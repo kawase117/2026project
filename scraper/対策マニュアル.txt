@@ -1,0 +1,285 @@
+# Webスクレイピング対策・トラブルシューティングマニュアル
+
+## 概要
+このマニュアルは、Webサイトの対策強化によってスクレイピングが困難になった際の診断・対処方法をまとめたものです。
+
+## よくある問題パターンと対処法
+
+### 1. JavaScript evaluate() で辞書・配列が None になる
+
+#### 症状
+```python
+# こんなコードが失敗する
+result = await page.evaluate('''
+    () => ({
+        title: document.title,
+        elements: document.querySelectorAll('h1').length
+    })
+''')
+# result が None になる
+```
+
+#### 原因
+- サイト側のJavaScript実行環境の制限強化
+- セキュリティポリシーの変更
+- 複合オブジェクト返却の制限
+
+#### 対処法
+```python
+# ❌ 悪い例
+complex_data = await page.evaluate('() => ({title: document.title, count: elements.length})')
+
+# ✅ 良い例 - 単純な値のみ
+title = await page.evaluate('document.title')
+count = await page.evaluate('document.querySelectorAll("h1").length')
+
+# または HTML直接取得 + BeautifulSoup
+html = await page.get_content()
+soup = BeautifulSoup(html, 'html.parser')
+title = soup.title.get_text() if soup.title else ''
+```
+
+### 2. ページ遷移でCloudflareチャレンジが発生
+
+#### 症状
+- `page.get(url)` で新規ページアクセス時にチャレンジ
+- 一覧ページでは正常だが、詳細ページで403エラー
+
+#### 原因
+- `page.get()` は完全な新規セッションとして認識される
+- Cloudflareが「bot的な新規アクセス」として検知
+
+#### 対処法
+```python
+# ❌ 悪い例
+await page.get(target_url)  # 新規セッション扱い
+
+# ✅ 良い例 - JavaScript遷移
+await page.evaluate(f'window.location.href = "{target_url}"')  # セッション継続
+```
+
+### 3. 要素が見つからない・取得できない
+
+#### 症状
+- XPATHやCSSセレクタで要素が見つからない
+- 目視では存在するのにコードでは取得できない
+
+#### 診断手順
+
+**ステップ1: 基本確認**
+```python
+# JavaScript実行環境の確認
+simple_test = await page.evaluate('1 + 1')  # 2 が返るか？
+
+# ページ基本情報
+url = await page.evaluate('window.location.href')
+title = await page.evaluate('document.title')
+```
+
+**ステップ2: HTML直接確認**
+```python
+html_content = await page.get_content()
+print(f"HTML size: {len(html_content)}")
+
+# BeautifulSoupで解析
+from bs4 import BeautifulSoup
+soup = BeautifulSoup(html_content, 'html.parser')
+elements = soup.find_all('h1')
+print(f"H1 elements found: {len(elements)}")
+```
+
+**ステップ3: 待機時間の調整**
+```python
+# 段階的待機
+for wait_time in [5, 10, 15, 20]:
+    await asyncio.sleep(5)
+    element_count = await page.evaluate('document.querySelectorAll("h1").length')
+    if element_count > 0:
+        break
+```
+
+#### 対処法の優先順位
+1. **HTML直接解析**: BeautifulSoupでの要素取得
+2. **待機時間延長**: 動的コンテンツの読み込み待ち
+3. **セレクタ変更**: より汎用的なセレクタの使用
+4. **iframe確認**: コンテンツがiframe内にある可能性
+
+### 4. 動的コンテンツの読み込み問題
+
+#### 症状
+- ページアクセス直後は要素が存在しない
+- 時間をおくと要素が出現する
+
+#### 対処法
+```python
+async def wait_for_element(page, selector, max_wait=30):
+    """要素出現まで待機"""
+    for i in range(max_wait):
+        try:
+            # HTML解析で確認
+            html = await page.get_content()
+            soup = BeautifulSoup(html, 'html.parser')
+            if soup.select(selector):
+                return True
+        except:
+            pass
+        await asyncio.sleep(1)
+    return False
+
+# 使用例
+if await wait_for_element(page, 'h1'):
+    # 要素取得処理
+    pass
+```
+
+## 段階的対処アプローチ
+
+### レベル1: 最小限の修正
+```python
+# JavaScript evaluate の辞書を個別取得に変更
+title = await page.evaluate('document.title')
+element_count = await page.evaluate('document.querySelectorAll("h1").length')
+```
+
+### レベル2: ハイブリッド方式
+```python
+# 遷移のみJavaScript、その他はHTML解析
+await page.evaluate(f'window.location.href = "{url}"')  # 遷移
+html = await page.get_content()  # データ取得
+soup = BeautifulSoup(html, 'html.parser')  # 解析
+```
+
+### レベル3: 完全HTML解析
+```python
+# すべてpage.get_content() + BeautifulSoupで処理
+# JavaScriptを一切使用しない
+```
+
+## デバッグテンプレート
+
+### 基本診断スクリプト
+```python
+async def diagnose_page(page):
+    """ページ状態の基本診断"""
+    
+    print("=== 基本診断 ===")
+    
+    # 1. JavaScript実行確認
+    try:
+        result = await page.evaluate('1 + 1')
+        print(f"JS実行: OK ({result})")
+    except Exception as e:
+        print(f"JS実行: NG ({e})")
+    
+    # 2. 基本情報取得
+    try:
+        url = await page.evaluate('window.location.href')
+        title = await page.evaluate('document.title')
+        print(f"URL: {url}")
+        print(f"Title: {title}")
+    except Exception as e:
+        print(f"基本情報取得: NG ({e})")
+    
+    # 3. HTML直接取得
+    try:
+        html = await page.get_content()
+        print(f"HTML size: {len(html):,} chars")
+        
+        soup = BeautifulSoup(html, 'html.parser')
+        h1_count = len(soup.find_all('h1'))
+        print(f"H1 elements: {h1_count}")
+        
+        if h1_count > 0:
+            for i, h1 in enumerate(soup.find_all('h1')[:3]):
+                print(f"  H1[{i}]: '{h1.get_text().strip()[:50]}'")
+                
+    except Exception as e:
+        print(f"HTML解析: NG ({e})")
+```
+
+### 要素検索テンプレート
+```python
+async def find_element_multiple_ways(page, target_text):
+    """複数の方法で要素を検索"""
+    
+    html = await page.get_content()
+    soup = BeautifulSoup(html, 'html.parser')
+    
+    methods = [
+        ('ID検索', lambda: soup.find(id='st-page')),
+        ('H1全検索', lambda: [h for h in soup.find_all('h1') if target_text in h.get_text()]),
+        ('テキスト検索', lambda: soup.find(string=lambda text: text and target_text in text)),
+        ('クラス検索', lambda: soup.find_all(class_=lambda x: x and 'title' in ' '.join(x).lower())),
+    ]
+    
+    for method_name, method_func in methods:
+        try:
+            result = method_func()
+            if result:
+                print(f"{method_name}: 発見 - {result}")
+                return result
+        except Exception as e:
+            print(f"{method_name}: エラー - {e}")
+    
+    return None
+```
+
+## 予防的対策
+
+### 1. 堅牢なセレクタ設計
+```python
+# 複数の候補を用意
+selectors = [
+    '#st-page h1',           # 理想的
+    'h1:first-of-type',      # 汎用的
+    '[class*="title"] h1',   # クラス名部分一致
+    'h1'                     # 最終手段
+]
+
+for selector in selectors:
+    elements = soup.select(selector)
+    if elements:
+        break
+```
+
+### 2. エラー処理の充実
+```python
+async def robust_page_operation(page, operation_name, operation_func):
+    """堅牢なページ操作"""
+    
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            result = await operation_func()
+            print(f"{operation_name}: 成功 (試行{attempt + 1})")
+            return result
+        except Exception as e:
+            print(f"{operation_name}: 失敗 {attempt + 1}/{max_retries} - {e}")
+            if attempt < max_retries - 1:
+                await asyncio.sleep(5)
+            else:
+                raise
+```
+
+### 3. 設定の最適化
+```python
+# nodriver起動オプション
+browser = await uc.start(
+    headless=False,
+    args=[
+        '--disable-blink-features=AutomationControlled',
+        '--disable-dev-shm-usage',
+        '--no-sandbox'
+    ]
+)
+```
+
+## 今後の対策指針
+
+1. **HTML解析を基本とする**: JavaScriptに依存しない設計
+2. **段階的フォールバック**: 複数の取得方法を用意
+3. **セッション継続**: 遷移時は`window.location.href`を使用
+4. **十分な待機時間**: 動的コンテンツの読み込みを考慮
+5. **包括的エラー処理**: 予期しない変更に対応
+
+これらの知見により、サイト側の対策強化があっても迅速に対応できるはずです。
