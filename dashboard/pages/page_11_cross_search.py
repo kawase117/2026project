@@ -11,6 +11,60 @@ from ..utils.data_loader import load_machine_detailed_results
 from ..design_system import section_title, premium_divider, COLORS
 
 
+def _build_display_rows(
+    df: pd.DataFrame,
+    attr1: str,
+    attr2: str,
+    machine_names_dict: dict,
+    latest_machine_dict: dict,
+    show_latest_only: bool
+) -> list:
+    """クロス検索結果テーブルの行データを構築する（TOP20・全件共用）"""
+    rows = []
+    for _, row in df.iterrows():
+        row_data = {attr1: str(row['attr1'])}
+        if attr1 == '台番号別' and row['attr1'] in machine_names_dict:
+            row_data['機種'] = (
+                latest_machine_dict[row['attr1']] if show_latest_only
+                else machine_names_dict[row['attr1']]
+            )
+        row_data[attr2] = str(row['attr2'])
+        if attr2 == '台番号別' and row['attr2'] in machine_names_dict:
+            row_data['機種'] = (
+                latest_machine_dict[row['attr2']] if show_latest_only
+                else machine_names_dict[row['attr2']]
+            )
+        row_data['勝率'] = float(row['win_rate'])
+        row_data['合計差枚'] = int(row['total_diff'])
+        row_data['平均差枚'] = int(row['avg_diff'])
+        row_data['平均G数'] = int(row['avg_games'])
+        row_data['台数'] = int(row['count'])
+        rows.append(row_data)
+    return rows
+
+
+def _render_cross_table(
+    df: pd.DataFrame,
+    attr1: str,
+    attr2: str,
+    machine_names_dict: dict,
+    latest_machine_dict: dict,
+    show_latest_only: bool,
+    title: str
+):
+    """クロス検索結果テーブルを描画する"""
+    rows = _build_display_rows(
+        df, attr1, attr2, machine_names_dict, latest_machine_dict, show_latest_only
+    )
+    if not rows:
+        st.warning("⚠️ フィルタ条件に該当するデータがありません")
+        return
+    df_display = pd.DataFrame(rows)
+    df_display['勝率'] = df_display['勝率'].apply(lambda x: f"{x:.1f}%")
+    st.markdown(f"### {title}")
+    st.dataframe(df_display, use_container_width=True, hide_index=True)
+
+
 def render():
     """クロス検索分析のページを描画"""
     section_title("クロス検索分析", "複数の属性を組み合わせてフィルタリング・分析します")
@@ -138,10 +192,6 @@ def render():
                     )
                     st.plotly_chart(fig, use_container_width=True)
 
-                # テーブル表示
-                premium_divider()
-                st.markdown("### 📋 クロス検索結果（TOP20）")
-
                 # 台番号別の場合、機種表示オプションを追加
                 show_latest_only = False
                 if attr1 == '台番号別' or attr2 == '台番号別':
@@ -191,95 +241,19 @@ def render():
                         machine_names_dict[machine_num] = ' → '.join(machines_sorted)  # 新→古
                         latest_machine_dict[machine_num] = machines_sorted[0] if len(machines_sorted) > 0 else ''
 
-                # フィルタ後のTOP20を表示
-                display_data = []
-                for idx, row in cross_filtered.head(20).iterrows():
-                    row_data = {}
-
-                    # attr1 を追加
-                    row_data[attr1] = str(row['attr1'])
-
-                    # attr1 が台番号別の場合、機種名を直後に追加
-                    if attr1 == '台番号別' and row['attr1'] in machine_names_dict:
-                        if show_latest_only and row['attr1'] in latest_machine_dict:
-                            row_data['機種'] = latest_machine_dict[row['attr1']]
-                        else:
-                            row_data['機種'] = machine_names_dict[row['attr1']]
-
-                    # attr2 を追加
-                    row_data[attr2] = str(row['attr2'])
-
-                    # attr2 が台番号別の場合、機種名を直後に追加
-                    if attr2 == '台番号別' and row['attr2'] in machine_names_dict:
-                        if show_latest_only and row['attr2'] in latest_machine_dict:
-                            row_data['機種'] = latest_machine_dict[row['attr2']]
-                        else:
-                            row_data['機種'] = machine_names_dict[row['attr2']]
-
-                    # その他の列を追加
-                    row_data['勝率'] = float(row['win_rate'])
-                    row_data['合計差枚'] = int(row['total_diff'])
-                    row_data['平均差枚'] = int(row['avg_diff'])
-                    row_data['平均G数'] = int(row['avg_games'])
-                    row_data['台数'] = int(row['count'])
-
-                    display_data.append(row_data)
-
-                df_cross_display = pd.DataFrame(display_data)
-                if df_cross_display.empty:
-                    st.warning("⚠️ フィルタ条件に該当するデータがありません")
-                else:
-                    # 勝率をパーセンテージにフォーマット（表示のみ）
-                    df_cross_display_formatted = df_cross_display.copy()
-                    df_cross_display_formatted['勝率'] = df_cross_display['勝率'].apply(lambda x: f"{x:.1f}%")
-                    st.dataframe(df_cross_display_formatted, use_container_width=True, hide_index=True)
-
-                # 全表示テーブル
                 premium_divider()
-                st.markdown("### 📋 クロス検索結果（全データ）")
+                _render_cross_table(
+                    cross_filtered.head(20), attr1, attr2,
+                    machine_names_dict, latest_machine_dict, show_latest_only,
+                    "📋 クロス検索結果（TOP20）"
+                )
 
-                # フィルタ後の全データを表示
-                all_display_data = []
-                for idx, row in cross_filtered.iterrows():
-                    row_data = {}
-
-                    # attr1 を追加
-                    row_data[attr1] = str(row['attr1'])
-
-                    # attr1 が台番号別の場合、機種名を直後に追加
-                    if attr1 == '台番号別' and row['attr1'] in machine_names_dict:
-                        if show_latest_only and row['attr1'] in latest_machine_dict:
-                            row_data['機種'] = latest_machine_dict[row['attr1']]
-                        else:
-                            row_data['機種'] = machine_names_dict[row['attr1']]
-
-                    # attr2 を追加
-                    row_data[attr2] = str(row['attr2'])
-
-                    # attr2 が台番号別の場合、機種名を直後に追加
-                    if attr2 == '台番号別' and row['attr2'] in machine_names_dict:
-                        if show_latest_only and row['attr2'] in latest_machine_dict:
-                            row_data['機種'] = latest_machine_dict[row['attr2']]
-                        else:
-                            row_data['機種'] = machine_names_dict[row['attr2']]
-
-                    # その他の列を追加
-                    row_data['勝率'] = float(row['win_rate'])
-                    row_data['合計差枚'] = int(row['total_diff'])
-                    row_data['平均差枚'] = int(row['avg_diff'])
-                    row_data['平均G数'] = int(row['avg_games'])
-                    row_data['台数'] = int(row['count'])
-
-                    all_display_data.append(row_data)
-
-                df_cross_all_display = pd.DataFrame(all_display_data)
-                if df_cross_all_display.empty:
-                    st.warning("⚠️ フィルタ条件に該当するデータがありません")
-                else:
-                    # 勝率をパーセンテージにフォーマット（表示のみ）
-                    df_cross_all_display_formatted = df_cross_all_display.copy()
-                    df_cross_all_display_formatted['勝率'] = df_cross_all_display['勝率'].apply(lambda x: f"{x:.1f}%")
-                    st.dataframe(df_cross_all_display_formatted, use_container_width=True, hide_index=True)
+                premium_divider()
+                _render_cross_table(
+                    cross_filtered, attr1, attr2,
+                    machine_names_dict, latest_machine_dict, show_latest_only,
+                    "📋 クロス検索結果（全データ）"
+                )
 
                 # サマリー表示（フィルタ後）
                 premium_divider()
