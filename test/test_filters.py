@@ -84,3 +84,21 @@ class TestApplyMachineFilters:
         )
         assert len(result) == 2
         assert result['games_normalized'].min() >= 1000
+
+    def test_show_low_confidenceがTrueなら全件残る(self):
+        from dashboard.utils.filters import apply_machine_filters
+        df = make_machine_df()
+        result = apply_machine_filters(
+            df,
+            date_range=(datetime(2026, 1, 1), datetime(2026, 12, 31)),
+            min_games=9999,
+            show_low_confidence=True
+        )
+        assert len(result) == 3
+
+class TestFilterByDateRangeNone:
+    def test_date_rangeがNoneの場合全件返す(self):
+        from dashboard.utils.filters import filter_by_date_range
+        df = make_hall_summary_df()
+        result = filter_by_date_range(df, None)
+        assert len(result) == 3

@@ -14,7 +14,7 @@ def filter_by_date_range(
     date_column: str = 'date'
 ) -> pd.DataFrame:
     """日付範囲でDataFrameをフィルタリングする"""
-    if df.empty:
+    if df.empty or date_range is None:
         return df
     start, end = date_range
     return df[(df[date_column] >= start) & (df[date_column] <= end)]
