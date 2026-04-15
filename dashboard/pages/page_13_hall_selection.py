@@ -10,6 +10,7 @@ from pathlib import Path
 import sqlite3
 
 from ..utils.data_loader import get_all_hall_paths
+from ..utils.filters import apply_sidebar_filters
 from ..design_system import section_title, premium_divider, COLORS
 
 
@@ -92,15 +93,13 @@ def render_attribute_tab(config, hall_paths, date_range, min_games):
         if df.empty:
             continue
 
-        # 日付範囲でフィルタ
-        df = df[
-            (df['date'] >= date_range[0]) &
-            (df['date'] <= date_range[1])
-        ]
-
-        # min_games フィルタを適用
-        if not st.session_state.show_low_confidence:
-            df = df[df['avg_games_per_machine'] >= min_games]
+        # 日付範囲でフィルタ、min_games フィルタを適用
+        df = apply_sidebar_filters(
+            df,
+            date_range=date_range,
+            min_games=min_games,
+            show_low_confidence=st.session_state.show_low_confidence,
+        )
 
         if df.empty:
             continue

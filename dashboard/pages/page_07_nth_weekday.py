@@ -7,6 +7,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
+from ..utils.filters import apply_sidebar_filters
 from ..design_system import section_title, premium_divider, COLORS
 
 
@@ -16,21 +17,18 @@ def render():
 
     # session_state からフィルタ情報を取得
     df = st.session_state.df_hall_summary
-    date_range = st.session_state.date_range
-    min_games = st.session_state.min_games
 
     if df.empty:
         st.warning("⚠️ データが見つかりません")
         return
 
     # フィルタリング
-    df_filtered = df[
-        (df['date'] >= date_range[0]) &
-        (df['date'] <= date_range[1])
-    ]
-
-    if not st.session_state.show_low_confidence:
-        df_filtered = df_filtered[df_filtered['avg_games_per_machine'] >= min_games]
+    df_filtered = apply_sidebar_filters(
+        df,
+        date_range=st.session_state.date_range,
+        min_games=st.session_state.min_games,
+        show_low_confidence=st.session_state.show_low_confidence,
+    )
 
     if df_filtered.empty:
         st.warning("⚠️ フィルタ条件に合致するデータがありません")

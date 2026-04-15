@@ -8,6 +8,7 @@ import pandas as pd
 import plotly.express as px
 
 from ..utils.data_loader import load_machine_detailed_results, load_last_digit_summary
+from ..utils.filters import apply_sidebar_filters, filter_by_date_range
 
 
 def render():
@@ -15,7 +16,6 @@ def render():
     st.markdown("## 台番号末尾別分析")
     st.markdown("台番号の末尾（0-9）ごと、ゾロ目（同じ数字が複数）の性能を、指定期間で集計して分析します")
 
-    date_range = st.session_state.date_range
     min_games = st.session_state.min_games
     machine_type = st.session_state.machine_type
 
@@ -27,13 +27,13 @@ def render():
         return
 
     # 日付でフィルタ
-    df_last_digit_filtered = df_last_digit[
-        (df_last_digit['date'] >= date_range[0]) &
-        (df_last_digit['date'] <= date_range[1])
-    ]
-
-    if not st.session_state.show_low_confidence:
-        df_last_digit_filtered = df_last_digit_filtered[df_last_digit_filtered['avg_games'] >= min_games]
+    df_last_digit_filtered = apply_sidebar_filters(
+        df_last_digit,
+        date_range=st.session_state.date_range,
+        min_games=st.session_state.min_games,
+        show_low_confidence=st.session_state.show_low_confidence,
+        games_column='avg_games',
+    )
 
     if df_last_digit_filtered.empty:
         st.warning("⚠️ フィルタ条件に合致するデータがありません")
@@ -56,10 +56,7 @@ def render():
 
     # 日付でフィルタ
     all_machines['date'] = pd.to_datetime(all_machines['date'], format='%Y%m%d')
-    all_machines_filtered = all_machines[
-        (all_machines['date'] >= date_range[0]) &
-        (all_machines['date'] <= date_range[1])
-    ]
+    all_machines_filtered = filter_by_date_range(all_machines, st.session_state.date_range)
 
     if all_machines_filtered.empty:
         st.warning("⚠️ 指定期間にデータがありません")

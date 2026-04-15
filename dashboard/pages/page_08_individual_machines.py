@@ -8,6 +8,7 @@ import pandas as pd
 import plotly.express as px
 
 from ..utils.data_loader import load_machine_detailed_results
+from ..utils.filters import filter_by_date_range
 from ..design_system import section_title, premium_divider, COLORS
 
 
@@ -15,7 +16,6 @@ def render():
     """個別台分析のページを描画"""
     section_title("個別台分析（全期間TOP10）", "指定期間における個別台の成績TOP10を表示します")
 
-    date_range = st.session_state.date_range
     min_games = st.session_state.min_games
 
     # 期間内のすべての個別台データを集計
@@ -27,10 +27,7 @@ def render():
 
     # 日付でフィルタ
     all_machines['date'] = pd.to_datetime(all_machines['date'], format='%Y%m%d')
-    all_machines_filtered = all_machines[
-        (all_machines['date'] >= date_range[0]) &
-        (all_machines['date'] <= date_range[1])
-    ]
+    all_machines_filtered = filter_by_date_range(all_machines, st.session_state.date_range)
 
     if all_machines_filtered.empty:
         st.warning("⚠️ 指定期間にデータがありません")
