@@ -18,46 +18,43 @@ class RankCalculator:
         return sqlite3.connect(self.db_path)
     
     def calculate_ranks_for_date(self, date: str):
-        """指定日の全テーブルのランクを計算"""
+        """指定日の全テーブルのランクを計算（ROW_NUMBER()ウィンドウ関数使用）"""
         conn = self.get_connection()
         cursor = conn.cursor()
-        
+
         try:
             tables = get_all_summary_tables()
-            
+
             for table_info in tables:
                 table = table_info['table_name']
                 key = table_info['group_key']
                 prefix = table_info['rank_prefix']
-                
+
                 # テーブル存在確認
                 cursor.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND name='{table}'")
                 if not cursor.fetchone():
                     continue
-                
-                # ランク計算（効率的なサブクエリ方式）
-                cursor.execute(f"""
-                    UPDATE {table} SET
-                        {prefix}_diff = (
-                            SELECT COUNT(*) + 1 
-                            FROM {table} t2 
-                            WHERE t2.date = ? AND t2.avg_diff_coins > {table}.avg_diff_coins
-                        ),
-                        {prefix}_games = (
-                            SELECT COUNT(*) + 1 
-                            FROM {table} t2 
-                            WHERE t2.date = ? AND t2.avg_games > {table}.avg_games
-                        ),
-                        {prefix}_efficiency = (
-                            SELECT COUNT(*) + 1 
-                            FROM {table} t2 
-                            WHERE t2.date = ? 
-                            AND CAST(t2.avg_diff_coins AS REAL) / NULLIF(t2.avg_games, 0) 
-                                > CAST({table}.avg_diff_coins AS REAL) / NULLIF({table}.avg_games, 0)
-                        )
+
+                # ROW_NUMBER()ウィンドウ関数でランクを一括取得（1回のSELECTで3ランク全て）
+                rows = cursor.execute(f"""
+                    SELECT
+                        rowid,
+                        ROW_NUMBER() OVER (PARTITION BY date ORDER BY avg_diff_coins DESC)          AS rank_diff,
+                        ROW_NUMBER() OVER (PARTITION BY date ORDER BY avg_games DESC)               AS rank_games,
+                        ROW_NUMBER() OVER (
+                            PARTITION BY date
+                            ORDER BY CAST(avg_diff_coins AS REAL) / NULLIF(avg_games, 0) DESC
+                        )                                                                           AS rank_efficiency
+                    FROM {table}
                     WHERE date = ?
-                """, (date, date, date, date))
-            
+                """, (date,)).fetchall()
+
+                # バッチUPDATE（executemany で一括適用）
+                cursor.executemany(
+                    f"UPDATE {table} SET {prefix}_diff = ?, {prefix}_games = ?, {prefix}_efficiency = ? WHERE rowid = ?",
+                    [(r[1], r[2], r[3], r[0]) for r in rows]
+                )
+
             conn.commit()
         finally:
             conn.close()
