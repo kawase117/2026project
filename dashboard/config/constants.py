@@ -12,6 +12,7 @@ PAGES = [
     {"icon": "📅", "title": "日別分析", "key": "daily_analysis"},
     {"icon": "📆", "title": "曜日別分析", "key": "weekday_analysis"},
     {"icon": "📆", "title": "DD別分析", "key": "dd_analysis"},
+    {"icon": "📊", "title": "末尾別分析", "key": "last_digit"},
     {"icon": "📊", "title": "日末日別分析", "key": "day_last_digit"},
     {"icon": "📋", "title": "第X曜日別分析", "key": "nth_weekday"},
     {"icon": "💻", "title": "個別台分析", "key": "individual_machines"},
@@ -21,16 +22,6 @@ PAGES = [
     {"icon": "ℹ️", "title": "統計情報", "key": "statistics"},
     {"icon": "🏪", "title": "ホール選択支援", "key": "hall_selection"},
 ]
-
-# ========================================
-# 配色設定
-# ========================================
-
-COLORS = {
-    'primary': '#1f77b4',      # 勝率（青）
-    'secondary': '#ff7f0e',    # G数（オレンジ）
-    'tertiary': '#2ca02c'      # 差枚（緑）
-}
 
 # ========================================
 # デフォルト値

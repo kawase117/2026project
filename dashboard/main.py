@@ -22,6 +22,7 @@ from .pages import (
     page_02_daily_analysis,
     page_03_weekday_analysis,
     page_04_dd_analysis,
+    page_05_last_digit,
     page_06_day_last_digit,
     page_07_nth_weekday,
     page_08_individual_machines,
@@ -165,6 +166,8 @@ try:
         page_03_weekday_analysis.render()
     elif "DD別" in page_selection:
         page_04_dd_analysis.render()
+    elif "末尾別分析" in page_selection and "台番号" not in page_selection and "日末" not in page_selection:
+        page_05_last_digit.render()
     elif "日末日別" in page_selection:
         page_06_day_last_digit.render()
     elif "第X曜日" in page_selection:
