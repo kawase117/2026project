@@ -6,7 +6,7 @@
 
 import sqlite3
 from datetime import datetime, timedelta
-from table_config import get_all_summary_tables, get_rank_columns
+from table_config import get_all_summary_tables
 
 class RankCalculator:
     """ランク・履歴計算クラス"""
@@ -27,7 +27,6 @@ class RankCalculator:
 
             for table_info in tables:
                 table = table_info['table_name']
-                key = table_info['group_key']
                 prefix = table_info['rank_prefix']
 
                 # テーブル存在確認
@@ -35,6 +34,8 @@ class RankCalculator:
                 if not cursor.fetchone():
                     continue
 
+                # ROW_NUMBER() を使用：同率の場合も一意のランクを付与（旧実装の COUNT(*)+1 は同率同ランク）
+                # パチスロデータでは avg_diff_coins が完全一致することは稀なため ROW_NUMBER() で十分
                 # ROW_NUMBER()ウィンドウ関数でランクを一括取得（1回のSELECTで3ランク全て）
                 rows = cursor.execute(f"""
                     SELECT
