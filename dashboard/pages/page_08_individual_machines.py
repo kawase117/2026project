@@ -16,8 +16,6 @@ def render():
     """個別台分析のページを描画"""
     section_title("個別台分析（全期間TOP10）", "指定期間における個別台の成績TOP10を表示します")
 
-    min_games = st.session_state.min_games
-
     # 期間内のすべての個別台データを集計
     all_machines = load_machine_detailed_results(str(st.session_state.db_path))
 
@@ -44,7 +42,7 @@ def render():
 
     # min_games フィルタを適用
     if not st.session_state.show_low_confidence:
-        machine_summary = machine_summary[machine_summary['total_games'] >= min_games]
+        machine_summary = machine_summary[machine_summary['total_games'] >= st.session_state.min_games]
 
     # すべての機種を取得（→ で連結）
     all_machine_names = all_machines_filtered.sort_values('date').groupby('machine_number')['machine_name'].apply(

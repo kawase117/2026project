@@ -49,14 +49,11 @@ def render():
         {"attribute": "all", "label": "全期間", "type": "all"}
     ]
 
-    date_range = st.session_state.date_range
-    min_games = st.session_state.min_games
-
     # 各タブの処理
     for idx, tab in enumerate(tabs):
         with tab:
             config = attribute_configs[idx]
-            render_attribute_tab(config, hall_paths, date_range, min_games)
+            render_attribute_tab(config, hall_paths)
 
 
 def load_daily_hall_summary_all(db_path: str) -> pd.DataFrame:
@@ -76,7 +73,7 @@ def load_daily_hall_summary_all(db_path: str) -> pd.DataFrame:
         return pd.DataFrame()
 
 
-def render_attribute_tab(config, hall_paths, date_range, min_games):
+def render_attribute_tab(config, hall_paths):
     """属性別タブを描画"""
     attribute = config["attribute"]
     label = config["label"]
@@ -96,8 +93,8 @@ def render_attribute_tab(config, hall_paths, date_range, min_games):
         # 日付範囲でフィルタ、min_games フィルタを適用
         df = apply_sidebar_filters(
             df,
-            date_range=date_range,
-            min_games=min_games,
+            date_range=st.session_state.date_range,
+            min_games=st.session_state.min_games,
             show_low_confidence=st.session_state.show_low_confidence,
         )
 

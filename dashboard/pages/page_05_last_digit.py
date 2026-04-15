@@ -92,6 +92,7 @@ def render():
         })
 
     # ゾロ目の集計（個別台データから）
+    # ゾロ目は台数が少ないため min_games フィルタを適用しない（日付範囲のみ適用）
     all_machines = load_machine_detailed_results(str(st.session_state.db_path))
     if not all_machines.empty:
         all_machines['date'] = pd.to_datetime(all_machines['date'], format='%Y%m%d')
