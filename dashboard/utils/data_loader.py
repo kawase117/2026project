@@ -11,6 +11,17 @@ from typing import List
 
 
 # ========================================
+# セキュリティ: 許可された属性名のホワイトリスト
+# ========================================
+
+ALLOWED_ATTRIBUTES = {
+    'day_of_week', 'last_digit', 'weekday_nth',
+    'is_zorome', 'is_strong_zorome', 'is_month_start',
+    'is_month_end', 'is_weekend', 'is_holiday'
+}
+
+
+# ========================================
 # Database Connection
 # ========================================
 
@@ -129,6 +140,9 @@ def load_daily_hall_by_attribute(
     戻り値:
         属性別にフィルタされた DataFrame
     """
+    if attribute not in ALLOWED_ATTRIBUTES:
+        raise ValueError(f"許可されていないattribute: {attribute}")
+
     try:
         conn = sqlite3.connect(db_path)
 
