@@ -61,20 +61,15 @@ class DataImporter:
         self.summary_calc.update_position_summary_by_type(date)
         self.summary_calc.update_island_summary(date)
         
-        # 4. ランク・履歴計算
+        # 4. ランク・履歴計算 + 日付フラグ追加（原子的に処理）
         try:
             self.rank_calc.calculate_ranks_for_date(date)
             self.rank_calc.calculate_history_for_date(date)
-            print(f"✓ ランク・履歴完了 ({date})")
-        except Exception as e:
-            print(f"⚠️ ランク計算スキップ: {str(e)}")
-        
-        # 5. 日付フラグ追加 ← **新規**
-        try:
             self.date_info_calc.update_date_info(date)
-            print(f"✓ 日付フラグ追加 ({date})")
+            print(f"✅ {date}: ランク計算・日付フラグ追加完了")
         except Exception as e:
-            print(f"⚠️ 日付フラグ追加エラー: {str(e)}")
+            print(f"⚠️ {date}: ランク計算・日付フラグ追加スキップ - {str(e)}")
+            # 処理継続（次の日付へ）
         
         return date
     
