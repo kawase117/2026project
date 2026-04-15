@@ -1,1 +1,240 @@
-# DEVELOPER_GUIDE.md ## 開発環境セットアップガイド **対象者**: パチスロ分析ダッシュボードの開発エンジニア **最終更新**: 2026-04-13 **Python版**: 3.10+ --- ## 📂 ディレクトリ構造 ``` C:\Users\apto117\Documents\pachinko-analyzer\ ├── db/ │ └── pachinko.db # SQLite DB（テーブル 8+） │ ├── src/2026project/ │ ├── dashboard.py # メインダッシュボード（2100+ 行） │ ├── .streamlit/config.toml # ダークテーマ設定 │ ├── requirements.txt # 依存パッケージ │ └── Heatmap/ │ └── heatmap_implementation.py # スタンドアロン版ヒートマップ │ └── 見取り図CSV/ └── マルハンメガシティ2000-蒲田1見取り図.csv # 2F座標情報（370台） ``` --- ## 🔧 セットアップ手順 ### 1. リポジトリのクローン ```bash # プロジェクトディレクトリに移動 cd C:\Users\apto117\Documents\pachinko-analyzer\src\2026project\ ``` ### 2. 仮想環境の作成・有効化 ```bash # 仮想環境作成 python -m venv .venv # 仮想環境の有効化（Windows） .venv\Scripts\activate # 仮想環境の有効化（Mac/Linux） source .venv/bin/activate ``` ### 3. 依存パッケージのインストール ```bash pip install -r requirements.txt ``` **必須パッケージ**: ``` streamlit==1.56.0 # Web UI フレームワーク pandas==3.0.2 # データ処理 plotly==6.7.0 # グラフ描画 numpy==2.4.4 # 数値計算 sqlite3 # DB（標準ライブラリ） ``` ### 4. ダッシュボード起動 ```bash streamlit run dashboard.py ``` → ブラウザで `http://localhost:8501` が自動で開く --- ## 🗄️ データベース接続 ### DB ファイルパス ``` C:\Users\apto117\Documents\pachinko-analyzer\db\pachinko.db ``` ### Python コード内での指定 ```python import sqlite3 # DB パスの指定 db_path = r'C:\Users\apto117\Documents\pachinko-analyzer\db\pachinko.db' # 接続 conn = sqlite3.connect(db_path) cursor = conn.cursor() # クエリ実行 df = pd.read_sql_query("SELECT * FROM machine_detailed_results LIMIT 10", conn) ``` ### 使用可能なテーブル ```sql -- ホール全体の日別集計 SELECT * FROM daily_hall_summary; -- 台番号末尾別集計 SELECT * FROM last_digit_summary_*; -- * は日付（YYYYMMDD） -- 個別台の詳細データ SELECT * FROM machine_detailed_results; ``` **テーブル仕様は** `パチスロ分析DBスキーマ説明書_完全版.md` を参照 --- ## 🐍 Python 開発時のポイント ### キャッシング機能（@st.cache_data） ```python @st.cache_data(ttl=3600) # 1時間キャッシュ def load_machine_detailed_results(start_date, end_date): # DB からデータ読み込み df = pd.read_sql_query(...) return df # TTL の仕様 # - ttl=None → 永続（セッション終了まで） # - ttl=3600 → 1時間（この設定を推奨） # - ttl=86400 → 24時間 ``` ### DB ポーリング対応 ```python # キャッシュを無効化するには以下を使用 st.cache_data.clear() # または session_state で状態管理 if 'db_timestamp' not in st.session_state: st.session_state.db_timestamp = get_db_mtime() ``` ### よく使う Streamlit 関数 ```python # UI 部品 st.title("ページタイトル") st.metric("指標", 75.5, "+2.5%") st.dataframe(df) # テーブル表示 st.plotly_chart(fig) # グラフ表示 # フィルタ start_date = st.date_input("開始日") selected = st.multiselect("選択", options) indicator = st.radio("指標", ["勝率", "差枚", "G数"]) # ページ間ナビゲーション page = st.sidebar.selectbox("ページ", ["🏠 ホール全体", "📅 日別分析", ...]) # レイアウト col1, col2 = st.columns(2) with col1: st.metric("左側", 100) with col2: st.metric("右側", 200) ``` --- ## 📊 データ型・命名規則 ### データ型 | データ | 型 | 注意 | |--------|-----|------| | 勝率 | float（内部）→ 文字列フォーマット（表示） | ソート対応のため内部は float | | 差枚・G数 | int | カンマ区切り表示可 | | 日付 | TEXT（DB）→ datetime64（Python） | フィルタ用に datetime 変換 | | ゾロ目フラグ | INTEGER（0 or 1） | BOOLEAN 非対応 | ### 命名規則 ```python # 関数 load_machine_detailed_results() # load_* で DB 読み込み calculate_win_rate() # calculate_* で計算 format_date() # format_* で整形 # 変数 df_hall # データフレーム → df_* machine_numbers # リスト → 複数形 is_valid # 真偽値 → is_* で始まる max_value # スカラー値 → 単数形 ``` --- ## 🐛 よく発生するエラーと対処 ### Error 1: `KeyError: 'diff_coins_normalized'` ``` 原因: daily_hall_summary から個別台カラムを参照 対策: load_machine_detailed_results() から取得 ``` ### Error 2: テーブルのソートが機能しない ``` 原因: テキスト型（"100" < "200" がNG） 対策: 内部は数値型、表示時のみ文字列変換 ``` ### Error 3: Plotly で複合軸が無効 ``` 原因: Plotly 6.7.0 の厳密な検証 対策: make_subplots() でサブプロット方式に統一 ``` ### Error 4: SQLite 接続タイムアウト ``` 原因: DB ファイルがロック状態 対策: - Excel などで DB ファイルを開いていないか確認 - conn.close() で接続を明示的に閉じる ``` --- ## 🧪 デバッグ・テスト方法 ### ローカル実行 ```bash # ダッシュボードを起動 streamlit run dashboard.py # ターミナルから直接テスト python -c " import sqlite3 import pandas as pd db_path = r'C:\Users\apto117\Documents\pachinko-analyzer\db\pachinko.db' conn = sqlite3.connect(db_path) df = pd.read_sql_query('SELECT * FROM machine_detailed_results LIMIT 5', conn) print(df.head()) conn.close() " ``` ### Streamlit の再実行 ``` - Python ファイルを保存 → 自動で再実行 - または画面右上の「Rerun」をクリック - キャッシュクリア: st.cache_data.clear() ``` ### ログ出力 ```python import logging logging.basicConfig(level=logging.DEBUG) logger = logging.getLogger(__name__) logger.debug("デバッグ情報") logger.info("通常ログ") logger.warning("警告") logger.error("エラー") ``` --- ## 📈 パフォーマンス最適化 ### よい実装 ✅ ```python # DB でフィルタリング（推奨） query = """ SELECT * FROM machine_detailed_results WHERE date BETWEEN ? AND ? """ df = pd.read_sql_query(query, conn, params=(start_date, end_date)) # 必要なカラムのみ取得 query = "SELECT date, machine_number, diff_coins_normalized FROM ..." ``` ### 悪い実装 ❌ ```python # 全データを取得して Python でフィルタ（避けるべき） df = pd.read_sql_query("SELECT * FROM machine_detailed_results", conn) df = df[(df['date'] >= start_date) & (df['date'] <= end_date)] ``` ### キャッシングのコツ ```python # キャッシュ無し → 毎回 DB クエリ → 遅い def load_data(): return pd.read_sql_query(...) # キャッシュ有り → 初回のみ DB → 高速 @st.cache_data(ttl=3600) def load_data(): return pd.read_sql_query(...) ``` --- ## 📚 参考資料 | ファイル | 説明 | |---------|------| | PROJECT_SUMMARY.md | プロジェクト全体概要 | | USER_GUIDE_v1_6.md | ユーザー向けマニュアル | | パチスロ分析DBスキーマ説明書_完全版.md | DB 仕様詳細 | | ROADMAP_COMPLETE.md | 実装済みタスク一覧 | | HEATMAP_GUIDE.md | ヒートマップ実装ガイド | --- ## 🚀 よくあるコマンド ```bash # 仮想環境有効化 .venv\Scripts\activate # 依存パッケージ更新 pip install --upgrade -r requirements.txt # ダッシュボード起動 streamlit run dashboard.py # キャッシュクリア + 再起動 # → Streamlit UI の「Rerun」をクリック # Python スクリプト実行（テスト用） python test_script.py ``` --- ## ⚙️ 環境変数（オプション） プロジェクト内で `.env` ファイルを使用する場合： ```bash # .env ファイルを作成 DB_PATH=C:\Users\apto117\Documents\pachinko-analyzer\db\pachinko.db STREAMLIT_SERVER_PORT=8501 STREAMLIT_LOGGER_LEVEL=info ``` Python コード内での読み込み： ```python from dotenv import load_dotenv import os load_dotenv() db_path = os.getenv('DB_PATH') ``` --- **作成日**: 2026-04-13 **対象**: 開発エンジニア向け **次の確認**: セットアップ後、`streamlit run dashboard.py` で起動確認
+# DEVELOPER_GUIDE.md
+## 開発環境セットアップガイド
+
+**対象者**: Pachinko Analyzerの開発エンジニア
+**最終更新**: 2026-04-15
+**Python版**: 3.10+
+
+---
+
+## 📂 ディレクトリ構造
+
+```
+C:\Users\apto117\Documents\pachinko-analyzer\src\2026project\
+├── CLAUDE.md                    ← AI向け全体仕様（最重要）
+├── main_app.py                  ← 起動エントリーポイント
+├── dashboard/                   ← Phase 3 ダッシュボード
+│   ├── main.py
+│   ├── design_system.py
+│   ├── config/constants.py
+│   ├── utils/data_loader.py
+│   ├── utils/styling.py
+│   └── pages/page_01〜13.py
+├── database/                    ← Phase 2 DB処理
+│   ├── main_processor.py
+│   ├── data_inserter.py
+│   ├── date_info_calculator.py
+│   ├── summary_calculator.py
+│   ├── rank_calculator.py
+│   ├── batch_incremental_updater.py
+│   ├── incremental_db_updater.py
+│   ├── db_setup.py
+│   └── table_config.py
+├── scraper/
+│   └── anaslo-scraper_multi.py  ← Phase 1
+├── config/
+│   └── hall_config.json
+├── db/                          ← SQLite DB（gitignore）
+│   └── {ホール名}.db
+└── data/                        ← スクレイピングJSON（gitignore）
+```
+
+---
+
+## 🔧 セットアップ手順
+
+### 1. 仮想環境の有効化
+
+```bash
+cd C:\Users\apto117\Documents\pachinko-analyzer\src\2026project
+.venv\Scripts\activate
+```
+
+### 2. 依存パッケージのインストール
+
+```bash
+pip install -r requirements.txt
+```
+
+**必須パッケージ**:
+```
+streamlit==1.56.0
+pandas==3.0.2
+plotly==6.7.0
+numpy==2.4.4
+sqlite3  # 標準ライブラリ
+```
+
+### 3. ダッシュボード起動
+
+```bash
+# プロジェクトルートから
+streamlit run main_app.py
+```
+
+→ ブラウザで `http://localhost:8501` が自動で開く
+
+---
+
+## 🗄️ データベース接続
+
+各ホール別にDBファイルが存在する。
+
+```python
+import sqlite3
+import pandas as pd
+
+db_path = r'C:\Users\apto117\Documents\pachinko-analyzer\src\2026project\db\{ホール名}.db'
+
+conn = sqlite3.connect(db_path)
+df = pd.read_sql_query("SELECT * FROM machine_detailed_results LIMIT 10", conn)
+conn.close()
+```
+
+### 利用可能なテーブル
+
+```sql
+SELECT * FROM machine_detailed_results;  -- 個別台詳細（メインデータ）
+SELECT * FROM daily_hall_summary;        -- ホール全体日別集計
+SELECT * FROM last_digit_summary_*;      -- 末尾別集計（日付ごと）
+```
+
+詳細は `パチスロ分析データベース スキーマ説明書.md` を参照。
+
+---
+
+## 🐍 開発時のポイント
+
+### インポートの注意
+
+```python
+# main_app.py（絶対インポート）
+from dashboard.main import ...
+from dashboard.utils.data_loader import ...
+
+# dashboard/main.py（相対インポート）
+from .config.constants import ...
+from .utils.data_loader import ...
+```
+
+### キャッシング
+
+```python
+@st.cache_data(ttl=3600)  # 1時間キャッシュ
+def load_machine_detailed_results(db_path):
+    conn = sqlite3.connect(db_path)
+    df = pd.read_sql_query("SELECT * FROM machine_detailed_results", conn)
+    conn.close()
+    return df
+```
+
+### min_games フィルタの正しい実装
+
+```python
+# ✅ 正しい：集計前に個別台レベルでフィルタ
+if not st.session_state.show_low_confidence:
+    df = df[df['games_normalized'] >= min_games]
+# ← この後に groupby で集計
+
+# ❌ 誤り：集計後にグループ単位でフィルタ
+cross_summary = df.groupby(...).agg(...)
+cross_summary = cross_summary[cross_summary['avg_games'] >= min_games]  # NG
+```
+
+### データ型の注意点
+
+| データ | 型 | 注意 |
+|--------|-----|------|
+| 勝率 | float（内部）→ 文字列（表示） | ソートのため内部はfloat |
+| 差枚・G数 | int | カンマ区切り表示 |
+| last_digit（台） | **TEXT** | "0"〜"9" |
+| last_digit（日） | **INTEGER** | 0〜9 |
+| is_zorome | INTEGER | 0/1（BOOLEANは使わない） |
+
+---
+
+## 🐛 よく発生するエラーと対処
+
+### KeyError: 'diff_coins_normalized'
+```
+原因: daily_hall_summary から個別台カラムを参照している
+対策: load_machine_detailed_results() から取得する
+```
+
+### テーブルのソートが機能しない
+```
+原因: テキスト型（"100" < "200" がNG）
+対策: 内部は数値型、表示時のみ文字列変換
+```
+
+### Plotly で複合軸が無効
+```
+原因: Plotly 6.7.0 の厳密な検証
+対策: make_subplots() でサブプロット方式に統一
+```
+
+### SQLite 接続タイムアウト
+```
+原因: DBファイルがロック状態
+対策: conn.close() で接続を明示的に閉じる
+```
+
+### ModuleNotFoundError（相対インポートエラー）
+```
+原因: dashboard/main.py をルートから直接実行している
+対策: streamlit run main_app.py で起動する（main_app.pyが絶対インポート対応）
+```
+
+---
+
+## 🧪 デバッグ方法
+
+```bash
+# ターミナルから直接テスト
+python -c "
+import sqlite3, pandas as pd
+db_path = r'.\db\{ホール名}.db'
+conn = sqlite3.connect(db_path)
+df = pd.read_sql_query('SELECT * FROM machine_detailed_results LIMIT 5', conn)
+print(df.head())
+conn.close()
+"
+
+# キャッシュクリア + 再起動
+# → Streamlit UIの「Rerun」をクリック、またはキャッシュクリア
+```
+
+---
+
+## 📈 パフォーマンス最適化
+
+```python
+# ✅ DB側でフィルタリング（推奨）
+query = """
+SELECT * FROM machine_detailed_results
+WHERE date BETWEEN ? AND ?
+"""
+df = pd.read_sql_query(query, conn, params=(start_date, end_date))
+
+# ❌ 全件取得してPythonでフィルタ（避ける）
+df = pd.read_sql_query("SELECT * FROM machine_detailed_results", conn)
+df = df[(df['date'] >= start_date) & (df['date'] <= end_date)]
+```
+
+---
+
+## 📚 参考ドキュメント
+
+| ファイル | 内容 |
+|---------|------|
+| `CLAUDE.md`（ルート） | 全体仕様・最新構成（最重要） |
+| `ARCHITECTURE.md` | システム構成図・データフロー |
+| `パチスロ分析データベース スキーマ説明書.md` | DBスキーマ詳細 |
+| `PHASE2_完全仕様書.md` | Phase 2 詳細仕様 |
+| `PHASE2_API_Reference.md` | Phase 2 API仕様 |
+| `Phase1_Scraper実装ドキュメント.md` | スクレイパー仕様 |
+
+---
+
+**作成日**: 2026-04-15
+**対象**: 開発エンジニア向け

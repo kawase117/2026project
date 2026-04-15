@@ -1,1 +1,241 @@
-# ARCHITECTURE.md ## システムアーキテクチャ **最終更新**: 2026-04-13 **システム**: Pachinko Analyzer Dashboard v1.7 **テクノロジー**: Streamlit + Plotly + SQLite + Pandas --- ## 📐 全体構成図 ``` ┌─────────────────────────────────────────────────────────────┐ │ Web ブラウザ │ │ localhost:8501 │ └──────────────────────┬──────────────────────────────────────┘ │ ┌─────────────┴──────────────┐ │ │ ▼ ▼ ┌──────────────────────┐ ┌──────────────────────┐ │ Streamlit UI │ │ Plotly グラフ │ │ (Page Navigation) │ │ (Visualization) │ │ (Filters) │ │ (Heatmap) │ │ (Metrics) │ │ (Subplots) │ └──────────────────────┘ └──────────────────────┘ │ │ └─────────────┬──────────────┘ │ ┌─────────────▼──────────────┐ │ │ │ Pandas DataFrame Layer │ │ (Aggregation & Filtering) │ │ │ └─────────────┬──────────────┘ │ ┌─────────────▼──────────────┐ │ │ │ SQLite DB Connection │ │ (Query Execution) │ │ │ └─────────────┬──────────────┘ │ ┌─────────────▼──────────────┐ │ pachinko.db │ │ (8+ Tables) │ │ (370 Machines) │ │ (30-year Data) │ └────────────────────────────┘ ``` --- ## 🔄 データフロー ### シーケンス 1: ページロード時 ``` User (ブラウザで Page 選択) ↓ Streamlit (sidebar 更新) ↓ Page_function() 実行 ├─→ @st.cache_data で load_machine_detailed_results() │ └─→ SQL クエリ → SQLite │ └─→ DataFrame 返却（キャッシュされる） │ ├─→ pandas groupby() で集計 │ └─→ 統計計算（勝率、平均、etc.） │ ├─→ Plotly で図形化 │ └─→ fig.add_trace(), fig.update_layout() │ └─→ Streamlit で描画 ├─→ st.plotly_chart(fig) ├─→ st.dataframe(df) └─→ st.metric() ``` ### シーケンス 2: フィルタ変更時 ``` User (フィルタを変更: date_range, hall_filter など) ↓ Streamlit session_state 更新 ↓ Page_function() 再実行 │ ├─→ キャッシュチェック │ ├─ 同じ日付範囲 → キャッシュから取得（高速） │ └─ 異なる日付範囲 → DB から再取得（遅い） │ └─→ pandas で再フィルタリング └─→ グラフ・テーブル更新 ``` --- ## 📦 モジュール構成 ### dashboard.py（2100+ 行） ```python # セクション 1: インポート & 初期化 import streamlit as st import pandas as pd import sqlite3 from datetime import datetime, timedelta # セクション 2: グローバル設定 st.set_page_config(...) st.theme(...) # セクション 3: キャッシュ関数 @st.cache_data(ttl=3600) def load_machine_detailed_results(): ... @st.cache_data(ttl=3600) def load_daily_hall_summary(): ... # セクション 4: ユーティリティ関数 def calculate_win_rate(): ... def format_metrics(): ... # セクション 5: ページ定義（12 個の関数） def page_1_hall_overview(): ... def page_2_daily_analysis(): ... def page_3_dow_analysis(): ... # ... (省略) def page_12_statistics(): ... # セクション 6: ページ遷移とメインロジック if __name__ == "__main__": page = st.sidebar.selectbox("ページ選択", [ "🏠 ホール全体", "📅 日別分析", # ... (省略) "ℹ️ 統計情報" ]) if page == "🏠 ホール全体": page_1_hall_overview() elif page == "📅 日別分析": page_2_daily_analysis() # ... (省略) ``` ### heatmap_implementation.py（スタンドアロン） ```python import streamlit as st import plotly.graph_objects as go import pandas as pd import numpy as np import sqlite3 # 1. 初期化（ファイル・DB パス） # 2. 座標 CSV 読み込み → DataFrame # 3. DB 接続 → machine_detailed_results 取得 # 4. 日付フィルタリング # 5. 指標選択（ラジオボタン） # 6. グループ化集計（groupby） # 7. 座標情報とマージ # 8. NumPy 行列変換 # 9. Plotly Heatmap 生成 # 10. レイアウト最適化 # 11. TOP 10 テーブル表示 ``` --- ## 🗄️ データベーススキーマ ### テーブル関係図 ``` pachinko.db │ ├── daily_hall_summary │ ├── date (TEXT) │ ├── day_of_week (TEXT) │ ├── last_digit (INTEGER) │ ├── weekday_nth (TEXT) │ ├── win_rate (FLOAT) │ ├── avg_games_per_machine (INTEGER) │ ├── avg_diff_per_machine (INTEGER) │ ├── total_machines (INTEGER) │ └── is_zorome (INTEGER) │ └─ 集計用ホール全体データ │ ├── machine_detailed_results │ ├── date (TEXT) │ ├── machine_number (INTEGER) │ ├── machine_name (TEXT) │ ├── last_digit (TEXT) │ ├── is_zorome (INTEGER) │ ├── games_normalized (INTEGER) │ ├── diff_coins_normalized (INTEGER) │ └─ 台別の詳細データ → ダッシュボードの主データソース │ ├── last_digit_summary_YYYYMMDD (×30+) │ ├── last_digit (TEXT) │ ├── win_rate (FLOAT) │ ├── avg_games (INTEGER) │ ├── avg_diff_coins (INTEGER) │ └── machine_count (INTEGER) │ └─ キャッシュ用集計テーブル │ └── (その他テーブル) ├── machine_detailed_results_by_date ├── cross_analysis_cache └── hourly_temp_* ``` ### インデックス構造 ```sql -- machine_detailed_results のインデックス CREATE INDEX idx_date ON machine_detailed_results(date); CREATE INDEX idx_machine_number ON machine_detailed_results(machine_number); CREATE INDEX idx_machine_name ON machine_detailed_results(machine_name); CREATE INDEX idx_is_zorome ON machine_detailed_results(is_zorome); -- daily_hall_summary のインデックス CREATE INDEX idx_date ON daily_hall_summary(date); CREATE INDEX idx_weekday_nth ON daily_hall_summary(weekday_nth); ``` **クエリ最適化**: - WHERE date BETWEEN ? AND ? → インデックス使用（高速） - WHERE machine_number = ? → インデックス使用（高速） - WHERE is_zorome = 1 → インデックス使用（高速） --- ## 🔐 キャッシング戦略 ### キャッシュ層 ``` ┌─────────────────────────────────┐ │ Streamlit Cache Layer │ │ (@st.cache_data) │ │ TTL = 3600 (1時間) │ └──────────────┬──────────────────┘ │ MISS ▼ ┌─────────────────────────────────┐ │ SQLite DB Query │ │ (SELECT ... WHERE ...) │ └──────────────┬──────────────────┘ │ ▼ ┌─────────────────────────────────┐ │ Pandas DataFrame │ │ (groupby, agg, merge) │ └─────────────────────────────────┘ ``` ### キャッシュ無効化の仕組み ```python # 毎時間自動で無効化（TTL=3600） @st.cache_data(ttl=3600) def load_machine_detailed_results(...): # 1 時間内 → キャッシュから返却 # 1 時間経過 → キャッシュ削除、再クエリ # 手動無効化 st.cache_data.clear() # すべてのキャッシュ削除 ``` --- ## 📊 ページ構成（12 ページ） ``` Dashboard ├── Page 1: 🏠 ホール全体 │ └─ 勝率・G数・差枚の時系列推移（複合軸グラフ） │ ├── Page 2: 📅 日別分析 │ └─ 日別の 4 指標：勝率、平均G数、平均差枚、稼働台数 │ ├── Page 3: 📆 曜日別分析 │ └─ 曜日ごとの平均値 + 箱ひげ図 │ ├── Page 4: 📆 DD別分析 │ └─ 月内日付位置別（1日、2日...31日）の分析 │ ├── Page 5: 🔢 末尾別分析 │ └─ 台番号末尾（0～9 + ゾロ目）× 複数指標 │ ├── Page 6: 📊 日末日別分析 │ └─ 日付末尾（0～9）ごとの性能 │ ├── Page 7: 📋 第X曜日別分析 │ └─ 第N曜日パターン分析（Mon1～Sun5） │ ├── Page 8: 💻 個別台分析 │ └─ TOP 10 台 + 全台表示テーブル │ ├── Page 9: 🎯 台番号末尾別分析 │ └─ 末尾別集計（全期間） │ ├── Page 10: ⭐ 期間TOP10分析 │ └─ 差枚・G数・平均差枚別 TOP 10 │ ├── Page 11: 🔀 クロス検索分析 │ └─ 複数属性の掛け算集計（6 パターン + タブ化） │ └── Page 12: ℹ️ 統計情報 └─ 詳細統計（平均・中央値・四分位数） ``` --- ## 🎯 クロス分析機能 ### 複合分析の 6 パターン ``` Tab 1: DD別 × 末尾別 ├─ 1日の末尾0 → 勝率、平均差枚 ├─ 1日の末尾1 → ... └─ 31日の末尾9 → ... Tab 2: DD別 × 機種別 ├─ 1日のハナハナ → ... ├─ 1日の北斗 → ... └─ ... Tab 3: DD別 × 台番号別 ├─ 1日の台番号1001 → ... └─ ... Tab 4: 曜日別 × 末尾別 ├─ 月曜の末尾0 → ... └─ ... Tab 5: 曜日別 × 機種別 Tab 6: 曜日別 × 台番号別 ``` **計算方法**: ```python # 例: DD別 × 末尾別 for dd in range(1, 32): for tail in range(10): subset = df[(df['dd'] == dd) & (df['last_digit'] == tail)] result = subset.agg({ 'win_rate': 'mean', 'avg_diff': 'mean', 'machine_count': 'mean' }) ``` --- ## 🌐 Streamlit の状態管理 ### session_state の使用 ```python # ページ間でデータを共有 if 'selected_page' not in st.session_state: st.session_state.selected_page = 0 # フィルタの状態を保存 if 'date_range' not in st.session_state: st.session_state.date_range = (datetime(2026, 1, 1), datetime.now()) # ユーザー選択を記憶 if 'selected_machines' not in st.session_state: st.session_state.selected_machines = [] ``` ### キャッシュとの相互作用 ``` session_state 変更 ↓ (Streamlit が検知) ↓ Page function 再実行 ↓ @st.cache_data キャッシュをチェック ├─ 同じパラメータ → キャッシュから返却 └─ 異なるパラメータ → DB から新規取得 ``` --- ## 🔍 パフォーマンス特性 ### 処理時間の目安 | 処理 | 時間 | キャッシュ | |------|------|----------| | DB データ取得（全期間） | 2～3 秒 | 有効 | | groupby 集計 | 1～2 秒 | - | | グラフ描画 | 0.5～1 秒 | - | | テーブル表示 | 0.2～0.5 秒 | - | | **合計（初回）** | **4～7 秒** | - | | **合計（キャッシュ有）** | **0.5～1 秒** | ✅ | ### メモリ使用量 ``` machine_detailed_results (30日 × 370台) → ~10,000～15,000 行 → ~5～10 MB キャッシュサイズ（3 関数 × 3 バージョン） → ~30～50 MB（許容範囲） ``` --- ## 🎨 フロントエンド設計 ### Streamlit ウィジェット配置 ``` ┌──────────────────────────────────────────────┐ │ st.title() - ページタイトル │ ├──────────────────────────────────────────────┤ │ st.sidebar (固定左パネル) │ │ ├─ ホール選択 │ │ ├─ 日付範囲フィルタ │ │ ├─ ページナビゲーション │ │ └─ カスタムフィルタ │ ├──────────────────────────────────────────────┤ │ メインコンテンツ │ │ ├─ st.metric() × 複数指標 │ │ ├─ st.plotly_chart() × グラフ │ │ ├─ st.dataframe() × テーブル │ │ └─ st.tabs() × 複合分析タブ │ └──────────────────────────────────────────────┘ ``` ### 色設計（ダークテーマ） ``` Primary: #1f77b4 (Blue) - 勝率 Secondary: #ff7f0e (Orange) - G数 Tertiary: #2ca02c (Green) - 差枚 Alert: #d62728 (Red) - 異常値 ``` --- ## 🔗 外部依存関係 ### Python パッケージ ``` ├── streamlit==1.56.0 ← Web UI ├── pandas==3.0.2 ← データ処理 ├── plotly==6.7.0 ← グラフ（Heatmap, Subplots） ├── numpy==2.4.4 ← 数値計算（行列操作） └── sqlite3 (stdlib) ← DB アクセス ``` ### 外部データソース ``` ├── pachinko.db ← SQLite （ローカル） ├── 見取り図CSV ← ホール配置座標（手入力） └── マルハン店舗データ ← 機種・台番号（月 1～2 回更新） ``` --- ## 🚀 将来の拡張予定 ### Phase 3-B（見栄え最適化） ``` - ヒートマップの見栄え改善（セルサイズ、フォント） - グリッドラインの追加 - カラーバー改善 ``` ### Phase 4（複数フロア対応） ``` - 3F の見取り図CSV 作成 - dashboard.py へのヒートマップ統合 - フロア選択タブの追加 ``` ### Phase 5（複数ホール対応） ``` - ホール選択サイドバーの追加 - 複数ホール間の比較分析 - ホール別 DB 管理 ``` --- **作成日**: 2026-04-13 **対象**: システム設計の参考資料 **次の確認**: パフォーマンス測定・ボトルネック分析
+# ARCHITECTURE.md
+## システムアーキテクチャ
+
+**最終更新**: 2026-04-15
+**システム**: Pachinko Analyzer v2.0（モジュール化版）
+**テクノロジー**: Streamlit + Plotly + SQLite + Pandas
+
+---
+
+## 📐 全体構成図
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                       Web ブラウザ                           │
+│                    localhost:8501                            │
+└──────────────────────┬──────────────────────────────────────┘
+                       │
+          ┌────────────┴────────────┐
+          ▼                         ▼
+┌──────────────────────┐  ┌──────────────────────┐
+│    Streamlit UI      │  │   Plotly グラフ       │
+│  (Page Navigation)   │  │  (Visualization)     │
+│  (Sidebar Filters)   │  │  (Heatmap)           │
+│  (Metrics)           │  │  (Subplots)          │
+└──────────────────────┘  └──────────────────────┘
+          │                         │
+          └────────────┬────────────┘
+                       │
+          ┌────────────▼────────────┐
+          │   Pandas DataFrame      │
+          │ (Aggregation/Filtering) │
+          └────────────┬────────────┘
+                       │
+          ┌────────────▼────────────┐
+          │   SQLite DB Connection  │
+          │    (Query Execution)    │
+          └────────────┬────────────┘
+                       │
+          ┌────────────▼────────────┐
+          │  db/{hall_name}.db      │
+          │  (8+ Tables / ホール別) │
+          └─────────────────────────┘
+```
+
+---
+
+## 🔄 データフロー
+
+### Phase 1 → 2 → 3 全体フロー
+
+```
+【Phase 1: Scraper】
+ana-slo.com
+    ↓ BeautifulSoup HTMLパース
+data/{hall_name}/{date}_data.json
+
+【Phase 2: Database】
+data/{hall_name}/*.json
+    ↓ main_processor.py（オーケストレーター）
+    ├─ data_inserter.py       → machine_detailed_results
+    ├─ date_info_calculator.py → 日付フラグ付加
+    ├─ summary_calculator.py  → daily_hall_summary など
+    └─ rank_calculator.py     → 順位・移動平均
+db/{hall_name}.db
+
+【Phase 3: Dashboard】
+db/{hall_name}.db
+    ↓ utils/data_loader.py（@st.cache_data）
+    ├─ load_machine_detailed_results()
+    ├─ load_daily_hall_summary()
+    └─ load_last_digit_summary()
+        ↓
+dashboard/pages/page_01〜13.py（描画）
+```
+
+---
+
+## 📦 モジュール構成（現在）
+
+### dashboard/ （Phase 3）
+
+```
+dashboard/
+├── main.py              # サイドバー・ルーティング・session_state管理
+├── design_system.py     # カラーパレット・UIコンポーネント
+├── old-dashboard.py     # 旧monolithicダッシュボード（参照用）
+├── config/
+│   └── constants.py     # ページ定義・定数
+├── utils/
+│   ├── data_loader.py   # DB読み込み関数（キャッシュ付き）
+│   └── styling.py       # CSSダークテーマ
+└── pages/
+    ├── page_01_hall_overview.py
+    ├── page_02_daily_analysis.py
+    ├── page_03_weekday_analysis.py
+    ├── page_04_dd_analysis.py
+    ├── page_05_last_digit.py
+    ├── page_06_day_last_digit.py
+    ├── page_07_nth_weekday.py
+    ├── page_08_individual_machines.py
+    ├── page_09_machine_tail.py
+    ├── page_10_period_top10.py
+    ├── page_11_cross_search.py
+    ├── page_12_statistics.py
+    └── page_13_hall_selection.py
+```
+
+### database/ （Phase 2）
+
+```
+database/
+├── main_processor.py          # 全処理のオーケストレーター
+├── data_inserter.py           # SQLiteへのデータ投入
+├── date_info_calculator.py    # 日付フラグ計算
+├── summary_calculator.py      # 集計処理
+├── rank_calculator.py         # ランク・移動平均
+├── batch_incremental_updater.py  # 複数ホール一括更新
+├── incremental_db_updater.py     # 単一ホール増分更新
+├── db_setup.py                # テーブル定義・スキーマ
+└── table_config.py            # テーブル設定
+```
+
+### scraper/ （Phase 1）
+
+```
+scraper/
+└── anaslo-scraper_multi.py    # マルチホール対応スクレイパー
+```
+
+---
+
+## 🗄️ データベーススキーマ（主要テーブル）
+
+詳細は `パチスロ分析データベース スキーマ説明書.md` を参照。
+
+```
+db/{hall_name}.db
+│
+├── machine_detailed_results    ← ダッシュボードのメインデータ
+│   ├── date (TEXT: YYYYMMDD)
+│   ├── machine_number (INTEGER)
+│   ├── machine_name (TEXT)
+│   ├── last_digit (TEXT: "0"〜"9")  ← TEXTに注意
+│   ├── is_zorome (INTEGER: 0/1)
+│   ├── games_normalized (INTEGER)
+│   └── diff_coins_normalized (INTEGER)
+│
+├── daily_hall_summary          ← ホール全体集計
+│   ├── date (TEXT: YYYYMMDD)
+│   ├── day_of_week (TEXT)
+│   ├── last_digit (INTEGER: 0〜9)   ← INTEGERに注意
+│   ├── weekday_nth (TEXT: "Mon1"など)
+│   ├── win_rate (FLOAT)
+│   ├── avg_games_per_machine (INTEGER)
+│   ├── avg_diff_per_machine (INTEGER)
+│   └── is_zorome (INTEGER: 0/1)
+│
+├── last_digit_summary_YYYYMMDD ← 末尾別集計（キャッシュ）
+├── daily_machine_type_summary  ← 機種別集計
+├── machine_layout              ← 台配置マスター
+├── machine_master              ← 機種マスター
+├── event_calendar              ← イベント情報
+└── daily_island_summary        ← 島別集計
+```
+
+---
+
+## 🔐 キャッシング戦略
+
+```python
+@st.cache_data(ttl=3600)  # 1時間キャッシュ
+def load_machine_detailed_results(db_path): ...
+
+@st.cache_data(ttl=3600)
+def load_daily_hall_summary(db_path): ...
+
+@st.cache_data(ttl=3600)
+def load_last_digit_summary(db_path, date): ...
+```
+
+| 処理 | 初回 | キャッシュ有 |
+|------|------|------------|
+| DB データ取得 | 2〜3秒 | - |
+| groupby 集計 | 1〜2秒 | - |
+| グラフ描画 | 0.5〜1秒 | - |
+| **合計（初回）** | **4〜7秒** | - |
+| **合計（キャッシュ）** | - | **0.5〜1秒** |
+
+---
+
+## 🌐 session_state 設計
+
+```python
+# main.py で初期化・更新
+st.session_state.db_path            # 選択中DB
+st.session_state.hall_name          # 選択中ホール名
+st.session_state.df_hall_summary    # ホール集計DataFrame
+st.session_state.date_range         # 期間フィルタ (tuple)
+st.session_state.min_games          # 最小G数（集計前フィルタに使用）
+st.session_state.show_low_confidence  # 低信頼度データ表示フラグ
+st.session_state.machine_type       # 機種タイプフィルタ
+```
+
+---
+
+## 🎨 デザインシステム
+
+```python
+# design_system.py
+COLORS = {
+    'primary': '#0f172a',        # 深紺（背景）
+    'accent': '#d4af37',         # 金色（アクセント）
+    'secondary_blue': '#3b82f6',
+    'secondary_orange': '#f97316',
+    'secondary_green': '#10b981',
+    'secondary_red': '#ef4444',
+}
+
+# コンポーネント関数
+section_title(title, subtitle)   # 金色アンダーラインタイトル
+premium_divider()                 # グラデーション区切り線
+metric_card(label, value, ...)   # ラグジュアリーメトリクスカード
+```
+
+---
+
+## 🚀 将来の拡張予定
+
+### 近期
+- [ ] Heatmap：台配置×性能ヒートマップをダッシュボードに統合
+- [ ] OCR：画像からデータ自動抽出
+
+### Phase 4（機械学習）
+- [ ] 設定推定モデル（BB回数から設定を推測）
+- [ ] 明日の勝率予測
+- [ ] 最適台選択のAI推奨
+
+---
+
+**作成日**: 2026-04-15
+**対象**: システム設計の参考資料
