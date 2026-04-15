@@ -93,8 +93,8 @@ class DataImporter:
                 processed_dates.append(date)
                 print(f"進捗: {i}/{len(json_files)} ({date})")
             except Exception as e:
-                print(f"❌ エラー: {str(e)}")
-                raise
+                print(f"❌ エラー: {str(e)} ({os.path.basename(json_file)})")
+                # 処理継続（次のファイルへ）
         
         # 最終履歴再計算
         if processed_dates:
