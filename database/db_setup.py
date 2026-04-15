@@ -7,17 +7,16 @@
 import sqlite3
 import os
 import csv
-from table_config import MACHINE_TYPE_CONFIGS
+from table_config import MACHINE_TYPE_CONFIGS, SUMMARY_TABLE_CONFIGS, get_rank_columns
 
 def create_database(hall_name, db_dir="."):
-    """データベース作成（ホール別 DB を db フォルダ直下に配置）"""
-    # db フォルダを確保（なければ作成）
-    db_folder = os.path.join(db_dir, "db")
-    os.makedirs(db_folder, exist_ok=True)
-    
-    # ホール名をファイル名として使用（スペースなど危険な文字のみ処理）
+    """データベース作成"""
     safe_hall_name = hall_name.replace(" ", "_").replace("（", "(").replace("）", ")")
     db_filename = f"{safe_hall_name}.db"
+    
+    # db/ フォルダ直下に配置
+    db_folder = os.path.join(db_dir, "db")
+    os.makedirs(db_folder, exist_ok=True)
     db_path = os.path.join(db_folder, db_filename)
     
     if os.path.exists(db_path):
@@ -65,7 +64,10 @@ def create_database(hall_name, db_dir="."):
     print("✓ machine_detailed_results")
     
     # 3. 機種別サマリー
-    cursor.execute('''
+    rank_columns = get_rank_columns('machine_type_rank')
+    rank_columns_sql = ',\n            '.join(rank_columns)
+    
+    cursor.execute(f'''
         CREATE TABLE daily_machine_type_summary (
             date TEXT,
             machine_name TEXT,
@@ -82,11 +84,12 @@ def create_database(hall_name, db_dir="."):
             total_rb INTEGER,
             avg_bb_per_game REAL,
             avg_rb_per_game REAL,
-            win_rate REAL,
+            win_rate INTEGER,
             efficiency REAL,
             high_profit_rate REAL,
             is_over10_machine BOOLEAN DEFAULT 0,
             is_3_machine BOOLEAN DEFAULT 0,
+            {rank_columns_sql},
             PRIMARY KEY (date, machine_name)
         )
     ''')
@@ -100,7 +103,10 @@ def create_database(hall_name, db_dir="."):
     _create_summary_tables(cursor, 'daily_position_summary', 'front_position', is_integer_key=True)
     
     # 6. 島別集計
-    cursor.execute('''
+    rank_columns = get_rank_columns('island_rank')
+    rank_columns_sql = ',\n            '.join(rank_columns)
+    
+    cursor.execute(f'''
         CREATE TABLE daily_island_summary (
             date TEXT,
             island_name TEXT,
@@ -109,8 +115,9 @@ def create_database(hall_name, db_dir="."):
             avg_games REAL,
             total_diff_coins INTEGER,
             avg_diff_coins REAL,
-            win_rate REAL,
+            win_rate INTEGER,
             high_profit_rate REAL,
+            {rank_columns_sql},
             PRIMARY KEY (date, island_name)
         )
     ''')
@@ -125,7 +132,23 @@ def create_database(hall_name, db_dir="."):
             total_games INTEGER,
             total_diff_coins INTEGER,
             avg_games_per_machine INTEGER,
-            avg_diff_per_machine INTEGER
+            avg_diff_per_machine INTEGER,
+            win_rate INTEGER,
+            
+            -- 日付情報カラム（date_info_calculator.py で追加）
+            day_of_week TEXT,
+            last_digit INTEGER,
+            weekday_nth TEXT,
+            is_strong_zorome INTEGER DEFAULT 0,
+            is_zorome INTEGER DEFAULT 0,
+            is_month_start INTEGER DEFAULT 0,
+            is_month_end INTEGER DEFAULT 0,
+            is_weekend INTEGER DEFAULT 0,
+            is_holiday INTEGER DEFAULT 0,
+            hall_anniversary INTEGER DEFAULT 0,
+            is_x_day INTEGER DEFAULT 0,
+            week_of_month INTEGER,
+            is_any_event INTEGER DEFAULT 0
         )
     ''')
     print("✓ daily_hall_summary")
@@ -138,6 +161,7 @@ def create_database(hall_name, db_dir="."):
     print(f"  - 末尾別: 5テーブル (all, jug, hana, oki, other)")
     print(f"  - 位置別: 5テーブル (all, jug, hana, oki, other)")
     print(f"  - 島別: 1テーブル")
+    print(f"  - ランク・履歴カラム: 全集計テーブルに統合完了")
     
     # 台配置CSV自動インポート
     _import_machine_layout(db_path, hall_name, db_dir)
@@ -145,12 +169,25 @@ def create_database(hall_name, db_dir="."):
     return db_path
 
 def _create_summary_tables(cursor, base_name, key_column, is_integer_key=False):
-    """集計テーブルを設定駆動で作成"""
+    """集計テーブルを設定駆動で作成（ランク・履歴カラム含む）"""
     key_type = 'INTEGER' if is_integer_key else 'TEXT'
+    
+    # テーブルの rank_prefix を特定
+    rank_prefix = None
+    for summary_config in SUMMARY_TABLE_CONFIGS:
+        if summary_config['base_name'] == base_name:
+            rank_prefix = summary_config['rank_prefix']
+            break
+    
+    if not rank_prefix:
+        rank_prefix = base_name.replace('daily_', '').replace('_summary', '')
     
     for config in MACHINE_TYPE_CONFIGS:
         suffix = config['suffix']
         table_name = f"{base_name}_{suffix}"
+        
+        rank_columns = get_rank_columns(rank_prefix)
+        rank_columns_sql = ',\n                '.join(rank_columns)
         
         cursor.execute(f'''
             CREATE TABLE {table_name} (
@@ -165,8 +202,9 @@ def _create_summary_tables(cursor, base_name, key_column, is_integer_key=False):
                 avg_diff_coins REAL,
                 max_diff_coins INTEGER,
                 min_diff_coins INTEGER,
-                win_rate REAL,
+                win_rate INTEGER,
                 high_profit_rate REAL,
+                {rank_columns_sql},
                 PRIMARY KEY (date, {key_column})
             )
         ''')
@@ -217,6 +255,84 @@ def _import_machine_layout(db_path, hall_name, db_dir):
         
     except Exception as e:
         print(f"⚠️ 台配置CSV読み込みエラー: {str(e)}")
+
+def create_machine_master_db(db_dir="."):
+    """machine_master.db を新規作成（複数ホール間共有マスターDB）"""
+    db_folder = os.path.join(db_dir, "db")
+    os.makedirs(db_folder, exist_ok=True)
+    
+    db_path = os.path.join(db_folder, "machine_master.db")
+    
+    if os.path.exists(db_path):
+        os.remove(db_path)
+        print(f"既存 machine_master.db 削除: {db_path}")
+    
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    print(f"machine_master.db 作成: {db_path}")
+    
+    # machine_master テーブル定義
+    cursor.execute('''
+        CREATE TABLE machine_master (
+            machine_name_normalized TEXT PRIMARY KEY,
+            
+            -- 機種分類フラグ
+            jug_flag BOOLEAN DEFAULT 0,
+            hana_flag BOOLEAN DEFAULT 0,
+            oki_flag BOOLEAN DEFAULT 0,
+            bt_flag BOOLEAN DEFAULT 0,
+            
+            -- 表記・名称
+            display_names TEXT,
+            official_name TEXT,
+            
+            -- ペイアウト情報
+            payout_setting1 REAL,
+            payout_setting2 REAL,
+            payout_setting3 REAL,
+            payout_setting4 REAL,
+            payout_setting5 REAL,
+            payout_setting6 REAL,
+            
+            -- タイムスタンプ
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    print("✓ machine_master テーブル作成")
+    
+    # BT機種16個の初期データを登録
+    bt_machines = [
+        ('__LBパチスロ ヱヴァンゲリヲン ～約束の扉__', '__LBパチスロ ヱヴァンゲリヲン ～約束の扉__'),
+        ('スマスロ サンダーV', 'スマスロ サンダーV'),
+        ('ニューキングハナハナV', 'ニューキングハナハナV'),
+        ('L不二子BT', 'L不二子BT'),
+        ('SHAKE BONUS TRIGGER', 'SHAKE BONUS TRIGGER'),
+        ('マジカルハロウィン ボーナストリガー', 'マジカルハロウィン ボーナストリガー'),
+        ('クレアの秘宝伝 〜はじまりの扉と太陽の石〜 ボーナストリガーver.', 'クレアの秘宝伝 ボーナストリガー'),
+        ('マタドールⅢ', 'マタドールⅢ'),
+        ('アレックス ブライト', 'アレックス ブライト'),
+        ('LBトリプルクラウン', 'LBトリプルクラウン'),
+        ('LBジャックポット', 'LBジャックポット'),
+        ('LBパチスロ1000ちゃんA', 'LBパチスロ1000ちゃんA'),
+        ('翔べ！ハーレムエース', '翔べ！ハーレムエース'),
+        ('LBプレミアムうまい棒', 'LBプレミアムうまい棒'),
+        ('スマスロニューパルサーBT', 'スマスロニューパルサーBT'),
+    ]
+    
+    for machine_name, official_name in bt_machines:
+        cursor.execute('''
+            INSERT INTO machine_master (
+                machine_name_normalized, bt_flag, official_name
+            ) VALUES (?, 1, ?)
+        ''', (machine_name, official_name))
+    
+    print(f"✓ BT機種16個を登録")
+    
+    conn.commit()
+    conn.close()
+    
+    return db_path
 
 if __name__ == "__main__":
     print("main_processor.pyから実行してください。")

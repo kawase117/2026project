@@ -986,8 +986,8 @@ async def main():
         return
     
     # ===== 日付範囲（ここで変更） =====
-    start_date = "20250303"
-    end_date = "20250303"
+    start_date = "20260131"
+    end_date = "20260405"
     # ===================================
     
     print(f"📅 対象期間: {start_date} ～ {end_date}")

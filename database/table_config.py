@@ -27,9 +27,14 @@ MACHINE_TYPE_CONFIGS = [
         'condition': 'AND mm.oki_flag = 1',
     },
     {
+        'suffix': 'bt',
+        'name': 'BT機種',
+        'condition': 'AND mm.bt_flag = 1',
+    },
+    {
         'suffix': 'other',
-        'name': '非Aタイプ',
-        'condition': 'AND mm.jug_flag = 0 AND mm.hana_flag = 0 AND mm.oki_flag = 0',
+        'name': '非Aタイプ＆非BT',
+        'condition': 'AND mm.jug_flag = 0 AND mm.hana_flag = 0 AND mm.oki_flag = 0 AND mm.bt_flag = 0',
     }
 ]
 
