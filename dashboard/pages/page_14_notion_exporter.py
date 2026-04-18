@@ -11,6 +11,7 @@ from datetime import datetime
 
 from ..utils.notion_exporter import NotionExporter
 from ..utils.data_loader import load_machine_detailed_results
+from ..utils.attribute_calculator import get_attr_value
 from ..design_system import section_title, premium_divider
 
 
@@ -25,34 +26,6 @@ REQUIRED_COMBINATIONS = [
 ]
 
 
-def _get_attr_value(df, attr):
-    """属性値を取得（page_11 と同じロジック）"""
-    if attr == '台番号末尾':
-        result = pd.Series((df['machine_number'] % 10).astype(str), index=df.index)
-        zorome_mask = df['is_zorome'] == 1
-        result[zorome_mask] = 'ゾロ目'
-        return result
-    elif attr == '日末尾':
-        return df['date'].dt.strftime('%d').str[-1].astype(int)
-    elif attr == 'DD別':
-        return df['date'].dt.day
-    elif attr == '曜日':
-        return df['date'].dt.day_name()
-    elif attr == '第X曜日':
-        dates = df['date'].unique()
-        weekday_nth_map = {}
-        for d in dates:
-            dow = d.strftime('%a')
-            day = d.day
-            week_of_month = (day - 1) // 7 + 1
-            dow_map = {'Mon': 'Mon', 'Tue': 'Tue', 'Wed': 'Wed',
-                      'Thu': 'Thu', 'Fri': 'Fri', 'Sat': 'Sat', 'Sun': 'Sun'}
-            weekday_nth_map[d.date()] = f"{dow_map[dow]}{week_of_month}"
-        return df['date'].dt.date.map(weekday_nth_map)
-    elif attr == '機種別':
-        return df['machine_name']
-    elif attr == '台番号別':
-        return df['machine_number'].astype(str)
 
 
 def _compute_cross_analysis(df_machines, attr1, attr2, min_games, show_low_confidence):
@@ -75,9 +48,9 @@ def _compute_cross_analysis(df_machines, attr1, attr2, min_games, show_low_confi
     if not show_low_confidence:
         df_cross = df_cross[df_cross['games_normalized'] >= min_games]
     
-    # 属性列を追加
-    df_cross['attr1'] = _get_attr_value(df_cross, attr1)
-    df_cross['attr2'] = _get_attr_value(df_cross, attr2)
+    # 属性列を追加（共有関数を使用）
+    df_cross['attr1'] = get_attr_value(df_cross, attr1)
+    df_cross['attr2'] = get_attr_value(df_cross, attr2)
     
     # クロス集計
     def agg_win_rate(x):
@@ -98,11 +71,12 @@ def _compute_cross_analysis(df_machines, attr1, attr2, min_games, show_low_confi
 def render():
     """Notion エクスポーター"""
     section_title("📌 Notion へ保存", "クロス分析結果を Notion Database に一括保存")
-    
+
     # セッション状態を確認
     if "page_14_data" not in st.session_state:
-        st.info("⚠️ Page 11 のクロス検索分析からアクセスしてください")
-        return
+        st.error("セッション情報が失われました。Page 11 から再度操作してください。")
+        st.info("操作手順: Page 11 → クロス検索条件を設定 → 「Notion に保存」ボタン")
+        st.stop()
     
     page_14_data = st.session_state.page_14_data
     date_range = page_14_data.get("date_range", ("", ""))
