@@ -275,3 +275,21 @@ def render():
                         st.metric("平均差枚", f"{cross_filtered['avg_diff'].mean():.1f}枚")
                 else:
                     st.warning("⚠️ フィルタ条件に該当するデータがありません")
+
+                # Notion に保存ボタン
+                premium_divider()
+                st.markdown("### 📌 Notion に保存")
+                if st.button("📌 結果を Notion に保存", key="save_to_notion"):
+                    # セッション状態に保存
+                    st.session_state.page_14_data = {
+                        "date_range": (
+                            st.session_state.date_range[0].strftime("%Y-%m-%d"),
+                            st.session_state.date_range[1].strftime("%Y-%m-%d")
+                        ),
+                        "min_games": st.session_state.min_games,
+                        "show_low_confidence": st.session_state.show_low_confidence,
+                        "cross_attr1": attr1,
+                        "cross_attr2": attr2,
+                        "cross_filtered_data": cross_filtered,
+                    }
+                    st.switch_page("pages/page_14_notion_exporter.py")
