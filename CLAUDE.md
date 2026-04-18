@@ -8,7 +8,7 @@ AIアシスタントへ：このファイルをセッション開始時に必ず
 
 - **Phase 1 (scraper/)**: ana-slo.com からデータをスクレイピング → JSON保存
 - **Phase 2 (database/)**: JSONをSQLiteに投入、集計・ランク計算
-- **Phase 3 (dashboard/)**: Streamlit + Plotlyで12ページのダッシュボード表示
+- **Phase 3 (dashboard/)**: Streamlit + Plotlyで13ページのダッシュボード表示
 
 ## 現在のディレクトリ構造（最新版）
 
@@ -21,6 +21,8 @@ AIアシスタントへ：このファイルをセッション開始時に必ず
 │   ├── design_system.py         ← デザインシステム（色・コンポーネント）
 │   ├── config/constants.py      ← 定数・ページ定義
 │   ├── utils/data_loader.py     ← データ読み込み関数（キャッシュ付き）
+│   ├── utils/filters.py         ← 共通フィルタリング関数（全ページで使用）
+│   ├── utils/charts.py          ← 共通グラフ生成関数
 │   ├── utils/styling.py         ← CSSダークテーマ設定
 │   └── pages/
 │       ├── page_01_hall_overview.py     ← ホール全体 時系列推移
@@ -55,6 +57,9 @@ AIアシスタントへ：このファイルをセッション開始時に必ず
 ├── data/                        ← スクレイピングJSON（gitignore）
 ├── Heatmap/                     ← ヒートマップ実装（開発中）
 ├── ocr/                         ← OCR関連（開発中）
+├── test/                        ← ユニットテスト
+│   ├── test_filters.py          ← filters.py テスト（9件）
+│   └── test_charts.py           ← charts.py テスト（6件）
 └── document/                    ← 設計ドキュメント群
 ```
 
@@ -110,6 +115,51 @@ streamlit run main_app.py
 | avg_diff_per_machine | INTEGER | 台平均差枚 |
 | is_zorome | INTEGER | ゾロ目フラグ（0/1） |
 
+## 共通ユーティリティ（2026-04 追加）
+
+### utils/filters.py — フィルタリング関数
+
+全ページで使用する共通フィルタ。直接インライン実装してはいけない。
+
+```python
+from ..utils.filters import apply_sidebar_filters, apply_machine_filters, filter_by_date_range
+
+# ホール集計データ用（daily_hall_summary系）
+df_filtered = apply_sidebar_filters(
+    df,
+    date_range=st.session_state.date_range,
+    min_games=st.session_state.min_games,
+    show_low_confidence=st.session_state.show_low_confidence,
+    games_column='avg_games_per_machine',  # デフォルト値
+)
+
+# 個別台データ用（machine_detailed_results）※集計前に行レベルで適用
+df_filtered = apply_machine_filters(
+    df,
+    date_range=st.session_state.date_range,
+    min_games=st.session_state.min_games,
+    show_low_confidence=st.session_state.show_low_confidence,
+    games_column='games_normalized',  # デフォルト値
+)
+
+# page_08/10 のように集計後に total_games で絞る場合は filter_by_date_range のみ使用
+df = filter_by_date_range(df, st.session_state.date_range)
+# 集計後: df_summary[df_summary['total_games'] >= st.session_state.min_games]
+```
+
+**末尾別ページ（page_05, page_09）の games_column**：`avg_games`（`last_digit_summary` のカラム名）
+
+### utils/charts.py — グラフ生成関数
+
+```python
+from ..utils.charts import create_bar_chart, create_line_chart, create_scatter_chart
+
+fig = create_bar_chart(df, x='col_x', y='col_y', title='タイトル', height=400)
+fig = create_line_chart(df, x='col_x', y='col_y', title='タイトル')
+fig = create_scatter_chart(df, x='col_x', y='col_y', size='col_size', title='タイトル')
+# 空DataFrameでも例外を出さない（空のFigureを返す）
+```
+
 ## 重要な注意事項
 
 1. **last_digit型の違い**：`machine_detailed_results`はTEXT、`daily_hall_summary`はINTEGER
@@ -117,6 +167,8 @@ streamlit run main_app.py
 3. **Plotly複合軸**：`make_subplots()`方式を使用（Plotly 6.7.0対応）
 4. **インポート**：`main_app.py`は絶対インポート、`dashboard/main.py`は相対インポート
 5. **min_gamesフィルタ**：集計**前**に個別台レベルで適用（`games_normalized >= min_games`）
+6. **フィルタは必ず utils/filters.py を使うこと**：各ページにインライン実装しない
+7. **SQLインジェクション対策**：`load_daily_hall_by_attribute` の `attribute` 引数は `ALLOWED_ATTRIBUTES` ホワイトリストで検証済み
 
 ## キャッシング
 
@@ -125,6 +177,19 @@ streamlit run main_app.py
 def load_machine_detailed_results(db_path): ...
 def load_daily_hall_summary(db_path): ...
 ```
+
+## テスト実行
+
+```bash
+cd C:\Users\apto117\Documents\pachinko-analyzer\src\2026project
+python -m pytest test/ -v
+# test_filters.py: 9件、test_charts.py: 6件（計15件）
+```
+
+## database/ 側の改善点（2026-04 実施済み）
+
+- **rank_calculator.py**：サブクエリ O(n²) → `ROW_NUMBER()` ウィンドウ関数 O(n)（SQLite 3.25.0以上必須、現環境 3.50.4）
+- **main_processor.py / incremental_db_updater.py**：ランク計算と日付フラグ追加を同一 try/except に統合（部分成功による不整合を防止）
 
 ## ドキュメント参照先
 
@@ -135,6 +200,7 @@ def load_daily_hall_summary(db_path): ...
 | `document/PHASE2_完全仕様書.md` | Phase 2 詳細仕様 |
 | `document/ARCHITECTURE.md` | システム全体構成図 |
 | `document/パチスロ分析データベース スキーマ説明書.md` | DBスキーマ詳細 |
+| `document/plans/2026-04-15-refactoring-plan.md` | 2026-04 リファクタリング計画・変更記録 |
 
 ## GitHub
 
