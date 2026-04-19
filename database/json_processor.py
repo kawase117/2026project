@@ -225,14 +225,14 @@ class JSONProcessor:
         print(f"  検出ファイル数: {len(json_files)}")
         
         if not json_files:
-            print(f"\n⚠️  JSON ファイルが見つかりません")
+            print(f"\n[WARN]  JSON ファイルが見つかりません")
             print(f"  再試行: JSON から正しいホール名を検出...")
             
             # フォルダが存在しない場合、別のホール名で再試行
             actual_hall_name = self._find_correct_hall_folder()
             
             if actual_hall_name and actual_hall_name != self.hall_name:
-                print(f"✅ ホール名を修正: '{self.hall_name}' → '{actual_hall_name}'")
+                print(f"[OK] ホール名を修正: '{self.hall_name}' → '{actual_hall_name}'")
                 self.hall_name = actual_hall_name
                 self.data_dir = self._build_data_dir()
                 json_pattern = os.path.join(self.data_dir, "*.json")
@@ -247,7 +247,7 @@ class JSONProcessor:
         
         # ファイル名でソート
         json_files.sort()
-        print(f"✅ JSONファイル検出: {len(json_files)}個 (ホール: {self.hall_name})")
+        print(f"[OK] JSONファイル検出: {len(json_files)}個 (ホール: {self.hall_name})")
         
         return json_files
     
@@ -263,7 +263,7 @@ class JSONProcessor:
             print(f"  data_root 存在: {os.path.exists(data_root)}")
             
             if not os.path.exists(data_root):
-                print(f"  ❌ data フォルダが存在しません")
+                print(f"  [ERROR] data フォルダが存在しません")
                 return None
             
             # data/ 直下のフォルダをすべて列挙
@@ -296,16 +296,16 @@ class JSONProcessor:
                             
                             # JSON 内の hall_name と検索対象が一致したか確認
                             if json_hall_name == self.hall_name:
-                                print(f"    ✅ マッチ!")
+                                print(f"    [OK] マッチ!")
                                 return subdir
                     except Exception as e:
-                        print(f"    ⚠️  JSON 読み込みエラー: {str(e)}")
+                        print(f"    [WARN]  JSON 読み込みエラー: {str(e)}")
                         continue
             
-            print(f"\n  ❌ 一致するホール名が見つかりません")
+            print(f"\n  [ERROR] 一致するホール名が見つかりません")
             return None
         except Exception as e:
-            print(f"⚠️  ホール名検索エラー: {str(e)}")
+            print(f"[WARN]  ホール名検索エラー: {str(e)}")
             import traceback
             traceback.print_exc()
             return None
@@ -422,7 +422,7 @@ class JSONProcessor:
                 normalized_data = self.process_machine_data(date, machine_record, avg_games_per_machine)
                 processed_data_list.append(normalized_data)
             except Exception as e:
-                print(f"⚠️ 台データスキップ: {str(e)}")
+                print(f"[WARN] 台データスキップ: {str(e)}")
                 continue
         
         return processed_data_list

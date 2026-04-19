@@ -58,93 +58,36 @@ class IncrementalDBUpdater:
         self.date_info_calc = DateInfoCalculator(hall_name, self.db_path)
     
     def _ensure_database_initialized(self):
-        """DB が存在しない、またはテーブルがない場合は初期化"""
-        db_exists = os.path.exists(self.db_path)
+        """DB が存在しない、またはテーブルがない場合は db_setup で初期化"""
+        if not self.hall_name:
+            return  # hall_name が確定していない場合はスキップ
 
-        if not db_exists:
+        needs_init = False
+
+        if not os.path.exists(self.db_path):
             print(f"   DB が存在しないため作成します: {self.db_path}")
-            self._create_db_schema()
-            return
+            needs_init = True
+        else:
+            try:
+                conn = sqlite3.connect(self.db_path)
+                cursor = conn.cursor()
+                cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='machine_detailed_results'")
+                table_exists = cursor.fetchone() is not None
+                conn.close()
+                if not table_exists:
+                    print(f"   テーブルが存在しないため DB を再初期化します")
+                    os.remove(self.db_path)
+                    needs_init = True
+            except Exception as e:
+                print(f"   DB チェック失敗: {e}、DB を再初期化します")
+                if os.path.exists(self.db_path):
+                    os.remove(self.db_path)
+                needs_init = True
 
-        # DB が存在する場合、テーブル存在チェック
-        try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='machine_detailed_results'")
-            table_exists = cursor.fetchone() is not None
-            conn.close()
-
-            if not table_exists:
-                print(f"   テーブルが存在しないため DB を再初期化します")
-                os.remove(self.db_path)
-                self._create_db_schema()
-        except Exception as e:
-            print(f"   DB チェック失敗: {e}、DB を再初期化します")
-            if os.path.exists(self.db_path):
-                os.remove(self.db_path)
-            self._create_db_schema()
-
-    def _create_db_schema(self):
-        """DB スキーマを直接作成（db_setup 経由ではなく、正確な path を使用）"""
-        try:
-            from table_config import SUMMARY_TABLE_CONFIGS
-        except ImportError:
-            SUMMARY_TABLE_CONFIGS = {}
-
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-
-        # machine_detailed_results テーブル作成
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS machine_detailed_results (
-                date TEXT,
-                machine_name TEXT,
-                machine_number INTEGER,
-                last_digit TEXT,
-                is_zorome BOOLEAN,
-                machine_rank_in_type INTEGER,
-                games_normalized INTEGER,
-                diff_coins_normalized INTEGER
-            )
-        ''')
-
-        # daily_hall_summary テーブル作成
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS daily_hall_summary (
-                date TEXT PRIMARY KEY,
-                day_of_week TEXT,
-                last_digit INTEGER,
-                weekday_nth TEXT,
-                win_rate REAL,
-                avg_games_per_machine INTEGER,
-                avg_diff_per_machine INTEGER,
-                is_zorome INTEGER
-            )
-        ''')
-
-        # machine_layout テーブル作成
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS machine_layout (
-                machine_number INTEGER PRIMARY KEY,
-                front_position INTEGER,
-                back_position INTEGER,
-                island_name TEXT
-            )
-        ''')
-
-        # その他必要なテーブルを作成（summary tables）
-        if SUMMARY_TABLE_CONFIGS:
-            for table_name, config in SUMMARY_TABLE_CONFIGS.items():
-                try:
-                    columns = ", ".join([f"{col} {dtype}" for col, dtype in config.get("columns", {}).items()])
-                    if columns:
-                        cursor.execute(f"CREATE TABLE IF NOT EXISTS {table_name} ({columns})")
-                except Exception as e:
-                    print(f"      ⚠️ テーブル {table_name} 作成エラー: {e}")
-
-        conn.commit()
-        conn.close()
-        print(f"   ✅ DB スキーマを作成しました: {self.db_path}")
+        if needs_init:
+            project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            created_path = create_database(self.hall_name, project_root)
+            print(f"   [OK] DB 作成完了: {created_path}")
 
     def get_db_registered_dates(self) -> set:
         """
@@ -165,7 +108,7 @@ class IncrementalDBUpdater:
             return registered_dates
             
         except Exception as e:
-            print(f"   ⚠️ DB日付取得エラー: {e}")
+            print(f"   [WARN] DB日付取得エラー: {e}")
             return set()
     
     def get_json_available_dates(self) -> set:
@@ -191,7 +134,7 @@ class IncrementalDBUpdater:
             return available_dates
             
         except Exception as e:
-            print(f"   ⚠️ JSON日付取得エラー: {e}")
+            print(f"   [WARN] JSON日付取得エラー: {e}")
             return set()
     
     def get_new_dates(self, registered_dates: set, available_dates: set) -> list:
@@ -215,7 +158,7 @@ class IncrementalDBUpdater:
             成功時 True
         """
         try:
-            print(f"\n   📅 {date_str} を処理中...")
+            print(f"\n   [DATE] {date_str} を処理中...")
             
             # JSON ファイルを取得
             json_files = self.json_processor.get_json_files()
@@ -227,7 +170,7 @@ class IncrementalDBUpdater:
                     break
             
             if not json_filepath:
-                print(f"      ❌ JSON ファイルが見つかりません")
+                print(f"      [ERROR] JSON ファイルが見つかりません")
                 return False
             
             # JSON を読み込み
@@ -237,7 +180,7 @@ class IncrementalDBUpdater:
             # 日付を検証
             json_date = json_data.get('date')
             if json_date != date_str:
-                print(f"      ⚠️ JSON内の日付不一致: {date_str} != {json_date}")
+                print(f"      [WARN] JSON内の日付不一致: {date_str} != {json_date}")
                 # 日付で強制上書き
                 json_data['date'] = date_str
             
@@ -248,7 +191,7 @@ class IncrementalDBUpdater:
             )
             
             if not machine_data_list:
-                print(f"      ❌ 機械データが0件です")
+                print(f"      [ERROR] 機械データが0件です")
                 return False
             
             # 1. 個別台データ投入
@@ -266,23 +209,23 @@ class IncrementalDBUpdater:
                 self.summary_calc.update_position_summary_by_type(date_str)
                 self.summary_calc.update_island_summary(date_str)
             except Exception as e:
-                print(f"      ⚠️ 集計処理エラー: {e}")
+                print(f"      [WARN] 集計処理エラー: {e}")
             
             # 4. ランク・履歴計算 + 日付フラグ追加（原子的に処理）
             try:
                 self.rank_calc.calculate_ranks_for_date(date_str)
                 self.rank_calc.calculate_history_for_date(date_str)
                 self.date_info_calc.update_date_info(date_str)
-                print(f"      ✅ ランク計算・日付フラグ追加完了")
+                print(f"      [OK] ランク計算・日付フラグ追加完了")
             except Exception as e:
-                print(f"      ⚠️ ランク計算・日付フラグ追加スキップ - {str(e)}")
+                print(f"      [WARN] ランク計算・日付フラグ追加スキップ - {str(e)}")
                 # 処理継続（次の日付へ）
             
-            print(f"      ✅ {date_str} を DB に追加しました")
+            print(f"      [OK] {date_str} を DB に追加しました")
             return True
             
         except Exception as e:
-            print(f"      ❌ エラー: {e}")
+            print(f"      [ERROR] エラー: {e}")
             import traceback
             traceback.print_exc()
             return False
@@ -298,7 +241,7 @@ class IncrementalDBUpdater:
             結果情報の辞書
         """
         # Step 1: JSON から利用可能な日付を確認（先に実行して hall_name を確定させる）
-        print("🔍 JSON ファイルから利用可能な日付を確認中...")
+        print("[SEARCH] JSON ファイルから利用可能な日付を確認中...")
         available_dates = self.get_json_available_dates()
 
         # JSONProcessor が hall_name を更新した場合、db_path と各モジュールを再設定
@@ -321,17 +264,17 @@ class IncrementalDBUpdater:
         self._ensure_database_initialized()
 
         print("=" * 70)
-        print(f"📊 増分更新スクリプト - {self.hall_name}")
+        print(f"[REPORT] 増分更新スクリプト - {self.hall_name}")
         print("=" * 70)
         print()
 
         if available_dates:
             min_date = min(available_dates)
             max_date = max(available_dates)
-            print(f"   ✅ {len(available_dates)}件の JSON ファイルを検出")
-            print(f"   📅 期間: {min_date} ～ {max_date}")
+            print(f"   [OK] {len(available_dates)}件の JSON ファイルを検出")
+            print(f"   [DATE] 期間: {min_date} ～ {max_date}")
         else:
-            print(f"   ❌ JSON ファイルが見つかりません")
+            print(f"   [ERROR] JSON ファイルが見つかりません")
             return {
                 'status': 'error',
                 'message': 'JSON ファイルが見つかりません',
@@ -343,28 +286,28 @@ class IncrementalDBUpdater:
         print()
 
         # Step 2: DB 登録済み日付を確認（hall_name/db_path 確定後に実行）
-        print("🔍 DB 登録済み日付を確認中...")
+        print("[SEARCH] DB 登録済み日付を確認中...")
         registered_dates = self.get_db_registered_dates()
 
         if registered_dates:
             min_date = min(registered_dates)
             max_date = max(registered_dates)
-            print(f"   ✅ {len(registered_dates)}件の日付が登録済み")
-            print(f"   📅 期間: {min_date} ～ {max_date}")
+            print(f"   [OK] {len(registered_dates)}件の日付が登録済み")
+            print(f"   [DATE] 期間: {min_date} ～ {max_date}")
         else:
-            print(f"   ⚠️ DB にデータが登録されていません")
+            print(f"   [WARN] DB にデータが登録されていません")
         
         print()
         
         # 新規日付を検出
         new_dates = self.get_new_dates(registered_dates, available_dates)
         
-        print("📝 新規日付の検出:")
+        print("[NOTE] 新規日付の検出:")
         if new_dates:
-            print(f"   🆕 {len(new_dates)}件の新規日付を検出しました")
-            print(f"   📅 対象: {new_dates[0]} ～ {new_dates[-1]}")
+            print(f"   [NEW] {len(new_dates)}件の新規日付を検出しました")
+            print(f"   [DATE] 対象: {new_dates[0]} ～ {new_dates[-1]}")
         else:
-            print(f"   ℹ️ 新規データはありません（最新の状態です）")
+            print(f"   [INFO] 新規データはありません（最新の状態です）")
             return {
                 'status': 'success',
                 'message': '新規データはありません',
@@ -375,7 +318,7 @@ class IncrementalDBUpdater:
         
         print()
         print("=" * 70)
-        print(f"🚀 増分更新を開始します")
+        print(f"[START] 増分更新を開始します")
         print("=" * 70)
         print()
         
@@ -397,32 +340,32 @@ class IncrementalDBUpdater:
         if processed_dates:
             print()
             print("=" * 70)
-            print("📈 最終履歴処理を実行中...")
+            print("[TREND] 最終履歴処理を実行中...")
             print("=" * 70)
             
             for date_str in processed_dates[-7:]:
                 try:
                     self.rank_calc.calculate_history_for_date(date_str)
-                    print(f"   ✅ {date_str} の履歴を再計算")
+                    print(f"   [OK] {date_str} の履歴を再計算")
                 except Exception as e:
-                    print(f"   ⚠️ {date_str} 履歴処理エラー: {e}")
+                    print(f"   [WARN] {date_str} 履歴処理エラー: {e}")
         
         # 結果サマリー
         print()
         print("=" * 70)
-        print(f"📊 増分更新完了")
+        print(f"[REPORT] 増分更新完了")
         print("=" * 70)
-        print(f"✅ 正常処理: {processed_count}件")
-        print(f"❌ 失敗: {failed_count}件")
+        print(f"[OK] 正常処理: {processed_count}件")
+        print(f"[ERROR] 失敗: {failed_count}件")
         
         if processed_count > 0:
-            print(f"\n📅 追加された日付:")
+            print(f"\n[DATE] 追加された日付:")
             print(f"   {processed_dates[0]} ～ {processed_dates[-1]}")
             print(f"   合計 {len(processed_dates)}日分")
         
         print()
-        print(f"💾 DB パス: {self.db_path}")
-        print(f"📊 DB サイズ: {os.path.getsize(self.db_path) / 1024 / 1024:.2f} MB")
+        print(f"[DB] DB パス: {self.db_path}")
+        print(f"[REPORT] DB サイズ: {os.path.getsize(self.db_path) / 1024 / 1024:.2f} MB")
         print("=" * 70)
         
         return {
@@ -440,7 +383,7 @@ class IncrementalDBUpdater:
         config_path = Path(__file__).parent.parent / "config" / "hall_config.json"
 
         try:
-            with open(config_path) as f:
+            with open(config_path, encoding='utf-8') as f:
                 config = json.load(f)
         except Exception as e:
             print(f"[ERROR] hall_config.json の読込失敗: {e}")

@@ -36,7 +36,7 @@ def create_database(hall_name, db_dir="."):
             island_name TEXT
         )
     ''')
-    print("✓ machine_layout")
+    print("[OK] machine_layout")
     
     # 2. 個別台データ
     cursor.execute('''
@@ -61,7 +61,7 @@ def create_database(hall_name, db_dir="."):
             PRIMARY KEY (date, machine_number)
         )
     ''')
-    print("✓ machine_detailed_results")
+    print("[OK] machine_detailed_results")
     
     # 3. 機種別サマリー
     rank_columns = get_rank_columns('machine_type_rank')
@@ -94,7 +94,7 @@ def create_database(hall_name, db_dir="."):
         )
     ''')
     cursor.execute('CREATE INDEX idx_daily_machine_type_date ON daily_machine_type_summary(date)')
-    print("✓ daily_machine_type_summary")
+    print("[OK] daily_machine_type_summary")
     
     # 4. 末尾別集計（5テーブル）
     _create_summary_tables(cursor, 'last_digit_summary', 'last_digit')
@@ -122,7 +122,7 @@ def create_database(hall_name, db_dir="."):
         )
     ''')
     cursor.execute('CREATE INDEX idx_daily_island_date ON daily_island_summary(date)')
-    print("✓ daily_island_summary")
+    print("[OK] daily_island_summary")
     
     # 7. 日別全体集計
     cursor.execute('''
@@ -151,7 +151,7 @@ def create_database(hall_name, db_dir="."):
             is_any_event INTEGER DEFAULT 0
         )
     ''')
-    print("✓ daily_hall_summary")
+    print("[OK] daily_hall_summary")
     
     conn.commit()
     conn.close()
@@ -210,7 +210,7 @@ def _create_summary_tables(cursor, base_name, key_column, is_integer_key=False):
         ''')
         cursor.execute(f'CREATE INDEX idx_{table_name}_date ON {table_name}(date)')
         cursor.execute(f'CREATE INDEX idx_{table_name}_key ON {table_name}({key_column})')
-        print(f"✓ {table_name}")
+        print(f"[OK] {table_name}")
 
 def _import_machine_layout(db_path, hall_name, db_dir):
     """台配置CSVを自動インポート"""
@@ -221,7 +221,7 @@ def _import_machine_layout(db_path, hall_name, db_dir):
         csv_path = os.path.join(csv_dir, csv_filename)
         
         if not os.path.exists(csv_path):
-            print(f"⚠️ 台配置CSV未検出: {csv_filename}")
+            print(f"[WARN] 台配置CSV未検出: {csv_filename}")
             return
         
         conn = sqlite3.connect(db_path)
@@ -249,12 +249,12 @@ def _import_machine_layout(db_path, hall_name, db_dir):
                 VALUES (?, ?, ?, ?)
             ''', records)
             conn.commit()
-            print(f"✓ 台配置データ: {len(records)}台 ({csv_filename})")
+            print(f"[OK] 台配置データ: {len(records)}台 ({csv_filename})")
         
         conn.close()
         
     except Exception as e:
-        print(f"⚠️ 台配置CSV読み込みエラー: {str(e)}")
+        print(f"[WARN] 台配置CSV読み込みエラー: {str(e)}")
 
 def create_machine_master_db(db_dir="."):
     """machine_master.db を新規作成（複数ホール間共有マスターDB）"""
@@ -299,7 +299,7 @@ def create_machine_master_db(db_dir="."):
             updated_at TEXT DEFAULT CURRENT_TIMESTAMP
         )
     ''')
-    print("✓ machine_master テーブル作成")
+    print("[OK] machine_master テーブル作成")
     
     # BT機種16個の初期データを登録
     bt_machines = [
@@ -327,7 +327,7 @@ def create_machine_master_db(db_dir="."):
             ) VALUES (?, 1, ?)
         ''', (machine_name, official_name))
     
-    print(f"✓ BT機種16個を登録")
+    print(f"[OK] BT機種16個を登録")
     
     conn.commit()
     conn.close()

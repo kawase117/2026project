@@ -125,7 +125,7 @@ class DataInserter:
             
             cursor.executemany(insert_sql, records)
             conn.commit()
-            print(f"✓ 個別台データ {len(records)} 件投入")
+            print(f"[OK] 個別台データ {len(records)} 件投入")
             
         finally:
             conn.close()
@@ -143,7 +143,7 @@ class DataInserter:
             ''', (avg_games_per_machine, date))
             
             conn.commit()
-            print(f"✓ 回転数偏差更新: {cursor.rowcount}台 (平均{avg_games_per_machine}G)")
+            print(f"[OK] 回転数偏差更新: {cursor.rowcount}台 (平均{avg_games_per_machine}G)")
         finally:
             conn.close()
     
@@ -179,7 +179,7 @@ class DataInserter:
                 ''', (date, total_machines, total_games, total_diff_coins, avg_games, avg_diff, win_rate))
                 
                 conn.commit()
-                print(f"✓ 日別全体集計 ({date}): 台数={total_machines}, 平均={avg_games}G, 勝率={win_rate}%")
+                print(f"[OK] 日別全体集計 ({date}): 台数={total_machines}, 平均={avg_games}G, 勝率={win_rate}%")
                 return avg_games
         finally:
             conn.close()
