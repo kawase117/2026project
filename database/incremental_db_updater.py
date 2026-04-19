@@ -63,9 +63,7 @@ class IncrementalDBUpdater:
 
         if not db_exists:
             print(f"   DB が存在しないため作成します: {self.db_path}")
-            # プロジェクトルートから db_setup を呼び出す
-            project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            create_database(self.hall_name, project_root)
+            self._create_db_schema()
             return
 
         # DB が存在する場合、テーブル存在チェック
@@ -79,14 +77,66 @@ class IncrementalDBUpdater:
             if not table_exists:
                 print(f"   テーブルが存在しないため DB を再初期化します")
                 os.remove(self.db_path)
-                project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-                create_database(self.hall_name, project_root)
+                self._create_db_schema()
         except Exception as e:
             print(f"   DB チェック失敗: {e}、DB を再初期化します")
             if os.path.exists(self.db_path):
                 os.remove(self.db_path)
-            project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            create_database(self.hall_name, project_root)
+            self._create_db_schema()
+
+    def _create_db_schema(self):
+        """DB スキーマを直接作成（db_setup 経由ではなく、正確な path を使用）"""
+        from table_config import SUMMARY_TABLE_CONFIGS, get_rank_columns
+
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        # machine_detailed_results テーブル作成
+        cursor.execute('''
+            CREATE TABLE machine_detailed_results (
+                date TEXT,
+                machine_name TEXT,
+                machine_number INTEGER,
+                last_digit TEXT,
+                is_zorome BOOLEAN,
+                machine_rank_in_type INTEGER,
+                games_normalized INTEGER,
+                diff_coins_normalized INTEGER
+            )
+        ''')
+
+        # daily_hall_summary テーブル作成
+        cursor.execute('''
+            CREATE TABLE daily_hall_summary (
+                date TEXT PRIMARY KEY,
+                day_of_week TEXT,
+                last_digit INTEGER,
+                weekday_nth TEXT,
+                win_rate REAL,
+                avg_games_per_machine INTEGER,
+                avg_diff_per_machine INTEGER,
+                is_zorome INTEGER
+            )
+        ''')
+
+        # machine_layout テーブル作成
+        cursor.execute('''
+            CREATE TABLE machine_layout (
+                machine_number INTEGER PRIMARY KEY,
+                front_position INTEGER,
+                back_position INTEGER,
+                island_name TEXT
+            )
+        ''')
+
+        # その他必要なテーブルを作成（summary tables）
+        for table_name, config in SUMMARY_TABLE_CONFIGS.items():
+            columns = ", ".join([f"{col} {dtype}" for col, dtype in config["columns"].items()])
+            cursor.execute(f"CREATE TABLE {table_name} ({columns})")
+
+        conn.commit()
+        conn.close()
+        print(f"   ✅ DB スキーマを作成しました")
 
     def get_db_registered_dates(self) -> set:
         """
