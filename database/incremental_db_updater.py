@@ -86,14 +86,17 @@ class IncrementalDBUpdater:
 
     def _create_db_schema(self):
         """DB スキーマを直接作成（db_setup 経由ではなく、正確な path を使用）"""
-        from table_config import SUMMARY_TABLE_CONFIGS, get_rank_columns
+        try:
+            from table_config import SUMMARY_TABLE_CONFIGS
+        except ImportError:
+            SUMMARY_TABLE_CONFIGS = {}
 
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
         # machine_detailed_results テーブル作成
         cursor.execute('''
-            CREATE TABLE machine_detailed_results (
+            CREATE TABLE IF NOT EXISTS machine_detailed_results (
                 date TEXT,
                 machine_name TEXT,
                 machine_number INTEGER,
@@ -107,7 +110,7 @@ class IncrementalDBUpdater:
 
         # daily_hall_summary テーブル作成
         cursor.execute('''
-            CREATE TABLE daily_hall_summary (
+            CREATE TABLE IF NOT EXISTS daily_hall_summary (
                 date TEXT PRIMARY KEY,
                 day_of_week TEXT,
                 last_digit INTEGER,
@@ -121,7 +124,7 @@ class IncrementalDBUpdater:
 
         # machine_layout テーブル作成
         cursor.execute('''
-            CREATE TABLE machine_layout (
+            CREATE TABLE IF NOT EXISTS machine_layout (
                 machine_number INTEGER PRIMARY KEY,
                 front_position INTEGER,
                 back_position INTEGER,
@@ -130,13 +133,18 @@ class IncrementalDBUpdater:
         ''')
 
         # その他必要なテーブルを作成（summary tables）
-        for table_name, config in SUMMARY_TABLE_CONFIGS.items():
-            columns = ", ".join([f"{col} {dtype}" for col, dtype in config["columns"].items()])
-            cursor.execute(f"CREATE TABLE {table_name} ({columns})")
+        if SUMMARY_TABLE_CONFIGS:
+            for table_name, config in SUMMARY_TABLE_CONFIGS.items():
+                try:
+                    columns = ", ".join([f"{col} {dtype}" for col, dtype in config.get("columns", {}).items()])
+                    if columns:
+                        cursor.execute(f"CREATE TABLE IF NOT EXISTS {table_name} ({columns})")
+                except Exception as e:
+                    print(f"      ⚠️ テーブル {table_name} 作成エラー: {e}")
 
         conn.commit()
         conn.close()
-        print(f"   ✅ DB スキーマを作成しました")
+        print(f"   ✅ DB スキーマを作成しました: {self.db_path}")
 
     def get_db_registered_dates(self) -> set:
         """
