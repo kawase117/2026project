@@ -19,6 +19,7 @@ from data_inserter import DataInserter
 from summary_calculator import SummaryCalculator
 from rank_calculator import RankCalculator
 from date_info_calculator import DateInfoCalculator
+from db_setup import create_database
 
 
 class IncrementalDBUpdater:
@@ -46,6 +47,9 @@ class IncrementalDBUpdater:
         else:
             self.db_path = db_path
         
+        # DB チェック＆初期化
+        self._ensure_database_initialized()
+
         # 初期化
         self.json_processor = JSONProcessor(hall_name)
         self.data_inserter = DataInserter(self.db_path)
@@ -53,6 +57,37 @@ class IncrementalDBUpdater:
         self.rank_calc = RankCalculator(self.db_path)
         self.date_info_calc = DateInfoCalculator(hall_name, self.db_path)
     
+    def _ensure_database_initialized(self):
+        """DB が存在しない、またはテーブルがない場合は初期化"""
+        db_exists = os.path.exists(self.db_path)
+
+        if not db_exists:
+            print(f"   DB が存在しないため作成します: {self.db_path}")
+            # プロジェクトルートから db_setup を呼び出す
+            project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            create_database(self.hall_name, project_root)
+            return
+
+        # DB が存在する場合、テーブル存在チェック
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='machine_detailed_results'")
+            table_exists = cursor.fetchone() is not None
+            conn.close()
+
+            if not table_exists:
+                print(f"   テーブルが存在しないため DB を再初期化します")
+                os.remove(self.db_path)
+                project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                create_database(self.hall_name, project_root)
+        except Exception as e:
+            print(f"   DB チェック失敗: {e}、DB を再初期化します")
+            if os.path.exists(self.db_path):
+                os.remove(self.db_path)
+            project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            create_database(self.hall_name, project_root)
+
     def get_db_registered_dates(self) -> set:
         """
         DB に登録済みの日付を取得
