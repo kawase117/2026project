@@ -263,4 +263,4 @@ def render():
                         "cross_attr2": attr2,
                         "cross_filtered_data": cross_filtered,
                     }
-                    st.switch_page("pages/page_14_notion_exporter.py")
+                    st.switch_page("dashboard/pages/page_14_notion_exporter.py")
