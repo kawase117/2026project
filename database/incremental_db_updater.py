@@ -297,29 +297,34 @@ class IncrementalDBUpdater:
         Returns:
             結果情報の辞書
         """
+        # Step 1: JSON から利用可能な日付を確認（先に実行して hall_name を確定させる）
+        print("🔍 JSON ファイルから利用可能な日付を確認中...")
+        available_dates = self.get_json_available_dates()
+
+        # JSONProcessor が hall_name を更新した場合、db_path と各モジュールを再設定
+        if self.json_processor.hall_name != self.hall_name:
+            old_name = self.hall_name
+            self.hall_name = self.json_processor.hall_name
+            safe_hall_name = self.hall_name.replace(" ", "_").replace("（", "(").replace("）", ")")
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            project_root = os.path.dirname(script_dir) if script_dir.endswith(('database', 'scraper')) else script_dir
+            db_dir = os.path.join(project_root, "db")
+            os.makedirs(db_dir, exist_ok=True)
+            self.db_path = os.path.join(db_dir, f"{safe_hall_name}.db")
+            self.data_inserter = DataInserter(self.db_path)
+            self.summary_calc = SummaryCalculator(self.db_path)
+            self.rank_calc = RankCalculator(self.db_path)
+            self.date_info_calc = DateInfoCalculator(self.hall_name, self.db_path)
+            print(f"   ホール名を '{old_name}' → '{self.hall_name}' に更新しました")
+
+        # DB チェック＆初期化（hall_name 確定後に実行）
+        self._ensure_database_initialized()
+
         print("=" * 70)
         print(f"📊 増分更新スクリプト - {self.hall_name}")
         print("=" * 70)
         print()
-        
-        # 登録済み日付を取得
-        print("🔍 DB 登録済み日付を確認中...")
-        registered_dates = self.get_db_registered_dates()
-        
-        if registered_dates:
-            min_date = min(registered_dates)
-            max_date = max(registered_dates)
-            print(f"   ✅ {len(registered_dates)}件の日付が登録済み")
-            print(f"   📅 期間: {min_date} ～ {max_date}")
-        else:
-            print(f"   ⚠️ DB にデータが登録されていません")
-        
-        print()
-        
-        # 利用可能な日付を取得
-        print("🔍 JSON ファイルから利用可能な日付を確認中...")
-        available_dates = self.get_json_available_dates()
-        
+
         if available_dates:
             min_date = min(available_dates)
             max_date = max(available_dates)
@@ -334,6 +339,20 @@ class IncrementalDBUpdater:
                 'processed': 0,
                 'failed': 0
             }
+
+        print()
+
+        # Step 2: DB 登録済み日付を確認（hall_name/db_path 確定後に実行）
+        print("🔍 DB 登録済み日付を確認中...")
+        registered_dates = self.get_db_registered_dates()
+
+        if registered_dates:
+            min_date = min(registered_dates)
+            max_date = max(registered_dates)
+            print(f"   ✅ {len(registered_dates)}件の日付が登録済み")
+            print(f"   📅 期間: {min_date} ～ {max_date}")
+        else:
+            print(f"   ⚠️ DB にデータが登録されていません")
         
         print()
         
