@@ -322,25 +322,98 @@ class IncrementalDBUpdater:
             'processed_dates': processed_dates
         }
 
+    @classmethod
+    def run_all_halls(cls):
+        """複数ホール一括処理：hall_config.json から全ホールを読み込み、JSON 有無で自動認識"""
+        config_path = Path(__file__).parent.parent / "config" / "hall_config.json"
+
+        try:
+            with open(config_path) as f:
+                config = json.load(f)
+        except Exception as e:
+            print(f"[ERROR] hall_config.json の読込失敗: {e}")
+            return {}
+
+        print("=" * 70)
+        print("複数ホール増分更新を開始します")
+        print("=" * 70)
+        print()
+
+        results = {}
+        success_count = 0
+        skipped_count = 0
+        error_count = 0
+
+        for i, hall_config in enumerate(config["halls"], 1):
+            hall_name = hall_config["hall_name"]
+            print(f"[{i}/{len(config['halls'])}] {hall_name}")
+
+            try:
+                updater = cls(hall_name)
+
+                # JSON ファイル有無を確認
+                json_dates = updater.get_json_available_dates()
+                if not json_dates:
+                    print(f"     → JSON ファイルなし（スキップ）")
+                    results[hall_name] = {"status": "skipped", "message": "JSON ファイルなし"}
+                    skipped_count += 1
+                    continue
+
+                # 新規日付がある場合のみ処理
+                result = updater.run()
+                results[hall_name] = result
+
+                if result["status"] == "success":
+                    success_count += 1
+                else:
+                    error_count += 1
+
+            except Exception as e:
+                results[hall_name] = {"status": "error", "message": str(e)}
+                print(f"     → エラー: {e}")
+                error_count += 1
+
+        # 最終サマリー
+        print()
+        print("=" * 70)
+        print("複数ホール更新完了")
+        print("=" * 70)
+        print(f"成功: {success_count}, スキップ: {skipped_count}, エラー: {error_count}")
+
+        for hall_name, result in results.items():
+            status_emoji = "[OK]" if result["status"] == "success" else "[SKIP]" if result["status"] == "skipped" else "[ERROR]"
+            print(f"{status_emoji} {hall_name}: {result['message']}")
+
+        print("=" * 70)
+        return results
+
 
 def main():
     """メイン処理"""
-    
-    # ホール名を指定（CLI引数で変更可能）
+
+    # CLI オプション処理
+    if len(sys.argv) > 1 and sys.argv[1] == "--all":
+        # 複数ホール一括処理
+        results = IncrementalDBUpdater.run_all_halls()
+        # すべて成功または成功＋スキップなら exit 0
+        error_count = sum(1 for r in results.values() if r["status"] == "error")
+        return 0 if error_count == 0 else 1
+
+    # 単一ホール処理（既存機能）
     if len(sys.argv) > 1:
         hall_name = sys.argv[1]
     else:
-        hall_name = "マルハンメガシティ柏"
-    
+        hall_name = ""
+
     # DBパスを指定（CLI引数で変更可能）
     db_path = None
     if len(sys.argv) > 2:
         db_path = sys.argv[2]
-    
+
     # 増分更新を実行
     updater = IncrementalDBUpdater(hall_name, db_path)
     result = updater.run()
-    
+
     # 終了コード
     return 0 if result['status'] == 'success' else 1
 
