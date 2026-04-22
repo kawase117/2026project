@@ -22,6 +22,7 @@ PAGES = [
     {"icon": "ℹ️", "title": "統計情報", "key": "statistics"},
     {"icon": "🏪", "title": "ホール選択支援", "key": "hall_selection"},
     {"icon": "📌", "title": "Notion へ保存", "key": "notion_exporter"},
+    {"icon": "📊", "title": "バックテスト検証", "key": "backtest_validation"},
 ]
 
 # ========================================
