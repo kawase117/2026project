@@ -57,3 +57,35 @@ def test_compute_top_percentile_rankings():
     assert 'top20' in result['test_pattern']['win_rate']
     assert 'top10' in result['test_pattern']['win_rate']
     assert len(result['test_pattern']['win_rate']['top20']) >= len(result['test_pattern']['win_rate']['top10'])
+
+
+from dashboard.utils.backtest_helpers import compute_validation_metrics
+
+def test_compute_validation_metrics():
+    """検証指標が正しく計算されることを確認"""
+    df_test = pd.DataFrame({
+        'date': ['20260401', '20260401', '20260402', '20260402'] * 2,
+        'machine_number': [1, 2, 1, 2] * 2,
+        'machine_name': ['AA', 'BB', 'AA', 'BB'] * 2,
+        'last_digit': ['0', '1', '0', '1'] * 2,
+        'diff_coins_normalized': [100, -50, 200, 50] * 2,
+        'games_normalized': [50, 60, 70, 80] * 2
+    })
+
+    rankings = {
+        'dd_tail': {
+            'win_rate': {
+                'top20': {(4, '0')},
+                'top10': {(4, '0')},
+                'threshold20': 50.0,
+                'threshold10': 75.0
+            }
+        }
+    }
+
+    result = compute_validation_metrics(
+        df_test, rankings, 'dd_tail', ['dd', 'last_digit']
+    )
+
+    assert isinstance(result, pd.DataFrame)
+    assert 'd_20260401' in result.columns or 'd_20260402' in result.columns

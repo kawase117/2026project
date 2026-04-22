@@ -151,3 +151,86 @@ def compute_top_percentile_rankings(
             }
 
     return result
+
+
+def compute_validation_metrics(
+    df_test: pd.DataFrame,
+    rankings: Dict[str, Dict[str, Dict]],
+    pattern_name: str,
+    group_cols: list,
+    test_start: str = "20260401",
+    test_end: str = "20260420"
+) -> pd.DataFrame:
+    """
+    4月の毎日検証指標を計算
+
+    Args:
+        df_test: machine_detailed_results (4月データ)
+        rankings: compute_top_percentile_rankings() の出力
+        pattern_name: 'dd_tail' など
+        group_cols: ['dd', 'last_digit'] など
+        test_start: テスト開始日
+        test_end: テスト終了日
+
+    Returns:
+        DataFrame:
+            各パターン行 × 4月の日付カラム
+            セルの値: {'rank20': OK/NG, 'rank10': OK/NG, 'profit': OK/NG}
+    """
+    df_test = df_test[(df_test['date'] >= test_start) & (df_test['date'] <= test_end)].copy()
+    df_test['dd'] = df_test['date'].str[4:6].astype(int)
+
+    # テスト期間内のテスト日付リスト
+    test_dates = sorted(df_test['date'].unique())
+
+    # パターンごとの集計
+    grouped = df_test.groupby(group_cols, as_index=False).agg({
+        'diff_coins_normalized': ['mean', 'count'],
+        'games_normalized': 'mean'
+    })
+
+    grouped.columns = ['_'.join(col).strip('_') if col[1] else col[0] for col in grouped.columns.values]
+
+    # 勝率計算
+    count_win = df_test[df_test['diff_coins_normalized'] > 0].groupby(group_cols).size()
+    count_total = df_test.groupby(group_cols).size()
+    grouped['win_rate'] = (count_win / count_total * 100).round(2).values
+
+    # 毎日の検証
+    result_rows = []
+
+    for _, row in grouped.iterrows():
+        pattern_key = tuple(row[col] for col in group_cols)
+
+        row_dict = {col: row[col] for col in group_cols}
+        row_dict['count'] = row['diff_coins_normalized_count']
+
+        # 毎日の結果
+        for test_date in test_dates:
+            df_daily = df_test[df_test['date'] == test_date]
+            df_daily_pattern = df_daily[
+                (df_daily[group_cols[0]] == pattern_key[0]) &
+                (df_daily[group_cols[1]] == pattern_key[1])
+            ]
+
+            if len(df_daily_pattern) == 0:
+                row_dict[f"d_{test_date}"] = None
+                continue
+
+            # その日の勝率計算
+            daily_profit = (df_daily_pattern['diff_coins_normalized'] > 0).sum() / len(df_daily_pattern) * 100
+
+            # ランク維持判定
+            rank20_hit = pattern_key in rankings[pattern_name].get('win_rate', {}).get('top20', set())
+            rank10_hit = pattern_key in rankings[pattern_name].get('win_rate', {}).get('top10', set())
+            profit_hit = daily_profit > 0
+
+            row_dict[f"d_{test_date}"] = {
+                'rank20': 'OK' if rank20_hit else 'NG',
+                'rank10': 'OK' if rank10_hit else 'NG',
+                'profit': 'OK' if profit_hit else 'NG'
+            }
+
+        result_rows.append(row_dict)
+
+    return pd.DataFrame(result_rows)
