@@ -42,9 +42,10 @@ def compute_training_stats(
     
     # 日付カラムから DD（月内日付）を抽出
     df_train['dd'] = df_train['date'].str[4:6].astype(int)
-    
-    # 曜日は daily_hall_summary から別途取得する必要あり（後のタスクで対応）
-    
+
+    # 曜日情報を追加
+    df_train['weekday'] = pd.to_datetime(df_train['date'], format='%Y%m%d').dt.day_name()
+
     patterns = {
         'dd_tail': ['dd', 'last_digit'],
         'dd_machine': ['dd', 'machine_number'],
@@ -53,24 +54,20 @@ def compute_training_stats(
         'weekday_machine': ['weekday', 'machine_number'],
         'weekday_type': ['weekday', 'machine_name']
     }
-    
+
     for pattern_name, group_cols in patterns.items():
-        if pattern_name.startswith('weekday'):
-            # weekday は後のタスク Task 2 で統合
-            continue
-        
         grouped = df_train.groupby(group_cols, as_index=False).agg({
             'diff_coins_normalized': ['mean', 'count'],
             'games_normalized': 'mean'
         }).round(2)
-        
+
         grouped.columns = ['_'.join(col).strip('_') if col[1] else col[0] for col in grouped.columns.values]
-        
+
         # 勝率計算（差枚 > 0 の割合）
         count_win = df_train[df_train['diff_coins_normalized'] > 0].groupby(group_cols).size()
         count_total = df_train.groupby(group_cols).size()
         grouped['win_rate'] = (count_win / count_total * 100).round(2).values
-        
+
         result[pattern_name] = grouped
 
     return result

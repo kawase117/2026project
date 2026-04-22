@@ -89,3 +89,22 @@ def test_compute_validation_metrics():
 
     assert isinstance(result, pd.DataFrame)
     assert 'd_20260401' in result.columns or 'd_20260402' in result.columns
+
+
+def test_compute_training_stats_weekday():
+    """曜日別パターンの集計が正しく行われることを確認"""
+    df = pd.DataFrame({
+        'date': ['20260103', '20260110', '20260117', '20260124'] * 3,  # 複数の金曜日
+        'machine_number': [1, 2, 1, 2] * 3,
+        'machine_name': ['AA', 'BB', 'AA', 'BB'] * 3,
+        'last_digit': ['0', '1', '0', '1'] * 3,
+        'diff_coins_normalized': [100, -50, 200, 0] * 3,
+        'games_normalized': [50, 60, 70, 80] * 3
+    })
+
+    result = compute_training_stats(df)
+
+    assert 'weekday_tail' in result
+    assert 'weekday_machine' in result
+    assert 'weekday_type' in result
+    assert len(result['weekday_tail']) > 0
