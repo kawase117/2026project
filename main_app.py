@@ -38,6 +38,7 @@ from dashboard.pages import (
     page_12_statistics,
     page_13_hall_selection,
     page_14_notion_exporter,
+    page_15_backtest_validation,
 )
 
 
@@ -191,6 +192,8 @@ try:
         page_13_hall_selection.render()
     elif "Notion へ保存" in page_selection:
         page_14_notion_exporter.render()
+    elif "バックテスト検証" in page_selection:
+        page_15_backtest_validation.render()
 except Exception as e:
     st.error(f"ページ読み込みエラー: {e}")
     st.info("このエラーが続く場合は、以下のコマンドで起動してください:\nstreamlit run main_app.py")

@@ -192,24 +192,34 @@ def generate_validation_table(
     result = result.merge(training_stats_df[merge_cols + ['過去勝率', '過去差枚', '過去G数', '出現回数']],
                           on=merge_cols, how='left')
 
-    # 右側の集計（TOP20%維持率など）を計算
+    # 右側の集計（TOP20%維持率など）を計算（変換前に実行）
     test_dates = sorted([c for c in result.columns if c.startswith('d_')])
 
     def calc_top20_ratio(row):
-        count = sum(1 for d in test_dates if row.get(d) and row[d].get('rank20') == '✓')
+        count = sum(1 for d in test_dates if row.get(d) and isinstance(row[d], dict) and row[d].get('rank20') == 'OK')
         return f"{count}/{len(test_dates)}" if test_dates else "N/A"
 
     def calc_top10_ratio(row):
-        count = sum(1 for d in test_dates if row.get(d) and row[d].get('rank10') == '✓')
+        count = sum(1 for d in test_dates if row.get(d) and isinstance(row[d], dict) and row[d].get('rank10') == 'OK')
         return f"{count}/{len(test_dates)}" if test_dates else "N/A"
 
     def calc_profit_ratio(row):
-        count = sum(1 for d in test_dates if row.get(d) and row[d].get('profit') == '✓')
+        count = sum(1 for d in test_dates if row.get(d) and isinstance(row[d], dict) and row[d].get('profit') == 'OK')
         return f"{count}/{len(test_dates)}" if test_dates else "N/A"
 
     result['TOP20%維持率'] = result.apply(calc_top20_ratio, axis=1)
     result['TOP10%維持率'] = result.apply(calc_top10_ratio, axis=1)
     result['利益性維持率'] = result.apply(calc_profit_ratio, axis=1)
+
+    # 日付列の辞書を文字列に変換（表示用）
+    for col in test_dates:
+        result[col] = result[col].apply(
+            lambda x: (
+                f"勝率:{('✓' if x['rank20'] == 'OK' else '✗')} " +
+                f"差枚:{('✓' if x.get('rank10') == 'OK' else '✗')} " +
+                f"利益:{('✓' if x['profit'] == 'OK' else '✗')}"
+            ) if isinstance(x, dict) else "データなし"
+        )
 
     # カラム順序整理（左 | 中央日付 | 右集計）
     left_cols = group_cols + ['過去勝率', '過去差枚', '過去G数', '出現回数']
@@ -285,6 +295,12 @@ def render():
     st.write(f"**選択ホール:** {st.session_state.hall_name}")
     st.write(f"**データ件数:** {len(df_all):,}")
 
+    # 日付列の処理（dd, weekdayを計算）
+    if df_all['date'].dtype == 'object':
+        df_all['date'] = pd.to_datetime(df_all['date'], format='%Y%m%d')
+    df_all['dd'] = df_all['date'].dt.day
+    df_all['weekday'] = df_all['date'].dt.day_name()
+
     # 訓練統計計算
     training_stats = compute_training_stats(df_all, "20260101", "20260331")
     rankings = compute_top_percentile_rankings(training_stats)
@@ -317,7 +333,3 @@ def render():
         render_heatmap_chart(training_stats, pattern_name)
 
         render_validation_table(df_all, training_stats, pattern_name, group_cols, df_all)
-
-
-if __name__ == "__main__":
-    render()
