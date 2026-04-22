@@ -26,6 +26,88 @@ PAGES = [
 ]
 
 # ========================================
+# ページレジストリ
+# ========================================
+
+PAGE_REGISTRY = {
+    1: {
+        "name": "ホール全体",
+        "file": "page_01_hall_overview",
+        "icon": "🏠"
+    },
+    2: {
+        "name": "日別分析",
+        "file": "page_02_daily_analysis",
+        "icon": "📅"
+    },
+    3: {
+        "name": "曜日別分析",
+        "file": "page_03_weekday_analysis",
+        "icon": "📆"
+    },
+    4: {
+        "name": "DD別分析",
+        "file": "page_04_dd_analysis",
+        "icon": "📆"
+    },
+    5: {
+        "name": "末尾別分析",
+        "file": "page_05_last_digit",
+        "icon": "📊"
+    },
+    6: {
+        "name": "日末日別分析",
+        "file": "page_06_day_last_digit",
+        "icon": "📊"
+    },
+    7: {
+        "name": "第X曜日別分析",
+        "file": "page_07_nth_weekday",
+        "icon": "📋"
+    },
+    8: {
+        "name": "個別台分析",
+        "file": "page_08_individual_machines",
+        "icon": "💻"
+    },
+    9: {
+        "name": "台番号末尾別分析",
+        "file": "page_09_machine_tail",
+        "icon": "🎯"
+    },
+    10: {
+        "name": "期間TOP10分析",
+        "file": "page_10_period_top10",
+        "icon": "⭐"
+    },
+    11: {
+        "name": "クロス検索分析",
+        "file": "page_11_cross_search",
+        "icon": "🔀"
+    },
+    12: {
+        "name": "統計情報",
+        "file": "page_12_statistics",
+        "icon": "ℹ️"
+    },
+    13: {
+        "name": "ホール選択支援",
+        "file": "page_13_hall_selection",
+        "icon": "🏪"
+    },
+    14: {
+        "name": "Notion Exporter",
+        "file": "page_14_notion_exporter",
+        "icon": "📌"
+    },
+    15: {
+        "name": "バックテスト検証",
+        "file": "page_15_backtest_validation",
+        "icon": "📊"
+    }
+}
+
+# ========================================
 # デフォルト値
 # ========================================
 
