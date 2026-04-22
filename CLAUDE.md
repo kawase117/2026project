@@ -8,7 +8,7 @@ AIアシスタントへ：このファイルをセッション開始時に必ず
 
 - **Phase 1 (scraper/)**: ana-slo.com からデータをスクレイピング → JSON保存
 - **Phase 2 (database/)**: JSONをSQLiteに投入、集計・ランク計算
-- **Phase 3 (dashboard/)**: Streamlit + Plotlyで13ページのダッシュボード表示
+- **Phase 3 (dashboard/)**: Streamlit + Plotlyで15ページのダッシュボード表示
 
 ## 現在のディレクトリ構造（最新版）
 
@@ -37,7 +37,9 @@ AIアシスタントへ：このファイルをセッション開始時に必ず
 │       ├── page_10_period_top10.py      ← 期間TOP10
 │       ├── page_11_cross_search.py      ← クロス検索分析（7属性）
 │       ├── page_12_statistics.py        ← 統計情報
-│       └── page_13_hall_selection.py    ← 複数ホール選択支援
+│       ├── page_13_hall_selection.py    ← 複数ホール選択支援
+│       ├── page_14_notion_exporter.py   ← Notion連携
+│       └── page_15_backtest_validation.py ← バックテスト検証（新規）
 ├── database/                    ← Phase 2 DBモジュール群
 │   ├── main_processor.py        ← 全処理のオーケストレーター
 │   ├── data_inserter.py         ← SQLiteへのデータ投入
