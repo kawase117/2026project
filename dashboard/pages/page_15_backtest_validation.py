@@ -293,14 +293,14 @@ def render():
 
     st.markdown("---")
 
-    # 3つのDD別パターンを表示
+    # 全6パターンを表示（DD別3 + 曜日別3）
     patterns = [
         ('dd_tail', ['dd', 'last_digit'], 'DD × 台末尾'),
         ('dd_machine', ['dd', 'machine_number'], 'DD × 台番号'),
         ('dd_type', ['dd', 'machine_name'], 'DD × 機種'),
-        # ('weekday_tail', ['weekday', 'last_digit'], '曜日 × 台末尾'),  # Task 8で実装
-        # ('weekday_machine', ['weekday', 'machine_number'], '曜日 × 台番号'),
-        # ('weekday_type', ['weekday', 'machine_name'], '曜日 × 機種'),
+        ('weekday_tail', ['weekday', 'last_digit'], '曜日 × 台末尾'),
+        ('weekday_machine', ['weekday', 'machine_number'], '曜日 × 台番号'),
+        ('weekday_type', ['weekday', 'machine_name'], '曜日 × 機種'),
     ]
 
     for pattern_name, group_cols, display_name in patterns:
