@@ -72,5 +72,82 @@ def compute_training_stats(
         grouped['win_rate'] = (count_win / count_total * 100).round(2).values
         
         result[pattern_name] = grouped
-    
+
+    return result
+
+
+def compute_top_percentile_rankings(
+    stats_dict: Dict[str, pd.DataFrame]
+) -> Dict[str, Dict[str, pd.DataFrame]]:
+    """
+    訓練統計からTOP20%/10%のランキングを計算
+
+    Args:
+        stats_dict: compute_training_stats() の出力
+
+    Returns:
+        {
+            'dd_tail': {
+                'win_rate': {'top20': set(), 'top10': set()},
+                'avg_diff': {...},
+                'avg_games': {...}
+            },
+            ...
+        }
+    """
+    result = {}
+
+    for pattern_name, df in stats_dict.items():
+        result[pattern_name] = {}
+
+        # 勝率のランキング
+        threshold_20_wr = df['win_rate'].quantile(0.8)
+        threshold_10_wr = df['win_rate'].quantile(0.9)
+
+        top20_wr = set(zip(df[df['win_rate'] >= threshold_20_wr].iloc[:, 0],
+                           df[df['win_rate'] >= threshold_20_wr].iloc[:, 1]))
+        top10_wr = set(zip(df[df['win_rate'] >= threshold_10_wr].iloc[:, 0],
+                           df[df['win_rate'] >= threshold_10_wr].iloc[:, 1]))
+
+        result[pattern_name]['win_rate'] = {
+            'top20': top20_wr,
+            'top10': top10_wr,
+            'threshold20': threshold_20_wr,
+            'threshold10': threshold_10_wr
+        }
+
+        # 平均差枚のランキング
+        if 'diff_coins_normalized_mean' in df.columns:
+            threshold_20_diff = df['diff_coins_normalized_mean'].quantile(0.8)
+            threshold_10_diff = df['diff_coins_normalized_mean'].quantile(0.9)
+
+            top20_diff = set(zip(df[df['diff_coins_normalized_mean'] >= threshold_20_diff].iloc[:, 0],
+                                 df[df['diff_coins_normalized_mean'] >= threshold_20_diff].iloc[:, 1]))
+            top10_diff = set(zip(df[df['diff_coins_normalized_mean'] >= threshold_10_diff].iloc[:, 0],
+                                 df[df['diff_coins_normalized_mean'] >= threshold_10_diff].iloc[:, 1]))
+
+            result[pattern_name]['avg_diff'] = {
+                'top20': top20_diff,
+                'top10': top10_diff,
+                'threshold20': threshold_20_diff,
+                'threshold10': threshold_10_diff
+            }
+
+        # 平均G数のランキング
+        if 'games_normalized_mean' in df.columns:
+            threshold_20_g = df['games_normalized_mean'].quantile(0.8)
+            threshold_10_g = df['games_normalized_mean'].quantile(0.9)
+
+            top20_g = set(zip(df[df['games_normalized_mean'] >= threshold_20_g].iloc[:, 0],
+                              df[df['games_normalized_mean'] >= threshold_20_g].iloc[:, 1]))
+            top10_g = set(zip(df[df['games_normalized_mean'] >= threshold_10_g].iloc[:, 0],
+                              df[df['games_normalized_mean'] >= threshold_10_g].iloc[:, 1]))
+
+            result[pattern_name]['avg_games'] = {
+                'top20': top20_g,
+                'top10': top10_g,
+                'threshold20': threshold_20_g,
+                'threshold10': threshold_10_g
+            }
+
     return result

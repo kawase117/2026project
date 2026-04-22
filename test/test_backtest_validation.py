@@ -32,6 +32,28 @@ def test_compute_training_stats_empty():
         'diff_coins_normalized': [],
         'games_normalized': []
     })
-    
+
     result = compute_training_stats(df)
     assert isinstance(result, dict)
+
+
+from dashboard.utils.backtest_helpers import compute_top_percentile_rankings
+
+def test_compute_top_percentile_rankings():
+    """TOP20%/10%計算が正しく行われることを確認"""
+    df = pd.DataFrame({
+        'dd': [1, 1, 1, 2, 2, 2],
+        'last_digit': ['0', '1', '0', '1', '0', '1'],
+        'win_rate': [80.0, 60.0, 40.0, 70.0, 50.0, 30.0],
+        'diff_coins_normalized_mean': [100, 50, 0, 80, 30, -20],
+        'games_normalized_mean': [500, 400, 300, 450, 350, 250]
+    })
+
+    stats = {'test_pattern': df}
+    result = compute_top_percentile_rankings(stats)
+
+    assert 'test_pattern' in result
+    assert 'win_rate' in result['test_pattern']
+    assert 'top20' in result['test_pattern']['win_rate']
+    assert 'top10' in result['test_pattern']['win_rate']
+    assert len(result['test_pattern']['win_rate']['top20']) >= len(result['test_pattern']['win_rate']['top10'])
