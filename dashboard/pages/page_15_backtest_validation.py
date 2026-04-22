@@ -153,6 +153,119 @@ def render_heatmap_chart(stats_dict: Dict[str, pd.DataFrame], pattern_name: str)
     st.plotly_chart(fig, use_container_width=True)
 
 
+def generate_validation_table(
+    df_test: pd.DataFrame,
+    training_stats: Dict,
+    pattern_name: str,
+    group_cols: list,
+    train_data: pd.DataFrame
+) -> pd.DataFrame:
+    """
+    検証テーブル生成（左：過去 | 中央：4月毎日 | 右：集計）
+    """
+    # 検証指標計算
+    rankings = compute_top_percentile_rankings(training_stats)
+    validation_df = compute_validation_metrics(
+        df_test, rankings, pattern_name, group_cols
+    )
+
+    # 訓練データの過去統計を追加（左側）
+    train_agg = train_data.groupby(group_cols, as_index=False).agg({
+        'diff_coins_normalized': 'mean',
+        'games_normalized': 'mean'
+    })
+
+    # 結合
+    result = validation_df.copy()
+
+    # 過去のランク情報を左側に追加
+    training_stats_df = training_stats[pattern_name].copy()
+    training_stats_df = training_stats_df.rename(columns={
+        'diff_coins_normalized_mean': '過去差枚',
+        'games_normalized_mean': '過去G数',
+        'win_rate': '過去勝率',
+        'diff_coins_normalized_count': '出現回数'
+    })
+
+    # マージ
+    merge_cols = group_cols
+    result = result.merge(training_stats_df[merge_cols + ['過去勝率', '過去差枚', '過去G数', '出現回数']],
+                          on=merge_cols, how='left')
+
+    # 右側の集計（TOP20%維持率など）を計算
+    test_dates = sorted([c for c in result.columns if c.startswith('d_')])
+
+    def calc_top20_ratio(row):
+        count = sum(1 for d in test_dates if row.get(d) and row[d].get('rank20') == '✓')
+        return f"{count}/{len(test_dates)}" if test_dates else "N/A"
+
+    def calc_top10_ratio(row):
+        count = sum(1 for d in test_dates if row.get(d) and row[d].get('rank10') == '✓')
+        return f"{count}/{len(test_dates)}" if test_dates else "N/A"
+
+    def calc_profit_ratio(row):
+        count = sum(1 for d in test_dates if row.get(d) and row[d].get('profit') == '✓')
+        return f"{count}/{len(test_dates)}" if test_dates else "N/A"
+
+    result['TOP20%維持率'] = result.apply(calc_top20_ratio, axis=1)
+    result['TOP10%維持率'] = result.apply(calc_top10_ratio, axis=1)
+    result['利益性維持率'] = result.apply(calc_profit_ratio, axis=1)
+
+    # カラム順序整理（左 | 中央日付 | 右集計）
+    left_cols = group_cols + ['過去勝率', '過去差枚', '過去G数', '出現回数']
+    right_cols = ['TOP20%維持率', 'TOP10%維持率', '利益性維持率']
+    middle_cols = test_dates
+
+    final_cols = left_cols + middle_cols + right_cols
+    result = result[[c for c in final_cols if c in result.columns]]
+
+    return result
+
+
+def render_validation_table(
+    df_test: pd.DataFrame,
+    training_stats: Dict,
+    pattern_name: str,
+    group_cols: list,
+    train_data: pd.DataFrame
+):
+    """
+    検証テーブルをStreamlitで表示（ソート・フィルタ付き）
+    """
+    table_df = generate_validation_table(df_test, training_stats, pattern_name, group_cols, train_data)
+
+    st.markdown(f"### テーブル: {pattern_name}")
+
+    # ソートオプション
+    sort_col = st.selectbox(
+        f"ソート対象（{pattern_name}）",
+        options=table_df.columns,
+        key=f"sort_{pattern_name}",
+        index=0
+    )
+
+    # フィルタオプション（信頼度による絞込）
+    if 'TOP20%維持率' in table_df.columns:
+        min_ratio = st.slider(
+            f"最小TOP20%維持率（{pattern_name}）",
+            min_value=0,
+            max_value=20,
+            value=5,
+            step=1,
+            key=f"filter_{pattern_name}"
+        )
+        # フィルタ適用
+        table_df = table_df[
+            table_df['TOP20%維持率'].str.extract(r'(\d+)', expand=False).astype(int) >= min_ratio
+        ]
+
+    # ソート適用
+    table_df = table_df.sort_values(by=sort_col, ascending=False, key=abs)
+
+    # 表示（スクロール可能）
+    st.dataframe(table_df, use_container_width=True)
+
+
 def render():
     """バックテスト検証ページを描画"""
     # ページタイトルと説明
@@ -182,12 +295,12 @@ def render():
 
     # 3つのパターンを表示
     patterns_dd = [
-        ('dd_tail', 'DD × 台末尾'),
-        ('dd_machine', 'DD × 台番号'),
-        ('dd_type', 'DD × 機種'),
+        ('dd_tail', ['dd', 'last_digit'], 'DD × 台末尾'),
+        ('dd_machine', ['dd', 'machine_number'], 'DD × 台番号'),
+        ('dd_type', ['dd', 'machine_name'], 'DD × 機種'),
     ]
 
-    for pattern_name, display_name in patterns_dd:
+    for pattern_name, group_cols, display_name in patterns_dd:
         st.markdown("---")
         st.subheader(f"📈 {display_name} 分析")
 
@@ -199,3 +312,5 @@ def render():
             render_metrics_distribution_chart(training_stats, pattern_name)
 
         render_heatmap_chart(training_stats, pattern_name)
+
+        render_validation_table(df_all, training_stats, pattern_name, group_cols, df_all)

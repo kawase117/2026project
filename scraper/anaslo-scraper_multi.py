@@ -55,13 +55,13 @@ def extract_hall_name_from_url(url):
         hall_name = urllib.parse.unquote(hall_name_encoded)
         
         if hall_name:
-            print(f"   ✅ URL から hall_name 抽出: '{hall_name}'")
+            print(f"   [OK] URL から hall_name 抽出: '{hall_name}'")
             return hall_name
         
         return None
         
     except Exception as e:
-        print(f"   ❌ URL解析エラー: {e}")
+        print(f"   [ERROR] URL解析エラー: {e}")
         return None
 
 
@@ -80,7 +80,7 @@ def normalize_hall_name(hall_name):
     # スラッシュをハイフンに変換
     normalized = normalized.replace('/', '-')
     
-    print(f"   🔄 ホール名正規化: '{hall_name}' → '{normalized}'")
+    print(f"   [PROC] ホール名正規化: '{hall_name}' → '{normalized}'")
     return normalized
 
 
@@ -90,7 +90,7 @@ async def find_and_click_link_hybrid(page, target_url, date_str):
     戻り値: (success: bool, reason: str or None)
     """
     
-    print(f"   🔍 HTML解析でリンク検索...")
+    print(f"   [SEARCH] HTML解析でリンク検索...")
     
     try:
         # HTML取得
@@ -104,7 +104,7 @@ async def find_and_click_link_hybrid(page, target_url, date_str):
         page_text = soup.get_text()
         
         if slash_date in page_text:
-            print(f"   ✅ ページ内に '{slash_date}' を発見")
+            print(f"   [OK] ページ内に '{slash_date}' を発見")
             print(f"   🌐 JavaScript遷移で目標URLへ: {target_url}")
             
             # JavaScript遷移
@@ -115,28 +115,28 @@ async def find_and_click_link_hybrid(page, target_url, date_str):
                 # 遷移成功確認
                 current_html = await page.get_content()
                 if 'data' in current_html or '全データ一覧' in current_html:
-                    print(f"   ✅ 遷移成功")
+                    print(f"   [OK] 遷移成功")
                     return True, None
                 else:
                     reason = 'データページの内容が見つかりません'
-                    print(f"   ❌ 遷移失敗 - {reason}")
+                    print(f"   [ERROR] 遷移失敗 - {reason}")
                     return False, reason
                     
             except Exception as e:
                 reason = f'JavaScript遷移エラー: {e}'
-                print(f"   ❌ {reason}")
+                print(f"   [ERROR] {reason}")
                 return False, reason
                 
         else:
             reason = f"ページ内に '{slash_date}' が見つかりません（データなし）"
-            print(f"   ❌ {reason}")
-            print(f"   🔍 この日付のデータは存在しない可能性があります")
+            print(f"   [ERROR] {reason}")
+            print(f"   [SEARCH] この日付のデータは存在しない可能性があります")
         
         return False, reason
         
     except Exception as e:
         reason = f'リンク検索エラー: {e}'
-        print(f"   ❌ {reason}")
+        print(f"   [ERROR] {reason}")
         return False, reason
 
 
@@ -153,9 +153,9 @@ async def return_to_list_page_hybrid(page, list_url):
         # 移動確認
         html_content = await page.get_content()
         if 'データ一覧' in html_content:
-            print(f"   ✅ 一覧ページに移動成功")
+            print(f"   [OK] 一覧ページに移動成功")
         else:
-            print(f"   ⚠️ 一覧ページかどうか確認できません")
+            print(f"   [WARN] 一覧ページかどうか確認できません")
         
         # 広告処理（自動のみ）
         await manual_ad_step(page, "一覧ページ復帰", auto_only=True)
@@ -164,7 +164,7 @@ async def return_to_list_page_hybrid(page, list_url):
         await asyncio.sleep(10)
         
     except Exception as e:
-        print(f"   ❌ 一覧ページ移動エラー: {e}")
+        print(f"   [ERROR] 一覧ページ移動エラー: {e}")
         raise
 
 
@@ -174,12 +174,12 @@ async def get_hall_name_from_html(page):
     try:
         print("   📄 HTML取得中...")
         html_content = await page.get_content()
-        print(f"   ✅ HTML取得: {len(html_content):,} 文字")
+        print(f"   [OK] HTML取得: {len(html_content):,} 文字")
         
         soup = BeautifulSoup(html_content, 'html.parser')
         
         # 複数の方法でホール名を試行
-        print("   🔍 ホール名検索中...")
+        print("   [SEARCH] ホール名検索中...")
         
         raw_hall_name = None
         
@@ -190,7 +190,7 @@ async def get_hall_name_from_html(page):
             if h1:
                 raw_hall_name = h1.get_text().replace('データ一覧', '').strip()
                 if raw_hall_name:
-                    print(f"   ✅ #st-page h1で発見: '{raw_hall_name}'")
+                    print(f"   [OK] #st-page h1で発見: '{raw_hall_name}'")
         
         # 方法2: 全H1要素から検索
         if not raw_hall_name:
@@ -200,7 +200,7 @@ async def get_hall_name_from_html(page):
                 if 'データ一覧' in text:
                     raw_hall_name = text.replace('データ一覧', '').strip()
                     if raw_hall_name:
-                        print(f"   ✅ H1要素で発見: '{raw_hall_name}'")
+                        print(f"   [OK] H1要素で発見: '{raw_hall_name}'")
                         break
         
         # 方法3: ページタイトルから抽出
@@ -211,10 +211,10 @@ async def get_hall_name_from_html(page):
                 if 'データ一覧' in title_text:
                     raw_hall_name = title_text.replace('データ一覧', '').replace('- アナスロ', '').strip()
                     if raw_hall_name:
-                        print(f"   ✅ ページタイトルで発見: '{raw_hall_name}'")
+                        print(f"   [OK] ページタイトルで発見: '{raw_hall_name}'")
         
         if not raw_hall_name:
-            print("   ❌ どの方法でもホール名を発見できませんでした")
+            print("   [ERROR] どの方法でもホール名を発見できませんでした")
             return None
         
         # ホール名を正規化
@@ -222,7 +222,7 @@ async def get_hall_name_from_html(page):
         return normalized_hall_name
         
     except Exception as e:
-        print(f"   ❌ HTML解析エラー: {e}")
+        print(f"   [ERROR] HTML解析エラー: {e}")
         import traceback
         traceback.print_exc()
         return None
@@ -239,12 +239,12 @@ async def process_target_page_html(page, date_str, hall_name, save_dir):
         # HTML取得
         print(f"   📄 HTML取得中...")
         html_content = await page.get_content()
-        print(f"   ✅ HTML取得: {len(html_content):,} 文字")
+        print(f"   [OK] HTML取得: {len(html_content):,} 文字")
         
         # BeautifulSoupで解析
         soup = BeautifulSoup(html_content, 'html.parser')
         
-        print(f"   🔍 データ抽出...")
+        print(f"   [SEARCH] データ抽出...")
         
         # データ格納用辞書
         extracted_data = {
@@ -283,7 +283,7 @@ async def process_target_page_html(page, date_str, hall_name, save_dir):
                     print(f"         ℹ️ <tbody> 最初の行をヘッダーと見なす")
             
             if header:
-                print(f"         ✅ ヘッダー検出: {header}")
+                print(f"         [OK] ヘッダー検出: {header}")
                 
                 # データ行を処理
                 if tbody:
@@ -297,18 +297,18 @@ async def process_target_page_html(page, date_str, hall_name, save_dir):
                             row_data = dict(zip(header, cells))
                             extracted_data['all_data'].append(row_data)
                     
-                    print(f"         ✅ 全データ: {len(extracted_data['all_data'])}件抽出")
+                    print(f"         [OK] 全データ: {len(extracted_data['all_data'])}件抽出")
             else:
-                print(f"         ⚠️ ヘッダー行が見つかりません")
+                print(f"         [WARN] ヘッダー行が見つかりません")
         else:
-            print(f"         ❌ 全データ一覧テーブルが見つかりません")
+            print(f"         [ERROR] 全データ一覧テーブルが見つかりません")
         
         # 2. 末尾別集計データを取得
-        print(f"      📊 末尾別集計テーブル検索...")
+        print(f"      [REPORT] 末尾別集計テーブル検索...")
         last_digit_table = soup.find(id="last_digit_data_table")
         
         if last_digit_table:
-            print(f"         ✅ 末尾別集計テーブル発見！")
+            print(f"         [OK] 末尾別集計テーブル発見！")
             
             # テーブル要素を確認
             if last_digit_table.name == 'table':
@@ -352,13 +352,13 @@ async def process_target_page_html(page, date_str, hall_name, save_dir):
                                 row_data = dict(zip(header, cells))
                                 extracted_data['last_digit_data'].append(row_data)
                         
-                        print(f"         ✅ 末尾別データ: {len(extracted_data['last_digit_data'])}件抽出")
+                        print(f"         [OK] 末尾別データ: {len(extracted_data['last_digit_data'])}件抽出")
                 else:
-                    print(f"         ⚠️ ヘッダー行が見つかりません")
+                    print(f"         [WARN] ヘッダー行が見つかりません")
             else:
-                print(f"         ❌ テーブル要素が見つかりません")
+                print(f"         [ERROR] テーブル要素が見つかりません")
         else:
-            print(f"         ❌ ID 'last_digit_data_table' の要素が見つかりません")
+            print(f"         [ERROR] ID 'last_digit_data_table' の要素が見つかりません")
         
         # 3. JSONファイルとして保存
         json_filename = f"{date_str}_{hall_name}_data.json"
@@ -373,7 +373,7 @@ async def process_target_page_html(page, date_str, hall_name, save_dir):
         total_all_data = len(extracted_data['all_data'])
         total_last_digit = len(extracted_data['last_digit_data'])
         
-        print(f"   📊 抽出サマリー:")
+        print(f"   [REPORT] 抽出サマリー:")
         print(f"      - 全データ: {total_all_data}件")
         print(f"      - 末尾別データ: {total_last_digit}件")
         
@@ -381,14 +381,14 @@ async def process_target_page_html(page, date_str, hall_name, save_dir):
         success = total_all_data > 0
         
         if success:
-            print(f"   ✅ データ抽出成功")
+            print(f"   [OK] データ抽出成功")
         else:
-            print(f"   ❌ データ抽出失敗（全データが0件）")
+            print(f"   [ERROR] データ抽出失敗（全データが0件）")
         
         return success
         
     except Exception as e:
-        print(f"   ❌ ページ処理エラー: {e}")
+        print(f"   [ERROR] ページ処理エラー: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -408,7 +408,7 @@ async def manual_ad_step(page, page_type, auto_only=False):
             await asyncio.sleep(3)
             
     except Exception as e:
-        print(f"   ⚠️ 広告処理エラー: {e}")
+        print(f"   [WARN] 広告処理エラー: {e}")
 
 
 async def try_auto_close(page):
@@ -572,7 +572,7 @@ async def save_to_database(extracted_data, db_path="pachinko_data.db"):
         
         conn.commit()
         
-        print(f"   ✅ データベース保存完了: {db_path}")
+        print(f"   [OK] データベース保存完了: {db_path}")
         print(f"      - 全データ: {len(extracted_data['all_data'])}件")
         print(f"      - 末尾別データ: {len(extracted_data['last_digit_data'])}件")
         
@@ -580,7 +580,7 @@ async def save_to_database(extracted_data, db_path="pachinko_data.db"):
         return True
         
     except Exception as e:
-        print(f"   ❌ データベース保存エラー: {e}")
+        print(f"   [ERROR] データベース保存エラー: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -601,7 +601,7 @@ def optimize_memory(iteration, clear_interval=50):
         gc.collect()
         import time
         time.sleep(5)
-        print(f"   ✅ メモリ最適化完了")
+        print(f"   [OK] メモリ最適化完了")
 
 
 def export_failed_dates_to_csv(hall_results, output_dir="data"):
@@ -655,11 +655,11 @@ def export_failed_dates_to_csv(hall_results, output_dir="data"):
             
             return output_path
         else:
-            print(f"\n✅ 失敗日がありません（全て成功）")
+            print(f"\n[OK] 失敗日がありません（全て成功）")
             return None
             
     except Exception as e:
-        print(f"\n❌ CSVエクスポートエラー: {e}")
+        print(f"\n[ERROR] CSVエクスポートエラー: {e}")
         return None
 
 
@@ -667,15 +667,15 @@ def print_summary(success_dates, failed_dates, hall_name):
     """結果サマリー出力"""
     
     print(f"\n" + "="*70)
-    print(f"📊 取得結果サマリー - {hall_name}")
+    print(f"[REPORT] 取得結果サマリー - {hall_name}")
     print("="*70)
     
-    print(f"✅ 成功: {len(success_dates)}件")
+    print(f"[OK] 成功: {len(success_dates)}件")
     if success_dates:
         success_formatted = [f"{d[4:6]}/{d[6:8]}" for d in success_dates]
         print(f"   {', '.join(success_formatted)}")
     
-    print(f"\n❌ 失敗: {len(failed_dates)}件")
+    print(f"\n[ERROR] 失敗: {len(failed_dates)}件")
     if failed_dates:
         failed_formatted = [f"{d[4:6]}/{d[6:8]}" for d in failed_dates]
         print(f"   {', '.join(failed_formatted)} が取得できませんでした")
@@ -726,28 +726,28 @@ async def date_range_scrape_hybrid(start_date_str, end_date_str, list_url, page=
             page = await browser.get(list_url)
             
             # 十分な待機時間
-            print("⏳ ページ読み込み待機（15秒）...")
+            print("[WAIT] ページ読み込み待機（15秒）...")
             await asyncio.sleep(15)
         else:
             print("📄 既存ページを使用して処理開始...")
         
         # 初回：一覧ページから HTML で hall_name を取得
-        print("🏢 HTML解析でホール名取得中...")
+        print("[HALL] HTML解析でホール名取得中...")
         hall_name = await get_hall_name_from_html(page)
         
         if not hall_name:
-            print("❌ ホール名の取得に失敗しました。")
+            print("[ERROR] ホール名の取得に失敗しました。")
             detailed_log['status'] = 'error'
             detailed_log['error_message'] = 'ホール名取得失敗'
             return 0, 0, page, detailed_log
             
-        print(f"✅ ホール名検出: {hall_name}")
+        print(f"[OK] ホール名検出: {hall_name}")
         detailed_log['hall_name'] = hall_name
         print("="*70)
         
         # 日付リストを生成
         date_list = generate_date_list(start_date_str, end_date_str)
-        print(f"📅 対象日付: {len(date_list)}日間")
+        print(f"[DATE] 対象日付: {len(date_list)}日間")
         for date in date_list:
             print(f"   {date}")
         print()
@@ -773,7 +773,7 @@ async def date_range_scrape_hybrid(start_date_str, end_date_str, list_url, page=
             print("\n🚫 初回広告処理:")
             await manual_ad_step(page, "一覧ページ初回")
             
-            print("\n⏳ ページ安定化待機（10秒）...")
+            print("\n[WAIT] ページ安定化待機（10秒）...")
             await asyncio.sleep(10)
         
         print(f"\n📄 日付別データ取得開始...")
@@ -781,7 +781,7 @@ async def date_range_scrape_hybrid(start_date_str, end_date_str, list_url, page=
         
         # 日付ループ
         for i, date_str in enumerate(date_list, 1):
-            print(f"\n📅 [{i}/{len(date_list)}] {date_str} の処理開始")
+            print(f"\n[DATE] [{i}/{len(date_list)}] {date_str} の処理開始")
             print("-" * 40)
             
             try:
@@ -793,7 +793,7 @@ async def date_range_scrape_hybrid(start_date_str, end_date_str, list_url, page=
                 click_success, click_reason = await find_and_click_link_hybrid(page, target_url, date_str)
                 
                 if not click_success:
-                    print(f"   ❌ {date_str}: リンククリックに失敗しました")
+                    print(f"   [ERROR] {date_str}: リンククリックに失敗しました")
                     failed_dates.append(date_str)
                     detailed_log['dates'].append({
                         'date': date_str,
@@ -816,14 +816,14 @@ async def date_range_scrape_hybrid(start_date_str, end_date_str, list_url, page=
                 extracted_hall_name = extract_hall_name_from_url(detail_url)
                 if extracted_hall_name:
                     if extracted_hall_name != hall_name:
-                        print(f"   ⚠️ ホール名を更新: '{hall_name}' → '{extracted_hall_name}'")
+                        print(f"   [WARN] ホール名を更新: '{hall_name}' → '{extracted_hall_name}'")
                         hall_name = extracted_hall_name
                         detailed_log['hall_name'] = hall_name
                         # ディレクトリも更新
                         hall_save_dir = os.path.join(base_save_dir, hall_name)
                         os.makedirs(hall_save_dir, exist_ok=True)
                     else:
-                        print(f"   ✅ ホール名確認: '{hall_name}'")
+                        print(f"   [OK] ホール名確認: '{hall_name}'")
                 
                 success = await process_target_page_html(page, date_str, hall_name, hall_save_dir)
                 
@@ -838,7 +838,7 @@ async def date_range_scrape_hybrid(start_date_str, end_date_str, list_url, page=
                         db_success = await save_to_database(extracted_data)
                         
                         if db_success:
-                            print(f"   ✅ {date_str}: 取得・保存成功")
+                            print(f"   [OK] {date_str}: 取得・保存成功")
                             success_dates.append(date_str)
                             detailed_log['dates'].append({
                                 'date': date_str,
@@ -847,7 +847,7 @@ async def date_range_scrape_hybrid(start_date_str, end_date_str, list_url, page=
                             })
                             consecutive_failures = 0
                         else:
-                            print(f"   ⚠️ {date_str}: 取得成功、DB保存失敗")
+                            print(f"   [WARN] {date_str}: 取得成功、DB保存失敗")
                             success_dates.append(date_str)
                             detailed_log['dates'].append({
                                 'date': date_str,
@@ -856,7 +856,7 @@ async def date_range_scrape_hybrid(start_date_str, end_date_str, list_url, page=
                             })
                             consecutive_failures = 0
                     else:
-                        print(f"   ❌ {date_str}: JSONファイルが見つかりません")
+                        print(f"   [ERROR] {date_str}: JSONファイルが見つかりません")
                         failed_dates.append(date_str)
                         detailed_log['dates'].append({
                             'date': date_str,
@@ -865,7 +865,7 @@ async def date_range_scrape_hybrid(start_date_str, end_date_str, list_url, page=
                         })
                         consecutive_failures += 1
                 else:
-                    print(f"   ❌ {date_str}: データ抽出失敗")
+                    print(f"   [ERROR] {date_str}: データ抽出失敗")
                     failed_dates.append(date_str)
                     detailed_log['dates'].append({
                         'date': date_str,
@@ -886,7 +886,7 @@ async def date_range_scrape_hybrid(start_date_str, end_date_str, list_url, page=
                 optimize_memory(i, clear_interval=50)
                 
             except Exception as e:
-                print(f"   ❌ {date_str}: エラー - {e}")
+                print(f"   [ERROR] {date_str}: エラー - {e}")
                 failed_dates.append(date_str)
                 detailed_log['dates'].append({
                     'date': date_str,
@@ -916,7 +916,7 @@ async def date_range_scrape_hybrid(start_date_str, end_date_str, list_url, page=
         return len(success_dates), len(failed_dates), page, detailed_log
         
     except Exception as e:
-        print(f"❌ 全体エラー: {e}")
+        print(f"[ERROR] 全体エラー: {e}")
         detailed_log['error_message'] = str(e)
         return 0, 0, None, detailed_log
     finally:
@@ -939,23 +939,23 @@ def load_hall_config(config_filename="hall_config.json"):
         active_halls = [hall for hall in config['halls'] if hall.get('active', True)]
         
         if not active_halls:
-            print("❌ アクティブなホール設定が見つかりません")
+            print("[ERROR] アクティブなホール設定が見つかりません")
             return []
         
-        print(f"✅ {len(active_halls)}個のホール設定を読み込みました")
+        print(f"[OK] {len(active_halls)}個のホール設定を読み込みました")
         return active_halls
         
     except FileNotFoundError:
         script_dir = os.path.dirname(os.path.abspath(__file__))
         project_root = os.path.dirname(script_dir)
         config_path = os.path.join(project_root, "config", config_filename)
-        print(f"❌ 設定ファイルが見つかりません: {config_path}")
+        print(f"[ERROR] 設定ファイルが見つかりません: {config_path}")
         return []
     except json.JSONDecodeError:
-        print(f"❌ 設定ファイルの形式が不正です")
+        print(f"[ERROR] 設定ファイルの形式が不正です")
         return []
     except Exception as e:
-        print(f"❌ 設定ファイル読み込みエラー: {str(e)}")
+        print(f"[ERROR] 設定ファイル読み込みエラー: {str(e)}")
         return []
 
 
@@ -974,7 +974,7 @@ async def main():
         log_buffer.append(msg)
         print(msg)
     
-    print("🚀 複数ホール対応スクレイピング開始")
+    print("[START] 複数ホール対応スクレイピング開始")
     print("=" * 80)
     print()
     
@@ -982,16 +982,16 @@ async def main():
     halls = load_hall_config()
     
     if not halls:
-        print("❌ スクレイピングを開始できません")
+        print("[ERROR] スクレイピングを開始できません")
         return
     
     # ===== 日付範囲（ここで変更） =====
-    start_date = "20260406"
-    end_date = "20260418"
+    start_date = "20260419"
+    end_date = "20260420"
     # ===================================
     
-    print(f"📅 対象期間: {start_date} ～ {end_date}")
-    print(f"🏢 ホール数: {len(halls)}")
+    print(f"[DATE] 対象期間: {start_date} ～ {end_date}")
+    print(f"[HALL] ホール数: {len(halls)}")
     print("=" * 80)
     print()
     
@@ -1023,7 +1023,7 @@ async def main():
                 if i == 1:
                     browser = await uc.start(headless=False)
                     shared_page = await browser.get(scraper_url)
-                    print("⏳ ページ読み込み待機（15秒）...")
+                    print("[WAIT] ページ読み込み待機（15秒）...")
                     await asyncio.sleep(15)
                     
                     print("\n🚫 初回広告処理:")
@@ -1032,7 +1032,7 @@ async def main():
                     print("   📢 広告がある場合は手動で閉じてください")
                     input("   広告処理完了後、Enterを押してください: ")
                     
-                    print("\n⏳ ページ安定化待機（10秒）...")
+                    print("\n[WAIT] ページ安定化待機（10秒）...")
                     await asyncio.sleep(10)
                 else:
                     # 次のホールのURLに遷移
@@ -1056,17 +1056,17 @@ async def main():
                 log_buffer.append(json.dumps(detailed_log, ensure_ascii=False, indent=2))
                 
                 hall_results[hall_name] = {
-                    'status': '✅ 完了',
+                    'status': '[OK] 完了',
                     'success': success_count,
                     'failed': failed_count,
                     'has_csv': has_layout_csv,
                     'detailed_log': detailed_log
                 }
                 
-                print(f"\n✅ {hall_name}: 成功 {success_count}件, 失敗 {failed_count}件")
+                print(f"\n[OK] {hall_name}: 成功 {success_count}件, 失敗 {failed_count}件")
                 
             except Exception as e:
-                print(f"\n❌ {hall_name}: エラーが発生しました")
+                print(f"\n[ERROR] {hall_name}: エラーが発生しました")
                 print(f"   エラー内容: {str(e)}")
                 
                 error_log = {
@@ -1080,7 +1080,7 @@ async def main():
                 log_buffer.append(json.dumps(error_log, ensure_ascii=False, indent=2))
                 
                 hall_results[hall_name] = {
-                    'status': f'❌ エラー',
+                    'status': f'[ERROR] エラー',
                     'success': 0,
                     'failed': 0,
                     'has_csv': has_layout_csv,
@@ -1118,7 +1118,7 @@ async def main():
                 json.dump(logs_json, f, ensure_ascii=False, indent=2)
             print(f"\n💾 ログファイル保存: {log_file}")
         except Exception as e:
-            print(f"\n⚠️ ログファイル保存エラー: {e}")
+            print(f"\n[WARN] ログファイル保存エラー: {e}")
         
     finally:
         # 全ホール処理後に1回だけブラウザを終了
@@ -1135,7 +1135,7 @@ def print_final_summary(overall_success, overall_failed, hall_results):
     """最終結果サマリーを表示"""
     
     print("\n" + "=" * 80)
-    print("📊 全ホール処理完了 - 最終結果")
+    print("[REPORT] 全ホール処理完了 - 最終結果")
     print("=" * 80)
     print()
     
@@ -1144,20 +1144,20 @@ def print_final_summary(overall_success, overall_failed, hall_results):
     success_rate = (overall_success / total_all * 100) if total_all > 0 else 0
     
     print("🎯 全体統計:")
-    print(f"   ✅ 総成功件数: {overall_success}件")
-    print(f"   ❌ 総失敗件数: {overall_failed}件")
+    print(f"   [OK] 総成功件数: {overall_success}件")
+    print(f"   [ERROR] 総失敗件数: {overall_failed}件")
     print(f"   📈 全体成功率: {success_rate:.1f}% ({overall_success}/{total_all})")
     print()
     
     # ホール別結果
-    print("🏢 ホール別処理結果:")
+    print("[HALL] ホール別処理結果:")
     print()
     
     for hall_name, result in hall_results.items():
         status = result['status']
         success = result['success']
         failed = result['failed']
-        csv_status = "✅" if result['has_csv'] else "❌"
+        csv_status = "[OK]" if result['has_csv'] else "[ERROR]"
         
         if success > 0 or failed > 0:
             print(f"   {status}")
@@ -1174,14 +1174,14 @@ def print_final_summary(overall_success, overall_failed, hall_results):
     
     # 処理結果の統計
     print("📋 処理統計:")
-    success_halls = [h for h in hall_results.keys() if '✅' in hall_results[h]['status']]
-    error_halls = [h for h in hall_results.keys() if '❌' in hall_results[h]['status']]
+    success_halls = [h for h in hall_results.keys() if '[OK]' in hall_results[h]['status']]
+    error_halls = [h for h in hall_results.keys() if '[ERROR]' in hall_results[h]['status']]
     print(f"   正常完了ホール: {len(success_halls)}/{len(hall_results)}")
     print(f"   エラーホール: {len(error_halls)}/{len(hall_results)}")
     print()
     
     if error_halls:
-        print("⚠️ エラーが発生したホール:")
+        print("[WARN] エラーが発生したホール:")
         for hall_name in error_halls:
             print(f"      - {hall_name}")
         print()

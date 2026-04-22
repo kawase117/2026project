@@ -31,40 +31,44 @@ REQUIRED_COMBINATIONS = [
 def _compute_cross_analysis(df_machines, attr1, attr2, min_games, show_low_confidence):
     """
     クロス分析を計算する（page_11 と同じロジック）
-    
+    attr1 は削除して、attr2 のみを保持
+
     Args:
         df_machines: 機械詳細結果データフレーム
-        attr1: 第1属性
-        attr2: 第2属性
+        attr1: 第1属性（グループ化に使用）
+        attr2: 第2属性（表示用）
         min_games: 最小G数フィルタ
         show_low_confidence: 低G数データも表示するか
-    
+
     Returns:
-        クロス集計結果データフレーム
+        クロス集計結果データフレーム（attr2, total_diff, avg_diff, win_rate, count, avg_games）
     """
     df_cross = df_machines.copy()
-    
+
     # min_games フィルタを適用（集計前）
     if not show_low_confidence:
         df_cross = df_cross[df_cross['games_normalized'] >= min_games]
-    
+
     # 属性列を追加（共有関数を使用）
     df_cross['attr1'] = get_attr_value(df_cross, attr1)
     df_cross['attr2'] = get_attr_value(df_cross, attr2)
-    
+
     # クロス集計
     def agg_win_rate(x):
         return (x > 0).sum() / len(x) * 100
-    
+
     cross_summary = df_cross.groupby(['attr1', 'attr2']).agg({
         'diff_coins_normalized': ['sum', 'mean', agg_win_rate, 'count'],
         'games_normalized': 'mean'
     }).round(2)
-    
+
     cross_summary.columns = ['total_diff', 'avg_diff', 'win_rate', 'count', 'avg_games']
     cross_summary = cross_summary.reset_index()
     cross_summary = cross_summary.sort_values('total_diff', ascending=False)
-    
+
+    # attr1 を削除（attr2 のみを保持）
+    cross_summary = cross_summary.drop(columns=['attr1'])
+
     return cross_summary
 
 
@@ -87,7 +91,15 @@ def render():
     
     premium_divider()
     st.markdown("### 📊 保存対象テーブル")
-    st.info(f"以下の {len(REQUIRED_COMBINATIONS)} つの組み合わせを自動計算します：")
+    st.info(f"""
+    以下の {len(REQUIRED_COMBINATIONS)} つの組み合わせを Notion Database として保存します：
+
+    💡 **メリット**:
+    - ✅ Notionのネイティブテーブル機能が使える
+    - ✅ ソート・フィルタ・検索が可能
+    - ✅ テーブルが分割されない
+    - ✅ 全データが保存される
+    """)
     
     # 6つの組み合わせを表示
     cols = st.columns(2)
@@ -152,18 +164,18 @@ def render():
                 else:
                     # 6つの組み合わせを計算
                     tables_dict = {}
-                    
+
                     for attr1, attr2 in REQUIRED_COMBINATIONS:
                         cross_result = _compute_cross_analysis(
                             all_machines_filtered,
                             attr1, attr2,
                             min_games, show_low_confidence
                         )
-                        
+
                         table_name = f"{attr1} × {attr2}"
                         tables_dict[table_name] = cross_result
                     
-                    # Notion に保存
+                    # Notion Database として保存
                     metadata = {
                         "date_range": date_range,
                         "hall_name": hall_name,
@@ -171,9 +183,9 @@ def render():
                         "tags": tags,
                         "memo": memo,
                     }
-                    
+
                     exporter = NotionExporter()
-                    success, result = exporter.save_cross_analysis(tables_dict, metadata)
+                    success, result = exporter.save_cross_analysis_as_databases(tables_dict, metadata)
                     
                     if success:
                         st.success(f"✅ Notion に保存成功！")

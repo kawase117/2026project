@@ -7,6 +7,13 @@ import streamlit as st
 import pandas as pd
 from pathlib import Path
 from datetime import datetime
+from dotenv import load_dotenv
+
+# ========================================
+# Load environment variables
+# ========================================
+
+load_dotenv()
 
 # ========================================
 # Import from local modules
@@ -30,6 +37,7 @@ from dashboard.pages import (
     page_11_cross_search,
     page_12_statistics,
     page_13_hall_selection,
+    page_14_notion_exporter,
 )
 
 
@@ -181,6 +189,8 @@ try:
         page_12_statistics.render()
     elif "ホール選択支援" in page_selection:
         page_13_hall_selection.render()
+    elif "Notion へ保存" in page_selection:
+        page_14_notion_exporter.render()
 except Exception as e:
     st.error(f"ページ読み込みエラー: {e}")
     st.info("このエラーが続く場合は、以下のコマンドで起動してください:\nstreamlit run main_app.py")

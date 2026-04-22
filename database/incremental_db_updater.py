@@ -460,6 +460,12 @@ def main():
     else:
         hall_name = ""
 
+    # hall_name が空の場合は全ホール一括処理
+    if not hall_name:
+        results = IncrementalDBUpdater.run_all_halls()
+        error_count = sum(1 for r in results.values() if r["status"] == "error")
+        return 0 if error_count == 0 else 1
+
     # DBパスを指定（CLI引数で変更可能）
     db_path = None
     if len(sys.argv) > 2:

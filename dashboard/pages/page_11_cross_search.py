@@ -36,9 +36,9 @@ def _build_display_rows(
                 else machine_names_dict[row['attr2']]
             )
         row_data['勝率'] = float(row['win_rate'])
-        row_data['合計差枚'] = int(row['total_diff'])
         row_data['平均差枚'] = int(row['avg_diff'])
         row_data['平均G数'] = int(row['avg_games'])
+        row_data['合計差枚'] = int(row['total_diff'])
         row_data['台数'] = int(row['count'])
         rows.append(row_data)
     return rows
@@ -263,4 +263,5 @@ def render():
                         "cross_attr2": attr2,
                         "cross_filtered_data": cross_filtered,
                     }
-                    st.switch_page("dashboard/pages/page_14_notion_exporter.py")
+                    st.info("📌 サイドバーの「Notion へ保存」ページを選択してください")
+                    st.rerun()
