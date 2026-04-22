@@ -34,17 +34,24 @@ def compute_training_stats(
     if df.empty or 'date' not in df.columns:
         return result
 
-    df_train = df[(df['date'] >= train_start) & (df['date'] <= train_end)].copy()
+    # 日付カラムを文字列に変換（必要に応じて）
+    if df['date'].dtype == 'object':
+        df_temp = df.copy()
+    else:
+        df_temp = df.copy()
+        df_temp['date'] = df_temp['date'].astype(str).str.replace('-', '')
+
+    df_train = df_temp[(df_temp['date'] >= train_start) & (df_temp['date'] <= train_end)].copy()
 
     # 訓練期間にデータがない場合は空辞書を返す
     if df_train.empty:
         return result
-    
+
     # 日付カラムから DD（月内日付）を抽出
-    df_train['dd'] = df_train['date'].str[4:6].astype(int)
+    df_train['dd'] = df_train['date'].astype(str).str[4:6].astype(int)
 
     # 曜日情報を追加
-    df_train['weekday'] = pd.to_datetime(df_train['date'], format='%Y%m%d').dt.day_name()
+    df_train['weekday'] = pd.to_datetime(df_train['date'].astype(str), format='%Y%m%d').dt.day_name()
 
     patterns = {
         'dd_tail': ['dd', 'last_digit'],
@@ -174,8 +181,15 @@ def compute_validation_metrics(
             各パターン行 × 4月の日付カラム
             セルの値: {'rank20': OK/NG, 'rank10': OK/NG, 'profit': OK/NG}
     """
+    # 日付カラムを文字列に変換（必要に応じて）
+    if df_test['date'].dtype == 'object':
+        df_test = df_test.copy()
+    else:
+        df_test = df_test.copy()
+        df_test['date'] = df_test['date'].astype(str).str.replace('-', '')
+
     df_test = df_test[(df_test['date'] >= test_start) & (df_test['date'] <= test_end)].copy()
-    df_test['dd'] = df_test['date'].str[4:6].astype(int)
+    df_test['dd'] = df_test['date'].astype(str).str[4:6].astype(int)
 
     # テスト期間内のテスト日付リスト
     test_dates = sorted(df_test['date'].unique())

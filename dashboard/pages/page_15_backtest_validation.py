@@ -317,3 +317,7 @@ def render():
         render_heatmap_chart(training_stats, pattern_name)
 
         render_validation_table(df_all, training_stats, pattern_name, group_cols, df_all)
+
+
+if __name__ == "__main__":
+    render()
