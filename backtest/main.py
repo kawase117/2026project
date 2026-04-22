@@ -95,7 +95,7 @@ def run_backtest(db_path: str, win_rate_threshold: float = 0.66) -> None:
 if __name__ == "__main__":
     import glob
 
-    db_dir = Path("db")
+    db_dir = Path("../db")
     if not db_dir.exists():
         print(f"エラー: db/ ディレクトリが見つかりません")
         exit(1)
