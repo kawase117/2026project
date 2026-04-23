@@ -58,6 +58,14 @@ def print_dd_section(period_name: str):
     print("-" * 140)
 
 
+def print_dd_section_triple(period_name: str):
+    """DD別セクションのヘッダー（3グループ用）"""
+    print(f"\nDD別 相対パフォーマンス（{period_name}訓練）")
+    print("-" * 160)
+    print(f"{'DD':<5} {'属性':<15} {'基準':<8} {'上位G':<12} {'vs基準':<10} {'中間G':<12} {'vs基準':<10} {'下位G':<12} {'vs基準':<10} {'勝者':<12}")
+    print("-" * 160)
+
+
 def print_weekday_section(period_name: str):
     """曜日別セクションのヘッダー"""
     print(f"\n{'=' * 140}")
@@ -65,6 +73,15 @@ def print_weekday_section(period_name: str):
     print("-" * 140)
     print(f"{'曜日':<6} {'属性':<15} {'基準':<8} {'高G':<12} {'vs基準':<10} {'低G':<12} {'vs基準':<10} {'勝者':<12}")
     print("-" * 140)
+
+
+def print_weekday_section_triple(period_name: str):
+    """曜日別セクションのヘッダー（3グループ用）"""
+    print(f"\n{'=' * 160}")
+    print(f"曜日別 相対パフォーマンス（{period_name}訓練）")
+    print("-" * 160)
+    print(f"{'曜日':<6} {'属性':<15} {'基準':<8} {'上位G':<12} {'vs基準':<10} {'中間G':<12} {'vs基準':<10} {'下位G':<12} {'vs基準':<10} {'勝者':<12}")
+    print("-" * 160)
 
 
 def print_result_row(condition_label: str, attr: str, result: dict):
@@ -77,6 +94,23 @@ def print_result_row(condition_label: str, attr: str, result: dict):
     low_sign = "+" if r['low_relative'] >= 0 else ""
 
     print(f"{condition_label:<5} {attr:<15} {r['condition_avg']:>6.1f}% {r['high_avg']:>6.1f}% {high_sign}{r['high_relative']:>7.1f}% {r['low_avg']:>6.1f}% {low_sign}{r['low_relative']:>7.1f}% {r['winner']:<12}")
+
+
+def print_result_row_triple(condition_label: str, attr: str, result: dict):
+    """結果行を出力（3グループ用）"""
+    if not result:
+        return
+
+    r = result
+    top_sign = "+" if r['top_relative'] >= 0 else ""
+    mid_sign = "+" if r['mid_relative'] >= 0 else ""
+    low_sign = "+" if r['low_relative'] >= 0 else ""
+
+    print(f"{condition_label:<5} {attr:<15} {r['condition_avg']:>6.1f}% "
+          f"{r['top_avg']:>6.1f}% {top_sign}{r['top_relative']:>7.1f}% "
+          f"{r['mid_avg']:>6.1f}% {mid_sign}{r['mid_relative']:>7.1f}% "
+          f"{r['low_avg']:>6.1f}% {low_sign}{r['low_relative']:>7.1f}% "
+          f"{r['winner']:<12}")
 
 
 def get_condition_average(df_test: pd.DataFrame, metric_column: str) -> float:
@@ -121,3 +155,32 @@ def get_group_stats(group_list: list, test_grouped: pd.DataFrame, attr: str, met
         'relative': relative,
         'count': len(group_list),
     }
+
+
+def split_groups_triple(train_grouped: pd.DataFrame, metric_column: str):
+    """
+    訓練期間データを3グループに分割（パーセンタイル固定）
+    上位36% / 中間28% / 下位36%
+
+    戻り値: (top_group, mid_group, low_group)
+    """
+    if len(train_grouped) == 0:
+        return None, None, None
+
+    sorted_df = train_grouped.sort_values(metric_column).reset_index(drop=True)
+    n = len(sorted_df)
+
+    # パーセンタイル計算（切り位置）
+    low_cutoff_idx = max(0, int(n * 0.36) - 1)  # 下位36%の上限
+    top_cutoff_idx = min(n - 1, int(n * 0.64))    # 上位36%の下限
+
+    low_cutoff_val = sorted_df.iloc[low_cutoff_idx][metric_column]
+    top_cutoff_val = sorted_df.iloc[top_cutoff_idx][metric_column]
+
+    # 3グループに分割
+    top_g = train_grouped[train_grouped[metric_column] > top_cutoff_val]
+    mid_g = train_grouped[(train_grouped[metric_column] > low_cutoff_val) &
+                          (train_grouped[metric_column] <= top_cutoff_val)]
+    low_g = train_grouped[train_grouped[metric_column] <= low_cutoff_val]
+
+    return top_g, mid_g, low_g
