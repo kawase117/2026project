@@ -316,3 +316,31 @@ def run_multi_period_cross_metric_validation(db_path: str):
     print(f"\n{'=' * 100}")
     print("クロスメトリック検証完了")
     print(f"{'=' * 100}")
+
+
+if __name__ == "__main__":
+    # results/フォルダ作成
+    results_dir = Path("results")
+    results_dir.mkdir(exist_ok=True)
+
+    # 出力ファイルパス設定
+    output_file = results_dir / "cross_metric_validation_triple.txt"
+
+    # 出力をファイルに保存
+    old_stdout = sys.stdout
+    captured_output = StringIO()
+    sys.stdout = captured_output
+
+    try:
+        for hall in HALLS:
+            db_path = f"../db/{hall}"
+            if Path(db_path).exists():
+                run_multi_period_cross_metric_validation(db_path)
+    finally:
+        sys.stdout = old_stdout
+        output_content = captured_output.getvalue()
+        with open(output_file, 'w', encoding='utf-8') as f:
+            f.write(output_content)
+
+        print(output_content)
+        print(f"\n出力を保存しました: {output_file.absolute()}")

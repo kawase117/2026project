@@ -228,3 +228,23 @@ class TestRunMultiPeriodCrossMetricValidation:
         import inspect
         sig = inspect.signature(run_multi_period_cross_metric_validation)
         assert 'db_path' in sig.parameters
+
+
+class TestIntegration:
+    """統合テスト"""
+
+    def test_main_execution(self):
+        """メイン実行関数の統合テスト"""
+        # モックDB（またはテスト用DB）でテスト
+        # 例外が発生しないことを確認
+        from cross_metric_validation_triple import run_multi_period_cross_metric_validation
+
+        # テスト用DBが存在する場合のみ実行
+        from pathlib import Path
+        test_db = Path("../db/マルハンメガシティ2000-蒲田1.db")
+
+        if test_db.exists():
+            try:
+                run_multi_period_cross_metric_validation(str(test_db))
+            except Exception as e:
+                pytest.fail(f"統合テスト失敗: {e}")
