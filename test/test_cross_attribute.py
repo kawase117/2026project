@@ -102,3 +102,43 @@ def test_calculate_rank_correlation_returns_tuple():
     assert isinstance(corr, float)
     assert isinstance(p, float)
     assert 0.0 <= p <= 1.0
+
+
+from backtest.cross_attribute_performance_analysis import analyze_cross_attribute
+
+
+def make_full_df():
+    """9 台 × 2 期間のダミーデータ"""
+    rows = []
+    for date_str, period in [('2025-01-10', 'train'), ('2026-04-10', 'test')]:
+        for dd in range(1, 10):
+            rows.append({
+                'date': pd.Timestamp(date_str),
+                'dd': dd,
+                'weekday': 'Monday',
+                'last_digit': str(dd % 10),
+                'games_normalized': dd * 100,
+                'diff_coins_normalized': dd * 50 - 250,  # dd=5 がゼロ
+            })
+    return pd.DataFrame(rows)
+
+
+def test_analyze_cross_attribute_returns_dict():
+    df = make_full_df()
+    df_train = df[df['date'] == pd.Timestamp('2025-01-10')]
+    df_test = df[df['date'] == pd.Timestamp('2026-04-10')]
+    result = analyze_cross_attribute(df_train, df_test, 'games_normalized', 'dd')
+    assert result is not None
+    assert 'metrics' in result
+    assert 'corr' in result
+    assert 'p_value' in result
+
+
+def test_analyze_cross_attribute_metrics_structure():
+    df = make_full_df()
+    df_train = df[df['date'] == pd.Timestamp('2025-01-10')]
+    df_test = df[df['date'] == pd.Timestamp('2026-04-10')]
+    result = analyze_cross_attribute(df_train, df_test, 'games_normalized', 'dd')
+    metrics = result['metrics']
+    assert list(metrics.columns) == ['group', 'count', 'avg_coin', 'win_rate']
+    assert len(metrics) == 3
