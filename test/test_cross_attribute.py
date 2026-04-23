@@ -142,3 +142,46 @@ def test_analyze_cross_attribute_metrics_structure():
     metrics = result['metrics']
     assert list(metrics.columns) == ['group', 'count', 'avg_coin', 'win_rate']
     assert len(metrics) == 3
+
+
+from backtest.analysis_base import get_group_test_values_vectorized
+
+
+def test_get_group_test_values_vectorized_basic():
+    """基本的な merge() テスト"""
+    group_df = pd.DataFrame({
+        'dd': [1, 2, 3],
+    })
+    test_grouped = pd.DataFrame({
+        'dd': [1, 2, 3, 4, 5],
+        'value': [10.0, 20.0, 30.0, 40.0, 50.0],
+    })
+    result = get_group_test_values_vectorized(group_df, test_grouped, 'dd', 'value')
+    assert result == [10.0, 20.0, 30.0]
+
+
+def test_get_group_test_values_vectorized_partial_match():
+    """部分マッチのテスト"""
+    group_df = pd.DataFrame({
+        'dd': [1, 5],  # 5 は test_grouped に存在しない
+    })
+    test_grouped = pd.DataFrame({
+        'dd': [1, 2, 3],
+        'value': [100.0, 200.0, 300.0],
+    })
+    result = get_group_test_values_vectorized(group_df, test_grouped, 'dd', 'value')
+    assert result == [100.0]  # マッチしたもののみ
+
+
+def test_get_group_test_values_vectorized_order():
+    """順序の保持"""
+    group_df = pd.DataFrame({
+        'dd': [3, 1, 2],
+    })
+    test_grouped = pd.DataFrame({
+        'dd': [1, 2, 3],
+        'value': [10.0, 20.0, 30.0],
+    })
+    result = get_group_test_values_vectorized(group_df, test_grouped, 'dd', 'value')
+    # merge() は左側の順序を保持する
+    assert result == [30.0, 10.0, 20.0]

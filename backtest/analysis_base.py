@@ -334,3 +334,34 @@ def calculate_rank_correlation(
     from scipy.stats import spearmanr
     corr, p_value = spearmanr(train_vals, test_vals)
     return float(corr), float(p_value)
+
+
+def get_group_test_values_vectorized(
+    group_df: pd.DataFrame,
+    test_grouped: pd.DataFrame,
+    attr: str,
+    value_column: str,
+) -> list:
+    """
+    merge() を使用した高速グループデータ抽出。
+
+    iterrows() ベースの以下の処理を Pandas ベクトル化で置き換え：
+    - group_df（3グループのいずれか）を行ごとに反復
+    - 各行の attr 値で test_grouped をフィルタリング
+    - value_column 値を抽出してリストに返す
+
+    Args:
+        group_df: グループ（Top/Mid/Low いずれか）のDataFrame
+        test_grouped: テスト期間の集計結果DataFrame
+        attr: グループ分割属性（dd, last_digit, weekday など）
+        value_column: 抽出する値のカラム名
+
+    Returns:
+        マッチした value_column 値のリスト
+    """
+    merged = group_df[[attr]].merge(
+        test_grouped[[attr, value_column]],
+        on=attr,
+        how='inner',
+    )
+    return merged[value_column].tolist()
