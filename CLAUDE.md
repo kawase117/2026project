@@ -209,3 +209,8 @@ python -m pytest test/ -v
 リポジトリ: https://github.com/kawase117/2026project
 ブランチ: main
 修正完了後、ユーザーに「プッシュしますか？」と確認してからプッシュする。
+
+### /save コマンド
+- 現在のチャット会話を docs/ に保存
+- 形式：raw/sessions/YYYY-MM-DD-T-HH-MM-SS-<説明>.md
+- frontmatter: compiled: false, type: session

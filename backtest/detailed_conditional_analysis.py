@@ -74,14 +74,20 @@ def analyze_hypothesis_by_condition(df_train: pd.DataFrame, df_test: pd.DataFram
     return results
 
 
-def run_detailed_analysis(db_path: str):
+def run_detailed_analysis(db_path: str, output_file=None):
     """全DD/曜日での高低勝率比較分析"""
+
+    if output_file:
+        output_file = open(output_file, 'a', encoding='utf-8')
+        import sys
+        old_stdout = sys.stdout
+        sys.stdout = output_file
 
     print(f"\n詳細分析開始 (DB: {Path(db_path).stem})")
     print("=" * 90)
 
     df = load_machine_data(db_path)
-    df_train = df[(df['date'] >= '2026-01-01') & (df['date'] <= '2026-03-31')].copy()
+    df_train = df[(df['date'] >= '2026-02-01') & (df['date'] <= '2026-03-31')].copy()
     df_test = df[(df['date'] >= '2026-04-01') & (df['date'] <= '2026-04-20')].copy()
 
     # ========== DD別分析 ==========
@@ -166,3 +172,7 @@ if __name__ == "__main__":
     print("\n" + "=" * 90)
     print("詳細分析完了")
     print("=" * 90)
+
+    if output_file:
+        sys.stdout = old_stdout
+        output_file.close()
