@@ -8,6 +8,7 @@ from pathlib import Path
 from io import StringIO
 from loader import load_machine_data
 from analysis_base import *
+from analysis_base import get_group_test_values_vectorized
 
 
 def analyze_relative_performance_triple(df_train: pd.DataFrame, df_test: pd.DataFrame,
@@ -46,14 +47,11 @@ def analyze_relative_performance_triple(df_train: pd.DataFrame, df_test: pd.Data
     test_grouped.columns = [attr, 'test_count', 'test_wins']
     test_grouped['test_win_rate'] = test_grouped['test_wins'] / test_grouped['test_count']
 
-    # グループ別のテスト期間での平均勝率を計算
+    # グループ別のテスト期間での平均勝率を計算（ベクトル化）
     def get_group_test_rates(group_df):
-        rates = []
-        for _, row in group_df.iterrows():
-            test_match = test_grouped[test_grouped[attr] == row[attr]]
-            if len(test_match) > 0:
-                rates.append(test_match.iloc[0]['test_win_rate'])
-        return rates
+        return get_group_test_values_vectorized(
+            group_df, test_grouped, attr, 'test_win_rate'
+        )
 
     top_test_rates = get_group_test_rates(top_wr)
     mid_test_rates = get_group_test_rates(mid_wr)

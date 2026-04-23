@@ -8,6 +8,7 @@ from pathlib import Path
 from io import StringIO
 from loader import load_machine_data
 from analysis_base import *
+from analysis_base import get_group_test_values_vectorized
 
 
 def analyze_relative_performance_coin_diff_triple(df_train: pd.DataFrame, df_test: pd.DataFrame,
@@ -44,14 +45,11 @@ def analyze_relative_performance_coin_diff_triple(df_train: pd.DataFrame, df_tes
     }).reset_index()
     test_grouped.columns = [attr, 'test_avg_coin']
 
-    # グループ別のテスト期間での平均差枚を計算
+    # グループ別のテスト期間での平均差枚を計算（ベクトル化）
     def get_group_test_coins(group_df):
-        coins = []
-        for _, row in group_df.iterrows():
-            test_match = test_grouped[test_grouped[attr] == row[attr]]
-            if len(test_match) > 0:
-                coins.append(test_match.iloc[0]['test_avg_coin'])
-        return coins
+        return get_group_test_values_vectorized(
+            group_df, test_grouped, attr, 'test_avg_coin'
+        )
 
     top_test_coins = get_group_test_coins(top_coin)
     mid_test_coins = get_group_test_coins(mid_coin)

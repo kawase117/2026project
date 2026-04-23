@@ -8,6 +8,7 @@ from pathlib import Path
 from io import StringIO
 from loader import load_machine_data
 from analysis_base import *
+from analysis_base import get_group_test_values_vectorized
 
 
 def analyze_relative_performance_games_triple(df_train: pd.DataFrame, df_test: pd.DataFrame,
@@ -44,14 +45,11 @@ def analyze_relative_performance_games_triple(df_train: pd.DataFrame, df_test: p
     }).reset_index()
     test_grouped.columns = [attr, 'test_avg_games']
 
-    # グループ別のテスト期間での平均G数を計算
+    # グループ別のテスト期間での平均G数を計算（ベクトル化）
     def get_group_test_games(group_df):
-        games = []
-        for _, row in group_df.iterrows():
-            test_match = test_grouped[test_grouped[attr] == row[attr]]
-            if len(test_match) > 0:
-                games.append(test_match.iloc[0]['test_avg_games'])
-        return games
+        return get_group_test_values_vectorized(
+            group_df, test_grouped, attr, 'test_avg_games'
+        )
 
     top_test_games = get_group_test_games(top_games)
     mid_test_games = get_group_test_games(mid_games)
