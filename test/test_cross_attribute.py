@@ -49,3 +49,36 @@ def test_map_groups_low_group_has_lowest_train_attr():
     # dd=1 は games_normalized=100（最小）→ Low グループ
     low_rows = result[result['group'] == 'Low']
     assert 1 in low_rows['dd'].values
+
+
+from backtest.analysis_base import aggregate_group_metrics
+
+
+def test_aggregate_group_metrics_columns():
+    df = pd.DataFrame({
+        'group': ['Top', 'Top', 'Mid', 'Mid', 'Low', 'Low'],
+        'diff_coins_normalized': [100, 200, 10, 20, -100, -200],
+    })
+    result = aggregate_group_metrics(df)
+    assert list(result.columns) == ['group', 'count', 'avg_coin', 'win_rate']
+    assert len(result) == 3
+
+
+def test_aggregate_group_metrics_win_rate():
+    df = pd.DataFrame({
+        'group': ['Top', 'Top', 'Top', 'Top'],
+        'diff_coins_normalized': [100, 200, -50, 300],
+    })
+    result = aggregate_group_metrics(df)
+    top_row = result[result['group'] == 'Top'].iloc[0]
+    assert top_row['win_rate'] == pytest.approx(0.75)   # 3/4
+    assert top_row['avg_coin'] == pytest.approx(137.5)  # (100+200-50+300)/4
+
+
+def test_aggregate_group_metrics_order():
+    df = pd.DataFrame({
+        'group': ['Low', 'Mid', 'Top'],
+        'diff_coins_normalized': [-100, 10, 200],
+    })
+    result = aggregate_group_metrics(df)
+    assert list(result['group']) == ['Top', 'Mid', 'Low']

@@ -296,3 +296,28 @@ def map_groups_by_attr(
     result = test_df.copy()
     result['group'] = result[split_unit].apply(assign_group)
     return result[result['group'].notna()].reset_index(drop=True)
+
+
+def aggregate_group_metrics(
+    df: pd.DataFrame,
+    group_col: str = 'group',
+    result_col: str = 'diff_coins_normalized',
+) -> pd.DataFrame:
+    """
+    グループ別に台数・平均差枚・勝率を集計する。
+    返却カラム: group, count, avg_coin, win_rate
+    グループ順は Top → Mid → Low の固定順。
+    """
+    rows = []
+    for group_label in ['Top', 'Mid', 'Low']:
+        grp = df[df[group_col] == group_label]
+        if len(grp) == 0:
+            rows.append({'group': group_label, 'count': 0, 'avg_coin': 0.0, 'win_rate': 0.0})
+            continue
+        rows.append({
+            'group': group_label,
+            'count': len(grp),
+            'avg_coin': grp[result_col].mean(),
+            'win_rate': (grp[result_col] > 0).sum() / len(grp),
+        })
+    return pd.DataFrame(rows)
