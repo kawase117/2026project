@@ -184,3 +184,52 @@ def split_groups_triple(train_grouped: pd.DataFrame, metric_column: str):
     low_g = train_grouped[train_grouped[metric_column] <= low_cutoff_val]
 
     return top_g, mid_g, low_g
+
+
+def split_groups_triple_custom(train_grouped: pd.DataFrame, metric_column: str,
+                               top_percentile: float, mid_percentile: float, low_percentile: float):
+    """
+    訓練期間データを3グループに分割（カスタム比率対応）
+
+    パラメータ：
+      top_percentile: 上位グループの割合（0-100）
+      mid_percentile: 中間グループの割合（0-100）
+      low_percentile: 下位グループの割合（0-100）
+
+    戻り値: (top_group, mid_group, low_group)
+    注：比率の合計が100になることを前提。呼び出し側で検証
+    """
+    if len(train_grouped) == 0:
+        return None, None, None
+
+    sorted_df = train_grouped.sort_values(metric_column).reset_index(drop=True)
+    n = len(sorted_df)
+
+    # パーセンタイル計算（インデックス位置）
+    # 下位グループの要素数
+    low_count = round(n * low_percentile / 100)
+    # 中間グループの要素数
+    mid_count = round(n * mid_percentile / 100)
+
+    # 3グループに分割（インデックスベースで直接分割）
+    low_g = sorted_df.iloc[:low_count]
+    mid_g = sorted_df.iloc[low_count:low_count + mid_count]
+    top_g = sorted_df.iloc[low_count + mid_count:]
+
+    # 元のDataFrameのインデックスを復元
+    low_g = train_grouped.loc[low_g.index]
+    mid_g = train_grouped.loc[mid_g.index]
+    top_g = train_grouped.loc[top_g.index]
+
+    return top_g, mid_g, low_g
+
+
+# ========== パーセンタイル比率の候補 ==========
+
+PERCENTILE_CANDIDATES = [
+    (50, 0, 50),    # 2分割相当：上位50%・下位50%
+    (45, 10, 45),   # バランス型
+    (40, 20, 40),   # 中間重視
+    (36, 28, 36),   # 現在の設定
+    (33, 34, 33),   # ほぼ均等
+]
