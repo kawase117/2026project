@@ -255,3 +255,44 @@ def calculate_consistency_score(winners_by_period: list) -> tuple:
     is_consistent = all(w == first_winner for w in winners_by_period)
 
     return is_consistent, "✅" if is_consistent else "⚠️"
+
+
+# ========== クロス属性分析 共通関数 ==========
+
+def map_groups_by_attr(
+    train_df: pd.DataFrame,
+    test_df: pd.DataFrame,
+    train_attr: str,
+    split_unit: str,
+) -> pd.DataFrame | None:
+    """
+    訓練期間で split_unit 別に train_attr を平均集計し Top/Mid/Low に分割。
+    テスト期間データの各行に 'group' ラベル（Top/Mid/Low）を付与して返す。
+    split_unit に 3 つ未満の一意値しかない場合は None を返す。
+    """
+    train_grouped = train_df.groupby(split_unit)[train_attr].mean().reset_index()
+    train_grouped.columns = [split_unit, 'train_val']
+
+    if len(train_grouped) < 3:
+        return None
+
+    top_g, mid_g, low_g = split_groups_triple(train_grouped, 'train_val')
+    if top_g is None or mid_g is None or low_g is None:
+        return None
+
+    top_units = set(top_g[split_unit].values)
+    mid_units = set(mid_g[split_unit].values)
+    low_units = set(low_g[split_unit].values)
+
+    def assign_group(val):
+        if val in top_units:
+            return 'Top'
+        elif val in mid_units:
+            return 'Mid'
+        elif val in low_units:
+            return 'Low'
+        return None
+
+    result = test_df.copy()
+    result['group'] = result[split_unit].apply(assign_group)
+    return result[result['group'].notna()].reset_index(drop=True)
