@@ -207,7 +207,7 @@ def analyze_cross_metric_validation_games(df_train: pd.DataFrame, df_test: pd.Da
 # ========== パーセンタイル比率自動最適化エンジン ==========
 
 def find_optimal_percentile_ratio(db_path: str, metric_type: str, condition_type: str) -> dict:
-    """複数パーセンタイル比率を試行 → 最適比率を推奨"""
+    """複数パーセンタイル比率を試行（全DD対応） → 最適比率を推奨"""
     df = load_machine_data(db_path)
     df_test = df[(df['date'] >= TEST_START) & (df['date'] <= TEST_END)].copy()
 
@@ -222,22 +222,39 @@ def find_optimal_percentile_ratio(db_path: str, metric_type: str, condition_type
         for period_name, start_date, end_date in TRAINING_PERIODS:
             df_train = df[(df['date'] >= start_date) & (df['date'] <= end_date)].copy()
 
-            # DD別・機械番号での単一分析例（実装では全属性×全条件を試行）
-            result = None
-            if metric_type == 'win_rate':
-                result = analyze_cross_metric_validation_win_rate(
-                    df_train, df_test, 'dd', 1, 'machine_number',
-                    top_pct, mid_pct, low_pct
-                )
-            else:  # games
-                result = analyze_cross_metric_validation_games(
-                    df_train, df_test, 'dd', 1, 'machine_number',
-                    top_pct, mid_pct, low_pct
-                )
+            # 全DD（1-20）での分析結果を集計
+            dd_relative_values = []
+            dd_winners = []
 
-            if result:
-                period_results.append(result['max_relative'])
-                winners_by_period.append(result['winner'])
+            for dd in range(1, 21):
+                result = None
+                if metric_type == 'win_rate':
+                    result = analyze_cross_metric_validation_win_rate(
+                        df_train, df_test, 'dd', dd, 'machine_number',
+                        top_pct, mid_pct, low_pct
+                    )
+                else:  # games
+                    result = analyze_cross_metric_validation_games(
+                        df_train, df_test, 'dd', dd, 'machine_number',
+                        top_pct, mid_pct, low_pct
+                    )
+
+                if result:
+                    dd_relative_values.append(result['max_relative'])
+                    dd_winners.append(result['winner'])
+
+            # DD結果が存在する場合、その訓練期間の代表値を計算
+            if dd_relative_values:
+                period_relative = sum(dd_relative_values) / len(dd_relative_values)
+                period_results.append(period_relative)
+
+                # 勝者判定：複数DDの勝者の多数決で決定
+                if dd_winners:
+                    winner_counts = {}
+                    for w in dd_winners:
+                        winner_counts[w] = winner_counts.get(w, 0) + 1
+                    period_winner = max(winner_counts, key=winner_counts.get)
+                    winners_by_period.append(period_winner)
 
         # 3訓練期間での統計
         if len(period_results) == 3:

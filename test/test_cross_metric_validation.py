@@ -215,6 +215,25 @@ class TestFindOptimalPercentileRatio:
         assert 'winners_by_period' in mock_result['results'][0]
         assert 'is_consistent' in mock_result['results'][0]
 
+    def test_find_optimal_percentile_ratio_all_dds(self):
+        """全DDでの分析で、σ > 0.0%になることを確認（Task 1）"""
+        import os
+        db_path = os.path.join(os.path.dirname(__file__), '../db/マルハンメガシティ2000-蒲田1.db')
+
+        if not os.path.exists(db_path):
+            pytest.skip(f"Database not found: {db_path}")
+
+        result = find_optimal_percentile_ratio(db_path, 'win_rate', 'dd')
+
+        # 結果検証
+        assert result is not None
+        assert 'results' in result
+        assert len(result['results']) > 0
+
+        # σ > 0.0%であることを確認（最低1つのパーセンタイル比率で）
+        has_non_zero_std = any(r['relative_std'] > 0.0 for r in result['results'])
+        assert has_non_zero_std, "All ratios have σ = 0.0%, indicating single-DD analysis"
+
 
 class TestRunMultiPeriodCrossMetricValidation:
     """run_multi_period_cross_metric_validation() のテスト"""
