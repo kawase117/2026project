@@ -321,3 +321,16 @@ def aggregate_group_metrics(
             'win_rate': (grp[result_col] > 0).sum() / len(grp),
         })
     return pd.DataFrame(rows)
+
+
+def calculate_rank_correlation(
+    train_vals: list,
+    test_vals: list,
+) -> tuple:
+    """
+    訓練・テスト期間のグループ平均値リスト（Top/Mid/Low の 3 点）からスピアマン相関係数と p 値を返す。
+    3 点での計算のため参考値として扱うこと。
+    """
+    from scipy.stats import spearmanr
+    corr, p_value = spearmanr(train_vals, test_vals)
+    return float(corr), float(p_value)

@@ -82,3 +82,23 @@ def test_aggregate_group_metrics_order():
     })
     result = aggregate_group_metrics(df)
     assert list(result['group']) == ['Top', 'Mid', 'Low']
+
+
+from backtest.analysis_base import calculate_rank_correlation
+
+
+def test_calculate_rank_correlation_perfect_positive():
+    corr, p = calculate_rank_correlation([1.0, 2.0, 3.0], [10.0, 20.0, 30.0])
+    assert corr == pytest.approx(1.0)
+
+
+def test_calculate_rank_correlation_perfect_negative():
+    corr, p = calculate_rank_correlation([1.0, 2.0, 3.0], [30.0, 20.0, 10.0])
+    assert corr == pytest.approx(-1.0)
+
+
+def test_calculate_rank_correlation_returns_tuple():
+    corr, p = calculate_rank_correlation([3.0, 2.0, 1.0], [30.0, 20.0, 10.0])
+    assert isinstance(corr, float)
+    assert isinstance(p, float)
+    assert 0.0 <= p <= 1.0
