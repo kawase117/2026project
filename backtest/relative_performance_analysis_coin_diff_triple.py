@@ -8,84 +8,7 @@ from pathlib import Path
 from io import StringIO
 from loader import load_machine_data
 from analysis_base import *
-from analysis_base import get_group_test_values_vectorized
-
-
-def analyze_relative_performance_coin_diff_triple(df_train: pd.DataFrame, df_test: pd.DataFrame,
-                                                   condition_type: str, condition_value: str, attr: str) -> dict:
-    """平均差枚ベースの相対パフォーマンス分析（3グループ版）"""
-
-    train_filtered = df_train[df_train[condition_type] == condition_value]
-    test_filtered = df_test[df_test[condition_type] == condition_value]
-
-    if len(train_filtered) == 0 or len(test_filtered) == 0:
-        return None
-
-    # テスト期間での条件全体の平均差枚
-    condition_avg_coin = test_filtered['diff_coins_normalized'].mean() if len(test_filtered) > 0 else 0
-
-    # 訓練期間でこの属性別の平均差枚を計算
-    train_grouped = train_filtered.groupby(attr).agg({
-        'diff_coins_normalized': ['mean']
-    }).reset_index()
-    train_grouped.columns = [attr, 'train_avg_coin']
-
-    if len(train_grouped) < 3:  # 3グループに分割できない場合
-        return None
-
-    # 3グループに分割（パーセンタイル固定）
-    top_coin, mid_coin, low_coin = split_groups_triple(train_grouped, 'train_avg_coin')
-
-    if top_coin is None or mid_coin is None or low_coin is None:
-        return None
-
-    # テスト期間での集計
-    test_grouped = test_filtered.groupby(attr).agg({
-        'diff_coins_normalized': ['mean']
-    }).reset_index()
-    test_grouped.columns = [attr, 'test_avg_coin']
-
-    # グループ別のテスト期間での平均差枚を計算（ベクトル化）
-    def get_group_test_coins(group_df):
-        return get_group_test_values_vectorized(
-            group_df, test_grouped, attr, 'test_avg_coin'
-        )
-
-    top_test_coins = get_group_test_coins(top_coin)
-    mid_test_coins = get_group_test_coins(mid_coin)
-    low_test_coins = get_group_test_coins(low_coin)
-
-    top_avg_coin = sum(top_test_coins) / len(top_test_coins) if top_test_coins else 0
-    mid_avg_coin = sum(mid_test_coins) / len(mid_test_coins) if mid_test_coins else 0
-    low_avg_coin = sum(low_test_coins) / len(low_test_coins) if low_test_coins else 0
-
-    top_relative = top_avg_coin - condition_avg_coin
-    mid_relative = mid_avg_coin - condition_avg_coin
-    low_relative = low_avg_coin - condition_avg_coin
-
-    # 最高値のグループを勝者とする
-    max_relative = max(top_relative, mid_relative, low_relative)
-    if max_relative == top_relative:
-        winner = "上位G"
-    elif max_relative == mid_relative:
-        winner = "中間G"
-    else:
-        winner = "下位G"
-
-    return {
-        'condition_avg': condition_avg_coin,
-        'top_avg': top_avg_coin,
-        'top_relative': top_relative,
-        'top_count': len(top_coin),
-        'mid_avg': mid_avg_coin,
-        'mid_relative': mid_relative,
-        'mid_count': len(mid_coin),
-        'low_avg': low_avg_coin,
-        'low_relative': low_relative,
-        'low_count': len(low_coin),
-        'winner': winner,
-        'max_relative': max_relative,
-    }
+from analysis_base import analyze_relative_performance
 
 
 def run_multi_period_coin_diff_triple_analysis(db_path: str):
@@ -112,21 +35,22 @@ def run_multi_period_coin_diff_triple_analysis(db_path: str):
 
         for dd in range(1, 21):
             for attr in ATTRIBUTES:
-                result = analyze_relative_performance_coin_diff_triple(df_train, df_test, 'dd', dd, attr)
+                result = analyze_relative_performance(df_train, df_test, 'dd', dd, attr, metric='coin_diff')
                 if result:
                     r = result
-                    # 結果行を出力（3グループ対応）
+                    # 結果行を出力（3グループ対応 + スピアマン相関）
                     condition_label = f"D{dd:<3}"
                     attr_label = f"{ATTRIBUTES_JA[attr]:<15}"
                     top_sign = "+" if r['top_relative'] >= 0 else ""
                     mid_sign = "+" if r['mid_relative'] >= 0 else ""
                     low_sign = "+" if r['low_relative'] >= 0 else ""
+                    sig_label = "(*)" if r['p_value'] < 0.05 else ""
 
                     print(f"{condition_label:<5} {attr_label} {r['condition_avg']:>6.1f}% "
                           f"{r['top_avg']:>6.1f}% {top_sign}{r['top_relative']:>7.1f}% "
                           f"{r['mid_avg']:>6.1f}% {mid_sign}{r['mid_relative']:>7.1f}% "
                           f"{r['low_avg']:>6.1f}% {low_sign}{r['low_relative']:>7.1f}% "
-                          f"{r['winner']:<12}")
+                          f"{r['winner']:<12} | Rho={r['corr']:.2f} p={r['p_value']:.3f} {sig_label}")
 
                     # 統計カウント（最後の訓練期間のみ）
                     if period_name == TRAINING_PERIODS[-1][0]:
@@ -142,19 +66,20 @@ def run_multi_period_coin_diff_triple_analysis(db_path: str):
 
         for weekday, jp in zip(WEEKDAYS, WEEKDAY_JP):
             for attr in ATTRIBUTES:
-                result = analyze_relative_performance_coin_diff_triple(df_train, df_test, 'weekday', weekday, attr)
+                result = analyze_relative_performance(df_train, df_test, 'weekday', weekday, attr, metric='coin_diff')
                 if result:
                     r = result
                     attr_label = f"{ATTRIBUTES_JA[attr]:<15}"
                     top_sign = "+" if r['top_relative'] >= 0 else ""
                     mid_sign = "+" if r['mid_relative'] >= 0 else ""
                     low_sign = "+" if r['low_relative'] >= 0 else ""
+                    sig_label = "(*)" if r['p_value'] < 0.05 else ""
 
                     print(f"{jp}曜   {attr_label} {r['condition_avg']:>6.1f}% "
                           f"{r['top_avg']:>6.1f}% {top_sign}{r['top_relative']:>7.1f}% "
                           f"{r['mid_avg']:>6.1f}% {mid_sign}{r['mid_relative']:>7.1f}% "
                           f"{r['low_avg']:>6.1f}% {low_sign}{r['low_relative']:>7.1f}% "
-                          f"{r['winner']:<12}")
+                          f"{r['winner']:<12} | Rho={r['corr']:.2f} p={r['p_value']:.3f} {sig_label}")
 
     # 最終統計
     print("\n" + "=" * 160)

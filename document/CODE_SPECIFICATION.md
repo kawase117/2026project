@@ -30,11 +30,14 @@ backtest/ は DB 分析検証を行う 19 個のスクリプトから構成。Ph
 SELECT date, machine_number, machine_name, last_digit, diff_coins_normalized, games_normalized FROM machine_detailed_results
 ```
 
-**改善余地：**
-- 複数分析スクリプト（relative_performance_*.py など）が同じ loader を呼び出しているが、毎回同じ全レコード読み込みを実行
-- キャッシュ機構なし
+**改善内容（完了：2026-04-24）：**
+- 複数分析スクリプト（relative_performance_*.py など）が同じ loader を呼び出しているが、毎回同じ全レコード読み込みを実行していた問題を解決
+- `load_machine_data()` に `@lru_cache(maxsize=8)` デコレータを追加
+- 同一 db_path への複数呼び出しをメモリキャッシュ
 
-**推奨：** SQL 最適化 + キャッシュの導入（効果：トークン・実行時間削減）
+**効果：** トークン・実行時間削減
+
+**実装ファイル：** `backtest/loader.py`
 
 ---
 
@@ -52,23 +55,41 @@ def get_group_test_coins(group_df):
     return coins
 ```
 
-**改善余地：** `merge()` / `groupby()` による Pandas ベクトル化
+**改善内容（完了：2026-04-24）：**
+- 3 ファイル（`relative_performance_analysis_coin_diff_triple.py`, `relative_performance_analysis_games_triple.py`, `relative_performance_multi_period_triple.py`）の iterrows() ループを `merge()` ベースの `get_group_test_values_vectorized()` 共通関数に置き換え
+- `analysis_base.py` に共通関数を実装し、3 ファイルから呼び出し
 
-**推奨：** Pandas 集計ロジック最適化（効果：実行時間 10-50 倍改善）
+**効果：** 実行時間 10-50 倍改善、コード重複削減
+
+**実装ファイル：** 
+- `backtest/analysis_base.py` — `get_group_test_values_vectorized()` 追加
+- 3 個の relative_performance_*_triple.py ファイル — 関数呼び出しに置き換え
 
 ---
 
-### 3. 複数分析スクリプト間の重複コード
+### 3. 複数分析スクリプト間の重複コード統合
 **対象スキル：** `data:analyze`
 
 **現状：** 
 - `relative_performance_analysis_coin_diff_triple.py`
 - `relative_performance_analysis_games_triple.py`
 - `relative_performance_multi_period_triple.py`
+- `cross_attribute_performance_analysis.py`
 
-上記 3 スクリプト + クロスメトリック検証で、グループ分割・集計ロジックが **部分的に重複**している可能性
+上記 3 スクリプト + クロスメトリック検証で、グループ分割・集計ロジックが **部分的に重複**
 
-**推奨：** 共通抽出関数の実装（`analysis_base.py` に統合）
+**改善内容（部分完了：2026-04-24）：**
+- `analysis_base.py` に共通関数を追加：
+  - `map_groups_by_attr()` — 訓練期間でグループ分割し、テスト期間データにラベル付与
+  - `aggregate_group_metrics()` — グループ別 台数・平均差枚・勝率 を集計
+  - `calculate_rank_correlation()` — スピアマン相関係数と p 値を計算
+  - `get_group_test_values_vectorized()` — merge() ベースのベクトル化抽出
+
+**実装ファイル：**
+- `backtest/analysis_base.py` — 4 関数追加
+- `backtest/cross_attribute_performance_analysis.py` — 新規実装（上記共通関数を利用）
+
+**残課題（優先度 3）：** `cross_metric_validation_triple.py` との統合はエラー修正後に検討
 
 ---
 

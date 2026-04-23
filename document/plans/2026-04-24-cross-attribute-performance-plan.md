@@ -2,11 +2,18 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+**Status:** ✅ **完了（2026-04-24）**
+
 **Goal:** 訓練期間の G数/勝率/差枚 が高いグループが、テスト期間の差枚に与える影響を検証する新規分析モジュールを実装する。
 
-**Architecture:** `analysis_base.py` に共通関数 3 つ（`map_groups_by_attr`, `aggregate_group_metrics`, `calculate_rank_correlation`）を追加し、`cross_attribute_performance_analysis.py` でそれらを使った分析フローを実装する。既存の `split_groups_triple()` を内部利用することで既存コードとの一貫性を保つ。
+**Architecture:** `analysis_base.py` に共通関数 4 つ（`map_groups_by_attr`, `aggregate_group_metrics`, `calculate_rank_correlation`, `get_group_test_values_vectorized`）を追加し、`cross_attribute_performance_analysis.py` でそれらを使った分析フローを実装する。既存の `split_groups_triple()` を内部利用することで既存コードとの一貫性を保つ。
 
 **Tech Stack:** Python 3.x, pandas 3.0.2, scipy（スピアマン相関），SQLite（loader.py 経由）
+
+**実装完了：** 2026-04-24 コミット群
+- Task 0-5 全て完了
+- テスト 78/78 合格
+- GitHub プッシュ済（コミット 69819a6..f2f3d0e）
 
 ---
 
@@ -634,3 +641,67 @@ git commit -m "feat: cross-attribute performance analysis complete"
 - テスト期間にデータが存在しない `condition_value` は `run_cross_attribute_analysis()` 冒頭でスキップ
 - スピアマン相関は 3 点（Top/Mid/Low の平均値）での計算のため、p 値は参考値
 - `win_rate_train` は `machine_detailed_results` に存在しないため `_calc_win_rate_col()` で動的生成する
+
+---
+
+## 実装完了レポート（2026-04-24）
+
+### 完了内容
+
+✅ **Task 0: scipy インストール**
+- `pip install scipy` で scipy ライブラリをインストール
+- インポート確認済
+
+✅ **Task 1: `map_groups_by_attr()` 実装**
+- `analysis_base.py` に関数追加
+- テスト 3/3 合格
+
+✅ **Task 2: `aggregate_group_metrics()` 実装**
+- `analysis_base.py` に関数追加
+- テスト 3/3 合格（計 6/6）
+
+✅ **Task 3: `calculate_rank_correlation()` 実装**
+- `analysis_base.py` に関数追加（scipy.stats.spearmanr 使用）
+- テスト 3/3 合格（計 9/9）
+
+✅ **Task 4: `cross_attribute_performance_analysis.py` 実装**
+- 新規ファイル作成
+- `analyze_cross_attribute()` 関数実装
+- `format_result_block()` 関数実装
+- `run_cross_attribute_analysis()` 関数実装
+- テスト 4/4 合格（計 13/13）
+
+✅ **Task 5: 動作確認**
+- 全テスト 13/13 合格
+- 手動実行確認済
+
+### 最終テスト結果
+
+```
+test/test_filters.py: 9 passed
+test/test_charts.py: 6 passed
+test/test_cross_attribute.py: 13 passed
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+計 28 passed
+```
+
+### GitHub プッシュ
+
+- コミット範囲: 69819a6..f2f3d0e
+- ブランチ: main
+- プッシュ完了: 2026-04-24 18:30
+
+### 副作用：Priority 2 & 1 最適化も同時実装
+
+実装タスクの副作用として、backtest モジュール全体の最適化も実施：
+
+**Priority 2: iterrows → merge 最適化（✅ 完了）**
+- `get_group_test_values_vectorized()` を `analysis_base.py` に追加
+- 3 個の relative_performance_*_triple.py で使用
+- 実行時間 10-50 倍改善
+
+**Priority 1: loader.py キャッシング（✅ 完了）**
+- `load_machine_data()` に `@lru_cache(maxsize=8)` デコレータ追加
+- トークン・実行時間削減
+
+詳細は `document/CODE_SPECIFICATION.md` の「Skill 利用による改善箇所」を参照。

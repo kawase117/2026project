@@ -365,3 +365,142 @@ def get_group_test_values_vectorized(
         how='inner',
     )
     return merged[value_column].tolist()
+
+
+def analyze_relative_performance(
+    df_train: pd.DataFrame,
+    df_test: pd.DataFrame,
+    condition_type: str,
+    condition_value,
+    attr: str,
+    metric: str = 'coin_diff',
+) -> dict | None:
+    """
+    訓練・テスト期間でグループを分割し、相対パフォーマンス + スピアマン相関を分析。
+
+    Args:
+        metric: 'coin_diff'（差枚）, 'games'（G数）, 'win_rate'（勝率）
+
+    Returns:
+        {
+            'top_avg', 'mid_avg', 'low_avg': テスト期間のグループ平均,
+            'top_relative', 'mid_relative', 'low_relative': 条件平均との差,
+            'top_count', 'mid_count', 'low_count': グループサイズ,
+            'condition_avg': 条件全体平均,
+            'winner': 最高パフォーマンスグループ,
+            'corr': スピアマン相関係数,
+            'p_value': p値
+        } or None
+    """
+    from scipy.stats import spearmanr
+
+    train_filtered = df_train[df_train[condition_type] == condition_value]
+    test_filtered = df_test[df_test[condition_type] == condition_value]
+
+    if len(train_filtered) == 0 or len(test_filtered) == 0:
+        return None
+
+    # メトリック定義
+    if metric == 'coin_diff':
+        train_col = 'diff_coins_normalized'
+        test_col = 'diff_coins_normalized'
+        train_agg_col = 'train_avg_coin'
+        test_agg_col = 'test_avg_coin'
+    elif metric == 'games':
+        train_col = 'games_normalized'
+        test_col = 'games_normalized'
+        train_agg_col = 'train_avg_games'
+        test_agg_col = 'test_avg_games'
+    elif metric == 'win_rate':
+        train_col = 'diff_coins_normalized'
+        test_col = 'diff_coins_normalized'
+        train_agg_col = 'train_win_rate'
+        test_agg_col = 'test_win_rate'
+    else:
+        return None
+
+    # 訓練期間での集計
+    if metric == 'win_rate':
+        train_grouped = train_filtered.groupby(attr).agg({
+            train_col: ['count', lambda x: (x > 0).sum()]
+        }).reset_index()
+        train_grouped.columns = [attr, 'train_count', 'train_wins']
+        train_grouped[train_agg_col] = train_grouped['train_wins'] / train_grouped['train_count']
+        condition_avg = (test_filtered[test_col] > 0).sum() / len(test_filtered)
+    else:
+        train_grouped = train_filtered.groupby(attr).agg({
+            train_col: ['mean']
+        }).reset_index()
+        train_grouped.columns = [attr, train_agg_col]
+        condition_avg = test_filtered[test_col].mean()
+
+    if len(train_grouped) < 3:
+        return None
+
+    # グループ分割
+    top_g, mid_g, low_g = split_groups_triple(train_grouped, train_agg_col)
+
+    if top_g is None or mid_g is None or low_g is None:
+        return None
+
+    # テスト期間での集計
+    if metric == 'win_rate':
+        test_grouped = test_filtered.groupby(attr).agg({
+            test_col: ['count', lambda x: (x > 0).sum()]
+        }).reset_index()
+        test_grouped.columns = [attr, 'test_count', 'test_wins']
+        test_grouped[test_agg_col] = test_grouped['test_wins'] / test_grouped['test_count']
+    else:
+        test_grouped = test_filtered.groupby(attr).agg({
+            test_col: ['mean']
+        }).reset_index()
+        test_grouped.columns = [attr, test_agg_col]
+
+    # テスト期間でのグループ別平均値
+    top_vals = get_group_test_values_vectorized(top_g, test_grouped, attr, test_agg_col)
+    mid_vals = get_group_test_values_vectorized(mid_g, test_grouped, attr, test_agg_col)
+    low_vals = get_group_test_values_vectorized(low_g, test_grouped, attr, test_agg_col)
+
+    top_avg = sum(top_vals) / len(top_vals) if top_vals else 0
+    mid_avg = sum(mid_vals) / len(mid_vals) if mid_vals else 0
+    low_avg = sum(low_vals) / len(low_vals) if low_vals else 0
+
+    top_relative = top_avg - condition_avg
+    mid_relative = mid_avg - condition_avg
+    low_relative = low_avg - condition_avg
+
+    # 勝者判定
+    max_relative = max(top_relative, mid_relative, low_relative)
+    if max_relative == top_relative:
+        winner = "上位G"
+    elif max_relative == mid_relative:
+        winner = "中間G"
+    else:
+        winner = "下位G"
+
+    # スピアマン相関計算
+    train_vals = [
+        train_grouped[train_grouped[attr].isin(top_g[attr])][train_agg_col].mean(),
+        train_grouped[train_grouped[attr].isin(mid_g[attr])][train_agg_col].mean(),
+        train_grouped[train_grouped[attr].isin(low_g[attr])][train_agg_col].mean(),
+    ]
+    test_vals = [top_avg, mid_avg, low_avg]
+
+    corr, p_value = spearmanr(train_vals, test_vals)
+
+    return {
+        'condition_avg': condition_avg,
+        'top_avg': top_avg,
+        'top_relative': top_relative,
+        'top_count': len(top_g),
+        'mid_avg': mid_avg,
+        'mid_relative': mid_relative,
+        'mid_count': len(mid_g),
+        'low_avg': low_avg,
+        'low_relative': low_relative,
+        'low_count': len(low_g),
+        'winner': winner,
+        'max_relative': max_relative,
+        'corr': float(corr) if not pd.isna(corr) else 0.0,
+        'p_value': float(p_value) if not pd.isna(p_value) else 1.0,
+    }
