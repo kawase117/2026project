@@ -213,3 +213,20 @@ python -m pytest test/ -v
 ### /save コマンド
 - 現在のチャット会話を document/ に保存
 - 形式：raw/sessions/YYYY-MM-DD-T-HH-MM-SS-<説明>.md
+
+## ワークフロー関連（2026-04-23 追加）
+
+### Subagent-Driven Development について
+
+writing-plans スキルから "Subagent-Driven（推奨）" が提示された場合、**必ず Subagent-Driven で実行する**こと。
+
+**理由：**
+- TDD（テスト駆動開発）によるコード品質向上
+- 自動二段階レビュー（仕様適合 + コード品質）による品質保証
+- 手戻り・修正コストの削減
+
+**使用シーン：**
+- 新機能実装
+- バグ修正（複数ファイル関連）
+- ドキュメント作成（複数セクション）
+- リファクタリング
