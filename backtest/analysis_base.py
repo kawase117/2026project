@@ -233,3 +233,25 @@ PERCENTILE_CANDIDATES = [
     (36, 28, 36),   # 現在の設定
     (33, 34, 33),   # ほぼ均等
 ]
+
+
+# ========== 一貫性計算関数 ==========
+
+def calculate_consistency_score(winners_by_period: list) -> tuple:
+    """
+    複数訓練期間での勝者の一貫性をチェック
+
+    パラメータ：
+      winners_by_period: ['上位G', '上位G', '上位G'] など、各訓練期間での勝者リスト
+
+    戻り値: (is_consistent, consistency_symbol)
+      - is_consistent: bool — 3期間すべてで同じ勝者か
+      - consistency_symbol: str — "✅" または "⚠️"
+    """
+    if not winners_by_period or len(winners_by_period) != 3:
+        return False, "⚠️"
+
+    first_winner = winners_by_period[0]
+    is_consistent = all(w == first_winner for w in winners_by_period)
+
+    return is_consistent, "✅" if is_consistent else "⚠️"

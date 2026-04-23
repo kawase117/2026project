@@ -7,7 +7,7 @@ from pathlib import Path
 # backtest モジュールのインポート
 sys.path.insert(0, str(Path(__file__).parent.parent / 'backtest'))
 
-from analysis_base import split_groups_triple_custom
+from analysis_base import split_groups_triple_custom, calculate_consistency_score
 
 
 class TestSplitGroupsTripleCustom:
@@ -81,6 +81,58 @@ class TestSplitGroupsTripleCustom:
         assert len(top) == 33, f"Expected top=33, got {len(top)}"
         assert len(mid) == 34, f"Expected mid=34, got {len(mid)}"
         assert len(low) == 33, f"Expected low=33, got {len(low)}"
+
+
+class TestCalculateConsistencyScore:
+    """calculate_consistency_score() のテスト"""
+
+    def test_calculate_consistency_score_consistent(self):
+        """一貫性あり（全期間で上位G）"""
+        winners = ['上位G', '上位G', '上位G']
+        is_consistent, symbol = calculate_consistency_score(winners)
+
+        assert is_consistent == True
+        assert symbol == "✅"
+
+    def test_calculate_consistency_score_inconsistent(self):
+        """一貫性なし"""
+        winners = ['上位G', '中間G', '上位G']
+        is_consistent, symbol = calculate_consistency_score(winners)
+
+        assert is_consistent == False
+        assert symbol == "⚠️"
+
+    def test_calculate_consistency_score_all_middle(self):
+        """全期間で中間G"""
+        winners = ['中間G', '中間G', '中間G']
+        is_consistent, symbol = calculate_consistency_score(winners)
+
+        assert is_consistent == True
+        assert symbol == "✅"
+
+    def test_calculate_consistency_score_all_low(self):
+        """全期間で下位G"""
+        winners = ['下位G', '下位G', '下位G']
+        is_consistent, symbol = calculate_consistency_score(winners)
+
+        assert is_consistent == True
+        assert symbol == "✅"
+
+    def test_calculate_consistency_score_empty_list(self):
+        """空リスト"""
+        winners = []
+        is_consistent, symbol = calculate_consistency_score(winners)
+
+        assert is_consistent == False
+        assert symbol == "⚠️"
+
+    def test_calculate_consistency_score_wrong_length(self):
+        """リスト長が3でない"""
+        winners = ['上位G', '上位G']
+        is_consistent, symbol = calculate_consistency_score(winners)
+
+        assert is_consistent == False
+        assert symbol == "⚠️"
 
 
 if __name__ == '__main__':
