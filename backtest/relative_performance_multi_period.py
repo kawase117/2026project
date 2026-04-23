@@ -5,6 +5,7 @@ sys.stdout.reconfigure(encoding='utf-8')
 
 import pandas as pd
 from pathlib import Path
+from io import StringIO
 from loader import load_machine_data
 
 
@@ -233,12 +234,33 @@ def run_multi_period_analysis(db_path: str):
 
 
 if __name__ == "__main__":
-    halls = [
-        "マルハンメガシティ2000-蒲田1.db",
-        "マルハンメガシティ2000-蒲田7.db"
-    ]
+    # results/フォルダ作成
+    results_dir = Path("results")
+    results_dir.mkdir(exist_ok=True)
 
-    for hall in halls:
-        db_path = f"../db/{hall}"
-        if Path(db_path).exists():
-            run_multi_period_analysis(db_path)
+    # 出力ファイルパス設定
+    output_file = results_dir / "relative_performance_multi_period.txt"
+
+    # 出力をファイルに保存
+    old_stdout = sys.stdout
+    captured_output = StringIO()
+    sys.stdout = captured_output
+
+    try:
+        halls = [
+            "マルハンメガシティ2000-蒲田1.db",
+            "マルハンメガシティ2000-蒲田7.db"
+        ]
+
+        for hall in halls:
+            db_path = f"../db/{hall}"
+            if Path(db_path).exists():
+                run_multi_period_analysis(db_path)
+    finally:
+        sys.stdout = old_stdout
+        output_content = captured_output.getvalue()
+        with open(output_file, 'w', encoding='utf-8') as f:
+            f.write(output_content)
+
+        print(output_content)
+        print(f"\n出力を保存しました: {output_file.absolute()}")
