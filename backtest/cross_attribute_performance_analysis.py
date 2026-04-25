@@ -82,7 +82,7 @@ def analyze_cross_attribute(
 
 
 class WinnerStatistics:
-    """統計カウント管理クラス - DD別・曜日別の勝者カウント集約"""
+    """統計カウント管理クラス - DD別・曜日別の勝者カウント集約（訓練属性×分割単位）"""
 
     def __init__(self, train_attrs: dict) -> None:
         """
@@ -91,12 +91,14 @@ class WinnerStatistics:
         """
         self.is_recording = False  # 統計記録有効フラグ（最終訓練期間のみ）
         self.dd_stats = {
-            attr_label: {'上位G': 0, '中間G': 0, '下位G': 0}
+            f"{attr_label}_{split_unit}": {'上位G': 0, '中間G': 0, '下位G': 0}
             for attr_label in train_attrs.values()
+            for split_unit in ATTRIBUTES
         }
         self.wd_stats = {
-            attr_label: {'上位G': 0, '中間G': 0, '下位G': 0}
+            f"{attr_label}_{split_unit}": {'上位G': 0, '中間G': 0, '下位G': 0}
             for attr_label in train_attrs.values()
+            for split_unit in ATTRIBUTES
         }
 
     def enable_recording(self) -> None:
@@ -104,42 +106,44 @@ class WinnerStatistics:
         self.is_recording = True
 
     def record_dd_result(self, attr_label: str, result: dict, split_unit: str) -> None:
-        """DD別の結果を記録（split_unit == 'last_digit' のみ）"""
-        if self.is_recording and split_unit == 'last_digit' and result:
-            self.dd_stats[attr_label][result['winner']] += 1
+        """DD別の結果を記録（全split_unit対象）"""
+        if self.is_recording and result:
+            key = f"{attr_label}_{split_unit}"
+            if key in self.dd_stats:
+                self.dd_stats[key][result['winner']] += 1
 
     def record_wd_result(self, attr_label: str, result: dict, split_unit: str) -> None:
-        """曜日別の結果を記録（全split_unit対象、ただし重複排除のため'last_digit'のみ）"""
-        # 注：曜日別分析は split_units_for_group=['dd', 'last_digit'] で実行される
-        # dd分割は不安定（テスト期間短い）なため、last_digit分割のみカウント
-        if self.is_recording and split_unit == 'last_digit' and result:
-            self.wd_stats[attr_label][result['winner']] += 1
+        """曜日別の結果を記録（全split_unit対象）"""
+        if self.is_recording and result:
+            key = f"{attr_label}_{split_unit}"
+            if key in self.wd_stats:
+                self.wd_stats[key][result['winner']] += 1
 
     def print_dd_statistics(self) -> None:
         """DD別統計を出力"""
-        print("\nDD別 勝者統計（最終訓練期間、split_unit='last_digit'）:")
-        for attr_label in self.dd_stats.keys():
-            counts = self.dd_stats[attr_label]
+        print("\nDD別 勝者統計（最終訓練期間、訓練属性×分割単位）:")
+        for key in sorted(self.dd_stats.keys()):
+            counts = self.dd_stats[key]
             top = counts['上位G']
             mid = counts['中間G']
             low = counts['下位G']
             total = top + mid + low
             if total > 0:
-                print(f"  {attr_label:<10}: 上位G勝利 {top:>2}/20回 ({top/20*100:>5.1f}%) | "
+                print(f"  {key:<25}: 上位G勝利 {top:>2}/20回 ({top/20*100:>5.1f}%) | "
                       f"中間G勝利 {mid:>2}/20回 ({mid/20*100:>5.1f}%) | "
                       f"下位G勝利 {low:>2}/20回 ({low/20*100:>5.1f}%)")
 
     def print_wd_statistics(self) -> None:
         """曜日別統計を出力"""
-        print("\n曜日別 勝者統計（最終訓練期間、split_unit='last_digit'）:")
-        for attr_label in self.wd_stats.keys():
-            counts = self.wd_stats[attr_label]
+        print("\n曜日別 勝者統計（最終訓練期間、訓練属性×分割単位）:")
+        for key in sorted(self.wd_stats.keys()):
+            counts = self.wd_stats[key]
             top = counts['上位G']
             mid = counts['中間G']
             low = counts['下位G']
             total = top + mid + low
             if total > 0:
-                print(f"  {attr_label:<10}: 上位G勝利 {top:>2}/7回 ({top/7*100:>5.1f}%) | "
+                print(f"  {key:<25}: 上位G勝利 {top:>2}/7回 ({top/7*100:>5.1f}%) | "
                       f"中間G勝利 {mid:>2}/7回 ({mid/7*100:>5.1f}%) | "
                       f"下位G勝利 {low:>2}/7回 ({low/7*100:>5.1f}%)")
 
@@ -206,12 +210,11 @@ def _analyze_condition_by_attributes(
     condition_value: int | str,
     condition_label: str,
     train_attrs: dict,
-    split_units: list,
     stats: WinnerStatistics,
     is_recording_dd: bool = False,
     is_recording_wd: bool = False,
 ) -> None:
-    """条件値 × 属性 × split_unit での分析を実行
+    """条件値 × 訓練属性 での分析を実行（分割単位はATTRIBUTES固定）
 
     Args:
         df_train_cond, df_test_cond: 条件値でフィルタ済みのDataFrame
@@ -219,13 +222,12 @@ def _analyze_condition_by_attributes(
         condition_value: 条件値（DDなら1-20、曜日ならMondayなど）
         condition_label: 出力用ラベル（'D1'など）
         train_attrs: 訓練属性辞書
-        split_units: 分割単位リスト
         stats: WinnerStatistics インスタンス
         is_recording_dd: DD別統計記録フラグ
         is_recording_wd: 曜日別統計記録フラグ
     """
     for attr_col, attr_label in train_attrs.items():
-        for split_unit in split_units:
+        for split_unit in ATTRIBUTES:
             result = analyze_cross_attribute(df_train_cond, df_test_cond, attr_col, split_unit)
             if result is None:
                 continue
@@ -245,7 +247,6 @@ def _run_grouped_analysis(
     df_test: pd.DataFrame,
     group_config: dict,
     train_attrs: dict,
-    split_units_for_group: list,
     stats: WinnerStatistics,
     period_name: str,
     is_final_period: bool,
@@ -262,7 +263,6 @@ def _run_grouped_analysis(
                 'filter_attr': フィルタ属性名
             }
         train_attrs: 訓練属性辞書
-        split_units_for_group: 分割単位リスト
         stats: WinnerStatistics インスタンス
         period_name: 訓練期間名
         is_final_period: 最終訓練期間フラグ
@@ -301,7 +301,6 @@ def _run_grouped_analysis(
             condition_value=group_val,
             condition_label=label,
             train_attrs=train_attrs,
-            split_units=split_units_for_group,
             stats=stats,
             is_recording_dd=is_recording_dd,
             is_recording_wd=is_recording_wd,
@@ -363,7 +362,6 @@ def run_cross_attribute_analysis_comprehensive(db_path: str) -> None:
                 'filter_attr': 'dd',
             },
             train_attrs=TRAIN_ATTRS,
-            split_units_for_group=['last_digit', 'weekday'],
             stats=stats,
             period_name=period_name,
             is_final_period=is_final_period,
@@ -381,7 +379,6 @@ def run_cross_attribute_analysis_comprehensive(db_path: str) -> None:
                 'filter_attr': 'weekday',
             },
             train_attrs=TRAIN_ATTRS,
-            split_units_for_group=['dd', 'last_digit'],
             stats=stats,
             period_name=period_name,
             is_final_period=is_final_period,
