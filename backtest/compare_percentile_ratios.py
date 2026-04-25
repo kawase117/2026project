@@ -151,6 +151,16 @@ def run_percentile_comparison_analysis(db_path: str):
     # 結果保存用：比率 → [訓練期間1, 訓練期間2, 訓練期間3] の構造
     ratio_results = {}  # {(top%, mid%, low%): {'dd': {...}, 'wd': {...}}}
 
+    # グローバル統計（最終訓練期間のみ、比率別）
+    global_stats = {}
+
+    for top_pct, mid_pct, low_pct in PERCENTILE_CANDIDATES:
+        ratio_name = f"{top_pct}/{mid_pct}/{low_pct}"
+        global_stats[ratio_name] = {
+            'dd': {attr: {'top': 0, 'mid': 0, 'low': 0} for attr in ATTRIBUTES},
+            'wd': {attr: {'top': 0, 'mid': 0, 'low': 0} for attr in ATTRIBUTES}
+        }
+
     for top_pct, mid_pct, low_pct in PERCENTILE_CANDIDATES:
         ratio_name = f"{top_pct}/{mid_pct}/{low_pct}"
         print(f"\n{'='*180}")
@@ -223,6 +233,67 @@ def run_percentile_comparison_analysis(db_path: str):
                               f"{r['winner']:<12} | Rho={r['corr']:.2f} p={r['p_value']:.3f} {sig_label}")
 
             ratio_results[ratio_name]['wd'] = wd_results
+
+        # 最終訓練期間（1月）での統計集約
+        final_period_key = TRAINING_PERIODS[-1][0]  # '1月'
+
+        # 全訓練期間処理後、この比率の統計を集約
+        # 注：ratio_resultsは最後の訓練期間のみを保持（上書きされるため）
+        if 'dd' in ratio_results[ratio_name] and 'wd' in ratio_results[ratio_name]:
+            final_period_data = ratio_results[ratio_name]
+
+            # DD統計の集約
+            if 'dd' in final_period_data:
+                for dd in final_period_data['dd']:
+                    for attr in ATTRIBUTES:
+                        if attr in final_period_data['dd'][dd]:
+                            result = final_period_data['dd'][dd][attr]
+                            if result['winner'] == "上位G":
+                                global_stats[ratio_name]['dd'][attr]['top'] += 1
+                            elif result['winner'] == "中間G":
+                                global_stats[ratio_name]['dd'][attr]['mid'] += 1
+                            else:
+                                global_stats[ratio_name]['dd'][attr]['low'] += 1
+
+            # 曜日別統計の集約
+            if 'wd' in final_period_data:
+                for weekday in final_period_data['wd']:
+                    for attr in ATTRIBUTES:
+                        if attr in final_period_data['wd'][weekday]:
+                            result = final_period_data['wd'][weekday][attr]
+                            if result['winner'] == "上位G":
+                                global_stats[ratio_name]['wd'][attr]['top'] += 1
+                            elif result['winner'] == "中間G":
+                                global_stats[ratio_name]['wd'][attr]['mid'] += 1
+                            else:
+                                global_stats[ratio_name]['wd'][attr]['low'] += 1
+
+            # 統計情報の出力
+            print(f"\n{'='*180}")
+            print(f"分割比率 {ratio_name} - 統計集約（最終訓練期間 {final_period_key}）")
+            print(f"{'='*180}")
+
+            print(f"\nDD別勝者統計 ({ratio_name}):")
+            for attr in ATTRIBUTES:
+                top = global_stats[ratio_name]['dd'][attr]['top']
+                mid = global_stats[ratio_name]['dd'][attr]['mid']
+                low = global_stats[ratio_name]['dd'][attr]['low']
+                total = top + mid + low
+                if total > 0:
+                    print(f"  {ATTRIBUTES_JA[attr]:<15}: 上位G勝利 {top:>2}/20回 ({top/20*100:>5.1f}%) | "
+                          f"中間G勝利 {mid:>2}/20回 ({mid/20*100:>5.1f}%) | "
+                          f"下位G勝利 {low:>2}/20回 ({low/20*100:>5.1f}%)")
+
+            print(f"\n曜日別勝者統計 ({ratio_name}):")
+            for attr in ATTRIBUTES:
+                top = global_stats[ratio_name]['wd'][attr]['top']
+                mid = global_stats[ratio_name]['wd'][attr]['mid']
+                low = global_stats[ratio_name]['wd'][attr]['low']
+                total = top + mid + low
+                if total > 0:
+                    print(f"  {ATTRIBUTES_JA[attr]:<15}: 上位G勝利 {top:>1}/7回 ({top/7*100:>5.1f}%) | "
+                          f"中間G勝利 {mid:>1}/7回 ({mid/7*100:>5.1f}%) | "
+                          f"下位G勝利 {low:>1}/7回 ({low/7*100:>5.1f}%)")
 
     # TODO: 最終統計と比率比較マトリクスの出力
 
