@@ -109,8 +109,10 @@ class WinnerStatistics:
             self.dd_stats[attr_label][result['winner']] += 1
 
     def record_wd_result(self, attr_label: str, result: dict, split_unit: str) -> None:
-        """曜日別の結果を記録（split_unit == 'dd' のみ）"""
-        if self.is_recording and split_unit == 'dd' and result:
+        """曜日別の結果を記録（全split_unit対象、ただし重複排除のため'last_digit'のみ）"""
+        # 注：曜日別分析は split_units_for_group=['dd', 'last_digit'] で実行される
+        # dd分割は不安定（テスト期間短い）なため、last_digit分割のみカウント
+        if self.is_recording and split_unit == 'last_digit' and result:
             self.wd_stats[attr_label][result['winner']] += 1
 
     def print_dd_statistics(self) -> None:
@@ -129,7 +131,7 @@ class WinnerStatistics:
 
     def print_wd_statistics(self) -> None:
         """曜日別統計を出力"""
-        print("\n曜日別 勝者統計（最終訓練期間、split_unit='dd'）:")
+        print("\n曜日別 勝者統計（最終訓練期間、split_unit='last_digit'）:")
         for attr_label in self.wd_stats.keys():
             counts = self.wd_stats[attr_label]
             top = counts['上位G']
