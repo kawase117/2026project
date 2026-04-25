@@ -195,6 +195,35 @@ def run_percentile_comparison_analysis(db_path: str):
 
             ratio_results[ratio_name]['dd'] = dd_results
 
+            # ========== 曜日別分析 ==========
+            print_weekday_section_triple(period_name)
+
+            wd_results = {}  # {weekday: {attr: result_dict}}
+
+            for weekday, jp in zip(WEEKDAYS, WEEKDAY_JP):
+                wd_results[weekday] = {}
+                for attr in ATTRIBUTES:
+                    result = analyze_cross_attribute(
+                        df_train, df_test, 'weekday', weekday, attr,
+                        top_pct=top_pct, mid_pct=mid_pct, low_pct=low_pct
+                    )
+                    if result:
+                        wd_results[weekday][attr] = result
+                        r = result
+                        attr_label = f"{ATTRIBUTES_JA[attr]:<15}"
+                        top_sign = "+" if r['top_relative'] >= 0 else ""
+                        mid_sign = "+" if r['mid_relative'] >= 0 else ""
+                        low_sign = "+" if r['low_relative'] >= 0 else ""
+                        sig_label = "(*)" if r['p_value'] < 0.05 else ""
+
+                        print(f"{jp}曜   {attr_label} {r['condition_avg']*100:>6.1f}% "
+                              f"{r['top_avg']*100:>6.1f}% {top_sign}{r['top_relative']*100:>7.1f}% "
+                              f"{r['mid_avg']*100:>6.1f}% {mid_sign}{r['mid_relative']*100:>7.1f}% "
+                              f"{r['low_avg']*100:>6.1f}% {low_sign}{r['low_relative']*100:>7.1f}% "
+                              f"{r['winner']:<12} | Rho={r['corr']:.2f} p={r['p_value']:.3f} {sig_label}")
+
+            ratio_results[ratio_name]['wd'] = wd_results
+
     # TODO: 最終統計と比率比較マトリクスの出力
 
     print(f"\n{'='*180}")
