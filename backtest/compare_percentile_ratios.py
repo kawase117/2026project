@@ -295,7 +295,48 @@ def run_percentile_comparison_analysis(db_path: str):
                           f"中間G勝利 {mid:>1}/7回 ({mid/7*100:>5.1f}%) | "
                           f"下位G勝利 {low:>1}/7回 ({low/7*100:>5.1f}%)")
 
-    # TODO: 最終統計と比率比較マトリクスの出力
+    # ========== マトリクス出力 ==========
+    print(f"\n{'='*180}")
+    print(f"全分割比率の比較マトリクス - DD別")
+    print(f"{'='*180}\n")
+
+    print(f"{'比率':<15} {'機械番号':<20} {'機種名':<20} {'末尾':<20}")
+    header_line = " " * 15 + "上G      中G      下G      上G      中G      下G      上G      中G      下G"
+    print(header_line)
+    print("-" * 140)
+
+    for ratio_name in sorted(global_stats.keys(), key=lambda x: (
+        int(x.split('/')[0]), int(x.split('/')[1]), int(x.split('/')[2])
+    )):
+        row = f"{ratio_name:<15}"
+        for attr in ATTRIBUTES:
+            stats = global_stats[ratio_name]['dd'][attr]
+            top_pct = stats['top'] / 20 * 100
+            mid_pct = stats['mid'] / 20 * 100
+            low_pct = stats['low'] / 20 * 100
+            row += f"{top_pct:>5.1f}% {mid_pct:>5.1f}% {low_pct:>5.1f}% "
+        print(row)
+
+    print(f"\n{'='*180}")
+    print(f"全分割比率の比較マトリクス - 曜日別")
+    print(f"{'='*180}\n")
+
+    print(f"{'比率':<15} {'機械番号':<20} {'機種名':<20} {'末尾':<20}")
+    header_line = " " * 15 + "上G      中G      下G      上G      中G      下G      上G      中G      下G"
+    print(header_line)
+    print("-" * 140)
+
+    for ratio_name in sorted(global_stats.keys(), key=lambda x: (
+        int(x.split('/')[0]), int(x.split('/')[1]), int(x.split('/')[2])
+    )):
+        row = f"{ratio_name:<15}"
+        for attr in ATTRIBUTES:
+            stats = global_stats[ratio_name]['wd'][attr]
+            top_pct = stats['top'] / 7 * 100
+            mid_pct = stats['mid'] / 7 * 100
+            low_pct = stats['low'] / 7 * 100
+            row += f"{top_pct:>5.1f}% {mid_pct:>5.1f}% {low_pct:>5.1f}% "
+        print(row)
 
     print(f"\n{'='*180}")
     print(f"分割比率最適化分析 完了")
