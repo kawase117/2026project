@@ -87,6 +87,10 @@ def _create_features_model_type(df: pd.DataFrame) -> np.ndarray:
 
 def _create_features_machine_number(df: pd.DataFrame) -> np.ndarray:
     """台番号別グループ化による特徴量生成"""
+    # 空DataFrameの処理
+    if len(df) == 0:
+        return np.array([]).reshape(0, 1)
+
     # 台番号を正規化（0～1範囲）
     machine_numbers = df["machine_number"].values.astype(float)
     machine_min = machine_numbers.min()

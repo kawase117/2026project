@@ -137,3 +137,45 @@ def test_prepare_data_invalid_groupby_strategy():
                 groupby_strategy="invalid_strategy",
                 task="a"
             )
+
+
+def test_prepare_data_empty_test_range():
+    """テスト範囲にデータがない場合の処理"""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        db_path = Path(tmpdir) / "test.db"
+        conn = sqlite3.connect(db_path)
+
+        # 訓練範囲のみにデータを配置
+        test_data = pd.DataFrame({
+            "date": ["20250101", "20250102"],
+            "machine_number": [1, 2],
+            "machine_name": ["機種A", "機種A"],
+            "last_digit": ["1", "2"],
+            "is_zorome": [0, 0],
+            "games_normalized": [100, 100],
+            "diff_coins_normalized": [1200, 800]
+        })
+        test_data.to_sql("machine_detailed_results", conn, if_exists="replace", index=False)
+        conn.close()
+
+        # テスト範囲: 20250110-20250120 (データなし)
+        X_train, y_train, X_test, y_test = prepare_data_by_groupby(
+            db_path=str(db_path),
+            groupby_strategy="machine_number",
+            task="a",
+            train_start="20250101",
+            train_end="20250102",
+            test_start="20250110",
+            test_end="20250120"
+        )
+
+        # 訓練セットは存在
+        assert len(X_train) > 0
+        assert len(y_train) > 0
+
+        # テストセットは空
+        assert len(X_test) == 0
+        assert len(y_test) == 0
+
+        # 空テストセットの shape は (0, 1)
+        assert X_test.shape == (0, 1)
