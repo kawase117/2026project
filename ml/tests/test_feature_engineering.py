@@ -539,7 +539,7 @@ class TestBuildFeaturesExtended:
     """Test combined extended feature building (22 + 9 = 31 dimensions)"""
 
     def test_build_features_extended_shape(self, sample_df):
-        """Test that extended features have correct shape (n, 31)"""
+        """Test that extended features have correct shape (n, 53)"""
         df_hall = pd.DataFrame({
             "date": ["20250101", "20250102", "20250103", "20250104"],
             "win_rate": [38, 31, 42, 35],
@@ -548,9 +548,9 @@ class TestBuildFeaturesExtended:
             "total_machines": [280, 280, 280, 280]
         })
 
-        fb = FeatureBuilder(sample_df, df_hall=df_hall)
+        fb = FeatureBuilder(sample_df, df_hall=df_hall, df_full=sample_df)
         features = fb.build_features(is_train=True, enable_extended_features=True)
-        assert features.shape == (4, 31)
+        assert features.shape == (4, 53)
 
     def test_build_features_task1_without_extended(self, sample_df):
         """Test that enable_extended_features=False returns 22 dimensions"""
@@ -559,11 +559,11 @@ class TestBuildFeaturesExtended:
         assert features.shape == (4, 22)
 
     def test_build_features_extended_no_hall_data(self, sample_df):
-        """Test extended features without hall data (should still return 31)"""
-        fb = FeatureBuilder(sample_df, df_hall=None)
+        """Test extended features without hall data (should still return 53)"""
+        fb = FeatureBuilder(sample_df, df_hall=None, df_full=sample_df)
         features = fb.build_features(is_train=True, enable_extended_features=True)
         # Hall-wide features are zeros, periodicity is computed from machine data
-        assert features.shape == (4, 31)
+        assert features.shape == (4, 53)
 
     def test_extended_features_data_leakage_prevention(self):
         """Test that test features use only training statistics"""
@@ -603,16 +603,17 @@ class TestBuildFeaturesExtended:
             "total_machines": [280]
         })
 
-        fb_train = FeatureBuilder(df_train, df_hall=df_hall_train)
+        df_full = pd.concat([df_train, df_test], ignore_index=True)
+        fb_train = FeatureBuilder(df_train, df_hall=df_hall_train, df_full=df_full)
         X_train = fb_train.build_features(is_train=True, enable_extended_features=True)
 
-        fb_test = FeatureBuilder(df_test, df_hall=df_hall_test)
+        fb_test = FeatureBuilder(df_test, df_hall=df_hall_test, df_full=df_full)
         fb_test.train_stats = fb_train.train_stats
         X_test = fb_test.build_features(is_train=False, enable_extended_features=True)
 
-        # Both should have 31 dimensions
-        assert X_train.shape == (3, 31)
-        assert X_test.shape == (1, 31)
+        # Both should have 53 dimensions (Task 1 + 2 + 3)
+        assert X_train.shape == (3, 53)
+        assert X_test.shape == (1, 53)
 
         # Test features should not have NaN values
         assert not np.isnan(X_test).any()

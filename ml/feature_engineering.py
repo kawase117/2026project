@@ -564,12 +564,12 @@ class FeatureBuilder:
             df_machine_copy['lag_1_win'] = (df_machine_copy['diff_coins_normalized'].shift(1) > 0).astype(int)
 
             # Forward-fill missing lags (first 30 days)
-            df_machine_copy['lag_1_diff'] = df_machine_copy['lag_1_diff'].fillna(method='ffill')
-            df_machine_copy['lag_2_diff'] = df_machine_copy['lag_2_diff'].fillna(method='ffill')
-            df_machine_copy['lag_7_diff'] = df_machine_copy['lag_7_diff'].fillna(method='ffill')
-            df_machine_copy['lag_30_diff'] = df_machine_copy['lag_30_diff'].fillna(method='ffill')
-            df_machine_copy['lag_1_games'] = df_machine_copy['lag_1_games'].fillna(method='ffill')
-            df_machine_copy['lag_7_games'] = df_machine_copy['lag_7_games'].fillna(method='ffill')
+            df_machine_copy['lag_1_diff'] = df_machine_copy['lag_1_diff'].ffill()
+            df_machine_copy['lag_2_diff'] = df_machine_copy['lag_2_diff'].ffill()
+            df_machine_copy['lag_7_diff'] = df_machine_copy['lag_7_diff'].ffill()
+            df_machine_copy['lag_30_diff'] = df_machine_copy['lag_30_diff'].ffill()
+            df_machine_copy['lag_1_games'] = df_machine_copy['lag_1_games'].ffill()
+            df_machine_copy['lag_7_games'] = df_machine_copy['lag_7_games'].ffill()
 
             # Fill remaining NaNs with 0
             df_machine_copy['lag_1_diff'] = df_machine_copy['lag_1_diff'].fillna(0)
