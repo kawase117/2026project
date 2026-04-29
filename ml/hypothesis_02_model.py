@@ -105,12 +105,87 @@ def run_hypothesis_2_experiments(db_path: str, results_dir: str = None):
     print(f"{'='*60}")
 
 
+def run_hypothesis_2_with_extended_features(db_path: str, results_dir: str = None):
+    """
+    仮説2を実行（拡張特徴量版）：勝者戦略 × ML候補2個 × タスク2 = 4実験（69D特徴量）
+    """
+    if results_dir is None:
+        results_dir = Path(__file__).parent / "experiments" / "results"
+
+    runner = ExperimentRunner(results_dir=results_dir)
+
+    # Step 1 の勝者戦略を読み込み
+    winner_strategy = load_winner_strategy(results_dir)
+
+    # MLモデル候補
+    models_config = [
+        ("logistic", LogisticRegressionModel(random_state=42)),
+        ("xgboost", XGBoostModel(random_state=42)),
+    ]
+
+    tasks = ["a", "b"]
+
+    for model_name, model_instance in models_config:
+        for task in tasks:
+            print(f"\n{'='*60}")
+            print(f"Experiment: Phase 2 Extended (69D), Model={model_name}, Task={task}")
+            print(f"{'='*60}")
+
+            try:
+                # データ準備（拡張特徴量有効化）
+                print(f"Loading data with strategy={winner_strategy}, task={task}...")
+                X_train, y_train, X_test, y_test = prepare_data_by_groupby(
+                    db_path=db_path,
+                    groupby_strategy=winner_strategy,
+                    task=task,
+                    enable_extended_features=True
+                )
+
+                print(f"Training samples: {len(X_train)}, Features: {X_train.shape[1]}D")
+                print(f"Test samples: {len(X_test)}")
+
+                # モデル訓練・評価
+                exp_id = f"exp_002_extended_model_{model_name}_task_{task}"
+
+                runner.run_experiment(
+                    experiment_id=exp_id,
+                    phase=2,
+                    hypothesis="MLモデルの最適性（拡張特徴量69D）",
+                    groupby_strategy=winner_strategy,
+                    task=task,
+                    ml_model=model_name,
+                    X_train=X_train,
+                    y_train=y_train,
+                    X_test=X_test,
+                    y_test=y_test,
+                    model=model_instance,
+                    interpretation=f"Model {model_name} with task {task} (69D extended features)",
+                    next_step="実装完了"
+                )
+
+                print(f"[OK] Experiment {exp_id} completed and logged")
+
+            except Exception as e:
+                print(f"[NG] Error in experiment {exp_id}: {e}", file=sys.stderr)
+                raise
+
+    print(f"\n{'='*60}")
+    print("仮説2実行完了（拡張特徴量）：4実験すべてがログに記録されました")
+    print(f"ログディレクトリ: {results_dir}")
+    print(f"{'='*60}")
+
+
 if __name__ == "__main__":
     import argparse
-    
+
     parser = argparse.ArgumentParser(description="Run Hypothesis 2 experiments")
     parser.add_argument("--db-path", required=True, help="Path to SQLite database")
     parser.add_argument("--results-dir", default=None, help="Output directory for experiment logs")
-    
+    parser.add_argument("--extended", action="store_true", help="Use extended 69D features")
+
     args = parser.parse_args()
-    run_hypothesis_2_experiments(args.db_path, args.results_dir)
+
+    if args.extended:
+        run_hypothesis_2_with_extended_features(args.db_path, args.results_dir)
+    else:
+        run_hypothesis_2_experiments(args.db_path, args.results_dir)
