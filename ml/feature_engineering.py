@@ -103,6 +103,15 @@ class FeatureBuilder:
         self.df["month"] = self.df["date_parsed"].dt.month
         self.df["year"] = self.df["date_parsed"].dt.year
 
+        # Also parse df_full if it exists and doesn't have date_parsed yet
+        if self.df_full is not None and "date_parsed" not in self.df_full.columns:
+            if pd.api.types.is_datetime64_any_dtype(self.df_full["date"]):
+                self.df_full["date_parsed"] = self.df_full["date"]
+            else:
+                self.df_full["date_parsed"] = pd.to_datetime(
+                    self.df_full["date"].astype(str), format="%Y%m%d", errors="coerce"
+                )
+
     def build_features(self, is_train: bool = True, enable_extended_features: bool = False) -> np.ndarray:
         """
         Build combined feature matrix (Temporal + Group ID + optional Hall-wide + Periodicity + Task 3)
