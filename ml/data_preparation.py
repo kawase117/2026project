@@ -67,11 +67,24 @@ def prepare_data_by_groupby(
             test_end
         )
 
-        # FeatureBuilder で 31次元の拡張特徴量を生成
-        fb_train = FeatureBuilder(df_train, df_hall=df_train_hall)
+        # Create full dataframe (train + test) for proper rolling calculations
+        df_full = pd.concat([df_train, df_test], ignore_index=True).sort_values('date')
+
+        # FeatureBuilder で 53次元の拡張特徴量を生成
+        fb_train = FeatureBuilder(
+            df_train,
+            df_hall=df_train_hall,
+            df_full=df_full,
+            train_end_date=train_end
+        )
         X_train = fb_train.build_features(is_train=True, enable_extended_features=True)
 
-        fb_test = FeatureBuilder(df_test, df_hall=df_test_hall)
+        fb_test = FeatureBuilder(
+            df_test,
+            df_hall=df_test_hall,
+            df_full=df_full,
+            train_end_date=train_end
+        )
         # Test時は訓練統計を使用（Data Leakage 防止）
         fb_test.train_stats = fb_train.train_stats
         X_test = fb_test.build_features(is_train=False, enable_extended_features=True)
