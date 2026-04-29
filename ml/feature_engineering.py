@@ -395,6 +395,91 @@ class FeatureBuilder:
 
         return machine_history
 
+    def _build_relative_features(self, is_train: bool = True) -> np.ndarray:
+        """
+        Build Relative Features (4 total)
+
+        Features compare individual machine performance to hall-wide statistics:
+        1. diff_vs_hall — machine_diff / (hall_avg_diff + 1e-8)
+        2. games_vs_hall — machine_games / (hall_avg_games + 1e-8)
+        3. efficiency_vs_hall — machine_efficiency / (hall_efficiency + 1e-8)
+        4. rank_percentile — rank of machine by diff / total_machines (0-1)
+
+        Args:
+            is_train: If True, fit scalers. If False, use stored scalers.
+
+        Returns:
+            Array of shape (n_samples, 4)
+        """
+        if self.df_hall is None:
+            # Return zeros if no hall data available
+            return np.zeros((len(self.df), 4), dtype=float)
+
+        n = len(self.df)
+
+        # Merge hall statistics with machine data by date
+        df_merged = self.df.copy()
+        df_merged['date_str'] = df_merged['date'].astype(str)
+
+        df_hall_copy = self.df_hall.copy()
+        df_hall_copy['date'] = df_hall_copy['date'].astype(str)
+
+        df_merged = df_merged.merge(
+            df_hall_copy[['date', 'avg_diff_per_machine', 'avg_games_per_machine']],
+            left_on='date_str',
+            right_on='date',
+            how='left'
+        )
+
+        # Feature 1: diff_vs_hall
+        machine_diff = self.df['diff_coins_normalized'].values.astype(float)
+        hall_avg_diff = df_merged['avg_diff_per_machine'].values.astype(float)
+        diff_vs_hall = machine_diff / (np.abs(hall_avg_diff) + 1e-8)
+        diff_vs_hall = np.nan_to_num(diff_vs_hall, nan=0.0)
+        diff_vs_hall_feature = diff_vs_hall.reshape(-1, 1)
+
+        # Feature 2: games_vs_hall
+        machine_games = self.df['games_normalized'].values.astype(float)
+        hall_avg_games = df_merged['avg_games_per_machine'].values.astype(float)
+        games_vs_hall = machine_games / (hall_avg_games + 1e-8)
+        games_vs_hall = np.nan_to_num(games_vs_hall, nan=0.0)
+        games_vs_hall_feature = games_vs_hall.reshape(-1, 1)
+
+        # Feature 3: efficiency_vs_hall
+        machine_efficiency = machine_diff / (machine_games + 1e-8)
+        hall_efficiency = hall_avg_diff / (hall_avg_games + 1e-8)
+        efficiency_vs_hall = machine_efficiency / (np.abs(hall_efficiency) + 1e-8)
+        efficiency_vs_hall = np.nan_to_num(efficiency_vs_hall, nan=0.0)
+        efficiency_vs_hall_feature = efficiency_vs_hall.reshape(-1, 1)
+
+        # Feature 4: rank_percentile
+        # Rank machines by diff within each date
+        rank_percentile = np.zeros(n, dtype=float)
+
+        for date_val in self.df['date'].unique():
+            mask = self.df['date'] == date_val
+            date_machines = self.df[mask].copy()
+
+            # Rank by diff_coins (0 = worst, 1 = best)
+            if len(date_machines) > 1:
+                diffs = date_machines['diff_coins_normalized'].values
+                ranks = (diffs.argsort().argsort() + 1) / len(date_machines)  # 1-indexed to 0-indexed percentile
+                rank_percentile[mask] = ranks
+            elif len(date_machines) == 1:
+                rank_percentile[mask] = 0.5  # Single machine gets middle percentile
+
+        rank_percentile_feature = rank_percentile.reshape(-1, 1)
+
+        # Concatenate all relative features: 4 dimensions
+        relative = np.concatenate([
+            diff_vs_hall_feature,
+            games_vs_hall_feature,
+            efficiency_vs_hall_feature,
+            rank_percentile_feature
+        ], axis=1)
+
+        return relative
+
     def _apply_scaling_train(self, features: np.ndarray):
         """
         Fit and apply scaling on training data (placeholder for future StandardScaler)
