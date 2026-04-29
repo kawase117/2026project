@@ -12,12 +12,26 @@ Group Identification Features (11):
 - last_digit (one-hot, 10 dimensions)
 - machine_number_normalized (1 dimension)
 
-Total: 22 features
+Hall-wide Features (4):
+- win_rate_daily (1 dimension)
+- avg_diff_daily (1 dimension)
+- avg_games_daily (1 dimension)
+- total_machines (1 dimension)
+
+Periodicity Pattern Features (5):
+- weekday_avg_diff (1 dimension)
+- weekday_avg_games (1 dimension)
+- dd_pattern_score (1 dimension)
+- is_event_day (1 dimension)
+- anomaly_score (1 dimension)
+
+Total: 22 features (Task 1) or 31 features (Task 2)
 """
 
 import numpy as np
 import pandas as pd
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Dict
+from sklearn.preprocessing import StandardScaler
 
 
 class FeatureBuilder:
@@ -35,18 +49,22 @@ class FeatureBuilder:
         "diff_coins_normalized"
     ]
 
-    def __init__(self, df: pd.DataFrame):
+    def __init__(self, df: pd.DataFrame, df_hall: Optional[pd.DataFrame] = None):
         """
         Initialize FeatureBuilder
 
         Args:
             df: DataFrame with machine_detailed_results columns
                 Must contain: date (YYYYMMDD), machine_number, last_digit, is_zorome
+            df_hall: Optional DataFrame with daily_hall_summary columns
+                     Used for Hall-wide and Periodicity features (Task 2)
         """
         self.df = df.copy()
+        self.df_hall = df_hall.copy() if df_hall is not None else None
         self._validate_columns()
         self._parse_dates()
         self._scaler_state = {}
+        self.train_stats = {}  # Storage for train statistics (Data Leakage Prevention)
 
     def _validate_columns(self):
         """Check that all required columns are present"""
@@ -70,24 +88,33 @@ class FeatureBuilder:
         self.df["month"] = self.df["date_parsed"].dt.month
         self.df["year"] = self.df["date_parsed"].dt.year
 
-    def build_features(self, is_train: bool = True) -> np.ndarray:
+    def build_features(self, is_train: bool = True, enable_extended_features: bool = False) -> np.ndarray:
         """
-        Build combined feature matrix (Temporal + Group ID)
+        Build combined feature matrix (Temporal + Group ID + optional Hall-wide + Periodicity)
 
         Args:
             is_train: If True, fit scaler on this data. If False, use stored scaler.
+            enable_extended_features: If True, add Hall-wide (4) + Periodicity (5) features for 31 total.
+                                     If False, return only Task 1 features (22).
 
         Returns:
-            Feature matrix of shape (n_samples, 22)
+            Feature matrix of shape (n_samples, 22) or (n_samples, 31)
         """
         if len(self.df) == 0:
-            return np.array([]).reshape(0, 22)
+            n_features = 31 if enable_extended_features else 22
+            return np.array([]).reshape(0, n_features)
 
         temporal = self._build_temporal_features()
         group_id = self._build_group_identification_features()
 
-        # Concatenate along axis 1 (columns)
+        # Concatenate Task 1 features (22)
         features = np.concatenate([temporal, group_id], axis=1)
+
+        # Add Task 2 features if requested
+        if enable_extended_features:
+            hall_wide = self._build_hall_wide_features(is_train=is_train)
+            periodicity = self._build_periodicity_features(is_train=is_train)
+            features = np.concatenate([features, hall_wide, periodicity], axis=1)
 
         if is_train:
             self._apply_scaling_train(features)
@@ -191,8 +218,303 @@ class FeatureBuilder:
         Apply pre-fitted scaling on test data (placeholder)
 
         Args:
-            features: Feature array of shape (n_samples, 22)
+            features: Feature array of shape (n_samples, 22) or (n_samples, 31)
         """
         # Placeholder: In future, apply pre-fitted StandardScaler
         # For now, do nothing (scaler not yet implemented)
         pass
+
+    def _build_hall_wide_features(self, is_train: bool = True) -> np.ndarray:
+        """
+        Build Hall-wide features (4 total)
+
+        Features:
+        1. win_rate_daily (%) — Hall-wide win rate from daily_hall_summary
+        2. avg_diff_daily — Hall-wide average diff coins per machine
+        3. avg_games_daily — Hall-wide average games per machine
+        4. total_machines — Number of machines in operation that day
+
+        Normalization:
+        - win_rate: uses training mean for normalization
+        - avg_diff_daily: StandardScaler fit on training data
+        - avg_games_daily: StandardScaler fit on training data
+        - total_machines: StandardScaler fit on training data
+
+        Args:
+            is_train: If True, fit scalers on this data. If False, use stored scalers.
+
+        Returns:
+            Array of shape (n_samples, 4)
+        """
+        if self.df_hall is None:
+            # Return zeros if no hall data available
+            return np.zeros((len(self.df), 4), dtype=float)
+
+        n = len(self.df)
+
+        # Merge hall statistics with machine data by date
+        df_merged = self.df.copy()
+        df_merged["date_str"] = df_merged["date"].astype(str)
+
+        df_hall_copy = self.df_hall.copy()
+        df_hall_copy["date"] = df_hall_copy["date"].astype(str)
+
+        df_merged = df_merged.merge(
+            df_hall_copy[["date", "win_rate", "avg_diff_per_machine", "avg_games_per_machine", "total_machines"]],
+            left_on="date_str",
+            right_on="date",
+            how="left"
+        )
+
+        # Feature 1: win_rate_daily (%)
+        win_rate = df_merged["win_rate"].values.astype(float)
+        if is_train:
+            # Compute mean/std on non-NaN values
+            valid_win_rate = win_rate[~np.isnan(win_rate)]
+            if len(valid_win_rate) > 0:
+                self.train_stats["win_rate_mean"] = float(np.mean(valid_win_rate))
+                self.train_stats["win_rate_std"] = float(np.std(valid_win_rate))
+            else:
+                self.train_stats["win_rate_mean"] = 0.0
+                self.train_stats["win_rate_std"] = 1.0
+        # Normalize by training mean
+        win_rate_train_mean = self.train_stats.get("win_rate_mean", 0.0)
+        win_rate_normalized = (win_rate - win_rate_train_mean) / (win_rate_train_mean + 1e-8)
+        win_rate_normalized = np.nan_to_num(win_rate_normalized, nan=0.0)
+        win_rate_feature = win_rate_normalized.reshape(-1, 1)
+
+        # Feature 2 & 3: avg_diff_daily and avg_games_daily (StandardScaler)
+        avg_diff = df_merged["avg_diff_per_machine"].values.astype(float)
+        avg_games = df_merged["avg_games_per_machine"].values.astype(float)
+
+        if is_train:
+            scaler_diff = StandardScaler()
+            scaler_games = StandardScaler()
+
+            # Fit on non-NaN values
+            valid_diff = avg_diff[~np.isnan(avg_diff)].reshape(-1, 1)
+            valid_games = avg_games[~np.isnan(avg_games)].reshape(-1, 1)
+
+            if len(valid_diff) > 0:
+                scaler_diff.fit(valid_diff)
+                self.train_stats["scaler_avg_diff"] = scaler_diff
+            if len(valid_games) > 0:
+                scaler_games.fit(valid_games)
+                self.train_stats["scaler_avg_games"] = scaler_games
+        else:
+            scaler_diff = self.train_stats.get("scaler_avg_diff", StandardScaler())
+            scaler_games = self.train_stats.get("scaler_avg_games", StandardScaler())
+
+        # Apply scaling
+        avg_diff_normalized = np.full_like(avg_diff, 0.0)
+        avg_games_normalized = np.full_like(avg_games, 0.0)
+
+        valid_mask_diff = ~np.isnan(avg_diff)
+        valid_mask_games = ~np.isnan(avg_games)
+
+        if valid_mask_diff.sum() > 0:
+            avg_diff_normalized[valid_mask_diff] = scaler_diff.transform(
+                avg_diff[valid_mask_diff].reshape(-1, 1)
+            ).flatten()
+
+        if valid_mask_games.sum() > 0:
+            avg_games_normalized[valid_mask_games] = scaler_games.transform(
+                avg_games[valid_mask_games].reshape(-1, 1)
+            ).flatten()
+
+        avg_diff_feature = avg_diff_normalized.reshape(-1, 1)
+        avg_games_feature = avg_games_normalized.reshape(-1, 1)
+
+        # Feature 4: total_machines (StandardScaler)
+        total_machines = df_merged["total_machines"].values.astype(float)
+
+        if is_train:
+            scaler_machines = StandardScaler()
+            valid_machines = total_machines[~np.isnan(total_machines)].reshape(-1, 1)
+            if len(valid_machines) > 0:
+                scaler_machines.fit(valid_machines)
+                self.train_stats["scaler_total_machines"] = scaler_machines
+        else:
+            scaler_machines = self.train_stats.get("scaler_total_machines", StandardScaler())
+
+        # Apply scaling
+        total_machines_normalized = np.full_like(total_machines, 0.0)
+        valid_mask_machines = ~np.isnan(total_machines)
+
+        if valid_mask_machines.sum() > 0:
+            total_machines_normalized[valid_mask_machines] = scaler_machines.transform(
+                total_machines[valid_mask_machines].reshape(-1, 1)
+            ).flatten()
+
+        total_machines_feature = total_machines_normalized.reshape(-1, 1)
+
+        # Concatenate all hall-wide features
+        hall_wide = np.concatenate(
+            [win_rate_feature, avg_diff_feature, avg_games_feature, total_machines_feature],
+            axis=1
+        )
+
+        return hall_wide
+
+    def _build_periodicity_features(self, is_train: bool = True) -> np.ndarray:
+        """
+        Build Periodicity Pattern features (5 total)
+
+        Features:
+        1. weekday_avg_diff — Weekday average diff (lookup from training statistics)
+        2. weekday_avg_games — Weekday average games (lookup from training statistics)
+        3. dd_pattern_score — Day-of-month z-score pattern (lookup from training statistics)
+        4. is_event_day — Flag for event days (month start/payday/month end)
+        5. anomaly_score — Day-specific anomaly z-score (lookup from training statistics)
+
+        Data Leakage Prevention:
+        - All statistics are computed on training data only
+        - Test data uses lookup tables from training statistics
+        - Never computes statistics on test data
+
+        Args:
+            is_train: If True, compute and store statistics. If False, use stored statistics.
+
+        Returns:
+            Array of shape (n_samples, 5)
+        """
+        n = len(self.df)
+
+        if is_train:
+            # === Compute statistics on training data ===
+
+            # Weekday statistics: group by day_of_week, compute mean diff and games
+            weekday_stats = self.df.groupby("day_of_week").agg({
+                "diff_coins_normalized": ["mean", "std"],
+                "games_normalized": ["mean", "std"]
+            }).fillna(0)
+
+            # Extract values for storage
+            weekday_avg_diff_dict = {}
+            weekday_avg_games_dict = {}
+            for dow in self.df["day_of_week"].unique():
+                if dow in weekday_stats.index:
+                    weekday_avg_diff_dict[dow] = float(weekday_stats.loc[dow, ("diff_coins_normalized", "mean")])
+                    weekday_avg_games_dict[dow] = float(weekday_stats.loc[dow, ("games_normalized", "mean")])
+
+            self.train_stats["weekday_avg_diff"] = weekday_avg_diff_dict
+            self.train_stats["weekday_avg_games"] = weekday_avg_games_dict
+            self.train_stats["weekday_diff_global_mean"] = float(self.df["diff_coins_normalized"].mean())
+            self.train_stats["weekday_diff_global_std"] = float(self.df["diff_coins_normalized"].std() + 1e-8)
+            self.train_stats["weekday_games_global_mean"] = float(self.df["games_normalized"].mean())
+            self.train_stats["weekday_games_global_std"] = float(self.df["games_normalized"].std() + 1e-8)
+
+            # DD (day-of-month) statistics
+            dd_stats = self.df.groupby("day_of_month").agg({
+                "diff_coins_normalized": ["mean", "std"]
+            }).fillna(0)
+
+            dd_avg_diff_dict = {}
+            for dd in self.df["day_of_month"].unique():
+                if dd in dd_stats.index:
+                    dd_avg_diff_dict[int(dd)] = float(dd_stats.loc[dd, ("diff_coins_normalized", "mean")])
+
+            self.train_stats["dd_avg_diff"] = dd_avg_diff_dict
+            self.train_stats["dd_global_mean"] = float(self.df["diff_coins_normalized"].mean())
+            self.train_stats["dd_global_std"] = float(self.df["diff_coins_normalized"].std() + 1e-8)
+
+            # Day-specific anomaly statistics (date level)
+            date_stats = self.df.groupby("date").agg({
+                "diff_coins_normalized": ["mean", "count"]
+            }).fillna(0)
+
+            date_zscore_dict = {}
+            global_mean = float(self.df["diff_coins_normalized"].mean())
+            global_std = float(self.df["diff_coins_normalized"].std() + 1e-8)
+
+            for date in self.df["date"].unique():
+                if date in date_stats.index:
+                    date_mean = float(date_stats.loc[date, ("diff_coins_normalized", "mean")])
+                    zscore = (date_mean - global_mean) / global_std if global_std != 0 else 0.0
+                    date_zscore_dict[str(date)] = float(zscore)
+
+            self.train_stats["date_zscore"] = date_zscore_dict
+            self.train_stats["date_global_mean"] = global_mean
+            self.train_stats["date_global_std"] = global_std
+
+        # === Apply statistics to current data ===
+
+        # Feature 1: weekday_avg_diff
+        weekday_avg_diff_dict = self.train_stats.get("weekday_avg_diff", {})
+        weekday_diff_global_mean = self.train_stats.get("weekday_diff_global_mean", 0.0)
+
+        weekday_avg_diff = np.full(n, weekday_diff_global_mean, dtype=float)
+        for i, dow in enumerate(self.df["day_of_week"]):
+            if dow in weekday_avg_diff_dict:
+                weekday_avg_diff[i] = weekday_avg_diff_dict[dow]
+            else:
+                weekday_avg_diff[i] = weekday_diff_global_mean
+
+        weekday_avg_diff_feature = (weekday_avg_diff.reshape(-1, 1) - weekday_diff_global_mean) / (
+            self.train_stats.get("weekday_diff_global_std", 1.0) + 1e-8
+        )
+
+        # Feature 2: weekday_avg_games
+        weekday_avg_games_dict = self.train_stats.get("weekday_avg_games", {})
+        weekday_games_global_mean = self.train_stats.get("weekday_games_global_mean", self.df["games_normalized"].mean())
+        weekday_games_global_std = self.train_stats.get("weekday_games_global_std", self.df["games_normalized"].std() + 1e-8)
+
+        weekday_avg_games = np.full(n, weekday_games_global_mean, dtype=float)
+        for i, dow in enumerate(self.df["day_of_week"]):
+            if dow in weekday_avg_games_dict:
+                weekday_avg_games[i] = weekday_avg_games_dict[dow]
+            else:
+                weekday_avg_games[i] = weekday_games_global_mean
+
+        weekday_avg_games_feature = (weekday_avg_games.reshape(-1, 1) - weekday_games_global_mean) / (
+            weekday_games_global_std + 1e-8
+        )
+
+        # Feature 3: dd_pattern_score
+        dd_avg_diff_dict = self.train_stats.get("dd_avg_diff", {})
+        dd_global_mean = self.train_stats.get("dd_global_mean", 0.0)
+        dd_global_std = self.train_stats.get("dd_global_std", 1.0)
+
+        dd_pattern_score = np.zeros(n, dtype=float)
+        for i, dd in enumerate(self.df["day_of_month"]):
+            if int(dd) in dd_avg_diff_dict:
+                dd_value = dd_avg_diff_dict[int(dd)]
+                dd_pattern_score[i] = (dd_value - dd_global_mean) / (dd_global_std + 1e-8)
+            else:
+                dd_pattern_score[i] = 0.0
+
+        dd_pattern_score_feature = dd_pattern_score.reshape(-1, 1)
+
+        # Feature 4: is_event_day
+        is_event_day = np.zeros(n, dtype=float)
+        for i, dd in enumerate(self.df["day_of_month"]):
+            # Month start (1-3), payday (23-27), month end (28-31)
+            if (1 <= dd <= 3) or (23 <= dd <= 27) or (28 <= dd <= 31):
+                is_event_day[i] = 1.0
+
+        is_event_day_feature = is_event_day.reshape(-1, 1)
+
+        # Feature 5: anomaly_score (date-specific z-score)
+        date_zscore_dict = self.train_stats.get("date_zscore", {})
+
+        anomaly_score = np.zeros(n, dtype=float)
+        for i, date in enumerate(self.df["date"]):
+            date_str = str(date)
+            if date_str in date_zscore_dict:
+                anomaly_score[i] = date_zscore_dict[date_str]
+            else:
+                # If date not in training data, use 0 (neutral anomaly)
+                anomaly_score[i] = 0.0
+
+        # Fill any remaining NaN with 0
+        anomaly_score = np.nan_to_num(anomaly_score, nan=0.0)
+        anomaly_score_feature = anomaly_score.reshape(-1, 1)
+
+        # Concatenate all periodicity features
+        periodicity = np.concatenate(
+            [weekday_avg_diff_feature, weekday_avg_games_feature, dd_pattern_score_feature,
+             is_event_day_feature, anomaly_score_feature],
+            axis=1
+        )
+
+        return periodicity

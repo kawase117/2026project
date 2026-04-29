@@ -66,10 +66,10 @@ def run_hypothesis_1_experiments(db_path: str, results_dir: str = None):
                     next_step="Step 2へ進む"
                 )
                 
-                print(f"✓ Experiment {exp_id} completed and logged")
-            
+                print(f"[OK] Experiment {exp_id} completed and logged")
+
             except Exception as e:
-                print(f"✗ Error in experiment {exp_id}: {e}", file=sys.stderr)
+                print(f"[NG] Error in experiment {exp_id}: {e}", file=sys.stderr)
                 raise
     
     print(f"\n{'='*60}")

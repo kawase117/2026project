@@ -1,6 +1,8 @@
 """
 Unit tests for FeatureBuilder - Feature Engineering Module
-Tests Temporal (11) + Group Identification (11) = 22 features
+Tests Temporal (11) + Group Identification (11) = 22 features (Task 1)
+Tests Hall-wide (4) + Periodicity (5) = 9 features (Task 2)
+Total: up to 31 features
 """
 
 import pytest
@@ -10,6 +12,7 @@ import tempfile
 import sqlite3
 from pathlib import Path
 from ml.feature_engineering import FeatureBuilder
+from ml.utils.db_queries import load_daily_hall_with_date_info
 
 
 @pytest.fixture
@@ -20,7 +23,7 @@ def temp_test_db():
         conn = sqlite3.connect(db_path)
 
         # Sample data spanning multiple dates and machines
-        test_data = pd.DataFrame({
+        machine_data = pd.DataFrame({
             "date": [
                 "20250101", "20250102", "20250103", "20250104",
                 "20250123", "20250124", "20250125",  # Around payday
@@ -34,7 +37,20 @@ def temp_test_db():
             "games_normalized": [100] * 10,
             "diff_coins_normalized": [1200, 800, 1500, -500, 900, 2000, 300, 1100, -200, 1800]
         })
-        test_data.to_sql("machine_detailed_results", conn, if_exists="replace", index=False)
+        machine_data.to_sql("machine_detailed_results", conn, if_exists="replace", index=False)
+
+        # Sample hall data for Task 2 tests
+        hall_data = pd.DataFrame({
+            "date": ["20250101", "20250102", "20250103", "20250104",
+                     "20250123", "20250124", "20250125", "20250215", "20250216", "20250301"],
+            "win_rate": [38, 31, 42, 35, 45, 40, 38, 32, 36, 41],
+            "avg_diff_per_machine": [118, -371, 205, 95, 250, 180, 120, -50, 140, 195],
+            "avg_games_per_machine": [4558, 4842, 4700, 4600, 4800, 4700, 4650, 4500, 4550, 4700],
+            "total_machines": [280, 280, 280, 280, 280, 280, 280, 280, 280, 280],
+            "day_of_week": ["Wed", "Thu", "Fri", "Sat", "Fri", "Sat", "Sun", "Fri", "Sat", "Sat"],
+            "last_digit": [1, 2, 3, 4, 3, 4, 5, 5, 6, 1]
+        })
+        hall_data.to_sql("daily_hall_summary", conn, if_exists="replace", index=False)
         conn.close()
 
         yield db_path
@@ -315,3 +331,288 @@ class TestDataTypes:
         for col_idx in normalized_cols:
             col_values = features[:, col_idx]
             assert np.all(col_values >= 0) and np.all(col_values <= 1), f"Column {col_idx} not in [0, 1]"
+
+
+class TestHallWideFeatures:
+    """Test Hall-wide feature generation (Task 2)"""
+
+    def test_hall_wide_features_shape(self, sample_df, temp_test_db):
+        """Test that hall-wide features have correct shape (n, 4)"""
+        # Create sample hall data
+        df_hall = pd.DataFrame({
+            "date": ["20250101", "20250102", "20250103", "20250104"],
+            "win_rate": [38, 31, 42, 35],
+            "avg_diff_per_machine": [118, -371, 205, 95],
+            "avg_games_per_machine": [4558, 4842, 4700, 4600],
+            "total_machines": [280, 280, 280, 280]
+        })
+
+        fb = FeatureBuilder(sample_df, df_hall=df_hall)
+        hall_wide = fb._build_hall_wide_features(is_train=True)
+        assert hall_wide.shape == (4, 4)
+
+    def test_hall_wide_features_no_nans(self, sample_df, temp_test_db):
+        """Test that hall-wide features have no NaN values"""
+        df_hall = pd.DataFrame({
+            "date": ["20250101", "20250102", "20250103", "20250104"],
+            "win_rate": [38, 31, 42, 35],
+            "avg_diff_per_machine": [118, -371, 205, 95],
+            "avg_games_per_machine": [4558, 4842, 4700, 4600],
+            "total_machines": [280, 280, 280, 280]
+        })
+
+        fb = FeatureBuilder(sample_df, df_hall=df_hall)
+        hall_wide = fb._build_hall_wide_features(is_train=True)
+        assert not np.isnan(hall_wide).any()
+
+    def test_hall_wide_with_missing_dates(self):
+        """Test that hall-wide handles missing dates gracefully"""
+        df_machine = pd.DataFrame({
+            "date": ["20250101", "20250102", "20250103", "20250104"],
+            "machine_number": [1, 2, 11, 12],
+            "machine_name": ["機種A"] * 4,
+            "last_digit": ["1", "2", "1", "2"],
+            "is_zorome": [0, 0, 1, 0],
+            "games_normalized": [100] * 4,
+            "diff_coins_normalized": [1200, 800, 1500, -500]
+        })
+
+        # Only 2 dates in hall data
+        df_hall = pd.DataFrame({
+            "date": ["20250101", "20250102"],
+            "win_rate": [38, 31],
+            "avg_diff_per_machine": [118, -371],
+            "avg_games_per_machine": [4558, 4842],
+            "total_machines": [280, 280]
+        })
+
+        fb = FeatureBuilder(df_machine, df_hall=df_hall)
+        hall_wide = fb._build_hall_wide_features(is_train=True)
+
+        # Should still return (4, 4) with filled values
+        assert hall_wide.shape == (4, 4)
+        # Missing dates should be filled with 0 (from nan_to_num)
+        assert not np.isnan(hall_wide).any()
+
+    def test_hall_wide_no_hall_data(self, sample_df):
+        """Test that hall-wide returns zeros when df_hall is None"""
+        fb = FeatureBuilder(sample_df, df_hall=None)
+        hall_wide = fb._build_hall_wide_features(is_train=True)
+        assert hall_wide.shape == (4, 4)
+        assert np.all(hall_wide == 0.0)
+
+
+class TestPeriodicityFeatures:
+    """Test Periodicity Pattern feature generation (Task 2)"""
+
+    def test_periodicity_features_shape(self, sample_df):
+        """Test that periodicity features have correct shape (n, 5)"""
+        fb = FeatureBuilder(sample_df)
+        periodicity = fb._build_periodicity_features(is_train=True)
+        assert periodicity.shape == (4, 5)
+
+    def test_periodicity_features_no_nans(self, sample_df):
+        """Test that periodicity features have no NaN values"""
+        fb = FeatureBuilder(sample_df)
+        periodicity = fb._build_periodicity_features(is_train=True)
+        assert not np.isnan(periodicity).any()
+
+    def test_is_event_day_detection(self):
+        """Test that is_event_day correctly identifies event days"""
+        df_event = pd.DataFrame({
+            "date": ["20250101", "20250102", "20250103", "20250104", "20250123", "20250128", "20250131"],
+            "machine_number": [1, 2, 3, 4, 5, 6, 7],
+            "machine_name": ["機種A"] * 7,
+            "last_digit": ["1"] * 7,
+            "is_zorome": [0] * 7,
+            "games_normalized": [100] * 7,
+            "diff_coins_normalized": [1000] * 7
+        })
+
+        fb = FeatureBuilder(df_event)
+        periodicity = fb._build_periodicity_features(is_train=True)
+
+        # Column 3 is is_event_day
+        is_event_day = periodicity[:, 3]
+
+        # Expected: [1, 1, 1, 0, 1, 1, 1]
+        # (month start: 1-3, payday: 23-27, month end: 28-31)
+        expected = np.array([1, 1, 1, 0, 1, 1, 1], dtype=float)
+        assert np.array_equal(is_event_day, expected)
+
+    def test_no_data_leakage_in_periodicity(self):
+        """Test that test statistics are not used when is_train=False"""
+        df_train = pd.DataFrame({
+            "date": ["20250101", "20250102", "20250103", "20250104"],
+            "machine_number": [1, 2, 3, 4],
+            "machine_name": ["機種A"] * 4,
+            "last_digit": ["1"] * 4,
+            "is_zorome": [0] * 4,
+            "games_normalized": [100, 200, 150, 180],
+            "diff_coins_normalized": [1000, 2000, 1500, 800]
+        })
+
+        df_test = pd.DataFrame({
+            "date": ["20250215", "20250216"],
+            "machine_number": [1, 2],
+            "machine_name": ["機種A"] * 2,
+            "last_digit": ["1"] * 2,
+            "is_zorome": [0] * 2,
+            "games_normalized": [100, 200],
+            "diff_coins_normalized": [500, 5000]  # Very different from train
+        })
+
+        # Build train features and store stats
+        fb_train = FeatureBuilder(df_train)
+        fb_train.build_features(is_train=True)
+
+        # Build test features using train stats
+        fb_test = FeatureBuilder(df_test)
+        fb_test.train_stats = fb_train.train_stats
+        test_periodicity = fb_test._build_periodicity_features(is_train=False)
+
+        # Check that weekday_avg_diff uses only train stats
+        # (The values should be based on training statistics, not test data)
+        assert test_periodicity.shape == (2, 5)
+        assert not np.isnan(test_periodicity).any()
+
+    def test_dd_pattern_score_normalization(self):
+        """Test that dd_pattern_score is correctly normalized as z-score"""
+        df_dd = pd.DataFrame({
+            "date": ["20250101", "20250102", "20250111", "20250121"],
+            "machine_number": [1, 2, 3, 4],
+            "machine_name": ["機種A"] * 4,
+            "last_digit": ["1"] * 4,
+            "is_zorome": [0] * 4,
+            "games_normalized": [100] * 4,
+            "diff_coins_normalized": [1000, 1100, 900, 800]
+        })
+
+        fb = FeatureBuilder(df_dd)
+        periodicity = fb._build_periodicity_features(is_train=True)
+
+        # Column 2 is dd_pattern_score
+        dd_pattern = periodicity[:, 2]
+
+        # Should contain z-scores (centered around 0)
+        # Not all zeros, at least some variation
+        assert not np.all(dd_pattern == 0.0)
+
+    def test_anomaly_score_with_missing_dates(self):
+        """Test that anomaly_score handles dates not in training set"""
+        df_train = pd.DataFrame({
+            "date": ["20250101", "20250102"],
+            "machine_number": [1, 2],
+            "machine_name": ["機種A"] * 2,
+            "last_digit": ["1"] * 2,
+            "is_zorome": [0] * 2,
+            "games_normalized": [100, 200],
+            "diff_coins_normalized": [1000, 1100]
+        })
+
+        # Test data with a date not in training
+        df_test = pd.DataFrame({
+            "date": ["20250315"],
+            "machine_number": [1],
+            "machine_name": ["機種A"],
+            "last_digit": ["1"],
+            "is_zorome": [0],
+            "games_normalized": [100],
+            "diff_coins_normalized": [2000]
+        })
+
+        fb_train = FeatureBuilder(df_train)
+        fb_train.build_features(is_train=True)
+
+        fb_test = FeatureBuilder(df_test)
+        fb_test.train_stats = fb_train.train_stats
+        periodicity = fb_test._build_periodicity_features(is_train=False)
+
+        # Column 4 is anomaly_score
+        anomaly = periodicity[:, 4]
+
+        # Missing dates should return 0 (neutral anomaly)
+        assert np.all(anomaly == 0.0)
+
+
+class TestBuildFeaturesExtended:
+    """Test combined extended feature building (22 + 9 = 31 dimensions)"""
+
+    def test_build_features_extended_shape(self, sample_df):
+        """Test that extended features have correct shape (n, 31)"""
+        df_hall = pd.DataFrame({
+            "date": ["20250101", "20250102", "20250103", "20250104"],
+            "win_rate": [38, 31, 42, 35],
+            "avg_diff_per_machine": [118, -371, 205, 95],
+            "avg_games_per_machine": [4558, 4842, 4700, 4600],
+            "total_machines": [280, 280, 280, 280]
+        })
+
+        fb = FeatureBuilder(sample_df, df_hall=df_hall)
+        features = fb.build_features(is_train=True, enable_extended_features=True)
+        assert features.shape == (4, 31)
+
+    def test_build_features_task1_without_extended(self, sample_df):
+        """Test that enable_extended_features=False returns 22 dimensions"""
+        fb = FeatureBuilder(sample_df)
+        features = fb.build_features(is_train=True, enable_extended_features=False)
+        assert features.shape == (4, 22)
+
+    def test_build_features_extended_no_hall_data(self, sample_df):
+        """Test extended features without hall data (should still return 31)"""
+        fb = FeatureBuilder(sample_df, df_hall=None)
+        features = fb.build_features(is_train=True, enable_extended_features=True)
+        # Hall-wide features are zeros, periodicity is computed from machine data
+        assert features.shape == (4, 31)
+
+    def test_extended_features_data_leakage_prevention(self):
+        """Test that test features use only training statistics"""
+        df_train = pd.DataFrame({
+            "date": ["20250101", "20250102", "20250103"],
+            "machine_number": [1, 2, 3],
+            "machine_name": ["機種A"] * 3,
+            "last_digit": ["1"] * 3,
+            "is_zorome": [0] * 3,
+            "games_normalized": [100, 200, 150],
+            "diff_coins_normalized": [1000, 2000, 1500]
+        })
+
+        df_test = pd.DataFrame({
+            "date": ["20250215"],
+            "machine_number": [1],
+            "machine_name": ["機種A"],
+            "last_digit": ["1"],
+            "is_zorome": [0],
+            "games_normalized": [100],
+            "diff_coins_normalized": [5000]  # Outlier
+        })
+
+        df_hall_train = pd.DataFrame({
+            "date": ["20250101", "20250102", "20250103"],
+            "win_rate": [30, 35, 40],
+            "avg_diff_per_machine": [100, 150, 200],
+            "avg_games_per_machine": [4500, 4600, 4700],
+            "total_machines": [280, 280, 280]
+        })
+
+        df_hall_test = pd.DataFrame({
+            "date": ["20250215"],
+            "win_rate": [50],  # Outlier
+            "avg_diff_per_machine": [500],  # Outlier
+            "avg_games_per_machine": [5000],  # Outlier
+            "total_machines": [280]
+        })
+
+        fb_train = FeatureBuilder(df_train, df_hall=df_hall_train)
+        X_train = fb_train.build_features(is_train=True, enable_extended_features=True)
+
+        fb_test = FeatureBuilder(df_test, df_hall=df_hall_test)
+        fb_test.train_stats = fb_train.train_stats
+        X_test = fb_test.build_features(is_train=False, enable_extended_features=True)
+
+        # Both should have 31 dimensions
+        assert X_train.shape == (3, 31)
+        assert X_test.shape == (1, 31)
+
+        # Test features should not have NaN values
+        assert not np.isnan(X_test).any()

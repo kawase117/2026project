@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 from typing import Tuple
 from ml.feature_engineering import FeatureBuilder
+from ml.utils.db_queries import load_daily_hall_with_date_info
 
 
 def prepare_data_by_groupby(
@@ -57,12 +58,23 @@ def prepare_data_by_groupby(
 
     # 拡張特徴量を使用する場合
     if enable_extended_features:
-        # FeatureBuilder で 22次元の拡張特徴量を生成
-        fb_train = FeatureBuilder(df_train)
-        X_train = fb_train.build_features(is_train=True)
+        # Hall データを読み込む（Task 2 の Hall-wide + Periodicity 特徴量用）
+        df_train_hall, df_test_hall = load_daily_hall_with_date_info(
+            db_path,
+            train_start,
+            train_end,
+            test_start,
+            test_end
+        )
 
-        fb_test = FeatureBuilder(df_test)
-        X_test = fb_test.build_features(is_train=False)
+        # FeatureBuilder で 31次元の拡張特徴量を生成
+        fb_train = FeatureBuilder(df_train, df_hall=df_train_hall)
+        X_train = fb_train.build_features(is_train=True, enable_extended_features=True)
+
+        fb_test = FeatureBuilder(df_test, df_hall=df_test_hall)
+        # Test時は訓練統計を使用（Data Leakage 防止）
+        fb_test.train_stats = fb_train.train_stats
+        X_test = fb_test.build_features(is_train=False, enable_extended_features=True)
 
         # ラベルを生成
         y_train = (df_train["diff_coins_normalized"] >= 1000).astype(int).values
