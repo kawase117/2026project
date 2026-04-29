@@ -105,31 +105,44 @@ class FeatureBuilder:
 
     def build_features(self, is_train: bool = True, enable_extended_features: bool = False) -> np.ndarray:
         """
-        Build combined feature matrix (Temporal + Group ID + optional Hall-wide + Periodicity)
+        Build combined feature matrix (Temporal + Group ID + optional Hall-wide + Periodicity + Task 3)
 
         Args:
             is_train: If True, fit scaler on this data. If False, use stored scaler.
-            enable_extended_features: If True, add Hall-wide (4) + Periodicity (5) features for 31 total.
+            enable_extended_features: If True, add all extended features (Task 2 + Task 3) for 53 total.
                                      If False, return only Task 1 features (22).
 
         Returns:
-            Feature matrix of shape (n_samples, 22) or (n_samples, 31)
+            Feature matrix of shape (n_samples, 22), (n_samples, 31), or (n_samples, 53)
         """
         if len(self.df) == 0:
-            n_features = 31 if enable_extended_features else 22
-            return np.array([]).reshape(0, n_features)
+            if enable_extended_features:
+                return np.array([]).reshape(0, 53)  # Task 1 + 2 + 3
+            else:
+                return np.array([]).reshape(0, 22)  # Task 1 only
 
-        temporal = self._build_temporal_features()
-        group_id = self._build_group_identification_features()
+        temporal = self._build_temporal_features()  # 11
+        group_id = self._build_group_identification_features()  # 11
 
         # Concatenate Task 1 features (22)
         features = np.concatenate([temporal, group_id], axis=1)
 
-        # Add Task 2 features if requested
+        # Add Task 2 and Task 3 features if requested
         if enable_extended_features:
-            hall_wide = self._build_hall_wide_features(is_train=is_train)
-            periodicity = self._build_periodicity_features(is_train=is_train)
-            features = np.concatenate([features, hall_wide, periodicity], axis=1)
+            hall_wide = self._build_hall_wide_features(is_train=is_train)  # 4
+            periodicity = self._build_periodicity_features(is_train=is_train)  # 5
+            machine_history = self._build_machine_history_features(is_train=is_train)  # 10
+            relative = self._build_relative_features(is_train=is_train)  # 4
+            lag = self._build_lag_features(is_train=is_train)  # 8
+
+            features = np.concatenate([
+                features,
+                hall_wide,
+                periodicity,
+                machine_history,
+                relative,
+                lag
+            ], axis=1)  # 22 + 4 + 5 + 10 + 4 + 8 = 53
 
         if is_train:
             self._apply_scaling_train(features)
