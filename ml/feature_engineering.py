@@ -480,6 +480,120 @@ class FeatureBuilder:
 
         return relative
 
+    def _build_lag_features(self, is_train: bool = True) -> np.ndarray:
+        """
+        Build Lag Features (8 total)
+
+        Features use past values to capture temporal patterns:
+        1-4. lag_1_diff, lag_2_diff, lag_7_diff, lag_30_diff — Previous differences
+        5-6. lag_1_games, lag_7_games — Previous game counts
+        7. lag_1_win_rate — Binary: was previous day a win? (diff > 0)
+        8. lag_1_win_rate_mean — 7-day win rate from previous day
+
+        Time Series Coherence:
+        - All calculations use df_full (train + test combined by date order)
+        - Test period lags connect to training period values (no gap)
+        - Missing values in first 30 days filled with ffill then 0
+
+        Data Leakage Prevention:
+        - Lag values are by definition historical (t-1, t-7, etc.)
+        - No future information used
+
+        Args:
+            is_train: Unused (lag features have no fitting required)
+
+        Returns:
+            Array of shape (n_samples, 8)
+        """
+        n = len(self.df)
+
+        # Sort df_full by machine and date to compute lags properly
+        df_full_sorted = self.df_full.sort_values(['machine_number', 'date_parsed']).copy()
+
+        # Initialize lag arrays
+        lag_1_diff = np.zeros(n, dtype=float)
+        lag_2_diff = np.zeros(n, dtype=float)
+        lag_7_diff = np.zeros(n, dtype=float)
+        lag_30_diff = np.zeros(n, dtype=float)
+        lag_1_games = np.zeros(n, dtype=float)
+        lag_7_games = np.zeros(n, dtype=float)
+        lag_1_win_rate = np.zeros(n, dtype=float)
+        lag_1_win_rate_mean = np.zeros(n, dtype=float)
+
+        # Create mapping: (machine_number, date) -> index in self.df
+        df_indexed = self.df.copy()
+        df_indexed['idx_in_self'] = range(n)
+
+        # Calculate lags by machine
+        for machine_id in df_full_sorted['machine_number'].unique():
+            df_machine = df_full_sorted[df_full_sorted['machine_number'] == machine_id].reset_index(drop=True)
+
+            if len(df_machine) < 2:
+                continue
+
+            # Create lag columns
+            df_machine_copy = df_machine.copy()
+            df_machine_copy['lag_1_diff'] = df_machine_copy['diff_coins_normalized'].shift(1)
+            df_machine_copy['lag_2_diff'] = df_machine_copy['diff_coins_normalized'].shift(2)
+            df_machine_copy['lag_7_diff'] = df_machine_copy['diff_coins_normalized'].shift(7)
+            df_machine_copy['lag_30_diff'] = df_machine_copy['diff_coins_normalized'].shift(30)
+            df_machine_copy['lag_1_games'] = df_machine_copy['games_normalized'].shift(1)
+            df_machine_copy['lag_7_games'] = df_machine_copy['games_normalized'].shift(7)
+            df_machine_copy['lag_1_win'] = (df_machine_copy['diff_coins_normalized'].shift(1) > 0).astype(int)
+
+            # Forward-fill missing lags (first 30 days)
+            df_machine_copy['lag_1_diff'] = df_machine_copy['lag_1_diff'].fillna(method='ffill')
+            df_machine_copy['lag_2_diff'] = df_machine_copy['lag_2_diff'].fillna(method='ffill')
+            df_machine_copy['lag_7_diff'] = df_machine_copy['lag_7_diff'].fillna(method='ffill')
+            df_machine_copy['lag_30_diff'] = df_machine_copy['lag_30_diff'].fillna(method='ffill')
+            df_machine_copy['lag_1_games'] = df_machine_copy['lag_1_games'].fillna(method='ffill')
+            df_machine_copy['lag_7_games'] = df_machine_copy['lag_7_games'].fillna(method='ffill')
+
+            # Fill remaining NaNs with 0
+            df_machine_copy['lag_1_diff'] = df_machine_copy['lag_1_diff'].fillna(0)
+            df_machine_copy['lag_2_diff'] = df_machine_copy['lag_2_diff'].fillna(0)
+            df_machine_copy['lag_7_diff'] = df_machine_copy['lag_7_diff'].fillna(0)
+            df_machine_copy['lag_30_diff'] = df_machine_copy['lag_30_diff'].fillna(0)
+            df_machine_copy['lag_1_games'] = df_machine_copy['lag_1_games'].fillna(0)
+            df_machine_copy['lag_7_games'] = df_machine_copy['lag_7_games'].fillna(0)
+            df_machine_copy['lag_1_win'] = df_machine_copy['lag_1_win'].fillna(0)
+
+            # 7-day rolling win rate shifted by 1
+            df_machine_copy['win_indicator'] = (df_machine_copy['diff_coins_normalized'] > 0).astype(int)
+            df_machine_copy['lag_1_win_rate_mean'] = df_machine_copy['win_indicator'].rolling(7, min_periods=1).mean().shift(1)
+            df_machine_copy['lag_1_win_rate_mean'] = df_machine_copy['lag_1_win_rate_mean'].fillna(0)
+
+            # Map back to indices in self.df
+            for idx_in_machine, row_machine in enumerate(df_machine_copy.itertuples()):
+                # Find matching row in self.df
+                mask = (df_indexed['machine_number'] == machine_id) & (df_indexed['date_parsed'] == row_machine.date_parsed)
+                idx_list = df_indexed[mask]['idx_in_self'].values
+
+                if len(idx_list) > 0:
+                    idx_in_self = idx_list[0]
+                    lag_1_diff[idx_in_self] = row_machine.lag_1_diff
+                    lag_2_diff[idx_in_self] = row_machine.lag_2_diff
+                    lag_7_diff[idx_in_self] = row_machine.lag_7_diff
+                    lag_30_diff[idx_in_self] = row_machine.lag_30_diff
+                    lag_1_games[idx_in_self] = row_machine.lag_1_games
+                    lag_7_games[idx_in_self] = row_machine.lag_7_games
+                    lag_1_win_rate[idx_in_self] = row_machine.lag_1_win
+                    lag_1_win_rate_mean[idx_in_self] = row_machine.lag_1_win_rate_mean
+
+        # Concatenate all lag features: 8 dimensions
+        lag_features = np.concatenate([
+            lag_1_diff.reshape(-1, 1),
+            lag_2_diff.reshape(-1, 1),
+            lag_7_diff.reshape(-1, 1),
+            lag_30_diff.reshape(-1, 1),
+            lag_1_games.reshape(-1, 1),
+            lag_7_games.reshape(-1, 1),
+            lag_1_win_rate.reshape(-1, 1),
+            lag_1_win_rate_mean.reshape(-1, 1)
+        ], axis=1)
+
+        return lag_features
+
     def _apply_scaling_train(self, features: np.ndarray):
         """
         Fit and apply scaling on training data (placeholder for future StandardScaler)
