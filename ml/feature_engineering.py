@@ -218,6 +218,183 @@ class FeatureBuilder:
 
         return group_id
 
+    def _build_machine_history_features(self, is_train: bool = True) -> np.ndarray:
+        """
+        Build Machine History features (10 total)
+
+        Features:
+        1-2. ma_14_diff, ma_7_diff — Moving average of diff_coins (14/7 days)
+        3-4. ma_14_games, ma_7_games — Moving average of games (14/7 days)
+        5. ma_30_diff — Moving average of diff_coins (30 days)
+        6. efficiency — ma_14_diff / (ma_14_games + 1e-8), normalized
+        7. stability — Std of diff_coins over 7 days
+        8. trend_14 — (recent_7_mean - older_7_mean) / older_7_mean
+        9. consecutive_wins — Count of consecutive days with diff > 0
+        10. win_rate_machine — (days_with_positive_diff / total_days), normalized
+
+        Data Leakage Prevention:
+        - All rolling calculations done on df_full (train + test combined)
+        - Statistics (mean, std) computed only on training data
+        - Test data uses training statistics for normalization
+
+        Args:
+            is_train: If True, fit scalers. If False, use stored scalers.
+
+        Returns:
+            Array of shape (n_samples, 10)
+        """
+        n = len(self.df)
+
+        # Sort df_full by machine_number and date for rolling calculations
+        df_full_sorted = self.df_full.sort_values(['machine_number', 'date_parsed']).copy()
+
+        # Initialize feature arrays
+        ma_14_diff_vals = np.zeros(n, dtype=float)
+        ma_7_diff_vals = np.zeros(n, dtype=float)
+        ma_14_games_vals = np.zeros(n, dtype=float)
+        ma_7_games_vals = np.zeros(n, dtype=float)
+        ma_30_diff_vals = np.zeros(n, dtype=float)
+        efficiency_vals = np.zeros(n, dtype=float)
+        stability_vals = np.zeros(n, dtype=float)
+        trend_14_vals = np.zeros(n, dtype=float)
+        consecutive_wins_vals = np.zeros(n, dtype=float)
+        win_rate_machine_vals = np.zeros(n, dtype=float)
+
+        # Create mapping: (machine_number, date) -> index in self.df
+        df_indexed = self.df.copy()
+        df_indexed['idx_in_self'] = range(n)
+
+        # Calculate rolling statistics by machine
+        for machine_id in df_full_sorted['machine_number'].unique():
+            df_machine = df_full_sorted[df_full_sorted['machine_number'] == machine_id].reset_index(drop=True)
+
+            if len(df_machine) < 2:
+                continue
+
+            # Rolling means (minimum 1 period to handle sparse data)
+            ma_14_diff = df_machine['diff_coins_normalized'].rolling(14, min_periods=1).mean().values
+            ma_7_diff = df_machine['diff_coins_normalized'].rolling(7, min_periods=1).mean().values
+            ma_14_games = df_machine['games_normalized'].rolling(14, min_periods=1).mean().values
+            ma_7_games = df_machine['games_normalized'].rolling(7, min_periods=1).mean().values
+            ma_30_diff = df_machine['diff_coins_normalized'].rolling(30, min_periods=1).mean().values
+
+            # Efficiency: ma_14_diff / ma_14_games
+            efficiency = ma_14_diff / (ma_14_games + 1e-8)
+
+            # Stability: std of diff over 7 days (low std = stable)
+            stability = df_machine['diff_coins_normalized'].rolling(7, min_periods=1).std().values
+            stability = np.nan_to_num(stability, nan=0.0)  # Handle NaN in first period
+
+            # Trend: (recent_7_mean - older_7_mean) / older_7_mean
+            trend_14 = np.zeros_like(df_machine['diff_coins_normalized'].values, dtype=float)
+            for i in range(len(df_machine)):
+                if i >= 14:
+                    recent_7_mean = ma_7_diff[i-1]  # Use previous 7-day average
+                    older_7_start = max(0, i-14)
+                    older_7_mean = df_machine['diff_coins_normalized'].iloc[older_7_start:i-7].mean()
+                    if older_7_mean != 0:
+                        trend_14[i] = (recent_7_mean - older_7_mean) / abs(older_7_mean)
+                    else:
+                        trend_14[i] = 0.0
+                else:
+                    trend_14[i] = 0.0
+
+            # Consecutive wins: count days with diff > 0 consecutively
+            consecutive_wins = np.zeros_like(df_machine['diff_coins_normalized'].values, dtype=float)
+            win_indicator = (df_machine['diff_coins_normalized'].values > 0).astype(int)
+
+            count = 0
+            for i, is_win in enumerate(win_indicator):
+                if is_win:
+                    count += 1
+                else:
+                    count = 0
+                consecutive_wins[i] = count
+
+            # Win rate: fraction of days with diff > 0
+            total_days = len(df_machine)
+            win_days = (df_machine['diff_coins_normalized'].values > 0).sum()
+            win_rate = float(win_days) / float(total_days) if total_days > 0 else 0.0
+            win_rate_machine_arr = np.full(len(df_machine), win_rate, dtype=float)
+
+            # Map back to indices in self.df
+            for idx_in_machine, row_machine in enumerate(df_machine.itertuples()):
+                # Find matching row in self.df
+                mask = (df_indexed['machine_number'] == machine_id) & (df_indexed['date_parsed'] == row_machine.date_parsed)
+                idx_list = df_indexed[mask]['idx_in_self'].values
+
+                if len(idx_list) > 0:
+                    idx_in_self = idx_list[0]
+                    ma_14_diff_vals[idx_in_self] = ma_14_diff[idx_in_machine]
+                    ma_7_diff_vals[idx_in_self] = ma_7_diff[idx_in_machine]
+                    ma_14_games_vals[idx_in_self] = ma_14_games[idx_in_machine]
+                    ma_7_games_vals[idx_in_self] = ma_7_games[idx_in_machine]
+                    ma_30_diff_vals[idx_in_self] = ma_30_diff[idx_in_machine]
+                    efficiency_vals[idx_in_self] = efficiency[idx_in_machine]
+                    stability_vals[idx_in_self] = stability[idx_in_machine]
+                    trend_14_vals[idx_in_self] = trend_14[idx_in_machine]
+                    consecutive_wins_vals[idx_in_self] = consecutive_wins[idx_in_machine]
+                    win_rate_machine_vals[idx_in_self] = win_rate_machine_arr[idx_in_machine]
+
+        # Normalize efficiency, stability, win_rate using training statistics
+        if is_train:
+            scaler_efficiency = StandardScaler()
+            scaler_stability = StandardScaler()
+            scaler_win_rate = StandardScaler()
+
+            # Fit on non-zero values
+            valid_eff = efficiency_vals[efficiency_vals != 0].reshape(-1, 1) if (efficiency_vals != 0).sum() > 0 else np.array([[0.0]])
+            valid_stab = stability_vals[stability_vals != 0].reshape(-1, 1) if (stability_vals != 0).sum() > 0 else np.array([[0.0]])
+            valid_wr = win_rate_machine_vals.reshape(-1, 1)
+
+            scaler_efficiency.fit(valid_eff)
+            scaler_stability.fit(valid_stab)
+            scaler_win_rate.fit(valid_wr)
+
+            self.train_stats['scaler_efficiency'] = scaler_efficiency
+            self.train_stats['scaler_stability'] = scaler_stability
+            self.train_stats['scaler_win_rate'] = scaler_win_rate
+        else:
+            scaler_efficiency = self.train_stats.get('scaler_efficiency', StandardScaler())
+            scaler_stability = self.train_stats.get('scaler_stability', StandardScaler())
+            scaler_win_rate = self.train_stats.get('scaler_win_rate', StandardScaler())
+
+        # Apply scaling
+        efficiency_normalized = np.full_like(efficiency_vals, 0.0)
+        stability_normalized = np.full_like(stability_vals, 0.0)
+        win_rate_normalized = np.full_like(win_rate_machine_vals, 0.0)
+
+        valid_eff_mask = efficiency_vals != 0
+        valid_stab_mask = stability_vals != 0
+
+        if valid_eff_mask.sum() > 0:
+            efficiency_normalized[valid_eff_mask] = scaler_efficiency.transform(
+                efficiency_vals[valid_eff_mask].reshape(-1, 1)
+            ).flatten()
+
+        if valid_stab_mask.sum() > 0:
+            stability_normalized[valid_stab_mask] = scaler_stability.transform(
+                stability_vals[valid_stab_mask].reshape(-1, 1)
+            ).flatten()
+
+        win_rate_normalized = scaler_win_rate.transform(win_rate_machine_vals.reshape(-1, 1)).flatten()
+
+        # Concatenate all machine history features: 10 dimensions
+        machine_history = np.concatenate([
+            ma_14_diff_vals.reshape(-1, 1),
+            ma_7_diff_vals.reshape(-1, 1),
+            ma_14_games_vals.reshape(-1, 1),
+            ma_7_games_vals.reshape(-1, 1),
+            ma_30_diff_vals.reshape(-1, 1),
+            efficiency_normalized.reshape(-1, 1),
+            stability_normalized.reshape(-1, 1),
+            trend_14_vals.reshape(-1, 1),
+            consecutive_wins_vals.reshape(-1, 1),
+            win_rate_normalized.reshape(-1, 1)
+        ], axis=1)
+
+        return machine_history
+
     def _apply_scaling_train(self, features: np.ndarray):
         """
         Fit and apply scaling on training data (placeholder for future StandardScaler)
