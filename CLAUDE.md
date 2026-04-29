@@ -120,7 +120,26 @@ AIアシスタントへ：このファイルをセッション開始時に必ず
 ├── test/                        ← ユニットテスト
 │   ├── test_filters.py          ← filters.py テスト（9件）
 │   └── test_charts.py           ← charts.py テスト（6件）
-└── document/                    ← 設計ドキュメント群
+└── document/                    ← 設計ドキュメント（統一source of truth）
+    ├── ARCHITECTURE.md          ← システム全体構成図
+    ├── PHASE2_完全仕様書.md     ← Phase 2 詳細仕様
+    ├── PHASE5_ML_VALIDATION_REPORT.md ← Phase 5 検証結果
+    ├── PHASE6_IMPLEMENTATION_PLAN.md  ← Phase 6 実装計画
+    ├── plans/                   ← 全実装計画
+    │   ├── 2026-04-15-refactoring-plan.md
+    │   ├── 2026-04-23-backtest-validation-implementation.md
+    │   ├── 2026-04-23-cross-metric-validation-implementation.md
+    │   ├── 2026-04-24-cross-attribute-performance-plan.md
+    │   ├── 2026-04-25-percentile-optimization.md
+    │   ├── 2026-04-26-phase4-ml-pipeline.md
+    │   └── ...
+    ├── superpowers/             ← 高度な分析機能の仕様・設計
+    │   ├── 2026-04-23-cross-metric-validation-calculations.md
+    │   ├── 2026-04-23-cross-metric-validation-code-spec.md
+    │   ├── 2026-04-23-cross-metric-validation-design.md
+    │   ├── 2026-04-23-backtest-validation-design.md
+    │   └── README.md
+    └── sessions/                ← /save で生成される分析ログ
 ```
 
 ## 起動方法
@@ -253,15 +272,30 @@ python -m pytest test/ -v
 
 ## ドキュメント参照先
 
+### メインドキュメント
+
 | ドキュメント | 内容 |
 |------------|------|
+| `document/ARCHITECTURE.md` | システム全体構成図 |
 | `document/Phase1_Scraper実装ドキュメント.md` | スクレイパー詳細仕様 |
 | `document/Phase2_Database全体アーキテクチャ.md` | DB処理フロー全体 |
 | `document/PHASE2_完全仕様書.md` | Phase 2 詳細仕様 |
-| `document/ARCHITECTURE.md` | システム全体構成図 |
 | `document/パチスロ分析データベース スキーマ説明書.md` | DBスキーマ詳細 |
-| `document/plans/2026-04-15-refactoring-plan.md` | 2026-04 リファクタリング計画・変更記録 |
-| `ml/docs/PHASE4_DESIGN.md` | Phase 4 機械学習パイプライン設計（2026-04-26） |
+| `document/PHASE5_ML_VALIDATION_REPORT.md` | Phase 5 ML検証結果 |
+| `document/PHASE6_IMPLEMENTATION_PLAN.md` | Phase 6 実装計画 |
+| `ml/docs/PHASE4_DESIGN.md` | Phase 4 機械学習パイプライン設計 |
+
+### 実装計画 (document/plans/)
+
+全ての実装タスク・設計が集約されている。新しいタスク作成時は常にここに記録。
+
+### 高度な分析機能 (document/superpowers/)
+
+Cross-metric validation, バックテスト検証などの高度な分析機能の仕様・設計。
+
+### セッション記録 (document/sessions/)
+
+`/save` コマンドで生成される分析結果ログ。
 
 ## GitHub
 
@@ -269,9 +303,11 @@ python -m pytest test/ -v
 ブランチ: main
 修正完了後、ユーザーに「プッシュしますか？」と確認してからプッシュする。
 
-### /save コマンド
-- 現在のチャット会話を document/ に保存
-- 形式：raw/sessions/YYYY-MM-DD-T-HH-MM-SS-<説明>.md
+### /save コマンド（2026-04-29 統一）
+- 現在のチャット会話を `document/sessions/` に保存
+- 形式：`YYYY-MM-DD-T-HH-MM-SS-<説明>.md`
+- **用途**：分析結果を「分析条件」「グループ化方法」「学習条件」「結果」を完全に記録して保存
+- 参照：`.claude/skills/save/SKILL.md`
 
 ## ワークフロー関連（2026-04-23 追加）
 
