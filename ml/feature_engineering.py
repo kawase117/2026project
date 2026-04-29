@@ -25,7 +25,18 @@ Periodicity Pattern Features (5):
 - is_event_day (1 dimension)
 - anomaly_score (1 dimension)
 
-Total: 22 features (Task 1) or 31 features (Task 2)
+Machine History Features (10):
+- ma_14_diff, ma_7_diff, ma_14_games, ma_7_games, ma_30_diff (5 dimensions)
+- efficiency, stability, trend_14, consecutive_wins, win_rate_machine (5 dimensions)
+
+Relative Features (4):
+- diff_vs_hall, games_vs_hall, efficiency_vs_hall, rank_percentile (4 dimensions)
+
+Lag Features (8):
+- lag_1_diff, lag_2_diff, lag_7_diff, lag_30_diff (4 dimensions)
+- lag_1_games, lag_7_games, lag_1_win_rate, lag_1_win_rate_mean (4 dimensions)
+
+Total: 22 features (Task 1), 31 features (Task 1+2), or 53 features (Task 1+2+3)
 """
 
 import numpy as np
@@ -49,18 +60,22 @@ class FeatureBuilder:
         "diff_coins_normalized"
     ]
 
-    def __init__(self, df: pd.DataFrame, df_hall: Optional[pd.DataFrame] = None):
+    def __init__(self, df: pd.DataFrame, df_hall: Optional[pd.DataFrame] = None,
+                 df_full: Optional[pd.DataFrame] = None, train_end_date: Optional[str] = None):
         """
         Initialize FeatureBuilder
 
         Args:
-            df: DataFrame with machine_detailed_results columns
-                Must contain: date (YYYYMMDD), machine_number, last_digit, is_zorome
+            df: DataFrame with machine_detailed_results columns (train or test subset)
             df_hall: Optional DataFrame with daily_hall_summary columns
                      Used for Hall-wide and Periodicity features (Task 2)
+            df_full: Optional full DataFrame (train + test) for rolling calculations
+            train_end_date: End date of training period (YYYYMMDD) for coherence detection
         """
         self.df = df.copy()
         self.df_hall = df_hall.copy() if df_hall is not None else None
+        self.df_full = df_full.copy() if df_full is not None else df.copy()  # Default to current df
+        self.train_end_date = train_end_date
         self._validate_columns()
         self._parse_dates()
         self._scaler_state = {}
