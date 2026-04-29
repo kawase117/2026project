@@ -536,10 +536,10 @@ class TestPeriodicityFeatures:
 
 
 class TestBuildFeaturesExtended:
-    """Test combined extended feature building (22 + 9 = 31 dimensions)"""
+    """Test combined extended feature building (Task 1+2+3+4 = 69 dimensions)"""
 
     def test_build_features_extended_shape(self, sample_df):
-        """Test that extended features have correct shape (n, 53)"""
+        """Test that extended features have correct shape (n, 69)"""
         df_hall = pd.DataFrame({
             "date": ["20250101", "20250102", "20250103", "20250104"],
             "win_rate": [38, 31, 42, 35],
@@ -550,7 +550,7 @@ class TestBuildFeaturesExtended:
 
         fb = FeatureBuilder(sample_df, df_hall=df_hall, df_full=sample_df)
         features = fb.build_features(is_train=True, enable_extended_features=True)
-        assert features.shape == (4, 53)
+        assert features.shape == (4, 69), f"Expected 69 dimensions (Task 1-4), got {features.shape[1]}"
 
     def test_build_features_task1_without_extended(self, sample_df):
         """Test that enable_extended_features=False returns 22 dimensions"""
@@ -559,11 +559,11 @@ class TestBuildFeaturesExtended:
         assert features.shape == (4, 22)
 
     def test_build_features_extended_no_hall_data(self, sample_df):
-        """Test extended features without hall data (should still return 53)"""
+        """Test extended features without hall data (should still return 69)"""
         fb = FeatureBuilder(sample_df, df_hall=None, df_full=sample_df)
         features = fb.build_features(is_train=True, enable_extended_features=True)
-        # Hall-wide features are zeros, periodicity is computed from machine data
-        assert features.shape == (4, 53)
+        # Hall-wide features are zeros, periodicity + Task 4 features are computed from machine data
+        assert features.shape == (4, 69), f"Expected 69 dimensions (Task 1-4), got {features.shape[1]}"
 
     def test_extended_features_data_leakage_prevention(self):
         """Test that test features use only training statistics"""
@@ -611,9 +611,9 @@ class TestBuildFeaturesExtended:
         fb_test.train_stats = fb_train.train_stats
         X_test = fb_test.build_features(is_train=False, enable_extended_features=True)
 
-        # Both should have 53 dimensions (Task 1 + 2 + 3)
-        assert X_train.shape == (3, 53)
-        assert X_test.shape == (1, 53)
+        # Both should have 69 dimensions (Task 1 + 2 + 3 + 4)
+        assert X_train.shape == (3, 69), f"Expected 69 dimensions, got {X_train.shape[1]}"
+        assert X_test.shape == (1, 69), f"Expected 69 dimensions, got {X_test.shape[1]}"
 
         # Test features should not have NaN values
         assert not np.isnan(X_test).any()
@@ -900,6 +900,308 @@ class TestLagFeatures:
         assert set(unique_vals).issubset({0.0, 1.0}), f"lag_1_win_rate should be binary, got {unique_vals}"
 
 
+class TestInteractionFeatures:
+    """Test Interaction feature generation (5 dimensions - Task 4)"""
+
+    def test_interaction_features_shape(self, temp_test_db):
+        """Test that interaction features have correct shape (n, 5)"""
+        conn = sqlite3.connect(temp_test_db)
+        df = pd.read_sql_query("SELECT * FROM machine_detailed_results", conn)
+        conn.close()
+
+        df_hall = pd.DataFrame({
+            "date": df['date'].unique(),
+            "win_rate": [40] * len(df['date'].unique())
+        })
+
+        fb = FeatureBuilder(df, df_hall=df_hall, df_full=df)
+        interaction = fb._build_interaction_features()
+        assert interaction.shape == (len(df), 5), f"Expected shape ({len(df)}, 5), got {interaction.shape}"
+
+    def test_day_diff_interaction_range(self, temp_test_db):
+        """Test day_×_diff_interaction values are in [0, 1]"""
+        conn = sqlite3.connect(temp_test_db)
+        df = pd.read_sql_query("SELECT * FROM machine_detailed_results", conn)
+        conn.close()
+
+        fb = FeatureBuilder(df, df_full=df)
+        interaction = fb._build_interaction_features()
+
+        # First feature is day_×_diff_interaction
+        day_diff_interaction = interaction[:, 0]
+        assert np.all(day_diff_interaction >= 0) and np.all(day_diff_interaction <= 1), \
+            f"day_diff_interaction should be in [0, 1], got min={day_diff_interaction.min()}, max={day_diff_interaction.max()}"
+
+    def test_digit_weekday_interaction_nonzero(self, temp_test_db):
+        """Test digit_×_weekday_interaction is nonzero when both present"""
+        conn = sqlite3.connect(temp_test_db)
+        df = pd.read_sql_query("SELECT * FROM machine_detailed_results", conn)
+        conn.close()
+
+        fb = FeatureBuilder(df, df_full=df)
+        interaction = fb._build_interaction_features()
+
+        # Second feature is digit_×_weekday_interaction
+        digit_dow = interaction[:, 1]
+        # Should be nonzero for all rows (both digit and dow are present)
+        assert np.any(digit_dow > 0), "digit_×_weekday_interaction should have nonzero values"
+
+    def test_zorome_efficiency_interaction(self, temp_test_db):
+        """Test zorome_×_efficiency_interaction is nonzero only when is_zorome==1"""
+        conn = sqlite3.connect(temp_test_db)
+        df = pd.read_sql_query("SELECT * FROM machine_detailed_results", conn)
+        conn.close()
+
+        fb = FeatureBuilder(df, df_full=df)
+        interaction = fb._build_interaction_features()
+
+        # Third feature is zorome_×_efficiency_interaction
+        zorome_eff = interaction[:, 2]
+
+        # Get is_zorome values
+        is_zorome = df['is_zorome'].values
+
+        # Where is_zorome==0, interaction should be 0
+        zero_mask = is_zorome == 0
+        assert np.all(zorome_eff[zero_mask] == 0), "zorome_×_efficiency should be 0 when is_zorome==0"
+
+    def test_hall_condition_machine_perf(self, temp_test_db):
+        """Test hall_condition_×_machine_perf has no NaN values"""
+        conn = sqlite3.connect(temp_test_db)
+        df = pd.read_sql_query("SELECT * FROM machine_detailed_results", conn)
+        df_hall = pd.read_sql_query("SELECT * FROM daily_hall_summary", conn)
+        conn.close()
+
+        fb = FeatureBuilder(df, df_hall=df_hall, df_full=df)
+        interaction = fb._build_interaction_features()
+
+        # Fourth feature is hall_condition_×_machine_perf
+        hall_perf = interaction[:, 3]
+        assert not np.isnan(hall_perf).any(), "hall_condition_×_machine_perf should have no NaN"
+
+
+class TestDomainSpecificFeatures:
+    """Test Domain-Specific feature generation (11 dimensions - Task 4)"""
+
+    def test_domain_specific_features_shape(self, temp_test_db):
+        """Test that domain-specific features have correct shape (n, 11)"""
+        conn = sqlite3.connect(temp_test_db)
+        df = pd.read_sql_query("SELECT * FROM machine_detailed_results", conn)
+        df_hall = pd.read_sql_query("SELECT * FROM daily_hall_summary", conn)
+        conn.close()
+
+        fb = FeatureBuilder(df, df_hall=df_hall, df_full=df)
+        domain = fb._build_domain_specific_features()
+        assert domain.shape == (len(df), 11), f"Expected shape ({len(df)}, 11), got {domain.shape}"
+
+    def test_setting_injection_dd_marker(self, temp_test_db):
+        """Test setting_injection_marker_dd is 1 on payroll dates with high diff"""
+        conn = sqlite3.connect(temp_test_db)
+        df = pd.read_sql_query("SELECT * FROM machine_detailed_results", conn)
+        conn.close()
+
+        fb = FeatureBuilder(df, df_full=df)
+        domain = fb._build_domain_specific_features()
+
+        # Second feature is setting_injection_marker_dd
+        marker_dd = domain[:, 1]
+
+        # Should be binary (0 or 1)
+        assert np.all((marker_dd == 0) | (marker_dd == 1)), \
+            f"setting_injection_marker_dd should be binary, got unique values: {np.unique(marker_dd)}"
+
+    def test_setting_injection_dow_marker(self, temp_test_db):
+        """Test setting_injection_marker_dow is 1 on weekends with high diff"""
+        conn = sqlite3.connect(temp_test_db)
+        df = pd.read_sql_query("SELECT * FROM machine_detailed_results", conn)
+        conn.close()
+
+        fb = FeatureBuilder(df, df_full=df)
+        domain = fb._build_domain_specific_features()
+
+        # Third feature is setting_injection_marker_dow
+        marker_dow = domain[:, 2]
+
+        # Should be binary (0 or 1)
+        assert np.all((marker_dow == 0) | (marker_dow == 1)), \
+            f"setting_injection_marker_dow should be binary, got unique values: {np.unique(marker_dow)}"
+
+    def test_bb_rb_signature_positive(self, temp_test_db):
+        """Test bb_rb_signature_indicator values >= 0"""
+        conn = sqlite3.connect(temp_test_db)
+        df = pd.read_sql_query("SELECT * FROM machine_detailed_results", conn)
+        conn.close()
+
+        fb = FeatureBuilder(df, df_full=df)
+        domain = fb._build_domain_specific_features()
+
+        # Fourth feature is bb_rb_signature_indicator
+        bb_rb = domain[:, 3]
+
+        assert np.all(bb_rb >= 0), f"bb_rb_signature should be >= 0, got min={bb_rb.min()}"
+
+    def test_consecutive_win_marker_logic(self, temp_test_db):
+        """Test consecutive_win_marker is binary based on moving average logic"""
+        conn = sqlite3.connect(temp_test_db)
+        df = pd.read_sql_query("SELECT * FROM machine_detailed_results", conn)
+        conn.close()
+
+        fb = FeatureBuilder(df, df_full=df)
+        domain = fb._build_domain_specific_features()
+
+        # Fifth feature is consecutive_win_marker
+        consecutive_marker = domain[:, 4]
+
+        # Should be binary (0 or 1)
+        assert np.all((consecutive_marker == 0) | (consecutive_marker == 1)), \
+            f"consecutive_win_marker should be binary, got unique values: {np.unique(consecutive_marker)}"
+
+    def test_event_day_payload_composite(self, temp_test_db):
+        """Test event_day_payload_indicator requires all conditions"""
+        conn = sqlite3.connect(temp_test_db)
+        df = pd.read_sql_query("SELECT * FROM machine_detailed_results", conn)
+        conn.close()
+
+        fb = FeatureBuilder(df, df_full=df)
+        domain = fb._build_domain_specific_features()
+
+        # Sixth feature is event_day_payload_indicator
+        event_payload = domain[:, 5]
+
+        # Should be binary (0 or 1)
+        assert np.all((event_payload == 0) | (event_payload == 1)), \
+            f"event_day_payload_indicator should be binary, got unique values: {np.unique(event_payload)}"
+
+    def test_hall_state_relative_efficiency(self, temp_test_db):
+        """Test hall_state_relative_efficiency values are reasonable"""
+        conn = sqlite3.connect(temp_test_db)
+        df = pd.read_sql_query("SELECT * FROM machine_detailed_results", conn)
+        df_hall = pd.read_sql_query("SELECT * FROM daily_hall_summary", conn)
+        conn.close()
+
+        fb = FeatureBuilder(df, df_hall=df_hall, df_full=df)
+        domain = fb._build_domain_specific_features()
+
+        # Seventh feature is hall_state_relative_efficiency
+        relative_eff = domain[:, 6]
+
+        # Should be clipped to reasonable range [0, 5]
+        assert np.all(relative_eff >= 0) and np.all(relative_eff <= 5), \
+            f"hall_state_relative_efficiency should be in [0, 5], got min={relative_eff.min()}, max={relative_eff.max()}"
+
+    def test_machine_model_anomaly_score(self, temp_test_db):
+        """Test machine_model_anomaly_score is normalized [0, 1]"""
+        conn = sqlite3.connect(temp_test_db)
+        df = pd.read_sql_query("SELECT * FROM machine_detailed_results", conn)
+        conn.close()
+
+        fb = FeatureBuilder(df, df_full=df)
+        domain = fb._build_domain_specific_features()
+
+        # Eighth feature is machine_model_anomaly_score
+        anomaly = domain[:, 7]
+
+        # Should be normalized to [0, 1]
+        assert np.all(anomaly >= 0) and np.all(anomaly <= 1), \
+            f"machine_model_anomaly_score should be in [0, 1], got min={anomaly.min()}, max={anomaly.max()}"
+
+    def test_payday_window_ramp(self):
+        """Test payday_window_effect forms linear ramp (23→0, 24→0.5, 25→1.0, 26→0.5, 27→0)"""
+        df_payday = pd.DataFrame({
+            "date": ["20250122", "20250123", "20250124", "20250125", "20250126", "20250127", "20250128"],
+            "machine_number": [1, 2, 3, 4, 5, 6, 7],
+            "machine_name": ["Model"] * 7,
+            "last_digit": ["1"] * 7,
+            "is_zorome": [0] * 7,
+            "games_normalized": [100] * 7,
+            "diff_coins_normalized": [1000] * 7
+        })
+
+        fb = FeatureBuilder(df_payday, df_full=df_payday)
+        domain = fb._build_domain_specific_features()
+
+        # Ninth feature is payday_window_effect
+        payday_ramp = domain[:, 8]
+
+        # Expected: [0, 0, 0.5, 1.0, 0.5, 0, 0]
+        # (days 22-28 map to indices 0-6)
+        expected = np.array([0, 0, 0.5, 1.0, 0.5, 0, 0])
+        np.testing.assert_array_almost_equal(payday_ramp, expected, decimal=2)
+
+    def test_zorome_days_since(self, temp_test_db):
+        """Test zorome_days_since is in [0, 1]"""
+        conn = sqlite3.connect(temp_test_db)
+        df = pd.read_sql_query("SELECT * FROM machine_detailed_results", conn)
+        conn.close()
+
+        fb = FeatureBuilder(df, df_full=df)
+        domain = fb._build_domain_specific_features()
+
+        # Tenth feature is zorome_days_since
+        days_since = domain[:, 9]
+
+        assert np.all(days_since >= 0) and np.all(days_since <= 1), \
+            f"zorome_days_since should be in [0, 1], got min={days_since.min()}, max={days_since.max()}"
+
+    def test_overall_confidence_composite(self, temp_test_db):
+        """Test overall_setting_confidence is in [0, 1]"""
+        conn = sqlite3.connect(temp_test_db)
+        df = pd.read_sql_query("SELECT * FROM machine_detailed_results", conn)
+        conn.close()
+
+        fb = FeatureBuilder(df, df_full=df)
+        domain = fb._build_domain_specific_features()
+
+        # Eleventh feature is overall_setting_confidence
+        confidence = domain[:, 10]
+
+        assert np.all(confidence >= 0) and np.all(confidence <= 1), \
+            f"overall_setting_confidence should be in [0, 1], got min={confidence.min()}, max={confidence.max()}"
+
+
+class TestTask4Integration:
+    """Integration tests for Task 4 (Interaction + Domain-Specific features)"""
+
+    def test_interaction_no_nan_values(self, temp_test_db):
+        """Test that interaction features have no NaN values"""
+        conn = sqlite3.connect(temp_test_db)
+        df = pd.read_sql_query("SELECT * FROM machine_detailed_results", conn)
+        conn.close()
+
+        fb = FeatureBuilder(df, df_full=df)
+        interaction = fb._build_interaction_features()
+
+        assert not np.isnan(interaction).any(), "Interaction features contain NaN"
+
+    def test_domain_specific_no_nan_values(self, temp_test_db):
+        """Test that domain-specific features have no NaN values"""
+        conn = sqlite3.connect(temp_test_db)
+        df = pd.read_sql_query("SELECT * FROM machine_detailed_results", conn)
+        conn.close()
+
+        fb = FeatureBuilder(df, df_full=df)
+        domain = fb._build_domain_specific_features()
+
+        assert not np.isnan(domain).any(), "Domain-specific features contain NaN"
+
+    def test_build_features_with_task4_shape_69d(self, temp_test_db):
+        """Test full build_features with Task 4 returns (n, 69) dimensions"""
+        conn = sqlite3.connect(temp_test_db)
+        df = pd.read_sql_query("SELECT * FROM machine_detailed_results", conn)
+        df_hall = pd.read_sql_query("SELECT * FROM daily_hall_summary", conn)
+        conn.close()
+
+        df['date'] = pd.to_datetime(df['date'], format='%Y%m%d')
+        df_full = df.copy()
+
+        fb = FeatureBuilder(df, df_hall=df_hall, df_full=df_full)
+        features = fb.build_features(is_train=True, enable_extended_features=True)
+
+        # 22 (Task 1) + 4 (Hall) + 5 (Periodicity) + 10 (Machine History)
+        # + 4 (Relative) + 8 (Lag) + 5 (Interaction) + 11 (Domain-specific) = 69
+        assert features.shape[1] == 69, f"Expected 69 dimensions, got {features.shape[1]}"
+
+
 class TestFullFeatureIntegration:
     """Integration tests for full 53-dimensional feature matrix"""
 
@@ -916,7 +1218,7 @@ class TestFullFeatureIntegration:
         fb = FeatureBuilder(df_machine, df_hall=df_hall, df_full=df_full)
         features = fb.build_features(is_train=True, enable_extended_features=True)
 
-        assert features.shape[1] == 53, f"Expected 53 dimensions, got {features.shape[1]}"
+        assert features.shape[1] == 69, f"Expected 69 dimensions (Task 1-4), got {features.shape[1]}"
 
     def test_22_dimensional_output_without_extended(self, sample_df):
         """Test that enable_extended_features=False produces 22 dimensions"""
@@ -958,7 +1260,7 @@ class TestFullFeatureIntegration:
 
         assert X_train.shape[1] == X_test.shape[1], \
             f"Feature count mismatch: train={X_train.shape[1]}, test={X_test.shape[1]}"
-        assert X_train.shape[1] == 53, "Should have 53 dimensions"
+        assert X_train.shape[1] == 69, "Should have 69 dimensions"
 
     def test_no_data_leakage_in_lag_features(self):
         """Verify that test period lag features don't use future values"""

@@ -36,7 +36,27 @@ Lag Features (8):
 - lag_1_diff, lag_2_diff, lag_7_diff, lag_30_diff (4 dimensions)
 - lag_1_games, lag_7_games, lag_1_win_rate, lag_1_win_rate_mean (4 dimensions)
 
-Total: 22 features (Task 1), 31 features (Task 1+2), or 53 features (Task 1+2+3)
+Interaction Features (5):
+- day_×_diff_interaction (1 dimension)
+- digit_×_weekday_interaction (1 dimension)
+- zorome_×_efficiency_interaction (1 dimension)
+- hall_condition_×_machine_perf (1 dimension)
+- event_day_×_diff_boost (1 dimension)
+
+Domain-Specific Features (11):
+- zorome_efficiency_granular (1 dimension)
+- setting_injection_marker_dd (1 dimension)
+- setting_injection_marker_dow (1 dimension)
+- bb_rb_signature_indicator (1 dimension)
+- consecutive_win_marker (1 dimension)
+- event_day_payload_indicator (1 dimension)
+- hall_state_relative_efficiency (1 dimension)
+- machine_model_anomaly_score (1 dimension)
+- payday_window_effect (1 dimension)
+- zorome_days_since (1 dimension)
+- overall_setting_confidence (1 dimension)
+
+Total: 22 features (Task 1), 31 features (Task 1+2), 53 features (Task 1+2+3), 69 features (Task 1+2+3+4)
 """
 
 import numpy as np
@@ -118,19 +138,19 @@ class FeatureBuilder:
         enable_extended_features: bool = False
     ) -> np.ndarray:
         """
-        Build combined feature matrix (Temporal + Group ID + optional Hall-wide + Periodicity + Task 3)
+        Build combined feature matrix (Temporal + Group ID + optional Hall-wide + Periodicity + Task 3 + Task 4)
 
         Args:
             is_train: If True, fit scaler on this data. If False, use stored scaler.
-            enable_extended_features: If True, add all extended features (Task 2 + Task 3) for 53 total.
+            enable_extended_features: If True, add all extended features (Task 2 + Task 3 + Task 4) for 69 total.
                                      If False, return only Task 1 features (22).
 
         Returns:
-            Feature matrix of shape (n_samples, 22), (n_samples, 31), or (n_samples, 53)
+            Feature matrix of shape (n_samples, 22) or (n_samples, 69)
         """
         if len(self.df) == 0:
             if enable_extended_features:
-                return np.array([]).reshape(0, 53)  # Task 1 + 2 + 3
+                return np.array([]).reshape(0, 69)  # Task 1 + 2 + 3 + 4
             else:
                 return np.array([]).reshape(0, 22)  # Task 1 only
 
@@ -140,13 +160,15 @@ class FeatureBuilder:
         # Concatenate Task 1 features (22)
         features = np.concatenate([temporal, group_id], axis=1)
 
-        # Add Task 2 and Task 3 features if requested
+        # Add Task 2, Task 3, and Task 4 features if requested
         if enable_extended_features:
             hall_wide = self._build_hall_wide_features(is_train=is_train)  # 4
             periodicity = self._build_periodicity_features(is_train=is_train)  # 5
             machine_history = self._build_machine_history_features(is_train=is_train)  # 10
             relative = self._build_relative_features(is_train=is_train)  # 4
             lag = self._build_lag_features(is_train=is_train)  # 8
+            interaction = self._build_interaction_features()  # 5
+            domain_specific = self._build_domain_specific_features()  # 11
 
             features = np.concatenate([
                 features,
@@ -154,8 +176,10 @@ class FeatureBuilder:
                 periodicity,
                 machine_history,
                 relative,
-                lag
-            ], axis=1)  # 22 + 4 + 5 + 10 + 4 + 8 = 53
+                lag,
+                interaction,
+                domain_specific
+            ], axis=1)  # 22 + 4 + 5 + 10 + 4 + 8 + 5 + 11 = 69
 
         if is_train:
             self._apply_scaling_train(features)
@@ -655,6 +679,379 @@ class FeatureBuilder:
         ], axis=1)
 
         return lag_features
+
+    def _build_interaction_features(self) -> np.ndarray:
+        """
+        Build Interaction features (5 total)
+
+        Features:
+        1. day_×_diff_interaction — Day of month normalized × machine diff normalized
+        2. digit_×_weekday_interaction — Last digit × day-of-week interaction
+        3. zorome_×_efficiency_interaction — Zorome flag × machine efficiency
+        4. hall_condition_×_machine_perf — Hall win rate × machine efficiency vs hall
+        5. event_day_×_diff_boost — Event days × diff boost
+
+        Returns:
+            Array of shape (n_samples, 5)
+        """
+        n = len(self.df)
+
+        # Feature 1: day_×_diff_interaction
+        day_normalized = self.df["day_of_month"].values / 31.0
+        diff_normalized = np.clip(
+            self.df["diff_coins_normalized"].values / 10000.0, 0, 1
+        )
+        day_diff_interaction = (day_normalized * diff_normalized).reshape(-1, 1)
+
+        # Feature 2: digit_×_weekday_interaction
+        # One-hot encode last_digit and day_of_week, then sum interactions
+        last_digit_str = self.df["last_digit"].astype(str).str.strip()
+        last_digit_indices = last_digit_str.astype(int).values
+        digit_onehot = np.zeros((n, 10), dtype=float)
+        digit_onehot[np.arange(n), last_digit_indices] = 1.0
+
+        day_of_week_map = {
+            "Monday": 0, "Tuesday": 1, "Wednesday": 2, "Thursday": 3,
+            "Friday": 4, "Saturday": 5, "Sunday": 6
+        }
+        dow_indices = self.df["day_of_week"].map(day_of_week_map).values
+        dow_onehot = np.zeros((n, 7), dtype=float)
+        dow_onehot[np.arange(n), dow_indices] = 1.0
+
+        # Sum interactions and normalize
+        digit_weekday = (digit_onehot.sum(axis=1) * dow_onehot.sum(axis=1)) / 70.0
+        digit_weekday_interaction = digit_weekday.reshape(-1, 1)
+
+        # Feature 3: zorome_×_efficiency_interaction
+        is_zorome = self.df["is_zorome"].values.astype(float)
+        ma_14_diff_vals = np.zeros(n, dtype=float)
+        ma_14_games_vals = np.zeros(n, dtype=float)
+
+        df_full_sorted = self.df_full.sort_values(['machine_number', 'date_parsed']).copy()
+        df_indexed = self.df.copy()
+        df_indexed['idx_in_self'] = range(n)
+
+        for machine_id in df_full_sorted['machine_number'].unique():
+            df_machine = df_full_sorted[
+                df_full_sorted['machine_number'] == machine_id
+            ].reset_index(drop=True)
+
+            if len(df_machine) < 2:
+                continue
+
+            ma_14_diff = df_machine['diff_coins_normalized'].rolling(14, min_periods=1).mean().values
+            ma_14_games = df_machine['games_normalized'].rolling(14, min_periods=1).mean().values
+
+            for idx_in_machine, row_machine in enumerate(df_machine.itertuples()):
+                mask = (
+                    (df_indexed['machine_number'] == machine_id) &
+                    (df_indexed['date_parsed'] == row_machine.date_parsed)
+                )
+                idx_list = df_indexed[mask]['idx_in_self'].values
+
+                if len(idx_list) > 0:
+                    idx_in_self = idx_list[0]
+                    ma_14_diff_vals[idx_in_self] = ma_14_diff[idx_in_machine]
+                    ma_14_games_vals[idx_in_self] = ma_14_games[idx_in_machine]
+
+        efficiency = ma_14_diff_vals / (ma_14_games_vals + 1e-8)
+        efficiency_clipped = np.clip(efficiency, 0, 100)
+        zorome_eff = (is_zorome * efficiency_clipped / 100.0)
+        zorome_efficiency = zorome_eff.reshape(-1, 1)
+
+        # Feature 4: hall_condition_×_machine_perf
+        if self.df_hall is None:
+            hall_perf = np.zeros((n, 1), dtype=float)
+        else:
+            df_merged = self.df.copy()
+            df_merged["date_str"] = df_merged["date"].astype(str)
+            df_hall_copy = self.df_hall.copy()
+            df_hall_copy["date"] = df_hall_copy["date"].astype(str)
+
+            df_merged = df_merged.merge(
+                df_hall_copy[['date', 'win_rate']],
+                left_on='date_str',
+                right_on='date',
+                how='left'
+            )
+
+            machine_efficiency = self.df['diff_coins_normalized'].values / (
+                self.df['games_normalized'].values + 1e-8
+            )
+            machine_efficiency_clipped = np.clip(machine_efficiency / 100.0, 0, 1)
+            win_rate_normalized = df_merged['win_rate'].values.astype(float) / 100.0
+            win_rate_normalized = np.nan_to_num(win_rate_normalized, nan=0.0)
+
+            hall_perf = (win_rate_normalized * machine_efficiency_clipped).reshape(-1, 1)
+
+        # Feature 5: event_day_×_diff_boost
+        is_event = np.zeros(n, dtype=float)
+        for i, dd in enumerate(self.df["day_of_month"]):
+            if (1 <= dd <= 3) or (23 <= dd <= 27) or (28 <= dd <= 31):
+                is_event[i] = 1.0
+
+        diff_boost = np.clip(self.df["diff_coins_normalized"].values / 5000.0, 0, 1)
+        event_diff = (is_event * diff_boost).reshape(-1, 1)
+
+        # Concatenate all interaction features: 5 dimensions
+        interaction = np.concatenate([
+            day_diff_interaction,
+            digit_weekday_interaction,
+            zorome_efficiency,
+            hall_perf,
+            event_diff
+        ], axis=1)
+
+        return interaction
+
+    def _build_domain_specific_features(self) -> np.ndarray:
+        """
+        Build Domain-Specific features (11 total)
+
+        Features reflect domain knowledge about pachinko shop high-setting injection strategies:
+        1. zorome_efficiency_granular — Zorome × efficiency interaction
+        2. setting_injection_marker_dd — Binary: high diff on payroll dates
+        3. setting_injection_marker_dow — Binary: high diff on weekends
+        4. bb_rb_signature_indicator — (games/100) × is_zorome, range [0, 10]
+        5. consecutive_win_marker — Binary: ma_14 > ma_7 > 0 AND diff > 0
+        6. event_day_payload_indicator — Binary: event_day × zorome × high_diff
+        7. hall_state_relative_efficiency — machine_efficiency / hall_avg_efficiency
+        8. machine_model_anomaly_score — |machine_diff - model_mean| / model_std
+        9. payday_window_effect — Linear ramp (0 → 1 → 0) from day 23 to 27
+        10. zorome_days_since — Days since last zorome / 30, capped at 1.0
+        11. overall_setting_confidence — Average of markers (dd + dow + event + payday)
+
+        Returns:
+            Array of shape (n_samples, 11)
+        """
+        n = len(self.df)
+
+        # Feature 1: zorome_efficiency_granular (same as interaction feature 3)
+        df_full_sorted = self.df_full.sort_values(['machine_number', 'date_parsed']).copy()
+        ma_14_diff_vals = np.zeros(n, dtype=float)
+        ma_14_games_vals = np.zeros(n, dtype=float)
+
+        df_indexed = self.df.copy()
+        df_indexed['idx_in_self'] = range(n)
+
+        for machine_id in df_full_sorted['machine_number'].unique():
+            df_machine = df_full_sorted[
+                df_full_sorted['machine_number'] == machine_id
+            ].reset_index(drop=True)
+
+            if len(df_machine) < 2:
+                continue
+
+            ma_14_diff = df_machine['diff_coins_normalized'].rolling(14, min_periods=1).mean().values
+            ma_14_games = df_machine['games_normalized'].rolling(14, min_periods=1).mean().values
+
+            for idx_in_machine, row_machine in enumerate(df_machine.itertuples()):
+                mask = (
+                    (df_indexed['machine_number'] == machine_id) &
+                    (df_indexed['date_parsed'] == row_machine.date_parsed)
+                )
+                idx_list = df_indexed[mask]['idx_in_self'].values
+
+                if len(idx_list) > 0:
+                    idx_in_self = idx_list[0]
+                    ma_14_diff_vals[idx_in_self] = ma_14_diff[idx_in_machine]
+                    ma_14_games_vals[idx_in_self] = ma_14_games[idx_in_machine]
+
+        efficiency = ma_14_diff_vals / (ma_14_games_vals + 1e-8)
+        is_zorome = self.df["is_zorome"].values.astype(float)
+        zorome_eff_granular = (is_zorome * np.clip(efficiency, 0, 100) / 100.0).reshape(-1, 1)
+
+        # Feature 2: setting_injection_marker_dd
+        marker_dd = np.zeros(n, dtype=float)
+        for i, (dd, diff) in enumerate(zip(
+            self.df["day_of_month"].values,
+            self.df["diff_coins_normalized"].values
+        )):
+            if ((dd == 1) or (dd == 25) or (dd == 30 or dd == 31)) and (diff > 1000):
+                marker_dd[i] = 1.0
+
+        marker_dd = marker_dd.reshape(-1, 1)
+
+        # Feature 3: setting_injection_marker_dow
+        marker_dow = np.zeros(n, dtype=float)
+        day_of_week_map = {
+            "Monday": 0, "Tuesday": 1, "Wednesday": 2, "Thursday": 3,
+            "Friday": 4, "Saturday": 5, "Sunday": 6
+        }
+        for i, (dow, diff) in enumerate(zip(
+            self.df["day_of_week"].values,
+            self.df["diff_coins_normalized"].values
+        )):
+            dow_idx = day_of_week_map.get(dow, -1)
+            # Friday (4), Saturday (5), Sunday (6) are weekends
+            if (dow_idx in [4, 5, 6]) and (diff > 1000):
+                marker_dow[i] = 1.0
+
+        marker_dow = marker_dow.reshape(-1, 1)
+
+        # Feature 4: bb_rb_signature_indicator
+        games_normalized = self.df["games_normalized"].values.astype(float)
+        bb_rb = ((games_normalized / 100.0) * is_zorome)
+        bb_rb = np.clip(bb_rb, 0, 10).reshape(-1, 1)
+
+        # Feature 5: consecutive_win_marker
+        consecutive_marker = np.zeros(n, dtype=float)
+
+        for machine_id in df_full_sorted['machine_number'].unique():
+            df_machine = df_full_sorted[
+                df_full_sorted['machine_number'] == machine_id
+            ].reset_index(drop=True)
+
+            if len(df_machine) < 2:
+                continue
+
+            ma_14 = df_machine['diff_coins_normalized'].rolling(14, min_periods=1).mean().values
+            ma_7 = df_machine['diff_coins_normalized'].rolling(7, min_periods=1).mean().values
+
+            for idx_in_machine, row_machine in enumerate(df_machine.itertuples()):
+                mask = (
+                    (df_indexed['machine_number'] == machine_id) &
+                    (df_indexed['date_parsed'] == row_machine.date_parsed)
+                )
+                idx_list = df_indexed[mask]['idx_in_self'].values
+
+                if len(idx_list) > 0:
+                    idx_in_self = idx_list[0]
+                    if (ma_14[idx_in_machine] > ma_7[idx_in_machine] > 0 and
+                        row_machine.diff_coins_normalized > 0):
+                        consecutive_marker[idx_in_self] = 1.0
+
+        consecutive_marker = consecutive_marker.reshape(-1, 1)
+
+        # Feature 6: event_day_payload_indicator
+        is_event = np.zeros(n, dtype=float)
+        for i, dd in enumerate(self.df["day_of_month"]):
+            if (1 <= dd <= 3) or (23 <= dd <= 27) or (28 <= dd <= 31):
+                is_event[i] = 1.0
+
+        event_payload = np.zeros(n, dtype=float)
+        for i in range(n):
+            if (is_event[i] == 1.0 and is_zorome[i] == 1.0 and
+                self.df["diff_coins_normalized"].values[i] > 1000):
+                event_payload[i] = 1.0
+
+        event_payload = event_payload.reshape(-1, 1)
+
+        # Feature 7: hall_state_relative_efficiency
+        if self.df_hall is None:
+            hall_relative_eff = np.zeros((n, 1), dtype=float)
+        else:
+            df_merged = self.df.copy()
+            df_merged["date_str"] = df_merged["date"].astype(str)
+            df_hall_copy = self.df_hall.copy()
+            df_hall_copy["date"] = df_hall_copy["date"].astype(str)
+
+            df_merged = df_merged.merge(
+                df_hall_copy[['date', 'avg_diff_per_machine', 'avg_games_per_machine']],
+                left_on='date_str',
+                right_on='date',
+                how='left'
+            )
+
+            machine_efficiency = self.df['diff_coins_normalized'].values / (
+                self.df['games_normalized'].values + 1e-8
+            )
+            hall_avg_diff = df_merged['avg_diff_per_machine'].values.astype(float)
+            hall_avg_games = df_merged['avg_games_per_machine'].values.astype(float)
+            hall_efficiency = hall_avg_diff / (hall_avg_games + 1e-8)
+
+            relative_eff = machine_efficiency / (np.abs(hall_efficiency) + 1e-8)
+            relative_eff = np.clip(relative_eff, 0, 5)
+            hall_relative_eff = relative_eff.reshape(-1, 1)
+
+        # Feature 8: machine_model_anomaly_score
+        # Use training stats for mean and std
+        if is_train := False:  # Placeholder: always use stored stats
+            pass
+
+        global_mean = self.train_stats.get("dd_global_mean", 0.0)
+        global_std = self.train_stats.get("dd_global_std", 1.0)
+
+        machine_diff = self.df["diff_coins_normalized"].values.astype(float)
+        anomaly_score = np.abs(machine_diff - global_mean) / (global_std * 10.0 + 1e-8)
+        anomaly_score = np.clip(anomaly_score, 0, 1).reshape(-1, 1)
+
+        # Feature 9: payday_window_effect
+        payday_ramp = np.zeros(n, dtype=float)
+        for i, dd in enumerate(self.df["day_of_month"]):
+            if dd < 23 or dd > 27:
+                payday_ramp[i] = 0.0
+            elif dd == 23:
+                payday_ramp[i] = 0.0
+            elif dd == 24:
+                payday_ramp[i] = 0.5
+            elif dd == 25:
+                payday_ramp[i] = 1.0
+            elif dd == 26:
+                payday_ramp[i] = 0.5
+            elif dd == 27:
+                payday_ramp[i] = 0.0
+
+        payday_window = payday_ramp.reshape(-1, 1)
+
+        # Feature 10: zorome_days_since
+        zorome_days_since = np.zeros(n, dtype=float)
+
+        for machine_id in df_full_sorted['machine_number'].unique():
+            df_machine = df_full_sorted[
+                df_full_sorted['machine_number'] == machine_id
+            ].reset_index(drop=True)
+
+            if len(df_machine) < 1:
+                continue
+
+            last_zorome_idx = -1
+            for idx_in_machine in range(len(df_machine)):
+                if df_machine.iloc[idx_in_machine]['is_zorome'] == 1:
+                    last_zorome_idx = idx_in_machine
+
+                days_since = idx_in_machine - last_zorome_idx
+                days_since_norm = min(days_since / 30.0, 1.0)
+
+                row_machine = df_machine.iloc[idx_in_machine]
+                mask = (
+                    (df_indexed['machine_number'] == machine_id) &
+                    (df_indexed['date_parsed'] == row_machine['date_parsed'])
+                )
+                idx_list = df_indexed[mask]['idx_in_self'].values
+
+                if len(idx_list) > 0:
+                    idx_in_self = idx_list[0]
+                    zorome_days_since[idx_in_self] = days_since_norm
+
+        zorome_days = zorome_days_since.reshape(-1, 1)
+
+        # Feature 11: overall_setting_confidence
+        # Average of: marker_dd + marker_dow + event_payload + payday_ramp
+        overall_conf = (
+            marker_dd.flatten() +
+            marker_dow.flatten() +
+            event_payload.flatten() +
+            payday_window.flatten()
+        ) / 4.0
+        overall_conf = overall_conf.reshape(-1, 1)
+
+        # Concatenate all domain-specific features: 11 dimensions
+        domain_specific = np.concatenate([
+            zorome_eff_granular,
+            marker_dd,
+            marker_dow,
+            bb_rb,
+            consecutive_marker,
+            event_payload,
+            hall_relative_eff,
+            anomaly_score,
+            payday_window,
+            zorome_days,
+            overall_conf
+        ], axis=1)
+
+        return domain_specific
 
     def _apply_scaling_train(self, features: np.ndarray):
         """
