@@ -622,6 +622,40 @@ class TestBuildFeaturesExtended:
 class TestMachineHistoryFeatures:
     """Test Machine History feature generation (10 dimensions)"""
 
+    def test_sparse_machine_timeseries(self):
+        """
+        Test machine history features with sparse/discontinuous dates.
+        Machine 1: [Jan 1, Jan 5, Jan 10] (gaps in data)
+        """
+        df_sparse = pd.DataFrame({
+            'date': ['20250101', '20250105', '20250110'],
+            'machine_number': [1, 1, 1],
+            'machine_name': ['Model_A'] * 3,
+            'last_digit': ['1'] * 3,
+            'is_zorome': [0] * 3,
+            'games_normalized': [100, 200, 300],
+            'diff_coins_normalized': [1000, 1200, 1500]
+        })
+
+        fb = FeatureBuilder(df_sparse, df_full=df_sparse)
+        fb._parse_dates()
+        features = fb._build_machine_history_features(is_train=True)
+
+        # Check no NaN values
+        assert (
+            not np.isnan(features).any()
+        ), "Machine history features should not have NaN"
+
+        # Check shape
+        assert features.shape[1] == 10, "Should have 10 machine history features"
+
+        # Verify moving averages handle gaps gracefully
+        # ma_7_diff should adapt to sparse data (rolling with min_periods=1)
+        ma_7_diff_col = features[:, 1]
+        assert len(ma_7_diff_col) == 3
+        assert ma_7_diff_col[0] > 0  # First value should be positive
+        assert ma_7_diff_col[2] > ma_7_diff_col[0]  # Increasing trend
+
     def test_machine_history_shape(self, sample_df):
         """Test that machine history features have correct shape"""
         fb = FeatureBuilder(sample_df, df_full=sample_df)

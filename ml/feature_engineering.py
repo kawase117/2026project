@@ -112,7 +112,11 @@ class FeatureBuilder:
                     self.df_full["date"].astype(str), format="%Y%m%d", errors="coerce"
                 )
 
-    def build_features(self, is_train: bool = True, enable_extended_features: bool = False) -> np.ndarray:
+    def build_features(
+        self,
+        is_train: bool = True,
+        enable_extended_features: bool = False
+    ) -> np.ndarray:
         """
         Build combined feature matrix (Temporal + Group ID + optional Hall-wide + Periodicity + Task 3)
 
@@ -181,11 +185,16 @@ class FeatureBuilder:
         # 2. month_progress_rate (1 dimension)
         # Calculate day / days_in_month for each date
         days_in_month = self.df["date_parsed"].dt.daysinmonth.values
-        month_progress = self.df["day_of_month"].values / days_in_month
+        month_progress = (
+            self.df["day_of_month"].values / days_in_month
+        )
         month_progress = month_progress.reshape(-1, 1)
 
         # 3. is_payday (1 dimension): days 23-27
-        is_payday = ((self.df["day_of_month"] >= 23) & (self.df["day_of_month"] <= 27)).astype(float).values
+        is_payday = (
+            (self.df["day_of_month"] >= 23) &
+            (self.df["day_of_month"] <= 27)
+        ).astype(float).values
         is_payday = is_payday.reshape(-1, 1)
 
         # 4. is_zorome (1 dimension)
@@ -307,15 +316,28 @@ class FeatureBuilder:
             stability = df_machine['diff_coins_normalized'].rolling(7, min_periods=1).std().values
             stability = np.nan_to_num(stability, nan=0.0)  # Handle NaN in first period
 
-            # Trend: (recent_7_mean - older_7_mean) / older_7_mean
-            trend_14 = np.zeros_like(df_machine['diff_coins_normalized'].values, dtype=float)
+            # Trend: 14-day performance change
+            # recent_7_mean = 7-day MA up to day i-1
+            # older_7_mean = Average of days i-14 to i-7
+            # Trend = (recent - older) / abs(older)
+            # Note: Using abs(older) normalizes by magnitude, preserving sign
+            trend_14 = np.zeros_like(
+                df_machine['diff_coins_normalized'].values, dtype=float
+            )
             for i in range(len(df_machine)):
                 if i >= 14:
-                    recent_7_mean = ma_7_diff[i-1]  # Use previous 7-day average
+                    recent_7_mean = ma_7_diff[i-1]
                     older_7_start = max(0, i-14)
-                    older_7_mean = df_machine['diff_coins_normalized'].iloc[older_7_start:i-7].mean()
+                    older_7_mean = (
+                        df_machine['diff_coins_normalized'].iloc[
+                            older_7_start:i-7
+                        ].mean()
+                    )
                     if older_7_mean != 0:
-                        trend_14[i] = (recent_7_mean - older_7_mean) / abs(older_7_mean)
+                        trend_14[i] = (
+                            (recent_7_mean - older_7_mean) /
+                            abs(older_7_mean)
+                        )
                     else:
                         trend_14[i] = 0.0
                 else:
@@ -342,7 +364,10 @@ class FeatureBuilder:
             # Map back to indices in self.df
             for idx_in_machine, row_machine in enumerate(df_machine.itertuples()):
                 # Find matching row in self.df
-                mask = (df_indexed['machine_number'] == machine_id) & (df_indexed['date_parsed'] == row_machine.date_parsed)
+                mask = (
+                    (df_indexed['machine_number'] == machine_id) &
+                    (df_indexed['date_parsed'] == row_machine.date_parsed)
+                )
                 idx_list = df_indexed[mask]['idx_in_self'].values
 
                 if len(idx_list) > 0:
@@ -365,8 +390,16 @@ class FeatureBuilder:
             scaler_win_rate = StandardScaler()
 
             # Fit on non-zero values
-            valid_eff = efficiency_vals[efficiency_vals != 0].reshape(-1, 1) if (efficiency_vals != 0).sum() > 0 else np.array([[0.0]])
-            valid_stab = stability_vals[stability_vals != 0].reshape(-1, 1) if (stability_vals != 0).sum() > 0 else np.array([[0.0]])
+            eff_mask = (efficiency_vals != 0).sum() > 0
+            valid_eff = (
+                efficiency_vals[efficiency_vals != 0].reshape(-1, 1)
+                if eff_mask else np.array([[0.0]])
+            )
+            stab_mask = (stability_vals != 0).sum() > 0
+            valid_stab = (
+                stability_vals[stability_vals != 0].reshape(-1, 1)
+                if stab_mask else np.array([[0.0]])
+            )
             valid_wr = win_rate_machine_vals.reshape(-1, 1)
 
             scaler_efficiency.fit(valid_eff)
@@ -581,9 +614,16 @@ class FeatureBuilder:
             df_machine_copy['lag_1_win'] = df_machine_copy['lag_1_win'].fillna(0)
 
             # 7-day rolling win rate shifted by 1
-            df_machine_copy['win_indicator'] = (df_machine_copy['diff_coins_normalized'] > 0).astype(int)
-            df_machine_copy['lag_1_win_rate_mean'] = df_machine_copy['win_indicator'].rolling(7, min_periods=1).mean().shift(1)
-            df_machine_copy['lag_1_win_rate_mean'] = df_machine_copy['lag_1_win_rate_mean'].fillna(0)
+            df_machine_copy['win_indicator'] = (
+                (df_machine_copy['diff_coins_normalized'] > 0).astype(int)
+            )
+            rolling_win = df_machine_copy['win_indicator'].rolling(
+                7, min_periods=1
+            ).mean().shift(1)
+            df_machine_copy['lag_1_win_rate_mean'] = rolling_win
+            df_machine_copy['lag_1_win_rate_mean'] = (
+                df_machine_copy['lag_1_win_rate_mean'].fillna(0)
+            )
 
             # Map back to indices in self.df
             for idx_in_machine, row_machine in enumerate(df_machine_copy.itertuples()):
