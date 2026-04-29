@@ -2,6 +2,7 @@ import sqlite3
 import pandas as pd
 import numpy as np
 from typing import Tuple
+from ml.feature_engineering import FeatureBuilder
 
 
 def prepare_data_by_groupby(
@@ -11,7 +12,8 @@ def prepare_data_by_groupby(
     train_start: str = "2025-01-01",
     train_end: str = "2026-02-01",
     test_start: str = "2026-02-01",
-    test_end: str = "2026-04-26"
+    test_end: str = "2026-04-26",
+    enable_extended_features: bool = False
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
     グループ化戦略に応じてデータを準備し、訓練・テストセットを返す
@@ -21,9 +23,13 @@ def prepare_data_by_groupby(
         groupby_strategy: "tail" / "model_type" / "machine_number"
         task: "a" (勝率) / "b" (高利益確率)
         train_start, train_end, test_start, test_end: 日付（YYYY-MM-DD or YYYYMMDD）
+        enable_extended_features: True の場合、FeatureBuilder を使用して22特徴量を生成
+                                   False の場合（デフォルト），既存の3つの基本特徴量のみ
 
     Returns:
         (X_train, y_train, X_test, y_test)
+        - enable_extended_features=False: X_train/X_test は groupby_strategy に応じた特徴量
+        - enable_extended_features=True: X_train/X_test は 22次元の拡張特徴量
     """
     # DBから machine_detailed_results を読み込み
     conn = sqlite3.connect(db_path)
@@ -49,13 +55,38 @@ def prepare_data_by_groupby(
     df_train = df[train_mask].copy()
     df_test = df[test_mask].copy()
 
-    # グループ化戦略に応じて特徴量を生成
+    # 拡張特徴量を使用する場合
+    if enable_extended_features:
+        # FeatureBuilder で 22次元の拡張特徴量を生成
+        fb_train = FeatureBuilder(df_train)
+        X_train = fb_train.build_features(is_train=True)
+
+        fb_test = FeatureBuilder(df_test)
+        X_test = fb_test.build_features(is_train=False)
+
+        # ラベルを生成
+        y_train = (df_train["diff_coins_normalized"] >= 1000).astype(int).values
+        y_test = (df_test["diff_coins_normalized"] >= 1000).astype(int).values
+
+        return X_train, y_train, X_test, y_test
+
+    # グループ化戦略に応じて特徴量を生成（既存の3つの基本特徴量）
     if groupby_strategy == "tail":
-        X_train = _create_features_tail(df_train)
-        X_test = _create_features_tail(df_test)
+        # 訓練セットのカラムをテストセットに適用
+        tail_train = pd.get_dummies(df_train["last_digit"].astype(str), prefix="tail")
+        tail_test = pd.get_dummies(df_test["last_digit"].astype(str), prefix="tail")
+        # テストセットに訓練セットのカラムを合わせる
+        tail_test = tail_test.reindex(columns=tail_train.columns, fill_value=0.0)
+        X_train = tail_train.values.astype(float)
+        X_test = tail_test.values.astype(float)
     elif groupby_strategy == "model_type":
-        X_train = _create_features_model_type(df_train)
-        X_test = _create_features_model_type(df_test)
+        # 訓練セットのカラムをテストセットに適用
+        model_train = pd.get_dummies(df_train["machine_name"], prefix="model")
+        model_test = pd.get_dummies(df_test["machine_name"], prefix="model")
+        # テストセットに訓練セットのカラムを合わせる
+        model_test = model_test.reindex(columns=model_train.columns, fill_value=0.0)
+        X_train = model_train.values.astype(float)
+        X_test = model_test.values.astype(float)
     elif groupby_strategy == "machine_number":
         X_train = _create_features_machine_number(df_train)
         X_test = _create_features_machine_number(df_test)

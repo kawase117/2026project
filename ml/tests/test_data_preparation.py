@@ -179,3 +179,80 @@ def test_prepare_data_empty_test_range():
 
         # 空テストセットの shape は (0, 1)
         assert X_test.shape == (0, 1)
+
+
+def test_prepare_data_with_extended_features():
+    """拡張特徴量（22次元）でのデータ準備"""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        db_path = Path(tmpdir) / "test.db"
+        conn = sqlite3.connect(db_path)
+
+        # テスト用データを作成
+        test_data = pd.DataFrame({
+            "date": ["20250101", "20250102", "20250103", "20250104"],
+            "machine_number": [1, 2, 11, 12],
+            "machine_name": ["機種A", "機種A", "機種A", "機種A"],
+            "last_digit": ["1", "2", "1", "2"],
+            "is_zorome": [0, 0, 1, 0],
+            "games_normalized": [100, 100, 100, 100],
+            "diff_coins_normalized": [1200, 800, 1500, -500]
+        })
+        test_data.to_sql("machine_detailed_results", conn, if_exists="replace", index=False)
+        conn.close()
+
+        # 拡張特徴量を有効にしてデータ準備
+        X_train, y_train, X_test, y_test = prepare_data_by_groupby(
+            db_path=str(db_path),
+            groupby_strategy="tail",  # この値は無視される（enable_extended_features=True）
+            task="a",
+            train_start="20250101",
+            train_end="20250103",
+            test_start="20250103",
+            test_end="20250104",
+            enable_extended_features=True
+        )
+
+        # 特徴量の次元が 22 であることを確認
+        assert X_train.shape[1] == 22, f"Expected 22 features, got {X_train.shape[1]}"
+        assert X_test.shape[1] == 22, f"Expected 22 features, got {X_test.shape[1]}"
+
+        # ラベルが正しく生成されていることを確認
+        assert len(y_train) == len(X_train)
+        assert len(y_test) == len(X_test)
+        assert np.all((y_train == 0) | (y_train == 1))
+        assert np.all((y_test == 0) | (y_test == 1))
+
+
+def test_prepare_data_backward_compatibility():
+    """enable_extended_features=False で既存の動作を保持（後方互換性）"""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        db_path = Path(tmpdir) / "test.db"
+        conn = sqlite3.connect(db_path)
+
+        test_data = pd.DataFrame({
+            "date": ["20250101", "20250102"],
+            "machine_number": [1, 100],
+            "machine_name": ["機種A", "機種A"],
+            "last_digit": ["1", "0"],
+            "is_zorome": [0, 0],
+            "games_normalized": [100, 100],
+            "diff_coins_normalized": [1200, -500]
+        })
+        test_data.to_sql("machine_detailed_results", conn, if_exists="replace", index=False)
+        conn.close()
+
+        # enable_extended_features=False（デフォルト）で従来の動作を確認
+        X_train, y_train, X_test, y_test = prepare_data_by_groupby(
+            db_path=str(db_path),
+            groupby_strategy="machine_number",
+            task="a",
+            train_start="20250101",
+            train_end="20250101",
+            test_start="20250102",
+            test_end="20250102",
+            enable_extended_features=False  # デフォルト値
+        )
+
+        # 機械学習モデル用の1次元特徴量
+        assert X_train.shape[1] == 1
+        assert X_test.shape[1] == 1
