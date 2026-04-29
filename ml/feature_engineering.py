@@ -680,6 +680,86 @@ class FeatureBuilder:
 
         return lag_features
 
+    def _compute_machine_rolling_stats(self) -> Dict[str, np.ndarray]:
+        """
+        Compute rolling statistics per machine once, return cached.
+
+        Vectorized computation using groupby + merge instead of nested loops.
+        This replaces O(n²) mask-based lookups with O(n) merges.
+
+        Returns:
+            Dict with keys: 'ma_14_diff', 'ma_7_diff', 'ma_14_games', 'ma_7_games'
+            Each value is ndarray matching length of self.df
+        """
+        # Compute rolling stats grouped by machine
+        df_full_sorted = self.df_full.sort_values(
+            ['machine_number', 'date_parsed']
+        ).copy()
+
+        # Initialize rolling stats containers
+        rolling_data = []
+
+        for machine_id in df_full_sorted['machine_number'].unique():
+            group = df_full_sorted[
+                df_full_sorted['machine_number'] == machine_id
+            ].copy()
+
+            if len(group) < 1:
+                continue
+
+            # Compute rolling statistics for this machine
+            ma_14_diff = (
+                group['diff_coins_normalized']
+                .rolling(14, min_periods=1).mean().values
+            )
+            ma_7_diff = (
+                group['diff_coins_normalized']
+                .rolling(7, min_periods=1).mean().values
+            )
+            ma_14_games = (
+                group['games_normalized']
+                .rolling(14, min_periods=1).mean().values
+            )
+            ma_7_games = (
+                group['games_normalized']
+                .rolling(7, min_periods=1).mean().values
+            )
+
+            # Create result dataframe for this machine
+            result_df = pd.DataFrame({
+                'date_parsed': group['date_parsed'].values,
+                'machine_number': group['machine_number'].values,
+                'ma_14_diff': ma_14_diff,
+                'ma_7_diff': ma_7_diff,
+                'ma_14_games': ma_14_games,
+                'ma_7_games': ma_7_games,
+            })
+
+            rolling_data.append(result_df)
+
+        # Concatenate all machines
+        rolling_stats = pd.concat(rolling_data, ignore_index=True)
+
+        # Merge back to self.df indices (vectorized)
+        merged = self.df.copy()
+        merged['machine_number'] = self.df['machine_number']
+        merged['date_parsed'] = self.df['date_parsed']
+        merged = merged.merge(
+            rolling_stats[[
+                'machine_number', 'date_parsed',
+                'ma_14_diff', 'ma_7_diff', 'ma_14_games', 'ma_7_games'
+            ]],
+            on=['machine_number', 'date_parsed'],
+            how='left'
+        )
+
+        return {
+            'ma_14_diff': merged['ma_14_diff'].fillna(0).values,
+            'ma_7_diff': merged['ma_7_diff'].fillna(0).values,
+            'ma_14_games': merged['ma_14_games'].fillna(0).values,
+            'ma_7_games': merged['ma_7_games'].fillna(0).values,
+        }
+
     def _build_interaction_features(self) -> np.ndarray:
         """
         Build Interaction features (5 total)
@@ -719,40 +799,20 @@ class FeatureBuilder:
         dow_onehot[np.arange(n), dow_indices] = 1.0
 
         # Sum interactions and normalize
-        digit_weekday = (digit_onehot.sum(axis=1) * dow_onehot.sum(axis=1)) / 70.0
+        # Divide by 70.0 = 10 digits × 7 days (product of dimensions)
+        # Normalizes the interaction strength to [0, 1] range
+        digit_weekday = (
+            digit_onehot.sum(axis=1) * dow_onehot.sum(axis=1)
+        ) / 70.0
         digit_weekday_interaction = digit_weekday.reshape(-1, 1)
 
         # Feature 3: zorome_×_efficiency_interaction
+        # Use helper method for vectorized rolling stats (performance optimization)
         is_zorome = self.df["is_zorome"].values.astype(float)
-        ma_14_diff_vals = np.zeros(n, dtype=float)
-        ma_14_games_vals = np.zeros(n, dtype=float)
 
-        df_full_sorted = self.df_full.sort_values(['machine_number', 'date_parsed']).copy()
-        df_indexed = self.df.copy()
-        df_indexed['idx_in_self'] = range(n)
-
-        for machine_id in df_full_sorted['machine_number'].unique():
-            df_machine = df_full_sorted[
-                df_full_sorted['machine_number'] == machine_id
-            ].reset_index(drop=True)
-
-            if len(df_machine) < 2:
-                continue
-
-            ma_14_diff = df_machine['diff_coins_normalized'].rolling(14, min_periods=1).mean().values
-            ma_14_games = df_machine['games_normalized'].rolling(14, min_periods=1).mean().values
-
-            for idx_in_machine, row_machine in enumerate(df_machine.itertuples()):
-                mask = (
-                    (df_indexed['machine_number'] == machine_id) &
-                    (df_indexed['date_parsed'] == row_machine.date_parsed)
-                )
-                idx_list = df_indexed[mask]['idx_in_self'].values
-
-                if len(idx_list) > 0:
-                    idx_in_self = idx_list[0]
-                    ma_14_diff_vals[idx_in_self] = ma_14_diff[idx_in_machine]
-                    ma_14_games_vals[idx_in_self] = ma_14_games[idx_in_machine]
+        rolling_stats = self._compute_machine_rolling_stats()
+        ma_14_diff_vals = rolling_stats['ma_14_diff']
+        ma_14_games_vals = rolling_stats['ma_14_games']
 
         efficiency = ma_14_diff_vals / (ma_14_games_vals + 1e-8)
         efficiency_clipped = np.clip(efficiency, 0, 100)
@@ -826,53 +886,37 @@ class FeatureBuilder:
         """
         n = len(self.df)
 
-        # Feature 1: zorome_efficiency_granular (same as interaction feature 3)
-        df_full_sorted = self.df_full.sort_values(['machine_number', 'date_parsed']).copy()
-        ma_14_diff_vals = np.zeros(n, dtype=float)
-        ma_14_games_vals = np.zeros(n, dtype=float)
+        # Feature 1: zorome_efficiency_granular
+        # Use helper method for vectorized rolling stats (performance optimization)
+        is_zorome = self.df["is_zorome"].values.astype(float)
 
-        df_indexed = self.df.copy()
-        df_indexed['idx_in_self'] = range(n)
-
-        for machine_id in df_full_sorted['machine_number'].unique():
-            df_machine = df_full_sorted[
-                df_full_sorted['machine_number'] == machine_id
-            ].reset_index(drop=True)
-
-            if len(df_machine) < 2:
-                continue
-
-            ma_14_diff = df_machine['diff_coins_normalized'].rolling(14, min_periods=1).mean().values
-            ma_14_games = df_machine['games_normalized'].rolling(14, min_periods=1).mean().values
-
-            for idx_in_machine, row_machine in enumerate(df_machine.itertuples()):
-                mask = (
-                    (df_indexed['machine_number'] == machine_id) &
-                    (df_indexed['date_parsed'] == row_machine.date_parsed)
-                )
-                idx_list = df_indexed[mask]['idx_in_self'].values
-
-                if len(idx_list) > 0:
-                    idx_in_self = idx_list[0]
-                    ma_14_diff_vals[idx_in_self] = ma_14_diff[idx_in_machine]
-                    ma_14_games_vals[idx_in_self] = ma_14_games[idx_in_machine]
+        rolling_stats = self._compute_machine_rolling_stats()
+        ma_14_diff_vals = rolling_stats['ma_14_diff']
+        ma_14_games_vals = rolling_stats['ma_14_games']
 
         efficiency = ma_14_diff_vals / (ma_14_games_vals + 1e-8)
-        is_zorome = self.df["is_zorome"].values.astype(float)
-        zorome_eff_granular = (is_zorome * np.clip(efficiency, 0, 100) / 100.0).reshape(-1, 1)
+        zorome_eff_granular = (
+            is_zorome * np.clip(efficiency, 0, 100) / 100.0
+        ).reshape(-1, 1)
 
         # Feature 2: setting_injection_marker_dd
+        # Binary indicator: high diff (>1000) on key DD dates (1st, 25th, 30-31st)
+        # These are strategic injection dates: month start, payday, month end
         marker_dd = np.zeros(n, dtype=float)
         for i, (dd, diff) in enumerate(zip(
             self.df["day_of_month"].values,
             self.df["diff_coins_normalized"].values
         )):
-            if ((dd == 1) or (dd == 25) or (dd == 30 or dd == 31)) and (diff > 1000):
+            if ((dd == 1) or (dd == 25) or (dd == 30 or dd == 31)) and (
+                diff > 1000
+            ):
                 marker_dd[i] = 1.0
 
         marker_dd = marker_dd.reshape(-1, 1)
 
         # Feature 3: setting_injection_marker_dow
+        # Binary indicator: high diff (>1000) on weekend days (Fri-Sun = indices 4, 5, 6)
+        # Shop strategy: concentrated setting injection on weekends to maximize payouts
         marker_dow = np.zeros(n, dtype=float)
         day_of_week_map = {
             "Monday": 0, "Tuesday": 1, "Wednesday": 2, "Thursday": 3,
@@ -895,31 +939,21 @@ class FeatureBuilder:
         bb_rb = np.clip(bb_rb, 0, 10).reshape(-1, 1)
 
         # Feature 5: consecutive_win_marker
+        # Binary: ma_14 > ma_7 > 0 AND diff > 0 (uptrend confirmation)
+        # Vectorized computation using helper method for rolling stats
         consecutive_marker = np.zeros(n, dtype=float)
 
-        for machine_id in df_full_sorted['machine_number'].unique():
-            df_machine = df_full_sorted[
-                df_full_sorted['machine_number'] == machine_id
-            ].reset_index(drop=True)
+        rolling_stats = self._compute_machine_rolling_stats()
+        ma_14_diff = rolling_stats['ma_14_diff']
+        ma_7_diff = rolling_stats['ma_7_diff']
 
-            if len(df_machine) < 2:
-                continue
-
-            ma_14 = df_machine['diff_coins_normalized'].rolling(14, min_periods=1).mean().values
-            ma_7 = df_machine['diff_coins_normalized'].rolling(7, min_periods=1).mean().values
-
-            for idx_in_machine, row_machine in enumerate(df_machine.itertuples()):
-                mask = (
-                    (df_indexed['machine_number'] == machine_id) &
-                    (df_indexed['date_parsed'] == row_machine.date_parsed)
-                )
-                idx_list = df_indexed[mask]['idx_in_self'].values
-
-                if len(idx_list) > 0:
-                    idx_in_self = idx_list[0]
-                    if (ma_14[idx_in_machine] > ma_7[idx_in_machine] > 0 and
-                        row_machine.diff_coins_normalized > 0):
-                        consecutive_marker[idx_in_self] = 1.0
+        diff_vals = self.df['diff_coins_normalized'].values.astype(float)
+        uptrend_mask = (
+            (ma_14_diff > ma_7_diff) &
+            (ma_7_diff > 0) &
+            (diff_vals > 0)
+        )
+        consecutive_marker[uptrend_mask] = 1.0
 
         consecutive_marker = consecutive_marker.reshape(-1, 1)
 
@@ -995,7 +1029,13 @@ class FeatureBuilder:
         payday_window = payday_ramp.reshape(-1, 1)
 
         # Feature 10: zorome_days_since
+        # Vectorized: days since last zorome / 30, capped at 1.0
+        # Compute days since last zorome per machine
         zorome_days_since = np.zeros(n, dtype=float)
+
+        df_full_sorted = self.df_full.sort_values(
+            ['machine_number', 'date_parsed']
+        ).copy()
 
         for machine_id in df_full_sorted['machine_number'].unique():
             df_machine = df_full_sorted[
@@ -1005,14 +1045,28 @@ class FeatureBuilder:
             if len(df_machine) < 1:
                 continue
 
+            # Vectorized computation: cumulative days since last zorome
+            is_zorome_arr = df_machine['is_zorome'].values.astype(int)
+            # Find indices of zorome occurrences
+            zorome_indices = np.where(is_zorome_arr == 1)[0]
+
             last_zorome_idx = -1
+            days_since_arr = np.zeros(len(df_machine), dtype=float)
+
             for idx_in_machine in range(len(df_machine)):
-                if df_machine.iloc[idx_in_machine]['is_zorome'] == 1:
+                # Update last zorome index if current row is zorome
+                if is_zorome_arr[idx_in_machine] == 1:
                     last_zorome_idx = idx_in_machine
 
                 days_since = idx_in_machine - last_zorome_idx
                 days_since_norm = min(days_since / 30.0, 1.0)
+                days_since_arr[idx_in_machine] = days_since_norm
 
+            # Map back to self.df indices
+            df_indexed = self.df.copy()
+            df_indexed['idx_in_self'] = range(n)
+
+            for idx_in_machine in range(len(df_machine)):
                 row_machine = df_machine.iloc[idx_in_machine]
                 mask = (
                     (df_indexed['machine_number'] == machine_id) &
@@ -1022,7 +1076,7 @@ class FeatureBuilder:
 
                 if len(idx_list) > 0:
                     idx_in_self = idx_list[0]
-                    zorome_days_since[idx_in_self] = days_since_norm
+                    zorome_days_since[idx_in_self] = days_since_arr[idx_in_machine]
 
         zorome_days = zorome_days_since.reshape(-1, 1)
 
