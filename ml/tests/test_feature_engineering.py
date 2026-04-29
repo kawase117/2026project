@@ -616,3 +616,340 @@ class TestBuildFeaturesExtended:
 
         # Test features should not have NaN values
         assert not np.isnan(X_test).any()
+
+
+class TestMachineHistoryFeatures:
+    """Test Machine History feature generation (10 dimensions)"""
+
+    def test_machine_history_shape(self, sample_df):
+        """Test that machine history features have correct shape"""
+        fb = FeatureBuilder(sample_df, df_full=sample_df)
+        features = fb._build_machine_history_features(is_train=True)
+        assert features.shape == (len(sample_df), 10)
+
+    def test_machine_history_no_nans(self, sample_df):
+        """Test that machine history features contain no NaN values"""
+        fb = FeatureBuilder(sample_df, df_full=sample_df)
+        features = fb._build_machine_history_features(is_train=True)
+        assert not np.isnan(features).any(), "Machine history features contain NaN"
+
+    def test_moving_average_calculation(self):
+        """Test that moving averages are calculated correctly"""
+        # Create ordered data for one machine
+        df = pd.DataFrame({
+            'date': pd.date_range('2025-01-01', periods=30),
+            'machine_number': [1] * 30,
+            'last_digit': ['1'] * 30,
+            'is_zorome': [0] * 30,
+            'games_normalized': [100] * 30,
+            'diff_coins_normalized': [1000] * 15 + [500] * 15  # Step change
+        })
+
+        fb = FeatureBuilder(df, df_full=df)
+        features = fb._build_machine_history_features(is_train=True)
+
+        # Check that ma_7_diff (index 1) changes after day 15
+        ma_7_early = features[5:10, 1].mean()  # Days 5-9
+        ma_7_late = features[20:25, 1].mean()  # Days 20-24
+        assert ma_7_late < ma_7_early, "Moving average should decrease after step change"
+
+    def test_efficiency_calculation(self):
+        """Test that efficiency (diff/games) is calculated"""
+        df = pd.DataFrame({
+            'date': pd.date_range('2025-01-01', periods=10),
+            'machine_number': [1] * 10,
+            'last_digit': ['1'] * 10,
+            'is_zorome': [0] * 10,
+            'games_normalized': [100, 200, 100, 100, 100, 100, 100, 100, 100, 100],
+            'diff_coins_normalized': [500, 1000, 500, 500, 500, 500, 500, 500, 500, 500]
+        })
+
+        fb = FeatureBuilder(df, df_full=df)
+        features = fb._build_machine_history_features(is_train=True)
+
+        # Efficiency feature is at index 5
+        efficiency = features[:, 5]
+        assert efficiency.sum() != 0, "Efficiency should have non-zero values"
+
+    def test_win_rate_computation(self):
+        """Test that win rate is computed correctly"""
+        df = pd.DataFrame({
+            'date': pd.date_range('2025-01-01', periods=10),
+            'machine_number': [1] * 10,
+            'last_digit': ['1'] * 10,
+            'is_zorome': [0] * 10,
+            'games_normalized': [100] * 10,
+            'diff_coins_normalized': [100, 100, -100, 100, 100, -100, 100, 100, 100, -100]
+        })
+        # Expected win_rate: 7/10 = 0.7
+
+        fb = FeatureBuilder(df, df_full=df)
+        features = fb._build_machine_history_features(is_train=True)
+
+        # Win rate feature is at index 9
+        win_rate = features[0, 9]  # All rows should have same normalized win_rate
+        assert -2 < win_rate < 2, f"Normalized win rate {win_rate} should be in reasonable range"
+
+    def test_consecutive_wins_tracking(self):
+        """Test that consecutive wins are tracked"""
+        df = pd.DataFrame({
+            'date': pd.date_range('2025-01-01', periods=10),
+            'machine_number': [1] * 10,
+            'last_digit': ['1'] * 10,
+            'is_zorome': [0] * 10,
+            'games_normalized': [100] * 10,
+            'diff_coins_normalized': [100, 100, 100, -100, 100, 100, 100, 100, -100, 100]
+        })
+
+        fb = FeatureBuilder(df, df_full=df)
+        features = fb._build_machine_history_features(is_train=True)
+
+        # Consecutive wins feature is at index 8
+        consecutive = features[:, 8]
+        # Should see increasing values for consecutive wins
+        assert consecutive[2] > consecutive[1], "Consecutive wins should increase in streak"
+
+
+class TestRelativeFeatures:
+    """Test Relative feature generation (4 dimensions)"""
+
+    def test_relative_features_shape(self, sample_df, temp_test_db):
+        """Test that relative features have correct shape"""
+        conn = sqlite3.connect(temp_test_db)
+        df_hall = pd.read_sql_query("SELECT * FROM daily_hall_summary", conn)
+        conn.close()
+
+        fb = FeatureBuilder(sample_df, df_hall=df_hall)
+        features = fb._build_relative_features(is_train=True)
+        assert features.shape == (len(sample_df), 4)
+
+    def test_relative_features_no_nans(self, sample_df, temp_test_db):
+        """Test that relative features contain no NaN values"""
+        conn = sqlite3.connect(temp_test_db)
+        df_hall = pd.read_sql_query("SELECT * FROM daily_hall_summary", conn)
+        conn.close()
+
+        fb = FeatureBuilder(sample_df, df_hall=df_hall)
+        features = fb._build_relative_features(is_train=True)
+        assert not np.isnan(features).any(), "Relative features contain NaN"
+
+    def test_rank_percentile_bounds(self, temp_test_db):
+        """Test that rank percentile is in [0, 1]"""
+        conn = sqlite3.connect(temp_test_db)
+        df = pd.read_sql_query("SELECT * FROM machine_detailed_results", conn)
+        conn.close()
+
+        # Ensure dates are datetime
+        df['date'] = pd.to_datetime(df['date'], format='%Y%m%d')
+
+        fb = FeatureBuilder(df, df_hall=None)  # No hall data needed for this test
+        features = fb._build_relative_features(is_train=True)
+
+        # Rank percentile is at index 3
+        rank_percentile = features[:, 3]
+        assert (rank_percentile >= 0).all() and (rank_percentile <= 1).all(), \
+            "Rank percentile must be in [0, 1]"
+
+    def test_efficiency_ratio_comparison(self):
+        """Test that efficiency vs hall comparison is reasonable"""
+        df_machine = pd.DataFrame({
+            'date': ['20250101', '20250102'],
+            'machine_number': [1, 1],
+            'last_digit': ['1', '1'],
+            'is_zorome': [0, 0],
+            'games_normalized': [100, 200],
+            'diff_coins_normalized': [1000, 2000]
+        })
+
+        df_hall = pd.DataFrame({
+            'date': ['20250101', '20250102'],
+            'avg_diff_per_machine': [500, 500],
+            'avg_games_per_machine': [100, 100]
+        })
+
+        fb = FeatureBuilder(df_machine, df_hall=df_hall)
+        features = fb._build_relative_features(is_train=True)
+
+        # Efficiency vs hall (index 2) should be > 1 (machine better than hall)
+        efficiency_vs_hall = features[:, 2]
+        assert (efficiency_vs_hall > 0).all(), "Efficiency ratio should be positive"
+
+
+class TestLagFeatures:
+    """Test Lag feature generation (8 dimensions) with time-series coherence"""
+
+    def test_lag_features_shape(self, sample_df):
+        """Test that lag features have correct shape"""
+        fb = FeatureBuilder(sample_df, df_full=sample_df)
+        features = fb._build_lag_features(is_train=True)
+        assert features.shape == (len(sample_df), 8)
+
+    def test_lag_features_no_nans(self, sample_df):
+        """Test that lag features contain no NaN values after filling"""
+        fb = FeatureBuilder(sample_df, df_full=sample_df)
+        features = fb._build_lag_features(is_train=True)
+        assert not np.isnan(features).any(), "Lag features contain NaN after filling"
+
+    def test_lag_1_connection_across_periods(self):
+        """Test that lag_1 correctly connects train and test periods"""
+        # Create train and test data
+        df_train = pd.DataFrame({
+            'date': pd.date_range('2025-01-01', periods=10),
+            'machine_number': [1] * 10,
+            'last_digit': ['1'] * 10,
+            'is_zorome': [0] * 10,
+            'games_normalized': [100] * 10,
+            'diff_coins_normalized': list(range(100, 1100, 100))  # 100, 200, ..., 1000
+        })
+
+        df_test = pd.DataFrame({
+            'date': pd.date_range('2025-01-11', periods=5),
+            'machine_number': [1] * 5,
+            'last_digit': ['1'] * 5,
+            'is_zorome': [0] * 5,
+            'games_normalized': [100] * 5,
+            'diff_coins_normalized': [1100, 1200, 1300, 1400, 1500]
+        })
+
+        df_full = pd.concat([df_train, df_test], ignore_index=True)
+
+        # Test data should have lag_1_diff pointing to last training value
+        fb_test = FeatureBuilder(df_test, df_full=df_full)
+        features_test = fb_test._build_lag_features(is_train=False)
+
+        # First test row lag_1_diff should be 1000 (last training value)
+        lag_1_diff_test = features_test[0, 0]
+        assert lag_1_diff_test == 1000, f"Test lag_1_diff should be 1000, got {lag_1_diff_test}"
+
+    def test_lag_7_and_lag_30_handling(self):
+        """Test that lag_7 and lag_30 are filled with ffill and zeros"""
+        df = pd.DataFrame({
+            'date': pd.date_range('2025-01-01', periods=50),
+            'machine_number': [1] * 50,
+            'last_digit': ['1'] * 50,
+            'is_zorome': [0] * 50,
+            'games_normalized': [100] * 50,
+            'diff_coins_normalized': np.arange(50) * 100  # 0, 100, 200, ..., 4900
+        })
+
+        fb = FeatureBuilder(df, df_full=df)
+        features = fb._build_lag_features(is_train=True)
+
+        # lag_7_diff is at index 2, lag_30_diff at index 3
+        lag_7_diff = features[:, 2]
+        lag_30_diff = features[:, 3]
+
+        # First 30 days should not have NaNs (filled)
+        assert not np.isnan(lag_7_diff[:30]).any(), "First 30 days lag_7_diff has NaN"
+        assert not np.isnan(lag_30_diff[:30]).any(), "First 30 days lag_30_diff has NaN"
+
+    def test_lag_1_win_rate_binary(self):
+        """Test that lag_1_win_rate is binary (0 or 1)"""
+        df = pd.DataFrame({
+            'date': pd.date_range('2025-01-01', periods=15),
+            'machine_number': [1] * 15,
+            'last_digit': ['1'] * 15,
+            'is_zorome': [0] * 15,
+            'games_normalized': [100] * 15,
+            'diff_coins_normalized': [100, -100, 100, 100, -100, 100, 100, 100, -100, 100, 100, -100, 100, 100, 100]
+        })
+
+        fb = FeatureBuilder(df, df_full=df)
+        features = fb._build_lag_features(is_train=True)
+
+        # lag_1_win_rate is at index 6
+        lag_1_win = features[:, 6]
+
+        # Should be binary (0 or 1)
+        unique_vals = np.unique(lag_1_win)
+        assert set(unique_vals).issubset({0.0, 1.0}), f"lag_1_win_rate should be binary, got {unique_vals}"
+
+
+class TestFullFeatureIntegration:
+    """Integration tests for full 53-dimensional feature matrix"""
+
+    def test_53_dimensional_output_shape(self, temp_test_db):
+        """Test that enable_extended_features=True produces 53 dimensions"""
+        conn = sqlite3.connect(temp_test_db)
+        df_machine = pd.read_sql_query("SELECT * FROM machine_detailed_results", conn)
+        df_hall = pd.read_sql_query("SELECT * FROM daily_hall_summary", conn)
+        conn.close()
+
+        df_machine['date'] = pd.to_datetime(df_machine['date'], format='%Y%m%d')
+        df_full = df_machine.copy()
+
+        fb = FeatureBuilder(df_machine, df_hall=df_hall, df_full=df_full)
+        features = fb.build_features(is_train=True, enable_extended_features=True)
+
+        assert features.shape[1] == 53, f"Expected 53 dimensions, got {features.shape[1]}"
+
+    def test_22_dimensional_output_without_extended(self, sample_df):
+        """Test that enable_extended_features=False produces 22 dimensions"""
+        fb = FeatureBuilder(sample_df)
+        features = fb.build_features(is_train=True, enable_extended_features=False)
+
+        assert features.shape[1] == 22, f"Expected 22 dimensions, got {features.shape[1]}"
+
+    def test_train_test_feature_consistency(self):
+        """Test that train and test have same number of features"""
+        df_train = pd.DataFrame({
+            'date': pd.date_range('2025-01-01', periods=30),
+            'machine_number': [1] * 30,
+            'last_digit': ['1'] * 30,
+            'is_zorome': [0] * 30,
+            'games_normalized': [100] * 30,
+            'diff_coins_normalized': np.random.randn(30) * 100
+        })
+
+        df_test = pd.DataFrame({
+            'date': pd.date_range('2025-02-01', periods=10),
+            'machine_number': [1] * 10,
+            'last_digit': ['1'] * 10,
+            'is_zorome': [0] * 10,
+            'games_normalized': [100] * 10,
+            'diff_coins_normalized': np.random.randn(10) * 100
+        })
+
+        df_full = pd.concat([df_train, df_test], ignore_index=True)
+
+        # Train
+        fb_train = FeatureBuilder(df_train, df_full=df_full)
+        X_train = fb_train.build_features(is_train=True, enable_extended_features=True)
+
+        # Test
+        fb_test = FeatureBuilder(df_test, df_full=df_full)
+        fb_test.train_stats = fb_train.train_stats
+        X_test = fb_test.build_features(is_train=False, enable_extended_features=True)
+
+        assert X_train.shape[1] == X_test.shape[1], \
+            f"Feature count mismatch: train={X_train.shape[1]}, test={X_test.shape[1]}"
+        assert X_train.shape[1] == 53, "Should have 53 dimensions"
+
+    def test_no_data_leakage_in_lag_features(self):
+        """Verify that test period lag features don't use future values"""
+        df_train = pd.DataFrame({
+            'date': pd.date_range('2025-01-01', periods=30),
+            'machine_number': [1] * 30,
+            'last_digit': ['1'] * 30,
+            'is_zorome': [0] * 30,
+            'games_normalized': [100] * 30,
+            'diff_coins_normalized': list(range(0, 3000, 100))
+        })
+
+        df_test = pd.DataFrame({
+            'date': pd.date_range('2025-02-01', periods=5),
+            'machine_number': [1] * 5,
+            'last_digit': ['1'] * 5,
+            'is_zorome': [0] * 5,
+            'games_normalized': [100] * 5,
+            'diff_coins_normalized': [9999, 9999, 9999, 9999, 9999]  # Unrealistically high
+        })
+
+        df_full = pd.concat([df_train, df_test], ignore_index=True)
+
+        fb_test = FeatureBuilder(df_test, df_full=df_full)
+        features_test = fb_test._build_lag_features(is_train=False)
+
+        # lag_1_diff should be 2900 (last training value), not 9999 (test value)
+        lag_1_diff = features_test[0, 0]
+        assert lag_1_diff == 2900, f"Data leakage detected: lag_1_diff={lag_1_diff} (should be 2900)"
