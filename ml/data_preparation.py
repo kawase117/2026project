@@ -89,9 +89,15 @@ def prepare_data_by_groupby(
         fb_test.train_stats = fb_train.train_stats
         X_test = fb_test.build_features(is_train=False, enable_extended_features=True)
 
-        # ラベルを生成
-        y_train = (df_train["diff_coins_normalized"] >= 1000).astype(int).values
-        y_test = (df_test["diff_coins_normalized"] >= 1000).astype(int).values
+        # ラベルを生成（G数 >= 2000 かつ 差枚 >= 1000）
+        y_train = (
+            (df_train["games_normalized"] >= 2000) &
+            (df_train["diff_coins_normalized"] >= 1000)
+        ).astype(int).values
+        y_test = (
+            (df_test["games_normalized"] >= 2000) &
+            (df_test["diff_coins_normalized"] >= 1000)
+        ).astype(int).values
 
         return X_train, y_train, X_test, y_test
 
@@ -118,9 +124,16 @@ def prepare_data_by_groupby(
     else:
         raise ValueError(f"Unknown groupby_strategy: {groupby_strategy}")
 
-    # ラベルを生成（task a/b とも差枚 >= 1000）
-    y_train = (df_train["diff_coins_normalized"] >= 1000).astype(int).values
-    y_test = (df_test["diff_coins_normalized"] >= 1000).astype(int).values
+    # ラベルを生成（task a/b とも差枚 >= 1000 かつ G数 >= 2000）
+    # G数 >= 2000: 複数大当たり必要 → ランダムな運を排除
+    y_train = (
+        (df_train["games_normalized"] >= 2000) &
+        (df_train["diff_coins_normalized"] >= 1000)
+    ).astype(int).values
+    y_test = (
+        (df_test["games_normalized"] >= 2000) &
+        (df_test["diff_coins_normalized"] >= 1000)
+    ).astype(int).values
 
     return X_train, y_train, X_test, y_test
 
