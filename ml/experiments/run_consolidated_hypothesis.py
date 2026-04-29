@@ -29,6 +29,7 @@ def load_and_consolidate_data(groupby_strategy: str, task: str,
                                enable_extended_features: bool = False):
     """
     Load data from all 9 halls and union them.
+    Handles dimension mismatches by standardizing feature shapes across halls.
 
     Returns:
         Consolidated (X_train, y_train, X_test, y_test)
@@ -37,6 +38,7 @@ def load_and_consolidate_data(groupby_strategy: str, task: str,
     y_train_list = []
     X_test_list = []
     y_test_list = []
+    shapes = []
 
     print(f"\nLoading data from {len(HALL_DBS)} halls...")
     for db_path in HALL_DBS:
@@ -51,12 +53,36 @@ def load_and_consolidate_data(groupby_strategy: str, task: str,
             y_train_list.append(y_train)
             X_test_list.append(X_test)
             y_test_list.append(y_test)
+            shapes.append(X_train.shape[1])
 
             hall_name = Path(db_path).stem
-            print(f"  ✓ {hall_name}: {len(X_train)} train, {len(X_test)} test")
+            print(f"  ✓ {hall_name}: {len(X_train)} train ({X_train.shape[1]}D), {len(X_test)} test")
         except Exception as e:
-            print(f"  ✗ {db_path}: {e}", file=sys.stderr)
+            print(f"  ✗ {db_path}: {str(e)[:80]}", file=sys.stderr)
             continue
+
+    if not X_train_list:
+        raise ValueError("Failed to load data from any hall")
+
+    # For non-extended features with categorical groupby_strategy, dimensions may differ
+    # Standardize to maximum dimension by padding with zeros
+    if not enable_extended_features and groupby_strategy in ["tail", "model_type"]:
+        max_dim = max(shapes)
+        print(f"\nStandardizing feature dimensions to {max_dim} (found {set(shapes)})")
+
+        X_train_std = []
+        X_test_std = []
+        for X_train, X_test in zip(X_train_list, X_test_list):
+            if X_train.shape[1] < max_dim:
+                # Pad with zeros
+                pad_width = ((0, 0), (0, max_dim - X_train.shape[1]))
+                X_train = np.pad(X_train, pad_width, mode='constant', constant_values=0)
+                X_test = np.pad(X_test, pad_width, mode='constant', constant_values=0)
+            X_train_std.append(X_train)
+            X_test_std.append(X_test)
+
+        X_train_list = X_train_std
+        X_test_list = X_test_std
 
     # Union all data
     X_train_consolidated = np.vstack(X_train_list)
@@ -64,7 +90,8 @@ def load_and_consolidate_data(groupby_strategy: str, task: str,
     X_test_consolidated = np.vstack(X_test_list)
     y_test_consolidated = np.concatenate(y_test_list)
 
-    print(f"\nConsolidated: {len(X_train_consolidated)} train, {len(X_test_consolidated)} test")
+    print(f"Consolidated: {len(X_train_consolidated)} train samples, {X_train_consolidated.shape[1]}D features")
+    print(f"Consolidated: {len(X_test_consolidated)} test samples")
     return X_train_consolidated, y_train_consolidated, X_test_consolidated, y_test_consolidated
 
 
