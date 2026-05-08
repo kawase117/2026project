@@ -1,0 +1,51 @@
+{
+  "timestamp": "2026-05-08T21:29:01.037627",
+  "method": "Optimized Features (Unified Model)",
+  "feature_dimension": 16,
+  "features_kept": "month_progress (1D) + rolling averages (15D)",
+  "features_removed": [
+    "day_of_week one-hot (3.9% importance)",
+    "payday_window ramp (0.4% importance)",
+    "composite features (0.4% importance)"
+  ],
+  "design_rationale": "Unified feature set across all targets to avoid overfitting. Rolling averages already encode temporal patterns.",
+  "copy_db": "マルハンメガシティ2000-蒲田7_rank_exp.db",
+  "results": {
+    "rank_1": {
+      "auc": 0.6114170916802495,
+      "ap": 0.018431829347011743,
+      "brier_score": 0.06383120268583298,
+      "accuracy": 0.9401625215464171,
+      "baseline_auc": 0.5,
+      "auc_gain": 11.14170916802495,
+      "prec_at_r10": 1.791044776119403,
+      "prec_at_r20": 1.6320474777448073,
+      "pos_count": 57.0,
+      "neg_count": 4004.0
+    },
+    "top_3": {
+      "auc": 0.6226041592330931,
+      "ap": 0.06777073669427217,
+      "brier_score": 0.14904093742370605,
+      "accuracy": 0.7892144791923171,
+      "baseline_auc": 0.5,
+      "auc_gain": 12.26041592330931,
+      "prec_at_r10": 9.826589595375722,
+      "prec_at_r20": 8.413461538461538,
+      "pos_count": 173.0,
+      "neg_count": 3888.0
+    },
+    "top_5": {
+      "auc": 0.6043924695212608,
+      "ap": 0.10229911796725363,
+      "brier_score": 0.18219704926013947,
+      "accuracy": 0.7173110071410983,
+      "baseline_auc": 0.5,
+      "auc_gain": 10.43924695212608,
+      "prec_at_r10": 13.063063063063062,
+      "prec_at_r20": 11.63265306122449,
+      "pos_count": 285.0,
+      "neg_count": 3776.0
+    }
+  }
+}

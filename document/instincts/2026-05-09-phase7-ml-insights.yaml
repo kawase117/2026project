@@ -1,0 +1,96 @@
+---
+id: calibrated-beats-rebalancing
+trigger: "when implementing XGBoost on imbalanced classification (minority <10%)"
+confidence: 0.95
+domain: ml-feature-engineering
+source: phase7-experimental-validation
+project_id: pachinko-analyzer
+project_name: Pachinko Analyzer
+
+# Calibrated Strategy Beats Class Rebalancing
+
+## 背景
+Imbalanced binary classification typically uses class rebalancing (scale_pos_weight = neg_count / pos_count) to maximize AUC. However, this destroys probability calibration. In pachinko rank prediction (rank_1: 1.6% positive, top_3: 4.8% positive), testing shows the opposite is true.
+
+## アクション
+1. Do NOT use scale_pos_weight rebalancing on imbalanced data
+2. Instead, use scale_pos_weight = 1.0 (no reweighting)
+3. This preserves probability calibration: P(pred=1) = actual probability
+4. Measure success via AUC + ECE (Expected Calibration Error), not just AUC
+5. Use predicted probabilities directly as confidence thresholds in deployment
+
+## 例
+16D XGBoost rank_1: Balanced AUC 0.6114 → Calibrated AUC 0.6588 (+4.74%), ECE 52x better
+18D XGBoost top_3: Balanced AUC 0.6246 → Calibrated AUC 0.6671 (+4.26%), ECE 24.6x better
+
+---
+id: moving-averages-dominate
+trigger: "when engineering features for time-series rank/win-rate prediction"
+confidence: 0.92
+domain: ml-feature-engineering
+source: phase7-feature-importance-analysis
+project_id: pachinko-analyzer
+project_name: Pachinko Analyzer
+
+# Moving Average Features Dominate, Temporal Encoding is Redundant
+
+## 背景
+Feature importance analysis on 28D set (14D temporal + 15D rolling averages) showed moving averages capture 88-89% of predictive importance. Day-of-week, payday, composite features only 0.4-4.2%. Rolling windows implicitly encode temporal patterns.
+
+## アクション
+1. Engineer rolling average features (7/14/21/28/35-day windows) for: diff, games, efficiency
+2. Include month_progress only
+3. Do NOT engineer explicit temporal features (day-of-week, payday flags)
+4. Result: 16D vs 28D, better generalization, no overfitting
+
+## 例
+28D → 16D optimization: rank_1 AUC 0.5938 → 0.6114 (+2.96%), simpler model
+
+---
+id: target-specific-feature-utility
+trigger: "when adding new features and evaluating across multiple rank targets"
+confidence: 0.85
+domain: ml-feature-engineering
+source: phase7-18d-comparison-experiment
+project_id: pachinko-analyzer
+project_name: Pachinko Analyzer
+
+# days_since_last_rank1: Target-Dependent Utility
+
+## 背景
+days_since_last_rank1 helps top_3/top_5 but hurts rank_1. Not all features are universally beneficial.
+
+## アクション
+1. Test new features against ALL targets
+2. Accept target-specific feature sets if AUC gains > 1%
+3. For rank_1: use 16D (without days_since_last_rank1)
+4. For top_3/top_5: use 18D (with days_since_last_rank1)
+
+## 例
+18D vs 16D: rank_1 -0.09%, top_3 +3.28%, top_5 +1.17%
+
+---
+id: ece-metric-for-imbalanced
+trigger: "when evaluating ML on imbalanced datasets and deciding between rebalancing strategies"
+confidence: 0.90
+domain: ml-hyperparameter-tuning
+source: phase7-scale-pos-weight-comparison
+project_id: pachinko-analyzer
+project_name: Pachinko Analyzer
+
+# Use ECE (Expected Calibration Error) for Imbalanced Data
+
+## 背景
+Standard practice uses AUC alone for imbalanced classification. But AUC doesn't capture probability calibration. For deployment (e.g., "recommend if P > 0.8"), calibration matters more than discrimination.
+
+## アクション
+1. Always measure ECE alongside AUC
+2. ECE = |P_predicted - P_actual| across bins
+3. Prefer lower ECE even if AUC slightly lower
+4. Weight ECE improvements heavily (16.5x-52x transformative)
+5. Use Brier score as tiebreaker
+
+## 例
+Balanced vs Calibrated: AUC +4.74%, but ECE 52x better (0.1663 → 0.0032)
+Trustworthy probabilities matter more for real-world deployment
+

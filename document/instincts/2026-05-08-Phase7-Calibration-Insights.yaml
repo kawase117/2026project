@@ -1,0 +1,174 @@
+---
+id: ece-calibration-importance
+trigger: "when training XGBoost classification models with extreme class imbalance"
+confidence: 0.95
+domain: ml-hyperparameter-tuning
+source: session-observation
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# ECE（確率キャリブレーション）の重要性
+
+## 背景
+XGBoost の scale_pos_weight パラメータには2つの使い方がある：
+- **Balanced（adjusted）**: precision/recall のバランスを取る（daily_hit_rate が高い）
+- **Calibrated（=1.0）**: 確率スコアを信頼できるものにする（ECE が低い）
+
+Phase 7 で両方を試したところ、Calibrated アプローチが ECE を 96-99% 削減した。
+
+## アクション
+XGBoost の確率予測モデルを構築する際は：
+1. **Balanced モデルで基本性能を検証**（daily_hit_rate で確認）
+2. **Calibrated モデルを本番採用**（ECE < 2% を目指す）
+3. 確率スコアは「信頼できる」と見なす（リスク判断に使用可能）
+
+Precision/Recall のトレードオフより「確率の信頼性」を優先せよ。
+
+## 例
+- rank_1: Balanced ECE 0.2065 vs Calibrated ECE 0.0018 → 99.1% 削減
+- top_5: Balanced ECE 0.3232 vs Calibrated ECE 0.0118 → 96.4% 削減
+- Calibrated 50%確度予測 → 実際に約50%の的中率
+
+---
+id: data-binning-for-noisy-features
+trigger: "when feature distributions are highly variable (range > 10x the mean)"
+confidence: 0.90
+domain: ml-feature-engineering
+source: session-observation
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# ノイズの多い連続値特徴量のブロック化
+
+## 背景
+差枚・ゲーム数などの累積特徴量は非常に大きなばらつきを持つ：
+- 差枚: -6000 ～ 19000（広すぎる範囲）
+- ゲーム数: 0 ～ 3000（同様に広い）
+
+このままでは、モデルが「±100円の違い」にまで反応してしまい、過学習につながる。
+
+## アクション
+高ばらつき連続値特徴量に対しては：
+1. 固定幅ブロック化（pd.cut）を適用
+   - 差枚: 500単位ブロック
+   - ゲーム数: 500単位ブロック
+2. バイニング後、ブロックIDをカテゴリ特徴として使用
+3. 効率・ランク差など相対的な指標は「連続値のまま」保持
+
+## 例
+- 19500円 と 19800円 → 同じブロック ID
+- 19800円 と 20300円 → 異なるブロック ID
+
+---
+id: threshold-optimization-precision-recall-tradeoff
+trigger: "when balancing model utility (precision vs coverage) for practical deployment"
+confidence: 0.92
+domain: ml-hyperparameter-tuning
+source: session-observation
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# 閾値最適化による Precision/Recall トレードオフ
+
+## 背景
+確率予測モデルの実用性は「どの確度の予測を使うか」で大きく変わる。
+
+top_5 ターゲットでの例：
+- 閾値 0.01: Precision 0.0702, データ数 4061
+- 閾値 0.50: Precision 0.1014, データ数 1193
+- 閾値 0.60: Precision 0.1192, データ数 604
+
+## アクション
+F1スコアを最適化せよ（precision と recall の調和平均）
+1. 複数の閾値での「Precision・Recall・F1」を計算
+2. F1が最大となる閾値を採用
+3. ビジネス要件に応じて、F1最適値の前後 ±5-10% で調整
+
+## 例
+- 最適F1閾値: 0.4696 (F1=0.1645)
+- 実務的な50%基準: Precision 0.1014 (F1=0.1637)
+- 高精度60%: Precision 0.1192 (F1=0.1620)
+
+---
+id: high-confidence-subset-strategy
+trigger: "when achieving high absolute precision is critical (>10%)"
+confidence: 0.88
+domain: ml-project-planning
+source: session-observation
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# 高確度サブセット戦略による精度向上
+
+## 背景
+確率が「50%以上」の予測だけを使うことで、precision を約 40-50% 向上させられる。
+
+top_5 ターゲット例：
+- 全データ（1%以上確度）: Precision 0.0702
+- 50%以上確度のみ: Precision 0.1014 (+44%改善)
+- 60%以上確度のみ: Precision 0.1192 (+70%改善)
+
+## アクション
+精度が重視される場面では：
+1. 全データを使わず、高確度サブセットを選別する
+2. 使用するデータ数と精度のバランスをビジネス要件に応じて調整
+3. 「50%以上確度」が実用的な基準値
+
+---
+id: probability-distribution-analysis-before-threshold
+trigger: "when setting confidence thresholds for model deployment"
+confidence: 0.87
+domain: ml-hyperparameter-tuning
+source: session-observation
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# 閾値設定の前に確率分布を分析する
+
+## 背景
+適切な閾値を設定する前に、モデルが出す確率のレンジと分布を理解することが重要。
+
+Phase 7 確認事実：
+- rank_1: 0.003 ～ 0.888, 中央値 0.183
+- top_5: 0.013 ～ 0.869, 中央値 0.403
+
+## アクション
+モデル構築後、必ず以下を確認：
+1. 最小・最大確率を把握（モデルの出力範囲）
+2. 中央値・パーセンタイル（75%, 90%, 95%）を確認
+3. 目的のデータ比率に対応する確度を選定
+
+## 例
+- top_5 25パーセンタイル: 0.262
+- top_5 50パーセンタイル: 0.403
+- top_5 75パーセンタイル: 0.524
+- top_5 95パーセンタイル: 0.673
+
+---
+id: calibration-enables-risk-based-decisions
+trigger: "when model confidence scores are used for business decision-making"
+confidence: 0.91
+domain: ml-project-planning
+source: session-observation
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# キャリブレーション後の確率は信頼できるリスク指標になる
+
+## 背景
+Calibrated モデル（ECE < 0.02）を使えば、確率スコアをそのまま「リスク」または「確信度」として使用できる。
+
+Calibrated top_5 モデル例：
+- 「50%確度」の予測 → 実際に 50% の確率で的中
+- 「60%確度」の予測 → 実際に 60% の確率で的中
+
+## アクション
+Calibrated モデルの確率スコアはビジネス判断に使用できる
+1. 確度 0.70 以上 → 「高確度」（優先度 HIGH）
+2. 確度 0.50-0.70 → 「中確度」（優先度 MEDIUM）
+3. 確度 0.30-0.50 → 「低確度」（優先度 LOW）
+4. 確度 < 0.30 → 無視（ノイズレベル）
+
+## 例
+- Balanced 0.50確度予測 → 実際 0.10 的中（大損失）
+- Calibrated 0.50確度予測 → 実際 0.50 的中（期待通り）

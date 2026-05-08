@@ -1,0 +1,77 @@
+{
+  "timestamp": "2026-05-08T21:43:13.418884",
+  "method": "Final Optimized Features (18D)",
+  "feature_dimension": 18,
+  "features": {
+    "temporal": [
+      "month_progress",
+      "days_since_last_rank1"
+    ],
+    "rolling_diff": [
+      "avg_diff_7d",
+      "avg_diff_14d",
+      "avg_diff_21d",
+      "avg_diff_28d",
+      "avg_diff_35d"
+    ],
+    "rolling_games": [
+      "avg_games_7d",
+      "avg_games_14d",
+      "avg_games_21d",
+      "avg_games_28d",
+      "avg_games_35d"
+    ],
+    "rolling_efficiency": [
+      "avg_efficiency_7d",
+      "avg_efficiency_14d",
+      "avg_efficiency_21d",
+      "avg_efficiency_28d"
+    ],
+    "other": [
+      "machine_count"
+    ]
+  },
+  "features_removed": [
+    "is_weekend (12-32 importance, negligible)",
+    "avg_rank_diff features (29-72 importance, weak signal)"
+  ],
+  "copy_db": "マルハンメガシティ2000-蒲田7_rank_exp.db",
+  "results": {
+    "rank_1": {
+      "auc": 0.6684061552482605,
+      "ap": 0.029580039967283627,
+      "brier_score": 0.06609588861465454,
+      "accuracy": 0.9280965279487811,
+      "baseline_auc": 0.5,
+      "auc_gain": 16.840615524826053,
+      "prec_at_r10": 3.9215686274509802,
+      "prec_at_r20": 3.5143769968051117,
+      "pos_count": 57,
+      "neg_count": 4004
+    },
+    "top_3": {
+      "auc": 0.6416214705392612,
+      "ap": 0.07171046079968753,
+      "brier_score": 0.15775524079799652,
+      "accuracy": 0.7596651071164737,
+      "baseline_auc": 0.5,
+      "auc_gain": 14.162147053926121,
+      "prec_at_r10": 9.550561797752808,
+      "prec_at_r20": 7.882882882882883,
+      "pos_count": 173,
+      "neg_count": 3888
+    },
+    "top_5": {
+      "auc": 0.6360740967885816,
+      "ap": 0.10881322923882818,
+      "brier_score": 0.18862764537334442,
+      "accuracy": 0.6806205368135927,
+      "baseline_auc": 0.5,
+      "auc_gain": 13.607409678858161,
+      "prec_at_r10": 13.122171945701359,
+      "prec_at_r20": 11.949685534591195,
+      "pos_count": 285,
+      "neg_count": 3776
+    }
+  }
+}
