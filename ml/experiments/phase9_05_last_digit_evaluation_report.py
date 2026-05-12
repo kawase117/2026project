@@ -3,7 +3,7 @@
 Phase 9-5: 台番号末尾別総合評価報告書 - Last-Digit Final Evaluation Report
 
 Consolidates all Phase 9 results (feature engineering, importance, model comparison,
-hyperparameter tuning). Generates visualizations and markdown session summary.
+hyperparameter tuning). Generates visualizations and HTML session summary.
 """
 
 import sys
@@ -17,6 +17,7 @@ from datetime import datetime
 
 PROJECT_ROOT = Path(r"C:\Users\apto117\Documents\pachinko-analyzer\src\2026project")
 sys.path.insert(0, str(PROJECT_ROOT))
+from ml.experiments.result_format import render_html_page, write_text
 
 RESULTS_DIR = PROJECT_ROOT / "ml" / "experiments" / "results" / "phase9_last_digit_analysis"
 SESSIONS_DIR = PROJECT_ROOT / "document" / "sessions"
@@ -577,6 +578,77 @@ Phase 9 successfully extended machine-type learning to last-digit grouping, conf
     print(f"[OK] Markdown report saved to {report_path}")
 
 
+def create_html_report(results_consolidated):
+    """Create HTML session summary report."""
+    timestamp = datetime.now().strftime('%Y-%m-%d')
+    summary = results_consolidated['summary_metrics']
+
+    html = render_html_page(
+        title='Phase 9 Last-Digit Complete Report',
+        body=f"""
+        <section class="hero">
+          <p class="eyebrow">Phase 9-5</p>
+          <h1>Last-Digit Learning Complete Report</h1>
+          <p class="lede">Last-digit grouping is materially weaker than machine-type grouping and should remain a secondary signal.</p>
+          <p class="timestamp">{timestamp}</p>
+        </section>
+        <section>
+          <h2>Executive Summary</h2>
+          <p>Extending the learning pipeline from machine type to last-digit groups produced weaker AUC across all targets.</p>
+          <p>Operationally, hall behavior appears to be driven mostly by machine type rather than final machine-number digit.</p>
+        </section>
+        <section>
+          <h2>Data Summary</h2>
+          <table>
+            <tr><th>Total samples</th><td>{results_consolidated['data_summary']['total_samples']}</td></tr>
+            <tr><th>Train samples</th><td>{results_consolidated['data_summary']['train_samples']}</td></tr>
+            <tr><th>Test samples</th><td>{results_consolidated['data_summary']['test_samples']}</td></tr>
+            <tr><th>Groups</th><td>{results_consolidated['groups_description']}</td></tr>
+            <tr><th>Date range</th><td>{results_consolidated['data_summary']['date_range']}</td></tr>
+          </table>
+        </section>
+        <section>
+          <h2>Best AUC by Target</h2>
+          <table>
+            <tr><th>Target</th><th>Baseline AUC</th><th>Best Model AUC</th><th>Tuned AUC</th></tr>
+            <tr><td>rank_1</td><td>{summary['rank_1']['phase_9_2_baseline_auc']:.4f}</td><td>{summary['rank_1']['phase_9_3_best_auc']:.4f}</td><td>{summary['rank_1']['phase_9_4_tuned_auc']:.4f}</td></tr>
+            <tr><td>top_3</td><td>{summary['top_3']['phase_9_2_baseline_auc']:.4f}</td><td>{summary['top_3']['phase_9_3_best_auc']:.4f}</td><td>{summary['top_3']['phase_9_4_tuned_auc']:.4f}</td></tr>
+            <tr><td>top_5</td><td>{summary['top_5']['phase_9_2_baseline_auc']:.4f}</td><td>{summary['top_5']['phase_9_3_best_auc']:.4f}</td><td>{summary['top_5']['phase_9_4_tuned_auc']:.4f}</td></tr>
+          </table>
+        </section>
+        <section>
+          <h2>Why Last-Digit Underperforms</h2>
+          <ol>
+            <li>It is a finer grouping than machine type, so each bucket has less stable history.</li>
+            <li>Rolling averages still dominate feature importance, which means digit identity itself adds little signal.</li>
+            <li>Even after tuning, AUC remains well below the machine-type benchmark from earlier phases.</li>
+          </ol>
+        </section>
+        <section>
+          <h2>Recommended Use</h2>
+          <ol>
+            <li>Keep machine-type learning as the primary production model.</li>
+            <li>Use last-digit models only as a secondary ensemble or confidence modifier.</li>
+            <li>Prioritize hybrid features such as machine-type plus position before revisiting pure last-digit work.</li>
+          </ol>
+        </section>
+        <section>
+          <h2>Generated Artifacts</h2>
+          <ul>
+            <li><code>phase9_comprehensive_results.json</code></li>
+            <li><code>feature_importance_chart.html</code></li>
+            <li><code>model_comparison_radar.html</code></li>
+            <li><code>auc_progression.html</code></li>
+          </ul>
+        </section>
+        """,
+    )
+
+    report_path = SESSIONS_DIR / f'{timestamp}-Phase9-LastDigit-Complete.html'
+    write_text(report_path, html)
+    print(f"[OK] HTML report saved to {report_path}")
+
+
 def main():
     """Main execution flow."""
 
@@ -602,9 +674,9 @@ def main():
         results['phase9_04']
     )
 
-    # Create markdown report
-    print("\n[4] Creating markdown session report...")
-    create_markdown_report(results_consolidated)
+    # Create HTML report
+    print("\n[4] Creating HTML session report...")
+    create_html_report(results_consolidated)
 
     print("\n" + "=" * 80)
     print("[OK] Phase 9-5 Complete!")

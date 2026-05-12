@@ -6,18 +6,9 @@ Pachinko Analyzer - Dashboard Main (兼用エントリーポイント)
 import streamlit as st
 import pandas as pd
 from pathlib import Path
-from datetime import datetime
 from dotenv import load_dotenv
 
-# ========================================
-# Load environment variables
-# ========================================
-
 load_dotenv()
-
-# ========================================
-# Import from local modules
-# ========================================
 
 from dashboard.config.constants import PAGES, TRUST_LEVEL_INFO, FOOTER_TEXT
 from dashboard.utils.styling import configure_page, apply_dark_theme
@@ -29,6 +20,7 @@ from dashboard.pages import (
     page_02_daily_analysis,
     page_03_weekday_analysis,
     page_04_dd_analysis,
+    page_05_last_digit,
     page_06_day_last_digit,
     page_07_nth_weekday,
     page_08_individual_machines,
@@ -39,7 +31,28 @@ from dashboard.pages import (
     page_13_hall_selection,
     page_14_notion_exporter,
     page_15_backtest_validation,
+    page_16_cross_search_bulk,
 )
+
+# ページキーと関数のマッピング
+PAGE_ROUTER = {
+    "hall_overview": page_01_hall_overview.render,
+    "daily_analysis": page_02_daily_analysis.render,
+    "weekday_analysis": page_03_weekday_analysis.render,
+    "dd_analysis": page_04_dd_analysis.render,
+    "last_digit": page_05_last_digit.render,
+    "day_last_digit": page_06_day_last_digit.render,
+    "nth_weekday": page_07_nth_weekday.render,
+    "individual_machines": page_08_individual_machines.render,
+    "machine_tail": page_09_machine_tail.render,
+    "period_top10": page_10_period_top10.render,
+    "cross_search": page_11_cross_search.render,
+    "cross_search_bulk": page_16_cross_search_bulk.render,
+    "statistics": page_12_statistics.render,
+    "hall_selection": page_13_hall_selection.render,
+    "notion_exporter": page_14_notion_exporter.render,
+    "backtest_validation": page_15_backtest_validation.render,
+}
 
 
 # ========================================
@@ -60,6 +73,8 @@ if 'hall_name' not in st.session_state:
     st.session_state.hall_name = None
 if 'df_hall_summary' not in st.session_state:
     st.session_state.df_hall_summary = None
+if 'page_key' not in st.session_state:
+    st.session_state.page_key = PAGES[0]["key"]
 if 'date_range' not in st.session_state:
     st.session_state.date_range = (pd.to_datetime('2026-01-01'), pd.to_datetime('2026-12-31'))
 if 'min_games' not in st.session_state:
@@ -101,11 +116,13 @@ st.sidebar.markdown("---")
 
 # 分析ページ選択
 page_titles = [p["icon"] + " " + p["title"] for p in PAGES]
-page_selection = st.sidebar.radio(
+page_idx = st.sidebar.radio(
     "📊 分析ページ",
-    page_titles,
-    index=0
+    range(len(page_titles)),
+    format_func=lambda i: page_titles[i],
+    index=next((i for i, p in enumerate(PAGES) if p["key"] == st.session_state.page_key), 0)
 )
+st.session_state.page_key = PAGES[page_idx]["key"]
 
 st.sidebar.markdown("---")
 
@@ -146,7 +163,7 @@ if not df.empty:
     st.session_state.show_low_confidence = st.sidebar.checkbox(
         "参考値を表示（低信頼度）",
         value=False,
-        help="G数が少ないデータも表示\n\n⚠️ チェック時：最小G数フィルタが無視される\nチェック外：最小G数フィルタが有効になる"
+        help="G数が少ないデータも表示"
     )
 
     # 機種フィルタ
@@ -164,36 +181,12 @@ st.sidebar.markdown(TRUST_LEVEL_INFO)
 # Page Routing
 # ========================================
 
-# ページ選択に基づいてページ関数を実行
 try:
-    if "🏠" in page_selection:
-        page_01_hall_overview.render()
-    elif "📅" in page_selection and "DD" not in page_selection:
-        page_02_daily_analysis.render()
-    elif "曜日別" in page_selection:
-        page_03_weekday_analysis.render()
-    elif "DD別" in page_selection:
-        page_04_dd_analysis.render()
-    elif "日末日別" in page_selection:
-        page_06_day_last_digit.render()
-    elif "第X曜日" in page_selection:
-        page_07_nth_weekday.render()
-    elif "個別台" in page_selection:
-        page_08_individual_machines.render()
-    elif "台番号末尾" in page_selection:
-        page_09_machine_tail.render()
-    elif "期間TOP10" in page_selection:
-        page_10_period_top10.render()
-    elif "クロス検索" in page_selection:
-        page_11_cross_search.render()
-    elif "統計情報" in page_selection:
-        page_12_statistics.render()
-    elif "ホール選択支援" in page_selection:
-        page_13_hall_selection.render()
-    elif "Notion へ保存" in page_selection:
-        page_14_notion_exporter.render()
-    elif "バックテスト検証" in page_selection:
-        page_15_backtest_validation.render()
+    page_key = st.session_state.page_key
+    if page_key in PAGE_ROUTER:
+        PAGE_ROUTER[page_key]()
+    else:
+        st.error(f"ページ '{page_key}' が見つかりません")
 except Exception as e:
     st.error(f"ページ読み込みエラー: {e}")
     st.info("このエラーが続く場合は、以下のコマンドで起動してください:\nstreamlit run main_app.py")

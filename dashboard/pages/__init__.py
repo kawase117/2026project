@@ -15,6 +15,7 @@ from . import (
     page_13_hall_selection,
     page_14_notion_exporter,
     page_15_backtest_validation,
+    page_16_cross_search_bulk,
 )
 
 __all__ = [
@@ -32,4 +33,5 @@ __all__ = [
     'page_13_hall_selection',
     'page_14_notion_exporter',
     'page_15_backtest_validation',
+    'page_16_cross_search_bulk',
 ]

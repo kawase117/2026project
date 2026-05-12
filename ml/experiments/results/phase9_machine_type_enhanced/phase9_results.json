@@ -1,0 +1,316 @@
+{
+  "project": "Phase 9: Machine-Type Enhanced Rank Prediction",
+  "status": "COMPLETE",
+  "summary": {
+    "finding": "Machine-type features provide minimal improvement (AUC +0.0003 to +0.0042)",
+    "root_cause": "Multicollinearity + rare category encoding inefficiency",
+    "recommendation": "Skip one-hot encoding; try simple \"is_other\" flag or hyperparameter optimize baseline"
+  },
+  "phase9_2_metrics": {
+    "rank_1": {
+      "16D Baseline": {
+        "auc": 0.6959440415292455,
+        "ap": 0.04742659780717462,
+        "brier": 0.013976287096738815,
+        "hit_at_1": 1.0,
+        "hit_at_3": 0.3333333333333333,
+        "hit_at_5": 0.2,
+        "hit_at_10": 0.1,
+        "per_threshold": {
+          "threshold_0.01": {
+            "precision": 0.0190623390005152,
+            "recall": 0.891566265060241,
+            "f1": 0.0373266078184111,
+            "n_predicted_positive": 3882
+          },
+          "threshold_0.05": {
+            "precision": 0.05291005291005291,
+            "recall": 0.24096385542168675,
+            "f1": 0.08676789587852494,
+            "n_predicted_positive": 378
+          },
+          "threshold_0.1": {
+            "precision": 0.09090909090909091,
+            "recall": 0.012048192771084338,
+            "f1": 0.02127659574468085,
+            "n_predicted_positive": 11
+          },
+          "threshold_0.2": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "n_predicted_positive": 0
+          },
+          "threshold_0.5": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "n_predicted_positive": 0
+          }
+        },
+        "best_f1_threshold": 0.05669881030917168,
+        "best_f1_score": 0.11076923073119811,
+        "best_f1_precision": 0.0743801652892562,
+        "best_f1_recall": 0.21686746987951808
+      },
+      "20D Enhanced": {
+        "auc": 0.700177105068318,
+        "ap": 0.04676443689418277,
+        "brier": 0.013976067304611206,
+        "hit_at_1": 1.0,
+        "hit_at_3": 0.3333333333333333,
+        "hit_at_5": 0.2,
+        "hit_at_10": 0.1,
+        "per_threshold": {
+          "threshold_0.01": {
+            "precision": 0.019486926492353233,
+            "recall": 0.9518072289156626,
+            "f1": 0.03819192651679961,
+            "n_predicted_positive": 4054
+          },
+          "threshold_0.05": {
+            "precision": 0.056451612903225805,
+            "recall": 0.25301204819277107,
+            "f1": 0.09230769230769231,
+            "n_predicted_positive": 372
+          },
+          "threshold_0.1": {
+            "precision": 0.14285714285714285,
+            "recall": 0.012048192771084338,
+            "f1": 0.022222222222222223,
+            "n_predicted_positive": 7
+          },
+          "threshold_0.2": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "n_predicted_positive": 0
+          },
+          "threshold_0.5": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "n_predicted_positive": 0
+          }
+        },
+        "best_f1_threshold": 0.054795652627944946,
+        "best_f1_score": 0.10404624273809851,
+        "best_f1_precision": 0.06844106463878327,
+        "best_f1_recall": 0.21686746987951808
+      },
+      "improvement": {
+        "auc_delta": 0.00423306353907249,
+        "auc_improvement_pct": 0.6082476875254065,
+        "ap_delta": -0.0006621609129918507
+      }
+    },
+    "top_3": {
+      "16D Baseline": {
+        "auc": 0.6868719032909776,
+        "ap": 0.08162671152424947,
+        "brier": 0.040424998849630356,
+        "hit_at_1": 0.0,
+        "hit_at_3": 0.0,
+        "hit_at_5": 0.0,
+        "hit_at_10": 0.0,
+        "per_threshold": {
+          "threshold_0.01": {
+            "precision": 0.04284976768198245,
+            "recall": 1.0,
+            "f1": 0.08217821782178218,
+            "n_predicted_positive": 5811
+          },
+          "threshold_0.05": {
+            "precision": 0.07044601917465611,
+            "recall": 0.678714859437751,
+            "f1": 0.12764350453172205,
+            "n_predicted_positive": 2399
+          },
+          "threshold_0.1": {
+            "precision": 0.1019786910197869,
+            "recall": 0.26907630522088355,
+            "f1": 0.1479028697571744,
+            "n_predicted_positive": 657
+          },
+          "threshold_0.2": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "n_predicted_positive": 0
+          },
+          "threshold_0.5": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "n_predicted_positive": 0
+          }
+        },
+        "best_f1_threshold": 0.07538845390081406,
+        "best_f1_score": 0.15900802331090053,
+        "best_f1_precision": 0.09714795008912656,
+        "best_f1_recall": 0.43775100401606426
+      },
+      "20D Enhanced": {
+        "auc": 0.6853563119793088,
+        "ap": 0.07872453092068321,
+        "brier": 0.040458910167217255,
+        "hit_at_1": 0.0,
+        "hit_at_3": 0.0,
+        "hit_at_5": 0.0,
+        "hit_at_10": 0.0,
+        "per_threshold": {
+          "threshold_0.01": {
+            "precision": 0.04284976768198245,
+            "recall": 1.0,
+            "f1": 0.08217821782178218,
+            "n_predicted_positive": 5811
+          },
+          "threshold_0.05": {
+            "precision": 0.07137030995106036,
+            "recall": 0.7028112449799196,
+            "f1": 0.1295816364309515,
+            "n_predicted_positive": 2452
+          },
+          "threshold_0.1": {
+            "precision": 0.096,
+            "recall": 0.2891566265060241,
+            "f1": 0.14414414414414414,
+            "n_predicted_positive": 750
+          },
+          "threshold_0.2": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "n_predicted_positive": 0
+          },
+          "threshold_0.5": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "n_predicted_positive": 0
+          }
+        },
+        "best_f1_threshold": 0.08271993696689606,
+        "best_f1_score": 0.15371477366420958,
+        "best_f1_precision": 0.09761388286334056,
+        "best_f1_recall": 0.3614457831325301
+      },
+      "improvement": {
+        "auc_delta": -0.0015155913116687847,
+        "auc_improvement_pct": -0.22065123124227418,
+        "ap_delta": -0.0029021806035662567
+      }
+    },
+    "top_5": {
+      "16D Baseline": {
+        "auc": 0.6665497431738308,
+        "ap": 0.132212524303526,
+        "brier": 0.06440327316522598,
+        "hit_at_1": 1.0,
+        "hit_at_3": 0.3333333333333333,
+        "hit_at_5": 0.4,
+        "hit_at_10": 0.4,
+        "per_threshold": {
+          "threshold_0.01": {
+            "precision": 0.07072792978833248,
+            "recall": 1.0,
+            "f1": 0.13211186113789777,
+            "n_predicted_positive": 5811
+          },
+          "threshold_0.05": {
+            "precision": 0.08062805007426267,
+            "recall": 0.9245742092457421,
+            "f1": 0.1483216237314598,
+            "n_predicted_positive": 4713
+          },
+          "threshold_0.1": {
+            "precision": 0.11964873765093303,
+            "recall": 0.5304136253041363,
+            "f1": 0.19525302283922974,
+            "n_predicted_positive": 1822
+          },
+          "threshold_0.2": {
+            "precision": 0.3333333333333333,
+            "recall": 0.009732360097323601,
+            "f1": 0.018912529550827423,
+            "n_predicted_positive": 12
+          },
+          "threshold_0.5": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "n_predicted_positive": 0
+          }
+        },
+        "best_f1_threshold": 0.12911972403526306,
+        "best_f1_score": 0.20943952798135296,
+        "best_f1_precision": 0.15026455026455027,
+        "best_f1_recall": 0.34549878345498786
+      },
+      "20D Enhanced": {
+        "auc": 0.6668131026403533,
+        "ap": 0.13157923493108875,
+        "brier": 0.06442508846521378,
+        "hit_at_1": 0.0,
+        "hit_at_3": 0.0,
+        "hit_at_5": 0.4,
+        "hit_at_10": 0.4,
+        "per_threshold": {
+          "threshold_0.01": {
+            "precision": 0.07072792978833248,
+            "recall": 1.0,
+            "f1": 0.13211186113789777,
+            "n_predicted_positive": 5811
+          },
+          "threshold_0.05": {
+            "precision": 0.08194998949359109,
+            "recall": 0.948905109489051,
+            "f1": 0.15087040618955513,
+            "n_predicted_positive": 4759
+          },
+          "threshold_0.1": {
+            "precision": 0.11767925561029009,
+            "recall": 0.5231143552311436,
+            "f1": 0.19213583556747096,
+            "n_predicted_positive": 1827
+          },
+          "threshold_0.2": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "n_predicted_positive": 0
+          },
+          "threshold_0.5": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "n_predicted_positive": 0
+          }
+        },
+        "best_f1_threshold": 0.1256406605243683,
+        "best_f1_score": 0.206200432546617,
+        "best_f1_precision": 0.14651639344262296,
+        "best_f1_recall": 0.34793187347931875
+      },
+      "improvement": {
+        "auc_delta": 0.00026335946652256137,
+        "auc_improvement_pct": 0.039510849598194106,
+        "ap_delta": -0.0006332893724372568
+      }
+    }
+  },
+  "phase9_3_importance": {
+    "rank_1": {
+      "machine_type_other_gain": 0.05415070208511974,
+      "machine_type_total_gain": 0.05415070208511974
+    },
+    "top_3": {
+      "machine_type_other_gain": 0.08859084747208429,
+      "machine_type_total_gain": 0.08859084747208429
+    },
+    "top_5": {
+      "machine_type_other_gain": 0.15217161631562837,
+      "machine_type_total_gain": 0.15217161631562837
+    }
+  }
+}

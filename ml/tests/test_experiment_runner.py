@@ -61,6 +61,61 @@ class TestExperimentRunnerExecution:
             assert "auc" in log_data["metrics"]
             assert "accuracy" in log_data["metrics"]
 
+    def test_experiment_runner_creates_run_bundle_and_index(self):
+        """ExperimentRunner creates per-run bundle files and root index."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            X_train = np.array([[0, 0], [1, 1], [2, 2], [3, 3]])
+            y_train = np.array([0, 0, 1, 1])
+            X_test = np.array([[0.5, 0.5], [2.5, 2.5]])
+            y_test = np.array([0, 1])
+
+            runner = ExperimentRunner(results_dir=tmpdir)
+            model = LogisticRegressionModel(random_state=42)
+
+            exp_id = runner.run_experiment(
+                experiment_id="test_bundle_001",
+                phase=1,
+                hypothesis="Bundle test hypothesis",
+                groupby_strategy="tail",
+                task="a",
+                ml_model="logistic",
+                X_train=X_train,
+                y_train=y_train,
+                X_test=X_test,
+                y_test=y_test,
+                model=model,
+                interpretation="Bundle interpretation",
+                next_step="Bundle next step"
+            )
+
+            run_dir = Path(tmpdir) / exp_id
+            run_json = run_dir / "run.json"
+            summary_html = run_dir / "summary.html"
+            index_file = Path(tmpdir) / "index.jsonl"
+
+            assert run_dir.exists()
+            assert run_dir.is_dir()
+            assert run_json.exists()
+            assert summary_html.exists()
+            assert index_file.exists()
+
+            with open(run_json, "r", encoding="utf-8") as f:
+                bundle = json.load(f)
+
+            assert bundle["experiment_id"] == exp_id
+            assert bundle["result"]["primary_metric"] == "auc"
+
+            html_text = summary_html.read_text(encoding="utf-8")
+            assert "<html" in html_text.lower()
+            assert "Bundle test hypothesis" in html_text
+
+            index_lines = index_file.read_text(encoding="utf-8").strip().splitlines()
+            assert len(index_lines) == 1
+
+            index_entry = json.loads(index_lines[0])
+            assert index_entry["experiment_id"] == exp_id
+            assert index_entry["path"] == f"{exp_id}/run.json"
+
 
 class TestExperimentRunnerMetrics:
     """Test that metrics are correctly calculated and stored."""

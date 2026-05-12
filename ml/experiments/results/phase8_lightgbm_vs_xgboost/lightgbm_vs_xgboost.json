@@ -1,0 +1,272 @@
+{
+  "rank_1": {
+    "xgboost": {
+      "auc": 0.7056858719795382,
+      "ap": 0.04828138291361925,
+      "brier": 0.013965076766908169,
+      "hit_at_3": 0.3333333333333333,
+      "hit_at_10": 0.1,
+      "per_threshold": {
+        "threshold_0.01": {
+          "precision": 0.019876819708846586,
+          "recall": 0.8554216867469879,
+          "f1": 0.038850889192886456,
+          "n_predicted_positive": 3572
+        },
+        "threshold_0.05": {
+          "precision": 0.05141388174807198,
+          "recall": 0.24096385542168675,
+          "f1": 0.0847457627118644,
+          "n_predicted_positive": 389
+        },
+        "threshold_0.1": {
+          "precision": 0.06666666666666667,
+          "recall": 0.012048192771084338,
+          "f1": 0.02040816326530612,
+          "n_predicted_positive": 15
+        },
+        "threshold_0.2": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "n_predicted_positive": 0
+        },
+        "threshold_0.5": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "n_predicted_positive": 0
+        }
+      },
+      "best_f1_threshold": 0.05103367567062378,
+      "best_f1_score": 0.08908685965805922,
+      "best_f1_precision": 0.0546448087431694,
+      "best_f1_recall": 0.24096385542168675
+    },
+    "xgboost_train_time": 0.3702573776245117,
+    "lightgbm": {
+      "auc": 0.7048792235983038,
+      "ap": 0.03763991177993578,
+      "brier": 0.014071663593877693,
+      "hit_at_3": 0.0,
+      "hit_at_10": 0.1,
+      "per_threshold": {
+        "threshold_0.01": {
+          "precision": 0.019363762102351315,
+          "recall": 0.8433734939759037,
+          "f1": 0.03785830178474851,
+          "n_predicted_positive": 3615
+        },
+        "threshold_0.05": {
+          "precision": 0.05211726384364821,
+          "recall": 0.1927710843373494,
+          "f1": 0.08205128205128205,
+          "n_predicted_positive": 307
+        },
+        "threshold_0.1": {
+          "precision": 0.06521739130434782,
+          "recall": 0.03614457831325301,
+          "f1": 0.046511627906976744,
+          "n_predicted_positive": 46
+        },
+        "threshold_0.2": {
+          "precision": 0.125,
+          "recall": 0.012048192771084338,
+          "f1": 0.02197802197802198,
+          "n_predicted_positive": 8
+        },
+        "threshold_0.5": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "n_predicted_positive": 0
+        }
+      },
+      "best_f1_threshold": 0.04875582049664424,
+      "best_f1_score": 0.08899297420755667,
+      "best_f1_precision": 0.055232558139534885,
+      "best_f1_recall": 0.2289156626506024
+    },
+    "lightgbm_train_time": 1.6346635818481445
+  },
+  "top_3": {
+    "xgboost": {
+      "auc": 0.694930025748445,
+      "ap": 0.08223411407738448,
+      "brier": 0.04037972539663315,
+      "hit_at_3": 0.0,
+      "hit_at_10": 0.0,
+      "per_threshold": {
+        "threshold_0.01": {
+          "precision": 0.04284976768198245,
+          "recall": 1.0,
+          "f1": 0.08217821782178218,
+          "n_predicted_positive": 5811
+        },
+        "threshold_0.05": {
+          "precision": 0.069113627489262,
+          "recall": 0.7108433734939759,
+          "f1": 0.12597864768683273,
+          "n_predicted_positive": 2561
+        },
+        "threshold_0.1": {
+          "precision": 0.1050080775444265,
+          "recall": 0.26104417670682734,
+          "f1": 0.1497695852534562,
+          "n_predicted_positive": 619
+        },
+        "threshold_0.2": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "n_predicted_positive": 2
+        },
+        "threshold_0.5": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "n_predicted_positive": 0
+        }
+      },
+      "best_f1_threshold": 0.10498761385679245,
+      "best_f1_score": 0.15936254975653083,
+      "best_f1_precision": 0.11904761904761904,
+      "best_f1_recall": 0.24096385542168675
+    },
+    "xgboost_train_time": 0.23089337348937988,
+    "lightgbm": {
+      "auc": 0.6934700325935168,
+      "ap": 0.08168895588757621,
+      "brier": 0.040416368997581886,
+      "hit_at_3": 0.0,
+      "hit_at_10": 0.0,
+      "per_threshold": {
+        "threshold_0.01": {
+          "precision": 0.04284976768198245,
+          "recall": 1.0,
+          "f1": 0.08217821782178218,
+          "n_predicted_positive": 5811
+        },
+        "threshold_0.05": {
+          "precision": 0.06916537867078826,
+          "recall": 0.7188755020080321,
+          "f1": 0.12618963694043003,
+          "n_predicted_positive": 2588
+        },
+        "threshold_0.1": {
+          "precision": 0.10204081632653061,
+          "recall": 0.26104417670682734,
+          "f1": 0.14672686230248308,
+          "n_predicted_positive": 637
+        },
+        "threshold_0.2": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "n_predicted_positive": 3
+        },
+        "threshold_0.5": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "n_predicted_positive": 0
+        }
+      },
+      "best_f1_threshold": 0.10475354070242769,
+      "best_f1_score": 0.15303430074743943,
+      "best_f1_precision": 0.11394891944990176,
+      "best_f1_recall": 0.23293172690763053
+    },
+    "lightgbm_train_time": 0.1445295810699463
+  },
+  "top_5": {
+    "xgboost": {
+      "auc": 0.675202982788141,
+      "ap": 0.13209526546584355,
+      "brier": 0.0642538070678711,
+      "hit_at_3": 0.3333333333333333,
+      "hit_at_10": 0.3,
+      "per_threshold": {
+        "threshold_0.01": {
+          "precision": 0.07072792978833248,
+          "recall": 1.0,
+          "f1": 0.13211186113789777,
+          "n_predicted_positive": 5811
+        },
+        "threshold_0.05": {
+          "precision": 0.08575978161965424,
+          "recall": 0.9172749391727494,
+          "f1": 0.1568545870605367,
+          "n_predicted_positive": 4396
+        },
+        "threshold_0.1": {
+          "precision": 0.12092534174553102,
+          "recall": 0.559610705596107,
+          "f1": 0.19887591872027668,
+          "n_predicted_positive": 1902
+        },
+        "threshold_0.2": {
+          "precision": 0.4,
+          "recall": 0.004866180048661801,
+          "f1": 0.009615384615384616,
+          "n_predicted_positive": 5
+        },
+        "threshold_0.5": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "n_predicted_positive": 0
+        }
+      },
+      "best_f1_threshold": 0.11330986022949219,
+      "best_f1_score": 0.2131593256857917,
+      "best_f1_precision": 0.13725490196078433,
+      "best_f1_recall": 0.4768856447688564
+    },
+    "xgboost_train_time": 0.21736836433410645,
+    "lightgbm": {
+      "auc": 0.6736998738397765,
+      "ap": 0.12934121729311168,
+      "brier": 0.06430215092513171,
+      "hit_at_3": 0.6666666666666666,
+      "hit_at_10": 0.2,
+      "per_threshold": {
+        "threshold_0.01": {
+          "precision": 0.07072792978833248,
+          "recall": 1.0,
+          "f1": 0.13211186113789777,
+          "n_predicted_positive": 5811
+        },
+        "threshold_0.05": {
+          "precision": 0.08570129574903387,
+          "recall": 0.9172749391727494,
+          "f1": 0.15675675675675677,
+          "n_predicted_positive": 4399
+        },
+        "threshold_0.1": {
+          "precision": 0.12077043206663196,
+          "recall": 0.5644768856447688,
+          "f1": 0.19897084048027444,
+          "n_predicted_positive": 1921
+        },
+        "threshold_0.2": {
+          "precision": 0.21428571428571427,
+          "recall": 0.0072992700729927005,
+          "f1": 0.01411764705882353,
+          "n_predicted_positive": 14
+        },
+        "threshold_0.5": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "n_predicted_positive": 0
+        }
+      },
+      "best_f1_threshold": 0.11293134959535052,
+      "best_f1_score": 0.208154506403393,
+      "best_f1_precision": 0.13351686166551963,
+      "best_f1_recall": 0.4720194647201946
+    },
+    "lightgbm_train_time": 0.14165735244750977
+  }
+}

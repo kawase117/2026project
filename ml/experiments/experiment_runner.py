@@ -22,6 +22,14 @@ from pathlib import Path
 from datetime import datetime
 from ml.models.base_model import BaseModel
 from ml.evaluators.metrics import evaluate_model
+from ml.experiments.result_format import (
+    build_index_record,
+    build_run_payload,
+    render_run_summary_html,
+    update_index_jsonl,
+    write_json,
+    write_text,
+)
 
 
 class ExperimentRunner:
@@ -63,7 +71,14 @@ class ExperimentRunner:
         y_test: np.ndarray,
         model: BaseModel,
         interpretation: str,
-        next_step: str = ""
+        next_step: str = "",
+        baseline_run_id: str | None = None,
+        changed_factors: list[str] | None = None,
+        fixed_factors: dict | None = None,
+        data_context: dict | None = None,
+        decision: str = "unreviewed",
+        retest_if: list[str] | None = None,
+        tags: list[str] | None = None,
     ) -> str:
         """
         Execute a single experiment and log results.
@@ -91,6 +106,13 @@ class ExperimentRunner:
             model (BaseModel): Fitted or unfitted model instance (must implement fit, predict_proba)
             interpretation (str): Interpretation of results
             next_step (str, optional): Description of next steps. Default: ""
+            baseline_run_id (str, optional): Related baseline run identifier for comparison.
+            changed_factors (list[str], optional): Factors intentionally changed in this run.
+            fixed_factors (dict, optional): Factors held constant for this run.
+            data_context (dict, optional): Dataset and split context for this run.
+            decision (str, optional): Human review decision label. Default: "unreviewed".
+            retest_if (list[str], optional): Conditions that justify revisiting this run.
+            tags (list[str], optional): Searchable tags for the run index.
 
         Returns:
             str: The experiment_id (for chaining/verification)
@@ -132,6 +154,26 @@ class ExperimentRunner:
         with open(json_file, "w", encoding="utf-8") as f:
             json.dump(log_data, f, ensure_ascii=False, indent=2)
 
+        # Step 6b: Save structured bundle and update searchable index
+        run_payload = build_run_payload(
+            log_data,
+            decision=decision,
+            baseline_run_id=baseline_run_id,
+            changed_factors=changed_factors,
+            fixed_factors=fixed_factors,
+            data_context=data_context,
+            retest_if=retest_if,
+            tags=tags,
+        )
+        run_dir = self.results_dir / experiment_id
+        run_json_path = run_dir / "run.json"
+        summary_html_path = run_dir / "summary.html"
+        write_json(run_json_path, run_payload)
+        write_text(summary_html_path, render_run_summary_html(run_payload))
+
+        index_record = build_index_record(run_payload, run_json_path, self.results_dir)
+        update_index_jsonl(self.results_dir / "index.jsonl", index_record)
+
         # Step 7: Return experiment_id
         return experiment_id
 
@@ -153,9 +195,14 @@ class ExperimentRunner:
             >>> for exp in all_exps:
             ...     print(exp['experiment_id'], exp['metrics']['auc'])
         """
-        experiments = []
+        experiments = {}
         for json_file in sorted(self.results_dir.glob("*.json")):
             with open(json_file, "r", encoding="utf-8") as f:
                 exp = json.load(f)
-                experiments.append(exp)
-        return experiments
+                experiments[exp["experiment_id"]] = exp
+
+        for json_file in sorted(self.results_dir.glob("*/run.json")):
+            with open(json_file, "r", encoding="utf-8") as f:
+                exp = json.load(f)
+                experiments[exp["experiment_id"]] = exp
+        return list(experiments.values())

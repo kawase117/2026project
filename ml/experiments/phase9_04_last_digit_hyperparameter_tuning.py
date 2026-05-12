@@ -19,14 +19,24 @@ from itertools import product
 PROJECT_ROOT = Path(r"C:\Users\apto117\Documents\pachinko-analyzer\src\2026project")
 sys.path.insert(0, str(PROJECT_ROOT))
 
-FEATURES_PATH = PROJECT_ROOT / "ml" / "experiments" / "results" / "phase9_last_digit_analysis" / "features_18d_last_digit.csv"
 RESULTS_DIR = PROJECT_ROOT / "ml" / "experiments" / "results" / "phase9_last_digit_analysis"
 RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def load_features():
-    """Load 18D feature set from CSV."""
-    df = pd.read_csv(FEATURES_PATH)
+    """Load feature set from CSV (prefer 32D anti-pattern, fall back to 27D)."""
+    features_path_32d = RESULTS_DIR / 'features_32d_with_antipattern.csv'
+    features_path_27d = RESULTS_DIR / 'features_27d_last_digit_final.csv'
+
+    if features_path_32d.exists():
+        df = pd.read_csv(features_path_32d)
+        print("  Using 32D features with anti-pattern features (Phase 9-6)")
+    elif features_path_27d.exists():
+        df = pd.read_csv(features_path_27d)
+        print("  Using 27D base features (Phase 9-1)")
+    else:
+        raise FileNotFoundError("Neither 32D nor 27D feature files found!")
+
     return df
 
 
@@ -54,22 +64,20 @@ def grid_search_xgboost(df_train, df_test, target_col, target_name):
     print(f"Grid Search: {target_name}")
     print(f"{'='*70}")
 
-    features_18d = [
-        'month_progress', 'days_since_last_rank1',
-        'rolling_avg_diff_7d', 'rolling_avg_diff_14d', 'rolling_avg_diff_21d',
-        'rolling_avg_diff_28d', 'rolling_avg_diff_35d',
-        'rolling_avg_games_7d', 'rolling_avg_games_14d', 'rolling_avg_games_21d',
-        'rolling_avg_games_28d', 'rolling_avg_games_35d',
-        'rolling_avg_efficiency_7d', 'rolling_avg_efficiency_14d', 'rolling_avg_efficiency_21d',
-        'rolling_avg_efficiency_28d', 'rolling_avg_efficiency_35d',
-        'machine_count'
-    ]
+    # Auto-detect features (all columns except metadata and targets)
+    exclude_cols = {'date', 'last_digit', 'is_rank_1', 'is_top_3', 'is_top_5'}
+    feature_list = [col for col in df_train.columns if col not in exclude_cols]
 
-    X_train = df_train[features_18d].fillna(0).astype(np.float32)
+    X_train = df_train[feature_list].fillna(0).astype(np.float32)
     y_train = df_train[target_col].astype(int)
 
-    X_test = df_test[features_18d].fillna(0).astype(np.float32)
+    X_test = df_test[feature_list].fillna(0).astype(np.float32)
     y_test = df_test[target_col].astype(int)
+
+    # Calculate scale_pos_weight for class balance
+    pos_count = (y_train == 1).sum()
+    neg_count = (y_train == 0).sum()
+    scale_pos_weight = neg_count / pos_count if pos_count > 0 else 1.0
 
     # Parameter grid
     param_grid = {
@@ -102,7 +110,7 @@ def grid_search_xgboost(df_train, df_test, target_col, target_name):
             learning_rate=learning_rate,
             n_estimators=n_estimators,
             subsample=subsample,
-            scale_pos_weight=1.0,
+            scale_pos_weight=scale_pos_weight,
             random_state=42,
             verbosity=0
         )
@@ -141,9 +149,11 @@ def main():
     print("=" * 80)
 
     # Load features
-    print("\n[1] Loading 18D feature set...")
+    print("\n[1] Loading feature set (27D or 32D)...")
     df = load_features()
-    print(f"  Loaded {len(df)} samples")
+    exclude_cols = {'date', 'last_digit', 'is_rank_1', 'is_top_3', 'is_top_5'}
+    feature_count = len([col for col in df.columns if col not in exclude_cols])
+    print(f"  Loaded {len(df)} samples with {feature_count}D features")
 
     # Time-series split
     print("\n[2] Preparing time-series train/test split...")

@@ -1,0 +1,138 @@
+---
+id: page16-global-filter-pattern
+trigger: "when implementing bulk display pages with multiple filter targets"
+confidence: 0.95
+domain: dashboard-ui-patterns
+source: session-observation
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# グローバルフィルタパターン - Page 16 クロス検索一括
+
+## 背景
+複数のクロス検索ブロック（attribute1 × attribute2）を同時表示する場合、各ブロック内で独立してフィルタを提供すると、UIが複雑になり、一括管理ができない。
+
+## アクション
+1. ページ冒頭に グローバルフィルタセクション を配置
+2. 主要な属性（DD別、曜日別など）の multiselect を用意
+3. フィルタ後のデータを各ブロックに渡す
+4. 各ブロック内の個別フィルタ UI は削除
+5. 空データ時の警告メッセージを用意
+
+## 例
+```python
+# ページ冒頭
+dd_filter = st.multiselect("DD別（日付）で絞り込み", dd_options)
+weekday_filter = st.multiselect("曜日で絞り込み", weekday_options)
+
+# フィルタ後のデータ
+df_dd_filtered = apply_global_filter(df_prepared, 'DD別', dd_filter)
+
+# ブロックに渡す
+render_cross_search_block(df_dd_filtered, "DD別", "台番号末尾", "bulk16_dd_lastdigit")
+```
+
+## メリット
+- ユーザーが一度のフィルタ選択で全テーブルが更新される
+- UIが簡潔で直感的
+- 関連データ間の一貫性が保証される
+
+---
+id: page13-caching-performance
+trigger: "when loading same database repeatedly in loop or tab-based UI"
+confidence: 0.90
+domain: streamlit-performance-optimization
+source: session-observation
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# Page 13 キャッシング戦略 - パフォーマンス最適化
+
+## 背景
+page_13 では8つのタブがあり、タブを切り替えるたびに全ホール DB を再読み込みしていた。DB 読み込み関数に @st.cache_data がなかったため、同じデータが何度も読み込まれていた。
+
+## アクション
+1. DB読み込み関数に @st.cache_data(ttl=3600) をデコレータとして追加
+   ```python
+   @st.cache_data(ttl=3600)
+   def load_daily_hall_summary_all(db_path: str) -> pd.DataFrame:
+       ...
+   ```
+2. TTL は 1時間（3600秒）を推奨
+3. キャッシュキー自動生成（関数の引数から）
+
+## 効果
+- タブ切り替え時の読み込み時間が劇的に短縮
+- ネットワークI/O削減
+- ユーザーUX向上
+
+---
+id: attribute-aggregation-consolidation
+trigger: "when grouping data by multiple attribute types (categorical, numeric, binary, dd)"
+confidence: 0.88
+domain: data-aggregation-patterns
+source: session-observation
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# 属性別グループ化の統一化 - コード簡潔化
+
+## 背景
+page_13 の attribute_type による集計ロジックが 70行以上の複雑な if-elif ネストになっていた。各属性タイプごとに異なるループ・フィルタリング処理が散在。
+
+## アクション
+1. 属性タイプごとの グループ化ロジックを関数に切り出す
+   ```python
+   def _compute_attribute_groups(df, attr_type, attribute) -> list:
+       # (label, df_group) のリストを返す
+   ```
+2. 各グループについて共通の集計処理を実行
+3. 関数内で attribute_type の分岐を局所化
+
+## コード削減
+- 元：141-211行の複雑な分岐
+- 改：20行の統一処理（グループ化は関数に委譲）
+
+## メリット
+- コード保守性向上
+- バグが入りにくい
+- 新しい属性タイプ追加時に関数だけ修正すればよい
+
+---
+id: worktree-main-sync-awareness
+trigger: "when using worktrees and wondering why git status is clean but files seem modified"
+confidence: 0.92
+domain: git-workflow-management
+source: session-observation
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# Worktree と Main ブランチの同期意識
+
+## 背景
+このセッションは worktree（claude/nice-cray-7682e2）で実行されており、main ブランチは別の worktree で使用されていた。編集ツールで修正を加えても、git status がクリーンに見えた理由は、worktree と main が分離されていたから。
+
+## アクション
+1. Worktree の現在位置を常に意識する
+   ```bash
+   git status  # ブランチ名で worktree / main を確認
+   ```
+2. Worktree でのコミット後、main worktree に移動してマージ
+   ```bash
+   cd /c/Users/apto117/Documents/pachinko-analyzer/src/2026project
+   git merge <worktree-branch>
+   ```
+3. Main に切り替えたい場合は別の worktree から実行
+
+## 注意点
+- 同一ブランチを複数の worktree で使用不可（git error）
+- Worktree 内から他の worktree のブランチに切り替えられない
+- Push は main worktree からのみ実行可能
+
+## チェックリスト
+- [ ] 現在の worktree / ブランチを確認
+- [ ] 編集後はコミットを忘れない
+- [ ] Main への反映は main worktree で実行
+- [ ] Push 前に merge が完了したことを確認
+
+---

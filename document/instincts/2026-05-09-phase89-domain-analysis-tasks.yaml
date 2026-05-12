@@ -1,0 +1,174 @@
+---
+id: dd-concentration-analysis
+trigger: "when investigating shop's high-setting investment timing patterns"
+confidence: 0.92
+domain: ml-domain-analysis
+source: phase8-9-recall-fixed-analysis
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# DD（日付）集中度分析
+
+## 背景
+Phase 8-9 Recall固定精度比較分析で、CatBoost + Top_5 + Recall=10% の高精度予測機械の特性を分析した結果、**DD（月内日付）の平均値が18.4日**に集中していることが発見された。これは給料日（25日）前の集客対策、または月半ばの定期リセットなどの戦略的投入を示唆する可能性がある。
+
+## アクション
+1. ホール内でDD別のヒートマップを生成（1-31日の各日における高設定投入数）
+2. 給料日（25日）、初日（1日）、末日（30/31日）、月半ば（15日）など戦略的な節目との相関を検証
+3. 複数ホール間でDD投入パターンが異なるかを比較
+4. 時系列でDD投入パターンが変化するかを確認（例：最初は18日集中だが、時間とともに分散）
+
+## 期待される発見
+- 店側の給料日・イベント日前後の戦略的投入パターンの定量化
+- ホール別投入戦略の多様性の確認
+- 客の行動周期（給料日前後の来店）との一致度検証
+
+---
+id: days-since-cycle-verification
+trigger: "when validating shop's high-setting investment periodicity"
+confidence: 0.90
+domain: ml-domain-analysis
+source: phase8-9-recall-fixed-analysis
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# days_since（高設定サイクル）検証
+
+## 背景
+高精度予測機械の days_since_rank1 (前回高設定からの経過日数) の平均値が11.7日という結果は、**約2週間サイクルで高設定が投入される**ことを示唆する。これは固定的な定期投入戦略の存在を強く示唆する。
+
+## アクション
+1. 機械ごと・ホール全体で高設定投入の時間間隔を時系列で可視化
+2. 実際に7日・14日・21日などの固定周期パターンが存在するか検証
+3. 周期が機種別（model_type）に異なるかを確認
+4. days_since = 7-21日の範囲に限定した場合のモデル精度向上度を測定
+
+## 期待される発見
+- 店側の定期的な投入スケジュール（毎週？隔週？）の発見
+- 機種別投入戦略の周期性の違い
+- Recall固定での精度を更に高める閾値条件の発見（days_since + DD の組み合わせ条件）
+
+---
+id: model-consensus-prediction-analysis
+trigger: "when multiple models agree on the same machine prediction"
+confidence: 0.85
+domain: ml-domain-analysis
+source: phase8-9-recall-fixed-analysis
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# モデル間の予測一致度分析
+
+## 背景
+6つのモデル（XGBoost Baseline, XGBoost Balanced, CatBoost, RandomForest, Stacking, Neural Network）が存在する。各モデル個別の精度が15-17%であっても、**複数モデルが同じ台を指摘した場合のPrecisionは大幅に向上する可能性がある**。
+
+## アクション
+1. 全機械に対して6モデル全ての予測を実行（Recall=10%固定で3モデル以上が合意した台を抽出）
+2. モデル合意度別（6モデル全て合意、5モデル、4モデル...）のPrecision遷移を測定
+3. 最適な「合意モデル数」の閾値を発見（例：4モデル以上合意で Precision 25%等）
+4. 合意度が高い台の特性（DD, days_since等）を分析
+
+## 期待される発見
+- Ensemble効果による精度向上度（15% → 20%+への可能性）
+- モデル間の多様性と相補性の評価
+- 実運用で実現可能な「複数モデル投票」戦略の構築
+
+---
+id: false-positive-root-cause-analysis
+trigger: "when investigating why model makes incorrect predictions"
+confidence: 0.88
+domain: ml-domain-analysis
+source: phase8-9-recall-fixed-analysis
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# 偽陽性（False Positive）根因分析
+
+## 背景
+CatBoost + Top_5 + Recall=10% で、予測数183台のうち実TP(true positive)は32台、FP(false positive)は151台。つまり**約83%が偽陽性**。これらのFPの特性を理解することで、除外条件を発見し精度を向上させられる可能性がある。
+
+## アクション
+1. FP 151台の特性をTP 32台と比較（DD, days_since, efficiency, games等）
+2. TP台とFP台の明確な境界特性を検出（例：efficiency > 50% は常にFP等）
+3. FP台に共通する特徴パターンを抽出（例：初出現機械、営業初日など）
+4. 除外ルール（DD範囲、days_since範囲、効率閾値等）を構築してFP削減
+
+## 期待される発見
+- FP削減ルール（Precision向上）
+- 学習データ中の偽ラベル候補の発見
+- 高設定の「本当の定義」の再考（上位5機種より狭い定義が必要？）
+
+---
+id: model-type-specific-investment-patterns
+trigger: "when analyzing machine-type specific shop investment strategies"
+confidence: 0.82
+domain: ml-domain-analysis
+source: phase8-9-recall-fixed-analysis
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# 機種別（model_type）の投入パターン差
+
+## 背景
+Phase 5 検証で「全ホール統合より機種別個別モデル」が+2.44% AUC向上したという実績がある。これは**機種ごとに異なる投入戦略**が存在することを示唆する。DD・days_since・効率の投入パターンが機種別に異なる可能性。
+
+## アクション
+1. 主要機種（上位5-10機種）ごとにDD分布を可視化
+2. 各機種の days_since_rank1 平均値の比較（周期が機種で異なるか？）
+3. 機種別の efficiency 特性を分析（クセのある機種の特定）
+4. 機種別に最適化したサブモデルの構築を検討
+
+## 期待される発見
+- 機種別の投入戦略の多様性（例：A機種は月中心、B機種は給料日前）
+- 機種によって最適なRecall閾値が異なる可能性
+- 「TOP_5」の定義が機種別に異なるべき理由の発見
+
+---
+id: prediction-probability-distribution-analysis
+trigger: "when analyzing model confidence scores and calibration"
+confidence: 0.79
+domain: ml-domain-analysis
+source: phase8-9-recall-fixed-analysis
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# 確度スコア（y_pred_proba）の分布分析
+
+## 背景
+各モデルの y_pred_proba（予測確度スコア 0.0-1.0）の分布を分析することで、モデルの自信度がどの程度キャリブレーションされているか、または過度に確信的か（overly confident）を評価できる。また、スコア分布から最適な閾値を発見する手段となる。
+
+## アクション
+1. 全6モデル × 全3ターゲット × Recall固定時の y_pred_proba ヒストグラム生成
+2. y_pred_proba と実績（TP/FP）の相関度を測定（信頼度スコアが高いほど本当に高設定か）
+3. キャリブレーション曲線を生成（予測確度と実績一致度）
+4. モデル間の自信度の違いを比較（例：Neural Networkは極端な値を出すか？）
+
+## 期待される発見
+- モデルの自信度が現実とどの程度ズレているか
+- 最適な確度スコア閾値の再発見
+- ユーザー向けスコア提示時の信頼度表現方法の改善
+
+---
+id: temporal-pattern-variation-over-time
+trigger: "when investigating whether investment patterns change over time"
+confidence: 0.81
+domain: ml-domain-analysis
+source: phase8-9-recall-fixed-analysis
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# 時系列（月単位・週単位）の投入パターン変化
+
+## 背景
+現在の分析は全期間のデータを統合した結果だが、**時間とともに投入パターンが変化している可能性がある**。例：最初は18日集中だったが、4月下旬に戦略が変わったなど。月単位・週単位で投入パターンの推移を観測することで、ホール側の戦略進化を捉えられる可能性。
+
+## アクション
+1. データ期間を月単位に分割し、各月の DD・days_since・efficiency 分布を比較
+2. 週単位でも同様に分析（より短周期の変動を捉える）
+3. 投入パターンの「大きな転換点」をグラフから特定
+4. 転換点の背景を推測（新しいイベント、機種入替、競合店の影響など）
+
+## 期待される発見
+- ホール側の戦略進化・最適化プロセスの可視化
+- 現在進行中のホール戦略の特定（最新の投入パターン）
+- 予測モデルの再学習タイミングの発見（月1回？月2回？）

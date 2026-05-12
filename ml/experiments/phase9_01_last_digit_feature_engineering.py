@@ -20,6 +20,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import json
+from scipy.fft import fft
 
 PROJECT_ROOT = Path(r"C:\Users\apto117\Documents\pachinko-analyzer\src\2026project")
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -78,7 +79,7 @@ def compute_digit_ranks_by_date(df):
     df_copy['is_top_3'] = (df_copy['digit_rank'] <= 3).astype(int)
     df_copy['is_top_5'] = (df_copy['digit_rank'] <= 5).astype(int)
 
-    return df_copy.drop(columns=['digit_rank'])
+    return df_copy
 
 
 def compute_days_since_last_rank1(df):
@@ -123,6 +124,77 @@ def compute_month_progress(df):
     return df_copy
 
 
+def compute_dow_lastdigit_interaction(df):
+    """Compute target encoding for day_of_week × last_digit combination."""
+    df_copy = df.copy()
+    df_copy['day_of_week'] = df_copy['date'].dt.dayofweek
+
+    dow_digit_encoding = df_copy.groupby(['day_of_week', 'last_digit'])['is_rank_1'].transform('mean')
+    df_copy['dow_lastdigit_rank1_rate'] = dow_digit_encoding
+
+    return df_copy
+
+
+def compute_periodicity_strength(df):
+    """Compute periodicity signal for each last_digit using FFT."""
+    df_copy = df.copy()
+    df_copy['periodicity_strength'] = 0.0
+
+    for digit in df_copy['last_digit'].unique():
+        digit_mask = df_copy['last_digit'] == digit
+        digit_df = df_copy[digit_mask].sort_values('date')
+
+        if len(digit_df) > 4:
+            timeseries = digit_df['is_rank_1'].values
+            freqs = np.abs(fft(timeseries))
+            periodicity_val = np.max(freqs[1:]) / len(freqs) if len(freqs) > 1 else 0.0
+            df_copy.loc[digit_mask, 'periodicity_strength'] = periodicity_val
+
+    return df_copy
+
+
+def compute_prior_week_indicator(df):
+    """Compute prior week (7-day shifted) rank1 rate for same last_digit."""
+    df_copy = df.copy()
+
+    for digit in df_copy['last_digit'].unique():
+        digit_mask = df_copy['last_digit'] == digit
+        digit_df = df_copy[digit_mask].sort_values('date').reset_index(drop=True)
+
+        prior_week_rate = digit_df['is_rank_1'].shift(7).rolling(window=7, min_periods=1).mean()
+        df_copy.loc[digit_mask, 'prior_week_rank1_rate'] = prior_week_rate.fillna(0)
+
+    return df_copy
+
+
+def compute_prior_same_weekday_indicator(df):
+    """Compute rank1 rate from previous 1-3 occurrences of same weekday for same last_digit."""
+    df_copy = df.copy()
+    df_copy['day_of_week'] = df_copy['date'].dt.dayofweek
+    df_copy['prior_same_weekday_rank1_rate'] = 0.0
+
+    for digit in df_copy['last_digit'].unique():
+        for dow in range(7):
+            digit_dow_mask = (df_copy['last_digit'] == digit) & (df_copy['day_of_week'] == dow)
+            digit_dow_df = df_copy[digit_dow_mask].sort_values('date').reset_index(drop=True)
+
+            if len(digit_dow_df) > 1:
+                # Get rank1 from previous 1-3 occurrences of same weekday
+                prior_rank1_rates = []
+                for idx in range(len(digit_dow_df)):
+                    if idx >= 3:
+                        # Average of previous 1-3 occurrences
+                        prev_ranks = digit_dow_df.iloc[idx-3:idx]['is_rank_1'].values
+                        rate = np.mean(prev_ranks) if len(prev_ranks) > 0 else 0.0
+                    else:
+                        rate = 0.0
+                    prior_rank1_rates.append(rate)
+
+                df_copy.loc[digit_dow_mask, 'prior_same_weekday_rank1_rate'] = prior_rank1_rates
+
+    return df_copy
+
+
 def compute_rolling_averages(df, windows=[7, 14, 21, 28, 35]):
     """Compute rolling averages for each last_digit separately."""
 
@@ -138,35 +210,48 @@ def compute_rolling_averages(df, windows=[7, 14, 21, 28, 35]):
             rolling_diff = digit_df['total_diff_coins'].rolling(window=window, min_periods=1).mean().shift(1).fillna(0)
             rolling_games = digit_df['total_games'].rolling(window=window, min_periods=1).mean().shift(1).fillna(0)
             rolling_efficiency = digit_df['efficiency'].rolling(window=window, min_periods=1).mean().shift(1).fillna(0)
-            rolling_machines = digit_df['machine_count'].rolling(window=window, min_periods=1).mean().shift(1).fillna(0)
+            rolling_rank_sum = digit_df['digit_rank'].rolling(window=window, min_periods=1).sum().shift(1).fillna(0)
 
             # Assign back to dataframe
             df_copy.loc[digit_mask, f'rolling_avg_diff_{window}d'] = rolling_diff.values
             df_copy.loc[digit_mask, f'rolling_avg_games_{window}d'] = rolling_games.values
             df_copy.loc[digit_mask, f'rolling_avg_efficiency_{window}d'] = rolling_efficiency.values
-            df_copy.loc[digit_mask, f'rolling_avg_machines_{window}d'] = rolling_machines.values
+            df_copy.loc[digit_mask, f'rolling_rank_sum_{window}d'] = rolling_rank_sum.values
 
     return df_copy
 
 
 def create_feature_set(df):
-    """Create 18D feature set."""
+    """Create expanded feature set with temporal and ranking signals."""
 
     # Select target variables
     targets = ['is_rank_1', 'is_top_3', 'is_top_5']
 
-    # Select 18D features
-    features_18d = [
-        'month_progress',
+    # Compute day_of_week (0=Monday, 6=Sunday)
+    df['day_of_week'] = df['date'].dt.dayofweek
+
+    # Compute day_of_month (1-31)
+    df['day_of_month'] = df['date'].dt.day
+
+    # Select expanded feature set (27D: temporal, rolling averages, ranking, interaction, periodicity, prior)
+    features_expanded = [
+        # Temporal
+        'month_progress', 'day_of_week', 'day_of_month',
         'days_since_last_rank1',
+        # Rolling averages (diff)
         'rolling_avg_diff_7d', 'rolling_avg_diff_14d', 'rolling_avg_diff_21d', 'rolling_avg_diff_28d', 'rolling_avg_diff_35d',
+        # Rolling averages (games)
         'rolling_avg_games_7d', 'rolling_avg_games_14d', 'rolling_avg_games_21d', 'rolling_avg_games_28d', 'rolling_avg_games_35d',
+        # Rolling averages (efficiency)
         'rolling_avg_efficiency_7d', 'rolling_avg_efficiency_14d', 'rolling_avg_efficiency_21d', 'rolling_avg_efficiency_28d', 'rolling_avg_efficiency_35d',
-        'machine_count'
+        # Ranking stability (sum of recent ranks)
+        'rolling_rank_sum_7d', 'rolling_rank_sum_14d', 'rolling_rank_sum_21d',
+        # Interaction & signal features
+        'dow_lastdigit_rank1_rate', 'periodicity_strength', 'prior_week_rank1_rate', 'prior_same_weekday_rank1_rate'
     ]
 
     # Create feature matrix
-    X = df[features_18d].copy()
+    X = df[features_expanded].copy()
 
     # Ensure all features are numeric
     X = X.astype(np.float32)
@@ -174,7 +259,10 @@ def create_feature_set(df):
     # Create metadata
     metadata = df[['date', 'last_digit']].copy()
 
-    return X, targets, features_18d, metadata, df
+    # Drop temporary digit_rank column
+    df = df.drop(columns=['digit_rank'], errors='ignore')
+
+    return X, targets, features_expanded, metadata, df
 
 
 def create_eda_report(df):
@@ -242,7 +330,7 @@ def create_eda_report(df):
     print(f"[OK] Rank rate summary generated")
 
 
-def save_features_to_csv(df, X, targets, features_18d, metadata):
+def save_features_to_csv(df, X, targets, features_list, metadata):
     """Save features to CSV for model training."""
 
     # Create output dataframe
@@ -253,16 +341,17 @@ def save_features_to_csv(df, X, targets, features_18d, metadata):
         output_df[target] = df[target].values
 
     # Add features
-    for i, feat in enumerate(features_18d):
+    for i, feat in enumerate(features_list):
         output_df[feat] = X.iloc[:, i].values
 
     # Save
-    output_path = RESULTS_DIR / 'features_18d_last_digit.csv'
+    output_path = RESULTS_DIR / 'features_27d_last_digit_final.csv'
     output_df.to_csv(output_path, index=False)
 
     print(f"\n[OK] Features saved to {output_path}")
     print(f"  Shape: {output_df.shape}")
-    print(f"  Columns: {list(output_df.columns)}")
+    print(f"  Feature count: {len(features_list)}D")
+    print(f"  Columns: {list(output_df.columns[:10])} ... (showing first 10)")
 
 
 def main():
@@ -297,19 +386,35 @@ def main():
     print("\n[5] Computing rolling averages (7/14/21/28/35 days)...")
     df = compute_rolling_averages(df, windows=[7, 14, 21, 28, 35])
 
-    # Step 6: Create 18D feature set
-    print("\n[6] Creating 18D feature set...")
-    X, targets, features_18d, metadata, df_final = create_feature_set(df)
-    print(f"  Feature matrix shape: {X.shape}")
-    print(f"  Features: {features_18d}")
+    # Step 6: Compute day_of_week × last_digit interaction
+    print("\n[6] Computing day_of_week × last_digit interaction...")
+    df = compute_dow_lastdigit_interaction(df)
 
-    # Step 7: Create EDA report
-    print("\n[7] Creating EDA report...")
+    # Step 7: Compute periodicity strength for each last_digit
+    print("\n[7] Computing periodicity strength (FFT-based)...")
+    df = compute_periodicity_strength(df)
+
+    # Step 8: Compute prior week indicator
+    print("\n[8] Computing prior week rank1 rate indicator...")
+    df = compute_prior_week_indicator(df)
+
+    # Step 8.5: Compute prior same weekday indicator (前回～3回前の同じ曜日)
+    print("\n[8.5] Computing prior same-weekday rank1 rate indicator...")
+    df = compute_prior_same_weekday_indicator(df)
+
+    # Step 9: Create expanded feature set
+    print("\n[9] Creating expanded feature set...")
+    X, targets, features_expanded, metadata, df_final = create_feature_set(df)
+    print(f"  Feature matrix shape: {X.shape}")
+    print(f"  Feature dimension: {len(features_expanded)}D")
+
+    # Step 10: Create EDA report
+    print("\n[10] Creating EDA report...")
     create_eda_report(df_final)
 
-    # Step 8: Save to CSV
-    print("\n[8] Saving features to CSV...")
-    save_features_to_csv(df_final, X, targets, features_18d, metadata)
+    # Step 11: Save to CSV
+    print("\n[11] Saving features to CSV...")
+    save_features_to_csv(df_final, X, targets, features_expanded, metadata)
 
     # Step 9: Summary statistics
     print("\n" + "=" * 80)

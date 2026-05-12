@@ -19,6 +19,7 @@ PAGES = [
     {"icon": "🎯", "title": "台番号末尾別分析", "key": "machine_tail"},
     {"icon": "⭐", "title": "期間TOP10分析", "key": "period_top10"},
     {"icon": "🔀", "title": "クロス検索分析", "key": "cross_search"},
+    {"icon": "📑", "title": "クロス検索一括", "key": "cross_search_bulk"},
     {"icon": "ℹ️", "title": "統計情報", "key": "statistics"},
     {"icon": "🏪", "title": "ホール選択支援", "key": "hall_selection"},
     {"icon": "📌", "title": "Notion へ保存", "key": "notion_exporter"},
@@ -104,8 +105,19 @@ PAGE_REGISTRY = {
         "name": "バックテスト検証",
         "file": "page_15_backtest_validation",
         "icon": "📊"
+    },
+    16: {
+        "name": "クロス検索一括",
+        "file": "page_16_cross_search_bulk",
+        "icon": "📑"
     }
 }
+
+# ========================================
+# ページルーター（遅延インポート避けのため main.py で設定）
+# ========================================
+
+PAGE_ROUTER = None  # main.py で初期化される
 
 # ========================================
 # デフォルト値

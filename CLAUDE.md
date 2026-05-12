@@ -89,7 +89,8 @@ AIアシスタントへ：このファイルをセッション開始時に必ず
 │       ├── page_12_statistics.py        ← 統計情報
 │       ├── page_13_hall_selection.py    ← 複数ホール選択支援
 │       ├── page_14_notion_exporter.py   ← Notion連携
-│       └── page_15_backtest_validation.py ← バックテスト検証（新規）
+│       ├── page_15_backtest_validation.py ← バックテスト検証（新規）
+│       └── page_16_cross_search_bulk.py ← クロス検索一括（DD/曜日×末尾・機種・台番号）
 ├── ml/                          ← Phase 4 機械学習予測パイプライン（2026-04-26 新規）
 │   ├── 00_data_preparation.py          ← グループ化・特徴量生成
 │   ├── 01_hypothesis_01_groupby.py     ← 仮説1：グループ化戦略の検証

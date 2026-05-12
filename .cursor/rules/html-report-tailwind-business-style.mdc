@@ -1,0 +1,22 @@
+---
+description: HTML report/document creation standards with Tailwind and responsive business design
+alwaysApply: true
+---
+
+# HTML Report and Document Rule
+
+When creating reports or documents in HTML, follow all rules below:
+
+1. Load Tailwind CSS via CDN:
+   - `<script src="https://cdn.tailwindcss.com"></script>`
+2. Use a modern, clean business design style.
+3. Ensure responsive layout so mobile screens do not break.
+4. Decorate charts and tables with Tailwind utility classes to keep them readable.
+5. Deliver as a single self-contained HTML file that can be opened directly in a browser.
+
+## Output Checklist
+
+- Includes Tailwind CDN script in `<head>`
+- Uses responsive containers, spacing, and typography (`sm`, `md`, `lg` breakpoints)
+- Tables/charts are visually structured with borders, spacing, and readable colors
+- Final result is one standalone `.html` file with no extra build steps
