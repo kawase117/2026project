@@ -10,7 +10,7 @@ from pathlib import Path
 import sqlite3
 
 from ..utils.data_loader import get_all_hall_paths
-from ..utils.filters import apply_sidebar_filters
+from ..utils.filters import apply_sidebar_filters, filter_by_min_games
 from ..design_system import section_title, premium_divider, COLORS
 
 
@@ -49,13 +49,18 @@ def render():
         {"attribute": "all", "label": "全期間", "type": "all"}
     ]
 
+    # ベースラインを一度だけ計算（キャッシュ対応）
+    hall_paths_tuple = tuple(sorted(hall_paths.items()))
+    hall_baselines = compute_hall_baselines(hall_paths_tuple, st.session_state.min_games, st.session_state.show_low_confidence)
+
     # 各タブの処理
     for idx, tab in enumerate(tabs):
         with tab:
             config = attribute_configs[idx]
-            render_attribute_tab(config, hall_paths)
+            render_attribute_tab(config, hall_paths, hall_baselines)
 
 
+@st.cache_data(ttl=3600)
 def load_daily_hall_summary_all(db_path: str) -> pd.DataFrame:
     """ホール全体の日別集計データをすべて読み込み"""
     try:
@@ -73,7 +78,66 @@ def load_daily_hall_summary_all(db_path: str) -> pd.DataFrame:
         return pd.DataFrame()
 
 
-def render_attribute_tab(config, hall_paths):
+@st.cache_data(ttl=3600)
+def compute_hall_baselines(hall_paths_tuple: tuple, min_games: int, show_low: bool) -> dict:
+    """
+    各ホールの DB 全期間ベースライン（日別平均の平均）。
+    日付スライダーは適用せず、min_games / 参考値はサイドバーと同一。
+
+    注：hall_paths は dict のままではキャッシュ不可なので tuple に変換してから渡す
+    """
+    baselines = {}
+
+    for hall_name, hall_path in hall_paths_tuple:
+        df_full = load_daily_hall_summary_all(str(hall_path))
+        if df_full.empty:
+            continue
+        if not show_low:
+            df_full = filter_by_min_games(df_full, min_games, 'avg_games_per_machine')
+        if df_full.empty:
+            continue
+        baselines[hall_name] = {
+            'win_rate': float(df_full['win_rate'].mean()),
+            'avg_games': float(df_full['avg_games_per_machine'].mean()),
+            'avg_diff': float(df_full['avg_diff_per_machine'].mean()),
+        }
+    return baselines
+
+
+def _compute_attribute_groups(df: pd.DataFrame, attr_type: str, attribute: str, label: str = None) -> list:
+    """属性タイプに基づいてグループ化"""
+    groups = []
+
+    if attr_type == "all":
+        groups.append(('全期間', df))
+    elif attr_type == "binary":
+        df_filtered = df[df[attribute] == 1]
+        if not df_filtered.empty:
+            # binary型の場合、日本語ラベルを使用（例：label="月初別" で "月初" と表示）
+            group_label = label.rstrip('別') if label else attribute
+            groups.append((group_label, df_filtered))
+    elif attr_type == "numeric":
+        for digit in range(10):
+            df_filtered = df[df[attribute] == digit]
+            if not df_filtered.empty:
+                groups.append((f'末尾{digit}', df_filtered))
+    elif attr_type == "categorical":
+        for attr_val in sorted(df[attribute].dropna().unique()):
+            df_filtered = df[df[attribute] == attr_val]
+            if not df_filtered.empty:
+                groups.append((str(attr_val), df_filtered))
+    elif attr_type == "dd":
+        df['dd'] = df['date'].dt.day
+        for dd in sorted(df['dd'].unique()):
+            df_filtered = df[df['dd'] == dd]
+            if not df_filtered.empty:
+                groups.append((f'{int(dd)}日', df_filtered))
+        df.drop(columns=['dd'], inplace=True)
+
+    return groups
+
+
+def render_attribute_tab(config, hall_paths, hall_baselines):
     """属性別タブを描画"""
     attribute = config["attribute"]
     label = config["label"]
@@ -83,25 +147,18 @@ def render_attribute_tab(config, hall_paths):
 
     # 全ホールのデータを統合
     all_hall_data = {}
-
     for hall_name, hall_path in sorted(hall_paths.items()):
         df = load_daily_hall_summary_all(str(hall_path))
-
         if df.empty:
             continue
-
-        # 日付範囲でフィルタ、min_games フィルタを適用
         df = apply_sidebar_filters(
             df,
             date_range=st.session_state.date_range,
             min_games=st.session_state.min_games,
             show_low_confidence=st.session_state.show_low_confidence,
         )
-
-        if df.empty:
-            continue
-
-        all_hall_data[hall_name] = df
+        if not df.empty:
+            all_hall_data[hall_name] = df
 
     if not all_hall_data:
         st.warning("⚠️ 指定条件に該当するデータがありません")
@@ -109,79 +166,17 @@ def render_attribute_tab(config, hall_paths):
 
     # 属性に基づいて集計
     all_rows = []
-
     for hall_name, df in all_hall_data.items():
-        if attr_type == "all":
-            # 全期間：ホール全体の統計
-            stats = {
+        groups = _compute_attribute_groups(df, attr_type, attribute, label)
+        for attr_label, df_group in groups:
+            all_rows.append({
                 'ホール': hall_name,
-                '属性': '全期間',
-                '勝率': df['win_rate'].mean(),
-                '平均G数': df['avg_games_per_machine'].mean(),
-                '平均差枚': df['avg_diff_per_machine'].mean(),
-                'データ日数': len(df)
-            }
-            all_rows.append(stats)
-
-        elif attr_type == "binary":
-            # 二値属性（0 or 1）
-            df_filtered = df[df[attribute] == 1]
-            if not df_filtered.empty:
-                stats = {
-                    'ホール': hall_name,
-                    '属性': label,
-                    '勝率': df_filtered['win_rate'].mean(),
-                    '平均G数': df_filtered['avg_games_per_machine'].mean(),
-                    '平均差枚': df_filtered['avg_diff_per_machine'].mean(),
-                    'データ日数': len(df_filtered)
-                }
-                all_rows.append(stats)
-
-        elif attr_type == "numeric":
-            # 数値属性（末尾 0-9）
-            for digit in range(10):
-                df_filtered = df[df[attribute] == digit]
-                if not df_filtered.empty:
-                    stats = {
-                        'ホール': hall_name,
-                        '属性': f'末尾{digit}',
-                        '勝率': df_filtered['win_rate'].mean(),
-                        '平均G数': df_filtered['avg_games_per_machine'].mean(),
-                        '平均差枚': df_filtered['avg_diff_per_machine'].mean(),
-                        'データ日数': len(df_filtered)
-                    }
-                    all_rows.append(stats)
-
-        elif attr_type == "categorical":
-            # カテゴリ属性（曜日など）
-            for attr_val in df[attribute].unique():
-                df_filtered = df[df[attribute] == attr_val]
-                if not df_filtered.empty:
-                    stats = {
-                        'ホール': hall_name,
-                        '属性': str(attr_val),
-                        '勝率': df_filtered['win_rate'].mean(),
-                        '平均G数': df_filtered['avg_games_per_machine'].mean(),
-                        '平均差枚': df_filtered['avg_diff_per_machine'].mean(),
-                        'データ日数': len(df_filtered)
-                    }
-                    all_rows.append(stats)
-
-        elif attr_type == "dd":
-            # DD別（毎月の日付）
-            df['dd'] = df['date'].dt.day
-            for dd in sorted(df['dd'].unique()):
-                df_filtered = df[df['dd'] == dd]
-                if not df_filtered.empty:
-                    stats = {
-                        'ホール': hall_name,
-                        '属性': f'{int(dd)}日',
-                        '勝率': df_filtered['win_rate'].mean(),
-                        '平均G数': df_filtered['avg_games_per_machine'].mean(),
-                        '平均差枚': df_filtered['avg_diff_per_machine'].mean(),
-                        'データ日数': len(df_filtered)
-                    }
-                    all_rows.append(stats)
+                '属性': attr_label,
+                '勝率': df_group['win_rate'].mean(),
+                '平均G数': df_group['avg_games_per_machine'].mean(),
+                '平均差枚': df_group['avg_diff_per_machine'].mean(),
+                'データ日数': len(df_group)
+            })
 
     if not all_rows:
         st.warning("⚠️ フィルタ後、該当するデータがありません")
@@ -218,14 +213,28 @@ def render_attribute_tab(config, hall_paths):
         st.warning("⚠️ フィルタ条件に該当するデータがありません")
         return
 
-    # 表示用フォーマット（数値はフォーマットしない）
+    st.caption(
+        "勝率差・平均差枚差・平均G数差は、そのホールの DB 全期間平均（日付は未絞り、最小G数・参考値はサイドバーと同一）との差。"
+        "勝率差の単位はパーセントポイント（pt）。ベースラインが無い行は差が空欄になります。"
+    )
+
+    def get_baseline_series(df_filtered: pd.DataFrame, hall_baselines: dict, key: str) -> pd.Series:
+        return df_filtered['ホール'].apply(lambda n: hall_baselines.get(n, {}).get(key, float('nan')))
+
+    base_win = get_baseline_series(df_filtered, hall_baselines, 'win_rate')
+    base_games = get_baseline_series(df_filtered, hall_baselines, 'avg_games')
+    base_diff = get_baseline_series(df_filtered, hall_baselines, 'avg_diff')
+
     df_display = pd.DataFrame({
         'ホール': df_filtered['ホール'],
         '属性': df_filtered['属性'],
-        '勝率': df_filtered['勝率'].apply(lambda x: f"{x:.1f}%"),
-        '平均G数': df_filtered['平均G数'].apply(lambda x: int(x)),
-        '平均差枚': df_filtered['平均差枚'].apply(lambda x: int(x)),
-        'データ日数': df_filtered['データ日数']
+        '勝率': (df_filtered['勝率']).round(1),
+        '勝率差': (df_filtered['勝率'] - base_win).round(1),
+        '平均差枚': (df_filtered['平均差枚']).round().astype('Int64'),
+        '平均差枚差': (df_filtered['平均差枚'] - base_diff).round().astype('Int64'),
+        '平均G数': (df_filtered['平均G数']).round().astype('Int64'),
+        '平均G数差': (df_filtered['平均G数'] - base_games).round().astype('Int64'),
+        'データ日数': df_filtered['データ日数'],
     })
 
     premium_divider()
@@ -240,9 +249,7 @@ def render_attribute_tab(config, hall_paths):
         col1, col2 = st.columns(2)
 
         with col1:
-            # 差枚のバーグラフ（ホール別）
             top_data = df_filtered.nlargest(15, '平均差枚') if len(df_filtered) > 15 else df_filtered
-
             fig = px.bar(
                 top_data,
                 x='ホール',
@@ -252,11 +259,9 @@ def render_attribute_tab(config, hall_paths):
                 labels={'平均差枚': '平均差枚 (枚)', 'ホール': 'ホール'},
                 height=400
             )
-            fig.update_traces(marker_color=COLORS['secondary_green'])
             st.plotly_chart(fig, use_container_width=True)
 
         with col2:
-            # 散布図：G数 vs 差枚
             fig = px.scatter(
                 df_filtered,
                 x='平均G数',
