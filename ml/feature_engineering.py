@@ -326,18 +326,18 @@ class FeatureBuilder:
             if len(df_machine) < 2:
                 continue
 
-            # Rolling means (minimum 1 period to handle sparse data)
-            ma_14_diff = df_machine['diff_coins_normalized'].rolling(14, min_periods=1).mean().values
-            ma_7_diff = df_machine['diff_coins_normalized'].rolling(7, min_periods=1).mean().values
-            ma_14_games = df_machine['games_normalized'].rolling(14, min_periods=1).mean().values
-            ma_7_games = df_machine['games_normalized'].rolling(7, min_periods=1).mean().values
-            ma_30_diff = df_machine['diff_coins_normalized'].rolling(30, min_periods=1).mean().values
+            # Rolling means with shift(1) to prevent data leakage (exclude current day)
+            ma_14_diff = df_machine['diff_coins_normalized'].rolling(14, min_periods=1).mean().shift(1).fillna(0).values
+            ma_7_diff = df_machine['diff_coins_normalized'].rolling(7, min_periods=1).mean().shift(1).fillna(0).values
+            ma_14_games = df_machine['games_normalized'].rolling(14, min_periods=1).mean().shift(1).fillna(0).values
+            ma_7_games = df_machine['games_normalized'].rolling(7, min_periods=1).mean().shift(1).fillna(0).values
+            ma_30_diff = df_machine['diff_coins_normalized'].rolling(30, min_periods=1).mean().shift(1).fillna(0).values
 
             # Efficiency: ma_14_diff / ma_14_games
             efficiency = ma_14_diff / (ma_14_games + 1e-8)
 
-            # Stability: std of diff over 7 days (low std = stable)
-            stability = df_machine['diff_coins_normalized'].rolling(7, min_periods=1).std().values
+            # Stability: std of diff over 7 days (low std = stable) with shift(1) to prevent leakage
+            stability = df_machine['diff_coins_normalized'].rolling(7, min_periods=1).std().shift(1).fillna(0).values
             stability = np.nan_to_num(stability, nan=0.0)  # Handle NaN in first period
 
             # Trend: 14-day performance change
