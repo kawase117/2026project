@@ -1,0 +1,176 @@
+---
+id: baseline-model-saturation
+trigger: "when hyperparameter tuning yields <1% AUC improvement"
+confidence: 0.90
+domain: ml-hyperparameter-tuning
+source: phase10-observation
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer ML Pipeline
+
+# Baseline Model Already Well-Tuned
+
+## 背景
+Phase 10 hyperparameter grid search over max_depth=[2,3,4,5] and learning_rate=[0.001-0.05] yielded only +0.38% to +0.59% AUC improvement for rank prediction tasks. This is ~90% lower than Phase 9-4's recommendation of +1-3% improvement.
+
+## 分析
+- rank_1: baseline (MD=3, LR=0.01) → best (MD=4, LR=0.005) = +0.0041 AUC (+0.59%)
+- top_3: baseline (MD=3, LR=0.01) → best (MD=3, LR=0.02) = +0.0026 AUC (+0.38%)
+- top_5: baseline (MD=3, LR=0.01) = best (MD=3, LR=0.01) = +0.0000 AUC (+0.00%)
+
+The baseline parameters (max_depth=3, learning_rate=0.01) appear to be carefully chosen and already near-optimal.
+
+## アクション
+When hyperparameter tuning on a mature baseline shows diminishing returns (<1% improvement):
+1. **Do NOT pursue further grid search** — expanding parameter space will not help
+2. **Pivot to feature engineering** — interaction terms, new features, or domain-specific features are the next high-leverage opportunity
+3. **Verify time-series validation** — ensure proper validation methodology matches the deployment scenario
+
+## 例
+Phase 10 results: 20 parameter configurations tested across 3 targets. Average improvement +0.32% (well below +1-3% expectation). Conclusion: Feature engineering needed, not parameter tweaking. Expected next improvement from interaction features: +0.01 to +0.03 AUC.
+
+---
+id: multicollinearity-masking-signal
+trigger: "when categorical feature alone shows high effect size but minimal improvement when combined with baseline"
+confidence: 0.85
+domain: ml-feature-engineering
+source: phase9-observation
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer ML Pipeline
+
+# Multicollinearity Can Mask True Signal in Multi-Feature Models
+
+## 背景
+Phase 8-5 showed machine_type alone provides AUC +0.064-0.068 effect. However, when integrated into 16D baseline (Phase 9), improvement was minimal: +0.004 AUC. This 94% reduction in effect size indicates multicollinearity.
+
+## 分析
+1. The 16D baseline features already implicitly capture machine_type signal through rolling averages and efficiency metrics
+2. Machine types have different behavioral patterns (avg_diff, avg_games, avg_efficiency) that correlate with rank outcomes
+3. One-hot encoding creates multicollinearity rather than new orthogonal signal
+4. Rare categories (hana: 1.99%, oki: 1.52%) lack sufficient training samples
+
+## アクション
+When adding categorical features to existing numerical baseline:
+1. Test standalone effect first — measure target correlation alone
+2. If standalone effect is large (>5% AUC delta) but integrated improvement is <10% of standalone, suspect multicollinearity
+3. Consider alternatives: target encoding (handles rare categories), simplified binary flag, or skip the feature
+
+## 例
+Machine-type alone: AUC +0.0677. Combined with 16D: AUC +0.0042 (94% reduction). Signal largely redundant with existing temporal/efficiency features. One-hot encoding inefficient for rare categories.
+
+---
+id: time-series-validation-critical
+trigger: "when building rank prediction models for time-series data with non-uniform class distribution"
+confidence: 0.95
+domain: ml-project-planning
+source: phase9-03-correction
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer ML Pipeline
+
+# Time-Series Validation Essential for Temporal ML
+
+## 背景
+Phase 9-3 initially used simple sample-based test split (last 57 samples), producing AUC 0.37-0.57, inconsistent with Phase 9-2's date-based split producing AUC 0.66-0.70. Root cause: sample-based split created data leakage from future dates into training.
+
+## 修正方法
+Proper time-series split requires splitting on time/date, not samples:
+- Identify unique dates
+- Split at date index N-57 (last 57 unique dates)
+- Train on all data before split_date, test on data from split_date onward
+- Result: Chronological ordering preserved, no leakage
+
+## アクション
+For any temporal prediction task (time-series, financial, user behavior):
+1. Always split on time/date, never on samples — ensures future data doesn't leak into training
+2. Verify temporal ordering — training chronologically earlier than testing
+3. Document split ratio and methodology
+4. Use date-based validation in cross-validation, not random k-fold
+
+## 例
+Sample-based split (WRONG): train_idx = df[:13713], test_idx = df[13713:] → AUC 0.37-0.57 (data leakage). Date-based split (CORRECT): train_dates < 2026-02-08, test_dates >= 2026-02-08 → AUC 0.66-0.70 (realistic).
+
+---
+id: class-imbalance-target-specific
+trigger: "when dealing with multi-class imbalance (1% vs 4% vs 7% positive rates)"
+confidence: 0.80
+domain: ml-feature-engineering
+source: phase10-observation
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer ML Pipeline
+
+# Different Imbalance Ratios Require Different Approaches
+
+## 背景
+Pachinko rank prediction has three targets with different imbalance levels: rank_1 (1.43%), top_3 (4.28%), top_5 (7.07%). Optimal hyperparameters differed by target: rank_1 required max_depth=4, top_3 required learning_rate=0.02, top_5 remained at baseline.
+
+## インサイト
+Severe class imbalance (1-2% positive) requires different feature engineering and model tuning than mild imbalance (7%+). Single "one-size-fits-all" model may not be optimal.
+
+## アクション
+When handling multi-target imbalance:
+1. Tune per-target — do not apply same hyperparameters to all targets
+2. Consider separate models — for extreme imbalance (1-3%), dedicated model may outperform combined approach
+3. Evaluate with AUC and AP — not accuracy (meaningless for imbalanced data)
+4. Use scale_pos_weight in XGBoost: set to (n_negative / n_positive)
+
+## 例
+Phase 10: rank_1 (1.43%) best=(MD=4, LR=0.005) AUC 0.7001. top_3 (4.28%) best=(MD=3, LR=0.020) AUC 0.6895. top_5 (7.07%) best=(MD=3, LR=0.010) AUC 0.6665. No single parameter set optimal for all targets; imbalance severity directly impacts optimal depth/learning_rate.
+
+---
+id: domain-hypothesis-validation-limits
+trigger: "when testing 4+ domain hypotheses with statistical significance testing"
+confidence: 0.88
+domain: ml-project-planning
+source: phase8-observation
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer ML Pipeline
+
+# Not All Domain Hypotheses Require Explicit Feature Engineering
+
+## 背景
+Phase 8 tested 4 domain hypotheses: DD (日付), machine_type, 時系列ドリフト, 偽陽性パターン. Only machine_type showed statistical signal, but when integrated into full model, improvement was 94% lower due to multicollinearity.
+
+## 結論
+Domain analysis identifies which hypotheses are worth pursuing, but: (1) High standalone effect ≠ high combined effect; (2) Statistically significant ≠ practically useful; (3) Some patterns already captured implicitly by baseline features.
+
+## アクション
+When multiple domain hypotheses exist:
+1. Test hypotheses independently first — measure standalone effect size
+2. Only develop features for highest-value hypotheses — skip those with p>0.05 or redundant signal
+3. Expect diminishing returns — mature baselines already capture obvious patterns
+4. Pivot to new hypotheses if combined improvement <50% of standalone — indicates multicollinearity
+
+## 例
+Phase 8-10 workflow: Phase 8 tests 4 hypotheses (only machine_type significant). Phase 9 integrates machine_type (combined improvement +0.004, 94% reduction). Phase 10 hyperparameter tuning (+0.59% max). Conclusion: Need new hypotheses or interaction features, not better tuning.
+
+---
+id: feature-interaction-next-frontier
+trigger: "when baseline model plateau after hyperparameter tuning and feature integration"
+confidence: 0.85
+domain: ml-feature-engineering
+source: phase10-recommendation
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer ML Pipeline
+
+# Interaction Features Unlock Non-Linear Patterns
+
+## 背景
+Phases 8-10 achieved baseline performance (AUC 0.66-0.70) through domain analysis, feature integration, and hyperparameter tuning. Next frontier: interaction features to capture non-linear relationships.
+
+## 提案される相互作用特徴量
+- days_since_rank1 × avg_efficiency_7d — Does recency matter more for efficient machines?
+- month_progress × avg_diff_7d — Does profit strategy change through month?
+- avg_games_7d × avg_efficiency_7d — Does efficiency signal differ for busy vs quiet machines?
+
+Expected improvement: +0.01 to +0.03 AUC (10-50x better than hyperparameter tuning).
+
+## アクション
+When baseline plateaus:
+1. Create 2-3 high-value interaction terms — not 50+ (curse of dimensionality)
+2. Test each interaction independently — measure standalone correlation with target
+3. Use domain intuition — interactions should be interpretable
+4. Re-validate with time-series split — ensure improvements persist on held-out dates
+
+## 例
+High-value interactions: recency_efficiency = days_since_rank1 × avg_efficiency_7d, month_games = month_progress × avg_games_7d, game_efficiency = avg_games_7d × avg_efficiency_7d. Expected Phase 11 approach yields AUC improvement +0.01-0.03 (vs +0.004 from direct features).
+
+---
