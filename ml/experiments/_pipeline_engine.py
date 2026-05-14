@@ -74,6 +74,11 @@ class StoreOptimizedTrainingEngine:
                     )
                     forecast_datasets_by_grouping[grouping][forecast_dataset["store_id"].iat[0]] = forecast_dataset
 
+        pooled_by_grouping: dict[str, pd.DataFrame] = {
+            grouping: pd.concat(datasets_by_grouping[grouping].values(), ignore_index=True)
+            for grouping in self.config.groupings
+        }
+
         all_store_summaries: list[dict[str, Any]] = []
         for db_path in self.config.db_paths:
             store_id = _infer_store_id(db_path)
@@ -84,7 +89,7 @@ class StoreOptimizedTrainingEngine:
                         store_id=store_id,
                         grouping=grouping,
                         store_df=datasets_by_grouping[grouping][store_id],
-                        pooled_df=pd.concat(datasets_by_grouping[grouping].values(), ignore_index=True),
+                        pooled_df=pooled_by_grouping[grouping],
                         forecast_df=forecast_datasets_by_grouping[grouping].get(store_id),
                         output_root=output_root,
                     )
