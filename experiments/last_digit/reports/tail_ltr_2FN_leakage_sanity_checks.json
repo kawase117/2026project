@@ -1,0 +1,136 @@
+{
+  "expert": "2F_N",
+  "period": {
+    "start": "2026-01-01",
+    "end": "2026-05-21",
+    "n_valid_days": 141
+  },
+  "baseline_adaptive_testperiod": {
+    "n_days": 141,
+    "precision": 0.7588652482269503,
+    "recall": 0.7588652482269503,
+    "f1": 0.7588652482269503,
+    "hit_at_2": 0.950354609929078,
+    "hit_at_3": 0.9645390070921985
+  },
+  "label_shift_test": {
+    "n_days": 140,
+    "precision": 0.14642857142857144,
+    "recall": 0.14642857142857144,
+    "f1": 0.14642857142857144,
+    "hit_at_2": 0.2785714285714286,
+    "hit_at_3": 0.45
+  },
+  "month_start_fixed_forward": {
+    "overall": {
+      "n_days": 141,
+      "precision": 0.7943262411347518,
+      "recall": 0.7943262411347518,
+      "f1": 0.7943262411347518,
+      "hit_at_2": 0.9574468085106383,
+      "hit_at_3": 0.9716312056737588
+    },
+    "by_month": {
+      "2026-01": {
+        "n_days": 31,
+        "precision": 0.8064516129032258,
+        "recall": 0.8064516129032258,
+        "f1": 0.8064516129032258,
+        "hit_at_2": 1.0,
+        "hit_at_3": 1.0,
+        "chosen": {
+          "wed": {
+            "window": "full_2025",
+            "lambda": 0.75,
+            "tune_f1_prev_month": -1.0
+          },
+          "nonwed": {
+            "window": "recent_60d",
+            "lambda": 0.75,
+            "tune_f1_prev_month": -1.0
+          }
+        }
+      },
+      "2026-02": {
+        "n_days": 28,
+        "precision": 0.8035714285714286,
+        "recall": 0.8035714285714286,
+        "f1": 0.8035714285714286,
+        "hit_at_2": 0.9285714285714286,
+        "hit_at_3": 0.9285714285714286,
+        "chosen": {
+          "wed": {
+            "window": "full_2025",
+            "lambda": 1.0,
+            "tune_f1_prev_month": 0.75
+          },
+          "nonwed": {
+            "window": "recent_60d",
+            "lambda": 0.75,
+            "tune_f1_prev_month": 0.8333333333333334
+          }
+        }
+      },
+      "2026-03": {
+        "n_days": 31,
+        "precision": 0.7419354838709677,
+        "recall": 0.7419354838709677,
+        "f1": 0.7419354838709677,
+        "hit_at_2": 0.9032258064516129,
+        "hit_at_3": 0.967741935483871,
+        "chosen": {
+          "wed": {
+            "window": "full_2025",
+            "lambda": 0.75,
+            "tune_f1_prev_month": 0.75
+          },
+          "nonwed": {
+            "window": "recent_60d",
+            "lambda": 0.75,
+            "tune_f1_prev_month": 0.8125
+          }
+        }
+      },
+      "2026-04": {
+        "n_days": 30,
+        "precision": 0.8333333333333334,
+        "recall": 0.8333333333333334,
+        "f1": 0.8333333333333334,
+        "hit_at_2": 0.9666666666666667,
+        "hit_at_3": 0.9666666666666667,
+        "chosen": {
+          "wed": {
+            "window": "full_2025",
+            "lambda": 0.75,
+            "tune_f1_prev_month": 0.25
+          },
+          "nonwed": {
+            "window": "recent_60d",
+            "lambda": 0.75,
+            "tune_f1_prev_month": 0.8148148148148148
+          }
+        }
+      },
+      "2026-05": {
+        "n_days": 21,
+        "precision": 0.7857142857142857,
+        "recall": 0.7857142857142857,
+        "f1": 0.7857142857142857,
+        "hit_at_2": 1.0,
+        "hit_at_3": 1.0,
+        "chosen": {
+          "wed": {
+            "window": "full_2025",
+            "lambda": 0.75,
+            "tune_f1_prev_month": 0.5
+          },
+          "nonwed": {
+            "window": "recent_60d",
+            "lambda": 0.75,
+            "tune_f1_prev_month": 0.9
+          }
+        }
+      }
+    }
+  }
+}
