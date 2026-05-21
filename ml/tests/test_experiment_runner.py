@@ -160,11 +160,26 @@ class TestExperimentRunnerMetrics:
             assert "precision" in metrics
             assert "recall" in metrics
             assert "f1" in metrics
+            assert "pr_auc" in metrics
+            assert "zero_recall_penalty" in metrics
+            assert "objective_score" in metrics
 
             # Check metrics are numeric
-            for metric_value in metrics.values():
+            bounded_metrics = {
+                "auc",
+                "pr_auc",
+                "brier_score",
+                "accuracy",
+                "precision",
+                "recall",
+                "f1",
+                "zero_recall_penalty",
+            }
+            for metric_name, metric_value in metrics.items():
                 assert isinstance(metric_value, (int, float))
-                assert 0 <= metric_value <= 1
+                if metric_name in bounded_metrics:
+                    assert 0 <= metric_value <= 1
+            assert 0 <= metrics["objective_score"] <= 2
 
 
 class TestExperimentRunnerMetadata:

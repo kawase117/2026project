@@ -16,10 +16,13 @@ from ml.evaluators.metrics import (
     calculate_auc,
     calculate_accuracy,
     calculate_brier_score,
+    calculate_hit_at_k,
+    calculate_pr_auc,
     calculate_precision,
     calculate_recall,
     calculate_f1,
     evaluate_model,
+    optimize_binary_threshold,
 )
 
 
@@ -115,6 +118,57 @@ class TestCalculateBrierScore:
         assert bs < 0.2, "Good predictions should have low Brier Score"
 
 
+class TestCalculatePRAUC:
+    """Test PR-AUC calculation."""
+
+    def test_pr_auc_perfect_prediction(self):
+        """Test PR-AUC with perfect predictions."""
+        y_true = np.array([0, 1, 1, 0])
+        y_pred_proba = np.array([0.0, 1.0, 1.0, 0.0])
+        pr_auc = calculate_pr_auc(y_true, y_pred_proba)
+        assert pr_auc == 1.0, "Perfect predictions should yield PR-AUC=1.0"
+
+    def test_pr_auc_valid_range(self):
+        """Test PR-AUC stays within [0, 1]."""
+        y_true = np.array([0, 1, 1, 0])
+        y_pred_proba = np.array([0.1, 0.8, 0.9, 0.2])
+        pr_auc = calculate_pr_auc(y_true, y_pred_proba)
+        assert 0.0 <= pr_auc <= 1.0, "PR-AUC should be between 0 and 1"
+
+
+class TestRankingMetrics:
+    """Test rank-aware metrics."""
+
+    def test_hit_at_k_uses_groupwise_top_predictions(self):
+        """Test Hit@K over per-group ranked predictions."""
+        y_true = np.array([0, 1, 1, 0])
+        y_pred_proba = np.array([0.9, 0.8, 0.7, 0.1])
+        group_ids = np.array(["2025-01-01", "2025-01-01", "2025-01-02", "2025-01-02"])
+
+        hit_at_1 = calculate_hit_at_k(y_true, y_pred_proba, group_ids, k=1)
+        hit_at_2 = calculate_hit_at_k(y_true, y_pred_proba, group_ids, k=2)
+
+        assert hit_at_1 == 0.5
+        assert hit_at_2 == 1.0
+
+
+class TestThresholdOptimization:
+    """Test validation-threshold optimization helpers."""
+
+    def test_optimize_binary_threshold_returns_best_f1_metrics(self):
+        """Test threshold optimization exposes the chosen threshold and metrics."""
+        y_true = np.array([0, 1, 1, 0, 1])
+        y_pred_proba = np.array([0.1, 0.45, 0.8, 0.4, 0.7])
+
+        result = optimize_binary_threshold(y_true, y_pred_proba)
+
+        assert 0.0 <= result["best_threshold"] <= 1.0
+        assert 0.0 <= result["optimized_precision"] <= 1.0
+        assert 0.0 <= result["optimized_recall"] <= 1.0
+        assert 0.0 <= result["optimized_f1"] <= 1.0
+        assert result["optimized_f1"] >= result["f1_at_0_5"]
+
+
 class TestCalculatePrecision:
     """Test precision calculation."""
 
@@ -203,8 +257,10 @@ class TestEvaluateModel:
         
         assert isinstance(result, dict), "Should return a dictionary"
         assert "auc" in result, "Result should contain 'auc'"
+        assert "pr_auc" in result, "Result should contain 'pr_auc'"
         assert "brier_score" in result, "Result should contain 'brier_score'"
         assert 0.0 <= result["auc"] <= 1.0, "AUC should be valid"
+        assert 0.0 <= result["pr_auc"] <= 1.0, "PR-AUC should be valid"
         assert 0.0 <= result["brier_score"] <= 1.0, "Brier Score should be valid"
 
     def test_evaluate_model_with_both_predictions(self):
@@ -220,6 +276,8 @@ class TestEvaluateModel:
         assert "precision" in result, "Result should contain 'precision'"
         assert "recall" in result, "Result should contain 'recall'"
         assert "f1" in result, "Result should contain 'f1'"
+        assert "best_threshold" in result, "Result should contain optimized threshold"
+        assert "optimized_f1" in result, "Result should contain optimized F1"
         assert result["accuracy"] == 1.0, "Perfect predictions should yield accuracy=1.0"
 
     def test_evaluate_model_perfect_predictions(self):
@@ -235,6 +293,7 @@ class TestEvaluateModel:
         assert result["precision"] == 1.0, "Perfect predictions should yield precision=1.0"
         assert result["recall"] == 1.0, "Perfect predictions should yield recall=1.0"
         assert result["f1"] == 1.0, "Perfect predictions should yield F1=1.0"
+        assert result["pr_auc"] == 1.0, "Perfect predictions should yield PR-AUC=1.0"
         assert result["brier_score"] == 0.0, "Perfect predictions should yield Brier Score=0.0"
 
     def test_evaluate_model_returns_all_metrics(self):
@@ -245,8 +304,59 @@ class TestEvaluateModel:
         
         result = evaluate_model(y_true, y_pred_proba, y_pred)
         
-        expected_keys = {"auc", "accuracy", "precision", "recall", "f1", "brier_score"}
+        expected_keys = {
+            "auc",
+            "pr_auc",
+            "accuracy",
+            "precision",
+            "recall",
+            "f1",
+            "brier_score",
+            "base_rate",
+            "precision_lift_at_0_5",
+            "optimized_precision_lift",
+            "lift_floor",
+            "lift_shortfall",
+            "lift_penalty_weight",
+            "lift_penalty",
+            "zero_recall_penalty",
+            "objective_score",
+            "best_threshold",
+            "optimized_precision",
+            "optimized_recall",
+            "optimized_f1",
+            "precision_at_0_5",
+            "recall_at_0_5",
+            "f1_at_0_5",
+        }
         assert set(result.keys()) == expected_keys, "Should return all expected metrics"
+
+    def test_evaluate_model_adds_zero_recall_penalty_fields(self):
+        """Test evaluate_model exposes zero-recall penalty and composite score."""
+        y_true = np.array([1, 0, 1, 0])
+        y_pred_proba = np.array([0.9, 0.8, 0.7, 0.6])
+        y_pred = np.array([0, 0, 0, 0])
+
+        result = evaluate_model(y_true, y_pred_proba, y_pred)
+
+        assert result["recall"] == 0.0
+        assert result["zero_recall_penalty"] == 1.0
+        assert result["objective_score"] == pytest.approx(
+            result["auc"] + result["pr_auc"] - result["zero_recall_penalty"] - result["lift_penalty"]
+        )
+
+    def test_evaluate_model_applies_lift_penalty(self):
+        """Test evaluate_model applies lift-based penalty when optimized lift is below floor."""
+        y_true = np.array([1, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+        y_pred_proba = np.array([0.9, 0.85, 0.84, 0.83, 0.82, 0.81, 0.2, 0.1, 0.05, 0.01])
+        y_pred = np.array([1, 1, 1, 1, 1, 1, 0, 0, 0, 0])
+
+        baseline = evaluate_model(y_true, y_pred_proba, y_pred)
+        penalized = evaluate_model(y_true, y_pred_proba, y_pred, lift_floor=12.0, lift_penalty_weight=0.5)
+
+        assert penalized["lift_penalty"] >= 0.0
+        assert penalized["lift_shortfall"] > 0.0
+        assert penalized["objective_score"] <= baseline["objective_score"]
 
     def test_evaluate_model_with_list_inputs(self):
         """Test evaluate_model with list inputs."""

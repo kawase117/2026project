@@ -1,0 +1,175 @@
+---
+id: rolling-window-shift-prevention
+trigger: "when implementing rolling window features in time-series ML"
+confidence: 0.95
+domain: ml-feature-engineering
+source: session-observation
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# Rolling Windows Require shift(1) to Prevent Data Leakage
+
+## 背景
+Rolling window aggregations (moving averages, rolling std, etc.) automatically include the current observation in their calculation. When these features are used to predict a target for that same observation, current-day performance leaks into the prediction, causing artificially perfect metrics.
+
+**Example of the bug:**
+```python
+# WRONG - includes day i in calculation of MA[i]
+ma_7_diff = df['diff_coins'].rolling(7, min_periods=1).mean().values  # MA[i] includes day i
+
+# CORRECT - excludes day i from calculation of MA[i]
+ma_7_diff = df['diff_coins'].rolling(7, min_periods=1).mean().shift(1).fillna(0).values  # MA[i] now uses days i-7 to i-1
+```
+
+## アクション
+Always add `.shift(1).fillna(0)` after rolling window aggregations when:
+1. Using rolling features to predict targets for the same time period
+2. Building features in time-series validation
+3. Machine learning on temporal data where lookahead bias is possible
+
+The shift moves all values forward by one row, so position i contains data from periods before i, preventing leakage.
+
+## 例
+In the pachinko analyzer, Phase 9-10 ML pipeline was producing impossible AUC scores of 1.0 across all models/targets because rolling averages lacked shift(1):
+
+**Before (WRONG):**
+```python
+ma_14_diff = df_machine['diff_coins_normalized'].rolling(14, min_periods=1).mean().values
+ma_7_games = df_machine['games_normalized'].rolling(7, min_periods=1).mean().values
+```
+Result: AUC 1.0000 (artificial)
+
+**After (CORRECT):**
+```python
+ma_14_diff = df_machine['diff_coins_normalized'].rolling(14, min_periods=1).mean().shift(1).fillna(0).values
+ma_7_games = df_machine['games_normalized'].rolling(7, min_periods=1).mean().shift(1).fillna(0).values
+```
+Result: AUC 0.79-0.81 (realistic)
+
+---
+id: detect-leakage-via-perfect-metrics
+trigger: "when model evaluation produces suspiciously high metrics (AUC 1.0, precision/recall 1.0)"
+confidence: 0.90
+domain: ml-project-planning
+source: session-observation
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# Perfect Metrics Are a Red Flag for Data Leakage
+
+## 背景
+Statistically impossible perfect metrics (AUC 1.0, F1 1.0, precision/recall 1.0) almost always indicate data leakage rather than genuinely excellent model performance. In real-world problems with inherent noise and uncertainty, such perfection should trigger immediate investigation.
+
+For pachinko prediction specifically: perfect metrics are impossible because:
+- Gambling has inherent randomness (low settings can have lucky runs, high settings can have unlucky ones)
+- We're predicting statistical trends, not deterministic outcomes
+- Expected realistic performance range is 0.55-0.85 AUC depending on feature quality
+
+## アクション
+When you see AUC ≥ 0.98 or other perfect/near-perfect metrics:
+1. STOP implementation immediately
+2. Audit feature engineering for lookahead bias (especially rolling windows, lag features)
+3. Verify train/test split respects temporal ordering
+4. Check if target variable information is accidentally included in features
+5. Run diagnostic: compare train vs test metrics; large gaps confirm leakage
+6. Re-evaluate with corrected features
+
+## 例
+Phase 9-10 Rank1 target:
+- Before fix: AUC 1.0000 across XGBoost, precision/recall 1.0 (impossible)
+- Investigation: Found rolling(7).mean() without shift(1)
+- After fix: AUC 0.7910, precision 0.67, recall 0.42 (realistic distribution)
+
+---
+id: organize-experiments-by-intent
+trigger: "when experiment folder grows beyond 10-15 files"
+confidence: 0.80
+domain: ml-project-planning
+source: session-observation
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# Organize ML Experiments by Dataset, Strategy, and Hall
+
+## 背景
+As ML experiments accumulate, keeping all scripts in a single ml/experiments/ folder becomes unmaintainable. Trial code, obsolete versions, and active experiments get mixed together, making it:
+- Hard to identify which code is valid vs. abandoned
+- Difficult to understand the logical flow (hypothesis → implementation → results)
+- Easy to accidentally re-run old broken code
+
+Better structure: Group experiments by **dataset → grouping strategy → hall/model**, creating a clear hierarchy.
+
+## アクション
+Organize folder structure as:
+```
+db/experiments/
+├── {ホール名}_exp/
+│   ├── last_digit/
+│   │   ├── phase9_01_feature_engineering.py
+│   │   ├── phase9_02_model_comparison.py
+│   │   ├── phase10_hyperparameter_tuning.py
+│   │   └── results/
+│   ├── machine_type/
+│   │   ├── phase9_01_feature_engineering.py
+│   │   └── results/
+│   └── machine_number/
+│       └── ...
+
+ml/experiments/  (core utilities only)
+├── experiment_runner.py
+├── result_format.py
+└── results/
+```
+
+Delete obsolete trial files immediately when moving to new folder structure.
+
+## 例
+In pachinko analyzer:
+- **Before:** ml/experiments/ had 37 files (Phase 7 trials, Phase 8 trials, Phase 9 variants, experimental analysis)
+- **After:** ml/experiments/ has 5 files (core utilities); Phase 9-10 moved to db/experiments/マルハンメガシティ2000-蒲田7_exp/last_digit/ (7 scripts)
+- **Result:** Clear separation, 33 obsolete files deleted, experiments now explicitly tied to hall/strategy
+
+---
+id: time-series-validation-split-integrity
+trigger: "when implementing train/test split for temporal ML models"
+confidence: 0.85
+domain: ml-feature-engineering
+source: session-observation
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# Time-Series Validation Must Respect Temporal Ordering
+
+## 背景
+Standard random train/test splits break temporal assumptions in time-series data. When features depend on historical aggregates (rolling windows, lag features), test data must come strictly after training data to prevent lookahead bias.
+
+Additionally, when computing rolling statistics:
+1. Fit rolling window parameters (mean, std) on the full dataset (train + test combined) to maintain temporal continuity
+2. Fit scaler statistics only on training data to avoid leakage
+3. Use training statistics to normalize test data
+
+## アクション
+For time-series ML:
+1. Use **TimeSeriesSplitter** or manual chronological split (first 85% train, last 15% test)
+2. When computing rolling aggregates on `df_full` (train + test combined):
+   - Pass all data through rolling calculations once to compute unbiased statistics
+   - Then extract train/test subsets by date
+3. Compute normalization statistics (scaler.fit()) only on training data
+4. Apply same scaler to both train and test
+
+## 例
+In Phase 9-10 pachinko ML:
+```python
+# Correct approach:
+df_full = pd.concat([df_train, df_test])  # Combine for rolling
+df_full_sorted = df_full.sort_values(['machine_number', 'date'])
+
+# Compute rolling on full sorted data
+ma_7 = df_full_sorted.groupby('machine_number')['value'].rolling(7).mean().shift(1).fillna(0)
+
+# Then extract back to train/test subsets by date
+ma_7_train = ma_7[df_train.index]
+ma_7_test = ma_7[df_test.index]
+```
+
+This prevents lookahead bias while maintaining temporal continuity in rolling calculations.

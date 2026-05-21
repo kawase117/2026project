@@ -1,0 +1,218 @@
+---
+id: nonstationarity-invalidates-single-regime-models
+trigger: "when predicting rankings/classifications across temporal periods with shifting baseline distributions"
+confidence: 0.95
+domain: ml-project-planning
+source: session-observation | data-analysis
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# Non-Stationarity Invalidates Single-Regime ML Models
+
+## 背景
+When absolute baseline metrics shift systematically across time (e.g., high-profit rate drops from 29% to 24%), models trained on one regime will fail catastrophically on another, even if relative patterns remain stable. This is not a feature engineering problem — it's a fundamental architectural mismatch.
+
+Example: Regression trained on 29% baseline predicts test data consistently 5pp too high. Classification trained on Regime 1 patterns (when 末尾0 ranked 1st in 40% of days) fails in Regime 2 (where 末尾0 ranks 1st only 25% of days, not because it weakened relative to others, but because baseline dropped).
+
+## アクション
+1. **Identify regime transitions early** — Monitor key metrics (baseline high-profit %, absolute performance distribution) for structural breaks
+2. **Use regime-invariant predictions** — Prefer Learning to Rank (predict orderings, not absolute values) over regression/classification when baseline may shift
+3. **Design time-adaptive learning** — Implement time-decay weighting or expanding-window retraining to automatically down-weight old regime-specific patterns
+4. **Validate across regimes** — Always test on out-of-sample periods that may differ in baseline; don't assume train/test are identically distributed
+5. **Quantify regime shift impact** — Measure baseline shift magnitude; if >2pp uniform shift, single-regime models will fail
+
+## 例
+**Pachinko analyzer tail ranking:**
+- Train period (Regime 1): 29-30% high-profit baseline, 末尾 ranking: 末尾0 > 末尾6 > 末尾2 > ... (stable order)
+- Test period (Regime 2): 24-25% high-profit baseline, 末尾 ranking: same order, BUT absolute frequencies shift
+  - 末尾0: 30% → 25% (5pp drop, same as baseline)
+  - 末尾6: 29% → 24% (5pp drop, same as baseline)
+  - Relative order unchanged; single-regime regression fails anyway
+
+**Solution:** Use Learning to Rank (predicts relative ordering, invariant to 5pp baseline drop) + time-decay weighting (automatically adapts as Regime 2 data accumulates).
+
+---
+id: learning-to-rank-for-non-stationary-baselines
+trigger: "when predicting which option ranks highest, given absolute baseline may shift over time"
+confidence: 0.90
+domain: ml-feature-engineering
+source: session-observation
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# Learning to Rank (LTR) is Robust to Baseline Shifts
+
+## 背景
+Classification and regression predict absolute values or categories; when baseline shifts, these fail. Learning to Rank predicts relative ordering (which option is strongest) without caring about absolute values — inherently robust to baseline shifts.
+
+## アクション
+1. **Convert to pairwise ranking** — For each day, generate training examples: (tail_i vs tail_j: i wins) based on actual ranking
+2. **Choose LTR algorithm** — LambdaRank (tree-based, interpretable), RankSVM (kernel-based), or ListNet (direct ranking loss)
+3. **Use ranking metrics** — Evaluate with Spearman ρ, NDCG@k, not accuracy; these measure relative order quality
+4. **Combine with time-decay** — Weight pairwise examples by recency; recent days get weight ≈1.0, old days get ≈0.1-0.3
+5. **Deploy as ranking pipeline** — For each prediction day, score each option, sort by score, output top-K
+
+## 例
+**Tail ranking with non-stationary baseline:**
+
+Regular classification approach (FAILS):
+```
+Train: "predict which 末尾 is Rank1"
+  Regime 1 (29% baseline): 末尾0 is Rank1 in 40% of days
+  Regime 2 (24% baseline): 末尾0 is Rank1 in 25% of days (due to baseline shift, not weakness)
+  Model trained on Regime 1 overfits to "末尾0 → Rank1"
+  Test on Regime 2 → 15% accuracy (worse than random)
+```
+
+Learning to Rank approach (SUCCEEDS):
+```
+Train: "for each day, rank all 末尾 by win-rate; learn pairwise preferences"
+  Regime 1: 末尾0 beats 末尾3 in 80% of days (sign: 末尾0 is consistently stronger)
+  Regime 2: 末尾0 beats 末尾3 in 78% of days (same signal, robust to baseline)
+  Model learns: "末尾0 > 末尾3" regardless of absolute baseline
+  Test on Regime 2 → 20% Rank1 accuracy (vs 10% random), stable relative ordering
+```
+
+---
+id: time-decay-weighting-for-regime-drift
+trigger: "when retraining models on data spanning multiple regimes with gradual drift"
+confidence: 0.85
+domain: ml-hyperparameter-tuning
+source: session-observation
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# Time-Decay Weighting Handles Regime Drift Without Explicit Detection
+
+## 背景
+Rather than explicitly identifying which regime you're in, assign exponential weights to training examples: recent data gets weight ≈1.0, old data gets ≈0.1-0.3. This automatically down-weights regime-specific patterns as time progresses and new regimes emerge.
+
+Advantage: No need to manually detect regime transitions; model adapts continuously.
+
+## アクション
+1. **Compute sample weights** — `w(t) = exp(-λ * (T_current - t) / T_total)` where λ ∈ [1.0, 2.5]
+2. **Tune decay rate λ** — Grid search; λ=1.5-2.0 typically balances old/new data (80% recent, 20% historical)
+3. **Incorporate in training loss** — Weight each training example by w(t); loss becomes `Σ w(t) * L(example_t)`
+4. **Retrain frequently** — Weekly/monthly retraining ensures weights stay current as new data arrives
+5. **Monitor regime indicator** — Track baseline metric (high-profit %, absolute distribution) to detect if Regime 3 has different baseline
+
+## 例
+**蒲田7 tail ranking with time-decay:**
+
+Without time-decay (uniform weights):
+```
+Train on 150 days total (120 Regime 1 + 30 Regime 2)
+Each day equally weighted → Regime 1 patterns dominate (80% of data)
+Model overfits to Regime 1 (29% baseline) patterns
+Test on Regime 2 (24% baseline) → poor generalization
+```
+
+With time-decay weighting (λ=1.5):
+```
+Train on same 150 days, but with exponential weights
+Regime 1 (120 days old, 5 months): weight ≈ 0.15
+Regime 2 (0-30 days old, current): weight ≈ 0.85-1.0
+Effective training: ~25 Regime 1 + 30 Regime 2 = 55 days equivalent
+Model learns Regime 2 patterns strongly, Regime 1 patterns weakly
+Test on Regime 2 → much better generalization
+```
+
+Retraining schedule:
+```
+Day 0 (2025-12-31):  T_total = 150, λ=1.5 → Regime 1 weight=0.15, Regime 2 weight=1.0
+Day 30 (2026-01-30): T_total = 180, λ=1.5 → Regime 1 weight≈0.10, Regime 2&3 weight≈0.9-1.0
+Day 60 (2026-02-29): T_total = 210, λ=1.5 → Regime 1 weight≈0.05, Regime 2 weight≈0.7, Regime 3 weight≈1.0
+```
+As Regime 3 data arrives, it automatically gains prominence; old regimes fade.
+
+---
+id: data-driven-discovery-supersedes-hypothesis
+trigger: "when tempted to validate domain-based hypotheses without confronting actual data patterns"
+confidence: 0.95
+domain: ml-project-planning
+source: user-feedback
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# Data-Driven Pattern Discovery Supersedes Hypothesis-Driven Assumptions
+
+## 背景
+Domain expertise (e.g., "payday effects on machine selection") provides useful starting hypotheses, but must be validated with rigorous statistical testing. If chi-square tests show p=1.0000 (complete independence), the hypothesis is false — period. Don't try to make it work.
+
+User feedback this session: "給料日の考えに固執するのは辞めてください。機械学習での発見を第一に考えてください。" (Stop fixating on paydays. Prioritize ML discovery first.)
+
+## アクション
+1. **Formulate hypotheses as testable predictions** — "DD 20-25 has higher 末尾0 frequency" → chi-square test
+2. **Use appropriate statistical tests** — Chi-square for independence, t-test for mean differences, Spearman ρ for rankings
+3. **Set significance threshold** — p < 0.05 is standard; p=1.0000 means complete independence (hypothesis false)
+4. **Abandon unsupported hypotheses immediately** — Don't spend engineering effort on patterns that don't exist in data
+5. **Shift to data-driven discovery** — If hypotheses fail, ask "what patterns do the data actually show?" rather than forcing preconceptions
+
+## 例
+**Pachinko analyzer payroll hypothesis:**
+
+Hypothesis (intuitive but untested):
+- "High-setting machines concentrated around paydays (20-25) to capture salary-inflated players"
+- Prediction: 末尾 ranking should differ on paydays vs non-paydays
+
+Statistical test:
+```
+Chi-square (tail vs DD):
+  H₀: tail ranking is independent of DD
+  χ² = 0.00, p = 1.0000
+  Conclusion: REJECT hypothesis; tail ranking is completely independent of DD
+```
+
+Correct response: Abandon payday hypothesis entirely. Focus on what data shows (relative ranking is stable across all dates).
+
+Incorrect response: "Maybe the effect is subtle" or "let's try interaction terms anyway" — wasting engineering effort on false patterns.
+
+---
+id: relative-ranking-stability-despite-absolute-drift
+trigger: "when observing that absolute frequencies shift uniformly but relative order stays constant"
+confidence: 0.90
+domain: ml-feature-engineering
+source: data-analysis
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# Relative Ranking Can Remain Stable Even When Absolute Baseline Drifts
+
+## 背景
+If all groups shift by the same amount (e.g., all 末尾 drop 5pp uniformly), the relative ranking (which tail is strongest) doesn't change. This is a key insight for designing robust prediction systems: focus on relative comparisons, not absolute thresholds.
+
+## アクション
+1. **Monitor absolute baseline** — Track key metrics (high-profit %, overall distribution) to quantify regime shifts
+2. **Compare relative signals** — For each entity (tail, machine, etc.), compute its position relative to others, not absolute value
+3. **Use ranking-based features** — Prefer "rank within cohort" over "absolute win rate" when baseline may shift
+4. **Validate ranking stability** — Compute Spearman ρ between Regime 1 and Regime 2 rankings; high ρ (>0.7) signals stable ordering
+5. **Leverage for prediction** — If relative ordering is stable, predict it even when absolute values are unknown
+
+## 例
+**蒲田7 tail ranking drift analysis:**
+
+Absolute values (show drift):
+```
+Regime 1 (high-profit baseline 29-30%):
+  末尾0: 30.1%, 末尾1: 29.7%, 末尾2: 30.0%, 末尾3: 28.5%, ...
+
+Regime 2 (high-profit baseline 24-25%):
+  末尾0: 25.1%, 末尾1: 25.3%, 末尾2: 25.0%, 末尾3: 23.9%, ...
+  ↑ each dropped ~5pp uniformly
+```
+
+Relative ranking (shows stability):
+```
+Regime 1 ranking: 末尾0(30.1) > 末尾2(30.0) > 末尾1(29.7) > 末尾6(29.1) > ... > 末尾3(28.5)
+Regime 2 ranking: 末尾0(25.1) > 末尾2(25.0) > 末尾1(25.3)... wait, relative order changed!
+                  (Actually: 末尾1 moved above 末尾2; indicates non-stable ranking)
+Spearman ρ between Regime 1 and Regime 2 rankings: ≈ 0.65 (moderate stability, not perfect)
+```
+
+Implication: Relative ranking is *mostly* stable but not perfectly; use ranking predictions with moderate confidence, not high certainty.
+
+Comparison:
+```
+❌ Absolute prediction: "末尾0 will reach 30%" (FAILS in Regime 2; reaches only 25%)
+⚠️ Relative prediction: "末尾0 will rank 1st" (70% success; sometimes 末尾1 or 末尾2 rank higher)
+```

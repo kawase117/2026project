@@ -98,6 +98,40 @@ ABLATION_EVENT_DISTANCE_REDESIGN_COLUMNS = (
     "event_phase_after_event",
     "event_phase_before_event",
 )
+ABLATION_RANK1_SPECIAL_GROUP_A_COLUMNS = (
+    "prior_rank1_rate",
+)
+ABLATION_RANK1_SPECIAL_GROUP_B_COLUMNS = (
+    "same_weekday_rank1_rate",
+    "same_weekday_rank1_gap",
+    "days_since_last_rank1_same_weekday",
+)
+ABLATION_RANK1_SPECIAL_GROUP_C_COLUMNS = (
+    "same_day_of_month_rank1_rate",
+    "same_day_of_month_rank1_gap",
+    "days_since_last_rank1_same_day_of_month",
+)
+ABLATION_RANK1_SPECIAL_GROUP_D_COLUMNS = (
+    "rank1_streak_prev",
+    "rank1_rebound_score",
+)
+ABLATION_RANK1_SPECIAL_GROUP_E_COLUMNS = (
+    "rank1_streak_x_event_decay_3",
+    "rank1_rotation_context_gap",
+    "rank1_same_cycle_recency_gap",
+)
+ABLATION_EVENT_DISTANCE_GROUP_A_COLUMNS = (
+    "event_signed_distance_any",
+    "event_distance_abs_any",
+)
+ABLATION_EVENT_DISTANCE_GROUP_B_COLUMNS = (
+    "event_distance_decay_3",
+    "event_distance_decay_7",
+)
+ABLATION_EVENT_DISTANCE_GROUP_C_COLUMNS = (
+    "event_phase_after_event",
+    "event_phase_before_event",
+)
 ABLATION_EVENT_FEATURE_COLUMNS = (
     "is_event_day",
     "is_event_week",
@@ -174,7 +208,7 @@ class PipelineConfig:
     feature_selection_rfecv_cv_splits: int = 3
     feature_selection_permutation_repeats: int = 3
     feature_selection_shadow_quantile: float = 1.0
-    forecast_mode: bool = False
+    forecast_mode: bool = True
     feature_ablation_mode: str = "none"
 
     def __post_init__(self) -> None:
@@ -907,6 +941,10 @@ class StoreOptimizedFeatureBuilder:
             enriched["weekday_bias_x_days_since_rank1"] = (
                 enriched["weekday_digit_bias"] * np.log1p(enriched["days_since_last_rank1"])
             )
+        elif {"weekday_entity_bias", "days_since_last_rank1"} <= set(enriched.columns):
+            enriched["weekday_bias_x_days_since_rank1"] = (
+                enriched["weekday_entity_bias"] * np.log1p(enriched["days_since_last_rank1"])
+            )
 
         if {"anti_pattern_rank1_rate", "weekday_non_consecutive_rank1_rate"} <= set(enriched.columns):
             enriched["anti_pattern_x_weekday_non_consecutive"] = (
@@ -916,6 +954,10 @@ class StoreOptimizedFeatureBuilder:
         if {"dow_lastdigit_rank1_rate", "anti_pattern_rank1_rate"} <= set(enriched.columns):
             enriched["dow_lastdigit_x_anti_pattern"] = (
                 enriched["dow_lastdigit_rank1_rate"] * enriched["anti_pattern_rank1_rate"]
+            )
+        elif {"dow_entity_rank1_rate", "anti_pattern_rank1_rate"} <= set(enriched.columns):
+            enriched["dow_lastdigit_x_anti_pattern"] = (
+                enriched["dow_entity_rank1_rate"] * enriched["anti_pattern_rank1_rate"]
             )
 
         if {"days_since_last_rank1", "event_proximity_score"} <= set(enriched.columns):
@@ -944,14 +986,45 @@ class StoreOptimizedFeatureBuilder:
         for column in ("prior_worst1_rate", "prior_worst3_rate", "prior_worst5_rate"):
             enriched[column] = 0.0
 
-        if grouping == "last_digit":
+        if grouping in {"last_digit", "machine_type"}:
             for column in (
+                "dow_entity_rank1_rate",
                 "dow_lastdigit_rank1_rate",
                 "same_weekday_rolling_rank_sum_3",
+                "weekday_entity_bias",
                 "weekday_digit_bias",
                 "anti_pattern_rank1_rate",
                 "weekday_non_consecutive_rank1_rate",
                 "consecutive_suppression_score",
+            ):
+                enriched[column] = 0.0
+        if grouping == "last_digit":
+            for column in (
+                "last_digit_historical_rank1_rate",
+                "last_digit_historical_rank3_rate",
+                "last_digit_historical_rank5_rate",
+                "last_digit_historical_avg_diff",
+                "last_digit_historical_avg_efficiency",
+                "last_digit_historical_worst_rate",
+                "last_digit_top3_rate_by_digit",
+                "last_digit_worst3_rate_by_digit",
+                "last_digit_rank1_rate_vs_global_avg",
+                "last_digit_rank1_rate_percentile",
+                "last_digit_efficiency_ratio_to_avg",
+                "last_digit_consecutive_days",
+                "last_digit_gap_since_last_appearance",
+                "last_digit_recency_boost",
+                "last_digit_weekday_interaction_rank1_rate_7d",
+                "last_digit_weekday_trend",
+                "last_digit_rank1_market_share",
+                "last_digit_performance_spread",
+                "last_digit_spread_vs_global_avg",
+                "last_digit_top3_worst3_ratio",
+                "last_digit_high_performance_rate",
+                "last_digit_low_performance_rate",
+                "last_digit_top3_concentration",
+                "last_digit_rank1_dominance_score",
+                "last_digit_consistency_score",
             ):
                 enriched[column] = 0.0
 
@@ -966,7 +1039,7 @@ class StoreOptimizedFeatureBuilder:
             group["prior_worst3_rate"] = group["_tmp_is_worst3"].shift(1).expanding(min_periods=1).mean().fillna(0.0)
             group["prior_worst5_rate"] = group["_tmp_is_worst5"].shift(1).expanding(min_periods=1).mean().fillna(0.0)
 
-            if grouping == "last_digit":
+            if grouping in {"last_digit", "machine_type"}:
                 group["same_weekday_rolling_rank_sum_3"] = (
                     group.groupby("day_of_week", sort=False)["_tmp_best_rank"]
                     .transform(lambda s: s.shift(1).rolling(window=3, min_periods=1).sum())
@@ -992,11 +1065,13 @@ class StoreOptimizedFeatureBuilder:
                     out=np.zeros(len(group), dtype=float),
                     where=weekday_prior_count.to_numpy() > 0,
                 )
-                group["weekday_digit_bias"] = np.where(
+                group["weekday_entity_bias"] = np.where(
                     (overall_prior_count.to_numpy() > 0) & (weekday_prior_count.to_numpy() > 0),
                     weekday_prior_mean - overall_prior_mean,
                     0.0,
                 )
+                if grouping == "last_digit":
+                    group["weekday_digit_bias"] = group["weekday_entity_bias"]
 
                 is_prev_rank1 = group["is_rank_1"].shift(1).fillna(0).astype(int)
                 eligible_non_consecutive = (is_prev_rank1 == 0).astype(int)
@@ -1029,17 +1104,119 @@ class StoreOptimizedFeatureBuilder:
                 )
 
                 group["consecutive_suppression_score"] = _consecutive_suppression_score(group["is_rank_1"])
+                if grouping == "last_digit":
+                    group["last_digit_historical_avg_diff"] = (
+                        group["total_diff_coins"].shift(1).expanding(min_periods=1).mean().fillna(0.0)
+                    )
+                    group["last_digit_historical_avg_efficiency"] = (
+                        group["efficiency"].shift(1).expanding(min_periods=1).mean().fillna(0.0)
+                    )
+                    group["last_digit_weekday_interaction_rank1_rate_7d"] = (
+                        group.groupby("day_of_week", sort=False)["is_rank_1"]
+                        .transform(lambda s: s.shift(1).rolling(window=7, min_periods=1).mean())
+                        .fillna(0.0)
+                    )
+                    group["last_digit_consistency_score"] = (
+                        group["is_top_3"].shift(1).rolling(window=30, min_periods=1).mean().fillna(0.0)
+                    )
 
             groups.append(group)
 
         enriched = pd.concat(groups, ignore_index=True)
 
-        if grouping == "last_digit":
-            enriched["dow_lastdigit_rank1_rate"] = (
-                enriched.groupby(["last_digit", "day_of_week"], sort=False)["is_rank_1"]
+        if grouping in {"last_digit", "machine_type"}:
+            enriched["dow_entity_rank1_rate"] = (
+                enriched.groupby(["entity_key", "day_of_week"], sort=False)["is_rank_1"]
                 .transform(_prior_mean_transform)
                 .fillna(0.0)
             )
+        if grouping == "last_digit":
+            enriched["dow_lastdigit_rank1_rate"] = (
+                enriched["dow_entity_rank1_rate"].copy()
+            )
+            enriched["last_digit_historical_rank1_rate"] = enriched["prior_rank1_rate"]
+            enriched["last_digit_historical_rank3_rate"] = enriched["prior_top3_rate"]
+            enriched["last_digit_historical_rank5_rate"] = enriched["prior_top5_rate"]
+            enriched["last_digit_historical_worst_rate"] = enriched["prior_worst1_rate"]
+            enriched["last_digit_top3_rate_by_digit"] = enriched["prior_top3_rate"]
+            enriched["last_digit_worst3_rate_by_digit"] = enriched["prior_worst3_rate"]
+
+            daily = (
+                enriched.groupby("date", sort=True)
+                .agg(
+                    rank1_count=("is_rank_1", "sum"),
+                    avg_efficiency=("efficiency", "mean"),
+                )
+                .reset_index()
+            )
+            daily["global_prior_rank1_rate"] = (
+                daily["rank1_count"].shift(1).expanding(min_periods=1).mean().fillna(0.0)
+            )
+            daily["global_prior_efficiency"] = (
+                daily["avg_efficiency"].shift(1).expanding(min_periods=1).mean().fillna(0.0)
+            )
+            enriched = enriched.merge(
+                daily[["date", "global_prior_rank1_rate", "global_prior_efficiency"]],
+                on="date",
+                how="left",
+            )
+            enriched["global_prior_rank1_rate"] = enriched["global_prior_rank1_rate"].fillna(0.0)
+            enriched["global_prior_efficiency"] = enriched["global_prior_efficiency"].fillna(0.0)
+            enriched["last_digit_rank1_rate_vs_global_avg"] = (
+                enriched["last_digit_historical_rank1_rate"] - enriched["global_prior_rank1_rate"]
+            )
+            enriched["last_digit_efficiency_ratio_to_avg"] = _safe_ratio(
+                enriched["last_digit_historical_avg_efficiency"],
+                enriched["global_prior_efficiency"],
+            )
+            enriched["last_digit_rank1_rate_percentile"] = (
+                enriched.groupby("date", sort=False)["last_digit_historical_rank1_rate"]
+                .rank(method="average", pct=True)
+                .fillna(0.0)
+            )
+            enriched["last_digit_consecutive_days"] = enriched["rank1_streak_prev"]
+            enriched["last_digit_gap_since_last_appearance"] = enriched["days_since_last_rank1"]
+            enriched["last_digit_recency_boost"] = np.exp(
+                -enriched["last_digit_gap_since_last_appearance"] / 7.0
+            )
+            enriched["last_digit_weekday_trend"] = enriched["same_weekday_rank1_gap"]
+
+            enriched["last_digit_high_performance_rate"] = (
+                enriched["last_digit_historical_rank1_rate"]
+                + 0.7 * enriched["last_digit_historical_rank3_rate"]
+                + 0.5 * enriched["last_digit_historical_rank5_rate"]
+            ) / 3.0
+            enriched["last_digit_low_performance_rate"] = (
+                enriched["prior_worst1_rate"] + 0.7 * enriched["prior_worst3_rate"] + 0.5 * enriched["prior_worst5_rate"]
+            ) / 3.0
+            enriched["last_digit_top3_concentration"] = (
+                enriched["last_digit_historical_rank1_rate"] + enriched["last_digit_historical_rank3_rate"]
+            ) / 2.0
+            enriched["last_digit_performance_spread"] = (
+                enriched["last_digit_historical_rank1_rate"]
+                + enriched["last_digit_historical_rank3_rate"]
+                + enriched["last_digit_historical_rank5_rate"]
+                - enriched["prior_worst1_rate"]
+                - enriched["prior_worst3_rate"]
+                - enriched["prior_worst5_rate"]
+            )
+            enriched["last_digit_top3_worst3_ratio"] = _safe_ratio(
+                enriched["last_digit_top3_rate_by_digit"],
+                enriched["last_digit_worst3_rate_by_digit"],
+            )
+            enriched["last_digit_rank1_market_share"] = enriched["last_digit_historical_rank1_rate"]
+            top_share = enriched.groupby("date", sort=False)["last_digit_rank1_market_share"].transform("max")
+            enriched["last_digit_rank1_dominance_score"] = _safe_ratio(
+                enriched["last_digit_rank1_market_share"],
+                top_share,
+            )
+            global_spread = (
+                enriched.groupby("date", sort=False)["last_digit_performance_spread"].transform("mean").fillna(0.0)
+            )
+            enriched["last_digit_spread_vs_global_avg"] = (
+                enriched["last_digit_performance_spread"] - global_spread
+            )
+            enriched = enriched.drop(columns=["global_prior_rank1_rate", "global_prior_efficiency"])
 
         if "machine_name" in enriched.columns:
             enriched["dow_machine_name_rank1_rate"] = (
@@ -1771,6 +1948,30 @@ class StoreOptimizedTrainingEngine:
         def is_event_distance_redesign_feature(name: str) -> bool:
             return name in ABLATION_EVENT_DISTANCE_REDESIGN_COLUMNS
 
+        def is_rank1_special_group_a_feature(name: str) -> bool:
+            return name in ABLATION_RANK1_SPECIAL_GROUP_A_COLUMNS
+
+        def is_rank1_special_group_b_feature(name: str) -> bool:
+            return name in ABLATION_RANK1_SPECIAL_GROUP_B_COLUMNS
+
+        def is_rank1_special_group_c_feature(name: str) -> bool:
+            return name in ABLATION_RANK1_SPECIAL_GROUP_C_COLUMNS
+
+        def is_rank1_special_group_d_feature(name: str) -> bool:
+            return name in ABLATION_RANK1_SPECIAL_GROUP_D_COLUMNS
+
+        def is_rank1_special_group_e_feature(name: str) -> bool:
+            return name in ABLATION_RANK1_SPECIAL_GROUP_E_COLUMNS
+
+        def is_event_distance_group_a_feature(name: str) -> bool:
+            return name in ABLATION_EVENT_DISTANCE_GROUP_A_COLUMNS
+
+        def is_event_distance_group_b_feature(name: str) -> bool:
+            return name in ABLATION_EVENT_DISTANCE_GROUP_B_COLUMNS
+
+        def is_event_distance_group_c_feature(name: str) -> bool:
+            return name in ABLATION_EVENT_DISTANCE_GROUP_C_COLUMNS
+
         def is_worst_recency_feature(name: str) -> bool:
             lower = name.lower()
             return any(lower.startswith(prefix) for prefix in ABLATION_WORST_RECENCY_PREFIXES)
@@ -1839,6 +2040,28 @@ class StoreOptimizedTrainingEngine:
                 for column in columns
                 if not is_rank1_special_feature(column) and not is_event_distance_redesign_feature(column)
             ]
+        if mode == "rank1_special_group_a_off":
+            return [column for column in columns if not is_rank1_special_group_a_feature(column)]
+        if mode == "rank1_special_group_b_off":
+            return [column for column in columns if not is_rank1_special_group_b_feature(column)]
+        if mode == "rank1_special_group_c_off":
+            return [column for column in columns if not is_rank1_special_group_c_feature(column)]
+        if mode == "rank1_special_group_d_off":
+            return [column for column in columns if not is_rank1_special_group_d_feature(column)]
+        if mode == "rank1_special_group_e_off":
+            return [column for column in columns if not is_rank1_special_group_e_feature(column)]
+        if mode == "event_distance_group_a_off":
+            return [column for column in columns if not is_event_distance_group_a_feature(column)]
+        if mode == "event_distance_group_b_off":
+            return [column for column in columns if not is_event_distance_group_b_feature(column)]
+        if mode == "event_distance_group_c_off":
+            return [column for column in columns if not is_event_distance_group_c_feature(column)]
+        if mode == "rank1_interaction_streak_event_off":
+            return [column for column in columns if column != "rank1_streak_x_event_decay_3"]
+        if mode == "rank1_interaction_rotation_context_off":
+            return [column for column in columns if column != "rank1_rotation_context_gap"]
+        if mode == "rank1_interaction_same_cycle_recency_off":
+            return [column for column in columns if column != "rank1_same_cycle_recency_gap"]
         raise ValueError(f"Unknown feature_ablation_mode: {mode}")
 
     def _build_model(self, model_name: str, params: dict[str, Any]) -> Any:

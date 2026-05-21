@@ -1,0 +1,120 @@
+---
+id: machine-master-flag-keyword-based
+trigger: "machine_masterのbt_flagやhana_flagを追加・修正するとき"
+confidence: 0.97
+domain: database-maintenance
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# machine_master フラグはキーワードリストで一元管理する
+
+## 背景
+bt_flag / hana_flag / jug_flag / oki_flag はすべて機種名の部分一致で判定される。
+フラグ判定ロジックは `database/data_inserter.py` の冒頭にある `_BT_KEYWORDS` リストで一元管理されている。
+`get_or_create_machine_master()` が新規機種挿入時にこのリストを参照してフラグをセットする。
+
+## アクション
+- キーワード追加は `data_inserter.py` の `_BT_KEYWORDS` リストのみ編集する
+- 追加後は `python database/update_machine_flags.py` を実行して既存DBに反映する
+- hana_flag は `ハナハナ` / `スーハナ`、oki_flag は `沖ドキ`、jug_flag は `ジャグラー` で判定（変更時は `_calc_flags()` も同時に修正）
+
+## 例
+```python
+# _BT_KEYWORDS に追加するだけでよい
+_BT_KEYWORDS = [
+    'ボーナストリガー', 'BONUS TRIGGER',
+    'BT', 'LB', 'パルサー',
+    ...
+]
+# その後
+# python database/update_machine_flags.py
+```
+
+---
+id: machine-master-insert-vs-update
+trigger: "新規機種が追加されたのにbt_flagが0のままになっているとき"
+confidence: 0.95
+domain: database-maintenance
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# get_or_create_machine_master は既存レコードを更新しない
+
+## 背景
+`data_inserter.py` の `get_or_create_machine_master()` は既存レコードがあれば
+そのまま返して終了する（UPDATEしない）。
+キーワードを追加しても、すでにDBに登録済みの機種には自動で反映されない。
+
+## アクション
+- キーワード追加後は必ず `python database/update_machine_flags.py` を手動実行して既存レコードを再評価する
+- 新規機種（初回スクレイピング）については挿入時に自動でフラグがセットされる
+
+## 例
+```
+# キーワード追加 → update_machine_flags.py 実行のセット
+1. database/data_inserter.py の _BT_KEYWORDS に追加
+2. python database/update_machine_flags.py
+```
+
+---
+id: machine-name-hyoki-zure-patterns
+trigger: "機種名でDBを検索・フラグ判定するとき"
+confidence: 0.92
+domain: database-maintenance
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# パチスロ機種名の典型的な表記揺れパターン
+
+## 背景
+ana-slo.comからスクレイピングした機種名には複数の表記揺れが存在し、
+同一機種が異なるキーとして登録されてしまうケースがある。
+
+## アクション
+キーワード設計時は以下の揺れを考慮する：
+1. **プレフィックス有無**: `L不二子BT` vs `不二子BT`、`スマスロ ハナビ` vs `新ハナビ`
+2. **全角/半角**: `！` vs `!`、`Ⅲ` vs `III`（ローマ数字）、`‐`（全角ダッシュ）vs `-`
+3. **スマスロ表記**: `スマスロ ○○` / `スマート沖スロ ○○` / `○○(スマスロ)` が混在
+4. **LB プレフィックス**: LBで始まる機種は基本的にBT機
+5. **シリーズ番号**: 数字やサブタイトルで別機種になる場合がある（エウレカセブン3/4はBT非該当）
+
+## 例
+```
+# 安全なキーワード設計の例
+'ハーレムエース'  # 翔べ！・翔べ! 両方をカバー
+'マタドール'      # マタドールⅢ・マタドールIII 両方をカバー
+'エウレカセブン HI-EVOLUTION ZERO TYPE'  # 特定バージョンだけ狙い撃ち
+```
+
+---
+id: machine-master-per-hall-db
+trigger: "machine_masterテーブルを参照・更新するとき"
+confidence: 0.90
+domain: database-architecture
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# machine_master はホールDB内に埋め込まれている（共有DBではない）
+
+## 背景
+`db/machine_master.db`（db_setup.pyが作る共有マスター）と、
+各ホールDB内の `machine_master` テーブル（data_inserter.pyが動的に作る）は別物。
+ダッシュボードのクエリ（table_config.py）は各ホールDB内の machine_master を参照している。
+
+## アクション
+- フラグ変更は各ホールDBの machine_master テーブルに直接適用する必要がある
+- `update_machine_flags.py` は `db/*.db` を glob して全ホールDBを一括更新する
+- `db/machine_master.db` は現時点ではダッシュボードから参照されていないため優先度低
+
+## 例
+```python
+# table_config.py のクエリ例
+{'suffix': 'bt', 'name': 'BT機種', 'condition': 'AND mm.bt_flag = 1'}
+# mm = 各ホールDB内の machine_master（JOIN済み）
+```
+
+---

@@ -136,7 +136,12 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--feature-selection-rfecv-cv-splits", type=int, default=3)
     parser.add_argument("--feature-selection-permutation-repeats", type=int, default=3)
     parser.add_argument("--feature-selection-shadow-quantile", type=float, default=1.0)
-    parser.add_argument("--forecast-mode", action="store_true", help="Train only on historical-safe features and emit next-day forecasts.")
+    parser.add_argument(
+        "--forecast-mode",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Train only on historical-safe features and emit next-day forecasts. Default: enabled.",
+    )
     parser.add_argument(
         "--feature-ablation-mode",
         choices=[
@@ -156,6 +161,17 @@ def _build_parser() -> argparse.ArgumentParser:
             "rank1_special_off",
             "event_distance_redesign_off",
             "rank1_special_off_event_distance_redesign_off",
+            "rank1_special_group_a_off",
+            "rank1_special_group_b_off",
+            "rank1_special_group_c_off",
+            "rank1_special_group_d_off",
+            "rank1_special_group_e_off",
+            "event_distance_group_a_off",
+            "event_distance_group_b_off",
+            "event_distance_group_c_off",
+            "rank1_interaction_streak_event_off",
+            "rank1_interaction_rotation_context_off",
+            "rank1_interaction_same_cycle_recency_off",
         ],
         default="none",
         help="Ablation toggle for last_digit feature families.",

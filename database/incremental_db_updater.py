@@ -202,14 +202,37 @@ class IncrementalDBUpdater:
             if avg_games:
                 self.data_inserter.update_games_deviation(date_str, avg_games)
             
-            # 3. 各種集計
+            # 3. 各種集計（個別に実行して失敗を明示化）
+            summary_failures = []
+
             try:
                 self.summary_calc.update_machine_type_summary(date_str)
+            except Exception as e:
+                summary_failures.append(f"機種別集計: {e}")
+                print(f"      [WARN] 機種別集計エラー: {e}")
+
+            try:
                 self.summary_calc.update_last_digit_summary_by_type(date_str)
+            except Exception as e:
+                summary_failures.append(f"末尾別集計: {e}")
+                print(f"      [WARN] 末尾別集計エラー: {e}")
+
+            try:
                 self.summary_calc.update_position_summary_by_type(date_str)
+            except Exception as e:
+                summary_failures.append(f"位置別集計: {e}")
+                print(f"      [WARN] 位置別集計エラー: {e}")
+
+            try:
                 self.summary_calc.update_island_summary(date_str)
             except Exception as e:
-                print(f"      [WARN] 集計処理エラー: {e}")
+                summary_failures.append(f"島別集計: {e}")
+                print(f"      [WARN] 島別集計エラー: {e}")
+
+            if summary_failures:
+                print(f"      [ERROR] サブテーブル更新に失敗しました:")
+                for failure in summary_failures:
+                    print(f"        - {failure}")
             
             # 4. ランク・履歴計算 + 日付フラグ追加（原子的に処理）
             try:

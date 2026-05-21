@@ -8,6 +8,48 @@ import sqlite3
 from typing import List, Dict, Any
 from datetime import datetime
 
+# BT機種判定キーワード（機種名にいずれかが含まれれば bt_flag=1）
+_BT_KEYWORDS = [
+    'ボーナストリガー', 'BONUS TRIGGER',
+    'BT',
+    'LB',
+    'パルサー',
+    'ハナビ',
+    'ディスクアップ',
+    'ひぐらし',
+    'うみねこ',
+    '戦国†恋姫',
+    'マジカルハロウィン8',
+    'ヱヴァンゲリヲン',
+    'スマスロ サンダーV',
+    'アレックス ブライト',
+    'マタドール',
+    'ハーレムエース',
+    # 追加
+    '1000ちゃん',
+    'A‐SLOT+',
+    'ドルアーガ',
+    'うまい棒',
+    'アオハル',
+    'ギャグダー',
+    'クランキークレスト',
+    'ケロット',
+    'ドンちゃん',
+    'ナイツ',
+    'ニューゲッターマウス',
+    'マッピー',
+    'ハイパーラッシュ',
+    'ワードオブライツ',
+    'ハイビリターン',
+    'ダンジョンに出会いを求める',
+    'バーサスリヴァイズ',
+    'ピンクパンサー',
+    'ファイヤードリフト',
+    'ファミスタ',
+    'エウレカセブン HI-EVOLUTION ZERO TYPE',
+    '蛇喰夢子',
+]
+
 class DataInserter:
     """基本的なデータ投入クラス"""
     
@@ -65,25 +107,27 @@ class DataInserter:
             
             # 新規機種の場合、機種名から分類
             jug_flag = 1 if 'ジャグラー' in machine_name else 0
-            hana_flag = 1 if 'ハナハナ' in machine_name else 0
+            hana_flag = 1 if ('ハナハナ' in machine_name or 'スーハナ' in machine_name) else 0
             oki_flag = 1 if '沖ドキ' in machine_name else 0
-            
+            bt_flag = 1 if any(kw in machine_name for kw in _BT_KEYWORDS) else 0
+
             now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             cursor.execute('''
                 INSERT INTO machine_master (
-                    machine_name_normalized, jug_flag, hana_flag, oki_flag,
+                    machine_name_normalized, jug_flag, hana_flag, oki_flag, bt_flag,
                     display_names, official_name, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (machine_name, jug_flag, hana_flag, oki_flag, 
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (machine_name, jug_flag, hana_flag, oki_flag, bt_flag,
                   machine_name, machine_name, now, now))
-            
+
             conn.commit()
-            
+
             return {
                 'machine_name_normalized': machine_name,
                 'jug_flag': jug_flag,
                 'hana_flag': hana_flag,
-                'oki_flag': oki_flag
+                'oki_flag': oki_flag,
+                'bt_flag': bt_flag,
             }
         finally:
             conn.close()
