@@ -86,54 +86,80 @@ def normalize_hall_name(hall_name):
 
 async def find_and_click_link_hybrid(page, target_url, date_str):
     """ハイブリッド方式：HTML解析 + JavaScript遷移
-    
+
+    URLのスペース表記揺れ（%20 vs ハイフン）に対応するため、以下の順で試みる:
+    1. 一覧ページの <a> タグから実際のhrefを取得
+    2. target_url（ハイフン区切り）でフォールバック
+    3. ハイフン→%20に変換したURLでフォールバック
+
     戻り値: (success: bool, reason: str or None)
     """
-    
+
     print(f"   [SEARCH] HTML解析でリンク検索...")
-    
+
     try:
-        # HTML取得
         html_content = await page.get_content()
         soup = BeautifulSoup(html_content, 'html.parser')
-        
-        # 日付変換
+
         slash_date = date_str[:4] + "/" + date_str[4:6] + "/" + date_str[6:8]
-        
-        # ページ内にテキストが存在するか確認
+        hyphen_date = date_str[:4] + "-" + date_str[4:6] + "-" + date_str[6:8]
+
         page_text = soup.get_text()
-        
-        if slash_date in page_text:
-            print(f"   [OK] ページ内に '{slash_date}' を発見")
-            print(f"   🌐 JavaScript遷移で目標URLへ: {target_url}")
-            
-            # JavaScript遷移
-            try:
-                await page.evaluate(f'window.location.href = "{target_url}"')
-                await asyncio.sleep(5)
-                
-                # 遷移成功確認
-                current_html = await page.get_content()
-                if 'data' in current_html or '全データ一覧' in current_html:
-                    print(f"   [OK] 遷移成功")
-                    return True, None
-                else:
-                    reason = 'データページの内容が見つかりません'
-                    print(f"   [ERROR] 遷移失敗 - {reason}")
-                    return False, reason
-                    
-            except Exception as e:
-                reason = f'JavaScript遷移エラー: {e}'
-                print(f"   [ERROR] {reason}")
-                return False, reason
-                
-        else:
+        if slash_date not in page_text:
             reason = f"ページ内に '{slash_date}' が見つかりません（データなし）"
             print(f"   [ERROR] {reason}")
-            print(f"   [SEARCH] この日付のデータは存在しない可能性があります")
-        
+            return False, reason
+
+        print(f"   [OK] ページ内に '{slash_date}' を発見")
+
+        # Step 1: <a> タグから実際のURLを取得（スペース/%20/ハイフン揺れを回避）
+        actual_url = None
+        for a_tag in soup.find_all('a', href=True):
+            href = a_tag['href']
+            if hyphen_date in href and '-data' in href:
+                actual_url = href
+                print(f"   [OK] <a> タグからURL取得: {actual_url}")
+                break
+
+        # Step 2: ハイフン→%20 バリアントを生成
+        # target_url 例: https://ana-slo.com/YYYY-MM-DD-ホール名-data/
+        # 日付の3つのハイフンを除き、ホール名部分のハイフンのみ%20に変換
+        space_url = target_url
+        prefix = f"https://ana-slo.com/{hyphen_date}-"
+        if target_url.startswith(prefix):
+            hall_and_suffix = target_url[len(prefix):]  # "ホール名-data/"
+            if hall_and_suffix.endswith('-data/'):
+                hall_encoded = hall_and_suffix[:-len('-data/')]
+                space_url = prefix + hall_encoded.replace('-', '%20') + '-data/'
+
+        # 試行順: 実際のURL > ハイフンURL > %20URL
+        candidate_urls = []
+        if actual_url:
+            candidate_urls.append(actual_url)
+        candidate_urls.append(target_url)
+        if space_url != target_url:
+            candidate_urls.append(space_url)
+
+        for attempt_url in candidate_urls:
+            print(f"   🌐 JavaScript遷移を試みます: {attempt_url}")
+            try:
+                await page.evaluate(f'window.location.href = "{attempt_url}"')
+                await asyncio.sleep(5)
+
+                current_html = await page.get_content()
+                if '全データ一覧' in current_html or 'all_data_table' in current_html:
+                    print(f"   [OK] 遷移成功")
+                    return True, None
+
+                print(f"   [WARN] コンテンツ未確認、次のURLを試みます")
+
+            except Exception as e:
+                print(f"   [WARN] 遷移エラー ({attempt_url}): {e}")
+
+        reason = '全URLパターンで遷移失敗'
+        print(f"   [ERROR] {reason}")
         return False, reason
-        
+
     except Exception as e:
         reason = f'リンク検索エラー: {e}'
         print(f"   [ERROR] {reason}")
@@ -760,8 +786,8 @@ async def date_range_scrape_hybrid(start_date_str, end_date_str, list_url, page=
         
         # ホール別保存ディレクトリ作成
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        project_root = os.path.dirname(script_dir)
-        base_save_dir = os.path.join(project_root, "data")
+        pachinko_root = os.path.dirname(os.path.dirname(os.path.dirname(script_dir)))
+        base_save_dir = os.path.join(pachinko_root, "data")
         hall_save_dir = os.path.join(base_save_dir, hall_name)
         os.makedirs(hall_save_dir, exist_ok=True)
         print(f"💾 保存先: {hall_save_dir}/")
@@ -964,8 +990,8 @@ async def main():
     
     # ログファイル初期化
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.dirname(script_dir)
-    log_file = os.path.join(project_root, "data", "scraping_log.txt")
+    pachinko_root = os.path.dirname(os.path.dirname(os.path.dirname(script_dir)))
+    log_file = os.path.join(pachinko_root, "data", "scraping_log.txt")
     os.makedirs(os.path.dirname(log_file), exist_ok=True)
     log_buffer = []
     
@@ -986,8 +1012,8 @@ async def main():
         return
     
     # ===== 日付範囲（ここで変更） =====
-    start_date = "20260520"
-    end_date = "20260520"
+    start_date = "20260524"
+    end_date = "20260525"
     # ===================================
     
     print(f"[DATE] 対象期間: {start_date} ～ {end_date}")
@@ -1095,7 +1121,7 @@ async def main():
         print_final_summary(overall_success, overall_failed, hall_results)
         
         # 失敗日のCSVレポートをエクスポート
-        export_failed_dates_to_csv(hall_results, output_dir=os.path.join(project_root, "data"))
+        export_failed_dates_to_csv(hall_results, output_dir=os.path.join(pachinko_root, "data"))
         
         # ログファイルに保存
         try:

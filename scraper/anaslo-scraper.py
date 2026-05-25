@@ -8,49 +8,75 @@ from bs4 import BeautifulSoup
 import urllib.parse
 
 async def find_and_click_link_hybrid(page, target_url, date_str):
-    """ハイブリッド方式：HTML解析 + JavaScript遷移"""
-    
+    """ハイブリッド方式：HTML解析 + JavaScript遷移
+
+    URLのスペース表記揺れ（%20 vs ハイフン）に対応するため、以下の順で試みる:
+    1. 一覧ページの <a> タグから実際のhrefを取得
+    2. target_url（ハイフン区切り）でフォールバック
+    3. ハイフン→%20に変換したURLでフォールバック
+    """
+
     print(f"   🔍 HTML解析でリンク検索...")
-    
+
     try:
-        # HTML取得
         html_content = await page.get_content()
         soup = BeautifulSoup(html_content, 'html.parser')
-        
-        # 日付変換
+
         slash_date = date_str[:4] + "/" + date_str[4:6] + "/" + date_str[6:8]
-        
-        # ページ内にテキストが存在するか確認
+        hyphen_date = date_str[:4] + "-" + date_str[4:6] + "-" + date_str[6:8]
+
         page_text = soup.get_text()
-        
-        if slash_date in page_text:
-            print(f"   ✅ ページ内に '{slash_date}' を発見")
-            print(f"   🌐 JavaScript遷移で目標URLへ: {target_url}")
-            
-            # JavaScript遷移（元のコードと同じ方式）
-            try:
-                # シンプルなJavaScript実行
-                await page.evaluate(f'window.location.href = "{target_url}"')
-                await asyncio.sleep(5)  # 遷移待機
-                
-                # 遷移成功確認（HTML解析）
-                current_html = await page.get_content()
-                if 'data' in current_html or '全データ一覧' in current_html:
-                    print(f"   ✅ 遷移成功")
-                    return True
-                else:
-                    print(f"   ❌ 遷移失敗 - データページの内容が見つかりません")
-                    
-            except Exception as e:
-                print(f"   ❌ JavaScript遷移エラー: {e}")
-                return False
-                
-        else:
+        if slash_date not in page_text:
             print(f"   ❌ ページ内に '{slash_date}' が見つかりません")
             print(f"   🔍 この日付のデータは存在しない可能性があります")
-        
+            return False
+
+        print(f"   ✅ ページ内に '{slash_date}' を発見")
+
+        # Step 1: <a> タグから実際のURLを取得（スペース/%20/ハイフン揺れを回避）
+        actual_url = None
+        for a_tag in soup.find_all('a', href=True):
+            href = a_tag['href']
+            if hyphen_date in href and '-data' in href:
+                actual_url = href
+                print(f"   ✅ <a> タグからURL取得: {actual_url}")
+                break
+
+        # Step 2: ハイフン→%20 バリアントを生成
+        space_url = target_url
+        prefix = f"https://ana-slo.com/{hyphen_date}-"
+        if target_url.startswith(prefix):
+            hall_and_suffix = target_url[len(prefix):]
+            if hall_and_suffix.endswith('-data/'):
+                hall_encoded = hall_and_suffix[:-len('-data/')]
+                space_url = prefix + hall_encoded.replace('-', '%20') + '-data/'
+
+        candidate_urls = []
+        if actual_url:
+            candidate_urls.append(actual_url)
+        candidate_urls.append(target_url)
+        if space_url != target_url:
+            candidate_urls.append(space_url)
+
+        for attempt_url in candidate_urls:
+            print(f"   🌐 JavaScript遷移を試みます: {attempt_url}")
+            try:
+                await page.evaluate(f'window.location.href = "{attempt_url}"')
+                await asyncio.sleep(5)
+
+                current_html = await page.get_content()
+                if '全データ一覧' in current_html or 'all_data_table' in current_html:
+                    print(f"   ✅ 遷移成功")
+                    return True
+
+                print(f"   ⚠️ コンテンツ未確認、次のURLを試みます")
+
+            except Exception as e:
+                print(f"   ⚠️ 遷移エラー ({attempt_url}): {e}")
+
+        print(f"   ❌ 全URLパターンで遷移失敗")
         return False
-        
+
     except Exception as e:
         print(f"   ❌ リンク検索エラー: {e}")
         return False
@@ -524,7 +550,9 @@ async def date_range_scrape_hybrid(start_date_str, end_date_str, list_url):
         MAX_CONSECUTIVE_FAILURES = 3
         
         # ホール別保存ディレクトリ作成
-        base_save_dir = "scraped_data"
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        pachinko_root = os.path.dirname(os.path.dirname(os.path.dirname(script_dir)))
+        base_save_dir = os.path.join(pachinko_root, "data")
         hall_save_dir = os.path.join(base_save_dir, hall_name)
         os.makedirs(hall_save_dir, exist_ok=True)
         print(f"💾 保存先: {hall_save_dir}/")
@@ -643,9 +671,9 @@ async def main():
     """ハイブリッド版メイン処理"""
     
     # URL指定
-    target_url = "https://ana-slo.com/%E3%83%9B%E3%83%BC%E3%83%AB%E3%83%87%E3%83%BC%E3%82%BF/%E6%9D%B1%E4%BA%AC%E9%83%BD/%E3%83%9E%E3%83%AB%E3%83%8F%E3%83%B3%E3%83%A1%E3%82%AC%E3%82%B7%E3%83%86%E3%82%A32000-%E8%92%B2%E7%94%B01-%E3%83%87%E3%83%BC%E3%82%BF%E4%B8%80%E8%A6%A7/"
-    start_date = "20251210"
-    end_date = "20251210"
+    target_url = "https://ana-slo.com/%E3%83%9B%E3%83%BC%E3%83%AB%E3%83%87%E3%83%BC%E3%82%BF/%E6%9D%B1%E4%BA%AC%E9%83%BD/%E3%83%9E%E3%83%AB%E3%83%8F%E3%83%B3%E3%83%A1%E3%82%AC%E3%82%B7%E3%83%86%E3%82%A32000-%E8%92%B2%E7%94%B07-%E3%83%87%E3%83%BC%E3%82%BF%E4%B8%80%E8%A6%A7/"
+    start_date = "20260525"
+    end_date = "20260525"
     
     print("🚀 ハイブリッド版スクレイピング開始...")
     print("   ページ遷移のみJavaScript、その他はHTML解析")
