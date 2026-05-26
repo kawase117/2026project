@@ -551,8 +551,8 @@ async def date_range_scrape_hybrid(start_date_str, end_date_str, list_url):
         
         # ホール別保存ディレクトリ作成
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        pachinko_root = os.path.dirname(os.path.dirname(os.path.dirname(script_dir)))
-        base_save_dir = os.path.join(pachinko_root, "data")
+        project_root = os.path.dirname(script_dir)
+        base_save_dir = os.path.join(project_root, "data")
         hall_save_dir = os.path.join(base_save_dir, hall_name)
         os.makedirs(hall_save_dir, exist_ok=True)
         print(f"💾 保存先: {hall_save_dir}/")

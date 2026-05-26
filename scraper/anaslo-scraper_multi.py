@@ -786,8 +786,8 @@ async def date_range_scrape_hybrid(start_date_str, end_date_str, list_url, page=
         
         # ホール別保存ディレクトリ作成
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        pachinko_root = os.path.dirname(os.path.dirname(os.path.dirname(script_dir)))
-        base_save_dir = os.path.join(pachinko_root, "data")
+        project_root = os.path.dirname(script_dir)
+        base_save_dir = os.path.join(project_root, "data")
         hall_save_dir = os.path.join(base_save_dir, hall_name)
         os.makedirs(hall_save_dir, exist_ok=True)
         print(f"💾 保存先: {hall_save_dir}/")
@@ -990,8 +990,8 @@ async def main():
     
     # ログファイル初期化
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    pachinko_root = os.path.dirname(os.path.dirname(os.path.dirname(script_dir)))
-    log_file = os.path.join(pachinko_root, "data", "scraping_log.txt")
+    project_root = os.path.dirname(script_dir)
+    log_file = os.path.join(project_root, "data", "scraping_log.txt")
     os.makedirs(os.path.dirname(log_file), exist_ok=True)
     log_buffer = []
     
@@ -1012,8 +1012,8 @@ async def main():
         return
     
     # ===== 日付範囲（ここで変更） =====
-    start_date = "20260524"
-    end_date = "20260525"
+    start_date = "20260526"
+    end_date = "20260526"
     # ===================================
     
     print(f"[DATE] 対象期間: {start_date} ～ {end_date}")
@@ -1121,7 +1121,7 @@ async def main():
         print_final_summary(overall_success, overall_failed, hall_results)
         
         # 失敗日のCSVレポートをエクスポート
-        export_failed_dates_to_csv(hall_results, output_dir=os.path.join(pachinko_root, "data"))
+        export_failed_dates_to_csv(hall_results, output_dir=os.path.join(project_root, "data"))
         
         # ログファイルに保存
         try:
