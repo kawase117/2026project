@@ -1,0 +1,109 @@
+---
+id: all-weekdays-have-cluster-except-monday
+trigger: "when deciding which weekdays to apply cluster-based targeting in 蒲田七"
+confidence: 0.82
+domain: pachinko-domain-knowledge
+source: data-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 全曜日でクラスタ集中が確認されるが、月曜は唯一の例外（concentration_ratio ≈ 1.04）
+
+## 背景
+weekday_concentration.csv より（concentration_ratio = best_cluster_mean / all_digits_mean）:
+
+| 曜日 | all_digits_mean | best_cluster_mean | ratio   | delta |
+|------|-----------------|-------------------|---------|-------|
+| 月   |      211.15     |      219.40       |  1.039  |  8.25 |
+| 火   |      215.32     |      264.65       |  1.229  | 49.32 |
+| 水   |      193.03     |      231.65       |  1.200  | 38.62 |
+| 木   |      196.48     |      241.50       |  1.229  | 45.02 |
+| 金   |      152.23     |      182.06       |  1.196  | 29.83 |
+| 土   |      209.26     |      254.11       |  1.214  | 44.85 |
+| 日   |      186.12     |      219.43       |  1.179  | 33.31 |
+
+火・木が最強（ratio=1.229）。月曜だけが実質クラスタ集中なし（delta=8.25は誤差レベル）。
+
+## アクション
+月曜は「クラスタ末尾特徴量」の信頼度を下げる（or 無効化）。
+火〜日はクラスタ集中が有意（delta > 29）なので末尾クラスタ特徴量を活用できる。
+
+## 例
+火曜: best_cluster=6-7-8, delta=49.32（クラスタが全体より+49差枚）
+月曜: best_cluster=2-3-4, delta=8.25（クラスタと全体の差がほぼない）
+
+---
+id: top1-top2-distance-roughly-uniform-with-slight-dist5-excess
+trigger: "when evaluating the ハーフ×2遠距離配置 hypothesis for 蒲田七"
+confidence: 0.55
+domain: pachinko-domain-knowledge
+source: data-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# top1-top2の循環距離はほぼ一様分布。ハーフ×2遠距離仮説は弱い支持しかない
+
+## 背景
+distance_distribution.csv（n=320日）のランダム期待値との比較:
+
+| 距離 | 実測(%) | 期待値(%) | 差  |
+|------|---------|-----------|-----|
+|   1  |  20.6   |   22.2    | -1.6|
+|   2  |  23.1   |   22.2    | +0.9|
+|   3  |  21.6   |   22.2    | -0.6|
+|   4  |  21.6   |   22.2    | -0.6|
+|   5  |  13.1   |   11.1    | +2.0|
+
+- 期待値: top1固定のとき残り9末尾でランダム選択 → dist1〜4が各22.2%、dist5が11.1%（対角1択のみ）
+- 距離4+5合計: 実測34.7% vs 期待値33.3% → **+1.4ppのみ**
+
+「ホールが1と6、8と3のように正反対に分散投入する」仮説はデータで支持されない。
+距離5のみわずかに超過（+2.0pp）しているが、サンプル数を考えると誤差範囲の可能性が高い。
+
+## 解釈
+「なるべく遠い関係で入れている」という視覚的印象はあるが、データ上は全距離ほぼ等頻度。
+曜日別のweekly集計（木曜=dist5, 日曜=dist5）はあくまでその曜日の「典型パターン」であり、
+日次レベルでは遠距離選択の戦略的偏りは確認できない。
+
+## アクション
+ML特徴量として「top2の位置」を組み込む場合、距離ではなく実際のtop2末尾値を使う方が良い。
+「top1から距離4〜5」という抽象的な特徴量は予測寄与が期待できない。
+「top2末尾がX（具体値）」の特徴量を検討する。
+
+## 例
+dist5の実例: 木曜のtop1=2・top2=7（距離5）、日曜のtop1=6・top2=1（距離5）
+これらは曜日固定パターンであり、距離の遠さが戦略的意図とは言い切れない
+
+---
+id: thursday-sunday-have-top2-at-opposite-distance5
+trigger: "when building weekday-specific top2 features for last_digit LTR in 蒲田七"
+confidence: 0.73
+domain: pachinko-domain-knowledge
+source: data-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 木曜（top1=2, top2=7）と日曜（top1=6, top2=1）はtop1-top2距離=5（最遠）で安定
+
+## 背景
+weekday_concentration.csv の top1_top2_distance:
+- 月: dist=2（top1=2, top2=4）
+- 火: dist=3（top1=6, top2=9）
+- 水: dist=3（top1=8, top2=1）
+- 木: **dist=5**（top1=2, top2=7）← 正反対
+- 金: dist=3（top1=9, top2=6）
+- 土: dist=4（top1=6, top2=2）
+- 日: **dist=5**（top1=6, top2=1）← 正反対
+
+木・日は他曜日（dist2〜4）と異なり、最遠の末尾に2拠点を配置している。
+木曜の「0-1-2クラスタ（leftward）+ 末尾7（孤立強末尾）」というパターンと整合する。
+
+## アクション
+木曜: `is_thursday AND last_digit in ["0","1","2","7"]` を特徴量候補に追加。
+日曜: `is_sunday AND last_digit in ["6","7","8","1"]` を特徴量候補に追加。
+ただし週次単一値のため walk-forward での確認が必須。
+
+## 例
+木曜: top1(末尾2=259.3) + top2(末尾7=254.0) → 2拠点、距離5（正反対）
+日曜: top1(末尾6=286.6) + top2(末尾1=231.9) → 2拠点、距離5（正反対）
+対比: 火曜 top1(末尾6) + top2(末尾9) → 距離3（近い）

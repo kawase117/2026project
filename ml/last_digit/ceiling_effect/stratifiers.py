@@ -18,10 +18,17 @@ class WeekdayEvaluator(ConditionEvaluator):
 
     def stratify(self, df: pd.DataFrame) -> dict[str, pd.DataFrame]:
         out: dict[str, pd.DataFrame] = {}
-        for w in ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]:
-            sub = df[df["weekday"] == w].copy()
+        wk = df["weekday"].astype(str)
+        buckets = {
+            "mon_thu": wk.isin(["Monday", "Tuesday", "Thursday"]),
+            "wednesday": wk.eq("Wednesday"),
+            "fri_sat": wk.isin(["Friday", "Saturday"]),
+            "sunday": wk.eq("Sunday"),
+        }
+        for name, mask in buckets.items():
+            sub = df[mask].copy()
             if not sub.empty:
-                out[w] = sub
+                out[name] = sub
         return out
 
 
@@ -42,10 +49,13 @@ class AnomalyEvaluator(ConditionEvaluator):
 
     def stratify(self, df: pd.DataFrame) -> dict[str, pd.DataFrame]:
         out: dict[str, pd.DataFrame] = {}
-        for k in ["normal", "high_anomaly", "low_anomaly"]:
-            sub = df[df["anomaly_direction"] == k].copy()
-            if not sub.empty:
-                out[k] = sub
+        direction = df["anomaly_direction"].astype(str)
+        normal = df[direction.eq("normal")].copy()
+        anomaly = df[~direction.eq("normal")].copy()
+        if not normal.empty:
+            out["normal"] = normal
+        if not anomaly.empty:
+            out["anomaly"] = anomaly
         return out
 
 
@@ -68,4 +78,3 @@ def default_evaluators() -> list[ConditionEvaluator]:
         AnomalyEvaluator(),
         FailureDayEvaluator(),
     ]
-

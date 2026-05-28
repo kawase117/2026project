@@ -1,0 +1,307 @@
+{
+  "config": {
+    "catastrophic_threshold": 15000.0
+  },
+  "current": {
+    "overall": {
+      "n_pairs": 584,
+      "hit_at_2_rate": 0.9914383561643836,
+      "loss_mean": 865.9246575342465,
+      "loss_p50": 0.0,
+      "loss_p90": 1970.0000000000045,
+      "loss_p95": 5010.000000000014,
+      "rank2_rescue_on_miss1": 0.8214285714285714,
+      "rank3_rescue_on_miss12": 0.0,
+      "critical_miss_rate": 0.008561643835616438,
+      "catastrophic_rate": 0.018835616438356163,
+      "catastrophic_on_critical_rate": 0.0
+    },
+    "by_expert": [
+      {
+        "n_pairs": 146,
+        "hit_at_2_rate": 1.0,
+        "loss_mean": 284.93150684931504,
+        "loss_p50": 0.0,
+        "loss_p90": 550.0,
+        "loss_p95": 2375.0,
+        "rank2_rescue_on_miss1": 1.0,
+        "rank3_rescue_on_miss12": NaN,
+        "critical_miss_rate": 0.0,
+        "catastrophic_rate": 0.0,
+        "catastrophic_on_critical_rate": NaN,
+        "expert": "2F_A"
+      },
+      {
+        "n_pairs": 146,
+        "hit_at_2_rate": 0.9863013698630136,
+        "loss_mean": 1202.7397260273972,
+        "loss_p50": 0.0,
+        "loss_p90": 2750.0,
+        "loss_p95": 8475.0,
+        "rank2_rescue_on_miss1": 0.8,
+        "rank3_rescue_on_miss12": 0.0,
+        "critical_miss_rate": 0.0136986301369863,
+        "catastrophic_rate": 0.03424657534246575,
+        "catastrophic_on_critical_rate": 0.0,
+        "expert": "2F_N"
+      },
+      {
+        "n_pairs": 146,
+        "hit_at_2_rate": 0.9863013698630136,
+        "loss_mean": 365.06849315068496,
+        "loss_p50": 0.0,
+        "loss_p90": 1250.0,
+        "loss_p95": 2400.0,
+        "rank2_rescue_on_miss1": 0.7142857142857143,
+        "rank3_rescue_on_miss12": 0.0,
+        "critical_miss_rate": 0.0136986301369863,
+        "catastrophic_rate": 0.0,
+        "catastrophic_on_critical_rate": 0.0,
+        "expert": "3F_A"
+      },
+      {
+        "n_pairs": 146,
+        "hit_at_2_rate": 0.9931506849315068,
+        "loss_mean": 1610.958904109589,
+        "loss_p50": 0.0,
+        "loss_p90": 4450.0,
+        "loss_p95": 10775.0,
+        "rank2_rescue_on_miss1": 0.8571428571428571,
+        "rank3_rescue_on_miss12": 0.0,
+        "critical_miss_rate": 0.00684931506849315,
+        "catastrophic_rate": 0.0410958904109589,
+        "catastrophic_on_critical_rate": 0.0,
+        "expert": "3F_N"
+      }
+    ],
+    "by_condition": [
+      {
+        "n_pairs": 252,
+        "hit_at_2_rate": 0.996031746031746,
+        "loss_mean": 760.7142857142857,
+        "loss_p50": 0.0,
+        "loss_p90": 1670.0000000000018,
+        "loss_p95": 5514.999999999992,
+        "rank2_rescue_on_miss1": 0.9090909090909091,
+        "rank3_rescue_on_miss12": 0.0,
+        "critical_miss_rate": 0.003968253968253968,
+        "catastrophic_rate": 0.015873015873015872,
+        "catastrophic_on_critical_rate": 0.0,
+        "condition": "weekday",
+        "difficulty": "mon_thu"
+      },
+      {
+        "n_pairs": 80,
+        "hit_at_2_rate": 0.9875,
+        "loss_mean": 832.5,
+        "loss_p50": 0.0,
+        "loss_p90": 2110.000000000001,
+        "loss_p95": 4569.999999999996,
+        "rank2_rescue_on_miss1": 0.75,
+        "rank3_rescue_on_miss12": 0.0,
+        "critical_miss_rate": 0.0125,
+        "catastrophic_rate": 0.0125,
+        "catastrophic_on_critical_rate": 0.0,
+        "condition": "weekday",
+        "difficulty": "wednesday"
+      },
+      {
+        "n_pairs": 168,
+        "hit_at_2_rate": 0.9880952380952381,
+        "loss_mean": 755.952380952381,
+        "loss_p50": 0.0,
+        "loss_p90": 1390.0000000000034,
+        "loss_p95": 2860.0000000000023,
+        "rank2_rescue_on_miss1": 0.7777777777777778,
+        "rank3_rescue_on_miss12": 0.0,
+        "critical_miss_rate": 0.011904761904761904,
+        "catastrophic_rate": 0.017857142857142856,
+        "catastrophic_on_critical_rate": 0.0,
+        "condition": "weekday",
+        "difficulty": "fri_sat"
+      },
+      {
+        "n_pairs": 84,
+        "hit_at_2_rate": 0.9880952380952381,
+        "loss_mean": 1433.3333333333333,
+        "loss_p50": 0.0,
+        "loss_p90": 3110.000000000001,
+        "loss_p95": 10804.999999999993,
+        "rank2_rescue_on_miss1": 0.75,
+        "rank3_rescue_on_miss12": 0.0,
+        "critical_miss_rate": 0.011904761904761904,
+        "catastrophic_rate": 0.03571428571428571,
+        "catastrophic_on_critical_rate": 0.0,
+        "condition": "weekday",
+        "difficulty": "sunday"
+      },
+      {
+        "n_pairs": 144,
+        "hit_at_2_rate": 0.9722222222222222,
+        "loss_mean": 2849.3055555555557,
+        "loss_p50": 0.0,
+        "loss_p90": 9430.000000000015,
+        "loss_p95": 15339.999999999998,
+        "rank2_rescue_on_miss1": 0.7894736842105263,
+        "rank3_rescue_on_miss12": 0.0,
+        "critical_miss_rate": 0.027777777777777776,
+        "catastrophic_rate": 0.0625,
+        "catastrophic_on_critical_rate": 0.0,
+        "condition": "pred_span_quartile",
+        "difficulty": "Q1"
+      },
+      {
+        "n_pairs": 146,
+        "hit_at_2_rate": 0.9931506849315068,
+        "loss_mean": 563.6986301369863,
+        "loss_p50": 0.0,
+        "loss_p90": 700.0,
+        "loss_p95": 2125.0,
+        "rank2_rescue_on_miss1": 0.8888888888888888,
+        "rank3_rescue_on_miss12": 0.0,
+        "critical_miss_rate": 0.00684931506849315,
+        "catastrophic_rate": 0.0136986301369863,
+        "catastrophic_on_critical_rate": 0.0,
+        "condition": "pred_span_quartile",
+        "difficulty": "Q2"
+      },
+      {
+        "n_pairs": 147,
+        "hit_at_2_rate": 1.0,
+        "loss_mean": 85.71428571428571,
+        "loss_p50": 0.0,
+        "loss_p90": 0.0,
+        "loss_p95": 469.99999999999886,
+        "rank2_rescue_on_miss1": NaN,
+        "rank3_rescue_on_miss12": NaN,
+        "critical_miss_rate": 0.0,
+        "catastrophic_rate": 0.0,
+        "catastrophic_on_critical_rate": NaN,
+        "condition": "pred_span_quartile",
+        "difficulty": "Q3"
+      },
+      {
+        "n_pairs": 147,
+        "hit_at_2_rate": 1.0,
+        "loss_mean": 3.401360544217687,
+        "loss_p50": 0.0,
+        "loss_p90": 0.0,
+        "loss_p95": 0.0,
+        "rank2_rescue_on_miss1": NaN,
+        "rank3_rescue_on_miss12": NaN,
+        "critical_miss_rate": 0.0,
+        "catastrophic_rate": 0.0,
+        "catastrophic_on_critical_rate": NaN,
+        "condition": "pred_span_quartile",
+        "difficulty": "Q4"
+      },
+      {
+        "n_pairs": 508,
+        "hit_at_2_rate": 0.9940944881889764,
+        "loss_mean": 802.1653543307086,
+        "loss_p50": 0.0,
+        "loss_p90": 1730.0000000000011,
+        "loss_p95": 3694.999999999993,
+        "rank2_rescue_on_miss1": 0.8636363636363636,
+        "rank3_rescue_on_miss12": 0.0,
+        "critical_miss_rate": 0.005905511811023622,
+        "catastrophic_rate": 0.01968503937007874,
+        "catastrophic_on_critical_rate": 0.0,
+        "condition": "anomaly_direction",
+        "difficulty": "normal"
+      },
+      {
+        "n_pairs": 76,
+        "hit_at_2_rate": 0.9736842105263158,
+        "loss_mean": 1292.1052631578948,
+        "loss_p50": 0.0,
+        "loss_p90": 4650.0,
+        "loss_p95": 9025.0,
+        "rank2_rescue_on_miss1": 0.6666666666666666,
+        "rank3_rescue_on_miss12": 0.0,
+        "critical_miss_rate": 0.02631578947368421,
+        "catastrophic_rate": 0.013157894736842105,
+        "catastrophic_on_critical_rate": 0.0,
+        "condition": "anomaly_direction",
+        "difficulty": "anomaly"
+      },
+      {
+        "n_pairs": 564,
+        "hit_at_2_rate": 1.0,
+        "loss_mean": 807.0921985815603,
+        "loss_p50": 0.0,
+        "loss_p90": 1700.0,
+        "loss_p95": 3755.000000000007,
+        "rank2_rescue_on_miss1": 1.0,
+        "rank3_rescue_on_miss12": NaN,
+        "critical_miss_rate": 0.0,
+        "catastrophic_rate": 0.01950354609929078,
+        "catastrophic_on_critical_rate": NaN,
+        "condition": "difficulty_failure",
+        "difficulty": "hit_day"
+      },
+      {
+        "n_pairs": 20,
+        "hit_at_2_rate": 0.75,
+        "loss_mean": 2525.0,
+        "loss_p50": 0.0,
+        "loss_p90": 9760.0,
+        "loss_p95": 10335.0,
+        "rank2_rescue_on_miss1": 0.0,
+        "rank3_rescue_on_miss12": 0.0,
+        "critical_miss_rate": 0.25,
+        "catastrophic_rate": 0.0,
+        "catastrophic_on_critical_rate": 0.0,
+        "condition": "difficulty_failure",
+        "difficulty": "miss_day"
+      }
+    ]
+  },
+  "baseline": {
+    "overall": {
+      "n_pairs": 584,
+      "hit_at_2_rate": 0.9931506849315068,
+      "loss_mean": 610.7876712328767,
+      "loss_p50": 0.0,
+      "loss_p90": 900.0,
+      "loss_p95": 3500.0,
+      "rank2_rescue_on_miss1": 0.8918918918918919,
+      "rank3_rescue_on_miss12": 0.0,
+      "critical_miss_rate": 0.00684931506849315,
+      "catastrophic_rate": 0.011986301369863013,
+      "catastrophic_on_critical_rate": 0.5
+    }
+  },
+  "overall_delta": {
+    "hit_at_2_rate": {
+      "current": 0.9914383561643836,
+      "baseline": 0.9931506849315068,
+      "delta": -0.001712328767123239,
+      "direction": "worsened"
+    },
+    "loss_mean": {
+      "current": 865.9246575342465,
+      "baseline": 610.7876712328767,
+      "delta": 255.1369863013698,
+      "direction": "worsened"
+    },
+    "rank2_rescue_on_miss1": {
+      "current": 0.8214285714285714,
+      "baseline": 0.8918918918918919,
+      "delta": -0.07046332046332049,
+      "direction": "worsened"
+    },
+    "critical_miss_rate": {
+      "current": 0.008561643835616438,
+      "baseline": 0.00684931506849315,
+      "delta": 0.0017123287671232876,
+      "direction": "worsened"
+    },
+    "catastrophic_rate": {
+      "current": 0.018835616438356163,
+      "baseline": 0.011986301369863013,
+      "delta": 0.00684931506849315,
+      "direction": "worsened"
+    }
+  }
+}

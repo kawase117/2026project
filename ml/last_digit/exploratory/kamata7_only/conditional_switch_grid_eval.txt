@@ -1,0 +1,57 @@
+=== Conditional Switch Grid Eval ===
+source: ml\last_digit\reports\digit_lag_v2_withinexpert_xgb_ranker_ndcg_testperiod_topk.csv
+confirmed pairs: 429
+baseline hit@top2=95.34% | baseline median_diff=19300.0
+
+--- Top 20 by delta_hit then delta_median ---
+expert=3F_A, weekday=Thursday, band=undefined | switched=1 | hit=95.57% | med=19300.0 | dHit=+0.23pp | dMed=+0.0
+expert=3F_A, weekday=Wednesday, band=undefined | switched=2 | hit=95.57% | med=19300.0 | dHit=+0.23pp | dMed=+0.0
+expert=3F_A, weekday=Monday, band=low+undefined | switched=7 | hit=95.57% | med=19300.0 | dHit=+0.23pp | dMed=+0.0
+expert=3F_A, weekday=ALL, band=undefined | switched=8 | hit=95.57% | med=19300.0 | dHit=+0.23pp | dMed=+0.0
+expert=2F_N, weekday=Friday, band=low+undefined | switched=10 | hit=95.57% | med=19300.0 | dHit=+0.23pp | dMed=+0.0
+expert=2F_N, weekday=Tuesday, band=low+undefined | switched=11 | hit=95.57% | med=19300.0 | dHit=+0.23pp | dMed=+0.0
+expert=3F_A, weekday=Saturday, band=low+undefined | switched=12 | hit=95.57% | med=19200.0 | dHit=+0.23pp | dMed=-100.0
+expert=2F_N, weekday=Saturday, band=undefined | switched=0 | hit=95.34% | med=19300.0 | dHit=+0.00pp | dMed=+0.0
+expert=3F_A, weekday=Monday, band=undefined | switched=0 | hit=95.34% | med=19300.0 | dHit=+0.00pp | dMed=+0.0
+expert=3F_A, weekday=Tuesday, band=undefined | switched=0 | hit=95.34% | med=19300.0 | dHit=+0.00pp | dMed=+0.0
+expert=3F_N, weekday=Monday, band=undefined | switched=0 | hit=95.34% | med=19300.0 | dHit=+0.00pp | dMed=+0.0
+expert=3F_N, weekday=Tuesday, band=undefined | switched=0 | hit=95.34% | med=19300.0 | dHit=+0.00pp | dMed=+0.0
+expert=3F_N, weekday=Saturday, band=undefined | switched=0 | hit=95.34% | med=19300.0 | dHit=+0.00pp | dMed=+0.0
+expert=ALL, weekday=Monday, band=undefined | switched=1 | hit=95.34% | med=19300.0 | dHit=+0.00pp | dMed=+0.0
+expert=ALL, weekday=Tuesday, band=undefined | switched=1 | hit=95.34% | med=19300.0 | dHit=+0.00pp | dMed=+0.0
+expert=2F_N, weekday=Monday, band=undefined | switched=1 | hit=95.34% | med=19300.0 | dHit=+0.00pp | dMed=+0.0
+expert=2F_N, weekday=Tuesday, band=undefined | switched=1 | hit=95.34% | med=19300.0 | dHit=+0.00pp | dMed=+0.0
+expert=2F_N, weekday=Thursday, band=undefined | switched=1 | hit=95.34% | med=19300.0 | dHit=+0.00pp | dMed=+0.0
+expert=2F_N, weekday=Friday, band=undefined | switched=1 | hit=95.34% | med=19300.0 | dHit=+0.00pp | dMed=+0.0
+expert=3F_N, weekday=Wednesday, band=undefined | switched=1 | hit=95.34% | med=19300.0 | dHit=+0.00pp | dMed=+0.0
+
+--- Non-degrading candidates (dHit>=0 and dMed>=0) ---
+expert=3F_A, weekday=Thursday, band=undefined | switched=1 | dHit=+0.23pp | dMed=+0.0
+expert=3F_A, weekday=Wednesday, band=undefined | switched=2 | dHit=+0.23pp | dMed=+0.0
+expert=3F_A, weekday=Monday, band=low+undefined | switched=7 | dHit=+0.23pp | dMed=+0.0
+expert=3F_A, weekday=ALL, band=undefined | switched=8 | dHit=+0.23pp | dMed=+0.0
+expert=2F_N, weekday=Friday, band=low+undefined | switched=10 | dHit=+0.23pp | dMed=+0.0
+expert=2F_N, weekday=Tuesday, band=low+undefined | switched=11 | dHit=+0.23pp | dMed=+0.0
+expert=ALL, weekday=Monday, band=undefined | switched=1 | dHit=+0.00pp | dMed=+0.0
+expert=ALL, weekday=Tuesday, band=undefined | switched=1 | dHit=+0.00pp | dMed=+0.0
+expert=2F_N, weekday=Monday, band=undefined | switched=1 | dHit=+0.00pp | dMed=+0.0
+expert=2F_N, weekday=Tuesday, band=undefined | switched=1 | dHit=+0.00pp | dMed=+0.0
+expert=2F_N, weekday=Thursday, band=undefined | switched=1 | dHit=+0.00pp | dMed=+0.0
+expert=2F_N, weekday=Friday, band=undefined | switched=1 | dHit=+0.00pp | dMed=+0.0
+expert=3F_N, weekday=Wednesday, band=undefined | switched=1 | dHit=+0.00pp | dMed=+0.0
+expert=3F_N, weekday=Friday, band=undefined | switched=1 | dHit=+0.00pp | dMed=+0.0
+expert=ALL, weekday=Saturday, band=undefined | switched=2 | dHit=+0.00pp | dMed=+0.0
+expert=3F_A, weekday=Saturday, band=undefined | switched=2 | dHit=+0.00pp | dMed=+0.0
+expert=3F_A, weekday=Sunday, band=undefined | switched=2 | dHit=+0.00pp | dMed=+0.0
+expert=3F_N, weekday=Sunday, band=undefined | switched=2 | dHit=+0.00pp | dMed=+0.0
+expert=ALL, weekday=Wednesday, band=undefined | switched=4 | dHit=+0.00pp | dMed=+0.0
+expert=ALL, weekday=Thursday, band=undefined | switched=6 | dHit=+0.00pp | dMed=+0.0
+
+--- Practical candidates (switched>=3) ---
+expert=3F_A, weekday=Monday, band=low+undefined | switched=7 | hit=95.57% | med=19300.0 | dHit=+0.23pp | dMed=+0.0
+expert=3F_A, weekday=ALL, band=undefined | switched=8 | hit=95.57% | med=19300.0 | dHit=+0.23pp | dMed=+0.0
+expert=2F_N, weekday=Friday, band=low+undefined | switched=10 | hit=95.57% | med=19300.0 | dHit=+0.23pp | dMed=+0.0
+expert=2F_N, weekday=Tuesday, band=low+undefined | switched=11 | hit=95.57% | med=19300.0 | dHit=+0.23pp | dMed=+0.0
+expert=ALL, weekday=Wednesday, band=undefined | switched=4 | hit=95.34% | med=19300.0 | dHit=+0.00pp | dMed=+0.0
+expert=ALL, weekday=Thursday, band=undefined | switched=6 | hit=95.34% | med=19300.0 | dHit=+0.00pp | dMed=+0.0
+expert=2F_N, weekday=Sunday, band=low+undefined | switched=9 | hit=95.34% | med=19300.0 | dHit=+0.00pp | dMed=+0.0

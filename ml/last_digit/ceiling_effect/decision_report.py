@@ -5,9 +5,9 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-_MAJOR_METRICS = ("hit_at_2", "loss_value", "rank2_rescue_on_miss1")
+_MAJOR_METRICS = ("hit_at_2", "loss_value", "rank2_rescue_on_miss1", "critical_miss_rate")
 _HIGHER_IS_BETTER = {"hit_at_2", "rank2_rescue_on_miss1"}
-_LOWER_IS_BETTER = {"loss_value"}
+_LOWER_IS_BETTER = {"loss_value", "critical_miss_rate"}
 
 
 def _is_sig(row: pd.Series) -> bool:
@@ -149,6 +149,7 @@ def generate_decision_memo(sig_df: pd.DataFrame, diagnostics: dict[str, Any] | N
     lines.append(_metric_section(sig_df, "hit_at_2"))
     lines.append(_metric_section(sig_df, "loss_value"))
     lines.append(_metric_section(sig_df, "rank2_rescue_on_miss1"))
+    lines.append(_metric_section(sig_df, "critical_miss_rate"))
     lines.append("## リスク評価")
     lines.append(f"- 悪化条件の有無: {'あり' if len(sig_wrs) > 0 else 'なし'}")
     lines.append(f"- サンプルサイズ警告（n<10）: {'あり' if len(low_support) > 0 else 'なし'} ({len(low_support)}件)")

@@ -1,0 +1,281 @@
+---
+id: entity-level-rank1-unsolvable
+trigger: "when attempting machine_name (entity) level rank1 prediction"
+confidence: 0.95
+domain: ml-entity-level-targeting
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Entity-Level Rank1 は構造的に学習不可
+
+## 背景
+
+蒲田七で machine_name（機種名）レベルの is_rank_1 予測を試みた結果：
+- 全特徴量 MI < 0.01（ほぼノイズ）
+- モデルが machine_type_encoded（AT系/A型/BT の3値）のみを学習
+- Hit@K = 0.0（ランダム以下）
+- 機種間の長期平均ランクは有意に異なる（Kruskal p≈10^-79）が、日次予測では無意味
+- 評価期間で entity 内の特徴量がドリフト（prior_top1_rate KS p=10^-43）
+
+## アクション
+
+全体 rank1 ではなく、以下への問題再定義を検討：
+1. **セグメント内 top-K 予測** — 2F/3F × A型/非A型 で4分割し、各セグメント内で is_top3/top5
+2. **日次ホール勝率予測** — 「今日は全台設定か」を先に予測（Layer 0）
+3. **回帰（rank_pct分布予測）** — 順位の確率分布を直接予測
+
+## 例
+
+```
+is_rank_1（全体）の問題：base_rate = 1.4%、114機種の競争 → AUC 0.56 で打ち止め
+is_top3（セグメント内、2F_A）：base_rate = 32.6%、15機種の競争 → AUC 0.60 達成
+```
+
+---
+id: floor-atype-segmentation-improves-auc
+trigger: "when machine_name prediction AUC plateaus below 0.58"
+confidence: 0.85
+domain: ml-hierarchical-segmentation
+source: session-implementation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 2F/3F × A型/非A型 セグメント分割で AUC 向上
+
+## 背景
+
+エンティティレベルの全体ランク予測が失敗した理由は、114機種が1つの競争空間にある非効率性。
+前回の末尾ML では floor × atype の4セグメント構造が有効だったので、同じ軸で機種名レベルを分割。
+
+実装結果：
+- 全体 rank1 AUC 0.56 → セグメント内 is_top3 AUC 0.6623
+- セグメント内 is_top5 AUC 0.6941
+- lift@1 = 2.4x（Hit@1 40% vs random 16.6%）
+
+## アクション
+
+機種名予測を設計する際は、必ず以下を検討：
+1. machine_master から floor（2F/3F）と atype（A型 vs 非A型）を取得
+2. 4セグメントに事前分割：2F_A, 2F_N, 3F_A, 3F_N
+3. セグメント内の rank を再計算（グローバルランクではなく）
+4. 各セグメントに独立モデルを訓練
+
+## 例
+
+```python
+# セグメント定義（machine_master から派生）
+segments = {
+    '2F_A': (floor=='2F') & (machine_type=='A型'),
+    '2F_N': (floor=='2F') & (machine_type!='A型'),
+    '3F_A': (floor=='3F') & (machine_type=='A型'),
+    '3F_N': (floor=='3F') & (machine_type!='A型'),
+}
+
+# セグメント内で rank を再計算
+for seg_name, mask in segments.items():
+    df_seg = df[mask].copy()
+    df_seg['rank_pct_in_seg'] = df_seg.groupby('date')['rank_pct'].rank(pct=True)
+    df_seg['is_top3_in_seg'] = df_seg['rank_pct_in_seg'] >= 0.67
+```
+
+---
+id: within-segment-target-density-critical
+trigger: "when deciding between top3 vs top5 as target within a segment"
+confidence: 0.90
+domain: ml-target-engineering
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# セグメント内機種数に応じた target 選択
+
+## 背景
+
+セグメントサイズが小さいと、上位K個の threshold が自動的に高くなり学習が簡単になる反面、
+予測する価値が低下する（ほぼ全て推薦 = 意味がない）。
+
+蒲田七の場合：
+- 2F_A: 15機種 → is_top5 base_rate = 0.543 (random baseline 0.998) → is_top3 推奨
+- 2F_N: 33機種 → is_top3 base_rate = 0.092 → is_top5 が学習に向く
+- 3F_A: 15機種 → is_top5 base_rate = 0.916 → is_top3 推奨
+- 3F_N: 15機種 → is_top3 base_rate = 0.195 → is_top3/top5 両立可
+
+## アクション
+
+セグメント内機種数 N に応じて：
+- N < 20: is_top3 のみ（top5 は base_rate > 0.8 で無意味）
+- 20 ≤ N < 40: is_top3 主体、is_top5 補助
+- N ≥ 40: is_top5 も現実的
+
+base_rate の目安：
+- 0.3〜0.6 が最適学習帯域（AUC が 0.6+ 達成しやすい）
+- < 0.1 は厳しすぎ、> 0.8 は無意味
+
+## 例
+
+```
+2F_A (15機種) is_top3 base_rate=0.326 → AUC 0.604 ✓
+2F_A (15機種) is_top5 base_rate=0.543 → AUC 0.533 △ (trivial)
+2F_N (33機種) is_top3 base_rate=0.092 → AUC 0.553 △ (sparse)
+2F_N (33機種) is_top5 base_rate=0.154 → AUC 0.650 ✓
+```
+
+---
+id: day-quality-filter-threshold-calibration
+trigger: "when implementing Layer 0 (day-level win_rate filter)"
+confidence: 0.75
+domain: ml-preprocessing
+source: session-implementation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Layer 0: win_rate 閾値の事前キャリブレーション
+
+## 背景
+
+「今日は全台設定か（ホール全体の勝率が高いか）」を予測する Layer 0 を実装したが、
+win_rate ≥ 80% という固定閾値では評価期間（2026-04-24 ~ 2026-05-23）で正例がゼロ。
+モデルが学習できず、全日で proba = 0.0 となった。
+
+蒲田七の実際の win_rate 分布が不明なため、訓練データに十分な正例が含まれる閾値を動的に選択する必要。
+
+## アクション
+
+Layer 0 実装時に必ず実施：
+
+1. **win_rate 分布をサンプリング調査**
+```sql
+SELECT
+  day_of_month, AVG(win_rate) as mean_wr, COUNT(*) as n,
+  SUM(CASE WHEN win_rate >= 80 THEN 1 ELSE 0 END) as days_ge80,
+  SUM(CASE WHEN win_rate >= 70 THEN 1 ELSE 0 END) as days_ge70,
+  SUM(CASE WHEN win_rate >= 60 THEN 1 ELSE 0 END) as days_ge60
+FROM daily_hall_summary
+GROUP BY day_of_month
+```
+
+2. **「正例（good day）が全訓練日の 5～20%」となる閾値を選択**
+   - 少なすぎると（< 5%）モデルが学習困難
+   - 多すぎると（> 30%）予測の精度が低下
+
+3. **選定後、step_days=1 で再評価**
+
+## 例
+
+```
+蒲田七の場合（推測値）:
+- win_rate >= 60: 全日の 30% → 多すぎ
+- win_rate >= 70: 全日の 10% → 適正
+- win_rate >= 80: 全日の 2% → 少なすぎ → 正例ゼロ
+推奨: win_rate >= 70 で再実装
+```
+
+---
+id: evaluation-step-size-matters
+trigger: "when evaluating walk-forward performance with n_eval_days < 10"
+confidence: 0.88
+domain: ml-evaluation-design
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Walk-Forward 評価：step_days は十分にとれ
+
+## 背景
+
+eval_days=30, step_days=7 の設定で Layer 1 を評価した結果、n_eval_days = 5（スライドが5回）となった。
+この状態での hit@1=0.4（5日中2日）の lift=2.4x は、統計的に有意かどうか不明瞭。
+95% CI が非常に広い（最大 0.0～1.0）可能性が高い。
+
+## アクション
+
+walk-forward 評価時：
+1. **step_days=1 を使用して最低 30～90 日の評価点を確保**
+2. **各日の hit@K を個別記録し、平均と標準誤差を報告**
+3. **lift の 95% CI を計算してから「改善した」と判定**
+
+```python
+# 評価点が少なすぎる状況
+step_days=7, eval_days=30 → n_steps = 4〜5 → 信頼性 ★☆☆
+
+# 改善版
+step_days=1, eval_days=90 → n_steps = 30〜60 → 信頼性 ★★★
+```
+
+## 例
+
+```
+悪い例:
+  hit@1=0.4 (5 days, step=7) → "lift=2.4x、改善した！" ← 危険
+
+良い例:
+  hit@1=0.35 ± 0.12 (45 days, step=1) → "lift=2.1x, p=0.04" ← 統計的信頼性あり
+```
+
+---
+id: feature-drift-detection-essential
+trigger: "when using historical features (prior_top1_rate, lag features) in time-series prediction"
+confidence: 0.90
+domain: ml-feature-validation
+source: session-eda
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 時系列特徴量のドリフト検知は必須
+
+## 背景
+
+EDA で特徴量ドリフトを検測した結果：
+- **prior_top1_rate**: KS p=10^-43（極めて有意）× PSI=0.0193 → 過去の勝利実績が最近無効化
+- **roll7_rank_pct**: recent 期間で permutation importance=-0.024（有害）
+- **lag7_rank_pct**: recent 期間で permutation importance=-0.052（深刻に有害）
+
+これらは訓練期間では有用だった特徴量だが、評価期間で distribution shift が発生。
+単純に時間軸を伸ばして訓練すると、古い・今も有効な信号が薄められる。
+
+## アクション
+
+時系列特徴量を使う際：
+
+1. **PSI / KS 検定で学習期間と評価期間のドリフトを定量化**
+```python
+from scipy.stats import ks_2samp
+train_period = df[df['date'] < cutoff_date]
+eval_period = df[df['date'] >= cutoff_date]
+ks_stat, p_value = ks_2samp(
+    train_period['prior_top1_rate'].dropna(),
+    eval_period['prior_top1_rate'].dropna()
+)
+if p_value < 0.05:
+    print(f"Feature {col} has significant drift (KS p={p_value})")
+```
+
+2. **ドリフト検出時は rolling window で最近データのみを使用**
+```python
+# ドリフト検出の場合
+df['prior_top1_rate_r90'] = df.groupby('entity')['is_rank_1'].transform(
+    lambda x: x.rolling(90, min_periods=10).mean().shift(1)
+)
+# グローバル平均を使わない
+```
+
+3. **Permutation Importance で期間別に特徴量の有効性を追跡**
+   - 有効性が劣化した特徴量は削除するか rolling window 化
+
+## 例
+
+```
+事前（訓練期間）:
+  prior_top1_rate permutation importance: +0.052 ✓
+
+事後（評価期間）:
+  prior_top1_rate permutation importance: +0.030 △（劣化）
+  lag7_rank_pct permutation importance: -0.052 ✗（有害）
+
+対策:
+  prior_top1_rate を rolling 90 日版に置き換え
+  lag7_rank_pct を特徴量群から削除
+```
+
+---

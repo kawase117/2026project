@@ -1,0 +1,24 @@
+=== Fair Compare (current code baseline) ===
+
+overall_hit:
+- v2r_current: hit@2=0.9907, hit@3=0.9954, n=432
+- v2p1_all: hit@2=0.9907, hit@3=0.9931, n=432
+- v2p2_gate: hit@2=0.9907, hit@3=0.9931, n=432
+
+by_expert_hit@2:
+- 2F_N: v2r_current=0.9931, v2p1_all=0.9931, v2p2_gate=0.9931
+- 3F_N: v2r_current=0.9931, v2p1_all=0.9931, v2p2_gate=0.9931
+- 3F_A: v2r_current=0.9861, v2p1_all=0.9861, v2p2_gate=0.9861
+
+strategy_metrics:
+- v2r_current: hit1_top1=80.9%, hit1_top2=93.7%, hit1_top3=98.4%, cluster23_top2=76.9%
+- v2p1_all: hit1_top1=80.4%, hit1_top2=94.6%, hit1_top3=98.8%, cluster23_top2=77.2%
+- v2p2_gate: hit1_top1=80.4%, hit1_top2=94.6%, hit1_top3=99.1%, cluster23_top2=76.5%
+
+delta_vs_v2r_current (v2p1_all):
+- hit@2 delta: +0.0000
+- hit@3 delta: -0.0023
+
+delta_vs_v2r_current (v2p2_gate):
+- hit@2 delta: +0.0000
+- hit@3 delta: -0.0023

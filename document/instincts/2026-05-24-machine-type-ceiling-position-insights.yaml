@@ -1,0 +1,162 @@
+# Session Instincts Export
+# Generated: 2026-05-24
+# Project: pachinko-analyzer
+# Session: machine_type ML ceiling analysis + position hypothesis
+
+---
+id: rolling-feature-ceiling-for-antipatterned-halls
+trigger: "when rolling-average ML features plateau near 2x random for machine ranking"
+confidence: 0.88
+domain: ml-project-planning
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Rolling特徴量はホールの逆張り戦略により天井が低い
+
+## 背景
+rolling平均・EWM・lagなどの「過去成績ベース」特徴量を用いたXGBoostモデルが、
+eval60で Hit@3 ≈ 2× ランダム、rank_1 Hit@1 = 0.000 という結果に留まった。
+ホール側は「最近出した台には次回入れない」逆張り戦略を採るため、
+短期rolling特徴量とターゲットが逆相関している可能性が高い。
+長期rolling（rank_trend: 月別rank_pct平均）はAblationで寄与ゼロと判定済み。
+
+## アクション
+1. rolling特徴量だけでの改善追求は優先度を下げる
+2. 「過去成績」ではなく「ホールの意思決定パターン」を直接モデル化する方向に転換を検討する
+3. 位置情報（角番・島位置・入口距離）などの固定属性特徴量を追加することを優先する
+4. 長期rolling（rank_trend）はAblationで寄与ゼロ確認済み → 除外して良い
+
+## 例
+```
+xgb_default_eval60:              score=0.1848, rank1_hit@1=0.000
+xgb_global_noSmoothEwmNoRank:   score=0.2145, rank1_hit@1=0.000
+→ 特徴量改善で+16%改善できたが、rank_1の絶対予測は依然ゼロ
+→ 2× ランダム程度が現アーキテクチャの実用上限の可能性
+```
+
+---
+id: batch-eval-time-management-checkpoints
+trigger: "when planning ML evaluation runs for machine_type or last_digit models"
+confidence: 0.95
+domain: ml-project-planning
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 評価実行は段階的チェックポイント制で時間を制御する
+
+## 背景
+14時間連続実行（eval60 × 複数設定 × バッチ分割）は検証粒度が粗くなり、
+途中の判断ミスが後半全体を無駄にするリスクがある。
+
+## アクション
+以下の段階的基準を守る：
+- **eval3〜5**: 動作確認・スモーク（新機能の疎通確認のみ）
+- **eval20〜30**: 設定比較の主戦場。複数設定の優劣判定はここで行う
+- **eval60**: eval30で+0.01以上改善した設定のみ走らせる
+- **差が+0.005未満**: eval30の結果で採用決定し、eval60はスキップする
+- 1ステップ終わるごとに結果を確認し、次ステップの指示を出す（自律実行させない）
+
+## 例
+```
+floor2_b07 eval30: score=0.2166（global=0.2113より+0.005差）
+→ 差が+0.01未満のためeval60はスキップ、global eval60(0.2145)を採用設定とする
+```
+
+---
+id: thursday-threshold-split-rejected
+trigger: "when considering weekday-specific thresholds for machine_type XGBoost"
+confidence: 0.90
+domain: ml-hyperparameter-tuning
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 木曜専用閾値分離は予測数を激減させ全指標が悪化
+
+## 背景
+木曜日は非木曜と比べてF1・Hit@3が高い傾向があった。
+この差を活かすために閾値分離を実装して eval20 で比較した結果、
+閾値が上昇して予測数が激減し、全ターゲットで F1・Hit@3 が悪化した。
+
+## アクション
+- 木曜専用閾値分離は採用しない（スモーク eval3 と eval20 の両方で悪化確認）
+- 木曜フラグを特徴量として学習させる方向を検討する（モデル内で自動対応）
+
+## 例
+```
+eval20（floor2_b07_noSmoothEwmNoRank）:
+  分離なし: is_top_5 F1=0.181/0.216, is_top_3 F1=0.136/0.198
+  分離あり: is_top_5 F1=0.100/0.121, is_top_3 F1=0.067/0.148
+→ 全指標で悪化。予測数が1/5以下に激減。
+```
+
+---
+id: machine-position-as-missing-fixed-feature
+trigger: "when machine_type ML performance plateaus and rolling features show diminishing returns"
+confidence: 0.85
+domain: ml-feature-engineering
+source: session-observation + domain-hypothesis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 台の物理位置（角番・島位置・視認性）が欠落している重要固定特徴量
+
+## 背景
+高設定の投入位置はホールの「集客戦略」と密接に関係する。
+入口付近・角番など視認性の高い位置に高設定を入れると集客効果が高い。
+この「位置属性」は台番号に紐づく固定値だが、現在のデータに存在しない。
+rolling平均では絶対に捉えられない信号であり、次のフェーズの優先候補。
+
+## アクション
+1. 台番号と物理位置のマッピングテーブルを作成する（フロア・島番号・角番フラグ）
+2. 台番号が連番でフロアレイアウトと対応している場合は番号範囲から推定可能
+3. 手動でフロアマップを記録してCSVに落とし、machine_masterテーブルに列追加する
+4. 位置特徴量（is_corner, floor, island_id, position_in_island）をML特徴量として追加する
+5. 位置×曜日の交互作用特徴量も有望
+
+## 例
+```
+推定する位置属性:
+- is_corner: 島の両端（角番）か (0/1)
+- floor: 2F / 3F
+- island_id: 何番島か
+- position_in_island: 島内での端からの距離（0.0=端, 0.5=中央）
+
+台番号マッピング例:
+1001〜1020 → 2F 1島 (1001=左端角番, 1020=右端角番)
+```
+
+---
+id: confirmed-feature-set-no-smooth-ewm-no-rank-trend
+trigger: "when selecting feature set for machine_type XGBoost production use"
+confidence: 0.92
+domain: ml-feature-engineering
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 採用特徴量セット: no_smooth_ewm + no_rank_trend (135特徴量)
+
+## 背景
+Ablation eval30 および eval60 分割評価の結果、smooth_ewm はノイズ、
+rank_trend は寄与ゼロと判定。cross_section は除外で悪化するため必須。
+
+## アクション
+machine_type XGBoost の本番特徴量:
+`ml/machine_type/reports/_keep_no_smooth_ewm_no_rank_trend.txt`（135特徴量）
+
+設定:
+- model_type: xgb, segment_mode: global, alpha: 5.0
+- gpu_backend: auto, margin: 0.00（見送りなし）
+- floor2+blend0.7 は eval30 のみ確認（+0.005差）のため global を本番採用
+
+## 例
+```
+xgb_default eval60:                  score=0.1848（改善前）
+xgb_global_noSmoothEwmNoRank eval60: score=0.2145（+16%改善、採用）
+xgb_floor2_b07 eval30:               score=0.2166（eval60未確認、保留）
+```
+
+---

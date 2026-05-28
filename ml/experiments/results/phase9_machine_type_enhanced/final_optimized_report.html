@@ -1,0 +1,152 @@
+
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Phase 10: Final Optimized Models Report</title>
+        <style>
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; background: #f5f5f5; }
+            h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+            h2 { color: #34495e; margin-top: 40px; }
+            .model-section { background: white; padding: 20px; margin: 20px 0; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+            table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+            th, td { border: 1px solid #bdc3c7; padding: 12px; text-align: left; }
+            th { background: #3498db; color: white; font-weight: bold; }
+            tr:nth-child(even) { background: #ecf0f1; }
+            .metric-high { color: #27ae60; font-weight: bold; }
+            .metric-low { color: #e74c3c; font-weight: bold; }
+            .feature-list { background: #f8f9fa; padding: 10px; border-left: 4px solid #3498db; margin: 10px 0; }
+            .feature-item { margin: 5px 0; font-family: monospace; font-size: 0.9em; }
+            .summary { background: #fff3cd; padding: 15px; border-radius: 5px; margin: 20px 0; }
+            .good { color: green; }
+            .warning { color: orange; }
+            .bad { color: red; }
+        </style>
+    </head>
+    <body>
+        <h1>Phase 10: Final Optimized Models Report</h1>
+        <p><strong>Generated:</strong> 2026-05-12 15:51:37</p>
+
+        <div class="summary">
+            <h3>Executive Summary</h3>
+            <p>Final optimized models built using feature selection analysis results:</p>
+            <ul>
+                <li><strong>is_rank_1</strong>: 15 features (SelectKBest) - Focus on temporal + rolling metrics</li>
+                <li><strong>is_top_3</strong>: 5 features (XGBoostImportance) - Only rolling metrics, highest AUC</li>
+                <li><strong>is_top_5</strong>: 5 features (SelectKBest) - Temporal + short-term rolling metrics</li>
+            </ul>
+        </div>
+    
+            <div class="model-section">
+                <h2>IS_RANK_1 - rank_1_optimal</h2>
+
+                <h3>Configuration</h3>
+                <table>
+                    <tr><th>Parameter</th><th>Value</th></tr>
+                    <tr><td>Target</td><td>is_rank_1</td></tr>
+                    <tr><td>Max Depth</td><td>3</td></tr>
+                    <tr><td>Learning Rate</td><td>0.05</td></tr>
+                    <tr><td>Number of Features</td><td>15</td></tr>
+                </table>
+
+                <h3>Selected Features</h3>
+                <div class="feature-list">
+            <div class="feature-item">1. month_progress</div><div class="feature-item">2. day_of_week</div><div class="feature-item">3. day_of_month</div><div class="feature-item">4. rolling_avg_diff_7d</div><div class="feature-item">5. rolling_avg_diff_14d</div><div class="feature-item">6. rolling_avg_diff_21d</div><div class="feature-item">7. rolling_avg_diff_28d</div><div class="feature-item">8. rolling_avg_diff_35d</div><div class="feature-item">9. rolling_avg_games_7d</div><div class="feature-item">10. rolling_avg_games_14d</div><div class="feature-item">11. rolling_avg_games_21d</div><div class="feature-item">12. rolling_avg_games_28d</div><div class="feature-item">13. rolling_avg_games_35d</div><div class="feature-item">14. rolling_avg_efficiency_7d</div><div class="feature-item">15. rolling_avg_efficiency_14d</div>
+                </div>
+
+                <h3>Test Set Performance</h3>
+                <table>
+                    <tr><th>Metric</th><th>Value</th></tr>
+            
+                    <tr><td><strong>AUC</strong></td><td class="metric-high">0.5546</td></tr>
+                    <tr><td><strong>F1-Score</strong></td><td class="metric-low">0.0000</td></tr>
+                    <tr><td><strong>Precision</strong></td><td>0.0000</td></tr>
+                    <tr><td><strong>Recall</strong></td><td>0.0000</td></tr>
+                    <tr><td><strong>Specificity</strong></td><td>0.9947</td></tr>
+                    <tr><td colspan="2"><strong>Confusion Matrix</strong></td></tr>
+                    <tr><td>True Positives</td><td>0</td></tr>
+                    <tr><td>True Negatives</td><td>567</td></tr>
+                    <tr><td>False Positives</td><td>3</td></tr>
+                    <tr><td>False Negatives</td><td>57</td></tr>
+                </table>
+
+                <h3>Model Saved</h3>
+                <p><code>C:\Users\apto117\Documents\pachinko-analyzer\src\2026project\ml\experiments\results\phase9_machine_type_enhanced\final_model_rank_1_optimal.pkl</code></p>
+            </div>
+            
+            <div class="model-section">
+                <h2>IS_TOP_3 - top_3_optimal</h2>
+
+                <h3>Configuration</h3>
+                <table>
+                    <tr><th>Parameter</th><th>Value</th></tr>
+                    <tr><td>Target</td><td>is_top_3</td></tr>
+                    <tr><td>Max Depth</td><td>3</td></tr>
+                    <tr><td>Learning Rate</td><td>0.05</td></tr>
+                    <tr><td>Number of Features</td><td>5</td></tr>
+                </table>
+
+                <h3>Selected Features</h3>
+                <div class="feature-list">
+            <div class="feature-item">1. rolling_avg_diff_7d</div><div class="feature-item">2. rolling_avg_diff_14d</div><div class="feature-item">3. rolling_avg_diff_35d</div><div class="feature-item">4. rolling_avg_games_7d</div><div class="feature-item">5. rolling_avg_games_14d</div>
+                </div>
+
+                <h3>Test Set Performance</h3>
+                <table>
+                    <tr><th>Metric</th><th>Value</th></tr>
+            
+                    <tr><td><strong>AUC</strong></td><td class="">0.5459</td></tr>
+                    <tr><td><strong>F1-Score</strong></td><td class="metric-low">0.0328</td></tr>
+                    <tr><td><strong>Precision</strong></td><td>0.2500</td></tr>
+                    <tr><td><strong>Recall</strong></td><td>0.0175</td></tr>
+                    <tr><td><strong>Specificity</strong></td><td>0.9803</td></tr>
+                    <tr><td colspan="2"><strong>Confusion Matrix</strong></td></tr>
+                    <tr><td>True Positives</td><td>3</td></tr>
+                    <tr><td>True Negatives</td><td>447</td></tr>
+                    <tr><td>False Positives</td><td>9</td></tr>
+                    <tr><td>False Negatives</td><td>168</td></tr>
+                </table>
+
+                <h3>Model Saved</h3>
+                <p><code>C:\Users\apto117\Documents\pachinko-analyzer\src\2026project\ml\experiments\results\phase9_machine_type_enhanced\final_model_top_3_optimal.pkl</code></p>
+            </div>
+            
+            <div class="model-section">
+                <h2>IS_TOP_5 - top_5_optimal</h2>
+
+                <h3>Configuration</h3>
+                <table>
+                    <tr><th>Parameter</th><th>Value</th></tr>
+                    <tr><td>Target</td><td>is_top_5</td></tr>
+                    <tr><td>Max Depth</td><td>2</td></tr>
+                    <tr><td>Learning Rate</td><td>0.05</td></tr>
+                    <tr><td>Number of Features</td><td>5</td></tr>
+                </table>
+
+                <h3>Selected Features</h3>
+                <div class="feature-list">
+            <div class="feature-item">1. month_progress</div><div class="feature-item">2. day_of_week</div><div class="feature-item">3. day_of_month</div><div class="feature-item">4. rolling_avg_diff_7d</div><div class="feature-item">5. rolling_avg_diff_14d</div>
+                </div>
+
+                <h3>Test Set Performance</h3>
+                <table>
+                    <tr><th>Metric</th><th>Value</th></tr>
+            
+                    <tr><td><strong>AUC</strong></td><td class="">0.5195</td></tr>
+                    <tr><td><strong>F1-Score</strong></td><td class="">0.3902</td></tr>
+                    <tr><td><strong>Precision</strong></td><td>0.4638</td></tr>
+                    <tr><td><strong>Recall</strong></td><td>0.3368</td></tr>
+                    <tr><td><strong>Specificity</strong></td><td>0.6754</td></tr>
+                    <tr><td colspan="2"><strong>Confusion Matrix</strong></td></tr>
+                    <tr><td>True Positives</td><td>96</td></tr>
+                    <tr><td>True Negatives</td><td>231</td></tr>
+                    <tr><td>False Positives</td><td>111</td></tr>
+                    <tr><td>False Negatives</td><td>189</td></tr>
+                </table>
+
+                <h3>Model Saved</h3>
+                <p><code>C:\Users\apto117\Documents\pachinko-analyzer\src\2026project\ml\experiments\results\phase9_machine_type_enhanced\final_model_top_5_optimal.pkl</code></p>
+            </div>
+            
+    </body>
+    </html>
+    

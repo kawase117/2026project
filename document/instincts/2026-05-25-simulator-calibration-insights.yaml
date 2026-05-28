@@ -1,0 +1,109 @@
+---
+id: session2-win-rate-higher-than-session1
+trigger: "when modeling re-challenge alpha coefficient in pachinko simulator"
+confidence: 0.82
+domain: simulator-design
+source: data-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# session2の勝率はsession1より高い。単純な劣化モデルは実態と逆
+
+## 背景
+稼働日誌CSV（2026-04-01〜2026-05-20、99行）のうちエナ・ゾーン除外後71セッション/32日を分析:
+
+| session_num | N  | Wins | WinRate |
+|------------|-----|------|---------|
+| 1          |  32 |   14 | 43.8%   |
+| 2          |  22 |   14 | 63.6%   |
+| 3          |  13 |    5 | 38.5%   |
+| 4          |   4 |    1 | 25.0%   |
+
+alpha(session1->2) = 1.455 でsession2が最高勝率。
+シミュレーター設計時の仮説「alphaは1未満で再チャレンジ毎に劣化」は実態と逆だった。
+
+## アクション
+シミュレーターのalpha係数モデルを「単純な等比劣化」から以下の非線形モデルに変更する:
+- P_win(1) = 0.438（base）
+- P_win(2) = 0.636（session1の1.455倍、上昇）
+- P_win(3) = 0.385（session2の0.61倍、急落）
+- P_win(4) = 0.250（session3の0.65倍、継続低下）
+
+session2だけ特別に高いことの解釈は2つ:
+1. 情報蓄積効果: session1で外した経験で台配置の理解が深まりsession2の選択精度が上がる
+2. 選択バイアス: session2に移行する日は「session1での外しに確信がある日」=「フロアに高設定の実在が見えた日」に限られる
+
+どちらの解釈でも「session2は利用価値が高い」という行動指針は変わらない。
+
+## 例
+直感的な立ち回りとの整合:
+「1台目で外したが高設定がフロアに明らかに入っている日に、次の台に移る」= session2
+この状況は情報が最も豊富でかつ高設定が残存しているため、勝率が上昇することは理にかなっている。
+
+---
+id: p-move-observed-0688
+trigger: "when setting P_move parameter in pachinko simulator for 設定狙い sessions"
+confidence: 0.85
+domain: simulator-design
+source: data-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# P_moveの実測値は0.688。シミュレーター初期仮定0.3は大幅に過小
+
+## 背景
+稼働日誌71セッション/32日の設定狙いデータ:
+
+| 1日の台数 | 日数 |
+|----------|------|
+| 1台      |  10日 |
+| 2台      |   9日 |
+| 3台      |   9日 |
+| 4台      |   4日 |
+
+2台以上打った日 = 22/32日 → P_move = 0.688
+シミュレーター初期仮定の0.3（1日に再チャレンジする確率30%）は実態の半分以下だった。
+
+全体勝率は47.9%、全体収支は+497,091円（約50日間）。
+
+## アクション
+シミュレーターのP_moveを0.3から0.688に修正する。
+また日別セッション数は1〜4台の分布を持ち、平均セッション数 = 71/32 ≈ 2.2台/日。
+分布を使うなら Poisson(lambda=1.2) のゼロ切り捨てモデル（1〜4台の分布を近似）が適当。
+
+## 例
+32日中22日が複数台 → 「1日1台で終わる」のは少数派（31%）。
+多くの稼働日は複数台をハシゴしており、シミュレーターは複数台前提で設計すべき。
+
+---
+id: session3-plus-degradation-is-real
+trigger: "when deciding whether to attempt 3rd or later re-challenge in 設定狙い"
+confidence: 0.78
+domain: simulator-design
+source: data-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 3台目以降は勝率が急落。session2までが実践的な上限
+
+## 背景
+session2は高勝率（63.6%）だがsession3以降は基準より低い:
+- session3: 38.5%（session1の43.8%より低い）
+- session4: 25.0%（全sessionで最低）
+
+session3+の発生日数: 13日（全32日中40%）→ session3まで打つのは珍しくない。
+しかし勝率は基準を下回る → 期待値が低い状態での継続になっている。
+
+## アクション
+立ち回りの実践的ガイドライン:
+- session1: 予測に基づく初期選択（勝率43.8%）
+- session2: 情報蓄積後の再選択（勝率63.6%、最も高い）→ 積極的に実行
+- session3以降: 勝率が急落（38.5%以下）→ 継続するなら強い根拠が必要
+
+シミュレーターでは「session2打ち切り戦略」「session3継続戦略」の期待値を比較する。
+session3以降の投資は収支への寄与が低く、撤退の方が期待値が高い可能性がある。
+
+## 例
+session3が正当化されるケース:
+- 明確な高設定示唆が1台目・2台目で確認できた（不発）かつ末尾が判明して未消化台がある
+これ以外の「なんとなく続ける」session3は期待値マイナスの可能性が高い。

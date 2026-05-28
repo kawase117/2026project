@@ -1,0 +1,20 @@
+{
+  "threshold_days": 30,
+  "score_rule": "0.5*prior_top1_rate_rolling90 + 0.3*same_weekday_top1_rate + 0.2*lag1_rank_pct",
+  "metrics": {
+    "ml": {
+      "hit_at_1": 0.12222222222222222,
+      "lift_at_3": 1.0767799770451727
+    },
+    "rule": {
+      "hit_at_1": 0.13333333333333333,
+      "hit_at_3": 0.3,
+      "random_baseline_at_3": 0.3095649440362406,
+      "lift_at_3": 0.9691019793406555
+    },
+    "random": {
+      "hit_at_1": 0.029411764705882353,
+      "lift_at_3": 1.0
+    }
+  }
+}

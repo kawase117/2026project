@@ -1,0 +1,96 @@
+---
+id: digit3-low-normal-high-on-anomaly
+trigger: "when analyzing last_digit=3 performance in pachinko last_digit LTR model"
+confidence: 0.82
+domain: pachinko-domain-knowledge
+source: data-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 末尾3は平常時最低・high anomaly日に集中投入される可能性がある
+
+## 背景
+蒲田七の digit3_profile_report.csv より:
+- 全末尾 mean_diff: 末尾3 = 135.8（全末尾中最下位。次点は末尾1=176.0）
+- high anomaly 日（5日間）の末尾別 mean_diff: 末尾3 = 851.8（全末尾中1位、2位の末尾5=725.6を大きく上回る）
+- 末尾3の ACF 有意lagはlag2のみ（全末尾最少）
+- Kruskal post-hoc で末尾3が全4有意ペアに登場（最大乖離: 3 vs 8, p=0.0016）
+
+これらは「平常時は低設定多め・anomaly日に集中投入」という二極化パターンで説明できる。
+二極化がACFの自己相関を弱め、Kruskalで他末尾と孤立させている可能性が高い。
+
+## アクション
+末尾3の rolling平均特徴量は信頼度が低い（通常時の低値と anomaly日の高値が混在）。
+MLに組み込む場合は「直近のhigh anomaly発生フラグ × last_digit=3」の交互作用として扱う方が有効かもしれない。
+ただしhigh anomaly日5件のみのため統計的根拠は弱く、仮説段階。
+
+## 例
+通常平均: last_digit=3 → mean_diff=135.8（全末尾最低）
+high anomaly日平均: last_digit=3 → mean_diff=851.8（全末尾最高、通常の6.3倍）
+
+---
+id: digit3-at-vs-atype-split
+trigger: "when designing features for last_digit=3 in machine_type or last_digit LTR model"
+confidence: 0.90
+domain: ml-feature-engineering
+source: data-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 末尾3の低さはAT系が引き下げており、A型（ジャグラー等）末尾3は平均以上
+
+## 背景
+digit3_profile_report.csv（section=digit3_by_machine_type）より:
+
+| 機種タイプ | mean_diff | std_diff | 台数比率 |
+|-----------|-----------|----------|---------|
+| AT系      | 84.9      | 3233     | 65.6%   |
+| A型       | 243.0     | 1321     | 25.7%   |
+| BT        | 203.3     | 1552     |  8.6%   |
+
+全体の65.6%を占めるAT系の末尾3が mean=84.9・std=3233 と非常に不安定で、
+全体平均（135.8）を引き下げている。
+A型（ジャグラー・ハナハナ等）の末尾3は mean=243.0 と全末尾平均（約182）を超える。
+
+## アクション
+末尾3を「低設定末尾」として一括に扱うのは誤り。AT系に限定した場合だけ成立する。
+機種タイプを掛け合わせた特徴量（last_digit=3 AND bt_flag=0 AND jug_flag=0）を
+AT系LTRの特徴量として追加することを検討する。
+
+## 例
+NG: 末尾3 → 全体的に低い → スコア下げる
+OK: 末尾3 かつ AT系 → 低い（mean=84.9）→ スコア下げる
+OK: 末尾3 かつ A型  → 平均以上（mean=243.0）→ スコアに影響させない
+
+---
+id: digit7-symbolic-hall-strategy-hypothesis
+trigger: "when analyzing last_digit distribution strategy for halls with '7' in the store name"
+confidence: 0.65
+domain: pachinko-domain-knowledge
+source: user-hypothesis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 「7」が店名に入るホールでは、末尾7周辺（6・8・9）への設定集中が有効な集客戦略
+
+## 背景（ユーザー仮説）
+蒲田七（店名に「7」を含む）ではスロットユーザーが朝一台選びで末尾7を優先する傾向がある。
+ホール側はこれを逆手に取り、「末尾7の客が座った台は高設定ではないが、隣や周辺（6・8・9）に高設定を入れる」
+という「出玉感の演出」戦略を採る可能性がある。
+
+また、「3台並び（7の3つ離れ）」という視点では末尾3が7から最も離れた位置にあるため
+「7狙いの客に気づかれにくい」配置として末尾3は低設定に使いやすい。
+
+土曜日のweekday_digit_cross: 末尾6 mean=307.8が全曜日・全末尾で最高値。
+これは「土曜×末尾6 = 7の隣に設定を入れる演出」仮説と整合する。
+
+## アクション
+- 末尾6の土曜フラグを特徴量候補として記録する（土曜×last_digit=6）
+- 末尾7自体の実績を別途確認する（高い期待に対して実績が低ければ仮説補強）
+- 信頼度0.65: ユーザー仮説であり、複数の曜日・期間で検証が必要
+
+## 例
+土曜 mean_diff:
+- 末尾6: 307.8（全曜日・全末尾で最高）
+- 末尾7: 224.3（期待ほど高くない可能性）
+- 末尾3: 119.8（低い = 7から遠く、ホールが低設定を入れやすい位置）

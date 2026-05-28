@@ -1,0 +1,315 @@
+---
+id: rb-quantile-0-90-optimal-cliff
+trigger: "signal_multi_tail_2fn.py で quantile を調整するとき"
+confidence: 0.95
+domain: ml-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# RB quantile 0.90 が最適点。0.85以下は崩壊、0.95は同値
+
+## 背景
+蒲田七DBで `signal_multi_tail_2fn.py --signal-source rb --signal-mode quantile` を
+複数 quantile で試した結果、single 日数が急崖を持つ：
+
+| quantile | single日 | hit_rate |
+|----------|---------|---------|
+| 0.85     | 1       | 0.0%    |
+| 0.90     | 32      | 21.88%  |
+| 0.95     | 32      | 21.88%（同値） |
+
+0.85→0.90 の間に急崖がある。tail-level avg_rb の日次分布が離散的（distinct 値が少ない）ため、
+quantile cutpoint が同じ閾値に潰れやすい。0.875 を試しても 0.85 と同様に崩壊する可能性が高い。
+
+## アクション
+```python
+# 最適設定（蒲田七）
+--signal-source rb --signal-mode quantile --rb-quantile 0.90
+
+# 不要な試行
+# 0.85:  single 1日のみ（統計的に意味なし）
+# 0.875: 崩壊する可能性が高い（試す必要なし）
+# 0.95:  0.90 と完全同値（試す意味なし）
+```
+
+## 例
+```
+rb 0.90 の結果:
+  single 32日, hit_rate 0.2188 (baseline 0.10)
+  adjusted_lift = +118.8% (baseline の 2.2倍)
+  水曜: 3/5 = 60%, 日曜: 3/5 = 60%
+```
+
+---
+id: wednesday-sunday-single-signal-actionable
+trigger: "RBシグナルが1末尾に絞られた日の立ち回りを判断するとき"
+confidence: 0.82
+domain: operational-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 水曜・日曜の RB single シグナルは 60%（baseline 10% の6倍）
+
+## 背景
+`signal_multi_tail_2fn.py --signal-source rb --rb-quantile 0.90` で
+category == "single" の 32日の曜日別 hit_rate:
+
+| 曜日 | n | hit_rate |
+|------|---|---------|
+| 月   | 5 | 0.000   |
+| 火   | 4 | 0.000   |
+| 水   | 5 | 0.600   |
+| 木   | 2 | 0.000   |
+| 金   | 3 | 0.000   |
+| 土   | 8 | 0.125   |
+| 日   | 5 | 0.600   |
+
+水曜・日曜だけが有意に高い。各 n=5 で確定的ではないが方向性は明確。
+
+ドメイン解釈：
+- 水曜: 「末尾重要日」でホールが特定末尾に集中投資 → シグナルも1末尾に収束
+- 日曜: 「機種一」イベントで末尾集中 → 同上
+- 月/火/木/金: 投資分散 → single条件を満たしにくく、当たらない
+
+## アクション
+```python
+# 運用判断ロジック
+if category == "single" and signal_source == "rb" and day_of_week in ["水", "日"]:
+    action = "シグナル末尾を高優先度で選択（60%精度）"
+elif category == "single" and day_of_week == "土":
+    action = "参考程度（12.5%、baseline 10%とほぼ同等）"
+else:
+    action = "シグナルは補助情報のみ（multi or 非対象曜日）"
+```
+
+## 例
+```
+水曜: RBシグナルが末尾6に集中（single）→ 末尾6が2FN最優秀末尾である確率60%
+月曜: RBシグナルが末尾2/5/6/8に散在（multi）→ 判別力なし
+```
+
+---
+id: hokuto-exact-miss-correction-negative
+trigger: "MLモデルの予測外れ日に北斗で補正できるかを検討するとき"
+confidence: 0.93
+domain: ml-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 北斗の exact_miss 補正は機能しない（6.82%、baseline 10%以下）
+
+## 背景
+testperiod_topk.csv の2F_N expert で exact_miss（予測top1 ≠ 実際rank1）の44日を抽出し、
+その日の北斗ベスト末尾と2FN最優秀末尾の一致率を計算した。
+
+結果: **hit_rate = 3/44 = 6.82%**（baseline 10% を下回る）
+
+曜日別:
+| 曜日 | n | hit_rate |
+|------|---|---------|
+| 月   | 5 | 0.000   |
+| 火   | 9 | 0.000   |
+| 水   | 7 | 0.143   |
+| 木   | 3 | 0.667   |
+| 金   | 9 | 0.000   |
+| 土   | 9 | 0.000   |
+| 日   | 2 | 0.000   |
+
+木曜 2/3 は n が小さすぎて統計的に無意味。
+
+## アクション
+```python
+# 結論: 北斗ベスト末尾は予測外れ日の補正材料として使わない
+# 「北斗が好調だから末尾を変更する」という判断は統計的根拠が弱い
+
+# 有効な使い方（代わりに）:
+# → RB single シグナルの確認（category=="single" and rb quantile 0.90 and 水/日）
+# → signal_machine_correlation の知見（シグナル末尾は平均的に他機種も良い）
+```
+
+## 例
+```
+2F_N が末尾5を予測、実際の最優秀は末尾2 (exact_miss)
+この日に北斗ベスト台が末尾7だったとしても
+→ 末尾7が正解の確率は6.82%（baseline以下）
+→「北斗で末尾修正」は根拠なし
+```
+
+---
+id: signal-multi-tail-vs-correlation-distinction
+trigger: "北斗・モンキーのシグナルを2種類の分析で解釈するとき"
+confidence: 0.92
+domain: ml-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# signal_machine_correlation と signal_multi_tail は別の問いを測定している
+
+## 背景
+2つの分析が異なる問いを立てており、結果が「矛盾するように見える」場合がある。
+
+| 分析 | 問い | 蒲田七の結果 |
+|------|------|------------|
+| signal_machine_correlation | RBシグナル末尾の他機種は平均的に良いか？ | YES (delta+67, p=4.97e-7) |
+| signal_multi_tail_2fn | RBシグナル末尾が2FN単独最優秀末尾か？ | 26.5% (rb 0.90 multi) |
+
+前者はグループ比較（シグナル末尾は平均的に良い）。
+後者はピンポイント識別（シグナル末尾がTHE BEST末尾か）。
+前者が成立しても後者は難しい——矛盾ではない。
+
+## アクション
+```python
+# 正しい使い方の区別
+# signal_machine_correlation → 「この末尾は平均よりも良い」という確率的優位性の確認
+# signal_multi_tail_2fn     → 「この末尾が今日最も良い」というピンポイント選択の検証
+
+# 「RBシグナル末尾を打てば必ず一番当たる」→ 過剰期待（multi hit rate 26.5%）
+# 「RBシグナル末尾は打たない末尾より平均的に良い」→ 正しい期待（p=4.97e-7で確認済み）
+```
+
+## 例
+```
+ある日: RBシグナルが末尾2と末尾6に出ている
+→ 末尾2と末尾6は他の末尾より平均的に良い（signal_machine_correlation）
+→ しかし末尾2が「今日の単独最優秀末尾」かどうかは26.5%しか保証されない
+```
+
+---
+id: adjusted-lift-denominator-10-not-9
+trigger: "signal_multi_tail_2fn の hit_rate をランダムベースラインと比較するとき"
+confidence: 0.99
+domain: ml-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# adjusted_lift の分母は 10（末尾0-9）、9ではない
+
+## 背景
+蒲田七の末尾は 0-9 の10種類（北斗は末尾4欠番で9台だが、末尾数は10）。
+summary.json の `baseline_random = 0.1` がこれを示している。
+分母を 9 にすると diff・OR が「baseline 以下」に見えるが、10 にすると「baseline 水準」になる。
+
+| 条件 | hit_rate | 9分母baseline | 10分母baseline | 正しい判断 |
+|------|----------|--------------|---------------|-----------|
+| rb 0.80  | 41.5% | 37.9% (+3.6%pt) | 34.1% (+7.4%pt) | rbは強い |
+| diff 0.80 | 35.3% | 38.8% (-3.5%pt) | 34.9% (+0.4%pt) | diffはランダム水準 |
+| or 0.80  | 53.9% | 56.3% (-2.4%pt) | 50.7% (+3.2%pt) | orは小さな正のリフト |
+
+## アクション
+```python
+# 正しい adjusted_lift 計算
+N_DIGITS = 10  # 蒲田七は末尾0-9の10種類
+
+def adjusted_lift_multi(hit_rate, avg_signal_tails, n_digits=N_DIGITS):
+    baseline = avg_signal_tails / n_digits
+    return hit_rate / baseline - 1 if baseline > 0 else float('nan')
+
+def adjusted_lift_single(hit_rate, n_digits=N_DIGITS):
+    return hit_rate * n_digits - 1  # = hit_rate / (1/10) - 1
+
+# 蒲田七 rb 0.90 の正しい値
+# single: 0.2188 * 10 - 1 = +1.188 → baseline の 2.19倍
+# multi:  0.265 / (2.00/10) - 1 = +0.325 → baseline の 1.33倍
+```
+
+## 例
+```
+誤り（9で割った場合）:
+  diff 0.80: baseline = 3.49/9 = 38.8%, observed 35.3% → ランダム以下（誤）
+
+正しい（10で割った場合）:
+  diff 0.80: baseline = 3.49/10 = 34.9%, observed 35.3% → +0.4%pt（ほぼランダム・正）
+```
+
+---
+id: monday-paradox-broad-investment
+trigger: "月曜日のシグナル解釈が他の分析と矛盾するように見えるとき"
+confidence: 0.78
+domain: ml-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 月曜の逆転：相関は強いがシグナルで末尾を特定できない
+
+## 背景
+月曜に関して3つの分析が一見矛盾する結果を示した：
+
+| 分析 | 月曜の結果 |
+|------|-----------|
+| signal_machine_correlation | delta +183.5, p_adj=0.0017（全曜日で最強） |
+| signal_accuracy_2fn（北斗ヒット率） | 6.38%（baseline以下） |
+| signal_multi_tail single hit_rate | 0.000%（0/5） |
+
+仮説：月曜はホールが複数末尾に分散投資している。
+→ 北斗・モンキーも複数末尾に散在 → single条件を満たしにくい
+→ 各末尾のシグナル機種はその末尾の他機種と相関する（correlation成立）
+→ しかし「どの末尾がTHE BEST」かはランダムに近い
+
+## アクション
+```python
+# 月曜の運用方針
+if day_of_week == "月":
+    # signal_machine_correlation の結果（+183枚）は
+    # 「シグナルがある末尾はシグナルがない末尾より良い」という意味だが、
+    # 「特定1末尾がTHE BEST」とは別。
+    # → 月曜: 末尾を1つに絞る根拠なし。RB single が出ても信頼しない（0/5=0%）
+    action = "月曜のRB singleは使わない。broad coverage が合理的"
+```
+
+## 例
+```
+月曜日: signal_machine_correlation では最も信頼性が高い曜日
+しかし signal_multi_tail single: 0/5 = 0%
+
+解釈: 月曜は投資が広く分散 → どの末尾も「平均的に良い」が、
+      1末尾に絞れるほど差がついていない
+```
+
+---
+id: hard-miss-vs-exact-miss-definition
+trigger: "testperiod_topk.csv で「予測外れ日」を定義するとき"
+confidence: 0.98
+domain: ml-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# hard_miss (hit_at_2==0) は1日のみ。exact_miss を使うべき
+
+## 背景
+`nextday_kamata7_20260527_tasks123_verify_...topk.csv` の2F_N（146日）:
+- hard_miss（hit_at_2 == 0）: **1日のみ**（99.3%がhit@2）
+- exact_miss（予測top1 ≠ 実際rank1）: **44日**（69.86%がexact_hit）
+
+hard_miss はこのモデルには機能しない定義。exact_miss が実用的な「外れ日」。
+
+## アクション
+```python
+# hard_miss（使わない）
+miss_days = df_pred[df_pred["hit_at_2"] == 0]  # → 1日のみ
+
+# exact_miss（使う） - actual_rank1_digit をDBから計算して付加
+df_other_day = df_other[df_other["date"] == date]
+agg = df_other_day.groupby("last_digit")["diff_coins_normalized"].mean()
+actual_rank1_digit = str(agg.idxmax())
+exact_miss = (pred_top1_tail != actual_rank1_digit)
+# → 44日が対象
+```
+
+## 例
+```
+2F_N の hit@2 rate: 145/146 = 99.3%（hard_miss = 1日のみ）
+2F_N の exact hit rate: 102/146 = 69.86%
+exact_miss days: 44日 → 分析に使える外れ日
+
+北斗の exact_miss 補正: 3/44 = 6.82%（baseline以下）
+→ 北斗は外れ日補正に使えないことが確認された
+```
+
+---

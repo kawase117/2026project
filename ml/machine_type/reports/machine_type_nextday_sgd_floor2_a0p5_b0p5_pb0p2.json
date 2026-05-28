@@ -1,0 +1,85 @@
+{
+  "db_path": "db\\マルハンメガシティ2000-蒲田7.db",
+  "prediction_date": "2026-05-21",
+  "alpha": 0.5,
+  "random_state": 42,
+  "model_type": "sgd",
+  "gpu_backend": "cpu",
+  "segment_mode": "floor2",
+  "segment_blend_weight": 0.5,
+  "prior_blend_weight": 0.2,
+  "min_segment_days": 14,
+  "min_segment_rows": 120,
+  "backend_used_by_target": {
+    "is_rank_1": "cpu",
+    "is_top_2": "cpu",
+    "is_top_3": "cpu",
+    "is_top_5": "cpu"
+  },
+  "segment_models_by_target": {
+    "is_rank_1": 2,
+    "is_top_2": 2,
+    "is_top_3": 2,
+    "is_top_5": 2
+  },
+  "segment_prediction_rows_by_target": {
+    "is_rank_1": 114,
+    "is_top_2": 114,
+    "is_top_3": 114,
+    "is_top_5": 114
+  },
+  "recommend_k": 3,
+  "enforce_floor_diversity": true,
+  "min_confidence_margin": 0.02,
+  "confidence_margin_top1_top2": 0.04499999999999993,
+  "skip_suggested": 0,
+  "feature_count": 77,
+  "target_thresholds": {
+    "is_rank_1": 0.5,
+    "is_top_2": 0.5,
+    "is_top_3": 0.0,
+    "is_top_5": 0.5
+  },
+  "audit_report": {
+    "row_count": 20964,
+    "duplicate_date_machine_name_rows": 0,
+    "missing_machine_count_rows": 0,
+    "missing_avg_diff_rows": 0,
+    "missing_total_games_rows": 0,
+    "date_parse_failed_rows": 0,
+    "min_date": "2025-07-07",
+    "max_date": "2026-05-20",
+    "unique_machine_names": 114,
+    "new_machine_rows": 114,
+    "count_increase_rows": 46,
+    "count_decrease_rows": 126,
+    "segment_floor2_counts": {
+      "2F": 12062,
+      "3F": 8902
+    },
+    "segment_floor_type4_counts": {
+      "2F_N": 9615,
+      "3F_A": 4833,
+      "3F_N": 4069,
+      "2F_A": 2447
+    },
+    "machine_master_join_miss_rate": 0.0
+  },
+  "top10_machine_names": [
+    "アクダマドライブ",
+    "とある魔術の禁書目録",
+    "麻雀格闘倶楽部 覚醒",
+    "ネオプラネット",
+    "バーニングエクスプレス",
+    "L麻雀物語",
+    "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION",
+    "七つの魔剣が支配する",
+    "ルパン三世 大航海者の秘宝",
+    "防空少女ラブキューレ2～極限の共鳴～"
+  ],
+  "recommended_machine_names": [
+    "アクダマドライブ",
+    "とある魔術の禁書目録",
+    "ネオプラネット"
+  ]
+}

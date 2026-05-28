@@ -1,0 +1,64 @@
+---
+id: bt-machine-type-db-vs-hall-definition-mismatch
+trigger: "when using machine_type flags (jug_flag, hana_flag, bt_flag) for 蒲田七 or 蒲田一 analysis"
+confidence: 0.92
+domain: pachinko-domain-knowledge
+source: user-ground-truth
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# DBのA型定義と蒲田七（蒲田一）の定義が異なる。2FAは実質BT専用フラグ
+
+## 背景
+- DBでは A型（jug_flag/hana_flag）と BT（bt_flag）は別フラグとして管理されている
+- 蒲田七・蒲田一の運用上の分類: A型とBTを「非AT（非N）」としてまとめて扱う
+- 2FAフラグは実質的にBT専用フラグとして機能している
+
+厳密には異なる機種だが、台数の少なさと「非AT」という共通点から現場では一括で考えられている。
+
+## アクション
+ML特徴量設計でA型とBTを別々に扱う場合はDBフラグと現場定義のズレを念頭に置く。
+「A型 vs AT系」ではなく「非AT（A型+BT） vs AT系」の切り口も検討する。
+蒲田七・蒲田一固有の知見として他ホールへの転用には注意が必要。
+
+## 例
+DB定義: A型（jug_flag=1 or hana_flag=1）と BT（bt_flag=1）は別カテゴリ
+蒲田七定義: A型+BT = 「非AT」として一括管理 → 2FAが「非AT専用フラグ」として機能
+
+---
+id: bt-machine-low-ceiling-compressed-diff-distribution
+trigger: "when interpreting BT machine diff_coins distribution or ML prediction difficulty in 蒲田七"
+confidence: 0.90
+domain: pachinko-domain-knowledge
+source: user-ground-truth
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# BT機種: 機械割100%超えで設定1でも安定黒字。高設定の機械割が低く設定2以上も稀
+
+## 背景
+BT機種の特性（ユーザー確認済み）:
+1. 機械割100%超え → 設定1でも長期的にプラスになる
+2. 一定ユーザー層が平日・イベント日を問わず安定して稼働
+3. 高設定の機械割が低い（設定6でも設定1との差が小さい）
+4. 設定2以上を入れられることが少ない（高設定コストに見合わないため）
+
+## ML的な含意
+AT系との差枚分布の違い:
+- AT系: 設定1=大きくマイナス、設定6=大きくプラス → 設定差が大きい (high variance)
+- BT: 設定1≒設定2≒...≒設定6 → 設定差が小さい (compressed distribution)
+
+BTが「機械学習で全く特徴を掴めなかった」理由:
+- 高設定 vs 低設定のシグナルが非常に弱い（設定間の差枚差が小さい）
+- 安定してプラスになるため「出ている日」と「出ていない日」の区別が困難
+- diff_coins の分布が AT系と比べてずっとフラット
+
+## アクション
+BT機種のML予測では「設定が入っているか」より「この台番号末尾が選ばれているか」
+という末尾選択フラグの方がシグナルになる可能性がある。
+[[bt-weekday-cluster-patterns-all-7-days]] の曜日×末尾交互作用特徴量を優先的に使う。
+
+## 例
+BT設定1: 機械割≒100%超え → diff_coins がわずかにプラス
+BT設定6: 機械割がやや高い → diff_coins がもう少しプラス（ただし設定1との差は小さい）
+AT系設定6: 機械割が大幅に高い → diff_coins が大きくプラス（設定1との差が大きい）

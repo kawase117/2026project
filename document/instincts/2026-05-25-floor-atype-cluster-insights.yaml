@@ -1,0 +1,141 @@
+---
+id: floor-atype-wednesday-clusters-all-different
+trigger: "when interpreting 水曜末尾クラスタ in 蒲田七 floor_atype分割分析"
+confidence: 0.88
+domain: pachinko-domain-knowledge
+source: data-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 水曜は4グループ（floor × atype）全てで異なる末尾クラスタ。「水曜同一クラスタ」仮説を否定
+
+## 背景
+旧instinct [[atype-bt-form-opposite-clusters-half2-mechanism]] では「水曜のみ A型・BT共に3-4-5」と記録していた。
+しかし、2F/3F × A/N の4グループ分割（floor_atype_weekday_cluster.csv）では全て異なる:
+
+| group_key | 水曜クラスタ | delta |
+|-----------|------------|-------|
+| 2F_A | 3-4-5 | 79.0 |
+| 2F_N | 9-0-1 | 71.8 |
+| 3F_A | 1-2-3 | 26.7 |
+| 3F_N | 8-9-0 | 78.2 |
+
+旧分析の「3-4-5一致」は、BTが2F_A中心・A型が2F_A+3F_A混在のため、2F寄りの集計結果として3-4-5が出ていた粗さによるもの。
+
+## アクション
+「水曜は末尾基準投入日だから全機種タイプ同一末尾」という仮説は棄却する。
+水曜の特徴量設計では floor × atype の4グループを独立したクラスタ特徴量として扱う。
+floor_atype分割はA型 vs BT の1次元分割より情報量が多いため、今後の分析は4グループを基本単位とする。
+
+## 例
+2F_A（≈BT）の3-4-5 と 3F_N の8-9-0 は循環距離5で最大逆端。水曜でもフロア×機種タイプで逆端配置が成立する。
+
+---
+id: 2fn-cluster-678-dominant-across-weekdays
+trigger: "when designing last_digit features for 2F_N group in 蒲田七"
+confidence: 0.85
+domain: pachinko-domain-knowledge
+source: data-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 2F_N（2FのAT系機種）は火・木・金・土・日の5曜日で6-7-8クラスタが固定的
+
+## 背景
+floor_atype_weekday_cluster.csv（2F_N行）:
+
+| 曜日 | クラスタ | delta |
+|------|---------|-------|
+| 月 | 0-1-2 | 23.8 |
+| 火 | 6-7-8 | 89.4 |
+| 水 | 9-0-1 | 71.8 |
+| 木 | 6-7-8 | 37.5 |
+| 金 | 6-7-8 | 53.9 |
+| 土 | 6-7-8 | 84.3 |
+| 日 | 6-7-8 | 81.9 |
+
+7曜日中5曜日（71%）で6-7-8が最高クラスタ。月曜（0-1-2）と水曜（9-0-1）のみ例外。
+2F_N の overall_digit ランキングは末尾6が rank=1（mean_diff=330）でグループ最高。
+
+## アクション
+2F_N の末尾特徴量では「末尾6-7-8にいるか」を基本フラグとして採用する。
+月曜・水曜は例外として独立フラグを検討。deltaが最大の火曜（89.4）が最も信頼できる曜日。
+ML特徴量設計では `is_2fn and is_digit_678 and not is_monday and not is_wednesday` が高設定シグナル候補。
+
+## 例
+土曜2F_N: all_group_mean=326.9（全グループ中最高水準）、best_cluster=6-7-8、delta=84.3。
+2FのAT機種は土曜に強く、かつ6-7-8末尾に集中している。
+
+---
+id: 3fn-low-base-but-strong-cluster-signal
+trigger: "when interpreting 3F_N group statistics or designing features for それ in 蒲田七"
+confidence: 0.87
+domain: pachinko-domain-knowledge
+source: data-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 3F_N は差枚水準が極端に低い（土曜は全体平均マイナス）がクラスタdeltaは全グループ最大級
+
+## 背景
+floor_atype_weekday_cluster.csv の 3F_N 行:
+
+| 曜日 | クラスタ | all_group_mean | delta |
+|------|---------|---------------|-------|
+| 月 | 6-7-8 | 131.4 | 71.6 |
+| 火 | 2-3-4 | 123.0 | 40.4 |
+| 水 | 8-9-0 | 48.4 | 78.2 |
+| 木 | 0-1-2 | 45.2 | 112.4 |
+| 金 | 8-9-0 | 19.1 | 106.3 |
+| 土 | 4-5-6 | -34.9 | 77.1 |
+| 日 | 9-0-1 | -6.3 | 135.3 |
+
+他グループの all_group_mean 範囲: 2F_A=103〜313、2F_N=205〜327、3F_A=167〜287。
+3F_N のみ土曜がマイナス。「3FのAT機種は全体的に低設定が多く、Layer A（全台高設定）に選ばれにくい」と整合。
+floor_atype_overall_digit.csv（3F_N）: 末尾3の mean_diff=-94.4（全グループ全末尾の中で唯一の大きなマイナス）、末尾8が150.8（最高）。
+
+## アクション
+3F_N の末尾特徴量を使う場合:
+- 差枚の絶対値が低いため「勝ちやすい台」としての優先度は低い
+- ただしdeltaが大きいため「高設定の位置特定」精度は高い
+- 末尾3は3F_N では積極的に避けるべき末尾（-94差枚）
+ML設計では 3F_N の is_high_setting 閾値を他グループより 100〜200 低く設定する必要がある。
+
+## 例
+土曜3F_N: best_cluster=4-5-6（mean=42.2）、それ以外の末尾は平均マイナス。
+「3FのAT機種土曜は4-5-6以外は負け確定」という状況でもdeltaで末尾を絞れる。
+
+---
+id: thursday-3fa-3fn-share-cluster-012
+trigger: "when analyzing 木曜の末尾パターン across floor × atype groups in 蒲田七"
+confidence: 0.78
+domain: pachinko-domain-knowledge
+source: data-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 木曜のみ 3F_A と 3F_N が同じ 0-1-2 クラスタ。フロア内で機種タイプ横断の末尾配置
+
+## 背景
+floor_atype_weekday_cluster.csv の木曜行:
+
+| group_key | 木曜クラスタ | delta |
+|-----------|------------|-------|
+| 2F_A | 7-8-9 | 95.4 |
+| 2F_N | 6-7-8 | 37.5 |
+| 3F_A | 0-1-2 | 59.4 |
+| 3F_N | 0-1-2 | 112.4 |
+
+3F_A（delta=59.4）と 3F_N（delta=112.4）が同一クラスタ。
+他の曜日では3F内のAとNが同クラスタになることはない（火曜のみ3-4-5 vs 2-3-4で隣接）。
+木曜のイベント「ニブイチ（複数機種の半分が高設定）」は3Fの機種タイプを問わず0-1-2末尾に集中する傾向。
+ただし2Fは木曜で2F_A（7-8-9）と2F_N（6-7-8）で異なり、フロア特性が異なる。
+
+## アクション
+木曜の特徴量では「3F かつ 末尾0-1-2」を単一の強いシグナルとして扱える（3F_A と 3F_N の両方をカバー）。
+水曜（全グループ異なる）との対比で、木曜は「3F全体で0-1-2」という設計判断が可能。
+2F木曜は floor_atype 分割が引き続き必要（グループ間でクラスタが異なる）。
+
+## 例
+木曜 3F_N delta=112.4 → 3FのAT機種で末尾0-1-2への集中度が最も高い曜日。
+木曜の 3F 特徴量: `is_thursday and is_3f and is_digit_012` でA/N問わず共通シグナルとして使える。

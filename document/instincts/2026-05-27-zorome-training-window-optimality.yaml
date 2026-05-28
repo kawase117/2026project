@@ -1,0 +1,200 @@
+---
+id: zorome-training-window-optimality-120days
+trigger: "correction テーブルの安定性とゾロ目戦略の有効性を評価するとき"
+confidence: 0.88
+domain: ml-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 訓練期間 120日 がゾロ目補正テーブルの最適値
+
+## 背景
+複数の訓練期間（60, 90, 120, 180, full）でゾロ目戦略シミュレーションを実行した結果、
+B（ゾロ目優先）vs A（ランダム）の期待差枚が、訓練期間に対して ∩ 型（山型）の曲線を示した。
+
+- 60d:  +256.887 枚/機
+- 90d:  +230.067 枚/機
+- 120d: +286.340 枚/機 ← **最大**
+- 180d: +191.779 枚/機
+- full: +27.659 枚/機
+
+訓練期間が長すぎると古いホール戦略パターンがノイズになり、
+correction テーブルの信号が希薄化する。
+
+## アクション
+- 訓練期間は **120日に固定** を推奨
+- 月次で更新する際は「テスト開始日より 120日前までのデータ」を使用
+- 180日以上の全期間訓練は避ける（最悪パフォーマンス）
+- 新規テスト期間でも同じ訓練窓を使用（walk-forward ではなく expanding window の場合）
+
+## 例
+```python
+# 推奨: 120日 expanding window
+test_start = datetime(2026, 5, 27)
+train_end = test_start - timedelta(days=1)
+train_start = train_end - timedelta(days=120)
+df_train = df[(df['date'] >= train_start) & (df['date'] < test_start)]
+
+# 非推奨: full 訓練
+df_train = df[df['date'] < test_start]  # 1年以上含む → signal 希薄化
+```
+
+---
+id: zorome-effect-selective-investment-not-random
+trigger: "ゾロ目効果の信頼性と有無を評価するとき"
+confidence: 0.82
+domain: ml-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ゾロ目効果は「脆弱なランダムノイズ」ではなく「ホール側の選別的投入」の可能性
+
+## 背景
+62日テスト期間で B > A（ゾロ目優先が有効）となった日は **わずか 9日（14.5%）**。
+
+しかし、これらの 9日の勝利幅は極めて大きい：
+  合計 +29,269 枚 / 9日 = 平均 +3,252/日
+
+一方、残りの 53日（85.5%）は B ≤ A（効果なし、または逆効果）。
+
+## アクション
+解釈は2つある：
+1. **ランダムノイズ説**：効果は不安定で信頼性低い
+2. **選別的投入説**：ホール側が「いつゾロ目に投入するか」を選別している
+
+**次ステップで判定：** B > A だった 9日の correction_direction を確認
+  - prefer_zorome に 7～9日 集中 → 選別的投入説 支持
+  - ランダム分布 → ノイズ説 支持
+
+## 例
+```
+検証方法：
+df_win = phase1_daily[phase1_daily['strategy_B_mean'] > phase1_daily['strategy_A_mean']]
+print(df_win['correction_direction'].value_counts())
+
+期待値（選別的投入説）：
+  prefer_zorome: 7～9
+  avoid_zorome: 0～1
+  no_data: 0～2
+```
+
+---
+id: correction-sign-persistence-not-reversal
+trigger: "correction テーブルの予測方向性（反転 vs 持続）を検証するとき"
+confidence: 0.90
+domain: ml-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Correction の符号は「反転」ではなく「持続」する
+
+## 背景
+3つの参加条件戦略（同一 expert×digit で参加可否のみ変化）を比較：
+- D（correction>0 末尾優先）：mean_diff_per_calendar_day = +690.323, coverage 74.2%
+- E（correction<0 末尾回避）：mean_diff_per_calendar_day = +295.161, coverage 74.2%
+- F（correction<0 末尾を逆張り）：mean_diff_per_calendar_day = -9.677
+
+D > E > F で明確な順序。特に F がほぼゼロ。
+
+## アクション
+- 「ホール側が対策を打つと符号が反転する」という仮説は **棄却**
+- correction の符号は「過去」と「未来」で一貫
+- **戦略：correction>0 の末尾を積極的に狙う（D）が最有効**
+- **非推奨：correction<0 の末尾を狙う（F）は避ける**
+
+## 例
+```
+過去実績（訓練期間内）：
+  末尾0: ゾロ目avg=1200, 非ゾロ目avg=700
+  correction = +500 (prefer_zorome)
+
+推奨戦略：
+  テスト期間でも末尾0を狙う（符号持続）
+
+非推奨：
+  末尾0を避ける（反転期待 → F の失敗で棄却）
+```
+
+---
+id: periodicity-not-detected-but-signal-faint
+trigger: "ホール側の設定投入パターンの周期性有無を判定するとき"
+confidence: 0.75
+domain: ml-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 周期性は統計的に検出されないが、ACF lag=4 が微弱シグナル
+
+## 背景
+correction テーブルの時系列に対する統計検定：
+- Ljung-Box 最小 p値 = 0.1917（有意差なし）
+- ランズ検定 p = 0.7047（符号のランダム性を棄却できず）
+
+ただし ACF で |acf| >= 0.2 の有意 lag = [4] が検出。
+
+## アクション
+- 「6ヶ月周期」「季節周期」は統計的に **棄却**
+- lag=4 は営業日パターン（週4日営業など）の可能性、または偶然
+- **結論：ホール側は周期的な大戦略ではなく、短期トレンドの微調整を採用**
+- 120日訓練で直近パターンをキャプチャすれば十分
+
+## 例
+```
+ホール側の行動モデル（推測）：
+  「周期的に全戦略を変更」 ← 棄却
+  「短期（1～2週間）ごとに末尾別投入を調整」 ← 支持
+
+含意：
+  correction テーブルは「過去の偶発」ではなく
+  「ホール側の最近の判断パターン」を反映している
+```
+
+---
+id: correction-table-diagnosis-required-before-use
+trigger: "correction テーブルを使った予測・戦略決定をするとき"
+confidence: 0.87
+domain: ml-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Correction テーブルの信号強度は訓練期間に依存し、診断が必須
+
+## 背景
+weekday × last_digit × group_key の3次元 correction テーブル：
+- 訓練期間 60日：セル埋め率が低 → correction==0 が多い
+- 訓練期間 120日：最適な埋め率と信号強度
+- 訓練期間 180日以上：古いパターンが混在 → 信号希薄化
+
+## アクション
+correction テーブル生成時、必ず以下を診断出力：
+1. **埋め率**：NA でない correction セルの %
+2. **信号強度**：correction 値の分布（平均、std、min、max の絶対値）
+3. **データ密度**：各セルあたりの平均観測数（n_zorome + n_nonzorome）
+
+これらの診断がないと、「信号か、ノイズか」の判定ができない。
+
+## 例
+```
+期待される診断出力（120日訓練時）：
+  Correction Table Diagnosis:
+    Cell fill rate: 52.1% (146/280 cells)
+    Signal strength:
+      mean |correction|: 187.5
+      std: 125.3
+      min: 1.2, max: 687.4
+    Data density (per cell):
+      avg observations: 7.2
+      min: 3, max: 22
+
+解釈：
+  埋め率 52% → 適度（高すぎると古パターン混在）
+  signal mean 187.5 → 有意な信号あり
+  avg obs 7.2 → 最小サンプル数（5, 10）を満たす
+```
+
+---

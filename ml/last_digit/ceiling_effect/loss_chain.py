@@ -76,12 +76,22 @@ def attach_loss_scenarios(
         actual = actual_rank_map.get(key)
         if actual is None:
             continue
+        pred_top1_tail = str(rec["top1_tail"])
         scenario = classify_loss_scenario(
-            pred_top1_tail=str(rec["top1_tail"]),
+            pred_top1_tail=pred_top1_tail,
             pred_top2_tail=str(rec["top2_tail"]),
             pred_top3_tail=(str(rec["top3_tail"]) if "top3_tail" in rec and pd.notna(rec["top3_tail"]) else None),
             actual=actual,
         )
+        top1_machine_count = float(actual.tail_to_machine_count.get(_tail_str(pred_top1_tail), np.nan))
+        if "top1_actual_raw_diff" in rec and pd.notna(rec["top1_actual_raw_diff"]):
+            top1_actual_raw_diff = float(rec["top1_actual_raw_diff"])
+        else:
+            top1_actual_raw_diff = float(actual.tail_to_diff.get(_tail_str(pred_top1_tail), np.nan))
+        if np.isfinite(top1_machine_count) and top1_machine_count > 0.0 and np.isfinite(top1_actual_raw_diff):
+            top1_avg_diff_per_machine = float(top1_actual_raw_diff / top1_machine_count)
+        else:
+            top1_avg_diff_per_machine = float("nan")
         out = dict(rec)
         out.update(
             {
@@ -91,6 +101,11 @@ def attach_loss_scenarios(
                 "actual_top1_diff": actual.top1_diff,
                 "actual_top2_diff": actual.top2_diff,
                 "actual_top3_diff": actual.top3_diff,
+                "actual_top1_machine_count": actual.top1_machine_count,
+                "actual_top2_machine_count": actual.top2_machine_count,
+                "actual_top3_machine_count": actual.top3_machine_count,
+                "top1_machine_count": top1_machine_count,
+                "top1_avg_diff_per_machine": top1_avg_diff_per_machine,
                 "loss_scenario": scenario.scenario,
                 "loss_value": scenario.loss_value,
                 "chosen_tail": scenario.chosen_tail,
@@ -102,4 +117,3 @@ def attach_loss_scenarios(
         )
         rows.append(out)
     return pd.DataFrame(rows)
-

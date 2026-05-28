@@ -1,0 +1,65 @@
+{
+  "config": {
+    "db_path": "",
+    "db_glob": "*7.db",
+    "split_name": "split4",
+    "target": "is_top_2",
+    "seed": 42,
+    "a_weight": 0.4,
+    "non_a_weight": 1.3,
+    "lr_thresholds": "0.3,0.4,0.5,0.6",
+    "output": "ml/experiments/combined_ranker_lr_results.json",
+    "log_level": "INFO"
+  },
+  "resolved_split_name": "regime_3_fixed_split",
+  "split_cfg": {
+    "train_start": "2025-07-07",
+    "train_end": "2025-12-31",
+    "valid_start": "2026-01-01",
+    "valid_end": "2026-05-22"
+  },
+  "train_rows": 7080,
+  "valid_rows": 5680,
+  "threshold_results": [
+    {
+      "threshold": 0.3,
+      "total_days": 142,
+      "abstain_days": 134,
+      "recommended_days": 8,
+      "abstain_ratio": 0.9436619718309859,
+      "hit_at_1_on_recommended_days": 1.0,
+      "hit_at_2_on_recommended_days": 1.0,
+      "mean_confidence_on_recommended_days": 0.3814850383538083
+    },
+    {
+      "threshold": 0.4,
+      "total_days": 142,
+      "abstain_days": 139,
+      "recommended_days": 3,
+      "abstain_ratio": 0.9788732394366197,
+      "hit_at_1_on_recommended_days": 1.0,
+      "hit_at_2_on_recommended_days": 1.0,
+      "mean_confidence_on_recommended_days": 0.4444409513759229
+    },
+    {
+      "threshold": 0.5,
+      "total_days": 142,
+      "abstain_days": 142,
+      "recommended_days": 0,
+      "abstain_ratio": 1.0,
+      "hit_at_1_on_recommended_days": 0.0,
+      "hit_at_2_on_recommended_days": 0.0,
+      "mean_confidence_on_recommended_days": 0.0
+    },
+    {
+      "threshold": 0.6,
+      "total_days": 142,
+      "abstain_days": 142,
+      "recommended_days": 0,
+      "abstain_ratio": 1.0,
+      "hit_at_1_on_recommended_days": 0.0,
+      "hit_at_2_on_recommended_days": 0.0,
+      "mean_confidence_on_recommended_days": 0.0
+    }
+  ]
+}

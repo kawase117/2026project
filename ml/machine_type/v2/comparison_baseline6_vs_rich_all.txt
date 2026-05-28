@@ -1,0 +1,69 @@
+=== 90日評価 baseline6 vs rich_all 比較 ===
+指標                        baseline6   rich_all         差分
+----------------------------------------------------------
+combined hit@1               0.1889     0.1222    -0.0667
+combined hit@3               0.3556     0.3778     0.0222
+combined AUC                 0.5836     0.6149     0.0312
+combined lift@1              1.8845     1.3155    -0.5690
+2F hit@1                     0.1556     0.1222    -0.0333
+2F AUC                       0.5857     0.5845    -0.0012
+3F hit@1                     0.1667     0.1778     0.0111
+3F AUC                       0.5809     0.6520     0.0711
+
+=== rich_all Feature Importance Top15 (segment別) ===
+
+[2F]
+ 1. atype_is_a (0.029058)
+ 2. prior_top2_rate (0.014117)
+ 3. lag_7_avg_diff_coins_zscore (0.011713)
+ 4. rank_pct_avg_3m (0.010530)
+ 5. rolling_std_efficiency_14d (0.010414)
+ 6. lag_1_efficiency_rank_pct (0.010396)
+ 7. rolling_avg_games_14d_rank_pct (0.010392)
+ 8. prior_top3_rate (0.010121)
+ 9. rolling_avg_diff_7d_rank_pct (0.009878)
+10. lag_7_efficiency (0.009842)
+11. ewm_efficiency_21d (0.009411)
+12. lag_1_avg_diff_coins_rank_pct (0.009272)
+13. ewm_rank_30d (0.009212)
+14. ewm_avg_diff_7d_rank_pct (0.009199)
+15. eff_delta_1_vs_14 (0.009198)
+
+[3F]
+ 1. atype_is_a (0.042213)
+ 2. same_weekday_top3_rate (0.021758)
+ 3. atype_is_n (0.018174)
+ 4. prior_segment_top1_rate (0.017490)
+ 5. same_weekday_top5_rate (0.014187)
+ 6. prior_rank1_rate (0.012689)
+ 7. days_since_last_count_decrease (0.012618)
+ 8. same_weekday_top2_rate (0.011341)
+ 9. rank_pct_std_14d (0.011210)
+10. lag_7_avg_diff_coins (0.010905)
+11. prior_top3_rate_smooth (0.010633)
+12. event_group (0.010414)
+13. days_since_last_top2 (0.010241)
+14. rolling_avg_efficiency_14d (0.009941)
+15. lag_1_avg_diff_coins_rank_pct (0.009878)
+
+=== 指定特徴量のランク ===
+
+[2F]
+- days_since_last_rank1: 130位
+- rank_trend_1m_vs_2m: 104位
+- ewm_rank_momentum_7v30: 76位
+- same_weekday_rank1_rate: 103位
+- days_since_last_top3: 120位
+- rank_pct_trend_7vs28: 94位
+
+[3F]
+- days_since_last_rank1: 85位
+- rank_trend_1m_vs_2m: 132位
+- ewm_rank_momentum_7v30: 101位
+- same_weekday_rank1_rate: 102位
+- days_since_last_top3: 56位
+- rank_pct_trend_7vs28: 71位
+
+=== 判定 ===
+AUC差分: 0.0312 -> 特徴量追加が有効。rich_all を採用する。
+days_since_last_rank1 は上位10位外（最良 85位）。サイクル仮説は弱い。

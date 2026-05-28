@@ -1,0 +1,209 @@
+---
+id: group-total-diff-is-not-per-machine
+trigger: "LTR予測の差枚KPIを報告・解釈するとき"
+confidence: 0.97
+domain: ltr-evaluation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# actual_raw_diff はグループ合計差枚であり1台あたりではない
+
+## 背景
+`loss_scenarios.csv` および `testperiod_topk.csv` の `top1_actual_raw_diff` は、
+予測rank1末尾に属する**全台の差枚合計**（`total_diff_coins`）である。
+kamata7の場合、2F_Nは末尾あたり約32台、3F_Nは15台、3F_Aは21台存在するため、
+グループ合計差枚はエキスパートによって大きく異なる。
+
+## アクション
+差枚KPIを報告するときは必ず2種類を区別する:
+- `top1_actual_raw_diff`: グループ合計（スクリプトが出力する生の値）
+- `top1_avg_diff_per_machine`: 1台あたり（= total / machine_count）
+
+実運用では「1人が1台に座る」ため、**1台あたり差枚が実践的なKPI**。
+`avg_diff_per_machine = top1_actual_raw_diff / machine_count` を
+KPIレポートに必ず追加すること。
+
+## 例
+```
+kamata7テスト期間（2026-01-01〜05-25, 435サンプル）:
+  グループ合計:  +21,795枚/日/エキスパート（台数で歪む）
+  1台あたり:     +1,001枚/日（実践的な期待値）
+  プラス率:      99.1%
+
+エキスパート別:
+  2F_N: 32台 → +983枚/台,  pos=99.3%
+  3F_N: 15台 → +1,421枚/台, pos=98.6%
+  3F_A: 21台 → +599枚/台,  pos=99.3%
+```
+
+---
+id: 2fa-exclusion-is-hardcoded-default-not-data-driven
+trigger: "2F_Aが予測・評価から除外されているとき / テスト期間に2F_Aが現れないとき"
+confidence: 0.95
+domain: ltr-pipeline
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 2F_A除外はデータ起因ではなくハードコードされたデフォルト値が原因
+
+## 背景
+`tail_ltr_split_rule_nextday_gpu.py` の `--reliability-exclude-experts` の
+デフォルト値が `"2F_A"` にハードコードされており、以下が発生する:
+- 信頼性履歴トラッキングから2F_Aが除外される
+- テスト期間評価（`--enable-test-period-report`）から2F_Aが除外される
+- `combine_experts_included` には含まれる（combined rankingには参加する）
+
+実際には `_is_expert_indeterminate` 関数が per-day で flat check をしており、
+2026-05-26時点の2F_A予測スパン = 0.997（他エキスパート 0.946〜0.893 と同等）。
+
+## アクション
+- `--reliability-exclude-experts` のデフォルトを `""` に変更する（line 106）
+- per-day の indeterminate check（`_is_expert_indeterminate`）に任せる
+- 変更後は `test_period_overall_by_expert` に2F_Aが現れることを確認
+- 2F_Aの hit@2 が 95% 以上なら復活確定
+
+## 例
+```python
+# tail_ltr_split_rule_nextday_gpu.py line 104-108
+# Before (問題のあるデフォルト)
+p.add_argument("--reliability-exclude-experts", default="2F_A", ...)
+
+# After (動的判定に任せる)
+p.add_argument("--reliability-exclude-experts", default="", ...)
+```
+
+---
+id: rank2-rank3-dedicated-models-not-worth-pursuing
+trigger: "ランク2・ランク3の予測精度を上げるために専用モデルを検討するとき"
+confidence: 0.88
+domain: ltr-design
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# is_rank_2 / is_rank_3 専用モデルは現行より悪化する可能性が高い
+
+## 背景
+現行モデル（is_top_2ターゲット、XGBRanker ndcg）はグループあたり正例が2件。
+is_rank_2専用モデルにすると正例が1件/グループになり学習シグナルが弱くなる。
+rank2の定義は「rank1の次」という曖昧なもので、専用化に向かない問題設定。
+
+実測精度（v2r_current, kamata7, 145日）:
+- Rank1完全一致: 93.8%
+- Rank2完全一致: 77.0%
+- hit@2: 99.1%
+
+## アクション
+is_rank_2 / is_rank_3 専用モデルを実装しない。
+現行モデルの連続スコア出力（全10末尾のスコア）をそのまま使い、
+TOP3・BOTTOM3は既存スコアから抽出する（新規学習不要）。
+
+## 例
+```
+# TOP3は既にlatest_test_top3.csvに実装済み（rank 1,2,3）
+# BOTTOM3はlatest_test_full.csvから抽出（rank 8,9,10）
+# 新規モデル学習なし
+```
+
+---
+id: hit-at-2-is-soft-metric-rank1-exact-is-operational
+trigger: "LTRモデルの精度を報告・比較するとき"
+confidence: 0.93
+domain: ltr-evaluation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# hit@2は「ソフト」な指標、実運用ではランク1完全一致が重要
+
+## 背景
+hit@2 = 「予測上位2件のどちらかが実際のTOP2内に入っていれば成功」。
+99.1%は「2回チャンスがある」という緩い条件での数値。
+実際の運用では最も良い末尾1つを選ぶため、ランク1完全一致が核心指標。
+
+## アクション
+精度報告では hit@2 だけでなく以下を必ず併記する:
+- `top1_match`: rank1完全一致率（最重要）
+- `top2_match`: rank2完全一致率
+- `top1_avg_diff_per_machine`: 1台あたり差枚期待値
+- `hit@3`: TOP3カバレッジ参考値
+
+hit@2だけ見ると天井効果を過大評価しやすい点に注意。
+
+## 例
+```
+v2r_current (kamata7, 145日, 3エキスパート):
+  hit@2:           99.1%  ← ソフト指標（参考値）
+  ランク1完全一致: 93.8%  ← 実運用の核心
+  ランク2完全一致: 77.0%
+  1台あたり差枚:   +1,001枚/日, pos=99.1%  ← 実践KPI
+  TOP3カバレッジ: 90.3%が2件ともTOP3内
+```
+
+---
+id: bottom3-does-not-require-new-model
+trigger: "BOTTOM3（下位末尾）を予測・出力したいとき"
+confidence: 0.92
+domain: ltr-pipeline
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# BOTTOM3出力に新規モデル学習は不要、既存full scoringから抽出するだけ
+
+## 背景
+`latest_test_full.csv` は各エキスパートの全10末尾スコアを保持している。
+BOTTOM3 = スコアが最も低い3末尾（rank 8, 9, 10）であり、既存データから直接抽出可能。
+専用のis_worst_1モデル（worst1_hit_rate=78.9%）と同等効果が期待できる。
+
+## アクション
+1. `latest_test_full.csv` のスコアを昇順ソート
+2. 下位3件を `latest_test_bottom3.csv` として出力（top3と同形式、rank=8,9,10）
+3. JSONの `latest_test_bottom3_by_expert` キーに記録
+4. 実測精度を測定してから、専用worst1モデルが必要か判断する
+
+## 例
+```python
+full_df = pd.read_csv("*_latest_test_full.csv")
+bottom3 = (full_df
+    .sort_values(['expert', 'pred'])   # スコア昇順
+    .groupby('expert')
+    .head(3)
+    .assign(rank=lambda df: df.groupby('expert').cumcount() + 8))
+bottom3.to_csv("*_latest_test_bottom3.csv", index=False)
+```
+
+---
+id: top3-output-already-implemented-per-expert
+trigger: "TOP3末尾の出力を実装しようとするとき / latest_test_top3を参照するとき"
+confidence: 0.98
+domain: ltr-pipeline
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# latest_test_top3.csvはエキスパートごとのrank1〜3を既に出力している
+
+## 背景
+`tail_ltr_split_rule_nextday_gpu.py` が出力する `*_latest_test_top3.csv` は、
+各エキスパート（2F_N, 3F_N, 3F_A, 2F_A）のrank1・rank2・rank3を含む。
+2F_Aも2026-05-26時点ではTOP3に含まれている（除外デフォルトを解除した場合）。
+
+## アクション
+- TOP3の新規実装は不要
+- 追加が必要なのはBOTTOM3（rank 8,9,10）のみ
+- 2F_Aの除外デフォルト（`default="2F_A"`）を解除すれば2F_Aも自動参加
+
+## 例
+```
+*_latest_test_top3.csv の構造:
+expert, rank, last_digit, pred, actual_raw_diff, prob_positive, final_score, ltr_pred
+2F_N, 1, 0, 0.9481, 15200.0, ...
+2F_N, 2, 7, 0.1135,  9000.0, ...
+2F_N, 3, 2, 0.0304,  8000.0, ...
+2F_A, 1, 3, 0.9980,  7600.0, ...  ← 2F_A参加時
+2F_A, 2, 5, 0.1515,  2300.0, ...
+2F_A, 3, 8, 0.0610,  1700.0, ...
+```

@@ -1,0 +1,25 @@
+=== undefined-limited switch KPI ===
+source: ml\last_digit\reports\digit_lag_v2_withinexpert_xgb_ranker_ndcg_testperiod_topk.csv
+
+[full testperiod] n=429
+base hit@top2: 95.34%
+op   hit@top2: 94.87%
+delta hit: -0.47pp
+base median diff: 19300.0
+op   median diff: 19300.0
+delta median diff: +0.0
+undefined count: 23 (5.4%)
+
+[recent 7 days in testperiod] n=21
+base hit@top2: 95.24%
+op   hit@top2: 95.24%
+delta hit: +0.00pp
+base median diff: 22400.0
+op   median diff: 22900.0
+delta median diff: +500.0
+undefined count: 1 (4.8%)
+
+[recent7 by expert]
+2F_N: n=7, hit base/op=100.0/100.0%, med diff base/op=38800/38800, undef=0
+3F_A: n=7, hit base/op=85.7/85.7%, med diff base/op=10800/10800, undef=0
+3F_N: n=7, hit base/op=100.0/100.0%, med diff base/op=22400/22900, undef=1

@@ -1,0 +1,29 @@
+{
+  "segment": "2F_N",
+  "eval_settings": {
+    "min_train_days": 120,
+    "eval_days": 90,
+    "step_days": 1,
+    "min_machine_history_days": 60
+  },
+  "rule_definition": "0.5*prior_top1_rate_rolling90 + 0.3*same_weekday_top1_rate + 0.2*(1-days_since_last_top1/90)",
+  "metrics": {
+    "ml": {
+      "hit_at_1": 0.12222222222222222,
+      "lift_at_3": 1.1145675330828135
+    },
+    "rule": {
+      "hit_at_1": 0.1111111111111111,
+      "hit_at_3": 0.3333333333333333,
+      "random_baseline_at_3": 0.328976626165032,
+      "lift_at_3": 1.0132432118934669
+    },
+    "random": {
+      "hit_at_1": 0.03333333333333333,
+      "lift_at_3": 1.0
+    }
+  },
+  "notes": [
+    "warnings_head=['active_filter: 60 machines retained (active=72, qualified_by_history=94, original=114)']"
+  ]
+}

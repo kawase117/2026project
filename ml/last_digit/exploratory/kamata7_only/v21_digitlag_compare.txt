@@ -1,0 +1,26 @@
+=== v2 vs v2.1 (enable-digit-lag-bundle) ===
+base_topk: ml\last_digit\reports\digit_lag_v2_withinexpert_xgb_ranker_ndcg_testperiod_topk.csv
+new_topk:  ml\last_digit\reports\digit_lag_v2p1_digitlag_xgb_ranker_ndcg_testperiod_topk.csv
+
+overall:
+- n_pairs: base=432, new=432
+- hit@2: base=0.9931, new=0.9907, delta=-0.0023
+- hit@3: base=0.9977, new=0.9931, delta=-0.0046
+
+by_expert:
+- 2F_N: hit@2 1.0000->0.9931 (-0.0069), hit@3 1.0000->0.9931 (-0.0069)
+- 3F_N: hit@2 0.9931->0.9931 (+0.0000), hit@3 1.0000->0.9931 (-0.0069)
+- 3F_A: hit@2 0.9861->0.9861 (+0.0000), hit@3 0.9931->0.9931 (+0.0000)
+
+feature_presence_under_bundle:
+- lag1_digit_diff: YES
+- lag5_digit_diff: YES
+- lag7_digit_diff: YES
+
+status_ok_rows: base=432, new=432
+
+strategy_metrics_delta:
+- hit1_top1: base=78.8%, new=80.4%, delta=+1.6pp
+- hit1_top2: base=95.3%, new=94.6%, delta=-0.7pp
+- hit1_top3: base=99.1%, new=98.8%, delta=-0.2pp
+- cluster23_top2(rank2_proxy): base=77.2%, new=77.2%, delta=+0.0pp

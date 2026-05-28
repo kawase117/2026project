@@ -1,0 +1,29 @@
+=== hit_at_2_mean distribution ===
+hit_at_2_mean
+0.666667      4
+1.000000    139
+Name: count, dtype: int64
+total days: 143
+
+=== weekday x hit_at_2 (fail rate = hit<1.0) ===
+         n_fail  n_total  fail_rate   avg_hit
+weekday                                      
+月             0       20   0.000000  1.000000
+火             0       20   0.000000  1.000000
+水             1       20   0.050000  0.983333
+木             2       21   0.095238  0.968254
+金             0       21   0.000000  1.000000
+土             0       21   0.000000  1.000000
+日             1       20   0.050000  0.983333
+
+=== avg_diff stats by hit_at_2 ===
+               count   mean    std    min    25%    50%    75%    max
+hit_at_2_mean                                                        
+0.666667         4.0  220.2  115.1  106.0  146.5  202.5  276.2  370.0
+1.000000       139.0  106.2  155.2 -331.0   12.0   88.0  212.0  655.0
+
+=== is_anomaly x hit_at_2 ===
+hit_at_2_mean  0.67  1.00
+is_anomaly               
+0                 4   135
+1                 0     4

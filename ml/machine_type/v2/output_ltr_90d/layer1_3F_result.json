@@ -1,0 +1,41 @@
+{
+  "segment": "3F",
+  "status": "ok",
+  "model_type": "xgb_ranker_ndcg",
+  "feature_profile": "baseline6",
+  "games_feature_mode": "none",
+  "target_policy": "default",
+  "unique_machines": 31,
+  "n_source_rows": 7171,
+  "n_source_dates": 323,
+  "requested_eval_dates": 90,
+  "features": [
+    "weekday_prior_top1_rate",
+    "prior_top1_rate",
+    "day_of_month",
+    "day_of_week_num",
+    "is_weekend",
+    "lag1_rank_pct"
+  ],
+  "target_is_top3": {
+    "auc": 0.580914180036987,
+    "hit_at_1": 0.16666666666666666,
+    "hit_at_3": 0.3888888888888889,
+    "hit_at_5": 0.5777777777777777,
+    "random_baseline": 0.3015306032557406,
+    "lift": 1.289716150499842,
+    "random_baseline_at_1": 0.10858221174313126,
+    "random_baseline_at_3": 0.3015306032557406,
+    "random_baseline_at_5": 0.46433208221064287,
+    "lift_at_1": 1.5349352715428521,
+    "lift_at_3": 1.289716150499842,
+    "lift_at_5": 1.2443201749640693,
+    "n_eval_days": 90,
+    "n_rows": 2493,
+    "base_rate": 0.10830324909747292,
+    "eval_period": {
+      "start": "2026-02-26",
+      "end": "2026-05-26"
+    }
+  }
+}

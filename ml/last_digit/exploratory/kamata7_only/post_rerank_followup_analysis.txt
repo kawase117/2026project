@@ -1,0 +1,63 @@
+=== post_rerank follow-up analysis (Issue 2-4) ===
+source: ml\last_digit\reports\digit_lag_v2_withinexpert_xgb_ranker_ndcg_testperiod_topk.csv
+confirmed pairs: 429
+
+=== 2) pred_span ? 1/2 miss ??? ===
+2/2 count=314, median=0.116310, mean=0.239982
+1/2 count=112, median=0.131609, mean=0.292908
+Mann-Whitney U p=0.165736
+??: p>0.05 ?? rank2?????????? span ???undefined ???????????
+
+=== 3) hit@1?top2=95.3% ??????rank1 miss ??? ===
+rank1 miss total: 20
+  rank2 rescue: 17 (85.0%)
+  rank2 also miss: 3 (15.0%)
+by expert: 2F_N:8, 3F_A:10, 3F_N:2
+by confidence band: low:14, medium:2, undefined:4
+by weekday(desc): Wednesday:4, Saturday:3, Friday:3, Thursday:3, Sunday:3, Monday:2, Tuesday:2
+
+=== 4) ???????????????????? ===
+Wednesday pairs: 60
+Baseline(rank1??): hit=93.3%, median_diff=22350.0
+PolicyA(undefined?rank2): hit=93.3%, median_diff=23250.0
+PolicyB(low/undefined?rank2): hit=80.0%, median_diff=20950.0
+
+per-expert (Wednesday):
+2F_N n=20 | hit base/A/B=95.0/90.0/75.0% | med_diff base/A/B=33700.0/33700.0/32700.0
+3F_A n=20 | hit base/A/B=90.0/95.0/85.0% | med_diff base/A/B=15150.0/16350.0/13350.0
+3F_N n=20 | hit base/A/B=95.0/95.0/80.0% | med_diff base/A/B=20350.0/21750.0/20950.0
+
+=== 5-7) quick feature audit (implementation state) ===
+selected_feature_count: 58
+key-feature presence in selected features:
+- lag7_digit_diff: False
+- lag1_digit_diff: False
+- lag5_digit_diff: False
+- lag7_total_diff_coins: True
+- roll7_total_diff_coins: True
+- roll14_total_diff_coins: True
+- roll28_total_diff_coins: True
+- day_of_month: False
+- is_weekend: False
+
+high-correlation pairs (|corr|>=0.90, top 20):
+- roll14_total_games vs roll28_total_games: 0.997
+- roll7_total_games vs roll14_total_games: 0.995
+- roll7_total_games vs roll28_total_games: 0.990
+- roll7_total_diff_coins_focus vs total_diff_coins_deficit: 0.988
+- lag1_total_diff_coins vs lag1_total_diff_coins_focus: 0.969
+- lag7_total_diff_coins vs lag7_total_diff_coins_focus: 0.969
+- lag14_total_diff_coins vs lag14_total_diff_coins_focus: 0.969
+- roll7_total_diff_coins vs roll7_total_diff_coins_focus: 0.954
+- roll14_total_diff_coins vs roll14_total_diff_coins_focus: 0.949
+- roll7_total_diff_coins vs total_diff_coins_deficit: 0.945
+- roll28_total_diff_coins vs roll28_total_diff_coins_focus: 0.945
+- roll14_total_diff_coins vs roll28_total_diff_coins: 0.943
+- roll14_total_diff_coins_focus vs roll28_total_diff_coins_focus: 0.943
+- roll28_total_diff_coins vs prior_mean_diff: 0.942
+- machine_count vs roll14_total_games: 0.941
+- machine_count vs roll28_total_games: 0.941
+- machine_count vs roll7_total_games: 0.938
+- roll14_efficiency vs roll14_efficiency_focus: 0.927
+- roll14_win_rate vs roll28_win_rate: 0.927
+- roll28_efficiency vs roll28_efficiency_focus: 0.925

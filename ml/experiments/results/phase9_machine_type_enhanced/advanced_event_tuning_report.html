@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Phase 10 Advanced: Rich Event Features</title>
+  <style>
+    :root {
+      --bg: #f4efe6;
+      --panel: #fffaf2;
+      --ink: #1f2933;
+      --muted: #5f6c7b;
+      --line: #d8cfc1;
+      --accent: #b85c38;
+      --accent-soft: #f4d8c6;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Hiragino Sans", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, #f8dfc8 0, transparent 28%),
+        linear-gradient(180deg, #fbf6ef 0%, #f1e8db 100%);
+    }
+    main {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 40px 20px 72px;
+    }
+    section {
+      background: rgba(255, 250, 242, 0.96);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 24px;
+      margin-bottom: 18px;
+      box-shadow: 0 12px 30px rgba(87, 63, 33, 0.08);
+    }
+    .hero {
+      border-top: 6px solid var(--accent);
+    }
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    h1, h2 {
+      margin: 0 0 12px;
+      line-height: 1.2;
+    }
+    h1 {
+      font-size: 32px;
+    }
+    h2 {
+      font-size: 20px;
+    }
+    p {
+      margin: 0 0 12px;
+      line-height: 1.7;
+    }
+    .lede {
+      font-size: 18px;
+      color: var(--muted);
+    }
+    .timestamp {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 10px;
+    }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin-top: 20px;
+    }
+    .meta-grid div {
+      background: var(--accent-soft);
+      border-radius: 14px;
+      padding: 12px 14px;
+    }
+    .meta-grid span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 6px;
+    }
+    .meta-grid strong {
+      font-size: 18px;
+    }
+    .two-col {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    th, td {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid #eee3d2;
+      vertical-align: top;
+    }
+    th {
+      width: 38%;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    ul {
+      margin: 0;
+      padding-left: 18px;
+    }
+    code {
+      font-family: Consolas, monospace;
+      background: #f5ede4;
+      padding: 1px 6px;
+      border-radius: 999px;
+    }
+    @media (max-width: 720px) {
+      main {
+        padding: 18px 12px 40px;
+      }
+      section {
+        padding: 18px;
+        border-radius: 16px;
+      }
+      h1 {
+        font-size: 26px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    
+        <section class="hero">
+          <p class="eyebrow">Phase 10 Advanced</p>
+          <h1>26D Optimization with Rich Event Day Features</h1>
+          <p class="lede">Grid search on 16D baseline + 10 advanced event features (26D total).</p>
+        </section>
+        
+    <section>
+      <h2>Advanced Event Feature Results Summary</h2>
+      <table>
+        <tr>
+          <th>Target</th>
+          <th>AUC</th>
+          <th>F1-Score</th>
+          <th>Precision</th>
+          <th>Recall</th>
+          <th>Best Parameters</th>
+        </tr>
+        
+        <tr>
+          <td>RANK_1</td>
+          <td>0.5609</td>
+          <td>0.1971</td>
+          <td>0.1116</td>
+          <td>0.8421</td>
+          <td>MD=2, LR=0.005</td>
+        </tr>
+        
+        <tr>
+          <td>TOP_3</td>
+          <td>0.5167</td>
+          <td>0.4398</td>
+          <td>0.2833</td>
+          <td>0.9825</td>
+          <td>MD=2, LR=0.01</td>
+        </tr>
+        
+        <tr>
+          <td>TOP_5</td>
+          <td>0.5070</td>
+          <td>0.6250</td>
+          <td>0.4545</td>
+          <td>1.0000</td>
+          <td>MD=4, LR=0.05</td>
+        </tr>
+        
+      </table>
+    </section>
+    
+        <section>
+          <h2>Advanced Event Features (10)</h2>
+          <ul>
+            <li><strong>event_group:</strong> Group A (1,11,21 - 1のつく日), Group B (7,17,27 - 7のつく日), or Month-end (E)</li>
+            <li><strong>event_cycle_phase:</strong> (day_of_month % 10) to capture intra-month cycles</li>
+            <li><strong>days_to_next_same_group:</strong> Days to next event in same group (グループ内距離)</li>
+            <li><strong>days_to_next_any:</strong> Days to next event (any group - グループ間距離)</li>
+            <li><strong>days_since_last_any:</strong> Days since last event (any group)</li>
+            <li><strong>is_event_week:</strong> 1 if within +/- 3 days of any event</li>
+            <li><strong>event_proximity_score:</strong> 1 / (days_to_next_any + 1)</li>
+            <li><strong>next_event_same_group:</strong> 1 if next event is in same group</li>
+            <li><strong>event_density_5d:</strong> Number of events in last 5 days</li>
+          </ul>
+        </section>
+        
+  </main>
+</body>
+</html>

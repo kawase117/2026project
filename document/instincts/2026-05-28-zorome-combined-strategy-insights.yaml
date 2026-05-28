@@ -1,0 +1,182 @@
+---
+id: correction-threshold-150-optimal-operating-point
+trigger: "ゾロ目補正テーブルを台選択に使う閾値を決めるとき"
+confidence: 0.85
+domain: operational-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# correction 閾値は ±150 が最適操作点
+
+## 背景
+combined_strategy_simulation で threshold を 0/50/100/150/200/300/400 とスイープした結果、
+threshold=150 で diff Y-X と Cohen's d が同時にピークを示した（∩型曲線）。
+
+- threshold=0  : coverage=72.1%, diff=+167.0, d=0.255, p=0.144
+- threshold=100 : coverage=54.1%, diff=+210.5, d=0.284, p=0.208
+- threshold=150 : coverage=52.5%, diff=+229.0, d=0.307, p=0.144  ← ピーク
+- threshold=200 : coverage=50.8%, diff=+217.3, d=0.288, p=0.202
+- threshold=300 : coverage=37.7%, diff=+120.7, d=0.175, p=0.622  ← 急落
+
+150未満は signal が薄い日も含み効果を希薄化する。
+150超は参加日数が急減し、ノイズが優位になる。
+
+## アクション
+- correction > +150 → ゾロ目台（XX番台）を最優先
+- correction < -150 → ゾロ目台を避ける（同末尾の非ゾロ目台から選ぶ）
+- -150 ≤ correction ≤ +150 → signal が薄い。ゾロ目にこだわらない
+- 参加率は約 50% になる（週3〜4日行動する場合、1〜2日はスキップ扱い）
+
+## 例
+```
+曜日=水曜, target_digit=7, correction=+320 → ゾロ目台（77番台）を最優先
+曜日=水曜, target_digit=9, correction=-87  → 閾値未満。末尾9の全台から選ぶ
+曜日=月曜, target_digit=3, correction=-200 → ゾロ目台33を避け非ゾロ目台から選ぶ
+```
+
+---
+id: correction-sign-direction-rule
+trigger: "correction 値をもとにゾロ目台を選ぶか避けるかを判断するとき"
+confidence: 0.92
+domain: operational-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# correction の符号と絶対値で台選択を決める（冗長な条件を書かない）
+
+## 背景
+「|correction| > 150 かつ correction > 0」という記述は正しいが冗長で誤解を招く。
+correction > +150 と書けば絶対値条件も符号条件も同時に満たす。
+「|correction| > 150 かつ correction < 0」は correction < -150 と等価。
+
+## アクション
+正しい条件分岐（3択）：
+- `correction > +150` → ゾロ目台を最優先
+- `correction < -150` → ゾロ目台を避ける
+- `-150 ≤ correction ≤ +150` → どちらでもよい
+
+「|correction| > 150」は閾値確認に使う表現だが、
+方向（正負）は別途 correction の符号で判断する。
+一文に混在させると矛盾・冗長が生じる。
+
+## 例
+```python
+# 正しい実装（明確な3択）
+if correction > 150:
+    action = "prefer_zorome"
+elif correction < -150:
+    action = "avoid_zorome"
+else:
+    action = "neutral"
+
+# 避けるべき書き方（冗長・誤解招く）
+if abs(correction) > 150 and correction > 0:   # ← 冗長
+    ...
+if abs(correction) > 150 and correction < 0:   # ← 冗長
+    ...
+```
+
+---
+id: combined-strategy-ml-correction-both-required
+trigger: "ML末尾予測 + ゾロ目補正の統合戦略の期待値を評価するとき"
+confidence: 0.87
+domain: operational-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 統合戦略の期待値は ML精度 × correction 信号強度の積
+
+## 背景
+combined_strategy_simulation の結果：
+- ゾロ目単体シミュレーション（B-A）: +286 枚/機（61日）
+- 統合戦略（Y-X, threshold=0）: +167 枚/機（44参加日）
+- 統合戦略（Y-X, threshold=150）: +229 枚/機（32参加日）
+
+Y > X の恩恵は「MLの末尾予測が正しかった日」にのみ発生する。
+ML の予測 miss_rate が 30〜40% あれば、有効日は 60〜70% に限定される。
+
+## アクション
+- correction > 150 の日に参加判断
+- ML の最信頼エキスパートの rank1 末尾を確認し、そのゾロ目台に座る
+- ML予測が複数エキスパートで割れる日（合意なし）は参加見送りも選択肢
+- 「correction が強い日 = ML予測も正確」という保証はないので過信しない
+
+## 例
+```
+期待値の上限（理論値）:
+  ゾロ目効果 +229 枚 × ML精度 70% ≈ +160 枚/日（補正後期待値）
+
+ML予測が外れた場合: +229 が消失 → ランダム選択と同等かそれ以下
+→ 複数エキスパートが同じ末尾を指す日に絞ると期待値向上の可能性
+```
+
+---
+id: new-hall-correction-signal-maturity
+trigger: "オープンから1年未満のホールで correction テーブルを運用するとき"
+confidence: 0.80
+domain: operational-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# オープン初年度ホールは correction テーブルの signal が未成熟
+
+## 背景
+蒲田7はオープン日が 2025/7/7（データ約10ヶ月）。
+threshold=150 の有効性を蒲田7のデータのみで統計的に確認することは困難。
+また初年度はホール側の設定投入パターンが試行錯誤中で不安定な可能性がある。
+
+## アクション
+- 初年度ホールでは threshold=150 の知識を「仮説レベル」として扱う
+- まず既存の古いホール（2年以上のデータあり）で threshold sweep を実施し有効性を確認
+- 有効性が確認できたホールの知識を初年度ホールへ転用する
+- 2年目以降（データ400日以上）で蒲田7の threshold を再校正する
+
+## 例
+```
+転用手順:
+1. 老舗ホール（例: みとや大森町）で threshold sweep を実行
+2. d のピーク threshold と coverage を確認
+3. 蒲田7でも同じ threshold を暫定採用
+4. 蒲田7のデータが溜まったら（2026年後半〜）再スイープで校正
+```
+
+---
+id: threshold-sweep-inverted-u-shape
+trigger: "correction 閾値と参加率のトレードオフを分析するとき"
+confidence: 0.83
+domain: ml-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# threshold と coverage は単調減少、効果量（d）は ∩ 型
+
+## 背景
+threshold スイープ結果：
+- threshold が上がると coverage は単調に低下
+- Cohen's d は threshold=150 でピークの ∩ 型
+- threshold=300 以上で d が急落（サンプル23日以下 → ノイズ優位）
+
+## アクション
+新しいホールで threshold sweep を実施するときの解釈方針：
+1. d のピークが現れる threshold を確認（ホールによって異なる可能性）
+2. coverage が 40% 未満になる threshold は避ける（サンプル不足）
+3. d のピーク値が 0.2 未満 → ゾロ目効果が弱い（このホールでは採用しない）
+4. d のピーク値が 0.3 以上かつ coverage ≥ 40% → 採用を検討
+
+## 例
+```
+判定基準:
+  d >= 0.3 かつ coverage >= 40% → 採用
+  d < 0.2 または coverage < 30% → 採用しない
+  d >= 0.3 かつ coverage < 30%  → 要判断（参加機会が少なすぎる）
+
+蒲田7の結果:
+  threshold=150: d=0.307, coverage=52.5% → 採用基準を満たす（ただし初年度ホールの制約あり）
+```
+
+---

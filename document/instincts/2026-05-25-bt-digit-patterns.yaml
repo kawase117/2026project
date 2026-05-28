@@ -1,0 +1,98 @@
+---
+id: bt-all-high-days-only-3-of-320
+trigger: "when evaluating whether BT（2FA）全台高設定 affects ML features in 蒲田七"
+confidence: 0.95
+domain: pachinko-domain-knowledge
+source: data-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# BT機種の全台高設定日は320日中3日（0.9%）。Layer A の影響はほぼ無視できる
+
+## 背景
+bt_mode_classification.csv より all_high 判定日:
+- 2025-07-07（月）、2025-07-09（水）、2025-10-30（木）の3日のみ（全期間の0.9%）
+
+ユーザーの「BT機種が全台に選ばれることは稀」という認識と完全に一致。
+BT機種のML予測困難の原因は「all_high/normal の2モード混在」ではなく別の要因。
+
+## アクション
+BT分析においてモード分離フィルタは不要（3日しかないため統計的に無意味）。
+BT末尾パターンは全期間を通じた曜日別集計で直接分析できる。
+
+## 例
+BT全台高設定日 2025-10-30(木): bt_mean=841.8, min=333.3 → 全末尾が高い状態
+BT通常日の典型: bt_mean=300〜400, min=-1000〜-300 → 末尾間の差が大きい
+
+---
+id: bt-physical-placement-bias-last-digit-1-heavy
+trigger: "when interpreting BT cluster patterns in 蒲田七 last_digit analysis"
+confidence: 0.85
+domain: pachinko-domain-knowledge
+source: data-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# BT機種の台番号は末尾1に偏り（13.2%）だが、曜日別クラスタは物理配置で説明できない
+
+## 背景
+bt_overall_digit.csv より:
+- 末尾1: pct_rows=13.23%（期待値10%より+3.2pp、最多）
+- 末尾2-4: 10.4〜11.3%（やや多め）
+- 末尾0・7・8・9: 8.3〜8.5%（少なめ）
+
+反証: 木曜 best_cluster=8-9-0（台数が少ない末尾が強い）
+もし物理配置バイアスが原因なら末尾1-2-3-4が強くなるはずだが、木曜は逆の末尾が強い。
+→ BTの曜日別末尾パターンは物理配置ではなく戦略的な末尾選択を反映している可能性。
+
+## アクション
+曜日別クラスタが物理配置（末尾1-4）と逆の場合（木曜=8-9-0）は戦略的選択と見なす。
+
+## 例
+末尾1(13.23%)が mean_diff 1位(332.5) → 台数が多いためとも解釈できる
+木曜 best_cluster=8-9-0（pct_rows=8.3〜8.5%の少数末尾）→ 物理バイアスに逆らった配置
+
+---
+id: bt-weekday-cluster-patterns-all-7-days
+trigger: "when building BT-specific last_digit features for LTR model in 蒲田七"
+confidence: 0.78
+domain: pachinko-domain-knowledge
+source: data-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# BT機種の曜日別best_cluster: 日曜=0-1-2(delta=116.7最強)、木曜=8-9-0、火土=7-8-9
+
+## 背景
+bt_weekday_cluster.csv（mode=normal、全7曜日）:
+
+| 曜日 | best_cluster | top1    | delta  | 備考                 |
+|------|-------------|---------|--------|----------------------|
+| 月   | 9-0-1       | 末尾0(290) | 69.5 |                      |
+| 火   | 7-8-9       | 末尾9(490) | 88.4 | 強い                 |
+| 水   | 3-4-5       | 末尾3(386) | 60.6 | ホール全体(8-9-0)と逆！|
+| 木   | 8-9-0       | 末尾8(273) | 68.0 |                      |
+| 金   | 0-1-2       | 末尾1(447) | 82.9 | 強い                 |
+| 土   | 7-8-9       | 末尾9(246) | 71.3 |                      |
+| 日   | 0-1-2       | 末尾0(446) | 116.7| 全曜日最強           |
+
+日曜delta=116.7は全曜日で突出して高い。金・日は同じ0-1-2クラスタ。火・土は同じ7-8-9クラスタ。
+
+水曜BTはホール全体（8-9-0）と逆の3-4-5クラスタ:
+Layer Bの水曜「末尾基準投入」でBT機種には異なる末尾が割り当てられている可能性。
+水曜BT台を選ぶ場合は末尾8-9-0ではなく3-4-5を狙う。
+
+## アクション
+ML特徴量候補（BT機種限定の交互作用）優先度順:
+1. `is_sunday AND is_BT AND last_digit in ["0","1","2"]` （delta=116.7、最優先）
+2. `is_friday AND is_BT AND last_digit in ["0","1","2"]` （delta=82.9）
+3. `is_tuesday AND is_BT AND last_digit in ["7","8","9"]` （delta=88.4）
+4. `is_saturday AND is_BT AND last_digit in ["7","8","9"]` （delta=71.3）
+5. `is_thursday AND is_BT AND last_digit in ["8","9","0"]` （delta=68.0）
+6. `is_wednesday AND is_BT AND last_digit in ["3","4","5"]` （ホール全体と逆）
+
+BT台数比率8.6%のため全体順位への影響は小さいが、BT台限定での選択精度は高い。
+
+## 例
+日曜BT 0-1-2クラスタ: cluster_mean=396.9 vs BT全体mean=280.3（+42%）
+水曜BT 3-4-5クラスタ vs ホール全体 8-9-0: 同じ水曜でBT台と非BT台の狙いが分離

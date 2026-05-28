@@ -1,0 +1,85 @@
+{
+  "db_path": "db\\マルハンメガシティ2000-蒲田7.db",
+  "prediction_date": "2026-05-24",
+  "alpha": 5.0,
+  "random_state": 42,
+  "model_type": "xgb",
+  "gpu_backend": "auto",
+  "segment_mode": "global",
+  "segment_blend_weight": 1.0,
+  "prior_blend_weight": 0.0,
+  "min_segment_days": 21,
+  "min_segment_rows": 300,
+  "backend_used_by_target": {
+    "is_rank_1": "cuda",
+    "is_top_2": "cuda",
+    "is_top_3": "cuda",
+    "is_top_5": "cuda"
+  },
+  "segment_models_by_target": {
+    "is_rank_1": 0,
+    "is_top_2": 0,
+    "is_top_3": 0,
+    "is_top_5": 0
+  },
+  "segment_prediction_rows_by_target": {
+    "is_rank_1": 0,
+    "is_top_2": 0,
+    "is_top_3": 0,
+    "is_top_5": 0
+  },
+  "recommend_k": 3,
+  "enforce_floor_diversity": true,
+  "min_confidence_margin": 0.0,
+  "confidence_margin_top1_top2": 0.11936503872275356,
+  "skip_suggested": 0,
+  "feature_count": 121,
+  "target_thresholds": {
+    "is_rank_1": 0.0240943543612957,
+    "is_top_2": 0.05015018209815025,
+    "is_top_3": 0.06193658709526062,
+    "is_top_5": 0.08850060403347015
+  },
+  "audit_report": {
+    "row_count": 21180,
+    "duplicate_date_machine_name_rows": 0,
+    "missing_machine_count_rows": 0,
+    "missing_avg_diff_rows": 0,
+    "missing_total_games_rows": 0,
+    "date_parse_failed_rows": 0,
+    "min_date": "2025-07-07",
+    "max_date": "2026-05-23",
+    "unique_machine_names": 114,
+    "new_machine_rows": 114,
+    "count_increase_rows": 46,
+    "count_decrease_rows": 126,
+    "segment_floor2_counts": {
+      "2F": 12188,
+      "3F": 8992
+    },
+    "segment_floor_type4_counts": {
+      "2F_N": 9717,
+      "3F_A": 4878,
+      "3F_N": 4114,
+      "2F_A": 2471
+    },
+    "machine_master_join_miss_rate": 0.0
+  },
+  "top10_machine_names": [
+    "からくりサーカス",
+    "かぐや様は告らせたい",
+    "ルパン三世 大航海者の秘宝",
+    "東京リベンジャーズ",
+    "L麻雀物語",
+    "革命機ヴァルヴレイヴ2",
+    "攻殻機動隊",
+    "とある科学の超電磁砲2",
+    "ToLOVEるダークネス TRANCE ver.8.7",
+    "アズールレーン THE ANIMATION"
+  ],
+  "recommended_machine_names": [
+    "からくりサーカス",
+    "かぐや様は告らせたい",
+    "ルパン三世 大航海者の秘宝"
+  ]
+}

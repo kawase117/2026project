@@ -1,0 +1,1472 @@
+{
+  "is_rank_1": {
+    "SelectKBest": {
+      "5": {
+        "auc": 0.5969221298861189,
+        "features": [
+          "rolling_avg_diff_7d",
+          "rolling_avg_diff_14d",
+          "rolling_avg_diff_28d",
+          "rolling_avg_diff_35d",
+          "rolling_avg_games_7d"
+        ],
+        "params": {
+          "max_depth": 3,
+          "learning_rate": 0.01
+        }
+      },
+      "10": {
+        "auc": 0.5840258541089565,
+        "features": [
+          "rolling_avg_diff_7d",
+          "rolling_avg_diff_14d",
+          "rolling_avg_diff_28d",
+          "rolling_avg_diff_35d",
+          "rolling_avg_games_7d",
+          "rolling_avg_games_14d",
+          "rolling_avg_games_21d",
+          "rolling_avg_games_28d",
+          "rolling_avg_games_35d",
+          "rolling_avg_efficiency_7d"
+        ],
+        "params": {
+          "max_depth": 3,
+          "learning_rate": 0.01
+        }
+      },
+      "15": {
+        "auc": 0.5472606955986457,
+        "features": [
+          "rolling_avg_diff_7d",
+          "rolling_avg_diff_14d",
+          "rolling_avg_diff_28d",
+          "rolling_avg_diff_35d",
+          "rolling_avg_games_7d",
+          "rolling_avg_games_14d",
+          "rolling_avg_games_21d",
+          "rolling_avg_games_28d",
+          "rolling_avg_games_35d",
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_14d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_28d",
+          "rolling_avg_efficiency_35d",
+          "rolling_rank_sum_7d"
+        ],
+        "params": {
+          "max_depth": 2,
+          "learning_rate": 0.01
+        }
+      },
+      "20": {
+        "auc": 0.5362111418898121,
+        "features": [
+          "rolling_avg_diff_7d",
+          "rolling_avg_diff_14d",
+          "rolling_avg_diff_28d",
+          "rolling_avg_diff_35d",
+          "rolling_avg_games_7d",
+          "rolling_avg_games_14d",
+          "rolling_avg_games_21d",
+          "rolling_avg_games_28d",
+          "rolling_avg_games_35d",
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_14d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_28d",
+          "rolling_avg_efficiency_35d",
+          "rolling_rank_sum_7d",
+          "rolling_rank_sum_14d",
+          "rolling_rank_sum_21d",
+          "past_3m_avg_diff",
+          "past_6m_avg_diff",
+          "past_3m_avg_games"
+        ],
+        "params": {
+          "max_depth": 2,
+          "learning_rate": 0.02
+        }
+      },
+      "25": {
+        "auc": 0.51114188981225,
+        "features": [
+          "rolling_avg_diff_7d",
+          "rolling_avg_diff_14d",
+          "rolling_avg_diff_28d",
+          "rolling_avg_diff_35d",
+          "rolling_avg_games_7d",
+          "rolling_avg_games_14d",
+          "rolling_avg_games_21d",
+          "rolling_avg_games_28d",
+          "rolling_avg_games_35d",
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_14d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_28d",
+          "rolling_avg_efficiency_35d",
+          "rolling_rank_sum_7d",
+          "rolling_rank_sum_14d",
+          "rolling_rank_sum_21d",
+          "past_3m_avg_diff",
+          "past_6m_avg_diff",
+          "past_3m_avg_games",
+          "past_6m_avg_games",
+          "past_3m_rank1_freq",
+          "past_6m_rank1_freq",
+          "past_3m_max_diff",
+          "past_6m_max_diff"
+        ],
+        "params": {
+          "max_depth": 2,
+          "learning_rate": 0.05
+        }
+      }
+    },
+    "PermutationImportance": {
+      "5": {
+        "auc": 0.5289935364727608,
+        "features": [
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_14d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_28d",
+          "rolling_avg_efficiency_35d"
+        ],
+        "params": {
+          "max_depth": 3,
+          "learning_rate": 0.02
+        }
+      },
+      "10": {
+        "auc": 0.5204370575561712,
+        "features": [
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_14d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_28d",
+          "rolling_avg_efficiency_35d",
+          "rolling_rank_sum_7d",
+          "rolling_rank_sum_14d",
+          "rolling_rank_sum_21d",
+          "event_group",
+          "event_cycle_phase"
+        ],
+        "params": {
+          "max_depth": 2,
+          "learning_rate": 0.01
+        }
+      },
+      "15": {
+        "auc": 0.5253616497383811,
+        "features": [
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_14d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_28d",
+          "rolling_avg_efficiency_35d",
+          "rolling_rank_sum_7d",
+          "rolling_rank_sum_14d",
+          "rolling_rank_sum_21d",
+          "event_group",
+          "event_cycle_phase",
+          "days_to_next_same_group",
+          "days_to_next_any",
+          "days_since_last_any",
+          "is_event_week",
+          "event_proximity_score"
+        ],
+        "params": {
+          "max_depth": 2,
+          "learning_rate": 0.01
+        }
+      },
+      "20": {
+        "auc": 0.5125577100646352,
+        "features": [
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_14d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_28d",
+          "rolling_avg_efficiency_35d",
+          "rolling_rank_sum_7d",
+          "rolling_rank_sum_14d",
+          "rolling_rank_sum_21d",
+          "event_group",
+          "event_cycle_phase",
+          "days_to_next_same_group",
+          "days_to_next_any",
+          "days_since_last_any",
+          "is_event_week",
+          "event_proximity_score",
+          "next_event_is_same_group",
+          "event_density_5d",
+          "past_3m_avg_diff",
+          "past_6m_avg_diff",
+          "past_3m_avg_games"
+        ],
+        "params": {
+          "max_depth": 2,
+          "learning_rate": 0.01
+        }
+      },
+      "25": {
+        "auc": 0.50284702985534,
+        "features": [
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_14d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_28d",
+          "rolling_avg_efficiency_35d",
+          "rolling_rank_sum_7d",
+          "rolling_rank_sum_14d",
+          "rolling_rank_sum_21d",
+          "event_group",
+          "event_cycle_phase",
+          "days_to_next_same_group",
+          "days_to_next_any",
+          "days_since_last_any",
+          "is_event_week",
+          "event_proximity_score",
+          "next_event_is_same_group",
+          "event_density_5d",
+          "past_3m_avg_diff",
+          "past_6m_avg_diff",
+          "past_3m_avg_games",
+          "past_6m_avg_games",
+          "past_3m_rank1_freq",
+          "past_6m_rank1_freq",
+          "past_3m_max_diff",
+          "past_6m_max_diff"
+        ],
+        "params": {
+          "max_depth": 3,
+          "learning_rate": 0.01
+        }
+      }
+    },
+    "XGBoostImportance": {
+      "5": {
+        "auc": 0.5141889812249923,
+        "features": [
+          "rolling_avg_diff_21d",
+          "rolling_avg_diff_28d",
+          "rolling_avg_diff_35d",
+          "rolling_avg_games_7d",
+          "rolling_avg_games_21d"
+        ],
+        "params": {
+          "max_depth": 3,
+          "learning_rate": 0.05
+        }
+      },
+      "10": {
+        "auc": 0.5538165589412127,
+        "features": [
+          "rolling_avg_diff_21d",
+          "rolling_avg_diff_28d",
+          "rolling_avg_diff_35d",
+          "rolling_avg_games_7d",
+          "rolling_avg_games_21d",
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_14d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_28d",
+          "rolling_avg_efficiency_35d"
+        ],
+        "params": {
+          "max_depth": 3,
+          "learning_rate": 0.01
+        }
+      },
+      "15": {
+        "auc": 0.5449676823638042,
+        "features": [
+          "rolling_avg_diff_21d",
+          "rolling_avg_diff_28d",
+          "rolling_avg_diff_35d",
+          "rolling_avg_games_7d",
+          "rolling_avg_games_21d",
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_14d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_28d",
+          "rolling_avg_efficiency_35d",
+          "rolling_rank_sum_7d",
+          "rolling_rank_sum_21d",
+          "days_to_next_same_group",
+          "days_since_last_any",
+          "event_proximity_score"
+        ],
+        "params": {
+          "max_depth": 2,
+          "learning_rate": 0.01
+        }
+      },
+      "20": {
+        "auc": 0.5422129886118805,
+        "features": [
+          "rolling_avg_diff_21d",
+          "rolling_avg_diff_28d",
+          "rolling_avg_diff_35d",
+          "rolling_avg_games_7d",
+          "rolling_avg_games_21d",
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_14d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_28d",
+          "rolling_avg_efficiency_35d",
+          "rolling_rank_sum_7d",
+          "rolling_rank_sum_21d",
+          "days_to_next_same_group",
+          "days_since_last_any",
+          "event_proximity_score",
+          "next_event_is_same_group",
+          "event_density_5d",
+          "past_3m_avg_diff",
+          "past_6m_avg_diff",
+          "past_3m_avg_games"
+        ],
+        "params": {
+          "max_depth": 3,
+          "learning_rate": 0.01
+        }
+      },
+      "25": {
+        "auc": 0.5448753462603878,
+        "features": [
+          "rolling_avg_diff_21d",
+          "rolling_avg_diff_28d",
+          "rolling_avg_diff_35d",
+          "rolling_avg_games_7d",
+          "rolling_avg_games_21d",
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_14d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_28d",
+          "rolling_avg_efficiency_35d",
+          "rolling_rank_sum_7d",
+          "rolling_rank_sum_21d",
+          "days_to_next_same_group",
+          "days_since_last_any",
+          "event_proximity_score",
+          "next_event_is_same_group",
+          "event_density_5d",
+          "past_3m_avg_diff",
+          "past_6m_avg_diff",
+          "past_3m_avg_games",
+          "past_6m_avg_games",
+          "past_3m_rank1_freq",
+          "past_6m_rank1_freq",
+          "past_3m_max_diff",
+          "past_6m_max_diff"
+        ],
+        "params": {
+          "max_depth": 3,
+          "learning_rate": 0.02
+        }
+      }
+    },
+    "RFE": {
+      "5": {
+        "auc": 0.5141889812249923,
+        "features": [
+          "rolling_avg_diff_21d",
+          "rolling_avg_diff_28d",
+          "rolling_avg_diff_35d",
+          "rolling_avg_games_7d",
+          "rolling_avg_games_21d"
+        ],
+        "params": {
+          "max_depth": 3,
+          "learning_rate": 0.05
+        }
+      },
+      "10": {
+        "auc": 0.5538165589412127,
+        "features": [
+          "rolling_avg_diff_21d",
+          "rolling_avg_diff_28d",
+          "rolling_avg_diff_35d",
+          "rolling_avg_games_7d",
+          "rolling_avg_games_21d",
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_14d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_28d",
+          "rolling_avg_efficiency_35d"
+        ],
+        "params": {
+          "max_depth": 3,
+          "learning_rate": 0.01
+        }
+      },
+      "15": {
+        "auc": 0.5448599569098184,
+        "features": [
+          "rolling_avg_diff_21d",
+          "rolling_avg_diff_28d",
+          "rolling_avg_diff_35d",
+          "rolling_avg_games_7d",
+          "rolling_avg_games_21d",
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_14d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_28d",
+          "rolling_avg_efficiency_35d",
+          "rolling_rank_sum_7d",
+          "rolling_rank_sum_14d",
+          "rolling_rank_sum_21d",
+          "days_since_last_any",
+          "is_event_week"
+        ],
+        "params": {
+          "max_depth": 2,
+          "learning_rate": 0.01
+        }
+      },
+      "20": {
+        "auc": 0.5430901815943368,
+        "features": [
+          "rolling_avg_diff_21d",
+          "rolling_avg_diff_28d",
+          "rolling_avg_diff_35d",
+          "rolling_avg_games_7d",
+          "rolling_avg_games_21d",
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_14d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_28d",
+          "rolling_avg_efficiency_35d",
+          "rolling_rank_sum_7d",
+          "rolling_rank_sum_14d",
+          "rolling_rank_sum_21d",
+          "days_since_last_any",
+          "is_event_week",
+          "next_event_is_same_group",
+          "event_density_5d",
+          "past_3m_avg_diff",
+          "past_6m_avg_diff",
+          "past_3m_avg_games"
+        ],
+        "params": {
+          "max_depth": 2,
+          "learning_rate": 0.01
+        }
+      },
+      "25": {
+        "auc": 0.5318097876269622,
+        "features": [
+          "rolling_avg_diff_21d",
+          "rolling_avg_diff_28d",
+          "rolling_avg_diff_35d",
+          "rolling_avg_games_7d",
+          "rolling_avg_games_21d",
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_14d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_28d",
+          "rolling_avg_efficiency_35d",
+          "rolling_rank_sum_7d",
+          "rolling_rank_sum_14d",
+          "rolling_rank_sum_21d",
+          "days_since_last_any",
+          "is_event_week",
+          "next_event_is_same_group",
+          "event_density_5d",
+          "past_3m_avg_diff",
+          "past_6m_avg_diff",
+          "past_3m_avg_games",
+          "past_6m_avg_games",
+          "past_3m_rank1_freq",
+          "past_6m_rank1_freq",
+          "past_3m_max_diff",
+          "past_6m_max_diff"
+        ],
+        "params": {
+          "max_depth": 3,
+          "learning_rate": 0.01
+        }
+      }
+    }
+  },
+  "is_top_3": {
+    "SelectKBest": {
+      "5": {
+        "auc": 0.5263606750795117,
+        "features": [
+          "rolling_avg_diff_7d",
+          "rolling_avg_diff_14d",
+          "rolling_avg_diff_21d",
+          "rolling_avg_diff_28d",
+          "rolling_avg_diff_35d"
+        ],
+        "params": {
+          "max_depth": 2,
+          "learning_rate": 0.01
+        }
+      },
+      "10": {
+        "auc": 0.5335551964707089,
+        "features": [
+          "rolling_avg_diff_7d",
+          "rolling_avg_diff_14d",
+          "rolling_avg_diff_21d",
+          "rolling_avg_diff_28d",
+          "rolling_avg_diff_35d",
+          "rolling_avg_games_7d",
+          "rolling_avg_games_14d",
+          "rolling_avg_games_21d",
+          "rolling_avg_games_28d",
+          "rolling_avg_games_35d"
+        ],
+        "params": {
+          "max_depth": 2,
+          "learning_rate": 0.02
+        }
+      },
+      "15": {
+        "auc": 0.5066687185800759,
+        "features": [
+          "rolling_avg_diff_7d",
+          "rolling_avg_diff_14d",
+          "rolling_avg_diff_21d",
+          "rolling_avg_diff_28d",
+          "rolling_avg_diff_35d",
+          "rolling_avg_games_7d",
+          "rolling_avg_games_14d",
+          "rolling_avg_games_21d",
+          "rolling_avg_games_28d",
+          "rolling_avg_games_35d",
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_14d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_35d",
+          "rolling_rank_sum_7d"
+        ],
+        "params": {
+          "max_depth": 4,
+          "learning_rate": 0.05
+        }
+      },
+      "20": {
+        "auc": 0.5192559248999693,
+        "features": [
+          "rolling_avg_diff_7d",
+          "rolling_avg_diff_14d",
+          "rolling_avg_diff_21d",
+          "rolling_avg_diff_28d",
+          "rolling_avg_diff_35d",
+          "rolling_avg_games_7d",
+          "rolling_avg_games_14d",
+          "rolling_avg_games_21d",
+          "rolling_avg_games_28d",
+          "rolling_avg_games_35d",
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_14d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_35d",
+          "rolling_rank_sum_7d",
+          "rolling_rank_sum_14d",
+          "rolling_rank_sum_21d",
+          "past_3m_avg_diff",
+          "past_6m_avg_diff",
+          "past_3m_avg_games"
+        ],
+        "params": {
+          "max_depth": 2,
+          "learning_rate": 0.01
+        }
+      },
+      "25": {
+        "auc": 0.5257386888273313,
+        "features": [
+          "rolling_avg_diff_7d",
+          "rolling_avg_diff_14d",
+          "rolling_avg_diff_21d",
+          "rolling_avg_diff_28d",
+          "rolling_avg_diff_35d",
+          "rolling_avg_games_7d",
+          "rolling_avg_games_14d",
+          "rolling_avg_games_21d",
+          "rolling_avg_games_28d",
+          "rolling_avg_games_35d",
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_14d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_35d",
+          "rolling_rank_sum_7d",
+          "rolling_rank_sum_14d",
+          "rolling_rank_sum_21d",
+          "past_3m_avg_diff",
+          "past_6m_avg_diff",
+          "past_3m_avg_games",
+          "past_6m_avg_games",
+          "past_3m_rank1_freq",
+          "past_6m_rank1_freq",
+          "past_3m_max_diff",
+          "past_6m_max_diff"
+        ],
+        "params": {
+          "max_depth": 3,
+          "learning_rate": 0.02
+        }
+      }
+    },
+    "PermutationImportance": {
+      "5": {
+        "auc": 0.5042833692418179,
+        "features": [
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_14d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_28d",
+          "rolling_avg_efficiency_35d"
+        ],
+        "params": {
+          "max_depth": 4,
+          "learning_rate": 0.01
+        }
+      },
+      "10": {
+        "auc": 0.5154149994870216,
+        "features": [
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_14d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_28d",
+          "rolling_avg_efficiency_35d",
+          "rolling_rank_sum_7d",
+          "rolling_rank_sum_14d",
+          "rolling_rank_sum_21d",
+          "event_group",
+          "event_cycle_phase"
+        ],
+        "params": {
+          "max_depth": 3,
+          "learning_rate": 0.02
+        }
+      },
+      "15": {
+        "auc": 0.5188647789063301,
+        "features": [
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_14d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_28d",
+          "rolling_avg_efficiency_35d",
+          "rolling_rank_sum_7d",
+          "rolling_rank_sum_14d",
+          "rolling_rank_sum_21d",
+          "event_group",
+          "event_cycle_phase",
+          "days_to_next_same_group",
+          "days_to_next_any",
+          "days_since_last_any",
+          "is_event_week",
+          "event_proximity_score"
+        ],
+        "params": {
+          "max_depth": 4,
+          "learning_rate": 0.02
+        }
+      },
+      "20": {
+        "auc": 0.5369729147429978,
+        "features": [
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_14d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_28d",
+          "rolling_avg_efficiency_35d",
+          "rolling_rank_sum_7d",
+          "rolling_rank_sum_14d",
+          "rolling_rank_sum_21d",
+          "event_group",
+          "event_cycle_phase",
+          "days_to_next_same_group",
+          "days_to_next_any",
+          "days_since_last_any",
+          "is_event_week",
+          "event_proximity_score",
+          "next_event_is_same_group",
+          "event_density_5d",
+          "past_3m_avg_diff",
+          "past_6m_avg_diff",
+          "past_3m_avg_games"
+        ],
+        "params": {
+          "max_depth": 4,
+          "learning_rate": 0.02
+        }
+      },
+      "25": {
+        "auc": 0.5308684723504669,
+        "features": [
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_14d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_28d",
+          "rolling_avg_efficiency_35d",
+          "rolling_rank_sum_7d",
+          "rolling_rank_sum_14d",
+          "rolling_rank_sum_21d",
+          "event_group",
+          "event_cycle_phase",
+          "days_to_next_same_group",
+          "days_to_next_any",
+          "days_since_last_any",
+          "is_event_week",
+          "event_proximity_score",
+          "next_event_is_same_group",
+          "event_density_5d",
+          "past_3m_avg_diff",
+          "past_6m_avg_diff",
+          "past_3m_avg_games",
+          "past_6m_avg_games",
+          "past_3m_rank1_freq",
+          "past_6m_rank1_freq",
+          "past_3m_max_diff",
+          "past_6m_max_diff"
+        ],
+        "params": {
+          "max_depth": 4,
+          "learning_rate": 0.02
+        }
+      }
+    },
+    "XGBoostImportance": {
+      "5": {
+        "auc": 0.5211731814917412,
+        "features": [
+          "rolling_avg_diff_7d",
+          "rolling_avg_diff_14d",
+          "rolling_avg_diff_35d",
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_14d"
+        ],
+        "params": {
+          "max_depth": 2,
+          "learning_rate": 0.02
+        }
+      },
+      "10": {
+        "auc": 0.5056171129578332,
+        "features": [
+          "rolling_avg_diff_7d",
+          "rolling_avg_diff_14d",
+          "rolling_avg_diff_35d",
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_14d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_28d",
+          "rolling_avg_efficiency_35d",
+          "rolling_rank_sum_7d",
+          "event_cycle_phase"
+        ],
+        "params": {
+          "max_depth": 2,
+          "learning_rate": 0.01
+        }
+      },
+      "15": {
+        "auc": 0.5056171129578332,
+        "features": [
+          "rolling_avg_diff_7d",
+          "rolling_avg_diff_14d",
+          "rolling_avg_diff_35d",
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_14d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_28d",
+          "rolling_avg_efficiency_35d",
+          "rolling_rank_sum_7d",
+          "event_cycle_phase",
+          "days_to_next_same_group",
+          "days_to_next_any",
+          "days_since_last_any",
+          "is_event_week",
+          "event_proximity_score"
+        ],
+        "params": {
+          "max_depth": 2,
+          "learning_rate": 0.01
+        }
+      },
+      "20": {
+        "auc": 0.519358520570432,
+        "features": [
+          "rolling_avg_diff_7d",
+          "rolling_avg_diff_14d",
+          "rolling_avg_diff_35d",
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_14d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_28d",
+          "rolling_avg_efficiency_35d",
+          "rolling_rank_sum_7d",
+          "event_cycle_phase",
+          "days_to_next_same_group",
+          "days_to_next_any",
+          "days_since_last_any",
+          "is_event_week",
+          "event_proximity_score",
+          "next_event_is_same_group",
+          "event_density_5d",
+          "past_3m_avg_diff",
+          "past_6m_avg_diff",
+          "past_3m_avg_games"
+        ],
+        "params": {
+          "max_depth": 2,
+          "learning_rate": 0.01
+        }
+      },
+      "25": {
+        "auc": 0.5184992818303068,
+        "features": [
+          "rolling_avg_diff_7d",
+          "rolling_avg_diff_14d",
+          "rolling_avg_diff_35d",
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_14d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_28d",
+          "rolling_avg_efficiency_35d",
+          "rolling_rank_sum_7d",
+          "event_cycle_phase",
+          "days_to_next_same_group",
+          "days_to_next_any",
+          "days_since_last_any",
+          "is_event_week",
+          "event_proximity_score",
+          "next_event_is_same_group",
+          "event_density_5d",
+          "past_3m_avg_diff",
+          "past_6m_avg_diff",
+          "past_3m_avg_games",
+          "past_6m_avg_games",
+          "past_3m_rank1_freq",
+          "past_6m_rank1_freq",
+          "past_3m_max_diff",
+          "past_6m_max_diff"
+        ],
+        "params": {
+          "max_depth": 2,
+          "learning_rate": 0.01
+        }
+      }
+    },
+    "RFE": {
+      "5": {
+        "auc": 0.5211731814917412,
+        "features": [
+          "rolling_avg_diff_7d",
+          "rolling_avg_diff_14d",
+          "rolling_avg_diff_35d",
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_14d"
+        ],
+        "params": {
+          "max_depth": 2,
+          "learning_rate": 0.02
+        }
+      },
+      "10": {
+        "auc": 0.5200125679696317,
+        "features": [
+          "rolling_avg_diff_7d",
+          "rolling_avg_diff_14d",
+          "rolling_avg_diff_35d",
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_14d",
+          "rolling_avg_efficiency_35d",
+          "rolling_rank_sum_7d",
+          "rolling_rank_sum_21d",
+          "event_group",
+          "event_cycle_phase"
+        ],
+        "params": {
+          "max_depth": 4,
+          "learning_rate": 0.02
+        }
+      },
+      "15": {
+        "auc": 0.5185313429773263,
+        "features": [
+          "rolling_avg_diff_7d",
+          "rolling_avg_diff_14d",
+          "rolling_avg_diff_35d",
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_14d",
+          "rolling_avg_efficiency_35d",
+          "rolling_rank_sum_7d",
+          "rolling_rank_sum_21d",
+          "event_group",
+          "event_cycle_phase",
+          "days_to_next_same_group",
+          "days_to_next_any",
+          "days_since_last_any",
+          "is_event_week",
+          "event_proximity_score"
+        ],
+        "params": {
+          "max_depth": 2,
+          "learning_rate": 0.05
+        }
+      },
+      "20": {
+        "auc": 0.5321060326254232,
+        "features": [
+          "rolling_avg_diff_7d",
+          "rolling_avg_diff_14d",
+          "rolling_avg_diff_35d",
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_14d",
+          "rolling_avg_efficiency_35d",
+          "rolling_rank_sum_7d",
+          "rolling_rank_sum_21d",
+          "event_group",
+          "event_cycle_phase",
+          "days_to_next_same_group",
+          "days_to_next_any",
+          "days_since_last_any",
+          "is_event_week",
+          "event_proximity_score",
+          "next_event_is_same_group",
+          "event_density_5d",
+          "past_3m_avg_diff",
+          "past_6m_avg_diff",
+          "past_3m_avg_games"
+        ],
+        "params": {
+          "max_depth": 2,
+          "learning_rate": 0.05
+        }
+      },
+      "25": {
+        "auc": 0.5270980814609623,
+        "features": [
+          "rolling_avg_diff_7d",
+          "rolling_avg_diff_14d",
+          "rolling_avg_diff_35d",
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_14d",
+          "rolling_avg_efficiency_35d",
+          "rolling_rank_sum_7d",
+          "rolling_rank_sum_21d",
+          "event_group",
+          "event_cycle_phase",
+          "days_to_next_same_group",
+          "days_to_next_any",
+          "days_since_last_any",
+          "is_event_week",
+          "event_proximity_score",
+          "next_event_is_same_group",
+          "event_density_5d",
+          "past_3m_avg_diff",
+          "past_6m_avg_diff",
+          "past_3m_avg_games",
+          "past_6m_avg_games",
+          "past_3m_rank1_freq",
+          "past_6m_rank1_freq",
+          "past_3m_max_diff",
+          "past_6m_max_diff"
+        ],
+        "params": {
+          "max_depth": 2,
+          "learning_rate": 0.05
+        }
+      }
+    }
+  },
+  "is_top_5": {
+    "SelectKBest": {
+      "5": {
+        "auc": 0.4808402585410896,
+        "features": [
+          "rolling_avg_diff_7d",
+          "rolling_avg_diff_14d",
+          "rolling_avg_diff_21d",
+          "rolling_avg_diff_35d",
+          "rolling_avg_games_7d"
+        ],
+        "params": {
+          "max_depth": 4,
+          "learning_rate": 0.05
+        }
+      },
+      "10": {
+        "auc": 0.5018108135836667,
+        "features": [
+          "rolling_avg_diff_7d",
+          "rolling_avg_diff_14d",
+          "rolling_avg_diff_21d",
+          "rolling_avg_diff_35d",
+          "rolling_avg_games_7d",
+          "rolling_avg_games_14d",
+          "rolling_avg_games_21d",
+          "rolling_avg_games_28d",
+          "rolling_avg_games_35d",
+          "rolling_avg_efficiency_7d"
+        ],
+        "params": {
+          "max_depth": 4,
+          "learning_rate": 0.01
+        }
+      },
+      "15": {
+        "auc": 0.5075407817790089,
+        "features": [
+          "rolling_avg_diff_7d",
+          "rolling_avg_diff_14d",
+          "rolling_avg_diff_21d",
+          "rolling_avg_diff_35d",
+          "rolling_avg_games_7d",
+          "rolling_avg_games_14d",
+          "rolling_avg_games_21d",
+          "rolling_avg_games_28d",
+          "rolling_avg_games_35d",
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_14d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_28d",
+          "rolling_avg_efficiency_35d",
+          "rolling_rank_sum_7d"
+        ],
+        "params": {
+          "max_depth": 4,
+          "learning_rate": 0.02
+        }
+      },
+      "20": {
+        "auc": 0.4983225607879348,
+        "features": [
+          "rolling_avg_diff_7d",
+          "rolling_avg_diff_14d",
+          "rolling_avg_diff_21d",
+          "rolling_avg_diff_35d",
+          "rolling_avg_games_7d",
+          "rolling_avg_games_14d",
+          "rolling_avg_games_21d",
+          "rolling_avg_games_28d",
+          "rolling_avg_games_35d",
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_14d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_28d",
+          "rolling_avg_efficiency_35d",
+          "rolling_rank_sum_7d",
+          "rolling_rank_sum_14d",
+          "rolling_rank_sum_21d",
+          "past_3m_avg_diff",
+          "past_6m_avg_diff",
+          "past_3m_avg_games"
+        ],
+        "params": {
+          "max_depth": 4,
+          "learning_rate": 0.01
+        }
+      },
+      "25": {
+        "auc": 0.49638350261618963,
+        "features": [
+          "rolling_avg_diff_7d",
+          "rolling_avg_diff_14d",
+          "rolling_avg_diff_21d",
+          "rolling_avg_diff_35d",
+          "rolling_avg_games_7d",
+          "rolling_avg_games_14d",
+          "rolling_avg_games_21d",
+          "rolling_avg_games_28d",
+          "rolling_avg_games_35d",
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_14d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_28d",
+          "rolling_avg_efficiency_35d",
+          "rolling_rank_sum_7d",
+          "rolling_rank_sum_14d",
+          "rolling_rank_sum_21d",
+          "past_3m_avg_diff",
+          "past_6m_avg_diff",
+          "past_3m_avg_games",
+          "past_6m_avg_games",
+          "past_3m_rank1_freq",
+          "past_6m_rank1_freq",
+          "past_3m_max_diff",
+          "past_6m_max_diff"
+        ],
+        "params": {
+          "max_depth": 4,
+          "learning_rate": 0.01
+        }
+      }
+    },
+    "PermutationImportance": {
+      "5": {
+        "auc": 0.48077870113881194,
+        "features": [
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_14d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_28d",
+          "rolling_avg_efficiency_35d"
+        ],
+        "params": {
+          "max_depth": 2,
+          "learning_rate": 0.05
+        }
+      },
+      "10": {
+        "auc": 0.4963732430491434,
+        "features": [
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_14d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_28d",
+          "rolling_avg_efficiency_35d",
+          "rolling_rank_sum_7d",
+          "rolling_rank_sum_14d",
+          "rolling_rank_sum_21d",
+          "event_group",
+          "event_cycle_phase"
+        ],
+        "params": {
+          "max_depth": 4,
+          "learning_rate": 0.01
+        }
+      },
+      "15": {
+        "auc": 0.49749153585718686,
+        "features": [
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_14d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_28d",
+          "rolling_avg_efficiency_35d",
+          "rolling_rank_sum_7d",
+          "rolling_rank_sum_14d",
+          "rolling_rank_sum_21d",
+          "event_group",
+          "event_cycle_phase",
+          "days_to_next_same_group",
+          "days_to_next_any",
+          "days_since_last_any",
+          "is_event_week",
+          "event_proximity_score"
+        ],
+        "params": {
+          "max_depth": 4,
+          "learning_rate": 0.01
+        }
+      },
+      "20": {
+        "auc": 0.48237919359803016,
+        "features": [
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_14d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_28d",
+          "rolling_avg_efficiency_35d",
+          "rolling_rank_sum_7d",
+          "rolling_rank_sum_14d",
+          "rolling_rank_sum_21d",
+          "event_group",
+          "event_cycle_phase",
+          "days_to_next_same_group",
+          "days_to_next_any",
+          "days_since_last_any",
+          "is_event_week",
+          "event_proximity_score",
+          "next_event_is_same_group",
+          "event_density_5d",
+          "past_3m_avg_diff",
+          "past_6m_avg_diff",
+          "past_3m_avg_games"
+        ],
+        "params": {
+          "max_depth": 2,
+          "learning_rate": 0.01
+        }
+      },
+      "25": {
+        "auc": 0.4850312916794911,
+        "features": [
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_14d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_28d",
+          "rolling_avg_efficiency_35d",
+          "rolling_rank_sum_7d",
+          "rolling_rank_sum_14d",
+          "rolling_rank_sum_21d",
+          "event_group",
+          "event_cycle_phase",
+          "days_to_next_same_group",
+          "days_to_next_any",
+          "days_since_last_any",
+          "is_event_week",
+          "event_proximity_score",
+          "next_event_is_same_group",
+          "event_density_5d",
+          "past_3m_avg_diff",
+          "past_6m_avg_diff",
+          "past_3m_avg_games",
+          "past_6m_avg_games",
+          "past_3m_rank1_freq",
+          "past_6m_rank1_freq",
+          "past_3m_max_diff",
+          "past_6m_max_diff"
+        ],
+        "params": {
+          "max_depth": 4,
+          "learning_rate": 0.05
+        }
+      }
+    },
+    "XGBoostImportance": {
+      "5": {
+        "auc": 0.48642659279778394,
+        "features": [
+          "rolling_avg_diff_35d",
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_28d",
+          "rolling_avg_efficiency_35d"
+        ],
+        "params": {
+          "max_depth": 4,
+          "learning_rate": 0.01
+        }
+      },
+      "10": {
+        "auc": 0.5048527752128861,
+        "features": [
+          "rolling_avg_diff_35d",
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_28d",
+          "rolling_avg_efficiency_35d",
+          "rolling_rank_sum_7d",
+          "rolling_rank_sum_14d",
+          "rolling_rank_sum_21d",
+          "event_group",
+          "event_cycle_phase"
+        ],
+        "params": {
+          "max_depth": 4,
+          "learning_rate": 0.01
+        }
+      },
+      "15": {
+        "auc": 0.5047963475941315,
+        "features": [
+          "rolling_avg_diff_35d",
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_28d",
+          "rolling_avg_efficiency_35d",
+          "rolling_rank_sum_7d",
+          "rolling_rank_sum_14d",
+          "rolling_rank_sum_21d",
+          "event_group",
+          "event_cycle_phase",
+          "days_to_next_same_group",
+          "days_to_next_any",
+          "days_since_last_any",
+          "is_event_week",
+          "event_proximity_score"
+        ],
+        "params": {
+          "max_depth": 4,
+          "learning_rate": 0.01
+        }
+      },
+      "20": {
+        "auc": 0.4936339386477891,
+        "features": [
+          "rolling_avg_diff_35d",
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_28d",
+          "rolling_avg_efficiency_35d",
+          "rolling_rank_sum_7d",
+          "rolling_rank_sum_14d",
+          "rolling_rank_sum_21d",
+          "event_group",
+          "event_cycle_phase",
+          "days_to_next_same_group",
+          "days_to_next_any",
+          "days_since_last_any",
+          "is_event_week",
+          "event_proximity_score",
+          "next_event_is_same_group",
+          "event_density_5d",
+          "past_3m_avg_diff",
+          "past_6m_avg_diff",
+          "past_3m_avg_games"
+        ],
+        "params": {
+          "max_depth": 4,
+          "learning_rate": 0.05
+        }
+      },
+      "25": {
+        "auc": 0.49781984200266743,
+        "features": [
+          "rolling_avg_diff_35d",
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_28d",
+          "rolling_avg_efficiency_35d",
+          "rolling_rank_sum_7d",
+          "rolling_rank_sum_14d",
+          "rolling_rank_sum_21d",
+          "event_group",
+          "event_cycle_phase",
+          "days_to_next_same_group",
+          "days_to_next_any",
+          "days_since_last_any",
+          "is_event_week",
+          "event_proximity_score",
+          "next_event_is_same_group",
+          "event_density_5d",
+          "past_3m_avg_diff",
+          "past_6m_avg_diff",
+          "past_3m_avg_games",
+          "past_6m_avg_games",
+          "past_3m_rank1_freq",
+          "past_6m_rank1_freq",
+          "past_3m_max_diff",
+          "past_6m_max_diff"
+        ],
+        "params": {
+          "max_depth": 4,
+          "learning_rate": 0.01
+        }
+      }
+    },
+    "RFE": {
+      "5": {
+        "auc": 0.48642659279778394,
+        "features": [
+          "rolling_avg_diff_35d",
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_28d",
+          "rolling_avg_efficiency_35d"
+        ],
+        "params": {
+          "max_depth": 4,
+          "learning_rate": 0.01
+        }
+      },
+      "10": {
+        "auc": 0.5048527752128861,
+        "features": [
+          "rolling_avg_diff_35d",
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_28d",
+          "rolling_avg_efficiency_35d",
+          "rolling_rank_sum_7d",
+          "rolling_rank_sum_14d",
+          "rolling_rank_sum_21d",
+          "event_group",
+          "event_cycle_phase"
+        ],
+        "params": {
+          "max_depth": 4,
+          "learning_rate": 0.01
+        }
+      },
+      "15": {
+        "auc": 0.5047963475941315,
+        "features": [
+          "rolling_avg_diff_35d",
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_28d",
+          "rolling_avg_efficiency_35d",
+          "rolling_rank_sum_7d",
+          "rolling_rank_sum_14d",
+          "rolling_rank_sum_21d",
+          "event_group",
+          "event_cycle_phase",
+          "days_to_next_same_group",
+          "days_to_next_any",
+          "days_since_last_any",
+          "is_event_week",
+          "event_proximity_score"
+        ],
+        "params": {
+          "max_depth": 4,
+          "learning_rate": 0.01
+        }
+      },
+      "20": {
+        "auc": 0.4936339386477891,
+        "features": [
+          "rolling_avg_diff_35d",
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_28d",
+          "rolling_avg_efficiency_35d",
+          "rolling_rank_sum_7d",
+          "rolling_rank_sum_14d",
+          "rolling_rank_sum_21d",
+          "event_group",
+          "event_cycle_phase",
+          "days_to_next_same_group",
+          "days_to_next_any",
+          "days_since_last_any",
+          "is_event_week",
+          "event_proximity_score",
+          "next_event_is_same_group",
+          "event_density_5d",
+          "past_3m_avg_diff",
+          "past_6m_avg_diff",
+          "past_3m_avg_games"
+        ],
+        "params": {
+          "max_depth": 4,
+          "learning_rate": 0.05
+        }
+      },
+      "25": {
+        "auc": 0.49781984200266743,
+        "features": [
+          "rolling_avg_diff_35d",
+          "rolling_avg_efficiency_7d",
+          "rolling_avg_efficiency_21d",
+          "rolling_avg_efficiency_28d",
+          "rolling_avg_efficiency_35d",
+          "rolling_rank_sum_7d",
+          "rolling_rank_sum_14d",
+          "rolling_rank_sum_21d",
+          "event_group",
+          "event_cycle_phase",
+          "days_to_next_same_group",
+          "days_to_next_any",
+          "days_since_last_any",
+          "is_event_week",
+          "event_proximity_score",
+          "next_event_is_same_group",
+          "event_density_5d",
+          "past_3m_avg_diff",
+          "past_6m_avg_diff",
+          "past_3m_avg_games",
+          "past_6m_avg_games",
+          "past_3m_rank1_freq",
+          "past_6m_rank1_freq",
+          "past_3m_max_diff",
+          "past_6m_max_diff"
+        ],
+        "params": {
+          "max_depth": 4,
+          "learning_rate": 0.01
+        }
+      }
+    }
+  }
+}

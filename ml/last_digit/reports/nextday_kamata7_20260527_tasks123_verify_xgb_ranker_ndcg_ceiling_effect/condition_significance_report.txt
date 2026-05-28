@@ -1,0 +1,36 @@
+======================================================================
+CEILING EFFECT EVALUATION: CONDITION SIGNIFICANCE SUMMARY
+======================================================================
+
+✓ SIGNIFICANT IMPROVEMENTS (BH p < 0.05):
+  [pred_span_quartile   / Q1             ] hit_at_2                 : Δ = +0.4142 (CI [+0.1071, +0.4286]), Cohen's d = 1.204 (large)
+  [weekday              / wednesday      ] hit_at_2                 : Δ = +0.2042 (CI [+0.1000, +0.3000]), Cohen's d = 0.718 (medium)
+  [weekday              / mon_thu        ] hit_at_2                 : Δ = +0.1326 (CI [+0.0820, +0.1858]), Cohen's d = 0.581 (medium)
+  [anomaly_direction    / normal         ] hit_at_2                 : Δ = +0.1301 (CI [+0.0933, +0.1627]), Cohen's d = 0.563 (medium)
+  [anomaly_direction    / anomaly        ] hit_at_2                 : Δ = +0.1272 (CI [+0.0351, +0.2281]), Cohen's d = 0.519 (medium)
+  [weekday              / fri_sat        ] hit_at_2                 : Δ = +0.1111 (CI [+0.0635, +0.1667]), Cohen's d = 0.538 (medium)
+
+✗ SIGNIFICANT DEGRADATIONS (BH p < 0.05):
+  [weekday              / sunday         ] loss_value               : Δ = -2494.8413 (CI [-3782.5794, -1031.7460]), Cohen's d = -0.594 (medium)
+  [anomaly_direction    / normal         ] loss_value               : Δ = -1359.1585 (CI [-1790.4133, -714.9267]), Cohen's d = -0.370 (small)
+  [weekday              / fri_sat        ] loss_value               : Δ = -1041.4683 (CI [-1782.5794, -286.5079]), Cohen's d = -0.375 (small)
+  [pred_span_quartile   / Q1             ] critical_miss_rate       : Δ = -0.4235 (CI [-0.4286, -0.1071]), Cohen's d = -1.228 (large)
+  [weekday              / wednesday      ] critical_miss_rate       : Δ = -0.2042 (CI [-0.3000, -0.1000]), Cohen's d = -0.718 (medium)
+  [anomaly_direction    / normal         ] critical_miss_rate       : Δ = -0.1328 (CI [-0.1680, -0.0960]), Cohen's d = -0.570 (medium)
+  [weekday              / mon_thu        ] critical_miss_rate       : Δ = -0.1326 (CI [-0.1858, -0.0820]), Cohen's d = -0.581 (medium)
+  [anomaly_direction    / anomaly        ] critical_miss_rate       : Δ = -0.1272 (CI [-0.2281, -0.0351]), Cohen's d = -0.519 (medium)
+  [weekday              / fri_sat        ] critical_miss_rate       : Δ = -0.1111 (CI [-0.1667, -0.0635]), Cohen's d = -0.538 (medium)
+
+~ TRENDS (raw p < 0.05, not BH-significant):
+  [weekday              / mon_thu        ] loss_value               : Δ = -703.4088, p = 0.0265, p_BH = 0.0596
+  [weekday              / sunday         ] critical_miss_rate       : Δ = -0.1032, p = 0.0339, p_BH = 0.0718
+  [weekday              / wednesday      ] loss_value               : Δ = -2222.9167, p = 0.0429, p_BH = 0.0857
+
+SUMMARY:
+  Total condition-difficulty-metric combinations tested: 36
+  Significant improvements (BH): 6
+  Significant degradations (BH): 9
+  Trends (raw < 0.05): 3
+  Tests with p < 0.05 (raw): 18
+  Average Cohen's d: -0.115
+======================================================================

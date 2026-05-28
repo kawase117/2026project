@@ -1,0 +1,54 @@
+{
+  "tune_results": {
+    "baseline6": {
+      "score": 0.38373077429078584,
+      "metrics": {
+        "combined_hit_at_1": 0.3333333333333333,
+        "combined_hit_at_3": 0.85,
+        "combined_auc": 0.6485194993722536,
+        "layer0_hit_at_1": 0.1,
+        "layer0_lift_at_1": 3.0192,
+        "layer0_base_rate": 0.033121722329561135,
+        "2F_N_lift_at_3": 1.1797146598883987,
+        "2F_N_lift_at_5": 1.0546815316277423
+      }
+    },
+    "rich_no_ranktrend": {
+      "score": 0.2475843143468019,
+      "metrics": {
+        "combined_hit_at_1": 0.21666666666666667,
+        "combined_hit_at_3": 0.6333333333333333,
+        "combined_auc": 0.618352953602704,
+        "layer0_hit_at_1": 0.1,
+        "layer0_lift_at_1": 3.0192,
+        "layer0_base_rate": 0.033121722329561135,
+        "2F_N_lift_at_3": 0.6995352737691742,
+        "2F_N_lift_at_5": 1.1974072820508064
+      }
+    },
+    "rich_all": {
+      "score": 0.3140975876350694,
+      "metrics": {
+        "combined_hit_at_1": 0.2833333333333333,
+        "combined_hit_at_3": 0.6833333333333333,
+        "combined_auc": 0.6152850860347212,
+        "layer0_hit_at_1": 0.1,
+        "layer0_lift_at_1": 3.0192,
+        "layer0_base_rate": 0.033121722329561135,
+        "2F_N_lift_at_3": 0.7578298799166054,
+        "2F_N_lift_at_5": 1.141713920094955
+      }
+    }
+  },
+  "best_profile": "baseline6",
+  "best_holdout_metrics": {
+    "combined_hit_at_1": 0.5,
+    "combined_hit_at_3": 0.8,
+    "combined_auc": 0.6675535196495773,
+    "layer0_hit_at_1": 0.1333,
+    "layer0_lift_at_1": 3.5713,
+    "layer0_base_rate": 0.037334865020103386,
+    "2F_N_lift_at_3": 0.520160528549441,
+    "2F_N_lift_at_5": 1.193275293854974
+  }
+}

@@ -1,0 +1,131 @@
+---
+id: 2fa-statistical-power-vs-signal
+trigger: "when evaluating 2F_A segment randomness or predictability"
+confidence: 0.85
+domain: ml-hypothesis-validation
+source: statistical-test-with-limited-data
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 2F_A ランダム性検定：検出力不足の陥阱
+
+## 背景
+
+2F_A セグメント（A型機種）の順位予測可能性をマン・ホイットニー検定で評価したところ p=0.284（有意差なし）という結果を得た。
+しかし同時に ML の lift@1 = 1.256（ランダムより 25% 良い命中率）を観測した。
+
+これは一見矛盾している。正しい解釈は「検定の検出力不足」である。
+
+評価期間 90 日間で、2F_A の平均機種数は 7.57 台。この条件下では 681 サンプルという限定的なサイズでマン・ホイットニー検定は本当の効果を検出できない（Type II エラー）。
+
+## アクション
+
+「マン・ホイットニー検定 p > 0.05 だから 2F_A はランダム」という結論は間違い。
+
+正確な判定：
+- **「ランダムである」ではなく「判定できない」**
+- lift@1 = 1.256 は信号の存在を示唆
+- 2F_A を**除外すべきではない**。弱い予測能があると仮定して継続評価
+
+## 例
+
+```python
+# 検定 p値が大きい = 「帰無仮説が正しい」ではなく「検出力が不足」の可能性
+# lift@1 = 1.256 = 実際には信号がある
+
+n_samples = 7.57 * 90  # ≈ 681
+effect_size = 0.256    # 25% 改善
+# statistical_power ≈ 0.40-0.50
+# つまり本当の効果があっても見落とす確率が 50% 以上
+```
+
+---
+id: lambda-hyperparameter-opposite-overfitting
+trigger: "when selecting combined_lambda via tune/holdout evaluation"
+confidence: 0.92
+domain: ml-hyperparameter-selection
+source: tune-vs-holdout-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# λ=0.5 は過学習の逆：tune では低く holdout では高い最適点
+
+## 背景
+
+combined_lambda パラメータ選択で以下を観測：
+
+| λ | tune hit@1 | holdout hit@1 |
+|---|-----------|--------------|
+| 0.0 | 0.633 | 0.389 |
+| 0.5 | 0.600 | **0.422** |
+
+通常の過学習では tune > holdout となる。ここでは逆：tune では λ=0.0 が優れているが holdout では λ=0.5 が 0.422 に達して目標 0.40 を超える。
+
+## アクション
+
+λ=0.5 を本番設定として採用する。
+
+この挙動パターンは「λ=0.5 の方が汎化性能が高い」ことを示唆。tune スコアを多少犠牲にしても holdout で堅牢に 0.42+ を維持する設定を選ぶべき。
+
+## 例
+
+```python
+# 通常の過学習：tune > holdout（悪い兆候）
+# tune_λ0 = 0.70, holdout_λ0 = 0.60
+
+# 今回の 2F_A 診断（逆パターン）
+# tune_λ0 = 0.633, holdout_λ0 = 0.389  (tune 高いが一般化しない)
+# tune_λ05 = 0.600, holdout_λ05 = 0.422 (tune 低いが holdout 良好)
+
+# λ=0.5 の方が正則化が効いており汎化性能が良い
+```
+
+---
+id: segment-machine-count-impacts-learning-difficulty
+trigger: "when comparing performance across segments with different machine pool sizes"
+confidence: 0.88
+domain: ml-segment-design
+source: segment-diagnostics-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# セグメント機種数の違いが学習難易度を支配する
+
+## 背景
+
+3F_A（16 台）と 2F_A（10 台）の Layer 1 モデルを比較したところ、同じ TOP3 特徴量を使用しているにもかかわらず精度が大きく異なることが判明した。
+
+原因は特徴量ではなく、**セグメントあたりの機種数**の違いである。
+
+- **2F_A：10 台**
+  - is_top3 理論値 = 3/10 = 30%
+  - 実測 base_rate = 57.4%（非常に高い）
+  - 理由：10 台以下の日が多く、3 台のほぼすべてが top3 に入る
+
+- **3F_A：16 台**
+  - is_top3 理論値 = 3/16 = 18.8%
+  - is_top3 base_rate = 22.3%（理論に近い）
+  - 機種数が多いため top3 に入らない台が多く識別タスクが充実
+
+## アクション
+
+同じ特徴量でセグメント間に精度差がある場合、まず**機種数（母数）**を確認する。
+
+2F_A の精度改善を目指す場合は以下を検討：
+- `--min-machine-history-days` を 30 → 20 に緩める
+- 機種数を 10 → 12-14 に増やす
+- learning task の識別難度が上がり学習が安定する可能性
+
+## 例
+
+```python
+# セグメント A：10 機種、base_rate 57%
+# → 「外れ台 7 つを探す」という簡単な逆向きタスク
+
+# セグメント B：16 機種、base_rate 23%
+# → 「高設定 3 つを正確に選ぶ」という難しく充実したタスク
+
+# 同じ特徴量でも母数が違うと学習難度が大きく異なる
+```
+
+---

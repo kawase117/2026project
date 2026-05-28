@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 
 from .decision_report import generate_decision_memo
+from .kpi_report import KpiConfig, build_kpi_summary, build_kpi_summary_table, generate_kpi_decision_memo
 from .loaders import build_actual_rank_map, load_topk_with_conditions
 from .loss_chain import attach_loss_scenarios
 from .stats import StatsConfig, compute_condition_significance, generate_summary_report
@@ -232,13 +233,16 @@ def analyze_ceiling_effect(
     input_topk_csv: str | Path,
     output_dir: str | Path,
     baseline_topk_csv: str | Path | None = None,
+    db_path: str | Path | None = None,
     stats_config: StatsConfig | None = None,
+    catastrophic_threshold: float = 15000.0,
 ) -> dict[str, Path]:
     out_dir = Path(output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    topk = load_topk_with_conditions(input_topk_csv)
-    rank_map = build_actual_rank_map()
+    resolved_db_path = Path(db_path) if db_path is not None and str(db_path).strip() else None
+    topk = load_topk_with_conditions(input_topk_csv, db_path=resolved_db_path)
+    rank_map = build_actual_rank_map(db_path=resolved_db_path)
     loss_df = attach_loss_scenarios(topk, rank_map)
     if loss_df.empty:
         raise RuntimeError("No rows after attaching loss scenarios. Check date/expert consistency.")
@@ -249,7 +253,7 @@ def analyze_ceiling_effect(
     sig_df = pd.DataFrame()
     baseline_loss_df: pd.DataFrame | None = None
     if baseline_topk_csv is not None:
-        base_topk = load_topk_with_conditions(baseline_topk_csv)
+        base_topk = load_topk_with_conditions(baseline_topk_csv, db_path=resolved_db_path)
         base_loss_df = attach_loss_scenarios(base_topk, rank_map)
         baseline_loss_df = base_loss_df
         sig_df = compute_condition_significance(
@@ -259,6 +263,13 @@ def analyze_ceiling_effect(
         )
         json_summary["condition_significance"] = sig_df.to_dict(orient="records")
 
+    kpi_summary = build_kpi_summary(
+        current_loss_df=loss_df,
+        baseline_loss_df=baseline_loss_df,
+        config=KpiConfig(catastrophic_threshold=float(catastrophic_threshold)),
+    )
+    kpi_table = build_kpi_summary_table(kpi_summary)
+
     diagnostics = _build_run_diagnostics(
         current_loss_df=loss_df,
         baseline_loss_df=baseline_loss_df,
@@ -267,6 +278,7 @@ def analyze_ceiling_effect(
         stats_config=stats_config,
     )
     json_summary["run_diagnostics"] = diagnostics
+    json_summary["kpi_summary"] = kpi_summary
 
     out_loss = out_dir / "loss_scenarios.csv"
     out_metrics = out_dir / "condition_layer_metrics.csv"
@@ -277,15 +289,21 @@ def analyze_ceiling_effect(
     out_sig_summary = out_dir / "condition_significance_summary.md"
     out_sig_report = out_dir / "condition_significance_report.txt"
     out_decision_memo = out_dir / "decision_memo.md"
+    out_kpi_json = out_dir / "kpi_summary.json"
+    out_kpi_csv = out_dir / "kpi_summary.csv"
+    out_kpi_memo = out_dir / "kpi_decision.md"
 
     loss_df.to_csv(out_loss, index=False, encoding="utf-8-sig")
     condition_metrics.to_csv(out_metrics, index=False, encoding="utf-8-sig")
     rank_chain.to_csv(out_chain, index=False, encoding="utf-8-sig")
+    kpi_table.to_csv(out_kpi_csv, index=False, encoding="utf-8-sig")
     if not sig_df.empty:
         sig_df.to_csv(out_sig, index=False, encoding="utf-8-sig")
         out_sig_summary.write_text(_build_significance_summary_markdown(sig_df), encoding="utf-8")
         out_sig_report.write_text(generate_summary_report(sig_df), encoding="utf-8")
         out_decision_memo.write_text(generate_decision_memo(sig_df, diagnostics), encoding="utf-8")
+    out_kpi_json.write_text(json.dumps(kpi_summary, ensure_ascii=False, indent=2), encoding="utf-8")
+    out_kpi_memo.write_text(generate_kpi_decision_memo(kpi_summary), encoding="utf-8")
     out_diag.write_text(json.dumps(diagnostics, ensure_ascii=False, indent=2), encoding="utf-8")
     out_json.write_text(json.dumps(json_summary, ensure_ascii=False, indent=2), encoding="utf-8")
 
@@ -295,6 +313,9 @@ def analyze_ceiling_effect(
         "rank_complement_chain": out_chain,
         "ceiling_effect_analysis": out_json,
         "ceiling_effect_diagnostics": out_diag,
+        "kpi_summary_json": out_kpi_json,
+        "kpi_summary_csv": out_kpi_csv,
+        "kpi_decision": out_kpi_memo,
     }
     if not sig_df.empty:
         outputs["condition_significance"] = out_sig

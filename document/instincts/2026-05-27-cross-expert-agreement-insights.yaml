@@ -1,0 +1,156 @@
+---
+id: cross-expert-agreement-is-random-baseline
+trigger: "クロスエキスパート特徴量（複数グループの末尾合意）を実装しようとしているとき"
+confidence: 0.92
+domain: ltr-feature-engineering
+source: data-exploration
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# クロスエキスパート合意はランダム水準を超えない（蒲田7）
+
+## 背景
+4エキスパート（2F_A/2F_N/3F_A/3F_N）が翌日の末尾top2を予測するとき、
+「複数グループが同じ末尾を予測していれば信頼度が高い」という直感がある。
+しかし蒲田7の147日間の実測データを検証したところ、
+この直感は統計的に支持されなかった。
+
+4グループがそれぞれ10末尾から2つを独立にランダム選択した場合の
+「ある末尾が2+グループに選ばれる確率」= 18.1%。
+実測値 = 18.2%。誤差0.1ppであり、ランダム基準と区別不能。
+
+## アクション
+- クロスエキスパート合意カウント（agree_count）をlag-1特徴量として実装しない
+- 「複数グループ合意 = 高信頼」という解釈を予測に使用しない
+- エキスパートごとのwithin-expert予測はそれぞれ独立した情報として扱う
+- 特徴量候補が「グループ間の相関」に依存する場合は、
+  まず合意率のランダム期待値と比較してから実装判断する
+
+## 例
+```python
+# ランダム期待値の計算（各グループがtop2を選ぶ = 2/10）
+p_pick = 2/10
+p2plus_random = 1 - (1-p_pick)**4 - C(4,1)*p_pick*(1-p_pick)**3
+# = 18.1%
+
+# 実測: agree_count>=2 の割合 = 18.2%
+# → 実測 ≒ ランダム（差異0.1pp, 特徴量価値なし）
+```
+
+---
+id: cross-expert-lag1-performance-signal-null
+trigger: "昨日の複数グループ合意末尾が翌日も良いか検証するとき"
+confidence: 0.90
+domain: ltr-feature-engineering
+source: data-exploration
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Lag-1クロスエキスパート合意 → 翌日パフォーマンスにシグナルなし
+
+## 背景
+「昨日2+グループが合意した末尾は今日も高パフォーマンス（streak）」という仮説を検証。
+147日間のtestperiodデータで計測した結果：
+
+- Lag-1 agree → 翌日avg_diff/機 Spearman r = -0.019（実質ゼロ）
+- Mann-Whitney p = 0.33（有意差なし）
+- agree_lag1=2: 1107円/台、agree_lag1=3: 969円/台（高合意でむしろやや低下）
+
+同日合意はhit@2が全レベル99%超で天井効果があり差別化不能。
+かつ同日他エキスパートの予測を使うのはデータ漏洩。
+
+## アクション
+- `cross_agree_lag1` 系の特徴量は実装をスキップ
+- 同日合意（agree_count当日値）も使用不可（漏洩）
+- 合意streak/anti-streakいずれも実装根拠なし
+
+## 例
+```python
+# 検証結果サマリ
+# agree_lag1=0: mean=1069円/台 (n=208)
+# agree_lag1=1: mean=1083円/台 (n=208)
+# agree_lag1=2: mean=1107円/台 (n=68)
+# agree_lag1=3: mean= 969円/台 (n=16)
+# Spearman r(lag1 → avg_diff) = -0.019
+# → 特徴量採用閾値(|r|>=0.05)未満、実装スキップ
+```
+
+---
+id: cross-expert-mild-anti-pattern
+trigger: "クロスエキスパート合意のanti-pattern特徴量を検討しているとき"
+confidence: 0.82
+domain: ltr-feature-engineering
+source: data-exploration
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# クロスエキスパート合意は微弱な負の自己相関を示すが実装不要
+
+## 背景
+Chi2検定: 昨日高合意(≥2) → 今日の合意が下がる傾向が p=0.025 で有意。
+Spearman r(lag1 agree → today agree) = -0.036（負）。
+
+ただし effect size が小さく（phi ≈ 0.06）、
+翌日パフォーマンスへの直接的な影響もなし（性能シグナルがない）。
+
+フロア別の傾向：
+- 2F_N ∩ 3F_N: 46.9%（ランダム37.8%より+9.1pp、最大）
+- 2F_A ∩ 2F_N: 32.7%（ランダム以下）→ BT機フロアと通常AT機は末尾戦略非共有
+
+## アクション
+- p値が有意でもeffect size(phi<0.10)なら実装スキップ
+- 「高合意翌日に回避」アンチパターン特徴量も不採用
+- 2F_AはBT/A-RT機のため他フロアと独立した末尾投入戦略と解釈
+
+## 例
+```python
+# Chi2クロス集計
+# lag1_high  today_high=0  today_high=1
+#   False         964          231
+#   True          230           35
+# Chi2=5.054, p=0.025  → 有意だが phi=sqrt(5.054/1460)=0.059
+# → effect size小さく実装不要と判断
+```
+
+---
+id: explore-before-cross-feature-implementation
+trigger: "複数モデル・グループ間の相関を特徴量にしようとしているとき"
+confidence: 0.95
+domain: ml-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# クロス特徴量は実装前に必ずランダム基準との比較から探索する
+
+## 背景
+「複数グループが同じ末尾を予測 → 信頼度UP」という直感は自然だが、
+「ランダムでも起きる頻度」と比較しないとノイズ特徴量を実装するリスクがある。
+
+本セッションでは探索先行により、実装前に「ランダム水準と区別不能」と判明し、
+実装コストをゼロに抑えた。アンチパターン確認も同時に完了。
+データ探索 → 判断 → スキップ、というフローが機能した事例。
+
+## アクション
+クロス特徴量候補に対して以下の順序で確認してから実装を決定する：
+
+1. ランダム期待値の計算（n_top/n_total の二項確率で期待値算出）
+2. 実測合意率 vs ランダム期待値を比較（差異が1pp以上あるか）
+3. Lag-1合意 → 翌日パフォーマンスのSpearman r計算
+4. 判断基準: |r| >= 0.05 かつ p < 0.10 を満たさなければスキップ
+
+## 例
+```
+クロス特徴量の実装判断フロー:
+Step1: 合意率計算 → ランダム期待値と比較
+   差異 < 1pp → 実装スキップ（蒲田7クロスエキスパートのケース）
+   差異 ≥ 1pp → Step2へ
+
+Step2: Lag-1 Spearman r計算
+   |r| < 0.05 → 実装スキップ
+   |r| ≥ 0.05 → Step3へ
+
+Step3: 方向とeffect size確認
+   phi < 0.10 → アンチパターンも実装スキップ
+   phi ≥ 0.10 → 実装検討
+```

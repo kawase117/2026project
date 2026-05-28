@@ -1,0 +1,213 @@
+---
+id: daily-topk-beats-fixed-threshold-low-baserate
+trigger: "when evaluating a binary classifier with base_rate below 5%"
+confidence: 0.92
+domain: ml-evaluation-design
+source: session-implementation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# base_rate が低い場合は固定閾値ではなく日次 Top-K 評価を使う
+
+## 背景
+
+Layer 0（is_kisyuzen 検知）を base_rate=3.45% で実装した際、
+CatBoost の予測確率が全件 0.03〜0.25 程度に収束し、
+閾値 0.3 でも 0.5 でも precision/recall = 0.0 となった。
+
+原因: well-calibrated な CatBoost は確率を base_rate に近い値で出力する。
+base_rate=3.45% なら真の機種全でも確率 0.1〜0.2 程度が上限になる。
+
+解決策: 「閾値以上なら推薦」から「その日の全機種の中で確率上位 K 機種を推薦」に変更。
+AUC=0.695 × 日次 Top-2 選択 で hit@2=17.8% vs random 6.8%（lift=2.62x）を達成。
+
+## アクション
+
+base_rate < 5% のモデル評価時：
+
+1. 固定閾値による precision/recall を捨てる
+2. 日次 Top-K 選択に切り替える
+
+```python
+for k in [1, 2, 3]:
+    hits = []
+    for date, group in eval_df.groupby('date'):
+        top_k = group.nlargest(k, 'proba')['entity'].tolist()
+        actuals = group[group['target'] == 1]['entity'].tolist()
+        hit = int(any(e in actuals for e in top_k))
+        hits.append(hit)
+    hit_at_k = np.mean(hits)
+    random_baseline = 1 - (1 - base_rate) ** k
+    lift = hit_at_k / random_baseline
+```
+
+3. random_baseline = 1 - (1 - base_rate)^k で計算
+4. lift > 1.5 なら実用的に有意と判断
+
+## 例
+
+```
+変更前:
+  precision@threshold=0.3 = 0.0  <- 確率が全件 0.3 未満で機能しない
+
+変更後:
+  hit@1 = 11.1%  random=3.5%  lift=3.22x
+  hit@2 = 17.8%  random=6.8%  lift=2.62x
+  hit@3 = 23.3%  random=10.0% lift=2.34x
+```
+
+---
+id: winrate-structural-break-at-80pct
+trigger: "when setting win_rate threshold to define 機種全 (all-machine high-setting event)"
+confidence: 0.88
+domain: ml-target-engineering
+source: session-data-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 機種全の win_rate 閾値は 80% に構造的な切り目がある
+
+## 背景
+
+蒲田七の機種名別日次 win_rate（17,346件）で 5% バケット集計を行い、
+avg_diff と diff>0率 の構造変化を確認した結果：
+
+- 60〜69%: diff>0率 92〜94%、min_diff が負のケースあり
+- 70〜74%: diff>0率 100% だが 75% で min_diff=-500
+- 80%〜:   diff>0率 99〜100%、min_diff >= 220（全件確実にプラス）
+
+特に注意が必要な点：
+- win_rate=67% に 826件のスパイク
+  -> 3台機種の 2/3 勝利（2/3=66.7%）が原因
+  -> min_diff=-1,267 という負値が混入
+  -> 2台低設定 + 1台高設定が機種全として誤ラベルされるアーティファクト
+
+80%+ はこのアーティファクトの影響を受けない最低ラインである。
+
+## アクション
+
+機種全ラベルの閾値設定時：
+- 70%: 全件プラスだが 75% でmin_diff=-500（不十分）
+- 80%: min_diff=220+、全件プラス確認（推奨）
+- 100%: 最クリーンだが件数が少なすぎる（2.2%）
+
+機種サイズ起因スパイクの回避策：
+HAVING COUNT(*) >= 4 を使うことで 3台以下の機種（67%=2/3が混入）を除外できる。
+
+## 例
+
+```
+win_rate=67%（3台機種の2勝）:
+  件数=826, avg_diff=1,272, min_diff=-1,267  <- 機種全でない日が混入
+
+win_rate=80%（最低4台中3勝以上）:
+  件数=727, avg_diff=1,903, min_diff=+220    <- 全件プラス確認
+
+-> 閾値 80% が品質保証として最低ライン
+```
+
+---
+id: 2fn-segment-needs-special-treatment
+trigger: "when 2F_N segment shows lift below 1.0 in multiple experiments"
+confidence: 0.82
+domain: ml-hierarchical-segmentation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 2F_N セグメントは汎用特徴量では機能しない
+
+## 背景
+
+4セグメント（2F_A, 2F_N, 3F_A, 3F_N）で複数回実験し、
+2F_N（2F の AT系のみ）が一貫して hit@1 < random を示した：
+
+  2F_N is_top3 hit@3 = 0.267 vs random 0.274（lift=0.97）
+  2F_N is_top5 hit@1 = 0.156 vs random 0.163（lift=0.95）
+
+セグメント定義の補足（machine_type_common.py による）:
+- "A" セグメント = jug_flag OR hana_flag OR bt_flag == 1（A型 + ハナハナ + BT）
+- "N" セグメント = 上記フラグ全て0 = AT系のみ（BT は含まない）
+
+2F_N の特徴：
+- 最大セグメント（約33機種/日）
+- AT系のみで機種ごとのキャラクターが多様
+- 汎用特徴量（weekday_prior_top1_rate, lag1_rank_pct など）が捉えにくい
+
+注意: 評価日数が少ない（n=5）場合は偶然 lift=1.5 以上になることがある。
+90日評価で random 以下が確定してから判断すること。
+
+## アクション
+
+2F_N を扱う場合の優先順序：
+
+Option A（除外）: 推薦対象から外す（最優先）
+Option B（分割）: AT系を機種タイプ（液晶/通常/ART等）でさらに細分化して独立モデルを訓練
+Option C（特徴量追加）: machine_type 別 rolling win_rate などを追加
+
+まず Option A で運用し、データが増えたら Option B を検討。
+
+## 例
+
+```
+2F_N lift 推移:
+  n_eval_days= 5: hit@3=0.40, lift=1.54  <- 少サンプルで偶然良く見えた
+  n_eval_days=90: hit@3=0.27, lift=0.97  <- 本来の性能（random以下確定）
+```
+
+---
+id: two-layer-complementary-signals
+trigger: "when combining Layer 0 (機種全 detection) and Layer 1 (segment rank) for recommendations"
+confidence: 0.85
+domain: ml-hierarchical-architecture
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Layer 0 と Layer 1 は混合せず独立した信号として別々に提示する
+
+## 背景
+
+Layer 0（is_kisyuzen）と Layer 1（セグメント内 top-K）を
+final_score = layer1_proba * (1 + 0.5 * layer0_proba) で混合したが、
+2つの信号は性質が根本的に異なる：
+
+Layer 0: 稀な高品質日検知（機種全）、hit@2=17.8%（6日に1日）
+Layer 1: 日次相対パフォーマンス、hit@3=83.3%（5日に4日）
+
+混合スコアでは Layer 1 の hit 率が高いため Layer 0 の信号が薄れ、
+評価指標が何を測っているか不明確になる。
+
+## アクション
+
+推薦システムの出力設計：
+
+```python
+daily_recommendation = {
+    'date': today,
+    # Layer 0: 機種全候補（稀だが高確信度）
+    'kisyuzen_candidates': layer0_top2,
+    # Layer 1: セグメント別高ランク候補（頻繁・安定）
+    'segment_top': {
+        '2F_A': layer1_2FA_top1,
+        '3F_A': layer1_3FA_top1,
+        '3F_N': layer1_3FN_top1,
+        # 2F_N は除外（random以下）
+    }
+}
+```
+
+混合スコアは使わない。2つの信号をユーザーが用途に応じて参照する設計にする。
+
+## 例
+
+```
+Layer 0 単独: hit@2=17.8%（6日に1日は機種全を捕捉）
+Layer 1 単独: hit@3=83.3%（5日に4日はセグメント top3 を捕捉）
+
+混合スコアの問題:
+- 機種全でない日の Layer 0 top-2 が Layer 1 の順位を歪める
+- 2つの信号の独立した価値が隠れる
+```
+
+---

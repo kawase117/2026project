@@ -1,0 +1,38 @@
+======================================================================
+CEILING EFFECT EVALUATION: CONDITION SIGNIFICANCE SUMMARY
+======================================================================
+
+✓ SIGNIFICANT IMPROVEMENTS (BH p < 0.05):
+  [weekday              / Saturday       ] rank2_rescue_on_miss1    : Δ = +0.7000 (CI [+0.4000, +1.0000]), Cohen's d = 1.807 (large)
+  [weekday              / Wednesday      ] rank2_rescue_on_miss1    : Δ = +0.5980 (CI [+0.2059, +0.8824]), Cohen's d = 1.389 (large)
+  [pred_span_quartile   / Q1             ] rank2_rescue_on_miss1    : Δ = +0.4678 (CI [+0.2278, +0.7031]), Cohen's d = 1.068 (large)
+  [pred_span_quartile   / Q1             ] hit_at_2                 : Δ = +0.4074 (CI [+0.0741, +0.3704]), Cohen's d = 1.098 (large)
+  [anomaly_direction    / normal         ] rank2_rescue_on_miss1    : Δ = +0.3933 (CI [+0.1633, +0.6167]), Cohen's d = 0.845 (large)
+  [anomaly_direction    / low_anomaly    ] hit_at_2                 : Δ = +0.2500 (CI [+0.0833, +0.4167]), Cohen's d = 0.799 (medium)
+  [weekday              / Monday         ] hit_at_2                 : Δ = +0.2167 (CI [+0.1167, +0.3167]), Cohen's d = 0.738 (medium)
+  [weekday              / Wednesday      ] hit_at_2                 : Δ = +0.2000 (CI [+0.1000, +0.3167]), Cohen's d = 0.650 (medium)
+  [anomaly_direction    / normal         ] hit_at_2                 : Δ = +0.1280 (CI [+0.0933, +0.1627]), Cohen's d = 0.510 (medium)
+  [weekday              / Friday         ] hit_at_2                 : Δ = +0.1111 (CI [+0.0317, +0.1905]), Cohen's d = 0.496 (small)
+  [weekday              / Saturday       ] hit_at_2                 : Δ = +0.1111 (CI [+0.0317, +0.1905]), Cohen's d = 0.496 (small)
+
+✗ SIGNIFICANT DEGRADATIONS (BH p < 0.05):
+  [anomaly_direction    / low_anomaly    ] loss_value               : Δ = -2500.0000 (CI [-4287.8125, -949.7917]), Cohen's d = -0.795 (medium)
+  [anomaly_direction    / normal         ] loss_value               : Δ = -1047.7333 (CI [-1622.6800, -513.6000]), Cohen's d = -0.241 (small)
+  [weekday              / Saturday       ] loss_value               : Δ = -928.5714 (CI [-1746.1111, -242.8175]), Cohen's d = -0.432 (small)
+
+~ TRENDS (raw p < 0.05, not BH-significant):
+  [weekday              / Sunday         ] loss_value               : Δ = -1211.1111, p = 0.0191, p_BH = 0.0523
+  [weekday              / Monday         ] loss_value               : Δ = -800.0000, p = 0.0220, p_BH = 0.0565
+  [weekday              / Tuesday        ] hit_at_2                 : Δ = +0.0833, p = 0.0253, p_BH = 0.0611
+  [pred_span_quartile   / Q2             ] rank2_rescue_on_miss1    : Δ = +0.4091, p = 0.0320, p_BH = 0.0730
+  [weekday              / Thursday       ] hit_at_2                 : Δ = +0.0952, p = 0.0339, p_BH = 0.0731
+  ... and 1 more trend(s)
+
+SUMMARY:
+  Total condition-difficulty-metric combinations tested: 48
+  Significant improvements (BH): 11
+  Significant degradations (BH): 3
+  Trends (raw < 0.05): 6
+  Tests with p < 0.05 (raw): 20
+  Average Cohen's d: 0.400
+======================================================================

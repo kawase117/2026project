@@ -1,0 +1,85 @@
+{
+  "db_path": "db\\マルハンメガシティ2000-蒲田7.db",
+  "prediction_date": "2026-05-23",
+  "alpha": 5.0,
+  "random_state": 42,
+  "model_type": "xgb",
+  "gpu_backend": "auto",
+  "segment_mode": "global",
+  "segment_blend_weight": 1.0,
+  "prior_blend_weight": 0.0,
+  "min_segment_days": 21,
+  "min_segment_rows": 300,
+  "backend_used_by_target": {
+    "is_rank_1": "cuda",
+    "is_top_2": "cuda",
+    "is_top_3": "cuda",
+    "is_top_5": "cuda"
+  },
+  "segment_models_by_target": {
+    "is_rank_1": 0,
+    "is_top_2": 0,
+    "is_top_3": 0,
+    "is_top_5": 0
+  },
+  "segment_prediction_rows_by_target": {
+    "is_rank_1": 0,
+    "is_top_2": 0,
+    "is_top_3": 0,
+    "is_top_5": 0
+  },
+  "recommend_k": 3,
+  "enforce_floor_diversity": true,
+  "min_confidence_margin": 0.02,
+  "confidence_margin_top1_top2": 0.03169252350926399,
+  "skip_suggested": 0,
+  "feature_count": 161,
+  "target_thresholds": {
+    "is_rank_1": 0.02179018408060074,
+    "is_top_2": 0.05659251660108566,
+    "is_top_3": 0.05428217723965645,
+    "is_top_5": 0.09346310794353485
+  },
+  "audit_report": {
+    "row_count": 21108,
+    "duplicate_date_machine_name_rows": 0,
+    "missing_machine_count_rows": 0,
+    "missing_avg_diff_rows": 0,
+    "missing_total_games_rows": 0,
+    "date_parse_failed_rows": 0,
+    "min_date": "2025-07-07",
+    "max_date": "2026-05-22",
+    "unique_machine_names": 114,
+    "new_machine_rows": 114,
+    "count_increase_rows": 46,
+    "count_decrease_rows": 126,
+    "segment_floor2_counts": {
+      "2F": 12146,
+      "3F": 8962
+    },
+    "segment_floor_type4_counts": {
+      "2F_N": 9683,
+      "3F_A": 4863,
+      "3F_N": 4099,
+      "2F_A": 2463
+    },
+    "machine_master_join_miss_rate": 0.0
+  },
+  "top10_machine_names": [
+    "とある科学の超電磁砲2",
+    "かぐや様は告らせたい",
+    "革命機ヴァルヴレイヴ",
+    "からくりサーカス",
+    "七つの魔剣が支配する",
+    "アズールレーン THE ANIMATION",
+    "L麻雀物語",
+    "新鬼武者3",
+    "ルパン三世 大航海者の秘宝",
+    "無職転生 ～異世界行ったら本気だす～"
+  ],
+  "recommended_machine_names": [
+    "とある科学の超電磁砲2",
+    "かぐや様は告らせたい",
+    "革命機ヴァルヴレイヴ"
+  ]
+}

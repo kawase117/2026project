@@ -1,0 +1,138 @@
+---
+id: bisect-identical-results-means-zero-importance
+trigger: "when two different feature sets in A/B test produce identical walk-forward hit@2 scores"
+confidence: 0.75
+domain: ml-feature-engineering
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# A/Bテストで hit@2 が同一なら「v2比では無効」と診断する（ゼロ重要度ではない）
+
+## 背景（2026-05-26 訂正）
+digit_lag_v3a（cluster_right/left_diff のみ）と
+digit_lag_v3b（weekday_roll4_total_diff_coins のみ）を walk-forward で比較した結果、
+両者が全 expert でほぼ同一の hit@2 を出力した。
+
+【元の診断】「ゼロ重要度」→ **部分的に誤り**
+
+ceiling_effect フレームワークによる再評価（2026-05-26）:
+- v3a vs v1：sig_imp=11、sig_wrs=0 → CONDITIONAL+（v1 より有意に改善）
+- v3b vs v1：sig_imp=11、sig_wrs=0 → CONDITIONAL+（v1 より有意に改善）
+- v3a vs v2_withinexpert：sig_imp=0、sig_wrs=0 → CONDITIONAL（差なし）
+- v3b vs v2_withinexpert：sig_imp=0、sig_wrs=0 → CONDITIONAL（差なし）
+
+「ゼロ重要度」ではなく「v1 を超える力はあるが v2 を超えられない」が正しい診断。
+元の評価が hit@2=99%+ の天井効果環境で行われており、v1 比の差が検知できなかったことが原因。
+
+## 修正アクション
+hit@2 同一パターンが出たら **v2_withinexpert を基準に再評価する**:
+- vs v1 で CONDITIONAL+ でも vs v2 で sig_imp=0 なら「v2 代替不可」と判定
+- 採用可否の最終判断には ceiling_effect フレームワークの BH 補正テストを使う
+
+## 例
+v3a vs v1: sig_imp=11 ← 改善あり（v1 を超える力はある）
+v3a vs v2: sig_imp=0  ← v2 越えられず（v2 が天井）
+結論: v3a は v2 に追加しても効果なし。v2_withinexpert を維持する。
+
+---
+id: ndcg-loss-prefers-within-group-relative-features
+trigger: "when designing features for XGBRanker with rank:ndcg objective"
+confidence: 0.55
+domain: ml-feature-engineering
+source: session-reasoning
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# NDCG損失での相対値特徴量（z-norm/pctrank）は v1 比では有効だが v2 比では無効
+
+## 背景（2026-05-26 訂正）
+XGBRanker の `rank:ndcg` 損失はグループ内順位を最適化するため、
+理論的には絶対値より within-group 相対値特徴量（z-norm, pctrank）が有効と予測した。
+
+**実測結果（ceiling_effect フレームワーク、2026-05-26）:**
+
+| variant | vs v1 decision | v1 sig_imp | vs v2 decision | v2 sig_imp |
+|---------|---------------|-----------|----------------|-----------|
+| v4_znorm（z-norm + pctrank） | CONDITIONAL+ | 14 | CONDITIONAL | 0 |
+| v4a_znorm_only | CONDITIONAL+ | 16 | CONDITIONAL | 0 |
+| v4b_pctrank_only | CONDITIONAL+ | 12 | CONDITIONAL | 0 |
+
+v1（絶対値特徴量）との比較では有意に改善するが、
+v2_withinexpert との比較では sig_imp=0 / sig_wrs=0 と差が検出されない。
+
+**解釈**: v2_withinexpert の「is_top_2 をエキスパート内で計算する」設計が
+グループ内相対情報を学習ターゲット側で既に与えており、
+特徴量側の相対変換の追加効果が消える。
+
+## 修正アクション
+NDCG ベース LTR で z-norm / pctrank 特徴量を追加検討するときは:
+1. ベースラインが v1（グローバル is_top_2）なら効果あり（16 sig_imp まで）
+2. ベースラインが v2_withinexpert（エキスパート内 is_top_2）なら効果なし
+3. is_top_2 のスコープを先に正しく設定することが相対特徴量より重要
+
+## 例
+v4a_znorm_only vs v1: sig_imp=16 ← 有効に見える
+v4a_znorm_only vs v2: sig_imp=0  ← v2 があれば不要
+→ 相対特徴量を追加するより is_top_2 スコープの設計を先に正す
+
+---
+id: neighbor-roll-diff-redundant-with-existing-lags
+trigger: "when proposing cross-digit neighbor features (right/left adjacent last_digit) for LTR"
+confidence: 0.85
+domain: ml-feature-engineering
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 隣接末尾のroll差分特徴量はXGBoostが既存lagから暗黙的に学習済みで冗長
+
+## 背景
+`cluster_right_diff = roll7(digit+1) - roll7(digit)` を追加したが、
+XGBoost は walk-forward で当該特徴量に実質ゼロの importance を割り当てた。
+
+理由の推測:
+- モデルは各 entity_key の lag/roll を独立に受け取っている
+- 学習時に「末尾6が強い日に末尾7・8も強い」という交互作用を
+  tree の分岐として暗黙的に学習できる
+- right/left_diff という明示的な差分は既に学習済みの情報の二重表現になる
+
+## アクション
+隣接末尾の差分特徴量は「モデルが自力で学べる交互作用」として追加しない。
+モデルが学べないのは「グループ外の情報」「時間的に遠い情報」「欠損が多い情報」のみ。
+hall-digit-level lag（aggregate_mode 内で計算）はこれに該当するため有効（MI rank1 = 0.01237）。
+
+## 例
+効果なし: cluster_right_diff（隣接末尾との roll7 差分）→ feature importance ≈ 0
+効果あり: lag7_hall_digit_diff（ホール横断の末尾別 7日前実績）→ MI rank1 = 0.01237
+
+---
+id: weekday-roll4-redundant-with-expanding-weekday-rate
+trigger: "when proposing weekday-specific rolling average (last N same-weekday observations) for LTR"
+confidence: 0.83
+domain: ml-feature-engineering
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 同曜日直近N回rolling平均はweekday_prior_top2_rateと役割重複かつノイズ大
+
+## 背景
+`weekday_roll4_total_diff_coins`（同曜日直近4回の total_diff_coins 平均）を追加したが
+walk-forward で feature importance ≈ 0 だった。
+
+原因:
+1. 既存の `weekday_prior_top2_rate` が同曜日の is_top_2 拡張累積平均を計算済み
+2. N=4 では平均28日分のサンプルしかなく分散が大きい（roll7 の4〜6倍不安定）
+3. total_diff_coins の weekday rolling は is_top_2 の weekday rolling と高相関
+
+## アクション
+同曜日パターンを捕捉したい場合:
+- `weekday_prior_top2_rate`（既存）を使う
+- `weekday_delta_from_mean = weekday_prior_top2_rate - prior_top2_rate`（既存）を使う
+新たに同曜日rolling平均を追加しても XGBoost は既存特徴量を優先する。
+
+## 例
+追加した特徴量: weekday_roll4_total_diff_coins（N=4、サンプル約4週分）
+既存特徴量:    weekday_prior_top2_rate（拡張平均、サンプル全期間）
+→ 後者の方が安定したシグナル → 前者は冗長

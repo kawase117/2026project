@@ -1,0 +1,92 @@
+---
+id: test-period-standard-90d
+trigger: "予測モデルの評価ウィンドウ・テスト期間を設定・変更するとき"
+confidence: 0.92
+domain: ml-evaluation
+source: codex-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# テスト期間の評価標準は90日（recent_90d_standard）
+
+## 背景
+2026年全期間をテスト期間としていたため、2026年の最新トレンドが埋もれていた。
+CODEXとの検討で60日・90日・全期間の比較を実施した結果、90日が採用された。
+- full period(147日): Precision/F1=0.858, Hit@2=0.993
+- last 90d: Precision/F1=0.865, Hit@2=0.992
+- last 60d: Precision/F1=0.871, Hit@2=0.992
+Hit@2が90d/60dで同点のため、expert間バランス（振れ幅の小ささ）で90日を選択。
+
+## アクション
+- 運用判断の主評価指標: recent_90d_standard を使用する
+- 60日は補助指標（ドリフト検知用）として併用する
+- 全期間は回帰監視用として保持するが主判断には使わない
+- 実装場所: tail_ltr_split_rule_nextday_gpu.py / tail_time_adaptive_ltr_poc_improved.py
+  --test-period-split-name のデフォルトを recent_90d_standard に変更済み
+
+## 例
+expert別F1の比較（90日を選んだ理由）:
+| expert | full | 90d  | 60d  |
+|--------|------|------|------|
+| 2F_A   | 0.857| 0.878| 0.867|
+| 2F_N   | 0.827| 0.839| 0.867|
+| 3F_A   | 0.854| 0.844| 0.842|
+| 3F_N   | 0.895| 0.900| 0.908|
+60日は2F_N/3F_Nは良いが3F_Aが落ちる。90日がexpert間バランス最良。
+
+---
+id: evaluation-window-change-no-immediate-top3-effect
+trigger: "評価ウィンドウを変更した後、予測Top3が変わったかどうかを確認するとき"
+confidence: 0.88
+domain: ml-evaluation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 評価ウィンドウの変更は予測Top3を即座には変えない場合がある
+
+## 背景
+90日標準化後に2026-05-27の再予測を実行したところ、全4セグメントで
+旧予測と新予測のTop3が完全に一致した。
+評価ウィンドウは「モデルを選ぶ基準」であり、選ばれたモデルが同じなら
+予測Top3も同じになる。効果は長期的な蓄積で現れる。
+
+## アクション
+- 評価ウィンドウ変更の即日改善を期待しない
+- 変化の有無はモデル選択（recent_60d vs full_2025）が変わったかどうかで確認する
+- 効果検証は翌日予測と実績の継続突き合わせで蓄積する
+- 2026-05-28の翌日予測（combined: 0,4,7,9,1）がその最初の検証対象
+
+## 例
+2026-05-27 再予測結果（変化なし）:
+旧: 2F_N=3,0,7 / 3F_N=9,7,2 / 3F_A=7,5,4 / 2F_A=5,9,3
+新: 2F_N=3,0,7 / 3F_N=9,7,2 / 3F_A=7,5,4 / 2F_A=5,9,3
+
+---
+id: retroactive-prediction-comparison-equal-denominator
+trigger: "旧予測と新予測を同一日の実績で比較するとき"
+confidence: 0.85
+domain: prediction-evaluation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 遡及比較は「分母（セグメント数）を揃えてから」行う
+
+## 背景
+2026-05-24の旧予測は2F_Aが旧版のため除外（3セグメント・分母9）だったが、
+新予測は4セグメント（分母12）で比較してしまい、公平な比較にならなかった。
+分母が異なると一致率の比較自体が意味を失う。
+
+## アクション
+遡及比較（retroactive comparison）の手順：
+1. 旧予測と新予測で「使用セグメント数が同じか」を確認する
+2. 異なる場合は「共通セグメントのみ」で比較する
+3. 除外理由（旧版制約など）を明記する
+4. 分母が異なる比較は「参考値」として別扱いする
+
+## 例
+2026-05-24 正しい比較（共通3セグメント: 2F_N/3F_N/3F_A）:
+旧（9分母）: 5/9
+新（9分母に揃えた場合）: 1/9（2F_Aを除外）
+→ 旧が優れていた（4→9分母の不公平比較を修正した結果）

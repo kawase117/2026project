@@ -24,6 +24,12 @@ def main() -> int:
     parser.add_argument("--seed", type=int, default=20260520, help="Bootstrap seed.")
     parser.add_argument("--min-paired", type=int, default=10, help="Min paired rows for Wilcoxon.")
     parser.add_argument("--min-unpaired", type=int, default=5, help="Min rows per side for Mann-Whitney.")
+    parser.add_argument(
+        "--catastrophic-threshold",
+        type=float,
+        default=15000.0,
+        help="Loss threshold for catastrophic miss rate KPI.",
+    )
     args = parser.parse_args()
 
     baseline = str(args.baseline).strip() or None
@@ -38,6 +44,7 @@ def main() -> int:
         output_dir=args.output_dir,
         baseline_topk_csv=baseline,
         stats_config=cfg,
+        catastrophic_threshold=float(args.catastrophic_threshold),
     )
     for name, path in outputs.items():
         print(f"{name}: {path}")

@@ -1,0 +1,184 @@
+---
+id: exploration-coarse-to-fine
+trigger: "パチスロML予測で、特徴量・グループ化戦略・ハイパラを探索するとき"
+confidence: 0.90
+domain: ml-exploration-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ML探索は粗く網羅的→細かく限定的の段階的絞り込みを原則
+
+## 背景
+制限されたリソース（計算時間、実験反復数）の中で、
+探索空間全体を効率的にカバーするため、
+段階的な絞り込み戦略が必須。
+無計画に細かい最適化から始めると、
+全体像を見落とし、局所最適解に陥る。
+
+pachinko-analyzer Phase 5-6 での実証：
+- Phase 5（粗い探索）: 全ホール統合 vs ホール別別々モデル vs 機種別グループ化
+  → 「機種別グループ化が最適」と判定
+- Phase 6A（細かい探索）: 機種別グループ内で特徴量追加（digit_lag, total_diff_coins_deficit）
+  → digit_lag_v1-v2, catboost_gpu_wf による段階最適化
+- Phase 6B（微調整）: ハイパーパラメータ（lambda, learning_rate等）の精密調整
+
+## アクション
+常に以下の順序で探索する：
+
+### Step 1: グループ化戦略（粗い探索）
+複数の候補グループ化を同時に試す：
+- 全ホール統合
+- ホール別別々モデル
+- 機種別グループ化
+- 末尾別グループ化
+- 曜日別グループ化
+
+各々で AUC/NDCG などのベースラインを比較。最適グループ化を確定。
+
+### Step 2: 特徴量追加（中程度の探索）
+確定したグループ化の下で、候補特徴量を段階的に追加：
+- 元々の特徴量セット（baseline）
+- + lag 特徴量（[2,6,7,14]など）
+- + ホール固有差分（total_diff_coins_deficit）
+- + 機種内の相互作用
+
+各レイヤーで walk-forward 実測で効果測定。
+有効な特徴量だけを次に進める。
+
+### Step 3: ハイパーパラメータ微調整（細かい探索）
+最適特徴量セット下で、lambda/learning_rate/tree_depth などを精密探索。
+グリッドサーチまたはランダムサーチで最高性能を目指す。
+
+## 重要な原則
+
+1. **各段階で 1 つの変数だけ変える**
+   - グループ化 → 特徴量 → ハイパラ の順序を守る
+   - 複数を同時に変えると、どちらが効いているか不明になる
+
+2. **必ず walk-forward で検証する**
+   - CV AUC だけでは不十分（過学習、特徴量選択バイアス）
+   - 予測スパンなども同時に確認
+
+3. **ベースラインを明示して保管**
+   - 各段階のベストモデルを記録
+   - 改善前後で統計有意性を確認
+
+4. **逆効果の特徴量は即座に棄却**
+   - univariate cv_auc < 0.50 は危険シグナル
+   - walk-forward で改善なし → 採用しない
+
+## 例
+
+```python
+# pachinko-analyzer での実装例
+
+# === Phase 5: グループ化戦略（粗い）===
+grouping_strategies = [
+    "all_halls_unified",          # AUC 0.540
+    "hall_specific",              # AUC 0.564 ← best
+    "machine_type_grouped",       # AUC 0.565 ← best
+    "last_digit_grouped",         # AUC 0.528
+    "weekday_grouped",            # AUC 0.485
+]
+# → 機種別（machine_type_grouped）を確定
+
+# === Phase 6A: 特徴量追加（中程度）===
+# baseline: AUC 0.565
+features_v1 = baseline_features
+# → digit_lag_v1: AUC 0.571 ✓ 改善
+features_v2 = baseline_features + digit_lag + total_diff_coins_deficit
+# → digit_lag_v2: AUC 0.579 ✓ さらに改善
+features_v3 = features_v2 + machine_type_interaction
+# → digit_lag_v3: AUC 0.576 ✗ 過学習、採用しない
+
+# 最終採用: digit_lag_v2 (features_v2)
+
+# === Phase 6B: ハイパラ微調整（細かい）===
+best_params = {
+    "lambda": 1.25,              # grid search: [0.5, 0.75, 1.0, 1.25, 1.5]
+    "learning_rate": 0.01,       # grid search: [0.005, 0.01, 0.02]
+    "max_depth": 4,              # grid search: [3, 4, 5]
+    "subsample": 0.8,
+}
+# → final AUC: 0.583 ✓ 最高性能
+```
+
+---
+id: feature-selection-univariate-screening
+trigger: "EDA で forward selection した特徴量を ML モデルに適用するとき"
+confidence: 0.88
+domain: ml-feature-engineering
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# EDA forward selection 結果 ≠ XGBRanker walk-forward での有効性
+
+## 背景
+EDA（univariate 相互作用分析）と ML（walk-forward 実測）の異なる観点：
+
+EDA forward selection では：
+- 各特徴量単独の相互作用を評価
+- 「他の特徴量との相乗効果」を含む
+
+ML walk-forward では：
+- モデル最適化後の実測 AUC/NDCG で評価
+- 過学習・特徴量選択バイアスをカバー
+
+**具体例（pachinko-analyzer digit_lag_v5）**:
+- EDA で lag15 が forward selection rank2 に選出（D3モデルが微増）
+- ただし univariate cv_auc=0.4984（< 0.50, 負のシグナル）
+- walk-forward で digit_lag_v5 を試験 → 2F_N hit@2 -0.0069 で劣化
+- 結論: EDA の「相互作用込み効果」が XGBRanker では再現されず
+
+## アクション
+特徴量採択の最終判定は必ず walk-forward 実測で行う：
+
+1. **univariate cv_auc で最初の篩（ふるい）**
+   - cv_auc > 0.50: 候補として保持
+   - cv_auc <= 0.50: 危険シグナル、採用非推奨
+
+2. **EDA forward selection は「候補スクリーニング」のみ**
+   - 有望な特徴量のショートリストを作成
+   - 最終採択ではない
+
+3. **walk-forward で改善確認**
+   - ベースライン vs 新特徴量の統計有意性を測定
+   - 複数回実行して安定性を確認
+   - 一貫性のない改善は採用しない
+
+4. **ドメイン知識の相乗効果を確認**
+   - 「この特徴量は理論的に有効なはず」という期待は検証対象
+   - 実測が反映するまで採用しない
+
+## 例
+```python
+# 特徴量採択の決定フロー
+
+feature_lag15 = {
+    "eda_forward_rank": 2,           # 有望に見える
+    "univariate_cv_auc": 0.4984,    # < 0.50 → 危険シグナル ⚠️
+    "eda_interaction_effect": "+3%", # 相互作用あり（局所的）
+}
+
+# === Step 1: 篩 ===
+if univariate_cv_auc < 0.50:
+    print("危険シグナル。walk-forward で厳密に検証")
+    # → walk-forward 実行
+
+# === Step 2: walk-forward 結果 ===
+wf_result = {
+    "2F_N hit@2_delta": -0.0069,     # 劣化 ✗
+    "3F_A hit@2_delta": -0.0045,     # 劣化 ✗
+    "consistency": "negative",        # 一貫して悪い
+}
+
+# === Step 3: 判定 ===
+if wf_result["consistency"] == "negative":
+    decision = "採用しない（EDA forward selection 無視）"
+else:
+    decision = "採用"
+```
+
+---

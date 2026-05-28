@@ -1,0 +1,206 @@
+---
+id: floor2-split-beats-floor-atype4-split
+trigger: "機種別MLでセグメント設計を変更するとき / 2F_Aの機種数不足でbase_rateが不安定なとき"
+confidence: 0.90
+domain: ml-segment-design
+source: session-experiment
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 4分割（2F_A/2F_N/3F_A/3F_N）→ 2分割（2F/3F）でlift@1が大幅改善
+
+## 背景
+
+機種別ML v2 では当初 floor × atype の4セグメントを使用していた。
+2F_A の機種数が少ない（≈10台）ためbase_rateが高止まりし学習が不安定だった。
+フロア二分割（2F / 3F）に変更して各セグメントの機種数を増やした結果：
+
+- 2F lift@1: 1.12 → 1.67（大幅改善）
+- 3F lift@1: 1.47 → 1.53（安定維持）
+- combined hit@1: 0.1667 → 0.1889、AUC: 0.578 → 0.584（90日評価）
+
+## アクション
+
+機種別MLセグメント設計では、A型/非A型の軸はセグメント内機種数が十分な場合のみ有効。
+機種数が不足する場合はフロアのみ（2F / 3F）で2分割する。
+
+判断基準：
+- セグメント内ユニーク機種数 < 15 → 分割を粗くする（2分割に戻す）
+- セグメント内ユニーク機種数 ≥ 15 → 4分割を維持してよい
+
+## 例
+
+```python
+# Before: 4分割
+SEGMENT_KEYS = ("2F_A", "2F_N", "3F_A", "3F_N")
+work["segment_key"] = work["segment_floor2"] + "_" + work["segment_type2"]
+
+# After: 2分割（機種数不足対策）
+SEGMENT_KEYS = ("2F", "3F")
+work["segment_key"] = work["segment_floor2"]
+```
+
+---
+id: auc-and-hit1-diverge-with-feature-overload
+trigger: "LTRモデルに特徴量を大量追加したときAUCが改善するがhit@1が悪化するとき"
+confidence: 0.93
+domain: ml-feature-engineering
+source: session-experiment
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 特徴量過多でAUCとhit@1が逆方向に動く
+
+## 背景
+
+baseline6（6特徴量）→ rich_all（130+特徴量）に変更した結果：
+
+- combined AUC: 0.584 → 0.615（+0.031）✓
+- combined hit@1: 0.189 → 0.122（-0.067）✗
+- combined lift@1: 1.885 → 1.316（-0.569）✗
+
+AUCは「全体的な順序付け精度」を測るため多くの特徴量で改善しやすい。
+一方 hit@1 は「rank1の台が実際にtop3か」という点精度であり、
+多数の弱いシグナルがrank1の確信度を希薄化させ悪化する。
+
+## アクション
+
+XGBRankerで特徴量を追加する際は AUC だけでなく hit@1 を必ず同時に確認する。
+AUC改善 + hit@1悪化 は「過剰特徴量による rank1 確信度の希薄化」のサインであり、
+次のアクションは rich_all から重要特徴量を絞った中間セットを構築すること。
+
+段階：
+1. rich_all の feature_importance 上位10-15を抽出
+2. そのサブセットで再評価（AUCとhit@1が共に改善するか確認）
+3. 改善しない場合は baseline6 に戻り、問題設定の再定義を検討
+
+## 例
+
+```
+feature_count:    6    →  130+   →  目標: 10-15（sweet spot）
+AUC:          0.584   →  0.615  →  0.615 維持したい
+hit@1:        0.189   →  0.122  →  0.189 以上に戻したい
+```
+
+---
+id: floor-segment-auc-divergence-3f-vs-2f
+trigger: "機種ML rich_all評価でセグメント別AUCが大きく異なるとき"
+confidence: 0.87
+domain: ml-segment-design
+source: session-experiment
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 3FはAUC大幅改善、2Fはflat（rich_all適用時）
+
+## 背景
+
+rich_all（130+特徴量）を適用したときのセグメント別AUC変化：
+
+- 2F: 0.5857 → 0.5845（-0.001、実質ゼロ）
+- 3F: 0.5809 → 0.6520（+0.071、大幅改善）
+
+2Fには特徴量追加が効かず、3Fには有効な特徴量が存在することを示している。
+2Fと3Fでホールの設定投入ロジックが異なる可能性を示唆する。
+
+## アクション
+
+rich_all評価後は必ずセグメント別AUCを確認すること。
+セグメント間でAUC改善幅が大きく異なる場合：
+1. 改善したセグメント（3F）の feature_importance 上位15を調査
+2. そのセグメント専用のfeature subsetを構築して hit@1 も確認
+3. 改善しないセグメント（2F）は別のアプローチ（target再定義など）を検討
+
+## 例
+
+```
+3F: rich_all AUC 0.652 → top特徴量を絞った専用セット構築へ
+2F: rich_all 効果なし → target を is_top3 → win_rate threshold（絶対基準）へ変更を検討
+```
+
+---
+id: setting-cycle-hypothesis-rejected-kamata7
+trigger: "機種別MLで days_since_last_rank1 を重要特徴量として期待しているとき"
+confidence: 0.88
+domain: ml-hypothesis-validation
+source: session-experiment
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# days_since_last_rank1（設定サイクル仮説）は蒲田7で否定された
+
+## 背景
+
+「ホールが定期的に特定機種に設定を入れる → days_since_last_rank1 が予測に有効」
+という仮説を rich_all feature importance で検証した結果：
+
+- days_since_last_rank1:  2F=130位、3F=85位
+- days_since_last_top3:   2F=120位、3F=56位
+- rank_trend_1m_vs_2m:    2F=104位、3F=132位
+- same_weekday_rank1_rate: 2F=103位、3F=102位
+
+いずれも下位であり、設定投入サイクルは蒲田7では検出不能と判断する。
+
+## アクション
+
+蒲田7において：
+- days_since_last_rank1 系の特徴量を重視しない
+- 「何日ぶりに設定が入る」というサイクルパターンは存在しないか、
+  少なくともこのモデルでは捉えられない
+- 他ホールでは異なる可能性があるため、新ホール分析時は改めて確認
+
+## 例
+
+```
+仮説: 「前回top1から14日経った機種は次の高設定候補」
+実測: feature importance 130位 → 無関係
+結論: 蒲田7の設定投入はサイクル的ではなく、直前の成績トレンドで予測する方が有効
+```
+
+---
+id: machine-ml-practical-role-as-filter
+trigger: "機種MLと末尾MLの精度を比較するとき / 機種MLの実用水準を判断するとき"
+confidence: 0.92
+domain: ml-evaluation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 機種MLは末尾MLの補助フィルターとして使うのが現実的
+
+## 背景
+
+蒲田7での比較（2026-05-27時点、LTR 2分割 90日評価）：
+
+- 末尾ML hit@1→top2: 95.3%（144日、10択）
+- 機種ML hit@1→top3: 18.9%（90日、30択）
+
+性能差の理由：
+1. 末尾ML は 10択、機種ML は 30択（問題の難易度が3倍）
+2. 末尾番号はホールの意図的な投入シグナルとして強く機能する
+3. 機種別成績はノイズ（設定以外の要因）が多い
+
+現実的な到達目標は hit@1 30-40%、AUC 0.62-0.65 程度。
+末尾MLの水準（95%+）は問題の難易度差から構造的に届かない。
+
+## アクション
+
+機種MLは単独の意思決定ツールではなく、末尾MLとの組み合わせで使う：
+「末尾MLで末尾X推奨」かつ「機種MLで3F推奨」→ 3FのX末尾台に集中
+
+また機種MLの改善を判断する際は AUC だけでなく hit@1 も確認し、
+「hit@1 が lift 1.5x 以上を維持しているか」を実用水準の基準とする。
+
+## 例
+
+```
+単独意思決定:
+  末尾ML: ✅ 95%+ で活用可能
+  機種ML: △ lift 1.88x → 補助情報として活用
+
+組み合わせ戦略:
+  末尾ML（末尾7推奨） × 機種ML（3F推奨）
+  → "3Fフロアの末尾7の台" に絞り込む
+```
+
+---

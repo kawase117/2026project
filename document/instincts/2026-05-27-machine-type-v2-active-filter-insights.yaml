@@ -1,0 +1,261 @@
+---
+id: active-machine-filter-not-performance-filter
+trigger: "when filtering training machines for Layer 1 segment model"
+confidence: 0.92
+domain: ml-data-filtering
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Layer 1 フィルターは「稼働状況」のみ、成績では絞らない
+
+## 背景
+
+2F_N の学習対象を絞り込む際に fleet_diff（平均差枚×台数）や avg_diff でフィルターする
+案が出たが、それは誤り。Layer 1 が予測するのは「その日のセグメント内相対順位」であり、
+平均的に負けている機種でも「高設定が入る日」は上位になる。
+その日を予測できれば実運用上の価値がある。
+
+蒲田7の 2F_N 例：
+- 全期間ユニーク機種 63、最新日アクティブ 34、引退済み 29
+- 引退済み 29 機種が学習ノイズとして混入していた
+
+## アクション
+
+フィルター条件は以下の2つのみ：
+1. 最新日（DBの最終日）にアクティブな機種
+2. 履歴日数が N 日以上（推奨 60日、新台ノイズ排除のみ）
+
+除外してはいけないもの：
+- 平均差枚がマイナスの機種
+- 勝率が低い機種
+- 台数が少ない機種（ただし長期稼働が条件）
+
+## 例
+
+```python
+# ✅ 正しいフィルター
+latest_date = raw["date"].max()
+active_machines = set(raw[raw["date"] == latest_date]["machine_name"])
+machine_day_counts = raw.groupby("machine_name")["date"].nunique()
+qualified = set(machine_day_counts[machine_day_counts >= 60].index)
+target = active_machines & qualified
+
+# ❌ やってはいけない
+target = target[target["avg_diff"] > 0]  # 成績フィルターはNG
+```
+
+---
+id: min-train-days-is-threshold-not-window
+trigger: "when interpreting --min-train-days parameter in walk-forward evaluation"
+confidence: 0.95
+domain: ml-evaluation-design
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# min_train_days は訓練ウィンドウサイズではなく足切り閾値
+
+## 背景
+
+`--min-train-days=120` という設定を「訓練期間が120日」と誤解していた。
+実際のコードでは以下のように動作する：
+
+```python
+start_idx = max(min_train_days, total_dates - eval_days)
+```
+
+蒲田7（322日）で eval_days=90 の場合：
+- start_idx = max(120, 322-90) = max(120, 232) = 232
+- 実際の訓練期間：232〜321日（平均 276日）
+
+min_train_days=120 は「機種やセグメントの日数が120日未満ならスキップ」という
+足切り条件であり、訓練に使う期間の上限ではない。
+
+## アクション
+
+walk-forward の実際の訓練期間は `total_dates - eval_days` 〜 `total_dates - 1`。
+「訓練が短すぎる」仮説を立てる場合は eval_days（評価期間を短くして訓練に回す）を調整する。
+
+## 例
+
+```
+DB=322日, eval_days=90 の場合：
+  最初の評価日: 訓練 232日
+  最後の評価日: 訓練 321日
+  → 平均訓練 276日（十分な量）
+
+訓練を増やしたい場合は eval_days=60 に変更：
+  最初の評価日: 訓練 262日
+```
+
+---
+id: layer0-threshold-75-optimal
+trigger: "when tuning Layer 0 win_rate threshold for is_kisyuzen"
+confidence: 0.85
+domain: ml-hyperparameter-tuning
+source: session-experiment
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Layer 0 の win_rate 閾値は 75% が最適（蒲田7）
+
+## 背景
+
+Layer 0（機種×日付ごとに win_rate >= threshold を予測）の閾値を
+50〜80% でグリッドサーチした結果、coverage_score = lift@1 × sqrt(base_rate) で評価：
+
+| 閾値 | AUC   | lift@1 | base_rate | coverage_score |
+|------|-------|--------|-----------|----------------|
+| 70%  | 0.703 | 4.39x  | 6.5%      | 1.115          |
+| 75%  | 0.733 | 5.06x  | 5.6%      | 1.197 （最大） |
+| 80%  | 0.700 | 3.02x  | 3.5%      | 0.549 （旧設定）|
+
+旧設定 80% は base_rate が 3.5% と低すぎて Layer 1 との結合効果が限定的だった。
+
+## アクション
+
+蒲田7では `--layer0-winrate-threshold 75` を採用。
+新ホール・新期間では coverage_score でスイープして最適値を選択する。
+
+## 例
+
+```bash
+python -m ml.machine_type.v2.run_machine_type_v2 \
+  --layer0-winrate-threshold 75 \
+  --combined-lambda 0.1 \
+  --step-days 1 --eval-days 90
+```
+
+---
+id: rich-features-overfit-short-training
+trigger: "when adding many features to Layer 1 segment model"
+confidence: 0.88
+domain: ml-feature-engineering
+source: session-experiment
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# rich特徴量（100+）は baseline6 より性能が低い（過学習）
+
+## 背景
+
+machine_type_common.add_machine_type_features() が生成する 100+ 特徴量を
+Layer 1 に適用したところ、baseline6（6特徴量）より性能が悪化した。
+
+tune 結果：
+- baseline6:         combined_hit@1=0.333, AUC=0.649
+- rich_no_ranktrend: combined_hit@1=0.217, AUC=0.618
+- rich_all:          combined_hit@1=0.283, AUC=0.615
+
+Layer 1 の訓練期間が 200〜300 日程度では 100+ 特徴量は過学習する。
+
+## アクション
+
+新特徴量は 1〜3 本ずつ追加して個別に効果を検証する。
+一括投入は禁止。
+
+現在の baseline6 特徴量：
+- weekday_prior_top1_rate
+- prior_top1_rate
+- day_of_month / day_of_week_num / is_weekend
+- lag1_rank_pct
+
+## 例
+
+```
+OK: games_vs_segment_mean_7d を 1 本追加して再評価
+NG: add_machine_type_features() を全部投入
+```
+
+---
+id: progress-reporting-required-in-all-loops
+trigger: "when implementing walk-forward or any time-consuming loop in ML pipeline"
+confidence: 0.98
+domain: ml-implementation-standards
+source: session-requirement
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# walk-forward ループには必ず進捗レポートを実装する
+
+## 背景
+
+機種別予測（run_machine_type_v2.py）に進捗表示が実装されておらず、
+処理時間の予測ができない問題があった。
+末尾予測パイプラインには実装済みのため、全パイプラインで統一する。
+
+## アクション
+
+時間のかかるループには必ず以下のパターンを使用する：
+
+```python
+import time
+start_time = time.time()
+total = len(eval_dates)
+print(f"開始: {total} ステップ")
+
+for i, pred_date in enumerate(eval_dates, 1):
+    # ... 処理 ...
+    elapsed = time.time() - start_time
+    remaining = (elapsed / i) * (total - i)
+    print(
+        f"\r[{i:>4}/{total}] {100*i/total:5.1f}%  "
+        f"経過:{elapsed:6.1f}s  残り:{remaining:6.1f}s  ({pred_date})",
+        end="", flush=True,
+    )
+
+print()
+print(f"完了: {time.time() - start_time:.1f}s")
+```
+
+入れ子ループは外側のループにのみ実装すれば十分。
+
+## 例
+
+```
+開始: 90 ステップ
+[  45/ 90]  50.0%  経過:  127.3s  残り:  127.3s  (2026-03-10)
+完了: 254.6s
+```
+
+---
+id: 2fn-base-rate-too-sparse-for-top3
+trigger: "when evaluating 2F_N segment Layer 1 performance"
+confidence: 0.90
+domain: ml-target-engineering
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 2F_N の is_top3 は base_rate が低すぎて学習困難
+
+## 背景
+
+蒲田7の 2F_N（AT系・2F）の現状：
+- アクティブ機種: 34機種（引退済み 29 を除く）
+- is_top3 の base_rate: 3/34 ≈ 8.8%（学習帯域 10〜30% を下回る）
+- holdout lift@3=0.52（ランダム以下、予測が逆効果）
+
+tune 期では lift@3=1.18 だが holdout では 0.52 と大幅に乖離。
+ホールが期間途中で 2F_N の設定パターンを変えた可能性がある。
+
+## アクション
+
+対策の優先順：
+1. アクティブ機種フィルター（引退済み 29 機種を除去）
+2. 120日以上の履歴を持つ機種のみに絞る（台数減 → base_rate 上昇）
+3. is_top5 への切り替え検討（base_rate 5/34=14.7%）
+
+改善まで 2F_N の予測結果は割引いて参照すること。
+
+## 例
+
+```
+機種数別 is_top3 base_rate：
+  34機種（現状）:           3/34 = 8.8%  ← 学習困難
+  28機種（60日フィルター）:  3/28 = 10.7%
+  20機種（120日フィルター）: 3/20 = 15.0%  ← 学習帯域に近づく
+```
+
+---

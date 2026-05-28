@@ -1,5 +1,16 @@
 # Machine-Type ML Implementation Plan
 
+## Execution Update (2026-05-21)
+
+- Leakage control was strengthened by mirroring `last_digit` safeguards:
+  - explicit `FORECAST_EXCLUDED_COLUMNS` in `ml/machine_type/machine_type_common.py`
+  - prior-only (`shift(1)`) feature generation maintained
+  - monthly evaluation switched to per-date simulation with `train_end < pred_date` and same-day placeholder rows
+- Added coverage tracking for machine churn:
+  - `truth_entity_count`, `known_entity_count`, `unseen_entity_count`, `known_coverage`
+- Added lightweight alpha sensitivity CLI:
+  - `python -m ml.machine_type.machine_type_alpha_sensitivity --alphas 1,3,5,10 --eval-days 30`
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build a new `ml/machine_type/` forecasting workflow for `machine_name` entities with leakage-safe feature generation, shrinkage-based labels, next-day prediction, monthly reliability checking, and README/report outputs, without breaking existing last-digit wrappers.

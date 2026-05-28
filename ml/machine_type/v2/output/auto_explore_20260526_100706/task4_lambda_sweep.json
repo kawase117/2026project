@@ -1,0 +1,108 @@
+{
+  "tune_results": {
+    "0.0": {
+      "score": 0.2833333333333333,
+      "combined_recommendation": {
+        "description": "layer1_proba * (1 + 0.0 * layer0_proba) で算出",
+        "lambda": 0.0,
+        "top3_combined_hit_at_1": 0.3333333333333333,
+        "top3_combined_hit_at_3": 0.85,
+        "n_eval_days": 60,
+        "n_rows": 4260,
+        "missing_layer0_proba_rate": 0.1495305164319249
+      }
+    },
+    "0.1": {
+      "score": 0.3055555555555555,
+      "combined_recommendation": {
+        "description": "layer1_proba * (1 + 0.1 * layer0_proba) で算出",
+        "lambda": 0.1,
+        "top3_combined_hit_at_1": 0.36666666666666664,
+        "top3_combined_hit_at_3": 0.8333333333333334,
+        "n_eval_days": 60,
+        "n_rows": 4260,
+        "missing_layer0_proba_rate": 0.1495305164319249
+      }
+    },
+    "0.2": {
+      "score": 0.3055555555555555,
+      "combined_recommendation": {
+        "description": "layer1_proba * (1 + 0.2 * layer0_proba) で算出",
+        "lambda": 0.2,
+        "top3_combined_hit_at_1": 0.36666666666666664,
+        "top3_combined_hit_at_3": 0.8333333333333334,
+        "n_eval_days": 60,
+        "n_rows": 4260,
+        "missing_layer0_proba_rate": 0.1495305164319249
+      }
+    },
+    "0.3": {
+      "score": 0.3055555555555555,
+      "combined_recommendation": {
+        "description": "layer1_proba * (1 + 0.3 * layer0_proba) で算出",
+        "lambda": 0.3,
+        "top3_combined_hit_at_1": 0.36666666666666664,
+        "top3_combined_hit_at_3": 0.8333333333333334,
+        "n_eval_days": 60,
+        "n_rows": 4260,
+        "missing_layer0_proba_rate": 0.1495305164319249
+      }
+    },
+    "0.5": {
+      "score": 0.3055555555555555,
+      "combined_recommendation": {
+        "description": "layer1_proba * (1 + 0.5 * layer0_proba) で算出",
+        "lambda": 0.5,
+        "top3_combined_hit_at_1": 0.36666666666666664,
+        "top3_combined_hit_at_3": 0.8333333333333334,
+        "n_eval_days": 60,
+        "n_rows": 4260,
+        "missing_layer0_proba_rate": 0.1495305164319249
+      }
+    },
+    "0.7": {
+      "score": 0.2722222222222222,
+      "combined_recommendation": {
+        "description": "layer1_proba * (1 + 0.7 * layer0_proba) で算出",
+        "lambda": 0.7,
+        "top3_combined_hit_at_1": 0.3333333333333333,
+        "top3_combined_hit_at_3": 0.8166666666666667,
+        "n_eval_days": 60,
+        "n_rows": 4260,
+        "missing_layer0_proba_rate": 0.1495305164319249
+      }
+    },
+    "1.0": {
+      "score": 0.27999999999999997,
+      "combined_recommendation": {
+        "description": "layer1_proba * (1 + 1.0 * layer0_proba) で算出",
+        "lambda": 1.0,
+        "top3_combined_hit_at_1": 0.35,
+        "top3_combined_hit_at_3": 0.8,
+        "n_eval_days": 60,
+        "n_rows": 4260,
+        "missing_layer0_proba_rate": 0.1495305164319249
+      }
+    }
+  },
+  "recommended_lambda": 0.1,
+  "holdout_combined_recommendation": {
+    "description": "layer1_proba * (1 + 0.1 * layer0_proba) で算出",
+    "lambda": 0.1,
+    "top3_combined_hit_at_1": 0.4666666666666667,
+    "top3_combined_hit_at_3": 0.8,
+    "n_eval_days": 30,
+    "n_rows": 2161,
+    "missing_layer0_proba_rate": 0.19435446552521982
+  },
+  "holdout_metrics": {
+    "combined_hit_at_1": 0.5,
+    "combined_hit_at_3": 0.8,
+    "combined_auc": 0.6675535196495773,
+    "layer0_hit_at_1": 0.3333,
+    "layer0_lift_at_1": 5.527,
+    "layer0_base_rate": 0.06031016657093624,
+    "2F_N_lift_at_3": 0.520160528549441,
+    "2F_N_lift_at_5": 1.193275293854974
+  }
+}

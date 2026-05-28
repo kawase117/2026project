@@ -1,0 +1,99 @@
+---
+id: atype-bt-form-opposite-clusters-half2-mechanism
+trigger: "when interpreting the ハーフ×2（2本）pattern in 蒲田七 last_digit analysis"
+confidence: 0.82
+domain: pachinko-domain-knowledge
+source: data-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# A型とBTは水曜を除く全曜日で逆端クラスタを形成。これがハーフ×2の「2本」の実体
+
+## 背景
+atype_weekday_cluster.csv と bt_weekday_cluster.csv（mode=normal）の比較:
+
+| 曜日 | A型クラスタ | A型delta | BTクラスタ | BTdelta | 末尾距離 |
+|------|-----------|---------|-----------|---------|---------|
+| 月   | 2-3-4     |  15.8   | 9-0-1     |  69.5   | ≈4      |
+| 火   | 3-4-5     |  31.1   | 7-8-9     |  88.4   | ≈4      |
+| 水   | 3-4-5     |  18.7   | 3-4-5     |  60.6   |  0（同）|
+| 木   | 0-1-2     |  58.7   | 8-9-0     |  68.0   | ≈4      |
+| 金   | 4-5-6     |  24.7   | 0-1-2     |  82.9   | ≈4      |
+| 土   | 1-2-3     |  45.6   | 7-8-9     |  71.3   | ≈5      |
+| 日   | 6-7-8     |  16.6   | 0-1-2     | 116.7   | ≈4      |
+
+「ホールが設定を2箇所に入れる際、A型とBTで異なる末尾クラスタを割り当てている」パターン。
+[[top2-digit-usually-outside-best-cluster]] でtop2がクラスタ外に出やすい発見とも整合する。
+
+水曜のみ例外（両者とも3-4-5）: 「末尾基準」投入日は機種タイプを問わず同一末尾に投入
+という方針と整合する。
+
+⚠️ 訂正（2026-05-25 floor_atype分析後）: 上記の「水曜は同じ3-4-5」は2Fと3Fを混在させた粗い集計の結果。
+floor × atype の4グループ分割では水曜も全グループ異なるクラスタになる（2F_A: 3-4-5, 2F_N: 9-0-1, 3F_A: 1-2-3, 3F_N: 8-9-0）。
+→ [[floor-atype-wednesday-clusters-all-different]] 参照。
+
+## アクション
+ML特徴量設計では A型とBTを同一フラグ（is_non_AT）でまとめるのではなく、
+曜日×機種タイプの交互作用を別々に設計する必要がある。
+水曜の特例を考慮: `is_wednesday` の場合は A型・BT共に同じ末尾特徴量を使用してよい。
+
+## 例
+土曜: A型の末尾1-2-3（delta=45.6）と BT の末尾7-8-9（delta=71.3）が同時に設定が入っている
+日曜: A型の末尾6-7-8（delta=16.6）と BT の末尾0-1-2（delta=116.7）が逆端に配置
+
+---
+id: bt-delta-consistently-larger-than-atype
+trigger: "when comparing prediction confidence between BT and A型 cluster features in 蒲田七"
+confidence: 0.85
+domain: pachinko-domain-knowledge
+source: data-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# BTはA型より全曜日でconcentration_deltaが大きい。A型は機械割低さでシグナルが薄い
+
+## 背景
+全7曜日でBT(normal)のdeltaがA型より大きい:
+- BT: delta範囲 60〜117（水曜最小、日曜最大）
+- A型: delta範囲 16〜59（月曜最小、木曜最大）
+
+A型の機械割が低いため設定が入っても差枚の絶対値が小さく、
+末尾クラスタとしての信号が弱くなっている。
+
+## アクション
+A型の末尾クラスタ特徴量はBTより信頼度を下げて使う。
+delta < 20 の曜日（月曜=15.8、日曜=16.6）では A型クラスタ特徴量の採用を見送ることを検討。
+
+## 例
+木曜A型 delta=58.7（最大）→ 0-1-2クラスタが比較的信頼できる
+月曜A型 delta=15.8（最小）→ 2-3-4クラスタは誤差と区別できない可能性
+
+---
+id: saturday-row-always-low-gini-column-pattern-irrelevant
+trigger: "when evaluating whether row-level (physical column) features are useful for Saturday in 蒲田七"
+confidence: 0.75
+domain: pachinko-domain-knowledge
+source: data-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 土曜はpct_low_gini=100%（常に列間で均等分散）。三台並びは列単位でなく末尾連番
+
+## 背景
+row_weekday_summary.csv のpct_low_gini（値が高いほど列間均等分散）:
+- 土: 100.0%（全46日で均等）
+- 金: 97.8%
+- 火: 95.7%
+- 月・木: 93.5%
+- 水: 91.3%
+- 日: 90.9%
+
+土曜が全日100%低ジニ = 設定は物理列間で均等に分散している。
+土曜「三台並び」が「同列の3台」でなく「末尾連番の3台（末尾6・7・8等）」であることと整合。
+
+注意: row_concentration_ratio（比率）は水曜=-405のような極端値が出るため不安定。
+次のステップで row_concentration_delta（差分）への切り替えが必要。
+
+## アクション
+土曜の特徴量は row_group ではなく last_digit の連番クラスタを使う。
+行パターン分析の ratio 指標を delta に切り替えてから月曜の「一列まるごと」を再検証する。

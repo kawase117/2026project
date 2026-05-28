@@ -1,0 +1,26 @@
+=== Step 1: Strategy Metrics (rank3-unrequired) ===
+metric | ndcg_v2 | ndcg | pairwise | lgbm | catboost_v2
+---|---:|---:|---:|---:|---:
+hit@1->top1 | 78.8% | 68.8% | 69.9% | 67.8% | 69.2%
+hit@1->top2 | 95.3% | 78.1% | 80.7% | 77.4% | 77.4%
+hit@1->top3 | 99.1% | 82.1% | 84.4% | 81.1% | 82.8%
+cluster23->top2 (rank2 proxy) | 77.2% | 51.3% | 50.8% | 51.5% | 55.9%
+hit@3->top3 (from topk hit_at_3) | 99.8% | 89.5% | 91.6% | 88.6% | 90.7%
+
+=== Step 2: rank2 vs rank3 (ndcg_v2 proxy analysis) ===
+n=429
+rank2 actual diff median: 11700.0
+rank2 actual diff mean:   14190.2
+rank3 proxy median:       7800.0
+rank3 proxy mean:         9757.1
+actual top1 median:       20300.0
+paired t-test p-value (rank2 vs rank3 proxy): 2.63844e-32
+note: rank3 is unavailable in testperiod_topk; actual_top3_diff is used as proxy.
+
+=== Step 3: Sensitivity Analysis (ndcg_v2) ===
+taken_prob | scenarioA_rank1 | scenarioB_rank1_to_rank2 | scenarioC_rank1_to_random23proxy | scenarioD_theoretical_top1
+---|---:|---:|---:|---:
+10% | 19300.0 | 18500.0 | 18400.0 | 20300.0
+30% | 19300.0 | 16600.0 | 16300.0 | 20300.0
+50% | 19300.0 | 15200.0 | 13400.0 | 20300.0
+(unit: diff_coins median)

@@ -1,0 +1,78 @@
+{
+  "generated_at": "2026-05-27T13:03:26.917636",
+  "source_files": {
+    "topk_csv": "ml\\last_digit\\reports\\nextday_kamata7_20260527_tasks123_verify_xgb_ranker_ndcg_testperiod_topk.csv",
+    "loss_csv": "ml\\last_digit\\reports\\nextday_kamata7_20260527_tasks123_verify_xgb_ranker_ndcg_ceiling_effect\\loss_scenarios.csv",
+    "payload_json": "ml\\last_digit\\reports\\nextday_kamata7_20260527_tasks123_verify_xgb_ranker_ndcg.json",
+    "bottom3_csv": "ml\\last_digit\\reports\\nextday_kamata7_20260527_tasks123_verify_xgb_ranker_ndcg_latest_test_bottom3.csv",
+    "full_csv": "ml\\last_digit\\reports\\nextday_kamata7_20260527_tasks123_verify_xgb_ranker_ndcg_latest_test_full.csv",
+    "worst_report_json": "ml\\last_digit\\exploratory\\kamata7_only\\target_auto_explore_20260527_refresh\\report.json",
+    "db_path": "db\\マルハンメガシティ2000-蒲田7.db",
+    "nextday_prefix_mtime": "2026-05-27 09:40:44"
+  },
+  "hour1_2fa_metrics": {
+    "available": true,
+    "n_pairs": 146,
+    "n_days": 146,
+    "hit_at_2": 1.0,
+    "rank1_match_rate": 0.9315068493150684,
+    "top1_avg_diff_per_machine_mean": 1382.18820861678,
+    "top1_avg_diff_per_machine_median": 1300.0
+  },
+  "hour2_bottom3_current_latest_day": {
+    "available": true,
+    "latest_date": "2026-05-26",
+    "overall_overlap_mean": 0.5,
+    "by_expert": [
+      {
+        "expert": "2F_A",
+        "pred_bottom3": "7,8,9",
+        "actual_worst3": "3,4,8",
+        "overlap_count": 1,
+        "overlap_rate": 0.3333333333333333
+      },
+      {
+        "expert": "2F_N",
+        "pred_bottom3": "5,6,9",
+        "actual_worst3": "2,6,7",
+        "overlap_count": 1,
+        "overlap_rate": 0.3333333333333333
+      },
+      {
+        "expert": "3F_A",
+        "pred_bottom3": "0,7,9",
+        "actual_worst3": "0,4,7",
+        "overlap_count": 2,
+        "overlap_rate": 0.6666666666666666
+      },
+      {
+        "expert": "3F_N",
+        "pred_bottom3": "3,4,5",
+        "actual_worst3": "4,5,9",
+        "overlap_count": 2,
+        "overlap_rate": 0.6666666666666666
+      }
+    ]
+  },
+  "hour2_worst_model_reference": {
+    "available": true,
+    "n": 584,
+    "worst1_hit_rate": 0.7808219178082192,
+    "worst2_cover_rate": 0.9794520547945206,
+    "worst3_cover_rate": 0.9863013698630136,
+    "pred1_negative_rate": 0.9674657534246576,
+    "pred1_hard_negative_rate": 0.6352739726027398,
+    "pred1_diff_median": -7800.0,
+    "pred1_diff_mean": -11418.493150684932
+  },
+  "latest_anomaly": {
+    "available": true,
+    "date": "2026-05-26",
+    "zscore": -0.13012046825628865,
+    "is_anomaly": 0
+  },
+  "notes": {
+    "hour2_scope": "current bottom3はlatest日評価、worstモデルはtestperiod評価の参照。",
+    "hour7_8_next_step": "target_auto_exploreを新DBで再実行して比較を更新する。"
+  }
+}

@@ -1,0 +1,77 @@
+---
+id: is-top2-must-be-within-expert
+trigger: "when defining LTR ranking target for multi-expert pachinko prediction"
+confidence: 0.99
+domain: ml-pipeline-configuration
+source: session-breakthrough
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# is_top_2 はエキスパート内で計算しなければならない
+
+## 背景
+末尾別LTRパイプラインでは複数のエキスパート（2F_N / 3F_N / 3F_A / 2F_A）が
+それぞれ独立したモデルを持つ。
+評価指標 hit@2 は「エキスパート内10アイテム中、予測top2が実績top2を含むか」で定義。
+（metrics_ops.py: true_top2 = actual_raw_diff の上位2、エキスパート内のみ）
+
+当初の is_top_2 は全エキスパート統合（40 entity_keys）でのグローバルtop2だった。
+これにより：
+- 3F_A: グローバルtop2にほぼ入らず → ほぼ全行 is_top_2=0 → 勾配ほぼゼロ
+- N型: グローバルtop2を取りやすいため偶然機能 → 設計的には同じ欠陥
+
+## 修正（tail_ltr_split_rule_wf.py）
+
+```python
+# 変更前（グローバル）
+rk = agg.groupby("date", sort=False)["total_diff_coins"].rank(
+    method="first", ascending=False
+)
+
+# 変更後（エキスパート内）
+rk = agg.groupby(["date", "group_key"], sort=False)["total_diff_coins"].rank(
+    method="first", ascending=False
+)
+agg["is_top_2"] = (rk <= 2).astype(int)
+```
+
+## 効果（digit_lag_v1 → digit_lag_v2_withinexpert、testperiod 144日）
+
+| expert | hit@2 変更前 | hit@2 変更後 | 改善幅 |
+|--------|------------|------------|--------|
+| 2F_N   | 0.958      | 1.000      | +4.2pp |
+| 3F_N   | 0.917      | 0.993      | +7.6pp |
+| 3F_A   | 0.715      | 0.986      | +27.1pp |
+
+3F_A の大幅改善は「正しい問いを学習させたら正しく答えられた」ことを示す。
+モデルの改善ではなくタスク定義の修正。
+
+## 例
+NG: groupby("date") → 全40 entity_keys中のtop2 → 3F_Aはほぼ0
+OK: groupby(["date", "group_key"]) → 各expert内10アイテム中のtop2 → 毎日2行が正例確定
+
+---
+id: train-eval-alignment-check-mandatory
+trigger: "when designing LTR training targets for any multi-group ranking task"
+confidence: 0.97
+domain: ml-eval-discipline
+source: session-retrospective
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 学習ターゲットと評価指標のスコープを必ず揃える
+
+## 背景
+hit@2 が 71% に留まっていた原因が「学習スコープ（グローバル）と
+評価スコープ（エキスパート内）の不一致」だったことが今回判明した。
+
+## アクション
+LTRの学習ターゲットを設計するとき、以下を必ず確認する：
+1. 評価指標の group_ids に何を使っているか（date のみ？ date x group_key？）
+2. 学習ターゲットのランク計算の groupby が評価の group_ids と一致しているか
+3. 各グループ内で positive（is_top_2=1）が十分な頻度で出現しているか
+   （全行が0のグループは勾配ゼロ → 学習不能）
+
+## 例
+評価: score_top2_prediction_day(rank_df) → rank_df はエキスパート内の10行
+学習: is_top_2 = groupby(["date", "group_key"]).rank <= 2  ← 一致させる

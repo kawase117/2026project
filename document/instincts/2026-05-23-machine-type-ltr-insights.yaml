@@ -1,0 +1,184 @@
+---
+id: machine-type-f1-structural-limit
+trigger: "機種別学習でF1スコアが0.10以下になったとき"
+confidence: 0.95
+domain: ml-machine-type
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# F1スコアの構造的上限問題
+
+## 背景
+機種別学習で `is_rank_1` を二値分類ターゲットにすると、F1スコアが構造的に低くなる。
+機種が N 種ある場合、`is_rank_1` の base_rate = 1/N（10〜20種なら0.05〜0.10）。
+このとき F1 の理論的上限 ≈ base_rate × 2 = 0.10〜0.20 程度にとどまる。
+F1=0.09 はモデルの性能が低いのではなく、タスク定義の問題である可能性が高い。
+
+## アクション
+1. F1 ではなく Hit@1, Hit@3 を主評価指標とする
+2. 「ランク1を完璧に当てる」ではなく「上位候補を順序付け」というタスクに再定義
+3. XGBRanker（LTR）への転換を検討する
+4. ベースライン比較：Hit@1 の理論下限 = base_rate (≈1/N)、Hit@3 = base_rate × 3
+
+## 例
+```python
+metrics = common.evaluate_prediction_day(
+    work, target="is_rank_1", score_col="score", threshold=0.5
+)
+# hit_at_1, hit_at_3 が base_rate を上回っていれば有意な改善
+print(f"Hit@1={metrics['hit_at_1']:.3f}, base_rate={metrics['base_rate']:.3f}")
+```
+
+---
+
+---
+id: ltr-replaces-binary-classifier-for-ranking
+trigger: "機種別・台末尾別など、同日同グループ内でのランキング予測をするとき"
+confidence: 0.90
+domain: ml-machine-type
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# LTR（Learning-to-Rank）で Binary Classification を置き換える
+
+## 背景
+日付単位でグループ化したXGBRankerは、Binary Classificationの「クラスアンバランス問題」と「絶対閾値問題」を両方回避できる。
+`rank:ndcg` objective は NDCG@K を最大化し、Hit@K と相関が高い。
+既存の `ml/last_digit/core_ranking.py` に `fit_ranker()` が実装済みで再利用可能。
+
+## アクション
+1. `fit_ranker(X, y, train_dates, objective="rank:ndcg")` を使う
+2. グループ化は `train_dates`（日付）単位 → 同日の全機種が1グループ
+3. `ltr_relevance = 1 - rank_pct`（高いほど良い機種）をターゲットにする
+4. Time-decay: `decay_lambda=0.3` で直近日を重視する
+5. 評価は Hit@1, Hit@3, NDCG@3 を使う
+
+## 例
+```python
+from ml.last_digit.core_ranking import fit_ranker
+
+sorted_df = train_df.sort_values(["date", "machine_name"]).reset_index(drop=True)
+ltr_relevance = (1.0 - sorted_df["rank_pct"]).clip(0.0, 1.0)
+
+ranker = fit_ranker(
+    sorted_df[feature_columns].fillna(0.0),
+    ltr_relevance.to_numpy(dtype=float),
+    sorted_df["date"],
+    objective="rank:ndcg",
+    random_state=42,
+    decay_lambda=0.3,
+)
+scores = ranker.predict(pred_df[feature_columns].fillna(0.0))
+```
+
+---
+
+---
+id: cross-sectional-normalization-for-machine-ranking
+trigger: "機種別学習で絶対値特徴量（差枚、効率など）を使うとき"
+confidence: 0.92
+domain: ml-machine-type
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# クロスセクション正規化で機種間比較を可能にする
+
+## 背景
+機種ごとに差枚の構造的差異がある（ハナハナは元々差枚が少ない、AT機は多いなど）。
+絶対値の差枚をそのまま特徴量として使うと、機種間の構造差がシグナルを覆い隠す。
+同日の全機種に対して正規化（zscore, rank_pct, vs_mean）を施すことで、
+「この機種は今日の平均よりどれだけ高いか」という相対的シグナルを抽出できる。
+`add_machine_type_features()` の `cross_cols` タプルに列名を追加するだけで自動生成される。
+
+## アクション
+`cross_cols` タプルに対象カラムを列挙する。各カラムに対して3特徴量が自動生成：
+- `{col}_vs_mean`: 同日平均との差
+- `{col}_zscore`: 同日標準偏差で正規化
+- `{col}_rank_pct`: 同日内パーセンタイルランク
+
+対象候補：lag系、rolling系、ewm系、games系すべて。
+
+## 例
+```python
+cross_cols = (
+    "lag_1_avg_diff_coins",
+    "rolling_avg_diff_7d",
+    "ewm_avg_diff_7d",
+    "rolling_avg_games_7d",   # ゲーム数の相対比較も有用
+)
+# → lag_1_avg_diff_coins_vs_mean, _zscore, _rank_pct が自動生成される
+```
+
+---
+
+---
+id: staged-ranking-architecture-for-slot
+trigger: "複数の予測モデル（機種別・末尾別・角番別）を統合して最終台選択をするとき"
+confidence: 0.85
+domain: ml-architecture
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ステージ式ランキングアーキテクチャ（A案）
+
+## 背景
+末尾別・機種別・角番別の予測を単純に加算すると、各モデルのスケール差や信頼度差が無視される。
+A案（ステージ式）はそれぞれの角度を「異なる質問に答えるモデル」として役割分担する。
+Stage1（同機種内ランキング）が最も強いシグナルで、Stage2（2000枚確率）は信頼度ゲート。
+
+## アクション
+1. Stage1: machine_type LTR モデルで同機種内の順位付け（設定投入パターン検出）
+2. Stage2: 独立した diff_classifier.py で P(diff_coins >= 2000) を推定（並列開発）
+3. Stage3: Stage1スコア × Stage2確率を掛け合わせて最終スコア化
+4. A型機種（ジャグラー等）は独立した角度（RB確率等）を使う
+
+## 例
+```
+朝一台選択フロー：
+機種A（AT）: Stage1=0.85, Stage2=0.71 → 最終=0.60
+機種B（AT）: Stage1=0.72, Stage2=0.83 → 最終=0.60
+機種C（A型）: Stage1=0.65, RB率=0.55 → 参考候補
+→ 同スコアならStage1が高い機種Aを優先
+```
+
+---
+
+---
+id: rank-pct-trend-features-for-machine-momentum
+trigger: "機種の中長期トレンド（成績の上昇・下降）を特徴量にしたいとき"
+confidence: 0.88
+domain: ml-feature-engineering
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# rank_pct の月別平均でトレンドを捉える
+
+## 背景
+`avg_diff_coins` の絶対値は機種間で異なるため、「この機種は最近良くなっている」というトレンドを絶対値では捉えにくい。
+`rank_pct`（同日の全機種内でのパーセンタイルランク、0=最良, 1=最悪）を月別ウィンドウで集計することで、
+機種のトレンド（上昇・横ばい・下降）を機種間比較可能な形で表現できる。
+`_calendar_shift_window_mean()` が machine_type_common.py に実装済みで再利用可能。
+
+## アクション
+```python
+g["rank_pct_avg_1m"] = _calendar_shift_window_mean(g["date"], g["rank_pct"], lag_days=1,  window_days=30)
+g["rank_pct_avg_2m"] = _calendar_shift_window_mean(g["date"], g["rank_pct"], lag_days=31, window_days=30)
+g["rank_pct_avg_3m"] = _calendar_shift_window_mean(g["date"], g["rank_pct"], lag_days=61, window_days=30)
+g["rank_trend_1m_vs_2m"]     = g["rank_pct_avg_1m"] - g["rank_pct_avg_2m"]  # 負=改善
+g["rank_trend_acceleration"]  = g["rank_trend_1m_vs_2m"] - (g["rank_pct_avg_2m"] - g["rank_pct_avg_3m"])
+g["rank_trend_1m_available"]  = (g["rank_pct_avg_1m"].notna() & g["rank_pct_avg_2m"].notna()).astype(int)
+```
+
+## 例
+```
+機種A: rank_pct_avg_1m=0.25, rank_pct_avg_2m=0.45 → trend=-0.20（大幅改善）
+機種B: rank_pct_avg_1m=0.40, rank_pct_avg_2m=0.38 → trend=+0.02（横ばい）
+→ 機種Aに注目すべき
+```
+
+---

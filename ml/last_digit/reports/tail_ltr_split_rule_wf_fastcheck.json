@@ -1,0 +1,94 @@
+{
+  "config": {
+    "output_prefix": "ml/last_digit/reports/tail_ltr_split_rule_wf_fastcheck",
+    "db_path": "",
+    "db_glob": "*7.db",
+    "seeds": "42,77",
+    "test_days": 14,
+    "warmup_days": 56,
+    "min_train_days_wed": 12,
+    "min_train_days_nonwed": 42,
+    "windows_wed": "full_2025",
+    "lambdas_wed": "0.75,1.0,1.25",
+    "q_grid_wed": "0.0,0.1,0.2,0.3,0.4",
+    "windows_nonwed": "recent_60d,full_2025",
+    "lambdas_nonwed": "0.75,1.0,1.25",
+    "q_grid_nonwed": "0.0,0.1,0.2,0.3,0.4,0.5,0.6",
+    "a_weight": 0.7,
+    "non_a_weight": 1.0,
+    "a_gate_weight": 1.0,
+    "non_a_gate_weight": 1.15,
+    "modes": "floor_atype4",
+    "enable_moe": false,
+    "max_blocks": 3,
+    "n_boot": 1000,
+    "use_gpu": true,
+    "gpu_backend": "cuda",
+    "log_level": "INFO"
+  },
+  "modes": {
+    "floor_atype4": {
+      "raw": {
+        "overall": {
+          "mean": 1019.6128967972909,
+          "std": 472.5477306597616,
+          "n_days": 84,
+          "ci_low": 918.521911821044,
+          "ci_high": 1121.133569530226,
+          "p_gt_0": 1.0
+        },
+        "wednesday_only": {
+          "mean": 793.2947614033334,
+          "std": 636.3430861318577,
+          "n_days": 12,
+          "ci_low": 460.232406981768,
+          "ci_high": 1173.378623868071,
+          "p_gt_0": 1.0
+        },
+        "non_wednesday": {
+          "mean": 1057.3325860296172,
+          "std": 427.86688600761494,
+          "n_days": 72,
+          "ci_low": 962.5161931117566,
+          "ci_high": 1154.4631835077544,
+          "p_gt_0": 1.0
+        }
+      },
+      "focus_nonA": {
+        "overall": {
+          "mean": 1024.4051136774458,
+          "std": 476.404433954376,
+          "n_days": 84,
+          "ci_low": 922.2807612647327,
+          "ci_high": 1129.3304193639221,
+          "p_gt_0": 1.0
+        },
+        "wednesday_only": {
+          "mean": 758.6732579068298,
+          "std": 622.4031652683882,
+          "n_days": 12,
+          "ci_low": 432.40432312578275,
+          "ci_high": 1144.3389288104747,
+          "p_gt_0": 1.0
+        },
+        "non_wednesday": {
+          "mean": 1068.6937563058818,
+          "std": 431.84879111735125,
+          "n_days": 72,
+          "ci_low": 972.4607164039139,
+          "ci_high": 1167.746263249051,
+          "p_gt_0": 1.0
+        }
+      }
+    }
+  },
+  "ranking_focus_nonA": [
+    {
+      "mode": "floor_atype4",
+      "focus_overall_mean": 1024.4051136774458,
+      "focus_nonwed_mean": 1068.6937563058818,
+      "raw_overall_mean": 1019.6128967972909
+    }
+  ],
+  "recommended_mode_focus_nonA": "floor_atype4"
+}

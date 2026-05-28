@@ -1,0 +1,213 @@
+---
+id: anomaly-db-scope-must-be-single-hall
+trigger: "when running exploratory anomaly detection on pachinko data"
+confidence: 0.98
+domain: ml-data-validation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# アノマリー検出は単一ホールDBを明示指定すること
+
+## 背景
+run_exploratory_analysis.py のデフォルト --db-glob は "db/*.db" であり、
+db/ 直下の全ホール（9ホール）を統合して分析する。
+蒲田七は2025-07-07開業のため、他ホールのデータが混入すると
+開業前データやzscoreが-22を超える極端な外れ値が混入し、
+分析結果が完全に無意味になる。
+
+## アクション
+必ず --db-glob で対象ホールのDBファイルを明示指定する。
+
+```bash
+python ml/last_digit/exploratory/run_exploratory_analysis.py \
+  --db-glob "db/マルハンメガシティ2000-蒲田7.db" \
+  --reports-dir "ml/last_digit/reports" \
+  --output-dir "ml/last_digit/exploratory"
+```
+
+## 例
+誤: --db-glob "db/*.db"  → 9ホール統合、2025-04-21にzscore=-22.34の偽外れ値
+正: --db-glob "db/マルハンメガシティ2000-蒲田7.db" → 蒲田七のみ、開業日2025-07-07から正しく開始
+
+---
+id: rare-anomaly-days-as-heuristic-not-feature
+trigger: "when considering whether to add anomaly-day detection as an ML feature"
+confidence: 0.92
+domain: ml-feature-engineering
+source: session-reasoning
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 2%以下のアノマリー日はML特徴量ではなく運用ヒューリスティックとして扱う
+
+## 背景
+蒲田七の分析では全321日中9件（2.8%）がアノマリー日。
+テスト期間143日中4件。現状hit@2が90%以上の状態で
+アノマリー日をすべて正しく予測できても改善幅は1-2%未満。
+特徴量として取り込むコストに見合わない。
+
+## アクション
+アノマリー日の知見は特徴量化せず以下の用途に使う:
+1. 「3〜5週間に一度、高設定大量投入日がある」という定性的な補助情報
+2. 予測外れ日の事後分析（なぜ外れたかの説明材料）
+3. ユーザーへの「本日はアノマリー級の出し日の可能性」という注記
+
+## 例
+NG: is_near_anomaly_interval を ML 特徴量として追加 → サンプル不足で過学習リスク
+OK: 「前回 high anomaly から5週間経過」→ ユーザーへの参考情報として表示
+
+---
+id: saturday-concentration-in-new-store-anomalies
+trigger: "when analyzing anomaly distribution by weekday for a recently opened pachinko store"
+confidence: 0.80
+domain: pachinko-domain-knowledge
+source: data-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 新規開業ホールのアノマリーは土曜日に集中する傾向がある
+
+## 背景
+蒲田七（2025-07-07開業）のアノマリー9件中6件（67%）が土曜日。
+high/low 両方向とも土曜に集中。
+来客数が最も多い土曜が店側の設定戦略の「見せ場」として機能している可能性。
+
+## アクション
+土曜日専用特徴量の有効性を複数ホールで横断検証した上で判断する。
+蒲田七単独の9件では統計的根拠として不十分。
+
+## 例
+蒲田七の土曜アノマリー: 10/11(low,-187), 11/22(low,-251), 11/29(high,+413),
+1/31(low,-331), 2/28(high,+516), 5/2(high,+386)
+
+---
+id: rolling-window-masks-lows-in-declining-store
+trigger: "when anomaly detection finds surprisingly few low anomalies despite declining store performance"
+confidence: 0.88
+domain: ml-evaluation
+source: session-reasoning
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ローリング窓は下落トレンドに追随するためlow anomalyが検出されにくくなる
+
+## 背景
+蒲田七は開業直後から一貫して差枚が下落（rolling_median: 600→77）。
+しかしlow anomalyは4件のみ。IQR境界も同時に下落するため
+「既に低くなった基準からさらに外れる」ことが難しくなる。
+GW月曜(2026-05-04, avg_diff=-280)は下限-299を上回り非検出。
+
+## アクション
+ローリング窓ベースのアノマリー検出は「直近baseline比の外れ度」を測る。
+長期下落トレンドの絶対的な変化を捉えるには STL 分解などを別途検討する。
+
+## 例
+2026-05-04: avg_diff=-280, lower_bound=-299 → 非検出（下限が既に下がっている）
+2025-09-01: avg_diff=-351, lower_bound=-149 → 検出（baseline がまだ高い時期）
+
+---
+id: high-anomaly-in-declining-store-is-reputation-defense
+trigger: "when a store shows high anomaly days amid a general declining performance trend"
+confidence: 0.75
+domain: pachinko-domain-knowledge
+source: session-hypothesis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 下落トレンド中の突出したhigh anomalyは評判維持のための意図的な出し日の可能性
+
+## 背景
+蒲田七のテスト期間（2026年）は全体的に差枚が低下（rolling_median≈77）。
+しかしその中で突出したhigh anomaly日が通常水準の5〜7倍を記録。
+下落している評判を薄めるために意図的に設けている「特別出し日」と解釈できる。
+
+## アクション
+MLには組み込まず、ユーザーへの定性情報として活用する。
+発動トリガーの候補: ゾロ目日、長期低迷後の一定経過、GW直前土曜など。
+
+## 例
+2026-02-22: 強ゾロ目(2/22) → high anomaly（zscore=+4.14、通常の7.3倍）
+2026-02-28: 直後土曜にも高設定継続
+2026-05-02: GW直前土曜（通常の5倍）
+
+---
+id: small-sample-pattern-skepticism
+trigger: "when claiming a behavioral pattern from anomaly data with fewer than 5 examples"
+confidence: 0.95
+domain: ml-evaluation
+source: session-correction
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# アノマリーデータが10件未満の場合、1〜2例のパターンに意味を見出さない
+
+## 背景
+セッション内で「low anomaly翌週にhigh anomalyが発生」というパターンを
+11/22→11/29の1例から提案してしまい、ユーザーに「再現性が低すぎる」と
+正しく指摘された。9件のデータから1例では偶然と区別できない。
+
+## アクション
+アノマリーベースのパターン主張は最低5例、できれば10例以上を要件とする。
+サンプル不足の場合は「可能性がある」ではなく「判断保留」と明示する。
+
+## 例
+NG: 「low翌週high」: 9件中1例 → パターンとして扱わない
+OK: 「土曜集中」: 9件中6件（67%）→ 仮説として言及する価値あり
+
+---
+id: low-accuracy-expert-as-confidence-signal
+trigger: "when a specific floor or machine type shows significantly lower hit@2 than others"
+confidence: 0.85
+domain: ml-evaluation
+source: session-reasoning
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 機種別の正答率格差は特徴量改善より信頼度シグナルとして扱う
+
+## 背景
+蒲田七の expert 別 hit@2:
+- 2F_N: 95.1% (安定)
+- 3F_N: 90.2% (安定)
+- 3F_A: 76.9% (明らかに低い)
+A型機種は大当たり1回で差枚が激変するため差枚ベースランク信号が構造的に弱い可能性。
+
+## アクション
+低 hit@2 の expert はまず原因調査（特定機種・台番号への集中か否か）。
+構造的問題なら予測信頼度を低く設定してユーザーに明示する方針を選ぶ。
+
+## 例
+3F_A hit@2=76.9%:
+NG: 全 expert 統合モデルで無理に改善を狙う
+OK: UI上で「3F_A は参考予測（信頼度低）」として区別する
+
+---
+id: exploratory-analysis-before-ml-feature-design
+trigger: "when starting a new ML prediction project for pachinko or similar time-series data"
+confidence: 0.93
+domain: ml-project-planning
+source: session-retrospective
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 探索的分析（EDA）はML特徴量設計の前に実施する
+
+## 背景
+今回は walk-forward 評価やモデル比較を先行させ、
+アノマリー検出・生存時間分析・カイ二乗検定などの EDA を後回しにした。
+EDA 先行なら window サイズ（roll7/14/28）や efficiency 列の除外判断を
+より早い段階でデータに基づいて行えた。
+
+## アクション
+次回の ML プロジェクト開始時の順序:
+1. アノマリー検出（ホール別 rolling IQR）
+2. 曜日別・末尾別のカイ二乗検定
+3. ACF/PACF で最適 lag/window 確認
+4. 生存時間分析（高設定的中の周期性）
+5. 以上を踏まえて特徴量設計 → walk-forward
+
+## 例
+# 推奨: EDA を先に実行して window_hint を確認する
+python run_exploratory_analysis.py --db-glob "db/target_hall.db"
+# → periodicity_comment と window_hint を特徴量設計前に参照する

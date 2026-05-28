@@ -96,6 +96,8 @@ def _metric_series(df: pd.DataFrame, metric: str) -> np.ndarray:
     if metric == "rank2_rescue_on_miss1":
         sub = df[df["top1_match"] == 0]
         return pd.to_numeric(sub["top2_match"], errors="coerce").to_numpy(dtype=float)
+    if metric == "critical_miss_rate":
+        return (df["loss_scenario"] == "critical_miss").astype(float).to_numpy(dtype=float)
     return pd.to_numeric(df[metric], errors="coerce").to_numpy(dtype=float)
 
 
@@ -104,6 +106,16 @@ def _paired_frame(cur_sub: pd.DataFrame, base_sub: pd.DataFrame, metric: str) ->
         c = cur_sub[["date", "expert", "top1_match", "top2_match"]].copy()
         b = base_sub[["date", "expert", "top1_match", "top2_match"]].copy()
         return c.merge(b, on=["date", "expert"], suffixes=("_cur", "_base"))
+    if metric == "critical_miss_rate":
+        c = cur_sub[["date", "expert", "loss_scenario"]].copy()
+        b = base_sub[["date", "expert", "loss_scenario"]].copy()
+        c["critical_miss_rate"] = (c["loss_scenario"] == "critical_miss").astype(float)
+        b["critical_miss_rate"] = (b["loss_scenario"] == "critical_miss").astype(float)
+        return c[["date", "expert", "critical_miss_rate"]].merge(
+            b[["date", "expert", "critical_miss_rate"]],
+            on=["date", "expert"],
+            suffixes=("_cur", "_base"),
+        )
     c = cur_sub[["date", "expert", metric, "top1_match", "top2_match"]].copy()
     b = base_sub[["date", "expert", metric, "top1_match", "top2_match"]].copy()
     return c.merge(b, on=["date", "expert"], suffixes=("_cur", "_base"))
@@ -174,7 +186,7 @@ def compute_condition_significance(
     metrics: list[str] | None = None,
 ) -> pd.DataFrame:
     cfg = config or StatsConfig()
-    metric_list = metrics or ["hit_at_2", "loss_value", "rank2_rescue_on_miss1"]
+    metric_list = metrics or ["hit_at_2", "loss_value", "critical_miss_rate"]
 
     rows: list[dict] = []
     for evaluator in default_evaluators():

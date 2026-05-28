@@ -1,0 +1,17 @@
+======================================================================
+CEILING EFFECT EVALUATION: CONDITION SIGNIFICANCE SUMMARY
+======================================================================
+
+~ TRENDS (raw p < 0.05, not BH-significant):
+  [pred_span_quartile   / Q1             ] critical_miss_rate       : Δ = +0.0769, p = 0.0209, p_BH = 0.3766
+  [pred_span_quartile   / Q1             ] hit_at_2                 : Δ = -0.0699, p = 0.0209, p_BH = 0.3766
+  [anomaly_direction    / normal         ] critical_miss_rate       : Δ = +0.0157, p = 0.0325, p_BH = 0.3901
+
+SUMMARY:
+  Total condition-difficulty-metric combinations tested: 36
+  Significant improvements (BH): 0
+  Significant degradations (BH): 0
+  Trends (raw < 0.05): 3
+  Tests with p < 0.05 (raw): 3
+  Average Cohen's d: -0.026
+======================================================================

@@ -1,0 +1,100 @@
+---
+id: day7-date-boosts-last-digit-7
+trigger: "when analyzing which dates show elevated performance for last_digit=7 in 蒲田七"
+confidence: 0.80
+domain: pachinko-domain-knowledge
+source: data-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 日付の日部分に7を含む日（7・17・27日）は末尾7のmean_diffが75%高い
+
+## 背景
+day7_digit_report.csv より:
+- day7_flag=True（7日・17日・27日）の末尾7 mean_diff = 311.1
+- day7_flag=False（その他の日）の末尾7 mean_diff = 177.1
+- 差: +134（+75%）
+
+ホールが「日付に7がある日に末尾7へ高設定を入れる」演出をしている可能性。
+ただし7含む日でも末尾5-9内の順位は4位（8>6>9>7>5）であり、
+末尾7が突出しているわけではなく「全体的に出す日で末尾7も上がる」可能性もある。
+
+## アクション
+ML特徴量候補: `day_of_month.isin([7, 17, 27])` フラグ。
+全320日中約46日（14%）のサンプルのため過学習警戒。
+walk-forwardでの寄与確認が必須。
+「7含む日の全末尾平均 vs その他」を先に確認して全体的な出す日フラグかを検証する。
+
+## 例
+7含む日の末尾7: mean=311.1 / その他: mean=177.1 → +75%
+ただし7含む日の末尾8が1位（末尾7は4位）のため末尾7専用の日ではない可能性
+
+---
+id: saturday-digit6-vs-wednesday-digit89-different-patterns
+trigger: "when selecting day-of-week features for last_digit LTR in 蒲田七"
+confidence: 0.85
+domain: pachinko-domain-knowledge
+source: data-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 土曜は末尾6、水曜は末尾8・9が強い — 曜日で「強い末尾」パターンが異なる
+
+## 背景
+digit7_vicinity_summary.csv（末尾5-9の条件別順位）:
+
+| 条件   | 1位 | 2位 | 3位 | 4位 | 5位 |
+|--------|-----|-----|-----|-----|-----|
+| 土曜   |  6  |  8  |  7  |  9  |  5  |
+| 水曜   |  8  |  9  |  5  |  6  |  7  |
+| 7含む日|  8  |  6  |  9  |  7  |  5  |
+| その他 |  6  |  9  |  8  |  7  |  5  |
+
+- **土曜**: 末尾6（mean=307.8）が圧倒的1位。「7の左隣で出玉演出」仮説と整合。
+- **水曜**: 末尾8・9が上位、末尾6・7は下位。土曜とは異なり「7の右側（8・9）」が強い。
+- **末尾7**: 全4条件で常に4位または5位（下位固定）。
+
+## 解釈（ユーザー仮説）
+- 土曜: 技術レベルの低いオカルト客が「7狙い→その周辺6に設定が入っていた」という体験をさせる
+- 水曜: 設定投入日として業界で知られる曜日。土曜とは異なるユーザー層向けの台配置戦略
+
+## アクション
+ML特徴量候補:
+- `is_saturday AND last_digit == "6"` の交互作用
+- `is_wednesday AND last_digit in ["8", "9"]` の交互作用
+いずれも過学習警戒。walk-forwardで寄与を確認してから採用する。
+
+## 例
+土曜 末尾6 mean=307.8 vs 土曜全末尾平均≈209（+47%）
+水曜 末尾8 mean≈255、末尾9 mean≈236 vs 水曜全末尾平均≈193（+32%、+22%）
+
+---
+id: last-digit-7-consistently-weak-despite-player-expectation
+trigger: "when setting score weights for last_digit=7 in LTR model for 蒲田七"
+confidence: 0.88
+domain: pachinko-domain-knowledge
+source: data-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 末尾7は全条件・全曜日で末尾5-9内において常に下位
+
+## 背景
+digit7_vicinity_summary.csv: 末尾7は土曜4位・水曜5位（最下位）・7含む日4位・その他4位。
+weekday_digit_cross_report.csv: 末尾7が曜日別全末尾平均を上回る曜日は木曜(+57)・火曜(+22)のみ。
+日曜(-32)・水曜(-53)・金曜(-30)で平均を大きく下回る。
+
+ユーザー仮説: 「蒲田七ではスロットユーザーが末尾7（ラッキー7）を朝一優先で選ぶため、
+ホール側はそれを知っており末尾7には高設定を入れない」
+
+7含む日（7・17・27日）に末尾7が高くなる（mean=311.1）唯一の例外あり。
+ただしその日でも末尾5-9内では4位であり末尾7が最強にはなっていない。
+
+## アクション
+末尾7には「期待値を下げるバイアス」をLTRスコアに組み込むことを検討。
+例外: 7含む日（day_of_month in [7, 17, 27]）はバイアスを緩和する設計も考えられる。
+
+## 例
+全期間 mean_diff: 末尾7=190.5 vs 全末尾平均≈195（わずかに下位）
+土曜: 末尾6=307.8 vs 末尾7=224.3（末尾6が圧倒的に強い）
+水曜: 末尾7=139.6（全曜日・全末尾中でも特に低い水準）

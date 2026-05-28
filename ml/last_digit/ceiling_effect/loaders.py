@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import sqlite3
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -29,6 +29,10 @@ class ActualRankInfo:
     top2_diff: float
     top3_diff: float
     tail_to_diff: dict[str, float]
+    top1_machine_count: float = float("nan")
+    top2_machine_count: float = float("nan")
+    top3_machine_count: float = float("nan")
+    tail_to_machine_count: dict[str, float] = field(default_factory=dict)
 
 
 def _tail_str(value: Any) -> str:
@@ -113,6 +117,7 @@ def build_actual_rank_map(*, db_path: Path | None = None) -> dict[tuple[pd.Times
     agg["group_key"] = agg["group_key"].astype(str)
     agg["last_digit"] = agg["last_digit"].astype(str)
     agg["total_diff_coins"] = pd.to_numeric(agg["total_diff_coins"], errors="coerce").fillna(0.0)
+    agg["machine_count"] = pd.to_numeric(agg["machine_count"], errors="coerce").fillna(0.0)
 
     rank_map: dict[tuple[pd.Timestamp, str], ActualRankInfo] = {}
     for (dt, expert), group in agg.groupby(["date", "group_key"], sort=False):
@@ -120,6 +125,7 @@ def build_actual_rank_map(*, db_path: Path | None = None) -> dict[tuple[pd.Times
         if ranked.empty:
             continue
         tail_to_diff = {str(r.last_digit): float(r.total_diff_coins) for r in ranked.itertuples(index=False)}
+        tail_to_machine_count = {str(r.last_digit): float(r.machine_count) for r in ranked.itertuples(index=False)}
         top1 = ranked.iloc[0]
         top2 = ranked.iloc[1] if len(ranked) > 1 else ranked.iloc[0]
         top3 = ranked.iloc[2] if len(ranked) > 2 else ranked.iloc[min(1, len(ranked) - 1)]
@@ -131,6 +137,9 @@ def build_actual_rank_map(*, db_path: Path | None = None) -> dict[tuple[pd.Times
             top2_diff=float(top2["total_diff_coins"]),
             top3_diff=float(top3["total_diff_coins"]),
             tail_to_diff=tail_to_diff,
+            top1_machine_count=float(top1["machine_count"]),
+            top2_machine_count=float(top2["machine_count"]),
+            top3_machine_count=float(top3["machine_count"]),
+            tail_to_machine_count=tail_to_machine_count,
         )
     return rank_map
-

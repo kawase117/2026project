@@ -51,14 +51,21 @@ AIアシスタントへ：このファイルをセッション開始時に必ず
 
 ### ゾロ目（is_zorome）について
 
-- **定義** — 日付の日付部分と台番号の末尾が一致した日のこと
-  - 例：2月22日に22番の台、3月33日（存在しないが仮定）に33番の台
+テーブルによって定義が異なる点に注意。
+
+- **`machine_detailed_results.is_zorome`** — 台番号の末尾2桁が同じ場合に 1
+  - 例: 台番号 100/200…（末尾 "00"）, 11/111…（末尾 "11"）, 22, 33, 44, 55, 66, 77, 88, 99
+  - `database/json_processor.py` の `last_two_digits[0] == last_two_digits[1]` で判定
   - データベースでは `is_zorome = 1` でマーク
-  
-- **店側の心理** — 客に「きっかり ◯◯番◯◯日に高設定」と認識させるため、あえてゾロ目に高設定を投入する可能性がある
+
+- **`daily_hall_summary.is_zorome`** — 日付の日が 11 日または 22 日の場合に 1
+  - `database/date_info_calculator.py` の `_check_zorome()` で `day in [11, 22]` として判定
+  - ホール全体の集計単位なので台番号は関係しない
+
+- **店側の心理** — 末尾ゾロ目台や特定日付（11・22日）に高設定を投入する可能性がある
   - または逆に「ゾロ目は狙われるから避ける」という戦略も考えられる
   
-- **ダッシュボード活用** — page_05（台末尾別）で is_zorome フラグ別に成績を比較すると、店側の意図が見える可能性がある
+- **ダッシュボード活用** — page_05（台末尾別）で `machine_detailed_results.is_zorome` フラグ別に成績を比較すると、末尾ゾロ目台の設定傾向が見える可能性がある
 
 ## 現在のディレクトリ構造（最新版）
 
@@ -179,7 +186,7 @@ streamlit run main_app.py
 | machine_number | INTEGER | 台番号 |
 | machine_name | TEXT | 機種名 |
 | last_digit | **TEXT** | "0"〜"9"（文字列！） |
-| is_zorome | **INTEGER** | 0/1（BOOLEAN非対応）。ゾロ目フラグ：日付の日付部分と台番号末尾が一致した場合 1 |
+| is_zorome | **INTEGER** | 0/1（BOOLEAN非対応）。ゾロ目フラグ：台番号の末尾2桁が同じ（例: 00, 11, 22, 33…99）場合に 1 |
 | games_normalized | INTEGER | 正規化ゲーム数 |
 | diff_coins_normalized | INTEGER | 正規化差枚 |
 
@@ -193,7 +200,7 @@ streamlit run main_app.py
 | win_rate | FLOAT | 勝率（%） |
 | avg_games_per_machine | INTEGER | 台平均G数 |
 | avg_diff_per_machine | INTEGER | 台平均差枚 |
-| is_zorome | INTEGER | ゾロ目フラグ（0/1） |
+| is_zorome | INTEGER | ゾロ目フラグ（0/1）。日付の日が 11 または 22 の場合に 1 |
 
 ## 共通ユーティリティ（2026-04 追加）
 

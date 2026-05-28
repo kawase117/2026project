@@ -1,0 +1,90 @@
+=== Deep Dive: Weekday x Expert x Digit Bias / Partial Miss ===
+source: ml\last_digit\reports\digit_lag_v2_withinexpert_xgb_ranker_ndcg_testperiod_topk.csv
+records (actual-available only): 429 (date, expert)
+
+=== A) Weekday x Expert partial-hit distribution (2/2,1/2,0/2) ===
+[2F_N]
+  Monday    2/2=18  1/2= 2  0/2= 0  avg_hit=1.90  n=20
+  Tuesday   2/2=17  1/2= 3  0/2= 0  avg_hit=1.85  n=20
+  Wednesday 2/2= 9  1/2=11  0/2= 0  avg_hit=1.45  n=20
+  Thursday  2/2=14  1/2= 7  0/2= 0  avg_hit=1.67  n=21
+  Friday    2/2=15  1/2= 6  0/2= 0  avg_hit=1.71  n=21
+  Saturday  2/2=11  1/2=10  0/2= 0  avg_hit=1.52  n=21
+  Sunday    2/2=16  1/2= 4  0/2= 0  avg_hit=1.80  n=20
+
+[3F_N]
+  Monday    2/2=15  1/2= 5  0/2= 0  avg_hit=1.75  n=20
+  Tuesday   2/2=17  1/2= 3  0/2= 0  avg_hit=1.85  n=20
+  Wednesday 2/2=13  1/2= 7  0/2= 0  avg_hit=1.65  n=20
+  Thursday  2/2=18  1/2= 3  0/2= 0  avg_hit=1.86  n=21
+  Friday    2/2=17  1/2= 4  0/2= 0  avg_hit=1.81  n=21
+  Saturday  2/2=18  1/2= 3  0/2= 0  avg_hit=1.86  n=21
+  Sunday    2/2=13  1/2= 6  0/2= 1  avg_hit=1.60  n=20
+
+[3F_A]
+  Monday    2/2=16  1/2= 4  0/2= 0  avg_hit=1.80  n=20
+  Tuesday   2/2=15  1/2= 5  0/2= 0  avg_hit=1.75  n=20
+  Wednesday 2/2=12  1/2= 8  0/2= 0  avg_hit=1.60  n=20
+  Thursday  2/2=14  1/2= 6  0/2= 1  avg_hit=1.62  n=21
+  Friday    2/2=15  1/2= 6  0/2= 0  avg_hit=1.71  n=21
+  Saturday  2/2=15  1/2= 6  0/2= 0  avg_hit=1.71  n=21
+  Sunday    2/2=16  1/2= 3  0/2= 1  avg_hit=1.75  n=20
+
+=== B) 1/2-hit day: wrong predicted tail by weekday (top) ===
+[2F_N]
+  Wednesday tail6: 3
+  Friday    tail7: 2
+  Saturday  tail2: 2
+  Saturday  tail6: 2
+  Saturday  tail7: 2
+  Saturday  tail8: 2
+  Thursday  tail7: 2
+  Thursday  tail8: 2
+  Wednesday tail0: 2
+  Friday    tail1: 1
+  Friday    tail2: 1
+  Friday    tail6: 1
+  Friday    tail9: 1
+  Monday    tail5: 1
+  Monday    tail8: 1
+
+[3F_N]
+  Friday    tail6: 3
+  Wednesday tail2: 2
+  Friday    tail3: 1
+  Monday    tail3: 1
+  Monday    tail4: 1
+  Monday    tail5: 1
+  Monday    tail8: 1
+  Monday    tail9: 1
+  Saturday  tail5: 1
+  Saturday  tail6: 1
+  Saturday  tail8: 1
+  Sunday    tail1: 1
+  Sunday    tail2: 1
+  Sunday    tail4: 1
+  Sunday    tail5: 1
+
+[3F_A]
+  Wednesday tail7: 3
+  Friday    tail7: 2
+  Saturday  tail3: 2
+  Thursday  tail2: 2
+  Thursday  tail8: 2
+  Wednesday tail0: 2
+  Friday    tail2: 1
+  Friday    tail6: 1
+  Friday    tail8: 1
+  Friday    tail9: 1
+  Monday    tail1: 1
+  Monday    tail4: 1
+  Monday    tail5: 1
+  Monday    tail7: 1
+  Saturday  tail2: 1
+
+=== C) Strong weekday-specific bias (|pred-actual| >= 20pp, n>=12) ===
+(none)
+=== D) Complete miss (0/2) details ===
+2026-01-04 Sunday    3F_A pred=[0,5] actual=[4,6] span=0.000260
+2026-01-11 Sunday    3F_N pred=[0,2] actual=[5,6] span=0.000106
+2026-05-21 Thursday  3F_A pred=[1,8] actual=[5,9] span=0.001128

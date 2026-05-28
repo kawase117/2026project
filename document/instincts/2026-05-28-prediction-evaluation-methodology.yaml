@@ -1,0 +1,138 @@
+---
+id: segment-specific-top3-comparison
+trigger: "末尾予測の精度評価を行うとき"
+confidence: 0.98
+domain: prediction-evaluation
+source: user-correction
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# セグメント別Top3/Bottom3の正しい比較手法
+
+## 背景
+予測精度を評価する際、2F_N/3F_N/3F_A/2F_Aの各セグメント予測を全体の実績と比較していたが誤り。
+セグメント別予測はそれぞれのセグメント実績のみと比較すべき。
+ゾロ目狙い目意見もゾロ目台限定の実績（is_zorome=1）のみと比較する。
+
+## アクション
+- 2F_N予測Top3 → 2F実績Top3（machine_number < 3000）のみと比較
+- 3F_N予測Top3 → 3F実績Top3（machine_number >= 3000）のみと比較
+- 3F_A予測Top3 → 3F実績Top3と比較
+- 2F_A予測Top3 → 2F実績Top3と比較
+- ゾロ目意見はセグメント別ゾロ目実績（is_zorome=1）のみと比較する
+
+## 例
+```python
+df['floor'] = ['2F' if n < 3000 else '3F' for n in df['machine_number'].astype(int)]
+for floor in ['2F', '3F']:
+    df_floor = df[df['floor'] == floor]
+    summary = df_floor.groupby('last_digit')['diff_coins_normalized'].sum()
+    actual_top3 = summary.nlargest(3).index.tolist()
+    actual_bottom3 = summary.nsmallest(3).index.tolist()
+```
+
+---
+id: zorome-correction-value-definition
+trigger: "ゾロ目台の補正値・精度を評価するとき"
+confidence: 0.95
+domain: prediction-evaluation
+source: user-correction
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ゾロ目補正値の正しい定義と測定方法
+
+## 背景
+予測レポートの「台77 優先（+170）」などの数字は「同末尾の非ゾロ目台との期待差枚補正値」（過去データから算出）。
+ゾロ目台の実績評価も同様に「ゾロ目台平均差枚 - 非ゾロ目台平均差枚（同末尾・同セグメント）」で計算する。
+
+## アクション
+- 補正値 = ゾロ目台平均差枚 - 非ゾロ目台平均差枚（同末尾・同セグメント）
+- 予測補正値と実績補正値を比較して精度を評価する
+- セグメント別（2F/3F）に分けて集計すること
+
+## 例
+```python
+for ld in [str(i) for i in range(10)]:
+    df_ld = df_floor[df_floor['last_digit'] == ld]
+    z_avg = df_ld[df_ld['is_zorome']==1]['diff_coins_normalized'].mean()
+    nz_avg = df_ld[df_ld['is_zorome']==0]['diff_coins_normalized'].mean()
+    correction = z_avg - nz_avg  # 実績補正値
+# 予測「+170」と実績補正値を比較して精度評価
+```
+
+---
+id: kamata7-floor-classification
+trigger: "蒲田七（マルハンメガシティ2000-蒲田7）のデータをセグメント分類するとき"
+confidence: 0.99
+domain: data-processing
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田七のフロア分類ルール
+
+## 背景
+machine_detailed_resultsにはフロア情報が直接ないが、台番号でフロアを判定できる。
+Heatmap/2F_floor_coordinates_kamata7.csvで確認済み。
+
+## アクション
+- machine_number < 3000 → 2F（2001〜2351付近）
+- machine_number >= 3000 → 3F（3001〜3401付近）
+
+## 例
+```sql
+CASE WHEN CAST(machine_number AS INTEGER) < 3000 THEN '2F' ELSE '3F' END as floor
+```
+
+---
+id: prediction-accuracy-two-layer-structure
+trigger: "末尾別予測とゾロ目台補正予測の精度を同時に評価するとき"
+confidence: 0.90
+domain: prediction-evaluation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 予測精度の二層構造：末尾別とゾロ目補正は別指標
+
+## 背景
+2026-05-27の分析で判明：3F_Aは末尾別Top3で完全的中（3/3）だったが、
+ゾロ目補正値の予測では1/3のみ的中。同じモデルでも評価軸によって精度が大きく異なる。
+
+## アクション
+- 末尾別精度（全機種）とゾロ目補正精度（ゾロ目台）を別々に報告する
+- 「モデルが優秀」と言う際はどの評価軸の話かを明確にする
+- 末尾別精度が高くてもゾロ目補正精度が保証されるわけではない
+
+## 例
+| 評価軸 | 3F_A（2026-05-27） |
+|--------|-------------------|
+| 末尾別Top3一致度 | 3/3 完全的中 |
+| ゾロ目補正Top3一致度 | 1/3 |
+
+---
+id: anomaly-detection-requires-statistics
+trigger: "アノマリー判定（この日は普通か異常か）を行うとき"
+confidence: 0.95
+domain: statistical-analysis
+source: user-correction
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# アノマリー判定は統計検定が必須
+
+## 背景
+「火曜日は比較的普通の日」などの直感的な判断は不十分。
+ユーザーから「これは適当に行っただけですか？」と指摘を受けた。根拠なき断言は信頼を損なう。
+
+## アクション
+- アノマリー判定は過去30日以上のデータとz-score等の統計検定を用いる
+- 根拠がない場合は「アノマリー判定未実施」と明記する
+- 「普通の日」と断言しない
+
+## 例
+```python
+z_score = (today_total - historical_avg) / historical_std
+is_anomaly = abs(z_score) > 2.0  # 2σ超を異常とする
+```

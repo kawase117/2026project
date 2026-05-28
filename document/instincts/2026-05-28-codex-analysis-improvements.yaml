@@ -1,0 +1,143 @@
+---
+id: correct-segment-classification-floor-atype4
+trigger: "蒲田七の機台をセグメント分類（2F_N/3F_N/3F_A/2F_A）するとき"
+confidence: 0.99
+domain: data-processing
+source: codex-correction
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 正しいセグメント分類：フロア x A/N型で4分割
+
+## 背景
+台番号の先頭桁（2xxx=2F / 3xxx=3F）だけで分類していたのは不正確。
+正しい定義は ml/last_digit/tail_ltr_split_rule_wf.py の floor_atype4 モードにあり、
+jug_flag/hana_flag/bt_flag を使ってA/N型を判定する。
+
+## アクション
+```python
+df['floor_bucket'] = df['machine_number'].astype(str).str[0] + 'F'
+df['is_a_type'] = ((df['jug_flag']==1) | (df['hana_flag']==1) | (df['bt_flag']==1)).astype(int)
+df['atype_bucket'] = np.where(df['is_a_type']==1, 'A', 'N')
+df['segment'] = df['floor_bucket'] + '_' + df['atype_bucket']
+```
+- A型 = ジャグラー(jug_flag) / ハナビ系(hana_flag) / BT系(bt_flag)
+- N型 = それ以外（主にAT/ART機）
+- machine_detailed_results に LEFT JOIN machine_master が必要
+
+## 例
+2026-05-27 蒲田七の内訳: 2F_N=315台, 3F_A=207台, 3F_N=157台, 2F_A=36台
+
+---
+id: tail-vs-zorome-machine-separate-evaluation
+trigger: "末尾予測精度とゾロ目台推奨精度を評価・報告するとき"
+confidence: 0.97
+domain: prediction-evaluation
+source: codex-correction
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 末尾選定とゾロ目台選定は別指標で必ず分離して評価する
+
+## 背景
+CODEXの指摘：3F_Nの末尾7はセグメント1位（+13,300円）だったが、
+台3077自体は-2,900円（外れ）。強さは非ゾロ目側（+16,200円）に寄っていた。
+末尾精度とゾロ目台精度を混在させると「末尾は当たり、XX台は外れ」が見えない。
+
+## アクション
+分析レポートで以下を常に分離して報告する：
+1. tail hit@3: セグメント別末尾合計差枚によるTop3一致度
+2. XX台実績: 当日のゾロ目台（XX番台）の差枚を個別記載
+3. 「末尾当たり・XX台外れ」パターンを明示的に検出・フラグを立てる
+
+## 例
+3F_N 末尾7（2026-05-27）:
+- tail hit: セグメント1位 +13,300 (一致)
+- 3077台実績: -2,900 (外れ)
+- 原因: 非ゾロ目の末尾7台が+16,200を稼いでいた
+
+---
+id: combined-dynamic-weight-by-expert-reliability
+trigger: "combined予測を作成するとき・各expertの信頼度が異なるとき"
+confidence: 0.90
+domain: prediction-strategy
+source: codex-correction
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# combined は等重みで混ぜない。信頼度に応じた動的ウェイトを使う
+
+## 背景
+CODEXの指摘：「2F_N/2F_Aがノイズになっていてcombinedを崩した。
+3F_N/3F_A中心にすれば上位の崩れは小さかった」。
+等重みcombinedでは信頼度の低いexpertが予測を歪める。
+
+## アクション
+- 各expertのtop1ミス率・直近精度を事前確認しウェイトを調整
+- top1ミス率 > 20% のexpertはウェイト0.5倍以下に下げる
+- イベント日など特定条件では3F_Nを重視するなど条件付きウェイトを使う
+- 使用したウェイトを報告に明記する
+
+## 例
+2026-05-27（イベント日）の推奨ウェイト:
+- 3F_A（top1ミス7.1%）: 0.40
+- 3F_N（イベント日強）: 0.40
+- 2F_N（top1ミス14.3%）: 0.15
+- 2F_A（イベント日データなし）: 0.05
+
+---
+id: zorome-correction-strict-three-conditions
+trigger: "ゾロ目台（XX番台）を推奨するかどうか判断するとき"
+confidence: 0.88
+domain: prediction-strategy
+source: codex-correction
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ゾロ目補正はプラスだけでは不十分。3条件を全て満たすとき推奨する
+
+## 背景
+CODEXの指摘：「9はcombined 2位だったが3F_Nで-800, 2F_Aで-1200で根拠として弱すぎた。
+ゾロ目補正が7と9を押し上げすぎた」。補正値プラスでもサンプルや合意が薄ければ信頼できない。
+
+## アクション
+XX台推奨には以下3条件を全て確認する：
+1. correction > +150（同末尾非ゾロ目との差が閾値以上）
+2. 直近サンプル数 >= 10日（補正値の安定性）
+3. 複数expertが同じ末尾に合意している（末尾レベルで合意）
+1条件でも欠ける場合は「末尾推奨・XX台にはこだわらない」と明記する
+
+## 例
+2026-05-27 末尾9の検証:
+- correction: -87 → 条件1 NG
+- 3F_N=rank1 vs 3F_A=rank9 → 条件3 NG
+→ combined 2位に上げる根拠なし。「末尾9は推奨しない」が正解
+
+---
+id: kamata7-27th-structural-change-2026
+trigger: "蒲田七の27日（イベント日）の成績・予測精度を評価するとき"
+confidence: 0.82
+domain: statistical-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田七の27日は2026年から成績トレンドが急落している
+
+## 背景
+アノマリー検定（2026-05-28実施）で発見：
+- 2025年の27日: +159,000〜+354,800円（一貫して高投資）
+- 2026年の27日: -4,600〜+121,800円（急落）
+t検定 p=0.004 で「過去27日の平均より有意に低い」と確認。
+3F_Nの「27日無敗」仮説は2025年データで学習された可能性が高く、
+2026年の戦略変化に未対応かもしれない。
+
+## アクション
+- 27日の予測には「2026年の27日限定」の直近精度を優先確認する
+- 3F_Nの27日信頼度を相対的に引き下げて考える（無敗仮説は破綻済み）
+- アノマリー検定は「全期間参照」と「直近3ヶ月参照」の両方を提示する
+
+## 例
+27日時系列 蒲田七:
+2025年（7〜12月）: 平均 +245,583円
+2026年（2〜4月）: 平均 +55,767円（p=0.004で有意差あり）

@@ -1,0 +1,125 @@
+---
+id: half-row-streak-rare-base-pattern-is-3digit-cluster
+trigger: "when designing above-mean streak features or evaluating half-row hypothesis in 蒲田七"
+confidence: 0.85
+domain: pachinko-domain-knowledge
+source: data-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ハーフ列（streak≥5）は稀な例外。基本パターンは3末尾局所集中（mean_streak≈2.3〜3.0）
+
+## 背景
+above_mean_streak_report.csv（n=46日/曜日）より:
+
+| 曜日 | mean_streak | streak≥5% | streak≤3% |
+|------|-------------|-----------|-----------|
+| 水   |    2.326    |  0.0%     |   95.7%   |
+| 金   |    2.696    |  2.2%     |   78.3%   |
+| 火   |    2.783    |  4.3%     |   78.3%   |
+| 土   |    2.957    |  6.5%     |   69.6%   |
+| 月   |    2.739    |  8.7%     |   76.1%   |
+| 日   |    2.795    |  9.1%     |   79.5%   |
+| 木   |    2.761    |  10.9%    |   80.4%   |
+
+全曜日でmean_streak=2.3〜3.0であり、基本は「3末尾の島」が分離して現れる。
+ハーフ列（5末尾以上連続で全体平均超え）は最多の木曜でも10.9%しか発生しない。
+
+## アクション
+ML特徴量は「5末尾連続」フラグではなく「3末尾クラスタ内フラグ」を主軸にする。
+streak≥5フラグは木曜・日曜・月曜のみ補助特徴量として検討余地あり（それ以外は情報量ゼロ）。
+
+## 例
+水曜: 46日中streak≥5が0日 → 3末尾クラスタのみで水曜の特徴量は完結
+木曜: 46日中5日（10.9%）でハーフ列 → ニブイチ日に稀に連続半分が発生する
+
+---
+id: wednesday-zero-half-row-cleanest-cluster
+trigger: "when deciding feature stability for Wednesday cluster features in 蒲田七"
+confidence: 0.88
+domain: pachinko-domain-knowledge
+source: data-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 水曜はstreak≥5が0%。全曜日で最もクリーンな「3末尾局所集中」パターン
+
+## 背景
+above_mean_streak_report.csv より水曜のみ pct_streak_ge5=0.0%（46日中0日）。
+pct_streak_le3=95.7%（46日中44日）で突出して高い。
+concentration_ratio=1.200（delta=38.62）とも整合しており、
+水曜は8-9-0クラスタが毎回ほぼ確実に成立する最安定曜日。
+
+## アクション
+水曜の `is_wednesday AND last_digit in ["8","9","0"]` 特徴量は他曜日より信頼度が高い。
+外れる日がほぼないため precision が高く、過学習リスクも低い。
+
+## 例
+水曜46日のうち44日でstreak≤3 → 3末尾クラスタが外れる日は2日のみ
+対比: 土曜はpct_streak_le3=69.6%（3末尾クラスタが外れる日が3割）
+
+---
+id: thursday-machine-type-splits-digit-cluster
+trigger: "when designing Thursday-specific features for last_digit LTR with machine_type in 蒲田七"
+confidence: 0.78
+domain: pachinko-domain-knowledge
+source: data-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 木曜はA型・AT系が0-1-2クラスタ、BT機種だけ8-9-0クラスタと完全に分離
+
+## 背景
+weekday_machine_top_digits.csv の木曜行:
+
+| 機種タイプ | top1       | top2       | best_cluster | cluster_mean |
+|-----------|------------|------------|-------------|-------------|
+| A型       | 末尾2(308)  | 末尾9(301)  | 0-1-2       |   290.9     |
+| AT系      | 末尾7(292)  | 末尾2(248)  | 0-1-2       |   225.5     |
+| BT        | 末尾8(283)  | 末尾9(270)  | 8-9-0       |   230.1     |
+
+A型・AT系は共に best_cluster=0-1-2（ホール全体の木曜 leftward パターンと整合）。
+BT機種だけ 8-9-0（反対端）のクラスタを形成。
+AT系の top1=末尾7 はクラスタ外の孤立強末尾（ニブイチでAT系の末尾7に集中投入仮説）。
+
+## アクション
+木曜のクラスタ特徴量を機種タイプで分けて設計:
+- A型・AT系: `is_thursday AND last_digit in ["0","1","2"]`
+- AT系追加: `is_thursday AND last_digit=="7" AND is_AT`
+- BT: `is_thursday AND last_digit in ["8","9","0"]`
+BT比率8.6%のため全体特徴量への寄与は限定的だが、BT台限定では有効。
+
+## 例
+木曜A型top1=末尾2(308) vs 木曜BT top1=末尾8(283): 同じ木曜でも全く逆のクラスタ
+
+---
+id: sunday-bt-machines-cluster-at-0-1-2-opposite-to-others
+trigger: "when analyzing Sunday digit patterns by machine type in 蒲田七"
+confidence: 0.72
+domain: pachinko-domain-knowledge
+source: data-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 日曜はA型・AT系が6-7-8クラスタだがBT機種だけ0-1-2クラスタ（mean=396.9で最高）
+
+## 背景
+weekday_machine_top_digits.csv の日曜行:
+
+| 機種タイプ | top1        | top2        | best_cluster | cluster_mean |
+|-----------|-------------|-------------|-------------|-------------|
+| A型       | 末尾6(348)   | 末尾3(346)   | 6-7-8       |   297.9     |
+| AT系      | 末尾6(267)   | 末尾0(199)   | 6-7-8       |   186.0     |
+| BT        | 末尾0(446)   | 末尾1(445)   | 0-1-2       |   396.9     |
+
+A型・AT系は揃って6-7-8 → 日曜の末尾6パターンは機種横断的な方針。
+BT機種だけ0-1-2クラスタ、かつmean=396.9で日曜全体最高値。
+
+## アクション
+日曜のBT台は末尾0-1-2を優先。
+ML特徴量: `is_sunday AND is_BT AND last_digit in ["0","1","2"]` の交互作用。
+BT台数比率8.6%のため全体順位への影響は小さいが、BT機種限定での選択精度は高い。
+
+## 例
+日曜BT best_cluster_mean=396.9 vs 日曜A型 best_cluster_mean=297.9（BT+33%高い）
+日曜AT系 best_cluster=6-7-8, mean=186 → A型・AT系は揃って6-7-8方向

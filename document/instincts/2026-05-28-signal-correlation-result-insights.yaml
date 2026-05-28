@@ -1,0 +1,323 @@
+---
+id: signal-correlation-or-rate-too-high
+trigger: "signal_machine_correlation_analysis.pyのシグナル発動率を確認するとき"
+confidence: 0.95
+domain: ml-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# OR条件でのシグナル発動率は高すぎる — RB閾値にモンキー設定1が混入していたのが原因
+
+## 背景
+`diff_coins > 200 OR rb_prob > 1/300` のOR条件で実行すると発動率83.7%になる根本原因が判明した。
+**モンキーターンV設定1のRB確率は 1/299 = 0.003344 であり、閾値 1/300 = 0.003333 をわずかに超える。**
+つまり設定1台（最低設定）が毎日シグナル扱いになり、全末尾をシグナル末尾に汚染していた。
+
+RB閾値を 1/258（設定4+）に修正した結果：
+- 旧 1/300: signal 2703 / nonsignal 527 = **83.7%**
+- 新 1/258: signal 2376 / nonsignal 854 = **73.6%**
+
+それでも73.6%と高い理由は diff_signal（差枚>200）のOR条件が引き続き多くの日を捕捉するため。
+diff閾値を上げるかAND条件にしない限り、OR条件での発動率は下がりにくい。
+
+## アクション
+```python
+# 正しいRB閾値（設定4+を識別）
+--rb-threshold 0.003876   # = 1/258
+
+# モンキーターンV 設定別RB確率（設定3なし）
+# 設定1: 1/299 = 0.003344  <- 旧閾値(1/300)を突き抜けていた！
+# 設定2: 1/295 = 0.003390
+# 設定4: 1/258 = 0.003876  <- ここから設定が良い
+# 設定5: 1/235 = 0.004255
+# 設定6: 1/222 = 0.004505
+
+# 北斗の拳 設定別RB確率
+# 設定1: 1/384 = 0.002604
+# 設定2: 1/370 = 0.002703
+# 設定3: 1/297 = 0.003367  <- 旧閾値で捕捉されていた（設定3は低設定）
+# 設定4: 1/258 = 0.003876
+# 設定5: 1/235 = 0.004255
+
+# signal_rate チェック（常に確認する）
+signal_rate = pair_counts['signal_pairs'] / (pair_counts['signal_pairs'] + pair_counts['nonsignal_pairs'])
+if signal_rate > 0.7:
+    print(f"WARNING: Signal rate {signal_rate:.1%} is very high -- consider tightening thresholds.")
+```
+
+## 例
+```
+モンキーターンV 設定1 (理論RB=1/299=0.003344) が rb_threshold=1/300=0.003333 を超える
+-> 設定1の35台が毎日ほぼ全末尾でシグナル発火
+-> nonsignal が全体の16%しか残らない（83.7%発動）
+
+修正後 rb_threshold=1/258:
+  signal:    2376 (73.6%)
+  nonsignal:  854 (26.4%)
+  -> まだ高いが原因の大半は解消
+```
+
+---
+id: rb-threshold-258-not-300
+trigger: "signal_machine_correlation_analysis.py や signal_multi_tail_2fn.py でRB閾値を設定するとき"
+confidence: 0.96
+domain: ml-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# RB閾値は 1/300 ではなく 1/258（設定4+）が正しい
+
+## 背景
+旧来の `rb_threshold = 1/300 = 0.003333` はモンキーターンVの設定1（1/299）を捕捉してしまう。
+北斗の設定3（1/297）も捕捉する。いずれも低設定であり、シグナルとして使いたい設定ではない。
+
+両機種ともに「設定4以上」が意味のある設定で、その閾値が 1/258 = 0.003876 となる。
+閾値修正により rb_signal_only の delta が +65.8 から +77.8 に改善し、p値も1桁向上した。
+
+## アクション
+```python
+# 正しいデフォルト値（signal_machine_correlation_analysis.py の引数）
+--rb-threshold 0.003876   # = 1/258 = 設定4+
+
+# さらに絞る場合（設定5+）
+--rb-threshold 0.004255   # = 1/235
+
+# 機種別設定目安
+MONKEY_SETTINGS = {1: 1/299, 2: 1/295, 4: 1/258, 5: 1/235, 6: 1/222}  # 設定3なし
+HOKUTO_SETTINGS = {1: 1/384, 2: 1/370, 3: 1/297, 4: 1/258, 5: 1/235}
+THRESHOLD_SETTING4_PLUS = 1 / 258   # 両機種で設定4以上を捕捉
+
+# signal_multi_tail_2fn.py の fixed mode でも同様
+--signal-source rb --signal-mode fixed --rb-threshold 0.003876
+```
+
+## 例
+```
+旧閾値 1/300 での結果（蒲田七）:
+  rb_signal_only: delta +65.8, p=4.97e-7, signal_n=124,340
+
+新閾値 1/258 での結果:
+  rb_signal_only: delta +77.8, p=1.05e-8, signal_n=35,985
+  -> deltaが+12枚改善、p値が1桁向上
+  -> signal_n が 71% 減（低設定ノイズ除去）
+```
+
+---
+id: signal-correlation-monday-confirmed
+trigger: "モンキーターンV・スマスロ北斗の拳シグナルを曜日別に解釈するとき"
+confidence: 0.95
+domain: operational-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 月曜日のみBH補正後有意（p_adj=5.8e-5） -- 木曜ネガティブはノイズだった
+
+## 背景
+RB閾値を正しい 1/258 に修正した上での曜日別結果（BH補正後）：
+
+| 曜日 | delta(旧1/300) | delta(新1/258) | p_adj(新) | 有意 |
+|------|--------------|--------------|----------|------|
+| 月   | +183.5        | +182.1        | 5.8e-5   | YES  |
+| 水   | +168.4        | +136.2        | 0.125    | --   |
+| 土   | +103.4        | +92.8         | 0.203    | --   |
+| 木   | -64.2         | +8.6          | 0.797    | --   |
+| 日   | +28.7         | -9.7          | 0.834    | --   |
+| 金   | -9.1          | +13.8         | 0.724    | --   |
+| 火   | +30.1         | +12.5         | 0.724    | --   |
+
+重大な修正が2つある：
+1. **木曜のデルタ -64枚はモンキー設定1/2のノイズだった。**
+   1/258 に閾値を上げると木曜は +8.6（ほぼゼロ）に消える。木曜の逆転効果を信じた判断は取り消し。
+2. **日曜の +28.7 もノイズ。** 1/258では -9.7 に転落。
+   （signal_multi_tail_2fn での日曜60%は別分析なので矛盾しない）
+
+月曜は閾値に関わらず安定して有意（p_adj 0.0017 -> 5.8e-5 とさらに強化）。
+
+## アクション
+```python
+# 修正済み運用判断ロジック（signal_machine_correlation ベース）
+if target_weekday == "月曜日" and signal_active:
+    confidence_boost = +20  # 月曜は実証済み（p_adj=5.8e-5, delta+182）
+elif target_weekday in ["水曜日", "土曜日"] and signal_active:
+    confidence_boost = +5   # 境界的傾向あり、軽微な上乗せのみ
+else:
+    confidence_boost = 0    # 木曜ネガティブは削除（ノイズだった）
+
+# 廃止された判断（コメントアウトして記録）
+# elif target_weekday == "木曜日":
+#     confidence_boost = -10  # [廃止] rb_threshold=1/300のモンキーノイズ起因
+```
+
+## 例
+```
+月曜日に末尾2でモンキーターンVが好調:
+  -> 末尾2の他機種も平均+182枚期待 (BH補正後 p=5.8e-5)
+  -> 非常に信頼性が高い（閾値修正後も結論変わらず）
+
+木曜日に末尾4でスマスロ北斗が好調:
+  [旧・誤った解釈] デルタ-64枚の逆転傾向 -> 信号を信じるな
+  [新・正しい解釈] ほぼニュートラル（+8.6枚）-> 特別なペナルティ不要
+  -> ノイズだったため、木曜のシグナルは他の曜日と同じ扱いでよい
+```
+
+---
+id: signal-fake-tail-check-method
+trigger: "シグナル機種の兆候が真正かフェイク末尾かを判定するとき"
+confidence: 0.87
+domain: ml-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# fake_tail_checkで真正信号かフェイクかを判定できる
+
+## 背景
+「ホールが信号機種だけ特定末尾に集中設定し、その末尾を他の末尾と区別している」
+（= 真正信号）と、
+「信号機種は別の末尾に入れて見せかけだけ良くしている」（= フェイク末尾）
+を区別するには `build_fake_tail_check` の delta を見る。
+
+実行結果（蒲田七、rb_threshold=1/258）：
+```json
+{
+  "signal_tail_avg_diff": 189.0,
+  "nonsignal_tail_avg_diff": 126.4,
+  "delta": 62.6
+}
+```
+signal_tail > nonsignal_tail -> 信号末尾全体に恩恵がある -> **真正信号**。
+
+## アクション
+```python
+fake_check = payload['fake_tail_check']
+delta = fake_check['delta']
+
+if delta > 30:
+    interpretation = "真正信号（その末尾全体に設定が入っている）"
+elif -30 <= delta <= 30:
+    interpretation = "曖昧（フェイクかもしれない）"
+else:  # delta < -30
+    interpretation = "フェイク末尾の可能性が高い"
+```
+
+## 例
+```
+蒲田七の結果 (rb_threshold=1/258):
+  signal_tail_avg_diff:    189.0
+  nonsignal_tail_avg_diff: 126.4
+  delta: +62.6 -> 真正信号
+
+フェイク末尾シナリオ（仮想）:
+  signal_tail_avg_diff:    150.0
+  nonsignal_tail_avg_diff: 160.0
+  delta: -10.0 -> 信号末尾は特に良くない = フェイクの可能性
+```
+
+---
+id: rb-signal-more-stable-than-diff
+trigger: "差枚シグナルとRBシグナルのどちらを優先するか検討するとき"
+confidence: 0.92
+domain: ml-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# RB確率シグナルの方が差枚シグナルより統計的に安定（閾値修正後さらに明確）
+
+## 背景
+signal_machine_correlation_analysis.py の蒲田七結果（rb_threshold=1/258 で補正済み）：
+
+| シグナル種別 | delta | p値 | signal_n |
+|------------|-------|-----|---------|
+| diff_signal_only | +71.8 | 8.88e-4 | 149,745 |
+| rb_signal_only   | +77.8 | 1.05e-8 | 35,985  |
+| signal_or        | +62.8 | 2.88e-3 | 152,799 |
+
+RBシグナルのdeltaが差枚シグナルを上回り（+77.8 vs +71.8）、p値は4桁小さい。
+旧閾値(1/300)では rb delta=+65.8 だったが、設定1/2ノイズ除去で+77.8に改善した。
+
+差枚は「その日の短期ノイズ」を反映しやすく日内変動に引きずられる。
+RB確率は「設定の直接指標」であり長期的に安定した信号になる。
+
+## アクション
+```python
+# 優先順位付き評価
+if signal_rb:
+    priority = "高"
+    reason = "RBシグナルあり（設定4+の直接指標、p=1.05e-8）"
+elif signal_diff:
+    priority = "中"
+    reason = "差枚シグナルのみ（短期ノイズの可能性、p=8.88e-4）"
+else:
+    priority = "低"
+    reason = "シグナルなし"
+
+# rb_threshold は必ず 1/258 以上を使う（モンキー設定1ノイズ対策）
+RB_THRESHOLD = 1 / 258  # = 0.003876
+```
+RBシグナルが確認できない日の差枚シグナルは参考値として扱う。
+
+## 例
+```
+RBシグナル (1/258以上) が出た末尾の他2FN機種: 平均 +77.8枚, p=1.05e-8
+差枚シグナルのみ (>200枚) の末尾の他2FN機種: 平均 +71.8枚, p=8.88e-4
+
+-> 差枚は数値が近いが信頼性は4桁低い
+-> RBシグナルを優先ターゲットにする
+-> 旧閾値1/300では rb=+65.8 だったが、1/258補正で+77.8に向上
+```
+
+---
+id: signal-correlation-json-output-keys
+trigger: "signal_machine_correlation_summary.jsonを読み込んで解釈するとき"
+confidence: 0.99
+domain: operational-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# signal_machine_correlation_summary.jsonの正しいキー構造
+
+## 背景
+実際の出力JSONのキーは `overall_stats` や `weekday_stats` ではなく、
+`signal_or`, `diff_signal_only`, `rb_signal_only`, `fake_tail_check` など。
+間違ったキーでアクセスすると None が返って解釈を誤る。
+曜日別統計はJSON**ではなく** `signal_machine_weekday_stats.csv` に出力される。
+
+## アクション
+```python
+import json, pandas as pd
+
+with open("signal_machine_correlation_summary.json", encoding="utf-8") as f:
+    d = json.load(f)
+
+# 正しいキー
+d['signal_machines']        # ["スマスロ北斗の拳", "モンキーターンV"]
+d['signal_condition']       # {"diff_threshold": 200.0, "rb_threshold": 0.003876, "rb_direction": ">"}
+d['pair_counts']            # {"signal_pairs": N, "nonsignal_pairs": N}
+d['diff_signal_only']       # {signal_mean, nonsignal_mean, delta, p_value, signal_n, ...}
+d['rb_signal_only']         # {signal_mean, nonsignal_mean, delta, p_value, signal_n, ...}
+d['signal_or']              # {signal_mean, nonsignal_mean, delta, p_value, signal_n, ...}
+d['fake_tail_check']        # {signal_tail_avg_diff, nonsignal_tail_avg_diff, delta}
+
+# 曜日別はCSVファイルで別途読む
+weekday_df = pd.read_csv("signal_machine_weekday_stats.csv")
+# columns: day_of_week, signal_n, nonsignal_n, signal_mean, nonsignal_mean, delta, p_raw, p_adj, reject_fdr_bh
+```
+
+## 例
+```python
+# 間違い（None が返る）
+d.get('overall_stats')   # -> None
+d.get('weekday_stats')   # -> None
+d.get('correlation')     # -> None
+
+# 正しい（rb_threshold=1/258 の結果）
+d.get('rb_signal_only')  # -> {'signal_mean': 234.9, 'delta': 77.8, 'p_value': 1.05e-8, ...}
+d.get('fake_tail_check') # -> {'delta': 62.6, ...}
+```
+
+---

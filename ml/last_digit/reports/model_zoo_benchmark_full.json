@@ -1,0 +1,98 @@
+{
+  "batches": [
+    "model_zoo_benchmark_batch1",
+    "model_zoo_benchmark_batch2"
+  ],
+  "n_rows": 104,
+  "models": [
+    "catboost_classifier",
+    "catboost_ranker_pairlogit",
+    "catboost_ranker_yeti",
+    "extra_trees",
+    "lgbm_classifier",
+    "lgbm_ranker_lambdarank",
+    "linucb_contextual_bandit",
+    "logistic_regression",
+    "mlp_classifier_deep",
+    "random_forest",
+    "xgb_classifier",
+    "xgb_ranker_ndcg",
+    "xgb_ranker_pairwise"
+  ],
+  "top_models_by_hit_at_2": [
+    {
+      "model": "catboost_ranker_pairlogit",
+      "hit_at_2_mean": 0.9859154929577464,
+      "ndcg_at_2_mean": 0.8793066746552823,
+      "f1_mean": 0.857394366197183,
+      "elapsed_sec_mean": 42.53805283746624
+    },
+    {
+      "model": "xgb_ranker_ndcg",
+      "hit_at_2_mean": 0.9841549295774648,
+      "ndcg_at_2_mean": 0.9079119878662872,
+      "f1_mean": 0.8943661971830986,
+      "elapsed_sec_mean": 0.6961903624905972
+    },
+    {
+      "model": "lgbm_ranker_lambdarank",
+      "hit_at_2_mean": 0.9841549295774648,
+      "ndcg_at_2_mean": 0.8942258864323628,
+      "f1_mean": 0.8802816901408451,
+      "elapsed_sec_mean": 0.9081002875172999
+    },
+    {
+      "model": "xgb_ranker_pairwise",
+      "hit_at_2_mean": 0.982394366197183,
+      "ndcg_at_2_mean": 0.9096725512465689,
+      "f1_mean": 0.8961267605633803,
+      "elapsed_sec_mean": 0.7076098874968011
+    },
+    {
+      "model": "xgb_classifier",
+      "hit_at_2_mean": 0.9815140845070423,
+      "ndcg_at_2_mean": 0.8567854944627503,
+      "f1_mean": 0.8362676056338028,
+      "elapsed_sec_mean": 0.9204715625237441
+    },
+    {
+      "model": "lgbm_classifier",
+      "hit_at_2_mean": 0.9815140845070421,
+      "ndcg_at_2_mean": 0.8349074996380259,
+      "f1_mean": 0.807218309859155,
+      "elapsed_sec_mean": 1.4864950124901952
+    },
+    {
+      "model": "catboost_ranker_yeti",
+      "hit_at_2_mean": 0.9779929577464788,
+      "ndcg_at_2_mean": 0.8955557823471162,
+      "f1_mean": 0.8838028169014085,
+      "elapsed_sec_mean": 7.4469899624964455
+    },
+    {
+      "model": "catboost_classifier",
+      "hit_at_2_mean": 0.977112676056338,
+      "ndcg_at_2_mean": 0.8599594242312681,
+      "f1_mean": 0.8424295774647887,
+      "elapsed_sec_mean": 2.1794074499921408
+    },
+    {
+      "model": "extra_trees",
+      "hit_at_2_mean": 0.9762323943661971,
+      "ndcg_at_2_mean": 0.8689614439368412,
+      "f1_mean": 0.8512323943661971,
+      "elapsed_sec_mean": 1.2581951249740086
+    },
+    {
+      "model": "mlp_classifier_deep",
+      "hit_at_2_mean": 0.9674295774647887,
+      "ndcg_at_2_mean": 0.7618318301463088,
+      "f1_mean": 0.7266725352112676,
+      "elapsed_sec_mean": 8.798247537502903
+    }
+  ],
+  "artifacts": {
+    "detailed_csv": "ml\\last_digit\\reports\\model_zoo_benchmark_full_detailed.csv",
+    "summary_csv": "ml\\last_digit\\reports\\model_zoo_benchmark_full_summary.csv"
+  }
+}

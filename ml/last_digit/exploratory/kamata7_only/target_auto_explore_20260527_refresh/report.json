@@ -1,0 +1,52 @@
+{
+  "output_root": "ml\\last_digit\\exploratory\\kamata7_only\\target_auto_explore_20260527_refresh",
+  "top2_baseline_topk": "ml\\last_digit\\exploratory\\kamata7_only\\target_auto_explore_20260527_refresh\\top2_refit\\run_xgb_ranker_ndcg_testperiod_topk.csv",
+  "experiments": [
+    {
+      "experiment": "top2_refit",
+      "target_label": "is_top_2",
+      "source_latest_date": "2026-05-26",
+      "target_date": "2026-05-27",
+      "test_period_enabled": true,
+      "ceiling_status": "ok",
+      "ceiling_dir": ""
+    },
+    {
+      "experiment": "t1_rank1",
+      "target_label": "is_rank_1",
+      "source_latest_date": "2026-05-26",
+      "target_date": "2026-05-27",
+      "test_period_enabled": true,
+      "ceiling_status": "ok",
+      "ceiling_dir": "ml\\last_digit\\exploratory\\kamata7_only\\target_auto_explore_20260527_refresh\\t1_rank1\\run_xgb_ranker_ndcg_ceiling_effect"
+    },
+    {
+      "experiment": "t2_top3",
+      "target_label": "is_top_3",
+      "source_latest_date": "2026-05-26",
+      "target_date": "2026-05-27",
+      "test_period_enabled": true,
+      "ceiling_status": "ok",
+      "ceiling_dir": "ml\\last_digit\\exploratory\\kamata7_only\\target_auto_explore_20260527_refresh\\t2_top3\\run_xgb_ranker_ndcg_ceiling_effect"
+    },
+    {
+      "experiment": "worst1",
+      "target_label": "is_worst_1",
+      "source_latest_date": "2026-05-26",
+      "target_date": "2026-05-27",
+      "test_period_enabled": true,
+      "ceiling_status": "skipped_worst_target",
+      "ceiling_dir": ""
+    }
+  ],
+  "worst_eval": {
+    "n": 584,
+    "worst1_hit_rate": 0.7808219178082192,
+    "worst2_cover_rate": 0.9794520547945206,
+    "worst3_cover_rate": 0.9863013698630136,
+    "pred1_negative_rate": 0.9674657534246576,
+    "pred1_hard_negative_rate": 0.6352739726027398,
+    "pred1_diff_median": -7800.0,
+    "pred1_diff_mean": -11418.493150684932
+  }
+}

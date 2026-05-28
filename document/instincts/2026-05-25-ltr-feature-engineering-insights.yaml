@@ -1,0 +1,179 @@
+---
+id: window-name-vs-feature-name-confusion
+trigger: "when specifying --windows-wed or --windows-nonwed arguments for tail_ltr_split_rule_nextday_gpu"
+confidence: 0.99
+domain: ml-pipeline-configuration
+source: session-error
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# `--windows-*` はtraining期間名であり特徴量のroll幅ではない
+
+## 背景
+ACF/PACFで「roll28が最適」という知見を得た後、
+`--windows-wed "roll28"` を指定したところ全candidateが "unavailable" になった。
+`roll28` は特徴量名（`roll28_total_diff_coins`）であり、
+training windowの名前（`full_2025`, `recent_60d` など）とは完全に別物。
+
+## アクション
+`--windows-*` には以下の有効名のみを指定する:
+- `full_2025`（regime1開始〜regime2終了）
+- `recent_60d`（テスト開始60日前〜前日）
+- `recent_90d`, `opening_early`, `regime1_full` 等
+ACF/PACFのroll幅はfeature設計に使うが、`--windows-*`には影響しない。
+
+## 例
+誤: --windows-wed "roll28"       → 全候補unavailable（window名不存在）
+正: --windows-wed "full_2025"    → デフォルト動作、valid windowが選択される
+
+---
+id: python-module-vs-script-execution
+trigger: "when running ml/ 配下のPythonスクリプトをコマンドラインから実行するとき"
+confidence: 0.97
+domain: ml-pipeline-configuration
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ml/ 配下のスクリプトは `python -m` で実行する
+
+## 背景
+`python ml/last_digit/tail_ltr_split_rule_nextday_gpu.py` で実行すると
+`ModuleNotFoundError: No module named 'ml'` が発生する。
+`ml/` はパッケージ（`__init__.py` あり）として設計されており、
+直接スクリプト実行では相対インポートが解決できない。
+
+## アクション
+必ず `python -m` 形式で実行する。ドット区切りのモジュールパスを使用。
+
+## 例
+誤: python ml/last_digit/tail_ltr_split_rule_nextday_gpu.py
+正: python -m ml.last_digit.tail_ltr_split_rule_nextday_gpu
+
+---
+id: hall-digit-lag-complements-entity-level-lag
+trigger: "when adding lag features to the LTR model for last_digit prediction"
+confidence: 0.92
+domain: ml-feature-engineering
+source: session-reasoning
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ホール横断digit-level lagはentity_key単位lagと別次元の信号
+
+## 背景
+現行モデルのlag特徴量は `entity_key = "3F_N|7"` 単位（フロア×末尾）で計算。
+EDAのMI分析で有効と判定された `lag7_digit_diff` は
+ホール全体の末尾別集計（全フロアを跨ぐ）であり、別次元の信号。
+MI rank1: lag7_digit_diff (0.01237), rank2: lag14_digit_diff (0.00222)。
+
+## アクション
+`aggregate_mode()` の `agg.sort_values()` 直後に以下を追加:
+```python
+DIGIT_LAGS = [2, 6, 7, 14]
+hall_digit_daily = (
+    agg.groupby(["date", "last_digit"], sort=True)["total_diff_coins"]
+    .mean().reset_index()
+    .rename(columns={"total_diff_coins": "hall_digit_mean_diff"})
+    .sort_values(["last_digit", "date"]).reset_index(drop=True)
+)
+for lag in DIGIT_LAGS:
+    hall_digit_daily[f"lag{lag}_hall_digit_diff"] = (
+        hall_digit_daily.groupby("last_digit")["hall_digit_mean_diff"]
+        .shift(lag).fillna(0.0)
+    )
+lag_cols = [f"lag{lag}_hall_digit_diff" for lag in DIGIT_LAGS]
+agg["last_digit"] = agg["last_digit"].astype(str)
+hall_digit_daily["last_digit"] = hall_digit_daily["last_digit"].astype(str)
+agg = agg.merge(hall_digit_daily[["date", "last_digit", *lag_cols]], on=["date", "last_digit"], how="left")
+```
+
+## 例
+entity_key "3F_N|7" のlag7 = 3F_Nフロア内の末尾7のみの過去7日差枚
+hall_digit lag7 for "7" = ホール全体（全フロア）の末尾7の過去7日平均差枚
+
+---
+id: hall-level-rolling-features-mi-zero
+trigger: "when selecting features for is_top2 LTR target in last_digit prediction"
+confidence: 0.93
+domain: ml-feature-engineering
+source: data-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# hall-levelのrolling差枚特徴量はis_top2予測のMI=0
+
+## 背景
+MI-LTR分析（ターゲット: is_top2）の結果:
+- roll7_avg_diff, roll14_avg_diff, roll28_avg_diff のMI = 0.0
+- lag1/7/14_avg_diff のMI = 0.0
+- weekday のMI = 1.98e-6（実質ゼロ）
+ホール全体のaggregate差枚は、どの末尾がtop2に入るかという相対判断に貢献しない。
+digit-level特徴量（lag7_digit_diff=0.01237）のみが有意な信号を持つ。
+
+## アクション
+hall-level rolling特徴量をLTRの特徴量から削除することを検討する。
+ただし現行モデルではentity_key単位のlag（フロア×末尾）は別物なので混同しない。
+hall-aggregate（`avg_diff_per_machine` 系）は削除候補。
+
+## 例
+MI=0特徴量（is_top2に対して）:
+- lag1_avg_diff, lag7_avg_diff, lag14_avg_diff
+- roll7_avg_diff, roll14_avg_diff, roll28_avg_diff
+
+---
+id: kruskal-posthoc-digit3-outlier
+trigger: "when analyzing which last_digit pairs are statistically different in Kruskal post-hoc"
+confidence: 0.88
+domain: pachinko-domain-knowledge
+source: data-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Kruskal post-hocで末尾3が4ペア全てに登場し最も乖離している
+
+## 背景
+蒲田七のKruskal post-hoc（Mann-Whitney全ペア）で有意（p<0.05）なペア4件:
+- 3 vs 8: p=0.0016（最も有意）
+- 3 vs 6: p=0.0019
+- 3 vs 9: p=0.0023
+- 2 vs 3: p=0.042
+全ペアに末尾3が含まれる。他の末尾同士は有意差なし。
+
+## アクション
+末尾3の分布特性を個別調査する（高い？低い？）。
+3F_A（hit@2=76.9%の低精度expert）と末尾3の重なりを確認する。
+ただしKruskalはホール全体（訓練期間含む）での差異であり、
+末尾3を特別扱いするモデル変更は慎重に行う（overfitting警戒）。
+
+## 例
+有意ペア: (3,8)=0.0016, (3,6)=0.0019, (3,9)=0.0023, (2,3)=0.042
+無効ペア例: (0,1)=0.99, (4,5)=0.98 → 大半は有意差なし
+
+---
+id: acf-per-digit-heterogeneous-no-universal-lag
+trigger: "when deciding whether to use a single lag window for all last_digits in LTR"
+confidence: 0.85
+domain: ml-feature-engineering
+source: data-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# last_digit別ACFパターンは異質であり全末尾共通の有意lagは存在しない
+
+## 背景
+蒲田七のlast_digit別ACF（lags=30）の結果:
+- 全末尾共通の有意lagはゼロ
+- 最も広く有意なlag: lag6（5末尾）、lag2（4末尾）、lag9（3末尾）
+- 末尾ごとにパターンが明確に異なる
+
+## アクション
+単一のlagで全末尾を代表させることはできない。
+hall-wide digit-level lag特徴量はlag2/6/7/14の複数を追加し、
+モデルが各末尾に応じて最適lagを学習できるようにする。
+
+## 例
+末尾1の有意lag: 1, 6, 9（短周期）
+末尾6の有意lag: 1, 2, 4, 5, 21, 25（多数・長期含む）
+末尾0の有意lag: 11, 14, 17（中期のみ）
+→ 共通性なし、lag7/14のみ追加では不十分

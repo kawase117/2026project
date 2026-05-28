@@ -1,0 +1,54 @@
+{
+  "config": {
+    "output_prefix": "ml/last_digit/reports/model_zoo_benchmark_smoke_deep_rl",
+    "db_path": "",
+    "db_glob": "*7.db",
+    "split_name": "regime_3_fixed_split",
+    "target": "is_top_2",
+    "seeds": "42",
+    "a_weight": 0.4,
+    "non_a_weight": 1.3,
+    "include_deep": true,
+    "include_rl": true,
+    "models": "linucb_contextual_bandit,mlp_classifier_deep",
+    "log_level": "INFO"
+  },
+  "db_path": "db\\マルハンメガシティ2000-蒲田7.db",
+  "split": {
+    "train_start": "2025-07-07",
+    "train_end": "2025-12-31",
+    "valid_start": "2026-01-01",
+    "valid_end": "2026-05-22"
+  },
+  "train_rows": 7080,
+  "valid_rows": 5680,
+  "train_days": 177,
+  "valid_days": 142,
+  "features_count": 50,
+  "models_attempted": [
+    "mlp_classifier_deep",
+    "linucb_contextual_bandit"
+  ],
+  "completed_runs": 2,
+  "failed_runs": [],
+  "top_models_by_hit_at_2": [
+    {
+      "model": "mlp_classifier_deep",
+      "hit_at_2_mean": 0.9507042253521126,
+      "ndcg_at_2_mean": 0.7620054286423317,
+      "f1_mean": 0.7253521126760564,
+      "elapsed_sec_mean": 9.521568799973466
+    },
+    {
+      "model": "linucb_contextual_bandit",
+      "hit_at_2_mean": 0.2746478873239437,
+      "ndcg_at_2_mean": 0.1105662441895252,
+      "f1_mean": 0.14084507042253522,
+      "elapsed_sec_mean": 0.5737444999394938
+    }
+  ],
+  "artifacts": {
+    "detailed_csv": "ml\\last_digit\\reports\\model_zoo_benchmark_smoke_deep_rl_detailed.csv",
+    "summary_csv": "ml\\last_digit\\reports\\model_zoo_benchmark_smoke_deep_rl_summary.csv"
+  }
+}

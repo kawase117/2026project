@@ -1,0 +1,46 @@
+---
+id: kamata7-daily-all-high-machine-layer-a
+trigger: "when interpreting machine_type performance or BT/2FA prediction in 蒲田七"
+confidence: 0.92
+domain: pachinko-domain-knowledge
+source: user-ground-truth
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田七では毎日1〜2機種が全台高設定（Layer A）。末尾パターンはその上乗せ（Layer B）
+
+## 背景
+蒲田七の設定投入は2層構造:
+
+Layer A（毎日・常時）:
+- 2F: 特定の1機種 → 全台高設定
+- 3F: 特定の1機種 → 全台高設定
+- 計1〜2機種が毎日全台保証される
+
+Layer B（曜日別追加）:
+- 水曜: 特定末尾2つ × 50%
+- 火曜: 角からX・Y番目 × 50%
+- 土曜: 末尾連番3台、など（[[kamata7-weekday-investment-pattern-ground-truth]] 参照）
+
+## ML的な含意
+
+Layer A により「今日の全台高設定機種を当てる」が最大シグナルになる。
+BT（2FA）が全台高設定日 vs 通常日で挙動が二極化するため、
+この2モードを混ぜたまま学習すると「平均的に高い機種」として誤学習する。
+
+BT のmean_diffが機械学習で掴めなかった（bimodal分布）のはこの構造が原因と推定される。
+
+## アクション
+
+BT分析の基本方針:
+1. 日次で「全末尾が同時に高い日」= 全台高設定日候補（mode=all_high）を検出
+2. mode=normal の日だけで末尾パターンを分析（Layer B の純粋な効果を見る）
+3. mode=all_high の日のパターンを別途確認（全末尾均等 → 末尾特徴量不要）
+
+ML特徴量への反映:
+- 「今日が機種Xの全台高設定日か」を予測する上位特徴量が必要
+- last_digit特徴量はLayer B（非all_high日）で有効、all_high日では末尾に関係ない
+
+## 例
+BT全台高設定日: 末尾0〜9が全て平均以上 → concentration_delta≈0（末尾間差なし）
+BT通常日（木曜）: 末尾8-9-0が強い（BT内での末尾パターンが出る）

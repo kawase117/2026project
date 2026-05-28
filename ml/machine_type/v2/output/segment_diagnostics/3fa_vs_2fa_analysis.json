@@ -1,0 +1,25 @@
+{
+  "3fa": {
+    "n_machines": 16,
+    "is_top3_base_rate": 0.22280984134283743,
+    "lift_at_1_mean": 0.0,
+    "lift_at_1_std": 2.2662308949301266,
+    "top3_features": [
+      "prior_top1_rate",
+      "lag1_rank_pct",
+      "weekday_prior_top1_rate"
+    ]
+  },
+  "2fa": {
+    "n_machines": 10,
+    "is_top3_base_rate": 0.5743924125666864,
+    "lift_at_1_mean": 0.0,
+    "lift_at_1_std": 1.2300757780531597,
+    "top3_features": [
+      "prior_top1_rate",
+      "lag1_rank_pct",
+      "weekday_prior_top1_rate"
+    ]
+  },
+  "hypothesis": "3F_Aの優位は、2F_Aより高い日次lift分布と特徴量安定性の可能性。2F_Aはlift@1が1.0未満で、同一特徴量でも順位識別が弱い。"
+}

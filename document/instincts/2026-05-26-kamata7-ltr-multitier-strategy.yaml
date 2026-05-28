@@ -1,0 +1,252 @@
+---
+id: rank2-not-rank3-equivalent
+trigger: "蒲田七のLTRモデルで複数台の立ち回り戦略を設計するとき"
+confidence: 0.97
+domain: ml-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# rank2 >> rank3：微差仮説は否定された
+
+## 背景
+当初 rank2 と rank3 の差枚は微差であるという仮説が立てられていた。
+もしそうなら「rank1 or rank2/3」という束ね戦略が有効になる。
+strategy_eval_multitier.txt での検証（ndcg_v2、n=429日）で否定された。
+
+## アクション
+rank2 と rank3 は厳密に順序付けること。束ねて扱ってはならない。
+- rank2 median 差枚: +11,900枚
+- rank3 median 差枚: +7,700枚
+- Mann-Whitney U p = 1.15e-34（有意差確実）
+立ち回り優先順位: rank1 → rank2 → rank3 → それ以下
+
+## 例
+```
+# 正しい立ち回り
+priority = [rank1, rank2, rank3]  # 順に試みる
+
+# 誤った束ね戦略（棄却）
+cluster_23 = [rank2, rank3]  # 微差とみなして同等扱い → NG
+```
+
+---
+id: rank1-chaaichi-strategy-effective
+trigger: "蒲田七で朝一狙い台を1台選ぶとき"
+confidence: 0.95
+domain: ml-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# rank1朝一戦略：97.9%は的中または微差
+
+## 背景
+rank1 miss (hit@1→top1 外れ) が全体の21.2%。
+しかし外れたときに rank1 がどれだけ悪かったかを評価すると、
+「的中（78.8%）」＋「微差ハズレ（予測rank1が実際top2に入る 16.5%）」＝ 97.9%。
+完全ハズレ（rank1が著しく下位）は約2.1%にすぎない。
+Oracle（完全情報）との期待差枚ギャップは約1,000枚/日と小さい。
+
+## アクション
+- rank1 朝一戦略を基本方針として採用する
+- rank1 を取れなかった場合のみ rank2 → rank3 の順に移行
+- hit@1→top2 = 95.3%：rank1 が外れても top2 に含まれる確率が高い
+- Oracle ギャップが小さいためモデルによる機会損失は最小限
+
+## 例
+```
+# 運用シナリオ（抽選結果に応じて）
+if rank1_available:
+    sit(rank1)      # 78.8% で最高台
+elif rank2_available:
+    sit(rank2)      # rank1ハズレ時の次善策（gap=11900枚）
+else:
+    sit(rank3)      # 最終手段（rank2との差=4200枚/日）
+```
+
+---
+id: confidence-band-case-a-thresholds
+trigger: "LTRモデルの予測結果に信頼帯を付与するとき"
+confidence: 0.90
+domain: ml-feature-engineering
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 信頼帯 Case A：undefined<0.001, low<0.10 を採用
+
+## 背景
+pred_span_top12（top1予測スコア − top2予測スコア）を信頼度指標として使用。
+v2 の3件のミス日すべてで span が低かった。
+- 2026-01-04: span=0.000521（undefined）
+- 2026-01-11: span=0.000892（undefined）
+- 2026-05-21: span=0.001128（low）
+Case B の追加閾値0.15 は span 分布の確認から不要と判定。
+undefined バンドで overall miss の 8.7% をフラグ化できる。
+
+## アクション
+post_rerank.py の build_confidence_band 関数に Case A を実装：
+```python
+def build_confidence_band(pred_span: float) -> str:
+    if pred_span < 0.001:
+        return "undefined"   # モデル判断不能 → ユーザーへ警告
+    elif pred_span < 0.10:
+        return "low"
+    elif pred_span < 0.30:
+        return "medium"
+    else:
+        return "high"
+```
+undefined が出た日は「本日の予測は信頼性が低い」と表示する。
+
+## 例
+```
+pred_span=0.0005 → undefined → 警告表示
+pred_span=0.05   → low       → rank1 推薦・確信度低
+pred_span=0.35   → high      → rank1 推薦・確信度高
+```
+
+---
+id: ndcg-v2-dominant-model
+trigger: "蒲田七 last_digit LTR で複数モデルの比較・選択を行うとき"
+confidence: 0.98
+domain: ml-model-selection
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ndcg_v2 が全指標で他モデルに+15〜20pp の差をつけて支配的
+
+## 背景
+5モデル（ndcg_v2, ndcg, pairwise, lgbm, catboost_v2）を
+hit@1→top1/top2, cluster23→top2/top3, hit@3→top3 の新指標で比較。
+ndcg_v2 が全指標で1位。差は統計的に有意。
+
+| 指標            | ndcg_v2 | 次点(ndcg) |
+|----------------|---------|-----------|
+| hit@1→top1     | 78.8%   | 69.9%     |
+| hit@1→top2     | 95.3%   | 80.7%     |
+| cluster23→top2 | 81.1%   | 73.3%     |
+| cluster23→top3 | 94.4%   | 83.8%     |
+| hit@3→top3     | 99.5%   | 96.2%     |
+
+## アクション
+今後の改善・実装はすべて ndcg_v2 ベースで行う。
+他モデルへの切り替えは不要。新特徴量追加時も ndcg_v2 で評価。
+
+## 例
+```bash
+# walk-forward は常に ndcg_v2 prefix を基準
+python walk_forward.py --model ndcg_v2 --output digit_lag_v2_withinexpert
+```
+
+---
+id: multitier-evaluation-metrics-standard
+trigger: "LTRモデルの評価指標を設計・更新するとき"
+confidence: 0.90
+domain: ml-evaluation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 多段評価指標セットを標準化：hit@k→topN + cluster23 + sensitivity
+
+## 背景
+単純な hit@2（top2命中率）だけでは立ち回り戦略全体を評価できない。
+運用は「rank1固定→rank2移行→rank3移行」の多段構造なので、
+各ステップで意味のある指標を設計した。
+
+## アクション
+以下の指標を標準評価セットとして使用する：
+- hit@1→top1: rank1が実際1位になる率（朝一戦略の直接評価）
+- hit@1→top2: rank1が実際top2に入る率
+- cluster23→top2: rank2/3クラスタがtop2を網羅する率
+- cluster23→top3: rank2/3クラスタがtop3を網羅する率
+- hit@3→top3: rank1〜3が実際top3を網羅する率（クラスタカバレッジ）
+- sensitivity_10pct / 50pct: 抽選シェア別期待差枚
+
+## 例
+```python
+metrics = {
+    "hit_at1_top1": ...,
+    "hit_at1_top2": ...,
+    "cluster23_top2": ...,
+    "cluster23_top3": ...,
+    "hit_at3_top3": ...,
+    "sensitivity_10pct_A": ...,  # rank1固定
+    "sensitivity_10pct_B": ...,  # rank1→rank2移行
+    "sensitivity_50pct_oracle": ...,
+}
+```
+
+---
+id: eda-forward-selection-xgbranker-mismatch
+trigger: "EDAのforward selection結果をXGBRankerへ直接適用しようとするとき"
+confidence: 0.88
+domain: ml-feature-engineering
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# EDA forward selection の順位 ≠ XGBRanker walk-forward での有効性
+
+## 背景
+lag15 は EDA forward selection で rank2 に選ばれた（D3モデルが微増）。
+しかし univariate cv_auc=0.4984（負のシグナル）であり、
+walk-forward で digit_lag_v5 を試したところ 2F_N hit@2 -0.0069 と劣化。
+EDA の「相互作用込みの forward 選択効果」が XGBRanker では再現されなかった。
+
+## アクション
+EDA forward selection の結果は候補スクリーニングにのみ使う。
+最終的な特徴量の採否は必ず walk-forward 実測で確認すること。
+univariate cv_auc が 0.50 を下回る特徴量は採用しない（原則）。
+
+## 例
+```
+lag15: cv_auc=0.4984 (<0.50) → 危険シグナル
+  → forward selection でも rank2 → 相互作用の可能性あり
+  → walk-forward digit_lag_v5 → 2F_N hit@2 -0.0069 → 棄却確定
+
+採用基準: univariate cv_auc > 0.50 かつ walk-forward で改善
+```
+
+---
+id: rank1-miss-quality-decomposition
+trigger: "LTRモデルのミスパターンを詳細分析・報告するとき"
+confidence: 0.87
+domain: ml-evaluation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# rank1ミスの47%は重大ミス：ミス質の分解が必須
+
+## 背景
+rank1 miss は全体17件。「外れ」と一括りにするのではなく質を分解：
+- rank2 外れ（rank1は的中、rank2が外れ）: 95件（軽微）
+- rank1 外れ: 17件
+  - rank1が実際top2内（微差ハズレ）: 10件（52.9%）
+  - rank1が著しく下位（|gap|≥5000枚）: 8件（47.1%）→ 重大ミス
+重大ミス（rank1が著しく下位）は全体の約1.9%にすぎない。
+
+## アクション
+ミス分析では以下の4カテゴリで分解すること：
+1. 2/2 hit（両方的中）: 314件
+2. 1/2 hit - rank2外れ（rank1は正しい）: 95件
+3. 1/2 hit - rank1微差ハズレ（rank1はtop2内）: 10件
+4. 0/2 hit または rank1重大ミス: 3〜8件
+モデル改善の目標は「カテゴリ4を減らす」こと。
+
+## 例
+```python
+def classify_miss(rank1_actual_rank, gap_coins):
+    if rank1_actual_rank <= 2:
+        return "minor_miss"          # top2内 → 許容
+    elif abs(gap_coins) < 5000:
+        return "moderate_miss"       # 差小さい → 許容
+    else:
+        return "critical_miss"       # 重大 → 要因分析対象
+```
+
+---

@@ -1,0 +1,132 @@
+{
+  "db_path": "db\\マルハンメガシティ2000-蒲田7.db",
+  "eval_period": {
+    "start": "2026-04-27",
+    "end": "2026-05-26"
+  },
+  "target_is_top3": {
+    "2F": {
+      "auc": 0.5770014556040757,
+      "hit_at_1": 0.1,
+      "hit_at_3": 0.26666666666666666,
+      "hit_at_5": 0.4666666666666667,
+      "random_baseline": 0.2521131619803347,
+      "lift": 1.0577260805108906,
+      "random_baseline_at_1": 0.08948306595365424,
+      "random_baseline_at_3": 0.2521131619803347,
+      "random_baseline_at_5": 0.39412627220976354,
+      "lift_at_1": 1.117529880478087,
+      "lift_at_3": 1.0577260805108906,
+      "lift_at_5": 1.1840536893168476,
+      "n_eval_days": 30,
+      "n_rows": 1006,
+      "base_rate": 0.08946322067594434,
+      "eval_period": {
+        "start": "2026-04-27",
+        "end": "2026-05-26"
+      }
+    },
+    "3F": {
+      "auc": 0.575970643939394,
+      "hit_at_1": 0.16666666666666666,
+      "hit_at_3": 0.4,
+      "hit_at_5": 0.6333333333333333,
+      "random_baseline": 0.31380056980056986,
+      "lift": 1.274694944799535,
+      "random_baseline_at_1": 0.11339031339031343,
+      "random_baseline_at_3": 0.31380056980056986,
+      "random_baseline_at_5": 0.4814814814814817,
+      "lift_at_1": 1.4698492462311552,
+      "lift_at_3": 1.274694944799535,
+      "lift_at_5": 1.3153846153846147,
+      "n_eval_days": 30,
+      "n_rows": 794,
+      "base_rate": 0.11335012594458438,
+      "eval_period": {
+        "start": "2026-04-27",
+        "end": "2026-05-26"
+      }
+    },
+    "combined": {
+      "auc": 0.5775565843621399,
+      "hit_at_1": 0.16666666666666666,
+      "hit_at_3": 0.3,
+      "hit_at_5": 0.5,
+      "random_baseline": 0.2751607247223847,
+      "lift": 1.0902718776550548,
+      "random_baseline_at_1": 0.1,
+      "random_baseline_at_3": 0.2751607247223847,
+      "random_baseline_at_5": 0.4209460676823562,
+      "lift_at_1": 1.6666666666666665,
+      "lift_at_3": 1.0902718776550548,
+      "lift_at_5": 1.1878006195731885,
+      "n_eval_days": 30,
+      "n_rows": 1800,
+      "base_rate": 0.1,
+      "eval_period": {
+        "start": "2026-04-27",
+        "end": "2026-05-26"
+      }
+    }
+  },
+  "target_is_top5": {
+    "2F": {},
+    "3F": {},
+    "combined": {
+      "auc": null,
+      "hit_at_1": null,
+      "hit_at_3": null,
+      "hit_at_5": null,
+      "random_baseline": null,
+      "lift": null,
+      "n_eval_days": 0,
+      "n_rows": 0,
+      "base_rate": null
+    }
+  },
+  "layer0": {
+    "auc": 0.6857773390941597,
+    "hit_at_1": 0.1,
+    "hit_at_2": 0.1333,
+    "hit_at_3": 0.1667,
+    "random_baseline_hit_at_1": 0.0367,
+    "random_baseline_hit_at_2": 0.0721,
+    "random_baseline_hit_at_3": 0.1062,
+    "lift_at_1": 2.7219,
+    "lift_at_2": 1.8485,
+    "lift_at_3": 1.5691,
+    "kisyuzen_base_rate": 0.03673938002296211,
+    "n_eval_days": 30,
+    "n_eval_rows": 1742,
+    "threshold": 0.5,
+    "winrate_threshold": 80.0
+  },
+  "combined_recommendation": {
+    "description": "layer1_proba * (1 + 0.5 * layer0_proba) で算出",
+    "lambda": 0.5,
+    "top3_combined_hit_at_1": 0.16666666666666666,
+    "top3_combined_hit_at_3": 0.3,
+    "n_eval_days": 30,
+    "n_rows": 1800,
+    "missing_layer0_proba_rate": 0.0
+  },
+  "warnings": [
+    "active_filter: 60 machines retained (active=72, qualified_by_history=94, original=114)"
+  ],
+  "config": {
+    "min_train_days": 120,
+    "eval_days": 30,
+    "eval_offset_days": 0,
+    "step_days": 1,
+    "rolling_prior_window": 90,
+    "alpha": 5.0,
+    "layer0_threshold": 0.5,
+    "layer0_winrate_threshold": 80.0,
+    "combined_lambda": 0.5,
+    "feature_profile": "baseline6",
+    "games_feature_mode": "none",
+    "target_policy": "default",
+    "min_machine_history_days": 60,
+    "random_state": 42
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "db_path": "db\\マルハンメガシティ2000-蒲田7.db",
+  "prediction_date": "2026-05-21",
+  "alpha": 1.0,
+  "random_state": 42,
+  "model_type": "xgb",
+  "gpu_backend": "auto",
+  "segment_mode": "global",
+  "min_segment_days": 21,
+  "min_segment_rows": 300,
+  "backend_used_by_target": {
+    "is_rank_1": "cuda",
+    "is_top_2": "cuda",
+    "is_top_3": "cuda",
+    "is_top_5": "cuda"
+  },
+  "segment_models_by_target": {
+    "is_rank_1": 0,
+    "is_top_2": 0,
+    "is_top_3": 0,
+    "is_top_5": 0
+  },
+  "segment_prediction_rows_by_target": {
+    "is_rank_1": 0,
+    "is_top_2": 0,
+    "is_top_3": 0,
+    "is_top_5": 0
+  },
+  "feature_count": 59,
+  "target_thresholds": {
+    "is_rank_1": 0.0857008546590805,
+    "is_top_2": 0.10988269001245499,
+    "is_top_3": 0.11724374443292618,
+    "is_top_5": 0.14733178913593292
+  },
+  "audit_report": {
+    "row_count": 20964,
+    "duplicate_date_machine_name_rows": 0,
+    "missing_machine_count_rows": 0,
+    "missing_avg_diff_rows": 0,
+    "missing_total_games_rows": 0,
+    "date_parse_failed_rows": 0,
+    "min_date": "2025-07-07",
+    "max_date": "2026-05-20",
+    "unique_machine_names": 114,
+    "new_machine_rows": 114,
+    "count_increase_rows": 46,
+    "count_decrease_rows": 126,
+    "segment_floor2_counts": {
+      "2F": 12062,
+      "3F": 8902
+    },
+    "segment_floor_type4_counts": {
+      "2F_N": 9615,
+      "3F_A": 4833,
+      "3F_N": 4069,
+      "2F_A": 2447
+    },
+    "machine_master_join_miss_rate": 0.0
+  },
+  "top10_machine_names": [
+    "ルパン三世 大航海者の秘宝",
+    "プリズムナナ",
+    "ダーリン・イン・ザ・フランキス",
+    "押忍！番長4",
+    "攻殻機動隊",
+    "L麻雀物語",
+    "アクダマドライブ",
+    "銀河英雄伝説 Die Neue These",
+    "主役は銭形5",
+    "バンドリ！"
+  ]
+}

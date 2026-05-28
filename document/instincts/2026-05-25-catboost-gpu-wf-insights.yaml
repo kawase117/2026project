@@ -1,0 +1,180 @@
+---
+id: duplicate-background-process-detection
+trigger: "when launching a long-running training job in the background"
+confidence: 0.95
+domain: ml-execution
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# バックグラウンドプロセス重複起動の検出
+
+## 背景
+CatBoost walk-forward などの長時間ジョブをバックグラウンド実行する際、
+前回のプロセスが終了していないまま再度コマンドを発行すると、
+同一コマンドが複数並列起動され GPU リソースを奪い合う状態になる。
+本セッションでは4プロセスが同時稼働し、それぞれが GPU を競合させた。
+GPU メモリ警告（less than 75% available）はこの兆候のひとつ。
+
+## アクション
+1. 新たな学習ジョブを起動する前に必ずプロセスリストを確認する
+   ```powershell
+   Get-WmiObject Win32_Process | Where-Object {$_.CommandLine -like "*tail_ltr*"} | Select-Object ProcessId, CommandLine
+   ```
+2. 重複が確認された場合は古いプロセスを1つ残して残りをkill
+   ```powershell
+   Stop-Process -Id <pid1>, <pid2>, <pid3> -Force
+   ```
+3. GPU メモリ警告が出たら即座に重複プロセスを疑う
+
+## 例
+```
+PID 24776 — 開始 20:19, CPU 14565秒, RAM 566MB  ← 最古、残す
+PID 31932 — 開始 20:29, CPU 14281秒, RAM 807MB  ← kill
+PID 34368 — 開始 20:58, CPU 9603秒,  RAM 2042MB ← kill
+PID 30396 — 開始 21:20, CPU 10623秒, RAM 1415MB ← kill
+```
+Stop-Process -Id 30396, 31932, 34368 -Force
+
+---
+id: catboost-walkforward-runtime-expectation
+trigger: "when running CatBoost ranker walk-forward over testperiod"
+confidence: 0.88
+domain: ml-execution
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# CatBoost walk-forward の所要時間見積もり
+
+## 背景
+tail_ltr_split_rule_nextday_gpu.py の walk-forward は
+testperiod 143日 × expert数（2F_N / 3F_A / 3F_N）= 約430回の再学習を行う。
+CatBoost PairLogit は GPU を使っても1ステップあたり数十秒かかるため、
+トータルで 2〜4 時間程度の実行時間になる。
+GPU を複数プロセスで共有すると倍以上に延伸する。
+
+## アクション
+- GPU 独占状態で実行した場合の目安: 2〜3 時間
+- 進捗ログが無い場合は出力ディレクトリを定期確認（30分ごと）
+  ```powershell
+  Get-Item "db\experiments\model_comparison\tail_ltr_catboost_pairlogit_v2*" -ErrorAction SilentlyContinue
+  ```
+- 出力ファイルが生成され始めたら正常稼働中
+
+## 例
+完了後に生成されるファイル例:
+- tail_ltr_catboost_pairlogit_v2_testperiod_daily_2F_N.csv
+- tail_ltr_catboost_pairlogit_v2_testperiod_daily_3F_A.csv
+- tail_ltr_catboost_pairlogit_v2_testperiod_daily_3F_N.csv
+- tail_ltr_catboost_pairlogit_v2_comparison_summary.csv
+
+---
+id: catboost-gpu-model-params
+trigger: "when enabling GPU for CatBoostRanker in tail_ltr_split_rule_nextday_gpu.py"
+confidence: 0.92
+domain: ml-feature-engineering
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# CatBoost GPU 有効化の設定方法
+
+## 背景
+tail_ltr_split_rule_nextday_gpu.py では model_params をモデル名で分岐させる。
+当初 xgb_ モデルにしか GPU 設定が適用されておらず、
+catboost_ranker_pairlogit は CPU で動作していた。
+CatBoost は task_type="GPU", devices="0" を model_params に渡すことで GPU 利用になる。
+なお tail_ltr_full_walkforward_ops.py 側で "device" キーはポップされるが
+"task_type" は CatBoostRanker コンストラクタにそのまま渡される。
+
+## アクション
+```python
+# tail_ltr_split_rule_nextday_gpu.py (line ~482)
+if model_name.startswith("xgb_"):
+    model_params = _gpu_model_params(args.gpu_backend)
+elif model_name == "catboost_ranker_pairlogit":
+    model_params = {"task_type": "GPU", "devices": "0"}
+else:
+    model_params = {}
+```
+
+## 例
+GPU 使用確認:
+```
+Warning: less than 75% GPU memory available for training.
+Free: 2214.347656 Total: 8187.5
+```
+この警告は GPU が利用されている証拠（かつ他プロセスとの競合シグナル）。
+
+---
+id: total-diff-coins-deficit-feature
+trigger: "when searching for features to detect 低迷見落とし (underperformance oversight) in tail ranking"
+confidence: 0.82
+domain: ml-feature-engineering
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# total_diff_coins_deficit による低迷蓄積シグナル
+
+## 背景
+SHAP 分析で 2F_N の miss 日を調査した結果、
+efficiency_focus と total_diff_coins_focus が「低迷の見落とし」を引き起こしていた。
+miss 日は hit 日よりも efficiency_focus が低く（=低迷台）、
+モデルはスコアを下げる方向に動くが、ホールは低迷台に高設定を投入している可能性がある。
+total_diff_coins_deficit（7日の差枚実績 vs 28日平均から期待される7日分の差枚）は
+Phase A 統計検定（t検定）で p=0.027 となり唯一有意な新特徴量として残った。
+
+## アクション
+```python
+# tail_ltr_split_rule_wf.py の add_simple_features() 末尾に追加
+out["total_diff_coins_deficit"] = (
+    out["roll7_total_diff_coins_focus"]
+    - out["roll28_total_diff_coins_focus"] / 28.0 * 7.0
+).fillna(0.0)
+# 注: roll7/roll28 はすでに shift(1) 済みなので追加 shift 不要
+# 負の大きな値 = 累積出玉不足 = ホールが仕込む候補シグナル
+```
+
+## 例
+Phase A 検定結果（2F_N miss vs hit 日比較）:
+- total_diff_coins_deficit: p=0.027 ✅ 有意
+- efficiency_focus_drought_7d: p=0.31 非有意
+- consecutive_below_avg_days: p=0.19 非有意
+- relative_efficiency_vs_peers: p=0.44 非有意（横比較は無効）
+
+---
+id: catboost-eval-metric-pairlogit
+trigger: "when configuring CatBoostRanker with PairLogit loss"
+confidence: 0.95
+domain: ml-feature-engineering
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# CatBoost PairLogit の eval_metric は PairLogit に統一する
+
+## 背景
+CatBoostRanker で loss_function="PairLogit" を使う場合、
+eval_metric に "QueryRMSE" や "NDCG" を指定すると互換性エラーが発生する。
+eval_metric も "PairLogit" に揃える必要がある。
+
+## アクション
+```python
+# CatBoostRanker 設定
+CatBoostRanker(
+    loss_function="PairLogit",
+    eval_metric="PairLogit",  # QueryRMSE や NDCG は NG
+    task_type="GPU",
+    devices="0",
+    iterations=500,
+)
+```
+
+## 例
+エラーメッセージ例:
+```
+CatBoostError: Metric PairLogit is not compatible with loss function QueryRMSE
+```
+eval_metric="PairLogit" に変更して解決。

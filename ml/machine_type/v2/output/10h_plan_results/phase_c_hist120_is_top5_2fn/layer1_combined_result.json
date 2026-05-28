@@ -1,0 +1,207 @@
+{
+  "db_path": "db\\マルハンメガシティ2000-蒲田7.db",
+  "eval_period": {
+    "start": "2026-02-26",
+    "end": "2026-05-26"
+  },
+  "target_is_top3": {
+    "2F_A": {},
+    "2F_N": {},
+    "3F_A": {
+      "auc": 0.5876580621025066,
+      "hit_at_1": 0.25555555555555554,
+      "hit_at_3": 0.6333333333333333,
+      "hit_at_5": 0.8666666666666667,
+      "random_baseline": 0.5467032967032966,
+      "lift": 1.1584589614740368,
+      "random_baseline_at_1": 0.21428571428571438,
+      "random_baseline_at_3": 0.5467032967032966,
+      "random_baseline_at_5": 0.7692307692307692,
+      "lift_at_1": 1.192592592592592,
+      "lift_at_3": 1.1584589614740368,
+      "lift_at_5": 1.1266666666666667,
+      "n_eval_days": 90,
+      "n_rows": 1260,
+      "base_rate": 0.21428571428571427,
+      "eval_period": {
+        "start": "2026-02-26",
+        "end": "2026-05-26"
+      }
+    },
+    "3F_N": {
+      "auc": 0.513178349019057,
+      "hit_at_1": 0.23333333333333334,
+      "hit_at_3": 0.6666666666666666,
+      "hit_at_5": 0.8666666666666667,
+      "random_baseline": 0.6301295001295001,
+      "lift": 1.057983583580292,
+      "random_baseline_at_1": 0.2571678321678321,
+      "random_baseline_at_3": 0.6301295001295001,
+      "random_baseline_at_5": 0.8493589743589743,
+      "lift_at_1": 0.907319283933832,
+      "lift_at_3": 1.057983583580292,
+      "lift_at_5": 1.020377358490566,
+      "n_eval_days": 90,
+      "n_rows": 1061,
+      "base_rate": 0.2544769085768143,
+      "eval_period": {
+        "start": "2026-02-26",
+        "end": "2026-05-26"
+      }
+    },
+    "combined": {
+      "auc": 0.5608017759477614,
+      "hit_at_1": 0.23333333333333334,
+      "hit_at_3": 0.6444444444444445,
+      "hit_at_5": 0.8666666666666667,
+      "random_baseline": 0.5657363977943687,
+      "lift": 1.139124947514309,
+      "random_baseline_at_1": 0.2331547958214625,
+      "random_baseline_at_3": 0.5657363977943687,
+      "random_baseline_at_5": 0.7681397024875286,
+      "lift_at_1": 1.0007657466844797,
+      "lift_at_3": 1.139124947514309,
+      "lift_at_5": 1.128266985627836,
+      "n_eval_days": 90,
+      "n_rows": 2321,
+      "base_rate": 0.23265833692373977,
+      "eval_period": {
+        "start": "2026-02-26",
+        "end": "2026-05-26"
+      }
+    }
+  },
+  "target_is_top5": {
+    "2F_A": {},
+    "2F_N": {
+      "auc": 0.505500322788896,
+      "hit_at_1": 0.25555555555555554,
+      "hit_at_3": 0.6888888888888889,
+      "hit_at_5": 0.7555555555555555,
+      "random_baseline": 0.7612911609411813,
+      "lift": 0.9924659503749723,
+      "random_baseline_at_1": 0.2257356170399649,
+      "random_baseline_at_3": 0.555163765804498,
+      "random_baseline_at_5": 0.7612911609411813,
+      "lift_at_1": 1.1321011673151749,
+      "lift_at_3": 1.2408750918579987,
+      "lift_at_5": 0.9924659503749723,
+      "n_eval_days": 90,
+      "n_rows": 1999,
+      "base_rate": 0.22511255627813906,
+      "eval_period": {
+        "start": "2026-02-26",
+        "end": "2026-05-26"
+      }
+    },
+    "3F_A": {
+      "auc": 0.5239725651577504,
+      "hit_at_1": 0.45555555555555555,
+      "hit_at_3": 0.8,
+      "hit_at_5": 0.9333333333333333,
+      "random_baseline": 0.9370629370629368,
+      "lift": 0.9960199004975128,
+      "random_baseline_at_1": 0.35714285714285715,
+      "random_baseline_at_3": 0.7692307692307692,
+      "random_baseline_at_5": 0.9370629370629368,
+      "lift_at_1": 1.2755555555555556,
+      "lift_at_3": 1.0400000000000003,
+      "lift_at_5": 0.9960199004975128,
+      "n_eval_days": 90,
+      "n_rows": 1260,
+      "base_rate": 0.35714285714285715,
+      "eval_period": {
+        "start": "2026-02-26",
+        "end": "2026-05-26"
+      }
+    },
+    "3F_N": {
+      "auc": 0.49011638479723585,
+      "hit_at_1": 0.5222222222222223,
+      "hit_at_3": 0.8777777777777778,
+      "hit_at_5": 0.9666666666666667,
+      "random_baseline": 0.9739897448230784,
+      "lift": 0.9924813601012381,
+      "random_baseline_at_1": 0.42861305361305363,
+      "random_baseline_at_3": 0.8493589743589743,
+      "random_baseline_at_5": 0.9739897448230784,
+      "lift_at_1": 1.2184001812825742,
+      "lift_at_3": 1.0334591194968554,
+      "lift_at_5": 0.9924813601012381,
+      "n_eval_days": 90,
+      "n_rows": 1061,
+      "base_rate": 0.42412818096135724,
+      "eval_period": {
+        "start": "2026-02-26",
+        "end": "2026-05-26"
+      }
+    },
+    "combined": {
+      "auc": 0.6069378974934531,
+      "hit_at_1": 0.5333333333333333,
+      "hit_at_3": 0.8777777777777778,
+      "hit_at_5": 0.9666666666666667,
+      "random_baseline": 0.8613937711995067,
+      "lift": 1.1222122785036692,
+      "random_baseline_at_1": 0.3125,
+      "random_baseline_at_3": 0.684551341350601,
+      "random_baseline_at_5": 0.8613937711995067,
+      "lift_at_1": 1.7066666666666666,
+      "lift_at_3": 1.2822672672672677,
+      "lift_at_5": 1.1222122785036692,
+      "n_eval_days": 90,
+      "n_rows": 4320,
+      "base_rate": 0.3125,
+      "eval_period": {
+        "start": "2026-02-26",
+        "end": "2026-05-26"
+      }
+    }
+  },
+  "layer0": {
+    "auc": 0.698045408746587,
+    "hit_at_1": 0.1111,
+    "hit_at_2": 0.1778,
+    "hit_at_3": 0.2444,
+    "random_baseline_hit_at_1": 0.0345,
+    "random_baseline_hit_at_2": 0.0678,
+    "random_baseline_hit_at_3": 0.1,
+    "lift_at_1": 3.2204,
+    "lift_at_2": 2.6216,
+    "lift_at_3": 2.445,
+    "kisyuzen_base_rate": 0.034502051473330846,
+    "n_eval_days": 90,
+    "n_eval_rows": 5362,
+    "threshold": 0.3,
+    "winrate_threshold": 80.0
+  },
+  "combined_recommendation": {
+    "description": "layer1_proba * (1 + 0.5 * layer0_proba) で算出",
+    "lambda": 0.5,
+    "top3_combined_hit_at_1": 0.23333333333333334,
+    "top3_combined_hit_at_3": 0.6444444444444445,
+    "n_eval_days": 90,
+    "n_rows": 2321,
+    "missing_layer0_proba_rate": 0.19388194743644982
+  },
+  "warnings": [
+    "2F_A: skipped because unique machines < 10 (6)",
+    "active_filter: 53 machines retained (active=72, qualified_by_history=70, original=114)"
+  ],
+  "config": {
+    "min_train_days": 120,
+    "eval_days": 90,
+    "eval_offset_days": 0,
+    "step_days": 1,
+    "rolling_prior_window": 90,
+    "alpha": 5.0,
+    "layer0_threshold": 0.3,
+    "layer0_winrate_threshold": 80.0,
+    "combined_lambda": 0.5,
+    "feature_profile": "baseline6",
+    "games_feature_mode": "none",
+    "target_policy": "2fn_top5",
+    "min_machine_history_days": 120,
+    "random_state": 42
+  }
+}

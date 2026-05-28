@@ -1,0 +1,80 @@
+---
+id: v2-withinexpert-is-current-ceiling
+trigger: "when evaluating new feature variants against the last_digit LTR baseline"
+confidence: 0.93
+domain: ml-feature-engineering
+source: data-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# v2_withinexpert が現時点の天井：全11バリアントが vs v2 で sig_imp=0
+
+## 背景
+ceiling_effect フレームワーク（BH補正、Wilcoxon/Mann-Whitney）による再評価（2026-05-26）。
+評価対象：digit_lag v2p1/v2p2/v2p3/v2r/v3/v3a/v3b/v4/v4a/v4b（11バリアント）
+
+**比較結果サマリ（同一ルールで再集計）:**
+
+| variant | vs v1 decision | v1_sig_imp | vs v2 decision | v2_sig_imp | v2_sig_wrs |
+|---------|---------------|-----------|----------------|-----------|-----------|
+| v4a_znorm_only | CONDITIONAL+ | 16 | CONDITIONAL | 0 | 0 |
+| v2p1_digitlag | CONDITIONAL+ | 15 | CONDITIONAL | 0 | 0 |
+| v2p3_2fn_weekdaypatch | CONDITIONAL+ | 14 | CONDITIONAL | 0 | 0 |
+| v2r_current | CONDITIONAL+ | 14 | CONDITIONAL | 0 | 0 |
+| v4_znorm | CONDITIONAL+ | 14 | CONDITIONAL | 0 | 0 |
+| v2p2_digitlag_expertgate | CONDITIONAL+ | 13 | CONDITIONAL | 0 | 0 |
+| v4b_pctrank_only | CONDITIONAL+ | 12 | CONDITIONAL | 0 | 0 |
+| v3a_cluster_only | CONDITIONAL+ | 11 | CONDITIONAL | 0 | 0 |
+| v3b_weekday_only | CONDITIONAL+ | 11 | CONDITIONAL | 0 | 0 |
+| v3_cluster | CONDITIONAL+ | 10 | CONDITIONAL | 0 | 0 |
+
+**全候補が vs v2 で sig_imp=0 / sig_wrs=0。改善も悪化も検出されない。**
+
+## 解釈
+v2_withinexpert の核心的な修正（is_top_2 をエキスパート内スコープで計算）が
+学習ターゲットの設計上の欠陥を解消したことで、現行特徴量の範囲での上積みの余地が消えた。
+
+vs v1 では CONDITIONAL+（10〜16 sig_imp）が全候補で出ており、
+これらの特徴量は「v1 より上」の力はあるが「v2 より上」ではない。
+
+## アクション
+新特徴量を評価するとき:
+1. **比較ベースラインは必ず v2_withinexpert を使う**（v1 との比較は参考値）
+2. vs v2 で sig_imp ≥ 1 が出るまで採用候補に上げない
+3. low_support ≥ 15 の場合は判定を保留する
+4. 試すべき次の方向：
+   - ターゲット定義の再設計（is_top_2 以外のターゲット）
+   - グループ化戦略の再検討（現行 group_key = フロア × 末尾 以外）
+   - データ期間・ホール追加による low_support 解消
+
+## 注意
+この天井は「現行フレームワーク内での天井」。
+フレームワーク自体（評価指標、グループ設計、学習期間）を変えれば異なる可能性がある。
+
+---
+id: low-support-warning-15-is-high-in-this-dataset
+trigger: "when interpreting low_support count in ceiling_effect framework evaluation"
+confidence: 0.90
+domain: ml-evaluation-strategy
+source: data-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# low_support（n<10）が全バリアントで12〜15件：条件層の分割が細かすぎる
+
+## 背景
+ceiling_effect フレームワークの条件層評価（16分割）で
+全バリアントが low_support=12〜15/16 件という高い警告率を示した。
+
+これは「n<10 のサブグループが多数ある」ことを意味し、
+統計テストの信頼性が低い条件層が多い。
+
+## アクション
+low_support が 50%（8/16）を超える場合:
+- 条件層を粗くする（quartile → median split、weekday → weekday/weekend）
+- または CONDITIONAL vs CONDITIONAL+ の区別を low_support なし条件のみで再計算する
+
+## 例
+全11バリアントで low_support=12〜15/16（75〜94%）
+→ 現行16分割評価では判定精度が低い
+→ 8分割（weekday×2 × half×4）への変更を検討する

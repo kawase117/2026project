@@ -1,0 +1,152 @@
+---
+id: kikata-detection-machine-level-winrate
+trigger: "when designing a target to detect 機種全/末尾全 events"
+confidence: 0.92
+domain: ml-target-engineering
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 機種全検知には機種名レベルの win_rate を使う
+
+## 背景
+
+「全台設定」には以下の種類がある：
+- **機種全**：特定の機種名に属する全台が高設定
+- **末尾全**：特定の末尾番号に属する全台が高設定
+- **ホール全台**：ホール全体が高設定（非常に稀）
+
+当初 Layer 0 の target として daily_hall_summary.win_rate（ホール全体の日次勝率）を使用したが、
+これは全台 約40% の低い勝率で推移しており、機種全・末尾全の検知には全く機能しない。
+ホール全体 win_rate >= 80% は 320 日中わずか 1 日（0.3%）しか存在しなかった。
+
+正しいターゲットは **機種名 x 日ごとの win_rate**：
+- `machine_name_winrate = SUM(diff_coins > 0) / COUNT(*)`（同一機種名の全台）
+- 機種全イベント発生時 -> この値が高くなる
+
+## アクション
+
+Layer 0 またはイベント検知モデルを設計する際：
+
+1. `daily_hall_summary` ではなく `machine_detailed_results` から集計
+2. `GROUP BY machine_name, date` で機種別日次集計を作成
+3. `win_rate = SUM(CASE WHEN diff_coins_normalized > 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)`
+4. `HAVING COUNT(*) >= 3`（1〜2台の機種は除外）
+
+## 例
+
+```sql
+-- 正しい集計
+SELECT
+    machine_name, date,
+    COUNT(*) as n_machines,
+    ROUND(100.0 * SUM(CASE WHEN diff_coins_normalized > 0 THEN 1 ELSE 0 END) / COUNT(*), 1) as win_rate,
+    AVG(diff_coins_normalized) as avg_diff
+FROM machine_detailed_results
+GROUP BY machine_name, date
+HAVING COUNT(*) >= 3
+
+-- 間違い（ホール全体で集計）
+-- SELECT date, win_rate FROM daily_hall_summary  <- 機種全検知には無意味
+```
+
+---
+id: kikata-winrate-80pct-threshold-validated
+trigger: "when setting win_rate threshold for 機種全 event detection"
+confidence: 0.88
+domain: ml-target-engineering
+source: session-data-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 機種全の win_rate 閾値は 80% が有効（データで検証済み）
+
+## 背景
+
+蒲田七の機種名別日次 win_rate（17,346 件）を実データで分析：
+
+閾値 >= 70%: 1,455件（8.4%）
+閾値 >= 80%: 727件（4.2%）avg_diff 平均 2,474 枚
+閾値 >= 90%: 441件（2.5%）
+閾値 == 100%: 388件（2.2%）avg_diff 平均 2,661 枚
+
+win_rate >= 80% のケースは：
+- 最小 avg_diff = 220 枚（全件でプラス）
+- 平均 avg_diff = 2,474 枚（明確な高設定水準）
+- 「win_rate が高くても差枚が低い偽陽性」は実データでほぼ存在しない
+
+「機種全 = 80% 以上」という経験則はデータで裏付けられた。
+win_rate だけで判定しても差枚との二段階判定は不要。
+
+## アクション
+
+機種全イベントを正例（positive）として学習させる場合：
+- 推奨閾値: win_rate >= 80%（base_rate 4.2%、全件で avg_diff > 0）
+- 70% は正例が多くなりすぎる（8.4%、通常の良日も混入）
+- 100% は少なすぎる（2.2%）が最もクリーンな正解ラベル
+- win_rate >= 80% AND avg_diff >= 500 の二段階判定は不要（80% 単独で十分）
+
+## 例
+
+```python
+# 機種別日次集計後
+df['is_kikata'] = (df['win_rate'] >= 80).astype(int)
+
+# 蒲田七での base_rate
+# is_kikata == 1: 727件 / 17,346件 = 4.2%
+# -> 訓練データに十分な正例が含まれる水準
+```
+
+---
+id: layer0-target-scope-is-machine-not-hall
+trigger: "when implementing Layer 0 day-quality filter for machine_name prediction"
+confidence: 0.90
+domain: ml-hierarchical-architecture
+source: session-design-correction
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Layer 0 のスコープは機種名単位（ホール全体ではない）
+
+## 背景
+
+2層アーキテクチャの Layer 0 を「ホール全体の良い日フィルタ」として実装したが誤り。
+蒲田七のホール全体 win_rate >= 80% は 320 日中 1 日（0.3%）しか存在せず、
+評価期間 30 日間で正例がゼロ、モデルが全て proba=0.0 を出力して機能しなかった。
+
+原因の根本は「全台設定」の定義の誤解：
+- ホール全台（hall-wide）: 稀（月に0〜1回程度）
+- 機種全（machine_name-wide）: より頻繁（4.2%、月に1〜2回程度/機種）
+- 末尾全（last_digit-wide）: 末尾 ML で別途検知
+
+Layer 0 の正しい役割は「今日この機種名は機種全か？」を事前判定し、
+高 win_rate 機種を優先推薦することである。
+
+## アクション
+
+Layer 0 を設計・実装する際：
+
+1. 入力スコープ: 機種名 x 日（hall x 日ではない）
+2. ターゲット: `is_kikata = (machine_name_winrate >= 80%)`
+3. 特徴量候補:
+   - `day_of_month`（月内日付）
+   - `day_of_week`（曜日）
+   - `lag1_winrate`（前日のその機種の win_rate）
+   - `roll7_winrate`（直近7日の win_rate 移動平均）
+   - `prior_kikata_rate`（過去の機種全発生率）
+4. 評価: walk-forward AUC + precision@threshold
+
+## 例
+
+```
+誤った実装:
+    Layer 0 target = daily_hall_summary.win_rate >= 80%
+    -> 評価期間で正例ゼロ、全予測 0.0
+
+正しい実装:
+    Layer 0 target = (machine_name x date 集計 win_rate) >= 80%
+    -> base_rate 4.2%、avg_diff 最小 220 枚（全件プラス）
+    -> 機種全イベント検知として有効
+```
+
+---

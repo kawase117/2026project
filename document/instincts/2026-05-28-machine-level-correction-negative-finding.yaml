@@ -1,0 +1,122 @@
+---
+id: machine-level-correction-does-not-hold
+trigger: "ゾロ目台を台番号レベルで個別に選別しようとしているとき"
+confidence: 0.88
+domain: ml-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 台番号レベルの correction は統計的に支持されない
+
+## 背景
+蒲田7（323日、ゾロ目台70台）で machine_level_correction_analysis を実施した結果：
+
+- FDR有意台数: 1/70（1.4%）— ランダムなら5%有意で3〜4台出るはず
+- 前半/後半の correction 符号一致率: 42/70（60.0%）
+- 前半/後半のスピアマン相関: r=0.0884, p=0.4667（相関なし）
+
+同末尾内で平均差枚が大きく異なって見えた台（例: 2233=+489 vs 3233=-420）は
+ランダムな分散であり、持続的なシグナルではない。
+前半で「強かった台」が後半も強い保証は皆無。
+
+## アクション
+- 「台番号3211に必ず座れ」「3233は避けろ」という判断はデータに支持されない
+- 台番号レベルの correction テーブルは採用しない（過学習になる）
+- 適切な粒度は既存の weekday × last_digit 単位の correction テーブル
+- 台番号レベルの分析が有効になる条件：
+  - データ期間が3年以上（1000日超）
+  - 複数ホールを横断した大規模検証
+  - 現時点では実施しない
+
+## 例
+```
+【誤った判断】
+  avg_diff: 2233(末尾3) = +489, 3233(末尾3) = -420
+  → 「2233に座れ」「3233は避けろ」← 支持されない
+
+【正しい判断】
+  weekday=水曜, last_digit=3 の correction = +280
+  → 末尾3のゾロ目台ならどれでもよい（台番号に優劣なし）
+
+【判断の根拠】
+  スピアマン r=0.088 ≈ 0 → 前半の強さは後半に引き継がれない
+  FDR有意 1/70 → 偶然の範囲
+```
+
+---
+id: zorome-correction-granularity-last-digit-is-optimal
+trigger: "ゾロ目補正テーブルの粒度（末尾レベル vs 台番号レベル）を決めるとき"
+confidence: 0.87
+domain: ml-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ゾロ目補正の最適粒度は weekday × last_digit（台番号レベルは過学習）
+
+## 背景
+粒度を細かくすると以下のトレードオフが生じる：
+
+- weekday × last_digit: セル数70、1セル観測数~46、安定性中
+- weekday × machine_number: セル数490、1セル観測数~46、FDR有意1/70
+- machine_number のみ: セル数70、1セル観測数~323、スピアマンr=0.088
+
+台番号レベルにしても観測数が増えるわけではなく、
+セル数が増えるだけでノイズが増す。
+
+## アクション
+- correction テーブルの粒度は weekday × last_digit × group_key で固定
+- 台番号レベルへの細分化はデータ量が10倍以上になるまで試みない
+- 「同末尾内で特定の台番号が強い」という観測が出ても、
+  前半/後半の安定性とFDR補正を必ず確認してから採用を判断する
+
+## 例
+```python
+# 現行（適切な粒度）
+correction_table = df.groupby(['weekday', 'last_digit', 'group_key']).agg(...)
+correction_table['correction'] = zorome_avg - nonzorome_avg
+
+# 過学習（採用しない）
+correction_table = df.groupby(['weekday', 'machine_number']).agg(...)
+# FDR有意 1/70、スピアマン r≈0 で支持されない
+```
+
+---
+id: large-avgdiff-variance-is-noise-not-signal
+trigger: "個別台の平均差枚に大きなバラつきを発見して特定台を狙おうとしているとき"
+confidence: 0.85
+domain: ml-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 同末尾内の台番号間の avg_diff 差は多くの場合ランダム分散
+
+## 背景
+323日のデータで同末尾3のゾロ目台の平均差枚に最大900枚の差が見られたが、
+前半/後半スピアマン相関 r=0.088（p=0.467）は相関なしを示す。
+diff_coins の標準偏差は数百〜千枚オーダーあり、
+46観測（曜日別）では信頼区間が広すぎてこの程度の差は容易に生じる。
+
+## アクション
+個別台の成績バラつきを見たとき、シグナルとノイズを区別する最低基準：
+1. 前半/後半に分割して同じ順位傾向が続くか確認（符号一致率 ≥70%）
+2. Welch's t検定 + FDR補正で有意差があるか確認（p_fdr < 0.05）
+3. 効果量 Cohen's d ≥ 0.3
+4. 3つすべてクリアしない限り「ランダム分散」と判断して台番号選択には使わない
+
+## 例
+```
+【要注意パターン（採用しない）】
+  台番号77: 過去50回の平均 +800枚
+  → 前半25回 vs 後半25回で符号一致を確認
+  → 一致しないか、FDR p≥0.05 なら採用しない
+
+【採用できるパターン】
+  前半50回: +650枚 / 後半50回: +720枚
+  + FDR p<0.05 + Cohen's d≥0.3
+  → このホールでは当該台を当該曜日に優先する
+```
+
+---

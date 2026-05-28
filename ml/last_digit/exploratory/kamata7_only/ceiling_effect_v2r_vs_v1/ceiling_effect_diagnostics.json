@@ -1,0 +1,33 @@
+{
+  "current": {
+    "rows": 432,
+    "unique_pairs": 432,
+    "n_days": 144,
+    "n_experts": 3
+  },
+  "condition_group_count_by_condition": {
+    "anomaly_direction": 3,
+    "difficulty_failure": 2,
+    "pred_span_quartile": 4,
+    "weekday": 7
+  },
+  "total_condition_groups": 16,
+  "bootstrap_unit": "date_expert_pair",
+  "stats_config": {
+    "n_boot": 4000,
+    "seed": 20260520,
+    "min_paired_for_wilcoxon": 10,
+    "min_unpaired_for_mwu": 5
+  },
+  "baseline": {
+    "rows": 432,
+    "unique_pairs": 432,
+    "n_days": 144,
+    "n_experts": 3,
+    "overlap_pairs": 432,
+    "overlap_ratio_vs_current": 1.0,
+    "overlap_ratio_vs_baseline": 1.0
+  },
+  "significance_rows": 48,
+  "significance_sig_bh_0_05": 14
+}

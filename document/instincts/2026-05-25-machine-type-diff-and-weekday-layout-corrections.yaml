@@ -1,0 +1,94 @@
+---
+id: atype-machine-has-lower-diff-coins-than-at
+trigger: "when comparing expected diff_coins between A型 and AT系 machines in 蒲田七 analysis"
+confidence: 0.90
+domain: pachinko-domain-knowledge
+source: user-correction
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# A型（ジャグラー等）は機械割が低いため差枚は低い傾向。AT系高設定時の方が差枚は大きい
+
+## 背景
+A型（ジャグラー・ハナハナ等）は機械割が低い機種が多く、高設定でも差枚の絶対値は小さい。
+AT系は機械割の振れ幅が大きく、高設定時の差枚は大きくなる。
+
+誤認しやすいポイント:
+- digit3_profile_report で A型末尾3のmean_diff=243.0 > AT系末尾3のmean_diff=84.9 に見えるが、
+  これは「AT系末尾3には低設定が多く平均を引き下げている」ためであり、
+  A型の差枚ポテンシャルが高いことを意味しない。
+- A型の243.0はAT系が設定6を入れた場合の期待差枚（≈500-800）より低い。
+
+## アクション
+A型とAT系を比較する際は「同設定レベルでの差枚」を意識する。
+全体平均でA型がAT系より高く見える場合は「AT系に低設定が多い」という解釈を優先する。
+「A型は差枚が大きい」という記述は誤り。削除・修正対象。
+
+## 例
+NG: 「A型は差枚が大きく出やすい」
+OK: 「A型は機械割が低く差枚は低め。AT系の高設定時の方が差枚は大きい」
+OK: 「A型の末尾3がAT系より高く見えるのはAT系の低設定多数による平均引き下げ効果」
+
+---
+id: tuesday-kakuban-means-last-digit-adjacency-not-physical
+trigger: "when interpreting cluster patterns on Tuesday (火曜) for 蒲田七"
+confidence: 0.85
+domain: pachinko-domain-knowledge
+source: user-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 火曜は「角番の日」のため、末尾の「隣接」は台番号末尾での概念であり物理的な隣台ではない
+
+## 背景
+火曜日は「角番」（特定の台番号末尾に設定を入れる投入日）として認識されている。
+角番日では物理的に隣り合った台に設定を入れるのではなく、
+「台番号末尾が同じか隣接する末尾の台」に設定を入れるという末尾依存の投入方式をとる。
+
+これは「クラスタ集中（末尾6-7-8）」という概念と整合する:
+- 末尾6の台: ホール全体に散在（06番、16番、26番、106番、…）
+- 末尾7の台: 同様にホール全体に散在
+- これらが物理的に隣台でなくても「末尾クラスタ」として同時に高設定になっている
+
+## アクション
+火曜の分析・特徴量設計では「隣台の物理的実績」ではなく「同末尾・隣接末尾の実績」を使う。
+last_digit+1 mod 10 の実績を特徴量にする際、物理配置との混同を避けること。
+
+## 例
+火曜 best_cluster=6-7-8: 末尾6の台(06,16,26,…)と末尾7の台(07,17,27,…)が別の列にあっても
+同時に高設定が入っている → 「末尾の隣接」が物理的隣接と独立して機能している
+
+---
+id: tuesday-thursday-strongest-cluster-concentration
+trigger: "when prioritizing weekday-specific cluster features in 蒲田七 LTR model"
+confidence: 0.82
+domain: pachinko-domain-knowledge
+source: data-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 火・木のクラスタ集中度が最強（ratio=1.229）、月曜は実質無効（delta=8.25）
+
+## 背景
+weekday_concentration.csv より concentration_ratio・delta の曜日別比較:
+
+| 曜日 | ratio  | delta | 評価       |
+|------|--------|-------|------------|
+| 月   | 1.039  |  8.25 | 無効（誤差）|
+| 火   | 1.229  | 49.32 | 最強       |
+| 水   | 1.200  | 38.62 | 強         |
+| 木   | 1.229  | 45.02 | 最強       |
+| 金   | 1.196  | 29.83 | 中程度     |
+| 土   | 1.214  | 44.85 | 強         |
+| 日   | 1.179  | 33.31 | 中程度     |
+
+## アクション
+クラスタ特徴量（best_cluster_in フラグ等）を使う場合:
+- 月曜: クラスタ特徴量を無効化 or 重みを0に近く設定
+- 火・木: クラスタ特徴量の重みを最大化
+- 水・土: 次点で有効
+walk-forwardで各曜日のクラスタ特徴量寄与を確認してから採用する。
+
+## 例
+火曜の台選び: 末尾6-7-8クラスタに座ると全体平均+49差枚の期待値
+月曜の台選び: クラスタを意識しても全体平均+8差枚にしかならない（意味なし）

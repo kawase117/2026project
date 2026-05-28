@@ -1,0 +1,116 @@
+---
+id: weekday-cluster-rightward-dominant
+trigger: "when designing directional features for 3-machine cluster in last_digit LTR for 蒲田七"
+confidence: 0.82
+domain: pachinko-domain-knowledge
+source: data-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田七の3台並びクラスタは「番号増加方向（rightward）」が5/7曜日で支配的
+
+## 背景
+weekday_cluster_analysis.csv より:
+- rightward（top1+1, top1+2方向にクラスタが伸びる）: 月・火・水・土・日（5曜日）
+- leftward: 木曜のみ（0-1-2、top1=末尾2）
+- centered: 金曜のみ（8-9-0、top1=末尾9が中央）
+
+「強い末尾からみて番号が増える方向に高設定が並ぶ」傾向がホール全体に存在する可能性。
+ただし循環（末尾9→0）を含む集計のため、物理的配置との対応確認が必要。
+
+## アクション
+ML特徴量設計では「top1の右隣（last_digit+1 mod 10）の実績」を追加候補として検討する。
+right_neighbor_mean が left_neighbor_mean を上回る日は rightward クラスタが期待できる。
+
+## 例
+土曜: top1=6, right=7(224.3) > left=5(209.2) → rightward → 6-7-8クラスタ確認
+水曜: top1=8, right=9(236.0) > left=7(139.6) → rightward → 8-9-0クラスタ確認
+
+---
+id: digit6-fire-sat-sun-consistent-678-cluster
+trigger: "when selecting which last_digit cluster to target on weekends or Tuesday in 蒲田七"
+confidence: 0.88
+domain: pachinko-domain-knowledge
+source: data-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 末尾6は火・土・日で最強かつ常に6-7-8クラスタを形成する
+
+## 背景
+weekday_cluster_analysis.csv より:
+
+| 曜日 | top1 | best_cluster | best_cluster_mean |
+|------|------|-------------|------------------|
+| 火   |  6   |   6-7-8     |      264.6        |
+| 土   |  6   |   6-7-8     |      254.1        |
+| 日   |  6   |   6-7-8     |      219.4        |
+
+3曜日すべてで top1=末尾6、best_cluster=6-7-8 で一致。
+土曜の末尾6(307.8)は全データ（全曜日・全末尾）の中で最高値。
+
+## アクション
+「火曜・土曜・日曜の朝一台選びでは 6-7-8 クラスタを最優先」という運用ルールとして利用できる。
+LTR特徴量: `is_fire_or_sat_or_sun AND last_digit in ["6","7","8"]` の交互作用を検討。
+
+## 例
+土曜 6-7-8 cluster_mean=254.1（土曜全末尾平均≈209比 +22%）
+日曜 6-7-8 cluster_mean=219.4（日曜全末尾平均≈186比 +18%）
+
+---
+id: thursday-low-digit-cluster-leftward-anomaly
+trigger: "when analyzing Thursday patterns for last_digit in 蒲田七"
+confidence: 0.75
+domain: pachinko-domain-knowledge
+source: data-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 木曜は唯一の leftward クラスタ（0-1-2）。他曜日と対照的な低番号帯パターン
+
+## 背景
+weekday_cluster_analysis.csv より:
+- 木曜: top1=末尾2(259.3), best_cluster=0-1-2(241.5), direction=leftward
+- 他5曜日はrightwardまたはcentered
+
+木曜だけが低番号帯（末尾0〜2）に設定を集中させており、
+末尾7(254.0)も木曜では2番目に強いがクラスタ外の別拠点にある。
+
+## アクション
+木曜専用の特徴量: `is_thursday AND last_digit in ["0","1","2"]` を検討。
+信頼度0.75（原因不明・サンプル46日）のため walk-forward での確認必須。
+
+## 例
+木曜 mean_diff 上位: 末尾2=259.3, 末尾7=254.0, 末尾0=247.3（非連続な2拠点）
+best_cluster=0-1-2 が leftward → 木曜のみ番号減少方向にクラスタが伸びる
+
+---
+id: top2-digit-usually-outside-best-cluster
+trigger: "when deciding how many machines to target in a single session at 蒲田七"
+confidence: 0.80
+domain: pachinko-domain-knowledge
+source: data-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 2番目に強い末尾（top2）は6/7曜日でbest_clusterの外にある
+
+## 背景
+weekday_cluster_analysis.csv で top2 が best_cluster 内にある曜日は月曜のみ（top2=4 in 2-3-4）。
+残り6曜日はすべてクラスタ外:
+- 火: top2=9、cluster=6-7-8
+- 水: top2=1、cluster=8-9-0
+- 木: top2=7、cluster=0-1-2
+- 金: top2=6、cluster=8-9-0
+- 土: top2=2、cluster=6-7-8
+- 日: top2=1、cluster=6-7-8
+
+「ホールは1箇所まとめてではなく2拠点に分散して高設定を投入する」可能性を示唆。
+
+## アクション
+台選び戦略: 最強クラスタ（top1周辺3台）に加え、top2末尾も別途モニタリングする。
+MLでは「クラスタ内末尾」と「孤立強末尾（top2）」を別特徴量として扱うことを検討。
+
+## 例
+土曜: best_cluster=6-7-8(mean=254.1) + top2=末尾2(mean=266.1) が別拠点
+→ 6・7・8 と 2 が同時に出るなら2拠点に高設定が入っている可能性がある

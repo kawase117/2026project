@@ -1,0 +1,91 @@
+蒲田七 XGBRanker v2 walk-forward per-expert 失敗パターン分析
+
+対象ファイル
+- A: ml/last_digit/reports/digit_lag_v2_withinexpert_xgb_ranker_ndcg_testperiod_daily.csv
+- B: ml/last_digit/reports/digit_lag_v2_withinexpert_xgb_ranker_ndcg_testperiod_topk.csv
+- C: ml/last_digit/exploratory/kamata7_only/anomaly_vs_prediction_fail.csv
+- D: ml/last_digit/exploratory/kamata7_only/lag_deepdive_fold_metrics.csv
+- E: ml/last_digit/exploratory/kamata7_only/stl_daily_components.csv
+
+注:
+- 前回の集計は旧 baseline (`tail_ltr_xgb_ndcg_xgb_ranker_ndcg_testperiod_daily.csv`) を参照しており不一致だった。
+- 今回は within-expert 修正後の v2 baseline (`digit_lag_v2_withinexpert_*`) に統一して再集計した。
+
+【Step 1: fold validation 実日付】
+fold1 validation: 2025-08-26 〜 2025-10-15
+fold2 validation: 2025-10-16 〜 2025-12-04 ← ここを重点確認
+fold3 validation: 2025-12-05 〜 2026-01-23
+fold4 validation: 2026-01-24 〜 2026-03-14
+fold5 validation: 2026-03-15 〜 2026-05-03
+
+【Step 2-1: expert 単体の失敗回数】
+expert | total_days | hit@2=0 days | hit@2<0.5 days | 平均 hit@2
+2F_N | 144 | 0 | 0 | 1.0000
+3F_N | 144 | 1 | 1 | 0.9931
+3F_A | 144 | 2 | 2 | 0.9861
+
+解釈:
+- within-expert 修正後は 2F_N が完全一致で、単体ミスは 0 日。
+- 3F_N は 1 日だけミス。
+- 3F_A は 2 日だけミス。
+- したがって、旧 baseline で見えた「3F_A が大量に崩れる」像は v2 では成り立たない。
+
+【Step 2-2: 複合失敗パターン】
+失敗パターン | 発生回数
+2F_N のみミス | 0
+3F_N のみミス | 1
+3F_A のみミス | 2
+2F_N + 3F_N ミス | 0
+2F_N + 3F_A ミス | 0
+3F_N + 3F_A ミス | 0
+全 expert ミス | 0
+
+解釈:
+- 失敗日は合計 3 日しかない。
+- しかも全て「単独ミス」であり、複数 expert が同時に崩れる日はなかった。
+- 実務的には「全体崩壊」ではなく「ごく稀な局所ミス」とみなす方が正確。
+
+【Step 2-3: ミス日の特徴（片方ミスが発生した日のみ）】
+date | weekday | missed_experts | avg_diff | is_anomaly | zscore | span_2F_N | span_3F_N | span_3F_A
+2026-01-04 | 日 | 3F_A ミス | -220.0 | 0 | -2.083 | 0.8132 | 0.8094 | 0.0003
+2026-01-11 | 日 | 3F_N ミス | 160.0 | 0 | 0.047 | 0.0024 | 0.0001 | 0.6125
+2026-05-21 | 木 | 3F_A ミス | 245.0 | 0 | 0.717 | 0.4094 | 0.0101 | 0.0011
+
+観察:
+- 3 日とも `is_anomaly=0` で、C の異常日判定には引っかかっていない。
+- miss expert 側の `pred_span_top12` は非常に小さい。
+  - 2026-01-04 の 3F_A: 0.0003
+  - 2026-01-11 の 3F_N: 0.0001
+  - 2026-05-21 の 3F_A: 0.0011
+- 一方、同日の他 expert は大きい span を持つことが多い。
+  - 2026-01-04: 2F_N=0.8132, 3F_N=0.8094
+  - 2026-01-11: 3F_A=0.6125
+  - 2026-05-21: 2F_N=0.4094
+- つまり、v2 の miss は「expert 固有の自信不足日」にかなり寄っている。
+
+【Step 3: fold2 期間 vs walk-forward 失敗日の照合】
+fold2 期間: 2025-10-16 〜 2025-12-04
+walk-forward testperiod: 2026-01-01 〜 2026-05-23
+fold2 の位置づけ: testperiod 前
+fold2 の STL trend: 上昇 (start=171.03, end=181.89, delta=10.86)
+fold2 期間の anomaly 日数 (C 基準): 0
+
+解釈:
+- fold2 は walk-forward testperiod の外側で、しかも前の期間にある。
+- したがって、fold2 の悪化を A/B の失敗日と直接対応づけることはできない。
+- また C は 2026-01-01 以降の集計なので、fold2 期間の anomaly をこのファイルから追うこともできない。
+- 少なくとも STL 上は、fold2 は下落トレンドではなく緩やかな上昇期。
+
+【Step 4: 仮説整理】
+| 仮説 | 支持する証拠 | 否定する証拠 |
+|------|------------|------------|
+| 3F_A が最も単体ミスしやすい（hit@2=76.9% が反映） | v2 でも 3F_A の miss は 2 日で最多。3F_N は 1 日、2F_N は 0 日。単独ミス回数でも 3F_A が最多。 | ただし v2 の 3F_A hit@2 は 0.9861 であり、旧 baseline の 0.7483 とは別物。`76.9%` 仮説は v2 には当てはまらない。 |
+| ミス日は平凡な差枚日（zscore ≈ 0）に集中 | 3 日中 2 日は `|zscore| < 1`、全 3 日とも `is_anomaly=0`。極端な異常日依存ではない。 | 2026-01-04 は `z=-2.083` で明確に弱い日。したがって「全て平凡な日」ではない。 |
+| 特定の expert × 曜日の組み合わせでミス集中 | miss 3 日のうち 2 日が日曜。3F_A の miss 2 件は `Sunday` と `Thursday`、3F_N の miss 1 件は `Sunday`。 | サンプルが 3 日しかないため、「曜日パターンがある」と断言するには不足。現時点では傾向止まり。 |
+| STL 下落トレンド期にミスが増える | testperiod 内では `trend_diff7<0` の日の any-miss rate が 0.0258、`trend_diff7>=0` が 0.0081 で、弱い差はある。 | miss は 3 日しかなく、統計的にかなり不安定。さらに fold2 自体は上昇トレンド期なので、fold2 を根拠にこの仮説を支持できない。 |
+
+【結論】
+1. 前回の「3F_A は大量に崩れる」という結論は旧 baseline を読んだことによる誤り。
+2. 正しい v2 within-expert では、失敗日は testperiod 全体で 3 日しかない。
+3. miss の中心は「異常日」ではなく「その expert だけ span が極小になる自信不足日」。
+4. 今の v2 は、失敗パターン分析よりも「低 span 日の扱い」や「confidence 表示」の方が次の改善余地として自然。

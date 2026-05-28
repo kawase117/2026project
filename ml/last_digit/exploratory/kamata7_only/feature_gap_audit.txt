@@ -1,0 +1,33 @@
+=== Feature Gap Audit (v2) ===
+selected_feature_count: 58
+
+presence_in_selected:
+- lag7_digit_diff: NO
+- lag14_digit_diff: NO
+- lag1_digit_diff: NO
+- day_of_month: NO
+- weekday: YES
+- roll14_avg_diff: NO
+- roll7_avg_diff: NO
+
+top_mi_rows (from mutual_info_ltr_report.csv):
+- lag7_digit_diff: mi=0.012373, rank=1, level=digit
+- lag14_digit_diff: mi=0.002223, rank=2, level=digit
+- day_of_month: mi=0.000010, rank=3, level=hall
+- day_last_digit: mi=0.000002, rank=4, level=hall
+- weekday: mi=0.000002, rank=5, level=hall
+- lag1_avg_diff: mi=0.000000, rank=6, level=hall
+- lag7_avg_diff: mi=0.000000, rank=7, level=hall
+- lag14_avg_diff: mi=0.000000, rank=8, level=hall
+
+high_vif_features (vif>=10):
+- roll14_avg_diff: vif=80.74
+- win_rate: vif=72.01
+- avg_games: vif=66.49
+- roll28_avg_diff: vif=37.08
+- roll7_avg_diff: vif=34.46
+
+recommended_next_candidates:
+- candidate_1: lag1/lag5/lag7 digit diff bundle (leakage-safe shift only)
+- candidate_2: weekday x expert interaction features (especially Wednesday)
+- candidate_3: streak-derived features (last-hit age / consecutive-hit count)

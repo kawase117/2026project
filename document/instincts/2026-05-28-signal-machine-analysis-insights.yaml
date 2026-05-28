@@ -1,0 +1,222 @@
+---
+id: hokuto-machine-name-disambiguation
+trigger: "スマスロ北斗の拳を信号機種として使う際に機種名を検索するとき"
+confidence: 0.97
+domain: operational-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 北斗の拳は2機種存在する：スマスロ北斗の拳 vs 北斗の拳 転生の章2
+
+## 背景
+蒲田七DBには「北斗」を含む機種が2つ存在する：
+- `スマスロ北斗の拳`（信号機種として有効）
+- `北斗の拳 転生の章2`（別機種・除外対象）
+
+`LIKE '%北斗%'` で検索すると両方が引っかかる。
+「スマスロ北斗の拳」のみを対象にするために前方一致を使用する。
+
+## アクション
+```python
+# 正しい検索（前方一致で転生の章2を排除）
+cursor.execute(
+    "SELECT DISTINCT machine_name FROM machine_detailed_results "
+    "WHERE machine_name LIKE 'スマスロ北斗%'"
+)
+hokuto_names = [r[0] for r in cursor.fetchall()]
+# → ['スマスロ北斗の拳'] のみ
+
+# 誤った検索（両方引っかかる）
+# LIKE '%北斗%' ← 使ってはいけない
+```
+信号機種リストは必ずDBから動的取得し、ハードコードしない。
+
+## 例
+```python
+SIGNAL_MACHINES = []
+cursor.execute("SELECT DISTINCT machine_name FROM machine_detailed_results WHERE machine_name LIKE 'スマスロ北斗%'")
+SIGNAL_MACHINES += [r[0] for r in cursor.fetchall()]
+cursor.execute("SELECT DISTINCT machine_name FROM machine_detailed_results WHERE machine_name LIKE 'モンキーターン%'")
+SIGNAL_MACHINES += [r[0] for r in cursor.fetchall()]
+# → ['スマスロ北斗の拳', 'モンキーターンV']
+```
+
+---
+id: signal-machine-dual-condition
+trigger: "モンキーターンV・スマスロ北斗の拳の兆候を判定するとき"
+confidence: 0.88
+domain: operational-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 兆候機種の信号は差枚 OR RB確率の2条件で判定する
+
+## 背景
+「モンキーターンV または スマスロ北斗の拳が兆候を示している」の判定に
+2つの独立した基準がある：
+1. **差枚基準**: avg(diff_coins_normalized) > threshold（例: 200枚）
+2. **RB確率基準**: avg(rb_probability_decimal) < 1/300 = 0.003333
+
+差枚は「現在の成績」（短期ノイズに敏感）、
+RB確率は「設定の直接的な指標」（より安定した信号）。
+どちらか一方でも兆候があれば「信号あり」とする（OR条件）。
+
+## アクション
+```python
+diff_threshold = 200
+rb_threshold = 1 / 300  # = 0.003333
+
+signal_daily['signal_diff'] = signal_daily['avg_diff'] > diff_threshold
+signal_daily['signal_rb'] = signal_daily['avg_rb_prob'] < rb_threshold
+signal_daily['signal'] = signal_daily['signal_diff'] | signal_daily['signal_rb']
+```
+分析結果は3つに分けて出力すること：
+- 差枚信号のみ
+- RB確率信号のみ
+- OR（両方合算）
+
+## 例
+```
+信号あり日数（差枚）: 32
+信号あり日数（RB確率 1/300以下）: 41
+信号あり日数（OR合算）: 48
+
+→ RB確率は「設定の直接指標」であり差枚より安定した信号になりやすい
+→ OR合算が最も多くの兆候日を捉える
+```
+
+---
+id: sunday-machine-count-strategy
+trigger: "日曜日「機種一」戦略で台数別に機種を選ぶとき"
+confidence: 0.82
+domain: operational-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 日曜日「機種一」は少ない台数の機種が安牌。1台機種は設定なし確認済み
+
+## 背景
+蒲田七「機種一」イベント（日曜日）では：
+- 仮説A（安牌）：3台機種 → 1/3で高設定 → 確率的に最も恵まれた環境
+- 仮説B（多台数も候補）：30台機種でも設定6を複数台入れる可能性がある
+  → 突出した期待差枚・回転数をもつ台を探す戦略が有効
+
+**実績確認済みの事実**：
+- **1台機種は設定が入らない**（除外対象）
+- 最多台数（マジアカード100台）のavg_diffは+58枚（低め）
+- スマスロ北斗の拳（60台）のavg_diffは+491枚（高い）
+→ 台数の多寡だけでは判断できない。機種固有の実績が重要。
+
+## アクション
+台数カテゴリ分類：
+- 1台: 除外（設定なし既知）
+- 2-5台: 少数（安牌候補。確率的に最も優れた環境）
+- 6-50台: 実績で判断（avg_diff + 突出台率）
+- 50台超: 突出台（avg_diff + 1σ超え台）を探す
+
+## 例
+```
+日曜日データ（蒲田七）：
+  スマスロ北斗の拳: 60台, avg_diff +491 → 多台数でも高い
+  モンキーターンV: 84台, avg_diff +370 → 同上
+  マジアカード: 100台, avg_diff +58 → 多台数で低い
+
+→ 単純に「少ない台数が良い」ではなく機種固有の特性が重要
+```
+
+---
+id: nextday-zorome-workflow-spec
+trigger: "翌日予測と台末尾ゾロ目を統合した実行可能な出力を生成するとき"
+confidence: 0.90
+domain: operational-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 翌日予測 + 確信度 + 台末尾ゾロ目リストの統合ワークフロー
+
+## 背景
+翌日の立ち回りを決定するために以下を一つの出力にまとめる：
+1. 翌日予測（末尾ランキング）
+2. 各末尾の確信度（combined_scoreをmin-max正規化）
+3. 予測上位の末尾に該当する「台末尾ゾロ目」の機種名・台番号リスト
+
+「台末尾ゾロ目」は `machine_detailed_results.is_zorome` とは**別物**。
+- `is_zorome` = 月日ゾロ目（日付の日部分と台末尾が一致）← DBに存在
+- 台末尾ゾロ目 = 台番号の末2桁が同じ数字（11, 22, 33...99）← 別途計算
+
+## アクション
+```python
+def is_zorome_machine(machine_number: int) -> bool:
+    tail2 = abs(int(machine_number)) % 100
+    return (tail2 // 10) == (tail2 % 10) and tail2 != 0
+
+# 確信度変換（combined_scoreはランクの平均, 小さいほど良い → 反転）
+confidence = (max_score - score) / (max_score - min_score) * 100
+```
+台末尾ゾロ目リストは「最新日」（DBの最新date）から取得する。
+機種の撤去・追加に対応するため、最新日を必ず使用。
+
+## 例
+```
+翌日予測 (蒲田七, 2026-05-29 水曜日)
+─────────────────────────────────────────
+Rank 1: 末尾 7  確信度 82%
+  台末尾ゾロ目:
+    2077 スマスロ某
+    2177 A-SLOT+ 某
+
+Rank 2: 末尾 1  確信度 61%
+  台末尾ゾロ目:
+    2011 モンキーターンV
+    2111 某機種
+```
+
+---
+id: machine-signal-cross-prediction
+trigger: "特定機種の兆候から同日の他機種の強さを予測するとき"
+confidence: 0.75
+domain: ml-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 兆候機種の「強い日」と他機種の相関は統計的に検証が必要
+
+## 背景
+現場で体感している仮説：
+「モンキーターンV または スマスロ北斗の拳が高設定反応を示す → 同じ末尾の他機種も高設定」
+
+この仮説には2つの対立する解釈がある：
+A. **真正信号**: ホールが特定末尾に高設定を集中投入 → 兆候機種が先に反応する
+B. **フェイク末尾**: ホールが意図的に兆候機種だけ別の末尾に入れている
+
+どちらが正しいかは統計的検証が必要（未検証）。
+confidence=0.75 は「体感あり、統計的確認前」の暫定値。
+
+## アクション
+```python
+# 信号末尾 vs 非信号末尾の比較
+signal_digit = get_signal_machine_digit(today)
+same_digit_others = df[
+    (df['date'] == today) &
+    (df['last_digit'] == signal_digit) &
+    (~df['machine_name'].isin(SIGNAL_MACHINES))
+]
+# avg_diff >> 全体平均 → 真正信号の証拠
+# avg_diff ≈ 全体平均 → フェイクの可能性
+```
+検証後にconfidenceを更新すること。
+
+## 例
+```
+フェイク末尾の判定基準：
+  信号末尾 avg_diff > 全体平均 + 1σ → 「フェイクではない」証拠（強い）
+  信号末尾 avg_diff ≈ 全体平均    → 「フェイクの可能性あり」
+  信号末尾 avg_diff < 全体平均    → 「フェイクの可能性が高い」
+```
+
+---

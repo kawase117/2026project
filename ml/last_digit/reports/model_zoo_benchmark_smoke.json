@@ -1,0 +1,46 @@
+{
+  "config": {
+    "output_prefix": "ml/last_digit/reports/model_zoo_benchmark_smoke",
+    "db_path": "",
+    "db_glob": "*7.db",
+    "split_name": "regime_3_fixed_split",
+    "target": "is_top_2",
+    "seeds": "42",
+    "a_weight": 0.4,
+    "non_a_weight": 1.3,
+    "include_deep": false,
+    "include_rl": false,
+    "models": "xgb_classifier",
+    "log_level": "INFO"
+  },
+  "db_path": "db\\マルハンメガシティ2000-蒲田7.db",
+  "split": {
+    "train_start": "2025-07-07",
+    "train_end": "2025-12-31",
+    "valid_start": "2026-01-01",
+    "valid_end": "2026-05-22"
+  },
+  "train_rows": 7080,
+  "valid_rows": 5680,
+  "train_days": 177,
+  "valid_days": 142,
+  "features_count": 50,
+  "models_attempted": [
+    "xgb_classifier"
+  ],
+  "completed_runs": 1,
+  "failed_runs": [],
+  "top_models_by_hit_at_2": [
+    {
+      "model": "xgb_classifier",
+      "hit_at_2_mean": 0.9929577464788732,
+      "ndcg_at_2_mean": 0.8755540832333553,
+      "f1_mean": 0.8556338028169014,
+      "elapsed_sec_mean": 0.9204306999454275
+    }
+  ],
+  "artifacts": {
+    "detailed_csv": "ml\\last_digit\\reports\\model_zoo_benchmark_smoke_detailed.csv",
+    "summary_csv": "ml\\last_digit\\reports\\model_zoo_benchmark_smoke_summary.csv"
+  }
+}

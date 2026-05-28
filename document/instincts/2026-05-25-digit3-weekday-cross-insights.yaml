@@ -1,0 +1,159 @@
+---
+id: digit3-weakness-caused-by-at-series-dominance
+trigger: "when interpreting why last_digit=3 shows lowest mean_diff in overall stats of 蒲田七"
+confidence: 0.90
+domain: pachinko-domain-knowledge
+source: data-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 末尾3の弱さはAT系（66%）に完全に起因。A型・BTでは末尾3は正常水準
+
+## 背景
+digit3_profile_report.csv（蒲田七全期間）の機種タイプ別内訳:
+
+| machine_type | mean_diff | n_rows | 構成比 |
+|-------------|-----------|--------|--------|
+| AT系        |  84.9     | 14,913 |  66%   |
+| A型         | 242.9     |  5,851 |  26%   |
+| BT          | 203.3     |  1,956 |   8%   |
+| 合計        | 135.8     | 22,720 | 100%   |
+
+全末尾中で末尾3の全体mean_diff=135.8は最下位（2位末尾1=176.0に40枚差）。
+しかしA型(242.9)・BT(203.3)に絞ると末尾3は他末尾と遜色ない水準。
+
+## アクション
+末尾3を特徴量として使う際の分岐:
+- AT系（3F_N相当）の末尾3: 積極的に避ける
+- A型（3F_A/2F_A相当）の末尾3: 他末尾と同等に扱う
+- BT（2F_A相当）の末尾3: 同様に他末尾と同等
+
+ML特徴量では `is_digit_3 AND is_at_series` を弱設定シグナルとして設計できる。
+`is_digit_3 AND is_atype` は除外対象にしない（243枚はむしろ高水準）。
+
+## 例
+floor_atype_overall_digit.csv: 3F_N末尾3のmean_diff=-94.4（全グループ全末尾中最大のマイナス）
+AT系かつ3F機種が末尾3のマイナスを作っている主因。
+digit3_profile の AT系 mean=84.9 はAT系全フロア平均。3F_N限定ではさらに低い。
+
+---
+id: digit3-bimodal-normal-worst-anomaly-best
+trigger: "when designing features for last_digit=3 in LTR model for 蒲田七"
+confidence: 0.87
+domain: pachinko-domain-knowledge
+source: data-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 末尾3は通常日最下位・high anomaly日断然1位という二極分布
+
+## 背景
+high_anomaly_digit_dist.csv（high anomaly日5日間）vs 全体平均:
+
+| digit | anomaly日 mean_diff | 全体 mean_diff  | 変化率  |
+|-------|--------------------|-----------------||---------|
+|   3   |        851.8       |  135.8（最下位） | +527%   |
+|   5   |        725.6       |  176.8          | +310%   |
+|   6   |        681.9       |  233.5（通常1位）| +192%   |
+|   1   |        173.8       |  176.0          |   -1%   |
+
+末尾3のみ「通常最下位→anomaly日最高」という逆転が発生。
+末尾1は anomaly日でも低い（173.8）。
+末尾3の anomaly感受性は末尾6の3倍近い。
+
+## アクション
+末尾3は「high anomaly検出フラグ」と組み合わせたとき最も有効なシグナルになる。
+通常日の末尾3への投資は避け、「全台高設定日（Layer A）」が見込まれる日のみ末尾3を評価する。
+
+ML設計: `is_digit_3 AND is_predicted_anomaly_day` を強い高設定シグナルとして候補化。
+anomaly_detection が walk-forward に未統合であれば、past anomaly rate を
+rolling特徴量として間接的に組み込む。
+
+## 例
+全末尾変化率: 末尾3: 135.8 → 851.8（+527%）vs 末尾6: 233.5 → 681.9（+192%）
+末尾3の anomaly感受性が末尾6の3倍近い。
+参照: [[digit3-low-normal-high-on-anomaly]]（既存instinct）
+
+---
+id: saturday-digit6-dominant-307
+trigger: "when selecting machines or designing Saturday last_digit features for 蒲田七"
+confidence: 0.88
+domain: pachinko-domain-knowledge
+source: data-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 土曜は末尾6が307.8で断然1位。2位末尾2（266）と40枚以上の差
+
+## 背景
+weekday_digit_cross_report.csv の土曜行（上位・下位抜粋）:
+
+| rank | digit | mean_diff |
+|------|-------|-----------|
+|  1   |   6   |  307.8    |
+|  2   |   2   |  266.1    |
+|  3   |   8   |  230.2    |
+|  4   |   7   |  224.3    |
+|  9   |   3   |  119.8    |
+| 10   |   1   |   91.6    |
+
+土曜は末尾1(91.6)と末尾3(119.8)が特に弱く、末尾6が独走している。
+instinct [[2fn-cluster-678-dominant-across-weekdays]] の土曜2F_N mean=326.9（delta=84.3）と整合。
+
+## アクション
+土曜の台選択優先順位: 末尾6 >> 末尾2 > 末尾8,7,4 > (末尾1,3は避ける)
+ML特徴量: `is_saturday AND is_digit_6` を土曜の最強シグナルとして採用。
+全機種横断での知見のため、2F_N限定の [[2fn-cluster-678-dominant-across-weekdays]] と
+組み合わせると精度がさらに上がる。
+
+## 例
+土曜末尾6(307.8) vs 土曜末尾1(91.6): 差分216枚。
+末尾選択だけで高設定有無に匹敵する収益差が生じる水準。
+
+---
+id: tuesday-digit3-exception-friday-worst
+trigger: "when analyzing digit3 weekday variation or designing weekday-digit interaction features in 蒲田七"
+confidence: 0.85
+domain: pachinko-domain-knowledge
+source: data-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 火曜のみ末尾3が3位（270.4）、金曜は全曜日×全末尾中ワースト（50.2）
+
+## 背景
+weekday_digit_cross_report.csv の末尾3の曜日別順位:
+
+| 曜日 | 末尾3 mean_diff | 順位/10 |
+|------|----------------|---------|
+| 月   |  168.2         |  8位    |
+| 火   |  270.4         |  3位    |
+| 水   |  101.6         | 10位    |
+| 木   |  118.0         | 10位    |
+| 金   |   50.2         | 10位    |
+| 土   |  119.8         |  9位    |
+| 日   |  121.9         | 10位    |
+
+火曜(270.4)は同曜日1位=末尾6(295.6)と25枚差で、末尾3として唯一の「強い曜日」。
+金曜の末尾3(50.2)は全曜日×全末尾(70組)の中でワースト水準。
+
+火曜末尾3が強い理由の確認済み説明（anomaly_detection_report.csv 照合済み）:
+- high anomaly日（5日）の曜日内訳: 土3・木1・日1 → 火曜は0件
+- 「high anomaly日が火曜に集中」仮説は否定済み
+- 正しい説明: 3F_N の火曜クラスタ = 2-3-4（delta=40.4）に末尾3が包含される
+  → AT系機種（末尾3の66%を占める）が火曜に末尾2-3-4へ集中するため
+    全機種横断の集計でも火曜末尾3が上位に浮上する
+  参照: [[3fn-low-base-but-strong-cluster-signal]]
+
+## アクション
+末尾3を火曜に限り positive シグナルとして評価してよい（特に3F_N機種で有効）。
+金曜の末尾3(50.2)は最強の negative シグナルとして扱う。
+
+ML特徴量候補:
+- `is_tuesday AND is_digit_3` → conditional positive（3F_N機種で特に有効）
+- `is_friday AND is_digit_3` → strong negative
+
+## 例
+火曜末尾3(270.4) vs 金曜末尾3(50.2): 差分220枚。
+同一末尾でも曜日で高/低設定が逆転するレベルの差が存在する。
+火曜の3F_N クラスタ2-3-4 → 末尾3が「クラスタ内」になる唯一の曜日。
