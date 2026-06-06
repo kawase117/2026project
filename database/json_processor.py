@@ -2,9 +2,22 @@ import json
 import os
 import glob
 import re
+import sys
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 from collections import Counter
+
+sys.stdout.reconfigure(encoding='utf-8')
+
+def normalize_machine_name(machine_name: str) -> str:
+    """Normalize machine names that are temporarily prefixed with L."""
+    if machine_name is None:
+        return ""
+
+    normalized = machine_name.strip()
+    if normalized.startswith("L") and not normalized.startswith("LB"):
+        return normalized[1:]
+    return normalized
 
 class DataNormalizer:
     """データ正規化処理クラス"""
@@ -323,7 +336,7 @@ class JSONProcessor:
         """個別台データの正規化処理（超簡素版：機種フラグ・同機種台数削除）"""
         try:
             # 必須フィールドの確認と正規化
-            machine_name = machine_record.get("機種名", "").strip()
+            machine_name = normalize_machine_name(machine_record.get("機種名", "").strip())
             if not machine_name:
                 raise ValueError("機種名が空です")
             
@@ -401,7 +414,7 @@ class JSONProcessor:
         temp_data_list = []
         for machine_record in machine_records:
             try:
-                machine_name = machine_record.get("機種名", "").strip()
+                machine_name = normalize_machine_name(machine_record.get("機種名", "").strip())
                 machine_number = self.normalizer.normalize_machine_number(
                     machine_record.get("台番号", "")
                 )

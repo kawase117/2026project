@@ -8,10 +8,21 @@
 import os
 import sys
 import json
+import sqlite3
 from datetime import datetime
 from pathlib import Path
 
-from incremental_db_updater import IncrementalDBUpdater
+try:
+    from incremental_db_updater import IncrementalDBUpdater
+except ImportError:  # pragma: no cover
+    from database.incremental_db_updater import IncrementalDBUpdater
+
+try:
+    from json_processor import normalize_machine_name
+except ImportError:  # pragma: no cover
+    from database.json_processor import normalize_machine_name
+
+sys.stdout.reconfigure(encoding='utf-8')
 
 
 def load_hall_config(config_path: str = None) -> list:
@@ -94,6 +105,20 @@ def run_batch_update(halls: list, skip_errors: bool = True) -> dict:
             # 増分更新を実行
             updater = IncrementalDBUpdater(hall_name)
             result = updater.run(verbose=True)
+
+            if os.path.exists(updater.db_path):
+                try:
+                    with sqlite3.connect(updater.db_path) as conn:
+                        normalization_stats = normalize_l_prefix_in_db(conn)
+                    if any(normalization_stats.values()):
+                        print(
+                            "   [NORMALIZE] L-prefix cleanup: "
+                            f"details={normalization_stats['detail_updates']}, "
+                            f"master_deleted={normalization_stats['master_deleted']}, "
+                            f"master_renamed={normalization_stats['master_renamed']}"
+                        )
+                except Exception as e:
+                    print(f"   [WARN] L-prefix 正規化に失敗: {e}")
             
             # 結果を記録
             results['hall_results'][hall_name] = result
@@ -130,6 +155,72 @@ def run_batch_update(halls: list, skip_errors: bool = True) -> dict:
                 break
     
     return results
+
+
+def normalize_l_prefix_in_db(conn):
+    """
+    既存DBのL-プレフィックス機種名を正規化する。
+    'L〇〇〇' のうち 'LB' で始まらないものの先頭Lを除去し、
+    machine_detailed_results と machine_master を更新する。
+    """
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT DISTINCT machine_name
+        FROM machine_detailed_results
+        WHERE machine_name LIKE 'L%' AND machine_name NOT LIKE 'LB%'
+        """
+    )
+    old_names = [row[0] for row in cursor.fetchall() if row and row[0]]
+
+    detail_updates = 0
+    master_deleted = 0
+    master_renamed = 0
+
+    for old_name in old_names:
+        new_name = normalize_machine_name(old_name)
+        if not new_name or new_name == old_name:
+            continue
+
+        cursor.execute(
+            """
+            UPDATE machine_detailed_results
+            SET machine_name = ?
+            WHERE machine_name = ?
+            """,
+            (new_name, old_name),
+        )
+        detail_updates += cursor.rowcount
+
+        cursor.execute(
+            "SELECT 1 FROM machine_master WHERE machine_name_normalized = ?",
+            (new_name,),
+        )
+        canonical_exists = cursor.fetchone() is not None
+
+        if canonical_exists:
+            cursor.execute(
+                "DELETE FROM machine_master WHERE machine_name_normalized = ?",
+                (old_name,),
+            )
+            master_deleted += cursor.rowcount
+        else:
+            cursor.execute(
+                """
+                UPDATE machine_master
+                SET machine_name_normalized = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE machine_name_normalized = ?
+                """,
+                (new_name, old_name),
+            )
+            master_renamed += cursor.rowcount
+
+    conn.commit()
+    return {
+        "detail_updates": detail_updates,
+        "master_deleted": master_deleted,
+        "master_renamed": master_renamed,
+    }
 
 
 def print_batch_summary(results: dict):

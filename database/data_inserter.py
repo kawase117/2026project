@@ -5,8 +5,16 @@
 """
 
 import sqlite3
+import sys
 from typing import List, Dict, Any
 from datetime import datetime
+
+try:
+    from json_processor import normalize_machine_name
+except ImportError:  # pragma: no cover
+    from database.json_processor import normalize_machine_name
+
+sys.stdout.reconfigure(encoding='utf-8')
 
 # BT機種判定キーワード（機種名にいずれかが含まれれば bt_flag=1）
 _BT_KEYWORDS = [
@@ -90,6 +98,7 @@ class DataInserter:
     def get_or_create_machine_master(self, machine_name: str) -> Dict[str, Any]:
         """機種マスター情報を取得または作成"""
         self._ensure_machine_master_table()
+        machine_name = normalize_machine_name(machine_name)
         
         conn = self.get_connection()
         cursor = conn.cursor()
@@ -154,10 +163,11 @@ class DataInserter:
             
             records = []
             for data in machine_data_list:
-                self.get_or_create_machine_master(data["machine_name"])
+                machine_name = normalize_machine_name(data["machine_name"])
+                self.get_or_create_machine_master(machine_name)
                 
                 record = (
-                    data["date"], data["machine_name"], data["machine_number"],
+                    data["date"], machine_name, data["machine_number"],
                     data["last_digit"], data["is_zorome"], data["machine_rank_in_type"],
                     data["games_normalized"], data["diff_coins_normalized"],
                     data["games_deviation"], data["bb_count"], data["rb_count"],
