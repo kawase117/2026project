@@ -7,7 +7,10 @@
 import sqlite3
 import os
 import csv
+import sys
 from table_config import MACHINE_TYPE_CONFIGS, SUMMARY_TABLE_CONFIGS, get_rank_columns
+
+sys.stdout.reconfigure(encoding='utf-8')
 
 def create_database(hall_name, db_dir="."):
     """データベース作成"""
@@ -27,13 +30,23 @@ def create_database(hall_name, db_dir="."):
     cursor = conn.cursor()
     print(f"データベース作成: {db_path}")
     
-    # 1. 台配置マスター
+    # 1. 台配置マスター（フロア座標付き）
     cursor.execute('''
         CREATE TABLE machine_layout (
-            machine_number INTEGER PRIMARY KEY,
-            front_position INTEGER,
-            back_position INTEGER,
-            island_name TEXT
+            machine_number      INTEGER PRIMARY KEY,
+            hall_name           TEXT,
+            x                   INTEGER,
+            y                   INTEGER,
+            display_y           INTEGER,
+            section             TEXT,
+            section_min         INTEGER,
+            section_max         INTEGER,
+            rank_from_min       INTEGER,
+            rank_from_max       INTEGER,
+            is_reversed_section INTEGER DEFAULT 0,
+            rank_from_aisle     INTEGER,
+            physical_corner     INTEGER,
+            physical_corner_valid INTEGER DEFAULT 0
         )
     ''')
     print("[OK] machine_layout")
@@ -96,11 +109,11 @@ def create_database(hall_name, db_dir="."):
     cursor.execute('CREATE INDEX idx_daily_machine_type_date ON daily_machine_type_summary(date)')
     print("[OK] daily_machine_type_summary")
     
-    # 4. 末尾別集計（5テーブル）
+    # 4. 末尾別集計（6テーブル）
     _create_summary_tables(cursor, 'last_digit_summary', 'last_digit')
     
-    # 5. 位置別集計（5テーブル）
-    _create_summary_tables(cursor, 'daily_position_summary', 'front_position', is_integer_key=True)
+    # 5. 位置別集計（6テーブル）
+    _create_summary_tables(cursor, 'daily_position_summary', 'rank_from_min', is_integer_key=True)
     
     # 6. 島別集計
     rank_columns = get_rank_columns('island_rank')
@@ -109,7 +122,7 @@ def create_database(hall_name, db_dir="."):
     cursor.execute(f'''
         CREATE TABLE daily_island_summary (
             date TEXT,
-            island_name TEXT,
+            section TEXT,
             machine_count INTEGER,
             total_games INTEGER,
             avg_games REAL,
@@ -118,7 +131,7 @@ def create_database(hall_name, db_dir="."):
             win_rate INTEGER,
             high_profit_rate REAL,
             {rank_columns_sql},
-            PRIMARY KEY (date, island_name)
+            PRIMARY KEY (date, section)
         )
     ''')
     cursor.execute('CREATE INDEX idx_daily_island_date ON daily_island_summary(date)')
@@ -152,15 +165,19 @@ def create_database(hall_name, db_dir="."):
         )
     ''')
     print("[OK] daily_hall_summary")
+
+    # 8. 月次トレンド集計
+    _create_monthly_trend_tables(cursor)
     
     conn.commit()
     conn.close()
     
     print(f"\nテーブル作成完了:")
     print(f"  - 基本: 3テーブル")
-    print(f"  - 末尾別: 5テーブル (all, jug, hana, oki, other)")
-    print(f"  - 位置別: 5テーブル (all, jug, hana, oki, other)")
+    print(f"  - 末尾別: 6テーブル (all, jug, hana, oki, bt, other)")
+    print(f"  - 位置別: 6テーブル (all, jug, hana, oki, bt, other)")
     print(f"  - 島別: 1テーブル")
+    print(f"  - 月次トレンド: 18テーブル (3軸 × 6タイプ)")
     print(f"  - ランク・履歴カラム: 全集計テーブルに統合完了")
     
     # 台配置CSV自動インポート
@@ -212,49 +229,195 @@ def _create_summary_tables(cursor, base_name, key_column, is_integer_key=False):
         cursor.execute(f'CREATE INDEX idx_{table_name}_key ON {table_name}({key_column})')
         print(f"[OK] {table_name}")
 
+def _create_monthly_trend_tables(cursor):
+    """月次トレンドテーブルを作成（3軸 × 6機種タイプ = 18テーブル）"""
+    axis_configs = [
+        {'axis': 'date_digit', 'key_col': 'date_digit INTEGER NOT NULL', 'key_name': 'date_digit'},
+        {'axis': 'weekday', 'key_col': 'day_of_week TEXT NOT NULL', 'key_name': 'day_of_week'},
+        {'axis': 'machine_digit', 'key_col': 'machine_digit TEXT NOT NULL', 'key_name': 'machine_digit'},
+    ]
+    type_suffixes = [config['suffix'] for config in MACHINE_TYPE_CONFIGS]
+
+    for axis_cfg in axis_configs:
+        axis = axis_cfg['axis']
+        key_col = axis_cfg['key_col']
+        key_name = axis_cfg['key_name']
+
+        for suffix in type_suffixes:
+            table_name = f"monthly_trend_{axis}_{suffix}"
+            cursor.execute(f'''
+                CREATE TABLE IF NOT EXISTS {table_name} (
+                    year_month               TEXT    NOT NULL,
+                    {key_col},
+                    sample_count             INTEGER,
+                    days_in_month            INTEGER,
+                    is_complete              INTEGER DEFAULT 0,
+                    avg_diff_per_machine     REAL,
+                    median_diff_per_machine  REAL,
+                    max_diff_coins           INTEGER,
+                    min_diff_coins           INTEGER,
+                    total_diff_coins         INTEGER,
+                    avg_games_per_machine    REAL,
+                    win_rate                 REAL,
+                    high_profit_rate         REAL,
+                    machine_count            REAL,
+                    avg_rank_diff            REAL,
+                    avg_rank_games           REAL,
+                    avg_rank_efficiency      REAL,
+                    times_ranked_1st         INTEGER,
+                    times_ranked_top3        INTEGER,
+                    PRIMARY KEY (year_month, {key_name})
+                )
+            ''')
+            cursor.execute(
+                f'CREATE INDEX IF NOT EXISTS idx_{table_name}_ym ON {table_name}(year_month)'
+            )
+            print(f"[OK] {table_name}")
+
+    print("月次トレンドテーブル作成完了: 18テーブル")
+
+def _load_reversed_sections(hall_name: str, db_dir: str) -> frozenset:
+    """hall_config.json から逆順セクションセットを取得する。
+
+    逆順セクション＝メイン通路側が高番号端のセクション。
+    rank_from_max=1 が通路直近の角番台。
+    設定がない場合は空セットを返す（後方互換）。
+    """
+    import json
+    from pathlib import Path
+    # hall_config.json は db_dir の親か、プロジェクトルートの config/ に置かれている
+    candidates = [Path(__file__).resolve().parents[1] / "config" / "hall_config.json"]
+
+    # 後方互換として既存の db_dir ベース探索も残す。
+    base_dir = db_dir if db_dir != "." else os.getcwd()
+    candidates.extend([
+        Path(base_dir) / "config" / "hall_config.json",
+        Path(os.path.dirname(base_dir)) / "config" / "hall_config.json",
+        Path(base_dir) / ".." / "config" / "hall_config.json",
+    ])
+
+    for path in candidates:
+        if not path.exists():
+            continue
+        try:
+            with path.open("r", encoding="utf-8") as f:
+                config = json.load(f)
+            for hall in config.get("halls", []):
+                if hall.get("hall_name") == hall_name:
+                    sections = (
+                        hall
+                        .get("layout_settings", {})
+                        .get("reversed_sections", [])
+                    )
+                    return frozenset(sections)
+        except Exception:
+            continue
+
+    print(f"[WARN] hall_config.json が見つかりません: hall_name={hall_name}")
+    return frozenset()
+
+
 def _import_machine_layout(db_path, hall_name, db_dir):
-    """台配置CSVを自動インポート"""
+    """フロア座標CSVをmachine_layoutに自動インポート（Heatmap/ディレクトリを検索）。
+
+    hall_config.json の layout_settings.reversed_sections を参照して
+    is_reversed_section / rank_from_aisle を自動計算する。
+    """
     try:
-        csv_filename = f"{hall_name}台位置.csv"
         base_dir = db_dir if db_dir != "." else os.getcwd()
-        csv_dir = os.path.join(base_dir, "scraped_data", hall_name)
-        csv_path = os.path.join(csv_dir, csv_filename)
-        
-        if not os.path.exists(csv_path):
-            print(f"[WARN] 台配置CSV未検出: {csv_filename}")
+        heatmap_dir = os.path.join(base_dir, "Heatmap")
+
+        if not os.path.exists(heatmap_dir):
+            print(f"[WARN] Heatmapディレクトリ未検出: {heatmap_dir}")
             return
-        
-        conn = sqlite3.connect(db_path)
-        cursor = conn.cursor()
-        
-        with open(csv_path, 'r', encoding='utf-8') as f:
-            csv_reader = csv.DictReader(f)
-            records = []
-            
-            for row in csv_reader:
-                try:
-                    records.append((
-                        int(row['台番号']),
-                        int(row['前角']),
-                        int(row['後角']),
-                        row['列名'].strip()
-                    ))
-                except (ValueError, KeyError):
-                    continue
-        
+
+        matched_rows = []
+        for fname in os.listdir(heatmap_dir):
+            if "floor_coordinates" not in fname or not fname.endswith(".csv"):
+                continue
+            csv_path = os.path.join(heatmap_dir, fname)
+            try:
+                with open(csv_path, 'r', encoding='utf-8') as f:
+                    for row in csv.DictReader(f):
+                        if row.get('hall_name') == hall_name:
+                            matched_rows.append(row)
+            except Exception:
+                continue
+
+        if not matched_rows:
+            print(f"[WARN] フロア座標データ未検出: hall_name={hall_name}")
+            return
+
+        # hall_config.json から逆順セクションを取得
+        reversed_sections = _load_reversed_sections(hall_name, db_dir)
+        if reversed_sections:
+            print(f"[INFO] 逆順セクション: {sorted(reversed_sections)}")
+
+        def _to_int(val):
+            try:
+                return int(val) if val not in (None, '') else None
+            except ValueError:
+                return None
+
+        records = []
+        for row in matched_rows:
+            try:
+                section = row.get('section')
+                rank_from_min = _to_int(row.get('rank_from_min'))
+                rank_from_max = _to_int(row.get('rank_from_max'))
+                is_reversed = 1 if section in reversed_sections else 0
+                if rank_from_min is not None and rank_from_max is not None:
+                    rank_from_aisle = rank_from_max if is_reversed else rank_from_min
+                else:
+                    rank_from_aisle = None
+
+                if (
+                    rank_from_min is not None and rank_from_min > 0
+                    and rank_from_max is not None and rank_from_max > 0
+                ):
+                    physical_corner = min(rank_from_min, rank_from_max)
+                    physical_corner_valid = 1
+                else:
+                    physical_corner = -1
+                    physical_corner_valid = 0
+
+                records.append((
+                    int(row['machine_number']),
+                    row['hall_name'],
+                    _to_int(row.get('X')),
+                    _to_int(row.get('Y')),
+                    _to_int(row.get('display_y')),
+                    section,
+                    _to_int(row.get('section_min')),
+                    _to_int(row.get('section_max')),
+                    rank_from_min,
+                    rank_from_max,
+                    is_reversed,
+                    rank_from_aisle,
+                    physical_corner,
+                    physical_corner_valid,
+                ))
+            except (ValueError, KeyError):
+                continue
+
         if records:
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
             cursor.executemany('''
-                INSERT OR REPLACE INTO machine_layout 
-                (machine_number, front_position, back_position, island_name)
-                VALUES (?, ?, ?, ?)
+                INSERT OR REPLACE INTO machine_layout
+                (machine_number, hall_name, x, y, display_y,
+                 section, section_min, section_max,
+                 rank_from_min, rank_from_max,
+                 is_reversed_section, rank_from_aisle,
+                 physical_corner, physical_corner_valid)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', records)
             conn.commit()
-            print(f"[OK] 台配置データ: {len(records)}台 ({csv_filename})")
-        
-        conn.close()
-        
+            conn.close()
+            print(f"[OK] フロア座標データ: {len(records)}台 ({hall_name})")
+
     except Exception as e:
-        print(f"[WARN] 台配置CSV読み込みエラー: {str(e)}")
+        print(f"[WARN] フロア座標CSV読み込みエラー: {str(e)}")
 
 def create_machine_master_db(db_dir="."):
     """machine_master.db を新規作成（複数ホール間共有マスターDB）"""
@@ -301,7 +464,7 @@ def create_machine_master_db(db_dir="."):
     ''')
     print("[OK] machine_master テーブル作成")
     
-    # BT機種16個の初期データを登録
+    # BT機種15個の初期データを登録
     bt_machines = [
         ('__LBパチスロ ヱヴァンゲリヲン ～約束の扉__', '__LBパチスロ ヱヴァンゲリヲン ～約束の扉__'),
         ('スマスロ サンダーV', 'スマスロ サンダーV'),
@@ -327,7 +490,7 @@ def create_machine_master_db(db_dir="."):
             ) VALUES (?, 1, ?)
         ''', (machine_name, official_name))
     
-    print(f"[OK] BT機種16個を登録")
+    print(f"[OK] BT機種15個を登録")
     
     conn.commit()
     conn.close()
