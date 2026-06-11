@@ -1262,6 +1262,37 @@ class TestFullFeatureIntegration:
             f"Feature count mismatch: train={X_train.shape[1]}, test={X_test.shape[1]}"
         assert X_train.shape[1] == 69, "Should have 69 dimensions"
 
+
+class TestPositionFeatures:
+    """Tests for Mitoya-specific position features."""
+
+    def test_position_features_are_opt_in(self, sample_df):
+        fb = FeatureBuilder(sample_df)
+
+        base_names = fb.get_feature_names()
+        extended_names = fb.get_feature_names(enable_extended_features=True)
+        position_names = fb.get_feature_names(use_position_features=True)
+        all_names = fb.get_feature_names(enable_extended_features=True, use_position_features=True)
+
+        assert len(base_names) == 22
+        assert len(extended_names) == 69
+        assert len(position_names) == 25
+        assert len(all_names) == 72
+        assert "section_encoded" not in base_names
+        assert position_names[-3:] == ["section_encoded", "physical_corner", "physical_corner_valid"]
+        assert all_names[:22] == base_names
+        assert all_names[22:69] == extended_names[22:]
+        assert all_names[-3:] == ["section_encoded", "physical_corner", "physical_corner_valid"]
+
+    def test_position_feature_matrix_defaults_to_unknown_for_missing_columns(self, sample_df):
+        fb = FeatureBuilder(sample_df)
+        features = fb.build_features(is_train=True, use_position_features=True)
+
+        assert features.shape[1] == 25
+        np.testing.assert_array_equal(features[:, -3], np.zeros(len(sample_df)))
+        np.testing.assert_array_equal(features[:, -2], np.zeros(len(sample_df)))
+        np.testing.assert_array_equal(features[:, -1], np.zeros(len(sample_df)))
+
     def test_no_data_leakage_in_lag_features(self):
         """Verify that test period lag features don't use future values"""
         df_train = pd.DataFrame({
