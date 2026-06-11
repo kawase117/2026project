@@ -34,7 +34,7 @@ def main() -> None:
         output_path=DEFAULT_OUTPUT_PATH,
         metric_key=metric_key,
     )
-    components_html(html, height=2600, scrolling=True)
+    components_html(html, height=1800, scrolling=True)
 
 
 if __name__ == "__main__":

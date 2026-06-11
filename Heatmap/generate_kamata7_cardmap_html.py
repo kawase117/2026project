@@ -1,8 +1,8 @@
 """Generate a standalone HTML prototype for the Kamata7 floor map.
 
-This prototype intentionally avoids Plotly. It renders each machine as an
-absolutely positioned HTML card so we can validate whether the visual shape
-matches the requested floor-map style before replacing ``page_17_heatmap``.
+This prototype avoids Plotly and renders each machine as an absolutely
+positioned HTML card. The goal is to validate whether the floor shape and
+card readability are good enough to replace the current heatmap view.
 """
 
 from __future__ import annotations
@@ -74,7 +74,7 @@ def load_machine_stats(
     start_date: str | None = None,
     end_date: str | None = None,
 ) -> tuple[pd.DataFrame, str]:
-    """Return machine-level stats and the covered date range label."""
+    """Load machine-level stats and the covered date range label."""
 
     if not db_path.exists():
         raise FileNotFoundError(f"DB file not found: {db_path}")
@@ -107,15 +107,14 @@ def load_machine_stats(
         raise ValueError("machine_detailed_results is empty for the selected range")
 
     raw["date"] = pd.to_datetime(raw["date"], format="%Y%m%d")
+    raw = raw.sort_values(["machine_number", "date"])
     date_range_label = f"{raw['date'].min():%Y-%m-%d} 〜 {raw['date'].max():%Y-%m-%d}"
 
     stats_df = raw.groupby("machine_number").agg(
-        machine_name=(
-            "machine_name",
-            lambda series: _pick_first_nonempty(series, fallback=""),
-        ),
+        machine_name=("machine_name", lambda s: _pick_last_nonempty(s, fallback="")),
+        latest_date=("date", "max"),
         avg_diff=("diff_coins_normalized", "mean"),
-        win_rate=("diff_coins_normalized", lambda series: (series > 0).mean() * 100),
+        win_rate=("diff_coins_normalized", lambda s: (s > 0).mean() * 100),
         avg_games=("games_normalized", "mean"),
         sample_days=("date", "nunique"),
         total_games=("games_normalized", "sum"),
@@ -126,7 +125,7 @@ def load_machine_stats(
 
 
 def load_floor_coordinates(coords_path: Path) -> pd.DataFrame:
-    """Load a floor coordinate CSV and normalize drawing columns."""
+    """Load and normalize a floor coordinate CSV."""
 
     if not coords_path.exists():
         raise FileNotFoundError(f"Coordinate file not found: {coords_path}")
@@ -136,10 +135,8 @@ def load_floor_coordinates(coords_path: Path) -> pd.DataFrame:
         if column in coords_df.columns:
             coords_df[column] = pd.to_numeric(coords_df[column], errors="coerce")
 
-    required_columns = {"machine_number"}
-    missing = required_columns - set(coords_df.columns)
-    if missing:
-        raise ValueError(f"Missing required coordinate columns: {sorted(missing)}")
+    if "machine_number" not in coords_df.columns:
+        raise ValueError(f"Missing required coordinate columns in {coords_path}")
 
     coords_df = coords_df.dropna(subset=["machine_number"]).copy()
     coords_df["machine_number"] = coords_df["machine_number"].astype(int)
@@ -147,7 +144,7 @@ def load_floor_coordinates(coords_path: Path) -> pd.DataFrame:
 
 
 def build_tone_thresholds(values: pd.Series) -> ToneThresholds:
-    """Derive simple thresholds that keep the palette centered around zero."""
+    """Derive palette thresholds from the current floor's metric values."""
 
     clean = values.dropna()
     if clean.empty:
@@ -177,7 +174,7 @@ def build_tone_thresholds(values: pd.Series) -> ToneThresholds:
 
 
 def classify_metric(value: float | None, thresholds: ToneThresholds) -> str:
-    """Map a metric value to a tone class used by the HTML cards."""
+    """Map a metric value to a tone class."""
 
     if value is None or pd.isna(value):
         return "tone-missing"
@@ -193,12 +190,11 @@ def classify_metric(value: float | None, thresholds: ToneThresholds) -> str:
 
 
 def format_metric_value(value: float | None, metric_key: str) -> str:
-    """Format a metric for display inside the card badge."""
+    """Format a metric for the title tooltip."""
 
     if value is None or pd.isna(value):
         return "N/A"
-    metric = METRICS[metric_key]
-    return metric.formatter.format(float(value))
+    return METRICS[metric_key].formatter.format(float(value))
 
 
 def _safe_text(value: object, fallback: str = "") -> str:
@@ -208,12 +204,20 @@ def _safe_text(value: object, fallback: str = "") -> str:
     return text if text else fallback
 
 
-def shorten_machine_name(value: str | None, max_length: int = 12) -> str:
-    """Shorten long machine names so they fit inside the card."""
+def _pick_last_nonempty(series: pd.Series, *, fallback: str) -> str:
+    cleaned = series.dropna().astype(str)
+    cleaned = cleaned[cleaned.str.strip() != ""]
+    if cleaned.empty:
+        return fallback
+    return cleaned.iat[-1]
+
+
+def shorten_machine_name(value: str | None, max_length: int = 16) -> str:
+    """Shorten machine names so they remain readable in a compact card."""
 
     cleaned = _safe_text(value, fallback="未設定")
     if cleaned == "未設定":
-        return "未設定"
+        return cleaned
     cleaned = cleaned.replace("　", " ")
     if len(cleaned) <= max_length:
         return cleaned
@@ -247,15 +251,18 @@ def render_machine_card(
 
     metric_value = row.get(metric_key)
     tone_class = classify_metric(metric_value, thresholds)
-    machine_name = shorten_machine_name(row.get("machine_name"), max_length=14)
+    machine_name = shorten_machine_name(row.get("machine_name"), max_length=15)
     machine_number = int(row["machine_number"])
     metric_label = format_metric_value(metric_value, metric_key)
     full_name = _safe_text(row.get("machine_name"))
-    full_metric = METRICS[metric_key].label
+    latest_date = row.get("latest_date")
+    latest_date_label = (
+        pd.Timestamp(latest_date).strftime("%Y-%m-%d") if pd.notna(latest_date) else "-"
+    )
     title = (
-        f"{machine_number} / {full_name} / {full_metric}: {metric_label}"
+        f"{machine_number} / {full_name} / latest={latest_date_label} / {METRICS[metric_key].label}: {metric_label}"
         if full_name
-        else f"{machine_number} / {full_metric}: {metric_label}"
+        else f"{machine_number} / latest={latest_date_label} / {METRICS[metric_key].label}: {metric_label}"
     )
 
     return f"""
@@ -267,7 +274,6 @@ def render_machine_card(
       >
         <div class="machine-number">{machine_number}</div>
         <div class="machine-name">{escape(machine_name)}</div>
-        <div class="machine-metric">{escape(metric_label)}</div>
       </article>
     """
 
@@ -276,18 +282,19 @@ def render_floor_section(
     frame: pd.DataFrame,
     *,
     floor_label: str,
+    floor_title: str,
     metric_key: str,
     thresholds: ToneThresholds,
 ) -> str:
-    """Render one floor card with its machine layout."""
+    """Render one floor panel."""
 
     x_col, y_col = get_display_columns(frame.columns)
     max_x = int(frame[x_col].max())
     max_y = int(frame[y_col].max())
 
-    slot_x = 50
-    slot_y = 40
-    pad = 20
+    slot_x = 32
+    slot_y = 26
+    pad = 12
     map_width = pad * 2 + max_x * slot_x
     map_height = pad * 2 + max_y * slot_y
 
@@ -307,15 +314,15 @@ def render_floor_section(
     summary_games = frame["avg_games"].mean()
     summary_count = len(frame)
     section_label = str(frame["section"].iloc[0]) if "section" in frame.columns else "-"
-    machine_name_mode = _pick_first_nonempty(frame["machine_name"], fallback=HALL_NAME)
+    date_range_label = _safe_text(frame.attrs.get("date_range_label"), fallback="-")
 
     return f"""
-      <section class="floor-shell">
+      <section class="floor-shell" data-floor-panel="{escape(floor_label)}">
         <div class="floor-head">
           <div>
             <div class="floor-kicker">{escape(floor_label)}</div>
-            <h2 class="floor-title">{escape(machine_name_mode)} {escape(floor_label)}</h2>
-            <p class="floor-subtitle">集計期間: {escape(frame.attrs.get("date_range_label", "-"))} / セクション: {escape(section_label)}</p>
+            <h2 class="floor-title">{escape(floor_title)}</h2>
+            <p class="floor-subtitle">集計期間: {escape(date_range_label)} / セクション: {escape(section_label)}</p>
           </div>
           <div class="floor-summary-grid">
             <div class="summary-pill">
@@ -337,7 +344,7 @@ def render_floor_section(
           </div>
         </div>
 
-        <div class="floor-map-wrap">
+        <div class="floor-map-viewport" style="--base-map-width: {map_width}px; --base-map-height: {map_height}px;">
           <div class="floor-map" style="--slot-x: {slot_x}px; --slot-y: {slot_y}px; --pad: {pad}px; width: {map_width}px; height: {map_height}px;">
             <div class="floor-map-grid"></div>
             {''.join(machine_cards)}
@@ -347,8 +354,25 @@ def render_floor_section(
     """
 
 
+def _format_summary(value: float | None, metric_key: str) -> str:
+    if value is None or pd.isna(value):
+        return "N/A"
+    return METRICS[metric_key].formatter.format(float(value))
+
+
+def _pick_first_nonempty(series: pd.Series, *, fallback: str) -> str:
+    cleaned = series.dropna().astype(str)
+    cleaned = cleaned[cleaned.str.strip() != ""]
+    if cleaned.empty:
+        return fallback
+    try:
+        return cleaned.mode().iat[0]
+    except Exception:
+        return cleaned.iat[0]
+
+
 def build_html_document(
-    floor_sections: list[str],
+    floor_sections: list[dict[str, str]],
     *,
     generated_at: str,
     date_range_label: str,
@@ -357,6 +381,18 @@ def build_html_document(
     """Build the final standalone HTML document."""
 
     metric_label = METRICS[metric_key].label
+    nav_buttons = []
+    floor_panels = []
+    for index, section in enumerate(floor_sections):
+        active_class = " is-active" if index == 0 else ""
+        floor_label = section["floor"]
+        nav_buttons.append(
+            f'<button class="floor-tab{active_class}" type="button" data-floor-tab="{escape(floor_label)}">{escape(floor_label)}</button>'
+        )
+        floor_panels.append(
+            f'<div class="floor-panel{active_class}" data-floor-panel="{escape(floor_label)}"{" hidden" if index != 0 else ""}>{section["html"]}</div>'
+        )
+
     return f"""<!doctype html>
 <html lang="ja">
 <head>
@@ -370,13 +406,9 @@ def build_html_document(
       --bg-bottom: #eef2ff;
       --ink: #111827;
       --muted: #64748b;
-      --panel: rgba(255, 255, 255, 0.88);
-      --panel-border: rgba(148, 163, 184, 0.35);
+      --panel: rgba(255, 255, 255, 0.90);
+      --panel-border: rgba(148, 163, 184, 0.32);
       --shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
-      --radius-xl: 28px;
-      --radius-lg: 22px;
-      --radius-md: 16px;
-      --radius-sm: 12px;
       --font-sans: "Noto Sans JP", "Hiragino Sans", "Yu Gothic UI", "Meiryo", sans-serif;
     }}
 
@@ -397,14 +429,14 @@ def build_html_document(
     .shell {{
       max-width: 1920px;
       margin: 0 auto;
-      padding: 24px;
+      padding: 16px;
     }}
 
     .hero {{
       position: relative;
       overflow: hidden;
-      padding: 28px;
-      border-radius: 32px;
+      padding: 20px;
+      border-radius: 28px;
       border: 1px solid var(--panel-border);
       background: var(--panel);
       box-shadow: var(--shadow);
@@ -421,16 +453,16 @@ def build_html_document(
     }}
 
     .hero::before {{
-      width: 320px;
-      height: 320px;
+      width: 280px;
+      height: 280px;
       right: -120px;
       top: -140px;
       background: radial-gradient(circle, rgba(251, 113, 133, 0.18), transparent 65%);
     }}
 
     .hero::after {{
-      width: 260px;
-      height: 260px;
+      width: 240px;
+      height: 240px;
       left: -120px;
       bottom: -150px;
       background: radial-gradient(circle, rgba(59, 130, 246, 0.16), transparent 65%);
@@ -440,13 +472,13 @@ def build_html_document(
       position: relative;
       z-index: 1;
       display: grid;
-      gap: 20px;
-      grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.8fr);
+      gap: 16px;
+      grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.8fr);
       align-items: end;
     }}
 
     .eyebrow {{
-      margin: 0 0 10px;
+      margin: 0 0 8px;
       font-size: 12px;
       font-weight: 800;
       letter-spacing: 0.3em;
@@ -456,28 +488,28 @@ def build_html_document(
 
     .hero h1 {{
       margin: 0;
-      font-size: clamp(30px, 3.4vw, 48px);
+      font-size: clamp(28px, 3vw, 42px);
       line-height: 1.05;
       letter-spacing: -0.04em;
     }}
 
     .hero-copy {{
-      margin: 16px 0 0;
-      font-size: 15px;
-      line-height: 1.9;
+      margin: 12px 0 0;
+      font-size: 14px;
+      line-height: 1.8;
       color: var(--muted);
-      max-width: 62ch;
+      max-width: 64ch;
     }}
 
     .hero-meta {{
       display: grid;
-      gap: 12px;
+      gap: 10px;
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }}
 
     .meta-card {{
-      padding: 14px 16px;
-      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      border-radius: 16px;
       background: rgba(248, 250, 252, 0.92);
       border: 1px solid rgba(203, 213, 225, 0.8);
     }}
@@ -494,35 +526,34 @@ def build_html_document(
     .meta-card strong {{
       display: block;
       margin-top: 6px;
-      font-size: 17px;
+      font-size: 16px;
       font-weight: 800;
       color: #0f172a;
     }}
 
     .badges {{
-      margin-top: 16px;
+      margin-top: 14px;
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
+      gap: 8px;
     }}
 
     .badge {{
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      padding: 10px 14px;
+      padding: 8px 12px;
       border-radius: 999px;
       border: 1px solid rgba(148, 163, 184, 0.32);
-      background: rgba(255, 255, 255, 0.82);
+      background: rgba(255, 255, 255, 0.86);
       color: #0f172a;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 700;
-      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
     }}
 
     .badge .swatch {{
-      width: 12px;
-      height: 12px;
+      width: 10px;
+      height: 10px;
       border-radius: 999px;
     }}
 
@@ -533,15 +564,48 @@ def build_html_document(
     .badge.low .swatch {{ background: #2563eb; }}
     .badge.missing .swatch {{ background: #cbd5e1; }}
 
-    .floor-list {{
-      margin-top: 24px;
-      display: grid;
-      gap: 24px;
+    .floor-switcher {{
+      margin-top: 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }}
+
+    .floor-tab {{
+      appearance: none;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      background: rgba(255, 255, 255, 0.82);
+      color: #0f172a;
+      border-radius: 999px;
+      padding: 10px 16px;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+    }}
+
+    .floor-tab:hover {{
+      transform: translateY(-1px);
+    }}
+
+    .floor-tab.is-active {{
+      background: linear-gradient(180deg, #fff7ed 0%, #fed7aa 100%);
+      border-color: #f59e0b;
+      color: #7c2d12;
+    }}
+
+    .floor-panels {{
+      margin-top: 14px;
+    }}
+
+    .floor-panel[hidden] {{
+      display: none;
     }}
 
     .floor-shell {{
       overflow: hidden;
-      border-radius: 30px;
+      border-radius: 26px;
       border: 1px solid var(--panel-border);
       background: var(--panel);
       box-shadow: var(--shadow);
@@ -550,10 +614,10 @@ def build_html_document(
 
     .floor-head {{
       display: grid;
-      gap: 16px;
-      grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+      gap: 14px;
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
       align-items: start;
-      padding: 24px 24px 18px;
+      padding: 18px 18px 14px;
       border-bottom: 1px solid rgba(203, 213, 225, 0.7);
     }}
 
@@ -567,28 +631,28 @@ def build_html_document(
 
     .floor-title {{
       margin: 8px 0 0;
-      font-size: 24px;
+      font-size: 22px;
       line-height: 1.15;
       letter-spacing: -0.03em;
     }}
 
     .floor-subtitle {{
-      margin: 10px 0 0;
+      margin: 8px 0 0;
       color: var(--muted);
-      font-size: 14px;
+      font-size: 13px;
       line-height: 1.7;
     }}
 
     .floor-summary-grid {{
       display: grid;
-      gap: 12px;
+      gap: 10px;
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }}
 
     .summary-pill {{
-      padding: 14px 16px;
-      border-radius: var(--radius-md);
-      background: rgba(248, 250, 252, 0.88);
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(248, 250, 252, 0.9);
       border: 1px solid rgba(203, 213, 225, 0.75);
     }}
 
@@ -603,21 +667,22 @@ def build_html_document(
 
     .summary-pill strong {{
       display: block;
-      margin-top: 6px;
-      font-size: 18px;
+      margin-top: 5px;
+      font-size: 17px;
       font-weight: 800;
       color: #0f172a;
     }}
 
-    .floor-map-wrap {{
-      overflow-x: auto;
-      overflow-y: hidden;
-      padding: 18px 18px 24px;
+    .floor-map-viewport {{
+      position: relative;
+      width: 100%;
+      overflow: hidden;
+      padding: 14px 14px 18px;
     }}
 
     .floor-map {{
       position: relative;
-      border-radius: 26px;
+      border-radius: 8px;
       background:
         linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(248, 250, 252, 0.96)),
         repeating-linear-gradient(
@@ -636,6 +701,7 @@ def build_html_document(
         );
       border: 1px solid rgba(203, 213, 225, 0.8);
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+      transform-origin: top left;
     }}
 
     .floor-map-grid {{
@@ -651,52 +717,42 @@ def build_html_document(
 
     .machine-card {{
       position: absolute;
-      width: calc(var(--slot-x) - 8px);
-      height: calc(var(--slot-y) - 8px);
-      border-radius: 14px;
-      padding: 5px 5px 4px;
+      width: var(--slot-x);
+      height: var(--slot-y);
+      border-radius: 3px;
+      padding: 2px 3px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 2px;
+      gap: 1px;
       text-align: center;
-      line-height: 1.05;
+      line-height: 1;
       border: 1px solid transparent;
-      box-shadow: 0 10px 18px rgba(15, 23, 42, 0.08);
+      box-shadow: 0 6px 10px rgba(15, 23, 42, 0.06);
       overflow: hidden;
       transition: transform 120ms ease, box-shadow 120ms ease;
     }}
 
     .machine-card:hover {{
       transform: translateY(-1px);
-      box-shadow: 0 14px 22px rgba(15, 23, 42, 0.12);
+      box-shadow: 0 10px 18px rgba(15, 23, 42, 0.1);
       z-index: 2;
     }}
 
     .machine-number {{
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 900;
       letter-spacing: 0.02em;
     }}
 
     .machine-name {{
       font-size: 8px;
-      font-weight: 700;
+      font-weight: 800;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       max-width: 100%;
-    }}
-
-    .machine-metric {{
-      margin-top: 2px;
-      padding: 2px 5px;
-      border-radius: 999px;
-      font-size: 8px;
-      font-weight: 800;
-      letter-spacing: 0.02em;
-      background: rgba(255, 255, 255, 0.55);
     }}
 
     .tone-high {{
@@ -737,9 +793,9 @@ def build_html_document(
     }}
 
     .footer-note {{
-      margin-top: 20px;
-      padding: 18px 22px;
-      border-radius: 22px;
+      margin-top: 16px;
+      padding: 16px 18px;
+      border-radius: 18px;
       border: 1px solid rgba(203, 213, 225, 0.8);
       background: rgba(255, 255, 255, 0.8);
       color: var(--muted);
@@ -761,21 +817,21 @@ def build_html_document(
 
     @media (max-width: 720px) {{
       .shell {{
-        padding: 12px;
+        padding: 10px;
       }}
 
       .hero,
       .floor-shell {{
-        border-radius: 24px;
+        border-radius: 20px;
       }}
 
       .hero,
       .floor-head {{
-        padding: 18px;
+        padding: 14px;
       }}
 
-      .floor-map-wrap {{
-        padding: 14px;
+      .floor-map-viewport {{
+        padding: 10px;
       }}
 
       .hero-meta,
@@ -789,13 +845,13 @@ def build_html_document(
   <main class="shell">
     <section class="hero">
       <div class="hero-grid">
-          <div>
-            <p class="eyebrow">Heatmap Prototype</p>
-            <h1>{escape(HALL_NAME)} カード型フロアマップ</h1>
-            <p class="hero-copy">
-            Plotly のマス目ではなく、台ごとのカードをフロア上に絶対配置する試作です。
-            2F/3F の複雑な形状が崩れずに表現できるかを確認するため、まず静的HTMLとして出力します。
-            </p>
+        <div>
+          <p class="eyebrow">Heatmap Prototype</p>
+          <h1>{escape(HALL_NAME)} カード型フロアマップ</h1>
+          <p class="hero-copy">
+            Plotly のマス目ではなく、台ごとのカードをフロア上に並べる試作です。
+            カードの角丸を抑え、最新日の機種名を使い、タブ切り替えで1フロアずつ全体表示できるようにしました。
+          </p>
           <div class="badges">
             <span class="badge high"><span class="swatch"></span>強プラス</span>
             <span class="badge mid"><span class="swatch"></span>弱プラス</span>
@@ -827,14 +883,75 @@ def build_html_document(
       </div>
     </section>
 
-    <section class="floor-list">
-      {''.join(floor_sections)}
-    </section>
+    <div class="floor-switcher" role="tablist" aria-label="floor selector">
+      {''.join(nav_buttons)}
+    </div>
+
+    <div class="floor-panels">
+      {''.join(floor_panels)}
+    </div>
 
     <section class="footer-note">
-      このHTMLは試作です。page_17_heatmap へ移す前に、蒲田7の2F/3Fでカードの位置、文字量、色の粒度が妥当かを確認してください。
+      このHTMLは試作です。`page_17_heatmap` へ移す前に、蒲田7の2F/3Fでカードの位置、機種名の可読性、色の粒度が妥当かを確認してください。
     </section>
   </main>
+
+  <script>
+    (() => {{
+      const tabs = Array.from(document.querySelectorAll('[data-floor-tab]'));
+      const panels = Array.from(document.querySelectorAll('[data-floor-panel]'));
+
+      function fitActiveMap() {{
+        const activePanel = panels.find((panel) => !panel.hasAttribute('hidden'));
+        if (!activePanel) {{
+          return;
+        }}
+        const viewport = activePanel.querySelector('.floor-map-viewport');
+        const map = activePanel.querySelector('.floor-map');
+        if (!viewport || !map) {{
+          return;
+        }}
+
+        const baseWidth = Number(
+          viewport.style.getPropertyValue('--base-map-width').replace('px', '')
+        );
+        const baseHeight = Number(
+          viewport.style.getPropertyValue('--base-map-height').replace('px', '')
+        );
+        if (!baseWidth || !baseHeight) {{
+          return;
+        }}
+
+        const availableWidth = Math.max(0, viewport.clientWidth - 4);
+        const scale = Math.min(1, availableWidth / baseWidth);
+        map.style.transform = `scale(${{scale}})`;
+        viewport.style.height = `${{Math.ceil(baseHeight * scale)}}px`;
+      }}
+
+      function activateFloor(floor) {{
+        tabs.forEach((tab) => {{
+          const isActive = tab.dataset.floorTab === floor;
+          tab.classList.toggle('is-active', isActive);
+          tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        }});
+
+        panels.forEach((panel) => {{
+          const isActive = panel.dataset.floorPanel === floor;
+          panel.hidden = !isActive;
+          panel.classList.toggle('is-active', isActive);
+        }});
+
+        requestAnimationFrame(fitActiveMap);
+      }}
+
+      tabs.forEach((tab) => {{
+        tab.addEventListener('click', () => activateFloor(tab.dataset.floorTab));
+      }});
+
+      window.addEventListener('resize', fitActiveMap);
+      activateFloor(tabs[0]?.dataset.floorTab ?? '');
+    }})();
+  </script>
 </body>
 </html>
 """
@@ -847,7 +964,7 @@ def build_kamata7_cardmap_html(
     start_date: str | None = None,
     end_date: str | None = None,
 ) -> str:
-    """Build the prototype HTML and optionally persist it."""
+    """Build the prototype HTML and optionally write it to disk."""
 
     if metric_key not in METRICS:
         raise ValueError(f"Unsupported metric_key: {metric_key}")
@@ -858,18 +975,23 @@ def build_kamata7_cardmap_html(
         end_date=end_date,
     )
 
-    floor_sections: list[str] = []
+    floor_sections: list[dict[str, str]] = []
     for spec in FLOOR_SPECS:
         frame = build_floor_frame(spec.coords_path, stats_df)
         frame.attrs["date_range_label"] = date_range_label
         thresholds = build_tone_thresholds(frame[metric_key])
         floor_sections.append(
-            render_floor_section(
-                frame,
-                floor_label=spec.floor,
-                metric_key=metric_key,
-                thresholds=thresholds,
-            )
+            {
+                "floor": spec.floor,
+                "title": spec.title,
+                "html": render_floor_section(
+                    frame,
+                    floor_label=spec.floor,
+                    floor_title=spec.title,
+                    metric_key=metric_key,
+                    thresholds=thresholds,
+                ),
+            }
         )
 
     html = build_html_document(
@@ -884,23 +1006,6 @@ def build_kamata7_cardmap_html(
         output_path.write_text(html, encoding="utf-8")
 
     return html
-
-
-def _format_summary(value: float | None, metric_key: str) -> str:
-    if value is None or pd.isna(value):
-        return "N/A"
-    return METRICS[metric_key].formatter.format(float(value))
-
-
-def _pick_first_nonempty(series: pd.Series, *, fallback: str) -> str:
-    cleaned = series.dropna().astype(str)
-    cleaned = cleaned[cleaned.str.strip() != ""]
-    if cleaned.empty:
-        return fallback
-    try:
-        return cleaned.mode().iat[0]
-    except Exception:
-        return cleaned.iat[0]
 
 
 def parse_args() -> argparse.Namespace:
