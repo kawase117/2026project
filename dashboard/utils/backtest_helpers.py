@@ -73,7 +73,8 @@ def compute_training_stats(
         # 勝率計算（差枚 > 0 の割合）
         count_win = df_train[df_train['diff_coins_normalized'] > 0].groupby(group_cols).size()
         count_total = df_train.groupby(group_cols).size()
-        grouped['win_rate'] = (count_win / count_total * 100).round(2).values
+        win_rate_series = (count_win / count_total * 100).round(2).rename('win_rate').reset_index()
+        grouped = grouped.merge(win_rate_series, on=group_cols, how='left')
 
         result[pattern_name] = grouped
 
@@ -205,7 +206,8 @@ def compute_validation_metrics(
     # 勝率計算
     count_win = df_test[df_test['diff_coins_normalized'] > 0].groupby(group_cols).size()
     count_total = df_test.groupby(group_cols).size()
-    grouped['win_rate'] = (count_win / count_total * 100).round(2).values
+    win_rate_series = (count_win / count_total * 100).round(2).rename('win_rate').reset_index()
+    grouped = grouped.merge(win_rate_series, on=group_cols, how='left')
 
     # 毎日の検証
     result_rows = []

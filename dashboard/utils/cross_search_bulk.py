@@ -11,7 +11,8 @@ import plotly.express as px
 
 from .data_loader import load_machine_detailed_results
 from .attribute_calculator import get_attr_value
-from ..design_system import premium_divider
+from .comparison import add_baseline_diff_column
+from ..design_system import premium_divider, confidence_badge
 
 
 def prepare_machine_df(
@@ -59,6 +60,12 @@ def compute_cross_summary(df_prepared: pd.DataFrame, attr1: str, attr2: str) -> 
     }).round(2)
     cross_summary.columns = ['total_diff', 'avg_diff', 'win_rate', 'count', 'avg_games']
     cross_summary = cross_summary.reset_index().sort_values('total_diff', ascending=False)
+
+    overall_avg_diff = df_prepared['diff_coins_normalized'].mean()
+    cross_summary = add_baseline_diff_column(
+        cross_summary, 'avg_diff', overall_avg_diff, 'avg_diff_vs_overall'
+    )
+
     return cross_summary, df_cross
 
 
@@ -113,9 +120,11 @@ def _build_display_rows(
             )
         row_data['勝率'] = float(row['win_rate'])
         row_data['平均差枚'] = int(row['avg_diff'])
+        row_data['平均差枚(全体比)'] = f"{row['avg_diff_vs_overall']:+.0f}"
         row_data['平均G数'] = int(row['avg_games'])
         row_data['合計差枚'] = int(row['total_diff'])
         row_data['台数'] = int(row['count'])
+        row_data['信頼度'] = confidence_badge(int(row['count']))
         rows.append(row_data)
     return rows
 

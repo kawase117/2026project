@@ -289,6 +289,30 @@ def get_design_system_css():
             background: rgba({int("ef4444"[1:3], 16)}, {int("ef4444"[3:5], 16)}, {int("ef4444"[5:7], 16)}, 0.1);
             border-color: {COLORS['status_error']};
         }}
+
+        /* ========================================
+           メトリクス（標準コンポーネント）の数値・デルタ統一
+           ======================================== */
+
+        [data-testid="stMetricValue"] {{
+            font-family: {TYPOGRAPHY['font_mono']};
+        }}
+
+        [data-testid="stMetricDelta"] svg[data-testid="stMetricDeltaIcon-Up"] {{
+            color: {COLORS['status_success']};
+        }}
+
+        [data-testid="stMetricDelta"] svg[data-testid="stMetricDeltaIcon-Down"] {{
+            color: {COLORS['status_error']};
+        }}
+
+        /* ========================================
+           テーブルのフォントサイズ統一
+           ======================================== */
+
+        [data-testid="stDataframe"] * {{
+            font-size: {TYPOGRAPHY['size_sm']};
+        }}
     </style>
     """
 
@@ -335,6 +359,72 @@ def metric_card(label: str, value: str, delta: str = None, icon: str = "📊"):
     st.markdown(html, unsafe_allow_html=True)
 
 
+def metric_card_with_delta(
+    label: str,
+    value: str,
+    delta_value: float = None,
+    delta_label: str = "前期間比",
+    icon: str = "📊",
+):
+    """前期間比・全体平均比などのデルタ付きメトリクスカード"""
+    if delta_value is None:
+        metric_card(label, value, icon=icon)
+        return
+
+    if delta_value > 0:
+        delta_color = COLORS['status_success']
+        sign = "+"
+    elif delta_value < 0:
+        delta_color = COLORS['status_error']
+        sign = ""
+    else:
+        delta_color = COLORS['neutral_400']
+        sign = ""
+
+    html = f"""<div style="
+        background: linear-gradient(135deg, {COLORS['primary_navy']} 0%, rgba(30, 58, 95, 0.8) 100%);
+        border: 1px solid {COLORS['primary_accent']};
+        border-radius: {LAYOUT['border_radius_lg']};
+        padding: {SPACING['lg']};
+        margin: {SPACING['md']} 0;
+        box-shadow: 0 4px 20px rgba(212, 175, 55, 0.1);
+    ">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div>
+                <div style="
+                    font-size: {TYPOGRAPHY['size_xs']};
+                    color: {COLORS['neutral_400']};
+                    text-transform: uppercase;
+                    letter-spacing: 0.05em;
+                    font-weight: {TYPOGRAPHY['weight_semibold']};
+                    margin-bottom: {SPACING['xs']};
+                ">{label}</div>
+                <div style="
+                    font-size: {TYPOGRAPHY['size_3xl']};
+                    font-weight: {TYPOGRAPHY['weight_bold']};
+                    color: {COLORS['primary_accent']};
+                    font-family: {TYPOGRAPHY['font_mono']};
+                ">{value}</div>
+                <div style="
+                    font-size: {TYPOGRAPHY['size_sm']};
+                    font-family: {TYPOGRAPHY['font_mono']};
+                    color: {delta_color};
+                    margin-top: {SPACING['xs']};
+                ">{sign}{delta_value:,.1f} {delta_label}</div>
+            </div>
+            <div style="font-size: {TYPOGRAPHY['size_4xl']}; opacity: 0.5;">{icon}</div>
+        </div>
+    </div>"""
+    st.markdown(html, unsafe_allow_html=True)
+
+
+def confidence_badge(count: int, threshold: int = 5) -> str:
+    """サンプル数が閾値未満の場合に警告マークを返す。st.dataframe のセル表示用（プレーンテキスト）。"""
+    if count >= threshold:
+        return ""
+    return "⚠️ サンプル少"
+
+
 def section_title(title: str, subtitle: str = None):
     """セクションタイトル"""
     st.markdown(f"## {title}")
@@ -368,6 +458,8 @@ __all__ = [
     'LAYOUT',
     'apply_design_system',
     'metric_card',
+    'metric_card_with_delta',
+    'confidence_badge',
     'section_title',
     'premium_divider',
 ]

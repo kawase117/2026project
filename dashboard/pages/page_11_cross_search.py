@@ -9,7 +9,8 @@ import plotly.express as px
 
 from ..utils.data_loader import load_machine_detailed_results
 from ..utils.attribute_calculator import get_attr_value
-from ..design_system import section_title, premium_divider, COLORS
+from ..utils.comparison import add_baseline_diff_column
+from ..design_system import section_title, premium_divider, confidence_badge, COLORS
 
 
 def _build_display_rows(
@@ -37,9 +38,11 @@ def _build_display_rows(
             )
         row_data['勝率'] = float(row['win_rate'])
         row_data['平均差枚'] = int(row['avg_diff'])
+        row_data['平均差枚(全体比)'] = f"{row['avg_diff_vs_overall']:+.0f}"
         row_data['平均G数'] = int(row['avg_games'])
         row_data['合計差枚'] = int(row['total_diff'])
         row_data['台数'] = int(row['count'])
+        row_data['信頼度'] = confidence_badge(int(row['count']))
         rows.append(row_data)
     return rows
 
@@ -132,6 +135,11 @@ def render():
                 cross_summary.columns = ['total_diff', 'avg_diff', 'win_rate', 'count', 'avg_games']
                 cross_summary = cross_summary.reset_index()
                 cross_summary = cross_summary.sort_values('total_diff', ascending=False)
+
+                overall_avg_diff = df_cross['diff_coins_normalized'].mean()
+                cross_summary = add_baseline_diff_column(
+                    cross_summary, 'avg_diff', overall_avg_diff, 'avg_diff_vs_overall'
+                )
 
                 # グラフ表示
                 col1, col2 = st.columns(2)
@@ -231,7 +239,7 @@ def render():
                 st.markdown("### 📊 クロス分析サマリー")
 
                 if not cross_filtered.empty:
-                    col1, col2, col3, col4 = st.columns(4)
+                    col1, col2, col3, col4, col5 = st.columns(5)
 
                     with col1:
                         st.metric(f"{attr1}パターン数", len(cross_filtered['attr1'].unique()))
@@ -244,6 +252,12 @@ def render():
 
                     with col4:
                         st.metric("平均差枚", f"{cross_filtered['avg_diff'].mean():.1f}枚")
+
+                    with col5:
+                        st.metric(
+                            "全体平均比",
+                            f"{cross_filtered['avg_diff_vs_overall'].mean():+.1f}枚",
+                        )
                 else:
                     st.warning("⚠️ フィルタ条件に該当するデータがありません")
 

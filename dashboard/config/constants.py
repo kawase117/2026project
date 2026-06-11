@@ -24,6 +24,7 @@ PAGES = [
     {"icon": "🏪", "title": "ホール選択支援", "key": "hall_selection"},
     {"icon": "📌", "title": "Notion へ保存", "key": "notion_exporter"},
     {"icon": "📊", "title": "バックテスト検証", "key": "backtest_validation"},
+    {"icon": "H", "title": "Heatmap", "key": "heatmap"},
 ]
 
 # ========================================
@@ -110,6 +111,11 @@ PAGE_REGISTRY = {
         "name": "クロス検索一括",
         "file": "page_16_cross_search_bulk",
         "icon": "📑"
+    },
+    17: {
+        "name": "Heatmap",
+        "file": "page_17_heatmap",
+        "icon": "H"
     }
 }
 

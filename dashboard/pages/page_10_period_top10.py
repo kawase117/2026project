@@ -8,6 +8,8 @@ import pandas as pd
 
 from ..utils.data_loader import load_machine_detailed_results
 from ..utils.filters import filter_by_date_range
+from ..utils.comparison import compute_previous_period_range, add_baseline_diff_column
+from ..design_system import metric_card_with_delta
 
 
 def render():
@@ -31,6 +33,42 @@ def render():
     if all_machines_filtered.empty:
         st.warning("⚠️ 指定期間にデータがありません")
         return
+
+    # KPIカード（前期間比）
+    def _kpi_summary(df: pd.DataFrame) -> dict:
+        return {
+            'avg_diff': df['diff_coins_normalized'].mean(),
+            'win_rate': (df['diff_coins_normalized'] > 0).sum() / len(df) * 100,
+            'total_games': df['games_normalized'].sum(),
+            'machine_count': df['machine_number'].nunique(),
+        }
+
+    current_kpi = _kpi_summary(all_machines_filtered)
+
+    prev_range = compute_previous_period_range(st.session_state.date_range)
+    all_machines_prev = filter_by_date_range(all_machines, prev_range)
+    prev_kpi = _kpi_summary(all_machines_prev) if not all_machines_prev.empty else None
+
+    st.markdown("### 📌 期間サマリー")
+    kpi_col1, kpi_col2, kpi_col3, kpi_col4 = st.columns(4)
+
+    with kpi_col1:
+        delta = current_kpi['avg_diff'] - prev_kpi['avg_diff'] if prev_kpi else None
+        metric_card_with_delta("平均差枚", f"{current_kpi['avg_diff']:.0f}枚", delta, icon="💰")
+
+    with kpi_col2:
+        delta = current_kpi['win_rate'] - prev_kpi['win_rate'] if prev_kpi else None
+        metric_card_with_delta("勝率", f"{current_kpi['win_rate']:.1f}%", delta, icon="📊")
+
+    with kpi_col3:
+        delta = current_kpi['total_games'] - prev_kpi['total_games'] if prev_kpi else None
+        metric_card_with_delta("総G数", f"{current_kpi['total_games']:,.0f}", delta, icon="🎲")
+
+    with kpi_col4:
+        delta = current_kpi['machine_count'] - prev_kpi['machine_count'] if prev_kpi else None
+        metric_card_with_delta("稼働台数", f"{current_kpi['machine_count']}台", delta, icon="🎰")
+
+    st.markdown("---")
 
     # 台ごとに集計
     machine_summary = all_machines_filtered.groupby(['machine_number', 'machine_name']).agg({
@@ -98,6 +136,11 @@ def render():
     st.markdown("---")
     st.markdown("### 📋 全台詳細統計")
 
+    overall_avg_diff = machine_summary['avg_diff'].mean()
+    machine_summary = add_baseline_diff_column(
+        machine_summary, 'avg_diff', overall_avg_diff, 'avg_diff_vs_overall'
+    )
+
     all_display_data = []
     machine_summary_sorted = machine_summary.sort_values('avg_diff', ascending=False)
     for idx, row in machine_summary_sorted.iterrows():
@@ -105,6 +148,7 @@ def render():
             '台番号': int(row['machine_number']),
             '機種': row['machine_name'],
             '平均差枚': int(row['avg_diff']),
+            '平均差枚(全体比)': f"{row['avg_diff_vs_overall']:+.0f}",
             '差枚': int(row['total_diff']),
             'G数': int(row['total_games']),
             '稼働日数': int(row['play_days'])

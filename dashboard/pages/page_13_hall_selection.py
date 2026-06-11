@@ -64,10 +64,9 @@ def render():
 def load_daily_hall_summary_all(db_path: str) -> pd.DataFrame:
     """ホール全体の日別集計データをすべて読み込み"""
     try:
-        conn = sqlite3.connect(db_path)
-        query = "SELECT * FROM daily_hall_summary ORDER BY date"
-        df = pd.read_sql_query(query, conn)
-        conn.close()
+        with sqlite3.connect(db_path) as conn:
+            query = "SELECT * FROM daily_hall_summary ORDER BY date"
+            df = pd.read_sql_query(query, conn)
 
         if not df.empty:
             df['date'] = pd.to_datetime(df['date'], format='%Y%m%d')

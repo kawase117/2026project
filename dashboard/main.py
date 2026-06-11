@@ -30,6 +30,7 @@ from .pages import (
     page_14_notion_exporter,
     page_15_backtest_validation,
     page_16_cross_search_bulk,
+    page_17_heatmap,
 )
 
 # ページキーと関数のマッピング
@@ -50,6 +51,7 @@ PAGE_ROUTER = {
     "hall_selection": page_13_hall_selection.render,
     "notion_exporter": page_14_notion_exporter.render,
     "backtest_validation": page_15_backtest_validation.render,
+    "heatmap": page_17_heatmap.render,
 }
 
 

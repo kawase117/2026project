@@ -5,6 +5,7 @@ from . import (
     page_02_daily_analysis,
     page_03_weekday_analysis,
     page_04_dd_analysis,
+    page_05_last_digit,
     page_06_day_last_digit,
     page_07_nth_weekday,
     page_08_individual_machines,
@@ -16,6 +17,7 @@ from . import (
     page_14_notion_exporter,
     page_15_backtest_validation,
     page_16_cross_search_bulk,
+    page_17_heatmap,
 )
 
 __all__ = [
@@ -23,6 +25,7 @@ __all__ = [
     'page_02_daily_analysis',
     'page_03_weekday_analysis',
     'page_04_dd_analysis',
+    'page_05_last_digit',
     'page_06_day_last_digit',
     'page_07_nth_weekday',
     'page_08_individual_machines',
@@ -34,4 +37,5 @@ __all__ = [
     'page_14_notion_exporter',
     'page_15_backtest_validation',
     'page_16_cross_search_bulk',
+    'page_17_heatmap',
 ]
