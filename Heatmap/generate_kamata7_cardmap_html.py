@@ -332,7 +332,6 @@ def render_machine_card(
       >
         <div class="machine-number">{machine_number}</div>
         <div class="machine-name">{escape(machine_name)}</div>
-        <div class="machine-date">{escape(latest_date_label)}</div>
       </article>
     """
 
@@ -778,15 +777,15 @@ def build_html_document(
 
     .machine-card {{
       position: absolute;
-      width: calc(var(--slot-x) + 3px);
-      height: calc(var(--slot-y) + 3px);
+      width: calc(var(--slot-x) - 2px);
+      height: calc(var(--slot-y) - 2px);
       border-radius: 3px;
-      padding: 2px 3px;
+      padding: 1px 2px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 1px;
+      gap: 0;
       text-align: center;
       line-height: 1;
       border: 1px solid transparent;
@@ -814,13 +813,6 @@ def build_html_document(
       overflow: hidden;
       text-overflow: ellipsis;
       max-width: 100%;
-    }}
-
-    .machine-date {{
-      font-size: 7px;
-      font-weight: 700;
-      line-height: 1;
-      opacity: 0.78;
     }}
 
     .tone-high {{
