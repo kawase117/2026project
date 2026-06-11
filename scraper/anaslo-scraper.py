@@ -671,9 +671,9 @@ async def main():
     """ハイブリッド版メイン処理"""
     
     # URL指定
-    target_url = "https://ana-slo.com/%E3%83%9B%E3%83%BC%E3%83%AB%E3%83%87%E3%83%BC%E3%82%BF/%E6%9D%B1%E4%BA%AC%E9%83%BD/%E3%83%9E%E3%83%AB%E3%83%8F%E3%83%B3%E3%83%A1%E3%82%AC%E3%82%B7%E3%83%86%E3%82%A32000-%E8%92%B2%E7%94%B07-%E3%83%87%E3%83%BC%E3%82%BF%E4%B8%80%E8%A6%A7/"
-    start_date = "20260525"
-    end_date = "20260525"
+    target_url = "https://ana-slo.com/%e3%83%9b%e3%83%bc%e3%83%ab%e3%83%87%e3%83%bc%e3%82%bf/%e6%9d%b1%e4%ba%ac%e9%83%bd/%e3%83%9e%e3%83%ab%e3%83%8f%e3%83%b3%e3%83%a1%e3%82%ac%e3%82%b7%e3%83%86%e3%82%a32000-%e8%92%b2%e7%94%b01-%e3%83%87%e3%83%bc%e3%82%bf%e4%b8%80%e8%a6%a7/"
+    start_date = "20260601"
+    end_date = "20260603"
     
     print("🚀 ハイブリッド版スクレイピング開始...")
     print("   ページ遷移のみJavaScript、その他はHTML解析")

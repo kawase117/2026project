@@ -11,6 +11,7 @@
 - 作業開始時は `instincts` を更新する。
 - 長時間セッションでは、重要判断の前または15-20分ごとに再実行する。
 - 参照優先順は `document/instincts/ACTIVE_INSTINCTS.jsonl` -> `ACTIVE_INSTINCTS.md` -> 元 `*.yaml`。
+- Instinct を書くときは `document/instincts/INSTINCT_TEMPLATE.md` を使い、レビュー時は `document/instincts/EDA_CHECKLIST.md` を通す。
 
 ## スクリプト一覧
 

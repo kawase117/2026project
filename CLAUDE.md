@@ -305,6 +305,103 @@ Cross-metric validation, バックテスト検証などの高度な分析機能�
 
 `/save` コマンドで生成される分析結果ログ。
 
+#### セッションアーカイブ（過去の意思決定・変更・バグ修正の記録）
+
+過去のセッションログは `document/sessions/` にアーカイブされている。
+過去の経緯・決定事項・実装背景を調べる場合は、まずここを検索すること。
+
+```
+document/sessions/
+├── 2026-04-archive.md   # 13 sessions, 55 key paragraphs
+├── 2026-05-archive.md   # 130 sessions, 602 key paragraphs
+└── undated-archive.md   # 4 sessions
+```
+
+**検索方法（grep）:**
+```bash
+# キーワードで検索
+grep -n "CatBoost\|hit@1\|設計変更" document/sessions/*.md
+
+# セッション ID で検索
+grep -n "session_id.*9e50ff6a" document/sessions/*.md
+
+# 日付で検索
+grep -n "^### 2026-05-25" document/sessions/*.md
+```
+
+**生成スクリプト:** `extract_session_summaries.py`（再実行可能・月次更新用）
+
+### セッションログ管理の月次プロセス（2026-05-29 追加）
+
+**目的**: コンテキスト枠圧迫を回避しつつ、過去の決定・修正・設計変更を確実に保存・参照する。
+
+#### 月次実行（毎月1日推奨）
+
+**1. アーカイブ生成**
+```bash
+cd C:\Users\apto117\Documents\pachinko-analyzer\src\2026project
+python extract_session_summaries.py
+```
+- 出力: `document/sessions/YYYY-MM-archive.md` を自動生成
+- 処理: ~/.claude/projects/ の全JSONL から決定・修正・設計変更を自動抽出
+- キーワードマッチ: 決定, 修正, 設計, CatBoost, hit@, NDCG, ECE, walk-forward など
+
+**2. CLAUDE.md セッションアーカイブセクション更新**
+- 新しい月別アーカイブへのリンク追加
+- 例: `- 2026-06-archive.md (NN sessions, NN paragraphs)`
+
+**3. ログファイル移動（15日以上前のもの）**
+```powershell
+# ~/.claude/projects/ から D:\claude-session-backup\YYYYMM\ へ移動
+# 保持期間: 直近15日間のみを active に置く
+```
+- `cleanupPeriodDays=30` (自動削除) より先に手動バックアップ
+- 理由: 30日後の自動削除から保護、過去の決定を確実に保存
+
+#### 検索・参照ワークフロー
+
+**意思決定を探すとき:**
+```bash
+# キーワード検索（CatBoost パラメータ, hit@1 改善, 設計変更など）
+grep -n "CatBoost\|hit@1\|hit@2\|NDCG\|ECE\|設計\|修正" document/sessions/2026-*.md
+
+# セッション ID で検索（特定の過去作業に戻る）
+grep -n 'session_id.*<uuid>' document/sessions/*.md
+
+# 日付で検索（特定日の決定内容）
+grep -n '^### 2026-05-2[5-9]' document/sessions/2026-05-archive.md
+```
+
+**代表的な検索パターン:**
+| パターン | 用途 |
+|---------|------|
+| `CatBoost\|GPU\|warm_start` | ML学習パラメータの過去改善 |
+| `hit@1\|hit@2\|NDCG\|ECE` | 評価指標の選定理由 |
+| `walk-forward\|min-train-days` | バリデーション設計の進化 |
+| `segment\|セグメント\|2F\|3F` | グループ化戦略の検証結果 |
+| `修正\|バグ\|fix` | 既出バグの修正方法確認 |
+| `設計変更\|決定\|変更` | アーキテクチャ意思決定 |
+
+#### 自動化オプション
+
+**月次実行を schedule で自動化する場合:**
+```bash
+/schedule --cron "0 0 1 * *" --task "monthly-session-archive" --command "python extract_session_summaries.py"
+```
+- 毎月1日 UTC 00:00 に実行（ローカル時間に合わせて調整可能）
+
+#### ストレージ管理
+
+| ファイル | 保持場所 | 役割 | 保持期間 |
+|---------|--------|------|--------|
+| 直近15日の .jsonl | ~/.claude/projects/ | 検索・参照用（active） | 15日 |
+| 15日～30日の .jsonl | D:\claude-session-backup\ | バックアップ（cleanupPeriodDays対策） | 15日 |
+| 月別アーカイブ .md | document/sessions/ | grep 検索インデックス（永続保存） | 永続 |
+
+**30日超過時の処理:**
+- 自動削除対象の .jsonl は存在しても **アーカイブ .md に記録済み** なので問題なし
+- 詳細な過去ログが必要な場合は `D:\claude-session-backup\` から復元可能
+
 ## GitHub
 
 リポジトリ: https://github.com/kawase117/2026project
