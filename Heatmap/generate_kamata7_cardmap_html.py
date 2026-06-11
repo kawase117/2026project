@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import sqlite3
+import re
 from dataclasses import dataclass
 from html import escape
 from pathlib import Path
@@ -189,6 +190,21 @@ def classify_metric(value: float | None, thresholds: ToneThresholds) -> str:
     return "tone-neutral"
 
 
+def classify_games(value: float | None, thresholds: tuple[float, float, float]) -> str:
+    """Map games volume to a border class."""
+
+    if value is None or pd.isna(value):
+        return "games-missing"
+    high, mid, low = thresholds
+    if value >= high:
+        return "games-high"
+    if value >= mid:
+        return "games-mid"
+    if value >= low:
+        return "games-low"
+    return "games-missing"
+
+
 def format_metric_value(value: float | None, metric_key: str) -> str:
     """Format a metric for the title tooltip."""
 
@@ -212,16 +228,56 @@ def _pick_last_nonempty(series: pd.Series, *, fallback: str) -> str:
     return cleaned.iat[-1]
 
 
-def shorten_machine_name(value: str | None, max_length: int = 16) -> str:
-    """Shorten machine names so they remain readable in a compact card."""
+def abbreviate_machine_name(value: str | None, max_length: int = 12) -> str:
+    """Derive a compact machine label suitable for tiny floor cards."""
 
     cleaned = _safe_text(value, fallback="未設定")
     if cleaned == "未設定":
         return cleaned
     cleaned = cleaned.replace("　", " ")
+
+    for prefix in ("スマスロ", "パチスロ", "e ", "ｅ ", "L ", "S "):
+        if cleaned.startswith(prefix):
+            cleaned = cleaned[len(prefix) :]
+
+    replacements = (
+        ("炎炎ノ消防隊", "炎炎"),
+        ("炎炎の消防隊", "炎炎"),
+        ("甲鉄城のカバネリ 海門(うなと)決戦", "カバネリ"),
+        ("甲鉄城のカバネリ", "カバネリ"),
+        ("からくりサーカス", "からくり"),
+        ("モンキーターンV", "モンキー"),
+        ("モンキーターン", "モンキー"),
+        ("L ToLOVEるダークネス", "ToLOVEる"),
+        ("To LOVEる", "ToLOVEる"),
+        ("東京喰種", "喰種"),
+        ("リゼロ", "Re:ゼロ"),
+        ("Re:ゼロから始める異世界生活", "Re:ゼロ"),
+        ("この素晴らしい世界に祝福を!", "このすば"),
+        ("押忍!番長", "番長"),
+        ("甲鉄城のカバネリ海門決戦", "カバネリ"),
+    )
+    for source, target in replacements:
+        if source in cleaned:
+            cleaned = cleaned.replace(source, target)
+
+    cleaned = re.sub(r"\s+(?:ライト|スマスロ|L|S)$", "", cleaned)
+
     if len(cleaned) <= max_length:
         return cleaned
     return f"{cleaned[: max_length - 1]}…"
+
+
+def summarize_games_thresholds(values: pd.Series) -> tuple[float, float, float]:
+    """Return rough thresholds for border coloring based on avg games."""
+
+    clean = values.dropna()
+    if clean.empty:
+        return (0.0, 0.0, 0.0)
+    high = float(clean.quantile(0.75))
+    mid = float(clean.quantile(0.50))
+    low = float(clean.quantile(0.25))
+    return high, mid, low
 
 
 def build_floor_frame(coords_path: Path, stats_df: pd.DataFrame) -> pd.DataFrame:
@@ -244,6 +300,7 @@ def render_machine_card(
     *,
     metric_key: str,
     thresholds: ToneThresholds,
+    games_thresholds: tuple[float, float, float],
     x_col: str,
     y_col: str,
 ) -> str:
@@ -251,7 +308,8 @@ def render_machine_card(
 
     metric_value = row.get(metric_key)
     tone_class = classify_metric(metric_value, thresholds)
-    machine_name = shorten_machine_name(row.get("machine_name"), max_length=15)
+    games_class = classify_games(row.get("avg_games"), games_thresholds)
+    machine_name = abbreviate_machine_name(row.get("machine_name"), max_length=11)
     machine_number = int(row["machine_number"])
     metric_label = format_metric_value(metric_value, metric_key)
     full_name = _safe_text(row.get("machine_name"))
@@ -267,13 +325,14 @@ def render_machine_card(
 
     return f"""
       <article
-        class="machine-card {tone_class}"
+        class="machine-card {tone_class} {games_class}"
         style="left: calc(var(--pad) + ({int(row[x_col])} - 1) * var(--slot-x)); top: calc(var(--pad) + ({int(row[y_col])} - 1) * var(--slot-y));"
         title="{escape(title)}"
         aria-label="{escape(title)}"
       >
         <div class="machine-number">{machine_number}</div>
         <div class="machine-name">{escape(machine_name)}</div>
+        <div class="machine-date">{escape(latest_date_label)}</div>
       </article>
     """
 
@@ -294,15 +353,17 @@ def render_floor_section(
 
     slot_x = 32
     slot_y = 26
-    pad = 12
+    pad = 10
     map_width = pad * 2 + max_x * slot_x
     map_height = pad * 2 + max_y * slot_y
 
+    games_thresholds = summarize_games_thresholds(frame["avg_games"])
     machine_cards = [
         render_machine_card(
             row,
             metric_key=metric_key,
             thresholds=thresholds,
+            games_thresholds=games_thresholds,
             x_col=x_col,
             y_col=y_col,
         )
@@ -677,7 +738,7 @@ def build_html_document(
       position: relative;
       width: 100%;
       overflow: hidden;
-      padding: 14px 14px 18px;
+      padding: 10px 10px 14px;
     }}
 
     .floor-map {{
@@ -717,8 +778,8 @@ def build_html_document(
 
     .machine-card {{
       position: absolute;
-      width: var(--slot-x);
-      height: var(--slot-y);
+      width: calc(var(--slot-x) + 3px);
+      height: calc(var(--slot-y) + 3px);
       border-radius: 3px;
       padding: 2px 3px;
       display: flex;
@@ -747,12 +808,19 @@ def build_html_document(
     }}
 
     .machine-name {{
-      font-size: 8px;
+      font-size: 9px;
       font-weight: 800;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       max-width: 100%;
+    }}
+
+    .machine-date {{
+      font-size: 7px;
+      font-weight: 700;
+      line-height: 1;
+      opacity: 0.78;
     }}
 
     .tone-high {{
@@ -790,6 +858,23 @@ def build_html_document(
       border-color: #cbd5e1;
       color: #475569;
       opacity: 0.82;
+    }}
+
+    .games-high {{
+        border-color: #0f172a;
+        box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.2), 0 6px 10px rgba(15, 23, 42, 0.06);
+    }}
+
+    .games-mid {{
+        border-color: #2563eb;
+    }}
+
+    .games-low {{
+        border-color: #60a5fa;
+    }}
+
+    .games-missing {{
+        border-color: #cbd5e1;
     }}
 
     .footer-note {{
@@ -923,7 +1008,15 @@ def build_html_document(
         }}
 
         const availableWidth = Math.max(0, viewport.clientWidth - 4);
-        const scale = Math.min(1, availableWidth / baseWidth);
+        const availableHeight = Math.max(
+          240,
+          window.innerHeight - activePanel.getBoundingClientRect().top - 40
+        );
+        const scale = Math.min(
+          1,
+          availableWidth / baseWidth,
+          availableHeight / baseHeight
+        );
         map.style.transform = `scale(${{scale}})`;
         viewport.style.height = `${{Math.ceil(baseHeight * scale)}}px`;
       }}
