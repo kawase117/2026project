@@ -1,0 +1,7 @@
+﻿model,n_days,chosen_avg_diff_mean,oracle_avg_diff_mean,top1_hit_rate,top2_inclusion_rate,spearman_daily_mean,regret_mean,regret_sum,backend_requested,gpu_backend,models_requested,seeds
+catboost_ranker_depth4,150,111.81333333333333,264.73333333333335,0.24,0.3933333333333333,0.37861904761904763,152.92,22938.0,cpu,cuda,"xgb_ranker,lgbm_ranker,catboost_ranker",42
+catboost_ranker_depth6,150,111.81333333333333,264.73333333333335,0.24,0.4066666666666667,0.37657142857142856,152.92,22938.0,cpu,cuda,"xgb_ranker,lgbm_ranker,catboost_ranker",42
+xgb_ranker_md3,150,111.81333333333333,264.73333333333335,0.24,0.42,0.30123809523809525,152.92,22938.0,cpu,cuda,"xgb_ranker,lgbm_ranker,catboost_ranker",42
+xgb_ranker_md4,150,110.64,264.73333333333335,0.24,0.42,0.28933333333333333,154.09333333333333,23114.0,cpu,cuda,"xgb_ranker,lgbm_ranker,catboost_ranker",42
+lgbm_ranker_leaves31,150,106.68,264.73333333333335,0.22666666666666666,0.41333333333333333,0.3128888888888889,158.05333333333334,23708.0,cpu,cuda,"xgb_ranker,lgbm_ranker,catboost_ranker",42
+lgbm_ranker_leaves63,150,105.16666666666667,264.73333333333335,0.22666666666666666,0.4266666666666667,0.32111111111111107,159.56666666666666,23935.0,cpu,cuda,"xgb_ranker,lgbm_ranker,catboost_ranker",42

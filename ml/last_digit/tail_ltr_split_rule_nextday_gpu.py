@@ -32,12 +32,27 @@ from ml.last_digit.post_rerank import (
     mark_avoid_candidates,
 )
 from ml.last_digit.utils import configure_logging
-from ml.last_digit.nextday_zorome_report import fetch_latest_zorome_by_digit
+from ml.last_digit.nextday_zorome_report import (
+    fetch_latest_zorome_by_digit,
+    fetch_latest_zorome_by_expert_digit,
+)
 
 
 EXPERT_ORDER = ["2F_N", "3F_N", "3F_A", "2F_A"]
 logger = logging.getLogger(__name__)
 TARGET_CHOICES = ("is_top_2", "is_rank_1", "is_top_3", "is_worst_1")
+FORBIDDEN_SAME_DAY_FEATURES = frozenset(
+    {
+        "total_games",
+        "avg_games",
+        "total_diff_coins",
+        "total_diff_coins_focus",
+        "avg_diff_coins",
+        "win_rate",
+        "efficiency",
+        "efficiency_focus",
+    }
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -587,6 +602,12 @@ def _predict_for_date(
     all_features = improved.get_numeric_features(df_expert)
     excluded_targets = {"is_top_2", "is_rank_1", "is_top_3", "is_worst_1", "is_worst_3"}
     all_features = [f for f in all_features if f not in excluded_targets]
+    leaked = sorted(set(all_features).intersection(FORBIDDEN_SAME_DAY_FEATURES))
+    if leaked:
+        raise ValueError(
+            "Forbidden same-day outcome features leaked into training features: "
+            + ", ".join(leaked)
+        )
     if not use_digit_lag_bundle:
         all_features = [f for f in all_features if f not in {"lag1_digit_diff", "lag5_digit_diff", "lag7_digit_diff"}]
     if not use_2fn_weekday_patch:
@@ -755,19 +776,16 @@ def _build_forecast_summary(
     zorome_by_expert_digit: dict[str, dict[str, list]] | None = None,
     top_n: int = 3,
 ) -> dict[str, Any]:
-    """Build TOP-N forecast summary with relative confidence and zorome machines."""
+    """Build expert-centered forecast summary with strict segment zorome lists."""
     top_combined = combined_ranking[:top_n]
-    conf_c_all = _confidence_pct([float(r["combined_score"]) for r in combined_ranking])
-    conf_c = conf_c_all[: len(top_combined)]
     combined_rows = []
-    for row, conf in zip(top_combined, conf_c):
+    for row in top_combined:
         digit = str(row["last_digit"])
         combined_rows.append(
             {
                 "rank": int(row["rank"]),
                 "last_digit": digit,
                 "combined_score": float(row["combined_score"]),
-                "confidence_pct": conf,
                 "zorome_machines": [
                     {"machine_number": int(mn), "machine_name": str(nm)}
                     for mn, nm in zorome_by_digit.get(digit, [])
@@ -776,48 +794,51 @@ def _build_forecast_summary(
         )
 
     expert_summaries: dict[str, list[dict[str, Any]]] = {}
+    machine_list_by_expert: dict[str, list[dict[str, Any]]] = {}
     for expert in EXPERT_ORDER:
         info = expert_outputs.get(expert, {})
         if info.get("status") != "ok":
             continue
-        ranking_all = [r for r in info.get("ranking", []) if "pred" in r]
-        ranking = ranking_all[:top_n]
-        conf_e_all = _confidence_pct([float(r["pred"]) for r in ranking_all])
-        conf_e = conf_e_all[: len(ranking)]
+        ranking = [r for r in info.get("ranking", []) if "pred" in r][:top_n]
         expert_zorome = (zorome_by_expert_digit or {}).get(str(expert), {})
         expert_rows = []
-        for row, conf in zip(ranking, conf_e):
+        machine_union: dict[int, dict[str, Any]] = {}
+        for row in ranking:
             digit = str(row["last_digit"])
+            strict_machines = [
+                {"machine_number": int(mn), "machine_name": str(nm)}
+                for mn, nm in expert_zorome.get(digit, [])
+            ]
+            for machine in strict_machines:
+                machine_union[int(machine["machine_number"])] = {
+                    "machine_number": int(machine["machine_number"]),
+                    "machine_name": str(machine["machine_name"]),
+                    "last_digit": digit,
+                }
             expert_rows.append(
                 {
                     "rank": int(row.get("rank", 0)),
                     "last_digit": digit,
                     "pred": float(row["pred"]),
-                    "confidence_pct": conf,
-                    "zorome_machines": [
-                        {"machine_number": int(mn), "machine_name": str(nm)}
-                        for mn, nm in expert_zorome.get(digit, zorome_by_digit.get(digit, []))
-                    ],
+                    "model_score": float(row.get("final_score", row["pred"])),
+                    "zorome_machines": strict_machines,
                 }
             )
         expert_summaries[expert] = expert_rows
+        machine_list_by_expert[expert] = sorted(machine_union.values(), key=lambda x: int(x["machine_number"]))
 
     return {
         "combined": combined_rows,
         "by_expert": expert_summaries,
-        "confidence_scale": "relative_within_group_0_100",
+        "machine_list_by_expert": machine_list_by_expert,
+        "score_scale": "absolute_model_score",
     }
 
 
-def _format_machine_list(machines: list[dict[str, Any]], max_items: int = 3) -> str:
+def _format_machine_list(machines: list[dict[str, Any]]) -> str:
     if not machines:
-        return "なし"
-    shown = machines[: max_items]
-    text = " / ".join(f"{m['machine_number']} {m['machine_name']}" for m in shown)
-    extra = len(machines) - len(shown)
-    if extra > 0:
-        text += f" / ...(+{extra})"
-    return text
+        return "(none)"
+    return " / ".join(f"{m['machine_number']} {m['machine_name']}" for m in machines)
 
 
 def _log_forecast_summary(
@@ -826,29 +847,29 @@ def _log_forecast_summary(
     target_date: str,
     target_weekday: str,
 ) -> None:
-    """Print human-readable forecast summary with confidence and zorome machines to logger."""
+    """Print human-readable forecast summary with strict segment zorome machines."""
     lines = [
         "",
-        f"===== 翌日予測サマリー ({target_date} {target_weekday}) =====",
-        "※ 確信度は同一グループ内の相対値 (0-100)",
-        "combined順位 TOP3:",
+        f"===== Next-day Forecast Summary ({target_date} {target_weekday}) =====",
     ]
-    for row in summary.get("combined", []):
-        machines = row.get("zorome_machines", [])
-        machine_str = _format_machine_list(machines)
-        lines.append(
-            f"  Rank {row['rank']}: 末尾 {row['last_digit']}  相対確信度 {row['confidence_pct']}%"
-        )
-        lines.append(f"    ゾロ目候補: {machine_str}")
     for expert, rows in summary.get("by_expert", {}).items():
         lines.append(f"{expert} TOP3:")
         for row in rows:
-            machines = row.get("zorome_machines", [])
-            machine_str = _format_machine_list(machines)
+            machine_str = _format_machine_list(row.get("zorome_machines", []))
             lines.append(
-                f"  Rank {row['rank']}: 末尾 {row['last_digit']}  相対確信度 {row['confidence_pct']}%"
+                f"  Rank {row['rank']}: tail {row['last_digit']}  model_score {float(row['model_score']):.6f}"
             )
-            lines.append(f"    ゾロ目候補: {machine_str}")
+            lines.append(f"    zorome candidates: {machine_str}")
+    lines.append("台番号順ゾロ目台リスト:")
+    for expert, machines in summary.get("machine_list_by_expert", {}).items():
+        lines.append(f"{expert}:")
+        if not machines:
+            lines.append("  (none)")
+            continue
+        for machine in machines:
+            lines.append(
+                f"  {machine['machine_number']} [tail {machine['last_digit']}] {machine['machine_name']}"
+            )
     logger.info("\n".join(lines))
 
 
@@ -916,10 +937,6 @@ def _save_outputs(
         logger.info("Saved: %s", out_period_topk_csv)
     if not test_period_monthly.empty:
         logger.info("Saved: %s", out_period_monthly_csv)
-    if not combined.empty:
-        logger.info("\n%s", combined.head(5).to_string(index=False))
-
-
 def main() -> int:
     args = build_parser().parse_args()
     configure_logging(args.log_level)
@@ -1029,10 +1046,17 @@ def main() -> int:
             combined_included_experts.append(expert)
         else:
             combined_excluded_experts.append({"expert": expert, "reason": indeterminate_reason})
+        _sorted_rd = rank_df.sort_values("rank")
+        _t1p = float(_sorted_rd.iloc[0]["pred"]) if len(_sorted_rd) >= 1 else np.nan
+        _t2p = float(_sorted_rd.iloc[1]["pred"]) if len(_sorted_rd) >= 2 else np.nan
+        _span = float(_t1p - _t2p) if (np.isfinite(_t1p) and np.isfinite(_t2p)) else np.nan
+        _cband = build_confidence_band(float(_span) if np.isfinite(_span) else 0.0)
         expert_outputs[expert] = {
             "status": "ok",
             "combined_used": used_for_combined,
             "combined_exclude_reason": indeterminate_reason if is_indeterminate else "",
+            "pred_span_top12": float(_span) if np.isfinite(_span) else None,
+            "confidence_band": _cband,
             "selected_candidate": {
                 "window": cand.window_name,
                 "lambda": cand.decay_lambda,

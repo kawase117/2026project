@@ -8,11 +8,14 @@ from itertools import combinations
 from pathlib import Path
 from statistics import multimode
 import sqlite3
+import sys
 
 import numpy as np
 import pandas as pd
 from scipy import stats
 from sklearn.feature_selection import mutual_info_classif
+
+sys.stdout.reconfigure(encoding='utf-8')
 
 try:
     from lifelines import KaplanMeierFitter  # type: ignore

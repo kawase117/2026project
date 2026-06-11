@@ -8,10 +8,13 @@ Usage:
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
+
+sys.stdout.reconfigure(encoding='utf-8')
 
 
 CONFIGS: dict[str, dict[str, float | None]] = {
@@ -209,4 +212,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

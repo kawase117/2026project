@@ -28,6 +28,8 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 
+sys.stdout.reconfigure(encoding='utf-8')
+
 
 # ─────────────────────────────────────────
 # 除外キーワード（属性列に含まれる場合その行を除外）

@@ -1,0 +1,116 @@
+{
+  "config": {
+    "stores_csv": "C:\\Users\\apto117\\Documents\\pachinko-analyzer\\src\\2026project\\db\\experiments\\hall_day_strength_audit_20260601\\stores.csv",
+    "selection_start": "2025-07-07",
+    "selection_end": "2025-12-31",
+    "holdout_start": "2026-01-01",
+    "holdout_end": "2026-05-30",
+    "models": [
+      "xgb_ranker",
+      "lgbm_ranker",
+      "catboost_ranker"
+    ],
+    "seeds": [
+      42
+    ],
+    "use_gpu": true,
+    "gpu_backend": "cuda",
+    "grid_profile": "small"
+  },
+  "summary": [
+    {
+      "model": "xgb_ranker_md3",
+      "n_days": 150,
+      "chosen_avg_diff_mean": 111.66666666666667,
+      "oracle_avg_diff_mean": 264.73333333333335,
+      "top1_hit_rate": 0.25333333333333335,
+      "top2_inclusion_rate": 0.35333333333333333,
+      "spearman_daily_mean": 0.3116984126984127,
+      "regret_mean": 153.06666666666666,
+      "regret_sum": 22960.0,
+      "backend_requested": "gpu",
+      "gpu_backend": "cuda",
+      "models_requested": "xgb_ranker,lgbm_ranker,catboost_ranker",
+      "seeds": "42"
+    },
+    {
+      "model": "lgbm_ranker_leaves63",
+      "n_days": 150,
+      "chosen_avg_diff_mean": 108.32666666666667,
+      "oracle_avg_diff_mean": 264.73333333333335,
+      "top1_hit_rate": 0.23333333333333334,
+      "top2_inclusion_rate": 0.43333333333333335,
+      "spearman_daily_mean": 0.3122857142857143,
+      "regret_mean": 156.40666666666667,
+      "regret_sum": 23461.0,
+      "backend_requested": "gpu",
+      "gpu_backend": "cuda",
+      "models_requested": "xgb_ranker,lgbm_ranker,catboost_ranker",
+      "seeds": "42"
+    },
+    {
+      "model": "xgb_ranker_md4",
+      "n_days": 150,
+      "chosen_avg_diff_mean": 107.13333333333334,
+      "oracle_avg_diff_mean": 264.73333333333335,
+      "top1_hit_rate": 0.23333333333333334,
+      "top2_inclusion_rate": 0.36,
+      "spearman_daily_mean": 0.26601587301587304,
+      "regret_mean": 157.6,
+      "regret_sum": 23640.0,
+      "backend_requested": "gpu",
+      "gpu_backend": "cuda",
+      "models_requested": "xgb_ranker,lgbm_ranker,catboost_ranker",
+      "seeds": "42"
+    },
+    {
+      "model": "lgbm_ranker_leaves31",
+      "n_days": 150,
+      "chosen_avg_diff_mean": 106.68,
+      "oracle_avg_diff_mean": 264.73333333333335,
+      "top1_hit_rate": 0.22666666666666666,
+      "top2_inclusion_rate": 0.41333333333333333,
+      "spearman_daily_mean": 0.31422222222222224,
+      "regret_mean": 158.05333333333334,
+      "regret_sum": 23708.0,
+      "backend_requested": "gpu",
+      "gpu_backend": "cuda",
+      "models_requested": "xgb_ranker,lgbm_ranker,catboost_ranker",
+      "seeds": "42"
+    },
+    {
+      "model": "catboost_ranker_depth4",
+      "n_days": 150,
+      "chosen_avg_diff_mean": 38.99333333333333,
+      "oracle_avg_diff_mean": 264.73333333333335,
+      "top1_hit_rate": 0.11333333333333333,
+      "top2_inclusion_rate": 0.24666666666666667,
+      "spearman_daily_mean": 0.3014603174603175,
+      "regret_mean": 225.74,
+      "regret_sum": 33861.0,
+      "backend_requested": "gpu",
+      "gpu_backend": "cuda",
+      "models_requested": "xgb_ranker,lgbm_ranker,catboost_ranker",
+      "seeds": "42"
+    },
+    {
+      "model": "catboost_ranker_depth6",
+      "n_days": 150,
+      "chosen_avg_diff_mean": 27.28,
+      "oracle_avg_diff_mean": 264.73333333333335,
+      "top1_hit_rate": 0.11333333333333333,
+      "top2_inclusion_rate": 0.26,
+      "spearman_daily_mean": 0.29553968253968255,
+      "regret_mean": 237.45333333333335,
+      "regret_sum": 35618.0,
+      "backend_requested": "gpu",
+      "gpu_backend": "cuda",
+      "models_requested": "xgb_ranker,lgbm_ranker,catboost_ranker",
+      "seeds": "42"
+    }
+  ],
+  "backend": {
+    "requested": "gpu",
+    "gpu_backend": "cuda"
+  }
+}

@@ -11,6 +11,8 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from ml.last_digit.expert_segmentation import add_floor_atype4_columns
+
 from ml.last_digit import tail_time_adaptive_ltr_poc_improved as improved
 from ml.last_digit.tail_ltr_full_walkforward_ops import (
     bootstrap_ci,
@@ -69,6 +71,7 @@ def build_base_rows(*, db_path: Path, a_weight: float, non_a_weight: float) -> p
       m.diff_coins_normalized,
       COALESCE(mm.jug_flag, 0) AS jug_flag,
       COALESCE(mm.hana_flag, 0) AS hana_flag,
+      COALESCE(mm.oki_flag, 0) AS oki_flag,
       COALESCE(mm.bt_flag, 0) AS bt_flag,
       COALESCE(dh.is_any_event, 0) AS is_event_day
     FROM machine_detailed_results m
@@ -84,11 +87,7 @@ def build_base_rows(*, db_path: Path, a_weight: float, non_a_weight: float) -> p
 
     df["date"] = pd.to_datetime(df["date"], format="%Y%m%d")
     df["last_digit"] = df["last_digit"].map(normalize_last_digit)
-    df["floor_head"] = df["machine_number"].astype(str).str[0]
-    df = df[df["floor_head"].isin(["2", "3"])].copy()
-    df["floor_bucket"] = df["floor_head"] + "F"
-    df["is_a_type"] = ((df["jug_flag"] == 1) | (df["hana_flag"] == 1) | (df["bt_flag"] == 1)).astype(int)
-    df["atype_bucket"] = np.where(df["is_a_type"] == 1, "A", "N")
+    df = add_floor_atype4_columns(df)
     df["row_weight"] = np.where(df["is_a_type"] == 1, float(a_weight), float(non_a_weight))
     df["diff_focus"] = pd.to_numeric(df["diff_coins_normalized"], errors="coerce").fillna(0.0) * df["row_weight"]
     df["win_flag"] = (pd.to_numeric(df["diff_coins_normalized"], errors="coerce").fillna(0.0) > 0).astype(float)
@@ -171,6 +170,17 @@ def add_simple_features(df: pd.DataFrame, *, enable_digit_lag_bundle: bool = Fal
     out["weekday_sin"] = np.sin(2.0 * np.pi * out["weekday"] / 7.0)
     out["weekday_cos"] = np.cos(2.0 * np.pi * out["weekday"] / 7.0)
     out["is_wed"] = (out["weekday"] == 2).astype(int)
+    day_of_month = out["date"].dt.day.astype(int)
+    month_value = out["date"].dt.month.astype(int)
+    out["dd_value"] = day_of_month
+    out["dd_sin"] = np.sin(2.0 * np.pi * day_of_month / 31.0)
+    out["dd_cos"] = np.cos(2.0 * np.pi * day_of_month / 31.0)
+    out["is_zorome_day"] = day_of_month.isin([11, 22]).astype(int)
+    out["is_strong_zorome_day"] = (month_value == day_of_month).astype(int)
+    out["is_day_7x"] = day_of_month.isin([7, 17, 27]).astype(int)
+    out["is_day_1x"] = day_of_month.isin([1, 11, 21, 31]).astype(int)
+    out["is_wed_nonevent"] = ((out["is_wed"] == 1) & (pd.to_numeric(out["is_event_day"], errors="coerce").fillna(0.0) <= 0)).astype(int)
+    out["is_wed_event"] = ((out["is_wed"] == 1) & (pd.to_numeric(out["is_event_day"], errors="coerce").fillna(0.0) > 0)).astype(int)
 
     for col in ("total_diff_coins", "total_diff_coins_focus", "total_games", "efficiency", "efficiency_focus", "win_rate"):
         out[f"lag1_{col}"] = out.groupby("entity_key", sort=False)[col].shift(1).fillna(0.0)

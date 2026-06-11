@@ -16,10 +16,14 @@ FORECAST_EXCLUDED_COLUMNS = frozenset(
         "total_games",
         "avg_games",
         "total_diff_coins",
+        # Same-day weighted payoff. Leakage for next-day/holdout prediction if left in features.
+        "total_diff_coins_focus",
         "avg_diff_coins",
         "win_rate",
         "high_profit_rate",
         "efficiency",
+        # Same-day weighted efficiency derived from same-day payout.
+        "efficiency_focus",
         # Always excluded: value-dependent bins (can leak if computed with future rows).
         "total_games_bin",
         "avg_games_bin",

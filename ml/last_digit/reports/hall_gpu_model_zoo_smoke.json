@@ -1,0 +1,70 @@
+{
+  "config": {
+    "stores_csv": "C:\\Users\\apto117\\Documents\\pachinko-analyzer\\src\\2026project\\db\\experiments\\hall_day_strength_audit_20260601\\stores.csv",
+    "selection_start": "2025-07-07",
+    "selection_end": "2025-12-31",
+    "holdout_start": "2026-01-01",
+    "holdout_end": "2026-05-30",
+    "models": [
+      "xgb_ranker",
+      "lgbm_ranker",
+      "catboost_ranker"
+    ],
+    "seeds": [
+      42
+    ],
+    "use_gpu": false,
+    "gpu_backend": "cuda"
+  },
+  "summary": [
+    {
+      "model": "catboost_ranker",
+      "n_days": 150,
+      "chosen_avg_diff_mean": 111.81333333333333,
+      "oracle_avg_diff_mean": 264.73333333333335,
+      "top1_hit_rate": 0.24,
+      "top2_inclusion_rate": 0.4066666666666667,
+      "spearman_daily_mean": 0.37657142857142856,
+      "regret_mean": 152.92,
+      "regret_sum": 22938.0,
+      "backend_requested": "cpu",
+      "gpu_backend": "cuda",
+      "models_requested": "xgb_ranker,lgbm_ranker,catboost_ranker",
+      "seeds": "42"
+    },
+    {
+      "model": "xgb_ranker",
+      "n_days": 150,
+      "chosen_avg_diff_mean": 110.64,
+      "oracle_avg_diff_mean": 264.73333333333335,
+      "top1_hit_rate": 0.24,
+      "top2_inclusion_rate": 0.42,
+      "spearman_daily_mean": 0.28933333333333333,
+      "regret_mean": 154.09333333333333,
+      "regret_sum": 23114.0,
+      "backend_requested": "cpu",
+      "gpu_backend": "cuda",
+      "models_requested": "xgb_ranker,lgbm_ranker,catboost_ranker",
+      "seeds": "42"
+    },
+    {
+      "model": "lgbm_ranker",
+      "n_days": 150,
+      "chosen_avg_diff_mean": 106.68,
+      "oracle_avg_diff_mean": 264.73333333333335,
+      "top1_hit_rate": 0.22666666666666666,
+      "top2_inclusion_rate": 0.41333333333333333,
+      "spearman_daily_mean": 0.3128888888888889,
+      "regret_mean": 158.05333333333334,
+      "regret_sum": 23708.0,
+      "backend_requested": "cpu",
+      "gpu_backend": "cuda",
+      "models_requested": "xgb_ranker,lgbm_ranker,catboost_ranker",
+      "seeds": "42"
+    }
+  ],
+  "backend": {
+    "requested": "cpu",
+    "gpu_backend": "cuda"
+  }
+}
