@@ -1,0 +1,109 @@
+<h2>蒲田1フロアマップの座標方式</h2>
+<p class="subtitle">斜め島をどうCSVとヒートマップで再現するか、3方式を比較しています。</p>
+
+<div class="cards">
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <svg viewBox="0 0 420 240" style="width:100%;background:#f8f5ef">
+        <g fill="#d8d8d8" stroke="#777" stroke-width="1">
+          <rect x="20" y="35" width="18" height="18"/><rect x="40" y="35" width="18" height="18"/>
+          <rect x="60" y="35" width="18" height="18"/><rect x="80" y="35" width="18" height="18"/>
+          <rect x="100" y="35" width="18" height="18"/><rect x="120" y="35" width="18" height="18"/>
+          <rect x="140" y="35" width="18" height="18"/><rect x="160" y="35" width="18" height="18"/>
+          <rect x="180" y="35" width="18" height="18"/><rect x="200" y="35" width="18" height="18"/>
+          <rect x="220" y="35" width="18" height="18"/><rect x="240" y="35" width="18" height="18"/>
+          <rect x="260" y="35" width="18" height="18"/><rect x="280" y="35" width="18" height="18"/>
+          <rect x="300" y="35" width="18" height="18"/><rect x="320" y="35" width="18" height="18"/>
+          <rect x="340" y="35" width="18" height="18"/><rect x="360" y="35" width="18" height="18"/>
+        </g>
+        <text x="20" y="85" font-size="15" fill="#9a2c2c">斜め島が水平一列に潰れる</text>
+        <path d="M25 180 L120 150 L215 120 L310 90" fill="none" stroke="#1994a8" stroke-width="3" stroke-dasharray="8 6"/>
+        <text x="20" y="215" font-size="13" fill="#555">現在のCSVに近い方式</text>
+      </svg>
+    </div>
+    <div class="card-body">
+      <h3>A. 粗い整数格子</h3>
+      <p>既存実装を維持できますが、蒲田1の階段状配置を表現できません。</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <svg viewBox="0 0 420 240" style="width:100%;background:#f8f5ef">
+        <g fill="#d8d8d8" stroke="#777" stroke-width="1">
+          <rect x="20" y="185" width="18" height="18"/><rect x="40" y="175" width="18" height="18"/>
+          <rect x="60" y="165" width="18" height="18"/><rect x="80" y="155" width="18" height="18"/>
+          <rect x="100" y="145" width="18" height="18"/><rect x="120" y="135" width="18" height="18"/>
+          <rect x="140" y="125" width="18" height="18"/><rect x="160" y="115" width="18" height="18"/>
+          <rect x="180" y="105" width="18" height="18"/><rect x="200" y="95" width="18" height="18"/>
+          <rect x="220" y="85" width="18" height="18"/><rect x="240" y="75" width="18" height="18"/>
+          <rect x="260" y="65" width="18" height="18"/><rect x="280" y="55" width="18" height="18"/>
+          <rect x="300" y="45" width="18" height="18"/><rect x="320" y="35" width="18" height="18"/>
+        </g>
+        <g fill="#8bc8d2" stroke="#42747b" stroke-width="1">
+          <rect x="125" y="180" width="18" height="18"/><rect x="145" y="170" width="18" height="18"/>
+          <rect x="165" y="160" width="18" height="18"/><rect x="185" y="150" width="18" height="18"/>
+          <rect x="205" y="140" width="18" height="18"/><rect x="225" y="130" width="18" height="18"/>
+          <rect x="245" y="120" width="18" height="18"/><rect x="265" y="110" width="18" height="18"/>
+        </g>
+        <text x="20" y="225" font-size="13" fill="#555">半セル相当のズレは表現しづらい</text>
+      </svg>
+    </div>
+    <div class="card-body">
+      <h3>B. 細かい整数格子</h3>
+      <p>階段状にはできますが、CSVが大きくなり、台の縦横比と通路幅の調整が難しくなります。</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <svg viewBox="0 0 420 240" style="width:100%;background:#f8f5ef">
+        <g fill="#d8d8d8" stroke="#666" stroke-width="1">
+          <rect x="18" y="185" width="27" height="16"/><rect x="38" y="174" width="27" height="16"/>
+          <rect x="58" y="163" width="27" height="16"/><rect x="78" y="152" width="27" height="16"/>
+          <rect x="98" y="141" width="27" height="16"/><rect x="118" y="130" width="27" height="16"/>
+          <rect x="138" y="119" width="27" height="16"/><rect x="158" y="108" width="27" height="16"/>
+          <rect x="178" y="97" width="27" height="16"/><rect x="198" y="86" width="27" height="16"/>
+          <rect x="218" y="75" width="27" height="16"/><rect x="238" y="64" width="27" height="16"/>
+          <rect x="258" y="53" width="27" height="16"/><rect x="278" y="42" width="27" height="16"/>
+          <rect x="298" y="31" width="27" height="16"/><rect x="318" y="20" width="27" height="16"/>
+        </g>
+        <g fill="#8bc8d2" stroke="#42747b" stroke-width="1">
+          <rect x="115" y="187" width="27" height="16"/><rect x="137" y="175" width="27" height="16"/>
+          <rect x="159" y="163" width="27" height="16"/><rect x="181" y="151" width="27" height="16"/>
+          <rect x="203" y="139" width="27" height="16"/><rect x="225" y="127" width="27" height="16"/>
+          <rect x="247" y="115" width="27" height="16"/><rect x="269" y="103" width="27" height="16"/>
+        </g>
+        <g fill="#e3c36a" stroke="#806c35" stroke-width="1">
+          <rect x="330" y="130" width="27" height="16"/><rect x="330" y="148" width="27" height="16"/>
+          <rect x="330" y="166" width="27" height="16"/><rect x="330" y="184" width="27" height="16"/>
+        </g>
+        <text x="20" y="225" font-size="13" fill="#175866">台の幅・高さ・通路を独立調整できる</text>
+      </svg>
+    </div>
+    <div class="card-body">
+      <h3>C. 連続座標 + 長方形描画</h3>
+      <p>推奨。斜め島、横島、縦島を画像に近い比率で再現し、CSVには display_x / display_y を持たせます。</p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="pros-cons">
+    <div class="pros">
+      <h4>推奨するC案</h4>
+      <ul>
+        <li>元画像の階段状の島をそのまま再現できる</li>
+        <li>物理座標と表示座標を分離できる</li>
+        <li>既存ホールは従来の格子描画を維持できる</li>
+      </ul>
+    </div>
+    <div class="cons">
+      <h4>考慮点</h4>
+      <ul>
+        <li>蒲田1だけ描画方式を rectangle に切り替える</li>
+        <li>元画像から座標を再採寸する必要がある</li>
+      </ul>
+    </div>
+  </div>
+</div>
