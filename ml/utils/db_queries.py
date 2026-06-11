@@ -38,35 +38,30 @@ def load_daily_hall_summary(
     test_start_norm = test_start.replace('-', '')
     test_end_norm = test_end.replace('-', '')
 
-    conn = sqlite3.connect(db_path)
-
-    # Load training data
     query_train = """
         SELECT date, win_rate, avg_diff_per_machine, avg_games_per_machine, total_machines
         FROM daily_hall_summary
         WHERE date BETWEEN ? AND ?
         ORDER BY date
     """
-    df_train_hall = pd.read_sql_query(
-        query_train,
-        conn,
-        params=(train_start_norm, train_end_norm)
-    )
-
-    # Load test data
     query_test = """
         SELECT date, win_rate, avg_diff_per_machine, avg_games_per_machine, total_machines
         FROM daily_hall_summary
         WHERE date BETWEEN ? AND ?
         ORDER BY date
     """
-    df_test_hall = pd.read_sql_query(
-        query_test,
-        conn,
-        params=(test_start_norm, test_end_norm)
-    )
 
-    conn.close()
+    with sqlite3.connect(db_path) as conn:
+        df_train_hall = pd.read_sql_query(
+            query_train,
+            conn,
+            params=(train_start_norm, train_end_norm)
+        )
+        df_test_hall = pd.read_sql_query(
+            query_test,
+            conn,
+            params=(test_start_norm, test_end_norm)
+        )
 
     # Ensure date column is string type
     df_train_hall["date"] = df_train_hall["date"].astype(str)
@@ -103,8 +98,6 @@ def load_daily_hall_with_date_info(
     test_start_norm = test_start.replace('-', '')
     test_end_norm = test_end.replace('-', '')
 
-    conn = sqlite3.connect(db_path)
-
     query = """
         SELECT date, win_rate, avg_diff_per_machine, avg_games_per_machine, total_machines,
                day_of_week, last_digit
@@ -113,19 +106,17 @@ def load_daily_hall_with_date_info(
         ORDER BY date
     """
 
-    df_train_hall = pd.read_sql_query(
-        query,
-        conn,
-        params=(train_start_norm, train_end_norm)
-    )
-
-    df_test_hall = pd.read_sql_query(
-        query,
-        conn,
-        params=(test_start_norm, test_end_norm)
-    )
-
-    conn.close()
+    with sqlite3.connect(db_path) as conn:
+        df_train_hall = pd.read_sql_query(
+            query,
+            conn,
+            params=(train_start_norm, train_end_norm)
+        )
+        df_test_hall = pd.read_sql_query(
+            query,
+            conn,
+            params=(test_start_norm, test_end_norm)
+        )
 
     # Ensure date column is string type
     df_train_hall["date"] = df_train_hall["date"].astype(str)

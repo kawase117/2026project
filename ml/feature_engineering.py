@@ -57,12 +57,119 @@ Domain-Specific Features (11):
 - overall_setting_confidence (1 dimension)
 
 Total: 22 features (Task 1), 31 features (Task 1+2), 53 features (Task 1+2+3), 69 features (Task 1+2+3+4)
+Position Features (3, optional):
+- section_encoded (1 dimension)
+- physical_corner (1 dimension)
+- physical_corner_valid (1 dimension)
 """
 
 import numpy as np
 import pandas as pd
 from typing import Tuple, Optional, Dict
 from sklearn.preprocessing import StandardScaler
+
+SECTION_STRENGTH_ORDER = [
+    "574-590",
+    "591-607",
+    "557-573",
+    "501-522",
+    "540-556",
+    "734-744",
+    "658-674",
+    "805-815",
+    "723-733",
+    "608-623",
+    "675-691",
+    "712-722",
+    "641-657",
+    "692-700",
+    "624-640",
+    "745-755",
+    "523-539",
+    "701-711",
+]
+SECTION_RANK = {section: idx + 1 for idx, section in enumerate(SECTION_STRENGTH_ORDER)}
+
+BASE_FEATURE_NAMES = [
+    "day_of_week_monday",
+    "day_of_week_tuesday",
+    "day_of_week_wednesday",
+    "day_of_week_thursday",
+    "day_of_week_friday",
+    "day_of_week_saturday",
+    "day_of_week_sunday",
+    "month_progress_rate",
+    "is_payday",
+    "is_zorome",
+    "day_normalized",
+    "last_digit_0",
+    "last_digit_1",
+    "last_digit_2",
+    "last_digit_3",
+    "last_digit_4",
+    "last_digit_5",
+    "last_digit_6",
+    "last_digit_7",
+    "last_digit_8",
+    "last_digit_9",
+    "machine_number_normalized",
+]
+
+EXTENDED_FEATURE_NAMES = [
+    "win_rate_daily",
+    "avg_diff_daily",
+    "avg_games_daily",
+    "total_machines",
+    "weekday_avg_diff",
+    "weekday_avg_games",
+    "dd_pattern_score",
+    "is_event_day",
+    "anomaly_score",
+    "ma_14_diff",
+    "ma_7_diff",
+    "ma_14_games",
+    "ma_7_games",
+    "ma_30_diff",
+    "efficiency",
+    "stability",
+    "trend_14",
+    "consecutive_wins",
+    "win_rate_machine",
+    "diff_vs_hall",
+    "games_vs_hall",
+    "efficiency_vs_hall",
+    "rank_percentile",
+    "lag_1_diff",
+    "lag_2_diff",
+    "lag_7_diff",
+    "lag_30_diff",
+    "lag_1_games",
+    "lag_7_games",
+    "lag_1_win_rate",
+    "lag_1_win_rate_mean",
+    "day_diff_interaction",
+    "digit_weekday_interaction",
+    "zorome_efficiency_interaction",
+    "hall_condition_machine_perf",
+    "event_day_diff_boost",
+    "zorome_efficiency_granular",
+    "setting_injection_marker_dd",
+    "setting_injection_marker_dow",
+    "bb_rb_signature_indicator",
+    "consecutive_win_marker",
+    "event_day_payload_indicator",
+    "hall_state_relative_efficiency",
+    "machine_model_anomaly_score",
+    "payday_window_effect",
+    "zorome_days_since",
+    "overall_setting_confidence",
+]
+
+POSITION_FEATURE_NAMES = [
+    "section_encoded",
+    "physical_corner",
+    "physical_corner_valid",
+]
 
 
 class FeatureBuilder:
@@ -135,7 +242,8 @@ class FeatureBuilder:
     def build_features(
         self,
         is_train: bool = True,
-        enable_extended_features: bool = False
+        enable_extended_features: bool = False,
+        use_position_features: bool = False,
     ) -> np.ndarray:
         """
         Build combined feature matrix (Temporal + Group ID + optional Hall-wide + Periodicity + Task 3 + Task 4)
@@ -144,15 +252,17 @@ class FeatureBuilder:
             is_train: If True, fit scaler on this data. If False, use stored scaler.
             enable_extended_features: If True, add all extended features (Task 2 + Task 3 + Task 4) for 69 total.
                                      If False, return only Task 1 features (22).
+            use_position_features: If True, append Mitoya-specific position features (section / physical_corner).
 
         Returns:
-            Feature matrix of shape (n_samples, 22) or (n_samples, 69)
+            Feature matrix of shape (n_samples, 22), (n_samples, 25), (n_samples, 69), or (n_samples, 72)
         """
         if len(self.df) == 0:
-            if enable_extended_features:
-                return np.array([]).reshape(0, 69)  # Task 1 + 2 + 3 + 4
-            else:
-                return np.array([]).reshape(0, 22)  # Task 1 only
+            total_features = len(self.get_feature_names(
+                enable_extended_features=enable_extended_features,
+                use_position_features=use_position_features,
+            ))
+            return np.array([]).reshape(0, total_features)
 
         temporal = self._build_temporal_features()  # 11
         group_id = self._build_group_identification_features()  # 11
@@ -168,7 +278,7 @@ class FeatureBuilder:
             relative = self._build_relative_features(is_train=is_train)  # 4
             lag = self._build_lag_features(is_train=is_train)  # 8
             interaction = self._build_interaction_features()  # 5
-            domain_specific = self._build_domain_specific_features()  # 11
+            domain_specific = self._build_domain_specific_features(is_train=is_train)  # 11
 
             features = np.concatenate([
                 features,
@@ -181,12 +291,63 @@ class FeatureBuilder:
                 domain_specific
             ], axis=1)  # 22 + 4 + 5 + 10 + 4 + 8 + 5 + 11 = 69
 
+        if use_position_features:
+            position_features = self._build_position_features()
+            features = np.concatenate([features, position_features], axis=1)
+
         if is_train:
             self._apply_scaling_train(features)
         else:
             self._apply_scaling_test(features)
 
         return features
+
+    def get_feature_names(
+        self,
+        enable_extended_features: bool = False,
+        use_position_features: bool = False,
+    ) -> list[str]:
+        """Return feature names in the same order as build_features()."""
+        names = list(BASE_FEATURE_NAMES)
+        if enable_extended_features:
+            names.extend(EXTENDED_FEATURE_NAMES)
+        if use_position_features:
+            names.extend(POSITION_FEATURE_NAMES)
+        return names
+
+    def _build_position_features(self) -> np.ndarray:
+        """
+        Build Mitoya-specific position features (3 total).
+
+        Falls back to unknown/empty values when the columns are absent so the
+        same pipeline can still run on non-Mitoya halls.
+        """
+        n = len(self.df)
+        if n == 0:
+            return np.array([]).reshape(0, 3)
+
+        if "section" in self.df.columns:
+            section_series = self.df["section"].fillna("unknown").astype(str)
+        else:
+            section_series = pd.Series(["unknown"] * n, index=self.df.index)
+        section_encoded = section_series.map(SECTION_RANK).fillna(0).astype(int).values.reshape(-1, 1)
+
+        if "physical_corner" in self.df.columns:
+            physical_corner_series = self.df["physical_corner"]
+        else:
+            physical_corner_series = pd.Series([-1] * n, index=self.df.index)
+        physical_corner = pd.to_numeric(physical_corner_series, errors="coerce").fillna(-1).astype(int)
+        physical_corner_valid = (physical_corner > 0).astype(int)
+        physical_corner = physical_corner.clip(lower=0)
+
+        return np.concatenate(
+            [
+                section_encoded,
+                physical_corner.values.reshape(-1, 1),
+                physical_corner_valid.values.reshape(-1, 1),
+            ],
+            axis=1,
+        )
 
     def _build_temporal_features(self) -> np.ndarray:
         """
@@ -326,19 +487,49 @@ class FeatureBuilder:
             if len(df_machine) < 2:
                 continue
 
-            # Rolling means (minimum 1 period to handle sparse data)
-            ma_14_diff = df_machine['diff_coins_normalized'].rolling(14, min_periods=1).mean().values
-            ma_7_diff = df_machine['diff_coins_normalized'].rolling(7, min_periods=1).mean().values
-            ma_14_games = df_machine['games_normalized'].rolling(14, min_periods=1).mean().values
-            ma_7_games = df_machine['games_normalized'].rolling(7, min_periods=1).mean().values
-            ma_30_diff = df_machine['diff_coins_normalized'].rolling(30, min_periods=1).mean().values
+            # Rolling means — shift(1) excludes the current day (no same-day leakage)
+            ma_14_diff = (
+                df_machine['diff_coins_normalized']
+                .rolling(14, min_periods=1).mean()
+                .shift(1)
+                .fillna(df_machine['diff_coins_normalized'])
+                .values
+            )
+            ma_7_diff = (
+                df_machine['diff_coins_normalized']
+                .rolling(7, min_periods=1).mean()
+                .shift(1)
+                .fillna(df_machine['diff_coins_normalized'])
+                .values
+            )
+            ma_14_games = (
+                df_machine['games_normalized']
+                .rolling(14, min_periods=1).mean()
+                .shift(1)
+                .fillna(df_machine['games_normalized'])
+                .values
+            )
+            ma_7_games = (
+                df_machine['games_normalized']
+                .rolling(7, min_periods=1).mean()
+                .shift(1)
+                .fillna(df_machine['games_normalized'])
+                .values
+            )
+            ma_30_diff = (
+                df_machine['diff_coins_normalized']
+                .rolling(30, min_periods=1).mean()
+                .shift(1)
+                .fillna(df_machine['diff_coins_normalized'])
+                .values
+            )
 
             # Efficiency: ma_14_diff / ma_14_games
             efficiency = ma_14_diff / (ma_14_games + 1e-8)
 
-            # Stability: std of diff over 7 days (low std = stable)
-            stability = df_machine['diff_coins_normalized'].rolling(7, min_periods=1).std().values
-            stability = np.nan_to_num(stability, nan=0.0)  # Handle NaN in first period
+            # Stability: std of diff over 7 days — shift(1) to exclude current day
+            stability = df_machine['diff_coins_normalized'].rolling(7, min_periods=1).std().shift(1).fillna(0).values
+            stability = np.nan_to_num(stability, nan=0.0)
 
             # Trend: 14-day performance change
             # recent_7_mean = 7-day MA up to day i-1
@@ -367,9 +558,9 @@ class FeatureBuilder:
                 else:
                     trend_14[i] = 0.0
 
-            # Consecutive wins: count days with diff > 0 consecutively
+            # Consecutive wins: count days with diff > 0 consecutively (use lag-1)
             consecutive_wins = np.zeros_like(df_machine['diff_coins_normalized'].values, dtype=float)
-            win_indicator = (df_machine['diff_coins_normalized'].values > 0).astype(int)
+            win_indicator = (df_machine['diff_coins_normalized'].shift(1).fillna(0).values > 0).astype(int)
 
             count = 0
             for i, is_win in enumerate(win_indicator):
@@ -532,20 +723,40 @@ class FeatureBuilder:
         efficiency_vs_hall_feature = efficiency_vs_hall.reshape(-1, 1)
 
         # Feature 4: rank_percentile
-        # Rank machines by diff within each date
-        rank_percentile = np.zeros(n, dtype=float)
+        # Use previous-day diff to rank machines — avoids same-day label leakage.
+        date_arr = pd.to_datetime(
+            self.df["date_parsed"] if "date_parsed" in self.df.columns else self.df["date"],
+            errors="coerce",
+        ).to_numpy()
+        full_date_arr = pd.to_datetime(
+            self.df_full["date_parsed"] if "date_parsed" in self.df_full.columns else self.df_full["date"],
+            errors="coerce",
+        ).to_numpy()
+        rank_percentile = np.full(n, 0.5, dtype=float)
 
-        for date_val in self.df['date'].unique():
-            mask = self.df['date'] == date_val
-            date_machines = self.df[mask].copy()
+        for date_val in sorted(np.unique(date_arr)):
+            current_idx = np.where(date_arr == date_val)[0]
 
-            # Rank by diff_coins (0 = worst, 1 = best)
-            if len(date_machines) > 1:
-                diffs = date_machines['diff_coins_normalized'].values
-                ranks = (diffs.argsort().argsort() + 1) / len(date_machines)  # 1-indexed to 0-indexed percentile
-                rank_percentile[mask] = ranks
-            elif len(date_machines) == 1:
-                rank_percentile[mask] = 0.5  # Single machine gets middle percentile
+            prev_mask = full_date_arr < date_val
+            if not prev_mask.any():
+                continue
+            prev_date = full_date_arr[prev_mask].max()
+
+            prev_data = self.df_full[
+                pd.to_datetime(
+                    self.df_full["date_parsed"] if "date_parsed" in self.df_full.columns else self.df_full["date"],
+                    errors="coerce",
+                ).to_numpy() == prev_date
+            ][
+                ['machine_number', 'diff_coins_normalized']
+            ]
+            current_machines = self.df.iloc[current_idx][['machine_number']].copy()
+            merged_prev = current_machines.merge(prev_data, on='machine_number', how='left')
+            prev_diffs = merged_prev['diff_coins_normalized'].fillna(0).values
+
+            if len(prev_diffs) > 1:
+                ranks = (prev_diffs.argsort().argsort() + 1) / len(prev_diffs)
+                rank_percentile[current_idx] = ranks
 
         rank_percentile_feature = rank_percentile.reshape(-1, 1)
 
@@ -707,22 +918,23 @@ class FeatureBuilder:
             if len(group) < 1:
                 continue
 
-            # Compute rolling statistics for this machine
+            # Compute rolling statistics for this machine.
+            # shift(1) excludes the current day so features are purely historical.
             ma_14_diff = (
                 group['diff_coins_normalized']
-                .rolling(14, min_periods=1).mean().values
+                .rolling(14, min_periods=1).mean().shift(1).fillna(0).values
             )
             ma_7_diff = (
                 group['diff_coins_normalized']
-                .rolling(7, min_periods=1).mean().values
+                .rolling(7, min_periods=1).mean().shift(1).fillna(0).values
             )
             ma_14_games = (
                 group['games_normalized']
-                .rolling(14, min_periods=1).mean().values
+                .rolling(14, min_periods=1).mean().shift(1).fillna(0).values
             )
             ma_7_games = (
                 group['games_normalized']
-                .rolling(7, min_periods=1).mean().values
+                .rolling(7, min_periods=1).mean().shift(1).fillna(0).values
             )
 
             # Create result dataframe for this machine
@@ -864,7 +1076,7 @@ class FeatureBuilder:
 
         return interaction
 
-    def _build_domain_specific_features(self) -> np.ndarray:
+    def _build_domain_specific_features(self, is_train: bool = True) -> np.ndarray:
         """
         Build Domain-Specific features (11 total)
 
@@ -899,13 +1111,22 @@ class FeatureBuilder:
             is_zorome * np.clip(efficiency, 0, 100) / 100.0
         ).reshape(-1, 1)
 
+        # Compute lag-1 diff per machine to avoid same-day label leakage in markers
+        _df_sorted = self.df_full.sort_values(['machine_number', 'date_parsed']).copy()
+        _df_sorted['diff_lag1'] = _df_sorted.groupby('machine_number')['diff_coins_normalized'].shift(1).fillna(0)
+        _lag1_merged = self.df[['machine_number', 'date_parsed']].copy().merge(
+            _df_sorted[['machine_number', 'date_parsed', 'diff_lag1']],
+            on=['machine_number', 'date_parsed'],
+            how='left'
+        )
+        diff_lag1_vals = _lag1_merged['diff_lag1'].fillna(0).values
+
         # Feature 2: setting_injection_marker_dd
-        # Binary indicator: high diff (>1000) on key DD dates (1st, 25th, 30-31st)
-        # These are strategic injection dates: month start, payday, month end
+        # Binary indicator: high diff (>1000) on key DD dates — uses previous day's diff
         marker_dd = np.zeros(n, dtype=float)
         for i, (dd, diff) in enumerate(zip(
             self.df["day_of_month"].values,
-            self.df["diff_coins_normalized"].values
+            diff_lag1_vals
         )):
             if ((dd == 1) or (dd == 25) or (dd == 30 or dd == 31)) and (
                 diff > 1000
@@ -915,8 +1136,7 @@ class FeatureBuilder:
         marker_dd = marker_dd.reshape(-1, 1)
 
         # Feature 3: setting_injection_marker_dow
-        # Binary indicator: high diff (>1000) on weekend days (Fri-Sun = indices 4, 5, 6)
-        # Shop strategy: concentrated setting injection on weekends to maximize payouts
+        # Binary indicator: high diff (>1000) on weekend days — uses previous day's diff
         marker_dow = np.zeros(n, dtype=float)
         day_of_week_map = {
             "Monday": 0, "Tuesday": 1, "Wednesday": 2, "Thursday": 3,
@@ -924,7 +1144,7 @@ class FeatureBuilder:
         }
         for i, (dow, diff) in enumerate(zip(
             self.df["day_of_week"].values,
-            self.df["diff_coins_normalized"].values
+            diff_lag1_vals
         )):
             dow_idx = day_of_week_map.get(dow, -1)
             # Friday (4), Saturday (5), Sunday (6) are weekends
@@ -957,7 +1177,7 @@ class FeatureBuilder:
 
         consecutive_marker = consecutive_marker.reshape(-1, 1)
 
-        # Feature 6: event_day_payload_indicator
+        # Feature 6: event_day_payload_indicator — uses previous day's diff
         is_event = np.zeros(n, dtype=float)
         for i, dd in enumerate(self.df["day_of_month"]):
             if (1 <= dd <= 3) or (23 <= dd <= 27) or (28 <= dd <= 31):
@@ -966,7 +1186,7 @@ class FeatureBuilder:
         event_payload = np.zeros(n, dtype=float)
         for i in range(n):
             if (is_event[i] == 1.0 and is_zorome[i] == 1.0 and
-                self.df["diff_coins_normalized"].values[i] > 1000):
+                    diff_lag1_vals[i] > 1000):
                 event_payload[i] = 1.0
 
         event_payload = event_payload.reshape(-1, 1)
@@ -999,9 +1219,9 @@ class FeatureBuilder:
             hall_relative_eff = relative_eff.reshape(-1, 1)
 
         # Feature 8: machine_model_anomaly_score
-        # Use training stats for mean and std
-        if is_train := False:  # Placeholder: always use stored stats
-            pass
+        if is_train:
+            self.train_stats["dd_global_mean"] = float(self.df["diff_coins_normalized"].mean())
+            self.train_stats["dd_global_std"] = float(self.df["diff_coins_normalized"].std() + 1e-8)
 
         global_mean = self.train_stats.get("dd_global_mean", 0.0)
         global_std = self.train_stats.get("dd_global_std", 1.0)

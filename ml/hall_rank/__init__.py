@@ -1,0 +1,2 @@
+"""Hall-rank prediction package."""
+

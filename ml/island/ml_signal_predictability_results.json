@@ -1,0 +1,66 @@
+[
+  {
+    "train_start": "2025-01-01",
+    "test_start": "2025-07-01",
+    "test_end": "2025-08-01",
+    "test_size": 93,
+    "targets": {
+      "over_104_rate": {
+        "rmse": 0.07311465834394171,
+        "baseline_rmse": 0.0749215141318125,
+        "rmse_improvement_pct": 2.411664805241278,
+        "pearson_corr": 0.26224534828859963,
+        "pearson_p": 0.011103993035320775,
+        "top30_overlap": 0.48148148148148145
+      },
+      "win_rate": {
+        "rmse": 0.08688055313647723,
+        "baseline_rmse": 0.09490964166762372,
+        "rmse_improvement_pct": 8.459718517602868,
+        "pearson_corr": 0.43237615416990743,
+        "pearson_p": 1.5042912160579031e-05,
+        "top30_overlap": 0.5185185185185185
+      },
+      "avg_games": {
+        "rmse": 1050.9439352002275,
+        "baseline_rmse": 1642.0388324725852,
+        "rmse_improvement_pct": 35.99761988468237,
+        "pearson_corr": 0.7756835275338366,
+        "pearson_p": 6.899514317835456e-20,
+        "top30_overlap": 0.6296296296296297
+      }
+    }
+  },
+  {
+    "train_start": "2025-07-01",
+    "test_start": "2026-01-01",
+    "test_end": "2026-02-01",
+    "test_size": 93,
+    "targets": {
+      "over_104_rate": {
+        "rmse": 0.050465389965704294,
+        "baseline_rmse": 0.057505905173835005,
+        "rmse_improvement_pct": 12.243116923119267,
+        "pearson_corr": 0.4835562720775727,
+        "pearson_p": 9.109476810111183e-07,
+        "top30_overlap": 0.5555555555555556
+      },
+      "win_rate": {
+        "rmse": 0.06090585037289882,
+        "baseline_rmse": 0.07240172639450124,
+        "rmse_improvement_pct": 15.877903185573079,
+        "pearson_corr": 0.5459909082177917,
+        "pearson_p": 1.5101048481254305e-08,
+        "top30_overlap": 0.6666666666666666
+      },
+      "avg_games": {
+        "rmse": 581.7435108440327,
+        "baseline_rmse": 1501.503286237548,
+        "rmse_improvement_pct": 61.25592823031645,
+        "pearson_corr": 0.922469184091922,
+        "pearson_p": 2.1985958481474852e-39,
+        "top30_overlap": 0.7777777777777778
+      }
+    }
+  }
+]

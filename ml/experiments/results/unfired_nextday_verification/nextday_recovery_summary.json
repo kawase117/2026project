@@ -1,0 +1,30 @@
+{
+  "by_status": {
+    "unfired": {
+      "count": 6432,
+      "today_avg_diff": -538.03,
+      "tomorrow_avg_diff": 153.67,
+      "tomorrow_avg_relative_diff": -61.58,
+      "tomorrow_positive_rate": 38.9
+    },
+    "hit_candidate": {
+      "count": 38230,
+      "today_avg_diff": 2447.82,
+      "tomorrow_avg_diff": 217.31,
+      "tomorrow_avg_relative_diff": 3.11,
+      "tomorrow_positive_rate": 38.78
+    },
+    "other": {
+      "count": 185397,
+      "today_avg_diff": -243.87,
+      "tomorrow_avg_diff": 180.19,
+      "tomorrow_avg_relative_diff": 1.02,
+      "tomorrow_positive_rate": 38.3
+    }
+  },
+  "gaps_vs_other": {
+    "unfired_vs_other_gap": -62.6,
+    "hit_candidate_vs_other_gap": 2.09
+  },
+  "note": "relative_diff_tomorrow = diff_tomorrow - day_avg_diff_tomorrow\nday_avg_diff_tomorrow は翌日の全台平均差枚（曜日・日別効果を除去）"
+}

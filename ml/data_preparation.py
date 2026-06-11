@@ -13,11 +13,14 @@ def prepare_data_by_groupby(
     train_start: str = "2025-01-01",
     train_end: str = "2026-02-01",
     test_start: str = "2026-02-01",
-    test_end: str = "2026-04-26",
+    test_end: str = "2026-05-01",
     enable_extended_features: bool = False
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
     グループ化戦略に応じてデータを準備し、訓練・テストセットを返す
+
+    テスト期間：2026-02-01 ～ 2026-05-01（90日間）
+    walk-forward validation を想定した設定
 
     Args:
         db_path: SQLite DBファイルパス
