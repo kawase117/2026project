@@ -1,0 +1,342 @@
+---
+id: eda-over-ml-current-phase
+trigger: "MLによる予測精度が頭打ちになったとき、または次の分析方向を検討するとき"
+confidence: 0.95
+domain: methodology
+source: session-conclusion
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 現状のデータでは EDA が ML より有効
+
+## 背景
+蒲田七・みとやの両ホールでML予測を試みた結果、「現状の情報ではMLによる予測は困難だが
+EDAは一定の効果がある」「MLで読み取れるのは粒度の粗い情報のみ」という結論に達した。
+MLが苦手な理由：ホール側の意図的なランダム化、データ量不足、ノイズが多い。
+
+## アクション
+MLによる精度改善に時間を費やすより、EDAを「信じられないくらい広く・深く」実施し、
+発見したパターンをinstinctとして蓄積することを優先する。
+MLは発見したパターンの「統計的な実証」ツールとして位置づける。
+
+## 例
+```
+EDAで発見 → instinct化 → walk-forwardで検証（ML）
+「x_dayの末尾4が強い」→ Kruskal H検定で有意確認 → 運用ルール採用
+```
+
+---
+id: notebook-over-gui-for-eda
+trigger: "EDA用ツールを新規設計するとき、またはダッシュボードに新機能を追加しようとするとき"
+confidence: 0.92
+domain: methodology
+source: design-decision
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# EDA ツールは Jupyter Notebook + 関数ライブラリが最適
+
+## 背景
+「毎回Claudeに頼むよりGUIツールを作ったほうが良いか」という問いに対し検討した結果、
+Jupyter Notebook + 名前付きPython関数ライブラリが最適と結論。
+理由：
+- GUIは「もう一軸追加したい」という探索中の方向転換に弱い
+- Notebook形式はデータ探索で最も広く使われている業界標準
+- 関数ライブラリは引数を追加するだけで次元を拡張できる
+- 一人ユーザー・探索目的ならGUIのメンテナンスコストが無駄
+
+## アクション
+新しい分析軸・フィルタが必要になったら eda/core.py の関数を拡張するだけ。
+ダッシュボードへの統合は「運用フェーズ」（パターンが確定してから）に先送り。
+
+## 例
+```python
+# GUI不要。関数呼び出しで自由に組み合わせ
+scan_dimension('みとや', ['dd', 'date_digit'], filters={'is_x_day': 1}, min_n=5)
+full_scan('みとや', max_dims=2, dimensions=['dd_group','machine_digit'])
+cross_hall_scan(['dd_group', 'day_of_week'], min_n=10)
+```
+
+---
+id: auto-explore-before-hypothesis
+trigger: "新しいホールや次元を分析しはじめるとき"
+confidence: 0.93
+domain: methodology
+source: design-decision
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 自動総当たり探索を先に実施し、その後に仮説検証する
+
+## 背景
+「何を探すか」が分からない段階では、全次元の総当たりスキャンで
+「まだ知らないパターン」を先に発見する。
+みとやのDD=30発見・末尾7がx_day限定という発見はいずれも事前仮説なしで得られた。
+仮説検証は「発見後に仮説を立てて深掘り」という順序が正しい。
+
+## アクション
+1. full_scan(hall, max_dims=1) で全1次元をスキャン（高速・全体把握）
+2. Tier A/B が出た次元を中心に max_dims=2 で2次元スキャン
+3. 発見したパターンに対してフィルタを追加して仮説検証
+4. Tier A パターンを export_tier_a_drafts() でinstinct候補化
+
+## 例
+```python
+# Step 1: 全1次元スキャン
+scan1d = full_scan('みとや', max_dims=1, min_n=10)
+summary = summarize_scan(scan1d)  # Tier A/B のみ抽出
+
+# Step 2: 有望次元を2次元に拡張
+scan2d = full_scan('みとや', max_dims=2,
+    dimensions=['dd_group', 'day_of_week', 'date_digit'])
+```
+
+---
+id: hall-specific-vs-universal-patterns-equal-value
+trigger: "クロスホール比較でパターンが一致しない（矛盾に見える）とき"
+confidence: 0.97
+domain: methodology
+source: design-decision
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ホール固有パターンと共通パターンは等価値
+
+## 背景
+みとや固有のパターン（x_day末尾4が強い）と他ホールで確認できないパターンを
+「矛盾」として扱うのは誤り。
+各ホールは独自の設定投入戦略を持つ（CLAUDE.mdの実証済み事実）。
+ホール固有パターンはそのホールを攻略するための固有知識として価値がある。
+
+## アクション
+cross_hall_scan()の出力で universality='hall_specific' のパターンも積極的に採用する。
+universality='universal' はより広く適用できる汎用ルールとして別途管理する。
+「矛盾」という語は使わず「ホール固有のクセ」として記録する。
+
+## 例
+```
+みとや: x_day × 末尾4 → +469（ホール固有）→ みとや運用ルールに採用
+蒲田7:  x_day × 末尾4 → +50（有意でない）→ 蒲田7では異なるパターンを探す
+→ 矛盾ではなくホール戦略の違い
+```
+
+---
+id: tier-classification-relative-baseline
+trigger: "全機種集計データでTier分類を行うとき、またはplus_rateの閾値を設定するとき"
+confidence: 0.91
+domain: methodology
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Tier判定はホール全体のbaseline plus_rateに対する相対値で行う
+
+## 背景
+全機種集計データでの plus_rate は約38-39%（みとや実測）が基準値。
+セクション特定分析用の絶対閾値（Tier A: plus_rate>=75%）を全機種データに
+そのまま適用すると、全パターンがTier C/Avoid になり機能しない。
+
+パチスロホールの構造上、全機種平均は：
+- plus_rate: 37-45%（設定1-6混在のため半数以下がプラス）
+- avg_diff: -100〜+300程度が正常範囲
+
+## アクション
+eda/core.py の _classify_tier() は baseline_plus_rate を自動計算して相対判定する。
+セクション特定データ（機種フィルタ後など）では baseline_plus_rate が高くなるため
+自動的に閾値も上がり、正しく機能する。
+
+## 例
+```
+全機種データ: baseline_plus_rate=38.6%
+  Tier A 条件: plus_rate >= 53.6% (baseline+15)
+  Tier B 条件: plus_rate >= 43.6% (baseline+5)
+
+ジャグラー限定（高設定多投入）: baseline_plus_rate=55%
+  Tier A 条件: plus_rate >= 70%
+  Tier B 条件: plus_rate >= 60%
+```
+
+---
+id: monday-cross-hall-positive-pattern
+trigger: "非x_day（その他系）の平日で強いホールを探すとき、または月曜の戦略を検討するとき"
+confidence: 0.78
+domain: cross-hall
+source: auto-explorer-discovery
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 「その他系 × 月曜日」が複数ホールで共通のTier Bパターン（2026-06-09 自動発見）
+
+## 背景
+cross_hall_scan(['dd_group','day_of_week'], min_n=10) を実行したところ、
+「その他系（非x_day）× 月曜日」が4ホールで Tier B として出現した。
+事前に仮説なし・auto-explorerによる自動発見。
+
+実績値（n>=10）：
+  レイトギャップ: avg_diff=+607, plus_rate=50.9% (Tier B)
+  ヒロキ:         avg_diff=+332, plus_rate=44.8% (Tier B)
+  ザシティ:       avg_diff=+224, plus_rate=42.4% (Tier B)
+  ARROW:          avg_diff=+134, plus_rate=46.7% (Tier B)
+  みとや:         avg_diff=+277, plus_rate=41.5% (Tier C) ← x_day効果で埋もれている可能性
+  楽園:           avg_diff=-50  (Tier C)
+  金時:           avg_diff=-139 (Tier C)
+
+## アクション
+週明け月曜は客足を戻すため設定を上げる戦略をとるホールが複数存在する可能性。
+検証：各ホールで「月曜かつ非x_day」の日に絞って機種別・セクション別に深掘りする。
+注意：みとやはx_day効果が強いため月曜効果が見えにくい可能性がある。
+
+## 例
+```python
+scan_dimension(
+    'レイトギャップ',
+    ['machine_name'],
+    filters={'is_any_event': 0},
+    min_n=5,
+    df=df[df['day_of_week']=='月']
+)
+```
+
+---
+id: xday-auto-discovery-validates-eda-framework
+trigger: "EDA自動スキャナーの信頼性を評価するとき、または新しいパターンが本物かを検証するとき"
+confidence: 0.96
+domain: methodology
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# x_dayパターンがゼロ仮説でauto-explorerにより自動再発見された
+
+## 背景
+full_scan()をみとやに適用した結果、事前知識ゼロでDD=4,14,24がTier B、
+DD=7,17,27がTier Cとして自動検出された。
+これはinstinct記録済みの「x_day={4,7,14,17,24,27}」と完全一致。
+
+DD別 avg_diff（みとや全機種、n>=10）:
+  DD=4:  +280 Tier B  (x_day)
+  DD=14: +234 Tier B  (x_day)
+  DD=24: +213 Tier B  (x_day)
+  DD=7:  +185 Tier C  (x_day)
+  DD=27: +184 Tier C  (x_day)
+  DD=17: +172 Tier C  (x_day)
+  DD=30: +150 Tier C  (ウォッチ中・instinct既記録と一致)
+
+## アクション
+auto-explorerが既知パターンを再発見 = フレームワークの信頼性確認。
+新規Tier B/Cパターンはドメイン知識と照合し、
+既知パターンの再発見か真の新規発見かを判断する。
+
+## 例
+```python
+# DD=30の深掘り（Tier C→Bへの昇格可能性確認）
+scan_dimension('みとや', ['dd', 'date_digit'], filters={'dd': 30}, min_n=3)
+```
+
+---
+id: dd-group-lag-streak-signal
+trigger: "前日の結果から翌日の予測をしようとするとき、または据え・リバウンドパターンを分析するとき"
+confidence: 0.82
+domain: domain-analysis
+source: auto-explorer-discovery
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# x_day系（4系・7系）はDD内での連続性が極めて高い
+
+## 背景
+lag_analysis('みとや', 'dd_group', lag=1) を実行したところ（2026-06-09）：
+  4系: streak_rate=91.5%（前のx_day日がプラスなら次のx_day日も91.5%でプラス）
+  7系: streak_rate=95.9%
+  その他: streak_rate=32.2%（ほぼランダム）
+
+注意：lag=1はDD内の連続観測（DD=4→DD=14→DD=24の順）を見るため
+「翌日」ではなく「次の同系列日（約10日後）」の連続性を示す。
+
+## アクション
+「前回のx_day（4系）がプラスだった → 次の4系（10日後）も期待できる」
+という運用判断の統計的根拠として使用できる。
+その他系（非x_day）は連続性がなくランダムに近い。
+
+## 例
+```python
+lag = lag_analysis('みとや', 'machine_name', lag=1, min_n=5)
+# rebound_rate: 前日マイナス→翌日プラスの確率（リバウンド）
+# streak_rate:  前日プラス→翌日プラスの確率（据え継続）
+```
+
+---
+id: eda-instinct-pipeline
+trigger: "EDA分析の発見をinstinctとして記録するとき"
+confidence: 0.90
+domain: methodology
+source: design-decision
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# EDA発見→instinct候補ドラフト→人間レビューのパイプライン
+
+## 背景
+instinctが散発的な状況に留まっている問題を解決するため、
+auto-explorerとinstinct_generatorを連携させたパイプラインを実装した（2026-06-09）。
+
+パイプライン：
+  full_scan() → Tier A抽出 → export_tier_a_drafts() → YAMLドラフト → 人間レビュー → 正式採用
+
+人間レビューが必須な理由：
+- グローバルバイアスとの混同チェック（DD=19問題: spread大でも固有パターンなし）
+- サンプル数の十分性確認
+- ドメイン解釈の追記（「なぜこの日が強いか」）
+
+## アクション
+1. scan_dimension() or full_scan() でTier Aパターンを発見
+2. export_tier_a_drafts() で document/instincts/ にYAMLドラフトを出力
+3. 【要記入】部分（グローバルバイアスチェック・運用ルール）を人間が埋める
+4. 正式なinstinctとして採用
+
+## 例
+```python
+export_tier_a_drafts(
+    scan_result = result,
+    group_cols  = ['dd', 'day_of_week'],
+    hall_name   = 'みとや',
+)
+# → document/instincts/2026-06-09-auto-draft-みとや-dd_day_of_week.yaml
+```
+
+---
+id: statistical-tests-for-eda-validity
+trigger: "EDAで発見したパターンが「本物」かを判断するとき"
+confidence: 0.94
+domain: methodology
+source: design-decision
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# EDAパターンの有意性は4指標で総合判断する
+
+## 背景
+「Tier Aだから有意」だけでは不十分。パチスロデータは正規分布しないため
+ノンパラメトリック検定を使用し、4指標を組み合わせて判断する。
+
+## アクション
+| 指標 | 判断基準 | 役割 |
+|------|---------|------|
+| Kruskal-Wallis p値 | p < 0.10 | 次元全体の有意性 |
+| epsilon_sq (ε²) | >0.02=小, >0.06=中, >0.14=大 | 実用的な差の大きさ |
+| Bootstrap 95% CI | CIがゼロをまたがないか | 平均値の信頼性 |
+| Spearman rho | 月間トレンドの方向性 | 安定性vs消滅傾向 |
+
+グローバルバイアスチェック（必須）：
+deviation = pattern_avg_diff - global_mean を計算し、
+乖離が大きい場合のみ「固有パターン」として採用する（DD=19の教訓）。
+
+## 例
+```python
+# scan_dimension() が自動計算（kruskal_H, p_value, epsilon_sq, ci_lo, ci_hi, spearman_rho）
+result = scan_dimension('みとや', ['dd', 'date_digit'], min_n=5)
+
+# グローバルバイアスチェックを追加
+global_mean = load_hall_df('みとや')['diff'].mean()
+result['deviation_from_global'] = result['avg_diff'] - global_mean
+```

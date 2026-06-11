@@ -2,6 +2,8 @@
 id: wiki-reading-status-field-type
 trigger: when adding Boolean fields to wiki frontmatter
 confidence: 0.95
+scope: hall-specific
+hall: kamata7
 domain: wiki-maintenance
 source: session-observation
 project_id: wiki
@@ -19,6 +21,8 @@ example: 'repair logic: if ''reading_status'' not in fm_dict: fm_dict[''reading_
 id: wiki-field-name-consistency
 trigger: when implementing new frontmatter fields
 confidence: 0.9
+scope: hall-specific
+hall: kamata7
 domain: wiki-maintenance
 source: session-observation
 project_id: wiki
@@ -35,6 +39,8 @@ example: 'reading_status (Boolean) は全スキルで一貫して使用。ingest
 id: wiki-safe-batch-repair-pattern
 trigger: when performing batch repairs on 400+ files
 confidence: 0.85
+scope: hall-specific
+hall: kamata7
 domain: wiki-maintenance
 source: session-observation
 project_id: wiki

@@ -2,6 +2,7 @@
 id: is-top2-must-be-within-expert
 trigger: "when defining LTR ranking target for multi-expert pachinko prediction"
 confidence: 0.99
+scope: methodology
 domain: ml-pipeline-configuration
 source: session-breakthrough
 project_id: 2026project
@@ -54,6 +55,7 @@ OK: groupby(["date", "group_key"]) → 各expert内10アイテム中のtop2 → 
 id: train-eval-alignment-check-mandatory
 trigger: "when designing LTR training targets for any multi-group ranking task"
 confidence: 0.97
+scope: methodology
 domain: ml-eval-discipline
 source: session-retrospective
 project_id: 2026project

@@ -1,0 +1,467 @@
+---
+id: per-hall-model-insufficient-data
+trigger: "when considering training separate per-hall models for each of 9 halls"
+confidence: 0.95
+scope: methodology
+domain: ml-architecture
+source: empirical-20260605
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ホール別独立モデルは178行では機能しない
+
+## 背景
+全ホール統合モデル（pooled）の代わりに、各ホール独立のロジスティック回帰モデルを試した結果：
+- per_hall: chosen_avg_diff_mean=58.23, regret=206.50
+- pooled: chosen_avg_diff_mean=123.65
+
+per_hall が pooled を大幅に下回った。原因は訓練データが1ホール=178行と少なく、
+walk-forward 序盤の訓練サンプルが50〜80行程度まで減るため、疎なバイナリ特徴量
+（is_topk_dd: 年5回、is_strong_zorome: 年12回程度）で係数が発散する。
+
+## アクション
+ホール別独立モデルは 500行/ホール以上のデータが確保できる場合にのみ有効。
+現データ（178日/ホール）では pooled + ホール×シグナル交互作用項（hybrid）が最良。
+
+## 例
+❌ per_hall モデル (178行): avg_diff=58.23
+✅ hybrid (pooled + hall×signal): avg_diff=127.21
+→ DB拡張後（500行+）に per_hall を再評価する
+
+---
+id: hybrid-interaction-terms-beat-pooled
+trigger: "when improving pooled all-hall model for daily hall selection"
+confidence: 0.93
+scope: methodology
+domain: ml-architecture
+source: empirical-20260605
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# pooled + ホール×シグナル交互作用項（hybrid）が最良アーキテクチャ
+
+## 背景
+3アーキテクチャの同一holdout比較（150日）：
+- per_hall: 58.23（データ不足で過学習）
+- pooled: 105.46（全ホール共通係数、ホール固有シグナルを希釈）
+- hybrid: 121.92 → C=0.1チューニング後127.21
+
+hybrid は「全データでパラメータを学習しながら、ホール固有のシグナル日に専用係数を持つ」構造。
+SIGNAL_DETECTED ホールの DD-topk / strong_zorome の交互作用項が有効。
+NO_SIGNAL ホール（蒲田7等）の交互作用項はゼロのままなので自然にペナルティ不要。
+
+## アクション
+hybrid を基本アーキテクチャとして採用。特徴量は：
+- pooled base features（weekday, dd, is_zorome_day, is_strong_zorome_day等）
+- SIGNAL_DETECTED ホールのみ：hall_dummy × confirmed_signal の積
+
+## 例
+pd.get_dummies(df, columns=['store']) でダミー生成
+Stage 1 有意シグナルごとに hall_dummy × signal を新列として追加
+L2正則化 C=0.1 で全特徴量をロジスティック回帰に投入
+
+---
+id: logreg-c-01-optimal-for-sparse-calendar-features
+trigger: "when tuning regularization for logistic regression with sparse binary calendar features"
+confidence: 0.92
+scope: methodology
+domain: ml-regularization
+source: empirical-20260605
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 疎なカレンダー特徴量にはC=0.1（強い正則化）が最適
+
+## 背景
+C グリッド [0.01, 0.05, 0.1, 0.5, 1.0, 5.0] を探索した結果、C=0.1が選ばれた。
+理由：is_topk_dd（年5回）・is_strong_zorome（年12回）のような疎なバイナリ特徴量は、
+C=1.0以上では少ないサンプルで係数が発散し、holdoutで外れる。
+C=0.1では係数が小さく抑えられ、汎化性能が安定する。
+
+スモーク内比較：C=0.1=156.43 vs C=1.0=150.99
+
+## アクション
+hall×signal 交互作用項を含む hybrid モデルでは C=0.1 を基本とする。
+データが 500行+ に増えた場合は再チューニング（より高い C が有効になる可能性）。
+
+## 例
+LogisticRegression(C=0.1, max_iter=500, solver='lbfgs', penalty='l2')
+
+---
+id: exclusive-bin-scoring-improves-spearman-not-avgdiff
+trigger: "when switching from cumulative P(>=X) score to exclusive-bin expected value score"
+confidence: 0.89
+scope: methodology
+domain: feature-engineering
+source: empirical-20260605
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 排他的ビン期待値スコアはspearmanを改善するがavg_diffは変わらない
+
+## 背景
+スコア式を累積型から排他的ビン型に変更した実験：
+- 累積型: score = w100*P(>=100) + w200*P(>=200) + w300*P(>=300)
+- 排他的ビン型: expected_diff = -100*P(<0) + 50*P(0-100) + 150*P(100-200) + 250*P(200-300) + 350*P(>=300)
+
+結果：
+- avg_diff: 127.21 → 126.17（-1.04、誤差範囲内）
+- spearman: 0.3835 → 0.4263（+0.043、+11%改善）
+- 蒲田7選択率: 64.7% → 70.7%（悪化）
+
+spearman改善は「ホール間の相対順位把握能力の向上」を意味するが、
+1位を常に選択するため、1位の選択精度が変わらない限りavg_diffは変わらない。
+
+## アクション
+排他的ビン型は理論的に正しいスコア式として維持する。
+P(<0)の追加は蒲田7の低調日を検知する期待があったが、
+蒲田7はP(>=0)が高いため選択率がむしろ上昇した。
+
+## 例
+is_ge_0 = (avg_diff >= 0).astype(int)  # 新規ターゲット追加
+targets = ['is_ge_0', 'is_ge_100', 'is_ge_200', 'is_ge_300']
+
+---
+id: lag1-avg-games-harmful-for-hall-selection
+trigger: "when adding lag1_avg_games as a feature to the hall selection model"
+confidence: 0.91
+scope: methodology
+domain: feature-engineering
+source: empirical-20260605
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# lag1_avg_gamesはホール選択モデルに有害
+
+## 背景
+前日の avg_games（台平均G数）を lag(1) で特徴量追加した実験：
+- A（なし）: avg_diff=126.17, spearman=0.4263, 蒲田7=70.67%, top1=0.3067
+- B（あり）: avg_diff=123.41, spearman=0.4176, 蒲田7=82.00%, top1=0.26
+
+avg_diff -2.76、spearman -0.0087、蒲田7偏重 +11.3pt 全て悪化。
+
+理由：avg_games はホールの「規模・集客力」を反映しており、
+高設定を示すシグナルではない。蒲田7は台数が多く客足も安定しているため
+avg_games が高い傾向があり、この特徴量を追加すると蒲田7のスコアがさらに上昇する。
+
+## アクション
+lag1_avg_games は採用しない。
+avg_games 系特徴量全般を使う場合は ablation で効果を確認してから判断する。
+
+## 例
+❌ lag1_avg_games 追加: avg_diff -2.76, spearman -0.009, 蒲田7 +11pt 全て悪化 → 破棄
+
+---
+id: kamata7-selection-audit-rank-distribution
+trigger: "when evaluating whether to penalize 蒲田7 (NO_SIGNAL hall) in hall selection"
+confidence: 0.90
+scope: hall-specific
+hall: kamata7
+domain: ml-evaluation
+source: empirical-20260605
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田7選択日の実際順位分布：ペナルティ判断の基準値
+
+## 背景
+hybrid モデルが蒲田7を選んだ 97/150 日の実際の順位分布（holdout期間）：
+- rank=1（本当に最良）: 27日（27.8%）
+- rank<=3合計: 71日（73.2%）
+- 平均実順位: 2.82、中央値: 2
+
+ランダム期待値との比較：
+- rank=1 期待: 11.1% → 実績27.8%（2.5倍）
+- rank<=3 期待: 33.3% → 実績73.2%（2.2倍）
+
+## アクション
+蒲田7は「外れではないが最良でもない」状態。完全に切る根拠はない。
+no_signal_penalty を強めることよりスコア精度を先に改善する。
+改善後に 70%+ が続くなら penalty を検討する。
+
+## 例
+rank=1率 27.8% vs ランダム 11.1% → 蒲田7はランダムより明確にプラスの選択
+しかし 70%+ の選択率は高すぎる → スコア改善で自然に下がることを期待
+
+---
+id: gpu-ranking-models-underperform-logreg-on-small-data
+trigger: "when considering GPU-accelerated ranking models (XGBRanker/LGBMRanker/CatBoostRanker) for hall selection"
+confidence: 0.94
+scope: methodology
+domain: ml-architecture
+source: empirical-20260605
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# GPU ランキングモデルは小データ（178行/ホール）では LogReg hybrid に劣る
+
+## 背景
+GPU model zoo（XGBRanker/LGBMRanker/CatBoostRanker）vs hybrid LogReg の比較：
+- hybrid LogReg (C=0.1): avg_diff=126.17 ← 現ベスト
+- CatBoostRanker CPU: 111.81
+- XGBRanker md3 CPU: 111.81, spearman=0.3117
+- CatBoostRanker GPU: 34.73（NDCG GPU未実装で崩壊）
+
+GPU zoo best が hist_best_fixed（111.8）と同等で hybrid より -14.4 低い。
+178行/ホールでは n_estimators=300, max_depth=4 の複雑なモデルは過学習する。
+GPU speedup も発生しない（データが小さすぎてGPU転送オーバーヘッドが支配的）。
+
+また、ボトルネックは policy sweep（pandas/numpy）であり、GPU はモデル学習には効くが
+policy evaluation には無効。
+
+## アクション
+GPU ランキングモデルの採用条件：
+1. 各ホール 500行以上（現在178行の約3倍）
+2. policy sweep のボトルネックを先に解消する
+
+## 例
+❌ GPU zoo（データ不足）: best=111.81 ≒ hist_best=111.8（MLの価値なし）
+✅ hybrid LogReg (C=0.1): 126.17（+14 vs GPU zoo best）
+→ データ拡張後に再評価
+
+---
+id: catboost-gpu-ndcg-not-implemented
+trigger: "when using CatBoostRanker with GPU backend and NDCG objective"
+confidence: 0.99
+scope: methodology
+domain: ml-infrastructure
+source: empirical-20260605
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# CatBoost GPU 経路で NDCG 目標は未実装 → avg_diff が崩壊する
+
+## 背景
+CatBoostRanker に --use-gpu を指定した場合、NDCG 目標が GPU 未実装という警告が出て
+計算継続するが、精度が崩壊した：
+- CPU: avg_diff=111.81
+- GPU: avg_diff=34.73（壊滅的な低下）
+
+## アクション
+GPU 経路では CatBoostRanker を除外する。
+XGBRanker / LGBMRanker のみ GPU 対象にする。
+または CatBoost には GPU 対応の loss_function を使う（YetiRank等、要検証）。
+
+## 例
+❌ CatBoostRanker(loss_function='NDCG', task_type='GPU')  # 崩壊 avg_diff=34.73
+✅ CatBoostRanker(task_type='CPU')  # 安全 avg_diff=111.81
+
+---
+id: calendar-signal-ceiling-126-for-current-data
+trigger: "when evaluating whether to continue feature engineering on calendar-based hall selection model"
+confidence: 0.85
+scope: methodology
+domain: ml-evaluation
+source: empirical-20260605
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# カレンダー特徴量のみでのホール選択は avg_diff 126 付近が実用的な天井
+
+## 背景
+現データ（178日/ホール）でのカレンダー特徴量を使った各種改善試行の結果：
+- hybrid baseline: 126.17
+- C チューニング後: 127.21
+- 排他的ビン化: 126.17（spearman改善のみ）
+- lag1_avg_games 追加: 123.41（悪化）
+- GPU ランキングモデル: 111.81（大幅悪化）
+
+oracle との gap: 126 vs 264 = 138 の残差。
+カレンダー特徴量では予測できない「理由不明の高設定日」が多数存在する。
+
+## アクション
+次の飛躍には以下のいずれかが必要：
+1. 外部シグナル（ぽこデータ等の設定予測情報）の特徴量化
+2. DB拡張（500行+/ホール）で per-hall/ranking モデルが有効化
+3. 機種別特徴量の追加
+
+現状の推奨：external signal なしでは 126〜130 を天井として受け入れ、
+ぽこデータ活用の検討に移行する。
+
+## 例
+カレンダー改善の限界：127.21（ベスト）/ oracle 264.7
+残改善余地の主因：カレンダーシグナルが未検出の「理由不明の高設定日」
+
+---
+id: make-binary-model-gpu-branch-bug
+trigger: "XGBoostがインストールされている環境でGPUフラグの動作を確認するとき、またはmake_binary_modelを実装・修正するとき"
+confidence: 0.98
+scope: methodology
+domain: ml-architecture
+source: session-observation-20260605
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# make_binary_model の分岐は「XGBoostのインストール有無」ではなく「use_gpuフラグ」で行う
+
+## 背景
+`if XGBClassifier is None` という条件でモデルを分岐すると、
+XGBoostがインストールされている環境では `--use-gpu` なしでも常に XGBClassifier が使われる。
+これにより LogisticRegression でチューニングされたベースライン（例: hybrid avg_diff=127.21）が
+再現できなくなる。
+
+修正前（バグ）の動作:
+- XGBoost入り + `--use-gpu` なし → XGBClassifier(device="cpu") ← LogRegではない
+- XGBoost入り + `--use-gpu` あり → XGBClassifier(device="cuda")
+- XGBoost未インストール            → LogisticRegression
+
+## アクション
+```python
+# NG: XGBoostのインストール有無だけで分岐
+def make_binary_model(*, c, use_gpu, gpu_backend):
+    if XGBClassifier is None:
+        return LogisticRegression(C=c, ...)
+    return XGBClassifier(...)  # XGBoost入りなら常にXGBoost
+
+# OK: use_gpuフラグで分岐（インストール有無はフォールバックのみ）
+def make_binary_model(*, c, use_gpu, gpu_backend):
+    if not use_gpu or XGBClassifier is None:
+        return LogisticRegression(C=c, ...)   # デフォルトはLogReg
+    return XGBClassifier(device="cuda", ...)  # GPU明示時のみXGBoost
+```
+
+同様に `make_regressor` も `if not use_gpu or XGBRegressor is None` に変更する。
+
+## 例
+```python
+def make_binary_model(*, c: float, use_gpu: bool, gpu_backend: str) -> Any:
+    if not use_gpu or XGBClassifier is None:
+        return LogisticRegression(max_iter=500, class_weight="balanced",
+                                  solver="lbfgs", C=float(c), random_state=42)
+    params = build_model_params(use_gpu=True, gpu_backend=gpu_backend)
+    return XGBClassifier(n_estimators=300, ..., **params)
+```
+
+---
+id: hall-selection-vs-tail-ranking-model-separation
+trigger: "ホール選択モデルのパラメータ（C, logreg_c等）を末尾ランク予測モデルに適用しようとするとき"
+confidence: 0.97
+scope: methodology
+domain: ml-architecture
+source: session-observation-20260605
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ホール選択モデルと末尾ランク予測モデルは完全に別のシステム
+
+## 背景
+C=0.1（hybrid LogReg最適値）はホール選択モデル専用のパラメータ。
+末尾ランク予測（tail_ltr_*）はLTR + XGBoost LambdaMARTを使っており、
+LogisticRegression の C パラメータとは無関係。
+
+| モデル | ファイル | 問題設定 | アルゴリズム |
+|--------|----------|----------|-------------|
+| ホール選択 | hall_practical_strategy_analysis.py | どのホールに行くか | LogisticRegression(C=0.1) |
+| 末尾ランク | tail_ltr_*_wf.py | どの末尾が来るか | XGBoost LTR (LambdaMART) |
+
+## アクション
+- hall_practical_strategy_analysis.py のパラメータ議論を tail_ltr_* に持ち込まない
+- GPUサポートはそれぞれ独立して管理（tail_ltr系は既存の --use-gpu フラグあり）
+- C=0.1 のinstinctはホール選択文脈でのみ参照する
+
+---
+id: mitoya-segment-design-no-floor
+trigger: "みとや大森町の末尾ランク予測のセグメントを設計するとき"
+confidence: 0.95
+scope: hall-specific
+hall: mitoya
+domain: ml-architecture
+source: user-instruction-20260605
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# みとや大森町は全フロア1フロア扱い、N/A/BTの3セグメント構成
+
+## 背景
+蒲田七は2F/3F × A-type/N-type = 4セグメント（2F_N, 2F_A, 3F_N, 3F_A）。
+みとやは全台1フロアのため、フロア区分は不要。
+さらに、みとやはBTに高設定を入れることが多いため、BTを独立セグメントとする。
+
+台番号構成: 5xx(99台), 6xx(100台), 7xx(56台), 8xx(11台) → フロア分け不要
+
+## アクション
+```python
+EXPERTS_MITOYA = ("N", "A", "BT")
+
+def add_atype3_columns(df):
+    bt   = df["bt_flag"] == 1
+    a_nb = (df["jug_flag"] == 1) | (df["hana_flag"] == 1) | (df["oki_flag"] == 1)
+    bucket = pd.Series("N", index=df.index)
+    bucket[a_nb] = "A"
+    bucket[bt]   = "BT"   # BTが最優先（A条件より後で上書き）
+    df["atype_bucket"] = bucket
+    df["expert"] = bucket
+    df["is_a_type"] = (a_nb | bt).astype(int)  # row_weight互換性維持
+    return df
+```
+`floor_bucket` / `floor_head` 列は生成しない。
+
+## 例
+台番号 501（bt_flag=1, jug_flag=1）→ "BT"（BTが優先）
+台番号 601（bt_flag=0, jug_flag=1）→ "A"
+台番号 701（bt_flag=0, jug_flag=0）→ "N"
+
+---
+id: signal-existence-mitoya-period-settings
+trigger: "signal_existence_mitoyaの期間設定を確認・修正するとき"
+confidence: 0.93
+scope: hall-specific
+hall: mitoya
+domain: ml-evaluation
+source: session-observation-20260605
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# みとや signal_existence の selection-start は 2025-11-01 が正しい
+
+## 背景
+みとやのデータ: 2025-01-01〜2026-05-29（514日）
+
+プランの期間設計:
+- training  : 2025-01-01〜2025-10-31（305日）
+- selection : 2025-11-01〜2026-01-27（119日）← ここが正しい
+- holdout   : 2026-01-28〜2026-05-29（90日）
+
+Codex実装時に selection-start が 2025-04-01 になってしまい、
+training が3ヶ月しかなくなるバグがあった。
+
+## アクション
+signal_existence_mitoya.py の build_parser() で:
+```python
+p.add_argument("--selection-start", default="2025-11-01")  # 2025-04-01 は誤り
+p.add_argument("--selection-end",   default="2026-01-27")
+p.add_argument("--holdout-start",   default="2026-01-28")
+p.add_argument("--holdout-end",     default="2026-05-29")
+```
+
+---
+id: optimize-allhall-policy-needs-use-gpu-param
+trigger: "_optimize_allhall_policy 関数を修正・拡張するとき"
+confidence: 0.90
+scope: methodology
+domain: ml-architecture
+source: session-observation-20260605
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# _optimize_allhall_policy には use_gpu パラメータが必要
+
+## 背景
+`build_policy_grid(use_gpu=False, ...)` がフォールバックパスにハードコードされていた。
+`_optimize_allhall_policy` に `use_gpu` パラメータがなかったため、
+`policy_grid=None` で呼ばれた場合に常にフルグリッドになる。
+通常 `main()` から `policy_grid` が渡されるため dead code だったが、
+関数シグネチャとして `use_gpu` を持つべき。
+
+## アクション
+```python
+def _optimize_allhall_policy(*, ..., policy_grid=None, use_gpu: bool = False):
+    if combos is None:
+        combos = build_policy_grid(use_gpu=use_gpu, ...)  # False固定を解消
+
+# main() の呼び出し側:
+best_policy, opt_table = _optimize_allhall_policy(
+    ..., policy_grid=policy_grid, use_gpu=bool(args.use_gpu),
+)
+```
+

@@ -1,0 +1,186 @@
+---
+id: total-diff-coins-focus-leakage-root-cause
+trigger: "バックテストのhit@2が95%超のとき、またはget_numeric_featuresで特徴量セットを変更するとき"
+confidence: 0.99
+scope: methodology
+domain: prediction-evaluation
+source: data-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# total_diff_coins_focus が特徴量に混入していた根本リーク
+
+## 背景
+clean holdout監査（2025選定→2026評価）でも hit@2=98-99% が継続したことで調査。
+以下の手順でリークを特定した：
+
+1. ナイーブ基準（過去固定Top2）: hit@2=37.8% ≈ ランダム
+   → Top2は日次で変動しており単純暗記ではない
+2. 全lag特徴量のSpearman rho（日内ランク相関）: 0.002〜0.059
+   → lag特徴量は実質ランダムレベルの予測力
+3. total_diff_coins_focus 単独 hit@2 = 100.0% (327日全勝)
+   → 同日の実績値が特徴量に混入している
+
+_predict_for_date (tail_ltr_split_rule_nextday_gpu.py line 591) の除外リスト：
+```python
+excluded_targets = {"is_top_2", "is_rank_1", "is_top_3", "is_worst_1", "is_worst_3"}
+```
+ターゲットラベル5列しか除外していない。
+total_diff_coins_focus (r=+0.643 with is_top_2) が特徴量として混入。
+efficiency_focus も同様 (r=+0.642)。
+
+## アクション
+_predict_for_date の特徴量フィルタを以下に修正する：
+```python
+SAME_DAY_LEAK_COLS = {
+    "is_top_2", "is_rank_1", "is_top_3", "is_worst_1", "is_worst_3",
+    "avg_diff_coins", "total_diff_coins", "total_diff_coins_focus",
+    "win_rate", "efficiency", "efficiency_focus", "diff_coins_normalized",
+}
+all_features = [f for f in all_features if f not in SAME_DAY_LEAK_COLS]
+```
+同様の除外漏れが clean_holdout_audit.py, tail_ltr_split_rule_wf.py にも存在しうる。
+修正後は全バックテストを再実行して真の性能を計測する。
+
+---
+id: leakage-diagnosis-three-step-procedure
+trigger: "バックテスト精度が異常に高いとき、またはモデルの評価妥当性を疑うとき"
+confidence: 0.97
+scope: methodology
+domain: prediction-evaluation
+source: data-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# リーク診断の3ステップ標準手順
+
+## 背景
+今回のリーク発見は3ステップで確定した。
+ステップ1・2だけでは「非線形相互作用」と誤判断するリスクがある。
+
+ステップ1: ナイーブ基準との比較
+- 「過去の頻度Top2を固定して毎日予測」→ hit@2がランダム基準と同等か確認
+- 同等なら「Top2は日次変動あり、単純暗記ではない」が確認できる
+
+ステップ2: 個別特徴量の予測力確認
+- 線形相関: is_top_2との相関係数
+- Spearman rho: 日内の相対順位との相関
+- 両方ともほぼゼロなら「lag特徴量は予測力なし」が確認できる
+
+ステップ3: 同日実績列の単独予測力確認（最重要）
+- 除外対象のはずの列（avg_diff_coins等）を直接使った場合のhit@2を計算
+- 100%に近ければリーク確定
+
+今回: ナイーブ=37.8%, Spearman rho<0.06, total_diff_coins_focus単独=100%
+→ 全3ステップでリーク確定。
+
+## アクション
+バックテストhit@2が95%超の場合、このチェックリストを実行する前に
+特徴量・戦略の改善議論に入らない。
+
+チェックリスト：
+□ ナイーブ基準（固定Top2）のhit@2を計算
+□ 全特徴量のSpearman rho（日内ランク）を計算
+□ get_numeric_featuresで返される全列を確認し、同日実績列を列挙
+□ 同日実績列の単独hit@2を計算（1.0に近ければリーク確定）
+□ SAME_DAY_LEAK_COLSを追加して修正・再評価
+
+---
+id: clean-holdout-does-not-fix-feature-leakage
+trigger: "パラメータ選定のclean holdoutを実施してもhit@2が高止まりするとき"
+confidence: 0.96
+scope: methodology
+domain: prediction-evaluation
+source: data-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# パラメータ選定のclean holdoutは特徴量リークを修正しない
+
+## 背景
+clean holdout監査（2025年内で候補選定→2026年holdout評価）を実施：
+- 2025年選定期間（n=109日）の hit@2: 3F_N=1.000, 2F_A=1.000, 2F_N=0.991
+- 2026年holdout（n=150日）の hit@2: 全セグメント98-99%
+
+元の99%とほぼ変化なし。
+
+理由：パラメータ選定のclean化は「window/lambdaをテスト期間で最適化した」という
+間接リークへの対処。特徴量レベルの直接リーク（同日実績列の混入）は
+参照データを変えても修正されない。
+
+両者の違い：
+- 間接リーク（パラメータ選定）: clean holdoutで対処可能
+- 直接リーク（同日実績列が特徴量）: 特徴量から除外しないと修正不可
+
+## アクション
+clean holdout後も高精度が継続したら、直接リークを疑って
+get_numeric_featuresの全出力列を確認する。
+
+---
+id: live-vs-backtest-gap-explained-by-leakage
+trigger: "バックテスト精度と実践精度に大きな乖離があるとき"
+confidence: 0.98
+scope: methodology
+domain: prediction-evaluation
+source: data-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# backtest 98% vs live 25-50% の乖離はリークで完全に説明できる
+
+## 背景
+本プロジェクトの実測値：
+- backtest (clean holdout) precision@2: 83-87%
+- live評価 (9日間) precision@2: 25-50%
+
+この乖離を「small sample effect」「seasonal shift」で説明しようとしていたが、
+実際は total_diff_coins_focus リークが原因：
+
+- backtest: 同日実績列を特徴量として使用
+  → モデルは「正解を見てから答える」状態
+  → precision@2=83-87%は実績値が既知なら当然の数値
+
+- live評価: 翌日予測時には翌日の実績は未知
+  → リークなしの真の性能
+  → precision@2=25-50%が真の予測力（ランダム=20%とほぼ同等）
+
+## アクション
+リーク修正後のbacktestでの期待値：
+全lag特徴量のSpearman rho<0.06なので、真の性能はランダムに近い可能性が高い。
+修正後に precision@2 = 20-40% 程度が現実的な期待値。
+特徴量追加（dd_value, is_zorome, wed_digit_hist_avg）で改善余地あり。
+
+リーク修正→再評価→特徴量改善のサイクルで進める。
+リーク修正前の改善議論は無意味。
+
+---
+id: ranking-model-leakage-vs-nonlinear-interaction
+trigger: "ランク問題でlinear correlationが低いのに予測力が高いと主張するとき"
+confidence: 0.90
+scope: methodology
+domain: ml-architecture
+source: data-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ランク問題でindividual correlationが低くても高精度はありうるが確認が必要
+
+## 背景
+XGBoostランカーはindividual correlationではなく日内相対順位を学習するため、
+「linear correlation≈0なのにhit@2=98%」を「非線形相互作用」で説明できるように見える。
+
+今回確認した3つの指標：
+- Spearman rho（日内ランク相関）: 最大0.059（≈ランダム）
+- ナイーブ基準（固定Top2）hit@2: 37.8%（ランダム基準と同等）
+- total_diff_coins_focus単独 hit@2: 100.0%（リーク確定）
+
+この3つが揃った場合、「非線形相互作用説」は成立しない。
+直接リークが存在すると判断すべき。
+
+## アクション
+個別linear correlationが低くても次のチェックを追加する：
+1. Spearman rho（日内ランク相関）: 0.1超が少なくとも1つあるか
+2. 最強単独特徴量でのhit@2: 50%超か（ランダム38%より有意に高いか）
+3. 除外されているはずの同日実績列の単独hit@2: 1.0に近くないか
+
+全てが低い（≈ランダム）なのに全体hit@2が95%超なら直接リーク確定。

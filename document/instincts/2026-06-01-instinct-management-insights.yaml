@@ -1,0 +1,134 @@
+---
+id: instinct-contamination-two-types
+trigger: "リーク修正後に過去のinstinctを評価するとき、または古いinstinctを参照しようとするとき"
+confidence: 0.99
+scope: methodology
+domain: prediction-evaluation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# instinct汚染には2種類あり処置が異なる
+
+## 背景
+2026-05-31のリーク修正後、過去のinstinctを精査した結果、
+汚染の種類によって処置が異なることが判明した（2026-06-01）。
+
+種類1「MLモデル性能値が主体」→ contaminated/ へアーカイブ（無効化）
+- AUC=0.8140、hit@2=98%、precision@2=83% 等の数値が核心
+- リーク込みのモデルで計測されたため全て無効
+- 例：phase9-10-breakthroughs.yaml、ml-2f-3f-strategy.yaml
+
+種類2「実データ観察が主体」→ 警告注記を追加して保持
+- diff_coins集計・曜日別パターン・台配置等の生データから得た観察
+- リークはモデルの学習過程の問題であり、生データ集計には影響しない
+- アクション項目がリーク前の文脈を参照している点のみ要注意
+- 例：bt-digit-patterns.yaml、zorome-combined-strategy-insights.yaml
+
+## アクション
+新しいリーク修正後に過去のinstinctをレビューするとき：
+1. 各instinctの核心的主張がモデル性能値か生データ観察かを判定
+2. モデル性能値が核心 → contaminated/ フォルダへ移動
+3. 生データ観察が核心 → LEAKAGE WARNING ヘッダーを追加して保持
+4. 方法論・データ構造 → 汚染なし、そのまま保持
+
+triage_contaminated_instincts.py でこの分類を自動実行できる。
+
+---
+id: data-observation-is-leakage-immune
+trigger: "過去のデータ分析結果がリークによって無効化されているか判断するとき"
+confidence: 0.97
+scope: methodology
+domain: prediction-evaluation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 実データ観察はリーク修正の影響を受けない
+
+## 背景
+リーク（total_diff_coins_focus が特徴量に混入）はMLモデルの学習過程の問題。
+生データの集計・観察には影響しない。
+
+影響を受けない（有効）：
+- 曜日別の平均 diff_coins（DBの生データから集計）
+- 特定末尾の出現頻度・配置パターン
+- ゾロ目日のホール全体差枚統計
+- 機種別の稼働日数・平均差枚
+
+影響を受ける（無効）：
+- モデルが予測した hit@2・precision@2・AUC
+- モデルが算出した特徴量重要度ランキング
+- リーク込みモデルに基づいた戦略推奨
+
+## アクション
+過去の分析結果を再利用するとき：
+「この数値はDBから直接集計されたか、それともモデルの出力か？」を確認する。
+DBからの直接集計 → 有効
+モデルの予測・評価指標 → リーク修正前なら無効
+
+---
+id: approach-transfer-vs-findings-transfer
+trigger: "別ホールで分析を始めるとき、または蒲田7の知見を他に適用しようとするとき"
+confidence: 0.98
+scope: domain-general
+domain: domain-strategy
+source: user-instruction
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 「アプローチの再利用」と「発見の転用」は別物
+
+## 背景
+ユーザー指摘（2026-06-01）：
+「同じアプローチで分かることもある。
+ データ探索やホールではなく機種固有のクセなどは共通している可能性がある。」
+
+## 転用の可否
+
+OK（アプローチ・ツール）：
+- signal_existence_plan.py などの分析スクリプト
+- walk-forward の枠組み・統計検定手順
+- uplift 評価の考え方
+
+OK（機種固有のクセ）：
+- 天井ゲーム数・ボーナス確率（メーカー仕様で全ホール共通）
+- 特定機種の確率テーブル・天井システム
+
+NG（ホール固有の発見）：
+- 蒲田7の 2F_N 69.3% 支配、uplift 数値
+- 蒲田7のカレンダールール無効という結論
+
+## 判断基準
+「この知見はメーカーが決めたことか、ホールが決めたことか？」
+メーカーが決めた → 全ホール共通（転用可）
+ホールが決めた → そのホール固有（転用不可）
+
+---
+id: contaminated-instincts-archive-not-delete
+trigger: "無効化されたinstinctの管理方法を決めるとき"
+confidence: 0.95
+scope: methodology
+domain: ml-architecture
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 無効化instinctはcontaminated/フォルダに移動して削除しない
+
+## 背景
+リーク修正後、MLモデル性能値が主体のinstinctを削除せずに移動を選択した。
+
+削除しない理由：
+1. 「なぜその戦略を採用したか」の歴史的経緯として残す
+2. 将来リーク修正後の再検証で一部が復活する可能性がある
+3. 削除すると「なぜ廃止したか」の記録が消える
+
+## アクション
+instinctを無効化するとき：
+1. document/instincts/contaminated/ フォルダへ移動（削除しない）
+2. ファイル先頭に無効化理由と日付を記載
+3. triage_contaminated_instincts.py の ARCHIVE_FILES に追加
+
+contaminated/ フォルダのファイルは /instinct-import では読み込まない（隔離済み）。
+

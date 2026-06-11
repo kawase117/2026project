@@ -2,6 +2,7 @@
 id: rolling-window-shift-prevention
 trigger: "when implementing rolling window features in time-series ML"
 confidence: 0.95
+scope: methodology
 domain: ml-feature-engineering
 source: session-observation
 project_id: pachinko-analyzer
@@ -50,6 +51,7 @@ Result: AUC 0.79-0.81 (realistic)
 id: detect-leakage-via-perfect-metrics
 trigger: "when model evaluation produces suspiciously high metrics (AUC 1.0, precision/recall 1.0)"
 confidence: 0.90
+scope: methodology
 domain: ml-project-planning
 source: session-observation
 project_id: pachinko-analyzer
@@ -84,6 +86,7 @@ Phase 9-10 Rank1 target:
 id: organize-experiments-by-intent
 trigger: "when experiment folder grows beyond 10-15 files"
 confidence: 0.80
+scope: methodology
 domain: ml-project-planning
 source: session-observation
 project_id: pachinko-analyzer
@@ -133,6 +136,7 @@ In pachinko analyzer:
 id: time-series-validation-split-integrity
 trigger: "when implementing train/test split for temporal ML models"
 confidence: 0.85
+scope: methodology
 domain: ml-feature-engineering
 source: session-observation
 project_id: pachinko-analyzer

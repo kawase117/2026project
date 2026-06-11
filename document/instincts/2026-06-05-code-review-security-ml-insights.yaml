@@ -1,0 +1,281 @@
+---
+id: sql-injection-fstring-table-name
+trigger: "SQLクエリでテーブル名・カラム名をf-stringで埋め込むとき"
+confidence: 0.98
+domain: security
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# f-string SQL でのテーブル名/カラム名はallowlist必須
+
+## 背景
+`data_loader.py` の `load_machine_detailed_by_date` でf-string SQLが使われており、
+`date_str` が直接クエリに埋め込まれていた。`database_accessor.py` では
+`table_name`・`column` もf-string埋め込みだった。
+Streamlit経由でユーザー入力が流れ込む可能性がある。
+
+## アクション
+- ユーザー入力が入りうる値は必ず `?` プレースホルダーでパラメータ化
+- テーブル名・カラム名はSQL識別子なのでパラメータ化できない → allowlist で検証
+  ```python
+  ALLOWED_TABLES = frozenset({'machine_detailed_results', ...})
+  def _validate_table(name):
+      if name not in ALLOWED_TABLES: raise ValueError(...)
+  ```
+- `sqlite_master` のテーブル存在確認も `WHERE name=?` でパラメータ化可能
+
+## 例
+```python
+# NG
+query = f"SELECT * FROM {table_name} WHERE date = '{date_str}'"
+
+# OK
+_validate_table(table_name)
+query = f"SELECT * FROM {table_name} WHERE date = ?"
+df = pd.read_sql_query(query, conn, params=(date_str,))
+```
+
+---
+id: ml-rolling-stats-shift1-leakage
+trigger: "機械別のローリング統計（移動平均・標準偏差）を特徴量として計算するとき"
+confidence: 0.97
+domain: ml-feature-engineering
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ローリング統計には必ず shift(1) を付けてデータリーケージを防ぐ
+
+## 背景
+`feature_engineering.py` の `_build_machine_history_features` と
+`_compute_machine_rolling_stats` で `.rolling(14).mean().values` のように
+shift なしで計算していた。`rolling(N).mean()` はデフォルトで当日を含むため、
+当日の `diff_coins_normalized`（目的変数の源泉）が特徴量に混入していた。
+
+## アクション
+全ローリング統計に `.shift(1).fillna(0)` を追加する。
+`stability`（std）、`consecutive_wins` の win_indicator にも同様の対処が必要。
+
+## 例
+```python
+# NG (当日含む)
+ma_14_diff = df_machine['diff_coins_normalized'].rolling(14, min_periods=1).mean().values
+
+# OK (前日まで)
+ma_14_diff = (df_machine['diff_coins_normalized']
+              .rolling(14, min_periods=1).mean()
+              .shift(1).fillna(0).values)
+```
+
+---
+id: ml-same-day-diff-as-feature-leakage
+trigger: "差枚・勝率などの当日アウトカムを使って特徴量のバイナリマーカーを作るとき"
+confidence: 0.95
+domain: ml-feature-engineering
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 当日 diff を特徴量マーカーに使うのは直接的なラベルリーケージ
+
+## 背景
+`_build_domain_specific_features` の Feature 2/3/6 で
+`self.df["diff_coins_normalized"].values[i] > 1000` を条件に使っていた。
+ラベル（diff）をそのまま特徴量に使うためモデルが汎化せず過学習する。
+`rank_percentile` も同日diffでランクを計算しており同様の問題。
+
+## アクション
+前日の diff（lag-1）を使うよう変更する：
+```python
+_df_sorted['diff_lag1'] = (
+    _df_sorted.groupby('machine_number')['diff_coins_normalized']
+    .shift(1).fillna(0)
+)
+```
+`rank_percentile` も前日diffでランク計算する。
+
+## 例
+```python
+# NG: 当日diff使用
+if (dd == 25) and (self.df["diff_coins_normalized"].values[i] > 1000):
+    marker[i] = 1.0
+
+# OK: 前日diff使用
+if (dd == 25) and (diff_lag1_vals[i] > 1000):
+    marker[i] = 1.0
+```
+
+---
+id: walrus-operator-parameter-overwrite
+trigger: "Pythonのwalrus演算子 := をif条件の中で使うとき"
+confidence: 0.99
+domain: python-bugs
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# walrus演算子でFalseを代入するとパラメータが永久に上書きされる
+
+## 背景
+`feature_engineering.py` の Feature 8 で以下のコードがあった：
+```python
+if is_train := False:  # Placeholder: always use stored stats
+    pass
+```
+walrus演算子は関数パラメータ `is_train` をローカル変数として `False` に永久上書きする。
+結果として学習統計（`dd_global_mean`, `dd_global_std`）が一切計算されなくなっていた。
+
+## アクション
+プレースホルダーで walrus を使わない。意図に沿った条件分岐を書く：
+```python
+# NG
+if is_train := False:
+    pass
+
+# OK
+if is_train:
+    self.train_stats["dd_global_mean"] = float(self.df["diff_coins_normalized"].mean())
+    self.train_stats["dd_global_std"] = float(self.df["diff_coins_normalized"].std() + 1e-8)
+```
+
+## 例
+`if x := False:` は `x = False` を実行してから `if False:` を評価する。
+既存の同名パラメータを黙って上書きするので特に危険。
+
+---
+id: bare-except-swallows-keyboard-interrupt
+trigger: "例外処理で except: pass を書くとき"
+confidence: 0.98
+domain: python-bugs
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 裸の except は KeyboardInterrupt を飲み込む
+
+## 背景
+`date_info_calculator.py` の `_check_holiday` で `except: pass` が使われており、
+`BaseException`（`KeyboardInterrupt`や`SystemExit`含む）ごと無音で飲み込んでいた。
+フォールバックがあるケースでも失敗が完全に隠れる。
+
+## アクション
+必ず `except Exception as e:` を使い `logging.warning` で記録する：
+```python
+import logging
+try:
+    if jpholiday:
+        return jpholiday.is_holiday(date_obj.date())
+except Exception as e:
+    logging.warning("jpholiday.is_holiday() failed: %s", e)
+```
+
+## 例
+```python
+# NG
+except:
+    pass
+
+# OK
+except Exception as e:
+    logging.warning("jpholiday failed: %s", e)
+```
+
+---
+id: groupby-values-alignment-bug
+trigger: "groupby集計後に .values でシリーズをDataFrameに代入するとき"
+confidence: 0.95
+domain: pandas-bugs
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# .values 代入は groupby のインデックスアライメントを無視して行がズレる
+
+## 背景
+`backtest_helpers.py` の `compute_training_stats` で
+`grouped['win_rate'] = (count_win / count_total * 100).round(2).values`
+のように `.values` を使っていた。`count_win / count_total` は groupby
+インデックスでアライメントされるが、`.values` で ndarray にしてから代入すると
+`grouped` の行順と一致しない可能性がある。
+
+## アクション
+`.values` を使わず `.merge()` でインデックスを保持して結合する：
+```python
+win_rate_series = (count_win / count_total * 100).round(2).rename('win_rate').reset_index()
+grouped = grouped.merge(win_rate_series, on=group_cols, how='left')
+```
+
+## 例
+```python
+# NG: インデックス不一致リスク
+grouped['win_rate'] = (count_win / count_total * 100).values
+
+# OK: merge でアライメント保証
+win_rate_s = (count_win / count_total * 100).rename('win_rate').reset_index()
+grouped = grouped.merge(win_rate_s, on=group_cols, how='left')
+```
+
+---
+id: sqlite-connection-leak-without-context-manager
+trigger: "sqlite3.connect() でDB接続を開いてクエリを実行するとき"
+confidence: 0.92
+domain: python-best-practices
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# with文なしの sqlite3.connect は例外時に接続がリークする
+
+## 背景
+`ml/utils/db_queries.py` で `conn = sqlite3.connect(...)` → `pd.read_sql_query(...)`
+→ `conn.close()` のパターンを使っていた。
+`read_sql_query` が例外を出すと `conn.close()` が呼ばれない。
+
+## アクション
+必ず `with sqlite3.connect(db_path) as conn:` を使う。
+SQLiteの `with` はコミットも自動で行う（エラー時はロールバック）。
+
+## 例
+```python
+# NG
+conn = sqlite3.connect(db_path)
+df = pd.read_sql_query(query, conn)
+conn.close()  # 例外時に到達しない
+
+# OK
+with sqlite3.connect(db_path) as conn:
+    df = pd.read_sql_query(query, conn)
+```
+
+---
+id: sys-stdout-redirect-module-level
+trigger: "sys.stdout や sys.stderr をスクリプトファイルの先頭で置換するとき"
+confidence: 0.90
+domain: python-best-practices
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# sys.stdout のモジュールレベル置換は import 時に Streamlit を壊す
+
+## 背景
+`database/main_processor.py` でモジュールの先頭に
+`sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')`
+があった。Streamlit や他のモジュールからインポートされた場合、
+そのプロセスの stdout/stderr が永続的に置き換わる。
+
+## アクション
+`if __name__ == "__main__":` ブロック内に移動する：
+```python
+if __name__ == "__main__":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+    main()
+```
+
+## 例
+CLIスクリプトは直接実行専用であっても、将来インポートされる可能性がある。
+エンコーディング設定などの副作用は必ず `__main__` ブロックに閉じ込める。
+
+---

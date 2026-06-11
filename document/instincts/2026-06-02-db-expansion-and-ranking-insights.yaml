@@ -1,0 +1,197 @@
+---
+id: db-expansion-1year-limit
+trigger: "when modeling multi-hall strategy with less than 2 years per-hall data"
+confidence: 0.95
+domain: data-preparation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# DB拡張の必須性：1年半データでは長期パターンが見えない
+
+## 背景
+Codex ホール分析で判明した事実：現在のほぼ全ホールが1年半程度のデータしか保有していない。
+この期間では周年イベント日（毎年同じ日付）などの長期季節パターンが捕捉できない。
+例：給料日効果、初日効果、末日効果、anniversary patterns が複数年にわたって確認できない。
+
+## アクション
+次回モデリング前に、外部データソース（Wayback Machine、過去プログレッシブ記事、ホール公式イベント履歴など）から
+2024年以前のデータを補強。最低でも 2.5～3年 分のデータを確保してから再モデリングを実施。
+
+## 例
+現在：2024-09 ～ 2026-05（約20ヶ月）
+目標：2023-01 ～ 2026-05（約40ヶ月）で年間パターンの再現性を検証可能にする。
+
+---
+id: oracle-coverage-thresholds
+trigger: "when setting realistic expectations for daily max prediction"
+confidence: 0.92
+domain: ml-evaluation
+source: thread-learning-20260602
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Oracle統計：完全ホール切り替えでも100%は不可能
+
+## 背景
+Holdout期間（2026-01-01 ～ 2026-05-30）における全ホール統合 oracle（実際に発生した日次最大差枚）の統計：
+- >=0 diff: 100%（すべての日に何らかの利益機会がある）
+- >=100 diff: 86.7%（14日中86日が 100 以上の利益可能）
+- >=200 diff: 64.0%（14日中90日が 200 以上）
+- >=300 diff: 36.0%（14日中50日が 300 以上）
+
+つまり「毎日 200 以上」は物理的に不可能。予測モデルも同じ制約を受ける。
+
+## アクション
+目標設定を相対的に変更：
+1. 日次タイミング判定：「去年より良い日」「平均以上の日」に絞る（>=0 必ず当たる）
+2. ホール選択ランキング：「この日の利益機会がある場合、どのホールが最も有望か」に変更
+3. 多閾値確率：P(>=100), P(>=200), P(>=300) をそれぞれ予測し、ユーザーが期待リターンで判断
+
+## 例
+昔：「300 以上の日を毎日当てる」→ 不可能（36%のみが候補）
+新：「>=100 が確認できる日を選び、その日のベストホール予測」→ achievable（86% カバー）
+
+---
+id: hit-at-2-operational-value
+trigger: "when evaluating ranking predictions for day-selection"
+confidence: 0.88
+domain: ml-evaluation
+source: thread-learning-20260602
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Hit@2 の価値：ショートリスト生成では Hit@1 より優れている場合がある
+
+## 背景
+候補限定ランキング（top-k を複数ホールから選択）で hit@1（最高ランク台が正答）に固執すると、
+実際の日次最大機会を逃す。一方、hit@2（top 2 に正答がある）は：
+- 目標ランキングでも より緩い基準
+- オペレーション上、ショートリスト（候補2台）を同時検索するコストは小さい
+- より高確率で「本当の機会」をキャッチ
+
+## アクション
+ranking パスに hit@1 と hit@2 を並存：
+- 目標：hit@1 >= X%
+- フォールバック：hit@2 で「少なくとも TOP 2 に候補がある」保証を与える
+- Operational: ユーザーに「最優先候補」と「代替候補」を提示
+
+## 例
+True daily max = ホールB 台番号55
+モデル予測 rank: [ホールA 台号10, ホールB 台号55, ホールC 台号100]
+Hit@1: ✗（ランク1位がホールA）
+Hit@2: ✓（ランク2位がホールB 台号55）
+⇒ ユーザーは「ホールA」と「ホールB」の両方をチェック → 発見成功
+
+---
+id: walk-forward-validation-strictness
+trigger: "when designing training/tuning/holdout split for multi-hall daily prediction"
+confidence: 0.93
+domain: ml-validation
+source: thread-learning-20260602
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Walk-Forward は時間的厳密性が必須：学習 < ターゲット日付（絶対違反禁止）
+
+## 背景
+Leakage は subtle に発生：
+1. Tuning 期間（既知 oracle を使用）で threshold/weight を決定 ✗（holdout に最適化）
+2. holdout で threshold を再選択 ✗（validation 汚染）
+3. 学習データに holdout の情報（特徴量統計など）が混在 ✗（forward leak）
+
+正しい flow：
+1. Training (< date T)
+2. Tuning (date T ～ date T+N, oracle 既知、ポリシー最適化のみ)
+3. Holdout (date T+N+1 以降, oracle 未知、固定ポリシーで評価のみ)
+
+## アクション
+実装時：
+```python
+train_dates = df[df['date'] < tuning_start]  # Strict <
+tuning_dates = df[(df['date'] >= tuning_start) & (df['date'] < holdout_start)]
+holdout_dates = df[df['date'] >= holdout_start]
+
+# Tuning で oracle を見て最適ポリシー決定
+best_policy = optimize_policy(tuning_dates, oracle_available=True)
+
+# Holdout では oracle は使わない、固定ポリシー適用
+holdout_pred = apply_policy(holdout_dates, policy=best_policy, oracle=None)
+```
+
+## 例
+❌ 悪い例：holdout で threshold を再調整
+✅ 良い例：tuning で決めた threshold を holdout でも固定使用
+
+---
+id: multi-threshold-probability-approach
+trigger: "when predicting daily max opportunity across multiple halls"
+confidence: 0.91
+domain: feature-engineering
+source: thread-learning-20260602
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 多閾値確率：binary ranking より expected value 指向
+
+## 背景
+従来：「この台がランク1位か」→ binary classification
+問題：200以上の利益が保証できない場合、上位ランクにしても「外れ」扱いされてしまう。
+
+新：「この日このホールで >=100, >=200, >=300 の確率は？」
+→ ユーザーが自分のリスク許容度に応じて判断可能
+
+## アクション
+モデル出力層を以下に変更：
+```
+output: P(>=100), P(>=200), P(>=300)
+# ランキングはこれらを aggregate してスコア化
+# 例：score = 0.5 * P(>=100) + 0.3 * P(>=200) + 0.2 * P(>=300)
+```
+
+排他的ではなく並存評価で、ユーザーに透明性を提供。
+
+## 例
+ホールA：P(>=100)=0.75, P(>=200)=0.35, P(>=300)=0.10
+ホールB：P(>=100)=0.60, P(>=200)=0.55, P(>=300)=0.25
+
+目標が「安定性」 → ホールA 優先
+目標が「高リターン」 → ホールB 優先
+
+---
+id: anti-concentration-regularization
+trigger: "when hall selection becomes biased (one hall picked 50%+ of the time)"
+confidence: 0.87
+domain: ml-regularization
+source: thread-learning-20260602
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Anti-Concentration 制御：同一ホール繰り返し選択に対する正則化
+
+## 背景
+候補限定ランキングで、スコアだけで選ぶと、
+ホール A が実際により多くの利益機会を持つ場合、毎日ホール A が選ばれてしまう。
+これは：
+1. オペレーション上、別のホールへのアクセス機会を失う
+2. 実際には「今日はホール B に高リスク高リターン機会がある」のに見逃す
+
+## アクション
+ポリシー最適化段階で soft constraint を追加：
+```python
+# スコア = oracle fit - λ * (share_bias)
+# share_bias = (actual_hall_share - expected_share)^2
+# λ は tuning で調整
+```
+
+もしくは hard constraint：
+```python
+# max_share = 40%
+# 各ホールは max 全日の 40% までしか選択できない
+```
+
+## 例
+昔：毎日ホール A を選ぶ（スコア最高だから）→ ホール B の大きなチャンス見逃し
+新：各ホール max 40% 制約で、ホール B の40% 枠内で最高スコア機会をキャッチ
+
+---

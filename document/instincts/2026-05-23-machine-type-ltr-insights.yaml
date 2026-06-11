@@ -2,6 +2,7 @@
 id: machine-type-f1-structural-limit
 trigger: "機種別学習でF1スコアが0.10以下になったとき"
 confidence: 0.95
+scope: methodology
 domain: ml-machine-type
 source: session-observation
 project_id: 2026project
@@ -36,6 +37,7 @@ print(f"Hit@1={metrics['hit_at_1']:.3f}, base_rate={metrics['base_rate']:.3f}")
 id: ltr-replaces-binary-classifier-for-ranking
 trigger: "機種別・台末尾別など、同日同グループ内でのランキング予測をするとき"
 confidence: 0.90
+scope: methodology
 domain: ml-machine-type
 source: session-observation
 project_id: 2026project
@@ -79,6 +81,7 @@ scores = ranker.predict(pred_df[feature_columns].fillna(0.0))
 id: cross-sectional-normalization-for-machine-ranking
 trigger: "機種別学習で絶対値特徴量（差枚、効率など）を使うとき"
 confidence: 0.92
+scope: methodology
 domain: ml-machine-type
 source: session-observation
 project_id: 2026project
@@ -118,6 +121,7 @@ cross_cols = (
 id: staged-ranking-architecture-for-slot
 trigger: "複数の予測モデル（機種別・末尾別・角番別）を統合して最終台選択をするとき"
 confidence: 0.85
+scope: methodology
 domain: ml-architecture
 source: session-observation
 project_id: 2026project
@@ -151,6 +155,7 @@ Stage1（同機種内ランキング）が最も強いシグナルで、Stage2�
 id: rank-pct-trend-features-for-machine-momentum
 trigger: "機種の中長期トレンド（成績の上昇・下降）を特徴量にしたいとき"
 confidence: 0.88
+scope: methodology
 domain: ml-feature-engineering
 source: session-observation
 project_id: 2026project

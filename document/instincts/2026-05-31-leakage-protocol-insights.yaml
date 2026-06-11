@@ -1,0 +1,192 @@
+---
+id: leakage-check-direction-must-be-inclusion-not-exclusion
+trigger: "リーク確認を依頼されたとき、またはget_numeric_features()の出力を確認するとき"
+confidence: 0.99
+scope: methodology
+domain: prediction-evaluation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# リーク確認は「除外リスト」ではなく「混入リスト全追跡」で行う
+
+## 背景
+total_diff_coins_focus のリークを複数回の確認依頼にもかかわらず見逃した。
+原因は「除外リストに target 列が含まれているか」をチェックしていたこと。
+しかし本当に必要なのは「get_numeric_features() が返す全列の生成元を追跡すること」。
+
+間違ったチェック方向：
+- excluded_targets を確認して「target列は除外済み」と判断 → 不十分
+
+正しいチェック方向：
+- get_numeric_features() の全出力列をリストアップし
+- 各列の生成元コードを追跡して「同日実績か過去集計か」を分類する
+
+## アクション
+リーク確認を求められたら以下を実行する（コードレビューだけで完結させない）：
+
+1. get_numeric_features(df_expert) の実際の出力列を列挙
+2. 各列について生成元コード（add_simple_features, aggregate_mode等）を追跡
+3. 同日実績由来の疑いがある列をリストアップ
+4. 疑わしい列は単独 hit@2 を実測（1.0に近ければリーク確定）
+5. SAME_DAY_LEAK_COLS に追加して再評価
+
+## 例
+```python
+# 疑わしい列の単独 hit@2 計算
+single_feature_hits = []
+for col in df_expert.columns:
+    if col in excluded_targets:
+        continue
+    tmp = df_expert.groupby("date").apply(
+        lambda g: g.nlargest(2, col)["is_top_2"].sum() >= 1
+    )
+    single_feature_hits.append({"col": col, "hit@2": tmp.mean()})
+# hit@2 が 0.9 以上の列はリーク候補
+```
+
+---
+id: outcome-leakage-vs-target-leakage-are-different
+trigger: "MLモデルの特徴量リークを確認するとき"
+confidence: 0.98
+scope: methodology
+domain: prediction-evaluation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# アウトカムリークはターゲットリークと別物で見逃されやすい
+
+## 背景
+古典的なリーク確認はターゲットリーク（is_top_2 を特徴量に使う）を防ぐもの。
+今回のリークは「ターゲットそのものではないが、同日実績由来でターゲットと高相関な列」。
+
+- ターゲットリーク：is_top_2, is_rank_1 など → 除外リストで対処済み
+- アウトカムリーク：total_diff_coins_focus (r=+0.643 with is_top_2) → 除外リストに入っていなかった
+
+アウトカムリークの特徴：
+- 列名がlag特徴量と区別しにくい（_focus サフィックス等）
+- 除外リストに載っていないため自動的に特徴量として採用される
+- 単独でhit@2=100%を達成できる（モデルは実質「正解を見てから回答」）
+
+## アクション
+SAME_DAY_LEAK_COLS はターゲットリークとアウトカムリーク両方を含める：
+
+```python
+SAME_DAY_LEAK_COLS = {
+    # ターゲットリーク
+    "is_top_2", "is_rank_1", "is_top_3", "is_worst_1", "is_worst_3",
+    # アウトカムリーク（同日実績由来）
+    "avg_diff_coins", "total_diff_coins", "total_diff_coins_focus",
+    "win_rate", "efficiency", "efficiency_focus", "diff_coins_normalized",
+}
+```
+新しい集計列を追加するときは「この列は翌日予測時点で既知か？」を必ず確認する。
+
+---
+id: empirical-leakage-detection-over-code-review
+trigger: "リーク確認をコードレビューのみで完結させようとするとき"
+confidence: 0.97
+scope: methodology
+domain: prediction-evaluation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# リーク確認はコードレビューではなく計測で完結させる
+
+## 背景
+total_diff_coins_focus のリークはコードレビューで複数回見逃された。
+発見のきっかけは「単独特徴量で hit@2 を計算する」という経験的テストだった。
+
+コードレビューが失敗する理由：
+- 列名が lag 特徴量と区別しにくい
+- generate 元のコードを全追跡するには認知負荷が高い
+- 複数ファイルにまたがると見落としが発生しやすい
+
+経験的テストは確実：
+- total_diff_coins_focus 単独 hit@2 = 100.0%（327日全勝）
+- この計測だけでリーク確定、コードレビューは補助に過ぎない
+
+## アクション
+リーク確認の標準手順として以下を追加する：
+
+コードレビュー → 補助的確認
+経験的テスト  → 主要確認（こちらが正）
+
+経験的テストのチェックリスト：
+□ ナイーブ基準（固定Top2）の hit@2 を計算（ランダム基準確認）
+□ 全特徴量の Spearman rho（日内ランク相関）を計算
+□ 疑わしい列の単独 hit@2 を計算（0.9超でリーク確定）
+□ 修正後に hit@2 がランダム基準まで低下することを確認
+
+---
+id: column-name-ambiguity-creates-leakage-blind-spot
+trigger: "新しい集計列をadd_simple_featuresやaggregate_modeで追加するとき"
+confidence: 0.94
+scope: methodology
+domain: ml-architecture
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 同日実績列の命名規則がlag特徴量と区別できないとリークを招く
+
+## 背景
+total_diff_coins_focus の _focus サフィックスは「絞り込み対象の集計値」に見えるが、
+実際は「当日のセグメント内合計差枚」という同日実績列だった。
+命名だけで同日実績かどうかを判断するのは困難だった。
+
+## アクション
+列作成時のルール：
+- 同日実績列には _actual サフィックスを付ける（例: total_diff_coins_actual）
+- lag特徴量には _lag1, _roll7 等の明示的サフィックスを付ける
+- _focus のような曖昧なサフィックスは避ける
+
+既存の曖昧命名への対処：
+- total_diff_coins_focus → SAME_DAY_LEAK_COLS に追加済み
+- 新列追加時は「翌日予測時点で既知か？」をコメントに必ず記載する
+
+## 例
+```python
+# NG: 曖昧（lag か実績か不明）
+out["total_diff_coins_focus"] = ...
+
+# OK: 明示的
+out["total_diff_coins_actual"]     = ...  # 同日実績 → SAME_DAY_LEAK_COLS必須
+out["total_diff_coins_lag1"]       = ...  # 前日実績 → 特徴量として使用可
+out["total_diff_coins_roll7_lag1"] = ...  # 7日ローリング前日まで → 使用可
+```
+
+---
+id: db-leakage-absence-is-inference-not-verification
+trigger: "DBの生成処理にリークがないことを主張するとき"
+confidence: 0.92
+scope: methodology
+domain: prediction-evaluation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 「DBリークなし」は確認ではなく間接推論である
+
+## 背景
+リーク修正後に hit@2 がランダム基準まで低下したことから
+「database/ の DB 生成過程にリークはない」と結論された。
+
+しかしこれは間接推論であり、DB生成コードを直接検証したわけではない：
+- 特徴量除外を修正 → hit@2 = 38% に低下（期待通り）
+- ∴ DB生成にはリークがない　← これは推論
+
+precision@2 = 20.83%（ランダム20%との差0.83pp）では、
+DB生成側に微小なリークが残っていても統計的に検出できない可能性がある。
+
+## アクション
+DB生成リークを直接確認する場合は：
+1. database/data_inserter.py, summary_calculator.py で当日データを使っている箇所を確認
+2. aggregate_mode が作成する全列の定義を追跡
+3. 当日入力データから当日実績列を作成している処理がないか確認
+
+「DB側リークなし」は現時点では間接推論に留まることを記憶する。
+hit@2 がランダムを有意に超えるようになったとき、改めて直接確認の価値がある。
+

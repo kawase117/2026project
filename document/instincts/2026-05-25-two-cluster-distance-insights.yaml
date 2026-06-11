@@ -2,6 +2,7 @@
 id: all-weekdays-have-cluster-except-monday
 trigger: "when deciding which weekdays to apply cluster-based targeting in 蒲田七"
 confidence: 0.82
+scope: methodology
 domain: pachinko-domain-knowledge
 source: data-observation
 project_id: 2026project
@@ -36,6 +37,7 @@ weekday_concentration.csv より（concentration_ratio = best_cluster_mean / all
 id: top1-top2-distance-roughly-uniform-with-slight-dist5-excess
 trigger: "when evaluating the ハーフ×2遠距離配置 hypothesis for 蒲田七"
 confidence: 0.55
+scope: methodology
 domain: pachinko-domain-knowledge
 source: data-observation
 project_id: 2026project
@@ -78,6 +80,7 @@ dist5の実例: 木曜のtop1=2・top2=7（距離5）、日曜のtop1=6・top2=1
 id: thursday-sunday-have-top2-at-opposite-distance5
 trigger: "when building weekday-specific top2 features for last_digit LTR in 蒲田七"
 confidence: 0.73
+scope: methodology
 domain: pachinko-domain-knowledge
 source: data-observation
 project_id: 2026project

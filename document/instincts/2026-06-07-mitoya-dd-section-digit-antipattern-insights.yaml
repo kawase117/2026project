@@ -1,0 +1,177 @@
+---
+id: mitoya-dd-group-section-antipattern-RETRACTED
+trigger: "みとやで「セクション交替アンチパターン」という命題を見かけたとき（過去の誤った分析結果）"
+confidence: 0.95
+domain: methodology-correction
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+scope: hall-specific
+hall: mitoya
+
+# 【撤回】「セクション交替90%」は全島混合トップ抽出の方法論的アーティファクトだった
+
+## 背景
+当初、102日のイベント日データで「同一DD末尾グループ内で前回最高セクションは90%別セクションに遷移する」と報告したが、これは誤りと判明した。
+
+原因：
+1. 「全島混合の最高セクション」を抽出すると、単価が2.35倍高いAT島(main_mix)が
+   80.4%（82/102日）を占め、ジャグラー島はわずか1日。つまり「セクション交替」の
+   実体はほぼ「AT島内の8区画間でのランダムな勝者交代」だった。
+2. 島内に限定して再検証すると、観測された遷移率（AT島14-20%, ジャグラー島36%）は
+   各島のセクション数から導かれるランダム期待値（8区画→12.5%, 3区画→33.3%）と
+   統計的に区別不可能（誤差±9%以内）だった。
+
+## アクション
+このIDの内容（90%セクション交替・prev_best_sectionへの負の重みづけ）は
+ML特徴量・運用ルールに**実装しないこと**。
+代わりに [[mitoya-corner-static-positional-effect]] の静的角番ルールを使う。
+
+## 例
+正しい検証手順（今後の教訓）：
+```python
+# NG: 全島混合でその日のトップを抽出 → 単価差で島が固定的に勝つだけ
+best = df.groupby('date')['diff'].idxmax()
+
+# OK: 島内に限定し、かつカテゴリ数から導いたランダム期待値と比較する
+best_within_island = df[df.island=='AT島'].groupby('date')['diff'].idxmax()
+chance_baseline = 1 / df[df.island=='AT島']['section'].nunique()
+```
+
+---
+id: mitoya-dd-group-digit-antipattern-RETRACTED
+trigger: "みとやで「末尾交替アンチパターン（88-92%）」という命題を見かけたとき（過去の誤った分析結果）"
+confidence: 0.95
+domain: methodology-correction
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+scope: hall-specific
+hall: mitoya
+
+# 【撤回】「末尾交替88-92%」もランダム期待値と区別不可能だった
+
+## 背景
+当初「同一DD末尾グループ内で前回最高末尾は88-92%別末尾に遷移する」と報告したが、
+末尾は0-9の10種類存在するため、ランダムに選んでも「同じ末尾が連続する」確率は
+理論上わずか10%（=「別末尾に遷移」90%）になる。
+
+島内に限定した再検証結果：
+4系グループ: AT島14%, ジャグラー島16%
+7系グループ: AT島8%,  ジャグラー島10%
+→ いずれもランダム期待値10%（誤差±4%）の範囲内で、有意な交替/持続シグナルなし。
+
+「88-92%交替」という数字だけを見ると強いシグナルに思えるが、
+カテゴリ数が多い変数では高い「交替率」は当然の帰結であり、
+ランダム期待値との比較なしに「アンチパターン」と判定したのが誤りだった。
+
+## アクション
+このIDの内容（prev_best_digitへの負の重みづけ）は実装しないこと。
+カテゴリ数の多い変数（末尾10種、セクション8-18種）で遷移率を報告する際は、
+必ず「1/カテゴリ数」のランダム期待値と比較してから「アンチパターン」と判定する。
+[[mitoya-island-digit-pattern-xday]] の島別末尾推奨（静的シグナル）は引き続き有効。
+
+## 例
+```python
+# 「アンチパターン」と判定する前に必ず実施するチェック
+n_categories = df['last_digit'].nunique()  # 例: 10
+chance_same_rate = 1 / n_categories         # 例: 10%
+observed_same_rate = ...                    # 観測値
+# 観測値がchance±2SE の範囲内なら「ランダムと区別不可」と判定し、
+# アンチパターンとして報告しない
+```
+
+---
+id: mitoya-corner-static-positional-effect
+trigger: "みとやのAT島(501-640)・ジャグラー島(641-691)で台選定するとき、または角番特徴量を設計するとき"
+confidence: 0.90
+domain: position-effect
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+scope: hall-specific
+hall: mitoya
+
+# 通路側角番は「日替わりの遷移パターン」ではなく「常時優位な静的ポジション」
+
+## 背景
+当初「角番は持続率38-48%でランダムに近い」と報告したが、これは
+角番を「通路側/奥側」の二値（rank_from_aisle==1 or ==max）でしか見ておらず、
+中間台（rank 2〜16等）を無視していたための誤った結論だった。
+
+中間台を含む3カテゴリ（通路側角番／中間／奥側角番）でイベント日の平均差枚を比較すると：
+
+AT島(501-640):
+  通路側角番: +637円  中間: +285円  奥側角番: -204円
+ジャグラー島(641-691):
+  通路側角番: +617円  中間: +159円  奥側角番: +36円
+
+通路側角番は中間の約2-4倍、奥側角番との差は800円以上。
+これは日によって入れ替わる「アンチパターン」ではなく、構造的に毎回優位な
+固定ポジション効果である（[[main-jug-corner-effect-strengthening]] と整合）。
+
+「持続率38-48%」という低めの数値が出たのは、二値分類が中間台の存在を
+無視しており、かつ marginal分布の偏り（通路側角番が単純に最も頻繁に
+1位を取る）を「ランダムに近い遷移」と誤認したため。
+marginal分布で補正したchance baselineと比較すると、観測persist率との差は
++1.7〜+8.7ptで全て統計誤差範囲内（n=50, ±7%）であり、動的な交替/持続
+シグナルは存在しない。
+
+## アクション
+角番を「次は変わるかも」という動的特徴量として扱わない。
+代わりに rank_from_aisle を**毎回固定的に評価する静的特徴量**として使う：
+
+```python
+# OK: 静的ポジション効果として常時加点
+position_score = {
+    "通路側角番": +1.0,   # rank_from_aisle == 1
+    "中間":      +0.4,   # 1 < rank_from_aisle < section_max
+    "奥側角番":  -0.3,   # rank_from_aisle == section_max
+}
+# NG: 「前回通路側が勝ったから今回は変わるはず」という遷移補正は不要
+```
+
+## 例
+```
+AT島での意思決定: 通路側角番の台を毎回優先する（前回の勝敗に関わらず）
+  → 中間より平均+352円、奥側より平均+841円のアドバンテージ
+ジャグラー島でも同様: 通路側角番を毎回優先（+458円 vs 中間, +581円 vs 奥側）
+```
+
+---
+id: mitoya-island-mixing-artifact-warning
+trigger: "みとやで「全島混合の最高セクション/最高末尾/最高ポジション」を集計しようとするとき"
+confidence: 0.93
+domain: methodology
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+scope: hall-specific
+hall: mitoya
+
+# 全島混合でのトップ抽出は「単価の高い島が常勝する」アーティファクトを生む
+
+## 背景
+みとやのAT島(main_mix)はジャグラー島(main_jug)の2.35倍の単価を持つ
+（[[main-mix-at-different-scale-from-jug]]）。
+そのため「日ごとに全島混合で最高平均差枚のセクションを抽出する」と、
+102イベント日中82日（80.4%）がAT島から選ばれ、ジャグラー島はわずか1日だった。
+
+この状態で「セクションが日々入れ替わる（90%交替）」と報告すると、実態は
+「AT島内の8区画間でのランダムな勝者交代」を見ているに過ぎず、
+「ホールが意図的に配置を変えている」という誤った解釈を生む。
+
+## アクション
+島ごとに単価が大きく異なるホール（みとやに限らず）で「最高〇〇」を
+抽出する分析を行う際は、必ず**島内に限定してから**集計する。
+全島混合の集計は「どの島が今日勝ったか」を見る別目的でのみ使う。
+
+## 例
+```python
+# NG: 全島混合トップ → 単価の高い島が固定的に勝つだけ
+df.groupby('date')['diff'].idxmax()
+
+# OK: 島ごとに分離してから島内トップを抽出
+for island_name, (lo, hi) in islands.items():
+    df[(df.machine_number>=lo)&(df.machine_number<=hi)].groupby('date')['diff'].idxmax()
+```

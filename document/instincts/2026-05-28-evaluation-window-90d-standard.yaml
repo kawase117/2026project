@@ -2,6 +2,7 @@
 id: test-period-standard-90d
 trigger: "予測モデルの評価ウィンドウ・テスト期間を設定・変更するとき"
 confidence: 0.92
+scope: methodology
 domain: ml-evaluation
 source: codex-analysis
 project_id: 2026project
@@ -38,6 +39,7 @@ expert別F1の比較（90日を選んだ理由）:
 id: evaluation-window-change-no-immediate-top3-effect
 trigger: "評価ウィンドウを変更した後、予測Top3が変わったかどうかを確認するとき"
 confidence: 0.88
+scope: methodology
 domain: ml-evaluation
 source: session-observation
 project_id: 2026project
@@ -66,6 +68,7 @@ project_name: pachinko-analyzer
 id: retroactive-prediction-comparison-equal-denominator
 trigger: "旧予測と新予測を同一日の実績で比較するとき"
 confidence: 0.85
+scope: methodology
 domain: prediction-evaluation
 source: session-observation
 project_id: 2026project

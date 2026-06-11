@@ -2,6 +2,7 @@
 id: bisect-identical-results-means-zero-importance
 trigger: "when two different feature sets in A/B test produce identical walk-forward hit@2 scores"
 confidence: 0.75
+scope: methodology
 domain: ml-feature-engineering
 source: session-observation
 project_id: 2026project
@@ -39,6 +40,7 @@ v3a vs v2: sig_imp=0  ← v2 越えられず（v2 が天井）
 id: ndcg-loss-prefers-within-group-relative-features
 trigger: "when designing features for XGBRanker with rank:ndcg objective"
 confidence: 0.55
+scope: methodology
 domain: ml-feature-engineering
 source: session-reasoning
 project_id: 2026project
@@ -80,6 +82,7 @@ v4a_znorm_only vs v2: sig_imp=0  ← v2 があれば不要
 id: neighbor-roll-diff-redundant-with-existing-lags
 trigger: "when proposing cross-digit neighbor features (right/left adjacent last_digit) for LTR"
 confidence: 0.85
+scope: methodology
 domain: ml-feature-engineering
 source: session-observation
 project_id: 2026project
@@ -110,6 +113,7 @@ hall-digit-level lag（aggregate_mode 内で計算）はこれに該当するた
 id: weekday-roll4-redundant-with-expanding-weekday-rate
 trigger: "when proposing weekday-specific rolling average (last N same-weekday observations) for LTR"
 confidence: 0.83
+scope: methodology
 domain: ml-feature-engineering
 source: session-observation
 project_id: 2026project

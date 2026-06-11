@@ -2,6 +2,7 @@
 id: machine-master-flag-keyword-based
 trigger: "machine_masterのbt_flagやhana_flagを追加・修正するとき"
 confidence: 0.97
+scope: methodology
 domain: database-maintenance
 source: session-observation
 project_id: 2026project
@@ -35,6 +36,7 @@ _BT_KEYWORDS = [
 id: machine-master-insert-vs-update
 trigger: "新規機種が追加されたのにbt_flagが0のままになっているとき"
 confidence: 0.95
+scope: methodology
 domain: database-maintenance
 source: session-observation
 project_id: 2026project
@@ -62,6 +64,7 @@ project_name: pachinko-analyzer
 id: machine-name-hyoki-zure-patterns
 trigger: "機種名でDBを検索・フラグ判定するとき"
 confidence: 0.92
+scope: methodology
 domain: database-maintenance
 source: session-observation
 project_id: 2026project
@@ -93,6 +96,7 @@ ana-slo.comからスクレイピングした機種名には複数の表記揺れ
 id: machine-master-per-hall-db
 trigger: "machine_masterテーブルを参照・更新するとき"
 confidence: 0.90
+scope: methodology
 domain: database-architecture
 source: session-observation
 project_id: 2026project

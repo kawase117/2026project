@@ -2,6 +2,8 @@
 id: hokuto-machine-name-disambiguation
 trigger: "スマスロ北斗の拳を信号機種として使う際に機種名を検索するとき"
 confidence: 0.97
+scope: hall-specific
+hall: kamata7
 domain: operational-strategy
 source: session-observation
 project_id: 2026project
@@ -46,6 +48,8 @@ SIGNAL_MACHINES += [r[0] for r in cursor.fetchall()]
 id: signal-machine-dual-condition
 trigger: "モンキーターンV・スマスロ北斗の拳の兆候を判定するとき"
 confidence: 0.88
+scope: hall-specific
+hall: kamata7
 domain: operational-strategy
 source: session-observation
 project_id: 2026project
@@ -91,6 +95,8 @@ signal_daily['signal'] = signal_daily['signal_diff'] | signal_daily['signal_rb']
 id: sunday-machine-count-strategy
 trigger: "日曜日「機種一」戦略で台数別に機種を選ぶとき"
 confidence: 0.82
+scope: hall-specific
+hall: kamata7
 domain: operational-strategy
 source: session-observation
 project_id: 2026project
@@ -131,6 +137,8 @@ project_name: pachinko-analyzer
 id: nextday-zorome-workflow-spec
 trigger: "翌日予測と台末尾ゾロ目を統合した実行可能な出力を生成するとき"
 confidence: 0.90
+scope: hall-specific
+hall: kamata7
 domain: operational-strategy
 source: session-observation
 project_id: 2026project
@@ -179,6 +187,8 @@ Rank 2: 末尾 1  確信度 61%
 id: machine-signal-cross-prediction
 trigger: "特定機種の兆候から同日の他機種の強さを予測するとき"
 confidence: 0.75
+scope: hall-specific
+hall: kamata7
 domain: ml-strategy
 source: session-observation
 project_id: 2026project

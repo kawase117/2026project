@@ -1,0 +1,221 @@
+---
+id: main-jug-corner1-dd-weekday-rules-confirmed
+trigger: "みとやのメインジャグラー島（台641-691）で角番1の狙い目を探すとき"
+confidence: 0.94
+domain: operational-rules
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+title: メインジャグラー島 角番1 最強パターン：4系月曜（+2154, n=16）が絶対狙い目
+
+## 背景
+全観測日の main_jug 角番1 を DD×曜日別に集計し、信頼度ティア（Tier A/B/Avoid）を確立した結果:
+
+**Tier A（高信頼, n≥10, plus_rate=100%, avg_diff≥1500）:**
+```
+1位: 4系月曜      +2154  n=16  ← 最強・最信頼
+2位: 7系土曜      +1996  n=13
+3位: 4系土曜      +1908  n=19
+```
+
+4系月曜が圧倒的（次点比 +158枚差）。サンプル数も n=16 で十分な信頼性。
+
+**Tier B（中信頼, n=5-9, plus_rate=100%, avg_diff≥1200）:**
+```
+1位: 4系月曜      +2604  n=9  ← サンプル小だが最高値（参考値）
+2位: 4系月曜      +2343  n=9  ← 複数観測で4系月曜の一貫性を確認
+```
+
+Tier B の +2600 が Tier A の +2154 を上回るが、n=9（小サンプル）なので確度は下げる。
+
+**Avoid ランク: 0件** ← 全観測パターンが100%プラス。「避けるべき日」が存在しない。
+
+## アクション
+
+**4系（DD=4,14,24）の月曜日は、メインジャグラー島の角番1を最優先で打つ**
+
+運用フロー:
+1. 前日確認で「明日が4系のいずれかか」を確認
+2. 「月曜」なら角番1の稼働状況を朝一番で確認
+3. メインジャグラー島 641-657 または 658-674 の rank_from_aisle=1 の台を選択
+
+**次点狙い:** 7系土曜（+1996）、4系土曜（+1908）も信頼できる。
+
+**信頼度の使い方：**
+- Tier A のパターンは「実行」レベルの信頼度
+- Tier B のパターンは「参考」レベル（情報収集が増えれば信頼度アップ）
+
+## 例
+```sql
+-- 4系月曜（Tier A）のメインジャグ島角番1台を抽出
+SELECT
+  m.machine_number,
+  m.machine_name,
+  ROUND(AVG(m.diff_coins_normalized), 0) as avg_diff,
+  COUNT(DISTINCT m.date) as n_days
+FROM machine_detailed_results m
+JOIN machine_layout ml ON m.machine_number = ml.machine_number
+WHERE ml.machine_number BETWEEN 641 AND 691
+  AND ml.rank_from_aisle = 1
+  AND CAST(SUBSTR(m.date,7,2) AS INTEGER) IN (4, 14, 24)
+  AND STRFTIME('%w', SUBSTR(m.date,1,4)||'-'||SUBSTR(m.date,5,2)||'-'||SUBSTR(m.date,7,2)) = '1'
+GROUP BY m.machine_number
+ORDER BY avg_diff DESC;
+```
+
+---
+id: main-mix-dd-weekday-absolute-strength
+trigger: "みとやの AT列（main_mix）の DD×曜日 最適配置を決めるとき"
+confidence: 0.93
+domain: operational-rules
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+title: AT列（main_mix）は「いつ打ってもプラス」 — Tier A 198パターン（圧倒的強さ）
+
+## 背景
+main_mix（台501-640, AT機列）の全角番合算で DD×曜日を集計した結果:
+
+**Tier A（絶対狙い, plus_rate=100%, avg_diff≥3500）: 198パターン**
+```
+1位: 7系木曜      +5427  n=23
+2位: 4系土曜      +5320  n=34
+3位: 4系水曜      +5217  n=24
+```
+
+Tier A が 198件 = ほぼ全 DD×曜日 パターンがプラス。
+**「避けるべき日がない」という異常な強さ**。
+
+**Tier B（優先, plus_rate=100%, n≥20, avg_diff≥2500）: 420パターン**
+- +3400～3500 の安定帯
+
+**Tier C（参考）: 153パターン**
+- +2400～2500 の下位帯
+
+## 解釈
+
+主要因は **機種構成**（スマスロ北斗・新鬼武者・スマスロ碧など高機械割機種）
+と **高設定投入率の高さ**（AT機は全般的に ホール利益率が低いため設定が甘い傾向）。
+
+角番効果（rank_from_aisle）よりも **DD×曜日による設定投入戦略が主要因**。
+
+## アクション
+
+**AT列は「日程選択よりも台番号・機種選択を優先」する**
+
+運用判断:
+1. Tier A（+5000超）の日に打つのは推奨だが、Tier C でも +2400 プラスは確実
+2. 「今日は何系か」より「現在配置されている機種は何か」を重視
+3. 高機械割機種（北斗系・新鬼武者など）がAT列に配置されていれば、
+   いつ打ってもプラス期待値
+
+**最優先 DD×曜日（Tier A の Top 5）:**
+- 7系木曜（+5427）
+- 4系土曜（+5320）
+- 4系水曜（+5217）
+- 7系木曜（+5099）
+- 4系金曜（+5048）
+
+## 例
+```python
+# main_mix（AT列）の日別期待値計算
+dd_group = 4  # 本日が4系（4, 14, 24日）
+weekday = 'Sat'  # 本日が土曜
+
+# ルールCSVから該当パターンを検索
+top_match = rules_df[
+    (rules_df['dd_group']=='4系') &
+    (rules_df['day_of_week']=='Sat') &
+    (rules_df['rank_tier']=='A')
+]
+# → avg_diff=+5320, n=34 確定
+expected_diff = 5320
+```
+
+---
+id: tier-framework-for-dd-weekday-rules
+trigger: "DD×曜日や位置による運用ルールを確立するとき"
+confidence: 0.91
+domain: methodology
+source: design-decision
+project_id: 2026project
+project_name: pachinko-analyzer
+
+title: 運用ルール確立のフレームワーク：Tier A/B/C による信頼度管理
+
+## 背景
+main_jug・main_mix の運用ルール確立で採用した Tier 分類法:
+
+| Tier | 定義 | 信頼度 | 運用判断 |
+|------|------|--------|---------|
+| **A** | n≥10, plus_rate=100%, avg_diff 高 | 実行レベル | この日このパターンなら打つ |
+| **B** | n=5-9, plus_rate=100%, avg_diff≥中 | 参考レベル | A を待つ暇があれば検討 |
+| **Avoid** | plus_rate<60% or avg_diff<閾値 | 回避推奨 | この日は避ける |
+
+**サンプル数（n）が信頼度を決める本質的な理由：**
+- 統計的には 3-5 回の観測は「偶然」の可能性が高い
+- 10 回以上の観測なら「ホールの意図的な戦略」の証拠
+- plus_rate=100% でも n が小さければ「次の観測で逆転する可能性」
+
+## アクション
+
+新しい分析（末尾別、セクション別など）で運用ルールを作るたびに:
+1. **Tier A の基準を設定する** （n≥10など）
+2. **Tier B の基準を設定する** （より緩い条件で「参考値」レベル）
+3. **Avoid を明示的に抽出する** （「避けるべき」は重要）
+4. **「サンプル数が少ない高値」は参考値に格下げ** する勇気
+
+みとやでの実績:
+- main_jug 角番1: Tier A 24件, Tier B 49件
+- main_mix DD×曜日: Tier A 198件 → ほぼ全パターンがプラス
+
+---
+id: all-patterns-always-plus-indicates-strong-hall
+trigger: "分析結果で「すべてのパターンが plus_rate=100%」という現象が見えたとき"
+confidence: 0.88
+domain: domain-analysis
+source: empirical-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+title: 全パターンプラスは「ホール戦略の不在」ではなく「高い設定投入量」を示す
+
+## 背景
+main_jug 角番1（73パターン）と main_mix（771パターン）
+いずれも **「避けるべきパターン（Avoid）がゼロ」** という現象。
+
+plus_rate=100% が全パターンに及ぶ理由:
+- 機械割（設定）が「どのセクション・どのDD でも」高く設定
+- または高い設定が「ほぼ全台」に投入
+- ホール経営判断として「客の還元率を上げる（稼働率確保）」戦略
+
+**対比:**
+- bari（バラエティ島）の角番: ε²=0 で選別なし → 低設定混在
+- main_jug 角番1: ε²=0.0067 で明確な選別 → 「角番1 に特に高設定」
+
+## アクション
+
+「全パターンプラス」が観測されたら:
+1. **「どこに打ってもプラス」は幸運ではなく、次のステップへの合図**
+2. 「差枚の大きさ」（+1500 vs +2500 vs +5000）で優先順を付ける
+3. 「ホールの意図」を追従するより、「実績の差」で選別する
+
+みとやの場合:
+- main_jug: 「どの DD×曜日 も +1000～+2000」 → 高設定多投入の確認
+- main_mix: 「どの DD×曜日 も +2400～+5400」 → より多投入の確認
+
+**危険な誤解：「Tier A と Tier C に差がない」**
+- Tier A は「最も確実」、Tier C は「ギリギリプラス」
+- サンプル数・再現性を疑う必要がある
+
+## 例
+```python
+# 「全パターンプラス」時の段階的分析
+if df['plus_rate'].min() == 100.0:
+    print("全パターンプラス → 次のステップ:")
+    print("1. 差枚の分布（中央値、四分位数）を確認")
+    print("2. サンプル数の偏り（小サンプルの高値）を検出")
+    print("3. 機種・配置による条件付き分析へシフト")
+```

@@ -1,0 +1,199 @@
+---
+id: chained-model-feature-broadcast-collapses-to-redundant-date-proxy
+trigger: "上流モデルの予測値を下流モデルの特徴量として統合する（chained/stacked pipeline）とき、または既存の統合パイプラインをレビューするとき"
+confidence: 0.95
+domain: ml-architecture
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 「セクション内に対象が1台しかいない」上流予測を groupby-mean でブロードキャストすると、下流モデルにとって完全に冗長な特徴量になる
+
+## 背景
+
+みとやの「角番予測モデル（Model 1: corner_rank_prediction_by_section.py）」の出力を
+「個別台差枚予測モデル（Model 2: individual_machine_diff_prediction_by_section.py）」の
+特徴量として統合するパイプラインをレビューした。
+
+検証の結果：
+- 18セクション全てで baseline（角番特徴なし）と with_corner（あり）の AUC/Precision/Recall/F1 が
+  delta = 0.0 で完全一致
+- pred_corner_top_prob の feature importance が **全セクションで厳密に 0.0**（最下位）
+- pred_baseline と pred_with_corner の予測値も bit-identical（最大差分 0.0）
+
+根本原因：
+```
+1. みとや大森町店は全18セクションで「角番台（rank_from_aisle==1）」が必ず1台のみ
+2. merge_corner_predictions() は groupby(["date","section"]).agg(mean) で
+   角番台の予測確率を集約 → 1台しかいないため、その1台の値がそのままセクション内
+   全台にブロードキャストされる
+3. セクション別モデルでは section が定数なので、このブロードキャスト値は
+   実質「日付だけに依存するスカラー」に潰れる
+4. モデルには既に dd, weekday_num, month, machine_xday_avg_wf, seat_dd_roll,
+   model_weekday_roll など、より直接的で機種・台番号に紐づいた日付系特徴が
+   大量に存在するため、CatBoost はこの特徴を完全に冗長と判定し一度も分岐に使わない
+```
+
+「実装は技術的に正しい（マージ・集約のコードにバグはない）が、対象集合のカーディナリティが
+小さすぎるため、統計的に意味のある変換になっていない」というケース。
+delta_auc=0.0 は merge失敗のサインではなく、「集約後の特徴が下流モデルの既存特徴と
+完全に線形従属/冗長である」ことのサイン。
+
+## アクション
+
+上流→下流の特徴統合パイプラインをレビュー・設計する際は必ず以下を確認する：
+
+```python
+# 1. 集約対象のカーディナリティを先に確認する
+target_count_per_group = df.groupby(group_keys)[target_flag].sum()
+if (target_count_per_group == 1).all():
+    # 集約(mean等)が「1サンプルの値の単純コピー」に退化している
+    # → 下流モデルでgroup_keysが定数になる文脈では、実質「日付だけのスカラー」
+    print("WARNING: aggregation degenerates to single-sample broadcast")
+
+# 2. 統合後、必ず feature importance と delta_auc の両方を確認する
+#    delta_auc=0.0 だけでなく importance=0.0 も併せて見ることで
+#    「ノイズで効果が消えた」のか「完全な冗長性で効果がない」のかを区別できる
+importance = model.get_feature_importance(prettified=True)
+if importance.loc[importance['Feature Id']==NEW_FEATURE, 'Importances'].iloc[0] == 0.0:
+    # 統合特徴がモデルに一度も使われていない → 設計を見直す
+    ...
+
+# 3. 改善案：ブロードキャストではなく対象行にのみマージする
+#    例：角番台の予測値は「角番台自身の行」にのみ付与し、
+#    他の台には付与しない（NaN または別ロジック）
+merged = machine_frame.merge(
+    corner_frame[["date", "machine_number", "pred_corner_top_prob"]],
+    on=["date", "machine_number"],   # section ではなく machine_number で結合
+    how="left",
+)
+```
+
+## 例
+
+```
+誤った統合: 角番予測値を (date, section) で集約してセクション内全台にブロードキャスト
+  → セクション内に角番台が1台しかいないため、実質「角番台1台の予測値の単純コピー」
+  → セクション別モデルでは section が定数なので「日付だけに依存するスカラー」に退化
+  → 既存の日付系特徴（dd, weekday_num, machine_xday_avg_wf 等）と完全に冗長
+  → feature_importance = 0.0（全18セクション）, delta_auc = 0.0（全18セクション）
+
+正しい診断手順:
+  1. groupby(date, section)["is_corner"].sum() で対象数を確認 → 全セクション1台と判明
+  2. 統合後の pred_baseline と pred_with_corner を比較 → bit-identical と判明
+  3. feature_importance を確認 → 0.0 と判明（3点が揃って「冗長」と確定診断できる）
+```
+
+---
+id: upstream-model-quality-gates-downstream-chaining-value
+trigger: "上流モデルの予測精度が低い（chance baselineに近い）状態で、その出力を下流モデルに連結しようとするとき"
+confidence: 0.9
+domain: ml-architecture
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 上流モデルの精度がチャンスに近い場合、下流への連結は「弱い信号の上に意味のない統合を重ねる」だけになる
+
+## 背景
+
+みとやの角番予測モデル（Model 1）自体の精度を確認したところ：
+- 全体AUC = 0.584（positive_rate ≈ 0.39 → chance AUC ≈ 0.5）
+- セクション別では 0.52〜0.61 とばらつき、明確に強いセクションは無し
+- → chance からの上振れはわずか（統計的有意性も未検証）
+
+この状態で Model 1 の出力を Model 2 の特徴量として統合しても、伝達できる
+情報量自体がほぼゼロに近い。実際に [[chained-model-feature-broadcast-collapses-to-redundant-date-proxy]]
+で確認した「完全な冗長性」は、(a) 集約方法の問題と (b) 上流モデルの信号の弱さ、
+の両方が重なった結果である。
+
+## アクション
+
+二段（chained/stacked）モデルを設計・評価する際は、連結する前に必ず：
+
+```python
+# 1. 上流モデル単体の精度が chance baseline と有意に区別できるかを先に検証する
+#    （[[antipattern-claim-requires-chance-baseline-comparison]] と同じ手法を適用）
+n = len(val_df)
+p = positive_rate
+chance_auc = 0.5
+se_auc = ... # 適切な標準誤差推定（bootstrap等）
+if abs(observed_auc - chance_auc) < 2 * se_auc:
+    print("上流モデルの精度はチャンスと区別不可 → 下流連結は無意味の可能性が高い")
+    # この時点で「連結アーキテクチャの改善」より「上流モデル自体の精度向上」を優先する
+
+# 2. 連結によるゲインの理論上限を見積もる
+#    上流AUCが0.55程度なら、伝達可能な情報量はごく僅か。
+#    下流モデルが既に持つ強い特徴（machine_avg_diff_wf 等、AUC寄与度の高いもの）と
+#    比べて、上流予測が追加でもたらせる価値は理論的にも小さい
+```
+
+## 例
+
+```
+誤った優先順位: 「角番予測→個別台予測」の統合方法（集約・マージ方式）を改善する
+正しい優先順位: まず角番予測モデル単体の精度（AUC 0.584、chanceは0.5）が
+              統計的に意味のあるシグナルかを検証する
+              → 意味がなければ、どう統合しても下流に伝わる情報はない
+              → 「弱いモデルの上に強い統合ロジックを作る」のではなく
+                「まず上流モデルを強くする」が正しい改善順序
+```
+
+---
+id: single-fold-ablation-selection-is-statistically-unvalidated
+trigger: "walk-forward foldが1つしか生成されない条件（短い学習期間スコープ・x_day限定など）で、複数シナリオ（特徴量・ウィンドウ等）を比較して『最良』を選択しようとするとき"
+confidence: 0.88
+domain: methodology
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# n_folds=1 のシナリオ比較で「最良」を選ぶのは、有意差検定なしの単一試行比較に過ぎない
+
+## 背景
+
+みとやの角番予測モデルでは、ウィンドウ別ablation（xday_7mean, xday_rolling30_mean,
+xday_90mean, xday_expanding_mean, all_days_expanding_mean）と特徴シナリオ別ablation
+（all_days/xday_only/hybrid）の両方で「最良シナリオ」を選択するロジック
+（select_window_ablation_scenario, paired_ttest_fold_aucs）が実装されていた。
+
+しかし実際の出力を確認すると：
+- x_day限定スコープ（72日学習/30日検証）では walk-forward が **1fold** しか作れない
+  （build_walk_forward_folds は len(dates) < train_days + 1 で空リストを返す）
+- 全シナリオで n_folds=1 → paired_ttest_fold_aucs が機能せず p_value=NaN
+- 「xday_7mean が最良（AUC 0.552）」という結論は、0.502〜0.533 という僅差の
+  シナリオ群に対する**単一試行の比較**に過ぎず、統計的に有意かどうか判定不能
+
+「比較・選択ロジックを実装した」ことと「その選択が統計的に妥当である」ことは別問題。
+fold数が少ない設定では、選択ロジック自体が機能しない（p値が出ない）ことに
+気づかないまま「最良シナリオ」が確定してしまうリスクがある。
+
+## アクション
+
+ablation/シナリオ選択を実装・レビューする際は必ず：
+
+```python
+# 1. 各シナリオの n_folds を確認する（最重要）
+metrics_df = pd.read_csv(ablation_metrics_path)
+if (metrics_df["n_folds"] <= 1).any():
+    print("WARNING: n_folds<=1 のシナリオが存在 → 有意差検定不可、選択結果は無効")
+    # この場合「最良シナリオ」として確定させてはいけない
+
+# 2. fold数を増やすための設計変更を検討する
+#    - train_days/step_days の縮小（ただし学習データ量とのトレードオフに注意）
+#    - x_day限定ではなく all_days スコープで学習し、x_dayのみで検証する
+#      （xday-scope-superiority 等、既存知見との整合性を要確認）
+#    - 検証期間全体をより長く確保する（DB拡張: [[db-expansion-plan-20260602]]）
+
+# 3. n_folds=1 の場合、選択結果を「参考情報」として明記し、
+#    本番採用は n_folds>=3〜5 を確保してから行う
+```
+
+## 例
+
+```
+誤った報告: 「window ablation の結果、xday_7mean (AUC 0.552) が最良と判明したため採用」
+正しい解釈: 全シナリオで n_folds=1（p_value=NaN）。
+            AUC差は 0.502〜0.552 の僅差で、単一の検証期間での比較に過ぎない。
+            → 「最良」の確定は時期尚早。fold数を増やせる設計に変更してから再評価すべき
+```

@@ -1,0 +1,167 @@
+---
+id: bucket-specific-hall-average-baseline
+trigger: "walk-forward の mean_diff から実際の期待差枚を計算するとき"
+confidence: 0.98
+domain: methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Bucket別ホール台平均を正しいベースラインとして使う
+
+## 背景
+walk-forward の mean_diff は「モデル予測末尾のexcess（予測末尾台平均 − その日のホール全体台平均）」であり、
+絶対的な期待差枚ではない。
+全期間の overall ホール台平均をベースラインとして使うと、
+属性ごとに大きく異なるホール台平均を見落とす。
+みとや大森町では x_day（4/7のつく日）のホール台平均は +210.7 で、others の -40 とは別次元。
+
+## アクション
+実際の期待差枚 = bucket別ホール台平均（DBから属性フィルタで集計） + model excess
+日付フィルタを bucket の定義と同じ条件で絞ること（4日なら day IN (4,14,24) など）。
+bucket の統合平均を流用してはならない。
+
+## 例
+```sql
+-- x_day のホール台平均
+SELECT AVG(avg_diff_per_machine) FROM daily_hall_summary
+WHERE date >= '20260128' AND date <= '20260529'
+  AND (CAST(SUBSTR(date,7,2) AS INT) % 10) IN (4, 7)
+-- +210.7 + model excess +18.16 = 実際の期待差枚 +228.9/台
+```
+
+---
+id: strong-zorome-date-computation
+trigger: "strong_zorome bucket の判定を実装するとき"
+confidence: 0.97
+domain: methodology
+source: bug-fix
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# strong_zorome は DB フラグではなく ts.month == ts.day で判定する
+
+## 背景
+`is_strong_zorome` カラムは `daily_hall_summary` に存在するが、
+`aggregate_mode_mitoya()` の後段でカラムが消えるため、
+bucket 分類が `is_strong_zorome` を参照すると n_days=0 になるバグが発生した。
+strong_zorome = 月と日が同じ日（2/2, 3/3, ... 12/12）は日付から直接計算できる。
+
+## アクション
+`classify_mitoya_day_bucket()` では DB フラグを参照せず `ts.month == ts.day` で判定する。
+x_day（day % 10 in {4, 7}）を先にチェックして優先させること（4/4, 7/7 は x_day 扱い）。
+
+## 例
+```python
+def classify_mitoya_day_bucket(ts: pd.Timestamp) -> str:
+    day = int(ts.day)
+    if day % 10 in {4, 7}:
+        return "x_day"
+    if ts.month == ts.day:
+        return "strong_zorome"
+    return "others"
+```
+
+---
+id: model-excess-vs-absolute-return
+trigger: "walk-forward の mean_diff で bucket 間の優先順位を決めようとするとき"
+confidence: 0.97
+domain: methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# model excess と実際の期待差枚を混同しない
+
+## 背景
+dd4 の model excess = -2.31、dd7 = +36.59 から「dd7 の方が強い」と解釈しがちだが誤り。
+model excess はその日のホール平均を引いた相対値。
+ホール台平均を加算すると dd4（+239）> dd7（+217）となる。
+
+## アクション
+実戦上の優先順位（どの日に行くか）は絶対値 = ホール台平均 + model excess で決める。
+モデルの末尾選択精度の評価は excess で行う。この2つは別の問い。
+
+## 例
+| | model excess | ホール台平均 | 実際の期待差枚 |
+|--|--|--|--|
+| dd4 | -2.31 | +241.3 | +239（有利） |
+| dd7 | +36.59 | +180.0 | +217 |
+
+---
+id: xday-equals-is-xday-flag
+trigger: "みとやの x_day bucket を定義または実装するとき"
+confidence: 0.99
+domain: hall-specific
+source: db-exploration
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# is_x_day フラグは日付末尾 4/7 と完全一致（DB JOIN 不要）
+
+## 背景
+みとや大森町 DB で is_x_day=1 の日と「day % 10 in {4,7}（4/7/14/17/24/27日）」は
+514日間で完全一致（n=102、重複率100%）。
+x_day ONLY: 0件、ld4/7 ONLY: 0件。
+
+## アクション
+x_day 判定は `day % 10 in {4, 7}` で計算する（DB JOIN 不要）。
+4/7 のつく日 = マルハン対抗日（ドメイン知識）。
+
+## 例
+```python
+is_x_day = (int(date_str[6:8]) % 10) in {4, 7}
+```
+
+---
+id: mitoya-event-day-negative
+trigger: "みとやで is_any_event フラグを bucket 設計に使おうとするとき"
+confidence: 0.95
+domain: hall-specific
+source: db-exploration
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# みとやの「イベント日」は設定投入と相関しない
+
+## 背景
+x_day / strong_zorome 以外の event 日（event_only: n=125）のホール台平均は -36.9/台（マイナス）。
+土・日は全て is_any_event=1 だが、正の信号ではない。
+有効なシグナルは x_day と strong_zorome のみ。
+
+## アクション
+みとやでは is_any_event をポジティブシグナルとして使ってはならない。
+event_only は others と同様に exclude。
+
+## 例
+全期間（514日）bucket 探索：
+  x_day:         n=102  avg=+210.7  → adopt
+  strong_zorome: n=14   avg=+173.1  → adopt
+  event_only:    n=125  avg=-36.9   → exclude
+  plain:         n=273  avg=-44.2   → exclude
+
+---
+id: small-bucket-min-train-days
+trigger: "年間 5〜15 日しかない bucket（strong_zorome など）を walk-forward 評価するとき"
+confidence: 0.90
+domain: methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 一貫して強い小サンプル bucket は min-train-days=5 まで下げてよい
+
+## 背景
+strong_zorome（月日ゾロ目）は年最大12日。full_2025 学習窓で 5 件程度しかなく、
+デフォルト min-train-days=14 では評価対象外（n_days=0）になる。
+ただしホール自体が一貫して強い（avg +173〜204/台）ため、
+外れた日の損失が小さく played_rate フィルタ（0.44）が自然に機能する。
+
+## アクション
+`--min-train-days-strong-zorome 5` を運用デフォルトとする。
+累計観測日数を出力 JSON に記録し、実績 15 日超過時に min-train-days=14 に戻して再評価。
+
+## 例
+strong_zorome holdout 結果（min-train-days=5）：
+  n_days=16, mean_diff=+82.27, Hit@2=0.50, played_rate=0.4375
+  実際の期待差枚 ≈ +173 + 82 = +255/台/日（全 bucket 中最強）

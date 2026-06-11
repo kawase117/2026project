@@ -1,0 +1,211 @@
+---
+id: verify-current-placement-before-dd-eda
+trigger: "特定DDのEDA・運用ルール作成をするとき"
+confidence: 0.97
+domain: methodology
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+title: EDA前に現在の機種配置を必ず確認する — 撤去済み機種の成績は運用に使えない
+
+## 背景
+DD=7 EDA を実施したところ「スマスロ北斗の拳 (540-556/557-573)」が最優先Aと判定されたが、
+実際には 2026/05/10 以前に全て撤去済みで現在は存在しない機種だった。
+歴史データ全期間を使った分析では「現在稼働していない機種」も上位に入るため、
+運用直前に必ず「現在配置の確認」ステップを挟まないと意思決定に使えない。
+
+## アクション
+特定DDのEDAを実施する際は以下の順序を守る:
+1. 全期間データで機種×DDパターンを分析（どの機種が強いか）
+2. **直近30日 (date >= 'YYYYMM01') で現在稼働中の機種×セクションを抽出**
+3. 2のリストで1の結果をフィルタ（is_current フラグ）
+4. 撤去済み機種は「参考：旧配置での実績」として分離表示
+
+クエリ例: `WHERE m.date >= '20260501' GROUP BY machine_name, section` で現在配置を確定。
+日付比較は YYYYMMDD テキスト形式のため `DATE()` 関数は使えない。文字列比較で行う。
+
+## 例
+```python
+# ステップ2: 現在稼働中の機種×セクションを取得
+q_current = '''
+SELECT DISTINCT m.machine_name, COALESCE(ml.section,'unknown') as section
+FROM machine_detailed_results m
+LEFT JOIN machine_layout ml ON m.machine_number = ml.machine_number
+WHERE m.date >= '20260501'
+'''
+df_current = pd.read_sql_query(q_current, con)
+current_keys = set(zip(df_current['machine_name'], df_current['section']))
+
+# ステップ3: DD分析にis_currentフラグを追加
+df_dd['is_current'] = df_dd.apply(
+    lambda r: (r['machine_name'], r['section']) in current_keys, axis=1
+)
+df_live = df_dd[df_dd['is_current']]  # 現在有効な分析のみ使う
+```
+
+---
+id: machine-section-movement-tracking-pitfall
+trigger: "同一機種が複数のセクションで出現するときや、セクション移動の有無を確認するとき"
+confidence: 0.93
+domain: data-quality
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+title: 同一機種が複数セクションに出現する — n_dates ではなく last_seen で現在配置を判断する
+
+## 背景
+ゴッドイーター リザレクションは 501-522 → 523-539 → 574-590 → 557-573 → 624-640 → 608-623
+と複数回移動している。機種×セクション単位で集計すると「624-640: n=5」「608-623: n=8」と
+両方残り、n_dates が多い 608-623 が現在配置と判断できるが、
+n_dates が少ない方が最新の場合もありうるため MAX(date) = last_seen の大小で判断する。
+
+## アクション
+機種の現在配置を確定するには MAX(date) が最大のセクションを採用する。
+複数セクションに同一機種が出現した場合は必ず移動履歴を確認してから分析に使う。
+
+## 例
+```sql
+-- 特定機種の配置履歴確認クエリ（last_seen 降順）
+SELECT
+  machine_name,
+  COALESCE(section, 'unknown') as section,
+  MIN(date) as first_seen,
+  MAX(date) as last_seen,
+  COUNT(DISTINCT date) as n_days
+FROM machine_detailed_results m
+LEFT JOIN machine_layout ml ON m.machine_number = ml.machine_number
+WHERE machine_name LIKE '%ゴッドイーター%'
+GROUP BY machine_name, section
+ORDER BY last_seen DESC;
+-- → last_seen が最大のセクションが現在の配置
+-- → n_days が多くても last_seen が古ければ旧配置
+```
+
+---
+id: mitoya-dd7-current-machine-patterns
+trigger: "みとやでDD=7（7日、17日、27日）の狙い目機種×末尾を判断するとき"
+confidence: 0.88
+domain: hall-specific
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+title: みとや DD=7 現役機種の強パターン（2026-06時点）
+
+## 背景
+2026-06時点の現役配置でDD=7に強い機種×末尾を調査した結果。
+スマスロ北斗の拳（旧最強機種）は撤去済みで使えない。
+現在の主役は ゴッドイーター リザレクション(608-623) と モンキーターンV(591-607)。
+
+## アクション
+DD=7（7日・17日・27日）の狙い目（信頼性 n>=6 のみ）:
+
+**優先度A:**
+- ゴッドイーター リザレクション (608-623): 末尾1 avg+3903(n=8), 末尾4 avg+4425(n=6)
+- モンキーターンV (591-607): 末尾6 avg+1604(n=22), 末尾9 avg+1309(n=17)
+- かぐや様は告らせたい (624-640): 末尾4 avg+1333(n=12), 末尾6 avg+875(n=12)
+
+**避けるべき:**
+- ゴッドイーター (608-623): 末尾0 avg-1478, 末尾8 avg-1021
+- モンキーターンV (591-607): 末尾8 avg-599
+- 東京喰種 (574-590): DD=7 全体 lift=-91（DD=4専用機種）
+- マギアレコード (501-522): DD=7 全体 lift=-56（DD=17専用機種）
+- 戦国乙女4 (608-623): avg-761
+
+**注意:**
+2026/05/11以降設置のモンスターハンターライズ(624-640)はDD=7未観測。
+旧配置(574-590)では末尾2/5/1が強かったため参考にする。
+
+## 例
+```
+DD=7 狙い目サマリー（2026-06時点）:
+  608-623 ゴッドイーター   末尾1/4 → 最優先（n=8/6）
+  591-607 モンキーターンV  末尾6/9 → 最優先（n=22/17 高信頼）
+  624-640 かぐや様        末尾4/6 → 優先（n=12）
+  624-640 モンハンライズ  末尾2/5/1 → 旧配置参考値・初観測待ち
+
+ホール全体: 17日中16日プラス(94.1%), avg+186/台
+金曜のみリスクあり（3回中1回マイナス）、日曜は100%プラス
+```
+
+---
+id: mitoya-dd7-hall-strength-confirmed
+trigger: "みとやでDD=7（7日・17日・27日）の信頼度を評価するとき"
+confidence: 0.94
+domain: domain-analysis
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+title: みとや DD=7 はホール全体で 94.1% プラス — 全DD中4位の強さ
+
+## 背景
+みとや全17日のDD=7データ分析結果:
+- is_hall_plus: 16/17 (94.1%)
+- avg_hall_diff: +186/台（全DD中4位）
+- plus_rate 順位: 5位/31DD
+「7系」(DD=7, 17, 27) は全て全DD中6位以内に入る安定グループ。
+金曜日のみ plus_rate=66.7%（3回中2回プラス）で他曜日は全て100%プラス。
+
+## アクション
+DD=7 は「運用実施」の判断基準を満たす強いDD。
+特に日曜・月〜木のDD=7は最優先で運用する。
+金曜DD=7は若干リスクあり（3観測のみのため統計的には注意）。
+
+## 例
+```
+DD別ランキング（ホール avg_hall_diff）:
+  1位: DD=4  (+278, plus_rate=82%)
+  2位: DD=14 (+233, plus_rate=100%)
+  3位: DD=24 (+212, plus_rate=94%)
+  4位: DD=7  (+186, plus_rate=94%)  ← ここ
+  5位: DD=27 (+180, plus_rate=100%)
+  6位: DD=17 (+173, plus_rate=94%)
+
+7系(7,17,27)は全て上位6位以内の「安定投資ライン」
+4系(4,14,24)は全て上位4位以内の「最優先投資ライン」
+```
+
+---
+id: new-machine-first-dd-observation-value
+trigger: "設置から1〜2ヶ月以内の新機種がDD=7などの特定DDに初めて当たるとき"
+confidence: 0.82
+domain: methodology
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+title: 新設置機種の初DD観測日は旧配置・同機種の実績を参照して期待値を推定する
+
+## 背景
+2026/05/11設置のモンスターハンターライズ(624-640)はDD=7のデータが未収集。
+同機種が旧配置(574-590)にいた期間のDD=7実績は avg+591(n=9, lift=+526)と強かった。
+機種固有の高設定投入パターン（DD×末尾）は配置場所が変わっても継承される可能性があり、
+新機種の特定DD初観測前の期待値推定に利用できる。
+
+## アクション
+新機種の特定DDデータが不足している場合:
+1. 同機種の「別セクション配置時」のDD実績をクエリする
+2. 「同機種のDD=Xパターン（旧配置参考）」として信頼度を下げて提示
+3. 実際に観測された後は旧データと新データを両方保持して推移を確認
+4. 2〜3回の観測後に信頼度を再評価する
+
+## 例
+```sql
+-- 特定機種の全配置・全DDにわたる実績を取得
+SELECT
+  COALESCE(ml.section,'unknown') as section,
+  CAST(SUBSTR(m.date,7,2) AS INTEGER) as dd,
+  AVG(m.diff_coins_normalized) as avg_diff,
+  COUNT(DISTINCT m.date) as n_dates
+FROM machine_detailed_results m
+LEFT JOIN machine_layout ml ON m.machine_number = ml.machine_number
+WHERE m.machine_name LIKE '%モンスターハンターライズ%'
+GROUP BY section, dd
+HAVING n_dates >= 3
+ORDER BY section, dd
+-- → 旧配置での実績から現在配置での期待値を推定
+-- → 初観測後に旧実績との乖離を確認して信頼度を更新
+```

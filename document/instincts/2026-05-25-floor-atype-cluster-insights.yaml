@@ -1,7 +1,15 @@
+# ⚠️  LEAKAGE WARNING (added 2026-06-01)
+# このファイルのインサイトは2026-05-31のリーク修正前に作成された。
+# 【有効】実データ観察（diff_coins集計・ゾロ目パターン・台配置等）
+# 【無効】MLモデル性能値（AUC / hit@2 / precision 等の数値）
+# アクション項目を実運用に使う前にリーク修正後のモデルで再検証すること。
+
 ---
 id: floor-atype-wednesday-clusters-all-different
 trigger: "when interpreting 水曜末尾クラスタ in 蒲田七 floor_atype分割分析"
 confidence: 0.88
+scope: hall-specific
+hall: kamata7
 domain: pachinko-domain-knowledge
 source: data-observation
 project_id: 2026project
@@ -34,6 +42,8 @@ floor_atype分割はA型 vs BT の1次元分割より情報量が多いため、
 id: 2fn-cluster-678-dominant-across-weekdays
 trigger: "when designing last_digit features for 2F_N group in 蒲田七"
 confidence: 0.85
+scope: hall-specific
+hall: kamata7
 domain: pachinko-domain-knowledge
 source: data-observation
 project_id: 2026project
@@ -70,6 +80,8 @@ ML特徴量設計では `is_2fn and is_digit_678 and not is_monday and not is_we
 id: 3fn-low-base-but-strong-cluster-signal
 trigger: "when interpreting 3F_N group statistics or designing features for それ in 蒲田七"
 confidence: 0.87
+scope: hall-specific
+hall: kamata7
 domain: pachinko-domain-knowledge
 source: data-observation
 project_id: 2026project
@@ -109,6 +121,8 @@ ML設計では 3F_N の is_high_setting 閾値を他グループより 100〜200
 id: thursday-3fa-3fn-share-cluster-012
 trigger: "when analyzing 木曜の末尾パターン across floor × atype groups in 蒲田七"
 confidence: 0.78
+scope: hall-specific
+hall: kamata7
 domain: pachinko-domain-knowledge
 source: data-observation
 project_id: 2026project

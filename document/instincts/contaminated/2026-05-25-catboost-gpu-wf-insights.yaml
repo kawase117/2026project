@@ -2,6 +2,7 @@
 id: duplicate-background-process-detection
 trigger: "when launching a long-running training job in the background"
 confidence: 0.95
+scope: methodology
 domain: ml-execution
 source: session-observation
 project_id: 2026project
@@ -40,6 +41,7 @@ Stop-Process -Id 30396, 31932, 34368 -Force
 id: catboost-walkforward-runtime-expectation
 trigger: "when running CatBoost ranker walk-forward over testperiod"
 confidence: 0.88
+scope: methodology
 domain: ml-execution
 source: session-observation
 project_id: 2026project
@@ -73,6 +75,7 @@ GPU を複数プロセスで共有すると倍以上に延伸する。
 id: catboost-gpu-model-params
 trigger: "when enabling GPU for CatBoostRanker in tail_ltr_split_rule_nextday_gpu.py"
 confidence: 0.92
+scope: methodology
 domain: ml-feature-engineering
 source: session-observation
 project_id: 2026project
@@ -111,6 +114,7 @@ Free: 2214.347656 Total: 8187.5
 id: total-diff-coins-deficit-feature
 trigger: "when searching for features to detect 低迷見落とし (underperformance oversight) in tail ranking"
 confidence: 0.82
+scope: methodology
 domain: ml-feature-engineering
 source: session-observation
 project_id: 2026project
@@ -148,6 +152,7 @@ Phase A 検定結果（2F_N miss vs hit 日比較）:
 id: catboost-eval-metric-pairlogit
 trigger: "when configuring CatBoostRanker with PairLogit loss"
 confidence: 0.95
+scope: methodology
 domain: ml-feature-engineering
 source: session-observation
 project_id: 2026project

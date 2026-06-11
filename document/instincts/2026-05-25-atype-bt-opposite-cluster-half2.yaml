@@ -1,7 +1,15 @@
+# ⚠️  LEAKAGE WARNING (added 2026-06-01)
+# このファイルのインサイトは2026-05-31のリーク修正前に作成された。
+# 【有効】実データ観察（diff_coins集計・ゾロ目パターン・台配置等）
+# 【無効】MLモデル性能値（AUC / hit@2 / precision 等の数値）
+# アクション項目を実運用に使う前にリーク修正後のモデルで再検証すること。
+
 ---
 id: atype-bt-form-opposite-clusters-half2-mechanism
 trigger: "when interpreting the ハーフ×2（2本）pattern in 蒲田七 last_digit analysis"
 confidence: 0.82
+scope: hall-specific
+hall: kamata7
 domain: pachinko-domain-knowledge
 source: data-observation
 project_id: 2026project
@@ -45,6 +53,8 @@ ML特徴量設計では A型とBTを同一フラグ（is_non_AT）でまとめ�
 id: bt-delta-consistently-larger-than-atype
 trigger: "when comparing prediction confidence between BT and A型 cluster features in 蒲田七"
 confidence: 0.85
+scope: hall-specific
+hall: kamata7
 domain: pachinko-domain-knowledge
 source: data-observation
 project_id: 2026project
@@ -72,6 +82,8 @@ delta < 20 の曜日（月曜=15.8、日曜=16.6）では A型クラスタ特徴
 id: saturday-row-always-low-gini-column-pattern-irrelevant
 trigger: "when evaluating whether row-level (physical column) features are useful for Saturday in 蒲田七"
 confidence: 0.75
+scope: hall-specific
+hall: kamata7
 domain: pachinko-domain-knowledge
 source: data-observation
 project_id: 2026project

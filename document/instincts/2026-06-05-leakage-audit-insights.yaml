@@ -1,0 +1,135 @@
+---
+id: forecast-excluded-columns-leakage-guard
+trigger: "みとやまたは他ホールのLTRモデルに新しいカラムを特徴量として追加しようとするとき"
+confidence: 0.98
+domain: methodology
+source: code-audit
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# FORECAST_EXCLUDED_COLUMNS が同日リークの主防衛線
+
+## 背景
+`utils.py` の `FORECAST_EXCLUDED_COLUMNS` は同日の目的変数と直接相関するカラムを列挙している。
+`get_numeric_features()` はこのセットと `META_COLUMNS` と `is_top_2` を除外してから
+数値カラムを特徴量リストとして返す。
+`run_mode_bucketed` 内に `features = [f for f in features if f not in {"is_top_2"}]` という
+二重防衛も存在する。
+
+## アクション
+新しいカラムを追加するとき、そのカラムが「同日の差枚・勝率・効率」に由来する場合は
+必ず `FORECAST_EXCLUDED_COLUMNS` に追加すること。コメントに除外理由を記載すること。
+lag/roll 派生カラム（`lag1_total_diff_coins` 等）は除外不要（shift 済みで安全）。
+
+## 例
+```python
+FORECAST_EXCLUDED_COLUMNS = frozenset({
+    "total_diff_coins",         # 目的変数 is_top_2 の直接の元データ
+    "total_diff_coins_focus",   # Same-day weighted payoff. Leakage if left in features.
+    "win_rate",                 # 同日勝率
+    "efficiency",               # 同日効率
+    "efficiency_focus",         # Same-day weighted efficiency derived from same-day payout.
+})
+```
+
+---
+id: full-2025-window-boundary-safety
+trigger: "walk-forward の学習窓 full_2025 が holdout と重複しないか確認するとき、または新しい window_name を追加するとき"
+confidence: 0.99
+domain: methodology
+source: code-audit
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# full_2025 は 2025-12-31 終端で holdout と完全分離
+
+## 背景
+`build_train_window("full_2025", test_start)` は
+`(REGIME_1_START="2025-07-07", REGIME_2_END="2025-12-31")` を返す。
+holdout 期間は `REGIME_3_START="2026-01-01"` 以降。
+train end と holdout start が 1 日差で分離されており、どのテストブロックでも重複しない。
+`recent_60d` は `(test_start - 60d, test_start - 1d)` なので現ブロックとは常に分離。
+
+## アクション
+新しい window_name を `build_train_window()` に追加するとき、
+`tr_end < holdout_start（2026-01-01）` が常に成立するか確認すること。
+固定終端日を使う window は特に要確認。
+
+## 例
+```python
+REGIME_2_END = "2025-12-31"    # train end（固定）
+REGIME_3_START = "2026-01-01"  # holdout start → 1日差で分離 ✅
+
+# NG 例：固定終端が holdout 期間内に入るケース
+if window_name == "recent_plus_jan":
+    return pd.Timestamp("2025-07-07"), pd.Timestamp("2026-01-15")  # ← holdout に侵入
+```
+
+---
+id: hall-digit-mean-diff-merge-exclusion
+trigger: "aggregate_mode 系の関数で hall レベルのラグ特徴量を merge するとき"
+confidence: 0.96
+domain: methodology
+source: code-audit
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# hall_digit_mean_diff（非シフト同日値）を merge から意図的に除外する
+
+## 背景
+`aggregate_mode_mitoya()` では `hall_digit_mean_diff`（同日の末尾別ホール平均差枚）を
+中間変数として計算し、そのラグ版（lag1〜lag15）のみを `agg` に merge する。
+非シフトの `hall_digit_mean_diff` は `is_top_2` と直接相関する同日情報であり、
+merge カラムに誤って含めると即リークになる。
+コメントなしだと将来の開発者が誤って追加するリスクがある。
+
+## アクション
+`hall_digit_daily` から `agg` に merge するとき、必ず lag_cols だけを選択する。
+`hall_digit_mean_diff` は明示的に除外し、その意図をコメントで記録すること。
+
+## 例
+```python
+lag_cols = [f"lag{lag}_hall_digit_diff" for lag in digit_lags]
+
+# Intentionally exclude `hall_digit_mean_diff` (same-day unshifted value) from merge.
+# Only lagged versions (lag_cols) are safe to use as features — leakage prevention.
+agg = agg.merge(
+    hall_digit_daily[["date", "last_digit", *lag_cols]],  # hall_digit_mean_diff は含まない
+    on=["date", "last_digit"],
+    how="left",
+)
+```
+
+---
+id: bootstrap-ci-unique-date-dedup
+trigger: "walk-forward の CI を計算するとき、特に small-bucket（n_unique_dates < 10）の信頼区間を解釈するとき"
+confidence: 0.95
+domain: methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# bootstrap_ci は unique_date ベースで実施しないと CI が過信頼になる
+
+## 背景
+walk-forward は複数 seed で実行されるため、同一日付が複数 seed 分（例：8 seed）だけ
+行として複製される。`bootstrap_ci(arr)` がこの複製された配列をそのまま resample すると、
+実効的なサンプルサイズが「ユニーク日数 × seed 数」になり、CI が過度に狭くなる。
+strong_zorome の実例：n_unique_dates=2, seeds=8 → n_rows=16。
+ci_low=+37.89 は n=2 のデータとしては過信頼。
+
+## アクション
+small-bucket の CI を解釈するとき、JSON の `n_days` ではなく
+`strong_zorome_observed_dates_holdout`（ユニーク日数）を参照すること。
+n_unique_dates が 5 未満の場合、CI の符号より「訓練履歴での一貫性」で採用判断する。
+統計的に厳密な CI が必要な場合は日付単位で平均化してから bootstrap する。
+
+## 例
+```python
+# seed 複製を除去：日付単位で平均してから bootstrap
+per_date = bucket_df.groupby("date")["excess"].mean().reset_index()
+values = per_date["excess"].to_numpy()
+ci = _bootstrap_mean_ci(values, n_boot=4000, seed=42)
+# n=2 の場合 CI は事実上意味をなさないため、
+# 「14日の訓練履歴で一貫して positive だったか」で採用判断する
+```

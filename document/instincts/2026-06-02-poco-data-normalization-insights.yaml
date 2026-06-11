@@ -1,0 +1,101 @@
+---
+id: poco-data-ocr-error-prevalence
+trigger: "when extracting machine names from poco facility content"
+confidence: 0.95
+domain: data-extraction
+source: session-observation
+project_id: pachinko-analyzer
+project_name: 2026project
+
+# OCR誤認識は大量発生 - 手動確認必須
+
+## 背景
+ぽこの仕掛け内容をOCRで抽出すると、大量の誤認識が発生する。特に漢字・特殊文字が誤認識されやすい。
+
+## アクション
+OCR出力の機種名は自動信頼せず、常にユーザーに手動確認を依頼すること。特に以下パターンが危険：（1）音が似た漢字の誤認識（緋弾→緑）、（2）複合記載が単一機種と誤解釈、（3）括弧やマークの誤検出
+
+## 例
+緋弾ドン（実：緑ドン）、いざ審判（実：いざ！番長）、末尾ルーレット（実：記載なし）
+
+---
+id: poco-facility-three-layer-structure
+trigger: "when analyzing poco facility content (仕掛け内容)"
+confidence: 0.9
+domain: data-structure
+source: session-observation
+project_id: pachinko-analyzer
+project_name: 2026project
+
+# ぽこ仕掛けは3層構造：曜日→末尾→機種
+
+## 背景
+ぽこの「仕掛け内容」は単なる機種リストではなく、3段階の階層構造を持つ。（1）曜日別戦略、（2）末尾別配置、（3）具体的機種選定
+
+## アクション
+仕掛け内容を解析する際は、矢印（→）の順序を尊重し、各層を分離して分析する。複合記載や「仕掛け→末尾」のような説明的記載は、動的フィルタまたはメタ情報として扱う
+
+## 例
+「水曜日→末尾1,3→SBJ,SAO」では、（1）曜日：水曜日、（2）末尾：1または3の台、（3）機種：SBJまたはSAO
+
+---
+id: poco-mixed-content-handling
+trigger: "when machine names include complex or ambiguous descriptions"
+confidence: 0.85
+domain: data-classification
+source: session-observation
+project_id: pachinko-analyzer
+project_name: 2026project
+
+# ぽこデータに複数の情報タイプが混在 - 分類が必須
+
+## 背景
+ぽこの「機種」欄には、実機種名だけでなく以下が混在：（1）台指定（台番号範囲）、（2）動的フィルタ（台数条件）、（3）仕掛け説明、（4）複合記載、（5）曖昧記載
+
+## アクション
+マッピング時に各記載を以下のカテゴリに分類：FOUND（DB一致）、DYNAMIC_FILTER（台数条件）、WEEKDAY_STRATEGY（曜日仕掛け）、MACHINE_SPECIFICATION（台指定）、MULTIPLE_MACHINES（複合）、DELETE（エラー・情報なし）
+
+## 例
+1台設置機種→[動的フィルタ machine_count=1]、1列ピックアップ→ハナ横の壁1列→[台指定 2399-2415]
+
+---
+id: hall-specific-machine-inventory-variance
+trigger: "when comparing poco facility data across multiple pachinko halls"
+confidence: 0.9
+domain: domain-knowledge
+source: session-observation
+project_id: pachinko-analyzer
+project_name: 2026project
+
+# ホール別で機種在庫が大きく異なる - ぽこ予測もホール別
+
+## 背景
+蒲田7と蒲田1で在庫機種が異なる（例：緑ドン、沖ドキBLACKは蒲田1のみ）。ぽこの仕掛け内容もホール別に異なる可能性が高い。
+
+## アクション
+マッピング適用時にはホール別に分離する。蒲田7にない機種を参考にしても精度向上に寄与しない。ホール別モデルの構築を検討
+
+## 例
+緋弾ドン→スマスロ 緑ドン（蒲田1のみ登録）、沖ドキBLACK（蒲田1のみ登録）
+
+---
+id: poco-data-quality-expectations
+trigger: "when validating poco facility accuracy against DB outcomes"
+confidence: 0.8
+domain: domain-knowledge
+source: session-observation
+project_id: pachinko-analyzer
+project_name: 2026project
+
+# ぽこ仕掛けと実績は完全一致しない - 期待値調整が必須
+
+## 背景
+ぽこが「仕掛けた」機種と実際の高差枚台が100%一致しない。理由：（1）未報告の高設定台、（2）高設定の不発、（3）報告タイミングのズレ（翌日報告）
+
+## アクション
+的中率分析では完全一致を目指さず、部分一致（Top-3, Top-5）や傾向の相関を見る。3-5%の的中率でも意味あり
+
+## 例
+ぽこが「この台高設定」と報告 → 実績では Top-5 高差枚に入っていなくても、他の関連台が Top-5 に入っていることがある
+
+---

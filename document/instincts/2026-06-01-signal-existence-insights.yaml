@@ -1,0 +1,172 @@
+---
+id: signal-existence-must-precede-ml-design
+trigger: "MLモデルの設計・特徴量追加を検討するとき"
+confidence: 0.99
+scope: methodology
+domain: ml-architecture
+source: data-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# MLの前に統計的シグナル存在確認が必須
+
+## 背景
+signal_existence_plan.py を蒲田7（holdout 150日）で実行した結果：
+- 反復回避：P(top1_{t+1}|top1_t) = 0.098 vs 基準0.10（非有意）
+- ランク自己相関：max |rho|≈0.035（実質ゼロ）
+- (DD,末尾)セル：Bonferroni補正後有意0件
+- 最良ルール(drought_relative)：precision@2=21.25%、95%CI含む20%（非有意）
+
+リーク修正後、統計的に検出可能なシグナルが存在しないことが確認された。
+この状態でML特徴量を追加しても性能は改善しない。
+
+## アクション
+新しい予測対象・ホール・期間でMLを始める前に必ず以下を実行する：
+
+1. 反復回避検定：P(rank1_{t+1}|rank1_t) vs 基準10%（セグメント別）
+2. ランク自己相関：lag=1,2,3,7 の Spearman rho
+3. ルールベース holdout 比較：drought/momentum/exclusion ルール vs. ランダム
+4. 有意なシグナルが1つ以上確認できてからMLに進む
+
+シグナルなしの状態でMLを設計してもリーク修正後は精度がランダムに戻る。
+
+---
+id: weak-p-value-with-multiple-segments-is-artifact
+trigger: "複数セグメントで検定して1つだけp≈0.05が出たとき"
+confidence: 0.97
+scope: methodology
+domain: prediction-evaluation
+source: data-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 4セグメント検定でp≈0.05は多重検定の見かけ
+
+## 背景
+signal_existence_plan で 3F_N のみ反復回避 p≈0.05 が出た。
+しかし 4セグメント（2F_A, 2F_N, 3F_A, 3F_N）を同時検定した場合、
+Bonferroni補正の閾値は p=0.05/4=0.0125。
+p≈0.05 は補正後に消える → 「4回試してたまたま1回引っかかった」が正しい解釈。
+
+## アクション
+セグメント別検定で p≈0.05 が出ても、以下を確認する前に「シグナルあり」と判断しない：
+1. Bonferroni補正後も有意か（n_tests で割った閾値を使う）
+2. 他のホールでも同方向の傾向があるか（再現性確認）
+3. selection → holdout で同方向か（消える可能性を確認）
+
+---
+id: effect-size-gap-makes-live-collection-impractical
+trigger: "ライブデータ収集で統計的検出力を稼ごうとするとき"
+confidence: 0.96
+scope: methodology
+domain: prediction-evaluation
+source: data-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 効果量が検出力閾値の1/5以下なら実運用での検証は非現実的
+
+## 背景
+蒲田7の結果：
+- 観測された最良改善量：drought_relative で 1.25pp（21.25% - 20%）
+- 80%検出力に必要な改善量：6.68pp（26.68% - 20%）
+- 必要サンプル数：約2,000日/セグメント ≈ 約13年分
+
+効果量が検出力閾値の1/5しかない場合、ライブデータ収集で確認するのは非現実的。
+
+## アクション
+「ライブで継続記録して検出力を稼ぐ」という提案が出たとき、先に計算する：
+1. 観測された効果量（precision改善量）
+2. 80%検出力に必要な改善量（power計算）
+3. 必要日数を逆算
+4. 必要日数が1〜2年を超えるなら別のアプローチを先に試す
+
+最優先の代替：ホール横断プールでサンプルを増やす（数時間の作業）。
+
+---
+id: cross-hall-pooling-is-fastest-power-gain
+trigger: "シグナルが非有意でサンプルを増やす必要があるとき"
+confidence: 0.95
+scope: methodology
+domain: ml-architecture
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ホール横断プールが最速・最安の検出力増強手段
+
+## 背景
+蒲田7単体：holdout 150日 → 80%検出力閾値 precision@2 ≈ 26.68%
+全9ホール合算：holdout ≈ 1,350日 → 閾値が約 23% 程度に低下
+
+既存DBが全ホール分存在するため、追加コストは数時間の分析スクリプト実行のみ。
+ライブ収集（約13年待ち）と比較して圧倒的にコストが低い。
+
+## アクション
+単ホールでシグナルが有意でなかった場合の次のステップ：
+1. 全ホール共通の分析スクリプトを同条件で実行
+2. ホール別の方向性を確認（全ホールで同方向なら pooling が有効）
+3. プールした場合の有効n と検出力閾値を再計算
+4. それでもシグナルなしなら問題の難易度自体を変える（ターゲット変更）
+
+---
+id: target-granularity-changes-problem-difficulty
+trigger: "予測精度が低くターゲット設計を見直すとき"
+confidence: 0.93
+scope: methodology
+domain: ml-architecture
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 予測問題の難易度はターゲット粒度で変わる
+
+## 背景
+現在のターゲット：「10末尾の中でどれが上位か」（1/10問題）
+- ランダム基準 precision@2 = 20%
+- 小さな改善も埋もれやすい
+
+代替ターゲット：「2Fと3Fのどちらに高設定が多いか」（1/2問題）
+- ランダム基準 50%
+- 同じ効果量でも検出力が大幅に高い
+- 実運用上も「フロアを選ぶ」判断は有用
+
+## アクション
+signal_existence_plan が null 結果を返したとき、次に試す：
+1. ターゲットを末尾(1/10)からセグメント(1/2〜1/4)に変更
+2. 同じ検定を再実行
+3. セグメントレベルでシグナルが見つかれば、その中で末尾を選ぶ2段階に進む
+
+「予測が難しい」は「このターゲット設定が難しい」であって
+別の粒度では解ける可能性がある。
+
+---
+id: calendar-features-hurt-means-non-stationary
+trigger: "カレンダー特徴量（DD/曜日）を追加して性能が悪化するとき"
+confidence: 0.97
+scope: methodology
+domain: ml-architecture
+source: data-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# カレンダー特徴量の悪化は「パターンが非定常である証拠」
+
+## 背景
+カレンダールール holdout 比較結果（蒲田7）：
+- global（カレンダーなし）：precision@2 = 0.2025（最良）
+- dd_value追加：0.1800（悪化 -2.25pp）
+- weekday追加：0.1900（悪化 -1.25pp）
+- dd+weekday：0.1942（悪化 -0.83pp）
+
+「追加すると悪化する」は「selection期間で学習したパターンが
+holdout では逆方向になっている」を意味する。
+ホール側が意図的に戦略を変えている（非定常）のが最も自然な説明。
+
+## アクション
+カレンダー特徴量追加で性能が悪化した場合：
+1. 「特徴量が悪い」ではなく「パターンが変化している」と解釈する
+2. ローリングウィンドウでパターンの安定性を確認（90日窓×スライド）
+3. 非定常なら「直近N日だけの集計」を特徴量にする（長期統計より短期適応）
+4. それでも悪化なら「このホールはカレンダー戦略を使っていない」可能性を考慮
+

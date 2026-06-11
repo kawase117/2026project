@@ -1,0 +1,227 @@
+---
+id: hall-firstday-kaiwari-ranking-arrow-mitoya-top
+trigger: "新台初日にどのホールを狙うべきか判断するとき / ホール別の新台設定投入傾向を調べるとき"
+confidence: 0.97
+scope: finding
+domain: hall-strategy
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ARROW・みとやが新台初日機械割で全ホール最上位（全閾値・全指標で一貫）
+
+## 背景
+全9ホール × DBスタート以降の新台 × 初日データ（games_normalized >= 200 フィルタ）
+を集計した結果（n=401〜558台×日）。
+
+生平均機械割ランキング:
+1. みとや   103.9%（avg差枚+243, plus率43.9%）
+2. ARROW   102.9%（avg差枚+499, plus率47.5%）
+3. ザシティ  100.2%
+4. 金時     98.4%
+5. 蒲田7    98.2%
+6. 蒲田1    97.3%
+7. ヒロキ    97.0%
+8. レイトギャップ 96.6%
+9. 楽園     95.8% ← 新台最下位
+
+固定効果補正後（同一機種を導入した他ホール平均との差）:
+1. みとや   resid=+4.50
+2. ARROW   resid=+2.80
+3. ザシティ  resid=+1.61
+...
+9. ヒロキ   resid=-3.20
+
+機種ラインナップの違いを除いても、みとや・ARROWの優位性は揺るがない。
+
+## アクション
+新台導入日にホール選択で迷ったら、みとや・ARROWを第一候補とする。
+楽園・レイトギャップ・ヒロキは新台初日を特に狙う必要はない。
+
+---
+id: hall-firstday-104pct-threshold-ranking
+trigger: "新台初日に高設定（機械割104%以上）に当たる確率をホール別に比較するとき"
+confidence: 0.97
+scope: finding
+domain: hall-strategy
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 機械割104%以上の出現率もARROW・みとやが2強（全閾値100〜110%で順位安定）
+
+## 背景
+各台×初日データで「機械割 >= 104%」を判定した出現率:
+
+| ホール         | 104%+ 出現率 | ヒット時avg機械割 |
+|--------------|------------|--------------|
+| ARROW        | 38.5%      | 123.6%       |
+| みとや         | 36.7%      | 130.9%       |
+| ヒロキ         | 30.6%      | 117.7%       |
+| 蒲田7         | 29.4%      | 123.8%       |
+| 楽園          | 28.7%      | 119.9%       |
+| 金時          | 28.4%      | 128.2%       |
+| 蒲田1         | 27.5%      | 129.1%       |
+| ザシティ        | 27.2%      | 138.2%       |
+| レイトギャップ     | 25.3%      | 115.9%       |
+
+閾値感度チェック（100%→102%→104%→106%→108%→110%）:
+- ARROWは全閾値で1位（47.7% → 27.7%）
+- みとやは全閾値で2位（43.9% → 25.4%）
+- 順位は閾値によらず安定
+
+## アクション
+「高設定に当たりたい」という目的では、ARROWとみとやに集中する。
+固定効果補正後もARROW(+0.058)、みとや(+0.049)と有意に上位。
+
+---
+id: lategap-moderate-setting-pattern
+trigger: "レイトギャップの新台初日を評価するとき"
+confidence: 0.92
+scope: finding
+domain: hall-strategy
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# レイトギャップ: 100%超は多いが104%超に急落する「中設定止まり」パターン
+
+## 背景
+レイトギャップの閾値別出現率:
+- >=100%: 39.0%（全ホール3位タイ程度）
+- >=102%: 31.3%（急落）
+- >=104%: 25.3%（最下位）
+- >=106%: 19.7%（最下位）
+- ヒット時avg機械割: 115.9%（全ホール最低）
+
+解釈: レイトギャップは新台に「機械割100〜102%程度の中設定」を多く使い、
+高設定はほぼ入れない方針。ヒット時の爆発力も最低。
+
+## アクション
+レイトギャップの新台初日は「高設定を掴める確率」が最も低い。
+高設定狙いではなく、台の稼働確認や立ち回りの参考程度に留める。
+
+---
+id: thecity-rare-explosive-pattern
+trigger: "ザシティの新台初日を評価するとき / ヒット時の爆発力が大きいホールを探すとき"
+confidence: 0.88
+scope: finding
+domain: hall-strategy
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ザシティ: 104%以上の出現率は低いがヒット時は全ホール最大（avg 138.2%）
+
+## 背景
+ザシティの統計:
+- 104%+ 出現率: 27.2%（下位8位）
+- ヒット時avg機械割: 138.2%（全ホール最大）
+- 生平均機械割: 100.2%（3位）
+- 中央値差枚: -722（生平均を大きく下回る）
+
+平均を引き上げているのは少数の爆発台（2026-05月で170.7%という異常値あり）。
+「多くの台は低設定だが、入ったときは他ホールより突出して高い」パターン。
+
+n=202と少ないため追加観察が必要だが、傾向は現時点では明確。
+
+## アクション
+ザシティの新台初日は「当たりか外れかの二択」。
+期待値はやや下だが、当たったときの回収量は最大級（138%平均）。
+高分散・低頻度を許容できる場合のみ選択肢に入れる。
+
+---
+id: firstday-analysis-implementation
+trigger: "新台初日のホール別・機種別パフォーマンスを集計するスクリプトを書くとき / debut_dateを計算するとき"
+confidence: 0.99
+scope: methodology
+domain: eda-implementation
+source: implementation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 新台初日分析の実装パターン（eda/hall_firstday_analysis.py）
+
+## 背景
+`machine_detailed_results` に導入初日フラグは存在しないため、
+「機種ごとの最古date = debut_date」として計算する。
+pre_existing（DBスタート日に既に存在した機種）を除外する必要がある。
+
+実装済みファイル: `eda/hall_firstday_analysis.py`
+
+各ホールのdb_start（DBスタート日）:
+- 蒲田1・金時・楽園・ARROW・ヒロキ・ザシティ・みとや: 20250101
+- レイトギャップ: 20250320
+- 蒲田7: 20250707
+
+## アクション
+```python
+# 1. 機種ごとのデビュー日を取得
+debut = df.groupby('machine_name')['date'].min().reset_index()
+debut.columns = ['machine_name', 'debut_date']
+
+# 2. DBスタート日より後のみ（pre_existing除外）
+new_m = debut[debut['debut_date'] > db_start]
+
+# 3. 初日データだけ抽出
+df2 = df.merge(new_m, on='machine_name')
+first_day = df2[df2['date'] == df2['debut_date']].copy()
+
+# 4. 機械割の近似（1G=3枚投入想定）
+first_day['kaiwari'] = (
+    100 + (first_day['diff_coins_normalized']
+           / first_day['games_normalized'].clip(lower=1)) / 3 * 100
+)
+```
+
+固定効果補正（同一機種間のホール比較）:
+```python
+# 3ホール以上で共通導入された機種のみ
+common_m = df_all.groupby('machine_name')['hall'].nunique()
+common_m = common_m[common_m >= 3].index
+
+dfc = df_all[df_all['machine_name'].isin(common_m)].copy()
+machine_avg = dfc.groupby('machine_name')['kaiwari'].mean().rename('m_avg')
+dfc = dfc.join(machine_avg, on='machine_name')
+dfc['resid'] = dfc['kaiwari'] - dfc['m_avg']
+# resid > 0 = 同機種の他ホールより高い設定
+```
+
+## 注意点
+- `games_normalized >= 200` フィルタ必須（初日に数Gのみのデータを除去）
+- db_startはホールごとに異なる（上記参照）
+- 機械割は近似値（1G=3枚仮定）
+
+---
+id: kaiwari-approximation-formula
+trigger: "diff_coins_normalizedとgames_normalizedから機械割を計算するとき"
+confidence: 0.95
+scope: methodology
+domain: calculation
+source: implementation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 機械割近似式: 100 + (差枚 / G数) / 3 * 100
+
+## 背景
+DBには機械割が直接格納されていない。
+パチスロの標準的な投入枚数は「1G = 3枚」なので以下で近似:
+
+  機械割(%) = (投入枚数 + 差枚) / 投入枚数 × 100
+            = (G数×3 + 差枚) / (G数×3) × 100
+            = 100 + (差枚 / G数) / 3 × 100
+
+## アクション
+```python
+df['kaiwari'] = (
+    100 + (df['diff_coins_normalized']
+           / df['games_normalized'].clip(lower=1)) / 3 * 100
+)
+```
+
+## 注意点
+- 沖スロ系（1G=2枚）や一部機種では精度が落ちる
+- 相対比較（ホール間・機種間の順位付け）には十分有効
+- 絶対値としての精度は数%のズレが生じる可能性がある
+- ボーナス中の払い出し枚数の違いで実際の機械割と差が出ることがある

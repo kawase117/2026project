@@ -1,0 +1,87 @@
+---
+id: ml-experiment-outputs-gitignore
+trigger: "when experiment output files accumulate as untracked changes"
+confidence: 0.95
+scope: methodology
+domain: git-workflow
+source: session-observation
+project_id: pachinko-analyzer
+project_name: Pachinko Analyzer ML Pipeline
+
+# ML実験出力をgitignoreに追加
+
+## 背景
+ml/experiments/ でのML実験実行時に、出力ファイル（JSON、CSV、キャッシュ）が未追跡ファイルとして蓄積される。これにより：
+- `git status` が見にくくなる
+- `git add -A` で意図しないファイルがコミットされる可能性
+- 実験結果の出力ディレクトリ構造がgit追跡対象になってしまう
+
+根本原因：.gitignore に ml/experiments/ の出力ディレクトリが除外されていなかった。
+
+## アクション
+pachinko-analyzer プロジェクトの .gitignore に以下を追加：
+```
+ml/experiments/outputs/
+ml/experiments/*.json
+ml/experiments/*.csv
+ml/**/__pycache__/
+ml/**/*.cache
+catboost_info/
+```
+
+実験スクリプト（.py）はコミット対象だが、実行結果は除外する。
+
+## 例
+Before:
+```
+git status
+# On branch main
+# Modified: 45 files
+# Untracked: 155 files
+```
+
+After adding gitignore entries:
+```
+git status
+# On branch main
+# nothing to commit
+```
+
+実験を実行しても出力ファイルは自動的に無視される。
+
+---
+id: codex-not-responsible
+trigger: "when untracked files are found and CODEX is suspected"
+confidence: 0.90
+scope: methodology
+domain: troubleshooting
+source: session-observation
+project_id: pachinko-analyzer
+project_name: Pachinko Analyzer ML Pipeline
+
+# CODEX連携は未追跡ファイル問題の原因ではない
+
+## 背景
+.gitignore 設定の不完全さが原因で、新しいファイルが「追跡すべきか除外すべきか」の判定が曖昧な状態になる。
+これはCODEX連携（claude-code-guide、skills、MCPサーバー等）とは無関係。
+
+## アクション
+未追跡ファイルが増える場合：
+1. まず .gitignore の内容を確認
+2. 該当ディレクトリが明示的に除外されているか確認
+3. 除外されていない場合は、ファイルのカテゴリ（出力/キャッシュ/一時）を判断して追加
+
+## 例
+```bash
+# 問題を確認
+git status --short | grep "^?"
+
+# 原因追跡
+git check-ignore <file>
+# 出力がなければ .gitignore で除外されていない
+
+# ml/ 下のファイルなら、ml/ 内の .gitignore を確認
+find ml -name ".gitignore"
+```
+
+---

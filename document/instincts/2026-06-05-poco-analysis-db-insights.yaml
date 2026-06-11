@@ -1,0 +1,212 @@
+---
+id: poco-diff-is-db-derived
+trigger: "ぽこデータの差枚精度を疑うとき・ぽこCSVとDBの差枚を比較するとき"
+confidence: 0.99
+domain: poco-data-quality
+source: empirical-measurement
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ぽこCSVの差枚はDBの合計差枚と同一：精度問題なし
+
+## 背景
+poco_data_v5.csv の `kamata7_diff` / `kamata1_diff` がアナスロデータと一致するか全期間検証した結果、
+K7: 282件中1件不一致、K1: 210件中3件不一致（ほぼ完全一致）。
+ぽこの差枚欄はアナスロDB（machine_detailed_results の SUM）を転記したものであり、
+独立した測定値ではない。NaN（K7:46件、K1:118件）はDBから補完可能。
+
+## アクション
+- ぽこCSVのdiff列の精度を心配する必要はない
+- NaNはDBのSUM(diff_coins_normalized)で補完（44/46件補完可能）
+- `total_diff IS NULL` が残る日はDBにもデータなし（約17件）
+
+## 例
+```python
+poco_diff = row['kamata7_diff']
+total_diff = int(poco_diff) if pd.notna(poco_diff) else get_total_diff(conn, date)
+```
+
+---
+id: poco-analysis-db-separate-file-strategy
+trigger: "ぽこデータをMLパイプラインに組み込む設計をするとき"
+confidence: 0.95
+domain: poco-data-architecture
+source: design-decision
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ぽこ分析DBは確定まで独立ファイル（poco_analysis.db）で設計する
+
+## 背景
+ぽこデータはテーブル粒度・特徴量設計・ML活用方法がまだ確定していない。
+integrated.db に早期統合するとスキーマ変更が難しくなる。
+poco_analysis.db として独立させ、設計確定後に結合方向で検討する。
+
+## アクション
+- `db/poco_analysis.db` を独立ファイルとして構築
+- スキーマ変更が必要になっても integrated.db を汚染しない
+- 確定した特徴量のみを後から integrated.db / ML パイプラインに移植
+
+## テーブル構成
+- `poco_announcements`: 日次×ホール（策略実績・推定トリプル）
+- `poco_targets`: 日次×ホール×機種（発表機種の実績）
+
+---
+id: narabi-strategy-window-calculation
+trigger: "並び仕掛けの差枚・勝率を計算するとき"
+confidence: 0.96
+domain: poco-strategy-calculation
+source: user-instruction
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 並び策略は台番号±windowで計算可能（3台並び=±2）
+
+## 背景
+「並び」とは連番台に高設定を入れる戦略。末尾Nの3台並びは、
+末尾Nの台番号Mを起点として[M-1,M,M+1]が範囲。
+すなわち |machine_number - M| <= 2 がターゲット台集合になる。
+- 3台並び → window = 2
+- 4台並び → window = 3
+- 5台並び → window = 4
+
+## アクション
+```sql
+SELECT AVG(m.diff_coins_normalized)
+FROM machine_detailed_results m
+WHERE m.date = ?
+AND EXISTS (
+    SELECT 1 FROM machine_detailed_results anchor
+    WHERE anchor.date = ?
+      AND anchor.last_digit IN (?, ...)
+      AND ABS(m.machine_number - anchor.machine_number) <= ?
+)
+```
+strategy_digits 形式: "3|2"（数字|window）
+
+## 例
+「末尾3絡みの3台並び」: machine 3 → {1,2,3,4,5}、machine 13 → {11..15}
+ユーザー確認: "3を含んだ前後2つが範囲となり、123、234、345が範囲となります"
+
+---
+id: narabi-jug-other-split-anchor
+trigger: "ジャグN、他M絡みのような並び策略をパースするとき"
+confidence: 0.97
+domain: poco-strategy-parsing
+source: user-instruction
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 「ジャグN、他M絡み」はN機・A機で別々の起点を持つ並び
+
+## 背景
+K1の「並び（ジャグ1、他5絡み）」はジャグラー系（N機）が末尾1起点、
+それ以外（A機）が末尾5起点の並びを意味する。
+パーサーが `末尾` プレフィックスを探すと取れないため専用パターンが必要。
+
+## アクション
+```python
+# _extract_narabi_digits 内に追加
+for m in re.finditer(r'(?:ジャグ|他)(\d)', s):
+    digits.append(m.group(1))
+```
+strategy_digits には両方の数字を格納: "1,5|2"
+パフォーマンス計算はN+A合算のwindowクエリで対応。
+
+## 例
+- 並び（ジャグ1、他5絡み）→ digits=['1','5'], window=2
+- 並び（ジャグ6、他1絡み）→ digits=['6','1'], window=2
+
+---
+id: na-split-improves-consecutive-detection
+trigger: "並び策略の末尾起点を逆算・検証するとき"
+confidence: 0.90
+domain: poco-reverse-engineering
+source: empirical-measurement
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# N/A分割で連番検出率が1/7→3/7に改善（合算では信号が希釈される）
+
+## 背景
+全台合算で末尾TOP3の連番チェックを行うと、異なる起点を持つN機・A機の
+シグナルが混ざり、連番パターンが検出されにくい。
+N機（jug/hana/oki）とA機（AT系）を分けると検出率が向上した。
+
+| 日付     | 合算判定 | N判定           | A判定          |
+|----------|----------|-----------------|----------------|
+| 20260425 | 非連番   | 非連番          | ★連番(起点=8)  |
+| 20260509 | 非連番   | ★連番(起点=9)   | 非連番         |
+| 20260418(K1) | 非連番 | ★連番(起点=2) | 非連番         |
+
+## アクション
+並び策略の不明日に対して逆算する場合は必ず N/A 分割で実施する。
+```python
+N_COND = '(mm.jug_flag=1 OR mm.hana_flag=1 OR mm.oki_flag=1)'
+A_COND = '(mm.jug_flag=0 AND mm.hana_flag=0 AND mm.oki_flag=0 AND mm.bt_flag=0)'
+```
+
+---
+id: est-triple-reverse-lookup-validated
+trigger: "並び策略のML特徴量を設計するとき・不明日の末尾起点を推定するとき"
+confidence: 0.95
+domain: poco-ml-features
+source: empirical-measurement
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 逆算トリプル推定の精度はpoco既知日で7/7（100%）検証済み
+
+## 背景
+全10連番トリプル（0,1,2 ～ 9,0,1）の中でavg_diffが最大のものを選ぶ逆算推定が
+poco宣言の起点数字と一致するか、K7 並び既知7日で検証した結果：
+N機・A機ともに7/7（100%）でpoco宣言数字がest_tripleに含まれていた。
+
+| 日付     | poco宣言 | est_N     | est_A     |
+|----------|----------|-----------|-----------|
+| 20250712 | 6        | 5,6,7 ✅  | 4,5,6 ✅  |
+| 20250802 | 7,1      | 7,8,9 ✅  | 1,2,3 ✅  |
+| 20250906 | 1,7      | 9,0,1 ✅  | 7,8,9 ✅  |
+
+## アクション
+- `est_n_triple`, `est_a_triple` はML特徴量として積極的に使用可
+- ぽこテキストに起点情報がない日（並び不明・角・列）でも代替特徴量として使用
+- 639/656行（97.4%）で計算済み（17行はDBにデータなし）
+
+## テーブル定義（poco_announcements に追加）
+```sql
+est_n_triple          TEXT,   -- e.g. "9,0,1"
+est_n_triple_avg_diff REAL,
+est_a_triple          TEXT,   -- e.g. "8,9,0"
+est_a_triple_avg_diff REAL
+```
+
+---
+id: poco-strategy-type-performance-hierarchy
+trigger: "曜日仕掛けの種類別にパフォーマンスを評価するとき・ML特徴量の重みを検討するとき"
+confidence: 0.88
+domain: poco-temporal-analysis
+source: empirical-measurement
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 曜日仕掛け種別の実績ヒエラルキー（K7 全期間）
+
+## 背景
+poco_analysis.db 構築後の全期間集計（K7）。
+
+| 仕掛け種別 | avg差枚 | 勝率  | 計算可否 |
+|-----------|--------|-------|---------|
+| 全台       | +2,598 | 79.9% | ✅（1件のみ）|
+| 末尾ゾロ目 | +1,949 | 68.6% | ✅ |
+| 末尾       | +700   | 49.5% | ✅ |
+| 並び       | +338   | 43.6% | ✅ |
+| 角・列・不明 | NULL   | -     | ❌ |
+
+並びが末尾より低いのは「並び範囲に低設定台も含まれる」ためで、
+「局所的高設定1点集中」の情報として解釈する。
+
+## アクション
+- `strategy_type` を順序特徴量: 全台 > ゾロ目 > 末尾 > 並び の順
+- 角・列は `est_*_triple` で代替
+- is_calculable=0 の行はNULL補完か除外

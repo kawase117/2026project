@@ -1,0 +1,134 @@
+---
+id: catboost-windows-py314-bad-allocation-warmup
+trigger: "CatBoostRegressor.fit() が Windows + Python 3.14 環境で初回呼び出し時に bad allocation で落ちるとき"
+confidence: 0.97
+domain: ml-engineering
+source: session-experiment
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# CatBoost Windows + Python 3.14 "bad allocation" workaround
+
+## 背景
+Windows + Python 3.14 環境において、CatBoostRegressor の最初の `.fit()` 呼び出しが
+`_catboost.CatBoostError: bad allocation` で必ず失敗する現象が発生した。
+- メモリ（9GB空き）・ディスク（177GB空き）・GPU使用率に問題なし
+- `allow_writing_files=False` 追加・NaN sentinel 埋め・pipe redirect 変更でも解決せず
+- 同一プロセス内で一度でも fit() が成功していれば、それ以降は正常動作する
+- 診断：CatBoost 内部スレッドプール/メモリアリーナの遅延初期化が、
+  最初の本番 fit() の C++ 側でレースコンディション or バッファ確保失敗を起こすと推測
+
+## アクション
+main() の冒頭にダミーウォームアップ fit を1回実行する。
+たった10イテレーション・数値特徴量のみで十分。本番 fit の前に CatBoost 内部状態を初期化する。
+
+```python
+def _catboost_warmup():
+    dummy_X = pd.DataFrame({'a': np.arange(20, dtype=float), 'b': np.arange(20, dtype=float)})
+    dummy_y = np.arange(20, dtype=float)
+    CatBoostRegressor(iterations=10, depth=2, verbose=0, allow_writing_files=False).fit(dummy_X, dummy_y)
+
+def main():
+    _catboost_warmup()  # 必ず最初に呼ぶ
+    ...
+```
+
+## 例
+- 症状: run_split() 内の model.fit() が bad allocation → どこを直しても再現
+- 確認: ウォームアップなしで単体 fit を試すと同様に失敗
+- 修正後: ウォームアップ1回で全 split の fit が正常完走
+
+---
+id: mitoya-lag-ma-over104-no-improvement
+trigger: "みとや大森町店の island/section 粒度で over_104_rate の移動平均ラグ特徴量を追加検討するとき"
+confidence: 0.90
+domain: feature-engineering
+source: session-experiment
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# みとや over_104_rate ラグ特徴量は改善しない
+
+## 背景
+Island / Section x {baseline, +lag(N=5)} の 2x2 比較実験を実施。
+追加ラグ特徴量（3種、リーク防止済み trailing MA）:
+- ma_all_5    : その島/区画の直近5回（全期間）over_104_rate 移動平均
+- ma_event_5  : 同上、イベント日のみ
+- ma_bucket_5 : 同上、同一 bucket のみ
+
+結果:
+- Island: baseline Pearson=0.280 → +lag Pearson=0.233 (Delta=-0.047)
+- Section: baseline Pearson=0.215 → +lag Pearson=0.213 (Delta=-0.002)
+- Top30%も Island で -0.083、Section で -0.009 と改善なし。
+
+## アクション
+- ラグ特徴量（移動平均 3種）は採用しない
+- Island の悪化理由は2つの可能性:
+  1. 1034行に特徴量3つ追加でオーバーフィット（行数不足）
+  2. みとや設定投入に時系列自己相関がそもそも存在しない（ランダム化戦略と整合）
+- Section が±0に近いのは、行数多い（9306行）のでオーバーフィットしにくいが
+  有用な情報もないことを意味する
+- 今後の lag/autocorrelation 系特徴量は、この結果を根拠に優先度を下げる
+
+## 例
+- train_months=6, walk-forward, CatBoostRegressor(depth=4, iterations=200)
+- NaN sentinel = -1.0（over_104_rate の範囲 [0,1] 外の値でリーク防止）
+
+---
+id: mitoya-island-best-granularity-lag-included
+trigger: "みとや大森町店で island vs section 粒度の最終比較を判断するとき"
+confidence: 0.88
+domain: ml-strategy
+source: session-experiment
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# みとや Island 粒度が Section より優位（lag追加後も）
+
+## 背景
+ラグ特徴量込みの最終比較（train_months=6）:
+- Island baseline: Pearson=0.280, Top30%=0.444（行数1034、lag追加で悪化）
+- Section baseline: Pearson=0.215, Top30%=0.398（行数9306、lag追加でほぼ不変）
+
+Island baseline が依然として最良。ただし行数が少ないため拡張に弱い構造的弱点あり。
+
+## アクション
+- Island baseline（dd, dow, bucket, island）が現時点での最良モデル
+- is_event / month_progress_rate の単独効果は未検証（lag と bundle だったため分離不可）
+  → 次の実験候補: Island baseline + is_event のみ単体追加で効果確認
+- train_months=12 の旧ベースライン(0.419)とは直接比較不可（ウィンドウ長が異なる）
+
+## 例
+- Island baseline avg Pearson=0.280, avg Top30%=0.444（train_months=6）
+- Section+lag avg Pearson=0.213, avg Top30%=0.389（Island に及ばない）
+
+---
+id: mitoya-bari-island-nonexistent
+trigger: "みとや大森町店で assign_island() を使うとき / island カテゴリ数を確認するとき"
+confidence: 0.99
+domain: data-model
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# みとや大森町店に 'bari' island は存在しない
+
+## 背景
+assign_island() の定義: machine_num >= 832 を 'bari' に分類。
+みとや大森町店の machine_detailed_results における machine_number の実際の範囲:
+- MIN=501, MAX=815, n=266台
+→ 815 < 832 のため、みとやには 'bari' カテゴリが1台も存在しない。
+exclude_values=['other'] でフィルタすると、実質 main_jug / main_mix の2グループのみ。
+「3島モデル」と称するスクリプトが実際には2島で動く状態になっていた。
+
+## アクション
+- みとや専用スクリプトでは island カテゴリ数を動的に表示・確認する
+- assign_island() のしきい値がホール固有の台番号体系に依存することを常に意識する
+- 別ホール（蒲田7番など）では bari が存在する可能性があるため、
+  全ホール共用スクリプトでは island の value_counts を必ず出力してから分析する
+
+## 例
+- みとや island value_counts: other=72380, main_mix=38775, main_jug=26367, bari=0
+- exclude=['other'] 後: 2グループ、1034行（= 2 x 517日）
+
+---

@@ -1,7 +1,15 @@
+# ⚠️  LEAKAGE WARNING (added 2026-06-01)
+# このファイルのインサイトは2026-05-31のリーク修正前に作成された。
+# 【有効】実データ観察（diff_coins集計・ゾロ目パターン・台配置等）
+# 【無効】MLモデル性能値（AUC / hit@2 / precision 等の数値）
+# アクション項目を実運用に使う前にリーク修正後のモデルで再検証すること。
+
 ---
 id: rb-quantile-0-90-optimal-cliff
 trigger: "signal_multi_tail_2fn.py で quantile を調整するとき"
 confidence: 0.95
+scope: hall-specific
+hall: kamata7
 domain: ml-strategy
 source: session-observation
 project_id: 2026project
@@ -45,6 +53,8 @@ rb 0.90 の結果:
 id: wednesday-sunday-single-signal-actionable
 trigger: "RBシグナルが1末尾に絞られた日の立ち回りを判断するとき"
 confidence: 0.82
+scope: hall-specific
+hall: kamata7
 domain: operational-strategy
 source: session-observation
 project_id: 2026project
@@ -94,6 +104,8 @@ else:
 id: hokuto-exact-miss-correction-negative
 trigger: "MLモデルの予測外れ日に北斗で補正できるかを検討するとき"
 confidence: 0.93
+scope: hall-specific
+hall: kamata7
 domain: ml-strategy
 source: session-observation
 project_id: 2026project
@@ -142,6 +154,8 @@ testperiod_topk.csv の2F_N expert で exact_miss（予測top1 ≠ 実際rank1�
 id: signal-multi-tail-vs-correlation-distinction
 trigger: "北斗・モンキーのシグナルを2種類の分析で解釈するとき"
 confidence: 0.92
+scope: hall-specific
+hall: kamata7
 domain: ml-strategy
 source: session-observation
 project_id: 2026project
@@ -182,6 +196,8 @@ project_name: pachinko-analyzer
 id: adjusted-lift-denominator-10-not-9
 trigger: "signal_multi_tail_2fn の hit_rate をランダムベースラインと比較するとき"
 confidence: 0.99
+scope: hall-specific
+hall: kamata7
 domain: ml-strategy
 source: session-observation
 project_id: 2026project
@@ -230,6 +246,8 @@ def adjusted_lift_single(hit_rate, n_digits=N_DIGITS):
 id: monday-paradox-broad-investment
 trigger: "月曜日のシグナル解釈が他の分析と矛盾するように見えるとき"
 confidence: 0.78
+scope: hall-specific
+hall: kamata7
 domain: ml-strategy
 source: session-observation
 project_id: 2026project
@@ -275,6 +293,8 @@ if day_of_week == "月":
 id: hard-miss-vs-exact-miss-definition
 trigger: "testperiod_topk.csv で「予測外れ日」を定義するとき"
 confidence: 0.98
+scope: hall-specific
+hall: kamata7
 domain: ml-strategy
 source: session-observation
 project_id: 2026project

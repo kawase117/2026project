@@ -1,0 +1,290 @@
+---
+id: zero-sum-section-hypothesis-falsified-weak-positive-comovement-found
+trigger: "「セクション内/島内で予算の奪い合いが起きている（一台が好調なら他は不調になる）」というゼロサム仮説を検証・引用しようとするとき"
+confidence: 0.85
+domain: domain-analysis
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 「セクション内ゼロサム（予算の奪い合い）」仮説は誤り。実際は弱い正の共動効果（co-movement）
+
+## 背景
+
+ユーザーから「ホールには予算があり、一つ良ければ他が弱くなるという現象が起きるはず」という
+ゼロサム仮説の検証を依頼された。同日同セクション内の対象機と「他の台」の成績の相関を、
+全日・X_day限定の両方、生の相関・偏相関（weekday/month/x_day/section/ddで統制）の
+両方で検証した。
+
+結果：
+```
+全日:       raw r=+0.05〜+0.07, partial r=+0.05〜+0.07
+X_day限定:  raw r=+0.08〜+0.10, partial r=+0.05〜+0.08
+```
+全ての切り口で**正の相関**（弱いが統計的に頑健）が確認され、ゼロサム仮説（負の相関を予想）
+は明確に否定された。むしろ「セクション全体の地合いが良い日は対象機も良い」という
+**共動（co-movement）効果**が存在する。
+
+ただし効果量は小さく（r≈0.05-0.10）、「セクション全体の地合い」自体が
+過去から予測可能か検証したところ、ラグ相関はほぼゼロ（X_day限定後も同様）。
+→ 共動効果は実在するが、それ自体が予測不能なノイズに近い。
+
+## アクション
+
+セクション内の機械間相互作用に関する仮説を検証する際は：
+```python
+# 1. 生の相関だけでなく、交絡変数（曜日・月・x_day・セクション・dd）を
+#    OLS残差で統制した偏相関も必ず確認する
+# 2. 「効果の符号」と「効果の予測可能性」は別問題として両方検証する
+#    （符号が分かっても、その値自体が過去から予測できなければ実用的価値は薄い）
+# 3. X_day限定での再検証は、効果を弱めるどころかむしろ明確化することがある
+#    （[[xday-restriction-sharpens-not-weakens-signal]] 参照）
+```
+
+## 例
+
+```
+誤った予想: 「予算の奪い合いで負の相関があるはず」
+実際の結果: raw r=+0.05〜+0.10（正・弱いが頑健）
+解釈:       ゼロサムではなく、地合い（環境要因）による共動が支配的
+            ただしその地合い自体はラグ相関≈0で予測不能
+```
+
+---
+id: target-reformulation-does-not-escape-variance-ceiling
+trigger: "予測ターゲットを差枚→相対差枚（excess_diff = diff - section_mean）や確率など別の指標に変更すれば精度が改善すると期待するとき"
+confidence: 0.9
+domain: ml-architecture
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ターゲットを「差枚」から「環境調整後の相対差枚」に変えても、分散構造はほぼ変わらない
+
+## 背景
+
+「セクションのTOPXに入るかという間接的な予測ではなく、target = diff_coins_normalized -
+section_daily_mean_diff（環境調整後の相対差枚）の方が目的（獲得枚数最大化）に直結するのでは」
+という提案を検証した。
+
+分散分解の結果：
+```
+「環境」（date×section の平均、=baseline）が説明する分散: 8.0%
+「個体」（個別機の差枚の環境からの乖離）が説明する分散:    92.0%
+```
+これは「excess_diff ≈ diff_coins_normalized − (8%程度の定数オフセット)」を意味し、
+両者は強く相関する（ほぼ線形従属）。つまり target を diff から excess_diff に
+変えても、学習対象の統計的構造（分散の出どころ・予測可能性の上限）はほとんど変化しない。
+
+実際、複数の切り口（セクション内ランキング, excess_diff 中央値分類, 機種内正規化済み
+確率の中央値分類）で「正しく統制した場合」のAUCはいずれも 0.51〜0.61 のレンジに収束した
+（[[probability-target-cross-segment-artifact-collapse]] 参照）。
+
+## アクション
+
+「ターゲットの再定義で精度が向上するはず」という仮説を検証する前に：
+```python
+# 1. まず分散分解（environment vs individual）を行い、
+#    新旧ターゲットがどれだけ線形従属かを確認する
+env_var_share = df.groupby(['date','section'])['target'].transform('mean').var() / df['target'].var()
+if env_var_share < 0.15:
+    print("環境成分の寄与が小さい → ターゲット再定義による構造変化はわずか")
+
+# 2. 複数のターゲット定義で「正しく統制した」AUCを横並びで比較し、
+#    収束するレンジ（このプロジェクトでは概ね0.51-0.61）を「実質的な天井」として認識する
+# 3. 「ターゲットの言い換え」より「機種内/セグメント内正規化の正しさ」の方が
+#    AUCに与える影響が大きいことを優先的に確認する
+```
+
+## 例
+
+```
+期待: 「環境を調整したexcess_diffなら、ノイズが減って予測しやすくなるはず」
+実際: environment分散寄与は8%のみ → excess_diffはdiffとほぼ線形従属
+      AUCは中央値予測でいずれも0.51-0.56に収束（diff/excess_diff/確率で同様）
+結論: ターゲットの「言い換え」では分散構造の本質（>99%が個体内ノイズ）は変わらない
+```
+
+---
+id: probability-target-cross-segment-artifact-collapse
+trigger: "合成確率（total_probability_decimal）や機械割など、機種ごとに理論値レンジが大きく異なる指標を予測ターゲットの百分位として使おうとするとき"
+confidence: 0.95
+domain: methodology
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 「合成確率の下位30%」をグローバル百分位で定義すると、AUC=0.868という見せかけの高精度が出るが、機種内z-score正規化すると0.541まで崩壊する
+
+## 背景
+
+「機械割105%以上の台を予測する」という提案の前段階として、合成確率
+（total_probability_decimal、機種ごとに理論値レンジが約1/97%〜6/115%と大きく異なる）
+の閾値予測を検証したところ、AUC=0.868という驚異的な数値が出た。
+
+しかし [[cross-segment-aggregation-creates-dominance-artifact]] を踏まえ、
+これが「設定検出」ではなく「機種の当てっこ」である可能性を疑い、機種内z-score
+（prob_z_within_model = (value - 機種内平均) / 機種内標準偏差）で再検証した：
+
+```
+グローバル百分位版（機種混在）:        AUC = 0.868, positive_rate = 0.300
+機種内z-score版（within-model normalized）: AUC = 0.541, positive_rate = 0.308
+```
+
+決定的な証拠（model_hist_prob = 機種の過去平均確率、実質的に「機種の指紋」）：
+```
+model_hist_prob と「グローバル下位30%」二値ラベルとの相関:        r = -0.4595
+model_hist_prob と「機種内z下位30%」二値ラベルとの相関:           r = -0.0010
+```
+
+これは「機種が分かれば、グローバル百分位の閾値を超えるかはほぼ決まってしまう
+（機種の理論値レンジの差をなぞっているだけ）」ことを定量的に証明している。
+正しく機種内で統制すると、AUCは diff/excess_diff ベースの中央値予測（0.51-0.56）
+と同水準（0.541）に収束し、「合成確率の方が本質的に予測しやすい」という期待は
+否定された。
+
+## アクション
+
+確率・機械割など「機種固有の理論値レンジを持つ指標」を予測ターゲットにする際は
+必ず以下を実施する（[[cross-segment-aggregation-creates-dominance-artifact]] の
+具体的な追加検証手順として）：
+
+```python
+# 1. 百分位/閾値を計算する前に、機種内z-score化する
+df['prob_z_within_model'] = df.groupby('machine_name')['total_probability_decimal']\
+    .transform(lambda x: (x - x.mean()) / x.std())
+
+# 2. グローバル版と機種内正規化版のAUCを必ず両方算出し、比較する
+#    両者に大きな差（>0.2）がある場合、グローバル版は「機種識別」の
+#    アーティファクトである可能性が高い
+
+# 3. スモーキングガン検証：「機種の指紋」となる特徴量
+#    （machine_name の過去平均値など）が、グローバル版ターゲットと
+#    機種内正規化版ターゲットのそれぞれとどれだけ相関するかを確認する
+#    → グローバル版とは強相関、正規化版とはほぼ無相関、なら「識別アーティファクト」確定
+fingerprint_corr_global = df['model_hist_prob'].corr(df['target_global_percentile'])
+fingerprint_corr_normalized = df['model_hist_prob'].corr(df['target_within_model_z'])
+```
+
+## 例
+
+```
+誤った報告: 「合成確率の下位30%予測でAUC=0.868、設定検出に使える画期的な指標を発見」
+正しい解釈: 機種内z正規化でAUC=0.541に崩壊。model_hist_probとの相関が
+            r=-0.46→r=-0.001に消失 → 「機種の当てっこ」であって「設定の当てっこ」ではない
+教訓:       「理論的に設定と直結している指標」（合成確率）でも、
+            機種間スケール差を統制しなければdiffベースの指標と同じ罠に落ちる
+```
+
+---
+id: tail-focused-auc-monotonic-increase-toward-extremes
+trigger: "差枚やexcess_diffなどの連続指標を閾値分類するとき、閾値Tの位置によってAUCがどう変化するかを調査するとき"
+confidence: 0.8
+domain: ml-interpretation
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# P(excess_diff > T) のAUCは閾値Tが分布の裾（極端な値）に近づくほど単調に上昇する
+
+## 背景
+
+excess_diff（環境調整後の相対差枚）について、閾値 T を中央値付近から両極端に
+動かしながら P(excess_diff > T) の予測AUCを計測した：
+
+```
+T = -500 (下振れの裾): AUC = 0.538
+T =    0 (中央値):     AUC = 0.513
+T = +1000 (上振れの裾): AUC = 0.557
+```
+
+中央値（プラスかマイナスかの境界）付近ではAUCがほぼチャンス（0.513）だが、
+分布の両極端（大勝ち/大負けの境界）に近づくにつれて単調にAUCが上昇する。
+これは「弱い構造的シグナルは、平均的な結果ではなく極端な結果（裾）に
+集中している」ことを示唆する。
+
+ユーザーの目標（獲得枚数の最大化）は「平均してどちらが優れているか」ではなく
+「大勝ちする可能性が高いか/大負けを避けられるか」に近いため、この発見は
+目的との整合性が高い、数少ない有望なリードである。
+
+## アクション
+
+連続指標の閾値分類モデルを設計する際は、単一の閾値（中央値など）だけでなく
+複数の閾値でAUCをスキャンし、「どの閾値帯にシグナルが集中しているか」を
+事前に可視化する：
+
+```python
+for T in [-1500, -1000, -500, 0, +500, +1000, +1500]:
+    target = (df['excess_diff'] > T).astype(int)
+    auc = compute_auc(features, target)
+    print(f"T={T}: AUC={auc:.3f}, positive_rate={target.mean():.3f}")
+# AUCがTに対して単調に変化する場合、「裾に焦点を当てた多閾値予測」
+# （multi-threshold probability framework, [[ml-ranking-learnings-20260602]]）
+# の設計に活かす
+```
+
+## 例
+
+```
+発見: T=0近辺でAUC=0.513（チャンス相当）、T=+1000でAUC=0.557
+示唆: 「プラスかマイナスか」を当てるより「大勝ちするか」を当てる方が
+      構造的シグナルを多く含む可能性がある
+応用: 機種内正規化済みの確率・差枚双方で、複数閾値の期待値合成
+      （multi-threshold probability）を試す価値がある
+ただし: 閾値を裾に寄せるほどpositive_rateが下がりサンプルが偏るため、
+        実用上は適合率・再現率とのトレードオフを別途検証する必要がある
+```
+
+---
+id: xday-restriction-sharpens-not-weakens-signal
+trigger: "通常日とX_day（イベント日）を混在させたラグ・持続性分析を、X_day限定に修正するとき"
+confidence: 0.82
+domain: methodology
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 「直近N日平均」のような全日ベースのラグ計算をX_day限定に修正すると、効果は弱まらずむしろ明確になることがある
+
+## 背景
+
+ユーザーから「直近七日平均では高設定がほぼ無い通常日が混入するため正しく評価できない、
+以前のようにX_day内部での検証に修正すべき」という指摘を受け、セクション共動効果の
+ラグ分析を「全日の暦日ベースrolling」から「X_dayのみを抽出した上でのrolling(3).shift(1)」
+に修正して再計算した。
+
+結果、効果が弱まるどころか、むしろ明確になった：
+```
+全日ベース:     raw r=+0.05〜+0.07
+X_day限定後:    raw r=+0.08〜+0.10（約1.5倍に増幅）
+```
+これは「通常日のノイズ（高設定がほぼ無い、変動が乏しい日）が全体相関を希釈していた」
+ことを意味する。修正は「結論を覆す」のではなく「結論をより正確に・より強く」示した。
+
+## アクション
+
+「通常日とイベント日の混在」が疑われる時系列・ラグ分析を修正する際は：
+```python
+# 1. まずX_day限定でフィルタしてから rolling/shift を計算する
+#    （カレンダー日数ではなく、フィルタ後の「X_dayの連番」でrollingする）
+xday_df = df[df['is_xday'] == 1].sort_values(['machine_number', 'date'])
+xday_df['lag_feature'] = xday_df.groupby('machine_number')['value']\
+    .transform(lambda s: s.rolling(3).mean().shift(1))
+
+# 2. 修正前後で効果量がどう変化したかを必ず比較し、
+#    「弱まった/消えた」のか「強まった/明確になった」のかを報告する
+#    → 後者の場合、「ノイズ除去によりシグナルが純化された」という
+#      ポジティブな解釈ができ、元の発見の信頼性がむしろ向上する
+```
+
+## 例
+
+```
+修正前: 全日rolling(7) → raw r=+0.05〜+0.07
+修正後: X_day限定rolling(3).shift(1) → raw r=+0.08〜+0.10
+解釈: 修正は「誤りの是正」であると同時に「シグナルの純化」でもあった
+教訓: 正しい手法への修正は、結論を弱める可能性だけでなく
+      強める可能性も両方視野に入れて評価すべき
+```
+
+---

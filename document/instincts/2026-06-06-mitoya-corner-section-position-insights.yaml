@@ -1,0 +1,175 @@
+---
+id: mitoya-group-level-position-aggregation
+trigger: "walk-forward パイプラインにマシンレベルの位置特徴量を追加しようとしたとき"
+confidence: 0.97
+domain: ml-pipeline
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+title: 位置特徴量はグループ集計後のパイプラインでは aggregation 経由で追加する
+
+## 背景
+tail_ltr_mitoya_wf.py は aggregate_mode_mitoya でマシン行を (last_digit × date) グループに集計してから
+walk-forward を走らせる。FeatureBuilder.build_features(use_position_features=True) は
+マシン行レベルで section_encoded / physical_corner を追加するが、集計後のDataFrameには
+マシン行が存在しないため機能しない。
+
+## アクション
+1. build_base_rows_mitoya() でマシンレベルの section_rank / is_strong_section を計算
+2. aggregate_mode_mitoya() の .agg() に mean_section_rank / mean_physical_corner / pct_strong_section を追加
+3. get_numeric_features(df) が自動採用するため、特別な設定不要
+4. --use-position-features フラグで ON/OFF を切り替える場合は、集計後の列を drop する形で制御
+
+## 例
+```python
+# build_base_rows_mitoya 内
+work["section_rank"] = work["section"].map(SECTION_RANK).fillna(0).astype(int)
+work["is_strong_section"] = (work["section_rank"].between(1, 5)).astype(int)
+
+# aggregate_mode_mitoya の .agg() 末尾
+mean_section_rank=("section_rank", lambda s: float(s.mean())),
+mean_physical_corner=("physical_corner", lambda s: float(s[s > 0].mean()) if (s > 0).any() else 0.0),
+pct_strong_section=("is_strong_section", lambda s: float(s.mean())),
+```
+
+---
+id: mitoya-physical-corner-alternating-numbering
+trigger: "パチスロホールの台番号から角番（物理的な角距離）を計算するとき"
+confidence: 0.95
+domain: domain-knowledge
+source: user-correction
+project_id: 2026project
+project_name: pachinko-analyzer
+
+title: 物理的な角番は min(rank_from_min, rank_from_max) で計算する
+
+## 背景
+パチスロホールでは台番号が島の中で交互方向に並ぶことが多い。
+例: 1,2,3...N (順方向) / 20,19,18...N+1 (逆方向)
+この場合、rank_from_min だけでは物理的な角からの距離を正しく表せない。
+
+## アクション
+physical_corner = min(rank_from_min, rank_from_max) を使う。
+両値が > 0 のときのみ有効とし、それ以外は -1（不明）とする。
+
+## 例
+```python
+valid = (rank_from_min > 0) & (rank_from_max > 0)
+df["physical_corner"] = -1
+df.loc[valid, "physical_corner"] = np.minimum(rank_from_min[valid], rank_from_max[valid]).astype(int)
+df["physical_corner_valid"] = (df["physical_corner"] > 0).astype(int)
+```
+
+---
+id: mitoya-section-numeric-range-pitfall
+trigger: "台番号の連続範囲で Section（列）を定義しようとしたとき"
+confidence: 0.93
+domain: domain-knowledge
+source: user-correction
+project_id: 2026project
+project_name: pachinko-analyzer
+
+title: 台番号の連続範囲は物理的な島（列）とは一致しない
+
+## 背景
+みとやスロスの初期実装では台番号を等分割した10セクションを定義していたが、
+これは単なる数値グループであり物理的な島の配置とは無関係だった。
+例: 523-556 は実際には 523-539 と 540-556 の別々の島で構成されていた。
+XY座標（通路の向き・列の方向）を考慮しないと、異なる島の台が同セクションに混在する。
+
+## アクション
+Section は必ずドメイン知識（実際の島の物理配置）に基づいて定義する。
+座標情報がない場合はユーザーに手動確認を求める。
+みとや正しいセクション定義（18島）:
+(501-522), (523-539), (540-556), (557-573), (574-590), (591-607),
+(608-623), (624-640), (641-657), (658-674), (675-691), (692-700),
+(701-711), (712-722), (723-733), (734-744), (745-755), (805-815)
+
+## 例
+誤: 501-556 を1セクションとして扱う（実際は2つの異なる島）
+正: 501-522, 523-539 を別セクションとして分ける
+
+---
+id: mitoya-section-strength-machine-type-proxy
+trigger: "みとやで列（Section）の強弱を評価したとき"
+confidence: 0.90
+domain: domain-analysis
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+title: みとやの列強弱は主に機種タイプの代理変数だが、独立した位置効果もある
+
+## 背景
+Kruskal-Wallis 検定で Section の epsilon_sq=0.012900（セクション修正後）。
+断面分析では「強いセクション = AT機（東京喰種など）のセクション」という
+機種タイプとの共線関係が強い。
+ただし within-type 分析（"other" タイプ固定）で epsilon_sq=0.003797 が確認され、
+機種タイプを超えた独立の位置効果が存在する。
+弱セクション（692以降）はバラエティ相当の島。強セクション（574-590）はAT機の島。
+
+## アクション
+Section 特徴量は機種タイプ特徴量と併用し、feature importance で独立効果を確認する。
+アブレーション実験（section_encoded あり/なし）で純粋な位置効果を分離する。
+
+## 例
+Section BEST: 574-590 (AT機「東京喰種」)
+Section WORST: 701-711 (バラエティ)
+rank_from_min epsilon_sq: 0.000478 (角番効果弱い)
+section epsilon_sq: 0.012900 (列効果は意味あり)
+
+---
+id: mitoya-daily-hall-summary-null-flags
+trigger: "みとやDBで daily_hall_summary の日付フラグを使おうとしたとき"
+confidence: 0.98
+domain: data-quality
+source: empirical-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+title: みとやの daily_hall_summary フラグは全行 NULL — date 文字列から直接導出する
+
+## 背景
+みとやスロスのDBでは daily_hall_summary の day_of_week, last_digit, weekday_nth,
+is_strong_zorome が 514 行すべて NULL。
+これらに依存した特徴量計算は全て 0/NaN になってしまう。
+
+## アクション
+日付属性は date 文字列（YYYYMMDD）から Python で直接計算する。
+daily_hall_summary は avg_diff_per_machine（is_hall_plus 判定用）のみ利用する。
+
+## 例
+```python
+df["date"] = pd.to_datetime(df["date"], format="%Y%m%d")
+df["day_of_week"] = df["date"].dt.strftime("%a")
+df["dd"] = df["date"].dt.day
+df["mm"] = df["date"].dt.month
+df["is_mm_dd"] = (df["mm"] == df["dd"]).astype(int)
+```
+
+---
+id: section-correction-epsilon-sq-improvement
+trigger: "セクション定義を修正したあと統計検定を再実行したとき"
+confidence: 0.88
+domain: domain-knowledge
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+title: 物理的に正しいセクション定義はKW effect sizeを約61%改善する
+
+## 背景
+みとやの初期10セクション（数値グループ）→ 修正18セクション（物理島）への変更で
+Kruskal-Wallis の epsilon_sq が 0.008010 → 0.012900（+61%）に改善した。
+間違った集計単位では統計的シグナルが希薄化する典型例。
+
+## アクション
+ML特徴量追加前にドメイン知識でグループ定義の妥当性を必ず確認する。
+グループ定義変更後は必ず統計検定を再実行してシグナルの変化を確認する。
+epsilon_sq > 0.01 を「意味ある効果」の目安とする（ML特徴量として採用検討）。
+
+## 例
+rank_from_min epsilon_sq: 0.000478 (弱い → 単独採用は疑問)
+section (修正前) epsilon_sq: 0.008010
+section (修正後) epsilon_sq: 0.012900 → 採用する価値あり

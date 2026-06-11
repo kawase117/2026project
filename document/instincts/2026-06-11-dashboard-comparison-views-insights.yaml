@@ -1,0 +1,87 @@
+---
+id: pachinko-design-system-dormant-tokens-activation
+trigger: Streamlit dashboardでUIコンポーネント（metric_card等）を新規追加・拡張するとき
+confidence: 0.85
+domain: dashboard-design
+source: session-observation
+project_id: pachinko-2026project
+project_name: 2026project
+title: design_system.py の TYPOGRAPHY/SPACING/status_* は定義済みだが未使用 — 拡張時に活用する
+background: >
+  design_system.py に TYPOGRAPHY, SPACING, LAYOUT, status_success/warning/error
+  が定義されていたが、既存16ページではほぼ使われておらず COLORS['secondary_*'] のみ
+  多用されていた。metric_card() も delta 引数があるのに誰も使っていなかった。
+action: >
+  新規UIコンポーネント（metric_card_with_delta, confidence_badge 等）を追加する際は、
+  これら既存定数を積極的に使い、ベタ書きの px 値・色コードを避ける。CSS への追記は
+  既存ルールへの破壊的変更を避け、新規セレクタ追加に留める。
+example: >
+  metric_card_with_delta() で delta_value > 0 → COLORS['status_success'],
+  delta_value < 0 → COLORS['status_error'], delta表示には
+  TYPOGRAPHY['size_sm'] / font_mono を使用した。
+
+---
+id: streamlit-dataframe-no-html-rendering
+trigger: st.dataframe() のセルにバッジ・装飾的な表示を追加しようとするとき
+confidence: 0.95
+domain: dashboard-development
+source: session-observation
+project_id: pachinko-2026project
+project_name: 2026project
+title: st.dataframe() はセル内のHTMLをレンダリングしない — バッジはプレーンテキストで実装する
+background: >
+  confidence_badge() を当初 HTML <span style="..."> として実装したが、page_11/16 の
+  表示は st.dataframe(use_container_width=True) を使用しており、HTML はエスケープ
+  されてそのまま文字列表示されてしまう問題があった。
+action: >
+  st.dataframe のセルに警告マーク等を表示する場合はプレーンテキスト（絵文字+テキスト）
+  で実装する。HTML + unsafe_allow_html が使えるのは st.markdown 経由のカード型
+  コンポーネント（metric_card 等）のみ。
+example: >
+  confidence_badge(count, threshold=5) は count < threshold のとき
+  "⚠️ サンプル少" という文字列のみを返す（HTMLタグなし）。
+
+---
+id: pachinko-comparison-utility-pattern
+trigger: ダッシュボードページに前期間比・全体平均比などの比較指標を追加するとき
+confidence: 0.85
+domain: dashboard-design
+source: session-observation
+project_id: pachinko-2026project
+project_name: 2026project
+title: 比較ビュー（前期間比・全体平均比）は dashboard/utils/comparison.py に集約する
+background: >
+  各ページが絶対値（差枚・勝率・G数）のみを表示しており「良いか悪いか」の基準が
+  なかった。page_10/11/16 で同様の比較ロジックが必要になったため、共通ユーティリティ
+  として抽出した。
+action: >
+  新しい比較指標が必要な場合は comparison.py に関数を追加し、各ページから呼び出す。
+  前期間比較は compute_previous_period_range() で date_range と同じ日数の直前期間を
+  計算し、データが空の場合は None にフォールバックして metric_card_with_delta 側で
+  通常表示にする。
+example: >
+  prev_range = compute_previous_period_range(st.session_state.date_range);
+  prev_kpi = _kpi_summary(df_prev) if not df_prev.empty else None
+
+---
+id: claude-code-fact-forcing-gate-hook
+trigger: Write/Edit ツールでこのプロジェクト配下のファイルを新規作成・編集するとき
+confidence: 0.9
+domain: workflow
+source: session-observation
+project_id: pachinko-2026project
+project_name: 2026project
+title: ファイルの Write/Edit 前に「Fact-Forcing Gate」フックが事実確認を要求する
+background: >
+  本セッションで plan ファイル・新規 util ファイル・design_system.py 等の編集時、
+  毎回「呼び出し元ファイル」「既存重複の有無（Glob/Grep確認）」「データファイルの場合の
+  フィールド構造」「ユーザー指示の引用」を提示しないとツールがエラーを返すフックが
+  有効になっていた。
+action: >
+  Write/Edit を実行する前に、事前に Grep/Glob で呼び出し元・重複ファイルの有無を
+  確認しておく。エラーが出たら指定の4項目（呼び出し元、影響する公開関数、データ構造、
+  ユーザー指示の引用）を本文で提示してから同じ操作をリトライする。
+example: >
+  "1. Files importing X: ... / 2. Public functions affected: ... /
+  3. No data file I/O ... / 4. User's instruction (approved plan): ..."
+  の形式で回答してから再実行する。

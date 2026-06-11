@@ -1,0 +1,126 @@
+---
+id: unfired-hypothesis-absolute-diff-bias
+trigger: "when evaluating next-day improvement for unfired high settings using raw diff_coins values"
+confidence: 0.95
+scope: methodology
+domain: pachinko-analysis-pitfall
+source: session-experiment
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 不発高設定の翌日差枚改善は曜日効果バイアス
+
+## 背景
+不発高設定台の翌日追跡で、翌日絶対差枚+154枚・改善+691枚（ベースライン+424枚）が見え、
+「翌日据え置き戦略あり」という誤った結論を出しかけた。
+翌日の全台平均で補正すると：不発台 -62枚、当たり台 +3枚、普通台 +1枚。
+「月曜日は強い」という日別効果が全て説明できた。
+
+## アクション
+翌日差枚を評価するときは必ず日別平均で補正する：
+```python
+day_avg_diff_tomorrow = df.groupby("date")["diff_coins_normalized"].mean()
+relative_diff_tomorrow = diff_tomorrow - day_avg_diff_tomorrow[date_tomorrow]
+```
+絶対差枚ではなく `relative_diff_tomorrow` で比較すること。
+
+## 例
+蒲田七（232,375台・325営業日）：
+- 絶対差枚: 不発台 +691枚改善（誤：据え置きありに見える）
+- 相対差枚: 不発台 -62枚（正：普通台より劣位）
+
+---
+id: hall-holdover-strategy-per-hall-verification
+trigger: "when verifying whether a hall uses next-day high-setting carry-over strategy"
+confidence: 0.90
+scope: methodology
+domain: pachinko-hall-strategy
+source: session-experiment
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ホール別の据え置き戦略は個別検証が必須
+
+## 背景
+「不発台は翌日も据え置かれる」戦略はホールによって異なる。
+蒲田七では翌日相対差枚 -62枚（不支持）。他ホールでは実在する可能性がある。
+
+## アクション
+ホールごとに `unfired_nextday_verification.py` を実行し、
+`tomorrow_avg_relative_diff` の符号で判定：
+
+| 結果 | 解釈 |
+|------|------|
+| relative_diff > +30 | 据え置き戦略あり（活用可） |
+| -30 ≦ relative_diff ≦ +30 | 据え置きなし（ノイズ範囲） |
+| relative_diff < -30 | 翌日回収傾向（避けるべき） |
+
+## 例
+```bash
+python ml/experiments/unfired_nextday_verification.py \
+  --db-path db/<ホール名>.db \
+  --output-dir ml/experiments/results/unfired_nextday_verification/
+```
+蒲田七: unfired -62枚、hit_candidate +3枚 → 据え置きなし
+
+---
+id: hit-candidate-holdover-also-absent
+trigger: "when checking if hall maintains hit_candidate settings on consecutive days"
+confidence: 0.88
+scope: methodology
+domain: pachinko-hall-strategy
+source: session-experiment
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 当たり台の翌日据え置きも蒲田七では確認されず
+
+## 背景
+当たり台（+2,448枚）の翌日相対差枚: +3枚。ベースライン: +1枚。差わずか2枚。
+蒲田七は「高設定を連日継続する」戦略も採用していない。
+
+## アクション
+据え置き戦略の有無は「当たり台」「不発台」の両方で確認する。
+両方ともベースラインと差がなければ、当該ホールは毎日設定をリセットする傾向あり。
+その場合、翌日以降への持ち越しは予測に使えない。当日指標に集中すること。
+
+## 例
+蒲田七：
+- unfired_vs_other_gap: -62.60枚
+- hit_candidate_vs_other_gap: +2.09枚
+→ 設定は毎日リセットされる可能性が高い
+
+---
+id: nextday-vs-nextweek-tracking-strategy
+trigger: "when designing temporal tracking for pachinko setting verification"
+confidence: 0.85
+scope: methodology
+domain: pachinko-analysis-design
+source: session-experiment
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 翌日追跡 vs 翌週追跡の使い分け
+
+## 背景
+不発高設定台の仮説検証において：
+- 翌週追跡: 同曜日イベント再発仮説（週次戦略）
+- 翌日追跡: 連日据え置き仮説（日次戦略）
+両者で前提が異なり、ホールの戦略タイプを先に仮定して選ぶ必要がある。
+
+## アクション
+| ホール戦略の仮定 | 使用手法 |
+|---------------|---------|
+| 曜日イベント重視（週1回） | unfired_verification.py（翌週） |
+| 連日据え置き戦略 | unfired_nextday_verification.py（翌日） |
+| 不明 | 両方実行して比較 |
+
+さらに両手法とも相対差枚（日別平均補正）で評価すること。
+
+## 例
+蒲田七：
+- 翌週: unfired 13.85% vs baseline 15.79% → 翌週戦略なし
+- 翌日: unfired relative -62枚 vs baseline +1枚 → 翌日戦略なし
+→ 設定継続戦略が確認されないホール
+
+---

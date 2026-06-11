@@ -2,6 +2,7 @@
 id: 2fa-statistical-power-vs-signal
 trigger: "when evaluating 2F_A segment randomness or predictability"
 confidence: 0.85
+scope: methodology
 domain: ml-hypothesis-validation
 source: statistical-test-with-limited-data
 project_id: 2026project
@@ -43,6 +44,7 @@ effect_size = 0.256    # 25% 改善
 id: lambda-hyperparameter-opposite-overfitting
 trigger: "when selecting combined_lambda via tune/holdout evaluation"
 confidence: 0.92
+scope: methodology
 domain: ml-hyperparameter-selection
 source: tune-vs-holdout-validation
 project_id: 2026project
@@ -84,6 +86,7 @@ combined_lambda パラメータ選択で以下を観測：
 id: segment-machine-count-impacts-learning-difficulty
 trigger: "when comparing performance across segments with different machine pool sizes"
 confidence: 0.88
+scope: methodology
 domain: ml-segment-design
 source: segment-diagnostics-analysis
 project_id: 2026project

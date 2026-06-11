@@ -1,7 +1,15 @@
+# ⚠️  LEAKAGE WARNING (added 2026-06-01)
+# このファイルのインサイトは2026-05-31のリーク修正前に作成された。
+# 【有効】実データ観察（diff_coins集計・ゾロ目パターン・台配置等）
+# 【無効】MLモデル性能値（AUC / hit@2 / precision 等の数値）
+# アクション項目を実運用に使う前にリーク修正後のモデルで再検証すること。
+
 ---
 id: digit3-weakness-caused-by-at-series-dominance
 trigger: "when interpreting why last_digit=3 shows lowest mean_diff in overall stats of 蒲田七"
 confidence: 0.90
+scope: hall-specific
+hall: kamata7
 domain: pachinko-domain-knowledge
 source: data-observation
 project_id: 2026project
@@ -40,6 +48,8 @@ digit3_profile の AT系 mean=84.9 はAT系全フロア平均。3F_N限定では
 id: digit3-bimodal-normal-worst-anomaly-best
 trigger: "when designing features for last_digit=3 in LTR model for 蒲田七"
 confidence: 0.87
+scope: hall-specific
+hall: kamata7
 domain: pachinko-domain-knowledge
 source: data-observation
 project_id: 2026project
@@ -78,6 +88,8 @@ rolling特徴量として間接的に組み込む。
 id: saturday-digit6-dominant-307
 trigger: "when selecting machines or designing Saturday last_digit features for 蒲田七"
 confidence: 0.88
+scope: hall-specific
+hall: kamata7
 domain: pachinko-domain-knowledge
 source: data-observation
 project_id: 2026project
@@ -114,6 +126,8 @@ ML特徴量: `is_saturday AND is_digit_6` を土曜の最強シグナルとし�
 id: tuesday-digit3-exception-friday-worst
 trigger: "when analyzing digit3 weekday variation or designing weekday-digit interaction features in 蒲田七"
 confidence: 0.85
+scope: hall-specific
+hall: kamata7
 domain: pachinko-domain-knowledge
 source: data-observation
 project_id: 2026project

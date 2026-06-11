@@ -1,0 +1,275 @@
+---
+id: persistence-after-loss-signal-fails-cross-hall-replication
+trigger: "新規発見した予測シグナル（特に単一ホールでAUC改善が見えたもの）をパイプラインに本実装するか判断する時"
+confidence: 0.85
+domain: ml-feature-validation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 「直近X_dayで大負け→翌X_dayも回され続ける」シグナルは単一ホール検証では+1.46pt改善したが、別ホールでは符号が反転した
+
+## 背景
+ユーザーの観察「高設定台は大負けしても回され続ける」を起点に、`persistence_ratio = 翌X_day回転数 / 自席のX_day平均回転数（lag付き、座席正規化）`を「直近X_dayの下位10%大負け」条件付きで36特徴量に追加し、walk-forward CatBoostで検証した。
+
+- みとや大森町（5fold, 条件付きサブセットn=1,337）: baseline AUC 0.6357 → +persistence 0.6503（**+0.0146**, 5fold中4foldで改善）
+- 蒲田七（5fold, 条件付きサブセットn=2,505）: baseline AUC 0.6194 → +persistence 0.6090（**-0.0104**, 符号反転）
+
+全体AUCはどちらのホールでもほぼ無変化（特徴量が情報を持つのは全体の約8〜10%のみのため）。
+
+## アクション
+- 単一ホールでの+1〜2pt程度のAUC改善は、本実装の根拠として不十分。**必ず最低2ホール以上でwalk-forward再検証**し、符号の一貫性を確認してから判断すること
+- 「4/5foldで改善」のような fold単位の一貫性だけでは不十分（n=1,337規模ではホール固有ノイズで容易に再現する）。ホール間の符号一致こそが真の判定基準
+- この種の検証は計算コストが高い（CatBoost二重学習×fold数×ホール数）ため、最初から複数ホールを並行して検証計画に組み込むこと
+
+## 例
+```python
+# 単一ホールでの「改善」は条件付き採用、複数ホールでの符号一致まで本実装を保留する
+results = {}
+for hall_db in ['mitoya_omori', 'kamata7']:
+    results[hall_db] = run_walkforward_comparison(hall_db, feature='persistence_feat')
+if not all(r['lift'] > 0 for r in results.values()):
+    print("符号が一致しないため本実装を見送る（ホール固有ノイズの可能性が高い）")
+```
+
+---
+id: persistence-signal-threshold-sensitivity-reveals-extreme-dependency
+trigger: "「大負け」「大勝ち」など分位点ベースの条件付き特徴量を設計・評価する時"
+confidence: 0.75
+domain: ml-feature-validation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# persistenceシグナルは「より極端な大負け」に絞るほど効き、緩めると消失する — 閾値依存性そのものが構造の手がかりになる
+
+## 背景
+みとや大森町で「大負け」の定義（diff_coins_normalizedの下位分位点）を5%/10%/15%と変えて条件付きサブセットでのAUCリフトを再検証した。
+
+| 大負け定義 | サブセットn | リフト |
+|---|---|---|
+| 下位5%（閾値-3191） | 1,243 | +0.0129 |
+| 下位10%（閾値-2397） | 2,495 | +0.0146 |
+| 下位15%（閾値-1950） | 3,769 | -0.0015 |
+
+5%・10%では改善が一貫し、15%まで広げると消失する。これは「本当に極端な状態でのみ意味を持つ」という、ノイズでは説明しにくい構造的パターン。
+
+## アクション
+- 条件付き特徴量を評価する際は、**単一の閾値だけでなく複数の閾値で感度分析**を行い、リフトの符号・大きさが閾値に対してどう変化するかを見ること
+- 「閾値を緩めると効果が消える」というパターンは、シグナルが「極端な事象に特有の構造」を捉えている可能性を示すが、同時に**サンプル数が極端に少ない領域に依存する＝過学習リスクが高い**ことも意味する。両面から判断すること
+- 閾値感度分析の結果が「ホール間で符号が逆転する」場合（このセッションの蒲田七のように）、構造自体は実在してもその「意味」がホール固有である可能性を疑うこと
+
+## 例
+```python
+for q in (0.05, 0.10, 0.15):
+    thr = df['diff_coins_normalized'].quantile(q)
+    # 閾値ごとに特徴量を再構築し、walk-forwardで再評価
+    # リフトの符号・大きさの変化を見て「本物の構造」か「ノイズの偶然」かを判別する
+```
+
+---
+id: big-loss-persistence-phenomenon-concentrates-in-at-type-machines
+trigger: "ボーナス確率や差枚など機種特性に依存する指標を、機種タイプ（jug/bt vs hana/oki）を区別せず分析する時"
+confidence: 0.85
+domain: pachinko-domain-machine-type
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 「大負けしても回され続ける」現象は、AT系（hana/oki）の方がジャグラー/BT系より「発生しやすさ（出現率）」が10倍以上高い — ただし条件付きサブセットの大半は両者ではなく「未分類（other）」機種
+
+## 背景
+ユーザーの事前予測「ジャグラーには設定が入りやすいがその他には入りにくいため、この特徴が見えるか疑問」を検証する目的で、条件付きサブセット（直近X_dayで大負け）内でのjug+bt（Aタイプ系）とhana+oki（AT系）の**出現率**（その機種タイプの全行数に対する条件成立行数の割合）を両ホールで比較した。
+
+**【訂正】初回エクスポート時の数値は誤りだった**（`1337 - 64 = 1273` という引き算で「AT系件数」を導出しており、実際に`machine_type`でフィルタしていなかった）。実データで再計算した正しい値は以下の通り：
+
+| ホール | jug+bt 出現率 | hana+oki 出現率 | 比率 |
+|---|---|---|---|
+| みとや大森町 | 124 / 10,683（**1.16%**） | 106 / 853（**12.43%**） | 約10.7倍 |
+| 蒲田七 | 65 / 14,585（**0.45%**） | 146 / 2,184（**6.68%**） | 約14.8倍 |
+
+「出現率」（機種タイプ内での発生しやすさ）で見ると、AT系の方がジャグラー/BT系より10〜15倍高く、ユーザーの事前予測の方向性は支持される。
+
+**しかし**、条件付きサブセットの**構成比**で見ると、両ホールとも9割前後が`machine_type='other'`（`machine_master`未登録の未分類機種）であり、「ほぼ排他的にAT系に発生する」という当初の記述は誤りだった：
+
+| ホール | 条件付きサブセットn | other | jug | bt | hana | oki |
+|---|---|---|---|---|---|---|
+| みとや大森町 | 2,495 | 2,265 (90.8%) | 85 | 39 | 1 | 105 |
+| 蒲田七 | 4,521 | 4,310 (95.3%) | 21 | 44 | 5 | 141 |
+
+## アクション
+- 「出現率」（機種タイプ内での発生確率）と「構成比」（サブセット内での占有率）を**混同しないこと**。「Xタイプで起きやすい」と「サブセットの大半がXタイプ」は別の主張であり、片方が成り立っても他方が成り立つとは限らない（`machine_type='other'`が母数として最大であるため）
+- 派生変数の算出は必ず実データに対する直接フィルタ・集計で行い、**他の集計値からの引き算で間接的に求めない**（`1337-64=1273`のような操作は、母集団に第三のカテゴリ（other）が存在する場合に必ず誤りを生む）
+- 「差枚」「回転継続」などプレイヤー行動由来の指標を分析する際は、**最初から機種タイプ（jug/hana/oki/bt_flag, またはmachine_type）で層別し、`other`カテゴリの比率も必ず確認すること**
+- jug/bt・hana/oki機種でこの種の条件付きサブセットのサンプル数が極端に少ない（n<150）場合、AUC等の評価指標は統計的に無意味（評価不能と明記すべき）。無理に解釈しないこと
+
+## 例
+```python
+sub = df[df['had_big_loss_prev_xday'] == 1]
+print(sub['machine_type'].value_counts())  # 'other' の比率を必ず確認する
+
+# 出現率は必ず実フィルタで計算する（引き算で求めない）
+at_full = df[df['machine_type'].isin(['hana','oki'])]
+at_sub  = sub[sub['machine_type'].isin(['hana','oki'])]
+print(f"AT系出現率: {len(at_sub)}/{len(at_full)} = {100*len(at_sub)/len(at_full):.2f}%")
+```
+
+---
+id: same-phenomenon-cross-hall-sign-reversal-is-the-valid-evidence-not-the-at-type-subtest
+trigger: "ホール間で同じ行動パターン・現象が観測された時に、それが同じ予測的意味を持つと仮定しそうになった時。または、派生サブセットでの再検証結果を『補強証拠』として引用しようとする時"
+confidence: 0.55
+domain: pachinko-domain-hall-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 「大負け後persistenceシグナル」のホール間符号逆転（みとや+0.0146 vs 蒲田七-0.0104）自体が『同じ現象でも予測的意味がホール固有』の有効な証拠 — だが「AT系サブセットでも符号が逆転する」という補強テストは、誤ったサブセット定義に基づいており無効だった
+
+## 背景
+当初、「現象の発生条件（AT系への集中）は共通でも、その現象の予測的意味はホールで逆転する」ことの**追加証拠**として、AT系サブセットに限定したリフト比較（みとや+0.0106 vs 蒲田七-0.0058）を報告した。
+
+**【訂正】このAT系サブセットの定義自体が誤りだった。** 隣接知見（big-loss-persistence-...）で訂正した通り、「AT系サブセットn=1,273/n=2,472」は引き算による誤導出であり、実際に`machine_type`でフィルタした値ではない。正しくフィルタすると：
+
+- みとや大森町: AT系（hana+oki）の条件付き行数は**わずか106件**（全データ26,765件中）
+- 蒲田七: 同**146件**（全データ45,829件中）
+
+walk-forward検証の各foldの検証期間に分配すれば数十件規模となり、AUC比較は統計的に意味をなさない。したがって「AT系サブセットでも符号が逆転する」という補強証拠は**実質的に検証されていない**（捏造ではないが、誤った定義で計算した数値をそのまま採用してしまった）。
+
+**ただし、本知見の核心的主張（同じ現象でもホールにより予測的意味が逆転する）自体は、隣接知見`persistence-after-loss-signal-fails-cross-hall-replication`が報告した「条件付きサブセット全体でのリフト符号逆転」（みとや+0.0146 vs 蒲田七-0.0104, n=1,337 vs n=2,505 — これは正しく計算されている）だけで十分に裏付けられる。** AT系限定の再テストは「念のための補強」のつもりだったが、不要であり、かつ誤りを含んでいた。
+
+## アクション
+- ホール間で同じ行動パターンが観測されても、**それが同じ予測的価値を持つと仮定しないこと**。これ自体はCLAUDE.md記載の既存知見（ホール別個別モデルが平均+2.44%AUC改善）を補強する
+- ただし、**主張の根拠として「最も単純で正しく計算された比較」を優先し、補強のために派生・細分化したサブセットを追加すると、サンプルサイズの縮小と定義ミスのリスクが増す**ことを認識すること。「念のための補強分析」がかえって主張全体の信頼性を損なう場合がある（本件のように）
+- サブセットを細分化して再検証する前に、**そのサブセットのサンプルサイズが統計的に意味を持つ規模か**を必ず事前に見積もること（n<150では機種タイプ別のAUC比較は評価不能）
+- 「構造は普遍的（プレイヤー行動・機種特性由来）」「意味はホール固有（設定投入戦略由来）」という二層構造の枠組み自体は今後も有効だが、AT系内での意味の逆転は**未検証の仮説**として扱うこと（再検証にはより多くの大負けサンプルが必要 = DB拡張後に再評価）
+
+## 例
+```python
+# 補強分析を追加する前に、まずサンプルサイズを見積もる
+at_sub = df[(df['had_big_loss_prev_xday']==1) & (df['machine_type'].isin(['hana','oki']))]
+print(f"AT系条件付きサブセット: n={len(at_sub)}")
+if len(at_sub) < 150:
+    print("→ walk-forward再検証には小さすぎる。補強テストとして採用しない（評価不能と明記）")
+```
+
+---
+id: machine-layout-table-partial-schema-bug-rank-from-aisle
+trigger: "レイアウトCSVを持たないホール（hall_config.jsonでhas_layout_csv: false、または部分的なmachine_layoutデータを持つホール）のDBで`build_machine_feature_frame`を実行する時"
+confidence: 0.9
+domain: code-bug-latent
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# machine_layoutテーブルが存在するが`rank_from_aisle`列が欠けているホールでは、build_machine_feature_frameがKeyErrorで落ちる（潜在バグ）
+
+## 背景
+`db/マルハンメガシティ2000-蒲田7.db`の`machine_layout`テーブルは存在するが、列が`['machine_number', 'hall_name', 'x', 'y', 'display_y', 'section', 'section_min', 'section_max', 'rank_from_min', 'rank_from_max']`のみで`rank_from_aisle`を持たない。
+
+`load_raw_machine_rows`内の処理は「layoutテーブルが存在しない」場合にのみ`rank_from_aisle`等の列をNaNで補完するロジックを持つが、「テーブルは存在するが一部列が欠けている」ケースをハンドリングしていない。結果、`build_machine_feature_frame`の`work["is_corner"] = ... work["rank_from_aisle"] ...`でKeyErrorが発生する。
+
+## アクション
+- `ml/prediction/individual_machine_diff_prediction.py`の`load_raw_machine_rows`内、layout処理部分（`for col in [...]: if col in layout.columns: ...`のループ）を、**マージ後に欠けている列を事後的にNaN補完する**形に修正することを推奨（恒久対応）
+- 暫定対応（本セッションで使用）: `raw = m.load_raw_machine_rows(...)` の後に `if 'rank_from_aisle' not in raw.columns: raw['rank_from_aisle'] = np.nan` を追加してから`build_machine_feature_frame`を呼ぶ
+- 新しいホールDBでこのパイプラインを使う前に、`machine_layout`テーブルの列構成を必ず確認すること（`has_layout_csv: false`のホールほど部分的スキーマの可能性が高い）
+
+## 例
+```python
+# 暫定ワークアラウンド（本体未修正の場合）
+raw = m.load_raw_machine_rows(db_path, min_games=500)
+for col in ['rank_from_aisle']:  # 他にも欠ける可能性のある列を都度確認
+    if col not in raw.columns:
+        raw[col] = np.nan
+frame = m.build_machine_feature_frame(raw)
+```
+
+---
+id: oki-and-hana-have-distinct-setting-deployment-tendencies-not-a-binary-at-vs-a-type
+trigger: "沖ドキ!・ハナハナ系機種を『Aタイプ』『AT機』のような広いカテゴリに二値化してジャグラー等と同列にグルーピングしようとする時"
+confidence: 0.8
+domain: pachinko-domain-machine-type
+source: user-domain-knowledge + session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 沖ドキ!とハナハナは、フラグ上は「Aタイプ系」に見えても、実際の設定投入傾向はジャグラーと全く異なる固有の挙動を持つ — ユーザーのドメイン訂正が行動データで実証された
+
+## 背景
+セッション中、私は`is_at = hana_flag | oki_flag`という二分類を作って「AT系 vs ジャグラー系」という対立軸で分析しようとしたが、ユーザーから次の訂正を受けた：
+- 「沖ドキはAT機の一種だが、関東では設定をあまり入れられない特殊な台」
+- 「ハナハナもAタイプだが、ジャグラーと比較すると圧倒的に設定投入傾向が少ない」
+
+つまり、沖ドキ・ハナハナ・ジャグラーはいずれも一般的な機種カテゴリ表では近い位置に分類されることがあるが、**ホールの設定投入戦略における実際の扱われ方は三者三様**。
+
+この訂正を実データ（「直近X_dayで大負け→翌X_dayも回され続ける」現象の機種シリーズ別出現率）で検証したところ、見事に裏付けられた：
+
+| 系統 | 出現率 |
+|---|---|
+| ジャグラー系 | 0.95% |
+| ハナハナ | 1.16% |
+| BT系（混在） | 2.29% |
+| **沖ドキ!系** | **13.69%** |
+| その他（主にAT/ART機） | 14.87% |
+
+沖ドキの挙動（13.69%）はジャグラー/ハナハナ（〜1%）ではなく、本来のAT/ART機グループ（14.87%）に酷似しており、「沖ドキはAT機の一種」というユーザーの認識を行動データが裏付けた。
+
+## アクション
+- 機種を「Aタイプ/AT機」のような教科書的な二分類でグルーピングする前に、**ホールでの実際の設定投入傾向についてユーザー（ドメインエキスパート）に確認すること**。表面上同じカテゴリに属する機種でも、ホール戦略上は全く別の扱いを受けていることがある
+- ユーザーから得たドメイン知識は、可能な限り**行動データで裏付け（またはクロスチェック）すること**。本件では「出現率」という単純な集計だけでユーザーの主張が定量的に裏付けられた
+- 機種グルーピングを設計する際は、二値化（A vs AT）よりも**機種シリーズ単位（jug/hana/oki/bt/other）で個別に評価する**ことを基本方針とする。「広いカテゴリにまとめると本質を消してしまう」機種が存在することを前提とすること
+
+## 例
+```python
+# 二値化グルーピングの前に、シリーズ単位の出現率を必ず確認する
+for flag, label in [('jug_flag','ジャグラー'),('hana_flag','ハナハナ'),('oki_flag','沖ドキ'),('bt_flag','BT系')]:
+    full_n = (df[flag]==1).sum()
+    sub_n = (df[(df['had_big_loss_prev_xday']==1) & (df[flag]==1)]).shape[0]
+    print(f"{label}: {sub_n}/{full_n} = {100*sub_n/full_n:.2f}%")
+# 系統間で出現率が大きく異なる場合、二値化グルーピングは情報を失わせる
+```
+
+---
+id: supplementary-feature-value-may-inversely-correlate-with-baseline-segment-accuracy
+trigger: "新規特徴量のセグメント別リフトを評価し、特定セグメントでのみ効果が出る理由を説明しようとする時"
+confidence: 0.55
+domain: ml-feature-validation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# persistence特徴量は「ベースラインモデルが既に高精度に当てられている機種系統」では悪化させ、「ベースラインが苦手な系統」では改善する傾向が見えた — ベースライン精度と補助特徴量の価値が逆相関する可能性
+
+## 背景
+みとや大森町で、persistence_feat追加によるリフトを機種シリーズ別にプールOOF予測で検証した（baseline AUCも併記）：
+
+| 系統 | n | baseline AUC | +persistence AUC | リフト |
+|---|---|---|---|---|
+| ジャグラー系 | 42 | **0.807**（高精度） | 0.785 | **-0.0227** |
+| BT系 | 22 | **0.777**（高精度） | 0.760 | **-0.0165** |
+| その他(主にAT/ART) | 1,217 | 0.632（低精度） | 0.641 | +0.0090 |
+| 沖ドキ!系 | 55 | 0.608（低精度） | 0.680 | **+0.0720** |
+
+ベースラインAUCが高い系統（ジャグラー・BT系=「設定が見えやすい」とされる機種）ではpersistence特徴量が**悪化要因**となり、ベースラインAUCが低い系統（沖ドキ・その他AT系=「読みにくい」機種）では**改善要因**となる、きれいな逆相関パターンが観測された。
+
+これは「ベースライン特徴量で既に説明できる対象に、無関係/間接的な特徴量を追加するとノイズとして働き、ベースラインで説明しきれない対象には補完情報として働く」という、機種を超えて一般化できる可能性のある仮説。
+
+## アクション
+- セグメント別の特徴量リフトを評価する際は、**そのセグメントにおけるベースラインモデルの精度（AUC）も必ず併記すること**。リフトの大小だけでなく「なぜそのセグメントで効く/効かないのか」をベースライン精度との関係で説明できないか検討する
+- 「補助特徴量を全データに一律追加する」のではなく、**ベースラインモデルが苦手とするセグメントに選択的に適用する**という特徴量設計戦略（segment-conditional feature injection）を今後検討する価値がある
+- ただし本件のセグメント別n（沖ドキ55、ジャグラー42、BT系22）はいずれも「n<150は評価不能」という本セッション内で確立した基準を下回り、特に沖ドキの+0.072という大きな値は**方向性の手がかりに留め、確証とはしない**こと。傾向の再現性はDB拡張後の大標本で再検証が必要
+
+## 例
+```python
+# セグメント別リフト評価では、必ずベースライン精度も併記し、相関を確認する
+for seg, mask in segments.items():
+    g = cond[mask]
+    if len(g) < 150:
+        print(f"{seg}: n={len(g)} -> 評価不能（傾向の手がかりとしてのみ記録）")
+        continue
+    auc_base = roc_auc_score(g['target'], g['p_base'])
+    auc_ext  = roc_auc_score(g['target'], g['p_ext'])
+    print(f"{seg}: baseline={auc_base:.3f} lift={auc_ext-auc_base:+.4f}")
+    # baseline が低いセグメントほど lift がプラスに振れていないか確認する
+```
+
+---

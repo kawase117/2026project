@@ -1,7 +1,15 @@
+# ⚠️  LEAKAGE WARNING (added 2026-06-01)
+# このファイルのインサイトは2026-05-31のリーク修正前に作成された。
+# 【有効】実データ観察（diff_coins集計・ゾロ目パターン・台配置等）
+# 【無効】MLモデル性能値（AUC / hit@2 / precision 等の数値）
+# アクション項目を実運用に使う前にリーク修正後のモデルで再検証すること。
+
 ---
 id: anomaly-db-scope-must-be-single-hall
 trigger: "when running exploratory anomaly detection on pachinko data"
 confidence: 0.98
+scope: hall-specific
+hall: kamata7
 domain: ml-data-validation
 source: session-observation
 project_id: 2026project
@@ -34,6 +42,8 @@ python ml/last_digit/exploratory/run_exploratory_analysis.py \
 id: rare-anomaly-days-as-heuristic-not-feature
 trigger: "when considering whether to add anomaly-day detection as an ML feature"
 confidence: 0.92
+scope: hall-specific
+hall: kamata7
 domain: ml-feature-engineering
 source: session-reasoning
 project_id: 2026project
@@ -61,6 +71,8 @@ OK: 「前回 high anomaly から5週間経過」→ ユーザーへの参考情
 id: saturday-concentration-in-new-store-anomalies
 trigger: "when analyzing anomaly distribution by weekday for a recently opened pachinko store"
 confidence: 0.80
+scope: hall-specific
+hall: kamata7
 domain: pachinko-domain-knowledge
 source: data-observation
 project_id: 2026project
@@ -85,6 +97,8 @@ high/low 両方向とも土曜に集中。
 id: rolling-window-masks-lows-in-declining-store
 trigger: "when anomaly detection finds surprisingly few low anomalies despite declining store performance"
 confidence: 0.88
+scope: hall-specific
+hall: kamata7
 domain: ml-evaluation
 source: session-reasoning
 project_id: 2026project
@@ -110,6 +124,8 @@ GW月曜(2026-05-04, avg_diff=-280)は下限-299を上回り非検出。
 id: high-anomaly-in-declining-store-is-reputation-defense
 trigger: "when a store shows high anomaly days amid a general declining performance trend"
 confidence: 0.75
+scope: hall-specific
+hall: kamata7
 domain: pachinko-domain-knowledge
 source: session-hypothesis
 project_id: 2026project
@@ -135,6 +151,8 @@ MLには組み込まず、ユーザーへの定性情報として活用する。
 id: small-sample-pattern-skepticism
 trigger: "when claiming a behavioral pattern from anomaly data with fewer than 5 examples"
 confidence: 0.95
+scope: hall-specific
+hall: kamata7
 domain: ml-evaluation
 source: session-correction
 project_id: 2026project
@@ -159,6 +177,8 @@ OK: 「土曜集中」: 9件中6件（67%）→ 仮説として言及する価�
 id: low-accuracy-expert-as-confidence-signal
 trigger: "when a specific floor or machine type shows significantly lower hit@2 than others"
 confidence: 0.85
+scope: hall-specific
+hall: kamata7
 domain: ml-evaluation
 source: session-reasoning
 project_id: 2026project
@@ -186,6 +206,8 @@ OK: UI上で「3F_A は参考予測（信頼度低）」として区別する
 id: exploratory-analysis-before-ml-feature-design
 trigger: "when starting a new ML prediction project for pachinko or similar time-series data"
 confidence: 0.93
+scope: hall-specific
+hall: kamata7
 domain: ml-project-planning
 source: session-retrospective
 project_id: 2026project

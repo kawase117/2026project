@@ -1,0 +1,359 @@
+---
+id: aisle-corrected-rank-5x-epsilon-improvement
+trigger: "通路距離ベースの角番指標と通常の角番指標を比較するとき、またはみとやのlayoutデータを使うとき"
+confidence: 0.96
+domain: feature-engineering
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+title: 通路距離補正した角番（rank_from_aisle）はノーマル角番の5倍の説明力（ε²）を持つ
+
+## 背景
+みとや大森町店の台番号は交互逆順配置（メイン通路側が高番号のセクションと低番号のセクションが交互）。
+逆順補正なしの rank_from_min はメイン通路からの距離を正しく表せない。
+Kruskal-Wallis ε² で3指標を比較した結果:
+
+- rank_from_aisle  : ε²=0.002482  ← 最大（5.1倍）
+- rank_from_min    : ε²=0.000488
+- physical_corner  : ε²=0.000434
+
+プラス日限定で差枚を目的変数としたとき、通路距離補正指標が圧倒的に優れる。
+
+## アクション
+みとや（または同様の逆順交互配置ホール）の角番分析では、必ず `rank_from_aisle`（DB格納済み）を
+使うこと。`rank_from_min` は使用禁止ではないが、説明力が5分の1に落ちることを認識する。
+新ホールのレイアウト追加時は `reversed_sections` を hall_config.json に定義してから
+DB更新を行うことで自動的に `rank_from_aisle` が計算・格納される。
+
+## 例
+```python
+# NG: ノーマル角番（逆順補正なし）
+df.groupby('rank_from_min')['diff_coins_normalized'].mean()
+
+# OK: 通路距離補正済み角番（DB格納済み）
+df.groupby('rank_from_aisle')['diff_coins_normalized'].mean()
+```
+
+---
+id: reversed-sections-in-hall-config-not-code
+trigger: "逆順セクション定義をコードに書こうとしたとき、またはホールレイアウト情報を管理するとき"
+confidence: 0.97
+domain: architecture
+source: design-decision
+project_id: 2026project
+project_name: pachinko-analyzer
+
+title: 逆順セクション定義は hall_config.json に書く — コードにハードコードしない
+
+## 背景
+当初 Python の frozenset としてスクリプト内にハードコードされていた逆順セクション定義を、
+`config/hall_config.json` の `layout_settings.reversed_sections` に移動した。
+理由:
+- コードを読まないと定義が分からない → メンテナンス困難
+- ホール追加時に複数ファイル修正が必要
+- データと設定の混在（separation of concerns 違反）
+
+## アクション
+新しいホールで逆順セクションが存在する場合は hall_config.json に追記する:
+```json
+"layout_settings": {
+  "reversed_sections": ["523-539", "557-573", "591-607"]
+}
+```
+DBセットアップ時（`db_setup.py`）が自動的に読み込み、`machine_layout` テーブルの
+`is_reversed_section`（INTEGER 0/1）と `rank_from_aisle`（INTEGER）を計算・格納する。
+
+## 例
+```json
+// config/hall_config.json
+{
+  "hall_name": "みとや大森町店",
+  "layout_settings": {
+    "reversed_sections": [
+      "523-539", "557-573", "591-607", "624-640",
+      "658-674", "701-711", "723-733", "745-755"
+    ]
+  }
+}
+```
+```sql
+-- DB内の格納結果
+SELECT section, is_reversed_section, rank_from_aisle
+FROM machine_layout
+WHERE section = '523-539'
+-- is_reversed_section=1, rank_from_aisle=rank_from_max
+```
+
+---
+id: mitoya-main-jug-corner-gradient-strongest
+trigger: "みとやのメインジャグラー島（台641-691）の設定投入パターンを分析するとき"
+confidence: 0.92
+domain: hall-specific
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+title: みとや メインジャグラー島の角番1はプラス日に+640（島内で最大）— 通路最近接台に高設定集中
+
+## 背景
+島別×角番別のプラス日限定 avg_diff を分析した結果、メインジャグラー島（台641-691）で
+最も明確な角番勾配が観測された:
+
+| 角番 | avg_diff | plus_rate |
+|-----|----------|-----------|
+|  1  |   +640   |   64.8%   |
+|  2  |   +447   |   60.2%   |
+|  3  |   +358   |   57.1%   |
+|  4  |   +180   |   53.4%   |
+|  5  |   +311   |   54.7%   |
+
+一方バラエティ島（台692+）は角番1=+255と勾配が弱い。
+バラエティ島はそもそも高設定投入率が低く、角番効果が薄れる。
+
+## アクション
+みとやのメインジャグラー島では角番1・2に着目する。
+島全体のDD（4系・7系）が強い日は角番1-3が特に優位。
+バラエティ島の角番1は「角番1だから強い」という単純な推測をしないこと。
+
+## 例
+```
+みとや 島別×角番 avg_diff（プラス日限定）:
+  main_jug(641-691): rank1=+640, rank2=+447 → 明確な角番勾配あり
+  bari(692+):        rank1=+255, rank2=+201 → 勾配が弱く高設定自体が少ない
+  main_mix(501-640): rank1=+480, rank2=+390 → 中程度の勾配
+```
+
+---
+id: at-corner4-confound-by-machine-placement
+trigger: "AT機全体の角番別成績を見て「角番4が強い」という結論を出しそうなとき"
+confidence: 0.91
+domain: analysis-methodology
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+title: AT機角番4の高成績は特定台番号への強機種固定配置による交絡 — 角番効果ではない
+
+## 背景
+AT機（other/bt カテゴリ）の角番4が全体で avg+459 と高く見えたが、これは角番効果ではなく
+「強い機種（スマスロ北斗の拳）が角番4の特定台番号（543, 570等）に長期固定配置されていた」
+ことによる交絡効果だった。
+
+検証結果:
+- 台543（角番4）: スマスロ北斗の拳が474日間固定 → avg+297
+- 台570（角番4）: 北斗→新鬼武者3→北斗転生と機種変更
+  - 北斗時代: avg+321
+  - 新鬼武者3: avg-595（同じ台番号・同じ角番なのに急落）
+  - 北斗転生: avg+555（北斗系に戻ると回復）
+
+→ 機種効果が位置効果を上回る（暫定結論）
+
+## アクション
+「角番X が強い」という分析結果を見たら、必ずその角番に固定配置されている機種を確認する。
+長期間（100日以上）同一機種が占有している台番号があれば、機種別×台番号別に分解して
+交絡の有無を検証すること。
+
+## 例
+```sql
+-- 角番4 の AT 台番号別 × 機種別成績
+SELECT
+  m.machine_number,
+  ml.rank_from_aisle,
+  m.machine_name,
+  AVG(m.diff_coins_normalized) as avg_diff,
+  COUNT(DISTINCT m.date) as n_days
+FROM machine_detailed_results m
+LEFT JOIN machine_layout ml ON m.machine_number = ml.machine_number
+WHERE ml.rank_from_aisle = 4
+  AND m.machine_name NOT LIKE '%ジャグラー%'
+  AND m.machine_name NOT LIKE '%アイム%'
+GROUP BY m.machine_number, m.machine_name
+ORDER BY n_days DESC, avg_diff DESC;
+-- → 長期固定機種があれば「機種効果の交絡」として扱う
+```
+
+---
+id: corner5-bounce-is-machine-specific-not-structural
+trigger: "特定の島でrank5（角番5）がrank4より高い成績になっているとき"
+confidence: 0.89
+domain: analysis-methodology
+source: empirical-correction
+project_id: 2026project
+project_name: pachinko-analyzer
+
+title: 角番5のバウンス（rank4より高い）は構造的要因ではなく特定台番号の個別特性
+
+## 背景
+メインジャグラー島（641-691）で角番4（avg+180）→角番5（avg+311）とバウンスが観測された。
+当初「角番5が別通路の角番になるセクション構造の影響」と説明したが、これは誤り。
+実際の原因は台670（658-674 セクション角番5）が avg+152 と比較的良好で、
+当該セクション全体（全台マイジャグラーV占有）の機械割の高さと重なった個別特性だった。
+
+## アクション
+角番の単調性（角番1 > 角番2 > ... > 角番n）が崩れた場合は：
+1. 問題の角番に含まれる台番号を個別に確認する
+2. セクション×台番号ごとの avg_diff を出す
+3. 「構造的説明」を先に持ち出さず、データから帰納的に説明する
+
+「角番5が別通路構造だから強い」という説明は、みとやの実レイアウトでは成立しない。
+
+## 例
+```python
+# 角番5のバウンスが見えたとき
+# 1. 問題の台番号を特定
+df_rank5 = df[df['rank_from_aisle'] == 5].groupby('machine_number')['diff_coins_normalized'].agg(['mean','count'])
+# 2. 特定台番号の機種変遷を確認
+# → 機種固定 or 機種変更履歴が原因でないか
+```
+
+---
+id: machine-position-effect-confounding
+trigger: "台番号の角番（位置）効果と機種配置効果を比較するとき"
+confidence: 0.90
+domain: domain-analysis
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+title: 不人気機種の配置が位置効果を打ち消す — 機種効果と位置効果は交絡している
+
+## 背景
+台570（角番4、中央AT列）の機種変更追跡:
+
+| 機種 | 人気 | avg_diff |
+|------|------|---------|
+| スマスロ北斗の拳 | 高 | +321 |
+| 新鬼武者3 | 低 | -595 |
+| スマスロ北斗転生 | 高 | +555 |
+
+「不人気機種 → 成績急落」「人気機種 → 回復」は確認できる。
+ただし「人気機種 → 人気機種（モンハン→東京喰種など）」の遷移では成績が安定するため、
+位置効果と機種効果の分離ができない。
+
+正確な解釈:
+- 「機種効果 > 位置効果」は言いすぎ
+- 「不人気機種が配置されると位置効果を打ち消す」が正確
+- 「人気機種が長期固定されているポジション ＝ ホールが意図的に選んだ場所」という
+  間接的な位置の強さの現れ方もある
+
+## 追加検証（2026-06-07）: マイジャグラーV機種内角番効果
+同一機種（マイジャグラーV）だけで角番効果を見た結果:
+
+| 角番 | avg_diff | plus_rate |
+|-----|----------|-----------|
+|  1  |   +709   |   66.6%   |
+|  2  |   +310   |   54.6%   |
+|  3  |   +219   |   51.5%   |
+|  4  |    +45   |   43.9%   |
+|  9  |    +49   |   43.9%   |
+
+機種が同じでも角番1と角番4で664差 → **位置効果は機種効果と独立して存在する**。
+「機種効果だけで角番差は説明できる」という仮説は棄却。
+正確な結論: 位置効果・機種効果は両方独立して存在し、交絡している。
+不人気機種が配置されると位置効果を打ち消す（台570事例）が、
+人気機種が揃ったときは位置効果が明確に現れる（マイジャグV事例）。
+
+## アクション
+台番号固有の強さを語るときは「現在配置されている機種込みで評価」する。
+機種が不人気機種に変わった後は過去データを重く扱いすぎないこと。
+人気機種が長期配置されているポジションを「強ポジション」と見なすのは合理的だが、
+機種変更後に同じ期待値を持つのは危険。
+同一機種内での角番比較が最も純粋な位置効果の検証になる。
+
+## 例
+```sql
+-- 特定台番号の機種変更履歴と成績推移
+SELECT
+  machine_name,
+  MIN(date) as first_seen,
+  MAX(date) as last_seen,
+  COUNT(DISTINCT date) as n_days,
+  AVG(diff_coins_normalized) as avg_diff
+FROM machine_detailed_results
+WHERE machine_number = 570
+GROUP BY machine_name
+ORDER BY first_seen;
+-- → 機種が変わるたびに avg_diff が激変するかどうか確認
+```
+
+---
+id: kakuban-not-rank-terminology
+trigger: "台配置位置の順位を表現するとき"
+confidence: 0.99
+domain: terminology
+source: user-correction
+project_id: 2026project
+project_name: pachinko-analyzer
+
+title: 「角番」と「ランク」は区別必須 — 位置は角番、成績順位はランクと呼ぶ
+
+## 背景
+ユーザーからの明示的な指摘: 「ランクだと成績順位と混同する。角番という言い方に統一してください」。
+本プロジェクトでは:
+- **角番**（kakuban）: メイン通路からの距離による位置順位（rank_from_aisle, rank_from_min）
+- **ランク**: 機械ランキング（machine_rank_in_type）、成績順位
+
+同じ「ランク」という言葉が両方に使われるため、文脈から判断できなくなる。
+
+## アクション
+コードのコメント・出力文字列・分析レポートで位置順位を指すときは「角番」を使う。
+`rank_from_aisle` / `rank_from_min` のカラム名はそのまま（変数名まで変える必要はない）が、
+日本語の説明では「角番1」「角番5」と表現する。
+成績順位を表すときのみ「ランク」を使う。
+
+## 例
+```python
+# NG
+print(f"Rank1の平均差枚: {avg_rank1:+d}")  # 成績ランクか位置ランクか不明
+
+# OK
+print(f"角番1（通路最近接）の平均差枚: {avg_rank1:+d}")   # 位置を明示
+print(f"成績ランク1位台の平均差枚: {avg_rank1:+d}")       # 成績を明示
+```
+
+---
+id: day-of-week-null-in-daily-summary
+trigger: "daily_hall_summary の day_of_week カラムでフィルタやグループ化をするとき"
+confidence: 0.95
+domain: data-quality
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+title: daily_hall_summary.day_of_week は大部分が NULL — date 文字列から直接計算すること
+
+## 背景
+みとや大森町店DBで `daily_hall_summary.day_of_week` を確認したところ、515行中514行が NULL。
+挿入処理の不備でほぼ全行が NULL になっている。
+SQL クエリで day_of_week でフィルタ・グループ化してもほとんどデータが得られない。
+
+## アクション
+曜日フィルタが必要な場合は date カラム（YYYYMMDD テキスト）から直接計算する:
+
+```sql
+CASE STRFTIME('%w', SUBSTR(date,1,4)||'-'||SUBSTR(date,5,2)||'-'||SUBSTR(date,7,2))
+  WHEN '0' THEN '日'
+  WHEN '1' THEN '月'
+  WHEN '2' THEN '火'
+  WHEN '3' THEN '水'
+  WHEN '4' THEN '木'
+  WHEN '5' THEN '金'
+  WHEN '6' THEN '土'
+END as day_of_week
+```
+
+または Python 側で `pd.to_datetime(df['date'], format='%Y%m%d').dt.dayofweek` を使う。
+`STRFTIME('%w', date)` は YYYYMMDD テキスト形式に直接適用できないことに注意。
+
+## 例
+```sql
+-- NG: day_of_week カラムを使った曜日フィルタ（ほとんど NULL でヒットしない）
+SELECT * FROM daily_hall_summary WHERE day_of_week = '金'
+
+-- OK: date 文字列から曜日を計算
+SELECT *,
+  STRFTIME('%w', SUBSTR(date,1,4)||'-'||SUBSTR(date,5,2)||'-'||SUBSTR(date,7,2)) as dow_num
+FROM daily_hall_summary
+WHERE STRFTIME('%w', SUBSTR(date,1,4)||'-'||SUBSTR(date,5,2)||'-'||SUBSTR(date,7,2)) = '5'  -- 金曜
+```

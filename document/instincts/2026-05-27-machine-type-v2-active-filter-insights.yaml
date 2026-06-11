@@ -2,6 +2,7 @@
 id: active-machine-filter-not-performance-filter
 trigger: "when filtering training machines for Layer 1 segment model"
 confidence: 0.92
+scope: methodology
 domain: ml-data-filtering
 source: session-analysis
 project_id: 2026project
@@ -49,6 +50,7 @@ target = target[target["avg_diff"] > 0]  # 成績フィルターはNG
 id: min-train-days-is-threshold-not-window
 trigger: "when interpreting --min-train-days parameter in walk-forward evaluation"
 confidence: 0.95
+scope: methodology
 domain: ml-evaluation-design
 source: session-analysis
 project_id: 2026project
@@ -93,6 +95,7 @@ DB=322日, eval_days=90 の場合：
 id: layer0-threshold-75-optimal
 trigger: "when tuning Layer 0 win_rate threshold for is_kisyuzen"
 confidence: 0.85
+scope: methodology
 domain: ml-hyperparameter-tuning
 source: session-experiment
 project_id: 2026project
@@ -131,6 +134,7 @@ python -m ml.machine_type.v2.run_machine_type_v2 \
 id: rich-features-overfit-short-training
 trigger: "when adding many features to Layer 1 segment model"
 confidence: 0.88
+scope: methodology
 domain: ml-feature-engineering
 source: session-experiment
 project_id: 2026project
@@ -172,6 +176,7 @@ NG: add_machine_type_features() を全部投入
 id: progress-reporting-required-in-all-loops
 trigger: "when implementing walk-forward or any time-consuming loop in ML pipeline"
 confidence: 0.98
+scope: methodology
 domain: ml-implementation-standards
 source: session-requirement
 project_id: 2026project
@@ -223,6 +228,7 @@ print(f"完了: {time.time() - start_time:.1f}s")
 id: 2fn-base-rate-too-sparse-for-top3
 trigger: "when evaluating 2F_N segment Layer 1 performance"
 confidence: 0.90
+scope: methodology
 domain: ml-target-engineering
 source: session-analysis
 project_id: 2026project

@@ -1,7 +1,15 @@
+# ⚠️  LEAKAGE WARNING (added 2026-06-01)
+# このファイルのインサイトは2026-05-31のリーク修正前に作成された。
+# 【有効】実データ観察（diff_coins集計・ゾロ目パターン・台配置等）
+# 【無効】MLモデル性能値（AUC / hit@2 / precision 等の数値）
+# アクション項目を実運用に使う前にリーク修正後のモデルで再検証すること。
+
 ---
 id: bt-machine-type-db-vs-hall-definition-mismatch
 trigger: "when using machine_type flags (jug_flag, hana_flag, bt_flag) for 蒲田七 or 蒲田一 analysis"
 confidence: 0.92
+scope: hall-specific
+hall: kamata7
 domain: pachinko-domain-knowledge
 source: user-ground-truth
 project_id: 2026project
@@ -29,6 +37,8 @@ DB定義: A型（jug_flag=1 or hana_flag=1）と BT（bt_flag=1）は別カテ�
 id: bt-machine-low-ceiling-compressed-diff-distribution
 trigger: "when interpreting BT machine diff_coins distribution or ML prediction difficulty in 蒲田七"
 confidence: 0.90
+scope: hall-specific
+hall: kamata7
 domain: pachinko-domain-knowledge
 source: user-ground-truth
 project_id: 2026project

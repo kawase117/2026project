@@ -2,6 +2,7 @@
 id: baseline-model-saturation
 trigger: "when hyperparameter tuning yields <1% AUC improvement"
 confidence: 0.90
+scope: methodology
 domain: ml-hyperparameter-tuning
 source: phase10-observation
 project_id: pachinko-analyzer
@@ -32,6 +33,7 @@ Phase 10 results: 20 parameter configurations tested across 3 targets. Average i
 id: multicollinearity-masking-signal
 trigger: "when categorical feature alone shows high effect size but minimal improvement when combined with baseline"
 confidence: 0.85
+scope: methodology
 domain: ml-feature-engineering
 source: phase9-observation
 project_id: pachinko-analyzer
@@ -61,6 +63,7 @@ Machine-type alone: AUC +0.0677. Combined with 16D: AUC +0.0042 (94% reduction).
 id: time-series-validation-critical
 trigger: "when building rank prediction models for time-series data with non-uniform class distribution"
 confidence: 0.95
+scope: methodology
 domain: ml-project-planning
 source: phase9-03-correction
 project_id: pachinko-analyzer
@@ -92,6 +95,7 @@ Sample-based split (WRONG): train_idx = df[:13713], test_idx = df[13713:] → AU
 id: class-imbalance-target-specific
 trigger: "when dealing with multi-class imbalance (1% vs 4% vs 7% positive rates)"
 confidence: 0.80
+scope: methodology
 domain: ml-feature-engineering
 source: phase10-observation
 project_id: pachinko-analyzer
@@ -119,6 +123,7 @@ Phase 10: rank_1 (1.43%) best=(MD=4, LR=0.005) AUC 0.7001. top_3 (4.28%) best=(M
 id: domain-hypothesis-validation-limits
 trigger: "when testing 4+ domain hypotheses with statistical significance testing"
 confidence: 0.88
+scope: methodology
 domain: ml-project-planning
 source: phase8-observation
 project_id: pachinko-analyzer
@@ -146,6 +151,7 @@ Phase 8-10 workflow: Phase 8 tests 4 hypotheses (only machine_type significant).
 id: feature-interaction-next-frontier
 trigger: "when baseline model plateau after hyperparameter tuning and feature integration"
 confidence: 0.85
+scope: methodology
 domain: ml-feature-engineering
 source: phase10-recommendation
 project_id: pachinko-analyzer

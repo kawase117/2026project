@@ -1,0 +1,44 @@
+---
+id: 2026-06-10-instinct-management-package-design
+trigger: "Instinct/EDAチェックリストを新規作成・改訂する、または新しい特徴量候補をInstinct化しようとするとき"
+confidence: 0.85
+domain: methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+---
+
+# Instinct運用パッケージの設計合意（テンプレ・チェックリスト・命名統一）
+
+## 背景
+CodexからInstinct運用の拡張案（単一パッケージ化、invalidatesルール、EDAチェックリスト、新特徴量候補7種）が提示され、
+レビューの結果 `document/instincts/INSTINCT_TEMPLATE.md` と `document/instincts/EDA_CHECKLIST.md`、
+`scripts/README.md` への導線が新設された。
+
+レビューで指摘した3点（persistence/drawdown系のモメンタム前提を置かない、tail_event_rateは小標本では保守的に扱う、
+signal_agreementは予測時点で算出可能かをチェックする）はすべて反映済み。
+さらにフィールド名の表記揺れ（`sample_size` vs `n_observations`）について、
+Evidenceセクションで既に使われている `n_observations` に統一する決定がなされた。
+
+## アクション
+- 新しいInstinctを書く際は `document/instincts/INSTINCT_TEMPLATE.md` を雛形として使う。
+- EDA実施前後で `document/instincts/EDA_CHECKLIST.md` のチェックリストを通す。
+- 観測件数のフィールド名は必ず `n_observations` を使う。`sample_size` は使わない。
+- `persistence_rate` / `drawdown_recovery` のような遷移系特徴量は、符号・方向がEDAで検証されるまで
+  「効果がある」前提の名前・解釈をInstinctに書かない（neutral transition featureとして記録する）。
+- `invalidates` は data_bug / leakage / scope_error / confounding / regime_change の場合のみ使用。
+  粒度違い・指標違い・「他にも見つけた」は invalidate しない（status: stale / regime_specific を使う）。
+- tail_event_rate（極端値発生率）は小標本では `provisional` 扱いとし、DB拡張後に再評価する。
+
+## 例
+```yaml
+## Evidence
+- n_observations: 184   # sample_size ではなくこちらを使う
+- data scope: single-hall
+- metric scope: diff / hit104
+```
+
+## Relation
+- related:
+  - mitoya-event-definition-confirmed
+  - ml-validation-discipline-20260602

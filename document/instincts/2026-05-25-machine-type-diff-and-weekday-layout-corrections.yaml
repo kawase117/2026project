@@ -2,6 +2,7 @@
 id: atype-machine-has-lower-diff-coins-than-at
 trigger: "when comparing expected diff_coins between A型 and AT系 machines in 蒲田七 analysis"
 confidence: 0.90
+scope: methodology
 domain: pachinko-domain-knowledge
 source: user-correction
 project_id: 2026project
@@ -33,6 +34,7 @@ OK: 「A型の末尾3がAT系より高く見えるのはAT系の低設定多数�
 id: tuesday-kakuban-means-last-digit-adjacency-not-physical
 trigger: "when interpreting cluster patterns on Tuesday (火曜) for 蒲田七"
 confidence: 0.85
+scope: methodology
 domain: pachinko-domain-knowledge
 source: user-observation
 project_id: 2026project
@@ -62,6 +64,7 @@ last_digit+1 mod 10 の実績を特徴量にする際、物理配置との混同
 id: tuesday-thursday-strongest-cluster-concentration
 trigger: "when prioritizing weekday-specific cluster features in 蒲田七 LTR model"
 confidence: 0.82
+scope: methodology
 domain: pachinko-domain-knowledge
 source: data-observation
 project_id: 2026project

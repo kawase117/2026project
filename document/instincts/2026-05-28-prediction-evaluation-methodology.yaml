@@ -2,6 +2,7 @@
 id: segment-specific-top3-comparison
 trigger: "末尾予測の精度評価を行うとき"
 confidence: 0.98
+scope: methodology
 domain: prediction-evaluation
 source: user-correction
 project_id: 2026project
@@ -35,6 +36,7 @@ for floor in ['2F', '3F']:
 id: zorome-correction-value-definition
 trigger: "ゾロ目台の補正値・精度を評価するとき"
 confidence: 0.95
+scope: methodology
 domain: prediction-evaluation
 source: user-correction
 project_id: 2026project
@@ -65,6 +67,7 @@ for ld in [str(i) for i in range(10)]:
 id: kamata7-floor-classification
 trigger: "蒲田七（マルハンメガシティ2000-蒲田7）のデータをセグメント分類するとき"
 confidence: 0.99
+scope: methodology
 domain: data-processing
 source: session-observation
 project_id: 2026project
@@ -89,6 +92,7 @@ CASE WHEN CAST(machine_number AS INTEGER) < 3000 THEN '2F' ELSE '3F' END as floo
 id: prediction-accuracy-two-layer-structure
 trigger: "末尾別予測とゾロ目台補正予測の精度を同時に評価するとき"
 confidence: 0.90
+scope: methodology
 domain: prediction-evaluation
 source: session-observation
 project_id: 2026project
@@ -115,6 +119,7 @@ project_name: pachinko-analyzer
 id: anomaly-detection-requires-statistics
 trigger: "アノマリー判定（この日は普通か異常か）を行うとき"
 confidence: 0.95
+scope: methodology
 domain: statistical-analysis
 source: user-correction
 project_id: 2026project

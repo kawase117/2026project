@@ -1,0 +1,147 @@
+---
+id: global-digit-bias-masks-dd-specific-pattern
+trigger: "DDの spread が大きいことを根拠に新しいバケット候補として提案しようとするとき"
+confidence: 0.93
+domain: methodology
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# spread 上位の DD ≠ 新バケット候補：グローバル末尾バイアスとの混同
+
+## 背景
+composite score (spread × sqrt(n/17)) でランキングしたところ DD=19 がトップになったが、
+実際に「グローバル平均からの偏差」を見ると、DD=19 の top2（digit=4: +158, digit=2: +153）は
+みとや全体のグローバルランキング（4が全体1位 global+60、2が2位 global+42）を
+そのまま反映しているだけだった。
+spread が大きく見えたのは bottom3 の末尾が強く負になったためで、
+特定末尾を予測できる構造とは異なる。
+
+## アクション
+新バケット候補評価は spread ではなく「グローバル baseline からの偏差」で判断すること。
+計算手順：
+1. 全 DD の平均を digit 別に計算（global_mean）
+2. 各 (DD, digit) セルで deviation = mean_diff - global_mean を計算
+3. そのDD内で deviation >= +150 を達成する digit が複数あれば候補
+4. 1 digit のみの場合は n=17 での偶発的変動と区別できないため除外
+
+## 例
+```
+DD=19: spread=303（ランキング1位）
+  → deviation top2: digit=4(+158), digit=2(+153)
+  → グローバルランキングの1位・2位と完全一致 → 固有パターンなし
+
+DD=4 (x_day): spread=288
+  → deviation top3: digit=2(+469), digit=7(+368), digit=5(+351)
+  → digit=5 は global -15 なのに x_day では突出 → 本物の DD固有パターン
+```
+
+---
+id: multi-digit-simultaneous-deviation-as-bucket-criterion
+trigger: "末尾選択可能性を持つ新しいバケット DD を発掘・評価するとき"
+confidence: 0.94
+domain: methodology
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 複数末尾の同時高偏差が新バケット採用の必要条件
+
+## 背景
+全 31 DD に対して偏差分析（deviation >= +150）を実施した結果、
+複数の末尾が同時に高偏差を示す DD は x_day（4/7/14/17/24/27）と DD=30 のみだった。
+1末尾のみで偏差 +150〜225 程度の DD（DD=9: digit=6 +225, DD=20: digit=0 +167）は
+存在するが、n=17 の単一末尾では偶発性を排除できない。
+
+x_day の偏差レンジ: +248〜+469（各DD で 2〜4 末尾が同時に高偏差）
+DD=30 の偏差レンジ: +203〜+256（3 末尾が同時に +200 超）
+新候補なし: 偏差 +150 以上かつ複数末尾を同時に持つ DD は発見されず
+
+## アクション
+新バケット評価基準：
+- 必要条件：deviation >= +150 の末尾が 2 つ以上同時に存在すること
+- 十分条件：deviation >= +200 の末尾が 2 つ以上（x_day 水準）
+1末尾のみの候補は「ウォッチリスト」止まりとし walk-forward には追加しない。
+
+## 例
+```
+採用基準を満たす DD（2026-06-06 時点）：
+  x_day (4,7,14,17,24,27): 偏差 +248〜+469、複数末尾同時 → 採用済み
+  DD=30: 偏差 +203〜+256、3末尾同時 → ウォッチ中（observed_dates=2）
+
+採用基準を満たさない DD：
+  DD=9:  digit=6 のみ偏差 +225 → 1末尾 → 除外
+  DD=19: digit=4/2 が偏差 +153/158 だがグローバルバイアスの反映 → 除外
+  DD=20: digit=0 のみ偏差 +167 → 1末尾 → 除外
+```
+
+---
+id: month-dd-seasonality-requires-3plus-years
+trigger: "月×DD の組み合わせで季節性パターン（特定の月の特定 DD が強いなど）を分析しようとするとき"
+confidence: 0.97
+domain: methodology
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 月×DD の季節性分析は 1.5 年データでは統計的に不可能
+
+## 背景
+みとや大森町 1.5 年データで (月, DD, 末尾) セルの n_dates を確認したところ、
+月×DD の各セルは n=1〜2 しかなかった。
+- 月1〜5（2年分）：n=2
+- 月6〜12（1年分）：n=1
+n=1 のセルは mean = その1日の値そのもので、平均の意味をなさない。
+DD=19 の9月に digit=9 が +2035 という外れ値が出たが、これは n=1 の1日分の実績値にすぎない。
+
+## アクション
+月×DD の季節性分析を提案・実施しないこと。
+必要データ量：n_dates >= 3〜5 per cell = 3〜5 年分。
+代替アプローチ：
+- DD 集計（全月込み）で検出できるパターンに注力する
+- データが増えた時点（3 年以上）で月別分析を再検討する
+
+## 例
+```
+DD=19, 月別 digit=9 の mean_diff：
+  9月: +2035（n=1）, 11月: +846（n=1）, 8月: +142（n=1）, ...
+  → 値の大きさはサンプルサイズを反映しない。季節性の証拠にならない。
+
+必要サンプルサイズ：月×DD=12×31=372 セル、各 n>=3 → 1116 日以上 ≈ 3 年
+```
+
+---
+id: digit-7-is-xday-exclusive-at-mitoya
+trigger: "末尾7が強い日付パターンや新しいバケットをみとやで探しているとき"
+confidence: 0.91
+domain: hall-specific
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# みとや大森町において末尾7の強い日は x_day に限定される
+
+## 背景
+全 31 DD に対する偏差分析（deviation >= +150）で、末尾7が高偏差を示す DD は
+DD=4(+368), DD=7(+341), DD=17(+256), DD=24(+248) の 4 DD のみだった。
+これらは全て x_day（day%10 in {4,7}）に含まれる。
+末尾7の global_mean は +20 で中位だが、x_day 以外の DD では突出した偏差を見せない。
+
+## アクション
+みとやで「末尾7が強い日を探す」= x_day を探すと同義。
+末尾7に特化した別バケットを作る必要はない。
+x_day の中で特に末尾7が強い DD（4, 7, 17）を重み付けする場合は
+バケット分割ではなくモデル内の特徴量として扱うこと。
+
+## 例
+```
+末尾7の DD別偏差（deviation >= +150 のみ）：
+  DD=4  [x_day]: +368
+  DD=7  [x_day]: +341
+  DD=17 [x_day]: +256
+  DD=24 [x_day]: +248
+  ── その他全 DD は +150 未満 ──
+
+対比：末尾4は deviation >= +150 を達成する DD が 7 個存在するが、
+      末尾7は x_day 4 DD のみに完全に限定される。
+```

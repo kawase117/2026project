@@ -1,7 +1,15 @@
+# ⚠️  LEAKAGE WARNING (added 2026-06-01)
+# このファイルのインサイトは2026-05-31のリーク修正前に作成された。
+# 【有効】実データ観察（diff_coins集計・ゾロ目パターン・台配置等）
+# 【無効】MLモデル性能値（AUC / hit@2 / precision 等の数値）
+# アクション項目を実運用に使う前にリーク修正後のモデルで再検証すること。
+
 ---
 id: kamata7-weekday-investment-pattern-ground-truth
 trigger: "when designing any weekday-based feature or interpreting weekday patterns in 蒲田七"
 confidence: 0.95
+scope: hall-specific
+hall: kamata7
 domain: pachinko-domain-knowledge
 source: user-ground-truth
 project_id: 2026project

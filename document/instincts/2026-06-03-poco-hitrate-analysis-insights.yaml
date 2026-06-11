@@ -1,0 +1,199 @@
+---
+id: poco-full-half-hitrate-80pct
+trigger: "ぽこ全ハーフ機種の的中率を評価するとき、またはぽこデータの信頼性を議論するとき"
+confidence: 0.92
+domain: poco-validation
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ぽこ全ハーフ機種の日レベル的中率はTop5で80.6%
+
+## 背景
+poco_data_v3.csv（正規化済み）を使いdaily_machine_type_summaryの上位機種と照合した結果。
+208日分（グランドオープン除く）で、ぽこが全ハーフとして報告した機種が
+実際の当日Top5機種に1つ以上含まれていた割合が80.6%だった。
+
+機種レベル精度: Top3=38.1% / Top5=53.2% / Top10=70.7%
+
+## アクション
+ぽこ全ハーフ情報はMLの特徴量として利用価値が高い。
+ただし以下の差異に注意して扱うこと：
+- K7（86.8%）はK1（73.1%）より13%高精度 → K7優先
+- 金曜通常日（68.8%）は最も精度が落ちる
+- PARTIALマッピング機種（北斗など）は過剰計上に注意
+
+## 例
+```
+K7 Top5日レベル的中率: 86.8%
+K1 Top5日レベル的中率: 73.1%
+日曜イベント日: 100%（全件一致）
+金曜通常日: 68.8%（最低）
+```
+
+---
+id: poco-event-day-date-based-definition
+trigger: "ぽこデータのイベント日を分類するとき、またはis_event_dayフラグを設定するとき"
+confidence: 0.95
+domain: poco-validation
+source: user-ground-truth
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# イベント日はコンテンツではなく日付で定義する
+
+## 背景
+ぽこのコンテンツ内容（全→/発表→/貫通→の有無）でイベント日を判断すると
+フォーマット変化（7月は発表→、8月以降は全→）で誤判定が多発する。
+正しくは日付の日付で判断する。
+
+イベント日の日: 1, 7, 11, 17, 21, 22, 27, 30, 31
+また MM=DD（月と日が一致する強ゾロ目日）もイベント日扱い。
+周年などの特別日は別途管理。
+
+## アクション
+```python
+EVENT_DAY_SET = {1, 7, 11, 17, 21, 22, 27, 30, 31}
+def calc_is_event_day(date_str):
+    month = int(date_str[4:6])
+    day   = int(date_str[6:8])
+    return (day in EVENT_DAY_SET) or (month == day)
+```
+
+## 例
+20250711: day=11 → is_event_day=True
+20250808: month=8, day=8 → MM==DD → is_event_day=True
+20250713: day=13 → is_event_day=False
+
+---
+id: poco-content-three-layer-parse
+trigger: "ぽこの仕掛け内容を解析するとき、またはpoco_data CSVを再構築するとき"
+confidence: 0.90
+domain: poco-validation
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ぽこコンテンツは曜日仕掛け + 全ハーフの2層に分離する
+
+## 背景
+ぽこの仕掛け内容は「曜日仕掛け（発動条件）」と「全ハーフ（具体機種）」が
+1文字列に連結されている。これを分離しないと的中率が3-4%に見えるが、
+正しく分離すると80%超になる。
+
+分離ルール:
+- 「、全→」「、発表→」「、貫通→」「：全→」の直前 = 曜日仕掛けの終端
+- 「貫通→」で始まる場合 = イベント日（weekday_strategy空）
+- メガ仕掛け→ / 高配分→ は無視
+
+## アクション
+```python
+# 分割位置を探す
+split_pos = -1
+for sep in ['、', '：']:
+    for mk in ['全→', '発表→', '貫通→']:
+        pos = s.find(sep + mk)
+        if pos != -1 and (split_pos == -1 or pos < split_pos):
+            split_pos = pos
+
+# 貫通→始まりはイベント日（full_halfのみ）
+if s.startswith('貫通→'):
+    return '', clean_full_half(s), False
+```
+
+## 例
+"水曜日→末尾1・8、全→バイオ5、SAO"
+→ weekday_strategy="水曜日→末尾1・8"
+→ full_half="バイオ5、SAO"
+
+"貫通→吉宗、発表→モンハンライズ"
+→ weekday_strategy="" (イベント日)
+→ full_half="吉宗、モンハンライズ"
+
+---
+id: poco-kantsuu-means-both-halls
+trigger: "ぽこデータに「貫通→機種」という記載があるとき"
+confidence: 0.92
+domain: poco-validation
+source: user-ground-truth
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 貫通→機種 は蒲田7・蒲田1両店が同機種に高設定を入れたことを意味する
+
+## 背景
+「貫通」はK7とK1が共同で同一機種に全台系設定を入れるイベントを指す。
+検証した全6件（20250711,20250715,20250730,20250801,20250803,20250804）で
+K7とK1のコンテンツが同一機種（または同等機種）を示していた。
+1のつく日・30日などのイベント日に多く発生。
+
+## アクション
+- 「貫通→」をfull_halfの一部として扱う（weekday_strategyに入れない）
+- 両ホールの貫通機種が一致するか検証すると品質確認になる
+- 貫通日はK1のfull_halfにも同機種が含まれると想定してよい
+
+## 例
+20250711: K7=貫通→吉宗, K1=貫通→吉宗 → 両ホール吉宗
+20250730: K7=貫通→ハッピー, K1=貫通→ハッピー → 両ホールハッピー
+
+---
+id: poco-machine-reliability-by-type
+trigger: "ぽこ報告機種をフィルタリングするとき、または機種別の信頼スコアを設計するとき"
+confidence: 0.82
+domain: poco-validation
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ぽこ機種の的中率は機種によって大きくばらつく（0%〜100%）
+
+## 背景
+n>=5の機種について的中率（Top5内出現率）を計算した結果:
+高信頼機種（Top5率80%超）: マイジャグラーV,真一騎当千,かぐや様,マギアレコード,SAO
+低信頼機種（Top5率30%未満）: 7つの魔剣,北斗の拳転生の章2,ガールズ最終章,バンドリ！
+
+## アクション
+- 機種別信頼スコアを特徴量として追加を検討
+- 「7つの魔剣」「北斗の拳 転生の章2」はPARTIALマッピングの精度問題の可能性あり
+  → 「北斗の拳 転生の章2」は存在しない機種で、正解は「スマスロ北斗の拳」
+- 「ガールズ&パンツァー 最終章」は「ジャグラーガールズ」との混在が原因の可能性
+
+## 例
+```
+マイジャグラーV     : Top5=100%  avg_rank=2.6（強）
+真・一騎当千       : Top5=100%  avg_rank=2.7（強）
+7つの魔剣        : Top5=0%    avg_rank=N/A（要調査）
+北斗の拳 転生の章2  : Top5=0%    avg_rank=N/A（機種不存在）
+```
+
+---
+id: poco-k7-more-reliable-than-k1
+trigger: "蒲田7と蒲田1のぽこ情報を比較するとき、またはホール別の的中率を評価するとき"
+confidence: 0.88
+domain: poco-validation
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ぽこのK7情報はK1より13%高精度（86.8% vs 73.1%）
+
+## 背景
+Top5日レベル的中率:
+- K7（蒲田七）: 86.8%（189日）
+- K1（蒲田一）: 73.1%（156日）
+
+差異の原因仮説:
+- ぽこの情報源がK7の方が質が高い（内部情報提供者の違い）
+- K1は機種ラインナップが異なり、poco表記とDBのマッピング精度が低い
+
+## アクション
+- K7を主要分析対象として優先する
+- K1の的中率改善にはマッピング精度向上（特にK1固有機種）が必要
+- K1のfull_half_normalizedの正規化漏れを確認する
+
+## 例
+K7 Top3=73.5%  Top5=86.8%  Top10=94.7%
+K1 Top3=60.3%  Top5=73.1%  Top10=85.9%
+差異: Top5で13.7ポイント
+
+---

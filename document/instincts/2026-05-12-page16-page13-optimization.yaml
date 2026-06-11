@@ -2,6 +2,7 @@
 id: page16-global-filter-pattern
 trigger: "when implementing bulk display pages with multiple filter targets"
 confidence: 0.95
+scope: methodology
 domain: dashboard-ui-patterns
 source: session-observation
 project_id: pachinko-analyzer
@@ -41,6 +42,7 @@ render_cross_search_block(df_dd_filtered, "DD別", "台番号末尾", "bulk16_dd
 id: page13-caching-performance
 trigger: "when loading same database repeatedly in loop or tab-based UI"
 confidence: 0.90
+scope: methodology
 domain: streamlit-performance-optimization
 source: session-observation
 project_id: pachinko-analyzer
@@ -70,6 +72,7 @@ page_13 では8つのタブがあり、タブを切り替えるたびに全ホ�
 id: attribute-aggregation-consolidation
 trigger: "when grouping data by multiple attribute types (categorical, numeric, binary, dd)"
 confidence: 0.88
+scope: methodology
 domain: data-aggregation-patterns
 source: session-observation
 project_id: pachinko-analyzer
@@ -102,6 +105,7 @@ page_13 の attribute_type による集計ロジックが 70行以上の複雑�
 id: worktree-main-sync-awareness
 trigger: "when using worktrees and wondering why git status is clean but files seem modified"
 confidence: 0.92
+scope: methodology
 domain: git-workflow-management
 source: session-observation
 project_id: pachinko-analyzer

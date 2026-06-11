@@ -1,7 +1,14 @@
+# ⚠️  LEAKAGE WARNING (added 2026-06-01)
+# このファイルのインサイトは2026-05-31のリーク修正前に作成された。
+# 【有効】実データ観察（diff_coins集計・ゾロ目パターン・台配置等）
+# 【無効】MLモデル性能値（AUC / hit@2 / precision 等の数値）
+# アクション項目を実運用に使う前にリーク修正後のモデルで再検証すること。
+
 ---
 id: group-total-diff-is-not-per-machine
 trigger: "LTR予測の差枚KPIを報告・解釈するとき"
 confidence: 0.97
+scope: methodology
 domain: ltr-evaluation
 source: session-observation
 project_id: 2026project
@@ -41,6 +48,7 @@ kamata7テスト期間（2026-01-01〜05-25, 435サンプル）:
 id: 2fa-exclusion-is-hardcoded-default-not-data-driven
 trigger: "2F_Aが予測・評価から除外されているとき / テスト期間に2F_Aが現れないとき"
 confidence: 0.95
+scope: methodology
 domain: ltr-pipeline
 source: session-observation
 project_id: 2026project
@@ -78,6 +86,7 @@ p.add_argument("--reliability-exclude-experts", default="", ...)
 id: rank2-rank3-dedicated-models-not-worth-pursuing
 trigger: "ランク2・ランク3の予測精度を上げるために専用モデルを検討するとき"
 confidence: 0.88
+scope: methodology
 domain: ltr-design
 source: session-observation
 project_id: 2026project
@@ -111,6 +120,7 @@ TOP3・BOTTOM3は既存スコアから抽出する（新規学習不要）。
 id: hit-at-2-is-soft-metric-rank1-exact-is-operational
 trigger: "LTRモデルの精度を報告・比較するとき"
 confidence: 0.93
+scope: methodology
 domain: ltr-evaluation
 source: session-observation
 project_id: 2026project
@@ -146,6 +156,7 @@ v2r_current (kamata7, 145日, 3エキスパート):
 id: bottom3-does-not-require-new-model
 trigger: "BOTTOM3（下位末尾）を予測・出力したいとき"
 confidence: 0.92
+scope: methodology
 domain: ltr-pipeline
 source: session-observation
 project_id: 2026project
@@ -179,6 +190,7 @@ bottom3.to_csv("*_latest_test_bottom3.csv", index=False)
 id: top3-output-already-implemented-per-expert
 trigger: "TOP3末尾の出力を実装しようとするとき / latest_test_top3を参照するとき"
 confidence: 0.98
+scope: methodology
 domain: ltr-pipeline
 source: session-observation
 project_id: 2026project

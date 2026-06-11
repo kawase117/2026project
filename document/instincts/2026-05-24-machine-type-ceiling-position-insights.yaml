@@ -7,6 +7,7 @@
 id: rolling-feature-ceiling-for-antipatterned-halls
 trigger: "when rolling-average ML features plateau near 2x random for machine ranking"
 confidence: 0.88
+scope: methodology
 domain: ml-project-planning
 source: session-observation
 project_id: 2026project
@@ -39,6 +40,7 @@ xgb_global_noSmoothEwmNoRank:   score=0.2145, rank1_hit@1=0.000
 id: batch-eval-time-management-checkpoints
 trigger: "when planning ML evaluation runs for machine_type or last_digit models"
 confidence: 0.95
+scope: methodology
 domain: ml-project-planning
 source: session-observation
 project_id: 2026project
@@ -68,6 +70,7 @@ floor2_b07 eval30: score=0.2166（global=0.2113より+0.005差）
 id: thursday-threshold-split-rejected
 trigger: "when considering weekday-specific thresholds for machine_type XGBoost"
 confidence: 0.90
+scope: methodology
 domain: ml-hyperparameter-tuning
 source: session-observation
 project_id: 2026project
@@ -96,6 +99,7 @@ eval20（floor2_b07_noSmoothEwmNoRank）:
 id: machine-position-as-missing-fixed-feature
 trigger: "when machine_type ML performance plateaus and rolling features show diminishing returns"
 confidence: 0.85
+scope: methodology
 domain: ml-feature-engineering
 source: session-observation + domain-hypothesis
 project_id: 2026project
@@ -132,6 +136,7 @@ rolling平均では絶対に捉えられない信号であり、次のフェー�
 id: confirmed-feature-set-no-smooth-ewm-no-rank-trend
 trigger: "when selecting feature set for machine_type XGBoost production use"
 confidence: 0.92
+scope: methodology
 domain: ml-feature-engineering
 source: session-observation
 project_id: 2026project

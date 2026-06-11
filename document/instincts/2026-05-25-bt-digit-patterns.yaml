@@ -1,7 +1,15 @@
+# ⚠️  LEAKAGE WARNING (added 2026-06-01)
+# このファイルのインサイトは2026-05-31のリーク修正前に作成された。
+# 【有効】実データ観察（diff_coins集計・ゾロ目パターン・台配置等）
+# 【無効】MLモデル性能値（AUC / hit@2 / precision 等の数値）
+# アクション項目を実運用に使う前にリーク修正後のモデルで再検証すること。
+
 ---
 id: bt-all-high-days-only-3-of-320
 trigger: "when evaluating whether BT（2FA）全台高設定 affects ML features in 蒲田七"
 confidence: 0.95
+scope: hall-specific
+hall: kamata7
 domain: pachinko-domain-knowledge
 source: data-observation
 project_id: 2026project
@@ -28,6 +36,8 @@ BT通常日の典型: bt_mean=300〜400, min=-1000〜-300 → 末尾間の差が
 id: bt-physical-placement-bias-last-digit-1-heavy
 trigger: "when interpreting BT cluster patterns in 蒲田七 last_digit analysis"
 confidence: 0.85
+scope: hall-specific
+hall: kamata7
 domain: pachinko-domain-knowledge
 source: data-observation
 project_id: 2026project
@@ -56,6 +66,8 @@ bt_overall_digit.csv より:
 id: bt-weekday-cluster-patterns-all-7-days
 trigger: "when building BT-specific last_digit features for LTR model in 蒲田七"
 confidence: 0.78
+scope: hall-specific
+hall: kamata7
 domain: pachinko-domain-knowledge
 source: data-observation
 project_id: 2026project

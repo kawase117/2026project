@@ -2,6 +2,7 @@
 id: combined-prediction-zorome-strategy-definition
 trigger: "MLモデルの翌日末尾予測とゾロ目補正を組み合わせて台選択戦略を作るとき"
 confidence: 0.88
+scope: methodology
 domain: operational-strategy
 source: session-observation
 project_id: 2026project
@@ -57,6 +58,7 @@ Step4: 3F_A(rank1=7) かつ 3F_N(rank2=7) → 末尾7が最も確度高い
 id: combined-vs-simple-simulation-hypothesis
 trigger: "ML末尾予測+ゾロ目統合戦略と単純末尾予測の効率比較シミュレーションを設計するとき"
 confidence: 0.85
+scope: methodology
 domain: operational-strategy
 source: session-observation
 project_id: 2026project
@@ -114,6 +116,7 @@ print(f"B: mean={np.mean(results_B):.0f}, win_rate={np.mean(np.array(results_B)>
 id: zorome-weekday-pattern-is-actionable
 trigger: "曜日別のゾロ目台（XX番台）パフォーマンス補正値を台選択に利用しようとしているとき"
 confidence: 0.80
+scope: methodology
 domain: operational-strategy
 source: session-observation
 project_id: 2026project

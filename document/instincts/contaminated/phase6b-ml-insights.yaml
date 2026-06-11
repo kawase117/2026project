@@ -7,6 +7,7 @@
 id: tree-models-need-feature-engineering
 trigger: "when implementing tree-based ML models"
 confidence: 0.9
+scope: methodology
 domain: ml-feature-engineering
 source: session-observation
 project_id: pachinko-analyzer
@@ -30,6 +31,7 @@ Phase 6B実装では、複合特徴量（target encoding + interactions）によ
 id: target-encoding-dimension-reduction
 trigger: "when dealing with high-cardinality categorical features"
 confidence: 0.85
+scope: methodology
 domain: ml-feature-engineering
 source: session-observation
 project_id: pachinko-analyzer
@@ -55,6 +57,7 @@ Phase 6B実装では +5.6% AUC改善を達成。
 id: shallow-trees-prevent-overfitting
 trigger: "when training tree-based models on moderate-sized datasets"
 confidence: 0.8
+scope: methodology
 domain: ml-hyperparameter-tuning
 source: session-observation
 project_id: pachinko-analyzer
@@ -77,6 +80,7 @@ Phase 6BではPCで以下を採用：
 id: realistic-ml-improvement-targets
 trigger: "when setting AUC improvement goals for Phase 6"
 confidence: 0.75
+scope: methodology
 domain: ml-project-planning
 source: session-observation
 project_id: pachinko-analyzer

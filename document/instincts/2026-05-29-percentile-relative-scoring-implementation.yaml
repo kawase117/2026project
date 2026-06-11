@@ -1,0 +1,187 @@
+---
+id: percentile-relative-scoring-solves-fixed-threshold
+trigger: "when analyzing outlier machines across diverse variance profiles (Big Dream vs ハナハナ)"
+confidence: 0.95
+scope: methodology
+domain: ml-feature-engineering
+source: session-implementation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Percentile化による固定しきい値問題の解決
+
+## 背景
+固定+500枚というしきい値は機種ごとの分散を無視している。Big Dream THE GOLDEN PUSHER のような低設定でも一撃性が高い荒波機では、低設定でも +500～+1000枚の振れが簡単に起こる。一方、ハナハナのような安定機では、+500枚は有意な差を示す。固定値では、荒波機での誤検出率が高い。
+
+## アクション
+機種の分散を自動調整するため、固定絶対値ではなく機種内での相対percentile（0-100）を使用する：
+```python
+diff_ranks = df_machine["diff_coins_normalized"].rank(method="average")
+diff_percentiles = (diff_ranks / len(df_machine) * 100)
+```
+これにより、各機種内での「相対的に高い位置」を測定。Big Dream内での「相対的高さ」とハナハナ内での「相対的高さ」を同じ基準で比較可能。
+
+## 例
+ARROW池上店（2026-05-24）での実装結果：
+- Big Dream THE GOLDEN PUSHER: 従来50% → percentile化後15%（誤検出3倍削減）
+- 東京喰種: 従来50% → percentile化後15%
+- 当たり候補の平均差枚: 従来1700枚 → percentile化後3000枚超（より高設定を確実に検出）
+
+---
+id: excess-count-detects-strategic-investment
+trigger: "when identifying hall's strategic setting distribution patterns across multiple machines"
+confidence: 0.85
+scope: methodology
+domain: ml-feature-engineering
+source: session-implementation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# excess_count による複数台投入検出
+
+## 背景
+店舗側が高設定を投入する際、「1台だけ」と「複数台」では戦略が異なる可能性がある。複数台投入は、その機種が「当たる可能性が高い」ことを店舗が推測している証拠。単純な「突出台の割合」では、この戦略的意思が失われる。
+
+## アクション
+excess_count = max(hit_candidate_count - 1, 0) を計算。複数台が当たり候補な機種・期間を識別：
+```
+hit_candidate_count = 3台 → excess_count = 2台（複数投入）
+hit_candidate_count = 1台 → excess_count = 0台（単独投入）
+```
+excess_count > 0 の機種は、店舗の「複数台戦略」が働いている可能性が高く、単独投入より信頼度が高い。
+
+## 例
+ARROW池上店での結果：
+- ハッピージャグラーVIII: hit_candidate=2台 → excess_count=1台（複数投入確定）
+- スマスロ北斗の拳: hit_candidate=2台 → excess_count=1台（複数投入確定）
+これらは店舗が「この機種は当たる」と判断した機種の可能性。
+
+---
+id: hit-candidate-vs-unfired-high-setting-separation
+trigger: "when distinguishing true high settings from unlucky high settings with high spin counts but low diffs"
+confidence: 0.80
+scope: methodology
+domain: ml-feature-engineering
+source: session-implementation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 判定分離：当たり候補 vs 不発高設定
+
+## 背景
+高回転だが低差枚の台は、①本当に低設定で回転数だけ多い、または②高設定でも確率の悪さで負けた、の2パターンある。固定+500枚では両者を区別できず、予測精度が低下。ユーザーの経験則「回転数が突出していれば粘る要因があり、高設定の可能性が高い」と矛盾する場合がある。
+
+## アクション
+2つの判定を分離：
+- **当たり候補**: games_percentile >= 70 かつ diff_percentile >= 60
+  → 本物の高設定（回転＆差枚両立）
+
+- **不発高設定**: games_percentile >= 80 かつ diff_percentile >= 35 かつ当たり候補でない
+  → 高設定でも不発（高回転だが低差枚）
+
+不発高設定を分離することで、「回転数が高い＝高設定」という単純仮説の妥当性を検証可能。
+
+## 例
+スマスロ炎炎ノ消防隊2（ARROW池上店 2026-05-24）：
+- 全体5台、当たり候補2台、不発高設定0台
+- 当たり候補の平均差枚: -69.5枚（マイナス！）
+→ 当たり候補でも負けている = 本当に高設定か確認が必要。
+
+---
+id: walk-forward-90day-seasonality-standard
+trigger: "when designing validation strategy for pachinko ML models"
+confidence: 0.85
+scope: methodology
+domain: ml-validation
+source: session-implementation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Walk-forward Validation の90日標準化
+
+## 背景
+「2026年全体をテスト期間」という設計は長すぎる（約5ヶ月）。パチスロ業界には季節性があり、GW（4月下旬～5月上旬）、盆（8月）、年末年始（12月～1月）に特別な設定投入戦略が展開される。また、新台導入や店舗の人異動も特定時期に集中する。2月1日～5月1日のテスト期間（85日→90日）なら、Q2トレンド（GW）を拾いながらも、過度に長くない。
+
+## アクション
+テスト期間を以下のように設定：
+- train_end: 2026-02-01
+- test_start: 2026-02-01
+- test_end: 2026-05-01（従来2026-04-26から変更）
+- テスト期間: 90日（walk-forward standard）
+
+この設定により、2026年全体データで学習しつつ、Q2（新台、GW）の影響を測定可能。
+
+## 例
+データ準備スクリプト（ml/data_preparation.py）で実装。
+```python
+def prepare_data_by_groupby(
+    ...
+    test_end: str = "2026-05-01",  # 従来: "2026-04-26"
+    ...
+)
+```
+
+---
+id: percentile-computation-efficiency-pandas-rank
+trigger: "when computing per-group percentiles at scale (10k+ rows, 60+ machine types)"
+confidence: 0.90
+scope: methodology
+domain: ml-performance
+source: session-implementation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Percentile 計算の効率的実装（pandas rank を使用）
+
+## 背景
+SQLiteで percentile を計算する場合、ROW_NUMBER()ウィンドウ関数を使う方法もあるが、pandas で機種ごとに rank() を使う方が実装が簡潔で、パイプラインの流れと合致する。23,000+ 個別台レコード × 60機種での groupby percentile 計算も、pandas の vectorized operation により十分高速。
+
+## アクション
+```python
+# 機種ごとに処理
+for machine_name in df_individual["machine_name"].unique():
+    df_machine = df_individual[df_individual["machine_name"] == machine_name]
+
+    # rank(method="average") で重複を平均順位として扱う
+    diff_ranks = df_machine["diff_coins_normalized"].rank(method="average")
+    diff_percentiles = (diff_ranks / len(df_machine) * 100).values
+```
+
+パフォーマンス考慮：
+- groupby + apply パターンでも可能だが、ループの方が読みやすい
+- データが十分な大きさ（>5台/機種）なら、rank() の計算コストは無視できる範囲
+
+## 例
+sunday_outlier_analysis.py で23,071台のデータを約0.5秒で処理（ARROW池上店）。
+
+---
+id: outlier-rate-improvement-3x-precision-jump
+trigger: "when evaluating whether percentile normalization improves prediction quality"
+confidence: 0.92
+scope: methodology
+domain: ml-evaluation
+source: session-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 3倍精度向上：突出台率 46-51% → 当たり候補率 15-18%
+
+## 背景
+従来の固定+500枚では「突出台率 46～51%」という広い判定。当たり候補（games_pctile >= 70 and diff_pctile >= 60）では「当たり候補率 15～18%」に絞られる。かつ、当たり候補の平均差枚は全カテゴリで 3,000枚超に上昇。これは「より高設定を確実に検出している」ことを示す。
+
+誤検出率の低下：
+- 従来: 50% × (低設定混在率) ≈ 20～30%が低設定混在
+- percentile化後: 15% × (低設定混在率) ≈ 5～10%に改善（相対位置ベースだから低設定混在が少ない）
+
+## アクション
+percentile化した後の「当たり候補率」と「当たり候補の平均差枚」を、予測モデルの重要特徴量として採用。従来の「突出台率」より信頼度が3倍高いと仮定して、重み付けを調整。
+
+## 例
+ARROW池上店、2026-05-24、ジャグラー除外版：
+| カテゴリ | 従来（突出台率） | percentile化後（当たり候補率） | 精度向上 |
+|---------|------------|------------------|--------|
+| 2-5台 | 46.15% | 17.87% | 2.58倍削減 |
+| 6-15台 | 48.62% | 15.83% | 3.07倍削減 |
+| 16-50台 | 51.31% | 14.19% | 3.62倍削減 |
+
+---

@@ -1,0 +1,191 @@
+# ⚠️  LEAKAGE WARNING (added 2026-06-01)
+# このファイルのインサイトは2026-05-31のリーク修正前に作成された。
+# 【有効】実データ観察（diff_coins集計・ゾロ目パターン・台配置等）
+# 【無効】MLモデル性能値（AUC / hit@2 / precision 等の数値）
+# アクション項目を実運用に使う前にリーク修正後のモデルで再検証すること。
+
+---
+id: pred-span-top12-quality-gate
+trigger: "予測スコア差（pred_span_top12）を品質指標として使うとき"
+confidence: 0.95
+scope: methodology
+domain: prediction-evaluation
+source: backtest-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# pred_span_top12 が予測品質の決定因子
+
+## 背景
+600ステップのウォークフォワードバックテスト（2026-01-01〜05-30）で、
+top1とtop2の予測スコア差（pred_span_top12）が精度の最強予測因子と判明。
+
+span別の実際差枚格差（2F_N）：
+- < 0.001：top1=29,820 vs top2=30,260（top2が上の場合あり）→ 推奨不可
+- > 0.5：top1=30,854 vs top2=7,712（差 +23,142）→ 高信頼
+
+## アクション
+- pred_span_top12 < 0.05：「推奨なし」として出力する
+- pred_span_top12 > 0.2：高信頼予測として採用
+- 予測出力スクリプトにspan閾値フィルタを組み込む
+
+## 例
+```python
+if row['pred_span_top12'] < 0.05:
+    label = "推奨なし（確信度不足）"
+elif row['pred_span_top12'] > 0.2:
+    label = f"高信頼: 末尾{row['top1_tail']}"
+else:
+    label = f"参考: 末尾{row['top1_tail']}（中程度）"
+```
+
+---
+id: wednesday-predictions-structurally-broken
+trigger: "水曜日の予測を出力するとき、または曜日別精度を分析するとき"
+confidence: 0.93
+scope: methodology
+domain: prediction-evaluation
+source: backtest-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 水曜日は全セグメントで予測精度が構造的に低い
+
+## 背景
+バックテスト141日の曜日別分析で水曜日のみ精度が急落。
+水曜専用モデルは学習データ不足（週1回）で汎化失敗。
+
+低span発生率（pred_span < 0.1）：
+- 3F_N：水曜75% vs 火曜10%
+- 3F_A：水曜70% vs 火曜35%
+- 2F_N：水曜25% vs 火曜0%
+
+水曜のprecision：3F_N=37.5%（ランダム20%に近い）、3F_A=42.5%
+
+## アクション
+水曜日は「推奨なし」または警告付きで出力する。
+水曜専用モデルのmin_train_days_wedを増やすか、
+水曜は非水曜モデルにフォールバックする実験を検討する。
+
+---
+id: hit-at-2-binary-vs-precision-confusion
+trigger: "hit@2の数値を比較・解釈するとき、または評価指標を設計するとき"
+confidence: 0.98
+scope: methodology
+domain: prediction-evaluation
+source: backtest-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# hit@2のバイナリ指標とprecision指標を混同しない
+
+## 背景
+コードの `hit_at_2` はバイナリ（1件でも一致したら1.0）だが、
+ユーザーの手動評価は precision（一致数/2）。この違いで
+「コード89%」vs「手動50%」という見かけ矛盾が生じた。
+
+ランダム基準値：
+- バイナリhit@2：37.8% （= 1 - C(8,2)/C(10,2)）
+- precision：20% （= 2×2/10 / 2）
+
+月次CSVの `precision` 列 = |pred∩actual|/2 = 手動評価と同定義。
+
+## アクション
+報告時は必ず指標の種別とランダム基準を併記する。
+手動評価との比較には月次CSVの `precision` 列を使用する。
+
+---
+id: next-day-tracking-no-persistence
+trigger: "翌日も同じ末尾を狙う戦略を検討するとき"
+confidence: 0.90
+scope: methodology
+domain: domain-strategy
+source: backtest-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 予測末尾の翌日持続性はゼロ（反持続性の傾向あり）
+
+## 背景
+150日ペアのバックテストで翌日一致率を検証：
+- 今日top1末尾 = 明日top1末尾：6〜12%（ランダム10%と同等）
+- 今日の高diff末尾が翌日も高diff：p値0.47〜0.72（有意差なし）
+- 3F_N/3F_A：6〜7%でランダム以下（反持続性）
+
+## アクション
+「昨日良かった末尾を今日も狙う」戦略は採用しない。
+各日完全独立として予測を更新する。
+反持続性は「同じ末尾を連続投入しない店側意図」の特徴量として検討可能。
+
+---
+id: backtest-model-selection-bias-warning
+trigger: "バックテストのhit@2が95%以上、またはmiss日がほぼゼロの結果を見るとき"
+confidence: 0.92
+scope: methodology
+domain: prediction-evaluation
+source: backtest-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# バックテスト99〜100%は過剰適合の証拠
+
+## 背景
+新バックテスト（backtest_topk_full）：3F_N=100%、2F_A=100%、2F_N=99.3%（miss=1件）。
+旧バックテスト（tmp_phaseabc_eval）：3F_N=89%、2F_N=95%。
+ライブ評価（3日間）：3F_N precision≈50%。
+
+ウォークフォワード構造自体は正しいが、ウィンドウ/λパラメータが
+テスト期間データを見た後に選定されている可能性が高い（間接リーク）。
+
+## アクション
+- バックテスト精度95%超は「参考値」のみとして扱う
+- 真の汎化性能 = ライブ評価の蓄積（20日以上必要）
+- クリーンな再評価：2025年12月以前データのみでパラメータ確定後、
+  2026年データで完全holdout評価を実施する
+
+---
+id: 3fn-most-reliable-segment
+trigger: "セグメント別に予測の優先度を決めるとき"
+confidence: 0.88
+scope: methodology
+domain: domain-strategy
+source: backtest-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 3F_N が実践で最も安定したセグメント
+
+## 背景
+3日間のライブ評価：3F_N h@2=3/6（50%）が唯一ランダムを明確に上回った。
+バックテストでも3F_Nは非水曜・高span条件でprecision=80%。
+2F_Nはバックテスト78%だが実践では乖離が大きい（モデル選択バイアスの影響が強い可能性）。
+
+## アクション
+実践での優先順位：3F_N > 3F_A > 2F_N > 2F_A
+2F_Nの高バックテスト精度を実践に期待しすぎない。
+
+---
+id: hit-at-3-rescue-is-random-noise
+trigger: "hit@3 > hit@2のパターンを見て3位予測に意味があるか判断するとき"
+confidence: 0.87
+scope: methodology
+domain: prediction-evaluation
+source: backtest-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# hit@3での救済はランダムノイズ（3位固有シグナルではない）
+
+## 背景
+バックテスト141日：
+- 3位救済日（hit@2=0 but hit@3=1）のpred_span：
+  - 2F_N=0.003、3F_N=0.149、3F_A=0.057（全て低〜中）
+- hit@2成功日のpred_span：0.725/0.582/0.464（高）
+
+3位が当たるのは「低span日にランダムで当たる」ケース。
+Top3まで広げても統計的シグナルは存在しない。
+
+## アクション
+- 実践ではTop2を基本とし、Top3は使わない
+- 低span日はTop3でも推奨しない
+- hit@3はモデル評価指標として使用不可

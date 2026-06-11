@@ -2,6 +2,8 @@
 id: session2-win-rate-higher-than-session1
 trigger: "when modeling re-challenge alpha coefficient in pachinko simulator"
 confidence: 0.82
+scope: hall-specific
+hall: kamata7
 domain: simulator-design
 source: data-observation
 project_id: 2026project
@@ -44,6 +46,8 @@ session2だけ特別に高いことの解釈は2つ:
 id: p-move-observed-0688
 trigger: "when setting P_move parameter in pachinko simulator for 設定狙い sessions"
 confidence: 0.85
+scope: hall-specific
+hall: kamata7
 domain: simulator-design
 source: data-observation
 project_id: 2026project
@@ -79,6 +83,8 @@ project_name: pachinko-analyzer
 id: session3-plus-degradation-is-real
 trigger: "when deciding whether to attempt 3rd or later re-challenge in 設定狙い"
 confidence: 0.78
+scope: hall-specific
+hall: kamata7
 domain: simulator-design
 source: data-observation
 project_id: 2026project

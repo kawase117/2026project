@@ -1,0 +1,188 @@
+# ⚠️  LEAKAGE WARNING (added 2026-06-01)
+# このファイルのインサイトは2026-05-31のリーク修正前に作成された。
+# 【有効】実データ観察（diff_coins集計・ゾロ目パターン・台配置等）
+# 【無効】MLモデル性能値（AUC / hit@2 / precision 等の数値）
+# アクション項目を実運用に使う前にリーク修正後のモデルで再検証すること。
+
+---
+id: event-day-zorome-priority-rule
+trigger: "曜日correctionとイベント日correctionが矛盾したときにゾロ目戦略の優先順位を決めるとき"
+confidence: 0.82
+scope: hall-specific
+hall: kamata7
+domain: operational-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 曜日 vs イベント日の優先ルール（矛盾日対応）
+
+## 背景
+曜日×イベント日の矛盾日（n=3792）での実現値分析：
+
+- 曜日－ かつ イベント＋: 実現値平均 -190、曜日正解率 58.7% vs イベント 41.3%
+- 曜日＋ かつ イベント－: 実現値平均 +133、曜日正解率 47.6% vs イベント 52.4%
+
+「曜日がマイナス」のときは過半数の日で実際にゾロ目が不利だった。
+「曜日がプラス」のとき、典型的な日（頻度）はイベント信号が正しかった
+（ただし外れ値により平均は正）。
+
+注意：全データでシグナルを構築し同データで評価しているため過学習の可能性あり。
+方向性の参考として使い、確信を強める補助情報にとどめること。
+
+## アクション
+4段階の優先ルール：
+
+1. 曜日correction < 0 → イベント日であっても曜日優先でゾロ目を避ける
+2. 曜日correction > 0 かつ イベントcorrection < 0 → イベント信号を優先してゾロ目を避ける
+3. 曜日correction > 0 かつ イベントcorrection > 0 → ゾロ目優先（両シグナル一致）
+4. 火曜＋イベント日 → 特別に強い（+458）、積極的にゾロ目優先
+
+## 例
+```
+今日=木曜・イベント日・末尾5（木曜correction(末尾5)=-81、イベントcorrection=+149）
+→ ルール1：曜日がマイナスなのでゾロ目を避ける（イベント日でも曜日優先）
+
+今日=水曜・イベント日・末尾2（曜日correction=+404、イベントcorrection=-49）
+→ ルール2：曜日はプラスだがイベントがマイナス → イベント優先でゾロ目を避ける
+
+今日=火曜・イベント日・末尾0（曜日correction=+170、イベントcorrection=+294）
+→ ルール3+4：両方プラス、かつ火曜イベント日 → 最強のゾロ目優先
+```
+
+---
+id: tuesday-event-day-zorome-exceptional
+trigger: "火曜日かつイベント日にゾロ目戦略を適用するとき"
+confidence: 0.78
+scope: hall-specific
+hall: kamata7
+domain: operational-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 火曜イベント日はゾロ目効果が突出して強い
+
+## 背景
+曜日×イベント日の interaction correction（全末尾平均）：
+- 火曜・非イベント: +91
+- 火曜・イベント: +458（差 +367）
+
+他の曜日と比べて火曜イベント日の上昇幅が最も大きい。
+ホール側が火曜のイベント日に特定の末尾ゾロ目台へ集中投入している可能性。
+
+## アクション
+- 火曜かつイベント日（7/17/27、1/11/31、22、30、月末、月=日）に該当する場合：
+  correction 値がそれほど高くなくてもゾロ目台を積極的に優先する
+- 火曜・非イベント日の+91は平均的な水準。特別扱いは不要
+
+## 例
+```
+今日=火曜・17日（type7イベント）・末尾5: correction=+100（中立帯）
+→ 通常なら threshold < 150 でゾロ目を迷うが、火曜+イベント日のため積極的にゾロ目台優先
+```
+
+---
+id: thursday-event-day-zorome-reverse
+trigger: "木曜日かつイベント日にゾロ目戦略を適用するとき"
+confidence: 0.76
+scope: hall-specific
+hall: kamata7
+domain: operational-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 木曜イベント日はゾロ目効果が逆転して不利になる
+
+## 背景
+曜日×イベント日の interaction correction（全末尾平均）：
+- 木曜・非イベント: +33
+- 木曜・イベント: -151（差 -184）
+
+木曜のイベント日に限りゾロ目台が非ゾロ目台より平均151枚悪い。
+ホール側が木曜イベント日はゾロ目台以外に高設定を集中させている可能性。
+
+## アクション
+- 木曜かつイベント日に該当する場合：
+  correction が正の値を示していてもゾロ目台は避け、非ゾロ目台から選ぶ
+- 木曜・非イベント日（+33）は弱い正のシグナル。通常どおり correction の符号に従う
+
+## 例
+```
+今日=木曜・7日（type7イベント）・末尾9: correction=+303（通常なら狙い判定）
+→ 木曜+イベント日のため非ゾロ目の末尾9台を選ぶ（correction正でも逆転）
+```
+
+---
+id: event-day-amplifies-zorome-by-digit
+trigger: "イベント日に末尾別ゾロ目戦略の強度を評価するとき"
+confidence: 0.80
+scope: hall-specific
+hall: kamata7
+domain: operational-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# イベント日は多くの末尾でゾロ目効果を増幅するが末尾1は逆転
+
+## 背景
+イベント日 vs 非イベント日の末尾別 correction 比較（全曜日平均）：
+
+増幅（イベント日 > 非イベント日）:
+  末尾6: イベント+434 vs 非イベント-9（差+443）
+  末尾8: イベント+159 vs 非イベント-194（差+353）
+  末尾4: イベント+93 vs 非イベント-211（差+304）
+  末尾3: イベント+152 vs 非イベント-96（差+248）
+
+逆転（非イベント日の方が良い）:
+  末尾1: イベント-28 vs 非イベント+144（差-172）← 注意
+
+差なし: 末尾5・末尾9
+
+## アクション
+- 末尾4/6/8/3はイベント日にゾロ目を積極的に狙う
+- 末尾1はイベント日にゾロ目を避け非ゾロ目台を選ぶ
+- 末尾5・9はイベント日かどうかで方針を変えない
+
+## 例
+```
+今日=イベント日・末尾6: correction=+100（中立帯）
+→ イベント日の末尾6増幅効果（+443差）を考慮してゾロ目台優先
+
+今日=イベント日・末尾1: correction=+200（正値）
+→ イベント日の末尾1逆転（-172差）を考慮してゾロ目台を避ける
+```
+
+---
+id: month-eq-day-special-event
+trigger: "月=日（1/1、2/2 ... 12/12）の日にゾロ目戦略を適用するとき"
+confidence: 0.65
+scope: hall-specific
+hall: kamata7
+domain: operational-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 月=日（例: 5/5、7/7）はゾロ目全末尾で極めて高い correction（要継続観測）
+
+## 背景
+月=日（month == day）イベント11日間の correction（全末尾平均）が突出して高い：
+  末尾5: +1285、末尾6: +1160、末尾7: +893、末尾8: +953、末尾2: +841
+
+ただし11日のみのサンプルのため統計的信頼性は低い。
+
+## アクション
+- 月=日に該当する日は全末尾でゾロ目台を優先する方向で検討
+- ただし11日サンプルのため確定判断は保留。継続観測が必要
+- 該当日の末尾と台番号が一致する場合（例: 7/7の台77）は特に優先度高い
+
+## 例
+```
+今日=7/7（月=日イベント）・末尾7: correction=-50（通常なら非ゾロ目）
+→ 月=日イベントの特別効果を考慮し、ゾロ目台優先を検討（慎重に）
+```
+
+---

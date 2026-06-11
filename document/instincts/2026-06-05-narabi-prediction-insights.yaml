@@ -1,0 +1,112 @@
+---
+id: narabi-prediction-target-definition
+trigger: "並び起点末尾の予測モデルを設計するとき"
+confidence: 0.90
+domain: ml-feature-design
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 並び予測ターゲットは「起点digit TOP3ランキング」に絞る
+
+## 背景
+ぽこデータには並び仕掛けの起点末尾（0〜9）が約96%の日付で明示されている（土曜日・並び限定）。
+「並びが来るか否か」（バイナリ）より「どの末尾が起点か」（多クラス）の予測が実戦価値が高い。
+発表に複数digitが含まれる場合（例: 3,8）は全て正解として扱う。
+
+## アクション
+- 予測対象: 土曜日の並び起点digit（0〜9）TOP3ランキング
+- K1・K7は独立して処理（同じデータ量・同期間だが共通パターンを別途検証）
+- 評価指標: hit@3（メイン）+ MRR（補助）
+- ベースラインは実際のactual_digits件数を反映した確率的基準（固定30%ではない）
+
+## 例
+strategy_digits="3,8|2" → actual_digits=[3,8] → TOP3に3か8が含まれればHIT
+K1 n=28件、K7 n=25件（2025-07〜2026-05）
+
+---
+id: narabi-signal-spearman-design
+trigger: "Spearmanシグナルで並び起点を検証するとき"
+confidence: 0.85
+domain: ml-feature-design
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 並び予測のSpearmanシグナル設計（X2/X3/X4/X5）
+
+## 背景
+n≈25という小サンプルでSpearman検証を行う。有意閾値は|r|>0.37かつp<0.1（n=25での保守的設定）。
+4シグナルのうち、実際に有効だったのはX2のみ（X3/X4は一度も有効にならず）。
+
+## アクション
+- X2: DD mod 10 vs 各digit binary（10本計算）
+- X3: 前週first_digit vs 今週first_digit（複数digitは1st digitを代表値）
+- X4: (前週first_digit + offset) % 10 vs 今週first_digit（offset 0〜9を全探索）
+- X5-inv: 直近4週の出現頻度 → 低頻度digitを優先（枯渇仮説）
+- X5-mom: 直近4週の出現頻度 → 高頻度digitを優先（モメンタム仮説）
+- X5-invとX5-momは同時発火を許容（加算式）
+- タイブレークは (4 - recent_freq[d]) * 0.01 で未出現digit寄りがデフォルト
+
+## 例
+# タイブレーク符号の注意
+scores[d] += (4 - target_row.recent_freq[d]) * 0.01  # 未出現優先（正しい）
+scores[d] += target_row.recent_freq[d] * 0.01        # 出現優先（逆）← 混同しやすい
+
+---
+id: narabi-prediction-difficulty-analysis
+trigger: "並び起点予測の精度がベースラインを下回ったとき"
+confidence: 0.88
+domain: ml-validation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 並び起点予測はホールの意図的ランダム化により構造的に困難
+
+## 背景
+walk-forward評価結果:
+- K1: hit@3=27.8% vs baseline=45.6%（ベースライン大幅下回り）
+- K7: hit@3=53.3% vs baseline=56.2%（ほぼベースライン水準）
+有効シグナルはX2（DD相関）のみで不安定。X3/X4（ローテーション）は全期間で有意にならなかった。
+
+主因はデータ量不足ではなくホール側の意図的ランダム化。
+「客に高設定台を特定させないため意図的にランダム配置」という設計原則がある。
+
+## アクション
+- 弱い相関（r≈0.2〜0.3）が存在する可能性はあるが、検出にはn≈100以上が必要（現ペースで約2年）
+- 予測モデルより「K7でdigit確認→K1で運用」という実地確認戦略の方が実戦価値が高い
+- K7とK1で同日に同じdigitが出る共通パターンが観測されており、これを利用した確認フローが有望
+
+## 例
+# 共通パターン観測例（同日同digit）
+# K1 20250712 DD=12 digits=6  / K7 20250712 DD=12 digits=6
+# K1 20250816 DD=16 digits=3,8 / K7 20250816 DD=16 digits=3,8
+# → K7開店後にdigit確認→K1に同じdigitで投資という運用フローが現実的
+
+---
+id: narabi-x5-momentum-global-spearman-limitation
+trigger: "X5-momシグナルが連続出現パターンを捉えられないとき"
+confidence: 0.82
+domain: ml-feature-design
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# X5-momの全期間Spearmanは直近の連続パターンを希釈する
+
+## 背景
+K1 2026年以降でdigit5が5〜6週連続出現したが、X5-momは一度も発火しなかった。
+原因: 全期間通算Spearman(recent_freq[5], hit[5])では、序盤（2025年）にdigit5が少なく
+全体相関が閾値を超えられない。直近の「streak」を全期間統計が打ち消す。
+
+## アクション
+- 将来的な改善案: 直近Nヶ月のみのSpearmanに切り替える（ただし過学習リスクあり）
+- 現状では「全期間Spearman」の制約として受け入れ、結果解釈時に注意する
+- X5-momが発火しない期間の予測はほぼX2+タイブレーク依存になることを認識しておく
+
+## 例
+# 2026年K1の見逃しパターン
+# actual: [1,5], [2], [3], [5], [0,5], [1,5], [5]  ← digit5が支配的
+# pred:   [4,9,8] 固定  ← X5-momが全期間Spearmanでは発火せず
+# 直近6週だけでSpearmanを計算すればr≈0.6以上になる可能性がある

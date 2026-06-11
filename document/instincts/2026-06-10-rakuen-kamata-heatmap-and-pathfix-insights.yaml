@@ -1,0 +1,109 @@
+---
+id: heatmap-floor-coordinate-generation-pattern
+trigger: "新しいホールのフロアマップ座標CSVを画像から作成するとき"
+confidence: 0.9
+scope: workflow
+domain: heatmap-implementation
+source: session-implementation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# フロアマップ画像から座標CSVを生成する手順とU字島の扱い
+
+## 背景
+楽園蒲田店 本館3F（machine_number 3107-3266, 160台）の座標生成で確立した手順。
+既存の generate_kamata1_coordinates.py / generate_kamata7_coordinates.py と
+同じパターンを踏襲しつつ、U字型・並行2列型の島を1セクションとして扱う方法を整理した。
+
+## アクション
+1. フロア画像から「物理的な run（連続した行/列の機種番号レンジ）」を抽出する
+2. 各 run を (machines, start_x, start_y, step_x, step_y) で表現し add_run() で座標化
+3. U字島・2列並行ブロックなど、1つの数値レンジが複数runに分かれる場合は
+   add_run() に section=(min,max) を明示的に渡し、rank_from_min/max が
+   レンジ全体基準になるようにする（個別runのmin/maxで計算しない）
+4. 連続したバンク（同じ物理列）が機種違いで複数あっても、numeric range が
+   連続していれば1セクションにマージしてよい（例: 3174-3185を1セクションに統合）
+5. validate_rows() で機種番号セット完全一致 + 座標重複なしを必ず検証
+   - expected = set(range(start, end+1)) をDB実データ件数と事前に突合
+6. 生成後は ASCII グリッド（display_x/yをキーに last_two_digits を表示）で
+   視覚的に元画像のレイアウトと一致するか確認する
+7. hall_name/floor を正しく設定すれば find_floor_csvs() が自動検出するため、
+   page_17_heatmap.py 側のコード変更は不要
+
+## 例
+```python
+add_run(rows, floor, list(range(3121, 3131)), 6, 1, 0, 1, section=(3121, 3141))
+add_run(rows, floor, list(range(3141, 3131, -1)), 7, 1, 0, 1, section=(3121, 3141))
+add_run(rows, floor, [3131], 6, 11, 0, 0, section=(3121, 3141))
+```
+U字島（左列下り→右列上り→底辺1台）を1セクション(3121-3141)として扱う例。
+
+---
+id: heatmap-db-path-resolution-bug-fix
+trigger: "page_17_heatmap.py / heatmap_common.py で 'DB file not found: .../Heatmap/db/...' エラーが出たとき"
+confidence: 0.95
+scope: bugfix
+domain: heatmap-implementation
+source: session-bugfix
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# heatmap_common.py の db_path 解決はHeatmap/ではなくproject_root基準にする
+
+## 背景
+render_heatmap_page / render_last_digit_highlight 内の _resolve_path() が
+coords_file と db_path を両方 script_dir（Heatmap/フォルダ）基準で解決していた。
+しかし db_path は main_app.py/dashboard/main.py で
+`Path('./db') / f"{hall}.db"` というプロジェクトルート相対パスとして渡されるため、
+"Heatmap/db/{hall}.db" という存在しないパスになりエラーが発生していた。
+coords_file（CSV）はHeatmap/直下に置くファイル名なのでscript_dir基準が正しいが、
+db_pathだけは project_root = os.path.dirname(script_dir) 基準にする必要がある。
+
+## アクション
+heatmap_common.py の両関数で以下のように分岐する:
+```python
+script_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(script_dir)
+coords_path = _resolve_path(coords_file, script_dir)
+db_path = _resolve_path(db_path, project_root)
+```
+修正後は test/heatmap の全テスト（絶対パス使用のため影響なし）で確認すること。
+
+## 例
+修正前: db_path="db/楽園蒲田店.db" → 解決後 "Heatmap/db/楽園蒲田店.db" (存在しない)
+修正後: db_path="db/楽園蒲田店.db" → 解決後 "db/楽園蒲田店.db" (project_root基準で正しい)
+
+---
+id: page-router-missing-key-vs-pages-list
+trigger: "サイドバーのメニューに表示されるがクリックすると 'ページ X が見つかりません' になるとき"
+confidence: 0.9
+scope: bugfix
+domain: dashboard-routing
+source: session-bugfix
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# PAGESリストとPAGE_ROUTERは別々に定義されており両方の同期が必要
+
+## 背景
+dashboard/config/constants.py の PAGES リストにページが追加されていても、
+実際の起動エントリーポイント（main_app.py）の PAGE_ROUTER dict に
+対応する import と key:render のマッピングが追加されていないと、
+メニューには表示されるがクリック時に「ページ 'X' が見つかりません」になる。
+さらに main_app.py と dashboard/main.py の2箇所にPAGE_ROUTERが
+重複定義されているため、片方だけ更新すると同様の問題が再発する。
+
+加えて dashboard/pages/__init__.py の import リストにモジュールが
+含まれていないと、main.py側のimportそのものが失敗する別経路の
+エラーにもなり得る（page_05_last_digit が抜けていたケース）。
+
+## アクション
+新しいページを追加する際は以下の3箇所を必ず同期する:
+1. dashboard/config/constants.py の PAGES（メニュー表示）
+2. dashboard/pages/__init__.py の import / __all__
+3. main_app.py と dashboard/main.py 両方の PAGE_ROUTER（importとdict key）
+
+## 例
+page_17_heatmap を追加する際、constants.PAGESには登録済みだったが
+main_app.py のPAGE_ROUTERにimportとdict entryが無く、
+"ページ 'heatmap' が見つかりません" エラーになっていた。

@@ -1,0 +1,51 @@
+---
+id: mitoya-island-date-group-regression-confirms-real-signal-exists
+trigger: "個体x二値分類でAUCがランダム同然(0.5付近)に終わった後、『集団x連続値regression』への粒度転換が実際に機能するかを検証する時"
+confidence: 0.75
+domain: ml-strategy-design
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# みとや大森町：島x日の集団regressionに切り替えた途端、ランダム(AUC0.53)から有意な予測力(Pearson 0.26〜0.48)へ転換した実証結果
+
+## 背景
+[[individual-binary-classification-granularity-mismatch-shift-to-group-level-regression]] で提案した「個体x二値分類→集団x連続値regression」への粒度転換を、みとや大森町の島別データで実際に試した。
+
+**設計**:
+- 目的変数: 島(`main_jug`/`main_mix`/`other`)x日ごとの104%超え率（連続値、各グループ51〜140台で平均）
+- 特徴量: `dd`, `dow`, `is_event`, `island`（予測時点で既知のもののみ、リーク特徴量は含めない）
+- モデル: CatBoostRegressor、Walk-forward検証（学習6ヶ月／テスト1ヶ月、2スプリット）
+
+**結果**（個体x二値分類のAUC≈0.53と対比）:
+
+| 指標 | Split 0 (2025-07) | Split 1 (2026-01) | ランダム期待値 |
+|---|---|---|---|
+| RMSE改善率(vs 平均値予測) | +2.4% | +12.2% | 0% |
+| Pearson相関 | 0.262 (p=0.011) | 0.484 (p<0.001) | ~0 |
+| Top30%重複率 | 0.481 | 0.556 | 0.300 |
+
+両スプリットで統計的に有意（p<0.05）な相関を確認し、Top30%重複率はランダムの1.6〜1.9倍。**「集団レベルに粒度を変えると、個体レベルでは検出できなかった信号が学習可能になる」という仮説が実証された**。
+
+ただし、Split 0(夏)よりSplit 1(冬)の方が信号が強く、季節性かサンプル数(2スプリットのみ)による偶然かは未判別。
+
+## アクション
+- 個体レベルのAUCが理論上限（[[small-population-effect-size-cannot-yield-high-individual-auc]]参照）に張り付いて改善しない場合、**諦める前に必ず集団x連続値regressionを試す**。本ケースでは「ランダム」から「有意な予測力」への転換が実際に起きた。
+- regression転換時の評価指標は通常のRMSE/MAEだけでなく、**ベースライン（学習期間平均で予測した場合）との比較**と、**Top-k重複率（ランダム期待値との対比）**を必ず併記する。絶対的なRMSE値だけでは「意味のある予測か」を判断できない。
+- 信号の強さがウィンドウによって変動する場合（本ケースでは夏0.26 vs 冬0.48）、それが季節性か単なるサンプルノイズかを、**スプリット数を増やして**判別する必要がある——2スプリットでは結論を出すには不十分。学習期間を更に短縮するか、複数年分のデータが蓄積してから再検証すること。
+- 蒲田七など他ホールでも同じ粒度転換のパターンが再現するか検証することで、「みとや固有の現象」か「パチンコ予測一般に通用する設計原則」かを切り分けられる。
+
+## 例
+```python
+# 個体x二値分類: AUC≈0.53(ランダム) — 信号が個体ノイズに埋もれる
+y_individual = df['target_104']
+
+# 集団x連続値regression: 島x日ごとに集計してから学習 — 信号が顕在化
+grouped = df.groupby(['date','island']).agg(
+    over_104_rate=('target_104','mean'),  # 連続値の目的変数
+    dd=('dd','first'), dow=('dow','first'), is_event=('is_event','first')
+).reset_index()
+model = CatBoostRegressor(cat_features=['island'])
+model.fit(X_grouped[['dd','dow','is_event','island']], grouped['over_104_rate'])
+# => Pearson相関0.26〜0.48、Top30%重複率0.48〜0.56（ランダム0.30の1.6〜1.9倍）
+```

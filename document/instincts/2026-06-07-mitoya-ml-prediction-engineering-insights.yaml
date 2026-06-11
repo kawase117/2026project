@@ -1,0 +1,332 @@
+---
+id: machine-name-contamination-in-ml-training
+trigger: "みとや（または他ホール）でCatBoostにmachine_nameをCAT_FEATUREとして使うとき"
+confidence: 0.98
+scope: hall-specific
+hall: mitoya
+domain: ml-feature-engineering
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 機種名汚染問題: DBには台番号ごとに時系列で異なる機種名が格納されている
+
+## 背景
+みとや大森町店 266台中 **204台（76%）** で機種名が変わっていた（515日分データ）。
+例: 台501-522は「ダンベル何キロ持てる？」→「バンドリ！」→「甲鉄城のカバネリ 海門(うなと)決戦」のように変遷。
+
+CatBoostに`machine_name`をCAT_FEATUREとして使うとき、
+`df_raw.groupby("machine_number")["machine_name"].first()` や `.last()` を使うと汚染が起きる。
+
+予測用のDataFrame（today）に機種名をマッピングするときは必ず最新日付のデータを使う:
+```python
+latest_date = df_raw["date"].max()
+mn_map = (
+    df_raw[df_raw["date"] == latest_date][["machine_number", "machine_name"]]
+    .drop_duplicates("machine_number")
+)
+today = today.merge(mn_map, on="machine_number", how="left")
+today["machine_name"] = today["machine_name"].fillna("unknown")
+```
+
+## アクション
+1. 予測DataFrame（today）の機種名は **必ず `df_raw["date"].max()` の最新日付のみから取得**
+2. 学習DataFrame（df）の機種名は各行の歴史的な名前をそのまま使う（混在させない）
+3. `groupby("machine_number").first()` や `.last()` は使わない
+
+## 例
+```python
+# ❌ 古い機種名が混入する（firstは最古、lastは最新だが全期間での最後）
+mn_map = df_raw.groupby("machine_number")["machine_name"].first()
+
+# ✅ 最新日付のみを参照
+latest_date = df_raw["date"].max()
+mn_map = df_raw[df_raw["date"] == latest_date][["machine_number","machine_name"]].drop_duplicates("machine_number")
+```
+
+---
+id: machine-name-normalization-hurts-accuracy
+trigger: "機種名が変わった台の学習データを全て現在の機種名に書き換えたくなったとき"
+confidence: 0.95
+scope: hall-specific
+hall: mitoya
+domain: ml-feature-engineering
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 機種名の全履歴書き換えは精度を下げる: 異なる機種のデータが混在する
+
+## 背景
+「現在の機種名の埋め込みが薄い」という問題を解決しようとして、
+df全行のmachine_nameを最新日付の機種名に書き換える（正規化）を試みた。
+
+結果: **全指標が悪化**
+```
+正規化あり: Spearman=0.2557, hit@3=0.0222, prec25=0.4429
+正規化なし: Spearman=0.2923, hit@3=0.0556, prec25=0.4505
+```
+
+悪化の原因: 台501-522の2025年データは「ダンベル何キロ持てる？」の実績なのに
+「甲鉄城のカバネリ...」として学習される → 全く異なる機種のデータが混ざる
+
+## アクション
+**機種名の全履歴書き換え（正規化）は行わない。**
+代わりに、機種名から **walk-forward 集約特徴量** を生成する（B案を参照）。
+
+---
+id: machine-name-walkforward-agg-features-b-plan
+trigger: "CatBoostでmachine_nameをCAT_FEATUREとして使うとき、新機種（データが少ない）の埋め込みが薄い問題を解決したいとき"
+confidence: 0.96
+scope: hall-specific
+hall: mitoya
+domain: ml-feature-engineering
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# B案: 機種名から walk-forward 集約特徴量を生成し数値特徴量として追加
+
+## 背景
+- 機種が変わった台は旧機種名の学習データが多く、新機種名の学習データが少ない
+- 機種名正規化（全履歴書き換え）は逆効果（別機種のデータが混入）
+- 解決策: 各機種名が **実際に稼働していた期間のデータのみ** を使って集約統計を計算し、数値特徴量として追加
+
+追加した特徴量（shift(1)でデータリーク回避）:
+- `machine_avg_diff_wf`: 機種の全期間平均差枚（expanding mean）
+- `machine_plus_rate_wf`: 機種の勝率（expanding mean of diff > 0）
+- `machine_sample_n_wf`: 機種のサンプル数（統計の信頼性を示す）
+- `machine_xday_avg_wf`: 機種のx_day（DD末尾4,7）限定平均差枚
+
+**効果（みとや 2026-06-07予測、x_dayスコープ）:**
+```
+B案（walk-forward集約特徴量）: Spearman=0.2936, hit@3=0.0556, prec25=0.4545  ← ベスト
+元の実装（正規化なし）:         Spearman=0.2923, hit@3=0.0556, prec25=0.4505
+機種名正規化（全書き換え）:     Spearman=0.2557, hit@3=0.0222, prec25=0.4429
+```
+
+## アクション
+機種名CAT_FEATUREは残しつつ、以下を NUMERIC_FEATURES に追加:
+
+```python
+# 機種別 walk-forward 集約特徴量（特徴量エンジニアリング section）
+df_name_sorted = df.sort_values(["machine_name", "date_dt"])
+df_name_sorted["machine_avg_diff_wf"] = df_name_sorted.groupby("machine_name")["diff_coins_normalized"].transform(
+    lambda x: x.shift(1).expanding(min_periods=1).mean()
+)
+df_name_sorted["machine_plus_rate_wf"] = df_name_sorted.groupby("machine_name")["diff_coins_normalized"].transform(
+    lambda x: (x.shift(1) > 0).expanding(min_periods=1).mean()
+)
+df_name_sorted["machine_sample_n_wf"] = df_name_sorted.groupby("machine_name")["diff_coins_normalized"].transform(
+    lambda x: x.shift(1).expanding(min_periods=1).count()
+)
+df = df.merge(df_name_sorted[["date","machine_number",
+    "machine_avg_diff_wf","machine_plus_rate_wf","machine_sample_n_wf"]],
+    on=["date","machine_number"], how="left")
+
+# x_day限定 expanding mean（x_day以外の行は前方補完）
+df_xday_sub = df[df["is_xday"] == 1].sort_values(["machine_name", "date_dt"]).copy()
+df_xday_sub["machine_xday_avg_wf"] = df_xday_sub.groupby("machine_name")["diff_coins_normalized"].transform(
+    lambda x: x.shift(1).expanding(min_periods=1).mean()
+)
+df = df.merge(df_xday_sub[["date","machine_number","machine_xday_avg_wf"]], on=["date","machine_number"], how="left")
+df = df.sort_values(["machine_name","date_dt"])
+df["machine_xday_avg_wf"] = df.groupby("machine_name")["machine_xday_avg_wf"].transform(lambda x: x.ffill())
+```
+
+予測（今日）用: 全期間集計をそのまま使う（予測時点なのでリークは問題なし）
+```python
+machine_final_stats = df.groupby("machine_name").agg(
+    machine_avg_diff_wf=("diff_coins_normalized", "mean"),
+    machine_plus_rate_wf=("diff_coins_normalized", lambda x: (x > 0).mean()),
+    machine_sample_n_wf=("diff_coins_normalized", "count"),
+).reset_index()
+xday_final = df[df["is_xday"]==1].groupby("machine_name")["diff_coins_normalized"].mean().reset_index(name="machine_xday_avg_wf")
+machine_final_stats = machine_final_stats.merge(xday_final, on="machine_name", how="left")
+machine_final_stats["machine_xday_avg_wf"] = machine_final_stats["machine_xday_avg_wf"].fillna(
+    machine_final_stats["machine_avg_diff_wf"])
+today = today.merge(machine_final_stats, on="machine_name", how="left")
+```
+
+## 例
+特徴量重要度での位置づけ（2026-06-07, x_dayスコープ, 36特徴量）:
+```
+1位: games_normalized      31.4%
+2位: machine_avg_diff_wf    6.3%  ← 新特徴量が機種名CATより上位
+3位: machine_name（CAT）    6.2%  ← 補完役として有効
+4位: machine_roll7_diff     6.1%
+7位: machine_sample_n_wf    4.5%  ← モデルが信頼性を自動重みづけ
+8位: machine_plus_rate_wf   4.2%
+10位: machine_xday_avg_wf   3.1%
+```
+
+---
+id: xday-scope-training-beats-full-period
+trigger: "みとやのCatBoostモデルで学習データのスコープ（全期間 vs イベント日限定）を選択するとき"
+confidence: 0.92
+scope: hall-specific
+hall: mitoya
+domain: ml-training-strategy
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# x_day（DD末尾4,7）限定学習が全期間学習より全指標で優秀
+
+## 背景
+4スコープ × 2重み設定（8実験）を比較（2026-06-07セッション）:
+```
+スコープ          学習日数  Spearman  hit@3   prec25
+x_dayのみ          72日    0.2916   0.067   0.456  ← ベスト
+全期間            485日    0.2786   0.044   0.440
+7のつく日のみ      30日    0.2697   0.056   0.432
+DD=7のみ            2日    データ不足でスキップ
+```
+
+volume（全期間485日）より relevance（x_day 72日）の方が有効。
+「多いデータで学習すれば良い」は成立しない。
+DD=7の当日予測でも、DD=4の日を含むx_day全体で学習した方が良い。
+
+## アクション
+みとやの当日予測（DD末尾4,7の日）では **x_dayスコープのみで学習する**。
+全期間学習モデルを使う必要はない。
+
+```python
+# x_dayのみに絞る
+dd_mod = df["dd"] % 10
+df_xday = df[dd_mod.isin([4, 7])].copy()
+all_dates = sorted(df_xday["date"].unique())
+# 515日全期間から102日に絞られる（train=72日, val=30日）
+```
+
+---
+id: sample-weight-new-manager-ineffective
+trigger: "みとやの新店長期間（2026-05以降）に sample_weight で重みをつけようとするとき"
+confidence: 0.90
+scope: hall-specific
+hall: mitoya
+domain: ml-training-strategy
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 新店長期間の3x sample_weight は効果ゼロ（データ量が少なすぎる）
+
+## 背景
+新店長期間（2026-05以降）のx_dayデータ: 約37日分。
+72日の学習データに対して37日（51%）に3x重みをつけても効果なし。
+
+実験で確認: 全スコープで重みあり vs なしの差が0:
+```
+x_dayのみ / weight無し: Spearman=0.2916
+x_dayのみ / weight有り: Spearman=0.2916  ← 変化なし（全スコープで同様）
+```
+
+新店長の影響は `is_new_manager` フラグ（数値特徴量）として入れれば十分。
+パターンの変化があるとしても37日では統計的に学習できる量でない。
+
+## アクション
+**新店長期間 sample_weight は使わない。** train_poolのweightパラメータを削除:
+```python
+# ❌ 不要かつ無効
+train_pool = Pool(..., weight=df_train["sample_weight"])
+
+# ✅ シンプルに
+train_pool = Pool(df_train[ALL_FEATURES], label=df_train["diff_coins_normalized"], cat_features=cat_indices)
+```
+
+---
+id: is-far-corner-reversed-section-bug
+trigger: "is_far_corner（壁側角番フラグ）をmachine_layoutから計算するとき"
+confidence: 0.97
+scope: global
+domain: ml-feature-engineering
+source: user-ground-truth
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# is_far_cornerの定義: rank_from_max==1 は reversed_section で誤動作する
+
+## 背景
+みとや大森町店の台723-733島は `is_reversed_section=1`（台番号の昇順と通路側の向きが逆）。
+この島では台723が壁側角番、台733が通路側角番（rank_from_aisle=1）。
+
+`rank_from_max == 1` で is_far_corner を定義すると、
+reversed_section の通路側角番（733）に is_far_corner=1 が立ってしまう誤り。
+
+## アクション
+**セクション内 rank_from_aisle の最大値** で is_far_corner を定義する:
+```python
+# ❌ 誤り（reversed_sectionで通路側に誤フラグが立つ）
+df["is_far_corner"] = (df["rank_from_max"] == 1).astype(int)
+
+# ✅ 正しい
+section_max_aisle = df.groupby("section")["rank_from_aisle"].transform("max")
+df["is_far_corner"] = (df["rank_from_aisle"] == section_max_aisle).astype(int)
+```
+
+todayのDataFrameにも同様に適用:
+```python
+today_sec_max = today.groupby("section")["rank_from_aisle"].transform("max")
+today["is_far_corner"] = (today["rank_from_aisle"] == today_sec_max).astype(int)
+```
+
+## 例
+723-733島（is_reversed_section=1）での比較:
+```
+台733: rank_from_aisle=1（通路側）, rank_from_max=1 → ❌ is_far_cornerが誤って立つ
+台723: rank_from_aisle=17（壁側）, rank_from_max=17 → ✅ is_far_cornerが正しく立つ
+```
+
+---
+id: mitoya-20260607-top-predictions-result
+trigger: "みとや大森町店 2026-06-07（日曜, DD=7）の台選択参考"
+confidence: 0.75
+scope: hall-specific
+hall: mitoya
+domain: operational-prediction
+source: ml-prediction
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 2026-06-07（日曜DD=7）みとや予測: 東京喰種×574-590とビッグドリーム×624-640が最有力
+
+## 背景
+CatBoost GPU（x_dayスコープ, B案walk-forward集約特徴量, 36特徴量）による予測。
+モデル: ml/prediction/mitoya_daily_prediction.py
+バリデーション: Spearman=0.2936, hit@3=0.0556, prec25=0.4545
+
+モデル予測 TOP20から抜粋:
+```
+1位:  台574  東京喰種                      (574-590, 通路角番, 末尾4, pred+1479)
+2位:  台633  ビッグドリーム THE GOLDEN PUSHER (624-640, +951)
+3位:  台634  同上                           (624-640, +931)
+4位:  台632  同上                           (624-640, +841)
+5位:  台631  同上                           (624-640, +803)
+6位:  台581  東京喰種                       (574-590, +767)
+7位:  台587  東京喰種                       (574-590, 末尾7, +765)
+8位:  台540  ミリオンゴッド‐神々の軌跡‐     (540-556, 通路角番, +765)
+9位:  台674  マイジャグラーV               (658-674, 通路角番, +758)
+```
+
+ドメイン知識との整合:
+- 574-590×末尾2がInstinct最強安定セル → ML予測でも574（末尾4）が全体1位
+- ビッグドリーム（624-640）の複数台ランクインは新発見 → 624-640セクション全体の設定集中可能性
+- マイジャグラーV 角番1（674, 641）は上位入り → Instinct「7系土曜/4系月曜」と異なる曜日・DDだが機種力あり
+
+セクション別ベスト台:
+```
+574-590: 台574（東京喰種, 通路角番, +1479）
+624-640: 台633（ビッグドリーム, +951）
+540-556: 台540（ミリオンゴッド, 通路角番, +765）
+658-674: 台674（マイジャグラーV, 通路角番, +758）
+```
+
+## アクション
+運用優先順:
+1. **台574（東京喰種, 574-590通路角番, 末尾4）** を第1優先
+2. **624-640セクション（ビッグドリーム）複数台** を稼働状況次第で追加候補
+3. **台540（ミリオンゴッド, 通路角番）** を第3候補
+4. ジャグラー台では **台674（マイジャグラーV, 658-674通路角番）**
+
+注意: hit@3 = 0.0556（1/18日でTOP3中1台一致）。MLのみで判断せずInstinctと組み合わせる。

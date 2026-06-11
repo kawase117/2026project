@@ -1,0 +1,240 @@
+---
+id: poco-format-three-variants
+trigger: "ぽこデータを新たに抽出・処理するとき、または月次更新でMDファイルを追加するとき"
+confidence: 0.97
+scope: project-specific
+domain: data-pipeline
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ぽこMDファイルは3種類のフォーマットが混在する
+
+## 背景
+docs/ぽこデータ抽出/ 配下のMDファイルは月によってフォーマットが異なる：
+- **Format A（7〜1月）**: CSV形式（カンマ区切り、diff/contentが別カラム）
+- **Format B（2〜4月）**: Markdownテーブル（`|`区切り、`**bold**`、diff/contentが`/`で同一セル）
+- **Format C（5月〜）**: 3行1セット形式（日付行、K7行、K1行の順）
+
+Format B/Cでは差枚と内容が `±xxx / 内容文字列` で同一セルに入っている。
+
+## アクション
+抽出スクリプト（rebuild_poco_pipeline.py）は月番号でフォーマットを自動判定。
+新しい月を追加するときは MONTH_MAP への追記と、フォーマット判定の確認が必要。
+
+## 例
+```
+Format A: 1日(月),+182500,全→ファンキー、新鬼武者3,...
+Format B: | **1日(月)** | **+182,500** / 全→ファンキー、新鬼武者3 | ... |
+Format C:
+  1日(水)
+  +204,400 / 全→東リベ、L炎炎2
+  +55,300 / 全→ファンキー、アズレン
+```
+
+---
+id: poco-l-prefix-means-sumasuro
+trigger: "ぽこ報告の機種略称に L または S のプレフィックスが付いているとき"
+confidence: 0.95
+scope: project-specific
+domain: pachinko-domain-knowledge
+source: user-ground-truth
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ぽこ略称の L = スマスロプレフィックス、S = 旧タイプ
+
+## 背景
+ぽこ報告で機種名に付くアルファベットプレフィックスの意味（ユーザー確認済み）：
+
+| プレフィックス | 意味 | 例 |
+|------------|------|----|
+| `L` | スマスロ（新型AT版） | L炎炎→スマスロ炎炎ノ消防隊、L炎炎2→スマスロ炎炎ノ消防隊2、Lカバネリ→甲鉄城のカバネリ 海門 |
+| `S` | 旧タイプ | S炎炎→炎炎ノ消防隊（旧版）、Sこのすば→この素晴らしい世界に祝福を！（旧版） |
+
+注意：旧タイプを「A型」と表現しないこと（ユーザー指摘済み）。
+
+## アクション
+新しい `L〇〇` の略称が出たら DB で `スマスロ〇〇` を検索してマッピング。
+`S〇〇` は旧版DBを検索。必ずDBの稼働日と照合して確定させること。
+
+## 例
+```python
+# Sこのすば: DB照合で3日間とも「この素晴らしい世界に祝福を！」が稼働 → 旧版確定
+# L炎炎: DB照合で「スマスロ炎炎ノ消防隊」が稼働 → スマスロ版確定
+conn = sqlite3.connect(DB_PATH)
+df = pd.read_sql_query(
+    'SELECT machine_name, avg_diff_coins FROM daily_machine_type_summary WHERE date=?',
+    conn, params=[date_str])
+```
+
+---
+id: poco-mapping-db-match-errors
+trigger: "ぽこマッピングCSVのdb_matchカラムを参照するとき、またはnormalized名がDBに存在しないとき"
+confidence: 0.92
+scope: project-specific
+domain: data-quality
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# マッピングCSVのdb_matchに短縮名・誤名が入っているケースが複数存在する
+
+## 背景
+`poco_machine_mapping_TRULY_FINAL.csv` のdb_matchカラムに不正確な名称が入っている：
+
+| poco_machine | 誤db_match | 正しいDB名 |
+|------------|-----------|---------|
+| GE | ゴッドイーター | ゴッドイーター リザレクション |
+| ガルパン | ガールズ&パンツァー | ガールズ&パンツァー 最終章 |
+| マギレコ | マギアレコード | マギアレコード 魔法少女まどか☆マギカ外伝 |
+| エウレカART | パチスロ交響詩篇... | 交響詩篇...（パチスロなし・ダッシュの種類が違う） |
+| MULTIPLE_MACHINES | / 区切り | \| 区切りを期待していたが実際は / で区切られていた |
+
+## アクション
+正規化後に必ず `all_norm - all_db` で未存在名を検出する：
+```python
+not_in_db = sorted(all_norm - all_db)
+# → 0件になるまでPATCH_FOUND / POST_CORRECTで修正
+```
+PATCH_FOUNDで元マッピングを上書き、POST_CORRECTで正規化後の名称を修正：
+```python
+POST_CORRECT = {
+    'ガールズ&パンツァー': 'ガールズ&パンツァー 最終章',
+    'パチスロ交響詩篇エウレカセブン...': '交響詩篇エウレカセブン...',
+}
+```
+
+---
+id: poco-abbreviation-patterns-2026
+trigger: "2026年以降のぽこ報告に新しい略称が登場したとき"
+confidence: 0.90
+scope: project-specific
+domain: pachinko-domain-knowledge
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ぽこ略称の命名パターンと対応DB名一覧（2026年版）
+
+## 背景
+2月〜5月の新規データ処理で確認した略称と対応DB名。
+これらはマッピングCSVに存在しなかったためPATCH_FOUNDに追加した。
+
+## アクション
+新略称が出たときの解決手順：
+1. DB `daily_machine_type_summary` でキーワード検索
+2. ぽこ報告日にDBで実際に稼働していたか照合
+3. PATCH_FOUND に追加（rebuild_poco_pipeline.py）
+
+主要マッピング（2026年追加分）：
+
+| 略称 | DB正式名 | 初出 |
+|------|---------|------|
+| 新鬼3 | 新鬼武者3 | 旧台 |
+| 北斗転生 | 北斗の拳 転生の章2 | 2026/01 |
+| Lカバネリ | 甲鉄城のカバネリ 海門(うなと)決戦 | 2026/03 |
+| L炎炎 | スマスロ炎炎ノ消防隊 | 既存 |
+| L炎炎2 | スマスロ炎炎ノ消防隊2 | 2026/02 |
+| S炎炎 | 炎炎ノ消防隊（旧版） | 既存 |
+| ステライト | 少女☆歌劇 レヴュースタァライト ‐The SLOT‐ | 旧台 |
+| ヴヴヴ / ヴヴヴ2 | 革命機ヴァルヴレイヴ / ヴァルヴレイヴ2 | 旧台 |
+| ダリフラ | ダーリン・イン・ザ・フランキス | 旧台 |
+| ゾンサガ | ゾンビランドサガ | 旧台 |
+| 東リベ | 東京リベンジャーズ | 旧台 |
+| 攻殻機動隊 | 攻殻機動隊 | 2026/02 |
+| 刃牙 | 範馬刃牙 | 2026/02 |
+| サンダー | スマスロ サンダーV | 2026/03 |
+| ウルミラ | ウルトラミラクルジャグラー | 旧台 |
+| Sこのすば | この素晴らしい世界に祝福を！（旧版） | DB照合で確定 |
+| パンドリ | バンドリ！ | 旧台 |
+| シェイクBT | SHAKE BONUS TRIGGER | 旧台 |
+| ディスク2 | ディスクアップ2 | 旧台 |
+| ギルクラ2 | ギルティクラウン2 | 旧台 |
+| バイオRE2 | バイオハザード RE:2 | 旧台 |
+| わた婚 | わたしの幸せな結婚 | 旧台 |
+| いざ審判 | いざ！番長 | 旧台 |
+
+## 例
+```python
+# DB照合手順
+conn = sqlite3.connect('db/マルハンメガシティ2000-蒲田7.db')
+matches = pd.read_sql_query(
+    "SELECT machine_name FROM daily_machine_type_summary WHERE date=? AND machine_name LIKE ?",
+    conn, params=[date_str, f'%キーワード%'])
+```
+
+---
+id: poco-bracket-comma-parsing-fix
+trigger: "ぽこ報告の全/ハーフ機種名に括弧（）が含まれるとき、または？が機種名中に出るとき"
+confidence: 0.88
+scope: project-specific
+domain: data-pipeline
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 括弧内の「、」と「？」セパレータに注意
+
+## 背景
+2つのパーシングバグが発見された：
+
+1. **括弧内の読点バグ**: `8にまつわる機種(8台設置、ハッピーVIII、マジハロ8)` を
+   単純に `、` で split すると括弧が壊れる
+
+2. **？セパレータ**: `全→ヴヴヴ2？からくり？` の `？` は「どちらかわからない」の
+   セパレータとして使われており、`、` と同義
+
+## アクション
+```python
+def protect_brackets(s: str) -> str:
+    """括弧内の「、」をプレースホルダーで保護"""
+    result, depth = [], 0
+    for ch in s:
+        if ch in '(（': depth += 1
+        elif ch in ')）': depth -= 1
+        result.append('\x00' if ch == '、' and depth > 0 else ch)
+    return ''.join(result)
+
+def clean_full_half(text):
+    text = text.replace('？', '、')   # ？をセパレータに変換
+    text = protect_brackets(text)
+    parts = text.split('、')
+    for p in parts:
+        p = p.replace('\x00', '、')   # 括弧内の読点を復元
+        ...
+```
+
+---
+id: poco-stealth-machine-trends-2026q1
+trigger: "ステルス機種の最新トレンドを評価するとき（2026年Q1基準）"
+confidence: 0.82
+scope: project-specific
+domain: operational-strategy
+source: db-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 2026年Q1時点のステルス機種トレンド（poco_data_v5 + DB照合）
+
+## 背景
+poco_data_v5.csv（7月2025〜5月2026）とDB（〜2026/05/30）の照合による分析。
+ステルス機種 = ぽこ未報告でTop3に入っていた機種（MIN 3回以上）。
+DB最近差枚 = 2026/04/01以降の平均1台差枚。
+
+## アクション
+月別出現回数（202601基準）でトレンド判定：
+
+| 機種 | 累計 | 202601 | DB最近差枚 | 判定 |
+|------|:---:|:---:|:---:|------|
+| バーニングエクスプレス (K7) | 10 | 7↑↑ | +389 | 急増中・最注目 |
+| シャーマンキング (K7) | 26 | 10↑ | +316 | 増加継続 |
+| アズールレーン (K1) | 26 | 9↑ | -7 | 頻度高いが最近不振 |
+| デビル メイ クライ5 (K1) | 23 | 6 | +221 | 安定継続 |
+| 戦国乙女4 (K1) | 17 | 4 | +445 | DB最近最強クラス |
+
+消滅済み（追わないこと）：押忍！番長4、L麻雀物語、バイオ5 (K7)、いざ！番長 (K1: 202601=0)
+
+マグレ判定（ステルスでない）：絶対衝激IV（差枚-507）、沖ドキ系（差枚マイナス）
+
+---

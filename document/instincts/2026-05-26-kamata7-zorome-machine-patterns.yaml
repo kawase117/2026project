@@ -2,6 +2,8 @@
 id: zorome-machine-末尾-efficacy-patterns
 trigger: "蒲田7の立ち回り戦略を設計するとき、同じ末尾グループの台を選ぶ際に"
 confidence: 0.92
+scope: hall-specific
+hall: kamata7
 domain: ml-strategy
 source: session-observation
 project_id: 2026project
@@ -37,6 +39,8 @@ project_name: pachinko-analyzer
 id: weekday-dependent-zorome-strategy-variation
 trigger: "蒲田7の末尾ゾロ目立ち回りを日別・イベント別に最適化するとき"
 confidence: 0.88
+scope: hall-specific
+hall: kamata7
 domain: ml-strategy
 source: session-observation
 project_id: 2026project
@@ -83,6 +87,8 @@ project_name: pachinko-analyzer
 id: ゾロ目-adjacent-number-patterning
 trigger: "蒲田7が意図的に高設定投入するパターンを推測するとき"
 confidence: 0.85
+scope: hall-specific
+hall: kamata7
 domain: ml-strategy
 source: session-observation
 project_id: 2026project
@@ -130,6 +136,8 @@ project_name: pachinko-analyzer
 id: cluster-machines-mask-individual-zorome-efficacy
 trigger: "蒲田7の末尾7,8のゾロ目台が弱い理由を理解するとき"
 confidence: 0.90
+scope: hall-specific
+hall: kamata7
 domain: ml-strategy
 source: session-observation
 project_id: 2026project
@@ -182,6 +190,8 @@ project_name: pachinko-analyzer
 id: パチスロホール-weekday-event-investment-strategy
 trigger: "蒲田7の高設定投入戦略の全体像を推測するとき"
 confidence: 0.87
+scope: hall-specific
+hall: kamata7
 domain: ml-strategy
 source: session-observation
 project_id: 2026project

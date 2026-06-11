@@ -1,0 +1,168 @@
+---
+id: always-2fn-beats-all-calendar-rules
+trigger: "セグメント選択戦略を設計するとき、またはカレンダールールを逸脱判断に使おうとするとき"
+confidence: 0.98
+scope: hall-specific
+hall: kamata7
+domain: domain-strategy
+source: data-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 「常に2F_N」がカレンダールール全てに勝つ（蒲田7）
+
+## 背景
+deviation_rule_eval.csv（holdout 150日）の uplift 評価結果：
+- always_no（常に2F_N）: 0/日（基準）
+- dd_topk: -2,032/日
+- weekday_high: -5,975/日
+- calendar_union: -7,047/日
+- always_yes（常に3F_N）: -9,731/日
+
+2F_N は holdout 150日中 69.3% の日で最上位セグメント。
+DD・曜日・イベントを使ったどの逸脱ルールも、常に2F_N にいることより期待値が低い。
+
+## アクション
+蒲田7においては：
+- セグメント選択 = 常に2F_N が最適戦略（現時点）
+- カレンダールールによる逸脱判断は採用しない
+- 新しい逸脱ルールを提案されたとき、まず uplift 評価で検証する
+
+---
+id: deviation-rule-uplift-cost-is-large
+trigger: "逸脱ルールのコストを評価するとき"
+confidence: 0.97
+scope: hall-specific
+hall: kamata7
+domain: domain-strategy
+source: data-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 逸脱ルールのコストは「差枚/日」で定量化できる
+
+## 背景
+always_yes（常に3F_N）= -9,731/日は：
+- 2F_Nを完全に外した場合の1日あたりの期待損失
+- 150日合計では約-146万差枚
+
+各ルールのコスト比率：
+- dd_topk: -2,032/日 → always_yes の 21%
+- weekday_high: -5,975/日 → 61%
+- calendar_union: -7,047/日 → 72%
+
+calendar_union はほぼ always_yes 相当のコスト。
+これは「全日の約78%に逸脱フラグを立てている」という recall 過剰と一致する。
+
+## アクション
+新しい逸脱ルールの評価は必ず uplift（差枚/日）を計算する。
+Recall・Precision・Accuracy では実運用コストが見えない。
+uplift = 実際に座ったセグメントの diff_coins - 常に2F_Nにいた場合の diff_coins
+
+---
+id: 2fn-wins-big-when-it-wins
+trigger: "2F_N の支配率を評価するとき、または他セグメントとの差を考えるとき"
+confidence: 0.95
+scope: hall-specific
+hall: kamata7
+domain: domain-strategy
+source: data-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 2F_N は勝率だけでなく勝ち幅も大きい
+
+## 背景
+2F_N hit率 69.3% のみなら always_yes は約 -3,000/日 程度が期待値。
+実際は -9,731/日 と大幅に大きい。
+
+この差は「2F_Nが勝つ日は差枚規模も大きく、
+3F_Nが勝つ日は差枚差が小さい」ことを示す。
+ホールが 2F_N に高設定を集中するとき、その日の 2F_N の総差枚は他セグメントを大きく引き離す。
+
+## アクション
+単純な hit率だけで価値を判断しない。
+「2F_N が上位に来た日の差枚優位幅」を可視化して
+セグメント別の「勝ち方」の違いを把握することが重要。
+
+---
+id: grid-search-exposes-narrow-space-artifacts
+trigger: "限定的な探索で見つかったシグナルを全空間に拡張するとき"
+confidence: 0.99
+scope: hall-specific
+hall: kamata7
+domain: prediction-evaluation
+source: data-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 狭い探索空間で有意だった発見は全空間探索で消える
+
+## 背景
+lag=14 × 2F_N × digit=8 の発見経緯：
+1. is_positive autocorr で raw hit → p_raw=0.00066
+2. lag=14 に絞った検定 → FDR=0.026 で有意
+3. 全 expert × 全 digit × 複数 lag のグリッド探索 → FDR補正後0件
+
+探索空間を広げると多重検定負荷が上がり、有意が消えた。
+「狭い仮説空間でFDR有意」は「全空間でも有意」を保証しない。
+
+## アクション
+限定探索で有意な発見が出ても、以下の手順で確認する：
+1. 探索空間を全組み合わせに広げて再検定
+2. 全空間でもFDR後に有意なら「探索的発見」として保持
+3. 全空間で消えるなら「多重検定アーティファクト」と判定して棄却
+
+---
+id: classification-metrics-mislead-for-uplift-problems
+trigger: "セグメント逸脱予測や二値分類の精度をrecall/precisionで評価しようとするとき"
+confidence: 0.97
+scope: hall-specific
+hall: kamata7
+domain: prediction-evaluation
+source: data-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Recall高・Precision低のルールは差枚期待値でマイナスになりうる
+
+## 背景
+calendar_union ルールの評価：
+- recall=0.87, precision=0.34, accuracy=44-47%
+- mean_uplift_vs_2fn = -7,047/日
+
+recall=0.87 は「良い」に見えるが、全日の78%にフラグを立てており
+2F_Nを頻繁に離れるコストが蓄積してマイナスになる。
+多数派クラスが明確に優位な問題では分類 accuracy は misleading。
+
+## アクション
+実運用に直結する問題では、分類指標より uplift を主評価にする：
+- uplift = actual_diff(予測に従った場合) - baseline_diff(常に多数派)
+- 分類精度が高くても uplift がマイナスなら採用しない
+
+---
+id: cross-hall-strategy-comparison-is-domain-invalid
+trigger: "複数ホールを横断してパターンを検証しようとするとき"
+confidence: 0.96
+scope: hall-specific
+hall: kamata7
+domain: domain-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 異なる経営主体のホールは設定戦略を共有しない
+
+## 背景
+「他ホールでもlag=14パターンが再現するか」という検証提案に対して
+「系列店でない限り経営戦略を共有する理由がない」という指摘。
+
+同一チェーン/系列店：設定方針が共有される可能性あり（検証価値あり）
+異なる経営主体のホール：設定方針の共有を前提にしてはいけない
+
+## アクション
+複数ホール横断分析を提案するとき、まず確認する：
+1. 対象ホールは同一系列・同一チェーンか？
+2. 系列でない場合、pooling は異質データを混ぜてシグナルを薄める可能性がある
+3. 単ホールでの null 結果を補強したい場合は同系列店のみ対象にする
+

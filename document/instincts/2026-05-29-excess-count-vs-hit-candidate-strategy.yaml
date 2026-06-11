@@ -1,0 +1,180 @@
+---
+id: excess-count-vs-hit-candidate-dual-metrics
+trigger: "when evaluating machine selection strategy: whether to prioritize few-machine locales (high rate) or many-machine locales (more absolute targets)"
+confidence: 0.90
+scope: methodology
+domain: pachinko-strategy
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# excess_count と当たり候補数の戦略的区別
+
+## 背景
+percentile化により「当たり候補」の定義が明確になったが、機種規模による当たり候補数の分布が異なる。
+- 少数機種（2-5台）: 当たり候補率 16.55% だが 絶対数は 0.5台/機種
+- 大数機種（16-50台）: 当たり候補率 12.26% だが 絶対数は 3.7台/機種
+
+一見矛盾する結果を統一的に理解することが、効率的な機種選択に不可欠。
+
+## アクション
+2つの視点を分離して評価：
+
+### 視点A：当たり候補「割合」を重視（ハズレリスク最小化）
+```
+少数機種を優先
+- 当たり候補率 16.55% > 大数機種 12.26%
+- 低設定混在率が低い可能性
+- 試行台数が少ないから、統計的ノイズが少ない
+```
+
+### 視点B：当たり候補「絶対数」を重視（選択肢最大化）
+```
+大数機種を優先
+- 当たり候補絶対数 3.7台 > 少数機種 0.5台
+- 複数の候補を試せる
+- 1台外れても他にリトライ機会がある
+```
+
+### 最適戦略：2つを組み合わせ
+```
+第1優先：少数機種 × excess_count > 0
+         → 当たり候補率が高い × 複数台投入の確実性
+
+第2優先：大数機種 × excess_count > 0
+         → 絶対数が多い × 複数台投入の確実性
+
+第3優先：当たり候補率高い機種を単独投入でも試す
+         → 統計的信頼度が十分なら 1台投入でもリスク許容
+```
+
+## 例
+蒲田七（2026-05-24）での実装：
+
+**ケースA：少数機種 + excess_count > 0（推奨）**
+```
+かぐや様（10台）
+- 当たり候補数: 4台
+- excess_count: 3台（複数台投入確定）
+- 当たり候補平均差枚: 4,275枚（高い）
+→ 少数機種の当たり候補率を活用 × 店舗の複数台戦略
+→ 信頼度：最高
+```
+
+**ケースB：当たり候補率高いが excess_count = 0（検証段階）**
+```
+虚構推理（5台）
+- 当たり候補数: 2台
+- excess_count: 1台（単独投入に近い）
+- 当たり候補平均差枚: 1,800枚（中程度）
+→ 当たり候補率は高いが、複数台投入の確実性は低い
+→ 信頼度：中
+```
+
+**ケースC：当たり候補でも負けている（警戒）**
+```
+スマスロ ハナビ（5台）
+- 当たり候補数: 2台
+- excess_count: 1台
+- 当たり候補平均差枚: 350枚（低い！マイナス回も含む）
+→ 高回転だが低差枚 = 不発高設定の可能性
+→ 信頼度：低（要検証）
+```
+
+---
+id: few-machine-advantage-rate-vs-count
+trigger: "when deciding between few-machine (2-5台) and many-machine (16-50台) locales on same day"
+confidence: 0.92
+scope: methodology
+domain: pachinko-locale-strategy
+source: session-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 少数機種 vs 大数機種：「率」と「数」の使い分け
+
+## 背景
+蒲田七の日曜分析データ：
+- 少数機種（2-5台）：当たり候補率 16.55%（→ 1機種平均 0.5台）
+- 大数機種（16-50台）：当たり候補率 12.26%（→ 1機種平均 3.7台）
+
+「率が高い = 選択肢が多い」ではなく「率が高い = 外れた時の損失が大きい」という逆説が存在。
+その一方で「絶対数が多い = 統計的に安定」というメリットがある。
+
+## アクション
+目的別に戦略を切り替え：
+
+### 目的1：「確実に当たりやすい機種を1台」見つけたい
+→ **少数機種を優先**（当たり候補率 16.55%）
+- ハズレのリスクは高いが、当たった時の期待値が高い
+- 試行機種数が限定されている日は、「厳選」が有効
+
+### 目的2：「複数の選択肢から選びたい」
+→ **大数機種を優先**（絶対数 3.7台）
+- 当たり候補率は低いが、複数機種から試せる
+- 外れた時のリカバリー機会がある
+
+### 目的3：「複数台投入の戦略を活用したい」
+→ **少数機種 × excess_count > 0 を最優先**
+- 少数機種の当たり候補率 + 店舗の複数台投入
+- 期待値が最も高い組み合わせ
+
+## 例
+蒲田七で「本日1機種だけ打つ」という制約がある場合：
+
+| シナリオ | 推奨 | 理由 |
+|--------|------|------|
+| 予測が確実 | 少数機種 | 当たり候補率16.55%で厳選 |
+| 予測に不確実性 | 大数機種 | 複数候補から選択可能 |
+| excess_count > 0がある | 少数機種 | 複数台投入 × 高当たり率 |
+| excess_count = 0のみ | 当たり候補率高い任意機種 | 統計的信頼度で判定 |
+
+---
+id: model-score-priority-over-correction-rules
+trigger: "when choosing between high-model-score tail with negative zorome-correction vs low-model-score tail with positive zorome-correction"
+confidence: 0.88
+scope: methodology
+domain: pachinko-prediction-strategy
+source: session-discussion
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# モデルスコア優先の原則
+
+## 背景
+予測モデルから複数の末尾候補が得られた時、「モデルスコア」と「ゾロ目Correction」のどちらを優先するか問題。
+- 高モデルスコア × 負のゾロ目Correction
+- 低モデルスコア × 正のゾロ目Correction
+
+ゾロ目Correctionは「統計的に証明できない」結果が出ているため、モデルスコア（確信度）を最優先すべき。
+
+## アクション
+**原則：モデルスコア > Correction系パラメータ**
+
+優先順位：
+1. **モデルスコア** — 機械学習の予測信頼度（最優先）
+2. **複数台投入（excess_count）** — 店舗の戦略的意思（次優先）
+3. **ゾロ目Correction** — 統計的信頼度不十分（参考程度）
+
+理由：
+- モデルスコアは実績ベースで訓練された確信度
+- ゾロ目Correctionはパターン観測だが、因果性が証明されていない
+- TOP候補を外した場合、Correctionの効果は消滅する（walk-forward検証済み）
+
+## 例
+予測が以下の場合：
+
+```
+3F_N 末尾1: モデルスコア 0.72, ゾロ目Correction -0.05
+3F_N 末尾3: モデルスコア 0.68, ゾロ目Correction +0.12
+2F_N 末尾1: モデルスコア 0.65, ゾロ目Correction +0.08
+```
+
+**推奨順序：**
+1. **3F_N 末尾1**（0.72スコア：最優先）
+2. 3F_N 末尾3（0.68スコア × 正Correction）
+3. 2F_N 末尾1（0.65スコア × 正Correction）
+
+負のCorrectionは無視（モデルスコアで十分に上回っているため）
+
+---

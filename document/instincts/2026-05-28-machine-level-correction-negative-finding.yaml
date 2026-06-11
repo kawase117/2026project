@@ -2,6 +2,7 @@
 id: machine-level-correction-does-not-hold
 trigger: "ゾロ目台を台番号レベルで個別に選別しようとしているとき"
 confidence: 0.88
+scope: methodology
 domain: ml-strategy
 source: session-observation
 project_id: 2026project
@@ -48,6 +49,7 @@ project_name: pachinko-analyzer
 id: zorome-correction-granularity-last-digit-is-optimal
 trigger: "ゾロ目補正テーブルの粒度（末尾レベル vs 台番号レベル）を決めるとき"
 confidence: 0.87
+scope: methodology
 domain: ml-strategy
 source: session-observation
 project_id: 2026project
@@ -86,6 +88,7 @@ correction_table = df.groupby(['weekday', 'machine_number']).agg(...)
 id: large-avgdiff-variance-is-noise-not-signal
 trigger: "個別台の平均差枚に大きなバラつきを発見して特定台を狙おうとしているとき"
 confidence: 0.85
+scope: methodology
 domain: ml-strategy
 source: session-observation
 project_id: 2026project

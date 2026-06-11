@@ -1,0 +1,193 @@
+---
+id: regret-objective-backfires-on-avg-diff
+trigger: "when considering regret minimization as the primary optimization objective for hall selection"
+confidence: 0.93
+scope: methodology
+domain: ml-optimization
+source: session-observation-20260602
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# regret最適化を主目的にするとavg_diffが悪化する
+
+## 背景
+regret（oracle差）を最小化する目的関数を導入したところ、
+蒲田7の選択率は70%→47%に是正されたが、
+chosen_avg_diff_mean が 123.18 → 102.94 に低下し、
+ベースライン（historical_best_fixed=111.8）を下回った。
+
+原因：regret最小化はオラクル日のホールに寄ろうとするが、
+オラクル日のホールは事前予測が難しい。
+結果として予測可能なシグナルのあるホールではなく
+ノイズの多いホールを選ぶ挙動になる。
+
+## アクション
+regret_mean は【監視指標】として並行追跡するが、
+最適化の主目的には使わない。
+主目的 = chosen_avg_diff_mean の最大化。
+regret が改善しているのに avg_diff が下がるなら、
+それは oracle に近いが弱いホールを選んでいるサイン。
+
+## 例
+regret最適化後: chosen_avg_diff=102.9, regret=161.8
+前モデル:       chosen_avg_diff=123.2, regret≈141.5
+→ regretが増加したうえにavg_diffも悪化という最悪ケース。
+
+---
+id: hard-concentration-cap-hurts-performance
+trigger: "when adding a hard max_share constraint to reduce hall concentration bias"
+confidence: 0.91
+scope: methodology
+domain: ml-regularization
+source: empirical-20260602
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Hard集中制約は目的関数と衝突しavg_diffを下げる
+
+## 背景
+蒲田7への70%集中を解消するため max_share=65% の hard cap を導入したところ、
+chosen_avg_diff_mean が 123.18 → 105.45 に低下した。
+さらに50%に締めると悪化する公算が高い。
+
+理由：hard cap が avg_diff 最大化の目的関数と正面衝突する。
+「集中しすぎを避けたい」という意図は正しいが、
+cap 値を固定することは「適切な集中度」を仮定することになり、
+最適解を制約外に追いやる。
+
+## アクション
+集中度の制約は hard cap ではなく tuning パラメータとして扱う。
+目的関数に soft penalty として組み込み、
+tuning 期間でその係数を最適化させる。
+
+cap 値の候補グリッド例：[0.40, 0.50, 0.60, 0.70, 0.80]（tuning対象）
+
+## 例
+❌ 悪い例：max_share=0.50 固定（avg_diff が必ず下がる）
+✅ 良い例：penalty = λ × max(0, hall_share - cap)² をgridsearch
+
+---
+id: calendar-signal-bonus-must-be-tuned-not-hardcoded
+trigger: "when implementing hall-specific calendar bonuses from Stage 1 signal results"
+confidence: 0.90
+scope: methodology
+domain: feature-engineering
+source: session-observation-20260602
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# カレンダーシグナルの加点は係数探索で。特定ホール固定ブーストは過学習
+
+## 背景
+Stage 1 でARROW・楽園・ヒロキが strong_zorome（日==月）で精度100%を示した。
+この結果から「ARROW/楽園/ヒロキには strong_zorome 日に固定ブースト」
+という実装を提案したが、これは過学習のリスクがある。
+
+Stage 1 の発見は「selection 期間（2025-07〜12）で検出されたシグナル」であり、
+特定ホールへの永続ルールとして固定するものではない。
+ホール固有ルールは他ホール・他期間に転用できない（hall-independence-principle）。
+
+## アクション
+カレンダー信号の加点は以下の形で実装する：
+- 特徴量として「このホールのDD-topk日か」「今日は strong_zorome か」を入力
+- 係数（α, β, γ）は tuning 期間でグリッド探索
+- ホール別固定ブーストではなく、signal_class（detected/undetected）ごとに係数を持つ
+
+## 例
+❌ 悪い例：if hall == 'ARROW' and is_strong_zorome: score += 2.0
+✅ 良い例：score += tuned_zorome_coeff[signal_class] × is_strong_zorome_today
+
+---
+id: stage1-signals-are-calendar-not-temporal
+trigger: "when deciding whether to add lag/rolling autocorrelation features for hall selection"
+confidence: 0.88
+scope: methodology
+domain: feature-engineering
+source: empirical-20260602
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Stage 1: 有意シグナルはカレンダー由来がほぼ全て。時系列lag特徴量の効果は限定的
+
+## 背景
+9ホール × 複数テスト（ランク自己相関 lag=1/2/3/7, カレンダー精度）を実施した結果：
+- 有意シグナル18件のうち、ほぼ全てが cal_prec_dd_topk または cal_prec_strong_zorome
+- ランク自己相関（lag=1/2/3/7）で Bonferroni 後有意は非常に少数
+- 時系列的な momentum/anti-momentum は弱い
+
+したがって lag/rolling 特徴量の ROI は低いと予測される。
+
+## アクション
+lag/rolling 特徴量を追加する場合のガイドライン：
+1. 単純ローリング平均（7d, 14d の avg_diff 生値）→ 追加しない（ノイズ学習リスク）
+2. drought_days_since_last_ge200 → 1つだけ試して効果測定してから判断
+3. lag > 30d の特徴量 → 追加しない（selection=178日でサンプル大量消失）
+4. 必ず shift(1) を適用してリーク防止
+
+## 例
+優先度：カレンダー係数最適化 >> drought lag >> rolling平均（採用不推奨）
+
+---
+id: random-baseline-negative-hall-selection-critical
+trigger: "when evaluating whether hall selection strategy matters or setting performance expectations"
+confidence: 0.97
+scope: domain-general
+domain: ml-evaluation
+source: empirical-20260602
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ランダムホール選択は赤字（-7.2）：どのホールに行くかは非常に重要
+
+## 背景
+holdout 150日でベースライン比較を実施した結果（2026-06-02）：
+- ランダム選択: chosen_avg_diff = -7.15（赤字）
+- historical_best_fixed: 111.8
+- 現在モデル: 123.2
+- oracle: 264.7
+
+ランダムが赤字の理由：9ホール中の多くが平均的にマイナス差枚。
+少数の強いホールが正の平均を持つため、選択が重要。
+
+## アクション
+モデル評価では必ずランダムベースライン（avg_diff≈-7）との比較を出す。
+historical_best_fixed（avg_diff≈112）を最低限超えることが実用基準。
+ランダムを超えるだけでは不十分：hist_best を超えてから初めてMLの価値を主張できる。
+
+## 例
+ランダム:-7 / hist_best:112 / 現モデル:123 / oracle:265
+現モデルの hist_best に対する改善：+11（holdout 150日）≈ +10%
+
+---
+id: spearman-0.33-confirms-predictive-signal
+trigger: "when doubting whether the model has real predictive power for hall ranking"
+confidence: 0.87
+scope: methodology
+domain: ml-evaluation
+source: empirical-20260602
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# spearman_daily_mean=0.33：モデルに実質的な予測力が存在する
+
+## 背景
+allhall_daily_decision_summary で spearman_daily_mean = 0.3292 が確認された。
+これはモデルの日次ホールランキングと実際のホール順位に
+0.33 の Spearman 相関があることを意味する。
+
+これは予測可能なシグナルが存在することの証拠であり、
+Stage 1 の signal_detected 結果（7/9ホール）とも一致する。
+モデルの問題は予測能力の欠如ではなく、
+目的関数・制約の設計にある。
+
+## アクション
+spearman_daily_mean を定期的なモニタリング指標に追加する。
+現在の 0.33 をベースラインとして記録し、改善施策後に上昇するかを追跡。
+0.20 未満に低下したらモデル劣化の警告サインとして扱う。
+
+## 例
+spearman=0.33 → 予測力あり（問題はモデルではなく最適化設計）
+avg_diff=103 → 目的関数・制約の問題
+→ アプローチ：モデル構造の変更ではなく最適化設計の修正を優先
+
+---

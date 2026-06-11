@@ -1,0 +1,195 @@
+---
+id: dd-vs-xday-definition-clarification
+trigger: "when designing aggregation axes around date patterns (DD, Xのつく日, 末尾)"
+confidence: 0.98
+scope: domain
+domain: db-design
+source: session-interview-20260605
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# DDとXのつく日は異なる概念
+
+## 背景
+「DD別」と「Xのつく日」を混同しやすい。このプロジェクトでの定義：
+
+- **DD** = 日付の日（1〜31の具体的な日番号）
+  - 4日、14日、24日はそれぞれ別のDD
+  - 月内に**1回だけ**出現する
+
+- **Xのつく日（date_digit）** = 日付末尾の数字（0〜9）
+  - 4のつく日 = 4日・14日・24日（月に約3回出現）
+  - `daily_hall_summary.last_digit` カラムに格納済み
+
+## アクション
+設計文書・コード内で「DD」と書く場合は必ず（1-31）か（末尾0-9）かを明示する。
+月次集計の軸として「DD（1-31）」を使う場合、月1回しか出現しないため月次テーブルとしての意味がない。
+
+## 例
+monthly_trend_dd（DDを軸） → sample_count=1/月 → 月次集計は意味なし。削除。
+monthly_trend_date_digit（日付末尾0-9を軸） → sample_count≈3/月 → 有効。
+
+---
+id: monthly-aggregation-validity-by-sample-count
+trigger: "when deciding whether to pre-compute monthly aggregates for a given axis"
+confidence: 0.92
+scope: methodology
+domain: db-design
+source: session-interview-20260605
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 月次集計の有効性は月内サンプル数で判断する
+
+## 背景
+月次トレンドDB設計時、どの軸を月次集計する価値があるか検討した。
+
+| 軸 | 月内出現回数 | 有効？ |
+|---|---|---|
+| DD（日番号1-31） | 1回 | 不要 |
+| Xのつく日（末尾0-9） | 約3回 | 低信頼・pre-compute価値あり |
+| 曜日（月〜日） | 約4-5回 | 有効 |
+| 台末尾（0-9） | 約30日×全台数 | 高信頼 |
+| 機種別 | 30日分 | 高信頼 |
+
+台末尾は「末尾が特定の数字の台」が毎日全台存在するため、月30日分の集計になる。
+DDの「月1回」と混同しないこと。
+
+## アクション
+月次集計軸を新たに追加する場合、まず「その軸の値は月内に何回出現するか」を確認する。
+sample_count=1の場合、月次集計は不要。sample_countが3以上あれば集計の意味がある。
+
+## 例
+月次テーブルの `sample_count` カラムを必ず入れる。
+ML利用時: `sample_count < 3` の行は信頼性が低いとして重みを下げる。
+
+---
+id: monthly-trend-calculator-pattern
+trigger: "when adding a new pre-computation step to the daily DB update pipeline"
+confidence: 0.90
+scope: implementation
+domain: db-design
+source: session-interview-20260605
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 月次集計はCalculatorクラスパターンで日次パイプラインに統合する
+
+## 背景
+既存パイプライン（`process_new_date()`）は SummaryCalculator / RankCalculator /
+DateInfoCalculator を順番に呼ぶ構造。MonthlyTrendCalculatorも同じパターンで追加できる。
+
+パイプライン順序の制約：
+- `monthly_trend_machine_digit_*` は `last_digit_summary_*` のランク列を参照する
+- RankCalculator.calculate_ranks_for_date() の後に呼ぶこと
+
+## アクション
+新しい集計処理を追加するとき：
+1. `XxxCalculator(db_path)` クラスを `database/xxx_calculator.py` に新規作成
+2. `incremental_db_updater.py` の `__init__` に追加
+3. `process_new_date()` の末尾（ランク計算後）に呼び出し追加
+4. `main_processor.py` の `DataImporter` にも同様に追加
+5. `db_setup.py` の `create_database()` に新テーブルのCREATE文を追加
+
+## 例
+```python
+# process_new_date() 内、ランク計算の try/except の後
+try:
+    self.monthly_trend_calc.update_month(date_str)
+except Exception as e:
+    print(f"[WARN] 月次トレンド更新スキップ: {e}")
+return True  # この前に追加
+```
+
+---
+id: machine-type-split-for-all-trend-axes
+trigger: "when designing monthly or periodic aggregation tables for investment pattern tracking"
+confidence: 0.88
+scope: domain
+domain: db-design
+source: session-interview-20260605
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 投入傾向トレンドは機種タイプ別（all/jug/hana/oki/other）に分割する
+
+## 背景
+蒲田七はセグメント別の高設定投入傾向が実証されている（2026-05-27分析）。
+月次トレンドを機種タイプ別に分割することで「4のつく日はジャグラー系に集中」等の
+仮説検証が可能になる。「全体だけでよい」という判断はセグメント別傾向の見落としリスクがある。
+
+## アクション
+投入傾向を追跡するトレンドテーブルは必ず機種タイプ別
+（_all, _jug, _hana, _oki, _other）の5バリアントを作成する。
+既存の `last_digit_summary_*` と同じパターンに従う。
+
+## 例
+monthly_trend_date_digit_all / _jug / _hana / _oki / _other（5テーブル）
+monthly_trend_weekday_all / _jug / _hana / _oki / _other（5テーブル）
+monthly_trend_machine_digit_all / _jug / _hana / _oki / _other（5テーブル）
+計15テーブル
+
+---
+id: median-for-setting-distribution-analysis
+trigger: "when designing metrics for monthly or periodic aggregation of diff_coins"
+confidence: 0.82
+scope: methodology
+domain: db-design
+source: session-interview-20260605
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 中央値はベース設定・最高設定の読み取りに有用
+
+## 背景
+差枚の平均値だけでは分布の形状が分からない。中央値を加えることで：
+- median ≈ mean → 設定が均一に分散
+- median << mean → 少数の高設定台が平均を引き上げている（最高設定の集中投入）
+- median が月ごとに上昇 → ベース設定が上がっている傾向
+
+SQLiteにはMEDIAN()関数がないためPandasで計算してからINSERTする。
+
+## アクション
+月次・期間集計テーブルには `avg_diff_per_machine` と `median_diff_per_machine` を
+必ずセットで含める。Pandasの `groupby().median()` で計算し avgと同時にINSERT。
+
+## 例
+```python
+medians = (df.groupby(key_col)['diff_coins_normalized']
+           .median()
+           .rename('median_diff_per_machine'))
+result = result.merge(medians, on=key_col, how='left')
+```
+
+---
+id: is-complete-days-in-month-pattern
+trigger: "when designing a table that accumulates data incrementally within a calendar month"
+confidence: 0.87
+scope: implementation
+domain: db-design
+source: session-interview-20260605
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 月次テーブルにはis_completeとdays_in_monthを必ず含める
+
+## 背景
+月次テーブルは月の途中から書き込みが始まり月末に「完成」する。
+`days_in_month` があれば `sample_count / days_in_month` で月の進捗率を計算でき、
+MLモデルが「50%しか経過していない月のデータ」と判断できる。
+
+## アクション
+月次または期間テーブルには必ず以下の3カラムをセットで追加：
+- `sample_count INTEGER`  -- この月の実データ日数
+- `days_in_month INTEGER` -- その月の暦上の総日数（28/29/30/31）
+- `is_complete INTEGER DEFAULT 0` -- 翌月データ投入時に1に更新
+
+翌月の最初のデータが来た時点で前月のis_completeを1に自動更新する。
+
+## 例
+```sql
+-- MonthlyTrendCalculator._maybe_complete_prev_month() で自動実行
+UPDATE monthly_trend_xxx
+SET is_complete = 1
+WHERE year_month = '202605' AND is_complete = 0;
+```

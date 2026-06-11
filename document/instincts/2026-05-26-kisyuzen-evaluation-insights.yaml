@@ -2,6 +2,7 @@
 id: daily-topk-beats-fixed-threshold-low-baserate
 trigger: "when evaluating a binary classifier with base_rate below 5%"
 confidence: 0.92
+scope: methodology
 domain: ml-evaluation-design
 source: session-implementation
 project_id: 2026project
@@ -60,6 +61,7 @@ for k in [1, 2, 3]:
 id: winrate-structural-break-at-80pct
 trigger: "when setting win_rate threshold to define 機種全 (all-machine high-setting event)"
 confidence: 0.88
+scope: methodology
 domain: ml-target-engineering
 source: session-data-analysis
 project_id: 2026project
@@ -110,6 +112,7 @@ win_rate=80%（最低4台中3勝以上）:
 id: 2fn-segment-needs-special-treatment
 trigger: "when 2F_N segment shows lift below 1.0 in multiple experiments"
 confidence: 0.82
+scope: methodology
 domain: ml-hierarchical-segmentation
 source: session-observation
 project_id: 2026project
@@ -159,6 +162,7 @@ Option C（特徴量追加）: machine_type 別 rolling win_rate などを追加
 id: two-layer-complementary-signals
 trigger: "when combining Layer 0 (機種全 detection) and Layer 1 (segment rank) for recommendations"
 confidence: 0.85
+scope: methodology
 domain: ml-hierarchical-architecture
 source: session-analysis
 project_id: 2026project

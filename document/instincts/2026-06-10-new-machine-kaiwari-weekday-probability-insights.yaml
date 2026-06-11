@@ -1,0 +1,143 @@
+---
+id: new-machine-0-7-hall-strategy-diversity
+trigger: "新台投入0-7日レポート(document/reports/new_machine_0_7_*)の数値を解釈・引用するとき"
+confidence: 0.85
+domain: pachinko-ml-domain-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 新台0-7日のavg_kaiwari/avg_diffだけでなく、day0デルタと専有/共通機種の差も合わせて見ないとホール戦略を見誤る
+
+## 背景
+全9ホールの新台0-7日レポート(games_normalized>=200, debut_date>db_start, day_index 0-7, n=6577)を
+読み込んだところ、avg_kaiwariのホール順位(金時102.0 > みとや101.8 > ARROW101.4 > ... > 楽園96.6)は
+新台優遇度の単純な指標にはなるが、それだけでは「いつ・どの機種に」優遇が乗るかは分からない。
+day0デルタ(初日 vs day1-7)を見ると、ザシティは初日が最も高くday1-7は全てマイナス
+(最大-10.3)の「初日型」、金時はday7に向けて+23.2まで上昇する「終盤型」など、
+ホールごとに優遇のタイミングが正反対になっている。
+また専有機種(exclusive) vs 共通機種(shared)の比較では、ほとんどのホールで共通機種の方が
+avg_kaiwariが高く、特に金時の専有新台は壊滅的(avg_kaiwari 82.3, win_rate 12.0%)で、
+専有新台には設定を入れない可能性がある。同一機種(鉄拳6など)でもホール間でavg_kaiwariの
+range_kaiwariが60ポイント超あり、機種そのものよりホールの方が支配的要因。
+
+## アクション
+新台0-7日レポートの数値を引用・解釈する際は、必ず
+(1) avg_kaiwariのホール順位だけでなくday0デルタ(day_delta.csv)でタイミングの型(初日型/終盤型)を確認、
+(2) exclusive/sharedの比較で「専有新台に設定を入れるホールか」を確認、
+(3) 同一機種のホール間range(common4/common42_comparison.csv)で機種要因とホール要因を切り分ける。
+これらを欠いた「avg_kaiwariが高い=新台優遇」という単純な結論は、戦略のタイミングや
+専有/共通の違いを見落とす。
+
+## 例
+ザシティ: day0 kaiwari最高、day1-7は全てマイナス(初日型)。
+金時: day0-6は横ばい、day7で+23.2の急伸(終盤型)。
+金時 専有新台: avg_kaiwari 82.3, win_rate 12.0%(共通機種103.0と乖離)。
+鉄拳6(4ホール共通導入): kaiwari範囲83.7〜150.8(range 67.1)。
+
+---
+
+id: kaiwari-threshold-rates-vs-average-ranking-mismatch
+trigger: "ホール別の新台優遇度をavg_kaiwariの順位だけで比較しようとするとき"
+confidence: 0.8
+domain: pachinko-ml-domain-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# avg_kaiwariの順位と「高設定出現率(hit104/108/112)」の順位はズレる。ハイリスク・ハイリターン型ホールの検出に使える
+
+## 背景
+新台0-7日(n=6577)でhit104/108/112(kaiwari>=104/108/112の割合)をホール別に集計したところ、
+avg_kaiwari最高の金時(102.0)はhit104では3位(31.7%、みとや35.0%・ARROW37.3%より低い)だが、
+hit112では全ホール最高(21.7%)になった。逆にレイトギャップはhit104が28.0%(中位)なのに
+hit112は14.8%で全ホール最低、「広く浅く」型。
+day_index別では全体平均kaiwariはday0(初日)がやや高い程度だが、hit104出現率は
+day6(33.5%)が最も高く、day2(29.6%)が最も低い。avg_kaiwariの山と出現率の山は必ずしも一致しない。
+ホール×day_index別では、金時day7のhit112が30.8%(突出)、ザシティday1のhit112が25.2%
+(同ホール内で突出)など、avg_kaiwariのday0デルタ分析と整合する特異点が見つかった。
+
+## アクション
+ホールの新台優遇度・設定投入の「形」を議論する際は、avg_kaiwariの順位だけでなく
+hit104/108/112のような閾値別出現率を併記する。avg_kaiwari高×hit112高の組み合わせは
+「ハイリスク・ハイリターン(メリハリ)型」、avg_kaiwari中×hit104高×hit112低は
+「広く浅く型」という形で分類できる。day_index別の山もavg_kaiwariベースとhit閾値ベースで
+ズレることがあるため、両方確認してから「DAYXが強い」と結論づける。
+
+## 例
+金時: avg_kaiwari 102.0(1位), hit104 31.7%(3位), hit112 21.7%(1位) →ハイリスク・ハイリターン型。
+レイトギャップ: avg_kaiwari 98.5, hit104 28.0%, hit112 14.8%(最低) →広く浅く型。
+全体day_index別hit104: day6=33.5%(最高) vs day2=29.6%(最低)、avg_kaiwariの山(day0)とは別。
+
+---
+
+id: kaiwari-threshold-vs-probability-decimal
+trigger: "新台導入時のホール別「設定投入の形（1or6型 vs 段階型）」を機械割(kaiwari)から推定しようとするとき"
+confidence: 0.85
+domain: pachinko-ml-domain-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# avg_kaiwariとhit閾値出現率だけで「設定の山」を推定するのは危険、total_probability_decimalで裏取りすべき
+
+## 背景
+ARROW/みとやはavg_kaiwariがhit104/108/112出現率に対して相対的に低く、「メリハリ(1or6)型」かと
+仮説を立てたが、machine_detailed_results.total_probability_decimal（実測ボーナス確率、1/fraction）を
+kaiwariバケット(<104/104-112/>=112)別に集計したところ、結果は逆転した。
+ARROWはmid_to_high_ratio(=104-112→>=112の確率増分 / <104→>=112の総増分)が0.37〜0.49と
+全ホール中最小で、最も「滑らかな段階配分」に近い。逆に金時・ザシティ・蒲田一はratio0.7前後で
+ジャンプが大きく「1or6型」に近い。kaiwariは「設定」と「試行のブレ」が混ざった結果指標であり、
+出現率の高低だけから設定配分の形を断定すると誤る。
+
+## アクション
+ホールの設定投入パターン（1or6型 vs 3-6満遍なく型）を議論する際は、必ず
+total_probability_decimal / bb_probability_decimal をkaiwariバケット別に集計し、
+mid_to_high_ratioのようなステップ比較で裏取りする。さらに機種カテゴリ
+(machine_master.jug_flag/hana_flag/oki_flag/bt_flag)で層別しないと、
+ホール間の機種構成差（確率レンジが2倍近く違う）が交絡する。新台0-7日データでは
+「AT機・その他」が全体の約78%を占めるため、まずこのカテゴリに絞って比較するのが現実的。
+
+## 例
+新台0-7日(games_normalized>=200, debut_date>db_start, day_index 0-7)で
+category=='AT機・その他'に絞り、kaiwari_bucket別avg_total_probability_decimalの
+(104-112→>=112)と(<104→104-112)の差分比をホール別に比較する。
+ARROW=0.49(最小), みとや=0.72, 金時=0.70, ザシティ=0.68, 蒲田一=0.66。
+
+---
+
+id: weekday-bias-locale-reproducibility-trap
+trigger: "曜日(weekday)別集計をpandasのdt.day_name(locale=...)で行う結果を引き継ぐとき"
+confidence: 0.8
+domain: pachinko-ml-domain-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# dt.day_name(locale='en_US')ベースの曜日集計はWindows環境で再現性が崩れる可能性がある
+
+## 背景
+過去セッションで「新台0-7日では月曜が突出して強い(avg_kaiwari 102.3, win_rate 45.3%, hit104 36.7%)」
+という結論が出ていたが、同条件・同n(6577)で`dt.dayofweek`ベースに再実装して再現したところ、
+Mon=99.9/39.9%/31.8%、OtherWeekday=98.4/37.9%/30.6%となり、方向性は同じだが効果量が
+大幅に小さかった(kaiwari差+1.5pt vs 報告+3.2pt、win_rate差+2.0pt vs 報告+6.1pt)。
+一方Weekendの値はほぼ完全一致(98.6/39.0/30.4 vs 98.6/39.1/30.4)。
+Mon/OtherWeekdayのみズレていることから、元コードの`dt.day_name(locale='en_US')`が
+Windows環境でロケール依存の挙動になり曜日マッピングが一部崩れていた可能性が高い。
+さらにホール別に見るとレイトギャップは月曜が逆にOtherWeekdayより-5.1低く、
+「月曜が強い」は全ホール共通則ではない(6/9ホールのみ月曜>その他)。
+
+## アクション
+曜日別集計は`dt.dayofweek`(0=Mon...6=Sun)の整数ベースで行い、`day_name(locale=...)`は
+Windows環境では避ける。過去セッションの「曜日効果」「DAYX効果」の数値は、再利用前に
+同条件で再現できるか必ず検証する。また全ホール合算の効果量を「一般則」として
+DAYX解釈に使う前に、ホール別のlift方向が一致しているか確認する(本件は6/9のみ一致、
+レイトギャップは逆方向)。
+
+## 例
+eda/new_machine_weekday_bias_check.py で dt.dayofweek ベースに再実装し、
+n=6577（既存レポートのbaselineと一致）で再現。weekday_group別
+(Mon/Weekend/OtherWeekday)のavg_kaiwari, win_rate_pct, hit104_pctと
+ホール別Mon_minus_Other/Weekend_minus_Otherを出力して一般化可否を確認する設計。
+
+---

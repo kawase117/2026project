@@ -2,6 +2,7 @@
 id: ceiling-effect-loss-based-metrics
 trigger: "機械学習モデルが99%以上の精度で天井効果に達し、特徴量改善が検知できない状態のとき"
 confidence: 0.95
+scope: methodology
 domain: ml-evaluation-strategy
 source: session-observation
 project_id: 2026project
@@ -54,6 +55,7 @@ digit_lag_v1 vs v2r_current（429 pairs, 100% overlap）の結果：
 id: mvp-first-staged-implementation
 trigger: "大規模な ML 評価フレームワーク構築時に、全部一度にやるか悩むとき"
 confidence: 0.92
+scope: methodology
 domain: ml-project-planning
 source: session-observation
 project_id: 2026project
@@ -92,6 +94,7 @@ ceiling_effect の実装順序で「各フェーズ完成→次フェーズ開�
 id: block-resampling-date-expert-pair
 trigger: "bootstrap 信頼区間を計算するときに、観測値の独立性が崩れているか疑うとき"
 confidence: 0.93
+scope: methodology
 domain: statistical-rigor
 source: session-observation
 project_id: 2026project
@@ -129,6 +132,7 @@ digit_lag_v1 vs v2r_current（429 pairs）：
 id: modular-architecture-prevents-monolith
 trigger: "複数フェーズの処理パイプラインを実装するとき、『全部 1 ファイルでいいか』と迷うとき"
 confidence: 0.93
+scope: methodology
 domain: code-architecture
 source: session-observation
 project_id: 2026project

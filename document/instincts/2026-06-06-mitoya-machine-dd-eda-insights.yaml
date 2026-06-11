@@ -1,0 +1,232 @@
+---
+id: mitoya-section-dd-effect-is-machine-dd-effect
+trigger: "みとやでセクション×DDのパターンを分析したとき、または「なぜこのセクションがこのDDに強いのか」を調べるとき"
+confidence: 0.96
+domain: domain-analysis
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+title: みとやの「セクション×DD効果」は「機種×DD効果」の代理変数にすぎない
+
+## 背景
+section_by_dd.csv で 574-590 が DD=4 に平均 +1200 超と突出して強かったが、
+同じセクション内の機種別DD分析を実施したところ以下の事実が判明した。
+- 強い機種（モンキーターン）: DD=4 が 31DD中1位（avg +1720）
+- 弱い機種（別機種）: DD=4 が 18DD中18位（avg -2584）
+同じ物理セクションに置かれているのに、DD=4への高設定投入が機種を選んで行われている。
+これはセクション全体への均一投資ではなく「特定機種 × 特定DD」への選択的投資を示す。
+DD=17/501-522 の強さもマギアレコードという特定機種の配置（2024-09以降）で説明できた。
+
+## アクション
+セクション×DDルールを使う場合は「そのセクションの主力機種が変わると無効化するリスク」を認識する。
+より正確な予測軸は「機種名 × DD」であり、機種の配置追跡と組み合わせて運用する。
+機種配置が変わった時点でセクション×DDルールは再検証必須。
+
+## 例
+```
+574-590 の DD=4 機種別分解:
+  機種X (モンキーターン):    avg +1720  31DD中 1位  ← 高設定投入対象
+  機種Y (モンスターハンター): avg +966   31DD中 2位  ← 高設定投入対象
+  機種A (弱い機種):          avg -1279  3DD中  3位  ← 高設定なし
+  機種B (弱い機種):          avg -2584  18DD中18位  ← 明確に低設定傾向
+
+→ セクション全体の DD=4 強さ = 強機種の平均が高く弱機種を上回るため
+→ 機種を区別しないセクション集計では「セクションが強い」と誤認する
+```
+
+---
+id: mitoya-position-feature-ablation-hit-vs-diff-tradeoff
+trigger: "walk-forward パイプラインで位置特徴量（section_rank, physical_corner, pct_strong_section）の追加効果を評価するとき"
+confidence: 0.92
+domain: ml-pipeline
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+title: 位置特徴量は hit@1 を微減させるが mean_diff を3倍超改善する — 運用上は採用すべき
+
+## 背景
+tail_ltr_mitoya_wf.py で walk-forward アブレーション実験（with/without_position_features）を実施した。
+- without_position: hit@1=24.5%, mean_diff=+5.55,  p_gt_0=63.8%
+- with_position:    hit@1=23.1%, mean_diff=+21.57, p_gt_0=92.6%
+hit@1 は -1.4pp 低下したが mean_diff は +288%（5.55→21.57）、p_gt_0 は +28.8pp 改善。
+hit@1 の低下は「モデルが好みにくい末尾でも位置が強ければ上位選択する挙動変化」であり
+実際の差枚期待値は大幅に向上している。
+
+## アクション
+評価指標の優先順位: mean_diff > p_gt_0 > hit@1（実運用上の収益性ベース）
+hit@1 の単純比較で位置特徴量の価値を否定しないこと。
+位置特徴量は採用する。mean_diff と p_gt_0 が運用KPIとして正しい指標。
+
+## 例
+```
+評価指標     without_position  with_position  改善幅
+hit@1        24.5%             23.1%          -1.4pp  ← 微減（許容）
+mean_diff    +5.55             +21.57         +288%   ← 3倍超
+p_gt_0       63.8%             92.6%          +28.8pp ← 大幅改善
+```
+
+---
+id: mitoya-machine-dd-pattern-reliability-criteria
+trigger: "機種×DDの高設定投入パターンが信頼できるかを判断するとき"
+confidence: 0.90
+domain: methodology
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+title: 機種×DD パターンの信頼基準 — lift≥500 かつ n_dates≥8、機種は total_dates≥80
+
+## 背景
+みとや全機種×DD のマトリクス分析で、機種レベルの baseline（全DD平均）からの
+lift を算出し 34 件の信頼パターン（lift≥500, n_dates≥8）を特定した。
+機種の選定基準（total_dates≥80, n_dd≥8）は「少数出現機種の偶発的外れ値除外」のため。
+n_dates=4 で lift=+3000 超のパターンは高く見えるが偶発性が高く採用不可。
+
+## アクション
+機種×DDパターンの採用基準:
+1. 機種フィルタ: total_dates >= 80 かつ n_dd >= 8（年間を通じて安定出現する機種）
+2. パターンフィルタ: lift >= 500 かつ n_dates >= 8（そのDD組み合わせで8回以上確認）
+3. lift は「機種の全DD平均 diff」からの偏差（グローバルバイアスを除去）
+4. 出力: data/mitoya_corner_section_analysis/machine_dd_patterns.csv（UTF-8-sig）
+
+## 例
+```python
+# 機種別全体平均を計算
+machine_global = df.groupby('machine_name').agg(
+    global_avg=('avg_diff', 'mean'),
+    total_dates=('n_dates', 'sum'),
+    n_dd=('dd', 'count')
+).reset_index()
+
+# 信頼できる機種に絞る
+reliable = machine_global[
+    (machine_global['total_dates'] >= 80) & (machine_global['n_dd'] >= 8)
+]['machine_name']
+
+# lift を計算してフィルタ
+df_r['lift'] = df_r['avg_diff'] - df_r['global_avg']
+strong = df_r[(df_r['lift'] >= 500) & (df_r['n_dates'] >= 8)]
+# → みとやで34件（2026-06-06時点）
+```
+
+---
+id: mitoya-dd-grouping-structure-4-7-tsukisue
+trigger: "みとやでどのDDが全体的に多くの機種で強いかを評価するとき、またはDD別投資リズムを分析するとき"
+confidence: 0.89
+domain: domain-analysis
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+title: みとやのDD強弱は3グループ構造 — 4系・7系・月末系
+
+## 背景
+34件の信頼パターン（lift≥500, n_dates≥8）を機種数と平均lift でDD別に集計した結果
+3つのDDグループが浮かび上がった。
+- 4系 (DD=4,14,24): 最多7機種、平均lift=+1009、最大lift=+1703（最強）
+- 7系 (DD=7,17,27): 3〜5機種、平均lift=+600〜+780
+- 月末系 (DD=28,30): 2〜3機種、平均lift=+538〜+820
+DD=4 は特に突出しており「7機種にまたがって全て lift≥+500」を達成する唯一のDD。
+
+## アクション
+みとやでの運用優先度: DD=4 > DD=4/14/24（4系）> DD=7/17/27（7系）> DD=28/30
+「今日は何の日か」の判定は 4系 と 7系 を最初にチェックする。
+セクション横断で複数機種が同時に強くなるDDを最優先とする。
+
+## 例
+```
+DD別 信頼パターン集計（2026-06-06時点）:
+  DD=4:  7機種 平均lift=+1009  max=+1703 → 最優先日
+  DD=14: 1機種 平均lift=+1012              → 4系の延長
+  DD=24: 4機種 平均lift=+897              → 4系（機種数多い）
+  DD=27: 5機種 平均lift=+779              → 7系（機種数多い）
+  DD=30: 3機種 平均lift=+820              → 月末系
+  DD=17: 3機種 平均lift=+762              → 7系
+  DD=7:  3機種 平均lift=+600              → 7系
+
+「4系」「7系」「月末系」の3グループで投資リズムを把握する
+```
+
+---
+id: mitoya-section-rule-temporal-instability
+trigger: "セクション×DDルールを構築したあと長期間使い続けようとするとき"
+confidence: 0.93
+domain: domain-knowledge
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+title: セクション×DDルールは機種配置変更で無効化する — 定期的な再検証が必須
+
+## 背景
+501-522 (マギアレコード) の DD=17 強さを年別で分析したところ
+2024-09以前は DD=17/501-522 は平凡な成績だったが
+2024-09以降はマギアレコード設置により突出して強くなった（avg +1130）。
+セクション×DDルールをそのまま使い続けると「なぜ当たらなくなったのか」が分からなくなる。
+機種名ベースのルール（「マギアレコード × DD=17」）なら機種移動後も追跡できる。
+
+## アクション
+セクション×DDルールを使う場合は必ず以下を実施する:
+1. 半年〜1年ごとにセクション成績の推移を確認し急変がないかチェック
+2. 急変があった場合は「機種配置が変わった可能性」を最初に疑う
+3. 原則として「機種名 × DD」ルールを優先し、セクションは現在の配置情報として補完利用
+
+## 例
+```
+501-522 の DD=17 成績（年別）:
+  〜2024-08: avg_diff ≈ +200〜+400（普通）
+  2024-09〜: avg_diff ≈ +1130（突出）← マギアレコード設置と一致
+
+セクションルール「501-522 は DD=17 に強い」
+  → 機種が変わると崩壊するリスクあり
+
+機種ルール「マギアレコード は DD=17 に強い」
+  → 機種追跡で長期利用可能（場所が変わっても追える）
+```
+
+---
+id: mitoya-within-section-dd-heterogeneity
+trigger: "セクション単位で機種をまとめてDD分析をするとき"
+confidence: 0.95
+domain: methodology
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+title: 同じセクション内でもDD選好が正反対の機種が共存する — セクション単位集計は情報を損失する
+
+## 背景
+574-590 セクションの DD=4 成績を機種別に分解したところ
+- 機種X: dd4_avg=+1720、全31DD中 1位（高設定投入対象）
+- 機種Y: dd4_avg=+966、 全31DD中 2位（高設定投入対象）
+- 機種A: dd4_avg=-1279、全3DD中  3位（低設定）
+- 機種B: dd4_avg=-2584、全18DD中18位（明確に低設定）
+と正反対の機種が混在していた。
+セクション単位の avg_diff はこれらを混合平均してしまい機種間の差異を隠す。
+
+## アクション
+セクション×DD の平均 diff が高くても「全機種が均等に強い」とは限らない。
+機種別に分解してから「どの機種がそのDDに強いか」を確認する。
+EDA の順序: セクション×DD（粗い探索）→ 機種×DD（精密分析）
+
+## 例
+```python
+# セクション集計（粗い）
+# 574-590, DD=4: avg_diff = +850 （強く見える）
+
+# 機種別分解（精密）
+q = '''
+SELECT machine_name, AVG(diff_coins_normalized) as avg_diff,
+       COUNT(DISTINCT date) as n_dates
+FROM machine_detailed_results m
+JOIN machine_layout ml ON m.machine_number = ml.machine_number
+WHERE ml.section = '574-590'
+  AND CAST(SUBSTR(m.date, 7, 2) AS INTEGER) = 4
+GROUP BY machine_name
+ORDER BY avg_diff DESC
+'''
+# → 強機種と弱機種が混在していることを確認してから
+#    機種名レベルでルールを構築する
+```

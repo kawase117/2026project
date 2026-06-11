@@ -2,6 +2,7 @@
 id: floor2-split-beats-floor-atype4-split
 trigger: "機種別MLでセグメント設計を変更するとき / 2F_Aの機種数不足でbase_rateが不安定なとき"
 confidence: 0.90
+scope: methodology
 domain: ml-segment-design
 source: session-experiment
 project_id: 2026project
@@ -44,6 +45,7 @@ work["segment_key"] = work["segment_floor2"]
 id: auc-and-hit1-diverge-with-feature-overload
 trigger: "LTRモデルに特徴量を大量追加したときAUCが改善するがhit@1が悪化するとき"
 confidence: 0.93
+scope: methodology
 domain: ml-feature-engineering
 source: session-experiment
 project_id: 2026project
@@ -86,6 +88,7 @@ hit@1:        0.189   →  0.122  →  0.189 以上に戻したい
 id: floor-segment-auc-divergence-3f-vs-2f
 trigger: "機種ML rich_all評価でセグメント別AUCが大きく異なるとき"
 confidence: 0.87
+scope: methodology
 domain: ml-segment-design
 source: session-experiment
 project_id: 2026project
@@ -122,6 +125,7 @@ rich_all評価後は必ずセグメント別AUCを確認すること。
 id: setting-cycle-hypothesis-rejected-kamata7
 trigger: "機種別MLで days_since_last_rank1 を重要特徴量として期待しているとき"
 confidence: 0.88
+scope: methodology
 domain: ml-hypothesis-validation
 source: session-experiment
 project_id: 2026project
@@ -161,6 +165,7 @@ project_name: pachinko-analyzer
 id: machine-ml-practical-role-as-filter
 trigger: "機種MLと末尾MLの精度を比較するとき / 機種MLの実用水準を判断するとき"
 confidence: 0.92
+scope: methodology
 domain: ml-evaluation
 source: session-observation
 project_id: 2026project

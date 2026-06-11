@@ -2,6 +2,7 @@
 id: kikata-detection-machine-level-winrate
 trigger: "when designing a target to detect 機種全/末尾全 events"
 confidence: 0.92
+scope: methodology
 domain: ml-target-engineering
 source: session-analysis
 project_id: 2026project
@@ -54,6 +55,7 @@ HAVING COUNT(*) >= 3
 id: kikata-winrate-80pct-threshold-validated
 trigger: "when setting win_rate threshold for 機種全 event detection"
 confidence: 0.88
+scope: methodology
 domain: ml-target-engineering
 source: session-data-analysis
 project_id: 2026project
@@ -101,6 +103,7 @@ df['is_kikata'] = (df['win_rate'] >= 80).astype(int)
 id: layer0-target-scope-is-machine-not-hall
 trigger: "when implementing Layer 0 day-quality filter for machine_name prediction"
 confidence: 0.90
+scope: methodology
 domain: ml-hierarchical-architecture
 source: session-design-correction
 project_id: 2026project

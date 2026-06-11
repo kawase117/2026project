@@ -1,0 +1,130 @@
+---
+id: poco-patch-delete-structural-misclassification
+trigger: "PATCH_DELETE に機種名が登録されている場合、削除対象ノイズと判断する前に内容を検証するとき"
+confidence: 0.96
+scope: project-specific
+domain: data-quality
+source: session-investigation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# PATCH_DELETE 誤分類：複合戦略情報が削除対象として誤登録される
+
+## 背景
+ぽこデータの PATCH_DELETE リストに登録された項目のうち、複数の項目が実は有効な機種情報（複合戦略）を含んでいたことが判明。
+
+例：
+- `ハナハナ天膳` → 当日稼働しているハナハナ機種全 + 天膳全
+- `ゾンサガ` → ゾンビランドサガ（機種名）
+- `カイジ` → 回胴黙示録カイジ 狂宴（機種名）
+- `ハッピー` → ハッピージャグラー（機種名）
+
+## アクション
+1. `poco_data_extracted_full.csv` を参照データとして使用（v4ではなく）
+2. PATCH_DELETE の全項目を個別に検証
+3. 削除すべき項目（ノイズ）と保持すべき項目（機種情報）を分類
+4. deleted_log 監査ログで DELETE 実行を追跡
+
+## 例
+```python
+# deleted_log により DELETE 実行の可視化
+if deleted_log:
+    for k, v in sorted(deleted_log.items(), key=lambda x: -x[1]):
+        print(f"[{k}] {v}回 → 削除")
+```
+
+---
+id: poco-ocr-error-source-level-correction
+trigger: "OCRエラー（例：密告→吉宗、ミク→ミリオンゴッド）を発見したとき"
+confidence: 0.95
+scope: project-specific
+domain: data-quality
+source: user-guidance
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# OCRエラーは元データ（MDファイル）で修正：パイプライン PATCH_FOUND より優先
+
+## 背景
+OCRミスは複数存在：
+- 20260405: `密告` → `吉宗` のOCRエラー
+- 20260514: `ミク` → `ミリゴ`（ミリオンゴッド‐神々の軌跡‐）のOCRエラー
+
+パイプラインの PATCH_FOUND で対応するのではなく、元のMDファイルを直接修正することで、以降のデータ抽出時に正確な情報が保証される。
+
+## アクション
+1. `docs/ぽこデータ抽出/*.md` の該当行を検索：`grep -n "密告\|ミク" *.md`
+2. 各行の実際の内容を確認
+3. MDファイルで直接修正
+4. パイプライン再実行（PATCH_FOUND には追加しない）
+
+## 例
+```md
+# 修正前
+| **5日(金)** | ... | **+21,900** / 全→密告、ニブ→ファンキー |
+
+# 修正後
+| **5日(金)** | ... | **+21,900** / 全→吉宗、ニブ→ファンキー |
+```
+
+---
+id: poco-bracket-content-extraction-strategy
+trigger: "括弧を含む複合戦略情報を処理するとき"
+confidence: 0.92
+scope: project-specific
+domain: data-pipeline
+source: user-guidance
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 括弧内のコンテンツ抽出：全体の戦略ラベルではなく括弧内の機種名のみをマッピング
+
+## 背景
+ぽこデータに複数の括弧パターン：括弧外の「X にまつわる」は説明的ラベル、マッピング対象は括弧内の機種名のみ。
+
+## アクション
+1. 括弧内を個別トークンに分解
+2. 各トークンを独立にマッピング：
+   - `3台設置` → 動的DB検索（その日の3台機種を取得）
+   - `ゴージャグ3` → PATCH_FOUND で `ゴーゴージャグラー3` にマッピング
+   - `キンハナ30等多数` → `キングハナハナ-30`（「等多数」は削除）
+
+---
+id: poco-data-source-reference-hierarchy
+trigger: "ぽこデータを参照するとき"
+confidence: 0.94
+scope: project-specific
+domain: data-pipeline
+source: user-guidance
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# データソース参照順序：extracted_full > v4 > v5
+
+## 背景
+複数のぽこデータCSVバージョン存在。データの歪みを避けるため、分析・検証は extracted_full を使用。
+
+## アクション
+1. 分析・検証フェーズ：`poco_data_extracted_full.csv` を参照
+2. パイプライン調整後：v5で最終確認
+3. 情報喪失が疑われる場合：extracted_full と v4 を比較検証
+
+---
+id: poco-unmapped-detection-gap-deleted-items
+trigger: "未照合機種の検出漏れが疑われるとき"
+confidence: 0.91
+scope: project-specific
+domain: data-quality
+source: session-investigation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 未照合検出の盲点：DELETE 登録された項目は unmapped カウンターに加算されない
+
+## 背景
+PATCH_DELETE に登録されている機種は unmapped にカウントされずに即削除。結果として誤 DELETE 登録を検出不可。
+
+## アクション
+1. deleted_log を常時出力（監査ログ）
+2. DELETE 実行数が多い場合は個別検証
+3. 「出現回数 > 0 なのに未照合リストにない」パターンを疑う

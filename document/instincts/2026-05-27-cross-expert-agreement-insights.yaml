@@ -2,6 +2,7 @@
 id: cross-expert-agreement-is-random-baseline
 trigger: "クロスエキスパート特徴量（複数グループの末尾合意）を実装しようとしているとき"
 confidence: 0.92
+scope: methodology
 domain: ltr-feature-engineering
 source: data-exploration
 project_id: 2026project
@@ -41,6 +42,7 @@ p2plus_random = 1 - (1-p_pick)**4 - C(4,1)*p_pick*(1-p_pick)**3
 id: cross-expert-lag1-performance-signal-null
 trigger: "昨日の複数グループ合意末尾が翌日も良いか検証するとき"
 confidence: 0.90
+scope: methodology
 domain: ltr-feature-engineering
 source: data-exploration
 project_id: 2026project
@@ -79,6 +81,7 @@ project_name: pachinko-analyzer
 id: cross-expert-mild-anti-pattern
 trigger: "クロスエキスパート合意のanti-pattern特徴量を検討しているとき"
 confidence: 0.82
+scope: methodology
 domain: ltr-feature-engineering
 source: data-exploration
 project_id: 2026project
@@ -116,6 +119,7 @@ Spearman r(lag1 agree → today agree) = -0.036（負）。
 id: explore-before-cross-feature-implementation
 trigger: "複数モデル・グループ間の相関を特徴量にしようとしているとき"
 confidence: 0.95
+scope: methodology
 domain: ml-methodology
 source: session-observation
 project_id: 2026project

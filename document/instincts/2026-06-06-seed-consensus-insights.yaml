@@ -1,0 +1,118 @@
+---
+id: multi-seed-agreement-does-not-predict-accuracy
+trigger: "複数 seed の合意度を予測精度の代理指標として使おうとするとき"
+confidence: 0.95
+domain: methodology
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# seed 間の合意度は予測精度と相関しない
+
+## 背景
+みとや x_day holdout 19 日で seed 42/77/303 の combined_top1 が完全一致したのは
+1 日のみ（2026-03-04）。その唯一の高信頼日で実際の予測は外れていた（predicted=9, actual=6）。
+「全 seed が同じ digit を選ぶ = 正解」という仮説は実データで否定された。
+
+## アクション
+複数 seed の合意度を採用条件（is_high_confidence）として意思決定ルールに含めてはならない。
+合意度は参考情報として出力に残してよいが、実際の採用判断は margin 閾値のみで行う。
+
+## 例
+```
+実績：
+  完全一致日 (3/3): 1/19 日 → 0 Hit（当該日外れ）
+  2/3 一致日:      15/19 日 → 合意が広すぎてフィルタ機能せず
+  全員バラバラ:     4/19 日
+結論: 合意度で「良い日 vs 悪い日」は分離できない
+```
+
+---
+id: margin-threshold-is-primary-adoption-filter
+trigger: "みとや x_day の翌日予測で採用条件を設計・変更しようとするとき"
+confidence: 0.97
+domain: hall-specific
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# x_day の採用条件は margin 閾値のみに一本化する
+
+## 背景
+walk-forward の calibration 段階で margin（1位と2位のスコア差）の分位点閾値が最適化されている。
+複数 seed の合意度は追加の弁別力を持たなかった（1/19 日しか発火しない上に外れた）。
+margin フィルタが played_rate=0.77 を実現している既存設計が正しい。
+
+## アクション
+x_day 翌日予測の採用条件：
+1. day_bucket == "x_day"
+2. margin >= 学習済み閾値（walk-forward で最適化済み）
+これ以上の条件追加（合意度、特定 seed）は過剰。
+compare_mode の合意度は「表示情報」として維持するが採用ロジックには組み込まない。
+
+## 例
+```python
+# 採用条件（シンプルに保つ）
+should_play = (
+    day_bucket == "x_day"
+    and margin >= threshold  # walk-forward で calibration 済み
+)
+# 合意度は出力に記録するだけ
+output["seed_agreement_level"] = "3/3" | "2/3" | "1/3"
+```
+
+---
+id: small-holdout-winner-seed-is-noise
+trigger: "複数 seed を比較して最良 seed を選び、以降その seed を使おうとするとき"
+confidence: 0.93
+domain: methodology
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 小サンプル holdout で最良 seed を選ぶと Winner's Curse が発生する
+
+## 背景
+x_day holdout 19 日で seed 303 の excess は +248.8（8 seed 中最大）だったが、
+10 択 × 19 日では統計的に有意な差は示せない。
+8 seed の中から事後的に最大値を選ぶと偶然の外れ値が乗りやすい（多重比較問題）。
+
+## アクション
+seed の優劣判断には x_day で最低 50 日（約 8〜9 ヶ月）以上の holdout が必要。
+それまでは 8-seed 平均（Hit@1=24.3%）を信頼できる推定値として使う。
+production はデフォルト seed=42 を維持し、特定 seed を優遇しない。
+
+## 例
+```
+必要サンプルサイズ（Hit@1 の差 10pp を検出、α=0.05, power=0.80）→ 約 150 日以上
+x_day は月 6 日 → 約 25 ヶ月分のデータが理論上必要
+現実解: 8-seed 平均で運用し続け、1 年後に再評価
+```
+
+---
+id: x-day-seed-agreement-base-rate
+trigger: "x_day で複数 seed の合意閾値（2/3 や 3/3）を設計するとき"
+confidence: 0.92
+domain: hall-specific
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# x_day の seed 合意率の実測値（みとや holdout 19 日）
+
+## 背景
+seed 42/77/303 の 3 seed を x_day 19 日で比較した結果。
+合意率の実測値を把握せずに閾値を設計すると実用に耐えない設計になる。
+
+## アクション
+閾値設計前に合意率の base rate を必ず確認すること。
+3/3 は稀すぎて実用不可、2/3 は広すぎてフィルタにならない。
+
+## 例
+```
+3/3 完全一致: 1/19 = 5.3%  → 年間約 4 日しか発火しない
+2/3 一致:    15/19 = 78.9%  → フィルタにならない
+全員バラバラ:  4/19 = 21.1%
+唯一の 3/3 一致日（2026-03-04）は予測外れ
+→ 合意度フィルタを採用条件に含めるのは推奨しない
+```

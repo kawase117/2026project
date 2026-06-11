@@ -2,6 +2,8 @@
 id: rank2-not-rank3-equivalent
 trigger: "蒲田七のLTRモデルで複数台の立ち回り戦略を設計するとき"
 confidence: 0.97
+scope: hall-specific
+hall: kamata7
 domain: ml-strategy
 source: session-observation
 project_id: 2026project
@@ -34,6 +36,8 @@ cluster_23 = [rank2, rank3]  # 微差とみなして同等扱い → NG
 id: rank1-chaaichi-strategy-effective
 trigger: "蒲田七で朝一狙い台を1台選ぶとき"
 confidence: 0.95
+scope: hall-specific
+hall: kamata7
 domain: ml-strategy
 source: session-observation
 project_id: 2026project
@@ -69,6 +73,8 @@ else:
 id: confidence-band-case-a-thresholds
 trigger: "LTRモデルの予測結果に信頼帯を付与するとき"
 confidence: 0.90
+scope: hall-specific
+hall: kamata7
 domain: ml-feature-engineering
 source: session-observation
 project_id: 2026project
@@ -111,6 +117,8 @@ pred_span=0.35   → high      → rank1 推薦・確信度高
 id: ndcg-v2-dominant-model
 trigger: "蒲田七 last_digit LTR で複数モデルの比較・選択を行うとき"
 confidence: 0.98
+scope: hall-specific
+hall: kamata7
 domain: ml-model-selection
 source: session-observation
 project_id: 2026project
@@ -145,6 +153,8 @@ python walk_forward.py --model ndcg_v2 --output digit_lag_v2_withinexpert
 id: multitier-evaluation-metrics-standard
 trigger: "LTRモデルの評価指標を設計・更新するとき"
 confidence: 0.90
+scope: hall-specific
+hall: kamata7
 domain: ml-evaluation
 source: session-observation
 project_id: 2026project
@@ -184,6 +194,8 @@ metrics = {
 id: eda-forward-selection-xgbranker-mismatch
 trigger: "EDAのforward selection結果をXGBRankerへ直接適用しようとするとき"
 confidence: 0.88
+scope: hall-specific
+hall: kamata7
 domain: ml-feature-engineering
 source: session-observation
 project_id: 2026project
@@ -215,6 +227,8 @@ lag15: cv_auc=0.4984 (<0.50) → 危険シグナル
 id: rank1-miss-quality-decomposition
 trigger: "LTRモデルのミスパターンを詳細分析・報告するとき"
 confidence: 0.87
+scope: hall-specific
+hall: kamata7
 domain: ml-evaluation
 source: session-observation
 project_id: 2026project

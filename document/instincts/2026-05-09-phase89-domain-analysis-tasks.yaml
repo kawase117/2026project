@@ -2,6 +2,7 @@
 id: dd-concentration-analysis
 trigger: "when investigating shop's high-setting investment timing patterns"
 confidence: 0.92
+scope: methodology
 domain: ml-domain-analysis
 source: phase8-9-recall-fixed-analysis
 project_id: pachinko-analyzer
@@ -27,6 +28,7 @@ Phase 8-9 Recall固定精度比較分析で、CatBoost + Top_5 + Recall=10% の�
 id: days-since-cycle-verification
 trigger: "when validating shop's high-setting investment periodicity"
 confidence: 0.90
+scope: methodology
 domain: ml-domain-analysis
 source: phase8-9-recall-fixed-analysis
 project_id: pachinko-analyzer
@@ -52,6 +54,7 @@ project_name: pachinko-analyzer
 id: model-consensus-prediction-analysis
 trigger: "when multiple models agree on the same machine prediction"
 confidence: 0.85
+scope: methodology
 domain: ml-domain-analysis
 source: phase8-9-recall-fixed-analysis
 project_id: pachinko-analyzer
@@ -77,6 +80,7 @@ project_name: pachinko-analyzer
 id: false-positive-root-cause-analysis
 trigger: "when investigating why model makes incorrect predictions"
 confidence: 0.88
+scope: methodology
 domain: ml-domain-analysis
 source: phase8-9-recall-fixed-analysis
 project_id: pachinko-analyzer
@@ -102,6 +106,7 @@ CatBoost + Top_5 + Recall=10% で、予測数183台のうち実TP(true positive)
 id: model-type-specific-investment-patterns
 trigger: "when analyzing machine-type specific shop investment strategies"
 confidence: 0.82
+scope: methodology
 domain: ml-domain-analysis
 source: phase8-9-recall-fixed-analysis
 project_id: pachinko-analyzer
@@ -127,6 +132,7 @@ Phase 5 検証で「全ホール統合より機種別個別モデル」が+2.44%
 id: prediction-probability-distribution-analysis
 trigger: "when analyzing model confidence scores and calibration"
 confidence: 0.79
+scope: methodology
 domain: ml-domain-analysis
 source: phase8-9-recall-fixed-analysis
 project_id: pachinko-analyzer
@@ -152,6 +158,7 @@ project_name: pachinko-analyzer
 id: temporal-pattern-variation-over-time
 trigger: "when investigating whether investment patterns change over time"
 confidence: 0.81
+scope: methodology
 domain: ml-domain-analysis
 source: phase8-9-recall-fixed-analysis
 project_id: pachinko-analyzer

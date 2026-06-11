@@ -1,0 +1,169 @@
+---
+id: domain-insight-confidence-does-not-guarantee-ml-feature-value
+trigger: "ドメイン分析で得た高信頼度の知見（角番効果・新台汚染等）をML特徴量として実装しようとするとき"
+confidence: 0.93
+domain: ml-feature-engineering
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ドメイン知見の確信度が高くても、新規ML特徴量が既存特徴量と冗長なら効果はゼロ
+
+## 背景
+mitoya_daily_prediction.py に、信頼度0.90-0.95の3つのドメイン知見
+（island-vs-machinetype-dual-axis, corner-static-positional-effect,
+new-machine-seat-dd-roll-contamination）に基づく特徴量を実装し、
+30日 walk-forward validation で実測した。
+
+結果：
+```
+baseline (B案):        Spearman 0.2936 / hit@3 0.0556 / precision 0.4545
+3特徴量同時追加後:      Spearman 0.2915 / hit@3 0.0333 / precision 0.4520  ← 悪化
+physical_islandのみ:    Spearman 0.2964 / hit@3 0.0556 / precision 0.4500  ← 誤差範囲内の微増
+```
+
+feature importance で原因を特定：
+- physical_island（重要度3.9%, #7位）→ 唯一モデルが活用。既存軸（section/machine_type）
+  と独立した情報を持っていた。
+- island_pos3_avg_wf（重要度0.95%, #23位）→ ほぼ無視。既存の seat_dd_roll/section/
+  rank_from_aisle が同じ交互作用をより細かい粒度で既に捉えていた（冗長）。
+- is_new_machine（重要度 **0.000**）→ 完全に無視された。
+
+「ドメイン分析で確信度0.95の知見を得た」ことと「その知見をML特徴量として
+明示的に追加する価値がある」ことは別問題。モデルが既存特徴量から間接的に
+同じ情報を学習できている場合、新規特徴量は冗長でしかない。
+
+## アクション
+ドメイン知見をML特徴量として実装する前に、必ず以下を実施する：
+
+1. その情報が既存特徴量から導出可能かを先に検討する
+   - 例: 「新台かどうか」は二値フラグを作る前に、既存の連続値
+     `machine_sample_n_wf`（サンプル数）が既に同じ情報をより精緻に
+     持っていないか確認する
+2. 実装後は必ず walk-forward validation + feature importance の両方で検証する
+   - importance がほぼゼロ（<1%、既存の関連特徴量より大幅に低い）なら冗長と判定
+   - validation指標（Spearman/hit@3/precision）が悪化または横ばいなら追加しない
+3. 「効果がなかった」「冗長だった」という結果も、次回の特徴量設計の判断材料として
+   重要な知見として記録する（[[binary-flag-redundant-with-continuous-equivalent]] 参照）
+
+## 例
+```python
+# NG: 確信度の高いドメイン知見だからといって無検証で採用する
+df["is_new_machine"] = (df["machine_sample_n_wf"] < 30).astype(int)
+NUMERIC_FEATURES.append("is_new_machine")
+# → そのまま運用に投入
+
+# OK: 実装後に必ず empirical check を行う
+model.fit(...)
+importance = model.get_feature_importance(...)
+if importance["is_new_machine"] < 0.01:
+    # 既存の machine_sample_n_wf で代替可能と判定し、追加せず削除する
+    NUMERIC_FEATURES.remove("is_new_machine")
+```
+
+---
+id: binary-flag-redundant-with-continuous-equivalent
+trigger: "連続値変数（サンプル数・経過日数・カウント等）を閾値で二値化した特徴量を追加しようとするとき"
+confidence: 0.90
+domain: ml-feature-engineering
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 連続値の特徴量が既に存在する場合、それを二値化したフラグはCatBoostにとって無価値
+
+## 背景
+`is_new_machine = (machine_sample_n_wf < 30)` という二値フラグを追加したが、
+feature importance は完全にゼロ（0.000）だった。一方、元の連続値
+`machine_sample_n_wf` は重要度3.4%（全特徴量中#8位）と高い寄与を示していた。
+
+CatBoost のような決定木ベースのモデルは、連続値特徴量に対して任意のしきい値で
+分割点を学習できる。そのため、人間が「30」という閾値を決め打ちして二値化しても、
+モデルは既に連続値からその情報（および、もしより良い閾値があればそれも）を
+自由に学習可能であり、二値化版は完全に冗長になる。
+
+これは「新台フラグ」に限らず、決め打ちの閾値による二値化全般に当てはまる：
+- 「ベテラン台かどうか」（経過日数を閾値化）
+- 「高頻度かどうか」（出現回数を閾値化）
+- 「大型機種かどうか」（規模を閾値化）
+
+## アクション
+連続値変数の二値化を検討する際は、以下を確認する：
+
+1. 元の連続値が既に特徴量リストに含まれているか確認する
+   → 含まれていれば、二値化版を追加しても決定木モデルには無価値（冗長）
+2. 二値化が正当化されるのは以下のケースに限る：
+   - 元の連続値がノイズが多く、閾値以下では情報がない（モデルが自動学習しにくい）
+   - 線形モデル等、非線形な分割点を学習できないモデルを使う場合
+   - 解釈性のために明示的なビジネスルールとして埋め込みたい場合
+3. CatBoost/LightGBM等の決定木ベースモデルでは、基本的に連続値をそのまま渡し、
+   モデルに分割点の学習を委ねる方が良い
+
+## 例
+```python
+# NG: 連続値が既にあるのに、決め打ち閾値で二値化して追加する
+df["machine_sample_n_wf"] = ...  # 既存（連続値、重要度3.4%）
+df["is_new_machine"] = (df["machine_sample_n_wf"] < 30).astype(int)  # 重要度0.000（冗長）
+
+# OK: 連続値をそのまま渡し、モデルに分割点学習を委ねる
+NUMERIC_FEATURES = ["machine_sample_n_wf", ...]  # is_new_machine は追加しない
+
+# 二値化が正当化されるケース: 線形モデルや解釈性重視の場合のみ
+# logistic_model.fit(df[["is_new_machine"]], y)  # 決定木以外なら検討の余地あり
+```
+
+---
+id: small-validation-window-amplifies-metric-noise
+trigger: "30日程度の walk-forward validation で複数の特徴量構成を比較し、優劣を判断しようとするとき"
+confidence: 0.88
+domain: ml-validation
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# n=30日程度の検証では、hit@3等の離散指標は1日の結果差で大きく変動する
+
+## 背景
+同一データに対して特徴量構成だけを変えた3パターンを30日 walk-forward validation
+で比較したところ、以下のように指標が大きく振れた：
+
+```
+baseline:           hit@3 = 0.0556
+3特徴量追加後:       hit@3 = 0.0333  （baseline比で約40%の相対低下に見える）
+physical_islandのみ: hit@3 = 0.0556  （baselineと完全一致）
+```
+
+hit@3 は「日次のtop3予測一致数/3」の30日平均であり、0.0556 と 0.0333 の差は
+実質的に「30日間で1ヒット分」程度の差でしかない。これは統計的に意味のある
+劣化ではなく、サンプルサイズに起因するノイズの範囲内である可能性が高い。
+
+このような小さな検証窓で「Spearman 0.2936 → 0.2915」のような小数点3桁の差を
+「改善」「悪化」と断定するのは、[[antipattern-claim-requires-chance-baseline-comparison]]
+と同様に、ノイズと実質的なシグナルを区別できていない誤った判断を招く。
+
+## アクション
+小さな検証窓（n<50程度）で複数構成を比較する際は：
+
+1. 離散指標（hit@k, precision, recall）の最小単位を意識する
+   - 例: n=30日のhit@3なら、1/30 ≈ 0.033 が最小の変動単位
+   - 観測された差がこの最小単位の1-2個分なら「ノイズ」と解釈する
+2. feature importance のような補助指標と併せて判断する
+   - 指標の差が小さくても、importance が明確にゼロ/極小なら「冗長」の判断は可能
+   - 逆に、指標の差が大きくても importance が低ければ「過学習/ノイズ」を疑う
+3. 可能であれば検証期間を伸ばす、または複数のシード/期間で再現性を確認してから
+   「改善した」「悪化した」と結論づける
+
+## 例
+```python
+# NG: 小数点3桁の差だけで「改善/悪化」を断定する
+if new_spearman > baseline_spearman:
+    print("改善した！この特徴量を採用する")
+
+# OK: 最小変動単位とfeature importanceを併せて判断する
+min_unit = 1 / n_validation_days  # 例: 1/30 ≈ 0.033
+delta = abs(new_metric - baseline_metric)
+if delta < min_unit:
+    print("差は最小変動単位以下 → ノイズの可能性が高く、結論を保留する")
+if feature_importance < 0.01:
+    print("importanceがほぼゼロ → 指標の変動に関わらず冗長と判定して良い")
+```

@@ -1,0 +1,95 @@
+---
+id: forward-prediction-hypothesis-test-must-replicate-estimation-constraints-not-just-rerun-walkforward
+trigger: "ブラインド/フォワード予測で観測された異常な結果（精度低下・符号反転など）の原因を、後から仮説検証する時"
+confidence: 0.9
+domain: ml-validation-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 「ゾロ目の日は逆相関で動く」仮説の検証で、最初の再検証自体がリークしていた——同一日付のwalk-forward再評価では不十分
+
+## 背景
+6/6（月日ゾロ目の土曜）のブラインド予測でAUC=0.41という逆相関的結果が出たことから、「ゾロ目の日にはホールが逆パターンで動く法則性があるのでは」という仮説が立てられた。
+
+これを検証するため最初に行ったのは「同一パイプラインでの walk-forward OOF 再評価」（過去9回の月日ゾロ目それぞれのAUCを算出）であり、結果はAUC平均0.72・全日とも0.5超——「仮説は棄却された」と一度報告した。
+
+しかし、この再評価は **当日の実測 `games_normalized`（同日内オンリー特徴量、`.shift(1)`未処理）をそのままモデルに与えていた**。一方、6/6のブラインド予測では当日回転数が未知のため「過去の曜日別平均」で推定した値を使わざるを得なかった。両者は全く異なる制約条件での評価であり、比較に意味がなかった（ユーザー本人の指摘で発覚）。
+
+学習データのみから回転数を推定し直して公正に再検証したところ、ゾロ目の日(AUC_blind平均0.5254)と非ゾロ目の日(0.5203)に統計的有意差はなく(p=0.62)、仮説は完全に棄却された。
+
+## アクション
+- フォワード/ブラインド予測で観測された異常を検証する際は、「同じ日付を再評価する」だけでは不十分。**元のブラインド予測が置かれていた制約条件（未知の同日特徴量を学習データのみから推定する、など）を寸分違わず再現した検証**でなければ、結論は無効になる
+- 特に「同日内のみで観測される特徴量（このプロジェクトでは`games_normalized`）」が`BASE_FEATURES`に含まれている場合、それをそのまま使う再評価は本質的にリークしている——必ず特徴量ごとに「予測時点で既知か」を確認すること
+- 自分が組んだ「再検証」自体がフェアかどうか、報告前に一段階引いて確認する習慣をつけること（このセッションでは、ユーザーの「リークしていませんか？」という一言がなければ誤った結論を確信度付きでYAMLに記録するところだった）
+
+## 例
+```python
+# NG: 同一日付のwalk-forward再評価（実測値を使うため、ブラインド予測の代理にならない）
+frame = build_machine_feature_frame(raw)  # games_normalizedは実測値のまま
+auc = evaluate(model, frame[frame.date == target_date])
+
+# OK: 元のブラインド予測と同じ制約（未知特徴量を学習データのみから推定）を再現
+seat_dow_avg = train_raw.groupby(['machine_number','weekday'])['games_normalized'].mean()
+frame_blind = frame.copy()
+frame_blind['games_normalized'] = frame_blind.apply(lambda r: seat_dow_avg.get((r.machine_number, r.weekday), fallback), axis=1)
+auc_blind = evaluate(model, frame_blind[frame_blind.date == target_date])
+```
+
+---
+id: single-day-auc-anomaly-falls-within-pipelines-baseline-noise-rate-not-a-date-specific-law
+trigger: "特定の日付・イベント・属性で観測された1日分の異常な予測結果から、その属性固有の法則性を仮説立てしようとする時"
+confidence: 0.9
+domain: ml-validation-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 「ゾロ目の日にAUCが逆転した」現象は、実は同一手法で全日の約32%に発生する“通常運転”だった
+
+## 背景
+6/6（ゾロ目）のブラインド予測でAUC=0.41という逆相関が観測され、「ゾロ目特有の法則性では」という仮説が生まれた。
+
+しかし公正な条件（学習データのみからの回転数推定）でみとや大森町の過去247日を再現したところ：
+
+| 区分 | 該当日数 | AUC_blind平均 | 逆相関(AUC<0.5)になった日の割合 |
+|---|---|---|---|
+| 月日ゾロ目の日 | 9 | 0.5254 | 2/9 = 22.2% |
+| 非ゾロ目の日 | 238 | 0.5203 | 77/238 = 32.4% |
+| 全体 | 247 | 0.5210 | 79/247 = 32.0% |
+
+Mann-Whitney検定でも両者に有意差なし(p=0.62)。**「ゾロ目の日に逆転する」のではなく、「このブラインド予測パイプラインは、どの日でも約3日に1日の割合で逆転する」が正しい説明だった**。劣化幅トップ5の日もすべて非ゾロ目日。
+
+## アクション
+- 単発の異常値（1日分のAUC逆転など）を見て「法則性の発見」と報告する前に、**その手法・パイプライン自体の通常の変動範囲（baseline noise rate）を必ず確認する**こと。今回のケースでは「逆転」は珍しい現象どころか、全日の3割で起きる通常運転だった
+- 「n=1の劇的な観測」は強い印象を与えるが、それ単独では「属性Xに固有の法則」と「単なる手法のノイズの一表現」を区別できない。区別するには、同じ手法を他の多数の比較対象（このケースでは過去247日）に適用し、属性Xの該当群と非該当群の分布を統計的に比較する必要がある
+- 「嬉しい発見」に飛びつく前に「この程度の振れ幅は、この手法では普通に起こり得るか？」と自問する一手間が、誤った確信度付きインサイトの記録を防ぐ
+
+---
+id: games_normalized_estimation_error_is_dominant_noise_source_destroying_forward_prediction_signal
+trigger: "みとや大森町（または同一パイプライン）でフォワード/ブラインド予測の実用化・改善を検討する時"
+confidence: 0.85
+domain: ml-feature-engineering
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 実測回転数ありなら日次AUC平均0.69、推定値に置き換えると0.52(ほぼランダム)まで信号が破壊される
+
+## 背景
+`BASE_FEATURES`の中で`games_normalized`（当日回転数）だけが`.shift(1)`によるラグ処理をされていない「同日内オンリー」特徴量であり、フォワード予測では必然的に推定値で代用するしかない。
+
+過去247日のwalk-forward OOFで両条件を比較した結果：
+
+- 実測回転数を使った場合: 日次AUC平均 = **0.6949**（std=0.0397、全日でAUC>0.5を維持）
+- 学習データのみからの曜日別平均推定値に置き換えた場合: 日次AUC平均 = **0.5210**（std≈0.05、約32%の日でAUC<0.5に転落）
+- 平均劣化幅 = +0.1746（約17ptの情報損失）
+
+つまり、このモデルが本来持つ識別力（AUC≈0.69）のほとんどは、`games_normalized`の推定誤差というノイズに飲み込まれて消失する。
+
+## アクション
+- みとや大森町でのフォワード予測を実用化したいなら、**最優先課題は`games_normalized`への依存を断つこと**——(a) この特徴量を使わないモデルバリアントを別途学習・評価する、または(b) 推定精度を根本的に向上させる（曜日別平均では不十分なことが実証済み）
+- 「ブラインド予測の精度が低い／不安定」という現象を見たら、まず「同日内オンリー特徴量への依存度」を疑うこと。`BASE_FEATURES`のうちラグ処理されていない特徴量をリストアップし、それぞれの推定可能性を評価することが改善の出発点になる
+- 改善前の現状認識として、「合成行注入によるブラインド予測」は実用段階になく、確率閾値による選別判断の根拠としては使用しないこと
+
+---

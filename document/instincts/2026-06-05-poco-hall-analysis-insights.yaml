@@ -1,0 +1,217 @@
+---
+id: poco-partial-status-multi-machine-mapping
+trigger: "ぽこ機種マッピングで1つのエントリーを複数機種に展開する必要があるとき"
+confidence: 0.98
+domain: poco-data-pipeline
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# PATCH_FOUND は PARTIAL ステータスを持てない：複合機種は別途 PARTIAL で登録
+
+## 背景
+`rebuild_poco_pipeline.py` の `PATCH_FOUND` ディクショナリは、ループで全エントリーを
+`('FOUND', db_match)` として登録する。`norm_one()` の FOUND ハンドラは
+`return [db_match]` と単一要素リストを返すため、パイプ区切り文字列
+（例: `'キングハナハナ-30|バジリスク天膳'`）は1つの機種名として扱われ未マップになる。
+`PARTIAL` ステータスのみが `split('|')` による複数機種展開を行う。
+
+## アクション
+複数機種に展開が必要な複合戦略機種は `PATCH_FOUND` に書かず、
+`PATCH_FOUND` / `PATCH_DELETE` ループの後に直接 PARTIAL で登録する。
+
+```python
+# 複合戦略機種: PARTIAL ステータスでパイプ区切りを2機種に展開
+mapping['ハナハナ天膳'] = ('PARTIAL', 'キングハナハナ-30|バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION')
+```
+
+## 例
+`ハナハナ天膳` は「ハナハナ全台 + 天膳全台」の複合発表。
+修正後: `['キングハナハナ-30', 'バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION']` に展開される。
+
+---
+id: poco-signal-strength-quantified
+trigger: "ぽこ発表シグナルの信頼性を評価・使用するとき"
+confidence: 0.97
+domain: poco-analysis
+source: empirical-measurement
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ぽこ発表シグナルは圧倒的に有効：発表日+2898 vs 非発表日+95
+
+## 背景
+2025/7/12〜2026/5/31 K7全期間における発表日 vs 非発表日の実測値。
+「発表日」= その日の poco full_half_normalized に機種名が記載されている台日。
+
+| 区分 | 台日数 | avg差枚 | 勝率 |
+|------|--------|--------|------|
+| 発表日 | 6,902 | +2,898 | 73.9% |
+| 非発表日 | 223,328 | +95 | 39.4% |
+
+月別では全期間一貫して有効（最低月 2026/3 でも Δ+2,090）。
+
+## アクション
+ぽこ発表日をMLの正例ラベル・特徴量として積極的に活用してよい。
+マグレ排除の三重条件: avg_G>=4000 かつ 勝率>=60% かつ 台/日>=2。
+
+## 例
+発表されても全敗するケースがある（例: 2026/5 ミリオンゴッド avg-1,552・勝率12%）。
+発表回数だけで判断せず実績との照合を必ず行うこと。
+
+---
+id: poco-stealth-machines-absent
+trigger: "ぽこ非発表機種に高設定が入っているかを検討するとき"
+confidence: 0.92
+domain: poco-analysis
+source: empirical-measurement
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ステルス機種は存在しない：ぽこ非発表で高パフォーマンスの機種はゼロ
+
+## 背景
+条件（ぽこ非発表 × 台/日>=2 × avg差枚>+500）を全期間で探索した結果、
+条件を満たす機種は 0件。ターゲット機種の全日avg: +238 vs 非ターゲット: -184。
+
+## アクション
+- ホールはぽこに書いた機種だけに高設定を入れる一貫した運用をしている
+- ぽこ非発表機種を「隠れ高設定」として追いかける必要はない
+- 「ぽこ発表日かどうか」は最も信頼できる高設定シグナル
+
+## 例
+非ターゲット機種の全日avg差枚が -184 であることから、ぽこ外の機種は
+基本的に低設定運用であると見なして問題ない。
+
+---
+id: poco-k1-weekday-unknown-mechanism
+trigger: "K1（蒲田一）の平日データを分析するとき"
+confidence: 0.90
+domain: poco-data-quality
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# K1 平日の「機種全=不明」はデータ欠損ではなく情報非公開
+
+## 背景
+K1の平日で `kamata1_full_half_normalized` が空になる日が多い原因：
+- 曜日別「機種全=不明」日数: 火8日・水9日・金9日 vs 土0日・日1日（/47日）
+- K1も毎日「配置戦略 + 機種全」を実施しているが、
+  平日の機種全部分の機種名が把握できていないケースが多い。
+- K7は同条件で不明が1〜3日のみ（ほぼ全日機種名が判明）。
+
+## アクション
+- K1平日データは「配置戦略（位置情報）」は使えるが「機種名」は欠損扱いが安全
+- K1の機種別分析は土日中心で行うと精度が高い
+- 「発表なし」ではなく「不明」であることを区別して扱う
+
+## 例
+```
+水曜日→末尾→ジャグラー末尾6、その他機種末尾7、全→不明
+  ↑配置戦略は記録済                              ↑機種名は不明
+```
+
+---
+id: poco-dd-day-performance-pattern
+trigger: "DD（日付の日）を特徴量として使うとき・イベント日戦略を立てるとき"
+confidence: 0.88
+domain: poco-temporal-analysis
+source: empirical-measurement
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# DD別パフォーマンス：27日最強・10日最弱・25日（給料日）は期待外れ
+
+## 背景
+K7 発表日（2025/7/12〜2026/5/31）のDD別avg差枚実測値。
+
+高DD（avg>+3,000）: 27日(+3,665)・13日(+3,465)・31日(+3,458)・3日(+3,353)・7日(+3,240)
+低DD（avg<+2,400）: 10日(+2,084)・29日(+2,163)・20日(+2,342)・25日(+2,462)
+
+25日（給料日）は意外にも低パフォーマンス。
+27日・31日・3日・13日がイベント日フラグ有無に関わらず安定して高い。
+
+## アクション
+- MLモデルに `dd_score`（DD別avg差枚の歴史的期待値）を特徴量として追加を検討
+- 「給料日=高設定日」という先入観を捨て、実データに基づく DD スコアを使用する
+
+## 例
+単純なイベント日フラグより、DD別の実績スコアの方が予測精度が高い可能性がある。
+
+---
+id: poco-hall-separation-rule
+trigger: "ぽこデータをK7・K1両ホールで分析・出力するとき"
+confidence: 0.99
+domain: poco-analysis-workflow
+source: user-instruction
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# K7とK1の結果は必ず別々に出力する（統合禁止）
+
+## 背景
+蒲田七（K7）と蒲田一（K1）は戦略・規模・データ品質が根本的に異なる：
+- 規模: K7 月平均69.7機種発表 vs K1 44.9機種（K7の約65%）
+- K7: アニメ系スマスロを幅広く・平日も機種名明示
+- K1: 戦国乙女4・カバネリ海門などに集中・平日は機種全が「不明」多数
+- 同一機種でもK7とK1で実績が真逆になるケースがある
+  （例: 2026/5 東京リベンジャーズ → K7: +3,104 vs K1: -1,280）
+
+## アクション
+ぽこデータ関連の全ての分析・出力でK7とK1を分離する。統合した数値は禁止。
+
+```python
+# 正しいターゲット分離
+poco_k7 = {}  # date -> set(機種名) for K7のみ
+poco_k1 = {}  # date -> set(機種名) for K1のみ
+for _, row in df.iterrows():
+    date = str(row['date'])
+    for poco_dict, col in [(poco_k7, 'kamata7_full_half_normalized'),
+                            (poco_k1, 'kamata1_full_half_normalized')]:
+        machines = set()
+        if pd.notna(row[col]) and str(row[col]).strip():
+            for m in str(row[col]).split('、'):
+                m = m.strip()
+                if m:
+                    machines.add(m)
+        poco_dict[date] = machines
+```
+
+## 例
+K7実績はK7のDBを、K1実績はK1のDBを、それぞれのターゲット辞書と照合する。
+出力時も「K7（蒲田七）」「K1（蒲田一）」のセクションを必ず分けて表示する。
+
+---
+id: poco-weekday-event-interaction
+trigger: "曜日とイベント日の相互作用を分析するとき・特徴量設計するとき"
+confidence: 0.85
+domain: poco-temporal-analysis
+source: empirical-measurement
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# K7: イベント日×火・木・日曜日に発表機種数が爆発（通常日の2.5〜3倍）
+
+## 背景
+K7の発表機種数「曜日×イベント日フラグ」クロス集計：
+
+| | 月 | 火 | 水 | 木 | 金 | 土 | 日 |
+|--|--|--|--|--|--|--|--|
+| 通常日 | 2.37 | 1.69 | 1.91 | 2.29 | 1.68 | 1.79 | 1.84 |
+| イベント日 | 2.42 | **5.08** | 2.50 | **4.58** | 2.15 | 2.57 | **4.33** |
+
+土日の発表日実績: avg+3,078 / 勝率78.1%（平日: +2,798 / 71.6%）
+K1は逆に土日集中型（平日発表率63〜70%、土日89%）。
+
+## アクション
+- `is_event_day × weekday` の交差特徴量をMLモデルに追加することを検討
+- 特に「イベント日 × 火/木/日」は最大の発表量と高い設定期待値の組み合わせ
+
+## 例
+```python
+df['is_event_weekday_peak'] = (
+    (df['is_event_day'] == 1) &
+    (df['weekday_jp'].isin(['火', '木', '日']))
+).astype(int)
+```

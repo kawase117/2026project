@@ -2,6 +2,7 @@
 id: signal-correlation-or-rate-too-high
 trigger: "signal_machine_correlation_analysis.pyのシグナル発動率を確認するとき"
 confidence: 0.95
+scope: methodology
 domain: ml-strategy
 source: session-observation
 project_id: 2026project
@@ -62,6 +63,7 @@ if signal_rate > 0.7:
 id: rb-threshold-258-not-300
 trigger: "signal_machine_correlation_analysis.py や signal_multi_tail_2fn.py でRB閾値を設定するとき"
 confidence: 0.96
+scope: methodology
 domain: ml-strategy
 source: session-observation
 project_id: 2026project
@@ -108,6 +110,7 @@ THRESHOLD_SETTING4_PLUS = 1 / 258   # 両機種で設定4以上を捕捉
 id: signal-correlation-monday-confirmed
 trigger: "モンキーターンV・スマスロ北斗の拳シグナルを曜日別に解釈するとき"
 confidence: 0.95
+scope: methodology
 domain: operational-strategy
 source: session-observation
 project_id: 2026project
@@ -167,6 +170,7 @@ else:
 id: signal-fake-tail-check-method
 trigger: "シグナル機種の兆候が真正かフェイク末尾かを判定するとき"
 confidence: 0.87
+scope: methodology
 domain: ml-strategy
 source: session-observation
 project_id: 2026project
@@ -220,6 +224,7 @@ else:  # delta < -30
 id: rb-signal-more-stable-than-diff
 trigger: "差枚シグナルとRBシグナルのどちらを優先するか検討するとき"
 confidence: 0.92
+scope: methodology
 domain: ml-strategy
 source: session-observation
 project_id: 2026project
@@ -274,6 +279,7 @@ RBシグナル (1/258以上) が出た末尾の他2FN機種: 平均 +77.8枚, p=
 id: signal-correlation-json-output-keys
 trigger: "signal_machine_correlation_summary.jsonを読み込んで解釈するとき"
 confidence: 0.99
+scope: methodology
 domain: operational-strategy
 source: session-observation
 project_id: 2026project

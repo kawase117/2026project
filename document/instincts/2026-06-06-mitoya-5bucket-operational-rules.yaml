@@ -1,0 +1,154 @@
+---
+id: hall-avg-does-not-imply-tail-predictability
+trigger: "DD別・日別のホール全体平均がプラスの日を新しいバケットに追加しようとするとき"
+confidence: 0.92
+domain: methodology
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ホール全体が強い日 ≠ 特定末尾が予測可能な日
+
+## 背景
+DB探索で DD=11 のホール台平均差枚が +94.5 だったため、x_day/strong_zorome に続く第3の
+ポジティブバケットとして dd_11 を設計した。
+しかし walk-forward holdout（n=3日）での mean_diff は -65.34 と負になった。
+ホール全体の上昇が「全末尾が一様に上がる」によるものであれば、
+モデルは末尾選択の根拠を持てずノイズを拾って誤予測する。
+
+## アクション
+新バケット候補を評価するとき、「ホール台平均がプラス」だけでは採用根拠として不十分。
+「そのバケット内で特定の末尾に集中したプラスが見られるか（=末尾分布の偏り）」を確認すること。
+確認方法：bucket_exploration.txt の LastDigit × DD クロス集計を見る。
+全末尾が同方向に動いているだけなら、モデルは末尾選択を改善できない。
+
+## 例
+```
+DD=11 の実績：
+  ホール台平均: +94.5（強い）
+  walk-forward mean_diff: -65.34（モデル選択が裏目）
+  理由推測: 11日は全末尾が一様に強く、特定末尾への集中がない
+  → バケットとして採用不可
+
+DD=4/7 のつく日（x_day）の実績：
+  ホール台平均: +210.7（強い）
+  walk-forward mean_diff: +18.16（モデル有効）
+  理由推測: x_day は特定末尾（4,7）への集中が実際に存在する
+  → バケットとして有効
+```
+
+---
+id: mitoya-5bucket-operational-rules-2026-06
+trigger: "みとや大森町の翌日実戦ルールを確認・更新するとき（2026-06時点）"
+confidence: 0.93
+domain: hall-specific
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# みとや5バケット実戦ルール（2026-06-06 確定版）
+
+## 背景
+5バケット walk-forward（atype3 mode、holdout 2026-02-26〜2026-05-29、93日評価）の結果に基づく。
+
+| bucket | mean_diff | observed_dates_holdout | 判断 |
+|--------|-----------|----------------------|------|
+| x_day | +18.16 | 19 | 採用 |
+| strong_zorome | +82.27 | 2 | 採用（n少だが一貫性あり） |
+| month_end_30 | +124.00 | 2 | 観測継続 |
+| dd_11 | -65.34 | 3 | 除外 |
+| others | +0.05 | 67 | margin 閾値で取捨 |
+
+positive_combined mode: positive_day=-5.04, others=-1.62 → atype3 に劣る。使わない。
+
+## アクション
+採用バケット: x_day と strong_zorome のみで実戦。
+month_end_30 は予測ログに記録するが実戦しない。
+observed_dates_holdout >= 6 になった時点（あと4ヶ月分）で再評価する。
+dd_11 は当面再検討しない。
+positive_combined モードは production に含めない。
+
+## 例
+```python
+# 実戦採用条件
+should_play = (
+    day_bucket in {"x_day", "strong_zorome"}
+    and margin >= threshold  # walk-forward calibration 済み
+)
+
+# month_end_30 は記録のみ
+if day_bucket == "month_end_30":
+    log_prediction(date, predicted_digit, "watch_only")
+```
+
+---
+id: positive-combined-mode-degrades-performance
+trigger: "異なるバケット（x_day, strong_zorome, month_end_30 など）を1つのポジティブグループにまとめようとするとき"
+confidence: 0.90
+domain: methodology
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 異機序のバケットを統合すると個別モデルより性能が落ちる
+
+## 背景
+positive_combined モード（x_day + strong_zorome + month_end_30 + dd_11 を "positive_day" に統合）の
+holdout 結果は mean_diff=-5.04 と負。一方 atype3 の x_day は +18.16。
+統合によって x_day の強いシグナルが他の弱いバケットのノイズで希釈される。
+日付パターンが異なれば末尾選択の最適戦略も異なるため、同一モデルで学習させることが不適。
+
+## アクション
+バケット統合は「シグナルが同一機序から来ていること」が確認できた場合のみ行う。
+x_day（4/7のつく日）と strong_zorome（月日一致）はそれぞれ独立した機序を持つため、
+個別バケットとして保持する。
+統合バケットの walk-forward 結果が個別バケットを下回ったら即座に廃止を判断する。
+
+## 例
+```
+バケット統合の NG パターン：
+  x_day（末尾4/7が優遇される日）
+  + strong_zorome（月日一致の特別イベント）
+  + dd_11（ホール全体が強いが末尾は予測不可）
+  = positive_combined → mean_diff=-5.04（x_day 単独の +18.16 より悪い）
+
+正しいアプローチ：
+  各バケットを独立したサブモデルとして管理し、
+  バケット分類→対応モデル選択→予測の順で運用する
+```
+
+---
+id: month-end-30-minimum-observation-threshold
+trigger: "month_end_30 バケットの採用可否を判断しようとするとき"
+confidence: 0.88
+domain: hall-specific
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# month_end_30 の採用判断には observed_dates >= 6 が必要
+
+## 背景
+walk-forward holdout で month_end_30 の mean_diff は +124.00 と強い結果だったが、
+observed_dates_holdout=2（2日分）のみ。strong_zorome 採用時と同じ状況。
+strong_zorome は min-train-days=5 で採用したが、採用後に n=2 日での CI が
+過信頼（bootstrap_ci が実効サンプルサイズを過大評価）であることが判明した。
+
+## アクション
+month_end_30 は observed_dates_holdout >= 6 到達まで実戦見送り。
+（30日は毎月1回 → 6ヶ月 = 2026年12月ごろに再評価）
+それまでは毎月30日に予測ログを記録し、累積実績を蓄積する。
+再評価時は「6日中何日が正の mean_diff か」で採用可否を判断する。
+
+## 例
+```
+現状（2026-06-06）：
+  observed_dates_holdout = 2
+  mean_diff = +124.00（有望だが統計的に不十分）
+
+再評価条件：
+  observed_dates_holdout >= 6（2026年12月ごろ）
+  かつ 6日中 4日以上が正の mean_diff
+
+採用後は strong_zorome と同様に margin 閾値を calibration する
+```

@@ -1,0 +1,599 @@
+---
+id: daily-hall-summary-date-features-null-bug
+trigger: "daily_hall_summary の day_of_week / last_digit / is_x_day を使った分析をするとき"
+confidence: 1.0
+scope: data-quality
+domain: eda
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# daily_hall_summary の日付フィーチャーは大半がNULL — JOIN禁止
+
+## 背景
+`date_info_calculator.py` は全日付で実行されておらず、`daily_hall_summary` の
+`day_of_week`, `last_digit`, `is_x_day` 等は443日中わずか3日分しか入っていない。
+例：レイトギャップ 土曜 n=422（修正前）→ 24,850（修正後）で59倍の差が生じた。
+この状態でJOINすると「土曜のみ6件」が実際には「6日の土曜3件」と一致した偽の相関を生む。
+
+## アクション
+`machine_detailed_results.date` 文字列（YYYYMMDD）から Python で直接計算する。
+`daily_hall_summary` のJOINを日付フィーチャー目的で使ってはならない。
+
+```python
+dates = pd.to_datetime(df["date"], format="%Y%m%d")
+wd    = dates.dt.weekday  # 0=月 … 6=日
+df["day_of_week"] = wd.map(lambda x: _WEEKDAY_JP[x])
+df["dd"]          = dates.dt.day
+df["dd_mod10"]    = df["dd"] % 10
+df["is_x_day"]    = df["dd"].isin(event_digits).astype(int)
+```
+
+## 例
+修正前: レイトギャップ 土曜 avg=+XXX (n=422) → 信頼できない
+修正後: レイトギャップ 土曜 avg=正確な値 (n=24,850) → 有効
+
+---
+id: weekday-digit-nth-single-dim-all-null
+trigger: "曜日・台番号末尾・第N曜日を単独次元でスキャンするとき"
+confidence: 0.99
+scope: finding
+domain: eda-pattern
+source: empirical-scan
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 曜日・台番号末尾・第N曜日の単独スキャンは全ホール全てTier C
+
+## 背景
+daily_hall_summaryのJOINバグを修正した後、21次元 × 9ホールの全スキャンを実施。
+以下の単独次元は全ホール・全パターンでTier A/B が1件も出なかった。
+
+## アクション
+以下の単独次元に基づく台選択・設定投入予測は無効として扱う：
+- `day_of_week`（曜日単独）
+- `machine_digit`（台番号末尾単独）
+- `weekday_nth`（第N曜日単独）
+
+有効なシグナルは必ずDD系統・機種名との「組み合わせ」で発現する。
+
+## 例
+以前の「発見6: 曜日×台番号末尾 共通パターン」はDBバグによる誤検知。
+正しいデータでは 曜日×台番号末尾 は全ホール全てTier C。
+
+---
+id: kamata7-7kei-monday-strongest-signal
+trigger: "蒲田7の台選択・イベント日分析をするとき"
+confidence: 0.97
+scope: finding
+domain: eda-pattern
+source: empirical-scan
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田7: 7系（DD末尾7日）× 月曜日 = 全スキャン中最強シグナル
+
+## 背景
+DBバグ修正後の全ホール横断スキャン（21次元 × 9ホール）で、
+蒲田7の「7系/月」が avg=+807 n=2850 CI=[692,930] を記録。
+CI下限+692と余裕があり、n=2850と十分なサンプル。
+全スキャン中で最も強力な集計レベルシグナル。
+
+7系 = DD=7,17,27（蒲田7のx_day）の月曜日のみを指す。
+イベント日（is_any_event=1）フィルタ後でも同値が確認されている。
+
+## アクション
+蒲田7で7日・17日・27日が月曜日に当たるときは最優先の訪問候補とする。
+DD×曜日スキャンの他のシグナル（7系/木=+386, 7系/日=+323）も参考に。
+
+## 例
+```python
+# 蒲田7 7系×月 のフィルタ
+df_k7 = df[(df['hall']=='蒲田7') & (df['dd_group']=='7系') & (df['day_of_week']=='月')]
+# avg=+807, CI=[692,930]
+```
+
+---
+id: mitoya-4kei-saturday-signal
+trigger: "みとやの台選択・イベント日分析をするとき"
+confidence: 0.95
+scope: finding
+domain: eda-pattern
+source: empirical-scan
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# みとや: 4系（DD末尾4日）× 土曜日 = 最強シグナル
+
+## 背景
+全ホール横断スキャンで、みとやの「4系/土」が avg=+356 n=2126 CI=[217,493]。
+また4系は月/火/水/木でも全てTier B（+190〜+269）で、4系全体が優位。
+みとやのx_day = {4,14,24,7,17,27} のうち4系が全曜日で機能している。
+
+## アクション
+みとやで4日・14日・24日は平日でも狙い目。特に土曜は最優先。
+
+---
+id: lategap-6kei-weekday-signal
+trigger: "レイトギャップの台選択・イベント日分析をするとき"
+confidence: 0.93
+scope: finding
+domain: eda-pattern
+source: empirical-scan
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# レイトギャップ: 6系（DD末尾6日）× 木曜・水曜が有効
+
+## 背景
+全スキャンで レイトギャップ 6系/木=+287 CI=[162,408], 6系/水=+234 CI=[114,350]。
+レイトギャップのx_day={6,16,26}が木・水曜日と組み合わさった場合に有効。
+ヒロキも 6系/土=+129 でTier B（共通パターン）。
+
+## アクション
+レイトギャップで6日・16日・26日が木曜または水曜の場合を優先する。
+
+---
+id: dd-individual-x-day-confirmation
+trigger: "DD個別（1-31）スキャンの結果を解釈するとき"
+confidence: 0.98
+scope: finding
+domain: eda-pattern
+source: empirical-scan
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# DD個別スキャン結果: x_dayと一致するDDのみTier B
+
+## 背景
+DD個別（1-31）スキャン結果：
+- みとや: DD4=+280, DD14=+234, DD24=+213（全Tier B）→ 4系x_dayと完全一致
+- 蒲田7: DD7=+425 → 7系x_dayと一致
+- 蒲田1: DD7=+194 → 7系の弱い反応
+- レイトギャップ: DD6=+219 → 6系x_dayと一致
+- 金時: DD20=+247 (p=0.357 不有意)
+- 楽園・ARROW・ヒロキ・ザシティ: 全DD Tier A/B なし
+
+x_dayとして設定したDD以外でTier B以上が出たケースはなかった。
+金時DD20は設定した金時のx_day={5,15,25,20}のうちの1つだがp値が高く信頼できない。
+
+## アクション
+DD個別スキャンはx_dayの検証として使う。
+x_day外のDDにTier Bが出た場合はx_day設定の見直しを検討する。
+
+---
+id: new-machine-low-setting-start-confirmed
+trigger: "新台導入後の設定投入パターンを分析するとき / days_since_debutを使うとき"
+confidence: 0.97
+scope: finding
+domain: hall-behavior
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 新台は低設定スタートが統計的に確認済み（0-14日: -150〜-190枚）
+
+## 背景
+全ホール合算 days_since_debut 別 avg_diff:
+- 0-7日:  avg=-152 (n=31,579)
+- 8-14日: avg=-190 (n=31,087) ← 最低
+- 15-30日: avg=-116
+- 31-60日: avg=-23
+- 61-90日: avg=+4
+- 91-180日: avg=+39
+- 181日以上: avg=+85
+
+「新台は低設定スタート」が全機種合算で極めて明確に支持される。
+90日超えてからプラス圏に入る。
+
+## アクション
+- 新台導入から30日以内のデータは分析から除外を推奨
+- ANOMALYフレームワークでは導入30日以内のANOMALYを「信頼性低」として扱う
+- 設定が安定するのは61日目以降
+
+---
+id: technical-machine-saturday-bias-not-significant
+trigger: "新ハナビ・ディスクアップ・うみねこ等の技術介入機の曜日分析をするとき"
+confidence: 0.96
+scope: finding
+domain: technical-machine-bias
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 技術介入機の土曜プレミアムは統計的に有意でない
+
+## 背景
+新ハナビ・ディスクアップULTRAREMIX・うみねこ・ディスクアップ2の
+土曜 vs 平日 avg_diff を Mann-Whitney U検定で検証:
+
+| 機種 | 土曜avg | 平日avg | プレミアム | p値 |
+|------|---------|---------|-----------|-----|
+| 新ハナビ | +173 | +126 | +47枚 | 0.524 |
+| ディスクアップUR | +224 | +179 | +45枚 | 0.258 |
+| うみねこ | +48 | +54 | -6枚 | 0.653 |
+| ディスクアップ2 | +65 | +94 | -29枚 | 0.749 |
+
+全機種p>0.25で統計的に有意でない。
+新ハナビを1000G以上に絞ると土曜プレミアムは+47→+12枚に縮小。
+
+「技術介入機の土曜は技術者が集まるから強い」仮説は統計的に支持されない。
+
+## アクション
+機種名×曜日スキャンで「新ハナビ_土 8ホール共通 Tier B」が出ても、
+土曜バイアスとして特別視しない。効果量が小さく実用的な意味は薄い。
+技術差の理論値（+117枚/1000G for 新ハナビ）に対して実測+12枚は3%以下。
+
+---
+id: technical-machine-std-comparison
+trigger: "新ハナビとディスクアップのデータ特性を比較するとき"
+confidence: 0.88
+scope: finding
+domain: technical-machine-bias
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ディスクアップのstdはハナビより約60%大きい（設定差の大きさを反映）
+
+## 背景
+1000G以上の台の曜日別std比較:
+- 新ハナビ: std ≒ 1,050（均質）
+- ディスクアップULTRAREMIX: std ≒ 1,720（高分散）
+
+ディスクアップの設定1→6の機械割差は8.4%（ハナビは6.5%）。
+stdの差異は「技術力の振れ幅」ではなく「設定差の大きさ」を反映している可能性が高い。
+両機種とも土曜はstdが全曜日中で最大になる（設定・技術の高低が最も分かれる日）。
+
+## アクション
+stdが大きい機種はANOMALYスコアが出やすいことに注意。
+ANOMALYの閾値（デフォルトz=2.0）は機種の特性に応じて調整を検討。
+
+---
+id: kamata7-aim-juggler-streak-86
+trigger: "蒲田7でアイムジャグラーEX-TPの台を選ぶとき / ラグ分析の結果を見るとき"
+confidence: 0.95
+scope: finding
+domain: lag-analysis
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田7: アイムジャグラーEX-TP 据え継続streak=86%（n=139）
+
+## 背景
+lag_analysis の結果:
+- streak_rate=86%: 前日プラスなら翌日も86%の確率でプラス（n=139, avg=+285）
+- rebound_rate=74%: 前日マイナスでも74%でプラスに戻る（n=27, avg=+137）
+
+全ホール・全機種中でstreak=86%は突出して高い値。
+一般的に streak率がホール全体plus_rate（約44-45%）を大きく超えている場合、
+「複数日連続で高設定が維持されている」可能性が高い。
+
+他の注目機種（蒲田7）:
+- スマスロ北斗の拳: streak=79% avg=+492 n=255
+- マイジャグラーV: streak=79% avg=+251 n=249
+- わたしの幸せな結婚: rebound=77% avg=+1107 n=22
+
+## アクション
+前日のデータを確認し、アイムジャグラーEX-TPがプラスだった台を翌日も狙う。
+1000G未満の台は除外推奨（信頼性低）。
+
+---
+id: lag-analysis-other-halls-notable
+trigger: "蒲田1・楽園のラグ分析を参照するとき"
+confidence: 0.88
+scope: finding
+domain: lag-analysis
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ラグ分析 他ホール注目シグナル
+
+## 背景
+蒲田1: 炎炎ノ消防隊 streak=70% avg=+810 n=60
+楽園: スーパーリオエース2 streak=85% avg=+446 n=13
+楽園: スマスロ北斗の拳 streak=71% avg=+266 n=323
+ARROW: シン・エヴァンゲリオン streak=59%, 北斗転生の章2 streak=58%
+
+## アクション
+各ホールで前日プラスだった上記機種を翌日の台選びの参考にする。
+n=13（楽園スーパーリオ）のように小サンプルの場合は信頼性に注意。
+
+---
+id: rb-threshold-monkey-hokuto-confirmed
+trigger: "モンキーターンV・スマスロ北斗の拳のRBシグナルを使うとき"
+confidence: 0.99
+scope: methodology
+domain: rb-signal
+source: instinct-confirmed
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# RB閾値は必ず 1/258（0.003876）以上 — モンキー設定1ノイズ対策
+
+## 背景
+旧閾値 1/300=0.003333 ではモンキーターンV設定1（1/299=0.003344）が
+閾値を突き抜けて全台シグナル扱いになり、発動率83.7%という汚染が発生した。
+北斗の拳設定3（1/297=0.003367）も同様に捕捉されていた（設定3は低設定）。
+
+設定4以上を識別する正しい閾値 = 1/258 = 0.003876
+
+モンキーターンV設定別RB確率:
+- 設定1: 1/299（閾値未満に設定）
+- 設定2: 1/295
+- 設定4: 1/258（←ここから良い設定）
+- 設定5: 1/235
+- 設定6: 1/222
+
+スマスロ北斗の拳は機種名「スマスロ北斗%」で前方一致検索すること
+（「北斗の拳 転生の章2」を除外するため LIKE '%北斗%' は禁止）。
+
+## アクション
+```python
+RB_THRESHOLD = 1 / 258  # = 0.003876
+# スマスロ北斗の正しい検索
+cursor.execute("WHERE machine_name LIKE 'スマスロ北斗%'")
+```
+
+---
+id: anomaly-detection-framework
+trigger: "機種・台番号レベルで今日の異常好調台を検出したいとき"
+confidence: 0.95
+scope: methodology
+domain: anomaly-detection
+source: implementation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ANOMALYフレームワーク: eda/core.py の anomaly_detection 関数
+
+## 背景
+「回転数が落ちた台にホールが設定を投入する」というカンフル仮説の検証と、
+「今日突然好調な台の検出」をリアルタイムで行うためのフレームワーク。
+
+実装済み: `eda/core.py`
+- `compute_debut_features(df, db_start_grace_days=0)`: 機種初登場日・台数を付与
+- `anomaly_detection(hall, baseline_days=30, min_games=1000, anomaly_threshold=2.0)`
+
+アルゴリズム:
+1. 台ごとに前日までの30日 rolling_mean/std を計算（shift(1)でリーク防止）
+2. anomaly_score = (今日diff - rolling_mean) / rolling_std
+3. score ≥ 2.0 かつ games ≥ 1000 を is_anomaly とする
+
+付与される特徴量:
+- days_since_debut, days_since_debut_bucket
+- pre_existing（DB初日から存在する機種はTrue）
+- machine_count（設置台数）
+
+## アクション
+```python
+from eda.core import anomaly_detection
+df = anomaly_detection('蒲田7', baseline_days=30, min_games=1000, anomaly_threshold=2.0)
+today = df[df['date'] == df['date'].max() & df['is_anomaly']]
+```
+
+---
+id: anomaly-next-day-mean-reversion
+trigger: "ANOMALYを翌日の台選択シグナルとして使おうとするとき"
+confidence: 0.98
+scope: finding
+domain: anomaly-detection
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ANOMALY翌日は通常日より悪い — 翌日予測には使えない
+
+## 背景
+全ホール合算・翌日1000G以上でのANOMATY後続検証:
+
+| 条件 | 翌日avg | 翌日plus率 |
+|------|---------|----------|
+| ANOMALY日（score≥2） | +43 | 39.8% |
+| 通常日（score<2） | +60 | 40.6% |
+
+ANOMALYスコア帯別（スコアが高いほど翌日が悪い）:
+- score 2-3: 翌日+52
+- score 3-4: 翌日+38
+- score 4-5: 翌日+20
+- score 5以上: 翌日+5
+
+これは「平均回帰」パターン。多くのANOMALYは低設定台の偶然の上振れであり、
+翌日は元の低成績に戻る。
+
+## アクション
+ANOMALYを「翌日の台選択シグナル」として使ってはならない。
+ANOMALYの実用途は「今日リアルタイムで高設定台を発見する」に限定する。
+例: 営業中に「この台がスコア5以上を記録している」情報を使い同日に打ちに行く。
+
+---
+id: anomaly-baseline-positive-better
+trigger: "ANOMALYをどの条件で信頼するか判断するとき"
+confidence: 0.95
+scope: finding
+domain: anomaly-detection
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 「好調baseline × ANOMALY」が翌日最も続く（baseline≥+200で翌日+113）
+
+## 背景
+逆張り条件の翌日検証（全ホール合算、翌日1000G以上）:
+
+| 条件 | 翌日avg | plus率 |
+|------|---------|--------|
+| 全ANOMALY | +43 | 39.8% |
+| 少台数（≤3台）のANOMALY | +26 | 40.5% |
+| 低baseline（≤-500）のANOMALY | -46 | 37.3% |
+| 逆張り複合（少台数+低baseline） | **-90** | 37.0% |
+| 人気台ANOMALY（≥10台） | **+70** | 40.3% |
+| 好baseline（≥+200）のANOMALY | **+113** | 40.9% |
+
+「不人気機種の逆張りカンフル」仮説は否定。逆張り複合条件は翌日-90で最悪。
+「既に好成績の機種でのANOMALY」が最も翌日に続く（+113）。
+これはlag_analysisのstreak_rateと同じメカニズム（高設定台は複数日継続）。
+
+## アクション
+- 逆張り（低baseline+少台数）のANOMALYは翌日打ちに行かない
+- baseline≥+200のANOMALYは翌日継続を検討できる唯一の条件
+- カンフル注入は1日限りの可能性が高い（低baseline台はすぐ戻る）
+
+---
+id: anomaly-early-debut-unreliable
+trigger: "導入後30日以内の機種のANOMALYを解釈するとき"
+confidence: 0.97
+scope: finding
+domain: anomaly-detection
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 導入30日以内のANOMALYは信頼できない（翌日-291〜-396）
+
+## 背景
+pre_existing=False の新規機種に限定した、導入後日数帯別ANOMALY翌日検証:
+
+| 日数帯 | 翌日avg | plus率 | n |
+|--------|---------|--------|---|
+| 0-7日 | -291 | 37.5% | 2017 |
+| 8-14日 | -396 | 35.8% | 1191 |
+| 15-30日 | -198 | 35.6% | 2151 |
+| 31-60日以降 | +20〜+52 | 37-39% | 安定 |
+
+導入30日以内のANOMALYはベースラインが少ない期間のデータで構築されており、
+偽ANOMALYが多い。実際に翌日が大幅マイナスになっている。
+
+## アクション
+ANOMALYフレームワークでは `days_since_debut < 30` の機種のANOMALYに
+信頼性フラグを立て、「新台期間の過渡的変動」として扱う。
+実運用では導入30日以降の機種のANOMALYのみを参照する。
+
+---
+id: pre-existing-machine-debut-detection
+trigger: "days_since_debutを計算するとき / compute_debut_features を使うとき"
+confidence: 0.98
+scope: methodology
+domain: anomaly-detection
+source: implementation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# pre_existing判定: DB初日に初登場した機種を除外（grace_days=0で十分）
+
+## 背景
+`compute_debut_features(df, db_start_grace_days=0)` で実装済み。
+
+蒲田7の検証結果:
+- DB期間: 2025-07-07 〜 2026-06-07
+- pre_existing 60機種: 全て debut_date == 2025-07-07（DB初日に集中）
+- DB初日から2〜14日目に初登場した機種: 0件
+→ grace_days=14 と grace_days=0 は全く同じ結果になる
+
+ホールのデータ特性として「DB収集開始時点で設置中の機種は全て初日に一斉登場」する。
+grace_days の猶予期間は必要なく、0で十分。
+
+全ホール規模:
+- みとや: pre_existing 47機種 / 新規 98機種
+- 蒲田7: 60機種 / 54機種
+- 楽園: 96機種 / 151機種（最も入れ替えが活発）
+
+## アクション
+```python
+# デフォルトで grace_days=0（修正済み）
+df = compute_debut_features(df, db_start_grace_days=0)
+# pre_existing=Trueの機種は days_since_debut が NaN
+# is_anomaly は pre_existing 関係なく全機種で計算される
+```
+
+---
+id: machine-count-anomaly-small-hall-higher
+trigger: "設置台数別のANOMALY発生率を解釈するとき"
+confidence: 0.83
+scope: finding
+domain: anomaly-detection
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 設置1台の機種はANOMALY発生率が最高（6.6%）
+
+## 背景
+蒲田7での machine_count 別ANOMALY発生率:
+- 1台: 6.6%（最高）
+- 2-3台: 5.8%
+- 4-5台: 5.5%（最低）
+- 6-10台: 5.8%
+- 11台以上: 6.1%
+
+1台しか設置されていない機種のANOMALY率が最高だが、
+「逆張り複合条件」の翌日が-90と最悪なため、
+単台ANOMALYは「1日限りのカンフル」もしくは「バリアンス」の可能性が高い。
+
+## アクション
+設置1台のANOMALYを「隠れ名台発見」として期待しすぎない。
+baseline≥+200 の条件との組み合わせで初めて有望になる。
+
+---
+id: days-since-debut-bucket-anomaly-rate-pattern
+trigger: "導入後何日目にカンフル注入が起きやすいかを分析するとき"
+confidence: 0.85
+scope: finding
+domain: anomaly-detection
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ANOMALY発生率は導入15-30日が谷（5.2%）で前後が高い U字型
+
+## 背景
+蒲田7 pre_existing除外後の導入日数帯別ANOMALY発生率:
+- 0-7日: 6.7%（新台直後）
+- 8-14日: 5.4%
+- 15-30日: 5.2%（最低）
+- 31-60日: 5.6%
+- 61-90日: 6.3%
+- 91-180日: 6.1%
+- 181-365日: 6.7%
+
+解釈:
+- 0-7日の6.7%: 初日高設定の例外的事例（導入景気）が混在
+- 15-30日の5.2%（谷）: 低設定スタートが安定している期間→ベースラインも低くANOMATY出にくい
+- 61日以降の上昇: 「回転数が落ちてきたころにカンフル注入」仮説と一致
+
+## アクション
+61日〜180日の機種でANOMALYが発生した場合は
+「回転数低下後のカンフル注入」として最も確度が高い条件として扱う。
+
+---
+id: anomaly-realtime-usecase
+trigger: "ANOMALYの実用的な使い方を考えるとき"
+confidence: 0.95
+scope: methodology
+domain: anomaly-detection
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ANOMALYの実用途: 翌日予測ではなく「今日のリアルタイム高設定発見」
+
+## 背景
+全検証結果のまとめ:
+- ANOMALY翌日は通常日より悪い（平均回帰）
+- 逆張り条件では翌日-90（カンフルは1日限り）
+- 好baseline×ANOMALYのみ翌日+113で続く
+
+「カンフル注入仮説」への結論:
+- カンフルが存在する場合、多くは1日限り
+- 翌日予測シグナルとしてのANOMALYは機能しない
+
+## アクション
+ANOMALYを「今日・リアルタイム」で使う:
+1. 当日データを取得後、anomaly_score ≥ 3.0 かつ games ≥ 1000 の台を抽出
+2. その台がまだ打てる状態（閉店まで時間がある）なら打ちに行く
+3. baseline≥+200 の台なら翌日も検討可
+
+翌日朝に「昨日ANOMALYだった台」を狙うのは有効でない。
+ただし「昨日もANOMATY、かつ baseline が元々高い台」は別途lag_analysisのstreak_rateで評価する。

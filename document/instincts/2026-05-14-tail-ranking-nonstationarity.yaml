@@ -2,6 +2,7 @@
 id: nonstationarity-invalidates-single-regime-models
 trigger: "when predicting rankings/classifications across temporal periods with shifting baseline distributions"
 confidence: 0.95
+scope: methodology
 domain: ml-project-planning
 source: session-observation | data-analysis
 project_id: pachinko-analyzer
@@ -35,6 +36,7 @@ Example: Regression trained on 29% baseline predicts test data consistently 5pp 
 id: learning-to-rank-for-non-stationary-baselines
 trigger: "when predicting which option ranks highest, given absolute baseline may shift over time"
 confidence: 0.90
+scope: methodology
 domain: ml-feature-engineering
 source: session-observation
 project_id: pachinko-analyzer
@@ -77,6 +79,7 @@ Train: "for each day, rank all 末尾 by win-rate; learn pairwise preferences"
 id: time-decay-weighting-for-regime-drift
 trigger: "when retraining models on data spanning multiple regimes with gradual drift"
 confidence: 0.85
+scope: methodology
 domain: ml-hyperparameter-tuning
 source: session-observation
 project_id: pachinko-analyzer
@@ -129,6 +132,7 @@ As Regime 3 data arrives, it automatically gains prominence; old regimes fade.
 id: data-driven-discovery-supersedes-hypothesis
 trigger: "when tempted to validate domain-based hypotheses without confronting actual data patterns"
 confidence: 0.95
+scope: methodology
 domain: ml-project-planning
 source: user-feedback
 project_id: pachinko-analyzer
@@ -171,6 +175,7 @@ Incorrect response: "Maybe the effect is subtle" or "let's try interaction terms
 id: relative-ranking-stability-despite-absolute-drift
 trigger: "when observing that absolute frequencies shift uniformly but relative order stays constant"
 confidence: 0.90
+scope: methodology
 domain: ml-feature-engineering
 source: data-analysis
 project_id: pachinko-analyzer

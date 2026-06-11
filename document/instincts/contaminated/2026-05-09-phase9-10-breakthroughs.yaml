@@ -2,6 +2,7 @@
 id: engineered-features-outperform-raw
 trigger: "when implementing ML models with many raw features"
 confidence: 0.92
+scope: methodology
 domain: ml-feature-engineering
 source: phase9-10-hyperlearning
 project_id: pachinko-analyzer
@@ -48,6 +49,7 @@ auc = 0.8140  # BETTER: +0.9 AUC improvement
 id: feature-model-coupling
 trigger: "when selecting model architecture for ML task"
 confidence: 0.88
+scope: methodology
 domain: ml-hyperparameter-tuning
 source: phase9-10-hyperlearning
 project_id: pachinko-analyzer
@@ -97,6 +99,7 @@ for feature_set_name, feature_set in [
 id: conservative-hyperparameters-regularization
 trigger: "when tuning hyperparameters for imbalanced classification"
 confidence: 0.85
+scope: methodology
 domain: ml-hyperparameter-tuning
 source: phase9-10-hyperlearning
 project_id: pachinko-analyzer
@@ -152,6 +155,7 @@ param_grid = {
 id: grid-search-roi-imbalanced
 trigger: "when optimizing model for imbalanced classification task"
 confidence: 0.82
+scope: methodology
 domain: ml-hyperparameter-tuning
 source: phase9-10-hyperlearning
 project_id: pachinko-analyzer
@@ -203,6 +207,7 @@ else:
 id: feature-importance-selection-strategy
 trigger: "when selecting which features to use in ML model"
 confidence: 0.80
+scope: methodology
 domain: ml-feature-engineering
 source: phase9-10-hyperlearning
 project_id: pachinko-analyzer
@@ -261,6 +266,7 @@ hybrid_features = domain_features + importance_features
 id: rank1-specific-ml-breakthroughs
 trigger: "when targeting specific prediction task in pachinko ml"
 confidence: 0.88
+scope: methodology
 domain: ml-project-planning
 source: phase9-10-hyperlearning
 project_id: pachinko-analyzer

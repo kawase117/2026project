@@ -1,0 +1,263 @@
+---
+id: island-segmentation-essential-for-corner-analysis
+trigger: "角番分析（rank_from_aisle など位置効果の検証）をするとき"
+confidence: 0.94
+domain: analysis-methodology
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+title: 角番分析は必ず島別に分割 — バラエティ島は除外すべき
+
+## 背景
+全島合算の角番分析では bari（バラエティ島）の「角番効果なし」が全体の統計を歪める。
+島別に分割した Kruskal-Wallis ε² 比較（rank_from_aisle, 直近180日, プラス日）:
+
+| 島 | ε² | gradient | 解釈 |
+|----|-----|----------|------|
+| main_jug | 0.006653 | +154 | 角番1に高設定集中（強い） |
+| bari | **0.000000** | -135 | **角番効果なし（逆転傾向）** |
+| main_mix | 0.001322 | +249 | 絶対値大だが相対的に弱い |
+
+bari の ε²=0 は統計的に「角番で説明される差がない」を意味する。
+実際、rank1=+1486 と rank3=+1566 で角番1が弱い逆転現象。
+
+## アクション
+**バラエティ島（台692以上）は今後の角番分析から除外する**。
+理由:
+- 古い機種が多く、高設定投入戦略が不明確
+- 機種ターンオーバーが速い（データが陳腐化しやすい）
+- 角番で選別する価値がない（ε²=0）
+
+角番を使った運用ルールは **main_jug（メインジャグラー島）のみで立案** する。
+main_mix（AT列）は角番効果より DD×曜日が重要。
+
+## 例
+```python
+# NG: バラエティ島を含めた全島角番分析
+rank_aisle_all = df.groupby('rank_from_aisle')['diff'].mean()
+
+# OK: main_jug のみで角番分析（bari 除外）
+rank_aisle_main_jug = df[df['island']=='main_jug'].groupby('rank_from_aisle')['diff'].mean()
+```
+
+---
+id: main-jug-corner-effect-strengthening
+trigger: "メインジャグラー島（台641-691）の最新の角番効果を評価するとき"
+confidence: 0.91
+domain: hall-specific
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+title: メインジャグラー島の角番効果は直近180日で強化傾向（ε²: 0.00597 → 0.00665）
+
+## 背景
+みとや大森町店のメインジャグラー島（台641-691, マイジャグV・アイム）について
+Kruskal-Wallis ε² の時系列比較:
+
+| 期間 | rank_from_aisle ε² | rank1-5勾配 |
+|------|-----|----------|
+| 全期間 | 0.005976 | +112 |
+| 直近180日 | **0.006653↑** | **+154↑** |
+
+ε² が小さく見えるが、他の島（bari: 0.000）と比べて **6倍以上の説明力がある**。
+差枚 = 設定 + 回転数 + 運要素 という複合要因の中で、
+0.67% の説明力は統計的には有意で、角番による設定投入パターンが明確に存在する証拠。
+
+勾配が+112 → +154 に拡大（37%増）したのは、
+ホールが「メインジャグラー島の角番1に高設定を集中させる戦略」を
+2025年後半以降強化した可能性を示唆。
+
+## アクション
+メインジャグラー島の角番1は「信頼できる指標」と見なしてよい。
+ただし:
+- 他の島（main_mix）とは単価が2倍異なるため別スケールで管理
+- バラエティ島は混ぜない
+- 直近の change_point (2026-06-05) 付近で戦略変化の可能性を確認
+
+## 例
+```sql
+-- メインジャグラー島のみで角番別成績確認
+SELECT
+  ml.rank_from_aisle,
+  ROUND(AVG(m.diff_coins_normalized), 0) as avg_diff,
+  COUNT(*) as n
+FROM machine_detailed_results m
+JOIN machine_layout ml ON m.machine_number = ml.machine_number
+WHERE ml.machine_number BETWEEN 641 AND 691
+  AND m.date >= '20260501'
+GROUP BY ml.rank_from_aisle
+ORDER BY ml.rank_from_aisle;
+```
+
+---
+id: bari-island-exclude-from-corner-rules
+trigger: "バラエティ島（台692以上）の角番パターンから運用ルールを作ろうとするとき"
+confidence: 0.95
+domain: analysis-methodology
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+title: バラエティ島は角番で高設定を見分けられない — ε²=0 で除外確定
+
+## 背景
+バラエティ島（台692以上、モンキーターン・ゴッドイーター・沖ドキなど）の
+角番別 avg_diff を検証した結果:
+
+**全期間（rank_from_aisle, プラス日）:**
+```
+rank1: +1486   rank2: +1529   rank3: +1566   rank4: +1450
+```
+→ rank3 が最高。rank1 が最低（逆転）
+
+**直近180日の Kruskal-Wallis:**
+- ε² = 0.000000（ほぼゼロ）
+- gradient = -135（角番1 vs 角番5 で rank1 が低い）
+
+統計的に「角番で説明される差がない」状態。
+理由の仮説:
+- 機種ターンオーバーが速い（短期配置）
+- 機械割の差が角番効果を打ち消す
+- 同じセクション内で機種変更が頻繁
+
+## アクション
+**バラエティ島の角番ルールは作成しない**。
+代わりに:
+- 機種別・DD別で分析する（角番は使わない）
+- 古いデータ（1ヶ月以上前）は参考にしない
+- 稼働率（games_normalized）の方が台の信頼度を示す
+
+## 例
+```python
+# NG
+bari_rank1_rule = df[df['island']=='bari'].groupby('rank_from_aisle')...
+
+# OK（バラエティ島は機種・DD優先）
+bari_analysis = df[df['island']=='bari'].groupby(['machine_name', 'dd_group'])...
+```
+
+---
+id: main-mix-at-different-scale-from-jug
+trigger: "メイン混在島（AT列）と メインジャグラー島の成績を比較するとき"
+confidence: 0.92
+domain: domain-analysis
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+title: メイン混在島（AT列）はメインジャグラー島の2倍の単価で スケールが異なる
+
+## 背景
+島別の平均差枚（rank_from_aisle 全角番、プラス日）:
+
+| 島 | avg_diff | 代表機種 |
+|----|----------|---------|
+| main_jug | +1,400 | ジャグラー・アイム |
+| main_mix | **+3,300** | スマスロ北斗・スマスロ碧・新鬼武者 |
+
+main_mix は main_jug の **2.35倍の単価**。
+これは「角番効果」ではなく「機種の機械割の差」が主要因。
+
+角番別の勾配を見ると:
+- main_jug: rank1(+1525) - rank5(+1366) = **+159**（明確な差）
+- main_mix: rank1(+3306) - rank5(+3100) = **+206**（勾配は似ているが絶対値が大きい）
+
+**相対的な角番効果は同程度だが、単価が異なるため別管理が必須**。
+
+## アクション
+成績比較時は「main_mix は +3000, main_jug は +1500」という前提で見る。
+「main_mix が勝つ」のは角番の選別が効いているのではなく、
+機種構成（強い台が配置されている）が異なることが原因。
+
+同じ角番で比較するなら main_jug のみで評価。
+全体的な「今日の期待値」を算出するなら機種別・島別に加重平均。
+
+## 例
+```python
+# 正しい期待値計算
+expectation = (
+    df[df['island']=='main_jug'].groupby('dd_group')['diff'].mean() * 0.4 +
+    df[df['island']=='main_mix'].groupby('dd_group')['diff'].mean() * 0.6
+)
+```
+
+---
+id: corner-change-point-2026-06-05-observation
+trigger: "みとやの最新の角番ドリフトを追跡するとき"
+confidence: 0.78
+domain: domain-analysis
+source: empirical-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+title: change_point 2026-06-05 付近でホール戦略が変化している可能性（観察中）
+
+## 背景
+角番ドリフト分析で各島の change_point を抽出した結果:
+
+| 島 | 3指標の change_point |
+|----|-----|
+| main_jug | 2025-08-07（古い） |
+| bari | 2026-04-23 |
+| **main_mix** | **2026-06-05（今週）** |
+
+main_mix の change_point が今週（2026-06-05）に更新されたのは異常。
+直近の gradient や epsilon_sq が大きく変化（上昇傾向）したことを示唆。
+
+考えられる原因:
+- 店長交代（2026-04末）の遅れた影響
+- AT機の新規配置・機種入れ替え
+- 設定投入ルールの変更
+
+**現段階では観察値。複数週のデータで確認が必要**。
+
+## アクション
+2026-06-05 の前後で:
+1. 機種の配置変更がないか確認
+2. 店長の新しい設定戦略が反映されているか推測
+3. 今後1-2週間のデータで角番勾配の傾向を追跡
+
+直近データ（2026-06-07以降）を集めて gradient_diff の安定性を確認し、
+一時的な変動か本格的な戦略変化かを判断する。
+
+---
+id: epsilon-squared-interpretation-for-pachinko
+trigger: "角番などの位置効果を評価するとき、ε² が小さい値に見えて不安になるとき"
+confidence: 0.96
+domain: methodology
+source: explanation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+title: パチスロ成績分析では ε²0.006 で「十分な説明力」 — 差枚は多因子現象
+
+## 背景
+Kruskal-Wallis ε² は 0〜1 で「角番という要因が成績のばらつきをどれだけ説明できるか」を示す。
+
+みとやでは:
+- main_jug ε² = 0.006653（0.67%）
+- 一見小さく見える
+
+しかし差枚（成績）は複合現象:
+```
+成績 = 設定（機械割） + 回転数（稼働率） + 運要素（サンプルばらつき）
+```
+
+- **設定**（機械割 ±5%）：最大の要因だが多くの台で「未知」
+- **回転数**（日々変動 ±20%）：人気・評判で揺らぐ
+- **運要素**（統計ノイズ）：数日間では無視できない
+
+この背景で ε²=0.006 は：
+- 他の指標なし（全島合算）よりも **5〜6倍優れている**（bari ε²=0）
+- 「設定」を直接知ることはできないが、**ホールの設定投入パターンを間接的に捉えている**
+
+## アクション
+ε² が 0.01 以下でも「有用」と判定してよい理由:
+1. 多因子現象なので各要因の説明力は必然的に小さい
+2. 他の指標（機種・DD・曜日）と組み合わせると相乗効果
+3. 「同じ設定なら角番1 > 角番5」という単純な理論を実データで支持している
+
+ε² ではなく **相対比較**（他の島との ε² 差、時系列の ε² 変化）で判定する。
+main_jug (0.00665) > main_mix (0.00132) > bari (0.00000) という階級が信頼度の根拠。

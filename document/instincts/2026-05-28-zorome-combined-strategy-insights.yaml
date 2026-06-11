@@ -1,7 +1,15 @@
+# ⚠️  LEAKAGE WARNING (added 2026-06-01)
+# このファイルのインサイトは2026-05-31のリーク修正前に作成された。
+# 【有効】実データ観察（diff_coins集計・ゾロ目パターン・台配置等）
+# 【無効】MLモデル性能値（AUC / hit@2 / precision 等の数値）
+# アクション項目を実運用に使う前にリーク修正後のモデルで再検証すること。
+
 ---
 id: correction-threshold-150-optimal-operating-point
 trigger: "ゾロ目補正テーブルを台選択に使う閾値を決めるとき"
 confidence: 0.85
+scope: hall-specific
+hall: kamata7
 domain: operational-strategy
 source: session-observation
 project_id: 2026project
@@ -39,6 +47,8 @@ threshold=150 で diff Y-X と Cohen's d が同時にピークを示した（∩
 id: correction-sign-direction-rule
 trigger: "correction 値をもとにゾロ目台を選ぶか避けるかを判断するとき"
 confidence: 0.92
+scope: hall-specific
+hall: kamata7
 domain: operational-strategy
 source: session-observation
 project_id: 2026project
@@ -82,6 +92,8 @@ if abs(correction) > 150 and correction < 0:   # ← 冗長
 id: combined-strategy-ml-correction-both-required
 trigger: "ML末尾予測 + ゾロ目補正の統合戦略の期待値を評価するとき"
 confidence: 0.87
+scope: hall-specific
+hall: kamata7
 domain: operational-strategy
 source: session-observation
 project_id: 2026project
@@ -117,6 +129,8 @@ ML予測が外れた場合: +229 が消失 → ランダム選択と同等かそ
 id: new-hall-correction-signal-maturity
 trigger: "オープンから1年未満のホールで correction テーブルを運用するとき"
 confidence: 0.80
+scope: hall-specific
+hall: kamata7
 domain: operational-strategy
 source: session-observation
 project_id: 2026project
@@ -148,6 +162,8 @@ threshold=150 の有効性を蒲田7のデータのみで統計的に確認す�
 id: threshold-sweep-inverted-u-shape
 trigger: "correction 閾値と参加率のトレードオフを分析するとき"
 confidence: 0.83
+scope: hall-specific
+hall: kamata7
 domain: ml-strategy
 source: session-observation
 project_id: 2026project

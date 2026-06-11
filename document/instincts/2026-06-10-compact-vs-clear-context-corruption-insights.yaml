@@ -1,0 +1,37 @@
+---
+id: compact-vs-clear-context-corruption-prevention
+trigger: "/compact 実行後、過去の無関係なセッションのサマリーが「直前の会話」として混入し、文脈が崩れたとき"
+confidence: 0.9
+scope: workflow
+domain: session-management
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# /compact と /clear の使い分けで文脈崩壊を防ぐ
+
+## 背景
+楽園蒲田店ヒートマップ実装＋バグ修正＋instinct-exportが完了した直後に `/compact` を実行したところ、
+全く無関係な過去セッション（EDA・機種別RB確率分析）のサマリーが「PRIOR-SESSION SUMMARY」として
+混入し、「やはり完全に崩れた状態でした」という結果になった。
+
+`/compact` は「同じ作業の延長」を圧縮するためのものであり、過去の無関係なタスクの要約が
+混入するリスクがある。一方 `/clear` は会話履歴を完全に削除して新規開始するため、
+無関係な文脈の混入は起きないが、直前の細かい経緯はmemoryや`/save`に残しておく必要がある。
+
+## アクション
+1. 一つの作業（例：ヒートマップ実装）が完結し、`/instinct-export` などで知見を保存し終えたら、
+   次の作業に移る前に `/save` で `document/sessions/` に正本を残す
+2. タスクの種類が大きく変わる（分析→実装、実装→別機能の分析など）場合は `/compact` ではなく
+   `/save` → `/clear` で仕切り直す
+3. `/compact` は「同じタスクの延長で文脈を圧縮したいだけ」のときのみ使う
+4. compact/clear 直後の最初の応答では、表示された PRIOR-SESSION SUMMARY が
+   「現在進行中のタスクと一致するか」を確認し、一致しない場合は鵜呑みにせず
+   git status や直近の変更ファイルで実態を確認してからユーザーに次の作業を確認する
+
+## 例
+本セッションでは「楽園蒲田店ヒートマップ実装」完了直後に `/compact` した結果、
+PRIOR-SESSION SUMMARY に「スマスロ北斗の拳・モンキーターンVのRB確率分析」という
+全く別タスクの内容が混入した。これは `/compact` ではなく `/save` → `/clear` を
+使うべきケースだった。
+---

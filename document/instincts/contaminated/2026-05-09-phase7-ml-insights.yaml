@@ -2,6 +2,7 @@
 id: calibrated-beats-rebalancing
 trigger: "when implementing XGBoost on imbalanced classification (minority <10%)"
 confidence: 0.95
+scope: methodology
 domain: ml-feature-engineering
 source: phase7-experimental-validation
 project_id: pachinko-analyzer
@@ -27,6 +28,7 @@ Imbalanced binary classification typically uses class rebalancing (scale_pos_wei
 id: moving-averages-dominate
 trigger: "when engineering features for time-series rank/win-rate prediction"
 confidence: 0.92
+scope: methodology
 domain: ml-feature-engineering
 source: phase7-feature-importance-analysis
 project_id: pachinko-analyzer
@@ -50,6 +52,7 @@ Feature importance analysis on 28D set (14D temporal + 15D rolling averages) sho
 id: target-specific-feature-utility
 trigger: "when adding new features and evaluating across multiple rank targets"
 confidence: 0.85
+scope: methodology
 domain: ml-feature-engineering
 source: phase7-18d-comparison-experiment
 project_id: pachinko-analyzer
@@ -73,6 +76,7 @@ days_since_last_rank1 helps top_3/top_5 but hurts rank_1. Not all features are u
 id: ece-metric-for-imbalanced
 trigger: "when evaluating ML on imbalanced datasets and deciding between rebalancing strategies"
 confidence: 0.90
+scope: methodology
 domain: ml-hyperparameter-tuning
 source: phase7-scale-pos-weight-comparison
 project_id: pachinko-analyzer

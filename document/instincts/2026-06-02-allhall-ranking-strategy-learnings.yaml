@@ -1,0 +1,142 @@
+---
+id: paradigm-shift-to-spike-capture
+trigger: "when optimizing multi-hall daily selection from strong-hall-average to spike-day capture"
+confidence: 0.94
+domain: ml-strategy
+source: thread-learning-20260602-allhall
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# パラダイム転換：「強いホール当て」から「スパイク日当て」へ
+
+## 背景
+従来の問題：候補3ホール（蒲田7・蒲田1・ARROW）で「平均的に強い」ホールを毎日選ぶ。
+但し、弱いホール（例：みとや大森町）も月に1回は 200+ の爆発日を持つ。
+その日のみとや大森町は、蒲田7の平均より大きく出している可能性がある。
+
+発見：全ホール毎日スコアリングで「各ホール内で上位10%日」「>=200の爆発日」を狙えば、
+弱ホールの月1回チャンスを捕捉でき、トータル期待値が向上する。
+
+## アクション
+1. 毎日全9ホールをスコアリング（P(>=100), P(>=200), P(>=300)で多元的評価）
+2. 日別意思決定を「このホール確率」から「全ホール最大値を当てる」に変更
+3. Walk-forward 最適化：
+   - Tuning期間で edge × weight(w100, w200, w300) をグリッド探索
+   - 期待スコア = 100 × (w100×P100 + w200×P200 + w300×P300)
+   - 最適パラメータを holdout に固定適用
+4. 評価軸を hit@1/hit@2 から「oracle_daily_max capture rate」（200+日何割拾えたか）に転換
+
+## 例
+従来（候補3ホール）：蒲田7=56% 選択率（3ホール内）⇒ みとや大森町の爆発日を逃す
+新規（全9ホール）：多閾値スコアで、月1回の弱ホール爆発も組み込み ⇒ スパイク捕捉率向上
+
+---
+id: hall-concentration-penalty-essential
+trigger: "when optimization converges to extreme hall concentration (single hall 70%+ selection)"
+confidence: 0.91
+domain: ml-regularization
+source: thread-learning-20260602-allhall
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ホール偏りペナルティの必須性：過度な集中を検出・修正
+
+## 背景
+実装直後の結果（edge=0, weights=(1,1,2)）：
+- 蒲田7 70% 選択率（150日中105日）
+- だが実績では蒲田7は全ホール中 1位 のみ 24% （36/150日）
+- つまり「予測70% vs 実績24%」という過度な偏り
+
+根本原因：期待値最大化は制約なしで「最強ホール」に重力を持つ。
+複数ホール評価点が近い場合でも、平均的に強いホールに吸い寄せられる。
+
+## アクション
+3つの対策を段階的実装：
+1. **Soft constraint**: 同一ホール連続日数ペナルティを目的関数に追加
+2. **Hard constraint**: max_share=50% per hall per period（期間内で各ホール最大50%）
+3. **Operational shift**: Hit@2 運用（Top2から当日最終判断）で完全自動化を避ける
+
+特に対策3が効果的：Top2（蒲田7＋蒲田1）が確定したら、当日の詳細情報・運営状況で
+最終判定 ⇒ 完全ロックイン（単一ホール70%継続）を防ぐ
+
+## 例
+❌ 現状：毎日自動で蒲田7を選択 → 爆発日見逃し
+✅ 目標：蒲田7 + 蒲田1 Top2 を毎日提示 → オペレーターが当日判断で偏りを回避
+
+---
+id: oracle-coverage-vs-stability-tradeoff
+trigger: "when deciding between pure oracle-fit optimization and operational diversity"
+confidence: 0.88
+domain: ml-strategy
+source: thread-learning-20260602-allhall
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Oracle適合度と運用多様性のトレードオフ
+
+## 背景
+現在の最適化（weights=(1,1,2)）：期待値=264.73（oracle）vs 実績=123.18
+理由：蒲田7への 70% 集中で、弱ホール爆発日（150日中36日が他ホール最強）をほぼ逃す。
+
+もし max_share=50% 制約を加えれば：
+- 期待値は 5-10% 低下するが（～115に低下）、
+- 弱ホール爆発日（月1回 200+ スパイク）の捕捉確率が 5-10% 向上
+- 結果、年間安定性が向上し、「月1回は大きな成功」という体験が増加
+
+## アクション
+目的関数を複合評価に変更：
+```
+composite_score = 0.7 × (expected_diff) + 0.3 × (spike_capture_rate)
+```
+
+純粋な期待値最大化（0.7×expected_diff）から、
+スパイク日捕捉度も同時に評価する複合目標へ転換。
+
+## 例
+選択肢A（現在）：毎日蒲田7 → 平均123 だが月1回は逃す → 心理的フラストレーション
+選択肢B（改善案）：蒲田7 50% + 他 50% → 平均115 だが月1回以上キャッチ → 安定感
+
+---
+id: allhall-scoring-mechanism
+trigger: "when implementing full-hall vs candidate-restricted ranking"
+confidence: 0.90
+domain: feature-engineering
+source: thread-learning-20260602-allhall
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 全ホール毎日スコアリング機構：実装の詳細
+
+## 背景
+機構：各ホール h に対して、各日 d で:
+- モデル予測: P_h_d(>=100), P_h_d(>=200), P_h_d(>=300)
+- スコア化: score_h_d = edge + w100×P100 + w200×P200 + w300×P300
+- ランキング: argmax_h score_h_d でホール h を選択
+
+## アクション
+実装ステップ：
+1. CatBoost か他の多クラス器で、各ホール × 各閾値の確率予測を出力
+2. Walk-forward loop:
+   - Tuning: edge, w100, w200, w300 の 4D グリッド探索
+   - Holdout: 最適 (edge, weights) を固定使用
+3. 出力テーブル:
+   - allhall_tune_prediction_table.csv: tuning期の全日全ホールスコア
+   - allhall_holdout_prediction_table.csv: holdout期の予測
+   - allhall_daily_decision_plan.csv: 日別選択ホール + 成績
+
+## 例
+入力モデル出力（1日1ホール）：
+```
+date=2026-02-15, hall=蒲田7
+  P(>=100)=0.75, P(>=200)=0.45, P(>=300)=0.20
+```
+グリッド最適化結果: edge=0, weights=(1, 1, 2)
+スコア = 0 + 1×0.75 + 1×0.45 + 2×0.20 = 1.60
+
+別ホール蒲田1（同日）:
+  P(>=100)=0.70, P(>=200)=0.30, P(>=300)=0.10
+  スコア = 1×0.70 + 1×0.30 + 2×0.10 = 1.20
+
+⇒ 蒲田7 選択（スコア 1.60 > 1.20）
+
+---

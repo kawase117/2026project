@@ -1,0 +1,212 @@
+---
+id: pred-span-vs-pred-span-top12-are-different
+trigger: "pred_spanとpred_span_top12を評価・比較するとき、または「低Span日」を分析するとき"
+confidence: 0.98
+scope: methodology
+domain: prediction-evaluation
+source: data-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# pred_span と pred_span_top12 はほぼ独立した別指標
+
+## 背景
+バックテストCSVには2種類のspan指標が存在する。
+
+- `pred_span`（reliability_daily）: max(pred) - min(pred) → 全10末尾の範囲
+- `pred_span_top12`（testperiod_topk）: top1_pred - top2_pred → 1位と2位の差のみ
+
+実測値（蒲田7, 2026-01〜05）：
+- pred_span: mean=0.838, median=0.979（ほぼ常に大きい）
+- pred_span_top12: mean=0.264, median=0.123（小さく変動）
+- 両者の相関: 0.16（ほぼ独立）
+
+## アクション
+「低Span日」と語るときは必ずどちらを指すか明示する。
+- 運用確信度シグナルとして有意なのは `pred_span_top12` のみ
+- `pred_span`（max-min）は全10末尾のどこかに差があるだけで信頼度としては無意味
+- reliability_daily の pred_span フィルタはmedian=0.979の分布ではほぼ発動しない
+
+## 例
+```python
+# 混同パターン（NG）: max-min は低Span判定に不適切
+if row['pred_span'] < 0.05:
+    skip()
+
+# 正しいパターン（OK）: top1-top2 差を使う
+if row['pred_span_top12'] < 0.05:
+    label = "スキップ推奨"
+```
+
+---
+id: backtest-saturation-is-reliability-alarm
+trigger: "バックテストのhit@2が95%以上のとき、または低Span日のhit@2が高いとき"
+confidence: 0.97
+scope: methodology
+domain: prediction-evaluation
+source: data-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 低Span日に高hit@2が出るなら backtest は信頼できない
+
+## 背景
+蒲田7バックテスト（2026-01〜05）のspan band別hit@2：
+- span < 0.01（121件）: hit@2 = 94.2%  ← 異常（ランダム基準37.8%）
+- span 0.01-0.1（157件）: hit@2 = 100%
+- span >= 0.3（200件）: hit@2 = 100%
+
+セグメント別: 2F_A=100%, 2F_N=99.3%, 3F_A=96%, 3F_N=100%
+
+モデルが「わからない」（span<0.01）と言いながら94%正解するのは
+パラメータ（window/lambda）が評価期間データを参照して選ばれた可能性を示す。
+健全なバックテストでは60-75%程度が期待値。
+
+## アクション
+このバックテスト結果の上に戦略分析を積み上げない。健全性確認の手順：
+1. window/lambda候補を2025-12-31以前のみで選定し直す
+2. 2026-01-01以降を完全holdoutとして再評価する
+3. 健全なhit@2が出てから特徴量・戦略の議論に進む
+
+---
+id: low-span-means-indistinguishable-not-wrong
+trigger: "低Span日の予測品質を評価するとき、またはスキップ判断をするとき"
+confidence: 0.93
+scope: methodology
+domain: domain-strategy
+source: data-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 低Span日の本質は「誤り」ではなく「識別不能」
+
+## 背景
+span<0.01の121件における top1_actual - top2_actual の分布：
+- 中央値: +1,100（top1がわずかに優位）
+- Q25: -1,800（25%のケースでtop2がtop1を上回る）
+- Q75: +3,700
+
+span>=0.3の200件：
+- 中央値: +7,300
+- Q25: +2,975（25%タイルでも一貫してtop1が優位）
+
+## アクション
+低Span日の評価指標は hit@2 ではなく、
+top1_actual_raw_diff - top2_actual_raw_diff の分布（Q25/中央値/Q75）で判断する。
+「低Span = モデルが無力」ではなく「top1とtop2の実際の差が小さく識別限界」。
+低Span日でも実差枚差が小さいなら「どちらでもほぼ同じ」→消極策が合理的。
+
+---
+id: segment-cv-nearly-independent
+trigger: "日の予測難易度を評価するとき、またはCV特徴量を設計するとき"
+confidence: 0.95
+scope: methodology
+domain: ml-architecture
+source: data-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# セグメント間CVはほぼ無相関（-0.04〜+0.001）
+
+## 背景
+蒲田7（2F_N, 2F_A, 3F_N, 3F_A）の同一日CV相関行列：全ペアで相関-0.045〜+0.001
+
+高CV日の例（全セグ平均TOP3）：
+- 12/18 Thu DD=18: 3F_A=2726, 2F_A=1.8, 2F_N=1.3, 3F_N=16  ← 3F_Aだけ
+- 01/30 Fri DD=30: 2F_A=369, 2F_N=1.7, 3F_A=1.4, 3F_N=4.8  ← 2F_Aだけ
+
+店側は機種タイプ（セグメント）単位で集中投入している。
+「この日は難しい」はセグメント固有であり、全体CVは無意味。
+
+## アクション
+- 日の難易度表示はセグメント別に計算する
+- グローバルCVを特徴量に使わない
+- dd_value/weekday をセグメント別モデルに入れることで難易度パターンを自動学習
+
+---
+id: dd-value-missing-from-features
+trigger: "特徴量セットを確認・拡張するとき、またはdd_valueを実装するとき"
+confidence: 0.99
+scope: methodology
+domain: ml-architecture
+source: code-inspection
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# dd_value(1-31)が完全欠落、weekdayは既存で追加不要
+
+## 背景
+add_simple_features()（tail_ltr_split_rule_wf.py line 167）の実際の特徴量：
+
+既存（曜日系、追加不要）:
+- weekday（0-6）, weekday_sin, weekday_cos, is_wed
+- weekday_prior_top2_rate, weekday_delta_from_mean
+
+完全欠落（DD系、追加必要）:
+- dd_value（1-31）← ANOVA eta-sq 8.8%（曜日2.3%より高い）
+- dd_sin/cos, is_zorome（DD=11/22）, is_strong_zorome（MM=DD）
+
+## アクション
+add_simple_features()に以下を追加する：
+```python
+out["dd_value"] = out["date"].dt.day.astype(int)
+out["dd_sin"]   = np.sin(2.0 * np.pi * out["dd_value"] / 31.0)
+out["dd_cos"]   = np.cos(2.0 * np.pi * out["dd_value"] / 31.0)
+out["is_zorome"]        = (out["date"].dt.day.isin([11, 22])).astype(int)
+out["is_strong_zorome"] = (out["date"].dt.month == out["date"].dt.day).astype(int)
+```
+weekday_valueの新規追加は不要（weekday 0-6として実装済）。
+
+---
+id: per-day-cv-too-noisy-for-ml-feature
+trigger: "CVを機械学習特徴量として設計するとき"
+confidence: 0.92
+scope: methodology
+domain: ml-architecture
+source: data-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 1日単位のCV推定はノイズが大きすぎてML特徴量には不適
+
+## 背景
+DD別CV推定（各DD約11サンプル）の実測：
+- DD=17: mean=72.3, std=207.2（stdがmeanの2.9倍）
+- DD=11: mean=24.3, std=58.6（stdがmeanの2.4倍）
+- 7のつく日グループ: 7日(4.6), 17日(72.3), 27日(5.6) → グループ内分散が巨大
+
+stdがmeanを大きく上回るDDが多数 → DD別グループ化（7のつく日など）も機能しない。
+
+## アクション
+CVの利用は2段階に分ける：
+1. 【運用表示用】日タイプフラグ（is_zorome, is_event, is_wednesday等）に基づく
+   過去集計CVを翌日予測画面に表示 → confidence_band として実装済
+2. 【ML特徴量】CVの代理として構造フラグ（dd_value, weekday, is_event,
+   is_zorome, is_strong_zorome）を使う。tree-based modelがCV的パターンを学習。
+同日CVを翌日予測特徴量に直接使うのは未来情報リークのため不可。
+
+---
+id: wednesday-pattern-is-hall-specific
+trigger: "水曜日の予測戦略を検討するとき、またはホール間で水曜パターンを比較するとき"
+confidence: 0.90
+scope: methodology
+domain: domain-strategy
+source: data-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 水曜の末尾パターンはホール固有（末尾1/8強は一般則ではない）
+
+## 背景
+水曜の末尾別平均差枚（2025-07〜2026-05, n=47水曜）：
+
+金時京急蒲田店: 末尾5(+81) > 末尾2(+34) ... 末尾1(-65) > 末尾8(-83)
+蒲田7ホール:    末尾1(+127) > 末尾8(+66) ... 末尾7(-74)
+
+両ホールで末尾1と末尾8の強弱が完全に逆。
+「水曜は末尾1/8が強い」は特定ホールの法則であり一般則ではない。
+
+## アクション
+水曜専用特徴量 wed_digit_hist_avg はホール別DBで学習するため
+自動的にホール固有パターンを捉える。ホール間で共通の水曜ルールを仮定しない。
+ホール別モデルの優位性（Phase 5で検証済み +2.44% AUC）がここでも裏付けられる。

@@ -2,6 +2,7 @@
 id: weekday-cluster-rightward-dominant
 trigger: "when designing directional features for 3-machine cluster in last_digit LTR for 蒲田七"
 confidence: 0.82
+scope: methodology
 domain: pachinko-domain-knowledge
 source: data-observation
 project_id: 2026project
@@ -30,6 +31,7 @@ right_neighbor_mean が left_neighbor_mean を上回る日は rightward クラ�
 id: digit6-fire-sat-sun-consistent-678-cluster
 trigger: "when selecting which last_digit cluster to target on weekends or Tuesday in 蒲田七"
 confidence: 0.88
+scope: methodology
 domain: pachinko-domain-knowledge
 source: data-observation
 project_id: 2026project
@@ -61,6 +63,7 @@ LTR特徴量: `is_fire_or_sat_or_sun AND last_digit in ["6","7","8"]` の交互�
 id: thursday-low-digit-cluster-leftward-anomaly
 trigger: "when analyzing Thursday patterns for last_digit in 蒲田七"
 confidence: 0.75
+scope: methodology
 domain: pachinko-domain-knowledge
 source: data-observation
 project_id: 2026project
@@ -88,6 +91,7 @@ best_cluster=0-1-2 が leftward → 木曜のみ番号減少方向にクラス�
 id: top2-digit-usually-outside-best-cluster
 trigger: "when deciding how many machines to target in a single session at 蒲田七"
 confidence: 0.80
+scope: methodology
 domain: pachinko-domain-knowledge
 source: data-observation
 project_id: 2026project

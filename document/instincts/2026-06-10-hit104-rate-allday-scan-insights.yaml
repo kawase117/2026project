@@ -1,0 +1,223 @@
+---
+id: hit104-hall-ranking-reverses-vs-firstday
+trigger: "全日程ベースでホール別の高設定投入傾向を調べるとき / 新台初日と通常営業の戦略差を比較するとき"
+confidence: 0.95
+scope: finding
+domain: hall-strategy
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 全日程の機械割104%以上出現率は新台初日と完全に順位が逆転する
+
+## 背景
+新台初日（2026-06-10セッション前半）: みとや(103.9%)・ARROW(102.9%)が機械割で1-2位、
+104%以上出現率でもARROW(38.5%)・みとや(36.7%)が1-2位だった。
+
+しかし全日程・3000G以上フィルタでの機械割104%以上出現率:
+1. 楽園   38.7% (+3.2pp)
+2. 蒲田7  38.0% (+2.5pp)
+3. 金時   37.9% (+2.4pp)
+4. ヒロキ  36.0% (+0.5pp)
+5. 蒲田1  34.7% (-0.8pp)
+6. みとや  34.0% (-1.5pp)
+7. レイトギャップ 33.1% (-2.4pp)
+7. ザシティ 33.1% (-2.4pp)
+9. ARROW  32.4% (-3.1pp)  ← 新台では1位だったが全日程では最下位
+
+baseline(全体平均) = 35.5% (n=759,328, 3000G以上)
+
+## アクション
+「新台初日狙い」と「通常営業での高設定狙い」は別のホール選択をすべき。
+- 新台初日 → みとや・ARROW
+- 通常営業（全日程） → 楽園・蒲田7・金時
+ホールには「新台開放型」（みとや・ARROW）と「通常営業型」（楽園・蒲田7・金時）の
+2つの異なる戦略パターンが存在する可能性が高い。
+
+---
+id: weekday-vs-weekend-hit104-gap
+trigger: "曜日別の機械割104%出現率を見るとき / 平日と土日のホール傾向を比較するとき"
+confidence: 0.85
+scope: finding
+domain: eda-pattern
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 全日程3000G以上では平日(特に木)が土日より機械割104%出現率で4-5pp高い
+
+## 背景
+全ホール合算・3000G以上での曜日別機械割104%出現率:
+- 木: 37.7% (+2.2pp)
+- 水: 37.2% (+1.7pp)
+- 火: 37.1% (+1.6pp)
+- 金: 36.7% (+1.2pp)
+- 月: 36.2% (+0.7pp)
+- 土: 33.5% (-2.0pp)
+- 日: 33.2% (-2.3pp)
+
+差枚スキャン（games_normalized>=1000）では曜日単独は全ホール全パターンTier Cだったが、
+機械割104%・3000G以上では平日>土日の傾向が一貫して見える。
+ただし最大pp差は木(+2.2)で、Tier B閾値(+5pp)には届かない。
+
+## 仮説（要検証）
+1. 真にホールが平日に高設定を投入している
+2. サンプリングバイアス：土日は稼働率が高く低設定機種も3000G到達するため
+   分母が薄まる一方、平日は元々高設定の台に常連が座り続けるため3000G到達した
+   台の中の高設定比率が相対的に高くなる
+
+## アクション
+平日有利の傾向を「設定投入パターン」として断定する前に、
+「3000G到達した台の母集団の質」が曜日で変わっていないか
+（稼働率・客層の違い）を別途検証すること。
+
+---
+id: hit104-hall-weekday-tier-b-rakuen-and-thursday
+trigger: "ホール×曜日の組み合わせで機械割104%出現率のTier B以上を探すとき"
+confidence: 0.9
+scope: finding
+domain: hall-strategy
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 楽園の水木金とヒロキの木曜が機械割104%でTier B以上、複数ホールで「木曜」が共通シグナル
+
+## 背景
+全日程3000G以上、ホール×曜日でpp>=5かつn>=20のTier B以上一覧:
+
+| ホール | 曜日 | n      | hit104率 | pp   |
+|--------|------|--------|---------|------|
+| ヒロキ | 木   | 4,032  | 42.1%   | +6.6 |
+| 楽園   | 水   | 12,363 | 41.8%   | +6.3 |
+| 楽園   | 金   | 13,967 | 41.1%   | +5.6 |
+| 楽園   | 木   | 11,326 | 41.0%   | +5.5 |
+| 楽園   | 火   | 13,358 | 40.8%   | +5.3 |
+| 金時   | 木   | 2,658  | 40.8%   | +5.3 |
+| 蒲田7  | 木   | 18,774 | 40.5%   | +5.0 |
+
+「木曜」が楽園・金時・蒲田7・ヒロキの4ホールで共通してTier B以上。
+楽園は火水木金の4日全てがTier B以上で、平日全体が強い。
+
+ホール×DD_mod10では「金時×4系」のみTier B（40.6%, +5.1pp, n=2116）で、
+これはみとやの4系イベント定義（mitoya_event_definition_confirmed）とは
+別ホールでの4系シグナルとして注目に値する。
+
+## アクション
+楽園の平日（特に水・木・金）と、楽園・金時・蒲田7・ヒロキの木曜を
+機械割104%以上の出現確率が高い候補として優先的に観察する。
+「木曜が地域共通のイベント曜日」という仮説の検証材料として記録。
+
+---
+id: dd-and-lastdigit-invalid-for-hit104-too
+trigger: "DD系統(dd_mod10)・台番号末尾を機械割104%出現率で評価するとき"
+confidence: 0.95
+scope: finding
+domain: eda-pattern
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# DD_mod10単独・台番号末尾単独・曜日×DD_mod10は機械割104%指標でも全て無効（差枚スキャンと一致）
+
+## 背景
+全日程3000G以上での結果:
+- DD_mod10単独: 最大pp = +0.5（dd_mod10=0）、最小 = -0.3。全てTier C
+- 台番号末尾単独: 最大pp = +0.4（末尾8）、最小 = -0.3。全てTier C
+- 曜日×DD_mod10（全ホール）: pp>=5かつn>=20を満たす組み合わせ ゼロ件
+
+差枚ベースのスキャン（2026-06-09実施）でも同じ次元が全ホール全パターンTier Cだった。
+2つの独立した指標（差枚・機械割104%）で同じ結論に至ったため、
+これらの次元を「単独次元として無効」と確定してよい。
+
+## アクション
+DD_mod10単独・台番号末尾単独・曜日×DD_mod10の3次元は、
+今後のEDAスキャンで優先度を下げてよい（探索コストの削減）。
+有効なシグナルは「機種名×曜日」「ホール×曜日」「機種名×DD_mod10」など
+機種名やホールを含む組み合わせでのみ発現する。
+
+---
+id: hit104-lag-no-streak-unlike-diff-streak
+trigger: "前日の機械割104%達成が翌日の機械割104%達成に影響するか調べるとき / lag_analysisの結果を機械割指標で再現するとき"
+confidence: 0.93
+scope: finding
+domain: lag-analysis
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 機械割104%の「前日hit→翌日hit」連続性はほぼゼロ（差枚streakとは別の現象）
+
+## 背景
+差枚ベースのlag_analysis（2026-06-09実施）では蒲田7アイムジャグラーEX-TPで
+streak_rate=86%という強いシグナルが見つかっていた。
+
+しかし機械割104%を指標にした全ホール・台番号単位のラグ分析では:
+
+min_games=1000:
+- 全ホール streak_pp: -0.7〜+1.2pp（ザシティ最大+1.2、みとやは-0.7と逆相関）
+
+min_games=3000:
+- 全ホール streak_pp: -0.2〜+1.3pp（ザシティ+1.3、楽園+1.1が最大）
+
+いずれもTier B閾値(+5pp)に遠く及ばない。
+
+## 解釈
+差枚の連続性（streak_rate=86%等）は「特定の台が複数日にわたり高設定で
+据え置かれている」現象を捉えている。
+一方「機械割104%以上を達成したか」という二値指標は日々の確率変動（運）の
+影響が大きく、設定の継続性を直接反映しない。
+つまり「高設定が据え置かれている台」でも、その台が実際に104%以上の
+結果を出すかは試行ごとのばらつきが大きい。
+
+## アクション
+台選択のロジックでは、「前日104%超だったか」より
+「前日の差枚自体（および機種別streak_rate）」を優先指標として使う。
+機械割104%指標は「今日その台が高設定かどうか」の判定には有効だが、
+「翌日も狙うべきか」の判定にはlag_analysisの差枚streakを使うこと。
+
+---
+id: hit104-scan-implementation
+trigger: "機械割104%以上の出現率で差枚スキャンと同じ次元を再探索するスクリプトを書くとき"
+confidence: 0.95
+scope: methodology
+domain: eda-implementation
+source: implementation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 機械割104%出現率スキャンの実装パターン（eda/hit104_scan.py）
+
+## 背景
+差枚ベースの21次元スキャン（2026-06-09実施）と同じ軸を、
+「機械割>=104%」の二値フラグの出現率で再走査するための実装。
+
+実装済みファイル: `eda/hit104_scan.py`
+- PASS1: min_games=1000で全次元スキャン
+- PASS2: min_games=3000で再検証（PASS1のTier Aがどれだけ生存するか）
+
+Tier判定基準:
+- A: ベースラインとの差(pp) >= 10 かつ n >= 30
+- B: pp >= 5 かつ n >= 20
+- C: それ以外
+
+## アクション
+```python
+df['kaiwari'] = 100 + (df['diff_coins_normalized']
+                        / df['games_normalized'].clip(lower=1)) / 3 * 100
+df['hit104']  = (df['kaiwari'] >= 104.0).astype(int)
+
+# グループ別出現率
+grp = df.groupby(col)['hit104'].agg(['mean','count'])
+grp['hit_pct'] = grp['mean'] * 100
+grp['pp'] = grp['hit_pct'] - baseline  # baseline = df['hit104'].mean()*100
+```
+
+## 注意点（実装上のはまりどころ）
+- 全データを1つのDataFrameに結合して `sort_values` すると
+  `numpy._core._exceptions._ArrayMemoryError` が発生する規模
+  （約120万行 × ラグ計算で一時配列が肥大化）。
+  ラグ分析はホールごとに個別処理してから結果のみ集約すること。
+- `last_digit` は `machine_number % 10` を文字列化（差枚スキャンと型を揃える）。
+- 1000Gと3000Gでbaselineそのものが変わる（31.1% vs 35.5%）。
+  ppの絶対値はbaseline依存なので、2パス間でppを直接比較しない。

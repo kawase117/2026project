@@ -1,7 +1,15 @@
+# ⚠️  LEAKAGE WARNING (added 2026-06-01)
+# このファイルのインサイトは2026-05-31のリーク修正前に作成された。
+# 【有効】実データ観察（diff_coins集計・ゾロ目パターン・台配置等）
+# 【無効】MLモデル性能値（AUC / hit@2 / precision 等の数値）
+# アクション項目を実運用に使う前にリーク修正後のモデルで再検証すること。
+
 ---
 id: half-row-streak-rare-base-pattern-is-3digit-cluster
 trigger: "when designing above-mean streak features or evaluating half-row hypothesis in 蒲田七"
 confidence: 0.85
+scope: hall-specific
+hall: kamata7
 domain: pachinko-domain-knowledge
 source: data-observation
 project_id: 2026project
@@ -37,6 +45,8 @@ streak≥5フラグは木曜・日曜・月曜のみ補助特徴量として検�
 id: wednesday-zero-half-row-cleanest-cluster
 trigger: "when deciding feature stability for Wednesday cluster features in 蒲田七"
 confidence: 0.88
+scope: hall-specific
+hall: kamata7
 domain: pachinko-domain-knowledge
 source: data-observation
 project_id: 2026project
@@ -62,6 +72,8 @@ concentration_ratio=1.200（delta=38.62）とも整合しており、
 id: thursday-machine-type-splits-digit-cluster
 trigger: "when designing Thursday-specific features for last_digit LTR with machine_type in 蒲田七"
 confidence: 0.78
+scope: hall-specific
+hall: kamata7
 domain: pachinko-domain-knowledge
 source: data-observation
 project_id: 2026project
@@ -96,6 +108,8 @@ BT比率8.6%のため全体特徴量への寄与は限定的だが、BT台限定
 id: sunday-bt-machines-cluster-at-0-1-2-opposite-to-others
 trigger: "when analyzing Sunday digit patterns by machine type in 蒲田七"
 confidence: 0.72
+scope: hall-specific
+hall: kamata7
 domain: pachinko-domain-knowledge
 source: data-observation
 project_id: 2026project

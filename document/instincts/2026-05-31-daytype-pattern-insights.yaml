@@ -1,0 +1,170 @@
+---
+id: wednesday-digit-1-8-dominance
+trigger: "水曜日の予測設計・水曜専用特徴量を検討するとき"
+confidence: 0.88
+scope: methodology
+domain: domain-strategy
+source: db-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 水曜日は末尾1・8が強く6・7が弱い独自パターン
+
+## 背景
+DBの326日分を分析した結果、水曜日（非イベント）は末尾間差枚のCV=3.70で
+全日タイプ中最高。「水曜はランダム」ではなく「水曜は別の法則がある」ことが判明。
+
+末尾別の水曜 vs 非水曜 平均差枚差：
+- 末尾1: +127（最強）
+- 末尾8: +66（強）
+- 末尾6: -66（弱）
+- 末尾7: -74（最弱）
+
+現在のモデルが水曜に低spanを出す理由：
+末尾1・8優位パターンが特徴量に組み込まれていないため。
+
+## アクション
+水曜専用特徴量として以下を追加する：
+- `wed_digit_historical_rank`: 各末尾の水曜過去平均差枚順位
+- `wed_digit_recent_avg`: 直近8水曜の末尾別平均差枚
+水曜モデルのmin_train_days_wedを12より増やすことも検討。
+
+## 例
+```python
+# 水曜専用特徴量の追加例
+if day_of_week == 'Wednesday':
+    features['wed_hist_rank'] = wednesday_digit_rank_lookup[last_digit]
+    features['wed_recent_avg'] = recent_wednesday_avg[last_digit]
+```
+
+---
+id: event-day-multi-digit-high-setting
+trigger: "イベント日の予測戦略を設計するとき、またはイベント日に低spanが出たとき"
+confidence: 0.85
+scope: methodology
+domain: domain-strategy
+source: db-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# イベント日は複数末尾が横並び（マルチ投入前提）
+
+## 背景
+is_any_event=1の日（全体の42%）は末尾間差枚のCV=2.26で
+通常日（2.86）より低い。複数末尾が同時に高い状態を示唆。
+
+日タイプ別CV（末尾間差枚のばらつき）：
+- 強ゾロ目(MM=DD): 1.21（最も均一＝全体高の可能性）
+- ゾロ目(DD=11/22): 2.06
+- イベント日: 2.26
+- 通常日: 2.86
+- 水曜(非イベント): 3.70（最も格差大＝1〜2末尾が突出）
+
+## アクション
+イベント日の低spanは「モデル無力」ではなく「複数末尾が高い」可能性がある。
+Top3まで展開する戦略を検討する。
+低span + is_any_event=1 の組み合わせでTop3推奨に切り替えるロジックを実装する。
+
+---
+id: strong-zorome-full-hall-event
+trigger: "強ゾロ目日(MM=DD)の予測を行うとき、または定義を確認するとき"
+confidence: 0.90
+scope: methodology
+domain: domain-strategy
+source: db-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 強ゾロ目(MM=DD)は全台系イベントの可能性が高い
+
+## 背景
+強ゾロ目（月日が一致する日）はCV=1.21で全日タイプ中最低。
+年12回（7/7, 8/8, 9/9...12/12, 1/1, 2/2...）のみ発生。
+末尾間差枚がほぼ均一＝ほぼ全末尾に高設定が投入されている可能性。
+
+ゾロ目の定義（DB実装確認済み）：
+- is_strong_zorome = 1: MM = DD の日（例：7/7, 11/11, 1/1）
+- is_zorome = 1: DD が 11 または 22 の日（毎月2回）
+- ※台番号末尾ゾロ目(machine_detailed_results.is_zorome)とは別物
+
+## アクション
+強ゾロ目日はTop1集中より複数末尾を幅広く試す戦略が合理的。
+pred_span_top12が低くてもスキップする必要はなく、
+「低span = 全体的に高い」という解釈でTop3〜5を均等に参照する。
+
+---
+id: daytype-regime-model-architecture
+trigger: "水曜・イベント日のモデル改善を設計するとき、または低span問題を解決しようとするとき"
+confidence: 0.87
+scope: methodology
+domain: ml-architecture
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 二段階モデルより日タイプ別専用モデルが適切
+
+## 背景
+「低span → 再学習」という二段階モデルには循環問題がある。
+モデル1が低spanを出す理由は特徴量に信号がないから。
+同じ特徴量を使うモデル2も同じ結果になる。
+
+真の問題：日タイプごとに異なる法則が存在し、
+現行モデルがその違いを特徴量に持っていない。
+
+## アクション
+以下のレジーム別モデルを設計する：
+1. 通常日: 現行モデル（span > 0.2 なら高信頼）
+2. 水曜専用: 末尾1・8優位の特徴量を追加
+3. イベント日: マルチ投入前提、Top3展開
+4. 強ゾロ目: 最も均一、消極的 or Top5均等参照
+
+低span日専用の二段階設計より、日タイプフラグによる事前分岐の方が
+シンプルかつ効果的。
+
+## 例
+```python
+if is_strong_zorome:
+    strategy = 'conservative_multi'  # Top3-5、少量試打
+elif is_wednesday and not is_event:
+    strategy = 'wed_concentrated'    # 末尾1・8集中
+elif is_event:
+    strategy = 'event_spread'        # Top3展開
+elif pred_span_top12 > 0.2:
+    strategy = 'aggressive_top1'     # Top1集中・長時間
+else:
+    strategy = 'standard_skip'       # スキップ推奨
+```
+
+---
+id: pred-span-position-sizing-strategy
+trigger: "実践での台選択・投資量を決めるとき"
+confidence: 0.90
+scope: methodology
+domain: domain-strategy
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# pred_span_top12を確信度シグナルとしてポジションサイジングに使う
+
+## 背景
+ユーザーの目標は「差枚をプラスにする」であり「ランキング精度」ではない。
+hit@2はその代理指標に過ぎない。
+pred_span_top12は「モデルがどれだけ確信しているか」を直接表す。
+
+バックテスト実績（2F_N）：
+- span > 0.5: top1実diff平均 +30,854、top2 +7,712（差 +23,142）
+- span < 0.001: top1 +29,820、top2 +30,260（逆転あり）
+
+## アクション
+日タイプ別の3段階ポジションサイジング：
+
+通常日：
+- span > 0.2: アグレッシブ（top1末尾を複数台・長時間）
+- span 0.05〜0.2: 標準（top1を1〜2台、様子見）
+- span < 0.05: スキップ推奨
+
+イベント日の低span: top1+top2を1台ずつ試す（マルチ投入の可能性）
+強ゾロ目の低span: 複数末尾を少量試す（全体高の可能性）
+水曜: 末尾1・8を優先しつつ、水曜専用モデル完成まで控えめに

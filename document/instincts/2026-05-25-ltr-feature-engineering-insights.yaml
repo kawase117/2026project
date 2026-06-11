@@ -2,6 +2,7 @@
 id: window-name-vs-feature-name-confusion
 trigger: "when specifying --windows-wed or --windows-nonwed arguments for tail_ltr_split_rule_nextday_gpu"
 confidence: 0.99
+scope: methodology
 domain: ml-pipeline-configuration
 source: session-error
 project_id: 2026project
@@ -30,6 +31,7 @@ ACF/PACFのroll幅はfeature設計に使うが、`--windows-*`には影響しな
 id: python-module-vs-script-execution
 trigger: "when running ml/ 配下のPythonスクリプトをコマンドラインから実行するとき"
 confidence: 0.97
+scope: methodology
 domain: ml-pipeline-configuration
 source: session-observation
 project_id: 2026project
@@ -54,6 +56,7 @@ project_name: pachinko-analyzer
 id: hall-digit-lag-complements-entity-level-lag
 trigger: "when adding lag features to the LTR model for last_digit prediction"
 confidence: 0.92
+scope: methodology
 domain: ml-feature-engineering
 source: session-reasoning
 project_id: 2026project
@@ -96,6 +99,7 @@ hall_digit lag7 for "7" = ホール全体（全フロア）の末尾7の過去7�
 id: hall-level-rolling-features-mi-zero
 trigger: "when selecting features for is_top2 LTR target in last_digit prediction"
 confidence: 0.93
+scope: methodology
 domain: ml-feature-engineering
 source: data-observation
 project_id: 2026project
@@ -125,6 +129,7 @@ MI=0特徴量（is_top2に対して）:
 id: kruskal-posthoc-digit3-outlier
 trigger: "when analyzing which last_digit pairs are statistically different in Kruskal post-hoc"
 confidence: 0.88
+scope: methodology
 domain: pachinko-domain-knowledge
 source: data-observation
 project_id: 2026project
@@ -154,6 +159,7 @@ project_name: pachinko-analyzer
 id: acf-per-digit-heterogeneous-no-universal-lag
 trigger: "when deciding whether to use a single lag window for all last_digits in LTR"
 confidence: 0.85
+scope: methodology
 domain: ml-feature-engineering
 source: data-observation
 project_id: 2026project

@@ -2,6 +2,7 @@
 id: zorome-training-window-optimality-120days
 trigger: "correction テーブルの安定性とゾロ目戦略の有効性を評価するとき"
 confidence: 0.88
+scope: methodology
 domain: ml-strategy
 source: session-observation
 project_id: 2026project
@@ -44,6 +45,7 @@ df_train = df[df['date'] < test_start]  # 1年以上含む → signal 希薄化
 id: zorome-effect-selective-investment-not-random
 trigger: "ゾロ目効果の信頼性と有無を評価するとき"
 confidence: 0.82
+scope: methodology
 domain: ml-strategy
 source: session-observation
 project_id: 2026project
@@ -84,6 +86,7 @@ print(df_win['correction_direction'].value_counts())
 id: correction-sign-persistence-not-reversal
 trigger: "correction テーブルの予測方向性（反転 vs 持続）を検証するとき"
 confidence: 0.90
+scope: methodology
 domain: ml-strategy
 source: session-observation
 project_id: 2026project
@@ -122,6 +125,7 @@ D > E > F で明確な順序。特に F がほぼゼロ。
 id: periodicity-not-detected-but-signal-faint
 trigger: "ホール側の設定投入パターンの周期性有無を判定するとき"
 confidence: 0.75
+scope: methodology
 domain: ml-strategy
 source: session-observation
 project_id: 2026project
@@ -157,6 +161,7 @@ correction テーブルの時系列に対する統計検定：
 id: correction-table-diagnosis-required-before-use
 trigger: "correction テーブルを使った予測・戦略決定をするとき"
 confidence: 0.87
+scope: methodology
 domain: ml-strategy
 source: session-observation
 project_id: 2026project

@@ -2,6 +2,7 @@
 id: entity-level-rank1-unsolvable
 trigger: "when attempting machine_name (entity) level rank1 prediction"
 confidence: 0.95
+scope: methodology
 domain: ml-entity-level-targeting
 source: session-analysis
 project_id: 2026project
@@ -36,6 +37,7 @@ is_top3（セグメント内、2F_A）：base_rate = 32.6%、15機種の競争 �
 id: floor-atype-segmentation-improves-auc
 trigger: "when machine_name prediction AUC plateaus below 0.58"
 confidence: 0.85
+scope: methodology
 domain: ml-hierarchical-segmentation
 source: session-implementation
 project_id: 2026project
@@ -83,6 +85,7 @@ for seg_name, mask in segments.items():
 id: within-segment-target-density-critical
 trigger: "when deciding between top3 vs top5 as target within a segment"
 confidence: 0.90
+scope: methodology
 domain: ml-target-engineering
 source: session-observation
 project_id: 2026project
@@ -125,6 +128,7 @@ base_rate の目安：
 id: day-quality-filter-threshold-calibration
 trigger: "when implementing Layer 0 (day-level win_rate filter)"
 confidence: 0.75
+scope: methodology
 domain: ml-preprocessing
 source: session-implementation
 project_id: 2026project
@@ -175,6 +179,7 @@ GROUP BY day_of_month
 id: evaluation-step-size-matters
 trigger: "when evaluating walk-forward performance with n_eval_days < 10"
 confidence: 0.88
+scope: methodology
 domain: ml-evaluation-design
 source: session-analysis
 project_id: 2026project
@@ -217,6 +222,7 @@ step_days=1, eval_days=90 → n_steps = 30〜60 → 信頼性 ★★★
 id: feature-drift-detection-essential
 trigger: "when using historical features (prior_top1_rate, lag features) in time-series prediction"
 confidence: 0.90
+scope: methodology
 domain: ml-feature-validation
 source: session-eda
 project_id: 2026project

@@ -1,0 +1,94 @@
+---
+id: floor-coordinate-generation-workflow
+trigger: "新しいホールのフロア座標CSV(Heatmap/*_floor_coordinates_*.csv)を画像から作成・拡張するとき"
+confidence: 0.95
+domain: heatmap-coordinate-generation
+source: session-observation
+project_id: 2026project
+project_name: パチンコ分析ダッシュボード
+
+# フロア座標CSV生成のワークフロー（楽園蒲田店 全5フロア対応で確立）
+
+## 背景
+楽園蒲田店の本館3F/2F/1F・新館1F/2F、計569台のフロア座標CSVを
+`Heatmap/generate_rakuen_kamata_coordinates.py` に実装した。
+画像から手動で座標を起こす作業は、関数化された build パターンと
+ASCIIプレビュー検証を組み合わせることで、ミスなく高速に進められた。
+
+## アクション
+1. フロアごとに `build_rows_<hall>_<floor>()` 関数を1つずつ作成する
+2. 共通ヘルパーを使う：
+   - `add_run(rows, floor, machines, start_x, start_y, step_x, step_y, section=None)`
+     → 横列・縦列・1マスの三角形配置すべてこれ1関数で表現できる
+     （横列: step_x=1,step_y=0／縦列: step_x=0,step_y=1／単マス: step_x=step_y=0）
+   - 列が「上から下」「左から右」など逆方向に並ぶ場合は
+     `list(range(end, start-1, -1))` のように reversed range を使う
+   - `validate_rows(rows, expected)` で機種番号の過不足・重複座標を必ずチェック
+3. `main()` に `write_csv(build_rows_xxx(), here / "xxxF_floor_coordinates_<hall>.csv")` を追加するだけで
+   `Heatmap/coordinate_utils.py` の `find_floor_csvs()` が自動で拾う（コード変更不要）
+4. 完成後は `preview_ascii.py` でASCIIグリッド表示し、画像のレイアウトと目視突合する
+
+## 例
+```python
+def build_rows_shinkan_2f() -> list[dict[str, object]]:
+    floor = "新館2F"
+    rows: list[dict[str, object]] = []
+    # 横列
+    add_run(rows, floor, list(range(2008, 2021)), 2, 1, 1, 0)
+    # 縦列（逆順）
+    add_run(rows, floor, list(range(2003, 1999, -1)), 1, 9, 0, 1, section=(2000, 2003))
+    # 三角形の単マス配置
+    add_run(rows, floor, [2127], 8, 18, 0, 0, section=(2126, 2128))
+    add_run(rows, floor, [2126], 7, 19, 0, 0, section=(2126, 2128))
+    add_run(rows, floor, [2128], 9, 19, 0, 0, section=(2126, 2128))
+
+    expected = set(range(2000, 2091))
+    validate_rows(rows, expected)
+    return sorted(rows, key=lambda row: int(row["machine_number"]))
+```
+
+---
+
+---
+id: streamlit-preview-screenshot-timeout-workaround
+trigger: "Streamlitダッシュボードに多数のPlotly図(複数ヒートマップ等)が含まれ、preview_screenshotがタイムアウトするとき"
+confidence: 0.9
+domain: streamlit-verification
+source: session-observation
+project_id: 2026project
+project_name: パチンコ分析ダッシュボード
+
+# preview_screenshotタイムアウト時はPlotly内部データを直接抽出して照合する
+
+## 背景
+page_17（ヒートマップページ）のように1ページに10個のPlotly図(フロア5枚×2種類)が
+含まれると、`preview_screenshot` は毎回30秒でタイムアウトする。
+ただし `preview_eval` で `.js-plotly-plot` 要素の `.data`/`.layout` には
+オフスクリーン(clientWidth/Height=0)でもアクセスでき、
+描画前のReact/Plotlyオブジェクトは存在している。
+
+## アクション
+1. まず `.claude/launch.json` の `runtimeExecutable` を確認する
+   - `streamlit` がPATHに無い場合は `"runtimeExecutable": "python", "runtimeArgs": ["-m", "streamlit", "run", "main_app.py"]` に変更
+2. `preview_start` → `preview_eval(window.location.reload())` でページロード
+3. screenshotが通らない場合、以下で直接データ照合する：
+```js
+(() => {
+  const plot = document.querySelectorAll('.js-plotly-plot')[idx];
+  const cd = plot.data[0].customdata; // [[ [machine, pct], ... ], ...] 行=y, 列=x
+  const grid = {};
+  for (let yi=0; yi<cd.length; yi++)
+    for (let xi=0; xi<cd[yi].length; xi++)
+      if (cd[yi][xi][0]) grid[`${xi+1},${yi+1}`] = cd[yi][xi][0];
+  return grid;
+})()
+```
+4. 抽出した `{x,y: machine_number}` を生成元CSVの `display_x,display_y,machine_number` と突合する
+5. `.data[idx].x` / `.data[idx].y` でグリッドサイズ（フロアごとの最大x/y）も即座に確認できる
+
+## 例
+本セッションでは plot index 0-4 がフロアヒートマップ(新館1F/2F, 本館1F/2F/3F)、
+5-9 が末尾ハイライト散布図に対応。customdata抽出により
+全569台分の座標がCSV生成内容と完全一致することをスクリーンショット無しで確認できた。
+
+---
