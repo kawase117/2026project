@@ -348,8 +348,8 @@ def render_floor_section(
     max_x = int(frame[x_col].max())
     max_y = int(frame[y_col].max())
 
-    slot_x = 32
-    slot_y = 26
+    slot_x = 40
+    slot_y = 28
     pad = 10
     map_width = pad * 2 + max_x * slot_x
     map_height = pad * 2 + max_y * slot_y
@@ -799,18 +799,19 @@ def build_html_document(
     }}
 
     .machine-number {{
-      font-size: 10px;
+      font-size: 9px;
       font-weight: 900;
       letter-spacing: 0.02em;
     }}
 
     .machine-name {{
-      font-size: 9px;
+      font-size: 8px;
       font-weight: 800;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       max-width: 100%;
+      letter-spacing: -0.02em;
     }}
 
     .tone-high {{
