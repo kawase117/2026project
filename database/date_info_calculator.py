@@ -6,6 +6,7 @@
 weekday_nth実装版（TEXT型, 'Mon1'～'Sun5'形式）
 """
 
+import logging
 import os
 import sys
 import json
@@ -13,6 +14,8 @@ import sqlite3
 import calendar
 from datetime import datetime
 from pathlib import Path
+
+sys.stdout.reconfigure(encoding='utf-8')
 
 try:
     import jpholiday
@@ -45,13 +48,7 @@ class DateInfoCalculator:
             self.db_path = os.path.join(db_dir, f"{safe_hall_name}.db")
         else:
             self.db_path = db_path
-        
-        # config_path の決定
-        if config_path is None:
-            script_dir = os.path.dirname(os.path.abspath(__file__))
-            project_root = os.path.dirname(script_dir) if script_dir.endswith(('database', 'scraper')) else script_dir
-            config_path = os.path.join(project_root, "hall_config.json")
-        
+
         self.config_path = config_path
         self.hall_config = self._load_hall_config()
     
@@ -162,8 +159,8 @@ class DateInfoCalculator:
         try:
             if jpholiday:
                 return jpholiday.is_holiday(date_obj.date())
-        except:
-            pass
+        except Exception as e:
+            logging.warning("jpholiday.is_holiday() failed: %s", e)
         
         # jpholiday が利用できない場合は固定祝日で判定
         month, day = date_obj.month, date_obj.day

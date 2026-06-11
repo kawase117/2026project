@@ -50,17 +50,17 @@ SUMMARY_TABLE_CONFIGS = [
         'base_name': 'last_digit_summary',
         'group_key': 'last_digit',
         'rank_prefix': 'last_digit_rank',
-        'variants': ['all', 'jug', 'hana', 'oki', 'other']
+        'variants': ['all', 'jug', 'hana', 'oki', 'bt', 'other']
     },
     {
         'base_name': 'daily_position_summary',
-        'group_key': 'front_position',
+        'group_key': 'rank_from_min',
         'rank_prefix': 'position_rank',
-        'variants': ['all', 'jug', 'hana', 'oki', 'other']
+        'variants': ['all', 'jug', 'hana', 'oki', 'bt', 'other']
     },
     {
         'base_name': 'daily_island_summary',
-        'group_key': 'island_name',
+        'group_key': 'section',
         'rank_prefix': 'island_rank',
         'variants': [None]
     }

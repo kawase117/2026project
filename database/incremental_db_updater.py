@@ -13,6 +13,8 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+sys.stdout.reconfigure(encoding='utf-8')
+
 # モジュールのインポート
 from json_processor import JSONProcessor
 from data_inserter import DataInserter
@@ -20,6 +22,7 @@ from summary_calculator import SummaryCalculator
 from rank_calculator import RankCalculator
 from date_info_calculator import DateInfoCalculator
 from db_setup import create_database
+from monthly_trend_calculator import MonthlyTrendCalculator
 
 
 class IncrementalDBUpdater:
@@ -56,6 +59,7 @@ class IncrementalDBUpdater:
         self.summary_calc = SummaryCalculator(self.db_path)
         self.rank_calc = RankCalculator(self.db_path)
         self.date_info_calc = DateInfoCalculator(hall_name, self.db_path)
+        self.monthly_trend_calc = MonthlyTrendCalculator(self.db_path)
     
     def _ensure_database_initialized(self):
         """DB が存在しない、またはテーブルがない場合は db_setup で初期化"""
@@ -234,14 +238,15 @@ class IncrementalDBUpdater:
                 for failure in summary_failures:
                     print(f"        - {failure}")
             
-            # 4. ランク・履歴計算 + 日付フラグ追加（原子的に処理）
+            # 4. ランク・履歴計算 + 日付フラグ + 月次トレンド更新（依存関係をまとめて処理）
             try:
                 self.rank_calc.calculate_ranks_for_date(date_str)
                 self.rank_calc.calculate_history_for_date(date_str)
                 self.date_info_calc.update_date_info(date_str)
-                print(f"      [OK] ランク計算・日付フラグ追加完了")
+                self.monthly_trend_calc.update_month(date_str)
+                print(f"      [OK] ランク計算・日付フラグ・月次トレンド更新完了")
             except Exception as e:
-                print(f"      [WARN] ランク計算・日付フラグ追加スキップ - {str(e)}")
+                print(f"      [WARN] ランク/日付フラグ/月次トレンド更新スキップ - {str(e)}")
                 # 処理継続（次の日付へ）
             
             print(f"      [OK] {date_str} を DB に追加しました")
@@ -281,6 +286,7 @@ class IncrementalDBUpdater:
             self.summary_calc = SummaryCalculator(self.db_path)
             self.rank_calc = RankCalculator(self.db_path)
             self.date_info_calc = DateInfoCalculator(self.hall_name, self.db_path)
+            self.monthly_trend_calc = MonthlyTrendCalculator(self.db_path)
             print(f"   ホール名を '{old_name}' → '{self.hall_name}' に更新しました")
 
         # DB チェック＆初期化（hall_name 確定後に実行）

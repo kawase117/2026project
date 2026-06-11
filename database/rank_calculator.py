@@ -4,9 +4,17 @@
 ランク・履歴計算の統合処理
 """
 
+import re
 import sqlite3
 from datetime import datetime, timedelta
 from table_config import get_all_summary_tables
+
+_SAFE_IDENTIFIER_RE = re.compile(r'^[a-z][a-z0-9_]*$')
+
+
+def _assert_safe(name: str) -> None:
+    if not _SAFE_IDENTIFIER_RE.match(name):
+        raise ValueError(f"Unsafe SQL identifier: {name!r}")
 
 class RankCalculator:
     """ランク・履歴計算クラス"""
@@ -28,9 +36,14 @@ class RankCalculator:
             for table_info in tables:
                 table = table_info['table_name']
                 prefix = table_info['rank_prefix']
+                _assert_safe(table)
+                _assert_safe(prefix)
 
                 # テーブル存在確認
-                cursor.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND name='{table}'")
+                cursor.execute(
+                    "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+                    (table,)
+                )
                 if not cursor.fetchone():
                     continue
 
@@ -77,9 +90,15 @@ class RankCalculator:
                     table = table_info['table_name']
                     key = table_info['group_key']
                     prefix = table_info['rank_prefix']
-                    
+                    _assert_safe(table)
+                    _assert_safe(key)
+                    _assert_safe(prefix)
+
                     # テーブル存在確認
-                    cursor.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND name='{table}'")
+                    cursor.execute(
+                        "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+                        (table,)
+                    )
                     if not cursor.fetchone():
                         continue
                     

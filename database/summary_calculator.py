@@ -132,12 +132,12 @@ class SummaryCalculator:
                 
                 cursor.execute(f'''
                     INSERT INTO {table} (
-                        date, front_position, machine_count, total_games, avg_games,
+                        date, rank_from_min, machine_count, total_games, avg_games,
                         max_games, min_games, total_diff_coins, avg_diff_coins,
                         max_diff_coins, min_diff_coins, win_rate, high_profit_rate
                     )
                     SELECT 
-                        m.date, ml.front_position, COUNT(*),
+                        m.date, ml.rank_from_min, COUNT(*),
                         SUM(m.games_normalized), ROUND(AVG(m.games_normalized), 1),
                         MAX(m.games_normalized), MIN(m.games_normalized),
                         SUM(m.diff_coins_normalized), ROUND(AVG(m.diff_coins_normalized), 1),
@@ -147,8 +147,8 @@ class SummaryCalculator:
                     FROM machine_detailed_results m
                     LEFT JOIN machine_layout ml ON m.machine_number = ml.machine_number
                     LEFT JOIN machine_master mm ON m.machine_name = mm.machine_name_normalized
-                    WHERE m.date = ? AND ml.front_position IS NOT NULL {condition}
-                    GROUP BY m.date, ml.front_position
+                    WHERE m.date = ? AND ml.rank_from_min IS NOT NULL {condition}
+                    GROUP BY m.date, ml.rank_from_min
                 ''', (date,))
             
             conn.commit()
@@ -166,19 +166,19 @@ class SummaryCalculator:
             
             cursor.execute('''
                 INSERT INTO daily_island_summary (
-                    date, island_name, machine_count, total_games, avg_games,
+                    date, section, machine_count, total_games, avg_games,
                     total_diff_coins, avg_diff_coins, win_rate, high_profit_rate
                 )
                 SELECT 
-                    m.date, ml.island_name, COUNT(*),
+                    m.date, ml.section, COUNT(*),
                     SUM(m.games_normalized), ROUND(AVG(m.games_normalized), 1),
                     SUM(m.diff_coins_normalized), ROUND(AVG(m.diff_coins_normalized), 1),
                     CAST(ROUND(SUM(CASE WHEN m.diff_coins_normalized > 0 THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 0) AS INTEGER),
                     ROUND(SUM(CASE WHEN m.games_normalized >= 3000 AND m.diff_coins_normalized >= 1000 THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1)
                 FROM machine_detailed_results m
                 LEFT JOIN machine_layout ml ON m.machine_number = ml.machine_number
-                WHERE m.date = ? AND ml.island_name IS NOT NULL
-                GROUP BY m.date, ml.island_name
+                WHERE m.date = ? AND ml.section IS NOT NULL
+                GROUP BY m.date, ml.section
             ''', (date,))
             
             conn.commit()

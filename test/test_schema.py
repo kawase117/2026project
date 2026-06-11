@@ -139,8 +139,8 @@ def verify_table_schema(db_path: str):
         'daily_hall_summary': ['date', 'total_machines', 'total_games', 'total_diff_coins', 'win_rate'],
         'daily_machine_type_summary': ['date', 'machine_name', 'win_rate', 'machine_type_rank_diff', 'avg_diff_7d'],
         'last_digit_summary_all': ['date', 'last_digit', 'win_rate', 'last_digit_rank_diff', 'avg_diff_7d'],
-        'daily_position_summary_all': ['date', 'front_position', 'win_rate', 'position_rank_diff', 'avg_diff_7d'],
-        'daily_island_summary': ['date', 'island_name', 'win_rate', 'island_rank_diff', 'avg_diff_7d'],
+        'daily_position_summary_all': ['date', 'rank_from_min', 'win_rate', 'position_rank_diff', 'avg_diff_7d'],
+        'daily_island_summary': ['date', 'section', 'win_rate', 'island_rank_diff', 'avg_diff_7d'],
     }
     
     all_valid = True

@@ -5,13 +5,13 @@
 
 import sys
 import io
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 import os
 import time
 import glob
 from datetime import datetime
 from pathlib import Path
+
+sys.stdout.reconfigure(encoding='utf-8')
 
 from db_setup import create_database
 from json_processor import JSONProcessor
@@ -19,6 +19,7 @@ from data_inserter import DataInserter
 from summary_calculator import SummaryCalculator
 from rank_calculator import RankCalculator
 from date_info_calculator import DateInfoCalculator
+from monthly_trend_calculator import MonthlyTrendCalculator
 
 class DataImporter:
     """統合データインポーター"""
@@ -30,6 +31,7 @@ class DataImporter:
         self.summary_calc = SummaryCalculator(db_path)
         self.rank_calc = RankCalculator(db_path)
         self.date_info_calc = DateInfoCalculator(hall_name, db_path)
+        self.monthly_trend_calc = MonthlyTrendCalculator(db_path)
     
     def import_single_json(self, json_filepath: str) -> str:
         """単一JSONファイルを処理"""
@@ -61,14 +63,15 @@ class DataImporter:
         self.summary_calc.update_position_summary_by_type(date)
         self.summary_calc.update_island_summary(date)
         
-        # 4. ランク・履歴計算 + 日付フラグ追加（原子的に処理）
+        # 4. ランク・履歴計算 + 日付フラグ + 月次トレンド更新（依存関係をまとめて処理）
         try:
             self.rank_calc.calculate_ranks_for_date(date)
             self.rank_calc.calculate_history_for_date(date)
             self.date_info_calc.update_date_info(date)
-            print(f"✅ {date}: ランク計算・日付フラグ追加完了")
+            self.monthly_trend_calc.update_month(date)
+            print(f"✅ {date}: ランク計算・日付フラグ・月次トレンド更新完了")
         except Exception as e:
-            print(f"⚠️ {date}: ランク計算・日付フラグ追加スキップ - {str(e)}")
+            print(f"⚠️ {date}: ランク/日付フラグ/月次トレンド更新スキップ - {str(e)}")
             # 処理継続（次の日付へ）
         
         return date
@@ -290,6 +293,8 @@ def _print_summary(db_path, processed_dates, db_time, import_time):
     print(f"   サイズ: {os.path.getsize(db_path) / 1024 / 1024:.2f} MB")
 
 if __name__ == "__main__":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
     print(f"実行時刻: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     success = main()
     sys.exit(0 if success else 1)

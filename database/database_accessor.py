@@ -5,9 +5,39 @@
 DB接続・CRUD操作を一元管理
 """
 
+import re
 import sqlite3
 from typing import List, Dict, Any, Optional, Tuple
 from datetime import datetime
+
+_ALLOWED_TABLES = frozenset({
+    'machine_detailed_results', 'daily_hall_summary',
+    'last_digit_summary_all', 'last_digit_summary_jug',
+    'last_digit_summary_hana', 'last_digit_summary_oki',
+    'last_digit_summary_other', 'daily_machine_type_summary',
+    'daily_position_summary', 'daily_island_summary',
+    'machine_master',
+})
+_SAFE_IDENTIFIER_RE = re.compile(r'^[a-z][a-z0-9_]*$')
+_SAFE_COLUMN_DEF_RE = re.compile(
+    r'^[a-z][a-z0-9_]*\s+(TEXT|INTEGER|REAL|NUMERIC|BLOB|BOOLEAN)(\s+DEFAULT\s+\S+)?$',
+    re.IGNORECASE,
+)
+
+
+def _validate_table(name: str) -> None:
+    if name not in _ALLOWED_TABLES:
+        raise ValueError(f"Disallowed table name: {name!r}")
+
+
+def _validate_identifier(name: str) -> None:
+    if not _SAFE_IDENTIFIER_RE.match(name):
+        raise ValueError(f"Unsafe SQL identifier: {name!r}")
+
+
+def _validate_column_def(column_def: str) -> None:
+    if not _SAFE_COLUMN_DEF_RE.match(column_def.strip()):
+        raise ValueError(f"Unsafe column definition: {column_def!r}")
 
 
 class DataAccessor:
@@ -212,7 +242,9 @@ class DataAccessor:
         """
         if not updates:
             return 0
-        
+
+        _validate_table(table_name)
+
         conn = self.get_connection()
         cursor = conn.cursor()
         updated = 0
@@ -257,18 +289,24 @@ class DataAccessor:
         int
             追加されたカラム数
         """
+        _validate_table(table_name)
+
         conn = self.get_connection()
         cursor = conn.cursor()
         added = 0
-        
+
         try:
-            # テーブルが存在するか確認
-            cursor.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND name='{table_name}'")
+            # テーブルが存在するか確認（パラメータ化クエリを使用）
+            cursor.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+                (table_name,)
+            )
             if not cursor.fetchone():
                 return 0
-            
+
             # 各カラムを追加
             for column_def in columns:
+                _validate_column_def(column_def)
                 try:
                     cursor.execute(f"ALTER TABLE {table_name} ADD COLUMN {column_def}")
                     added += 1
@@ -286,9 +324,10 @@ class DataAccessor:
     
     def select_summary_data(self, date: str, table_name: str) -> List[Dict[str, Any]]:
         """指定テーブルの指定日のデータを取得"""
+        _validate_table(table_name)
         conn = self.get_connection()
         cursor = conn.cursor()
-        
+
         try:
             cursor.execute(f"SELECT * FROM {table_name} WHERE date = ?", (date,))
             return [dict(row) for row in cursor.fetchall()]
@@ -337,9 +376,11 @@ class DataAccessor:
         List[Tuple[str, Any]]
             [(date, value), ...] のリスト
         """
+        _validate_table(table_name)
+        _validate_identifier(column)
         conn = self.get_connection()
         cursor = conn.cursor()
-        
+
         try:
             cursor.execute(
                 f"SELECT date, {column} FROM {table_name} WHERE date < ? ORDER BY date DESC",
@@ -370,10 +411,10 @@ class DataAccessor:
             where_clause += " AND machine_name = ?"
             where_values.append(key_value)
         elif 'daily_position' in table_name:
-            where_clause += " AND front_position = ?"
+            where_clause += " AND rank_from_min = ?"
             where_values.append(key_value)
         elif table_name == 'daily_island_summary':
-            where_clause += " AND island_name = ?"
+            where_clause += " AND section = ?"
             where_values.append(key_value)
         
         return where_clause, where_values
@@ -394,9 +435,10 @@ class DataAccessor:
     
     def get_table_record_count(self, table_name: str, date: str) -> int:
         """指定テーブルの指定日レコード数を取得"""
+        _validate_table(table_name)
         conn = self.get_connection()
         cursor = conn.cursor()
-        
+
         try:
             cursor.execute(f"SELECT COUNT(*) FROM {table_name} WHERE date = ?", (date,))
             return cursor.fetchone()[0]
