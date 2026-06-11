@@ -228,7 +228,7 @@ def _pick_last_nonempty(series: pd.Series, *, fallback: str) -> str:
     return cleaned.iat[-1]
 
 
-def abbreviate_machine_name(value: str | None, max_length: int = 12) -> str:
+def abbreviate_machine_name(value: str | None, max_length: int = 4) -> str:
     """Derive a compact machine label suitable for tiny floor cards."""
 
     cleaned = _safe_text(value, fallback="未設定")
@@ -265,7 +265,7 @@ def abbreviate_machine_name(value: str | None, max_length: int = 12) -> str:
 
     if len(cleaned) <= max_length:
         return cleaned
-    return f"{cleaned[: max_length - 1]}…"
+    return cleaned[:max_length]
 
 
 def summarize_games_thresholds(values: pd.Series) -> tuple[float, float, float]:
@@ -309,18 +309,16 @@ def render_machine_card(
     metric_value = row.get(metric_key)
     tone_class = classify_metric(metric_value, thresholds)
     games_class = classify_games(row.get("avg_games"), games_thresholds)
-    machine_name = abbreviate_machine_name(row.get("machine_name"), max_length=11)
+    machine_name = abbreviate_machine_name(row.get("machine_name"), max_length=4)
     machine_number = int(row["machine_number"])
     metric_label = format_metric_value(metric_value, metric_key)
     full_name = _safe_text(row.get("machine_name"))
-    latest_date = row.get("latest_date")
-    latest_date_label = (
-        pd.Timestamp(latest_date).strftime("%Y-%m-%d") if pd.notna(latest_date) else "-"
-    )
+    avg_games_value = row.get("avg_games")
+    avg_games_label = f"{float(avg_games_value):.0f}G" if pd.notna(avg_games_value) else "N/A"
     title = (
-        f"{machine_number} / {full_name} / latest={latest_date_label} / {METRICS[metric_key].label}: {metric_label}"
+        f"{machine_number} / {full_name} / 平均G数: {avg_games_label} / {METRICS[metric_key].label}: {metric_label}"
         if full_name
-        else f"{machine_number} / latest={latest_date_label} / {METRICS[metric_key].label}: {metric_label}"
+        else f"{machine_number} / 平均G数: {avg_games_label} / {METRICS[metric_key].label}: {metric_label}"
     )
 
     return f"""
