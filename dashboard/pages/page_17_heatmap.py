@@ -10,12 +10,17 @@ import streamlit as st
 try:
     from Heatmap.coordinate_utils import find_floor_csvs
     from Heatmap.heatmap_common import (
+        WEEKDAY_LABELS,
         render_heatmap_page,
         render_last_digit_highlight,
     )
 except ModuleNotFoundError:
     from coordinate_utils import find_floor_csvs
-    from heatmap_common import render_heatmap_page, render_last_digit_highlight
+    from heatmap_common import (
+        WEEKDAY_LABELS,
+        render_heatmap_page,
+        render_last_digit_highlight,
+    )
 
 
 def render() -> None:
@@ -45,13 +50,38 @@ def render() -> None:
         st.warning("開始日と終了日を両方選択してください")
         return
 
+    filter_col1, filter_col2 = st.columns(2)
+    with filter_col1:
+        selected_weekdays = st.multiselect(
+            "曜日で絞り込み",
+            list(WEEKDAY_LABELS),
+            default=[],
+            help="空欄なら全曜日",
+            key=f"heatmap_weekdays_{hall_safe}",
+        )
+    with filter_col2:
+        selected_day_of_months = st.multiselect(
+            "月内日付(DD)で絞り込み",
+            list(range(1, 32)),
+            default=[],
+            help="空欄なら全日付",
+            key=f"heatmap_dd_{hall_safe}",
+        )
+
+    weekdays = selected_weekdays or None
+    day_of_months = selected_day_of_months or None
+
     heatmap_tab, digit_tab = st.tabs(["ヒートマップ", "末尾ハイライト"])
 
     with heatmap_tab:
-        _render_heatmap_views(csvs, str(db_path), hall_name, hall_safe, date_range)
+        _render_heatmap_views(
+            csvs, str(db_path), hall_name, hall_safe, date_range, weekdays, day_of_months
+        )
 
     with digit_tab:
-        _render_digit_views(csvs, str(db_path), hall_name, hall_safe, date_range)
+        _render_digit_views(
+            csvs, str(db_path), hall_name, hall_safe, date_range, weekdays, day_of_months
+        )
 
 
 def _render_heatmap_views(
@@ -60,16 +90,18 @@ def _render_heatmap_views(
     hall_name: str,
     hall_safe: str,
     date_range: tuple[date, date],
+    weekdays: list[str] | None,
+    day_of_months: list[int] | None,
 ) -> None:
     if len(csvs) == 1:
-        _render_one_floor_heat(csvs[0], db_path, hall_name, hall_safe, date_range)
+        _render_one_floor_heat(csvs[0], db_path, hall_name, hall_safe, date_range, weekdays, day_of_months)
         return
 
     floor_labels = [csv_info["floor"] for csv_info in csvs]
     floor_tabs = st.tabs(floor_labels)
     for tab, csv_info in zip(floor_tabs, csvs):
         with tab:
-            _render_one_floor_heat(csv_info, db_path, hall_name, hall_safe, date_range)
+            _render_one_floor_heat(csv_info, db_path, hall_name, hall_safe, date_range, weekdays, day_of_months)
 
 
 def _render_digit_views(
@@ -78,16 +110,18 @@ def _render_digit_views(
     hall_name: str,
     hall_safe: str,
     date_range: tuple[date, date],
+    weekdays: list[str] | None,
+    day_of_months: list[int] | None,
 ) -> None:
     if len(csvs) == 1:
-        _render_one_floor_digit(csvs[0], db_path, hall_name, hall_safe, date_range)
+        _render_one_floor_digit(csvs[0], db_path, hall_name, hall_safe, date_range, weekdays, day_of_months)
         return
 
     floor_labels = [csv_info["floor"] for csv_info in csvs]
     floor_tabs = st.tabs(floor_labels)
     for tab, csv_info in zip(floor_tabs, csvs):
         with tab:
-            _render_one_floor_digit(csv_info, db_path, hall_name, hall_safe, date_range)
+            _render_one_floor_digit(csv_info, db_path, hall_name, hall_safe, date_range, weekdays, day_of_months)
 
 
 def _render_one_floor_heat(
@@ -96,6 +130,8 @@ def _render_one_floor_heat(
     hall_name: str,
     hall_safe: str,
     date_range: tuple[date, date],
+    weekdays: list[str] | None,
+    day_of_months: list[int] | None,
 ) -> None:
     floor = csv_info["floor"]
     render_heatmap_page(
@@ -109,6 +145,8 @@ def _render_one_floor_heat(
         metric_key=f"heatmap_metric_{hall_safe}_{floor}",
         default_start_date=datetime(2026, 1, 1),
         date_range=date_range,
+        weekdays=weekdays,
+        day_of_months=day_of_months,
     )
 
 
@@ -118,6 +156,8 @@ def _render_one_floor_digit(
     hall_name: str,
     hall_safe: str,
     date_range: tuple[date, date],
+    weekdays: list[str] | None,
+    day_of_months: list[int] | None,
 ) -> None:
     floor = csv_info["floor"]
     render_last_digit_highlight(
@@ -128,6 +168,8 @@ def _render_one_floor_digit(
         floor=floor,
         date_range=date_range,
         widget_key_suffix=f"{hall_safe}_{floor}",
+        weekdays=weekdays,
+        day_of_months=day_of_months,
     )
 
 

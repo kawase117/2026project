@@ -7,10 +7,9 @@ from __future__ import annotations
 import os
 import sqlite3
 from datetime import date, datetime
+from html import escape
 
-import numpy as np
 import pandas as pd
-import plotly.graph_objects as go
 import streamlit as st
 
 try:
@@ -18,21 +17,77 @@ try:
 except ModuleNotFoundError:
     from coordinate_utils import get_display_columns
 
+try:
+    from Heatmap.generate_kamata7_cardmap_html import (
+        DIGIT_CATEGORY_COLORS,
+        METRICS,
+        build_html_document,
+        build_machine_stats,
+        build_tone_thresholds,
+        format_filter_label,
+        render_floor_section,
+        render_last_digit_floor_section,
+    )
+except ModuleNotFoundError:
+    from generate_kamata7_cardmap_html import (
+        DIGIT_CATEGORY_COLORS,
+        METRICS,
+        build_html_document,
+        build_machine_stats,
+        build_tone_thresholds,
+        format_filter_label,
+        render_floor_section,
+        render_last_digit_floor_section,
+    )
 
-CATEGORY_COLORS: dict[str, str] = {
-    "0": "#1f77b4",
-    "1": "#ff7f0e",
-    "2": "#2ca02c",
-    "3": "#d62728",
-    "4": "#9467bd",
-    "5": "#8c564b",
-    "6": "#e377c2",
-    "7": "#bcbd22",
-    "8": "#17becf",
-    "9": "#aec7e8",
-    "ゾロ目": "#FFD700",
+
+WEEKDAY_LABELS = ("月", "火", "水", "木", "金", "土", "日")
+WEEKDAY_TO_INDEX = {label: index for index, label in enumerate(WEEKDAY_LABELS)}
+
+# ホールごとのカード型フロアマップのレイアウト設定。
+# slot_x/slot_y/pad はカード1枚分のピッチ(px)、fit_mode/min_scale は
+# build_html_document に渡す表示モード。exclude_machine_numbers は
+# カードマップから除外する台番号（例: 蒲田1の5円スロット島）。
+HALL_CARD_CONFIG: dict[str, dict[str, object]] = {
+    "マルハンメガシティ2000-蒲田7": {
+        "slot_x": 40,
+        "slot_y": 28,
+        "pad": 10,
+        "fit_mode": "contain",
+        "min_scale": 0.6,
+        "exclude_machine_numbers": (),
+    },
+    "マルハンメガシティ2000-蒲田1": {
+        "slot_x": 40,
+        "slot_y": 30,
+        "pad": 8,
+        "fit_mode": "scroll",
+        "min_scale": 0.65,
+        # 2331-2340 は5円スロット島のため、カード型フロアマップでは除外する。
+        "exclude_machine_numbers": tuple(range(2331, 2341)),
+    },
 }
-UNSELECTED_COLOR = "#d3d3d3"
+
+_DEFAULT_CARD_CONFIG: dict[str, object] = {
+    "slot_x": 40,
+    "slot_y": 28,
+    "pad": 10,
+    "fit_mode": "contain",
+    "min_scale": 0.6,
+    "exclude_machine_numbers": (),
+}
+
+# ヒートマップタブの「表示指標」選択肢 -> generate_kamata7_cardmap_html.METRICS のキー
+HEATMAP_METRIC_OPTIONS: dict[str, str] = {
+    "平均差枚": "avg_diff",
+    "勝率(%)": "win_rate",
+    "平均機械割(%)": "avg_kaiwari",
+    "機械割104%以上率(%)": "hit104_rate",
+}
+
+
+def _get_card_config(hall_name: str | None) -> dict[str, object]:
+    return HALL_CARD_CONFIG.get(hall_name or "", _DEFAULT_CARD_CONFIG)
 
 
 def load_coordinate_frame(
@@ -77,53 +132,68 @@ def _ensure_date_range(
     return _as_date(start_date), _as_date(end_date)
 
 
-def _format_metric_options() -> list[str]:
-    return ["勝率(%)", "平均差枚", "平均ゲーム数"]
+def _normalize_weekday_selection(values: list[int | str] | None) -> list[int]:
+    if not values:
+        return []
+
+    normalized: list[int] = []
+    for value in values:
+        if value is None or pd.isna(value):
+            continue
+        candidate: int | None = None
+        if isinstance(value, int) and not isinstance(value, bool):
+            candidate = int(value)
+        else:
+            text = str(value).strip()
+            if text in WEEKDAY_TO_INDEX:
+                candidate = WEEKDAY_TO_INDEX[text]
+            elif text.isdigit():
+                candidate = int(text)
+        if candidate is None or not 0 <= candidate <= 6:
+            raise ValueError(f"Unsupported weekday selection: {value}")
+        normalized.append(candidate)
+    return sorted(set(normalized))
 
 
-def _format_metric_label(metric: str) -> tuple[str, str, str]:
-    if metric == "勝率(%)":
-        return "win_rate", "勝率(%)", "RdYlGn"
-    if metric == "平均差枚":
-        return "avg_diff", "平均差枚", "RdYlGn"
-    return "avg_games", "平均ゲーム数", "Blues"
+def _normalize_day_of_month_selection(values: list[int | str] | None) -> list[int]:
+    if not values:
+        return []
+
+    normalized: list[int] = []
+    for value in values:
+        if value is None or pd.isna(value):
+            continue
+        if isinstance(value, int) and not isinstance(value, bool):
+            candidate = int(value)
+        else:
+            text = str(value).strip()
+            if not text.isdigit():
+                raise ValueError(f"Unsupported day-of-month selection: {value}")
+            candidate = int(text)
+        if not 1 <= candidate <= 31:
+            raise ValueError(f"Unsupported day-of-month selection: {value}")
+        normalized.append(candidate)
+    return sorted(set(normalized))
 
 
-def _render_metric_summary(machine_stats: pd.DataFrame) -> None:
-    st.markdown("---")
-    st.markdown("### 分析サマリー")
-    c1, c2, c3, c4, c5 = st.columns(5)
-    with c1:
-        st.metric("台数", f"{len(machine_stats)}")
-    with c2:
-        st.metric("平均勝率", f"{machine_stats['win_rate'].mean():.1f}%")
-    with c3:
-        st.metric("平均差枚", f"{machine_stats['avg_diff'].mean():.0f}")
-    with c4:
-        st.metric("最高勝率", f"{machine_stats['win_rate'].max():.1f}%")
-    with c5:
-        st.metric("最高差枚", f"{machine_stats['avg_diff'].max():.0f}")
+def _apply_calendar_filters(
+    frame: pd.DataFrame,
+    *,
+    weekdays: list[int] | list[str] | None = None,
+    day_of_months: list[int] | list[str] | None = None,
+) -> pd.DataFrame:
+    filtered = frame.copy()
+    filtered["date"] = pd.to_datetime(filtered["date"])
 
+    normalized_weekdays = _normalize_weekday_selection(weekdays)
+    if normalized_weekdays:
+        filtered = filtered[filtered["date"].dt.weekday.isin(normalized_weekdays)]
 
-def _render_top_tables(machine_stats: pd.DataFrame) -> None:
-    st.markdown("---")
-    st.markdown("### 指標別 TOP 10")
-    tab1, tab2, tab3 = st.tabs(["勝率 TOP10", "平均差枚 TOP10", "平均ゲーム数 TOP10"])
+    normalized_days = _normalize_day_of_month_selection(day_of_months)
+    if normalized_days:
+        filtered = filtered[filtered["date"].dt.day.isin(normalized_days)]
 
-    def top_table(col: str) -> None:
-        df = machine_stats.nlargest(10, col)[
-            ["machine_number", "win_rate", "avg_diff", "avg_games"]
-        ].copy()
-        df.columns = ["台番号", "勝率(%)", "平均差枚", "平均ゲーム数"]
-        df.insert(0, "順位", range(1, len(df) + 1))
-        st.dataframe(df, use_container_width=True, hide_index=True)
-
-    with tab1:
-        top_table("win_rate")
-    with tab2:
-        top_table("avg_diff")
-    with tab3:
-        top_table("avg_games")
+    return filtered.reset_index(drop=True)
 
 
 def render_heatmap_page(
@@ -138,8 +208,10 @@ def render_heatmap_page(
     hall_name: str | None = None,
     floor: str | None = None,
     date_range: tuple[date, date] | None = None,
+    weekdays: list[int] | list[str] | None = None,
+    day_of_months: list[int] | list[str] | None = None,
 ) -> None:
-    """Render a floor-plan heatmap from coordinate CSV + SQLite data."""
+    """Render a floor-plan heatmap as a card-map HTML document."""
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.dirname(script_dir)
@@ -155,43 +227,6 @@ def render_heatmap_page(
 
     st.markdown(f"## {title}")
     st.markdown(subtitle)
-
-    coords_df = load_coordinate_frame(
-        coords_path,
-        hall_name=hall_name,
-        floor=floor,
-    )
-    if coords_df.empty:
-        st.warning(
-            f"Coordinate data is empty (hall_name={hall_name}, floor={floor})"
-        )
-        st.stop()
-
-    coords_df["machine_number"] = coords_df["machine_number"].astype(int)
-    coords_df["X"] = coords_df["X"].astype(int)
-    coords_df["Y"] = coords_df["Y"].astype(int)
-    if "display_x" in coords_df.columns:
-        coords_df["display_x"] = coords_df["display_x"].astype(int)
-    if "display_y" in coords_df.columns:
-        coords_df["display_y"] = coords_df["display_y"].astype(int)
-    if "hall_name" in coords_df.columns:
-        hall_names = coords_df["hall_name"].dropna().astype(str).unique().tolist()
-        if len(hall_names) == 1:
-            st.caption(f"対象ホール: {hall_names[0]}")
-
-    try:
-        with sqlite3.connect(db_path) as conn:
-            all_machines = pd.read_sql_query(
-                "SELECT * FROM machine_detailed_results ORDER BY date DESC",
-                conn,
-            )
-    except Exception as exc:
-        st.error(f"DB load error: {exc}")
-        st.stop()
-
-    if all_machines.empty:
-        st.warning("No machine data found")
-        st.stop()
 
     validated_range = _ensure_date_range(date_range)
     if date_range is not None and validated_range is None:
@@ -218,146 +253,119 @@ def render_heatmap_page(
             )
 
     with col_r:
-        metric = st.radio(
+        metric_label_jp = st.radio(
             "表示指標",
-            _format_metric_options(),
+            list(HEATMAP_METRIC_OPTIONS.keys()),
             key=metric_key,
             horizontal=False,
         )
+    metric = HEATMAP_METRIC_OPTIONS[metric_label_jp]
 
     start_date, end_date = validated_range
-    all_machines["date"] = pd.to_datetime(all_machines["date"], format="%Y%m%d")
-    filtered = all_machines[
-        (all_machines["date"] >= pd.Timestamp(start_date))
-        & (all_machines["date"] <= pd.Timestamp(end_date))
-    ]
 
-    if filtered.empty:
+    coords_df = load_coordinate_frame(
+        coords_path,
+        hall_name=hall_name,
+        floor=floor,
+    )
+    if coords_df.empty:
+        st.warning(
+            f"Coordinate data is empty (hall_name={hall_name}, floor={floor})"
+        )
+        st.stop()
+
+    coords_df["machine_number"] = coords_df["machine_number"].astype(int)
+    coords_df["X"] = coords_df["X"].astype(int)
+    coords_df["Y"] = coords_df["Y"].astype(int)
+    if "display_x" in coords_df.columns:
+        coords_df["display_x"] = coords_df["display_x"].astype(int)
+    if "display_y" in coords_df.columns:
+        coords_df["display_y"] = coords_df["display_y"].astype(int)
+    if "hall_name" in coords_df.columns:
+        hall_names = coords_df["hall_name"].dropna().astype(str).unique().tolist()
+        if len(hall_names) == 1:
+            st.caption(f"対象ホール: {hall_names[0]}")
+
+    card_config = _get_card_config(hall_name)
+    exclude_numbers = card_config["exclude_machine_numbers"]
+    if exclude_numbers:
+        coords_df = coords_df[
+            ~coords_df["machine_number"].isin(exclude_numbers)
+        ].reset_index(drop=True)
+
+    date_start_key = start_date.strftime("%Y%m%d")
+    date_end_key = end_date.strftime("%Y%m%d")
+
+    try:
+        with sqlite3.connect(db_path) as conn:
+            raw = pd.read_sql_query(
+                "SELECT date, machine_number, machine_name, diff_coins_normalized, games_normalized "
+                "FROM machine_detailed_results WHERE date >= ? AND date <= ? ORDER BY date",
+                conn,
+                params=(date_start_key, date_end_key),
+            )
+    except Exception as exc:
+        st.error(f"DB load error: {exc}")
+        st.stop()
+
+    if raw.empty:
         st.warning("選択期間にデータがありません")
         st.stop()
 
-    machine_stats = (
-        filtered.groupby("machine_number")
-        .agg(
-            avg_diff=("diff_coins_normalized", "mean"),
-            win_rate=("diff_coins_normalized", lambda x: (x > 0).sum() / len(x) * 100),
-            avg_games=("games_normalized", "mean"),
-        )
-        .round(2)
-        .reset_index()
+    raw["date"] = pd.to_datetime(raw["date"], format="%Y%m%d")
+    raw = _apply_calendar_filters(
+        raw,
+        weekdays=weekdays,
+        day_of_months=day_of_months,
+    )
+    if raw.empty:
+        st.warning("選択した曜日・日付に該当するデータがありません")
+        st.stop()
+
+    stats_df = build_machine_stats(raw)
+    frame = coords_df.merge(stats_df, on="machine_number", how="left")
+
+    filter_label = format_filter_label(
+        weekdays=weekdays,
+        day_of_months=day_of_months,
+    )
+    st.caption(f"追加フィルタ: {filter_label}")
+
+    thresholds = build_tone_thresholds(frame[metric].dropna())
+
+    section_html = render_floor_section(
+        frame,
+        floor_label=floor if floor is not None else "-",
+        floor_title=title,
+        metric_key=metric,
+        thresholds=thresholds,
+        filter_label=filter_label,
+        slot_x=card_config["slot_x"],
+        slot_y=card_config["slot_y"],
+        pad=card_config["pad"],
     )
 
-    heatmap_data = coords_df.merge(machine_stats, on="machine_number", how="left")
-    x_axis_col, y_axis_col = get_display_columns(heatmap_data.columns)
-
-    metric_col, metric_label, colorscale = _format_metric_label(metric)
-    if metric == "勝率(%)":
-        zmin, zmax = 0, 100
-        fmt = "{:.1f}%"
-    else:
-        # ホール全体（全フロア）の値域を使用し、フロア間で色基準を統一する
-        zmin = machine_stats[metric_col].min()
-        zmax = machine_stats[metric_col].max()
-        if metric == "平均差枚":
-            limit = max(abs(zmin), abs(zmax))
-            zmin, zmax = -limit, limit
-        fmt = "{:.0f}" if metric == "平均差枚" else "{:.0f}G"
-
-    max_x = int(heatmap_data[x_axis_col].max())
-    max_y = int(heatmap_data[y_axis_col].max())
-    z_mat = np.full((max_y, max_x), np.nan)
-    mn_mat = np.full((max_y, max_x), "", dtype=object)
-    val_mat = np.full((max_y, max_x), "", dtype=object)
-
-    for _, row in heatmap_data.iterrows():
-        xi = int(row[x_axis_col]) - 1
-        yi = int(row[y_axis_col]) - 1
-        mn_mat[yi, xi] = str(int(row["machine_number"]))
-        if not pd.isna(row[metric_col]):
-            z_mat[yi, xi] = row[metric_col]
-            val_mat[yi, xi] = fmt.format(row[metric_col])
-
-    height = max(600, max_y * 22 + 200)
-
-    fig = go.Figure(
-        data=go.Heatmap(
-            z=z_mat,
-            x=list(range(1, max_x + 1)),
-            y=list(range(1, max_y + 1)),
-            colorscale=colorscale,
-            customdata=np.stack([mn_mat, val_mat], axis=-1),
-            hovertemplate="<b>台番号: %{customdata[0]}</b><br>"
-            + f"{metric_label}: %{{customdata[1]}}<br>"
-            + "X=%{x}, Y=%{y}<extra></extra>",
-            zmin=zmin,
-            zmax=zmax,
-            xgap=0.5,
-            ygap=0.5,
-        )
+    html = build_html_document(
+        floor_sections=[
+            {
+                "floor": floor if floor is not None else "-",
+                "title": title,
+                "html": section_html,
+            }
+        ],
+        hall_name=hall_name,
+        generated_at=pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S"),
+        date_range_label=f"{start_date:%Y-%m-%d} 〜 {end_date:%Y-%m-%d}",
+        filter_label=filter_label,
+        metric_key=metric,
+        metric_label=METRICS[metric].label,
+        fit_mode=card_config["fit_mode"],
+        min_scale=card_config["min_scale"],
     )
 
-    fig.update_traces(
-        colorbar=dict(
-            title=dict(text=metric_label, side="right"),
-            thickness=18,
-            len=0.7,
-        )
-    )
+    from streamlit.components.v1 import html as components_html
 
-    fig.update_layout(
-        title=dict(
-            text=title,
-            x=0.5,
-            xanchor="center",
-            font=dict(size=18),
-        ),
-        height=height,
-        hovermode="closest",
-        yaxis=dict(
-            autorange="reversed",
-            side="left",
-            showgrid=True,
-            gridwidth=0.5,
-            gridcolor="rgba(200,200,200,0.2)",
-        ),
-        xaxis=dict(
-            showgrid=True,
-            gridwidth=0.5,
-            gridcolor="rgba(200,200,200,0.2)",
-        ),
-        font=dict(family="Arial, sans-serif", size=11, color="black"),
-        margin=dict(l=60, r=110, t=80, b=60),
-        plot_bgcolor="white",
-        paper_bgcolor="white",
-    )
-    fig.update_yaxes(scaleanchor="x", scaleratio=1)
-    fig.update_xaxes(scaleanchor="y", scaleratio=1)
-
-    st.plotly_chart(fig, use_container_width=True)
-
-    _render_metric_summary(machine_stats)
-    _render_top_tables(machine_stats)
-
-
-def _build_highlight_customdata(
-    row: pd.Series,
-    category: str,
-) -> list[str]:
-    machine_name = row.get("machine_name")
-    machine_name_str = "不明" if pd.isna(machine_name) else str(machine_name)
-
-    win_rate = row.get("win_rate")
-    avg_diff = row.get("avg_diff")
-    win_rate_str = "-" if pd.isna(win_rate) else f"{float(win_rate):.1f}%"
-    avg_diff_str = "-" if pd.isna(avg_diff) else f"{float(avg_diff):.0f}"
-
-    return [
-        str(int(row["machine_number"])),
-        machine_name_str,
-        category,
-        win_rate_str,
-        avg_diff_str,
-    ]
+    components_html(html, height=1800, scrolling=True)
 
 
 def render_last_digit_highlight(
@@ -369,6 +377,8 @@ def render_last_digit_highlight(
     floor: str | None = None,
     date_range: tuple[date, date],
     widget_key_suffix: str,
+    weekdays: list[int] | list[str] | None = None,
+    day_of_months: list[int] | list[str] | None = None,
 ) -> None:
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.dirname(script_dir)
@@ -388,10 +398,14 @@ def render_last_digit_highlight(
         return
     start_date, end_date = validated_range
 
-    st.markdown(f"## {title}")
+    filter_label = format_filter_label(
+        weekdays=weekdays,
+        day_of_months=day_of_months,
+    )
     st.caption(
         f"期間: {start_date.strftime('%Y-%m-%d')} 〜 {end_date.strftime('%Y-%m-%d')}"
     )
+    st.caption(f"追加フィルタ: {filter_label}")
 
     coords_df = load_coordinate_frame(
         coords_path,
@@ -412,6 +426,13 @@ def render_last_digit_highlight(
     if "display_y" in coords_df.columns:
         coords_df["display_y"] = coords_df["display_y"].astype(int)
 
+    card_config = _get_card_config(hall_name)
+    exclude_numbers = card_config["exclude_machine_numbers"]
+    if exclude_numbers:
+        coords_df = coords_df[
+            ~coords_df["machine_number"].isin(exclude_numbers)
+        ].reset_index(drop=True)
+
     date_start_key = start_date.strftime("%Y%m%d")
     date_end_key = end_date.strftime("%Y%m%d")
 
@@ -423,51 +444,50 @@ def render_last_digit_highlight(
             )
             has_is_zorome = "is_zorome" in table_info["name"].tolist()
 
-        latest_name_query = """
-            SELECT r.machine_number, r.machine_name
-            FROM machine_detailed_results r
-            JOIN (
-                SELECT machine_number, MAX(date) AS max_date
-                FROM machine_detailed_results
-                GROUP BY machine_number
-            ) m ON r.machine_number = m.machine_number AND r.date = m.max_date
-            GROUP BY r.machine_number
-            ORDER BY r.machine_number
-        """
-        latest_names = pd.read_sql_query(latest_name_query, conn)
+            query_columns = [
+                "date",
+                "machine_number",
+                "machine_name",
+                "diff_coins_normalized",
+                "games_normalized",
+            ]
+            if has_is_zorome:
+                query_columns.append("is_zorome")
 
-        if has_is_zorome:
-            period_stats_query = """
-                SELECT machine_number,
-                       AVG(diff_coins_normalized) AS avg_diff,
-                       100.0 * SUM(CASE WHEN diff_coins_normalized > 0 THEN 1 ELSE 0 END)
-                           / COUNT(*) AS win_rate,
-                       MAX(is_zorome) AS is_zorome
-                FROM machine_detailed_results
-                WHERE date >= ? AND date <= ?
-                GROUP BY machine_number
-            """
-        else:
-            period_stats_query = """
-                SELECT machine_number,
-                       AVG(diff_coins_normalized) AS avg_diff,
-                       100.0 * SUM(CASE WHEN diff_coins_normalized > 0 THEN 1 ELSE 0 END)
-                           / COUNT(*) AS win_rate
-                FROM machine_detailed_results
-                WHERE date >= ? AND date <= ?
-                GROUP BY machine_number
-            """
-        period_stats = pd.read_sql_query(
-            period_stats_query,
-            conn,
-            params=(date_start_key, date_end_key),
-        )
+            raw_query = (
+                "SELECT "
+                + ", ".join(query_columns)
+                + " FROM machine_detailed_results WHERE date >= ? AND date <= ? ORDER BY date"
+            )
+            raw = pd.read_sql_query(raw_query, conn, params=(date_start_key, date_end_key))
     except Exception as exc:
         st.error(f"DB load error: {exc}")
         st.stop()
 
-    heatmap_df = coords_df.merge(latest_names, on="machine_number", how="left")
-    heatmap_df = heatmap_df.merge(period_stats, on="machine_number", how="left")
+    if raw.empty:
+        st.warning("選択期間にデータがありません")
+        st.stop()
+
+    raw["date"] = pd.to_datetime(raw["date"], format="%Y%m%d")
+    raw = _apply_calendar_filters(
+        raw,
+        weekdays=weekdays,
+        day_of_months=day_of_months,
+    )
+    if raw.empty:
+        st.warning("選択した曜日・日付に該当するデータがありません")
+        st.stop()
+
+    stats_df = build_machine_stats(raw)
+    if has_is_zorome and "is_zorome" in raw.columns:
+        zorome_df = (
+            raw.groupby("machine_number")
+            .agg(is_zorome=("is_zorome", "max"))
+            .reset_index()
+        )
+        stats_df = stats_df.merge(zorome_df, on="machine_number", how="left")
+
+    heatmap_df = coords_df.merge(stats_df, on="machine_number", how="left")
     x_axis_col, y_axis_col = get_display_columns(heatmap_df.columns)
 
     def _is_zorome(row: pd.Series) -> bool:
@@ -477,116 +497,65 @@ def render_last_digit_highlight(
         last_two_digits = machine_number % 100
         return last_two_digits // 10 == last_two_digits % 10
 
-    plot_rows: list[dict[str, object]] = []
-    for _, row in heatmap_df.iterrows():
-        machine_number = int(row["machine_number"])
-        category = "ゾロ目" if _is_zorome(row) else str(machine_number % 10)
-        plot_rows.append(
+    heatmap_df["category"] = heatmap_df.apply(
+        lambda row: "ゾロ目" if _is_zorome(row) else str(int(row["machine_number"]) % 10),
+        axis=1,
+    )
+    heatmap_df["section"] = floor if floor is not None else "-"
+    heatmap_df.attrs["date_range_label"] = f"{start_date:%Y-%m-%d} 〜 {end_date:%Y-%m-%d}"
+
+    selected_categories = set(
+        st.multiselect(
+            "ハイライトする末尾を選択",
+            options=list(DIGIT_CATEGORY_COLORS.keys()),
+            default=[],
+            key=f"digit_select_{widget_key_suffix}",
+        )
+    )
+
+    section_html = render_last_digit_floor_section(
+        heatmap_df,
+        floor_label=floor if floor is not None else "-",
+        floor_title=title,
+        filter_label=filter_label,
+        selected_categories=selected_categories,
+        slot_x=card_config["slot_x"],
+        slot_y=card_config["slot_y"],
+        pad=card_config["pad"],
+    )
+
+    hero_badges_html = "".join(
+        f'<span class="badge{" high" if category in selected_categories else ""}"><span class="swatch" style="background: {color};"></span>{escape(category)}</span>'
+        for category, color in DIGIT_CATEGORY_COLORS.items()
+    )
+    html = build_html_document(
+        floor_sections=[
             {
-                "x": row[x_axis_col],
-                "y": row[y_axis_col],
-                "machine_number": machine_number,
-                "machine_name": "不明" if pd.isna(row.get("machine_name")) else str(row["machine_name"]),
-                "category": category,
-                "customdata": _build_highlight_customdata(row, category),
-                "label": str(machine_number)[-3:],
+                "floor": floor if floor is not None else "-",
+                "title": title,
+                "html": section_html,
             }
-        )
-
-    plot_df = pd.DataFrame(plot_rows)
-    selected = st.multiselect(
-        "ハイライトする末尾を選択",
-        options=list(CATEGORY_COLORS.keys()),
-        default=[],
-        key=f"digit_select_{widget_key_suffix}",
+        ],
+        hall_name=hall_name,
+        generated_at=pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S"),
+        date_range_label=f"{start_date:%Y-%m-%d} 〜 {end_date:%Y-%m-%d}",
+        filter_label=filter_label,
+        metric_key="avg_diff",
+        metric_label="末尾ハイライト",
+        hero_title=f"{hall_name or 'ホール'} 末尾ハイライト",
+        hero_eyebrow="Last Digit Prototype",
+        hero_copy=(
+            "末尾とゾロ目のカードハイライトを、ヒートマップと同じカードデザインで表示します。"
+            "色は末尾カテゴリ、枠線は平均G数です。"
+        ),
+        hero_badges_html=hero_badges_html,
+        footer_note=(
+            "このHTMLは試作です。末尾カテゴリの選択、カード配色、枠線判例が視認しやすいか確認してください。"
+        ),
+        fit_mode=card_config["fit_mode"],
+        min_scale=card_config["min_scale"],
     )
 
-    max_x = int(plot_df["x"].max())
-    max_y = int(plot_df["y"].max())
-    height = max(600, max_y * 22 + 200)
-    fig = go.Figure()
+    from streamlit.components.v1 import html as components_html
 
-    def add_trace(subset: pd.DataFrame, *, name: str, color: str, size: int, showlegend: bool, text_color: str) -> None:
-        if subset.empty:
-            return
-        fig.add_trace(
-            go.Scatter(
-                x=subset["x"],
-                y=subset["y"],
-                mode="markers+text",
-                name=name,
-                showlegend=showlegend,
-                text=subset["label"],
-                textposition="middle center",
-                textfont=dict(size=7, color=text_color),
-                marker=dict(
-                    symbol="square",
-                    size=size,
-                    color=color,
-                ),
-                customdata=subset["customdata"].tolist(),
-                hovertemplate=(
-                    "<b>台番号: %{customdata[0]}</b><br>"
-                    "機種: %{customdata[1]}<br>"
-                    "末尾: %{customdata[2]}<br>"
-                    "勝率: %{customdata[3]}<br>"
-                    "平均差枚: %{customdata[4]}<extra></extra>"
-                ),
-            )
-        )
-
-    if selected:
-        unselected_df = plot_df[~plot_df["category"].isin(selected)]
-    else:
-        unselected_df = plot_df
-
-    add_trace(
-        unselected_df,
-        name="未選択",
-        color=UNSELECTED_COLOR,
-        size=14,
-        showlegend=False,
-        text_color="black",
-    )
-
-    for category in selected:
-        add_trace(
-            plot_df[plot_df["category"] == category],
-            name=category,
-            color=CATEGORY_COLORS[category],
-            size=18,
-            showlegend=True,
-            text_color="white",
-        )
-
-    fig.update_layout(
-        title=dict(
-            text=title,
-            x=0.5,
-            xanchor="center",
-            font=dict(size=18),
-        ),
-        height=height,
-        hovermode="closest",
-        yaxis=dict(
-            autorange="reversed",
-            side="left",
-            showgrid=True,
-            gridwidth=0.5,
-            gridcolor="rgba(200,200,200,0.2)",
-        ),
-        xaxis=dict(
-            showgrid=True,
-            gridwidth=0.5,
-            gridcolor="rgba(200,200,200,0.2)",
-        ),
-        font=dict(family="Arial, sans-serif", size=11, color="black"),
-        margin=dict(l=60, r=110, t=80, b=60),
-        plot_bgcolor="white",
-        paper_bgcolor="white",
-        showlegend=True,
-    )
-    fig.update_yaxes(scaleanchor="x", scaleratio=1)
-    fig.update_xaxes(scaleanchor="y", scaleratio=1)
-
-    st.plotly_chart(fig, use_container_width=True)
+    components_html(html, height=1800, scrolling=True)

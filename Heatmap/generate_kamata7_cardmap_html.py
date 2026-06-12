@@ -33,6 +33,7 @@ class FloorSpec:
     floor: str
     title: str
     coords_path: Path
+    exclude_machine_numbers: tuple[int, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -66,16 +67,39 @@ FLOOR_SPECS = (
 METRICS = {
     "avg_diff": MetricSpec("avg_diff", "平均差枚", "{:+.0f}枚"),
     "win_rate": MetricSpec("win_rate", "勝率", "{:.1f}%"),
-    "avg_games": MetricSpec("avg_games", "平均G数", "{:.0f}G"),
+    "avg_kaiwari": MetricSpec("avg_kaiwari", "平均機械割", "{:.1f}%"),
+    "hit104_rate": MetricSpec("hit104_rate", "機械割104以上率", "{:.1f}%"),
 }
+
+DIGIT_CATEGORY_COLORS = {
+    "0": "#1f77b4",
+    "1": "#ff7f0e",
+    "2": "#2ca02c",
+    "3": "#d62728",
+    "4": "#9467bd",
+    "5": "#8c564b",
+    "6": "#e377c2",
+    "7": "#bcbd22",
+    "8": "#17becf",
+    "9": "#aec7e8",
+    "ゾロ目": "#FFD700",
+}
+
+WEEKDAY_LABELS = ("月", "火", "水", "木", "金", "土", "日")
+WEEKDAY_TO_INDEX = {label: index for index, label in enumerate(WEEKDAY_LABELS)}
+INDEX_TO_WEEKDAY = {index: label for label, index in WEEKDAY_TO_INDEX.items()}
+DAY_OF_MONTH_MIN = 1
+DAY_OF_MONTH_MAX = 31
 
 
 def load_machine_stats(
     db_path: Path,
     start_date: str | None = None,
     end_date: str | None = None,
-) -> tuple[pd.DataFrame, str]:
-    """Load machine-level stats and the covered date range label."""
+    weekdays: list[int] | None = None,
+    day_of_months: list[int] | None = None,
+) -> tuple[pd.DataFrame, str, str]:
+    """Load machine-level stats, the covered date range label, and filter label."""
 
     if not db_path.exists():
         raise FileNotFoundError(f"DB file not found: {db_path}")
@@ -108,21 +132,23 @@ def load_machine_stats(
         raise ValueError("machine_detailed_results is empty for the selected range")
 
     raw["date"] = pd.to_datetime(raw["date"], format="%Y%m%d")
-    raw = raw.sort_values(["machine_number", "date"])
+    raw = raw.sort_values(["machine_number", "date"]).reset_index(drop=True)
     date_range_label = f"{raw['date'].min():%Y-%m-%d} 〜 {raw['date'].max():%Y-%m-%d}"
 
-    stats_df = raw.groupby("machine_number").agg(
-        machine_name=("machine_name", lambda s: _pick_last_nonempty(s, fallback="")),
-        latest_date=("date", "max"),
-        avg_diff=("diff_coins_normalized", "mean"),
-        win_rate=("diff_coins_normalized", lambda s: (s > 0).mean() * 100),
-        avg_games=("games_normalized", "mean"),
-        sample_days=("date", "nunique"),
-        total_games=("games_normalized", "sum"),
+    filtered = filter_machine_records(
+        raw,
+        weekdays=weekdays,
+        day_of_months=day_of_months,
     )
-    stats_df = stats_df.reset_index()
-    stats_df["machine_number"] = stats_df["machine_number"].astype(int)
-    return stats_df, date_range_label
+    if filtered.empty:
+        raise ValueError("No machine data matched the selected filters")
+
+    stats_df = build_machine_stats(filtered)
+    filter_label = format_filter_label(
+        weekdays=weekdays,
+        day_of_months=day_of_months,
+    )
+    return stats_df, date_range_label, filter_label
 
 
 def load_floor_coordinates(coords_path: Path) -> pd.DataFrame:
@@ -156,21 +182,11 @@ def build_tone_thresholds(values: pd.Series) -> ToneThresholds:
     q60 = float(clean.quantile(0.60))
     q80 = float(clean.quantile(0.80))
 
-    strong_positive = max(250.0, q80)
-    positive = max(50.0, q60)
-    negative = min(-50.0, q40)
-    strong_negative = min(-250.0, q20)
-
-    if strong_negative > negative:
-        strong_negative = negative
-    if positive < negative:
-        positive = max(positive, 0.0)
-
     return ToneThresholds(
-        strong_positive=strong_positive,
-        positive=positive,
-        negative=negative,
-        strong_negative=strong_negative,
+        strong_positive=q80,
+        positive=q60,
+        negative=q40,
+        strong_negative=q20,
     )
 
 
@@ -228,6 +244,154 @@ def _pick_last_nonempty(series: pd.Series, *, fallback: str) -> str:
     return cleaned.iat[-1]
 
 
+def _coerce_date(value: object) -> pd.Timestamp | None:
+    if value is None or pd.isna(value):
+        return None
+    if isinstance(value, pd.Timestamp):
+        return value
+    try:
+        return pd.to_datetime(value)
+    except Exception:
+        return None
+
+
+def normalize_weekday_selection(values: list[int | str] | None) -> list[int]:
+    """Normalize weekday selections to integer indices."""
+
+    if not values:
+        return []
+
+    normalized: list[int] = []
+    for value in values:
+        if value is None or pd.isna(value):
+            continue
+        candidate: int | None = None
+        if isinstance(value, int) and not isinstance(value, bool):
+            candidate = int(value)
+        else:
+            text = str(value).strip()
+            if text in WEEKDAY_TO_INDEX:
+                candidate = WEEKDAY_TO_INDEX[text]
+            elif text.isdigit():
+                candidate = int(text)
+        if candidate is None or not 0 <= candidate <= 6:
+            raise ValueError(f"Unsupported weekday selection: {value}")
+        normalized.append(candidate)
+
+    return sorted(set(normalized))
+
+
+def normalize_day_of_month_selection(values: list[int | str] | None) -> list[int]:
+    """Normalize day-of-month selections to integers."""
+
+    if not values:
+        return []
+
+    normalized: list[int] = []
+    for value in values:
+        if value is None or pd.isna(value):
+            continue
+        if isinstance(value, int) and not isinstance(value, bool):
+            candidate = int(value)
+        else:
+            text = str(value).strip()
+            if not text.isdigit():
+                raise ValueError(f"Unsupported day-of-month selection: {value}")
+            candidate = int(text)
+        if not DAY_OF_MONTH_MIN <= candidate <= DAY_OF_MONTH_MAX:
+            raise ValueError(f"Unsupported day-of-month selection: {value}")
+        normalized.append(candidate)
+
+    return sorted(set(normalized))
+
+
+def filter_machine_records(
+    raw: pd.DataFrame,
+    *,
+    weekdays: list[int] | list[str] | None = None,
+    day_of_months: list[int] | list[str] | None = None,
+) -> pd.DataFrame:
+    """Filter raw machine rows by weekday and day-of-month."""
+
+    if raw.empty:
+        return raw.copy()
+
+    filtered = raw.copy()
+    filtered["date"] = pd.to_datetime(filtered["date"])
+
+    normalized_weekdays = normalize_weekday_selection(weekdays)
+    if normalized_weekdays:
+        filtered = filtered[filtered["date"].dt.weekday.isin(normalized_weekdays)]
+
+    normalized_days = normalize_day_of_month_selection(day_of_months)
+    if normalized_days:
+        filtered = filtered[filtered["date"].dt.day.isin(normalized_days)]
+
+    return filtered.reset_index(drop=True)
+
+
+def build_machine_stats(raw: pd.DataFrame) -> pd.DataFrame:
+    """Aggregate raw rows into machine-level statistics."""
+
+    if raw.empty:
+        raise ValueError("raw machine data is empty")
+
+    frame = raw.copy()
+    frame["date"] = pd.to_datetime(frame["date"])
+    frame["kaiwari"] = 100 + (
+        frame["diff_coins_normalized"]
+        / frame["games_normalized"].clip(lower=1)
+    ) / 3 * 100
+
+    stats_df = frame.groupby("machine_number").agg(
+        machine_name=("machine_name", lambda s: _pick_last_nonempty(s, fallback="")),
+        latest_date=("date", "max"),
+        avg_diff=("diff_coins_normalized", "mean"),
+        win_rate=("diff_coins_normalized", lambda s: (s > 0).mean() * 100),
+        avg_kaiwari=("kaiwari", "mean"),
+        hit104_rate=("kaiwari", lambda s: (s >= 104).mean() * 100),
+        avg_games=("games_normalized", "mean"),
+        sample_days=("date", "nunique"),
+        total_games=("games_normalized", "sum"),
+    )
+    stats_df = stats_df.reset_index()
+    stats_df["machine_number"] = stats_df["machine_number"].astype(int)
+    return stats_df
+
+
+def format_filter_label(
+    *,
+    weekdays: list[int] | list[str] | None = None,
+    day_of_months: list[int] | list[str] | None = None,
+) -> str:
+    """Format the active filter set for display."""
+
+    parts: list[str] = []
+
+    normalized_weekdays = normalize_weekday_selection(weekdays)
+    if normalized_weekdays:
+        parts.append("曜日=" + ",".join(INDEX_TO_WEEKDAY[index] for index in normalized_weekdays))
+
+    normalized_days = normalize_day_of_month_selection(day_of_months)
+    if normalized_days:
+        parts.append("日付=" + ",".join(str(day) for day in normalized_days))
+
+    return " / ".join(parts) if parts else "全日"
+
+
+def build_border_legend(games_thresholds: tuple[float, float, float]) -> str:
+    """Return a human-readable legend for border colors."""
+
+    high, mid, low = games_thresholds
+    return (
+        "枠線の判例: "
+        f"高G数（{high:.0f}G以上 / 黒枠）, "
+        f"中G数（{mid:.0f}G以上 / 青枠）, "
+        f"低G数（{low:.0f}G以上 / 薄青枠）, "
+        "欠損（灰枠）"
+    )
+
+
 def abbreviate_machine_name(value: str | None, max_length: int = 4) -> str:
     """Derive a compact machine label suitable for tiny floor cards."""
 
@@ -280,10 +444,19 @@ def summarize_games_thresholds(values: pd.Series) -> tuple[float, float, float]:
     return high, mid, low
 
 
-def build_floor_frame(coords_path: Path, stats_df: pd.DataFrame) -> pd.DataFrame:
+def build_floor_frame(
+    coords_path: Path,
+    stats_df: pd.DataFrame,
+    *,
+    exclude_machine_numbers: tuple[int, ...] = (),
+) -> pd.DataFrame:
     """Join coordinates and stats for one floor."""
 
     coords_df = load_floor_coordinates(coords_path)
+    if exclude_machine_numbers:
+        coords_df = coords_df[
+            ~coords_df["machine_number"].isin(exclude_machine_numbers)
+        ].copy()
     merged = coords_df.merge(stats_df, on="machine_number", how="left", validate="one_to_one")
 
     x_col, y_col = get_display_columns(merged.columns)
@@ -334,6 +507,39 @@ def render_machine_card(
     """
 
 
+def _render_map_viewport(
+    cards_html: str,
+    *,
+    slot_x: int,
+    slot_y: int,
+    pad: int,
+    map_width: int,
+    map_height: int,
+    name_font_size: float | None = None,
+) -> str:
+    """Render the scrollable map viewport shared by every floor panel.
+
+    The ``.floor-map-scaler`` wrapper carries the *scaled* layout size so the
+    viewport can scroll natively while ``.floor-map`` is CSS-transformed.
+
+    ``name_font_size`` overrides the ``.machine-name`` font size in pixels;
+    when omitted, it falls back to ``calc(var(--slot-x) * 0.2)`` via CSS.
+    """
+
+    name_font_style = f" --name-font-size: {name_font_size}px;" if name_font_size is not None else ""
+
+    return f"""
+        <div class="floor-map-viewport" style="--base-map-width: {map_width}px; --base-map-height: {map_height}px;">
+          <div class="floor-map-scaler">
+            <div class="floor-map" style="--slot-x: {slot_x}px; --slot-y: {slot_y}px; --pad: {pad}px;{name_font_style} width: {map_width}px; height: {map_height}px;">
+              <div class="floor-map-grid"></div>
+              {cards_html}
+            </div>
+          </div>
+        </div>
+    """
+
+
 def render_floor_section(
     frame: pd.DataFrame,
     *,
@@ -341,6 +547,11 @@ def render_floor_section(
     floor_title: str,
     metric_key: str,
     thresholds: ToneThresholds,
+    filter_label: str,
+    slot_x: int = 40,
+    slot_y: int = 28,
+    pad: int = 10,
+    name_font_size: float | None = None,
 ) -> str:
     """Render one floor panel."""
 
@@ -348,13 +559,11 @@ def render_floor_section(
     max_x = int(frame[x_col].max())
     max_y = int(frame[y_col].max())
 
-    slot_x = 40
-    slot_y = 28
-    pad = 10
     map_width = pad * 2 + max_x * slot_x
     map_height = pad * 2 + max_y * slot_y
 
     games_thresholds = summarize_games_thresholds(frame["avg_games"])
+    border_legend = build_border_legend(games_thresholds)
     machine_cards = [
         render_machine_card(
             row,
@@ -370,6 +579,8 @@ def render_floor_section(
     summary_metric = frame[metric_key].mean()
     summary_win = frame["win_rate"].mean()
     summary_games = frame["avg_games"].mean()
+    summary_kaiwari = frame["avg_kaiwari"].mean()
+    summary_hit104 = frame["hit104_rate"].mean()
     summary_count = len(frame)
     section_label = str(frame["section"].iloc[0]) if "section" in frame.columns else "-"
     date_range_label = _safe_text(frame.attrs.get("date_range_label"), fallback="-")
@@ -380,7 +591,7 @@ def render_floor_section(
           <div>
             <div class="floor-kicker">{escape(floor_label)}</div>
             <h2 class="floor-title">{escape(floor_title)}</h2>
-            <p class="floor-subtitle">集計期間: {escape(date_range_label)} / セクション: {escape(section_label)}</p>
+            <p class="floor-subtitle">集計期間: {escape(date_range_label)} / フィルタ: {escape(filter_label)} / セクション: {escape(section_label)}</p>
           </div>
           <div class="floor-summary-grid">
             <div class="summary-pill">
@@ -396,18 +607,201 @@ def render_floor_section(
               <strong>{summary_win:.1f}%</strong>
             </div>
             <div class="summary-pill">
+              <span>平均機械割</span>
+              <strong>{summary_kaiwari:.1f}%</strong>
+            </div>
+            <div class="summary-pill">
+              <span>機械割104以上率</span>
+              <strong>{summary_hit104:.1f}%</strong>
+            </div>
+            <div class="summary-pill">
               <span>平均G数</span>
               <strong>{summary_games:.0f}G</strong>
             </div>
           </div>
         </div>
 
-        <div class="floor-map-viewport" style="--base-map-width: {map_width}px; --base-map-height: {map_height}px;">
-          <div class="floor-map" style="--slot-x: {slot_x}px; --slot-y: {slot_y}px; --pad: {pad}px; width: {map_width}px; height: {map_height}px;">
-            <div class="floor-map-grid"></div>
-            {''.join(machine_cards)}
+        <div class="floor-legend-row">
+          <div class="legend-card">
+            <span>色の判例</span>
+            <p>強プラス / 弱プラス / 中立 / 弱マイナス / 強マイナス は選択中の指標で自動判定。</p>
+          </div>
+          <div class="legend-card">
+            <span>枠線の判例</span>
+            <p>{escape(border_legend)}</p>
           </div>
         </div>
+
+        {_render_map_viewport(''.join(machine_cards), slot_x=slot_x, slot_y=slot_y, pad=pad, map_width=map_width, map_height=map_height, name_font_size=name_font_size)}
+      </section>
+    """
+
+
+def _contrast_text_color(hex_color: str) -> str:
+    color = hex_color.lstrip("#")
+    if len(color) != 6:
+        return "#0f172a"
+    red = int(color[0:2], 16)
+    green = int(color[2:4], 16)
+    blue = int(color[4:6], 16)
+    luminance = (0.299 * red + 0.587 * green + 0.114 * blue) / 255
+    return "#0f172a" if luminance >= 0.67 else "#ffffff"
+
+
+def render_last_digit_card(
+    row: pd.Series,
+    *,
+    games_thresholds: tuple[float, float, float],
+    x_col: str,
+    y_col: str,
+    selected_categories: set[str],
+) -> str:
+    """Render one machine card for the last-digit highlight view."""
+
+    machine_number = int(row["machine_number"])
+    category = _safe_text(row.get("category"), fallback=str(machine_number % 10))
+    selected = category in selected_categories if selected_categories else False
+    games_class = classify_games(row.get("avg_games"), games_thresholds)
+    machine_name = abbreviate_machine_name(row.get("machine_name"), max_length=4)
+    avg_diff_value = row.get("avg_diff")
+    win_rate_value = row.get("win_rate")
+    avg_kaiwari_value = row.get("avg_kaiwari")
+    hit104_value = row.get("hit104_rate")
+    avg_games_value = row.get("avg_games")
+    avg_games_label = (
+        f"{float(avg_games_value):.0f}G" if pd.notna(avg_games_value) else "N/A"
+    )
+    title = (
+        f"{machine_number} / {machine_name} / 末尾: {category} / "
+        f"平均差枚: {_format_summary(avg_diff_value, 'avg_diff')} / "
+        f"勝率: {_format_summary(win_rate_value, 'win_rate')} / "
+        f"平均機械割: {_format_summary(avg_kaiwari_value, 'avg_kaiwari')} / "
+        f"機械割104以上率: {_format_summary(hit104_value, 'hit104_rate')} / "
+        f"平均G数: {avg_games_label}"
+    )
+
+    base_color = DIGIT_CATEGORY_COLORS.get(category, "#f8fafc")
+    text_color = _contrast_text_color(base_color) if selected else "#0f172a"
+    background = (
+        f"linear-gradient(180deg, {base_color} 0%, {base_color} 100%)"
+        if selected
+        else "linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)"
+    )
+    opacity = "1" if selected else "0.88"
+    category_chip_bg = base_color if selected else "#e2e8f0"
+    category_chip_text = _contrast_text_color(category_chip_bg)
+
+    return f"""
+      <article
+        class="machine-card {games_class}"
+        style="left: calc(var(--pad) + ({int(row[x_col])} - 1) * var(--slot-x)); top: calc(var(--pad) + ({int(row[y_col])} - 1) * var(--slot-y)); background: {background}; color: {text_color}; opacity: {opacity}; border-color: {base_color if selected else '#cbd5e1'};"
+        title="{escape(title)}"
+        aria-label="{escape(title)}"
+      >
+        <div class="machine-number">{machine_number}</div>
+        <div class="machine-name">{escape(machine_name)}</div>
+        <div style="margin-top: 1px; padding: 0 4px; border-radius: 999px; font-size: 7px; font-weight: 800; line-height: 1.2; background: {category_chip_bg}; color: {category_chip_text};">
+          {escape(category)}
+        </div>
+      </article>
+    """
+
+
+def render_last_digit_floor_section(
+    frame: pd.DataFrame,
+    *,
+    floor_label: str,
+    floor_title: str,
+    filter_label: str,
+    selected_categories: set[str],
+    slot_x: int = 40,
+    slot_y: int = 28,
+    pad: int = 10,
+    name_font_size: float | None = None,
+) -> str:
+    """Render one floor panel for last-digit highlighting."""
+
+    x_col, y_col = get_display_columns(frame.columns)
+    max_x = int(frame[x_col].max())
+    max_y = int(frame[y_col].max())
+
+    map_width = pad * 2 + max_x * slot_x
+    map_height = pad * 2 + max_y * slot_y
+
+    games_thresholds = summarize_games_thresholds(frame["avg_games"])
+    digit_cards = [
+        render_last_digit_card(
+            row,
+            games_thresholds=games_thresholds,
+            x_col=x_col,
+            y_col=y_col,
+            selected_categories=selected_categories,
+        )
+        for _, row in frame.sort_values([x_col, y_col]).iterrows()
+    ]
+
+    summary_count = len(frame)
+    summary_metric = frame["avg_diff"].mean()
+    summary_win = frame["win_rate"].mean()
+    summary_kaiwari = frame["avg_kaiwari"].mean()
+    summary_hit104 = frame["hit104_rate"].mean()
+    summary_games = frame["avg_games"].mean()
+    section_label = str(frame["section"].iloc[0]) if "section" in frame.columns else "-"
+    date_range_label = _safe_text(frame.attrs.get("date_range_label"), fallback="-")
+    selection_label = ", ".join(sorted(selected_categories)) if selected_categories else "全件"
+    legend_html = "".join(
+        f'<span class="badge{" high" if category in selected_categories else ""}" style="margin-right: 6px;"><span class="swatch" style="background: {DIGIT_CATEGORY_COLORS[category]};"></span>{escape(category)}</span>'
+        for category in list(DIGIT_CATEGORY_COLORS)
+    )
+
+    return f"""
+      <section class="floor-shell" data-floor-panel="{escape(floor_label)}">
+        <div class="floor-head">
+          <div>
+            <div class="floor-kicker">{escape(floor_label)}</div>
+            <h2 class="floor-title">{escape(floor_title)}</h2>
+            <p class="floor-subtitle">集計期間: {escape(date_range_label)} / フィルタ: {escape(filter_label)} / 選択: {escape(selection_label)} / セクション: {escape(section_label)}</p>
+          </div>
+          <div class="floor-summary-grid">
+            <div class="summary-pill">
+              <span>台数</span>
+              <strong>{summary_count}</strong>
+            </div>
+            <div class="summary-pill">
+              <span>平均差枚</span>
+              <strong>{summary_metric:+.0f}枚</strong>
+            </div>
+            <div class="summary-pill">
+              <span>勝率</span>
+              <strong>{summary_win:.1f}%</strong>
+            </div>
+            <div class="summary-pill">
+              <span>平均機械割</span>
+              <strong>{summary_kaiwari:.1f}%</strong>
+            </div>
+            <div class="summary-pill">
+              <span>機械割104以上率</span>
+              <strong>{summary_hit104:.1f}%</strong>
+            </div>
+            <div class="summary-pill">
+              <span>平均G数</span>
+              <strong>{summary_games:.0f}G</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="floor-legend-row">
+          <div class="legend-card">
+            <span>末尾カテゴリ</span>
+            <p>{legend_html}</p>
+          </div>
+          <div class="legend-card">
+            <span>枠線の判例</span>
+            <p>{escape(build_border_legend(games_thresholds))}</p>
+          </div>
+        </div>
+
+        {_render_map_viewport(''.join(digit_cards), slot_x=slot_x, slot_y=slot_y, pad=pad, map_width=map_width, map_height=map_height, name_font_size=name_font_size)}
       </section>
     """
 
@@ -432,13 +826,40 @@ def _pick_first_nonempty(series: pd.Series, *, fallback: str) -> str:
 def build_html_document(
     floor_sections: list[dict[str, str]],
     *,
+    hall_name: str = HALL_NAME,
     generated_at: str,
     date_range_label: str,
+    filter_label: str,
     metric_key: str,
+    hero_title: str | None = None,
+    hero_eyebrow: str = "Heatmap Prototype",
+    hero_copy: str | None = None,
+    hero_badges_html: str | None = None,
+    footer_note: str | None = None,
+    metric_label: str | None = None,
+    fit_mode: str = "contain",
+    min_scale: float = 0.6,
 ) -> str:
     """Build the final standalone HTML document."""
 
-    metric_label = METRICS[metric_key].label
+    metric_label = metric_label or METRICS[metric_key].label
+    hero_title = hero_title or f"{hall_name} カード型フロアマップ"
+    hero_copy = hero_copy or (
+        "Plotly のマス目ではなく、台ごとのカードをフロア上に並べる試作です。"
+        "カードの角丸を抑え、最新日の機種名を使い、タブ切り替えで1フロアずつ全体表示できるようにしました。"
+    )
+    hero_badges_html = hero_badges_html or """
+            <span class="badge high"><span class="swatch"></span>強プラス</span>
+            <span class="badge mid"><span class="swatch"></span>弱プラス</span>
+            <span class="badge neutral"><span class="swatch"></span>中立</span>
+            <span class="badge cool"><span class="swatch"></span>弱マイナス</span>
+            <span class="badge low"><span class="swatch"></span>強マイナス</span>
+            <span class="badge missing"><span class="swatch"></span>欠損</span>
+    """
+    footer_note = footer_note or (
+        f"このHTMLは試作です。`page_17_heatmap` へ移す前に、{hall_name} でカードの位置、"
+        "機種名の可読性、色の粒度が妥当かを確認してください。"
+    )
     nav_buttons = []
     floor_panels = []
     for index, section in enumerate(floor_sections):
@@ -450,13 +871,18 @@ def build_html_document(
         floor_panels.append(
             f'<div class="floor-panel{active_class}" data-floor-panel="{escape(floor_label)}"{" hidden" if index != 0 else ""}>{section["html"]}</div>'
         )
+    floor_switcher_html = (
+        f'<div class="floor-switcher" role="tablist" aria-label="floor selector">{"".join(nav_buttons)}</div>'
+        if len(floor_sections) > 1
+        else ""
+    )
 
     return f"""<!doctype html>
 <html lang="ja">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{escape(HALL_NAME)} カード型フロアマップ</title>
+  <title>{escape(hall_name)} カード型フロアマップ</title>
   <style>
     :root {{
       color-scheme: light;
@@ -704,7 +1130,7 @@ def build_html_document(
     .floor-summary-grid {{
       display: grid;
       gap: 10px;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }}
 
     .summary-pill {{
@@ -731,6 +1157,36 @@ def build_html_document(
       color: #0f172a;
     }}
 
+    .floor-legend-row {{
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      padding: 0 18px 12px;
+    }}
+
+    .legend-card {{
+      padding: 12px 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(203, 213, 225, 0.75);
+      background: rgba(248, 250, 252, 0.9);
+    }}
+
+    .legend-card span {{
+      display: block;
+      color: #64748b;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }}
+
+    .legend-card p {{
+      margin: 6px 0 0;
+      color: #0f172a;
+      font-size: 13px;
+      line-height: 1.7;
+    }}
+
     .floor-map-viewport {{
       position: relative;
       width: 100%;
@@ -738,8 +1194,19 @@ def build_html_document(
       padding: 10px 10px 14px;
     }}
 
+    .floor-map-viewport.is-scroll {{
+      overflow: auto;
+      max-height: 82vh;
+      scrollbar-width: thin;
+    }}
+
+    .floor-map-scaler {{
+      position: relative;
+    }}
+
     .floor-map {{
       position: relative;
+      transform-origin: top left;
       border-radius: 8px;
       background:
         linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(248, 250, 252, 0.96)),
@@ -799,18 +1266,20 @@ def build_html_document(
     }}
 
     .machine-number {{
-      font-size: 9px;
+      font-size: 11px;
       font-weight: 900;
       letter-spacing: 0.02em;
     }}
 
     .machine-name {{
-      font-size: 8px;
+      font-size: var(--name-font-size, calc(var(--slot-x) * 0.2));
       font-weight: 800;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      width: 100%;
       max-width: 100%;
+      align-self: stretch;
       letter-spacing: -0.02em;
     }}
 
@@ -889,6 +1358,10 @@ def build_html_document(
       .floor-summary-grid {{
         grid-template-columns: 1fr 1fr;
       }}
+
+      .floor-legend-row {{
+        grid-template-columns: 1fr;
+      }}
     }}
 
     @media (max-width: 720px) {{
@@ -914,35 +1387,33 @@ def build_html_document(
       .floor-summary-grid {{
         grid-template-columns: 1fr;
       }}
+
+      .floor-legend-row {{
+        grid-template-columns: 1fr;
+      }}
     }}
   </style>
 </head>
 <body>
-  <main class="shell">
+    <main class="shell">
     <section class="hero">
       <div class="hero-grid">
         <div>
-          <p class="eyebrow">Heatmap Prototype</p>
-          <h1>{escape(HALL_NAME)} カード型フロアマップ</h1>
+          <p class="eyebrow">{escape(hero_eyebrow)}</p>
+          <h1>{escape(hero_title)}</h1>
           <p class="hero-copy">
-            Plotly のマス目ではなく、台ごとのカードをフロア上に並べる試作です。
-            カードの角丸を抑え、最新日の機種名を使い、タブ切り替えで1フロアずつ全体表示できるようにしました。
+            {escape(hero_copy)}
           </p>
           <div class="badges">
-            <span class="badge high"><span class="swatch"></span>強プラス</span>
-            <span class="badge mid"><span class="swatch"></span>弱プラス</span>
-            <span class="badge neutral"><span class="swatch"></span>中立</span>
-            <span class="badge cool"><span class="swatch"></span>弱マイナス</span>
-            <span class="badge low"><span class="swatch"></span>強マイナス</span>
-            <span class="badge missing"><span class="swatch"></span>欠損</span>
+            {hero_badges_html}
           </div>
         </div>
 
         <div class="hero-meta">
-          <div class="meta-card">
-            <span>Hall</span>
-            <strong>{escape(HALL_NAME)}</strong>
-          </div>
+            <div class="meta-card">
+              <span>Hall</span>
+              <strong>{escape(hall_name)}</strong>
+            </div>
           <div class="meta-card">
             <span>Generated</span>
             <strong>{escape(generated_at)}</strong>
@@ -955,35 +1426,36 @@ def build_html_document(
             <span>Metric</span>
             <strong>{escape(metric_label)}</strong>
           </div>
+          <div class="meta-card">
+            <span>Filters</span>
+            <strong>{escape(filter_label)}</strong>
+          </div>
         </div>
       </div>
     </section>
 
-    <div class="floor-switcher" role="tablist" aria-label="floor selector">
-      {''.join(nav_buttons)}
-    </div>
+    {floor_switcher_html}
 
     <div class="floor-panels">
       {''.join(floor_panels)}
     </div>
 
     <section class="footer-note">
-      このHTMLは試作です。`page_17_heatmap` へ移す前に、蒲田7の2F/3Fでカードの位置、機種名の可読性、色の粒度が妥当かを確認してください。
+      {escape(footer_note)}
     </section>
   </main>
 
   <script>
     (() => {{
+      const FIT_MODE = "{fit_mode}";
+      const MIN_SCALE = {min_scale};
       const tabs = Array.from(document.querySelectorAll('[data-floor-tab]'));
       const panels = Array.from(document.querySelectorAll('[data-floor-panel]'));
 
-      function fitActiveMap() {{
-        const activePanel = panels.find((panel) => !panel.hasAttribute('hidden'));
-        if (!activePanel) {{
-          return;
-        }}
-        const viewport = activePanel.querySelector('.floor-map-viewport');
-        const map = activePanel.querySelector('.floor-map');
+      function fitMap(panel) {{
+        const viewport = panel.querySelector('.floor-map-viewport');
+        const scaler = panel.querySelector('.floor-map-scaler');
+        const map = panel.querySelector('.floor-map');
         if (!viewport || !map) {{
           return;
         }}
@@ -999,20 +1471,46 @@ def build_html_document(
         }}
 
         const availableWidth = Math.max(0, viewport.clientWidth - 4);
-        const availableHeight = Math.max(
-          240,
-          window.innerHeight - activePanel.getBoundingClientRect().top - 40
-        );
-        const scale = Math.min(
-          1,
-          availableWidth / baseWidth,
-          availableHeight / baseHeight
-        );
+        let scale;
+        if (FIT_MODE === 'scroll') {{
+          viewport.classList.add('is-scroll');
+          scale = Math.max(MIN_SCALE, Math.min(1, availableWidth / baseWidth));
+        }} else {{
+          const availableHeight = Math.max(
+            240,
+            window.innerHeight - panel.getBoundingClientRect().top - 40
+          );
+          scale = Math.min(1, availableWidth / baseWidth, availableHeight / baseHeight);
+        }}
+
+        const scaledWidth = Math.ceil(baseWidth * scale);
+        const scaledHeight = Math.ceil(baseHeight * scale);
         map.style.transform = `scale(${{scale}})`;
-        viewport.style.height = `${{Math.ceil(baseHeight * scale)}}px`;
+        if (scaler) {{
+          scaler.style.width = `${{scaledWidth}}px`;
+          scaler.style.height = `${{scaledHeight}}px`;
+        }}
+        if (FIT_MODE !== 'scroll') {{
+          viewport.style.height = `${{scaledHeight}}px`;
+        }}
+      }}
+
+      function fitActiveMap() {{
+        panels
+          .filter((panel) => !panel.hasAttribute('hidden'))
+          .forEach(fitMap);
       }}
 
       function activateFloor(floor) {{
+        if (!tabs.length) {{
+          panels.forEach((panel) => {{
+            panel.hidden = false;
+            panel.classList.add('is-active');
+          }});
+          requestAnimationFrame(fitActiveMap);
+          return;
+        }}
+
         tabs.forEach((tab) => {{
           const isActive = tab.dataset.floorTab === floor;
           tab.classList.toggle('is-active', isActive);
@@ -1033,7 +1531,10 @@ def build_html_document(
       }});
 
       window.addEventListener('resize', fitActiveMap);
-      activateFloor(tabs[0]?.dataset.floorTab ?? '');
+      window.addEventListener('load', fitActiveMap);
+      activateFloor(tabs[0]?.dataset.floorTab ?? panels[0]?.dataset.floorPanel ?? '');
+      // Fonts/Streamlit iframe sizing can settle after the first frame; re-fit a few times.
+      [120, 400, 900].forEach((delay) => setTimeout(fitActiveMap, delay));
     }})();
   </script>
 </body>
@@ -1047,21 +1548,74 @@ def build_kamata7_cardmap_html(
     metric_key: str = "avg_diff",
     start_date: str | None = None,
     end_date: str | None = None,
+    weekdays: list[int] | list[str] | None = None,
+    day_of_months: list[int] | list[str] | None = None,
 ) -> str:
     """Build the prototype HTML and optionally write it to disk."""
+
+    return build_cardmap_html(
+        hall_name=HALL_NAME,
+        db_path=DB_PATH,
+        floor_specs=FLOOR_SPECS,
+        output_path=output_path,
+        metric_key=metric_key,
+        start_date=start_date,
+        end_date=end_date,
+        weekdays=weekdays,
+        day_of_months=day_of_months,
+    )
+
+
+def build_cardmap_html(
+    *,
+    hall_name: str,
+    db_path: Path,
+    floor_specs: tuple[FloorSpec, ...],
+    output_path: Path | None = None,
+    metric_key: str = "avg_diff",
+    start_date: str | None = None,
+    end_date: str | None = None,
+    weekdays: list[int] | list[str] | None = None,
+    day_of_months: list[int] | list[str] | None = None,
+    slot_x: int = 40,
+    slot_y: int = 28,
+    pad: int = 10,
+    fit_mode: str = "contain",
+    min_scale: float = 0.6,
+    name_font_size: float | None = None,
+) -> str:
+    """Build the prototype HTML for any hall and optionally write it to disk.
+
+    ``slot_x`` / ``slot_y`` / ``pad`` control the card pitch in pixels.
+    ``fit_mode`` selects how the map fits the viewport:
+
+    - ``"contain"`` (default) shrinks the map to fit both width and height
+      (legacy behaviour, used by Kamata7 and the last-digit views).
+    - ``"scroll"`` fits to width only, never shrinking below ``min_scale``,
+      and lets the viewport scroll for the rest (keeps cards readable).
+    """
 
     if metric_key not in METRICS:
         raise ValueError(f"Unsupported metric_key: {metric_key}")
 
-    stats_df, date_range_label = load_machine_stats(
-        DB_PATH,
+    normalized_weekdays = normalize_weekday_selection(weekdays)
+    normalized_day_of_months = normalize_day_of_month_selection(day_of_months)
+
+    stats_df, date_range_label, filter_label = load_machine_stats(
+        db_path,
         start_date=start_date,
         end_date=end_date,
+        weekdays=normalized_weekdays,
+        day_of_months=normalized_day_of_months,
     )
 
     floor_sections: list[dict[str, str]] = []
-    for spec in FLOOR_SPECS:
-        frame = build_floor_frame(spec.coords_path, stats_df)
+    for spec in floor_specs:
+        frame = build_floor_frame(
+            spec.coords_path,
+            stats_df,
+            exclude_machine_numbers=spec.exclude_machine_numbers,
+        )
         frame.attrs["date_range_label"] = date_range_label
         thresholds = build_tone_thresholds(frame[metric_key])
         floor_sections.append(
@@ -1074,15 +1628,24 @@ def build_kamata7_cardmap_html(
                     floor_title=spec.title,
                     metric_key=metric_key,
                     thresholds=thresholds,
+                    filter_label=filter_label,
+                    slot_x=slot_x,
+                    slot_y=slot_y,
+                    pad=pad,
+                    name_font_size=name_font_size,
                 ),
             }
         )
 
     html = build_html_document(
         floor_sections,
+        hall_name=hall_name,
         generated_at=pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S"),
         date_range_label=date_range_label,
+        filter_label=filter_label,
         metric_key=metric_key,
+        fit_mode=fit_mode,
+        min_scale=min_scale,
     )
 
     if output_path is not None:
@@ -1116,6 +1679,18 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Optional end date in YYYYMMDD format",
     )
+    parser.add_argument(
+        "--weekday",
+        nargs="*",
+        default=None,
+        help="Optional weekday filter (0-6 or 月-日)",
+    )
+    parser.add_argument(
+        "--day-of-month",
+        nargs="*",
+        default=None,
+        help="Optional day-of-month filter (1-31)",
+    )
     return parser.parse_args()
 
 
@@ -1126,6 +1701,8 @@ def main() -> int:
         metric_key=args.metric,
         start_date=args.start_date,
         end_date=args.end_date,
+        weekdays=args.weekday,
+        day_of_months=args.day_of_month,
     )
     print(f"Wrote {args.output}")
     return 0

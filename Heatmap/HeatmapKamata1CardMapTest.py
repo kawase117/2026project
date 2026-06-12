@@ -1,40 +1,41 @@
-"""Streamlit viewer for the Kamata7 card-map prototype."""
+"""Streamlit viewer for the Kamata1 card-map prototype."""
 
 from __future__ import annotations
 
-from generate_kamata7_cardmap_html import (
+from generate_kamata1_cardmap_html import (
     DEFAULT_OUTPUT_PATH,
     FLOOR_SPECS,
     DB_PATH,
     METRICS,
     WEEKDAY_LABELS,
-    build_kamata7_cardmap_html,
+    build_kamata1_cardmap_html,
 )
 
 
 def main() -> None:
     import streamlit as st
     from streamlit.components.v1 import html as components_html
+
     try:
         from Heatmap.heatmap_common import render_last_digit_highlight
     except ModuleNotFoundError:
         from heatmap_common import render_last_digit_highlight
 
     st.set_page_config(
-        page_title="蒲田7 カード型フロアマップ試作",
+        page_title="蒲田1 カード型フロアマップ試作",
         layout="wide",
     )
-    st.title("蒲田7 カード型フロアマップ試作")
+    st.title("蒲田1 カード型フロアマップ試作")
     st.caption(
         "HTML/CSSカード版の検証ビューです。ページ再読み込み時にHTMLを再生成し、末尾ハイライトも確認できます。"
     )
 
-    today = st.session_state.get("kamata7_today")
+    today = st.session_state.get("kamata1_today")
     if today is None:
         from datetime import date
 
         today = date.today()
-        st.session_state["kamata7_today"] = today
+        st.session_state["kamata1_today"] = today
 
     metric_key = st.sidebar.selectbox(
         "表示指標",
@@ -45,7 +46,7 @@ def main() -> None:
     date_range = st.sidebar.date_input(
         "表示期間",
         value=(today.replace(month=1, day=1), today),
-        key="kamata7_cardmap_date_range",
+        key="kamata1_cardmap_date_range",
     )
     weekday_labels = list(WEEKDAY_LABELS)
     selected_weekdays = st.sidebar.multiselect(
@@ -79,7 +80,7 @@ def main() -> None:
 
     with card_tab:
         try:
-            html = build_kamata7_cardmap_html(
+            html = build_kamata1_cardmap_html(
                 output_path=DEFAULT_OUTPUT_PATH,
                 metric_key=metric_key,
                 start_date=start_date.strftime("%Y%m%d"),
@@ -94,21 +95,17 @@ def main() -> None:
 
     with digit_tab:
         st.caption("末尾ハイライトは現在、日付範囲を共有します。")
-        if len(FLOOR_SPECS) == 1:
-            specs = FLOOR_SPECS
-        else:
-            specs = FLOOR_SPECS
-        floor_tabs = st.tabs([spec.floor for spec in specs])
-        for tab, spec in zip(floor_tabs, specs):
+        floor_tabs = st.tabs([spec.floor for spec in FLOOR_SPECS])
+        for tab, spec in zip(floor_tabs, FLOOR_SPECS):
             with tab:
                 render_last_digit_highlight(
-                    title=f"蒲田7 {spec.floor} 末尾ハイライト",
+                    title=f"蒲田1 {spec.floor} 末尾ハイライト",
                     coords_file=spec.coords_path,
                     db_path=str(DB_PATH),
-                    hall_name="マルハンメガシティ2000-蒲田7",
+                    hall_name="マルハンメガシティ2000-蒲田1",
                     floor=spec.floor,
                     date_range=(start_date, end_date),
-                    widget_key_suffix=f"kamata7_{spec.floor}",
+                    widget_key_suffix=f"kamata1_{spec.floor}",
                     weekdays=weekdays,
                     day_of_months=day_of_months,
                 )

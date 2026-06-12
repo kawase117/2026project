@@ -194,7 +194,6 @@ def test_render_heatmap_page_uses_provided_date_range_without_date_input(
             columns=_columns,
             date_input=lambda *args, **kwargs: pytest.fail("date_input() should not be called"),
             radio=lambda *args, **kwargs: "勝率(%)",
-            plotly_chart=lambda fig, **kwargs: captured.setdefault("fig", fig),
             metric=lambda *args, **kwargs: None,
             tabs=lambda labels: [_DummyTab(), _DummyTab(), _DummyTab()],
             dataframe=lambda *args, **kwargs: None,
@@ -202,8 +201,13 @@ def test_render_heatmap_page_uses_provided_date_range_without_date_input(
         ),
     )
 
+    def fake_html(html: str, **kwargs) -> None:
+        captured["html"] = html
+
+    monkeypatch.setattr("streamlit.components.v1.html", fake_html)
+
     heatmap_common.render_heatmap_page(
-        title="Target Hall 2F 驟咲ｽｮ蝗ｳ",
+        title="Target Hall 2F フロアヒートマップ",
         subtitle="test",
         coords_file=str(coords_path),
         db_path=str(db_path),
@@ -215,7 +219,8 @@ def test_render_heatmap_page_uses_provided_date_range_without_date_input(
         date_range=(date(2026, 1, 1), date(2026, 1, 2)),
     )
 
-    assert "fig" in captured
+    assert "machine-card" in captured["html"]
+    assert "1001" in captured["html"]
 
 
 def test_render_last_digit_highlight_renders_selected_and_missing_data(
@@ -273,7 +278,6 @@ def test_render_last_digit_highlight_renders_selected_and_missing_data(
             caption=lambda *args, **kwargs: None,
             stop=lambda: (_ for _ in ()).throw(RuntimeError("stopped")),
             multiselect=lambda *args, **kwargs: ["1"],
-            plotly_chart=lambda fig, **kwargs: captured.setdefault("fig", fig),
             columns=lambda *args, **kwargs: pytest.fail("columns() should not be called"),
             tabs=lambda *args, **kwargs: pytest.fail("tabs() should not be called"),
             dataframe=lambda *args, **kwargs: pytest.fail("dataframe() should not be called"),
@@ -282,22 +286,24 @@ def test_render_last_digit_highlight_renders_selected_and_missing_data(
         ),
     )
 
+    def fake_html(html: str, **kwargs) -> None:
+        captured["html"] = html
+
+    monkeypatch.setattr("streamlit.components.v1.html", fake_html)
+
     heatmap_common.render_last_digit_highlight(
         title="Target Hall 2F 末尾ハイライト",
         coords_file=str(coords_path),
         db_path=str(db_path),
         hall_name="Target Hall",
         floor="2F",
-        date_range=(date(2026, 1, 1), date(2026, 1, 2)),
+        date_range=(date(2025, 12, 31), date(2026, 1, 5)),
         widget_key_suffix="target_2f",
     )
 
-    fig = captured["fig"]
-    points = [point for trace in fig.data for point in trace.customdata]
-    machine_numbers = {point[0] for point in points}
-
-    assert machine_numbers == {"1001", "1100"}
-    assert any(point[3] == "-" and point[4] == "-" for point in points)
+    assert "machine-card" in captured["html"]
+    assert "1001" in captured["html"]
+    assert "1100" in captured["html"]
 
 
 def test_render_last_digit_highlight_mixes_real_and_missing_period_stats(
@@ -354,7 +360,6 @@ def test_render_last_digit_highlight_mixes_real_and_missing_period_stats(
             caption=lambda *args, **kwargs: None,
             stop=lambda: (_ for _ in ()).throw(RuntimeError("stopped")),
             multiselect=lambda *args, **kwargs: [],
-            plotly_chart=lambda fig, **kwargs: captured.setdefault("fig", fig),
             columns=lambda *args, **kwargs: pytest.fail("columns() should not be called"),
             tabs=lambda *args, **kwargs: pytest.fail("tabs() should not be called"),
             dataframe=lambda *args, **kwargs: pytest.fail("dataframe() should not be called"),
@@ -362,6 +367,11 @@ def test_render_last_digit_highlight_mixes_real_and_missing_period_stats(
             radio=lambda *args, **kwargs: pytest.fail("radio() should not be called"),
         ),
     )
+
+    def fake_html(html: str, **kwargs) -> None:
+        captured["html"] = html
+
+    monkeypatch.setattr("streamlit.components.v1.html", fake_html)
 
     heatmap_common.render_last_digit_highlight(
         title="Target Hall 2F 末尾ハイライト",
@@ -373,10 +383,8 @@ def test_render_last_digit_highlight_mixes_real_and_missing_period_stats(
         widget_key_suffix="target_2f_mixed",
     )
 
-    fig = captured["fig"]
-    points = {point[0]: point for trace in fig.data for point in trace.customdata}
-
-    assert points["1001"][3] != "-"
-    assert points["1001"][4] != "-"
-    assert points["1100"][3] == "-"
-    assert points["1100"][4] == "-"
+    html = captured["html"]
+    assert "machine-card" in html
+    assert "1001" in html
+    assert "1100" in html
+    assert "N/A" in html
