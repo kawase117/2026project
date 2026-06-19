@@ -1,0 +1,143 @@
+---
+id: floorlr-split-effectiveness-lower-than-expected
+trigger: "Floor/LR 分割が最も有意な kakuban 分割軸だと仮説していた場合"
+confidence: 0.85
+domain: kakuban-stratification
+source: session-analysis
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# Floor/LR 分割の効果がセクションサイズ分割より弱い
+
+## 背景
+前回の分析では「Floor/LR 分割が最有意」という既存知見を再検証するため、2F/3F × Left/Right の分割を実装した。結果、機械割の L/R 差異が予想より微小であることが判明。
+
+## 観測事実
+- 2F: L側 101.61% vs R側 102.07% (差: -0.46pp)
+- 3F: L側 101.26% vs R側 101.25% (差: +0.01pp)
+- セクションサイズ分割では small/medium/large で 1-2pp の差が見えた
+- → LR分割の効果は±0.5pp 以下（微細）
+
+## アクション
+1. セクションサイズ分割 vs LR分割の効果を定量比較（F値・相関係数）
+2. 既存知見「LR分割が最有意」を要検証
+3. LR分割は補助的軸として再位置付け
+
+## 例
+2F large: LR差は +1.27pp だが、セクションサイズ層内での rank_from_min の変動（7→9）がより強い信号
+
+---
+id: section-size-remains-dominant-partitioning-axis
+trigger: "kakuban 効果の分割軸を最適化する際、複数の候補軸を比較している場合"
+confidence: 0.80
+domain: kakuban-stratification
+source: comparative-analysis
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# セクションサイズ分割がメイン軸として機能
+
+## 背景
+2F/3F/LR分割と前回のセクションサイズ分割を比較したところ、セクションサイズ（small/medium/large）の方が機械割差が大きく、より区別性が高い。
+
+## 観測事実
+セクションサイズ分割：
+- small/medium/large で 1-2pp の機械割差が見える
+- 各層内での peak rank が一貫性がある
+
+LR分割：
+- 機械割差 ±0.5pp（微細）
+- peak rank が最頻値で異なるが、セグメント依存性が高い
+
+## アクション
+- メイン分割軸をセクションサイズに戻す
+- LR分割は交互作用項として 2次解析に用いる
+- 「最も有意な分割軸」の定義を明確化（効果量、信頼区間）
+
+## 例
+2F: セクションサイズ別の pay_rate が顕著な段差、LR別は -0.46pp で微細
+
+---
+id: lr-split-effect-highly-segment-dependent
+trigger: "Floor/LR 分割の効果が一貫性を持つかどうか検証する際"
+confidence: 0.88
+domain: kakuban-segment-interaction
+source: cross-segment-analysis
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# LR 効果がセグメント・セクションサイズに強く依存
+
+## 背景
+2F, 3F, AT セグメント別に LR 分割の peak rank 分布を調査したところ、セグメントごとに最強角番の L/R 側が異なり、セクションサイズ層でも変動する。
+
+## 観測事実
+最強角番の最頻値：
+- 2F: L側→角2/7/3、R側→角13/4/5（R側外寄り傾向）
+- 3F: L側→角2/13/11、R側→角1/8/7（L側両極端）
+- AT: L側→角2/6/3、R側→角5/7/6（ほぼ類似）
+
+セクションサイズ別：
+- 2F large: L=7.2, R=9.8 (R側外寄り)
+- 3F small: L=2.0, R=1.0 (両者中央)
+- 3F large: L=8.3, R=6.6 (L側外寄り)
+
+## アクション
+LR分割を単独で解釈しない。必ず (segment, section_size, lr_side) の3軸で検証。
+
+## 例
+「R側が外寄り」は2F largeの話。3F smallでは両者中央寄り。セグメント固有の効果が dominant。
+
+---
+id: event-day-shift-asymmetric-across-lr-sides
+trigger: "イベント日の kakuban 効果を L/R 軸で検証する場合"
+confidence: 0.75
+domain: event-day-strategy
+source: temporal-analysis
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# イベント日のピークシフトが L側と R側で非対称
+
+## 背景
+イベント日（1,4,7,11,14,17,21,22,25,28,30,31）と通常日で peak rank を比較したところ、L側と R側で変動パターンが異なる。
+
+## 観測事実
+- 2F L側: イベント日 rank +1.47 外寄り（強いシフト）
+- 2F R側: イベント日 rank -0.47 （ほぼ不変）
+- 3F: 両側 ±0.6 以下（微弱）
+
+## アクション
+イベント日戦略は L/R 側で区別して検証。2F L側のシフトは意図的な設定投入の証拠の可能性。
+
+## 例
+2F: イベント日には L側で中央→外寄りへのシフト（+1.47）があり、R側は不変。
+
+---
+id: cross-interaction-analysis-essential-for-kakuban
+trigger: "kakuban 分割軸の真の優位性を判定する際"
+confidence: 0.82
+domain: statistical-design
+source: multifactorial-observation
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# セクションサイズ×LR の交互作用分析が必須
+
+## 背景
+セクションサイズ分割と LR分割の両者を実装・分析したところ、効果が単独ではなく交互作用している。単軸での解釈は不十分。
+
+## 観測事実
+- LR分割の効果（±0.5pp）がセクションサイズ層内で変動
+- セクションサイズの効果（1-2pp）が LR側で変動
+- → 両者の交互作用が無視できない大きさ
+
+## アクション
+1. セクションサイズ × LR × セグメント の3軸クロス集計を実施
+2. F検定で主効果と交互作用の有意性を比較
+3. 「最も有意な分割軸」を複合軸で定義
+
+## 例
+2F large R側 vs 2F medium L側 では、単純に「large > medium」ではなく交互作用で大きく変わる
+
+---
