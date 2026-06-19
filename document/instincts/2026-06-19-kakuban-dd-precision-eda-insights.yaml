@@ -1,0 +1,148 @@
+---
+id: kakuban-dd-type-mismatch-bug
+trigger: "新規EDAで groupby キーにカテゴリ列（small/medium/large）を使う場合"
+confidence: 0.95
+domain: eda-implementation
+source: session-bug-discovery
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# Groupby キーの型不一致（section_size vs section_size_group）
+
+## 背景
+Codex の実装で aggregated テーブルが全て空になった（eligible_rows = 0）。原因は `section_size`（数値：実際の機械数）と `section_size_group`（カテゴリ："small"/"medium"/"large"）を混同していたこと。`section_size.isin(["small","medium","large"])` は常に False を返す。
+
+## アクション
+EDA で section_size_group のようなカテゴリ化列を使う場合、以下を確認：
+1. groupby キーとして使う列が「実値」か「カテゴリ」か明確にする
+2. フィルタ条件に同じ列を使う（混合しない）
+3. テストデータに使用する全カラムを含める（補助列を忘れやすい）
+
+修正例：
+```python
+# ❌ 誤：section_size は数値
+work = work[work["section_size"].isin(["small", "medium", "large"])]
+
+# ✅ 正：section_size_group を使う
+work = work[work["section_size_group"].isin(["small", "medium", "large"])]
+```
+
+## 例
+`ml/analysis/kamata7_kakuban_dd_precision_eda.py` line 208, 227, 251, 301 で修正
+
+---
+id: section-size-rank-effect-differentiation
+trigger: "角番効果（rank_from_min）を検証する場合、セクションサイズ層で分離する必要がある"
+confidence: 0.90
+domain: kakuban-analysis
+source: data-analysis
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# セクションサイズ別の最強角番分化
+
+## 背景
+蒲田7 の precision EDA で、島のサイズによって最強角番が異なることが判明：
+- small (≤8台): 角5（機械割 100.80%）
+- medium (≤14台): 角6（機械割 102.27% — 最強）
+- large (>14台): 角11（機械割 101.88%）
+
+つまり「角5-9 が最強」という前回の仮説は、セクションサイズを無視していた。大島では外寄り（角11-13）が相対的に強くなる。
+
+## アクション
+kakuban 分析では必ず `section_size_group` でストラティファイ（層別）する：
+1. 全セグメント×セクションサイズの組み合わせで集計
+2. セクション別の pay_rate / peak rank を比較
+3. island ごとの rank_from_min 定義を物理レイアウトで検証
+
+## 例
+```
+2F:
+  small:  角5 最強 (100.80%)
+  medium: 角6 最強 (102.27%)
+  large:  角11 最強 (101.88%)
+```
+
+Output: `ml/analysis/results/kamata7_kakuban_dd_precision_eda/kamata7_peak_ranks_by_dd_sectionsize.csv`
+
+---
+id: island-size-event-day-strategy-shift
+trigger: "イベント日での角番シフト（peak rank の変動）を分析する場合"
+confidence: 0.85
+domain: event-day-strategy
+source: data-analysis
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# イベント日戦略の島サイズ依存パターン
+
+## 背景
+蒲田7 で DD（日付）ごとの peak rank を調査したところ、イベント日（1,4,7,11,14,17,21,22,25,28,30,31）と通常日での peak rank が異なる。特に島サイズに依存：
+
+**large 島**:
+- 2F: イベント日 9.25 vs 通常日 7.89 (差 +1.36) ← 外寄りシフト
+- AT: イベント日 9.33 vs 通常日 7.26 (差 +2.07) ← 強い外寄りシフト
+
+**medium 島**:
+- 3F: イベント日 5.58 vs 通常日 7.16 (差 -1.57) ← 中央寄りシフト
+
+**small 島**:
+- イベント日が pay_rate で -0.44pp（逆に弱い）← 矛盾・要検証
+
+## アクション
+1. イベント日の定義を再検証（small島の逆転現象は異常）
+2. large 島ではイベント日に外寄り（角9-13）に設定を集中
+3. medium 島ではイベント日に中央寄り（角5-7）に設定を集中
+4. 大島戦略に合わせた客のターゲット位置の予測
+
+## 例
+```
+イベント日の戦略（推測）:
+  large 島: 外寄り優遇 (+1.36～+2.07pp)
+  medium 島: 中央優遇（3F/AT で -1.57pp）
+  small 島: 特別な戦略不明
+```
+
+---
+id: dd-trend-prediction-unpredictable
+trigger: "DD（月内日付）ベースで最強角番を予測する場合"
+confidence: 0.75
+domain: dd-predictability
+source: data-analysis
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# DD トレンドの予測困難性
+
+## 背景
+DD ごとに最強角番（peak rank）を調査したところ、変動が大きく単純な予測が困難であることが判明：
+
+```
+2F の例:
+  DD 1 (イベント日): small=5, medium=5, large=13
+  DD 2 (通常日):    small=2, medium=7, large=11  ← 大きく変わる
+  DD 3 (通常日):    small=5, medium=6, large=9
+```
+
+イベント日マーク（★）との相関も弱い → 現在のイベント日定義が正確でない、または他の要因（曜日、給料日周期、ゾロ目、月初月末など）が優位である可能性。
+
+## アクション
+1. DD ベースの単純予測は避ける
+2. DD を以下の軸で細分化：
+   - 給料日周期（1日, 11日, 21日, 25日）
+   - ゾロ目日（11日, 22日）
+   - 週末（金土日）vs 平日
+   - 月初（1-10日）vs 月中（11-20日）vs 月末（21-31日）
+3. セクションサイズ×DD×セグメントの3軸での交互作用を検証
+
+## 例
+改善方針：
+```
+# 現在（困難）
+peak_rank = func(DD)
+
+# 改善案
+peak_rank = func(DD_category, weekday, section_size, segment)
+```
+
+---
