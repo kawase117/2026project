@@ -5,6 +5,8 @@
 **Recommended project context:** If `CLAUDE.md` or `CONTEXT.md` exists in the repository root, read them at the start of work and reflect them in decisions.
 - Use `CLAUDE.md` as project-specific working guidance.
 - Use `CONTEXT.md` as background knowledge and current project context.
+- When working in or editing files under a subdirectory, first check whether that subtree has its own `CLAUDE.md` and read the nearest relevant one before making decisions.
+- Precedence inside a subtree: direct user instructions > `AGENTS.md` > nearest subtree `CLAUDE.md` > root `CLAUDE.md` > `CONTEXT.md`.
 - If guidance conflicts, follow direct user instructions first, then `AGENTS.md`, then `CLAUDE.md`, then `CONTEXT.md`.
 
 **Plan-First Review Rule (Claude plan handoff):**
@@ -71,3 +73,12 @@ $old  = (Test-Path $file) ? ([IO.File]::ReadAllText($file,$enc)) : ''
 Write-Utf8NoBom -Path $file -Content ($old+"`nYOUR_TEXT_HERE`n")
 "'
 ```
+
+## Intermind
+
+Codex から Claude Code と連携するときは、`intermind` MCP サーバーを優先する。
+
+- `join` で room に入る
+- `inbox` を turn の先頭で確認する
+- 返答は同じ `thread_id` に返す
+- room が必要なら git branch 名を既定値にする
