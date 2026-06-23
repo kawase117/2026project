@@ -48,4 +48,6 @@ If a script starts as a one-off check, keep it in `scratch/` until it is worth p
 
 - transient generated files should be ignored when possible
 - stable checked-in assets should live next to the code or docs that consume them
-
+- `backtest/results/`, `ml/analysis/results/`, and selected `ml/experiments/**/results*` trees currently contain historical artifacts that are intentionally tracked
+- new exploratory or compatibility-run outputs should default to `scratch/` or `tmp/` instead of writing into existing tracked `results*` trees
+- promote a generated result into git only when it is a durable reference artifact used by docs, tests, or ongoing comparison work

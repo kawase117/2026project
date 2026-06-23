@@ -45,8 +45,20 @@ This file records the main untracked asset groups that remain after repo cleanup
 ## Already Treated As Generated Outputs
 
 - `ml/analysis/results/*/`
+- `scratch/`
+- `tmp/`
 - `ml/machine_type/exploratory/output/*.json`
 - `ml/machine_type/exploratory/output/*.md`
 - generated `document/machine_master_research/*` artifacts listed in `.gitignore`
 
 These are intentionally ignored unless explicitly promoted.
+
+## Tracked Historical Results
+
+- `backtest/results/`
+- `ml/experiments/gate_analysis/results/`
+- `ml/experiments/gate_ranking_test/results*`
+- `ml/experiments/walkforward_scoring/results*`
+- selected files under `ml/experiments/results/`
+
+These remain tracked as project history. New ad hoc runs should not append to them by default.

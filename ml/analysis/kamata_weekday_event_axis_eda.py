@@ -144,6 +144,23 @@ def _expand_dual_kakuban(frame: pd.DataFrame) -> pd.DataFrame:
     return pd.concat([part_min, part_max], ignore_index=True)
 
 
+def _build_kakuban_axis(frame: pd.DataFrame, *, hall_label: str, floor: str) -> pd.DataFrame:
+    """Build kakuban ranks from unique machine positions for compatibility tests."""
+    required = {"machine_number", "section", "X"}
+    missing = required - set(frame.columns)
+    if missing:
+        raise ValueError(f"_build_kakuban_axis requires columns: {sorted(missing)}")
+
+    machine_level = frame.loc[:, ["machine_number", "section", "X"]].drop_duplicates(subset=["machine_number"]).copy()
+    machine_level["section"] = machine_level["section"].astype(str)
+    machine_level["X"] = pd.to_numeric(machine_level["X"], errors="coerce")
+    machine_level = machine_level.dropna(subset=["X"]).copy()
+    machine_level["kakuban"] = machine_level.groupby("section")["X"].rank(method="dense", ascending=True).astype(int)
+    machine_level["hall_label"] = hall_label
+    machine_level["floor"] = floor
+    return machine_level.sort_values(["section", "kakuban", "machine_number"]).reset_index(drop=True)
+
+
 def _summarize_daily_cells(frame: pd.DataFrame, *, axis_col: str, subgroup_cols: tuple[str, ...]) -> pd.DataFrame:
     work = frame.copy()
     work["mean_diff"] = pd.to_numeric(work["diff_coins_normalized"], errors="coerce")
