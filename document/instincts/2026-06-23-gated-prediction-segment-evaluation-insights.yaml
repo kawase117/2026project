@@ -1,0 +1,211 @@
+---
+id: gate-nogate-fallback-reveals-segment-ranking-quality
+trigger: "ゲート付き予測の評価で単一セグメントに閉じ込められた場合"
+confidence: 0.90
+domain: ml-scoring-evaluation
+source: empirical-backtest
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ゲートが単一セグメントに絞ると、ランキング品質の低いセグメントに閉じ込められるリスク
+
+## 背景
+6/21のゲート付き予測で2F_R_Nのみがactive判定され168台に限定。
+結果Top50のvs_other=-591（v6a）と大逆選択。
+一方NOGATEで全714台を対象にした場合、同日のv6a Top50はvs_other=+35と改善。
+3Fセグメント（3F_L_N: vs=+1115, 3F_R_N: vs=+2111）でのランキング成功が
+2Fの逆選択（2F_R_N: vs=-624）を相殺したため。
+
+## アクション
+- ゲートがactive=1セグメントのみの場合、NOGATEフォールバックも並行出力して比較する
+- セグメント別のランキング品質が均一でないことを前提に、ゲート後も複数セグメントからのTop50構成を維持する
+- 単一セグメント閉じ込めはリスクが高い — 最低2セグメント以上のactive判定を安全基準とする
+
+## 例
+6/21 gated(2F_R_N only): v6a vs_other = -591
+6/21 nogate(全714台):     v6a vs_other = +35
+差: +626 — NOGATEの方が大幅に良好（3Fのリフトが寄与）
+
+---
+id: v6a-event-day-2f-dominance-confirmed
+trigger: "イベント日のv6a予測を評価・運用する場合"
+confidence: 0.92
+domain: ml-scoring-evaluation
+source: empirical-backtest
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# v6aはイベント日×2Fセグメントで圧倒的に強い
+
+## 背景
+28日間バックテスト（2026-05-22〜06-20）でv6aのセグメント別vs_otherを計測。
+イベント日（6日間）:
+  2F_L_N: +3,728 (勝率83%), 2F_R_N: +662 (83%)
+  3F_L_A: -394 (17%), 3F_L_N: +244 (33%)
+非イベント日（22日間）:
+  3F_R_N: +441 (71%), 3F_L_N: +502 (48%)
+  2F_L_N: +193 (55%), 2F_R_N: +141 (55%)
+
+## アクション
+- イベント日のv6a出力では2Fセグメントの推奨を最優先で採用
+- イベント日×3F_L_Aはv6a唯一の明確な弱点（-394, 17%） — この組み合わせではv9cまたはv9bを参照
+- 非イベント日はv6aの3F_R_N(71%勝率)が最も安定
+
+## 例
+イベント日v6a 2F_L_N: +3,728 (5/6日で勝ち) — 9.3台/日がTop50入り
+イベント日v6a 3F_L_A: -394 (1/6日で勝ち) — 弱点
+
+---
+id: v9b-non-event-balanced-strength
+trigger: "非イベント日のv9b予測を評価・運用する場合"
+confidence: 0.88
+domain: ml-scoring-evaluation
+source: empirical-backtest
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# v9bは非イベント日にバランス型の強みを持つ
+
+## 背景
+28日間バックテストで非イベント日のv9bセグメント別:
+  2F_L_N: +247 (67%) — v6aの55%より12pp高い勝率
+  3F_L_N: +507 (55%), 3F_R_N: +386 (55%)
+  3F_R_A: +158 (50%) — v6aの-3(20%)と大差
+イベント日はv6aに劣後（2F_R_N: -397, 3F_L_N: -589）。
+
+## アクション
+- 非イベント日はv9bの推奨を2F_L_N/3F系で参考にする
+- 特に2F_L_Nの勝率67%はv6a(55%)より安定
+- イベント日のv9bは2F_R_N/3F_L_Nで弱い — v6aを優先
+
+## 例
+非イベント日v9b 2F_L_N: +247 (14/21=67%) vs v6a: +193 (11/20=55%)
+イベント日v9b 2F_R_N: -397 (4/6=67%) vs v6a: +662 (5/6=83%)
+
+---
+id: v9c-set-selection-valid-ranking-invalid
+trigger: "v9cの予測結果を利用する場合"
+confidence: 0.93
+domain: ml-scoring-architecture
+source: empirical-backtest
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# v9cは50台セット選択は有効だが内部ランキングは無意味
+
+## 背景
+28日間バックテストでv9cのTop50全体avg_diff=+278（v6a: +251, v9b: +238より高い）。
+しかしTop50内部の層別分析:
+  Top5: +210, hit@4.5k=0.7%（最弱）
+  31-50位: +393, hit@4.5k=7.5%（最強）
+パーセンタイル変換でcompositeが0.8-1.0に圧縮され、ランキング解像度が崩壊。
+また3F_L_N/3F_R_Nへの配分が0台（パーセンタイルがN型弱セグメントにスコアを与えない構造）。
+lift@t4500ではv9cが全セグメント最強という過去検証データあり。
+
+## アクション
+- v9cのTop50に入ったかどうか（in/out）はシグナルとして有効 — 採用すべき
+- v9c内の順位（1位 vs 50位）は信用しない — 差がない
+- v9cが選ばなかった3F_L_N/3F_R_Nの台はv6a/v9bから補完する
+- 「v9cは捨てるべき」ではなく「フィルタとして使う」が正しい運用
+
+## 例
+v9c Top50 avg_diff: +278（3モデル中最高）
+v9c Top5 hit@4.5k: 0.7%（v6a: 11.4%, v9b: 13.6%と比べ壊滅的）
+→ セット選択○、ランキング×
+
+---
+id: segment-ranking-quality-varies-by-floor
+trigger: "セグメント横断のランキング評価を行う場合"
+confidence: 0.88
+domain: ml-scoring-evaluation
+source: empirical-backtest
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# セグメントによってランキング品質が大きく異なる — ホール側の法則が異なる可能性
+
+## 背景
+28日間のv6a セグメント別Top50 vs_otherと勝率:
+  2F_R_N: +253, std=808, 勝率61% — 最も安定（低分散・高勝率）
+  2F_L_N: +1,009, std=3,003, 勝率62% — 平均は高いがDD07(+12,920)等の外れ値依存
+  3F_R_N: +374, std=1,869, 勝率70% — 勝率最高だが負け日は-2,700〜-3,900
+  3F_L_N: +445, std=1,571, 勝率44% — 負け越し。DD28の+6,126一日が平均を正に見せている
+  3F_L_A: -25, 勝率47% — ジャグラー/ハナハナは設定判別困難でランキング不能
+
+6/21の実績でも3F(vs_other正)と2F(逆選択)で明確に分かれた。
+ホール側が2Fと3Fで異なる設定投入ルールを使っている可能性が高い。
+
+## アクション
+- セグメント横断のランキング比較は慎重に — 同一compositeスコアでもセグメントによる予測精度が異なる
+- 3F_L_Nの勝率44%はモデルが法則を捉えていない可能性 — 平均値に騙されない
+- 2F_R_Nの安定性（std=808）はモデルとの相性の良さを示唆
+- フロア別に異なるウェイトやルールの導入が次の改善候補
+
+## 例
+v6a 2F_R_N: mean=+253, std=808, 勝率61%（安定）
+v6a 3F_L_N: mean=+445, std=1571, 勝率44%（外れ値依存、負け越し）
+
+---
+id: vs-other-metric-segment-allocation-bias
+trigger: "セグメント別vs_otherを集計して全体評価する場合"
+confidence: 0.90
+domain: ml-evaluation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# セグメント別vs_otherの単純平均は配分0セグメントを持つモデルを不当に低評価する
+
+## 背景
+v9cはセグメント別vs_other平均で最悪に見えたが、全体Top50のavg_diffは+278で3モデル中最高。
+原因: 3F_L_N/3F_R_Nへの配分が0のため、セグメント別平均にこれらが含まれず、
+配分があるセグメント内でのvs_otherだけで評価されていた。
+v6a/v9bが3F_L_N/3F_R_Nで+400〜+500のvs_otherを稼いでいる分が
+セグメント平均を押し上げていたが、v9cは配分0で参加すらしていない。
+全体Top50ベースで見ると、v9cの「配分しないセグメントをスキップする」戦略自体は
+avg_diff最高という結果に繋がっている。
+
+## アクション
+- セグメント別vs_otherを集計する際は、配分台数で加重平均するか、全体Top50ベースの指標と必ず併用する
+- 「配分0セグメント」は弱点ではなく戦略の可能性がある — 弱セグメント回避は合理的
+- 複数指標（avg_diff, vs_other, lift@threshold, 勝率）を組み合わせて判断する
+
+## 例
+v9c セグメント別vs_other平均: 最悪に見える
+v9c 全体Top50 avg_diff: +278（v6a +251, v9b +238より高い）
+→ 評価方法の違いで結論が反転する
+
+---
+id: three-model-independent-operation-design
+trigger: "v6a/v9b/v9cの3モデル運用方針を決める場合"
+confidence: 0.85
+domain: ml-scoring-architecture
+source: session-synthesis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 3モデル独立運用：役割分担とConsensus不使用
+
+## 背景
+Borda平均によるConsensus統合は6/21: vs_other=-514、6/22: -419と一貫して悪化。
+v9b/v9cが3F系の台を引き込み、v6aの2F選択を薄めるため。
+独立運用での28日バックテスト結果:
+  v6a: イベント日×2F圧倒(+3,728/+662)、非イベント×3F_R_N(+441,71%)
+  v9b: 非イベント日バランス型、2F_L_N勝率67%、3F_L_N/3F_R_N安定
+  v9c: セット選択は最強(avg_diff+278)だがランキング無意味、N型無配分
+
+## アクション
+- Consensus（Borda平均）は使わない — 統合は価値を破壊する
+- 3モデルは独立した予測として提示し、ユーザーが状況に応じて選択
+- イベント日: v6aの2F推奨を最優先
+- 非イベント日: v9bを全体参考、v6aの3F_R_Nも有力
+- v9c: Top50 in/outのフィルタとして使用（内部順位は無視）
+- 3モデルの重複台（全モデルがTop50に選んだ台）は高信頼度シグナル
+
+## 例
+6/22 Consensus Top50: avg_diff=-248（3モデル統合で悪化）
+6/22 v6a Top50: avg_diff=+152（単体では正のリフト）
+6/22 v9b Top50: avg_diff=+178（単体では正のリフト）
+→ 統合すると良いモデルの結果を壊す
+
+---
