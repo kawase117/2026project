@@ -24,7 +24,9 @@ FIELDNAMES = [
     "section_max",
     "rank_from_min",
     "rank_from_max",
+    "rank_from_aisle",
 ]
+AISLE_X = 17.5
 SECTION_RANGES = {
     "2F": [
         (2001, 2010),
@@ -162,6 +164,7 @@ def apply_store_sections(
             f"Section coverage mismatch: missing={missing}, extra={extra}"
         )
 
+    section_rows: dict[tuple[int, int], list[dict[str, object]]] = {}
     for row in rows:
         machine_number = int(row["machine_number"])
         section_min, section_max = section_by_machine[machine_number]
@@ -170,6 +173,20 @@ def apply_store_sections(
         row["section_max"] = section_max
         row["rank_from_min"] = machine_number - section_min + 1
         row["rank_from_max"] = section_max - machine_number + 1
+        section_rows.setdefault((section_min, section_max), []).append(row)
+
+    for members in section_rows.values():
+        min_row = min(members, key=lambda r: int(r["machine_number"]))
+        max_row = max(members, key=lambda r: int(r["machine_number"]))
+        x_varies = int(min_row["X"]) != int(max_row["X"])
+        if x_varies:
+            min_dist = abs(int(min_row["X"]) - AISLE_X)
+            max_dist = abs(int(max_row["X"]) - AISLE_X)
+            use_min = min_dist < max_dist
+        else:
+            use_min = int(min_row["Y"]) < int(max_row["Y"])
+        for row in members:
+            row["rank_from_aisle"] = row["rank_from_min"] if use_min else row["rank_from_max"]
 
 
 def build_2f_rows() -> list[dict[str, object]]:

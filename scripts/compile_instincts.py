@@ -5,6 +5,7 @@ import argparse
 import hashlib
 import json
 import re
+from collections import Counter
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -13,7 +14,10 @@ from typing import Iterable
 import yaml
 
 
-COMPILER_VERSION = "1.1.0"
+COMPILER_VERSION = "1.2.0"
+VERIFICATION_STATUSES = {"unverified", "confirmed", "refuted", "superseded"}
+VERIFICATION_STATUS_ORDER = ("unverified", "confirmed", "refuted", "superseded")
+EXCLUDED_STATUSES = {"refuted", "superseded"}
 
 
 @dataclass
@@ -21,6 +25,8 @@ class InstinctRecord:
     record_id: str
     trigger: str
     confidence: float | None
+    verification_status: str
+    verified_by: list[dict[str, object]] | None
     domain: str
     source: str
     project_id: str
@@ -71,6 +77,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Include source files that start with '_' (for example '_cli_export.yaml').",
     )
+    parser.add_argument(
+        "--include-refuted",
+        action="store_true",
+        help="Include refuted and superseded records in output (for audit).",
+    )
     parser.add_argument("--force", action="store_true")
     return parser.parse_args()
 
@@ -98,10 +109,38 @@ def split_frontmatter_documents(text: str) -> Iterable[tuple[str, str]]:
         lines = part.split("\n")
         header_lines: list[str] = []
         i = 0
+        seen_header_key = False
         while i < len(lines):
-            line = lines[i].strip()
-            if key_pattern.match(line):
-                header_lines.append(lines[i])
+            raw_line = lines[i]
+            stripped = raw_line.strip()
+
+            if not stripped:
+                j = i + 1
+                while j < len(lines) and not lines[j].strip():
+                    j += 1
+                if not seen_header_key or j >= len(lines):
+                    header_lines.append(raw_line)
+                    i += 1
+                    continue
+
+                next_line = lines[j]
+                next_stripped = next_line.lstrip()
+                if not next_line.startswith((" ", "\t")) and not key_pattern.match(next_stripped):
+                    i = j
+                    break
+
+                header_lines.append(raw_line)
+                i += 1
+                continue
+
+            if key_pattern.match(stripped):
+                seen_header_key = True
+                header_lines.append(raw_line)
+                i += 1
+                continue
+
+            if raw_line.startswith((" ", "\t")) and seen_header_key:
+                header_lines.append(raw_line)
                 i += 1
                 continue
             break
@@ -159,6 +198,22 @@ def as_float(value: object) -> float | None:
         return None
 
 
+def normalize_verification_status(value: object) -> str:
+    status = str(value or "unverified").strip().lower()
+    return status if status in VERIFICATION_STATUSES else "unverified"
+
+
+def normalize_verified_by(value: object) -> list[dict[str, object]] | None:
+    if not isinstance(value, list):
+        return None
+
+    normalized: list[dict[str, object]] = []
+    for item in value:
+        if isinstance(item, dict):
+            normalized.append(dict(item))
+    return normalized or None
+
+
 def collect_records(instinct_dir: Path, include_underscored_sources: bool) -> list[InstinctRecord]:
     records: list[InstinctRecord] = []
     for path in sorted(instinct_dir.glob("*.yaml")):
@@ -187,11 +242,15 @@ def collect_records(instinct_dir: Path, include_underscored_sources: bool) -> li
             if not record_id:
                 continue
 
+            verification_status = normalize_verification_status(header.get("verification_status"))
+            verified_by = normalize_verified_by(header.get("verified_by"))
             records.append(
                 InstinctRecord(
                     record_id=record_id,
                     trigger=str(header.get("trigger", "")).strip(),
                     confidence=as_float(header.get("confidence")),
+                    verification_status=verification_status,
+                    verified_by=verified_by,
                     domain=str(header.get("domain", "")).strip(),
                     source=str(header.get("source", "")).strip(),
                     project_id=str(header.get("project_id", "")).strip(),
@@ -223,12 +282,16 @@ def filter_records(
     min_confidence: float,
     high_confidence_pin: float,
     recent_days: int,
+    include_refuted: bool,
 ) -> list[InstinctRecord]:
     today = datetime.now(timezone.utc).date()
     cutoff = today - timedelta(days=recent_days)
 
     filtered: list[InstinctRecord] = []
     for record in records:
+        if not include_refuted and record.verification_status in EXCLUDED_STATUSES:
+            continue
+
         conf = record.confidence if record.confidence is not None else -1.0
         if conf < min_confidence:
             continue
@@ -254,6 +317,11 @@ def sort_records(records: list[InstinctRecord]) -> list[InstinctRecord]:
         return (conf, record.file_mtime_ns, record.record_id)
 
     return sorted(records, key=score, reverse=True)
+
+
+def count_statuses(records: list[InstinctRecord]) -> dict[str, int]:
+    counts = Counter(record.verification_status for record in records)
+    return {status: counts.get(status, 0) for status in VERIFICATION_STATUS_ORDER}
 
 
 def build_snapshot_hash(instinct_dir: Path) -> str:
@@ -285,6 +353,7 @@ def render_markdown(
     instincts_dir: Path,
     min_confidence: float,
     recent_days: int,
+    status_breakdown: dict[str, int],
 ) -> str:
     now = datetime.now().astimezone()
     lines: list[str] = []
@@ -295,6 +364,8 @@ def render_markdown(
     lines.append(f"- source_dir: `{instincts_dir.as_posix()}`")
     lines.append(f"- total_records_scanned: {total_records_scanned}")
     lines.append(f"- active_records: {len(records)}")
+    breakdown = ", ".join(f"{status}={status_breakdown.get(status, 0)}" for status in VERIFICATION_STATUS_ORDER)
+    lines.append(f"- status_breakdown: {breakdown}")
     lines.append(
         f"- filters: `confidence >= {min_confidence:.2f}` and `file_date within {recent_days} days` (unless pinned by high confidence)"
     )
@@ -318,7 +389,9 @@ def render_markdown(
     for idx, record in enumerate(records, start=1):
         conf = "n/a" if record.confidence is None else f"{record.confidence:.2f}"
         lines.append(f"### {idx}. `{record.record_id}`")
-        lines.append(f"- confidence: `{conf}` | date: `{record.file_date or 'n/a'}` | file: `{record.file_name}`")
+        lines.append(
+            f"- confidence: `{conf}` | status: `{record.verification_status}` | date: `{record.file_date or 'n/a'}` | file: `{record.file_name}`"
+        )
         if record.domain or record.source:
             lines.append(f"- domain/source: `{record.domain or 'n/a'}` / `{record.source or 'n/a'}`")
         if record.trigger:
@@ -346,6 +419,8 @@ def record_to_json(record: InstinctRecord, rank: int) -> dict:
         "rank": rank,
         "id": record.record_id,
         "confidence": confidence,
+        "verification_status": record.verification_status,
+        "verified_by": record.verified_by,
         "trigger": record.trigger,
         "domain": record.domain,
         "source": record.source,
@@ -379,6 +454,17 @@ def main() -> int:
         return 1
 
     snapshot_hash = build_snapshot_hash(instincts_dir)
+    run_signature = {
+        "instinct_dir": str(instincts_dir.as_posix()),
+        "min_confidence": args.min_confidence,
+        "high_confidence_pin": args.high_confidence_pin,
+        "recent_days": args.recent_days,
+        "max_records": args.max_records,
+        "include_underscored_sources": args.include_underscored_sources,
+        "include_refuted": args.include_refuted,
+        "output_path": str(output_path.as_posix()),
+        "jsonl_output_path": str(jsonl_output_path.as_posix()),
+    }
     state = load_state(state_path)
     if (
         not args.force
@@ -386,6 +472,7 @@ def main() -> int:
         and jsonl_output_path.exists()
         and state.get("snapshot_hash") == snapshot_hash
         and state.get("compiler_version") == COMPILER_VERSION
+        and state.get("run_signature") == run_signature
     ):
         print(
             f"[SKIP] no changes detected. outputs are up-to-date: {output_path} and {jsonl_output_path}"
@@ -401,8 +488,10 @@ def main() -> int:
         min_confidence=args.min_confidence,
         high_confidence_pin=args.high_confidence_pin,
         recent_days=args.recent_days,
+        include_refuted=args.include_refuted,
     )
     sorted_records = sort_records(filtered)[: args.max_records]
+    status_breakdown = count_statuses(deduped)
 
     markdown = render_markdown(
         sorted_records,
@@ -410,6 +499,7 @@ def main() -> int:
         instincts_dir=instincts_dir,
         min_confidence=args.min_confidence,
         recent_days=args.recent_days,
+        status_breakdown=status_breakdown,
     )
     jsonl_text = render_jsonl(sorted_records)
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -426,6 +516,7 @@ def main() -> int:
             "output_path": str(output_path.as_posix()),
             "jsonl_output_path": str(jsonl_output_path.as_posix()),
             "source_dir": str(instincts_dir.as_posix()),
+            "run_signature": run_signature,
             "raw_records": len(raw_records),
             "active_records": len(sorted_records),
         },
@@ -433,7 +524,9 @@ def main() -> int:
 
     print(f"[OK] compiled instincts -> {output_path}")
     print(f"[OK] compiled instincts(jsonl) -> {jsonl_output_path}")
-    print(f"[INFO] scanned={len(raw_records)} active={len(sorted_records)}")
+    print(
+        f"[INFO] scanned={len(raw_records)} active={len(sorted_records)} refuted={status_breakdown.get('refuted', 0)} superseded={status_breakdown.get('superseded', 0)}"
+    )
     return 0
 
 

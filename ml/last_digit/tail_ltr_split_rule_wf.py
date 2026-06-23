@@ -179,6 +179,8 @@ def add_simple_features(df: pd.DataFrame, *, enable_digit_lag_bundle: bool = Fal
     out["is_strong_zorome_day"] = (month_value == day_of_month).astype(int)
     out["is_day_7x"] = day_of_month.isin([7, 17, 27]).astype(int)
     out["is_day_1x"] = day_of_month.isin([1, 11, 21, 31]).astype(int)
+    if "is_event_day" not in out.columns:
+        out["is_event_day"] = 0
     out["is_wed_nonevent"] = ((out["is_wed"] == 1) & (pd.to_numeric(out["is_event_day"], errors="coerce").fillna(0.0) <= 0)).astype(int)
     out["is_wed_event"] = ((out["is_wed"] == 1) & (pd.to_numeric(out["is_event_day"], errors="coerce").fillna(0.0) > 0)).astype(int)
 

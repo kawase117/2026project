@@ -35,8 +35,8 @@ HALL_DBS = {
 # hall_config.json の event_digits（date_info_calculator に依存しない）
 HALL_EVENT_DIGITS: dict = {
     "みとや":        [4, 14, 24, 7, 17, 27],
-    "蒲田7":         [1, 11, 31, 7, 17, 27],
-    "蒲田1":         [1, 11, 31, 22, 7, 17, 27],
+    "蒲田7":         [1, 7, 11, 17, 21, 22, 27, 31],
+    "蒲田1":         [1, 7, 11, 17, 21, 22, 27, 31],
     "楽園":          [11, 22],
     "レイトギャップ": [6, 16, 26],
     "ARROW":        [8, 18, 28, 11, 22],
@@ -166,14 +166,26 @@ def load_hall_df(hall_name: str) -> pd.DataFrame:
     df["is_weekend"]   = (wd >= 5).astype(int)
 
     event_digits       = HALL_EVENT_DIGITS.get(hall_name, [])
-    df["is_x_day"]     = df["dd"].isin(event_digits).astype(int)
-    df["is_any_event"] = ((df["is_weekend"] == 1) | (df["is_x_day"] == 1)).astype(int)
+
+    # MMDDゾロ目（強ゾロ目）: 月==日 (1/1, 2/2, ..., 9/9, 10/10, 11/11, 12/12)
+    df["is_mmdd_zorome"] = (dates.dt.month == dates.dt.day).astype(int)
 
     month_end = dates.apply(
         lambda d: _cal.monthrange(d.year, d.month)[1]
     )
     df["is_month_start"] = (df["dd"] == 1).astype(int)
     df["is_month_end"]   = (df["dd"] == month_end.values).astype(int)
+
+    # is_x_day: DDリスト + 月末 + 強ゾロ目(MM=DD) を統合
+    df["is_x_day"] = (
+        df["dd"].isin(event_digits)
+        | (df["is_month_end"] == 1)
+        | (df["is_mmdd_zorome"] == 1)
+    ).astype(int)
+
+    df["is_any_event"] = (
+        (df["is_weekend"] == 1) | (df["is_x_day"] == 1)
+    ).astype(int)
 
     df["hall"] = hall_name
 

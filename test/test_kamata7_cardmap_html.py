@@ -43,17 +43,21 @@ def test_filter_machine_records_applies_weekday_and_day_filters() -> None:
 
 
 def test_build_tone_thresholds_spreads_positively_skewed_values() -> None:
-    """正に偏った値でも5段階に分散すること。"""
+    """値のばらつきを10段階（10分位）に分散すること。"""
 
-    values = pd.Series([100, 101, 102, 103, 104, 105, 106, 107, 108, 109])
+    values = pd.Series(range(100, 110))
     thresholds = km7.build_tone_thresholds(values)
+
+    assert len(thresholds.cutpoints) == 9
 
     classes = [
         km7.classify_metric(value, thresholds)
-        for value in [100, 102, 104, 106, 109]
+        for value in range(100, 110)
     ]
 
-    assert len(set(classes)) == 5
+    assert len(set(classes)) == 10
+    assert km7.classify_metric(100, thresholds) == "tone-0"
+    assert km7.classify_metric(109, thresholds) == "tone-9"
 
 
 def test_build_machine_stats_computes_kaiwari_metrics() -> None:
@@ -90,6 +94,15 @@ def test_build_border_legend_reports_games_thresholds() -> None:
     assert "1200G" in legend
 
 
+def test_sanitize_filename_replaces_illegal_characters() -> None:
+    """ファイル名に使えない文字が置換されること。"""
+
+    assert (
+        km7.sanitize_filename('蒲田7/2F:heatmap*avg_diff?"20260601".png')
+        == "蒲田7_2F_heatmap_avg_diff__20260601_.png"
+    )
+
+
 def test_render_last_digit_floor_section_uses_card_layout() -> None:
     """末尾ハイライト用のカードレイアウトが生成されること。"""
 
@@ -119,8 +132,43 @@ def test_render_last_digit_floor_section_uses_card_layout() -> None:
     )
 
     assert "machine-card" in html
-    assert "machine-name" in html
+    assert "digit-card" in html
+    assert "machine-name" not in html
     assert "ゾロ目" in html
+
+
+def test_render_floor_section_adds_export_button() -> None:
+    """フロアセクションに画像保存ボタンが入ること。"""
+
+    frame = pd.DataFrame(
+        {
+            "machine_number": [101, 102],
+            "machine_name": ["炎炎ノ消防隊", "カバネリ"],
+            "X": [1, 2],
+            "Y": [1, 1],
+            "display_x": [1, 2],
+            "display_y": [1, 1],
+            "avg_diff": [10.0, -20.0],
+            "win_rate": [60.0, 40.0],
+            "avg_games": [1500.0, 800.0],
+            "avg_kaiwari": [103.0, 98.5],
+            "hit104_rate": [60.0, 0.0],
+            "section": ["2F", "2F"],
+        }
+    )
+
+    html = km7.render_floor_section(
+        frame,
+        floor_label="2F",
+        floor_title="蒲田7 2F",
+        metric_key="avg_diff",
+        thresholds=km7.build_tone_thresholds(frame["avg_diff"]),
+        filter_label="全日",
+        export_filename="マルハンメガシティ2000-蒲田7_2F_heatmap_avg_diff_20260601-20260601.png",
+    )
+
+    assert "export-png-btn" in html
+    assert 'data-export-filename="マルハンメガシティ2000-蒲田7_2F_heatmap_avg_diff_20260601-20260601.png"' in html
 
 
 def test_render_last_digit_highlight_emits_card_html(tmp_path, monkeypatch) -> None:

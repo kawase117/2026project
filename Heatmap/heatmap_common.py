@@ -25,6 +25,7 @@ try:
         build_machine_stats,
         build_tone_thresholds,
         format_filter_label,
+        sanitize_filename,
         render_floor_section,
         render_last_digit_floor_section,
     )
@@ -36,6 +37,7 @@ except ModuleNotFoundError:
         build_machine_stats,
         build_tone_thresholds,
         format_filter_label,
+        sanitize_filename,
         render_floor_section,
         render_last_digit_floor_section,
     )
@@ -88,6 +90,25 @@ HEATMAP_METRIC_OPTIONS: dict[str, str] = {
 
 def _get_card_config(hall_name: str | None) -> dict[str, object]:
     return HALL_CARD_CONFIG.get(hall_name or "", _DEFAULT_CARD_CONFIG)
+
+
+def _build_export_filename(
+    *,
+    hall_name: str | None,
+    floor: str | None,
+    kind: str,
+    descriptor: str,
+    date_start_key: str,
+    date_end_key: str,
+) -> str:
+    hall_part = sanitize_filename(hall_name or "hall")
+    floor_part = sanitize_filename(floor or "-")
+    descriptor_part = sanitize_filename(descriptor)
+    parts = [hall_part, floor_part, kind]
+    if descriptor_part and descriptor_part != kind:
+        parts.append(descriptor_part)
+    parts.append(f"{date_start_key}-{date_end_key}")
+    return "_".join(parts) + ".png"
 
 
 def load_coordinate_frame(
@@ -225,9 +246,6 @@ def render_heatmap_page(
         st.error(f"DB file not found: {db_path}")
         st.stop()
 
-    st.markdown(f"## {title}")
-    st.markdown(subtitle)
-
     validated_range = _ensure_date_range(date_range)
     if date_range is not None and validated_range is None:
         st.warning("開始日と終了日を両方選択してください")
@@ -332,6 +350,14 @@ def render_heatmap_page(
     st.caption(f"追加フィルタ: {filter_label}")
 
     thresholds = build_tone_thresholds(frame[metric].dropna())
+    export_filename = _build_export_filename(
+        hall_name=hall_name or title,
+        floor=floor,
+        kind="heatmap",
+        descriptor=metric,
+        date_start_key=date_start_key,
+        date_end_key=date_end_key,
+    )
 
     section_html = render_floor_section(
         frame,
@@ -343,6 +369,7 @@ def render_heatmap_page(
         slot_x=card_config["slot_x"],
         slot_y=card_config["slot_y"],
         pad=card_config["pad"],
+        export_filename=export_filename,
     )
 
     html = build_html_document(
@@ -503,6 +530,14 @@ def render_last_digit_highlight(
     )
     heatmap_df["section"] = floor if floor is not None else "-"
     heatmap_df.attrs["date_range_label"] = f"{start_date:%Y-%m-%d} 〜 {end_date:%Y-%m-%d}"
+    export_filename = _build_export_filename(
+        hall_name=hall_name or title,
+        floor=floor,
+        kind="digit_highlight",
+        descriptor="digit_highlight",
+        date_start_key=date_start_key,
+        date_end_key=date_end_key,
+    )
 
     selected_categories = set(
         st.multiselect(
@@ -522,6 +557,7 @@ def render_last_digit_highlight(
         slot_x=card_config["slot_x"],
         slot_y=card_config["slot_y"],
         pad=card_config["pad"],
+        export_filename=export_filename,
     )
 
     hero_badges_html = "".join(

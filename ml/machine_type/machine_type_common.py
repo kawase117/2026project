@@ -4,7 +4,7 @@ import json
 import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterable
 
 import numpy as np
 import pandas as pd
@@ -104,6 +104,69 @@ def write_json_report(path: Path, payload: dict[str, Any]) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def _safe_spearman(x: pd.Series, y: pd.Series) -> tuple[float, int]:
+    from scipy.stats import spearmanr
+
+    work = pd.DataFrame({"x": x, "y": y}).dropna()
+    if len(work) < 2:
+        return (float("nan"), int(len(work)))
+    if work["x"].nunique(dropna=True) < 2 or work["y"].nunique(dropna=True) < 2:
+        return (float("nan"), int(len(work)))
+    rho = spearmanr(work["x"].to_numpy(dtype=float), work["y"].to_numpy(dtype=float)).correlation
+    return (float(rho), int(len(work)))
+
+
+def build_machine_name_correlation_summary(
+    df: pd.DataFrame,
+    feature_cols: Iterable[str],
+    target_col: str,
+    *,
+    group_col: str = "machine_name",
+    min_n: int = 10,
+) -> pd.DataFrame:
+    if group_col not in df.columns:
+        raise KeyError(f"missing group_col: {group_col}")
+    rows = []
+    for feature in feature_cols:
+        per_group: list[float] = []
+        for _, group in df.groupby(group_col, sort=True):
+            rho, n = _safe_spearman(group[feature], group[target_col])
+            if np.isfinite(rho) and n >= int(min_n):
+                per_group.append(float(rho))
+        if per_group:
+            series = pd.Series(per_group, dtype=float)
+            rows.append(
+                {
+                    "feature": feature,
+                    "target": target_col,
+                    "group_col": group_col,
+                    "min_n": int(min_n),
+                    "n_groups": int(series.size),
+                    "mean_rho": float(series.mean()),
+                    "median_rho": float(series.median()),
+                    "std_rho": float(series.std(ddof=0)) if series.size > 1 else 0.0,
+                    "min_rho": float(series.min()),
+                    "max_rho": float(series.max()),
+                }
+            )
+        else:
+            rows.append(
+                {
+                    "feature": feature,
+                    "target": target_col,
+                    "group_col": group_col,
+                    "min_n": int(min_n),
+                    "n_groups": 0,
+                    "mean_rho": float("nan"),
+                    "median_rho": float("nan"),
+                    "std_rho": float("nan"),
+                    "min_rho": float("nan"),
+                    "max_rho": float("nan"),
+                }
+            )
+    return pd.DataFrame(rows)
+
+
 def load_daily_machine_type_summary(db_path: Path) -> pd.DataFrame:
     con = sqlite3.connect(db_path)
     try:
@@ -131,6 +194,32 @@ def load_daily_machine_type_summary(db_path: Path) -> pd.DataFrame:
         raise ValueError("daily_machine_type_summary returned no rows")
     if "win_rate" not in df.columns:
         df["win_rate"] = 0.0
+    return df
+
+
+def load_daily_hall_summary_slim(db_path: Path) -> pd.DataFrame:
+    con = sqlite3.connect(db_path)
+    try:
+        summary_columns = _table_columns(con, "daily_hall_summary")
+        select_columns = [col for col in ("date", "win_rate", "avg_diff_per_machine") if col in summary_columns]
+        if "date" not in select_columns:
+            select_columns.insert(0, "date")
+        df = pd.read_sql_query(
+            f"""
+            SELECT
+                {", ".join(f"d.{col}" for col in select_columns)}
+            FROM daily_hall_summary d
+            ORDER BY d.date
+            """,
+            con,
+        )
+    finally:
+        con.close()
+    if df.empty:
+        raise ValueError("daily_hall_summary returned no rows")
+    for column in ("win_rate", "avg_diff_per_machine"):
+        if column not in df.columns:
+            df[column] = 0.0
     return df
 
 

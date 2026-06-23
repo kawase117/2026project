@@ -221,6 +221,8 @@ def test_render_heatmap_page_uses_provided_date_range_without_date_input(
 
     assert "machine-card" in captured["html"]
     assert "1001" in captured["html"]
+    assert "export-png-btn" in captured["html"]
+    assert "Target_Hall_2F_heatmap_win_rate_20260101-20260102.png" in captured["html"]
 
 
 def test_render_last_digit_highlight_renders_selected_and_missing_data(
@@ -388,3 +390,5 @@ def test_render_last_digit_highlight_mixes_real_and_missing_period_stats(
     assert "1001" in html
     assert "1100" in html
     assert "N/A" in html
+    assert "export-png-btn" in html
+    assert "Target_Hall_2F_digit_highlight_20260101-20260102.png" in html

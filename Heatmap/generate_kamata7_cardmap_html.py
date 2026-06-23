@@ -38,10 +38,7 @@ class FloorSpec:
 
 @dataclass(frozen=True)
 class ToneThresholds:
-    strong_positive: float
-    positive: float
-    negative: float
-    strong_negative: float
+    cutpoints: tuple[float, ...]
 
 
 @dataclass(frozen=True)
@@ -70,6 +67,8 @@ METRICS = {
     "avg_kaiwari": MetricSpec("avg_kaiwari", "平均機械割", "{:.1f}%"),
     "hit104_rate": MetricSpec("hit104_rate", "機械割104以上率", "{:.1f}%"),
 }
+
+HTML2CANVAS_PATH = Path(__file__).resolve().parent / "static" / "html2canvas.min.js"
 
 DIGIT_CATEGORY_COLORS = {
     "0": "#1f77b4",
@@ -170,40 +169,30 @@ def load_floor_coordinates(coords_path: Path) -> pd.DataFrame:
     return coords_df
 
 
+TONE_BUCKET_COUNT = 10
+TONE_QUANTILES = tuple(i / TONE_BUCKET_COUNT for i in range(1, TONE_BUCKET_COUNT))
+
+
 def build_tone_thresholds(values: pd.Series) -> ToneThresholds:
-    """Derive palette thresholds from the current floor's metric values."""
+    """Derive decile-based palette thresholds from the current floor's metric values."""
 
     clean = values.dropna()
     if clean.empty:
-        return ToneThresholds(0.0, 0.0, 0.0, 0.0)
+        return ToneThresholds(cutpoints=tuple(0.0 for _ in TONE_QUANTILES))
 
-    q20 = float(clean.quantile(0.20))
-    q40 = float(clean.quantile(0.40))
-    q60 = float(clean.quantile(0.60))
-    q80 = float(clean.quantile(0.80))
-
-    return ToneThresholds(
-        strong_positive=q80,
-        positive=q60,
-        negative=q40,
-        strong_negative=q20,
-    )
+    cutpoints = tuple(float(clean.quantile(q)) for q in TONE_QUANTILES)
+    return ToneThresholds(cutpoints=cutpoints)
 
 
 def classify_metric(value: float | None, thresholds: ToneThresholds) -> str:
-    """Map a metric value to a tone class."""
+    """Map a metric value to one of 10 decile-based tone classes (tone-0..tone-9)."""
 
     if value is None or pd.isna(value):
         return "tone-missing"
-    if value >= thresholds.strong_positive:
-        return "tone-high"
-    if value >= thresholds.positive:
-        return "tone-mid"
-    if value <= thresholds.strong_negative:
-        return "tone-low"
-    if value <= thresholds.negative:
-        return "tone-cool"
-    return "tone-neutral"
+    for index, cutpoint in enumerate(thresholds.cutpoints):
+        if value <= cutpoint:
+            return f"tone-{index}"
+    return f"tone-{len(thresholds.cutpoints)}"
 
 
 def classify_games(value: float | None, thresholds: tuple[float, float, float]) -> str:
@@ -234,6 +223,34 @@ def _safe_text(value: object, fallback: str = "") -> str:
         return fallback
     text = str(value).strip()
     return text if text else fallback
+
+
+def sanitize_filename(value: str) -> str:
+    """Replace path-unsafe characters with underscores."""
+
+    sanitized = re.sub(r'[\\/:*?"<>|]', "_", value)
+    sanitized = re.sub(r"\s+", "_", sanitized)
+    return sanitized
+
+
+def _load_html2canvas_js() -> str:
+    if not HTML2CANVAS_PATH.exists():
+        return ""
+    return HTML2CANVAS_PATH.read_text(encoding="utf-8")
+
+
+def _export_button_html(export_filename: str | None) -> str:
+    if not export_filename:
+        return """
+          <button class="export-png-btn is-disabled" type="button" disabled title="画像エクスポート機能が利用できません">
+            📷 画像として保存
+          </button>
+        """
+    return f"""
+          <button class="export-png-btn" type="button" data-export-target="floor-map" data-export-filename="{escape(export_filename)}">
+            📷 画像として保存
+          </button>
+    """
 
 
 def _pick_last_nonempty(series: pd.Series, *, fallback: str) -> str:
@@ -552,6 +569,7 @@ def render_floor_section(
     slot_y: int = 28,
     pad: int = 10,
     name_font_size: float | None = None,
+    export_filename: str | None = None,
 ) -> str:
     """Render one floor panel."""
 
@@ -619,12 +637,17 @@ def render_floor_section(
               <strong>{summary_games:.0f}G</strong>
             </div>
           </div>
+          <div class="floor-actions">
+            {_export_button_html(export_filename)}
+          </div>
         </div>
+
+        <div class="export-preview" hidden></div>
 
         <div class="floor-legend-row">
           <div class="legend-card">
             <span>色の判例</span>
-            <p>強プラス / 弱プラス / 中立 / 弱マイナス / 強マイナス は選択中の指標で自動判定。</p>
+            <p>選択中の指標を10分位（10%刻み）で判定し、青(下位)〜白〜赤(上位)の10段階で色分け。</p>
           </div>
           <div class="legend-card">
             <span>枠線の判例</span>
@@ -693,14 +716,13 @@ def render_last_digit_card(
 
     return f"""
       <article
-        class="machine-card {games_class}"
+        class="machine-card digit-card {games_class}"
         style="left: calc(var(--pad) + ({int(row[x_col])} - 1) * var(--slot-x)); top: calc(var(--pad) + ({int(row[y_col])} - 1) * var(--slot-y)); background: {background}; color: {text_color}; opacity: {opacity}; border-color: {base_color if selected else '#cbd5e1'};"
         title="{escape(title)}"
         aria-label="{escape(title)}"
       >
         <div class="machine-number">{machine_number}</div>
-        <div class="machine-name">{escape(machine_name)}</div>
-        <div style="margin-top: 1px; padding: 0 4px; border-radius: 999px; font-size: 7px; font-weight: 800; line-height: 1.2; background: {category_chip_bg}; color: {category_chip_text};">
+        <div style="padding: 0 4px; border-radius: 999px; font-size: 7px; font-weight: 800; line-height: 1.2; background: {category_chip_bg}; color: {category_chip_text};">
           {escape(category)}
         </div>
       </article>
@@ -718,6 +740,7 @@ def render_last_digit_floor_section(
     slot_y: int = 28,
     pad: int = 10,
     name_font_size: float | None = None,
+    export_filename: str | None = None,
 ) -> str:
     """Render one floor panel for last-digit highlighting."""
 
@@ -788,7 +811,12 @@ def render_last_digit_floor_section(
               <strong>{summary_games:.0f}G</strong>
             </div>
           </div>
+          <div class="floor-actions">
+            {_export_button_html(export_filename)}
+          </div>
         </div>
+
+        <div class="export-preview" hidden></div>
 
         <div class="floor-legend-row">
           <div class="legend-card">
@@ -843,6 +871,7 @@ def build_html_document(
     """Build the final standalone HTML document."""
 
     metric_label = metric_label or METRICS[metric_key].label
+    html2canvas_js = _load_html2canvas_js()
     hero_title = hero_title or f"{hall_name} カード型フロアマップ"
     hero_copy = hero_copy or (
         "Plotly のマス目ではなく、台ごとのカードをフロア上に並べる試作です。"
@@ -883,6 +912,7 @@ def build_html_document(
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{escape(hall_name)} カード型フロアマップ</title>
+  {f"<script>{html2canvas_js}</script>" if html2canvas_js else ""}
   <style>
     :root {{
       color-scheme: light;
@@ -1133,6 +1163,12 @@ def build_html_document(
       grid-template-columns: repeat(3, minmax(0, 1fr));
     }}
 
+    .floor-actions {{
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 12px;
+    }}
+
     .summary-pill {{
       padding: 12px 14px;
       border-radius: 16px;
@@ -1155,6 +1191,62 @@ def build_html_document(
       font-size: 17px;
       font-weight: 800;
       color: #0f172a;
+    }}
+
+    .export-png-btn {{
+      appearance: none;
+      border: 1px solid rgba(37, 99, 235, 0.24);
+      background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%);
+      color: #1d4ed8;
+      border-radius: 999px;
+      padding: 9px 14px;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
+      box-shadow: 0 8px 16px rgba(37, 99, 235, 0.1);
+    }}
+
+    .export-png-btn:hover:not(:disabled) {{
+      transform: translateY(-1px);
+      box-shadow: 0 10px 18px rgba(37, 99, 235, 0.14);
+    }}
+
+    .export-png-btn.is-loading,
+    .export-png-btn:disabled {{
+      cursor: wait;
+      opacity: 0.68;
+      transform: none;
+      box-shadow: none;
+    }}
+
+    .export-preview {{
+      margin: 0 18px 14px;
+      padding: 12px;
+      border-radius: 18px;
+      border: 1px dashed rgba(148, 163, 184, 0.6);
+      background: rgba(255, 255, 255, 0.7);
+    }}
+
+    .export-preview[hidden] {{
+      display: none;
+    }}
+
+    .export-preview p {{
+      margin: 10px 0 0;
+      color: #475569;
+      font-size: 12px;
+      line-height: 1.6;
+    }}
+
+    .export-preview img {{
+      display: block;
+      max-width: 100%;
+      height: auto;
+      border-radius: 12px;
+      border: 1px solid rgba(203, 213, 225, 0.85);
+      background: #fff;
     }}
 
     .floor-legend-row {{
@@ -1283,34 +1375,69 @@ def build_html_document(
       letter-spacing: -0.02em;
     }}
 
-    .tone-high {{
-      background: linear-gradient(180deg, #fff1f2 0%, #fecdd3 100%);
-      border-color: #ef4444;
-      color: #7f1d1d;
+    .machine-card.digit-card {{
+      justify-content: space-between;
+      padding: 3px 2px;
     }}
 
-    .tone-mid {{
+    .tone-0 {{
+      background: linear-gradient(180deg, #1d4ed8 0%, #1e3a8a 100%);
+      border-color: #1e3a8a;
+      color: #ffffff;
+    }}
+
+    .tone-1 {{
+      background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+      border-color: #2563eb;
+      color: #ffffff;
+    }}
+
+    .tone-2 {{
+      background: linear-gradient(180deg, #93c5fd 0%, #60a5fa 100%);
+      border-color: #3b82f6;
+      color: #1e3a8a;
+    }}
+
+    .tone-3 {{
+      background: linear-gradient(180deg, #dbeafe 0%, #bfdbfe 100%);
+      border-color: #60a5fa;
+      color: #1e3a8a;
+    }}
+
+    .tone-4 {{
+      background: linear-gradient(180deg, #f0f9ff 0%, #eff6ff 100%);
+      border-color: #93c5fd;
+      color: #0f172a;
+    }}
+
+    .tone-5 {{
+      background: linear-gradient(180deg, #fffbeb 0%, #fef3c7 100%);
+      border-color: #fcd34d;
+      color: #0f172a;
+    }}
+
+    .tone-6 {{
       background: linear-gradient(180deg, #fff7ed 0%, #fed7aa 100%);
       border-color: #fb923c;
       color: #7c2d12;
     }}
 
-    .tone-neutral {{
-      background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-      border-color: #cbd5e1;
-      color: #0f172a;
+    .tone-7 {{
+      background: linear-gradient(180deg, #fed7aa 0%, #fdba74 100%);
+      border-color: #f97316;
+      color: #7c2d12;
     }}
 
-    .tone-cool {{
-      background: linear-gradient(180deg, #eff6ff 0%, #bfdbfe 100%);
-      border-color: #3b82f6;
-      color: #1e3a8a;
+    .tone-8 {{
+      background: linear-gradient(180deg, #fecaca 0%, #f87171 100%);
+      border-color: #ef4444;
+      color: #7f1d1d;
     }}
 
-    .tone-low {{
-      background: linear-gradient(180deg, #dbeafe 0%, #93c5fd 100%);
-      border-color: #2563eb;
-      color: #1e3a8a;
+    .tone-9 {{
+      background: linear-gradient(180deg, #f87171 0%, #b91c1c 100%);
+      border-color: #991b1b;
+      color: #ffffff;
     }}
 
     .tone-missing {{
@@ -1451,6 +1578,9 @@ def build_html_document(
       const MIN_SCALE = {min_scale};
       const tabs = Array.from(document.querySelectorAll('[data-floor-tab]'));
       const panels = Array.from(document.querySelectorAll('[data-floor-panel]'));
+      const exportButtons = Array.from(document.querySelectorAll('[data-export-filename]'));
+      const HTML2CANVAS_READY = typeof html2canvas === 'function';
+      const CAPTURE_PIXEL_THRESHOLD = 1200 * 900;
 
       function fitMap(panel) {{
         const viewport = panel.querySelector('.floor-map-viewport');
@@ -1525,6 +1655,159 @@ def build_html_document(
 
         requestAnimationFrame(fitActiveMap);
       }}
+
+      function chooseCaptureScale(map) {{
+        const width = map.offsetWidth || 0;
+        const height = map.offsetHeight || 0;
+        if (!width || !height) {{
+          return 1;
+        }}
+        return width * height > CAPTURE_PIXEL_THRESHOLD ? 1 : 2;
+      }}
+
+      function getPreview(shell) {{
+        let preview = shell.querySelector('.export-preview');
+        if (!preview) {{
+          preview = document.createElement('div');
+          preview.className = 'export-preview';
+          shell.appendChild(preview);
+        }}
+        return preview;
+      }}
+
+      function resetButton(button) {{
+        const label = button.dataset.originalLabel || '📷 画像として保存';
+        button.textContent = label;
+        button.classList.remove('is-loading');
+        button.disabled = !HTML2CANVAS_READY;
+      }}
+
+      function showPreview(shell, dataUrl, filename) {{
+        const preview = getPreview(shell);
+        preview.hidden = false;
+        preview.innerHTML = '';
+
+        const image = document.createElement('img');
+        image.src = dataUrl;
+        image.alt = filename;
+        preview.appendChild(image);
+
+        const note = document.createElement('p');
+        note.textContent = 'ダウンロードがブロックされたため、この画像を長押しまたは右クリックして保存してください。';
+        preview.appendChild(note);
+      }}
+
+      async function handleExport(button) {{
+        if (!HTML2CANVAS_READY) {{
+          return;
+        }}
+
+        const shell = button.closest('.floor-shell');
+        const map = shell?.querySelector('.floor-map');
+        if (!shell || !map) {{
+          return;
+        }}
+
+        const preview = getPreview(shell);
+        preview.hidden = true;
+        preview.innerHTML = '';
+
+        if (!button.dataset.originalLabel) {{
+          button.dataset.originalLabel = button.textContent || '📷 画像として保存';
+        }}
+        button.disabled = true;
+        button.classList.add('is-loading');
+        button.textContent = '生成中...';
+
+        const wrapper = document.createElement('div');
+        wrapper.setAttribute('aria-hidden', 'true');
+        wrapper.style.position = 'fixed';
+        wrapper.style.left = '-99999px';
+        wrapper.style.top = '0';
+        wrapper.style.pointerEvents = 'none';
+        wrapper.style.zIndex = '-1';
+
+        const clone = map.cloneNode(true);
+        clone.style.transform = 'none';
+        clone.style.position = 'relative';
+        clone.style.left = '0';
+        clone.style.top = '0';
+        clone.style.margin = '0';
+        wrapper.appendChild(clone);
+        document.body.appendChild(wrapper);
+
+        try {{
+          if (document.fonts && document.fonts.ready) {{
+            await document.fonts.ready;
+          }}
+          await new Promise((resolve) => requestAnimationFrame(() => resolve()));
+
+          const canvas = await html2canvas(clone, {{
+            scale: chooseCaptureScale(clone),
+            backgroundColor: '#f8fafc',
+            useCORS: true,
+          }});
+
+          const dataUrl = canvas.toDataURL('image/png');
+          const filename = button.dataset.exportFilename || 'export.png';
+
+          try {{
+            const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+            if (blob) {{
+              const objectUrl = URL.createObjectURL(blob);
+              try {{
+                const anchor = document.createElement('a');
+                anchor.href = objectUrl;
+                anchor.download = filename;
+                anchor.rel = 'noopener';
+                document.body.appendChild(anchor);
+                anchor.click();
+                anchor.remove();
+                setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+                return;
+              }} catch (downloadError) {{
+                URL.revokeObjectURL(objectUrl);
+              }}
+            }}
+          }} catch (downloadError) {{
+            // fall through to the next fallback
+          }}
+
+          try {{
+            const opened = window.open(dataUrl, '_blank', 'noopener,noreferrer');
+            if (opened) {{
+              return;
+            }}
+          }} catch (openError) {{
+            // fall through to DOM preview
+          }}
+
+          showPreview(shell, dataUrl, filename);
+        }} catch (error) {{
+          console.error('PNG export failed', error);
+          const message = getPreview(shell);
+          message.hidden = false;
+          message.innerHTML = '';
+          const note = document.createElement('p');
+          note.textContent = '画像の生成に失敗しました。';
+          message.appendChild(note);
+        }} finally {{
+          document.body.removeChild(wrapper);
+          resetButton(button);
+        }}
+      }}
+
+      exportButtons.forEach((button) => {{
+        if (!HTML2CANVAS_READY) {{
+          button.disabled = true;
+          button.title = '画像エクスポート機能が利用できません';
+          return;
+        }}
+
+        button.addEventListener('click', () => {{
+          handleExport(button);
+        }});
+      }});
 
       tabs.forEach((tab) => {{
         tab.addEventListener('click', () => activateFloor(tab.dataset.floorTab));

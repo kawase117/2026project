@@ -252,32 +252,56 @@ ANOMALYの閾値（デフォルトz=2.0）は機種の特性に応じて調整�
 ---
 id: kamata7-aim-juggler-streak-86
 trigger: "蒲田7でアイムジャグラーEX-TPの台を選ぶとき / ラグ分析の結果を見るとき"
-confidence: 0.95
+confidence: 0.4
 scope: finding
 domain: lag-analysis
 source: empirical-analysis
 project_id: 2026project
 project_name: pachinko-analyzer
 
-# 蒲田7: アイムジャグラーEX-TP 据え継続streak=86%（n=139）
+# [訂正済み] 蒲田7: アイムジャグラーEX-TP streak=86%/rebound=74% は無条件baseline(83.8%)とほぼ同水準 — 前日情報の追加価値は薄い
 
 ## 背景
 lag_analysis の結果:
 - streak_rate=86%: 前日プラスなら翌日も86%の確率でプラス（n=139, avg=+285）
 - rebound_rate=74%: 前日マイナスでも74%でプラスに戻る（n=27, avg=+137）
 
-全ホール・全機種中でstreak=86%は突出して高い値。
-一般的に streak率がホール全体plus_rate（約44-45%）を大きく超えている場合、
-「複数日連続で高設定が維持されている」可能性が高い。
+[2026-06-13 訂正] 当初「全ホール・全機種中でstreak=86%は突出して高い」と解釈し、
+比較baselineとして「ホール全体plus_rate（約44-45%）」を使っていたが、これは
+台×日（machine_detailed_results 1行単位、n=4230）の粒度であり、lag_analysisが
+使う「日付×機種で複数台を平均した日次集計」（n>=5台/日）とは粒度が異なり
+比較不適切だった。
 
-他の注目機種（蒲田7）:
-- スマスロ北斗の拳: streak=79% avg=+492 n=255
-- マイジャグラーV: streak=79% avg=+251 n=249
-- わたしの幸せな結婚: rebound=77% avg=+1107 n=22
+正しいbaseline（日付×機種の日次集計、n_days=167）で再計算した結果:
+- アイムジャグラーEX-TP 無条件 daily plus_rate = 83.8%（n_days=167）
+- streak=86% は baseline(83.8%)とほぼ同値（+2.2pt）→ 前日プラス情報はほぼ無情報
+- rebound=74% は baseline(83.8%)より低い（-9.8pt）→ 前日マイナスはやや不利な兆候
+
+n_days=167 ≈ n_after_plus(139) + n_after_minus(27) で一致しており、この機種は
+そもそも日次集計ベースで83.8%という高い確率でプラスになる「恒常的に強い機種」
+である可能性が高く、「前日の状態に連続性がある」という当初の解釈は支持されない。
+
+他の注目機種（蒲田7、2026-06-13 baseline再検証済み）:
+- スマスロ北斗の拳: streak=79%(n=255) vs baseline daily plus_rate=76.9%(n_days=338)
+  → +2.1pt、ほぼ誤差レベル。baseline自体が高い「恒常的に強い機種」。
+- マイジャグラーV: streak=79%(n=249) vs baseline daily plus_rate=75.1%(n_days=338)
+  → +3.9pt、同様に誤差レベル。
+- わたしの幸せな結婚: rebound=77%(n=22) vs baseline daily plus_rate=65.1%(n_days=63)
+  → **+11.9pt**。4機種中唯一、conditional値がbaselineを大きく上回る。
+  ただしn=22は小サンプルで過信注意。
 
 ## アクション
-前日のデータを確認し、アイムジャグラーEX-TPがプラスだった台を翌日も狙う。
-1000G未満の台は除外推奨（信頼性低）。
+- アイムジャグラーEX-TP・北斗の拳・マイジャグラーVの「前日プラスなら翌日も狙う」
+  という運用は、いずれもbaseline自体が高い（75-84%）「恒常的に強い機種」である
+  ことの言い換えに過ぎない可能性が高い。前日情報の有無で台選びの優先度を
+  変える根拠としては使わない。
+- 「わたしの幸せな結婚」のrebound=77%（baseline+11.9pt）は4機種中唯一、
+  前日情報に意味がありそうな候補。ただしn=22のため、追加データでの
+  再現性確認が必要（速断しない）。
+- lag_analysis のstreak_rate/rebound_rateを評価する際は、必ず
+  `groupby(["date", machine_name])` で日次集計した無条件plus_rate
+  （tmp/check_aimjuggler_daily_baserate.py 参照）をbaselineとして
+  併記し、conditional値との差分（pt差）で評価する。
 
 ---
 id: lag-analysis-other-halls-notable
