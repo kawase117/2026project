@@ -7,6 +7,8 @@ ana-slo.com からパチスロホールのデータをスクレイピングし�
 | ファイル | 役割 |
 |---------|------|
 | `anaslo-scraper_multi.py` | メインスクレイパー（マルチホール対応） |
+| `extract_and_batch_tables.py` | 1geki 機種ページから HTML テーブルを抽出し、LLM 向けバッチを `scratch/1geki_batches/` に出力 |
+| `fetch_rtp_via_llm.py` | 1geki 機種ページを取得し、LLM 解釈で RTP/BB/RB を `machine_list_for_research.csv` に反映 |
 
 ## データフロー
 
@@ -56,3 +58,4 @@ data/{hall_name}/{date}_{hall_name}_data.json
 - スクレイピング対象：`all_data_table`（個別台）と`last_digit_data_table`（末尾別集計）の2テーブル
 - 機種名の正規化・フラグ判定はPhase 2で行う（Phase 1ではやらない）
 - 出力先の`data/`フォルダはgitignore対象
+- 1geki 系の補助バッチ出力は `scratch/1geki_batches/` に置き、root には出さない

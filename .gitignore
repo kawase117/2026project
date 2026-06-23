@@ -9,6 +9,10 @@ venv/
 .env
 .coverage
 .pytest_cache/
+.pytest-tmp*/
+.pytest_tmp*/
+.playwright-cli/
+.codex/
 ml/experiments/outputs/
 ml/experiments/*.json
 ml/experiments/*.csv
@@ -19,3 +23,31 @@ catboost_info/
 .pytest-tmp-local/
 .mcp.json
 dbhub.toml
+
+# Local scratch and transient analysis artifacts
+scratch/
+tmp/
+_tmp_*
+Heatmap/*.tmp.*
+NUL
+docs/codex_prompts/
+docs/superpowers/plans/
+docs/superpowers/specs/
+
+# Generated analysis and research outputs
+ml/analysis/results/*/
+ml/machine_type/exploratory/output/*.json
+ml/machine_type/exploratory/output/*.md
+document/machine_master_research/1geki_slot_page_index.json
+document/machine_master_research/duplicate_selected_url_groups.md
+document/machine_master_research/duplicate_selected_url_groups_split.md
+document/machine_master_research/duplicate_url_decisions.json
+document/machine_master_research/duplicate_url_decisions.md
+document/machine_master_research/duplicate_url_resolution.csv
+document/machine_master_research/duplicate_url_resolution.json
+document/machine_master_research/duplicate_url_resolution.md
+document/machine_master_research/low_confidence_selected.md
+document/machine_master_research/machine_master_research_diff.json
+document/machine_master_research/machine_master_research_enhanced.csv
+document/machine_master_research/machine_master_research_url_map.csv
+document/machine_master_research/machine_master_research_url_map.json
