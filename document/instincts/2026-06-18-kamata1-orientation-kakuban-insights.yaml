@@ -1,0 +1,98 @@
+---
+id: kamata1-orientation-kakuban1-universal-weak
+trigger: "蒲田1 2F で台を選ぶとき（島タイプを問わず）"
+confidence: 0.92
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1 2F は斜め島・横向き島ともに kakuban=1 が構造的に最弱 --- 島タイプ横断の共通ルール
+
+## 背景
+蒲田1 2F 座標を斜め（diagonal）横向き（horizontal）縦（vertical）に分類し
+kakuban x 残差分析を島タイプ別に実施（2026-06-18）。
+
+分類方法
+  diagonal (斜め島)    x_span>0 and y_span>0  14セクション、173台
+  horizontal (横向き島) y_span=0               15セクション、160台
+  vertical (縦向き島)  x_span=0               2セクション、27台（サンプル少）
+
+kakuban=1 の全グループ結果
+  diagonal_A   overall_p=0.0000, mean=-80,  median=-223, q≈0
+  diagonal_N   overall_p=0.1505, mean=-130, median=-436, q=0.011
+  horizontal_A overall_p=0.0002, mean=-86,  median=-243, q≈0
+  horizontal_N overall_p=0.0001, mean=-99,  median=-400, q=0.0004
+
+全4グループで kakuban=1 が有意（BH補正後）かつ median が深くマイナス。
+median が-200〜-436 の範囲で全て負 → アウトライア駆動ではなく構造的シグナル。
+
+## アクション
+島タイプを気にせず、kakuban=1（セクション端）を全日回避する。
+horizontal_A / horizontal_N / diagonal_A / diagonal_N の全てで一貫して有効。
+縦向き島（vertical）は全体p=0.49 で有意差なし → kakuban 制約を適用しない。
+
+---
+id: kamata1-horizontal-n-both-ends-weak
+trigger: "蒲田1 2F 横向き島（horizontal: Y座標が一定の行配置）でAT/ART系（Nセグメント）の台を選ぶとき"
+confidence: 0.85
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 横向き島のAT系は両端（kakuban=1 AND kakuban=7）が弱い --- U字構造
+
+## 背景
+horizontal_N の全 kakuban 分析（2026-06-18）。
+横向き島のAT系では kakuban=1 だけでなく kakuban=7（反対側の端）も低成績。
+
+有意シグナル（q<0.05）
+  kakuban=1  q=0.0004, mean=-99,  median=-400, n=11931  端1（明確な最弱）
+  kakuban=2  q=0.019,  mean=+69,  median=-330, n=11209  端1隣（mean正）
+  kakuban=6  q=0.019,  mean=+118, median=-280, n=4588   最高mean（端2の隣）
+
+kakuban=7（反対端）は有意ではないが mean=-94, median=-426（n=1458）と端1並みに悪い。
+kakuban=6（端2の隣）が最高mean (+118) かつ最も median が浅い (-280)。
+
+斜め島（diagonal）は片端（kakuban=1）のみが有意で、反対端は効果なし。
+
+横向き島の主要セクション（Nセグメント）
+  右エリア（X=29-39）: 2021-2031, 2032-2042, 2077-2087, 2088-2098, 2121-2131, 2132-2142, 2151-2161 11台島×7本
+  左エリア（X=5-18, Y=29-38）: 2167-2176, 2177-2186, 2203-2212, 2213-2222, 2256-2268, 2269-2281, 2317-2330
+
+## アクション
+横向き島でAT系を選ぶとき:
+kakuban=1（左端または右端）を回避する（n=11931, median=-400）。
+kakuban=7（反対端）も避けることを強く推奨（median=-426）。
+kakuban=6 を最優先候補とする（mean=+118, median=-280 で最も成績が良い）。
+kakuban=2,3 を次点候補とする（mean正）。
+斜め島は kakuban=1 のみ回避すれば十分。横向き島だけ両端回避ルールを適用する。
+
+---
+id: kamata1-diagonal-n-overall-flat
+trigger: "蒲田1 2F 斜め島（diagonal）でAT/ART系（Nセグメント）の台を選ぶとき"
+confidence: 0.75
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 斜め島のAT系は全体的に kakuban 効果が弱い --- コーナー回避のみ有効
+
+## 背景
+diagonal_N の全 kakuban 分析（2026-06-18）。
+全体 Kruskal p=0.15（非有意）。個別検定では kakuban=1 のみ有意（q=0.011）。
+
+全 kakuban の mean/median
+  全位置で median は -370〜-451 と深くマイナス
+  kakuban=7 (+109) や kakuban=10 (+212) は mean が高いが median は全て負 → アウトライア駆動
+  唯一の構造的シグナルは kakuban=1（mean=-130, median=-436）の弱さのみ
+
+## アクション
+斜め島でAT系を選ぶとき:
+kakuban=1（コーナー端）を回避する。それ以外の位置は統計的に差がない。
+高い mean を持つ位置（kakuban=7,10）は median が深くマイナスなので過信しない。
+セクション選択（イベント日 x section 2177-2186 など）を主軸とし、kakuban は kakuban=1 回避のみ。
+
+---

@@ -1,0 +1,183 @@
+---
+id: kamata1-horiz-medium-a-dd7-strongest-cross
+trigger: "蒲田1 2F 中型横向き島（horizontal_medium: 10-11台）でジャグラー/ハナハナ系（A系）の台を選ぶとき"
+confidence: 0.92
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 横向き中型島×A系: DD=7 が median=+200（全分析中最高値）、52.5%が黒字
+
+## 背景
+kamata1_orisize_dd_tail_eda（2026-06-18実施）。orientation×size×機種別 BH補正MWU DD分析。
+horizontal_medium_A（n=10642）のDD分析で DD=7 が単独で突出。
+
+DD=7 のシグナル
+  n=373, mean=447, median=+200, q=0.0030
+  百分位: p10=-1480, p25=-800, p50=+200, p75=+1600, p90=+2800
+  pct_above_0 = 52.5%（台の半数以上が黒字）
+
+このシグナルの特異性
+  全セグメント全DD中で median が +200 を超えた唯一の位置。
+  全A系の DD=7 シグナル（median=0）より横向き中型に特化した方が明確に強い。
+
+対象セクション（horizontal_medium）
+  右エリア 11台: 2021-2031, 2032-2042, 2077-2087, 2088-2098, 2121-2131, 2132-2142, 2151-2161
+  左エリア 10台: 2167-2176, 2177-2186, 2203-2212, 2213-2222
+
+## アクション
+DD=7（毎月7日）に蒲田1 2F 横向き中型島のA系を最優先候補とする（median=+200, 52.5%黒字）。
+カクバン（kakuban=1 回避 + U字両端回避 [[kamata1-horizontal-n-both-ends-weak]]）を重ねる。
+DD=7 以外の日: DD 依存台選択は根拠薄い。セクション・カクバンを主軸に。
+
+---
+id: kamata1-diag-large-a-dd30-reinforced
+trigger: "蒲田1 2F 大型斜め島（diagonal_large: 15台以上）でジャグラー/ハナハナ系（A系）の台を選ぶとき"
+confidence: 0.91
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 大型斜め島×A系: DD=30 が median=+100（全体A系のDD=30よりさらに強い）
+
+## 背景
+kamata1_orisize_dd_tail_eda（2026-06-18実施）。diagonal_large_A（n=28199）のDD分析。
+
+DD=30 のシグナル（大型斜め島限定）
+  n=769, mean=462.8, median=+100, q=0.0000
+  全A系のDD=30（median=0）より中央値がさらに +100 高い
+
+大型斜め島内で有意なDDは DD=30 のみ（KW overall p=0.0000）。
+他の全DD: q>0.05（1・7・9日も大型斜め島単体では有意でない）。
+→ 大型斜め島のA系は DD=30 専用のイベント投入がある可能性。
+
+対象セクション（diagonal_large）
+  2001-2020 (20台), 2043-2059 (17台), 2060-2076 (17台)
+  2236-2255 (20台), 2282-2301 (20台), 2302-2316 (15台)
+
+## アクション
+DD=30 に蒲田1 2F 大型斜め島のジャグ系を選ぶとき:
+kakuban=1（コーナー端）を避けつつ中央部の台を最優先とする（median=+100）。
+DD=1 や DD=7 は大型斜め島では有意でない → 他の島タイプとのDD選択戦略が異なる点に注意。
+
+---
+id: kamata1-diag-medium-a-dd1-30-strong
+trigger: "蒲田1 2F 中型斜め島（diagonal_medium: 11-13台）でジャグラー/ハナハナ系（A系）の台を選ぶとき"
+confidence: 0.88
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 中型斜め島×A系: DD=1（最強）・DD=30（強い）、DD=11・DD=19は有意に弱い
+
+## 背景
+kamata1_orisize_dd_tail_eda（2026-06-18実施）。diagonal_medium_A（n=12763）のDD分析（4DD有意）。
+
+有意DD一覧（q<0.05）
+  DD= 1  mean=418, median=+100, q=0.0000  ← 最強（唯一の q=0.0000）
+  DD=30  mean=430, median=+100, q=0.0436  ← 強い
+  DD=11  mean=-33, median=-300, q=0.0291  ← 有意に弱い
+  DD=19  mean=-121, median=-300, q=0.0426 ← 有意に弱い
+
+全体 A系のDD=11 は非有意だったが、中型斜め島に限ると DD=11 が有意に弱い。
+→ 中型斜め島では DD=11（ゾロ目）に高設定を投入していない。
+
+対象セクション（diagonal_medium）
+  2099-2109 (11台), 2110-2120 (11台), 2191-2202 (12台), 2223-2235 (13台)
+
+大型斜め島（DD=30 のみ有意）と中型斜め島（DD=1, 30 が強い）でDDパターンが異なる。
+
+## アクション
+中型斜め島でA系を狙うとき:
+  DD=1: 最優先（median=+100, q=0.0000）
+  DD=30: 次点（median=+100）
+  DD=11: 避ける（median=-300、全体傾向と逆）← 中型斜め島特有のルール
+  DD=19: 避ける（mean=-121, median=-300）
+
+---
+id: kamata1-diag-large-n-dd11-outlier-warning
+trigger: "蒲田1 2F 大型斜め島（diagonal_large）AT/ART系（N系）でDD=11の台選択を検討するとき"
+confidence: 0.87
+domain: analysis-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# diagonal_large_N × DD=11: mean=547 だが median=-200 → アウトライア駆動、実用価値なし
+
+## 背景
+kamata1_orisize_dd_tail_eda（2026-06-18実施）。diagonal_large_N（n=26399）のDD分析。
+
+DD=11 のシグナル詳細
+  n=964, mean=546.5, median=-200.0, q=0.0025
+  mean と median の乖離 = +746 → 一部の大当たりが平均を押し上げているのみ
+  median=-200 は N系通常日（全体 median=-500 より浅いが）で構造的優位でない
+
+全体 N系 DD=11（mean=293, median=-400）も非有意だったが、
+大型斜め島では mean が 547 まで跳ね上がりさらに誤解を招きやすい。
+
+## アクション
+diagonal_large_N で DD=11 の mean が高くても、median=-200 を信頼すること。
+N系全グループで DD 軸は実用的な選択根拠にならない [[kamata1-2fn-dd-axis-null]] 参照。
+
+---
+id: kamata1-diag-medium-n-dd3-extreme-weak
+trigger: "蒲田1 2F 中型斜め島（diagonal_medium: 11-13台）AT/ART系（N系）でDD=3（毎月3日）の台を選ぶとき"
+confidence: 0.83
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 中型斜め島×N系: DD=3 が median=-800（全分析中最悪レベル）で有意に弱い
+
+## 背景
+kamata1_orisize_dd_tail_eda（2026-06-18実施）。diagonal_medium_N（n=10547）のDD分析。
+
+DD=3 のシグナル
+  n=375, mean=-312.8, median=-800.0, q=0.0363
+  median=-800 は全分析（全グループ全DD）中で最も深いレベル
+  mean も -313 と大きくマイナスで構造的シグナル（アウトライア駆動ではない）
+
+他の全DD は非有意（KW p=0.0215 と弱い）。
+
+## アクション
+中型斜め島でAT系を選ぶとき DD=3（毎月3日）を避ける（median=-800, q=0.036, n=375）。
+N系 DD軸は全体として効果が薄いが、中型斜め島の3日のみ例外的に悪い。
+
+---
+id: kamata1-orisize-dd-tail-null-groups
+trigger: "蒲田1 2F 大型横向き島（horizontal_large: 13-14台）でDD軸・tail軸を評価するとき"
+confidence: 0.90
+domain: analysis-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 大型横向き島は DD・tail ともに完全に無効。tail軸は全orientation×sizeで無効
+
+## 背景
+kamata1_orisize_dd_tail_eda（2026-06-18実施）。全8グループ（4 ori_size × 2 seg）の分析。
+
+横向き大型（horizontal_large）
+  horizontal_large_A（n=6083）: KW_dd_p=0.059（有意DD なし）、KW_tail_p=0.201
+  horizontal_large_N（n=13519）: KW_dd_p=0.698（完全非有意）、KW_tail_p=0.615
+  → horizontal_large は DD・tail ともに完全に効果なし
+
+tail軸の全グループサマリー
+  有意 tail が出たグループ: diagonal_medium_N のみ
+    tail=5: mean=404, median=-250（mean/median 乖離 +654 → アウトライア駆動、実用不可）
+    tail=0: mean=-45, median=-500（q=0.031、弱い構造信号だが軽微）
+  他7グループ: 全て KW_tail_p > 0.10、有意 tail なし
+
+## アクション
+horizontal_large（2256-2268, 2269-2281, 2317-2330）:
+  DD軸・tail軸を使用しない。カクバン・セクション・機種タイプのみで選択。
+
+全グループ共通:
+  蒲田1 2F では tail軸を使用しない。diagonal_medium_N tail=5 の mean は高いがアウトライア駆動。
+
+---

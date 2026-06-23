@@ -1,0 +1,89 @@
+---
+id: kamata1-2fla-dd19-24-kakuban6-8-signal
+trigger: "蒲田1 2F 左エリア（L: X≤17）ジャグラー/ハナハナ系（Aセグメント）でDD=19〜24日に訪問するとき"
+confidence: 0.78
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1 2F_L_A × DD 19-24 では kakuban=6 と kakuban=8 が median 正で信頼性の高いシグナル
+
+## 背景
+kamata1_kakuban_rl_eda（2026-06-18実施）。
+2F 左エリア（X<=17）を L、右エリア（X>=19）を R に分割して分析。
+2F_L_A DD bin 19-24 が kruskal_q=0.0018（有意）、top_kakuban=10。
+
+kakuban 別 mean/median/n（DD=19〜24 集計）
+  kakuban=6   mean=+131, median=+86,  n=148  median 正で信頼性高
+  kakuban=8   mean=+190, median=+46,  n=148  median 正で信頼性高
+  kakuban=7   mean=+130, median=-6,   n=106  median 境界
+  kakuban=10  mean=+216, median=-188, n=147  アウトライア駆動（mean/median 乖離）
+  kakuban=1   mean=+6,   median=-200          コーナーは効果薄
+
+kakuban=6 と kakuban=8 のみ median が正。kakuban=10 は mean が最大だが median が深くマイナスなのでアウトライア駆動。
+
+## アクション
+DD=19〜24 に蒲田1 2F 左エリア ジャグ系を訪問する場合:
+kakuban=6 または kakuban=8 の台を最優先候補とする（median が正で信頼性あり）。
+kakuban=10 は mean が高く見えるが median が負なので過信しないこと。
+左エリアの対象: X<=17 の台（通路側から6番目と8番目）。
+
+---
+id: kamata1-2fra-rl-mostly-outlier-driven
+trigger: "蒲田1 2F 右エリア（R: X>=19）ジャグラー/ハナハナ系（Aセグメント）でDD別台選択をするとき"
+confidence: 0.72
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 2F_R_A は DD別に有意シグナルがあるが全位置で median が負 --- アウトライア駆動のみ、実用価値限定
+
+## 背景
+kamata1_kakuban_rl_eda（2026-06-18実施）。
+2F_R_A では 3 DD bin で有意
+
+  DD 25-31  q=0.0005（最強）, top_kakuban=8
+  DD 19-24  q=0.025,         top_kakuban=17
+  DD 13-18  q=0.047,         top_kakuban=5
+
+しかし DD 25-31 の全 kakuban 位置で mean>0 かつ median<0（例: kakuban=8 mean=+71, median=-134）。
+アウトライア（稀な大当たり）が平均を押し上げているだけであり、median ベースの安定した優位ではない。
+
+## アクション
+2F_R_A の DD 別シグナルは統計的に有意だが median ベースの実用的シグナルとして使えない。
+DD 軸で右エリアを選択する根拠はなく、通常のイベント日セクション選択（[[kamata1-2fa-event-near-universal-uplift]]）を優先する。
+
+---
+id: kamata1-2frn-dd7-12-kakuban20-small-sample
+trigger: "蒲田1 2F 右エリア（R: X>=19）AT/ART系（Nセグメント）でDD=7〜12日に訪問するとき"
+confidence: 0.65
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 2F_R_N DD 7-12 の kakuban=20 が median=+383（n=106）--- 小サンプルながら median 正で有望候補
+
+## 背景
+kamata1_kakuban_rl_eda（2026-06-18実施）。
+2F_R_N DD bin 7-12: kruskal_q=0.021, top_kakuban=20。
+
+kakuban 別 mean/median/n（DD=7〜12 集計）
+  kakuban=20  mean=+598, median=+383, n=106  median 正の唯一の位置（ただし n 小）
+  kakuban=6   mean=+271, median=-348, n=1510 アウトライア駆動
+  kakuban=14  mean=+266, median=-167, n=208  アウトライア駆動
+
+kakuban=20（最奥端）のみ median が正。他は全てアウトライア駆動。
+n=106 は小サンプルなのでオーバーフィットのリスクあり。
+
+2F_R_N DD 13-18（q=0.039）でも kakuban=13（mean=+241）が上位だが median=-135 でアウトライア駆動。
+
+## アクション
+DD=7〜12 に蒲田1 2F 右エリア AT系を狙う場合:
+kakuban=20（最奥端）を参考候補として意識する（median=+383 だが n=106）。
+n が小さいため過信は禁物。イベント日優先の台選択（[[kamata1-2fn-event-section-hotspot]]）を主軸とする。
+2F_R_N の DD 別シグナルは全体的にアウトライア駆動であり、実運用への適用は慎重に。
+
+---

@@ -1,0 +1,130 @@
+---
+id: cross-hall-machine-name-persistence-generalizes
+trigger: "複数ホールでML特徴量のグループ化単位(機種別/台番号別)を決めるとき"
+confidence: 0.85
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 機種別(machine_name)持続性はみとや以外の8ホール全てで再現、台番号別持続性は機種効果の代理に過ぎない
+
+## 背景
+みとや大森町店で確認された「machine_name単位の差枚持続性(rho=0.415)が最強で、
+台番号別(rho=0.123)は機種効果の代理(残差rho=0.017)」という法則を、
+ARROW池上店・ザ-シティ-ベルシティ雑色店・ヒロキ東口店・マルハンメガシティ2000-蒲田1/7・
+レイトギャップ平和島・楽園蒲田店・金時京急蒲田店の8ホールで検証した
+(eda/cross_hall_pattern_verification.py, 3ヶ月期間ごとのクインタイル+Spearman相関)。
+
+結果: 全8ホールで machine_name rho > machine_number rho、かつ機種効果を除去した
+台番号別残差rhoは概ね±0.05以内に収束。
+- machine_name rho 範囲: 0.169(ARROW) 〜 0.636(マルハン蒲田7)
+- machine_number rho 範囲: 0.015(ヒロキ) 〜 0.202(金時)
+- 残差rho: -0.015 〜 0.052 (ほぼゼロ)
+
+## アクション
+- ML特徴量設計・台選定ロジックは「機種別の直近強さ」を主軸にすることが
+  ホール横断で正当化される。台番号単位の特徴量だけでは機種効果の重複検出に
+  なりやすい。
+- 新規ホールのデータを扱う際も、まず machine_name単位のクインタイル持続性を
+  確認すれば、そのホールでこの戦略が機能するかの第一次スクリーニングになる。
+
+## 例
+```python
+# eda/cross_hall_pattern_verification.py の persistence() 関数を
+# 新規ホールのdb_pathに対して実行し、machine_name rho と
+# machine_number残差rhoを比較する
+```
+---
+
+id: cross-hall-q1-avoidance-not-universal
+trigger: "Q1(最低クインタイル)台を避ける/Q5(最高)台を狙うという戦略を他ホールに適用するとき"
+confidence: 0.8
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 「Q1回避優先」はみとや固有の傾向で、蒲田系大型ホールでは逆にQ5の方が継続率・分散ともに高い
+
+## 背景
+みとやでは「Q5(上位)は分散の大きいラッキー台に汚染されやすく、Q1(下位)の方が
+構成が安定して回避しやすい」という法則(Q1stay > Q5stay)が見られた。
+8ホールでQ5stay/Q1stay(machine_name単位)とQ1/Q5のdiff_std(分散)を比較した結果:
+
+- ARROW・ザ-シティ・ヒロキ: みとや同様 Q1stay > Q5stay、diff_std もQ1側が大きい
+  (例: ヒロキ Q5stay=0.300, Q1stay=0.442)
+- マルハン蒲田1/7・楽園蒲田・金時(蒲田系大型ホール): **逆転**。
+  Q5stay > Q1stay、diff_std もQ5側が大きい
+  (例: マルハン蒲田7 Q5stay=0.702, Q1stay=0.325、diff_std Q1=172,879 vs Q5=474,028)
+- レイトギャップ: ほぼ同等(Q5stay=0.488, Q1stay=0.505)
+
+## アクション
+- 「Q1回避」をホール横断のルールとして固定しない。蒲田系大型ホールでは
+  Q5(強い機種)の方が安定して継続するため、Q1回避ルールを適用すると
+  むしろ強い機種を見逃す機会損失になる。
+- 新規ホールでは必ず Q1stay と Q5stay の両方、およびQ1/Q5のdiff_stdを
+  比較してから、どちらの戦略(上位継続ウォッチ vs 下位回避)が有効かを判定する。
+  おおよそ「中小規模ホール(台数少・機種数多)はQ1安定型、蒲田系大型ホールは
+  Q5安定型」という傾向が見られたが、サンプルホール数が少なくホール規模との
+  関係は仮説段階。
+
+## 例
+```python
+# persistence()の戻り値からQ5stay, Q1stay を比較し、
+# どちらが大きいかでホールごとの戦略タイプを分類する
+```
+---
+
+id: cross-hall-payout-rate-range-consistent
+trigger: "クインタイル別の機械割(payout_rate)から設定差を解釈するとき"
+confidence: 0.75
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Q1〜Q5の機械割レンジは全ホールで概ね94〜105%に収まり、みとやと同程度(設定3-4相当)
+
+## 背景
+8ホールでのmachine_name単位Q1〜Q5機械割レンジ:
+ARROW 98.4-102.0%, ザ-シティ 96.0-104.9%, ヒロキ 97.2-102.6%,
+マルハン蒲田1 96.6-102.2%, マルハン蒲田7 98.3-102.5%,
+レイトギャップ 97.0-102.6%, 楽園蒲田 97.3-101.9%, 金時 95.0-102.4%。
+みとや(95.5-105.8%)と同程度のレンジ。
+
+## アクション
+- クインタイル間の機械割差を「設定3〜4相当の機種間差」として解釈するのは
+  ホール横断で妥当。「設定6確定」のような過大解釈は引き続き避ける。
+- 機械割は (games_sum*3 + diff_sum) / (games_sum*3) * 100 で算出
+  (eda/mitoya_dd_persistence_metric_comparison.py の payout_rate定義を再利用)。
+---
+
+id: cross-hall-position-and-volume-effects-not-generalizable
+trigger: "物理配置(x座標)や稼働量(games)とdiffの相関をホール横断の法則として扱うとき"
+confidence: 0.7
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 物理配置効果はマルハン蒲田7で例外的に有意。稼働量とdiffの相関はホールごとに符号が逆転し一般化不可
+
+## 背景
+- 物理配置(x座標 vs diff合計, machine_number単位): machine_layoutテーブルがあった
+  マルハン蒲田1/7のみ検証。蒲田1は rho=0.074(p=0.163, 効果なし、みとやと同じ)だが
+  蒲田7は rho=-0.112(p=0.003, 弱いが有意な負の相関)。「配置効果は無視できる」を
+  全ホールに適用するのは早計。
+- 稼働量(games_sum) vs diff合計(machine_number単位, 全期間):
+  ARROW 0.013(n.s.), ザ-シティ -0.156(p=0.072), ヒロキ 0.073(n.s.),
+  マルハン蒲田1 0.095(p=0.056), マルハン蒲田7 **-0.191(p<0.001)**,
+  レイトギャップ 0.049(n.s.), 楽園蒲田 0.077(p=0.067), 金時 **+0.443(p<0.001)**。
+  符号も大きさもホールごとに大きく異なる。
+
+## アクション
+- 配置効果(x座標)は新規ホールごとに個別検証が必要。特に機種構成が地点ごとに
+  あまり交絡しない(機種が広く分散配置されている)ホールでは配置効果が
+  顔を出す可能性がある。
+- 「稼働量が多い台は強い/弱い」という仮説は単一ホールの結果をそのまま
+  他ホールのML特徴量に転用してはならない。ホール固有の運用方針
+  (人気台への設定投入 vs 人気台での回収)が反映されているとみられる。

@@ -1,0 +1,132 @@
+---
+id: kamata7-3f-typeA-kakuban-machine-fixed-effect-confound
+trigger: "蒲田7 3F type A（または同様にnear/farがn_machines=1のセクション粒度角番分析）でcat3（near/mid/far）のε²やresidual_diff/residual_gamesの差を解釈するとき"
+confidence: 0.9
+domain: pachinko-ml-eda
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田7 3F type A の near/far cat3 「U字パターン」は角番効果ではなく28台の個体特性の交絡
+
+## 背景
+floor_segment角番ε²分析で蒲田7/3F/all_daily/type Aが最高ε²(0.002977)だったため、
+near(角番1)/mid/far(角番max)のcat3集計を行ったところ、residual_diffで
+near=-195.6, mid=+33.5, far=-182.6というU字パターン（ε²_3cat=0.00359, p=5.0e-45）
+が全14セクションで一貫して観測された。
+
+しかしnear/farは各セクションでn_machines=1（台1台のみ）であり、機種変遷
+（LAG/SUM segment分析）を確認したところ：
+- 28台中22台（79%）が約338日間、一度も機種が変わっていない
+- 28台中23台（82%）がdominant_segment_share>=0.8（実質機種固定）
+
+つまりnear/farの平均値は「その位置に台を置いた効果」ではなく、
+「14セクションの通路側・最奥に偶然固定配置された28台の特定機種・個体の
+パフォーマンス平均」そのものであり、位置効果と個体効果が分離不能。
+みとやの台570（corner5バウンス）・マイジャグラーV intra-machine効果と
+同型の交絡パターン。
+
+residual_games/games_normalizedでも同方向(near=-195.59, mid=+33.51,
+far=-182.60, ε²=0.000853/0.000779)だったが、ε²はresidual_diffよりさらに
+小さく、追加の記述的事実にとどまる。
+
+## アクション
+- セクション粒度のkakuban cat3分析で near/far の n_machines が1（または
+  少数固定）の場合、観測されたnear/far差は「位置効果」ではなく「個体・
+  機種の交絡」である可能性を最優先で疑うこと
+- 機種変遷（LAG/SUM segment）を必ず確認し、dominant_segment_share>=0.8
+  かつsegment_count=1の台が多数を占める場合、その位置カテゴリは
+  「ほぼ固定個体のサンプル」と解釈し、位置効果の主張を行わない
+- ε²がみとやmain_jugの基準値(0.0067)の半分以下(蒲田7 3F type A: 0.0036)
+  かつ上記の交絡が確認された場合、その粒度でのkakuban分析は「効果なし」
+  として打ち切り、より頑健な他フロア/セグメントの探索に戻る
+- みとや式「セクション×日の集団regression」への粒度転換は、まず
+  ε²が頑健（≳0.005）かつ個体交絡が排除できているセクション/セグメントが
+  見つかってから着手する。交絡が解消されていない状態での粒度転換は
+  「信号 vs 機種構成効果」を区別できず空振りリスクが高い
+
+## 例
+```
+kamata7_3F_typeA_near_far_machine_transitions.csv の
+segment_count_values = {1: 22, 2: 4, 4: 1, 5: 1}（n=28）
+→ 22/28(79%)が全期間同一機種 → near/far平均は位置効果ではなく個体効果
+```
+
+---
+id: residual-games-equals-games-normalized-suspicious-bug
+trigger: "compute_machine_metric_residuals()によるresidual_*列とその元の絶対値列(games_normalized等)を同じ集計で出力したとき"
+confidence: 0.6
+domain: pachinko-ml-eda
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# residual_gamesとgames_normalizedのcat3集計値が小数点まで完全一致（要点検）
+
+## 背景
+kamata7_3F_typeA_kakuban_cat3_global_games.csv で、value_col="residual_games"
+と value_col="games_normalized" の near/mid/far平均値が
+(-195.590002, 33.510066, -182.598758) と全く同一だった。
+residual_games = games_normalized - machine_name平均（line 201-211）なので、
+機種名平均が常にゼロでない限り両者が完全一致するのは構造的にあり得ない。
+
+## アクション
+- 同様の出力で residual_* と元の絶対値列が完全一致している場合、
+  集計コードが同じ列を参照している（value_col引数が実際には
+  反映されていない）バグを疑い、実装を確認する
+- 本件では効果量(ε²)がいずれにせよ小さく結論に影響しないため、
+  最終結論には影響なしとして処理したが、追加検証を行う場合は
+  最初にこの点を修正・再生成すること
+
+## 例
+```
+global_games.csv:
+  residual_games:    near=-195.590002 mid=33.510066 far=-182.598758
+  games_normalized:  near=-195.590002 mid=33.510066 far=-182.598758  # 同値→バグ疑い
+```
+
+---
+id: codex-prompt-iterative-precision-review-pattern
+trigger: "ユーザーから「プロンプトにしてください」と指示され、Codex実装プロンプトを作成・修正するとき"
+confidence: 0.85
+domain: workflow-codex-handoff
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Codex実装プロンプトはコード実装(line番号・関数定義)を読んでから書き、ユーザーの2段階指摘に備える
+
+## 背景
+蒲田7 3F type A cat3分析のCodexプロンプトを2回作成し、いずれもユーザーから
+詳細な技術的指摘（1回目: load_hall_daily_frame()の戻り値契約・出力粒度の
+混在・縮退ケース未定義、2回目: residual_gamesの「稼働率」誤解釈・検証2SQLが
+時系列変遷を見ていない・分析期間未固定）を受けて全面的に書き直した。
+両回とも、実際のソースコード（compute_machine_metric_residuals,
+load_hall_daily_frame, _compute_kakuban_group_effect,
+summarize_section_kakuban_cat3 等）を読み直すことで初めて正確な記述が
+可能になった。
+
+## アクション
+- Codex向け実装プロンプトを書く前に、関連する既存関数の実装（特に
+  戻り値の契約・列の意味・期間のデフォルト挙動）をRead toolで確認し、
+  推測や記憶ベースの記述を避ける
+- 「residual_*」のような派生列は必ず計算式（line番号付き）を確認し、
+  「稼働率」「絶対値」等の意味づけをコードと照合してから記述する
+- 時系列・期間に関する処理（変遷・change point等）は、全期間集約SQLで
+  代用せず、LAG/SUM等のwindow関数で実際に時系列変化を捉える設計にする
+- 分析対象期間は既存出力（例: all_daily）と動的に一致させ、ハードコード
+  しない（daily frameのdate min/maxから<PERIOD_START>/<PERIOD_END>を導出）
+- 出力ファイルの粒度（section別 vs floor_segment全体）が混在しないよう、
+  別ファイルに分離する
+
+## 例
+```
+1回目の指摘: 「load_hall_daily_frame()の契約が曖昧」
+→ 実装を読んでA/N両方・excluded_from_corr未フィルタで返ることを確認し、
+  プロンプトに明示的な2段フィルタ＋n_rows=56266検証を追加
+
+2回目の指摘: 「residual_gamesを稼働率と解釈しているのが不正確」
+→ compute_machine_metric_residuals()のline201-211を確認し、
+  「同機種平均比の回転数偏差」という正確な表現に修正
+```
+---

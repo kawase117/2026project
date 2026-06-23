@@ -1,0 +1,179 @@
+---
+id: classify-seg-should-be-db-flag
+trigger: "A/Nセグメント分類ロジックを変更・拡張するとき"
+confidence: 0.95
+domain: data-architecture
+source: codex-v6-implementation-failure
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# A/N分類は機種名文字列マッチではなくDBフラグにすべき
+
+## 背景
+`scoring_model.py` の `classify_seg()` は機種名の部分一致（ジャグラー、ハナハナ等）でA/N分類を行っている。
+v6実装時にCodexが `apply_patch` で日本語キーワード行のマッチに3回失敗し、全体置換に逃避。
+さらに修正後も全件N判定になるバグが発生（family_dfの反映漏れ）。
+根本原因は、ランタイムで毎回文字列マッチする設計にある。
+
+問題点:
+- 新機種追加のたびにキーワードリスト更新が必要
+- エンコード問題に脆弱（Codexの apply_patch が日本語行で失敗）
+- ホール間の機種名表記揺れリスク
+- ニューパル脱落のような見落としが起きやすい
+
+## アクション
+- DB改修タイミングで `machine_detailed_results` に `machine_category` 列（A/N）を追加
+- スクレイピング時 or DB投入時（`database/json_processor.py`）で一度だけ分類
+- スコアリングモデル側は `classify_seg` を廃止してDBフラグを参照するだけにする
+- 改修までは現行の文字列マッチを維持するが、キーワードリストの網羅性を定期確認
+
+## 例
+```python
+# 現状（脆弱）
+def classify_seg(machine_name):
+    keywords = ("ジャグラー", "ハナハナ", "ファンキー", ...)  # 漏れリスク
+    return "A" if any(k in str(machine_name) for k in keywords) else "N"
+
+# あるべき姿（DB改修後）
+# json_processor.py で投入時に分類:
+#   row["machine_category"] = classify_once(row["machine_name"])
+# scoring_model.py では:
+#   family = row["machine_category"]  # DBから直接取得
+```
+
+---
+id: codex-apply-patch-japanese-failure
+trigger: "Codexプロンプトで日本語文字列を含むファイルの編集を指示するとき"
+confidence: 0.93
+domain: codex-prompt-engineering
+source: codex-v6-implementation-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Codexの apply_patch は日本語含有行で高確率で失敗する
+
+## 背景
+v6実装でCodexが `scoring_model.py` の `classify_seg()` を編集しようとした際、
+`apply_patch` が日本語キーワード行のバイト列マッチに3回連続失敗。
+最終的に「ファイル全体を安全に置き換え」に逃避し、大幅な時間ロスが発生。
+ファイル自体はUTF-8で正常だが、パッチ適用時の文字列比較が崩れる。
+
+## アクション
+- プロンプトに「日本語を含む関数を編集する場合は関数全体を置き換えること（行単位パッチ禁止）」と明記
+- ファイルエンコーディングはUTF-8（BOMなし）を維持する旨も明記
+- 可能なら日本語リテラルを外部ファイル（JSON/CSV）に分離し、ソースコードから排除
+
+## 例
+```markdown
+## 日本語文字列を含むファイルの編集
+- `scoring_model.py` の `classify_seg()` は日本語キーワードを含む
+- apply_patch の行単位マッチが日本語行で失敗しやすい
+- 対策: 日本語を含む関数を編集する場合、**関数全体を置き換える**こと
+- エンコーディング: UTF-8（BOMなし）を維持
+```
+
+---
+id: codex-classify-seg-smoke-test-mandatory
+trigger: "Codexプロンプトで classify_seg や A/N 分類に関わる実装を指示するとき"
+confidence: 0.90
+domain: codex-prompt-engineering
+source: codex-v6-implementation-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# classify_seg 変更時は実DB機種名でのスモークテストを必須化する
+
+## 背景
+v6実装でCodexが classify_seg を修正した後、全件N判定になるバグに気づくまで
+テスト→デバッグ→DB実データ確認と複数ステップを浪費した。
+原因は2つ: (1) family_dfの反映漏れ (2) テストデータが実在機種名を使っていなかった。
+
+## アクション
+- プロンプトに以下のスモークテストを必須として埋め込む
+- A件数が0なら classify_seg のキーワードが壊れていると判断
+- テストデータも実在の機種名（DBから取得）を使用すること
+
+## 例
+```python
+# 必須スモークテスト（プロンプトに埋め込む）
+from ml.experiments.walkforward_scoring.scoring_model import classify_seg
+import sqlite3, pandas as pd
+with sqlite3.connect('db/マルハンメガシティ2000-蒲田7.db') as conn:
+    names = pd.read_sql('SELECT DISTINCT machine_name FROM machine_detailed_results', conn)
+counts = names['machine_name'].map(classify_seg).value_counts()
+print(counts)
+assert counts.get('A', 0) > 0, "classify_seg が全件Nを返している"
+```
+
+---
+id: walkforward-scoring-is-rule-based-not-ml
+trigger: "Walk-forward scoringモデルの位置づけを説明するとき"
+confidence: 0.99
+domain: ml-methodology
+source: session-discussion
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Walk-forward scoringはルールベースであってMLではない
+
+## 背景
+v1-v6のWalk-forward scoringモデルは手動設計のコンポーネント（c1-c6, hist特徴量）を
+手動設定のウェイトで線形結合するルールベースのスコアリングシステム。
+学習アルゴリズム・損失関数・パラメータ最適化プロセスが存在しない。
+Walk-forwardは評価フレームワークであり、学習手法ではない。
+
+位置づけは「MLに投入する前の特徴量探索・有効性検証フェーズ」。
+有効と判明した特徴量をCatBoost等のMLモデルに渡すための前段階。
+
+## アクション
+- このモデルの結果を「ML予測」と呼ばない
+- 「ルールベーススコアリング」または「特徴量有効性検証」と正確に位置づける
+- 真のMLパイプライン（Phase 4 CatBoost）との違いを明確にする
+- v6bのセグメント別ウェイトも「手動チューニング」であり「学習」ではない
+
+## 例
+```
+| 要素       | Walk-forward scoring | 真のML (Phase 4) |
+|-----------|---------------------|-----------------|
+| 特徴量     | 手動設計              | 手動設計も可      |
+| 重み       | 手動設定              | データから学習     |
+| 閾値       | 手動選択              | 交差検証で最適化   |
+| 学習アルゴリズム | なし             | GBM, LogReg等    |
+| 損失関数    | なし                 | logloss, AUC等   |
+```
+
+---
+id: machine-name-not-used-as-scoring-feature
+trigger: "スコアリングモデルに機種情報を組み込むことを検討するとき"
+confidence: 0.88
+domain: ml-feature-engineering
+source: session-discussion
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 機種名は現在A/N分類のみに使用、直接的な特徴量としては未使用
+
+## 背景
+機種名は差枚・機械割に大きな影響がある（理論機械割が機種ごとに異なる）が、
+現在のスコアリングモデルでは classify_seg による A/N 2値分類にしか使われていない。
+個別機種名、機種カテゴリ（6号機AT/6.5号機AT等）、技術介入可否は未使用。
+
+ルールベースで機種名を直接使うのは困難（数十〜百種類、サンプル数不足）。
+CatBoost等のツリー系MLモデルならカテゴリカル特徴量として自然に扱える。
+
+## アクション
+- ルールベースでは A/N/技術介入 の3分類程度が現実的な上限
+- 本格的な機種別分析はMLパイプライン（Phase 4）で実施
+- 技術介入機（完全攻略で設定1でも機械割100%超）の分離は別途検討課題
+- DB改修時に machine_category 列を追加すれば、分類の基盤が整う
+
+## 例
+```
+現在使用:
+  machine_name -> classify_seg() -> "A" or "N" -> セグメント名の一部
+
+未使用だが価値あり:
+  個別機種名（アイムジャグラー vs マイジャグラー） -> 理論機械割が異なる
+  機種カテゴリ（Aタイプ / 技術介入 / AT機） -> 出玉性能の天井が違う
+  技術介入可否 -> 設定1でも100%超が可能
+```

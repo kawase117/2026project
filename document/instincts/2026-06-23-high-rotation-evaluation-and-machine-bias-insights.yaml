@@ -1,0 +1,141 @@
+---
+id: high-rotation-lift-all-models-below-1
+trigger: "高回転台の捕捉率でモデル評価するとき"
+confidence: 0.95
+domain: ml-evaluation
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 全モデルの高回転捕捉liftは1.0未満（差枚スコアリングの構造的限界）
+
+## 背景
+v6a/v9b/v9cいずれもTop50の5000G+率はランダム期待以下（lift 0.74〜0.998）。
+差枚ベースでスコアリングしている以上、高回転台が上位に集中する保証はない。
+ただしv9cだけは6000G+でlift=0.998（ほぼランダム同等）まで維持。
+v6a/v9bは0.74まで落ちる。v9cがAタイプに多く配分していることが効いている。
+
+## アクション
+- 高回転捕捉率はモデルの良し悪しというよりスコアリング方式の構造的制約
+- v9cのAタイプ重配分が結果的に高回転捕捉を維持する副作用を持つ
+- 高回転捕捉を直接改善したければ、gamesをスコアに組み込む設計変更が必要
+
+## 例
+全体lift（games>=5000）: v6a=0.846, v9b=0.853, v9c=0.959
+全体lift（games>=6000）: v6a=0.738, v9b=0.743, v9c=0.998
+
+---
+id: segment-baseline-comparison-required
+trigger: "Top50の高回転率をセグメント間で比較するとき"
+confidence: 0.95
+domain: ml-evaluation
+source: user-correction
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# セグメント間のTop50高回転率比較にはベースライン比（lift）が必須
+
+## 背景
+Top50中の5000G+率だけでは、それがモデルの選別力なのかセグメント自体の特性なのか区別できない。
+ベースライン（全台の5000G+率）との比較で初めてliftが計算できる。
+実測ベースライン: 3F_R_A=46.8%, 3F_L_A=45.2%, 3F_R_N=34.5%, 2F_L_N=27.2%
+Aタイプセグメントは元々半数近くが5000G+なので、Top50のAタイプ高回転率43-46%はベースライン通り（lift≈1.0）。
+「高回転台の捕捉はセグメント構造で決まる」と結論するにはliftで確認すべき。
+
+## アクション
+- 絶対率ではなくlift（Top50率/ベースライン率）で評価する
+- セグメント別ベースラインは日・曜日・イベント日で変動するため、集計期間を揃えること
+
+## 例
+3F_L_A: Top50率=46.3%, baseline=45.2% → lift=1.02（ほぼベースライン通り）
+2F_R_N: Top50率=26.8%, baseline=26.9% → lift=1.00（同上）
+v9cのみ2F_R_Nの高回転+負けlift=1.04でランダム超え。v6aは0.98。
+
+---
+id: v9c-model-selects-specific-machines-not-random
+trigger: "v9cの台選択パターンを分析するとき"
+confidence: 0.90
+domain: ml-model-design
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# v9cは特定の台番号を繰り返し選択する（ランダムではない）
+
+## 背景
+v9c Top50の5000G+台を1週間分リストアップすると、同一台番号が連日出現する。
+- #3275 マイジャグラーV: 7日中6日
+- #3010/#3011/#3012 キングハナハナ: ほぼ毎日
+- #2058/#2059/#2070 戦国乙女5: 毎日（ただし大半マイナス）
+これはc1（過去実績）やc4（角番）などの構造的特徴量が日をまたいで安定しているため。
+
+## アクション
+- リピート台の多さはモデルの欠陥ではなく構造的特徴量の反映
+- ただしリピート台の累積成績を追跡することでモデルの実効性を検証できる
+- Aタイプのリピート台は勝率が高い。N-typeのリピート台は新台・人気台バイアスの可能性
+
+## 例
+週間リピート（6/15-6/21）:
+- #3275 マイジャグラーV: 6/7日, avg_games=7,281, 勝敗混在
+- #2058 戦国乙女5: 7/7日, avg_games=5,757, avg_diff=-2,100（全敗に近い）
+
+---
+id: ntype-high-rotation-three-factors
+trigger: "N-type（AT機）の高回転台を評価指標に使おうとするとき"
+confidence: 0.95
+domain: pachinko-domain
+source: user-domain-knowledge
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# N-type高回転は「新台」「人気台」「高設定」の3要因が混在し分離困難
+
+## 背景
+AT機の高回転は3つの要因で発生する:
+1. 新台 — 打ちたいだけで座る（例: 戦国乙女5, avg_diff=-1,184で回されている）
+2. 人気台 — 設定不問で回る機種（例: カバネリ海門, avg_diff=-1,466）
+3. 高設定 — 実際に設定が入っている
+7日間のサンプルではこれらの分離ができない。
+avg_diffが大きくマイナスでも「下振れ」の可能性は排除できない。
+
+一方Aタイプの高回転は「設定が入っていない店では回らない」というドメイン知識から
+設定投入の裏付けがある程度ある（[[atype-high-games-is-hall-level-signal]]参照）。
+
+## アクション
+- N-typeのgames_normalizedを評価軸にする場合、新台・人気台バイアスの差し引きが必須
+- 機種ごとの全台平均回転数からの乖離（相対回転数）を使うのが最適解
+- 計算コストがかさむが、絶対回転数よりもシグナルとして有効
+- 現時点では未実装。将来の評価指標改善時に実装を検討
+
+## 例
+戦国乙女5: 店舗に7台あるがv9cが選んだのは4台。特定台に偏っている点は評価できるが、
+avg_diff=-1,184なので「設定が入っている」とは断言できない。
+全台の平均回転数を基準にした乖離値なら、新台バイアスをある程度差し引ける。
+
+---
+id: games-relative-to-machine-avg-best-signal
+trigger: "回転数ベースの評価指標を設計・実装するとき"
+confidence: 0.85
+domain: ml-evaluation
+source: session-discussion
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 回転数評価は機種別平均からの相対値が最適
+
+## 背景
+games_normalizedの絶対値を評価に使うと新台・人気台バイアスが入る。
+機種ごとの全台平均回転数を基準にした相対値（例: 当該台のgames / その機種の当日全台平均games）
+であれば「その機種の中で特に回されている」=打ち手が高設定と判断したシグナルに近づく。
+計算コストは高い（全台×機種別集計が必要）が、絶対値より遥かに有効。
+
+## アクション
+- 実装時は test_dateごとに machine_name別の avg_games を計算
+- 相対値 = 当該台games / 機種別当日平均games
+- Aタイプはセグメント全体の回転水準（日単位）、N-typeは台単位の相対回転数と使い分け
+- 現時点では未実装。walk_forward_engine への組み込みは将来課題
+
+## 例
+戦国乙女5 全台平均: 5,500G → #2058: 6,500G → 相対値 1.18（やや高い程度）
+マイジャグラーV 全台平均: 4,000G → #3275: 8,500G → 相対値 2.13（突出して高い）
+後者の方が「高設定シグナル」としての信頼度が高い。

@@ -1,0 +1,71 @@
+---
+id: kakuban-section-epsilon-low-sample-diagnosis
+trigger: "summarize_section_kakuban_epsilon系の関数でlow_sample=Trueが大量に出る場合"
+confidence: 0.9
+domain: ml-eda-statistics
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# カクバン×セクション効果量分析でlow_sample=Trueが大量発生する原因と対処
+
+## 背景
+kamata_corner_mirror_analysis.py の summarize_section_kakuban_epsilon /
+cat3 / fixed_effects は、load_hall_frame()（台番号1台=1行の集計フレーム）
+に assign_kakuban() を適用したフレームを入力としていた。
+_compute_kakuban_group_effect() は section×kakuban でグルーピングするが、
+1台=1行フレームでは各グループが常にちょうど1行になり
+（n_groups == n_rows）、Kruskal-Wallis検定の前提（各グループ
+min_group_size>=2）を満たせず、ほぼ全セクションがlow_sample=Trueになった
+（約70セクション中68）。
+
+## アクション
+セクション/カテゴリ単位でのKruskal-Wallis効果量検定（epsilon-squared等）を
+行う際は、入力フレームが「グループ内に複数行あるか」を必ず確認する。
+1台=1行の集計フレームでは不可能なので、load_hall_daily_frame()
+（台×日で複数行を持つ日次フレーム）など、グループ内にバリエーションを
+持つ粒度のフレームを別途用意して渡す。既存の集計版出力は変更せず、
+ファイル名に_dailyサフィックスを付けて並行出力すると後方互換を保てる。
+
+## 例
+kamata_section_kakuban_epsilon_{file_slug}_{floor}.csv（既存・1台1行版、
+ほぼlow_sample=True）に対し、
+kamata_section_kakuban_epsilon_daily_{file_slug}_{floor}.csv（新規・
+load_hall_daily_frame由来、台×日の複数行）を追加することで
+min_group_size>=2を満たせる可能性が上がる。
+
+---
+
+id: ml-eda-staged-scope-epsilon-before-cat3-fixed-effects
+trigger: "効果量検定(epsilon)＋カテゴリ別記述統計(cat3)＋固定効果分析を同時に新規実装する計画を立てるとき"
+confidence: 0.85
+domain: ml-eda-workflow
+source: user-feedback
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# epsilon検定を診断ゲートとして先行させ、cat3/fixed_effectsは結果を見てから追加する
+
+## 背景
+セクション粒度のカクバン分析を拡張する際、(a)全曜日＋日次フレーム化、
+(b)フロア全体をA/N区分の大ブロックに集約、という2軸の拡張を計画していた。
+当初プランではepsilon/cat3/fixed_effectsの全組み合わせ（daily×floor_segment）
+を一括実装する想定だったが、ユーザーから「まずepsilonのみに絞るべきでは」
+という指摘があり、見送る判断をした。
+
+## アクション
+epsilon（Kruskal-Wallis効果量）は「その粒度・グルーピングで見る価値が
+あるか」を判定するゲート役。新しい粒度（daily化、ブロック集約など）を
+試す際は、まずepsilonのみを全パターンで出力し、low_sample=Falseかつ
+効果量が出た対象を確認してから、その対象に限定してcat3（near/mid/far等の
+記述統計）やfixed_effects（機種集中度などの確認分析）を後追いで実装する。
+こうすることで、信号がない組み合わせに対する診断コードの量産を避けられる。
+[[exploration-coarse-to-fine]]の方針と同じ考え方。
+
+## 例
+4種類のepsilon出力（既存1台1行版、daily版、floor_segment版、
+daily×floor_segment版）を先に生成・確認 → low_sample=Falseの対象が
+判明した時点で、その対象だけにcat3/fixed_effectsをfloor_segment粒度で
+追加するかどうかを判断する、という二段階の実装計画にした。
+
+---

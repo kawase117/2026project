@@ -1,0 +1,286 @@
+---
+id: recommendation-latest-machine-name-required
+trigger: "推奨台リストを生成する際に機種名を表示するとき"
+confidence: 0.95
+domain: data-pipeline
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 推奨台リスト生成時は最新日の機種名を使用すること
+
+## 背景
+machine_detailed_resultsテーブルには全期間のデータがあり、台番号に紐づく機種名は機種入替で変わる。
+蒲田7では全715台中517台(72%)が期間中に機種変更済み。
+drop_duplicatesや古い日付からの集計で機種名を取得すると、現在設置されていない旧機種名が表示される。
+
+## アクション
+推奨台リスト生成時は、machine_numberごとにMAX(date)の行からmachine_nameを取得する。
+latest_namesテーブルを別途作成し、表示用にjoinする。
+スコアリング用のセグメント判定（A機/N機）は全期間データで計算してよいが、
+ユーザー向け表示は最新機種名を使うこと。
+
+## 例
+- 台番号2014: 旧=マギアレコード → 最新=甲鉄城のカバネリ 海門決戦
+- 台番号2107: 旧=モンキーターンV → 最新=モンスターハンターライズ
+- 台番号2349: 旧=少女歌劇 レヴュースタァライト → 最新=虚構推理
+
+---
+id: recommendation-theory-kakuban-bonus
+trigger: "蒲田7の推奨台スコアリングで角番を評価するとき"
+confidence: 0.85
+domain: scoring-model
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# セオリー最適角番ボーナスをスコアリングに組み込むこと
+
+## 背景
+蒲田七セオリーではsection_size_group別の最強角番が定義されている:
+small(8台以下)=角5, medium(14台以下)=角6(機械割102.27%), large(15台以上)=角11。
+しかしセグメント単体のデータ実績と全セグメント横断のセオリーは異なる場合がある。
+例: 2F_L_N mediumでは角4が+534で実績最強だが、セオリーはmedium=角6。
+
+## アクション
+スコアリングは6コンポーネント構成:
+1. セグメント×島サイズ×角番の実績 (40%) — データ主軸
+2. セオリー最適角番ボーナス (15%) — 距離減衰: 最適=+200, 距離1ごとに-50
+3. **DD個別×角番交互作用 (20%)** — DD-binではなく当日DD単独データを使用（→ scoring-c3-dd-individual-required）
+4. 曜日×角番交互作用 (15%)
+5. 末尾ボーナス (5%) — 3F_L_Nのみ
+6. ゾロ目ボーナス (5%) — 末尾0/5/9/6のみ有効
+台個体の直近3ヶ月実績を10%のタイブレーカーとして加算:
+composite = struct_score * 0.90 + hist_avg * 0.10
+
+## 例
+2F_L_N medium島: 角4(実績+534, bonus+15) vs 角6(実績+495, bonus+30) vs 角8(土曜+670)
+セオリーとデータが矛盾する場合、データ主軸(40%)にセオリー補正(15%)で調整。
+
+---
+id: recommendation-trough-zone-dd18-23
+trigger: "DD18-23の日に推奨台リストを作成するとき"
+confidence: 0.90
+domain: scoring-model
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# DD18-23はトラフゾーンとして明示し期待値の低さを伝えること
+
+## 背景
+DD fullspectrum分析でDD18-23は全DD中最悪の104%率帯(98.56%-99.21%)。
+全て非イベント日が集中。金曜×DD18-23は蒲田7で最も厳しい条件。
+
+## アクション
+1. DD18-23の日はリストに「トラフゾーン」タグを付ける
+2. 金曜×トラフ = 最悪条件と明示
+3. 土曜×トラフ = AT群効果(+1.71pt)で部分相殺と説明
+4. 来店判断の材料として提示
+
+## 例
+6/19(金) DD19: 金曜最弱(-4.2pp) + トラフ = 理論上最も避けるべき日
+6/20(土) DD20: AT群土曜効果がトラフを部分相殺 → 金曜より遥かにマシ
+
+---
+id: recommendation-output-format-notion
+trigger: "推奨台リストをユーザーに提示するとき"
+confidence: 0.95
+domain: output-format
+source: user-feedback
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 推奨台リストは台番号順・Notionコピー可能なMD形式で出力すること
+
+## 背景
+ユーザーは推奨台リストをNotionにコピーして実戦で使用する。
+入場時に台番号順に探索し、埋まっていた場合に次の候補を探す運用。
+
+## アクション
+出力フォーマット:
+1. 台番号昇順（スコア順ではない）
+2. 島切替を▸/·で示す
+3. MDテーブル形式（Notionペースト対応）
+4. カラム: 順位 | 台番 | 機種名（最新）| セグメント | 角 | 末 | スコア | 近3月
+5. 島カラム・Zカラムは不要（ゾロ目は台番号から判別可能）
+6. 機種名は台番の右隣に配置
+
+## 例
+| 順位 | 台番 | 機種名 | セグメント | 角 | 末 | スコア | 近3月 |
+|:---:|:---:|:---|:---|:---:|:---:|---:|---:|
+| 4 | 2004 | ゴッドイーター リザレクション | 2F_L_N | 4 | 4 | +426 | +706 |
+
+---
+id: recommendation-iron-machine-warning
+trigger: "推奨台リストに直近avg_diffが極端に高い台が含まれるとき"
+confidence: 0.80
+domain: scoring-model
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 直近実績が極端に高い台は鉄台候補として注意喚起すること
+
+## 背景
+台個体の直近3ヶ月avg_diffをタイブレーカーに使うと、恒常的に強い鉄台が
+構造スコアに関係なく上位に浮上する。構造シグナルと個体効果の区別が必要。
+
+## アクション
+1. hist_avg >= +1000 の台には鉄台候補として注記
+2. 構造スコアとhist_avg寄与を分離して表示
+3. 台番号2026は鉄台確定として常に除外
+
+## 例
+- 2274(北斗の拳 転生の章2): hist_avg=+1434 → 鉄台候補
+- 2243(モンキーターンV): hist_avg=+1380 → 鉄台候補
+- 2048(甲鉄城のカバネリ): hist_avg=+1130 → 鉄台候補
+
+---
+id: scoring-c3-dd-individual-required
+trigger: "推奨台スコアリングのC3コンポーネント（DD×角番交互作用）を計算するとき"
+confidence: 0.95
+domain: scoring-model
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# C3はDD-binではなくDD個別データで計算すること
+
+## 背景
+DD18-23をbin集計すると、DD間の角番効果差が平均化されて消える。
+DD20の角2は全角番中1位(+384)だが、DD19(金曜最弱)やDD22の低データで薄められ、
+bin集計では角2のDD20固有シグナルが完全に消滅していた。
+
+実測データ:
+- 角N-1: DD20単独=+233 vs DD18-23bin=+155（差+78が消失）
+- 角2:   DD20単独=+384 vs DD18-23bin=+258（差+126が消失）
+- DD20角2はbin集計ではTOP50に0台 → DD個別集計で7台出現
+
+## アクション
+1. C3コンポーネントは当日のDD値のみでフィルタした実績を使う
+2. セグメント×角番で集計し、n>=5ならセグメント値を使用
+3. n<5の場合はssg×角番にフォールバック
+4. DD-binやDD帯（例: DD18-23）でまとめてはならない
+
+## 例
+DD20スコアリング:
+- c3 = dd20_data.groupby(['segment', 'kakuban']).agg(avg=('diff_coins_normalized', 'mean'))
+- 角2 2F_L_N: c3=+425 (bin集計だと+258に薄められていた)
+- 角N-1 2F_R_N: c3=+283 (bin集計だと+155に薄められていた)
+
+---
+id: scoring-dd20-kakuban2-strongest
+trigger: "DD20の推奨台リストを生成するとき"
+confidence: 0.90
+domain: scoring-model
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# DD20では角2が全角番中最強であることを考慮すること
+
+## 背景
+DD20の角番別avg_diffランキング:
+1位: 角2 = +384 (n=583)
+2位: 角14 = +377 (n=319)
+3位: 角19 = +273 (n=22, サンプル少)
+4位: 角11 = +237 (n=462)
+5位: 角8 = +237 (n=550)
+
+角2はDD20で唯一の+384で、2位の角14(+377)を僅差で上回る。
+しかし前回のDD-binスコアリングでは角2がTOP50から完全に漏れていた。
+
+## アクション
+1. DD20のスコアリングでは角2台を意識的にチェック
+2. 2F_L_Nの角2台（2024,2033,2066,2156,2166,2188等）がTOP50に入っているか確認
+3. 特にmedium島の角2は理論ボーナス(距離4→+0)だが、DD20実績では強い
+
+## 例
+DD個別スコアリング修正後の角2 TOP50入り台:
+- 2188 化物語 (rank24, c3=+425)
+- 3401 マジカルハロウィン8 (rank25, c3=+582)
+- 2166 うみねこのなく頃に2 (rank27, c3=+425)
+- 2156 ディスクアップ ULTRAREMIX (rank35, c3=+425)
+- 2033 甲鉄城のカバネリ (rank37, c3=+425)
+- 2024 甲鉄城のカバネリ (rank38, c3=+425)
+- 2066 戦国乙女5 (rank42, c3=+425)
+
+---
+id: kakuban-alternating-section-reversal-bug
+trigger: "蒲田7の角番（kakuban）を計算・使用するとき"
+confidence: 0.99
+domain: data-pipeline
+source: user-correction
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田7の島は交互配置であり、約半数の島で角番が逆転していた
+
+## 背景
+蒲田7の島はメイン通路から見て順方向・逆方向が交互に並んでいる。
+物理座標（generate_kamata7_coordinates.py）のstep_xで確認:
+- step_x=+1の島: 台番号min側が通路側 → rank_from_min = 角番（正しい）
+- step_x=-1の島: 台番号min側が奥側 → rank_from_max = 角番（反転が必要）
+
+現行コードのREVERSED定義は3セクションのみ（2330-2351, 3191-3208, 3341-3362）。
+実際には26セクション（全53中）が反転必要。3191-3208は縦配置で反転不要だった。
+結果、約半数の島で角1と角Nが逆転し、全ての角番分析に影響。
+
+実証:
+- 台2030（島2023-2031, step_x=-1）: 物理X=4（通路から2番目）
+  → 正しい角番=角2、現在の角番=角8（逆転!）
+- 台2033（島2032-2040, step_x=+1）: 物理X=4（通路から2番目）
+  → 正しい角番=角2、現在の角番=角2（OK）
+- 2030と2033は物理的に同じ奥行き位置だが、現行コードでは角2と角8に分裂
+
+## アクション
+1. 角番計算時は必ずstep_xの方向を確認する
+2. step_x=-1の島ではrank_from_maxを角番として使用する
+3. REVERSEDリストを3→25セクションに拡張する（3191-3208は縦配置のため除外）
+4. 修正後、セオリー全体（角番効果、DD×角番、曜日×角番）の再検証が必要
+5. 既存のinstinct（scoring-c3-dd-individual-required, scoring-dd20-kakuban2-strongest等）は
+   角番修正後に数値が変わるため、再検証まで参考値として扱う
+
+## 例
+反転が必要な24セクション（追加分）:
+2F: 2023-2031, 2041-2052, 2065-2076, 2089-2101, 2115-2128, 2143-2154,
+    2165-2171, 2179-2186, 2196-2212, 2230-2246, 2264-2280, 2298-2313
+3F: 3017-3030, 3043-3057, 3073-3087, 3103-3116, 3131-3143, 3156-3167,
+    3181-3190, 3218-3233, 3250-3264, 3281-3294, 3310-3324, 3400-3401
+
+不要だったREVERSED: 3191-3208（縦配置、反転不要）
+
+---
+id: scoring-dd20-kakuban-values-pre-fix
+trigger: "角番修正前のDD20スコアリング結果を参照するとき"
+confidence: 0.85
+domain: scoring-model
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# DD20 TOP50は角番反転バグ修正前の暫定値
+
+## 背景
+2026-06-20セッションで出力したDD20 TOP50推奨台リストは、
+角番の交互配置反転バグ（kakuban-alternating-section-reversal-bug）修正前のもの。
+約半数の島で角番が逆転しているため、角番ベースのスコアリング（C1,C2,C3,C4）が
+不正確なデータに基づいている。
+
+## アクション
+1. このリストは角番修正前の暫定値として扱う
+2. 角番修正後に全コンポーネントを再計算し、TOP50を再生成すること
+3. 台番号・機種名・末尾・近3月の値は正確（角番に依存しない）
+4. セグメント（2F_L_N等）のLR分割はsection中央値ベースなので角番バグの影響なし
+
+## 例
+影響を受けるスコアリングコンポーネント:
+- C1(40%): segment×ssg×kakuban → 角番逆転で実績値が入れ替わる
+- C2(15%): theory_optimal距離 → 角番逆転で距離計算が逆
+- C3(20%): DD20×kakuban → 角番逆転でDD固有効果が入れ替わる
+- C4(15%): Saturday×kakuban → 同上
+影響を受けないもの:
+- C5(5%): 末尾 → 台番号%10で計算、角番無関係
+- C6(5%): ゾロ目 → 末尾ベース、角番無関係
+- hist_avg(10%): 個体実績 → 角番無関係

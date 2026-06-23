@@ -1,0 +1,90 @@
+---
+id: claude-code-background-task-timeout-10min
+trigger: "Claude Codeのバックグラウンドタスクで長時間ジョブを実行しようとするとき"
+confidence: 0.95
+domain: tooling
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Claude Codeバックグラウンドタスクは10分でタイムアウトする
+
+## 背景
+CatBoost v2フル実行（257日、推定104分）をClaude Codeのrun_in_backgroundで起動したところ、
+70/257日（27%）の時点でタイムアウトにより強制終了された。
+Bashツールのrun_in_backgroundパラメータは最大600秒（10分）の制限がある。
+
+## アクション
+ML実験など10分超のジョブは:
+1. Claude Codeのバックグラウンドタスクを使わない
+2. ユーザーにローカルPowerShellで直接実行してもらう
+3. --max-days でスモークテスト（10日程度）はClaude Code内で実行可能
+4. フル実行のコマンドをユーザーにコピペ可能な形で提示する
+
+## 例
+スモーク（OK）: `python -m ml.experiments.gate_ranking_test.run_gate_ranking_test --max-days 10`（242秒）
+フル（NG）: 同コマンドmax-daysなし（推定104分）→ タイムアウト
+---
+id: gate-ranking-bottleneck-is-score-day-not-rolling-diff
+trigger: "gate_ranking_testの実行速度を最適化しようとするとき"
+confidence: 0.85
+domain: ml-performance
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# gate_ranking_testのボトルネックはrolling_diffではなくscore_day×ML_RECENT_DAYS
+
+## 背景
+v2で24秒/日かかる原因を調査。rolling_diffのキャッシュ化（_build_rolling_cache）を実装したが
+最適化前25.6秒/日→最適化後24.2秒/日でほぼ変わらず。
+実際のボトルネックは_build_ml_train_data内のscore_dayループ（257日×ML_RECENT_DAYS=10日=2,570回）。
+CatBoost学習自体はGPUで高速。
+
+## アクション
+速度改善が必要な場合の優先順位:
+1. score_dayの結果キャッシュ（日付×variant単位でメモ化）が最も効果大
+2. _build_ml_train_dataの並列化（multiprocessing）
+3. ML_RECENT_DAYSの削減（10→5など）— ただし学習データ量とのトレードオフ
+4. rolling_diffやmergeの最適化は効果小
+
+## 例
+プロファイル概算（24秒/日の内訳）:
+- score_day × 10回 ≈ 20秒（ボトルネック）
+- CatBoost GPU学習 ≈ 2秒
+- rolling_diff × 3窓 ≈ 1秒
+- その他（merge, evaluate等）≈ 1秒
+---
+id: score-day-drops-extra-source-columns
+trigger: "score_dayの出力にsourceのカラムが含まれることを期待するとき"
+confidence: 0.90
+domain: ml-architecture
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# score_dayはsourceに追加したカラムを出力に通さない
+
+## 背景
+source DFにmachine_typeを事前mergeしておけば_attach_v2_featuresでmerge不要と考えたが、
+score_day内部で_prepare_rows→_build_component_columnsを経由するため、
+入力DFに追加したカラム（machine_type等）は出力に含まれない。
+結果として_attach_v2_features内でmachine_typesテーブルとの明示的mergeが依然必要。
+
+## アクション
+score_dayの出力に追加情報を付与する場合:
+1. score_day後に外部テーブルとmerge（machine_name or machine_numberキー）
+2. sourceへの事前mergeはrolling_cache等の内部計算用には有効だが、score_day出力には反映されない
+3. _attach_v2_featuresのように「列が無ければmerge」のガード条件を入れると安全
+
+## 例
+```python
+# NG: sourceにmerge済みでもscore_day出力には含まれない
+source = source.merge(machine_types, on="machine_name", how="left")
+scored = score_day(train, actual, variant)  # scored に machine_type は無い
+
+# OK: score_day後に明示的にmerge
+scored = score_day(train, actual, variant)
+scored = scored.merge(machine_types, on="machine_name", how="left")
+```
+---

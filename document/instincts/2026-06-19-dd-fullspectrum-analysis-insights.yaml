@@ -1,0 +1,133 @@
+---
+id: dd-fullspectrum-no-banding-superior
+trigger: "DD (day of month) feature engineering for ML models"
+confidence: 0.90
+domain: feature-engineering
+source: session-eda
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# DD 1-31 full spectrum is superior to early/mid/late banding
+
+## Background
+Compared DD banding (early/mid/late) vs DD 1-31 raw values. Fullspectrum reveals
+spike patterns at DD=7,27,30 and valley at DD=18-23 that banding completely obscures.
+Top5 DDs {7,30,27,17,11} all align with event day definitions. Bottom5 {23,19,29,18,20}
+are all non-event days concentrated in the pre-payday trough.
+
+## Action
+Use DD as a raw integer feature (1-31) in ML models rather than banding into
+early/mid/late. Consider cyclic encoding (sin/cos) if model requires it, but
+preserve the full resolution. The is_event_dd flag remains useful as a complementary
+binary feature.
+
+## Example
+# Bad: dd_band = "early" if dd <= 10 else "mid" if dd <= 20 else "late"
+# Good: features["dd"] = date.day  # raw 1-31
+# Also good: features["dd_sin"] = np.sin(2 * np.pi * dd / 31)
+
+---
+id: section-size-effect-dd-independent
+trigger: "evaluating section_size x DD interaction terms"
+confidence: 0.92
+domain: feature-interaction
+source: session-eda
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Section size effect is DD-independent -- no interaction term needed
+
+## Background
+ANOVA across 31 DDs found only 2 DDs (9 and 31) with significant section_size effect
+(p<0.05). Medium island dominates at 101.76% vs small 101.17% / large 101.23% across
+ALL DDs uniformly. The lack of significant interaction means section_size and DD
+contribute independently to pay_rate.
+
+## Action
+Do NOT add section_size x DD interaction features to ML models. Use section_size and
+DD as separate main effects. This reduces feature space without losing predictive power.
+The medium island advantage (101.76% vs ~101.2%) is stable and does not depend on
+which day of the month it is.
+
+## Example
+# Unnecessary: features["section_dd_interaction"] = section_size * dd
+# Sufficient: features["section_size_group"] = "medium"  # main effect only
+#             features["dd"] = 7  # main effect only
+
+---
+id: lr-split-negligible-per-dd
+trigger: "evaluating LR (left/right) split value in DD context"
+confidence: 0.95
+domain: feature-engineering
+source: session-eda
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# LR split has zero predictive value even at DD granularity
+
+## Background
+L=101.49% vs R=101.43% across all 31 DDs -- difference of 0.06pp. Heatmap shows no
+DD-specific LR reversal pattern. This confirms the prior finding that LR split is
+1000x weaker than section_size, and the DD dimension does not rescue it.
+
+## Action
+Exclude LR as a feature in ML models for Kamata7. Do not attempt DD x LR interaction
+terms. The physical left/right position within a section carries no exploitable signal.
+
+## Example
+# Drop: features["lr_position"] = "L"  # noise, not signal
+# Drop: features["dd_lr_interaction"] = dd * lr  # doubly useless
+
+---
+id: segment-3fn-adjustment-valve
+trigger: "analyzing segment-level DD patterns"
+confidence: 0.88
+domain: hall-behavior
+source: session-eda
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 3F_N is the hall's adjustment valve -- first to be cut, last to benefit
+
+## Background
+Segment hierarchy: 2F_N (101.97%) > 3F_A (101.45%) > 3F_N (100.50%). 2F_A is empty
+(no A-type machines on 2F pass min_games filter). On good days (DD=7), 3F_N rises to
+102.4%. On bad days (DD=1-4, 18-23), 3F_N drops below 100%. Month-end (DD=30) shows
+2F_N at 103.9% but 3F_N at only 100.6% -- the hall concentrates investment in 2F.
+
+## Action
+When building per-segment models, treat 3F_N as having the worst signal-to-noise ratio.
+Consider segment x DD interaction for 3F_N specifically since its DD sensitivity is
+highest. For practical prediction, 2F_N is the most predictable segment.
+
+## Example
+# DD=7:  2F_N=103.1, 3F_A=102.0, 3F_N=102.4 (all up -- event effect)
+# DD=30: 2F_N=103.9, 3F_A=102.3, 3F_N=100.6 (2F only -- selective investment)
+# DD=29: 3F_N=99.2 (bottom -- pre-month-end squeeze)
+
+---
+id: dd-top5-bottom5-asymmetry
+trigger: "designing event day features or DD-based filters"
+confidence: 0.85
+domain: hall-behavior
+source: session-eda
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Top5/Bottom5 DD asymmetry reveals hall investment calendar
+
+## Background
+Top5 DDs by pay_rate: {7(102.83), 30(101.73), 27(101.47), 17(100.73), 11(100.72)}.
+All are event days or their neighbors. Bottom5: {23(98.56), 19(98.88), 29(98.91),
+18(98.92), 20(99.21)}. All non-event, concentrated in DD 18-23 (pre-payday trough).
+The spread is 4.27pp (102.83 - 98.56), which is substantial.
+
+## Action
+Use this asymmetry in two ways: (1) a continuous DD feature captures the full shape,
+(2) a binary "trough_dd" flag for DD 18-23 may add value as a complementary signal
+alongside the existing is_event_dd flag. The trough is as informative as the peaks.
+
+## Example
+# Top: DD=7 (102.83%), DD=30 (101.73%), DD=27 (101.47%)
+# Bottom: DD=23 (98.56%), DD=19 (98.88%), DD=29 (98.91%)
+# Trough zone: DD 18-23, all below 99.5%

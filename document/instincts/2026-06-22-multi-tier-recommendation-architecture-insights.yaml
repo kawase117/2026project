@@ -1,0 +1,225 @@
+---
+id: top50-is-delivery-format-not-target
+trigger: "予測モデルのターゲットを設計するとき"
+confidence: 0.97
+domain: ml-target-design
+source: three-way-discussion-claude-codex-user
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Top50は配信フォーマットであって学習ターゲットではない
+
+## 背景
+Walk-forward scoringのTop50は元々朝一チートシート用の候補生成だった。
+しかし「全台を差枚で一列に並べてTop50を切る」ことを学習ターゲットにしていたため、
+ATの高ボラ台がAの高設定を飲み込み、セグメント間の公平な評価ができなかった。
+
+3者（ユーザー・Claude・Codex）の議論で以下が合意:
+- Top50は「候補生成の母集団」としてはまだ使える
+- 捨てるべきは「全台差枚で切る単一ターゲット設計」
+- この問題は投入検知・台選択・代替候補・A構造シグナルが混在しており、単一ターゲットでは解決しない
+
+## アクション
+- 予測ターゲットを多段構造に分離する（第1層gate + 第2層ranking + 第3層配信）
+- 「新しい単一ターゲットを1つ決めれば解決する」という発想を避ける
+- Top50は配信の母集団として残すが、学習ターゲットからは外す
+
+## 例
+```
+NG: target = 全台差枚Top50に入るか (単一ターゲット)
+OK:
+  第1層: 日×セグメント活性判定 (absolute gate)
+  第2層: 活性セグメント内Top20% (relative ranking)
+  第3層: AT優先Top10 + Backup + Context A (配信)
+```
+
+---
+id: multi-tier-recommendation-architecture
+trigger: "推薦システムのアーキテクチャを設計するとき"
+confidence: 0.95
+domain: ml-architecture
+source: three-way-discussion-claude-codex-user
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 3層構造: gate(absolute) + ranking(relative) + delivery(運用)
+
+## 背景
+蒲田7の推薦システムは3つの異なる目的を同時に達成する必要がある:
+1. 投入検知: 今日このセグメントに高設定が入っているか
+2. 台選択: どの台が高設定候補か
+3. 運用対応: 取られた場合の代替、Aを構造シグナルとして活用
+
+これらを単一モデルで処理するのは無理があり、層を分けるべき。
+
+## アクション
+第1層(gate): absoluteな閾値で日×セグメントの活性/非活性を判定
+  - 入力: 過去N日のhit_an率、イベント日フラグ等
+  - 出力: 活性/非活性の二値
+  - 全台低設定の日はここで推薦を抑制
+
+第2層(ranking): 活性セグメント内でのrelativeな台順位
+  - 教師ラベル: segment内Top20%（relative target）
+  - absoluteは第1層で処理済みなので、ここはrelativeに集中
+
+第3層(delivery): 運用向けの最終出力
+  - Main: AT純粋スコア順Top10（制約なし）
+  - Backup: 機種被りを軽く崩した次点5-8
+  - Context: Aセグメントの構造情報（角番傾向、島活性度）
+
+## 例
+```
+朝のチートシート出力:
+  [Gate] 3F_L_N: 活性 / 3F_R_A: 非活性 / 2F_L_N: 活性 ...
+  [Main] 1. 台3045(3F_L_N) 2. 台2015(2F_L_N) ... 10. 台3280(3F_R_N)
+  [Backup] 11. 台2105(2F_R_N) ... 18. 台3310(3F_R_N)
+  [Context] 3F_L_A: 角番台が活性日に強い傾向
+```
+
+---
+id: a-segment-analysis-not-recommendation
+trigger: "Aセグメントを推薦システムから除外することを検討するとき"
+confidence: 0.93
+domain: ml-architecture
+source: three-way-discussion-claude-codex-user
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Aは推薦面から分離、分析面では維持
+
+## 背景
+Aタイプ（ジャグラー等）は以下の理由でAT機より推薦優先度が低い:
+- 機械割の絶対値がATより低い（設定6でも109%程度）
+- 打ちながらの設定判別が困難で、低設定を長時間打つリスク
+- Top50に入りにくく、差枚ベースの評価で不利
+
+しかしAを分析面から外すのは危険:
+- Aの設定投入パターンはATの投入パターンと相関する可能性
+- 「3F_L_Aの角番が熱い → 3F_L_Nでも角番が熱い可能性」
+- ホール全体の投入構造を読む「センサー」としての価値
+
+## アクション
+- Aを推薦のMainランキングからは外す（Contextに回す）
+- 第1層gate、第2層rankingの学習にはA込みのデータを使う
+- 第3層配信でAT優先に並べ替える
+- 「Aをランキングから外す」と「Aを推薦面から分離する」は異なる操作
+
+## 例
+```
+NG: A台を学習データから除外 → A由来の投入パターン情報を喪失
+OK: A込みで学習、配信時にAT優先で出力
+    Main: AT Top10 (pure score order)
+    Context: "3F_L_A角番活性 → 3F_L_Nでも角番に注目"
+```
+
+---
+id: no-segment-diversity-constraint-on-main
+trigger: "推薦リストにセグメント分散制約を入れることを検討するとき"
+confidence: 0.90
+domain: ml-delivery
+source: user-correction
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Mainは純粋スコア順、制約はBackupのみ
+
+## 背景
+「セグメント被りを制御すべき」という提案に対し、ユーザーから反論があった:
+- 実際に埋まるのはセグメント単位ではなく機種単位
+- 予測スコアが高い台を制約で落とすと予測の方向性を歪める
+- セグメント分散より機種被りの制御が実運用に近い
+
+Codexも「予測と運用を分けるべき」と同意:
+- 予測スコアにはセグメント分散制約を入れない
+- 配信ルール側でだけ、必要なら軽い多様化を入れる
+- 本命まで分散させると、当てにいく力を落とす
+
+## アクション
+- Main Top10は純粋スコア順で出す（制約なし）
+- 機種被りの軽い制御はBackupだけに入れる
+- セグメント分散はハード制約にしない
+
+## 例
+```
+NG: Main = 各セグメントから最大3台（分散制約）
+OK: Main = 純粋スコア順Top10（たとえ8台が同セグメントでもOK）
+    Backup = Mainと機種が被らない次点を5-8台
+```
+
+---
+id: gate-label-relative-plus-absolute-two-stage
+trigger: "第1層ゲートの教師ラベルを設計するとき"
+confidence: 0.88
+domain: ml-target-design
+source: codex-recommendation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ゲートはabsolute判定、ランキングはrelative。ANDで単一ラベル化しない
+
+## 背景
+ゲートの教師ラベル候補として3案が議論された:
+1. segment内Top20%のみ → 全台低設定日でも正例が出る問題
+2. hit_an閾値超えのみ → セグメント間で閾値が異なる問題
+3. Top20% AND hit_an閾値 → 正例が減りすぎる問題（Codex指摘）
+
+Codexの推奨は「ANDの一発固定ではなく2段階」:
+- absolute（hit_an閾値）はゲート用の日/セグメント活性判定に使う
+- relative（segment内Top20%）は第2層ランキングの教師に使う
+- 両者を混ぜて単一ラベルにしない
+
+蒲田七は平日にも設定を入れるホールなので、absolute gateを厳格にしすぎると
+有用な日まで落としてしまうリスクがある。
+
+## アクション
+- 第1層: absolute指標で「そのセグメントが戦える日か」を判定
+- 第2層: 活性セグメント内でrelative rankingを作る
+- absolute AND relativeの単一ラベル化は避ける
+- ゲート閾値（N=1 vs 2 vs 3）は実データ分布で決定する
+
+## 例
+```
+第1層 gate_positive(日, セグメント):
+  そのセグメントで hit_an閾値超え かつ G>=400 の台が N台以上
+  → N の値は segment_daily_counts.csv の分布から決定
+
+第2層 ranking_target(台):
+  活性セグメント内でのTop20%か否か（relative）
+```
+
+---
+id: rule-based-first-ml-shadow-parallel
+trigger: "ルールベースからMLへの移行を検討するとき"
+confidence: 0.92
+domain: ml-methodology
+source: three-way-discussion-claude-codex-user
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ルールベース先行、MLはshadow modeで並走
+
+## 背景
+過去のML挑戦は「ラベルと特徴量の未整備」で失敗していた。
+今回segment分解等の新知識が増えたがすぐにML本番化するのは危険。
+改善したのか複雑化しただけなのか判定しづらくなる。
+
+3者合意で選択肢3（並走だが主系はルール）を採用:
+- 本線: ルールベースで第1層-第3層を完成
+- 並走: 第2層だけMLベンチを作る（shadow mode）
+- 判定: MLがルールを安定して上回った時だけ昇格
+
+## アクション
+- まずルールベースで全層を動かし、失敗箇所を可視化する
+- 同一ラベル・同一特徴量でCatBoost二値分類をshadow実行
+- ML昇格条件は3条件同時達成:
+  1. Main Top10のprecision: ML > Rule + 5pp以上
+  2. 非活性日での偽陽性率: Rule以下
+  3. Front/Back安定性: 前半/後半の両方でRule超え
+
+## 例
+```
+本番配信: ルールベーススコアで Main Top10 を出す
+shadow: 同じデータでCatBoostスコアも計算
+比較ダッシュボード: rule_precision vs ml_precision, 日別の差分
+昇格判定: 3条件を90日以上の期間で安定達成したらMLに切り替え
+```

@@ -1,0 +1,319 @@
+---
+id: when-axis-tail-level-exhausted
+trigger: "蒲田7の末尾選択（どの末尾を狙うか）にDD/曜日法則がないか調べようとするとき"
+confidence: 0.95
+domain: eda-pattern
+source: session-conclusion
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田7 Tail-level When軸（DD/曜日による末尾選択）は複数の独立手法で棄却済み
+
+## 背景
+以下4つの独立した手法が同じ結論に収束した（2026-06-16時点）:
+1. 単独次元スキャン（曜日・台番号末尾・第N曜日）→ 全ホールでTier A/B皆無
+2. カレンダー特徴量をMLに追加 → precision@2 悪化（-0.83〜-2.25pp）
+3. DD/曜日ベースの逸脱ルール → 「常に2F_N」より全て損失（-2032〜-9731/日）
+4. DD軸deep dive（2179-2186セクション） → stable=trueゼロ、イベント日も非有意
+
+## アクション
+- 「末尾選択×DD/曜日」の探索は優先度を最低まで下げる
+- 新たな手法を提案されても「この組み合わせは4手法で棄却済み」と明確に答える
+- ただしHall-level（どのホールのどの日に行くか）のWhen探索は別問題で未着手
+
+---
+id: which-axis-machinename-q5-backtest-confirmed
+trigger: "蒲田7でどの機種（machine_name）を優先して打つべきか戦略を立てるとき"
+confidence: 0.88
+domain: operational-strategy
+source: empirical-backtest
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田7 Q5機種名（前3ヶ月上位）は翌3ヶ月も一貫してホール平均を+107上回る
+
+## 背景
+`eda/kamata7_machinename_q5_backtest.py` で3ヶ月窓×3ペアのwalk-forwardを実施:
+- 期間N のdiff_sum上位20%（Q5）機種名 → 期間N+1 の実績を測定
+- 全3ペアでQ5 excess がプラス（+73, +117, +130）で増加傾向
+- 全体平均: Q5 avg_diff=+267 vs All=+160、excess=+107
+- フロア別: 2F excess=+129 > 3F excess=+93
+
+実装:
+- 学習: 前期 diff_sum でmachine_name単位クインタイル → Q5リスト抽出
+- 測定: 翌期 Q5機種名行の avg_diff / payout_rate / win_rate
+- ファイル: `eda/kamata7_machinename_q5_backtest.py`
+- 結果: `tmp/kamata7_machinename_q5_backtest/period_summary.csv`
+
+## アクション
+- 実践では 2F 内の Q5 機種名を優先（excess が 3F より +36 大きい）
+- 3ヶ月ごとにリストを更新する（`eda/kamata7_current_q5_list.py` で生成）
+- 3ペアのみのためまだ統計的確信は低い。10ペア以上たまるまで「有望」どまり
+
+---
+id: 7kei-day-when-which-are-substitutes
+trigger: "7系日（DD∈{7,17,27}）にQ5機種名を組み合わせると優位性が倍増するか検討するとき"
+confidence: 0.85
+domain: operational-strategy
+source: empirical-backtest
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 7系日はWhenとWhichが乗算ではなく代替関係 — 「全体が上がるがQ5の相対優位が縮む」
+
+## 背景
+バックテストの7系日オーバーレイ結果（3ペア平均）:
+- 7系日 All boost: +26.88（ホール全体が通常日より好調）
+- 7系日 Q5 boost: +18.90
+- 7系日 Q5 excess boost: -7.98（マイナス）
+
+Q5の絶対値は上がるが、ホール全体も上がるためQ5の「相対優位」は縮む。
+
+## アクション
+- 「7系日 × Q5 = ダブル効果」という期待は持たない
+- 7系日の正しい読み方: 「Q5以外（Q2〜Q4）でも打つ価値が上がる日」
+- Q5戦略は7系日かどうかに関わらず毎日適用するのが合理的
+- ⚠️ 旧アクション「Q5縛りを緩めてフロア内の台数を増やす」は誤り（→ 7kei-day-floor-h3-confirmed 参照）
+
+---
+id: 7kei-day-floor-h3-confirmed
+trigger: "7系日（DD∈{7,17,27}）に2F vs 3F どちらを優先するか判断するとき"
+confidence: 0.80
+domain: operational-strategy
+source: empirical-backtest
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 7系日は2F優位がさらに拡大する（H3支持） — 3Fはマイナスexcessのまま
+
+## 背景
+`eda/kamata7_7kei_floor_analysis.py` で walk-forward 3ペア（3ヶ月窓）を実施（2026-06-17）:
+
+| | avg_diff | excess |
+|---|---:|---:|
+| 7系日 2F | 254.91 | +94.51 |
+| 7系日 3F | 122.50 | -37.90 |
+| 通常日 2F | 207.10 | +46.70 |
+| 通常日 3F | 109.86 | -50.54 |
+
+- 2F/3F gap: 通常日 97.24 → 7系日 132.41（+35.17 拡大）
+- 3Fは7系日でも依然マイナスexcess（-37.90）
+- n_dates=25（7系日3ペア合計）、サンプル少フラグなし
+
+解釈: 7系日はホールが「広く浅く」ではなく「2Fに集中して」設定を入れるパターンに近い。
+
+## アクション
+- 7系日こそ 2F Q5 機種を最優先で絞る（2F縛りを緩めない）
+- 3Fは7系日でも避ける（excess が通常日と同様にマイナス）
+- まだ3ペアのため「有望」どまり。10ペア超えたら確信度を引き上げる
+- 実装: `eda/kamata7_7kei_floor_analysis.py`、結果: `tmp/kamata7_7kei_floor_analysis/`
+
+---
+id: weekend-q5-floor-pattern
+trigger: "週末（金・土・日）に蒲田7でどう立ち回るべきか判断するとき"
+confidence: 0.78
+domain: operational-strategy
+source: empirical-backtest
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 週末はQ5効果・2F優位がともに縮小する — 7系日と逆のフロアパターン
+
+## 背景
+`eda/kamata7_weekend_analysis.py` で walk-forward 3ペア（3ヶ月窓）を実施（2026-06-17）:
+
+| | Q5 excess | 2F/3F gap |
+|---|---:|---:|
+| 通常日 | +130.11 | 108.11 |
+| 週末 | +96.04 (-34) | 89.52 (-18.6) |
+| 7系日 | 縮小 | 132.41 (+35) |
+
+- Q5 excess は週末で −34 縮小（7系日と同じ「代替関係」パターン）
+- 2F/3F gap は週末で縮小（通常日比 −18.6）← 7系日（拡大）と逆
+- 週末 3F excess: −64（通常日 −36 より悪化）、2F excess: +25（通常日 +72 より大幅低下）
+
+解釈: 週末はホールが設定を「広く浅く」入れる日。Q5の相対優位も2F優位も希薄化。
+
+## アクション
+- Q5機種は週末でも excess +96 でプラスなので引き続き選択する
+- 2F縛りは週末に限り通常日ほど厳格にしなくてよい（gap が縮小）
+- 3Fは週末でも避ける（excess −64 でマイナス継続）
+- まだ3ペアのため「有望」どまり
+- 実装: `eda/kamata7_weekend_analysis.py`、結果: `tmp/kamata7_weekend_analysis/`
+
+---
+id: zorome-day-undetermined
+trigger: "ゾロ目日（DD∈{11,22}）に蒲田7で特別な戦略を取るべきか検討するとき"
+confidence: 0.40
+domain: eda-pattern
+source: empirical-backtest
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ゾロ目日は全 period でサンプル不足 — 現時点で判定不能
+
+## 背景
+`eda/kamata7_zorome_analysis.py` で walk-forward 3ペア実施（2026-06-17）:
+- ゾロ目日は月2回（11・22日）= 3ペア合計で最大18日分
+- 全 period が n_dates < 10 → 判定不能
+- 参考値（信頼低）: Q5 excess +59（通常日 +94 より低い傾向）、2F/3F gap ≒ 96（通常日と同等）
+
+## アクション
+- ゾロ目日に特別な戦略変更は現時点でしない
+- デフォルトは「通常日と同じ運用（2F Q5 優先）」を仮適用
+- データが10ペア以上たまったら再検証する
+- 実装: `eda/kamata7_zorome_analysis.py`、結果: `tmp/kamata7_zorome_analysis/`
+
+---
+id: kamata7-section-normal-day
+trigger: "蒲田7の2F内でどのセクション（島）を優先するか判断するとき"
+confidence: 0.84
+domain: operational-strategy
+source: empirical-backtest
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 通常日 2F 真の最強セクションは2102-2114（+296）。2023-2031は鉄台2026を除くと2位
+
+## 背景
+`eda/kamata7_machine_band_analysis.py`（鉄台除外デフォルト）、walk-forward 3ペア（2026-06-17）:
+- machine_number=2026（確定設定6、20260101〜）を除外した正味の序列
+
+### 通常日 2F 上位5 section（鉄台除外）
+| section | excess | 備考 |
+|---|---:|---|
+| 2102-2114 | +296 | 真の1位 |
+| 2023-2031 | +288 | 鉄台込みは+569だが除外後は2位 |
+| 2032-2040 | +271 | |
+| 2247-2263 | +265 | |
+| 2001-2010 | +262 | |
+
+### 通常日 2F 下位5 section（避けるべき）
+| section | excess |
+|---|---:|
+| 2196-2212 | -311（avg_diff もマイナス）|
+| 2065-2076 | -102 |
+| 2330-2351 | -96 |
+| 2179-2186 | -87 |
+| 2053-2064 | -77 |
+
+### 通常日 3F 上位5 section
+| section | excess |
+|---|---:|
+| 3001-3016 | +115 |
+| 3295-3309 | +112 |
+| 3310-3324 | +99 |
+| 3144-3155 | +93 |
+| 3191-3208 | +86 |
+
+旧「100単位帯域」が不正確だった理由: 2200台(+61)の中に最弱の2196-2212(-311)が混在。2023-2031の突出は鉄台2026によるもので section 戦略ではなかった。
+
+## アクション
+- 通常日 2F は **2102-2114 を最優先**（鉄台除外後の真の1位）
+- 2023-2031 は鉄台2026を狙えるなら最強だが、取れない前提では2位扱い
+- **2196-2212 は日種問わず最優先で避ける**（avg_diff がマイナス）
+- 実装: `eda/kamata7_machine_band_analysis.py`（デフォルト=鉄台除外）
+
+---
+id: kamata7-section-event-day
+trigger: "蒲田7の7系日・週末にセクション戦略を変えるべきか判断するとき"
+confidence: 0.78
+domain: operational-strategy
+source: empirical-backtest
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 7系日は通常日の弱セクションが大逆転する — ホールが設定帯域をシフトしている可能性
+
+## 背景
+`eda/kamata7_machine_band_analysis.py` の delta_excess（通常日との差分、2026-06-17）:
+
+### 7系日 2F delta_excess 上位
+| section | 通常日 | 7系日 | delta |
+|---|---:|---:|---:|
+| 2065-2076 | -106 | +316 | +422（逆転！）|
+| 2053-2064 | -81 | +268 | +349（逆転！）|
+| 2143-2154 | +136 | +467 | +331 |
+| 2330-2351 | -99 | +105 | +205（逆転！）|
+
+### 週末 2F delta_excess 上位
+| section | 通常日 | 週末 | delta |
+|---|---:|---:|---:|
+| 2089-2101 | +104 | +252 | +148 |
+| 2330-2351 | -99 | +4 | +103 |
+| 2155-2164 | +58 | +140 | +83 |
+
+## アクション
+- 7系日: 通常日最弱の 2065-2076, 2053-2064 が逆転 → **これらセクションも視野に入れる**
+- 週末: **2089-2101 が相対的に最善**（delta +148）
+- 1系日: 通常日最強群（2001-2010, 2041-2052, 2102-2114）が大幅悪化 → 避ける。2330-2351, 2077-2088 が逆転 → 狙い目
+- 3F は 3031-3042（delta +523 on 7系日）が逆転するが、3F全体は基本避ける方針を維持（1系日を除く）
+- **1系日のみ 3F も検討可**（2F/3F gap ≒ 19 のため）
+
+---
+id: ichikei-day-unique-pattern
+trigger: "1系日（DD∈{1,11,21,31}）に蒲田7でどう立ち回るべきか判断するとき"
+confidence: 0.80
+domain: operational-strategy
+source: empirical-backtest
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 1系日は2F/3Fフロア差が消滅する特異日 — Q5は有効だがフロア縛りは不要
+
+## 背景
+`eda/kamata7_ichikei_analysis.py` で walk-forward 3ペア（3ヶ月窓、n_dates=30）を実施（2026-06-17）:
+
+| | Q5 excess | 2F/3F gap |
+|---|---:|---:|
+| 通常日 | +150 | 135 |
+| 7系日 | +301 | 132 |
+| 週末 | +144 | 90 |
+| **1系日** | **+215** | **19** |
+
+- Q5 excess は +215（通常日 +150 より高く、7系日 +301 より低い）→ Q5機種選択は有効
+- 2F/3F gap は **わずか 19**（他の日種と比べて桁違いに小さい）→ フロア縛りが意味をなさない
+
+## セクション逆転パターン（2F）
+1系日に通常日最強セクションが大幅悪化し、弱セクションが逆転する:
+
+| section | 通常日 excess | 1系日 delta |
+|---|---:|---:|
+| 2330-2351 | -146 | +236（逆転） |
+| 2077-2088 | -65 | +177（逆転） |
+| 2089-2101 | +144 | +147 |
+| 2001-2010 | +294 | **-386（大幅悪化）** |
+| 2041-2052 | +291 | **-306（大幅悪化）** |
+| 2102-2114 | +294 | **-298（大幅悪化）** |
+
+3Fでも同様の逆転が大規模発生（3265-3280: delta +420, 3117-3130: +311）
+
+## アクション
+- Q5機種選択は1系日でも継続（excess +215 でプラス）
+- **フロア縛りは1系日に限り外す** — 2F/3F gap ≒ 19 なので 3F も選択肢に入る
+- セクション戦略は通常日と逆転するため注意（2001-2010, 2041-2052, 2102-2114 を避ける）
+- 逆に 2330-2351, 2077-2088 が1系日に浮上する
+- まだ3ペアのため「有望」どまり
+- 実装: `eda/kamata7_ichikei_analysis.py`、結果: `tmp/kamata7_ichikei_analysis/`
+
+---
+id: goal-prompt-4000char-limit
+trigger: "Codexへの/goalプロンプトを作成するとき"
+confidence: 0.99
+domain: workflow-codex-handoff
+source: user-instruction
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# /goalプロンプトは4000文字以内に収める
+
+## 背景
+2026-06-16セッションでユーザーから明示的に指示。
+初稿は不要な詳細（バリデーションリスト・例外ケース列挙）が多かった。
+既存ファイルから流用する関数名を明示すれば実装詳細の記述を省略でき、
+1500〜1800文字程度に圧縮しても Codex が迷わず実装できる。
+
+## アクション
+- 既存流用関数名を明示して詳細記述を省く
+- 出力カラムは必要なもののみ列挙
+- 書いたら文字数をカウントして4000文字以内を確認してから渡す

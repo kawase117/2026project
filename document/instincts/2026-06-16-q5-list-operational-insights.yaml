@@ -1,0 +1,97 @@
+---
+id: n-machines-is-nunique-not-current-floor-count
+trigger: "Q5リストや機種集計スクリプトの「台数」列を解釈するとき"
+confidence: 0.95
+domain: data-interpretation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# n_machines は「窓内にその機種名で稼働した台番号のユニーク数」であり、現在の設置台数ではない
+
+## 背景
+`kamata7_current_q5_list.py` および `kamata7_machinename_q5_backtest.py` の
+`n_machines = machine_number.nunique()` は、集計窓内に
+`games_normalized >= 1000` の記録があった台番号の種類数を返す。
+
+窓の途中で機種が入れ替わった台番号は、入れ替え前の機種名と
+入れ替え後の機種名の両方でカウントされる（重複計上）。
+
+ただし `active=True`（最終登場が30日以内）でフィルタ済みの場合は
+現在の設置台数に近い値になる。
+
+## アクション
+- 「モンキーターンV 66台」を「現在66台ある」ではなく
+  「過去3ヶ月で66種類の台番号で稼働」と解釈する
+- 現在台数を正確に知りたい場合は `last_date == max_date` 行のみの
+  `machine_number.nunique()` で計算する
+- active=True（30日以内）フィルタ後の値は実用上十分に現在台数に近い
+
+## 例
+```python
+# 現在台数の正確な計算
+current_n = df[df['date'] == max_date].groupby('machine_name')['machine_number'].nunique()
+```
+
+---
+id: kamata1-q5-backtest-not-yet-validated
+trigger: "（廃止）このインサイトは2026-06-16に検証完了により無効化"
+confidence: 0.0
+domain: operational-strategy
+source: superseded
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 廃止 — [[kamata1-q5-backtest-confirmed]] に置き換え
+
+## 背景
+2026-06-16に `eda/kamata1_machinename_q5_backtest.py` で5ペアのwalk-forwardを実施し、
+全ペアでexcess正（平均+86）を確認。本インサイトの「未実施」という前提が消滅した。
+詳細は `2026-06-16-kamata1-backtest-and-7kei-generalization.yaml` を参照。
+
+---
+id: high-variance-machine-payout-inflation-risk
+trigger: "台数が少なく（10台未満）かつ機械割が107%以上の機種がQ5リストに出現したとき"
+confidence: 0.88
+domain: data-interpretation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 少台数の高分散機種はpayout_rateが過大に見える可能性がある
+
+## 背景
+蒲田1Q5リストに「バジリスク絆2 天膳 BLACK EDITION」が108.45%・6台で登場。
+AT高分散機種は大当たりが集中した期間だとpayout_rateが設定投入率を大きく超えて見える。
+台数が少ないほど1〜2台の当たり期間で機種全体のpayout_rateが大きく変動する。
+
+## アクション
+- Q5リストで「台数 < 10 かつ payout_rate > 106%」の機種は
+  「高分散のラッキー候補」と分類し信頼度を下げる
+- n_datesが窓の全日数（約92日）に近いほど安定した実績
+- 迷う場合は games_sum / n_machines（台あたり平均稼働）も確認する
+
+---
+id: common-q5-machines-cross-halls-suggest-spec-effect
+trigger: "複数ホールのQ5リストを並べて比較するとき"
+confidence: 0.78
+domain: domain-hypothesis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 両ホール共通Q5機種は「機種スペック自体の強さ」が持続性の一因である可能性
+
+## 背景
+蒲田7（17機種）と蒲田1（16機種）のQ5を比較したところ13機種が共通だった。
+`hall-specific-findings-never-transfer-to-other-halls` の原則上、
+「Aホールの成績がBホールでも再現する」とは言えないが、
+「機種のベーススペックや人気度が差枚持続性に寄与している」という
+仮説はホール横断で成立しうる方法論レベルの話として区別できる。
+
+## アクション
+- 共通Q5機種を「機種スペック由来の強さ候補」、固有Q5機種を
+  「ホール戦略由来の強さ候補」として仮説的に分類する
+- 確定した法則ではなく仮説（confidence=0.78）。
+  検証にはmachine_master_researchの公称スペックとの照合が必要
+- ホール別の主張はホール別に行う（hall-specific原則は守る）

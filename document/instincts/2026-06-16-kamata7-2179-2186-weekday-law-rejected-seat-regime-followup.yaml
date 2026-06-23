@@ -1,0 +1,90 @@
+---
+id: kamata7-2179-2186-weekday-law-rejected-thu-weak-survives
+trigger: "kamata7 2F section 2179-2186、またはその他セクションの曜日別法則(機械割・差枚)を評価するとき"
+confidence: 0.8
+domain: project-status
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# セクション2179-2186の「日曜が強い」曜日法則は機種2180/2182の2台に依存し棄却。「木曜が弱い」のみ残存
+
+## 背景
+差枚ベースのEDAで kamata7 2F セクション2179-2186 に「日曜が最良・木曜が最悪」という
+曜日効果が見つかり、機械割ベース(hit_rate_104/mean_excess_pct/分布形状)で再検証した。
+
+1. 機械割ベースでも mean_excess_pct / hit_rate_100 で日曜>木曜の順序は再現した
+   (Sun mean_excess=-0.93が最良、Thu mean_excess=-7.10が最悪)。
+2. 「広く浅く(Sun) vs 狭く深く(Wed)」という分布形状仮説を立てたが、
+   share_100_104/share_104_plusの実測では支持されず、Sunは分布全体が
+   右シフトしているだけ(レベルシフト、形状シフトではない)。
+3. median_payoutrate_pctでSun/Thuともfull_sig(q<0.01)だったが、
+   split-halfでは前半non-sig・後半sigのみで stable=false。
+4. 機種台数別の集中度チェックで、Sunday効果は機種2182(q=0.007)と
+   2180(q=0.010)の2台にほぼ集中(top_machine_share=0.30)。
+   この2台を除外するとSun delta=+1.5, q=0.25(non-sig)に低下。
+   Thu delta=-2.96, q=0.021(sig)は除外後も残存。
+
+## アクション
+1. セクション/フロア全体の曜日法則を主張する前に、必ず台別delta×qの
+   表を作り、top1-2台を除外して再検証する。本ケースのように
+   「セクション法則」が実は2台の現象であることが多い。
+2. 「Thu弱い」は機種除外後も残る唯一の安定成分。今後このセクションで
+   曜日を特徴量に使う場合、Thuフラグ単独の弱さ(diff_coins/機械割とも
+   negative)として扱い、Sun強さは特徴量化しない。
+3. 分布形状仮説(broad-shallow vs narrow-deep)はこのデータでは再現
+   しなかった。曜日差は「分布のレベルシフト」として扱う方が単純で
+   妥当(p10〜p95が全体的に上下にシフトするだけ)。
+
+## 例
+```python
+# セクション内の台別曜日deltaを必ず確認してから法則を主張する
+per_machine = df.groupby(['machine_number','weekday_label']).agg(
+    median_pr=('payoutrate_pct','median'), n=('payoutrate_pct','size'))
+# top1-2台を除外して再集計し、qが消えるかを確認
+```
+
+---
+id: kamata-seat-regime-change-cross-machine-name-followup
+trigger: "ある台番号でmachine_nameが期間中に変わっており、その台が曜日/イベント法則の主要因になっているとき"
+confidence: 0.55
+domain: project-status
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 台2180/2182は2025-12-22前後でmachine_nameが変わったが、変更後の2機種(SHAKE BONUS TRIGGER→不二子BT)双方でSundayが突出して強くなる共通パターンが見られた(要追加検証・n小)
+
+## 背景
+[[kamata7-2179-2186-weekday-law-rejected-thu-weak-survives]] のSunday法則は
+台2180/2182の機種交代(2025-12-22)によるレジーム変化として説明されたが、
+詳細を見ると単純な「新機種の特性」では説明しづらい:
+
+- 2180: エヴァ(〜12/21, Sun median=100, share_104+=0.35)
+  → SHAKE(12/22〜, Sun median=106.0, share_104+=0.60)
+  → 不二子BT(Sun median=105.3, share_104+=0.62)
+- 2182: エヴァ(〜12/21, Sun median=100.5, share_104+=0.35)
+  → SHAKE(Sun median=104.1, share_104+=0.54)
+  → 不二子BT(Sun median=104.3, share_104+=0.50)
+
+エヴァ期はSundayは他曜日と大差ない平凡な値だったが、12/22以降は
+**SHAKE→不二子BTという全く異なる2機種の両方で**、同じ台番号(2180/2182)
+だけSundayが他曜日(median 87-99)より明確に高い(104-106)。
+
+機種が変わっても座席単位でSunday特性が維持される=「機種の特性」では
+なく「この2座席×2025-12-22以降の期間」固有の現象である可能性がある。
+ただし各セルn=8-15と小さく、ノイズの可能性も高い。
+
+## アクション
+1. 機種交代を含むセクション/台の法則を「機種固有の特性」と結論づける前に、
+   交代前後で同じ台番号の曜日パターンが「機種を問わず」共通かどうかを
+   確認する。機種を問わず共通なら「座席×期間」の現象として扱う。
+2. 2180/2182の「2025-12-22以降のSunday強さ」は n=8-15/セルと薄いため、
+   現時点では法則化しない。他の台でも2025-12-22前後でSunday特性が
+   変化していないか(ホール全体の運用変化の有無)を確認できれば、
+   座席固有か全体傾向かを区別できる。これは次のアクション候補として
+   保留する。
+3. 全体として、このセクション(2179-2186)の曜日深堀りはROIが低下して
+   いるため、これ以上の細分化(weekday×DD、台別除外の繰り返し)は
+   避け、他の軸(セクション、DD単独など)に切り替えることを推奨する。
+---

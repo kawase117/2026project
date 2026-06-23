@@ -1,0 +1,178 @@
+---
+id: recommendation-db-path-kamata7-actual
+trigger: "蒲田7のDBを読み込むとき"
+confidence: 0.99
+domain: data-pipeline
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田7のDB実体ファイル名は「マルハンメガシティ2000-蒲田7.db」
+
+## 背景
+db/kamata7.db は0Bの空ファイル。実データは db/マルハンメガシティ2000-蒲田7.db（55.73MB）に格納されている。
+前回セッションでも同じミスが発生しており、kamata7.dbを開いてテーブルが見つからないエラーが出た。
+
+## アクション
+蒲田7のデータを読む場合は必ず `db/マルハンメガシティ2000-蒲田7.db` を指定する。
+`kamata7.db` は使用しないこと。
+
+## 例
+```python
+DB_PATH = 'db/マルハンメガシティ2000-蒲田7.db'  # 正しい
+# DB_PATH = 'db/kamata7.db'  # 空ファイル、使用禁止
+```
+
+---
+id: recommendation-machine-master-schema
+trigger: "machine_masterテーブルからA機種フラグを取得するとき"
+confidence: 0.99
+domain: data-pipeline
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# machine_masterのキーはmachine_name_normalizedであり、machine_numberではない
+
+## 背景
+machine_masterテーブルのカラム構成:
+- machine_name_normalized（キー）
+- jug_flag, hana_flag, oki_flag, bt_flag
+- display_names, official_name, created_at, updated_at
+
+machine_numberカラムは存在しない。A機種判定はmachine_name_normalizedでフラグを取得するか、
+machine_detailed_resultsのmachine_nameとキーワードマッチで行う。
+
+## アクション
+1. machine_masterからはmachine_name_normalizedでjug_flag/hana_flag/bt_flagを取得
+2. machine_numberとの紐付けはmachine_detailed_resultsのmachine_nameを経由して行う
+3. キーワードマッチ（ジャグラー、ハナハナ等）を併用して漏れを補完
+
+## 例
+```python
+# 正しい: machine_name_normalizedでフラグ取得
+mm = pd.read_sql("SELECT * FROM machine_master", conn)
+a_names = set(mm.loc[mm['jug_flag']==1, 'machine_name_normalized'])
+
+# 誤り: machine_numberカラムは存在しない
+# mm.loc[mm['bt_flag']==1, 'machine_number']  # KeyError
+```
+
+---
+id: recommendation-dd21-characteristics
+trigger: "DD21の推奨台リストを生成するとき"
+confidence: 0.90
+domain: scoring-model
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# DD21はトラフゾーン内だが1のつく日イベント効果で正方向
+
+## 背景
+DD21の実績:
+- DD18-23はトラフゾーン（全DD中最悪の104%率帯）
+- しかしDD21は「1のつく日」イベント日に該当
+- DD21全体: 11日, avg=+211, WR=40.8%（正方向）
+- DD21末尾別: 末尾8(+361) > 末尾2(+296) > 末尾6(+276) > 末尾9(+260)
+- DD21末尾最弱: 末尾5(+84) < 末尾4(+114) < 末尾7(+149)
+
+## アクション
+DD21のスコアリングでは:
+1. トラフゾーン警告は表示するが、イベント日効果で相殺されていることを明記
+2. 末尾8が+361でDD21最強であることをC5に反映
+3. 末尾5が+84で最弱であることも注記
+
+## 例
+DD21推奨時の末尾優先度: 8 > 2 > 6 > 9 > 0 > 3 > 1 > 7 > 4 > 5
+
+---
+id: recommendation-3f-rn-structural-dominance
+trigger: "蒲田7のTOP50スコアリングで3F_R_Nセグメントが突出するとき"
+confidence: 0.85
+domain: scoring-model
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 3F_R_N（東京喰種・真打吉宗エリア）は構造スコアが突出して高い
+
+## 背景
+2026/06/21予測で3F_R_Nセグメントの角3/角11がランク2-6を独占:
+- 3211 東京喰種 角3: composite=488, struct=481
+- 3244 東京喰種 角11: composite=472, struct=484
+- 3223 東京喰種 角11: composite=447, struct=488
+- 3254 真打吉宗 角11: composite=446, struct=484
+- 3236 東京喰種 角3: composite=410, struct=389
+
+角3と角11が交互に出現し、構造スコア380-490と他セグメントの300前後を大きく上回る。
+7台/50台がこのセグメントから選出。
+
+## アクション
+1. 3F_R_Nの構造的優位性は複数DD/曜日で検証が必要
+2. 特定セグメントへの過集中リスクを認識する
+3. 東京喰種エリアの角3/角11は継続的に監視対象
+
+## 例
+3F_R_N TOP台: 3211(角3), 3223(角11), 3231(角3), 3236(角3), 3244(角11), 3254(角11), 3262(角3)
+
+---
+id: recommendation-2f-la-diskup-anomaly
+trigger: "2F_L_Aセグメントのディスクアップ島をスコアリングするとき"
+confidence: 0.80
+domain: scoring-model
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 2F_L_Aディスクアップ島の角8(台2157)は構造スコア637と異常に高い
+
+## 背景
+2026/06/21予測でランク1の台2157（ディスクアップ ULTRAREMIX）:
+- composite=592, struct_score=637（TOP50平均333の約2倍）
+- 同島の角1(台2164)もrank8, struct=350, WR=60.9%
+- ディスクアップ島全体がA機種として高評価
+
+composite 2位の3211(488)との差が100以上あり、外れ値の可能性もある。
+構造スコアがここまで突出する場合、C1(seg×ssg×kakuban)で特定の組合せが
+異常に高い実績を持っている可能性がある。
+
+## アクション
+1. 2157のスコア内訳（C1-C6各値）を確認し、どのコンポーネントが突出原因か特定
+2. 過去のDD別でも同様に突出するか検証（DD21固有か普遍的か）
+3. 外れ値として扱うか、構造的優位として活用するか判断
+
+## 例
+台2157: C1=?(40%), C2=?(15%), C3=?(20%), C4=?(15%), C5=?(5%), C6=?(5%)
+→ 次回スコアリング時にコンポーネント内訳を出力して確認
+
+---
+id: recommendation-powershell-encoding-required
+trigger: "日本語を含むPythonスクリプトの出力をターミナルで確認するとき"
+confidence: 0.99
+domain: development-workflow
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 日本語出力はBashではなくPowerShellでPYTHONIOENCODING=utf-8を設定して実行
+
+## 背景
+Bash toolで日本語を含むPythonスクリプトを実行すると、出力がmojibake（文字化け）になる。
+PowerShellで `$env:PYTHONIOENCODING = "utf-8"` を設定してから実行すると正常に表示される。
+
+## アクション
+日本語出力を含むPythonスクリプトは以下で実行:
+```powershell
+$env:PYTHONIOENCODING = "utf-8"; python script.py
+```
+Bash toolは使わない。
+
+## 例
+```
+# NG: Bash tool
+python _tmp_predict.py  # → 文字化け
+
+# OK: PowerShell tool
+$env:PYTHONIOENCODING = "utf-8"; python _tmp_predict.py  # → 正常表示
+```

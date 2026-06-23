@@ -1,0 +1,63 @@
+---
+id: machine-category-a-at-weekday-effect-hypothesis
+trigger: "kamata系の曜日別法則(Sat/Thu等)をmachine_name軸で検証し、上位候補が特定の機種カテゴリ(ジャグラー/ハナハナ系=A+AT/ノーマル/Aタイプ)に集中しているとき"
+confidence: 0.6
+domain: project-status
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# machine_name軸の曜日法則は「個別機種の特性」ではなく「機種カテゴリ(A群/AT群)による検出感度・設定戦略の差」の可能性がある
+
+## 背景
+2026-06-16、kamata7のmachine_name軸EDA(tmp/kamata_machine_name_axis_eda_deepdive/)で、
+Branch Aの「Sat(土曜)効果」上位がマイジャグラーV/ファンキージャグラー2/
+ハッピージャグラーVIII/キングハナハナ-30/ゴーゴージャグラー3など、
+いずれもジャグラー/ハナハナ系（A+AT・ノーマル・Aタイプに分類される低分散機種）に
+集中していた。
+
+これに対して2つの対立仮説が浮上した：
+1. ホール全体の土曜押し上げ効果が、低分散機種でしか統計的に検出できていないだけ
+   （machine_categoryは検出感度の代理変数）
+2. ユーザーのドメイン知識: ジャグラー/ハナハナ系は個別の設定判別が難しく、
+   列・末尾などのグループ単位で「このグループに設定が入っている」と判断するのが
+   一般的手法。土曜は来店者数が多い日であり、ホールが土曜にA+AT/ノーマル系へ
+   設定を入れるのは合理的戦略の一つ（machine_categoryは設定投入戦略そのものの軸）
+
+機種カテゴリの分類は document/machine_master_research/machine_list_for_research.csv
+の `machine_type` 列（値: スマスロ/AT/ノーマル/A+AT/A+ART/AT(擬似ノーマル)/ART/Aタイプ）
+を使って行える。このCSVはUTF-8 BOM付き（encoding='utf-8-sig'で読む。cp932は不可）。
+
+A群 = ノーマル, Aタイプ, A+AT, A+ART
+AT群 = AT, ART, スマスロ, AT(擬似ノーマル)
+
+## アクション
+1. machine_name軸の法則候補が特定の機種群に集中している場合、結論を出す前に
+   必ず machine_list_for_research.csv の machine_type で A群/AT群に分類し、
+   グループ単位の日次平均でも同じ効果(delta方向・q値)が出るか再検証する。
+2. A群とAT群で同方向・同程度のdeltaが出れば「ホール全体のレベルシフト」、
+   A群のみで有意ならユーザー仮説（土日にA群へ設定投入）を支持、と判定する。
+3. machine_name と machine_list_for_research.csv の表記は完全一致しない場合がある
+   ため、突合率を必ず報告し、unclassifiedは別集計して結論から除外する。
+4. AT機（ユーザーのメイン分析対象）はそもそも個別読みが容易なため、AT群限定の
+   machine_name法則が見つかった場合は「機種固有の特性」である可能性が高い。
+   A群のような「グループ単位判定」前提は当てはまらない点に注意する。
+5. machine_type(生値: AT/ノーマル/A+AT等) → A群/AT群/unclassified への変換は
+   実装内の一箇所のみで行い、以後はその変換済みカテゴリ文字列のみを使う
+   （lookup辞書の値に対して再度同様の変換関数を通さない＝二重変換禁止）。
+   実装直後に、既知のA群代表機種（例: マイジャグラーV）とAT群代表機種を使って
+   分類結果が期待通り(A群/AT群がunclassifiedに落ちていないか)を確認する
+   スモークテストを書くこと。
+
+## 例
+```python
+import pandas as pd
+cat = pd.read_csv('document/machine_master_research/machine_list_for_research.csv', encoding='utf-8-sig')
+A_GROUP = {'ノーマル','Aタイプ','A+AT','A+ART'}
+AT_GROUP = {'AT','ART','スマスロ','AT(擬似ノーマル)'}
+name_to_type = cat.set_index('machine_name')['machine_type'].to_dict()
+df['category'] = df['machine_name'].map(name_to_type).map(
+    lambda t: 'A群' if t in A_GROUP else ('AT群' if t in AT_GROUP else 'unclassified'))
+# A群/AT群それぞれで日次グループ平均excess_pctを作り、Sat/Thuのdelta×qを再検定
+```
+---

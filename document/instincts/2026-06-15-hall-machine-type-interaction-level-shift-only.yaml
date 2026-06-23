@@ -1,0 +1,49 @@
+---
+id: hall-machine-type-interaction-level-shift-only
+trigger: "機種別(machine_type)プールモデルに hall_id を特徴量として追加する効果を検証するとき"
+confidence: 0.8
+domain: pachinko-ml
+source: session-observation
+project_id: 2026project
+project_name: 2026project
+
+# hall_id特徴量追加によるAUC改善は「ホール内ランキング」には寄与しない（レベルシフトのみ）
+
+## 背景
+
+機種別(machine_type)プールモデル(is_top_3予測, xgb)に `hall_id_enc`
+(全9ホールをfactorize)を1特徴追加するcheap実験を実施。
+
+3つの直近30日split全てで:
+- AUC: 0.671-0.676 -> 0.697-0.702 (+0.024~+0.030, 一貫して改善)
+- hit@3: +0.021 / -0.002 / +0.005 (ブレが大きく一貫しない)
+- feature importance: hall_id_enc は約10%(7特徴中4位、is_a_typeが約50%で最大)
+- ホール別の平均スコア偏移は3split間で非常に一貫(同じホールが同じ方向・大きさでシフト)
+  - ザ-シティ-ベルシティ雑色店: +0.023 (最大の上昇)
+  - 楽園蒲田店: -0.019 (最大の下降)
+  - 蒲田1/蒲田7/ヒロキ東口: ほぼ0
+- within-(date,hall)のSpearman順位相関(hall_id追加前後) = 0.98-0.99
+
+## 結論
+
+hall_id_encは「そのホールはis_top_3になりやすい/なりにくいベース率」という
+**定数的なオフセット**を学習しているだけで、ホール内でどの機種がTop3かという
+**順位そのものはほぼ変化しない**(相関0.98-0.99)。AUC改善は統計的には有意だが、
+実務上の「どの機種を選ぶか」(hit@3)には直結しない可能性が高い。
+
+## アクション
+
+- 「hall×機種」の交互作用特徴量を本番特徴セットに追加する前に、
+  AUC単体の改善を見て早期に投資判断しない。
+  必ず hit@k や within-hallランク相関などの「順位への影響」を同時に確認する。
+- ザ-シティ-ベルシティ雑色店が最大の正偏移(+0.023)であったことは、
+  既存知見「ホール別個別モデルでベルシティ雑色のみ+2.86% AUC向上」と整合する。
+  このホールは既存特徴量(is_a_type比率等)で説明し切れない構造的な違いを持つ
+  可能性が高く、hall×機種の粒度ではなく「ベルシティ雑色固有の機種構成・台数・
+  営業日数」を個別に掘る方が筋が良い。
+
+## 例
+
+検証スクリプト: ml/machine_type/exploratory/hall_machine_interaction_smoke.py
+(全9ホールのdaily_machine_type_summaryをpoolし、hall_id_encの有無でxgb
+classifierを比較。3split全てで同じパターンを確認。)

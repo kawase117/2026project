@@ -1,0 +1,228 @@
+---
+id: kakuban-column-length-confound
+trigger: "角番×DDクロスで高角番シグナルが出たとき、または列長さの異なるセクションを混在させた角番分析を行うとき"
+confidence: 0.80
+domain: pachinko-eda
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 角番分析における列長さコンファウンドとL/R分割の必要性
+
+## 背景
+蒲田7の角番分析では、左側フロア（L: X≤17）と右側フロア（R: 2FはX≥19、3FはX≥23）という
+空間的な左右分類自体は有効だが、L/R 両側の正確なセクションサイズ分布は再計測が必要。
+従来の「左側は7〜14台の不均質列、右側は14〜17台の均質列」という理解は、
+column_size を X 集計で定義していた誤りに基づいていた。
+
+## アクション
+角番分析を実施する前に座標CSVのX座標でL/R分割を行い、
+空間的なR側（右側）とL側（左側）を分けて分析する。
+分割後は縦列（section内でX.nunique()==1）を除外してから渡す。
+
+L/R判定のXしきい値（蒲田7）:
+- 2F: X ≤ 17 → L、X ≥ 19 → R
+- 3F: X ≤ 17 → L、X ≥ 23 → R
+
+除外対象縦列: 2187-2195、3191-3208、3209-3217、3400-3401
+
+## 例
+```python
+def assign_side(floor: str, x: float) -> str:
+    if floor == "2F":
+        return "L" if x <= 17 else ("R" if x >= 19 else "E")
+    elif floor == "3F":
+        return "L" if x <= 17 else ("R" if x >= 23 else "E")
+    return "E"
+
+# 縦列除外
+sec_x_span = df.groupby("section")["X"].nunique()
+vertical_sections = sec_x_span[sec_x_span == 1].index
+df = df[~df["section"].isin(vertical_sections)].copy()
+```
+
+---
+id: floor-column-size-definition-correction
+trigger: "列の台数でグルーピングする分析を設計・実装するとき"
+confidence: 0.98
+domain: analysis-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 列（島）の台数はセクション単位で定義する
+
+## 背景
+2026-06-17: `kamata7_kakuban_colsize_eda.py` で `column_size` を
+「同じX座標を持つ台数」（X集計）で定義していたが誤り。
+X=1 に12台いても複数セクションが同じX位置にあるだけで列は複数本。
+
+## 正しい定義
+`column_size = section_max - section_min + 1`
+
+## アクション
+座標CSV（`floor_coordinates_*.csv`）を使って列サイズを計算するときは
+`coords["column_size"] = coords["section_max"] - coords["section_min"] + 1`
+を使う。`coords.groupby("X").size()` は列サイズではない。
+
+## 影響範囲
+- `kamata7_kakuban_colsize_eda.py`: 修正済み（2026-06-17）
+- `kamata7_short_split_eda.py`: X集計ベースのため廃棄
+- `kamata7_colsize_lr_confound_check.py`: X集計ベースのため廃棄
+- colsize と L/R の交絡確認は正しい colsize で再実施が必要
+
+---
+id: kakuban-high-position-single-section-trap
+trigger: "角番18以上のシグナルが出たとき、または長台列が1本だけ存在するフロアで角番分析するとき"
+confidence: 0.95
+domain: pachinko-eda
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 高角番シグナルは22台列1本依存の罠
+
+## 背景
+蒲田7では2F・3Fともに22台の大型セクション（2330-2351 / 3341-3362）が各1本だけ存在する。
+角番18〜22のサンプルは全てこの1セクションからしか来ない。
+「角番19が強い」という結果は「この1列の19番目が強い」と等価で、
+構造的な位置シグナルとして使えない。Task 1で実確認済み（sections=1）。
+
+## アクション
+角番分析の結果でtop_kakuban ≥ 18が出た場合、必ずセクション分散を確認する。
+```python
+subset = eligible[eligible["kakuban"].eq(kakuban_val) & eligible["dd_bin"].eq(bin_label)]
+print(subset["section"].value_counts())
+```
+sections=1なら「1列の特定ポジション観測」に格下げし、構造的シグナルと区別して注記する。
+R側の均質列でもkakuban=17〜22は22台列1本依存になりやすいので注意。
+
+## 例
+3F_R_A で DD 1-6 / 7-12 / 25-31 の top_kakuban=19-20 は全て section=3341-3362 のみ。
+同フロアの DD 19-24 の top_kakuban=9 は 5セクションに分散 → こちらが構造的シグナル。
+
+---
+id: mean-median-divergence-outlier-indicator
+trigger: "角番×DD分析でmean_residualとmedian_residualが逆符号になっているセルを見たとき"
+confidence: 0.90
+domain: pachinko-eda
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# mean/median逆符号セルは外れ値駆動で実用価値が低い
+
+## 背景
+蒲田7 L/R分析のTask 2で確認。以下の2セルでmean正・median負が発生:
+- 3F_L_N kakuban=8 × DD18: mean=+936, median=-53, n=145（非負72/負73）
+- 3F_L_A kakuban=8 × DD19: mean=+324, median=-92, n=158（非負73/負85）
+どちらも特定台・特定日付に集中した少数の大きな正側残差がmeanを引き上げており、
+Kruskal-Wallisは有意でも実務的な安定シグナルとして使えない。
+
+## アクション
+角番EDAのcell-vs-rest結果で mean_residual と median_residual が逆符号の行は
+実用シグナルとして使わず「外れ値駆動の疑い」フラグを付ける。
+確認が必要な場合は上位外れ値の台番号・日付を引いて確認する:
+```python
+suspect = eligible[(eligible["kakuban"]==8) & (eligible["dd"]==18)]
+print(suspect.nlargest(5, "residual")[["machine_number","date","residual"]])
+print(f"非負: {(suspect['residual']>=0).sum()} / 負: {(suspect['residual']<0).sum()}")
+```
+
+## 例
+外れ値が特定日付（2025-12-18、2026-04-18等）に集中 → ホール戦略ではなく台固有の大当たり偏りの可能性。
+
+---
+id: kakuban-9-3f-right-dd19-24
+trigger: "蒲田7の3F右側（R）ジャグラー系（Aセグメント）で訪問日のDDが19〜24のとき"
+confidence: 0.83
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 3F_R_A × DD19-24 の角番9が最信頼シグナル（q=3.6e-6、多セクション確認済み）
+
+## 背景
+L/R kakuban EDA（kamata7_kakuban_rl_eda.py）の最有意結果。
+3F_R_A（右側ジャグラー系）のDD 19-24ビンで角番9がKruskal q=3.6e-6で最強。
+5セクション（3265-3280 / 3281-3294 / 3295-3309 / 3310-3324 / 3325-3340 / 3341-3362）
+に分散していることをTask 3で確認済み。1列依存でない構造的シグナル。
+
+## アクション
+DD 19-24（月19〜24日）に蒲田7 3Fを訪問する場合、右側ジャグラー列の「角番9」台を優先確認。
+角番9 = section_min + 8（0始まりで8番目）の台番号が基本候補。
+
+具体的候補台（2026-06-17時点）:
+- 3273 / 3272（マイジャグラーV / 3265-3280）
+- 3286（マイジャグラーV / 3281-3294）
+- 3301（ハッピージャグラーVIII / 3295-3309）
+- 3318（ジャグラーガールズ / 3310-3324）
+- 3333（アイムジャグラーEX-TP / 3325-3340）
+- 3349（要機種確認 / 3341-3362 ← 機種変更履歴あり）
+
+## 例
+section 3265-3280 の9番目台 = 3265 + 8 = 3273（section_min + 8）
+
+---
+id: kamata7-3fl-a-monthly-position-shift
+trigger: "蒲田7 3F左側（L）ジャグラー系（Aセグメント）でDDビン別の角番を選ぶとき"
+confidence: 0.79
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 3F_L_A の最強角番は月内でシフトする（月初=5番、中旬以降=7〜9番）
+
+## 背景
+3F_L_A（左側ジャグラー系）のDD-bin分析で、有意なtop_kakubanが月内で変化する:
+- DD 1-6: 角番5（q=1.4e-6）月初は前寄り
+- DD 7-12: 有意シグナルなし（過渡期）
+- DD 13-18: 角番9（q=3.1e-6）
+- DD 19-24: 角番8（q=1.2e-4）
+- DD 25-31: 角番7（q=0.027）
+Task 4で角番5の実台を確認。上位10台のうち6台が section_min + 4 に一致。
+
+## アクション
+3F_L のジャグラー系を見る場合、DDに応じて候補角番を変える:
+- DD 1-6  → 各列の5番目台（section_min + 4）を優先
+- DD 7-12 → 有意シグナルなし、回転状況で判断
+- DD 13-18 → 各列の9番目台
+- DD 19-24 → 各列の8番目台
+- DD 25-31 → 各列の7番目台
+
+DD 1-6 の角番5候補（2026-06-17時点）:
+3135（マイジャグラーV / 3131-3143）、3148（ファンキージャグラー2 / 3144-3155）、
+3163（ファンキージャグラー2 / 3156-3167）、3172（ゴーゴージャグラー3 / 3168-3180）、
+3185（ゴーゴージャグラー3 / 3181-3190）、3005（キングハナハナ-30 / 3001-3016）
+
+## 例
+「月初の設定入れは前方台、通常月中は奥台」というホール戦略仮説と整合。
+
+---
+id: kamata7-2fl-n-kakuban6-repeats
+trigger: "蒲田7 2F左側（L）AT系（Nセグメント）でDDビン別の角番を選ぶとき"
+confidence: 0.74
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 2F_L_N では角番6が4つのDDビンで繰り返し最強
+
+## 背景
+2F_L_N（左側AT系）のDD-bin分析で、5ビンのうち4ビンでtop_kakuban=6:
+- DD 1-6: 角番6（q=0.00068）
+- DD 7-12: 角番14・末尾（q=0.00038）← 孤立した例外
+- DD 13-18: 角番6（q=0.14）← 有意なし
+- DD 19-24: 角番6（q=0.00019）
+- DD 25-31: 角番6（q=0.00043）
+L側最長14台列では角番6＝前半、12台列では中間に相当。
+
+## アクション
+2F_L のAT系を見る場合、DD 7-12 を除く月間を通じて各列の6番目台（section_min + 5）を優先候補にする。
+DD 7-12 の末尾台（角番14）は孤立パターンで確信度低め。
+
+## 例
+section 2115-2128（14台）の6番目台 = 2115 + 5 = 2120（section_min + 5）

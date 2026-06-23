@@ -1,0 +1,169 @@
+---
+id: machine-type-5val-categorical-over-binary
+trigger: "CatBoostに機種分類を特徴量として投入するとき"
+confidence: 0.85
+domain: ml-feature-engineering
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 機種分類は5値カテゴリカル1列が最適（4バイナリフラグより優位）
+
+## 背景
+machine_masterの4フラグ（jug_flag/hana_flag/oki_flag/bt_flag）をそのまま4バイナリ特徴量として投入する案と、
+5値カテゴリカル1列（jug/hana/oki/bt/other）としてCatBoostのcat_featuresに渡す案を比較検討。
+Codexレビューで「4フラグは別仮説であり、CatBoostの交互作用学習にはカテゴリカル1列の方が自然」と指摘。
+
+## アクション
+CatBoostにカテゴリカル変数を投入する場合:
+1. np.selectで5値文字列に変換し、cat_features指定でPoolに渡す
+2. バイナリフラグの個別投入は避ける（スパースで交互作用学習が非効率）
+3. _prepare_ml_frame で数値列とカテゴリカル列を分離処理する
+
+## 例
+```python
+work["machine_type"] = np.select(
+    [work["jug_flag"].eq(1), work["hana_flag"].eq(1),
+     work["oki_flag"].eq(1), work["bt_flag"].eq(1)],
+    ["jug", "hana", "oki", "bt"],
+    default="other",
+)
+pool = Pool(X, label=y, cat_features=[ML_FEATURES.index("machine_type")])
+```
+---
+id: rolling-diff-window-separation-effective
+trigger: "時系列差枚特徴量をCatBoostに投入するとき"
+confidence: 0.80
+domain: ml-feature-engineering
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# rolling_diff は窓幅別分離（7d/14d/28d）が単一hist_diffより有効
+
+## 背景
+v1のhist_diff（単一の過去平均差枚）をrolling_diff_7d/14d/28dの3窓幅に分離した結果、
+スモークテスト（8活性日）でAUC 0.539→0.602（+0.063）に改善。
+Phase 9でもrolling_avg_diff_7dが一貫してSelectKBestのトップ特徴量だった。
+
+## アクション
+台別の時系列特徴量を設計する際は:
+1. 単一窓幅の集約値より、複数窓幅（短期7d/中期14d/長期28d）に分離して投入
+2. _calc_rolling_diff ヘルパーで ref_date からの lookback を計算
+3. 履歴不足時は fillna(0.0) で安全に処理
+
+## 例
+```python
+def _calc_rolling_diff(history, target_machines, n_days, ref_date):
+    cutoff = ref_date - pd.Timedelta(days=n_days)
+    recent = history[(history["date_dt"] >= cutoff) & (history["date_dt"] < ref_date)]
+    avg = recent.groupby("machine_number")["diff_coins_normalized"].mean()
+    return target_machines.map(avg).fillna(0.0)
+```
+---
+id: hypothesis-separation-in-ml-experiments
+trigger: "ML実験プロンプトで複数の特徴量変更を同時に行うとき"
+confidence: 0.90
+domain: ml-methodology
+source: codex-review-feedback
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 1つのML実験プロンプトには1つの主仮説を設定する
+
+## 背景
+v2プロンプト初版で「machine_typeカテゴリカル」と「machine_master 4フラグ」が混在し、
+Codexから「タイトルと実装が別仮説」「結果解釈が曖昧になる」と指摘を受けた。
+仮説が混線すると、改善がどの特徴量に起因するか分離できない。
+
+## アクション
+ML実験のプロンプトを設計する際:
+1. タイトル・背景・実装が同一仮説を指すことを確認
+2. 複数の独立した仮説は別実験（v2a/v2b）に分離
+3. 「Phase Xの再現」と称する場合、本当に同じアプローチかを検証する
+   - Phase 5の「model_type grouping最有効」は別モデル学習であり、特徴量投入ではない
+
+## 例
+NG: タイトル「machine_type categorical」、実装「jug/hana/oki/bt 4フラグ」
+OK: タイトル「machine_type 5値categorical」、実装「np.selectで5値に変換しcat_features指定」
+---
+id: catboost-v2-auc-0602-smoke-promising
+trigger: "CatBoost v2の結果を評価するとき"
+confidence: 0.65
+domain: ml-evaluation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# v2スモーク: AUC 0.602, p@10 0.275（v1: 0.539, 0.217）— フル実行で確認必須
+
+## 背景
+CatBoost v2（machine_type 5値cat + rolling_diff 7d/14d/28d + is_event）のスモークテスト（8活性日）:
+- AUC: 0.539 → 0.602 (+0.063)
+- p@10: 0.217 → 0.275 (+0.058)
+- ML昇格3条件: 全PASS（スモーク段階）
+- Front 0.300 / Back 0.250（安定）
+
+## アクション
+confidence=0.65に留める理由:
+1. 8日間のスモークテストは統計的に不安定（標準誤差が大きい）
+2. v1のスモークテストでは出なかった傾向がフル（195日）で出る可能性
+3. フル実行結果でp@10, AUC, event/non_event分割, front/back全てを再検証
+4. 特にevent日のp@10改善（0.205→0.250）がフルでも再現するかが鍵
+
+## 例
+v1 full: AUC=0.539, p@10=0.217, ML昇格=NOT YET
+v2 smoke: AUC=0.602, p@10=0.275, ML昇格=PASS（暫定）
+v2 full: 実行中（推定25-35分）
+---
+id: is-event-feature-addresses-ml-weakness
+trigger: "MLのイベント日/非イベント日パフォーマンス差に対処するとき"
+confidence: 0.75
+domain: ml-feature-engineering
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# is_eventフラグ追加でMLのイベント日弱点に対処
+
+## 背景
+v1ではMLがイベント日で弱い（0.205 vs ルール0.236）、非イベント日で強い（0.222 vs 0.210）パターンがあった。
+v2でis_eventを明示的に特徴量投入した結果、スモークテストでevent p@10が0.205→0.250に改善。
+CatBoostがis_event×他特徴量の交互作用を学習し、日種別で異なるスコアリングを行えるようになった可能性。
+
+## アクション
+MLモデルのevent/non_event分割で一方が弱い場合:
+1. is_eventフラグを特徴量として明示的に投入
+2. CatBoostの交互作用学習に委ねる（手動分岐より効果的）
+3. ただしイベント日の定義自体がルールベースのc3/c4と重複するため、効果の分離は困難
+
+## 例
+v1: event 0.205 < rule 0.236, non_event 0.222 > rule 0.210
+v2 smoke: event 0.250 > rule 0.050, non_event 0.283 > rule 0.167
+---
+id: codex-prompt-phase-citation-accuracy
+trigger: "過去のPhase実験を根拠としてプロンプトに記載するとき"
+confidence: 0.90
+domain: codex-workflow
+source: codex-review-feedback
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 過去Phase実験の引用は「何を実証したか」を正確に記載する
+
+## 背景
+v2プロンプトで「Phase 5でmodel_type grouping最有効と実証済み」を根拠にmachine_type特徴量投入を提案したが、
+Phase 5は「機種タイプ別に別モデルを学習するgrouping戦略」の検証であり、「machine_typeを特徴量として投入」した実験ではなかった。
+Codexから「Phase 5の再現ではなく別アプローチ」と正しく指摘。
+
+## アクション
+プロンプトで過去実験を引用する際:
+1. 実験が「何を変えて何を測定したか」を正確に確認
+2. 「grouping戦略」と「特徴量投入」を混同しない
+3. 直接的に再現できない知見は「示唆」として記載し、「実証済み」とは書かない
+4. Phase番号だけでなく、具体的な手法名（groupby, feature selection, hyperparameter tuning等）を明記
+
+## 例
+NG: 「Phase 5でmodel_type grouping最有効と実証済み → machine_typeを特徴量投入」
+OK: 「Phase 5で機種タイプ別のgrouping戦略が有効と実証（AUC +2.44%）。これは機種タイプが予測に有用な情報を含むことを示唆するが、特徴量として投入した場合の効果は別途検証が必要」
+---

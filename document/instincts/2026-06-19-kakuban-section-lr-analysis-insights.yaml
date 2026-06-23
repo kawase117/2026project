@@ -1,0 +1,172 @@
+---
+id: section-vs-lr-f-value-comparison
+trigger: "新規分割戦略の有効性を比較評価する際"
+confidence: 0.95
+domain: eda-statistical-methods
+source: session-observation-quantified
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# セクションサイズ分割 >> LR分割（F値で1000倍差）
+
+## 背景
+
+蒲田7で角番×DD分析を実施時、2つの分割戦略（セクションサイズ vs LR）の有効性を比較。
+
+前提として「Large島の角番11が外側だから高設定」という仮説があったが、実装で物理検証と統計検証を同時に行った結果、**島の左右方向（LR）より、島全体のサイズ（台数）の方が重要**だことが判明。
+
+## アクション
+
+1. 分割戦略比較時は F値を必ず計算（stats.f_oneway で H0 検定）
+2. 交互作用分析で「組み合わせ効果」を検証（交互作用 < 0.2pp なら独立）
+3. 物理検証で「分類の正確性」を確認（F値が低い理由を区別）
+
+## 例
+
+セクションサイズ F値 vs LR F値（蒲田7, 2F）
+- section_size_group: 32.41
+- lr_split: 0.03
+→ section_size が 1000倍有効
+
+---
+id: lr-split-automatic-detection-from-coordinates
+trigger: "フロア座標データがある時、左右分割を自動判定する"
+confidence: 0.92
+domain: eda-data-preparation
+source: session-implementation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# フロア座標から LR分割を自動判定
+
+## 背景
+
+蒲田7 の 2F/3F フロア座標 CSV（kakuban, x, y, section）から、各台の左右位置を自動判定。
+
+島内での X座標中央値を基準に「左」「右」を分類し、角番の物理的位置と分類の相関を検証。
+
+## アクション
+
+1. CSV の X カラムを読み込み（rank_from_min をキーに）
+2. セクション内 X座標の中央値を計算
+3. 各 kakuban について x < x_median なら L, else R
+
+## 例
+
+島「2187-2195」(medium):
+- kakuban 1-5: x=38.0 → LR=R
+- kakuban 6-9: x=33.0-36.0 → LR=L
+
+---
+id: three-axis-aggregation-with-interaction-check
+trigger: "3軸以上のクロス集計を実施時、交互作用を検証する"
+confidence: 0.90
+domain: eda-statistical-methods
+source: session-implementation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 3軸クロス集計と交互作用分析
+
+## 背景
+
+DD × section_size × LR の 3軸集計を実施時、交互作用（main effect からの乖離）を定量化。
+
+交互作用が小さければ各軸が独立に作用し、細粒度分析は不要。
+
+## アクション
+
+1. 交互作用を計算: observed - (section_effect + lr_effect - grand_mean)
+2. 交互作用の std が < 0.2pp なら main effect が支配的
+3. この場合、「large島の右側」のような組み合わせは不要
+
+## 例
+
+蒲田7 交互作用範囲: -7.12pp ～ +7.12pp（ノイズレベル）
+
+---
+id: normalize-segment-frame-essential-columns
+trigger: "セグメント別フレームを作成時、必ず dd, rank_from_min, section_size_group を生成"
+confidence: 0.98
+domain: eda-implementation-pattern
+source: session-debugging
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# セグメント正規化（dd, rank_from_min, section_size_group 生成）
+
+## 背景
+
+蒲田7分析時、_build_segment_views() で返すフレームに `dd` カラムが存在せず、後続処理で KeyError が発生。
+
+_normalize_segment_frame() を呼び出して、日付から dd を生成し、section_size から section_size_group を導出する必要。
+
+## アクション
+
+1. _normalize_segment_frame() を呼び出し（date → dd, section_size → section_size_group）
+2. フロア別フレーム構築後に normalize を呼び出し
+3. 必須カラム: date, rank_from_min, section_size, pay_rate
+
+## 例
+
+dd = date.dt.day（日付から日を抽出）
+section_size_group = section_size.map(_section_size_group)（small/medium/large）
+
+---
+id: distinguish-actual-value-from-category
+trigger: "数値とカテゴリ変数が両立する場合、カラム名で明示的に区別"
+confidence: 0.96
+domain: code-quality-data-modeling
+source: session-debugging
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# section_size (実値) vs section_size_group (カテゴリ)
+
+## 背景
+
+section_size（島内の機械台数、数値） と section_size_group（small/medium/large、カテゴリ）が混在。
+
+前回実装で section_size_group に対して section_size_order（カテゴリ）でフィルタしようとして型不一致エラー。
+
+## アクション
+
+1. カラム名で明示的に役割を区別（_size = int, _size_group = str）
+2. groupby キーを明示的に指定（section_size_group で filter）
+3. テストデータに両カラムを含める
+
+## 例
+
+df[df["section_size_group"].isin(["small", "medium", "large"])]（正解）
+NOT df[df["section_size"].isin(["small", "medium", "large"])]（型不一致）
+
+---
+id: codex-prompt-data-preparation-checklist
+trigger: "Codex に EDA 実装プロンプトを送信する前"
+confidence: 0.92
+domain: ai-assisted-coding-workflow
+source: session-learning
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Codex プロンプト送信前チェックリスト
+
+## 背景
+
+前々回（2026-06-19）の kamata7_kakuban_dd_precision_eda.py で section_size 型不一致バグが本番出力まで到達。
+
+Codex が既存実装パターンを参考にしても、すべてを網羅できない。
+
+## アクション
+
+1. DB スキーマ確認（テーブル、カラム名、型、フィルタ条件）
+2. 既存実装の参照（_build_merged_frame シグネチャ、_normalize_segment_frame の生成カラム）
+3. テストデータに全カラムを含める（section_size, section_size_group, dd, rank_from_min）
+4. 出力フォーマット確認（CSV カラン順序、レポート構成、文字化け対策）
+
+## 例
+
+不十分: 「蒲田7の角番×DD分析を実装してください」
+完全: 「_build_merged_frame()シグネチャを参照し、_normalize_segment_frame()で dd を生成。テスト: kakuban 1-13, dd 1-31」
+
+---

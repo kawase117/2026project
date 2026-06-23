@@ -1,0 +1,173 @@
+---
+id: lastdigit-lr-split-reveals-hidden-signal
+trigger: "蒲田7の末尾別分析を実施するとき、またはL/R分割なしで末尾のKruskal-Wallisが非有意になったとき"
+confidence: 0.90
+domain: pachinko-eda
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 末尾分析はL/R分割後に実施する（未分割では信号が埋もれる）
+
+## 背景
+蒲田7の2F_N（AT系全体）を未分割でKruskal-Wallis検定するとp=0.254で非有意。
+同じデータをL（X<=17）とR（X>=19）に分割すると2F_L_NがKW p=0.020で有意化した。
+角番分析と同様、L/R分割が末尾軸でも信号を浮き上がらせる効果がある。
+
+## アクション
+末尾×差枚のKruskal-Wallisを実施する前に座標CSVでL/R付与を行う。
+L/R判定しきい値（蒲田7）:
+- 2F: X<=17→L, X>=19→R（X=18除外）
+- 3F: X<=17→L, X>=23→R（X=18〜22除外）
+縦列・除外セクションは角番分析と同一（2187-2195, 3191-3208, 3209-3217, 3400-3401）。
+
+## 例
+c["side"] = c["X"].apply(lambda x: "L" if x<=17 else ("R" if x>=19 else "E"))
+c = c[c["side"] != "E"]
+# 2F_L_N: p=0.020（有意）、未分割2F_N: p=0.254（非有意）
+
+---
+id: lastdigit-iron-exclusion-test
+trigger: "末尾別集計で特定末尾のmeanが突出しているとき、またはKruskal-Wallis有意後に台番号別集計を見るとき"
+confidence: 0.95
+domain: pachinko-eda
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 末尾シグナルの真偽は鉄台除外再検定で判定する
+
+## 背景
+今セッションで検証した末尾シグナルの大半が特定台依存だった:
+- 2F_L_N 末尾6: 2026台（鉄）1台除外でp=0.020→p=0.207（消滅）
+- 3F_R_N DD19-24 末尾5: 3225・3255の2台除外でp=0.084→p=0.479（消滅）
+- 3F_L_A DD19-24 末尾3: 5台除外でp=0.081→p=0.285（消滅）
+一方、3F_L_N DD7-12 末尾9は鉄台2台除外後もp=0.013で残存→構造的シグナルと判定。
+
+## アクション
+末尾の有意グループが見つかったら以下の手順で真偽判定する:
+1. 台番号別集計で pos_rate>=60% または median>=0 の台を鉄台候補とする
+2. 鉄台候補を除外して同じグループでKruskal-Wallis再実施
+3. p>=0.05に消えたら特定台依存の偽シグナル、p<0.05が残れば構造的シグナル
+
+iron = by_m[(by_m["pos_rate"] >= 60) | (by_m["median"] >= 0)].index.get_level_values(0).tolist()
+excl = full_bin[~full_bin["machine_number"].isin(iron)]
+stat, p = stats.kruskal(*[g.values for _, g in excl.groupby("last_digit") if len(g)>=10])
+
+## 例
+3F_L_N DD7-12 末尾9: 鉄台（3079, 3029）除外後p=0.013→構造シグナル確定。
+2F_L_N 末尾6: 2026除外後p=0.207→偽シグナル（2026の高設定が末尾6に滲んだだけ）。
+
+---
+id: kamata7-3fln-dd7-12-lastdigit9-structural
+trigger: "蒲田7 3F左側（L）AT系（Nセグメント）の末尾を選ぶとき、またはDDが7〜12のとき"
+confidence: 0.85
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 3F_L_N × DD7-12 では末尾9が最強・末尾5が最弱（構造的シグナル）
+
+## 背景
+3F_L_N（3F左側AT系）のDD-bin別末尾Kruskal-Wallis検定で、DD7-12（月7〜12日）のみp=0.002で有意。
+末尾9: mean=+519, pos%=46.4%（AT系平均42%超え）。
+末尾5: mean=-200, pos%=35.1%（明確な最弱）。
+鉄台候補（3079, 3029）2台除外後もp=0.013で有意残存→分散型の構造的シグナル。
+他DD-binでは末尾9の優位は消え、DD13-24では末尾5が末尾9を上回る逆転が発生。
+
+## アクション
+DD 7〜12（月7日〜12日）に蒲田7 3F左側AT系を狙う場合:
+- 末尾9台を優先候補にする（特に3069, 3049が安定）
+- 末尾5台は回避する（pos%=35.1%、mean=-200）
+他のDD期間では末尾軸に依存しない。
+
+候補台（DD7-12・特に優秀な末尾9）:
+3069（section 3058-3072, mean=+1222）
+3079（section 3073-3087, mean=+1007, median=+200 鉄台候補）
+3049（section 3043-3057, mean=+839）
+3029（section 3017-3030, mean=+531, pos%=59% 鉄台候補）
+3059（section 3058-3072, mean=-312 除外対象）
+
+## 例
+DD=8のとき → 3F_L_N 末尾9台（3069, 3049など）を優先。末尾5台はスキップ。
+
+---
+id: kamata7-dd19-24-3f-specific-machines
+trigger: "蒲田7を月19〜24日に訪問するとき、または3F_R_N・3F_L_Aの台選定をするとき"
+confidence: 0.82
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# DD19-24は3F右AT・3F左ジャグラーで特定台が高設定（末尾ではなく台番号で覚える）
+
+## 背景
+3F_R_N・3F_L_A ともにDD19-24がKW最有意ビン（それぞれp=0.084, p=0.081）。
+ただし台番号別検証で特定台依存と判明（除外後消滅）。
+末尾5・末尾3が構造的に強いのではなく、その末尾を持つ特定台がDD19-24に高設定。
+
+3F_R_N（右側AT系）高設定候補:
+- 3225（section 3218-3233, mean=+1465, median=+1000, pos%=58.7%）
+- 3255（section 3250-3264, mean=+1263, median=+300, pos%=56.1%）
+
+3F_L_A（左側ジャグラー系）高設定候補:
+- 3003（section 3001-3016, mean=+519, median=+350, pos%=54.8%）
+- 3183（section 3181-3190, mean=+461, median=+150, pos%=56.5%）
+- 3163（section 3156-3167, mean=+571, median=+100, pos%=55.0%）
+- 3123（section 3117-3130, mean=+336, median=+100, pos%=52.4%）
+- 3153（section 3144-3155, mean=+328, median=0, pos%=56.1%）
+
+## アクション
+DD 19〜24（月19日〜24日）に蒲田7 3Fを訪問する場合:
+- 3F右AT: 3225・3255を優先確認
+- 3F左ジャグラー: 3003・3183・3163・3123・3153を優先確認
+- 末尾単体で選ばず台番号で覚える
+
+## 例
+DD=21のとき → 3225の回転数と差枚をまず確認。稼働が低ければ高設定の可能性。
+
+---
+id: kamata7-lastdigit-6-演出仮説否定
+trigger: "蒲田7で末尾6台に設定6が入る演出戦略を検討するとき、またはDD=6/16/26×末尾6の交互作用を仮説として立てるとき"
+confidence: 0.95
+domain: pachinko-eda
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田7のDD=6/16/26×末尾6演出戦略仮説は否定済み
+
+## 背景
+ホールが設定6をイメージさせるため末尾6台にDD=6/16/26で設定を入れるという仮説を検証。
+Mann-Whitney検定:
+- DD=6/16/26: 末尾6 vs 末尾others → p=0.82（非有意）
+- 末尾6: DD=6/16/26 vs DD=other → p=0.93（非有意）
+2F_L_Nの末尾6 mean+410も2026台（鉄）1台が原因。2026除外後p=0.207に消滅。
+
+## アクション
+蒲田7では末尾6の設定6演出仮説に基づいた台選定を行わない。
+末尾6台の優位が見えた場合は鉄台除外検定を必ず実施すること。
+
+---
+id: kamata7-3fra-lastdigit-no-signal
+trigger: "蒲田7 3F右側ジャグラー系（3F_R_A）の末尾別分析を実施するとき"
+confidence: 0.88
+domain: pachinko-eda
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 3F_R_Aは末尾軸では全DD-binで非有意（角番で見るエリア）
+
+## 背景
+3F_R_A（右側ジャグラー系）の末尾×DD-bin分析で全ビンが非有意（p=0.14〜0.65）。
+角番分析では3F_R_AがDD19-24でkakuban=9が最強（p=3.6e-6）と判明済み。
+末尾軸では信号が出ない。
+
+## アクション
+3F_R_Aを狙う場合は末尾ではなく角番（kakuban）を軸に使う。
+末尾×L/R分割で3F_R_Aが有意にならなかった場合は分析打ち切りでよい。
+
+---

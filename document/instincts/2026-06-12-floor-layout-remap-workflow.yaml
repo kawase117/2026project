@@ -1,0 +1,83 @@
+---
+id: floor-layout-rigid-delta-remap-workflow
+trigger: "フロアマップ(カード型/ヒートマップ)の島・セクション配置を元画像に近づけて調整する依頼を受けたとき"
+confidence: 0.9
+domain: heatmap-floor-layout
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# フロア座標調整は「セクション単位の剛体並行移動(dx,dy)」で行う
+
+## 背景
+蒲田1 2F カードマップの配置調整(v3→v4)で、最初は p=x+y(対角線の垂直位置)や
+HORIZ_TOP(水平アイランドのY座標)をターゲット値として与える方式を使ったが、
+ユーザーからの「2059の底面と2060の天面を接地させる」のような具体的な
+セル間の隣接(edge-touch)要求には対応しづらかった。
+最終的に各セクションへの (dx, dy) 並行移動量を直接指定する方式
+(_remap_layout_v4.py の DELTAS dict)に切り替えたところ、
+「指定セルの座標を別セクションの指定セルの直下(同x, y+1)に揃える」
+という要求を dx = anchor.x - moved.x, dy = (anchor.y+1) - moved.y
+で機械的に計算でき、複雑な要求に柔軟に対応できた。
+
+## アクション
+1. まず現在のCSVから関係セクションの全セル座標(特に first/last セル)を
+   pandasで取得する。
+2. 各調整要求を「セクションSを (dx,dy) だけ平行移動する」という形に
+   分解する。「AのセルXをBのセルYの直下/隣に揃える」という要求は
+   dx = Y.x - X.x, dy = (Y.y±1) - X.y として計算する。
+3. 連鎖移動(cascade): 移動したセクションに隣接していた別セクションも
+   相対位置を保つために同じdeltaを追加で適用するか検討する
+   (例: 2223-2235移動後、2236-2255も同delta適用、さらに
+   2255&2282のedge-touch分を追加でcascade)。
+4. apply()後に overlaps() でセル重複が0であることを確認する。
+5. _layout_svg.py で簡易SVGスキーマを生成し、visualize widgetで
+   ユーザーに提示してから --write でCSVへ書き込む。
+6. write_back() は X/Y と display_x/display_y の両方を更新し、
+   除外行(5円アイランド等)は変更しない。
+
+## 例
+```python
+DELTAS = {
+    "2060-2076": (1, -2),   # 2060を2059の直下(同x, y+1)に揃える
+    "2223-2235": (-4, -6),  # 2223を2202の直下に揃える(2191-2202がanchor)
+    "2236-2255": (-4, -6),  # 2223-2235と一緒にcascade移動(近接関係を維持)
+}
+# dx,dyは「目標位置 - 現在位置」で計算する
+# delta = (anchor_x - moved_x, anchor_y + 1 - moved_y)
+```
+---
+id: throwaway-helper-script-fact-forcing-gate
+trigger: "Heatmap/_remap_layout*.py のような使い捨て解析スクリプトをWrite/Editする際にFact-Forcing Gateが発火したとき"
+confidence: 0.85
+domain: tooling-workflow
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 使い捨てスクリプトのFact-Forcing Gateは「呼び出し元なし」「同名ファイルなし」「CSV列構造」「ユーザー指示の引用」で通過する
+
+## 背景
+_remap_layout_v4.py のような一回限りの座標計算スクリプトを作成・編集する際、
+Fact-Forcing Gateがブロックする。これは本番コードのインポート関係を
+壊さないための安全機構だが、使い捨てスクリプトでも発火する。
+
+## アクション
+Gateの4項目には以下のように答えれば良い:
+1. 呼び出し元: 「このファイルは python Heatmap/xxx.py で直接実行する
+   使い捨てスクリプトで、どこからもimportされない」(Glob/Grepで確認)
+2. 同名ファイルなし確認: Globで同種のファイル(_remap_layout*.py等)を
+   検索し、重複していないことを示す
+3. CSV列構造: 実際のCSVのカラム名一覧(hall_name, floor, machine_number,
+   X, Y, display_x, display_y, section, ...)を提示する。値は実データで良いが
+   構造の説明が目的
+4. ユーザーの最新指示を逐語的に引用する
+
+これらを提示してから同じ操作をリトライすれば通過する。
+
+## 例
+"1. No files import this file — invoked directly via `python Heatmap/_remap_layout_v4.py [--write]`.
+2. Glob confirms only `_remap_layout.py` (v3) exists; this is v4 with different logic.
+3. Columns: hall_name, floor, machine_number, X, Y, display_x, display_y, section, ...
+4. User's verbatim instruction: '...'"
+---

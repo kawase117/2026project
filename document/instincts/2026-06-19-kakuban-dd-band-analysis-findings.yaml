@@ -1,0 +1,202 @@
+---
+id: anova-dd-band-significant-only-medium
+trigger: "セクションサイズ × DD帯の ANOVA を実施して、帯による設定投入差を検証するとき"
+confidence: 0.94
+domain: eda-statistical-discovery
+source: session-quantified-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# DD帯の効果は medium セクションのみ有意（large では無視可能）
+
+## 背景
+
+蒲田7で section_size × dd_band × segment の日別 ANOVA を実施。
+
+前提仮説：「large島で給料日以降（late帯）に高設定投入」
+
+実装結果：ANOVA 有意だったのは 2F medium と AT medium のみ。large島では帯による差なし（p > 0.22）。
+
+## アクション
+
+1. ANOVA 有意性判定（p < 0.05）
+   - 2F medium: p=0.0137 ✓
+   - AT medium: p=0.0023 ✓
+   - large 全て: p > 0.22 ✗
+
+2. Large島の帯別機械割（有意差なし）
+   - 2F: early 102.09% vs late 101.53% = 0.56pp
+   - 3F: early 100.96% vs late 100.98% = -0.02pp
+   - AT: early 101.33% vs late 101.06% = 0.27pp
+
+3. ホール戦略推測
+   - Large島：DD帯を問わずランダム投入
+   - Medium島：early に優遇傾向
+
+## 例
+
+ANOVA 結果の有意性:
+- 2F medium: F=3.557, p=0.0137 → early > late で 0.95pp差
+- 2F large: F=1.460, p=0.223 → 帯による差なし
+
+---
+id: reverse-hypothesis-medium-early-preference
+trigger: "「late に高設定」という仮説が破綻したとき、逆方向の仮説を検証"
+confidence: 0.89
+domain: statistical-hypothesis-testing
+source: session-finding-revision
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 反転仮説：Large はランダム → Medium で early 優遇
+
+## 背景
+
+初期仮説「Large島で late に高設定」が支持されず。
+
+代わりに ANOVA で検出：「Medium島で early に高い」という逆パターン。
+
+## アクション
+
+1. 帯別機械割の確認（Medium島）
+   - 各セグメントで early が consistently high か検証
+
+2. ホール戦略の再解釈
+   - Large: 回避戦略（ランダム化）
+   - Medium: 初期投入戦略（月初の来店客向け）
+
+3. ML 特徴量の優先度再調整
+   - Large: section_size のみ
+   - Medium: section_size + dd_band
+
+## 例
+
+2F medium: DD帯別機械割
+- event: 102.50%
+- early: 102.89%（最高）
+- mid: 102.06%
+- late: 101.94%（最低）
+→ early が他帯より +0.95pp 高い（p=0.0137）
+
+---
+id: daily-level-anova-for-group-size-bias-avoidance
+trigger: "複数グループを比較する ANOVA を実施するとき、グループサイズバイアスが懸念される"
+confidence: 0.96
+domain: statistical-methodology
+source: session-implementation-discipline
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 日別粒度の ANOVA で台数バイアスを回避
+
+## 背景
+
+セクションサイズ × DD帯の ANOVA を machine 単位で実施するとバイアスが生じる。
+
+Large島（~70台）が small島（~8台）を過剰に支配。
+
+代わりに日別の pay_rate で実施して等価性を確保。
+
+## アクション
+
+1. 集計粒度の選定
+   - ×: machine 単位（不均衡）
+   - ○: 日別集計（等価）
+
+2. 日別 pay_rate 計算
+   - グループ化キー: (segment, section_size_group, dd_band, date)
+   - 各日の games_sum, diff_sum から pay_rate 計算
+
+3. ANOVA 実施（日別データで）
+   - グループ: (segment, section_size_group, dd_band)
+   - 検定対象: 各グループの日別 pay_rate リスト
+
+## 例
+
+Large島の観測数:
+- machine レベル: 59,731台（不均衡）
+- 日別: 91日（均衡）
+
+---
+id: dd-band-priority-categorization
+trigger: "DD値が複数のカテゴリに該当するとき、優先順位で一意ラベル化"
+confidence: 0.98
+domain: data-categorization-design
+source: session-implementation-requirement
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# DD帯の優先順位付け（event > early > mid > late）
+
+## 背景
+
+dd_band 分類で event（1, 10, 20, 30）が他帯と重複。
+
+集計キーの一意性のため、優先順位で単一ラベル化。
+
+## アクション
+
+1. 優先順位の定義
+   - Tier 1: event（dd in [1, 10, 20, 30]）
+   - Tier 2: early（dd in 1-10）
+   - Tier 3: mid（dd in 11-20）
+   - Tier 4: late（dd in 21-31）
+
+2. 実装（if-elif 連鎖）
+   - dd=1 → "event"（not "early"）
+   - dd=10 → "event"（not "early"）
+   - dd=15 → "mid"（不重複）
+   - dd=25 → "late"（不重複）
+
+3. 結果：各 dd が単一ラベルを持つ
+
+## 例
+
+優先順位適用:
+```
+dd=1 (Tier 1, 2): → event（Tier 1優先）
+dd=10 (Tier 1, 2): → event（Tier 1優先）
+dd=15 (Tier 3): → mid
+dd=25 (Tier 4): → late
+```
+
+---
+id: section-size-dd-band-weak-effect-large-invariant
+trigger: "section_size × dd_band の交互作用を検証して、ML特徴量化の優先度を決めるとき"
+confidence: 0.92
+domain: feature-engineering-design
+source: session-statistical-finding
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Section × DD帯の効果は限定的（large では 0）
+
+## 背景
+
+セクションサイズ分割が LR分割を圧倒（F値 32-23）。
+
+section_size 内での dd_band による細分化の効果を検証。
+
+結果：medium で限定的（0.95～1.07pp）、large で無視可能（p > 0.22）。
+
+## アクション
+
+1. ML 特徴量の優先度
+   - 必須: section_size_group（F値 32-23）
+   - 補助: dd_band（有意な効果は medium のみ）
+   - 不要: section_size × dd_band の交互作用
+
+2. 予測モデルの粒度
+   - large島: section_size のみ
+   - medium島: section_size + dd_band（early boost +1pp）
+
+3. ホール別の一般化確認が必要
+
+## 例
+
+効果の大きさ（p値基準）:
+- 2F medium: 0.95pp（p=0.0137 有意）
+- AT medium: 1.07pp（p=0.0023 有意）
+- large全て: p > 0.22（有意差なし）
+
+→ ML では section_size が主軸、dd_band は補助的

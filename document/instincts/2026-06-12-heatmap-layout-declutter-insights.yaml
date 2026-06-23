@@ -1,0 +1,86 @@
+---
+id: cardmap-digit-card-flex-space-between
+trigger: "カード型UIで複数要素を縦に並べるが、中央の要素が崩れて読めない/不要になった場合"
+confidence: 0.85
+domain: heatmap-cardmap-ui
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 末尾ハイライトカードは中段の機種名を削除し digit-card クラスで space-between 配置に
+
+## 背景
+render_last_digit_card (Heatmap/generate_kamata7_cardmap_html.py) は
+.machine-card (flex-column, justify-content: center, gap: 0) の中に
+machine-number / machine-name / category chip の3要素を縦積みしていたが、
+カードサイズが小さいため machine-name が潰れて視認不能になっていた。
+ユーザーから「台番号が上段にあり、機種名が潰れて見えなくなるので不要」と指摘。
+
+## アクション
+- 不要になった中段要素(.machine-name)はHTML側から完全に削除する（CSSでhiddenにするだけでは不十分）
+- 残った2要素（番号・カテゴリチップ）を「上端・下端」に配置したい場合は、
+  専用クラス（例: digit-card）を追加して justify-content: space-between を適用する。
+  親の .machine-card 全体のスタイル（center寄せ）を変えると他のカード種別
+  （render_machine_card 等）に影響するため、追加クラスでスコープを限定する。
+- title属性（ツールチップ）には machine_name を残してよい（視覚要素としては不要でも
+  ホバー情報としては有用）。
+- テスト側のアサーション（"machine-name" in html）も同時に更新し、
+  逆に "machine-name" not in html / "digit-card" in html を確認する。
+
+## 例
+変更前:
+  <div class="machine-number">{number}</div>
+  <div class="machine-name">{name}</div>      <!-- 潰れて読めない -->
+  <div style="...category chip...">{category}</div>
+
+変更後:
+  class="machine-card digit-card {games_class}"
+  <div class="machine-number">{number}</div>
+  <div style="...category chip...">{category}</div>
+
+  CSS追加:
+  .machine-card.digit-card {
+    justify-content: space-between;
+    padding: 3px 2px;
+  }
+
+---
+id: dashboard-page-avoid-duplicate-title-stack
+trigger: "Streamlitページから components.html(iframe) でカスタムHTMLを描画し、
+  かつそのHTML内にも独自のhero/タイトル領域がある場合"
+confidence: 0.8
+domain: streamlit-dashboard-layout
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# st.markdown見出し + iframe内hero + floor-titleの三重タイトルは1つに集約する
+
+## 背景
+page_17_heatmap.py の「ヒートマップ」タブ統合後、ユーザーから
+「全体のレイアウトが見にくくなってしまった」と指摘された。
+原因を調査すると、同じ title 文字列（例: "{hall} {floor} フロアヒートマップ"）が
+1) Streamlit側の st.markdown(f"## {title}") + subtitle
+2) iframe内の <section class="hero"><h1>{hero_title}</h1>
+3) iframe内の <h2 class="floor-title">{floor_title}</h2>
+の3箇所に表示され、画面上部が見出しの繰り返しで占有されていた。
+
+## アクション
+- components.html で埋め込むHTML自体が hero/タイトル領域を持つ場合、
+  呼び出し元のStreamlit側で同じ title/subtitle を再度 st.markdown(f"## ...") しない。
+- Streamlit側に残すのは、フィルタ操作に必要な要素（date_input, radio, caption程度）のみとし、
+  「見出し」はiframe内デザインに一元化する。
+- pytestのモックでは markdown=lambda *args, **kwargs: None としているだけで
+  呼び出し有無を検証していないため、削除しても既存テストは通る
+  （= 安全に削減できるかどうかは目視 or grep で確認すること）。
+
+## 例
+変更前 (render_heatmap_page 冒頭):
+  st.markdown(f"## {title}")
+  st.markdown(subtitle)
+  validated_range = _ensure_date_range(date_range)
+
+変更後:
+  validated_range = _ensure_date_range(date_range)
+  # title/subtitle は iframe内の hero <h1> / floor-title <h2> に委譲
+---

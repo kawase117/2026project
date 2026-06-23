@@ -1,0 +1,177 @@
+---
+id: kamata1-2fa-dd30-strongest-event
+trigger: "蒲田1 2F ジャグラー/ハナハナ系（Aセグメント）でDD=30（月30日）に訪問するとき"
+confidence: 0.93
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1 A系 DD=30 が全DD中圧倒的最強（mean=390, median=0, q=1.2e-8）
+
+## 背景
+kamata1_dd_tail_eda（2026-06-18実施）。A系（ジャグ・ハナハナ）178225行、games>=400 でフィルタ。
+BH補正MWU各DD vs 残りの全体分析。
+
+DD=30 のシグナル
+  mean=390, median=0, n=1631, q=1.2e-8（全DD中最強）
+
+月末（is_month_end）との関係
+  is_month_end=1（30日が実際の月末: 2月・4月・6月・9月・11月）: mean=437, median=+100, n=580
+  is_month_end=0（30日が月末でない: 31日がある月）:              mean=364, median=0,   n=1051
+  → 月末かどうかに関わらず DD=30 自体がシグナル。蒲田1 は固定イベント日として DD=30 を採用。
+
+有意なDDリスト（BH補正後 q<0.05）
+  DD=30  q=1.2e-8  mean=390, median=0    強い（最強）
+  DD=1   q=9.8e-5  mean=239, median=0    強い
+  DD=9   q=3.5e-3  mean=198, median=-100 強い（現行イベント定義に含まれない日）
+  DD=7   q=7.6e-3  mean=216, median=0    強い
+  DD=20  q=7.9e-3  mean=-27, median=-200 弱い（有意に低い）
+  DD=19  q=1.7e-2  mean=-49, median=-200 弱い（有意に低い）
+  DD=29  q=4.4e-2  mean=-17, median=-200 弱い（有意に低い）
+
+## アクション
+DD=30 に蒲田1を訪問するとき:
+A系（ジャグ・ハナハナ）を最優先候補とする（median=0 で全台の半数超が収支トントン以上）。
+月末かどうかを気にする必要はなく、カレンダーの30日であれば適用。
+カクバン・セクション等の他フィルタを重ねてさらに絞り込む。
+
+---
+id: kamata1-2fa-dd-event-ranking
+trigger: "蒲田1 2F ジャグラー/ハナハナ系（Aセグメント）で訪問日のDD（月内日付）を評価するとき"
+confidence: 0.88
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1 A系のDD別強弱ランキング（有意なDD一覧）
+
+## 背景
+kamata1_dd_tail_eda（2026-06-18実施）。BH補正MWU各DD vs 残り。
+
+強いDD（median >= 0 で構造的シグナル）
+  DD=30  median=0,    mean=390  ★最強 （q=1.2e-8）
+  DD=1   median=0,    mean=239  （q=9.8e-5）
+  DD=7   median=0,    mean=216  （q=7.6e-3）
+  DD=9   median=-100, mean=198  （q=3.5e-3）※イベント定義外の日
+
+中程度（mean > 100 だが median -100 以下、非有意）
+  DD=21  mean=167, median=-100
+  DD=25  mean=144, median=-100
+  DD=17  mean=147, median=-100
+  DD=27  mean=140, median=-100
+
+弱いDD（有意に低い）
+  DD=19  mean=-49,  median=-200 （q=0.017）← 最弱
+  DD=20  mean=-27,  median=-200 （q=0.008）
+  DD=29  mean=-17,  median=-200 （q=0.044）
+
+DD=9 について
+  既存のイベント定義（event_7: {7,17,27}, event_1: {1,11,21,31}）に含まれない。
+  weekday別: Sunday(median=100)、Wednesday・Friday・Saturday(median=0) が強く、
+  DD=9 のシグナルは部分的に weekday 効果で説明できる可能性がある。
+  ただし BH補正後も有意（q=3.5e-3）なため構造的要素も存在する。
+
+## アクション
+訪問日の DD で優先順位をつける（A系のみ適用、N系は DD 軸効果なし）:
+  最優先: DD=30, DD=1, DD=7（median=0 で確実）
+  次点: DD=9（median=-100 だが有意に強い）
+  避ける: DD=19, DD=20, DD=29（有意に弱い、mean もマイナス）
+
+---
+id: kamata1-2fa-zorome-mmdd-special
+trigger: "蒲田1 2F ジャグラー/ハナハナ系（Aセグメント）でゾロ目日（月=日が一致する日: 1/1, 2/2, ... 12/12）に訪問するとき"
+confidence: 0.90
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1 ゾロ目mm=dd は 1/1・7/7・5/5 が突出して強い（A系のみ、N系は弱い）
+
+## 背景
+kamata1_dd_tail_eda（2026-06-18実施）。A系ゾロ目mm=ddを月別に集計。
+
+月別結果（A系 games>=400）
+  1/1 元日        n=236, mean=1067, median=750  ← 圧倒的最強（median が大きく正！）
+  7/7 七夕        n=127, mean=635,  median=600  ← 次点（非常に強い）
+  5/5 こどもの日  n=236, mean=293,  median=100  ← 強い（祝日）
+  2/2             n=233, mean=172,  median=0
+  12/12           n=108, mean=158,  median=-100
+  11/11           n=108, mean=104,  median=-100
+  3/3以降         median=-100以下（通常日と大差なし）
+
+上位3日（1/1, 7/7, 5/5）はいずれも祝日または記念日と重なる。
+ゾロ目効果 + 特別な日付の合わせ技で蒲田1 が最大限の高設定を投入している可能性。
+
+N系ゾロ目mm=dd: 全月 median=-500〜-600 で構造的シグナルなし。
+
+## アクション
+1/1（元日）: 蒲田1 2F A系は年間最強の訪問候補（median=750, n=236）。最優先で検討。
+7/7（七夕）: 元日に次ぐ最強候補（median=600）。
+5/5（こどもの日）: 祝日ゾロ目（median=100）。訪問価値あり。
+2/2: median=0（参考候補）。
+3/3以降のゾロ目: median が-100以下であり普通の日扱いでよい。
+
+---
+id: kamata1-2fn-dd-axis-null
+trigger: "蒲田1 2F AT/ART系（Nセグメント）でDD（月内日付）による台選択を検討するとき"
+confidence: 0.92
+domain: analysis-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1 2F N系（AT/ART）は DD軸で全日非有意 --- DD による選択は根拠なし
+
+## 背景
+kamata1_dd_tail_eda（2026-06-18実施）。N系（AT系）118472行。
+
+MWU: イベント日 vs 通常日  p=0.136（非有意）
+BH補正MWU 各DD vs 残り: 全31日 q > 0.05（有意なDDなし）
+
+上位DD（meanが高い）でも median は -500 のまま
+  DD=11  mean=293, median=-400, q=0.091（BH補正後非有意）
+  DD=1   mean=243, median=-500, q=非有意
+  DD=30  mean=113, median=-500, q=非有意
+  → 全て median が深くマイナスでアウトライア駆動
+
+A系との対比
+  A系: イベント日 MWU p=0.000（高有意）
+  N系: イベント日 MWU p=0.136（非有意）
+
+## アクション
+N系（AT/ART機）の訪問判断に DD を使わないこと。
+N系の台選択はセクション・カクバン・x_kakuban・イベント日セクション（[[kamata1-2fn-event-section-hotspot]] 参照）を主軸にする。
+N系でDD=11やDD=1の mean が高くても median が-400〜-500であるため過信しないこと。
+
+---
+id: kamata1-tail-axis-null
+trigger: "蒲田1 2F で台番号末尾（last_digit: 0〜9）による台選択を検討するとき"
+confidence: 0.93
+domain: analysis-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1 2F は A系・N系ともに台番号末尾（last_digit）で有意な差なし --- tail軸は無効
+
+## 背景
+kamata1_dd_tail_eda（2026-06-18実施）。games>=400 でフィルタ。
+
+A系（n=59753） Kruskal-Wallis overall p=0.211（非有意）
+  全tail位置で median=-200
+  BH補正MWU 各tail vs 残り: 全10位置で q > 0.05
+  tail=8 の mean=127（最高）も q=0.183 で非有意
+
+N系（n=118472） Kruskal-Wallis overall p=0.177（非有意）
+  全tail位置で median=-500
+  BH補正MWU 各tail vs 残り: 全10位置で q > 0.05
+  tail=3 の mean=75（最高）も q=0.147 で非有意
+
+## アクション
+蒲田1 2F では台番号末尾によるフィルタを一切適用しない。
+台選択の根拠としては DD軸（A系のみ）、セクション、カクバン、x_kakuban、向き×サイズを使うこと。
+
+---

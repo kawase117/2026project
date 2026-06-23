@@ -1,0 +1,140 @@
+---
+id: mitoya-other-category-xdds-effect
+trigger: "みとや大森町でX_DDS日（DD=4,7,14,17,24,27）の台選びをするとき"
+confidence: 0.92
+domain: mitoya-hall-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# みとや other(AT機)カテゴリは X_DDS 効果が最大かつ安定
+
+## 背景
+mitoya_machine_category_axis_deepdive.py の Branch E で検証。
+カテゴリ別（jug/bt/other/hana/oki）に X_DDS日 vs 非X_DDS日の payout を比較し、
+split-half で安定性を確認した。
+
+## アクション
+- X_DDS日の台選びでは **other（AT機多数）カテゴリを優先**する
+- delta=+3.20pp（xdds=101.36%）かつ stable=True（前後半同方向）
+- jug も +1.94pp で stable だがユーザー方針により実用対象外（別instinct参照）
+- bt: +1.43pp stable、hana/oki: <1pp unstable → 優先度低
+
+## 例
+| category | xdds_payout | non_xdds_payout | delta | stable |
+|---|---:|---:|---:|---|
+| other | 101.36 | 98.16 | +3.20 | True |
+| jug   |  99.12 | 97.18 | +1.94 | True |
+| bt    |  98.44 | 97.01 | +1.43 | True |
+| hana  |  94.54 | 93.76 | +0.78 | False |
+| oki   | 101.06 |100.66 | +0.40 | False |
+
+---
+id: mitoya-jug-xdds-effect-noted-not-actionable
+trigger: "みとやのジャグラー系機種の評価をするとき"
+confidence: 0.88
+domain: mitoya-hall-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ジャグラーは X_DDS 効果 stable だが実用対象外
+
+## 背景
+Branch E でジャグラー（jug）カテゴリも X_DDS 効果 +1.94pp かつ stable と判明した。
+ただしユーザー方針：「差枚1000枚以上を80%確率で取れない限りジャグラーには座らない」。
+
+## アクション
+- ジャグラーの X_DDS 効果は記録に留める（統計的には有意）
+- スクリーニングや推奨台ロジックからは **除外して構わない**
+- もし将来「ジャグラー X_DDS 特定機種で差枚+1000枚以上を80%」の証拠が出たら再評価
+
+## 例
+みとや Branch E: jug xdds_payout=99.12%, delta=+1.94, stable=True
+ただし絶対値として99%台であり、期待値はほぼ等価（1万G消化でも差枚+190程度）
+
+---
+id: mitoya-branch-f-stable-machines
+trigger: "みとやの X_DDS 日に機種を選ぶとき（特に Q5 候補の優先順位付け）"
+confidence: 0.91
+domain: mitoya-hall-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# みとや Branch F stable 機種 × Q5 の交差が最強シグナル
+
+## 背景
+mitoya_machine_category_axis_deepdive.py の Branch F で other 群 81 機種の X_DDS 効果を
+Mann-Whitney U + split-half で検定。stable=12機種を特定。
+Q5 リスト（直近3ヶ月 payout top quintile）と突き合わせると 4 機種が重複。
+
+## アクション
+X_DDS 日の優先順位：
+1. **Q5 かつ Branch F stable** = 最強（2シグナル収束）
+   - モンキーターンV: xdds=103.94%, delta=+5.83, p<0.001
+   - 東京喰種: xdds=105.50%, delta=+4.84, p<0.001
+   - マギアレコード: xdds=106.35%, delta=+5.21, p<0.001
+   - 少女☆歌劇 レヴュースタァライト: xdds=98.97%, delta=+4.31, p<0.01
+2. **Branch F stable のみ（Q5外だが X_DDS 爆発）** = 別instinct参照
+3. Q5 のみ（Branch F stable なし）= 中位
+
+## 例
+モンキーターンV: Q5（3ヶ月 payout 102.46%）+ Branch F stable（p<1e-16）
++ section rank2（591-623）= 三重シグナル → 最優先
+
+---
+id: mitoya-girls-panzer-xdds-hidden-gem
+trigger: "みとやの X_DDS 日に Q5外機種の追加候補を探すとき"
+confidence: 0.78
+domain: mitoya-hall-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ガールズ&パンツァー最終章は X_DDS 日限定の隠し爆発機種
+
+## 背景
+Branch F で X_DDS delta 1位（+16.92pp, xdds=115.43%）。
+Q5 リストには入っていないが X_DDS 日だけ別次元。
+全期間平均では非X_DDS 日の低調さに引きずられて Q5 入りできていない構造。
+後半 half の delta が前半より拡大（+9.56 → +19.85）でトレンド加速。
+
+## アクション
+- X_DDS 日の補助リストに **ガールズ&パンツァー最終章** を追加検討
+- Q5 フィルターを通過しない点は認識したうえで X_DDS 日限定で評価
+- section・台番を現地で確認（n_xdds=56台日分）
+- screening.py 改善案: 「Q5外でも X_DDS delta >10 の機種」を補助リスト出力する
+
+## 例
+Branch C (machine_name EDA): rank2、xdds=113.36%, lift=+15.65
+Branch F (category deepdive): delta=+16.92, first_half=+9.56, second_half=+19.85
+
+---
+id: mitoya-monkey-turn-triple-signal
+trigger: "みとやで X_DDS 日に最優先台を1機種選ぶとき"
+confidence: 0.93
+domain: mitoya-hall-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# モンキーターンV はみとやの三重シグナル最強機種
+
+## 背景
+3つの独立した分析軸が同一機種に収束：
+1. Q5 継続率：6/6期間で Q5 入り（payout 102.46%、active=✓）
+2. Branch F stable：X_DDS日 payout 103.94%、delta=+5.83、p<1e-16、split-half 両半で一致（+5.75 / +5.95）
+3. Section X_DDS ランキング：section 591-623 = rank2（X_DDS平均 payout 100.91%）
+
+## アクション
+- みとや X_DDS 日（DD=4,7,14,17,24,27）の第一候補は **モンキーターンV（594-607台付近）**
+- section 591-623 で同カテゴリの他機種も確認する価値あり
+- Q5・Branch F 両方の stable が揃う他機種: {東京喰種, マギアレコード, 少女☆歌劇}
+
+## 例
+2026-06-17 (DD=17, X_DDS=True):
+xdds_screening score=151.27（全機種1位）
+branch_f: delta=+5.83, p=7.6e-17, first_half=+5.75, second_half=+5.95
+→ 前後半の delta がほぼ同値 = 長期安定、トレンド変化なし
+

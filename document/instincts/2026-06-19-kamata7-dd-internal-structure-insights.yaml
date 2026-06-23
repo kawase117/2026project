@@ -1,0 +1,169 @@
+---
+id: kamata7-event-day-segment-a-concentration
+trigger: "蒲田7のイベント日にどのセグメントを打つか判断するとき"
+confidence: 0.92
+domain: pachinko-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# イベント日はA機（ジャグラー/ハナハナ）に高設定が集中投入される
+
+## 背景
+蒲田7の全イベントDD(1,7,11,17,22,27,30,31)で、セグメント別にイベント効果を測定。
+A機（ジャグ/ハナハナ）: イベント差分 diff=+122, plus=+5.9pp, hit104=+2.3pp
+N機（AT系）: イベント差分 diff=+30, plus=+2.3pp, hit104=+1.5pp
+A機のイベント効果はN機の約4倍。
+
+## アクション
+蒲田7のイベント日はA機を優先的に選択する。
+N機はイベント日でも非イベント日と大差ない恩恵しかない。
+
+## 例
+Section 6 segment: A event_avg_diff=308 vs non_event=186 (差=+122)
+                    N event_avg_diff=198 vs non_event=168 (差=+30)
+
+---
+id: kamata7-event-day-kakuban2-strongest
+trigger: "蒲田7のイベント日に角番ポジションを選ぶとき"
+confidence: 0.85
+domain: pachinko-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# イベント日は角2が最も恩恵を受ける（角1より上）
+
+## 背景
+角番ポジション別イベント効果:
+角2: diff差分=+95, plus=+4.6pp（最強）
+角1: diff差分=+62, plus=+3.9pp
+中間: diff差分=+54, plus=+3.1pp
+角N-1: diff差分=+31
+角N: diff差分=+38
+角1は「明らかに角」で客に特定されやすい。角2は見えにくいが角のポジション。
+通常時ベースラインは角1=43, 角N=20 vs 中間=219で角端は著しく弱い。
+
+## アクション
+イベント日に角を狙うなら角2。角1はイベント効果あるが通常時が弱すぎる。
+ただしDD30は全角番がプラス乖離で全面投入パターン。
+
+## 例
+角2 baseline=192 → event=264 (+95)
+角1 baseline=43 → event=89 (+62)
+DD30: 角N-1 dev=+250(全データ最強), 角1 dev=+287
+
+---
+id: kamata7-dd30-full-floor-investment
+trigger: "蒲田7のDD30の戦略を考えるとき"
+confidence: 0.93
+domain: pachinko-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# DD30は全面投入パターン（角番/末尾/セグメント問わず全体強い）
+
+## 背景
+DD30は近隣店舗との合同イベントのため、ホールが弱くできない構造的理由がある。
+DD×曜日マトリクスでも全曜日プラス乖離(avg_dev=+141)で唯一の全曜日安定イベントDD。
+DD×角番でも全ポジションがプラス乖離:
+角1=+287, 角2=+241, 中間=+118, 角N-1=+250, 角N=+233
+セグメント: A=+234, N=+129（両方プラス）
+
+## アクション
+DD30は「どこを打っても恩恵がある」日。セグメント/角番/末尾の選択精度より「DD30に行くこと自体」が重要。
+A機×角2がベストだが、他の選択でも十分なプラス効果がある。
+
+## 例
+DD30 segment A: avg_diff=450 (baseline 216, dev=+234)
+DD30 角N-1: plus_rate_dev=+10.6pp（全データ中最強クラス）
+
+---
+id: kamata7-event-digit7-baseline-jump
+trigger: "蒲田7のイベント日に台番号末尾を選択するとき"
+confidence: 0.78
+domain: pachinko-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 末尾7はイベント日でベースラインからの乖離が最大（+113）
+
+## 背景
+末尾7は非イベント日では下位（8位/diff=+157）だが、イベント日に+113ジャンプで1位(+270)に浮上。
+「7のつく日」交絡を検証済み:
+- 7のつく日(DD07,17,27): 末尾7は4位（末尾8=+346が1位）
+- 7なしイベント日(DD01,11,22,30,31): 末尾7が1位(+280)だが末尾2とほぼ同値(+279)
+DDの下一桁と台番号末尾の相関（日ゾロ目効果）は蒲田7には存在しない（全体で一致台+179 < 不一致台+187）。
+ただし絶対値の差は小さく、セグメントや角番ほどの戦略的重みはない。
+
+## アクション
+末尾選択の優先度はA機>角2>>>末尾（参考程度）。
+末尾を気にするなら7を選び、5は避ける（末尾5はイベント日に唯一沈む: 非イベ+190→イベ+137で-53）。
+
+## 例
+非イベ→イベ乖離ランキング:
+末尾7: +157→+270 (+113) 最大
+末尾3: +104→+202 (+98)
+末尾5: +190→+137 (-53) 唯一マイナス
+
+---
+id: kamata7-saturday-event-reverse-effect
+trigger: "蒲田7のイベント日×曜日の戦略を考えるとき"
+confidence: 0.90
+domain: pachinko-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 土曜のイベント日は逆効果（ホールが投資しない）
+
+## 背景
+DD×曜日の交互作用マトリクスとイベントvs非イベント曜日別集約から:
+木曜: イベント差分 diff=+183, plus=+6.7pp（最強）
+日曜: diff=+105, plus=+4.2pp
+金曜: diff=+95, plus=+3.9pp
+水曜: diff=+82, plus=+3.1pp
+土曜: diff=-102, plus=+0.1pp（逆効果）
+月曜: diff=-25（効果なし）
+「イベント日の効果はホールが客を呼ぶ必要性に比例する」仮説と整合。
+土曜は黙っていても客が来るので投資不要。
+
+## アクション
+蒲田7では土曜のイベントDD（特にDD22,DD31）は避ける。
+木曜のイベントDD（DD17,DD27,DD30等）を最優先で狙う。
+DD30は曜日不問で安定（合同イベントのため）。
+
+## 例
+DD22土曜: dev=-490（全データ中ワースト2位）
+DD31土曜: dev=-568（全データ中ワースト1位）
+DD17木曜: dev=+417
+DD30土曜: dev=+296（DD30は土曜でもプラス）
+
+---
+id: kamata7-day-digit-zorome-no-effect
+trigger: "DDの下一桁と台番号末尾の関連を検討するとき"
+confidence: 0.95
+domain: pachinko-eda
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 日ゾロ目（DDmod10==台末尾）投入パターンは蒲田7に存在しない
+
+## 背景
+DDの下一桁と台番号末尾が一致する台に高設定を入れるパターンを検証。
+全体: 一致台 diff=+179 vs 不一致台 diff=+187（一致台のほうが弱い）
+イベント日限定: 一致台 diff=+221 vs 不一致台 diff=+228（同様）
+dd_mod10別に分解しても体系的パターンなし（mod10=0で一致台が-211の大差で敗北）。
+
+## アクション
+「今日は7日だから末尾7が強い」という発想は蒲田7では成立しない。
+台番号末尾の選択はDD下一桁と独立に判断すべき。
+他ホールでは別の結果になる可能性があるため、ホール別に検証が必要。
+
+## 例
+mod10=0: 一致 diff=+35 vs 不一致 diff=+246 (差=-211)
+mod10=7: 一致 diff=+255 vs 不一致 diff=+231 (差=+24, 小さい)
+mod10=9: 一致 diff=+230 vs 不一致 diff=+126 (差=+104, mod10=9だけ強いが単発)

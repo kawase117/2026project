@@ -1,0 +1,142 @@
+---
+id: kamata1-diagonal-medium-a-kakuban5-positive
+trigger: "蒲田1 2F 中型斜め島（11-13台のdiagonal: 2099-2109, 2110-2120, 2191-2202, 2223-2235）でジャグラー/ハナハナ系の台を選ぶとき"
+confidence: 0.83
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# diagonal_medium_A の kakuban=5 が有意に優れる（唯一の積極的選択根拠）
+
+## 背景
+向き x サイズ x 機種別カクバン残差分析（2026-06-18実施）。
+中型斜め島（11-13台）のA系で2位置が有意。
+
+有意シグナル（q<0.05）
+  kakuban=1  q=0,      mean=-118, median=-267  端が最弱（共通ルール）
+  kakuban=5  q=0.0018, mean=+78,  median=-108  唯一の正方向シグナル
+
+全 kakuban の median 比較
+  kakuban=1  median=-267（最悪）
+  kakuban=2  median=-167
+  kakuban=3〜4  median=-140〜-170
+  kakuban=5  median=-108（最も浅い = 最良）
+  kakuban=6〜7  median=-139〜-162
+
+kakuban=5 は median がマイナスだが他の位置と比べて明確に浅い。
+mean も+78 と正で全体で最高。構造的な差がある（大型斜め島では同様シグナルなし）。
+
+## 対象セクション（中型斜め島）
+  2099-2109  11台（X=16〜26, Y=7〜17 の斜め配置）
+  2110-2120  11台（X=16〜26, Y=8〜18 の斜め配置）
+  2191-2202  12台（X=20〜31, Y=19〜30 の斜め配置）
+  2223-2235  13台（X=20〜32, Y=19〜31 の斜め配置）
+
+11台島では kakuban=5 が両端から5番目・7番目の台に対応。
+
+## アクション
+中型斜め島（11-13台）でジャグ系を選ぶとき:
+kakuban=5（両端から5番目）を最優先候補とする（q=0.0018, median=-108）。
+kakuban=1（コーナー端）を回避する（median=-267）。
+大型斜め島（15+台）ではこのシグナルは確認されていないので別ルールを適用する。
+
+---
+id: kamata1-diagonal-large-n-corner-extreme
+trigger: "蒲田1 2F 大型斜め島（15台以上のdiagonal: 2001-2020, 2236-2255, 2282-2301, 2043-2059, 2060-2076, 2302-2316）でAT/ART系の台を選ぶとき"
+confidence: 0.90
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# diagonal_large_N の kakuban=1 が median=-600 と全分析中最悪レベル
+
+## 背景
+向き x サイズ x 機種別カクバン残差分析（2026-06-18実施）。
+
+diagonal_large_N の kakuban=1
+  q≈0, mean=-217, median=-600, n=3001
+  median=-600 は全セグメント全kakuban位置で最悪レベル
+
+中型斜め島（diagonal_medium_N）の kakuban=1（median=-464）と比べても明らかに悪い。
+大型島ほどコーナー端のAT系台が極端に低成績。
+
+対象セクション（大型斜め島）
+  2001-2020  20台（X=3〜22, Y=1〜20 の斜め配置）
+  2236-2255  20台（X=20〜39, Y=16〜35 の斜め配置）
+  2282-2301  20台（X=20〜39, Y=17〜36 の斜め配置）
+  2043-2059  17台（X=9〜25, Y=2〜18 の斜め配置）
+  2060-2076  17台（X=9〜25, Y=3〜19 の斜め配置）
+  2302-2316  15台（X=24〜38, Y=23〜37 の斜め配置）
+
+## アクション
+大型斜め島でAT系を選ぶとき:
+kakuban=1（コーナー端）を強く回避する（median=-600, q≈0）。
+kakuban=2 も mean=-32, median=-471 と悪い傾向（非有意だが要注意）。
+端から3台以上内側を選ぶ方が安全。
+kakuban=7（mean=+109）やkakuban=10（mean=+212）はmean高いがmedianが-380〜-451でアウトライア駆動のため過信しない。
+
+---
+id: kamata1-horizontal-medium-n-corner-deepest
+trigger: "蒲田1 2F 中型横向き島（10-11台のhorizontal: 右エリアX=29-39の11台島, 左エリアX=5-14の10台島）でAT/ART系の台を選ぶとき"
+confidence: 0.92
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# horizontal_medium_N の kakuban=1 が median=-491（横向き島の中で最深）
+
+## 背景
+向き x サイズ x 機種別カクバン残差分析（2026-06-18実施）。
+
+horizontal_medium_N（10-11台横向き島、AT系）の kakuban=1
+  q≈0, mean=-107, median=-491, n=9075
+
+大型横向き島（13-14台）の kakuban=1 は median=-333 と比べて明らかに悪い。
+中型横向き島のAT系コーナー端が最も損失が深い。
+
+有意シグナル
+  kakuban=1  q≈0,    mean=-107, median=-491  明確な回避対象
+  kakuban=6  非有意, mean=+116, median=-364（n=2361）有望だが非有意
+
+対象セクション
+  右エリア 11台  2021-2031, 2032-2042, 2077-2087, 2088-2098, 2121-2131, 2132-2142, 2151-2161（X=29-39）
+  左エリア 10台  2167-2176, 2177-2186, 2203-2212, 2213-2222（X=5-14）
+
+## アクション
+中型横向き島でAT系を選ぶとき:
+kakuban=1（左端または右端）を強く回避する（median=-491, q≈0, n=9075）。
+kakuban=6 を優先候補とする（mean=+116、最高値）。
+kakuban=2〜3 を次点とする（mean=+47〜+75）。
+
+---
+id: kamata1-size-analysis-null-groups
+trigger: "蒲田1 2F で台を分析する際にカクバン効果が期待できないグループを確認するとき"
+confidence: 0.85
+domain: analysis-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# サイズ別分析でカクバン効果が検出されないグループが2つある
+
+## 背景
+向き x サイズ x 機種別カクバン残差分析（2026-06-18実施）。
+
+効果なしのグループ
+  diagonal_small（4-5台の斜め島）  overall_p=0.29(A), 0.79(N)
+    2143-2146, 2147-2150, 2162-2166, 2187-2190 の4セクション
+    台数が少なく全台がほぼコーナー相当なので kakuban による差別化不可
+
+  horizontal_large_A（13-14台横向き島のジャグ系）  overall_p=0.27
+    2317-2330（14台）, 2256-2268（13台）, 2269-2281（13台）の左エリア
+    全 kakuban で median が-121〜-193 の範囲に収まり差が小さい
+
+## アクション
+diagonal_small（4-5台島）と horizontal_large_A（13-14台横向き島ジャグ）に対しては
+kakuban による台選択フィルタを適用しない。
+他のシグナル（イベント日、セクション、台末尾）を使って選択する。
+
+---

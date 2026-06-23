@@ -1,0 +1,178 @@
+---
+id: infer-lr-must-use-x-coordinate
+trigger: "LR分割ロジックを実装・修正・レビューするとき"
+confidence: 0.99
+domain: data-engineering
+source: bug-discovery-and-fix
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# _infer_lr は台番号ではなくX座標で左右を判定しなければならない
+
+## 背景
+`_infer_lr()` は台番号の中央値でLRを分割していた（小さい方=L、大きい方=R）。
+しかし蒲田7では島ごとに台番号の並び方向が反転する（奇数列は左→右、偶数列は右→左）。
+結果として2Fの55.6%、3Fの57.7%のセクションで物理的な左右が逆転していた。
+
+修正: X座標の中央値でLRを判定する。
+```python
+# Before (WRONG): 台番号ベース
+mn = pd.to_numeric(coords["machine_number"], errors="coerce")
+section_median = mn.groupby(coords["section"]).transform("median")
+out.loc[valid & (mn <= section_median)] = "L"
+
+# After (CORRECT): X座標ベース
+x = pd.to_numeric(coords["X"], errors="coerce")
+section_median_x = x.groupby(coords["section"]).transform("median")
+out.loc[valid & (x <= section_median_x)] = "L"
+```
+
+## アクション
+- LR判定は必ず物理座標(X)を使用する
+- 台番号の大小は物理配置と一致しない前提で設計する
+- 修正後は全セクションで逆転率0%を確認してからコミットする
+
+## 例
+```
+セクション 2115-2128:
+  修正前: L(台番2115-2121) X=15→9 (物理的に右), R(台番2122-2128) X=8→1 (物理的に左) → 逆転
+  修正後: L(X≤8の台) = 物理的に左, R(X>8の台) = 物理的に右 → 正しい
+```
+
+---
+id: lr-reversal-dilutes-segment-components
+trigger: "セグメント別コンポーネントの説明力が弱い・lift≈1.0のとき"
+confidence: 0.95
+domain: ml-diagnostics
+source: root-cause-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# セグメント別コンポーネントのlift≈1.0はLR混在による希釈を疑え
+
+## 背景
+WFバックテスト166日で2F_R_Nの全コンポーネントがlift≈1.0（無効）と判定された。
+これを根拠にv7では2F_R_Nを予測対象から除外した。
+
+しかし原因はLR逆転バグ（56%のセクションでLRが物理的に逆）であり、
+旧「2F_R_N」は実質的に左右ランダムサンプルだった。
+セグメント別に集計するC1(DD), C3(角番), C4(曜日), C5(イベント), C6(ゾロ目)は
+全て左右の異なる物理特性が混ざり、シグナルが打ち消し合っていた。
+
+影響を受けないのはC2(末尾, 全体集計)とhist系(台個別履歴)のみ。
+
+## アクション
+- セグメント別コンポーネントがlift≈1.0のとき、まずセグメント定義（LR分割）の正しさを検証する
+- LR修正後は以下を全て再計算する必要がある:
+  - COMPONENT_LIFT_V7（セグメント別lift値）
+  - SEGMENT_HIST_RATIO_V7（セグメント別hist比率）
+  - EXCLUDED_SEGMENTS_V7（除外セグメント）
+- 「シグナルがない」と結論する前に「シグナルが希釈されている」可能性を排除する
+
+## 例
+```
+旧「2F_R_N」の構成:
+  物理的に右の台: 44%  ← 本来のR
+  物理的に左の台: 56%  ← 本来はLに属すべき台
+  → 左右の特性が混在してlift≈1.0（ランダムと同等）に見える
+  → v7で除外 → 実は有効なシグナルを捨てていた可能性
+```
+
+---
+id: v7-design-decisions-require-revalidation-after-lr-fix
+trigger: "LR修正後にv7バックテストを実行するとき"
+confidence: 0.92
+domain: ml-validation
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# LR修正後、v7の全設計判断は再検証が必要
+
+## 背景
+v7の3つの設計判断はすべてLR逆転状態のWFバックテスト結果に基づいている:
+1. COMPONENT_LIFT_V7: セグメント別lift値 → LR混在データから算出
+2. SEGMENT_HIST_RATIO_V7: セグメント別hist比率 → 同上
+3. EXCLUDED_SEGMENTS_V7 = {"2F_R_N"}: 2F_R_N除外 → lift≈1.0はLR希釈の結果
+
+LR修正後にWFバックテストを再実行すると:
+- 2F_R_Nに有効なコンポーネントが出現する可能性がある
+- 各セグメントのlift値が大幅に変わる可能性がある
+- セグメント間のhist比率も再計算が必要
+
+## アクション
+- LR修正後のバックテストではv7のウェイト固定値をそのまま使い、「旧ウェイト×正しいLR」の成績を確認
+- 次にlift値を再計算し、新ウェイトテーブルを構成（v8候補）
+- 2F_R_N除外の判断を再検証: 修正後のliftが1.0を有意に超えていれば除外解除
+- Codexバックテストプロンプト(2026-06-22-v7-walkforward-backtest.md)はLR修正済みの状態で実行されるので、結果はそのまま使える
+
+## 例
+```
+LR修正前のlift (旧):     LR修正後のlift (予想):
+2F_R_N c1: 1.01           → ???（要再計算）
+2F_R_N c3: 0.99           → ???
+2F_R_N c4: 1.02           → ???
+→ 全て≈1.0 → 除外         → 有意なliftが出る可能性あり → 除外解除
+```
+
+---
+id: predict-day-needs-actual-free-mode
+trigger: "未来日の予測スクリプトを設計するとき"
+confidence: 0.90
+domain: ml-delivery
+source: runtime-error
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# predict_day.pyは当日データなしでも動作しなければならない
+
+## 背景
+predict_day.pyは `actual`（当日の台リスト）を使って予測対象台を特定する。
+しかし実運用では当日のデータはまだDBに入っていない（スクレイピングは翌日以降）。
+6/22予測で `ERROR: 20260622 のデータがDBにありません` が発生した。
+
+回避策: 当日データがない場合は直近日の台リストを代用する。
+```python
+if actual.empty:
+    latest_date = train["date_dt"].max()
+    actual = train[train["date_dt"] == latest_date].copy()
+    actual["date"] = TARGET
+    actual["date_dt"] = target_date
+    actual["diff_coins_normalized"] = 0
+    actual["games_normalized"] = 0
+```
+
+## アクション
+- predict_day.pyのactualが空の場合は直近日の台リストで自動フォールバック
+- フォールバック時はINFOログを出力して代用日を明示
+- 台の入れ替え（新台導入・撤去）は反映されないことをユーザーに伝える
+
+## 例
+```
+$ python -m ... predict_day --date 20260622
+INFO: 20260622 のデータなし → 直近日 2026-06-21 の台リストを代用
+（予測結果が正常に出力される）
+```
+
+---
+id: v7-single-day-eval-inconclusive
+trigger: "v7の1日評価結果を解釈するとき"
+confidence: 0.88
+domain: ml-evaluation
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# v7の6/21単日評価は結論を出すには不十分
+
+## 背景
+v7を6/21で評価した結果:
+- v7: avg_diff=-332, WR=46%, MR=95.7%, hit@50=3, Spearman=0.085
+- v6: avg_diff=+408, WR=42%, MR=107.1%, hit@50=7, Spearman=0.124
+v7が大幅悪化に見えるが、N=1日の評価では統計的に有意な比較ができない。
+さらにこの評価自体がLR逆転バグの影響下で実行されている。
+
+## アクション
+- 単日評価はあくまで参考値として扱い、採用/不採用の判断にはWFバックテスト（166日以上）を使う
+- 未検証のモデル変更を本番予測に使わない（v6aをメイン、v7を参考値が正しい運用）
+- LR修正後の状態で再度バックテストを行い、正しいlift値に基づいてv7（またはv8）のウェイトを決定する

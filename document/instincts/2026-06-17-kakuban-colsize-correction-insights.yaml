@@ -1,0 +1,169 @@
+---
+id: floor-column-size-definition-correction
+trigger: "列の台数でグルーピングする分析を設計・実装するとき、または座標CSVからセクションサイズを計算するとき"
+confidence: 0.98
+domain: analysis-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 列（島）の台数は section_max - section_min + 1 で定義する
+
+## 背景
+2026-06-17: kamata7_kakuban_colsize_eda.py で column_size を
+「同じX座標を持つ台数（coords.groupby("X").size()）」で定義していたが誤り。
+
+例：X=1 に12台いても、2001-2010（10台）と別セクションの2台が
+同じX位置にあるだけで「列」は2本存在する。
+X座標は物理的な位置情報であり、列（セクション）の単位とは別物。
+
+列（島）= セクション（連続した台番号グループ）。
+2298-2313 という列があれば section_min=2298、section_max=2313 で16台の列。
+
+## アクション
+座標CSV（floor_coordinates_*.csv）から列サイズを計算する場合：
+
+```python
+# 正しい実装
+coords["column_size"] = coords["section_max"] - coords["section_min"] + 1
+
+# 誤り（X座標集計）
+col_size_map = coords.groupby("X").size()  # これは列サイズではない
+```
+
+bin 定義は X集計ベースの分布ではなく、section単位の分布を確認してから設定する：
+```python
+# 分布確認
+for floor, df_f in coords.groupby("floor"):
+    sizes = df_f.groupby("section")["column_size"].first()
+    print(sizes.value_counts().sort_index())
+```
+
+## 影響範囲（2026-06-17時点）
+- kamata7_kakuban_colsize_eda.py: 修正対象（column_size計算を1箇所修正）
+- kamata7_short_split_eda.py: X集計ベースのため廃棄対象
+- kamata7_colsize_lr_confound_check.py: X集計ベースのため廃棄対象
+- colsize と L/R の交絡確認は正しい colsize で再実施が必要
+
+---
+id: kakuban-colsize-lr-confound-needs-reverification
+trigger: "蒲田7の列サイズ（colsize）と左右（L/R）が同じ軸を指しているかを議論・使用するとき"
+confidence: 0.88
+domain: analysis-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# colsize ≈ L/R の交絡結論は X集計ベースの誤りで無効 — 再検証が必要
+
+## 背景
+2026-06-17: kamata7_colsize_lr_confound_check.py で
+「2F/3F の全 bin で特定 side に 80%以上集中（交絡あり）」という結論を出したが、
+この分析で使った column_size が X座標集計ベースの誤った定義だった。
+
+正しい section_max - section_min + 1 ベースの colsize で再実行するまで、
+「colsize と L/R は同じ空間軸」という結論は使ってはならない。
+
+## アクション
+- kamata7_colsize_lr_confound_check.py を section ベースの colsize で修正・再実行する
+- 再実行前は「colsize ≈ L/R」という前提を分析に持ち込まない
+- L/R 分析（kamata7_kakuban_rl_eda.py）の結果自体は独立して有効
+  （L/R 空間分類は正しく、kakuban 残差計算もセクション単位で正しい）
+
+## 注意
+「2F short → R 89.5% 集中」などの数値は X集計ベースの誤った colsize から来ており、
+正しい colsize では値が変わる可能性が高い。
+
+---
+id: support-sections-filter-removes-single-column-noise
+trigger: "角番分析の significant_kakuban 数が多すぎると感じたとき、または support_sections=1 の行が結果に多数含まれるとき"
+confidence: 0.92
+domain: analysis-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# support_sections >= 2 フィルタで単列依存ノイズを効果的に除去できる
+
+## 背景
+2026-06-17: kamata7_kakuban_colsize_eda.py に --min-support-sections 2 を追加して検証。
+
+3F_long_N セグメントで significant_kakuban が 14 → 4 に激減。
+14 個中 10 個は support_sections=1（1列のみから来るシグナル）だった。
+残存した 4 個（kakuban=3,4,12,13）は support_sections >= 5 以上で信頼できる。
+
+colsize の定義が誤っていたとしても、このフィルタの有効性自体は
+セクション残差計算が正しいため独立して成立する。
+
+## アクション
+角番分析スクリプトに --min-support-sections N（デフォルト 1）を追加する。
+N=2 を標準フィルタとして推奨。
+
+cross-bin / cross-segment 比較表は同じフィルタ条件で significant を集計する。
+
+## 判断基準
+| significant_kakuban 変化 | 解釈 |
+|---|---|
+| 大幅減少（例: 14→4） | 多くが単列ノイズ。残存分のみ信頼できる |
+| わずかな減少（例: 12→11） | 元のシグナルが多セクション分散で堅牢 |
+| 変化なし | support_sections が元々 >= 2 だった |
+
+---
+id: variety-corner-machine-type-overrides-kakuban
+trigger: "バラエティコーナー（少数機種が並ぶエリア）の角番分析を行うとき、または long 列の kakuban 効果を評価するとき"
+confidence: 0.85
+domain: pachinko-domain
+source: domain-knowledge
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# バラエティコーナーでは機種依存の設定投入が角番効果を上書きする
+
+## 背景
+2026-06-17: ユーザーのドメイン知識より。
+蒲田7 2F の long 列エリアはバラエティコーナー（少数機種が並ぶエリア）。
+このエリアでは設定を「機種に入れる」ことが多く、
+セクション内の位置（角番）ではなく機種選択が主な設定投入ロジックになる。
+
+## アクション
+- バラエティコーナーに該当するエリアでは kakuban 特徴は使わない
+- 代わりに machine_type / machine_name ベースの特徴量を優先する
+
+## 判定方法
+以下の条件が揃う場合、バラエティコーナーの可能性が高い：
+1. セクション内の機種バリエーションが少ない（1〜2機種のみ）
+2. 他エリアと比べて mean_abs_mean_residual が著しく低い
+
+---
+id: kakuban-colsize-eda-pending-rerun
+trigger: "今日（2026-06-17）の colsize EDA 結果（short/medium/long のbin別kakubanパターン）を選台や特徴量設計に使おうとするとき"
+confidence: 0.99
+domain: analysis-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# colsize EDA 再実行完了 — 旧結果は「X角番の先行実験」として位置づけ直し
+
+## 背景
+2026-06-17 午前: kamata7_kakuban_colsize_eda.py の column_size 計算が
+X座標集計ベースで定義されており、section 角番の colsize 分類としては軸がずれていた。
+→ 再実行を宣言（use-禁止ブロック）。
+
+2026-06-17 同日: section_max - section_min + 1 に修正して再実行完了。
+→ 新 report.md は section 単位の正しい colsize で生成済み（使用可）。
+
+旧結果は「section 角番の colsize 分析」としては軸混在で解釈不能だが、
+**X角番（X座標列内の深度順位）の先行実験**として別途再実装予定（`kamata7_x_kakuban_eda.py`）。
+
+## 旧結果の再分類（section colsize としては無効 / X角番としては再実装待ち）
+- 「short 列（≤9台）で kakuban=1・17 がマイナス」→ X角番先行実験の痕跡
+- 「medium 列で kakuban=6 がプラス」→ 同上
+- 「long 列の kakuban 効果が最も弱い」→ 同上
+- 「colsize と L/R は交絡」→ 再検証待ち（section colsize ベースで要再実施）
+
+## section 単位の正しい新結果
+`2026-06-17-kakuban-colsize-newresults-insights.yaml` に格納済み。
+
+## アクション
+X角番の正式実装は `kamata7_x_kakuban_eda.py` で行う（`x-kakuban-concept-definition` 参照）。

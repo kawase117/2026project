@@ -1,0 +1,114 @@
+---
+id: rotation-hypothesis-requires-dispersion-test-not-correlation
+trigger: "「特定の軸(角番・末尾・列など)のどこかに設定が入るが、毎回どこに入るかは変わる」というローテーション仮説を検証したいとき"
+confidence: 0.92
+domain: ml-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ローテーション仮説は「相関」では検出できない。「日次の群間分散」をpermutation検定する
+
+## 背景
+蒲田1/蒲田7の「角番」(入口/主通路からの距離ランク)が差枚residual/稼働residualと
+相関するかを検証したが、全期間・2025H2・火曜限定・機種タイプ別(A型/N型)セグメント分割
+のいずれでも |r| < 0.11 で、相関は一貫してゼロ近傍だった。
+
+ここでユーザーから「角番で設定を入れているのは事実だが、"どの角番が当たるか"は
+日によってランダムに変わる」という再解釈が提示された。
+これは重要な指摘で、もしこの仮説が正しい場合、多数の日を平均した
+residual_diff は角番値によらずほぼ同じ値に収束するため、
+「角番に効果が全くない」場合と全く同じ結果(相関ゼロ)になる。
+つまり相関分析では「ローテーション仮説」と「効果なし仮説」を区別できない。
+
+この2つを区別するには、「日ごとに角番グループ間の分散(ばらつき)が
+ランダムなグループ分けより大きいか」を permutation 検定する必要がある。
+ローテーション仮説が正しければ、毎日"どこかの"グループが偏って跳ねるため、
+角番ベースのグループ分けは日次の群間分散がランダムより大きくなるはず。
+
+実装した `compute_kakuban_dispersion_test()`:
+1. machine_number -> kakuban の対応表を作る
+2. 日付ごとに kakuban でグループ化し、各グループの平均residualを計算
+3. その日のグループ平均の分散を求め、全日付で平均 = observed_stat
+4. kakuban割り当てをシャッフルして同じ統計量を計算、n_permutations回繰り返す
+5. p_value = (observed_stat以上のpermutation数+1) / (n_permutations+1)
+
+50回のスモーク実行結果: ほぼ全ての hall/floor/segment/period で
+observed_stat < null_mean (p値0.7〜1.0に集中)。つまり実際の角番グループ分けは
+ランダムなグループ分けより群間分散が**小さい**方向に一貫しており、
+ローテーション仮説を支持する方向(分散が大きい)とは逆だった。
+唯一 p=0.039 (蒲田7 3F_N residual_games, all期間) が出たが、
+32行中の1件は多重比較で説明可能な範囲であり、2025H2では再現せず(p=0.098)。
+
+## アクション
+「Xが効いているはずだが相関に出ない」という相談を受けたとき:
+1. まず「Xの効果が固定方向(常に同じ値が高くなる)」か
+   「Xの効果がローテーション(毎回違う値が高くなる)」かをユーザーに確認する。
+2. ローテーション仮説の場合は相関ではなく
+   「実ラベルでの日次群間分散 vs ランダムラベルでの日次群間分散」の
+   permutation検定を設計する。
+3. permutationは最低1000回で実行する(50回はp値の刻みが粗すぎてスモークテスト専用)。
+4. 複数セグメント・期間に分けて検定する場合は、多重比較を意識し、
+   1〜2件のp<0.05だけでは"発見"と判断しない(再現性・他期間での確認が必須)。
+
+## 例
+```python
+# 観測統計量: 日次の角番グループ間分散の平均
+observed_stat = daily_frame.groupby("date").apply(
+    lambda d: d.groupby("kakuban")["residual_diff"].mean().var(ddof=0)
+).mean()
+
+# permutation: kakuban割り当てをシャッフルして同じ統計量を再計算
+rng = np.random.default_rng(seed)
+perm_stats = []
+for _ in range(n_permutations):
+    shuffled_map = machine_to_kakuban.sample(frac=1, random_state=rng).values
+    ...
+    perm_stats.append(observed_stat_with_shuffled_kakuban)
+
+p_value = (1 + sum(p >= observed_stat for p in perm_stats)) / (n_permutations + 1)
+```
+
+---
+id: kakuban-physical-position-null-result-multi-method
+trigger: "蒲田1/蒲田7の角番(物理的な入口距離)を特徴量として差枚/稼働を予測しようとするとき"
+confidence: 0.88
+domain: pachinko-domain-knowledge
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 角番(物理的な入口からの距離ランク)は、4つの検証手法すべてでresidual_diff/residual_gamesと無相関
+
+## 背景
+蒲田1 2F・蒲田7 2F・蒲田7 3F について、`assign_kakuban()` で各フロアの
+入口/主通路からの距離ランクを割り当て、residual_diff
+(機種平均差枚からの偏差)・residual_games との関係を以下4パターンで検証した:
+
+1. 全期間でのPearson相関 (|r| < 0.07)
+2. 2025H2限定でのPearson相関 (|r| < 0.11)
+3. 火曜(角番投入日と認識されている曜日)限定 + 機種タイプ別(A型/N型)セグメント分割
+   (|r| < 0.09)
+4. 火曜限定 + 日次群間分散のpermutation検定(50回スモーク、observed < null が大半)
+
+いずれの手法でも、角番という物理的な位置指標が差枚・稼働の偏差と
+線形的にも分散的にも有意な関係を示さなかった。
+[[rotation-hypothesis-requires-dispersion-test-not-correlation]] の検定により
+「ローテーションのため相関に出ない」という説明も支持されなかった。
+
+## アクション
+- 角番(入口からの距離)を新規ML特徴量として追加する優先度は低いと判断する。
+- 「火曜=角番の日」という運用認識自体は否定しないが、その効果を
+  「物理位置→差枚」という単純な軸で特徴量化するのは筋が悪い可能性が高い。
+  [[tuesday-kakuban-means-last-digit-adjacency-not-physical]] の通り、
+  むしろ「台番号末尾の隣接」など別の軸で角番投入が表現されている可能性がある。
+- 1000回permutationでの本実行は、すでに50回で一貫した方向性(null支持)が
+  出ているため、優先度を上げて急ぐ必要はない。
+
+## 例
+検証対象: ml/analysis/kamata_corner_mirror_analysis.py の
+assign_kakuban() / compute_kakuban_dispersion_test()
+結果: ml/analysis/results/kamata_corner_mirror/
+tuesday_kamata_corner_mirror_kakuban_correlation.csv
+tuesday_kamata_corner_mirror_kakuban_dispersion.csv
+---

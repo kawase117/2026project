@@ -1,0 +1,143 @@
+---
+id: kamata7-machine-zorome-baseline-advantage
+trigger: "蒲田7で台を選ぶとき、ゾロ目台（00,11,22,...,99番台）を考慮するか判断するとき"
+confidence: 0.88
+domain: pachinko-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 台末尾ゾロ目台は全体で+49差の安定的な優位性がある
+
+## 背景
+蒲田7の全データ（7/7除外）でゾロ目台（台番号末尾2桁同一: 00,11,22,...,99）vs 非ゾロ目台を比較。
+ゾロ目台: diff=+231, plus=41.6%, hit104=33.1% (n=23,631, 全体の9.8%)
+非ゾロ目: diff=+182, plus=40.8%, hit104=32.3% (n=217,187)
+差=+49。ゾロ目台は一貫して強い。
+内訳では00台(+318), 66台(+320), 99台(+322)が特に強く、77台(+120), 88台(+148)は弱め。
+
+## アクション
+同じ末尾で台を選ぶ際、ゾロ目台（XX番台）があればそちらを優先する。
+ただしmod10やdd_mod10との組み合わせで逆効果になるケースがある（後続instinct参照）。
+
+## 例
+末尾5を狙う場合: 55番台(diff=+287) > 非ゾロ目の末尾5台(+182程度)
+末尾7を狙う場合: 77番台(+120)は非ゾロ目より弱い可能性あり — 77は例外
+
+---
+id: kamata7-dd11-double-zorome-effect
+trigger: "蒲田7のDD11（11日）に台を選ぶとき"
+confidence: 0.90
+domain: pachinko-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# DD11×台末尾ゾロ目で+210の二重ゾロ目効果が発生する
+
+## 背景
+DDゾロ目（11日, 22日）に台末尾ゾロ目台を打つと、二重ゾロ目効果が発生する。
+DD11: ゾロ目台=+375 vs 非ゾロ目=+165 → 差=+210（今回の分析で最大級の効果量）
+DD22: ゾロ目台=+246 vs 非ゾロ目=+163 → 差=+83
+DD11の効果量が突出しており、DD22は半分以下。
+仮説: ホールが「11日にゾロ目台に高設定を入れる」という意図的パターンを持っている可能性。
+
+## アクション
+DD11は最優先でゾロ目台（00,11,22,...,99番台）を確保する。
+DD22もゾロ目台を優先するが、DD11ほどの効果は期待しない。
+
+## 例
+DD11に末尾3を狙う場合: 33番台(diff≈+375) >>> 非ゾロ目末尾3台(diff≈+165)
+差=+210は、セグメントA/Nの差(+90程度)や角2効果(+95)を大幅に上回る最大の選択変数。
+
+---
+id: kamata7-saturday-zorome-mod10-dependent
+trigger: "蒲田7の土曜日にゾロ目台を選ぶかどうか判断するとき"
+confidence: 0.85
+domain: pachinko-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 土曜のゾロ目台効果はdd_mod10によって大きく変動する（+333〜-330）
+
+## 背景
+土曜日の曜日×dd_mod10別ゾロ目台効果:
+mod10=8: +333（最強）
+mod10=6: +308
+mod10=3: +271
+mod10=4: +187
+mod10=0: +134
+mod10=7: +52
+mod10=1: +94
+mod10=2: -155（逆効果）
+mod10=5: -241（強い逆効果）
+mod10=9: -330（最も逆効果）
+水曜はmod10=5で+607の例外的ゾロ目効果がある一方、mod10=0/-2で逆効果。
+
+## アクション
+土曜にゾロ目台を優先すべきmod10: 8, 6, 3, 4, 0
+土曜にゾロ目台を避けるべきmod10: 9, 5, 2
+7月の具体例:
+7/6(土) mod10=6 → ゾロ目台を積極的に狙う(+308)
+7/13(土) mod10=3 → ゾロ目台を積極的に狙う(+271)
+7/20(土) mod10=0 → ゾロ目台を狙う(+134)
+7/27(土) mod10=7 → ゾロ目台効果は微弱(+52)、末尾d8優先
+
+## 例
+7/13(土) mod10=3: ゾロ目台=+387 vs 非ゾロ目=+116 → 差=+271
+7/20(土) mod10=0: ゾロ目台=+417 vs 非ゾロ目=+283 → 差=+134
+
+---
+id: kamata7-dd-mod10-dow-digit-quickref-system
+trigger: "蒲田7の任意の日付で台番号末尾の狙い目を確認するとき"
+confidence: 0.95
+domain: pachinko-reference
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# DD×曜日×末尾のリファレンスデータ体系を構築済み
+
+## 背景
+蒲田7の全データから、dd_mod10(0-9)×曜日(月-日)×台番号末尾(0-9)の全700組み合わせについて
+avg_diff, plus_rate, hit104_rate, n, rank を算出し、3つのCSVに保存した。
+任意の月のカレンダーと照合すれば、その日のmod10と曜日からTop3/避け末尾を即座に引ける。
+
+## アクション
+新しい月の戦略を立てる際は以下のCSVを参照:
+1. eda/reports/kamata7_quickref_dow_mod10.csv — 実戦用早見表（Top3/避け/ゾロ目効果）
+2. eda/reports/kamata7_dd_mod10_dow_digit_reference.csv — 全700組み合わせの詳細データ
+3. eda/reports/kamata7_dd_mod10_dow_zorome_reference.csv — ゾロ目台効果の曜日×mod10別
+
+## 例
+8月の水曜日（例: 8/7, 8/14, 8/21, 8/28）の狙い目を知りたい場合:
+8/7: dd=7, mod10=7, 水曜 → quickref_dow_mod10.csvの「水,7」行を参照
+8/14: dd=14, mod10=4, 水曜 → quickref_dow_mod10.csvの「水,4」行を参照
+イベント判定: mod10==1(1のつく日), mod10==7(7のつく日), DD11/22(ゾロ目)等を別途確認
+
+---
+id: kamata7-zorome-digit-dd-match-no-effect
+trigger: "dd_mod10とゾロ目台の桁が一致する場合に特別な効果があるか検討するとき"
+confidence: 0.92
+domain: pachinko-eda
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# dd_mod10とゾロ目桁の一致は追加効果なし（-18で微弱逆効果）
+
+## 背景
+「3日に33番台」「7日に77番台」のように、DDの下一桁とゾロ目台の桁が一致する場合の追加効果を検証。
+一致: diff=+215 (n=2,369)
+不一致: diff=+233 (n=21,262)
+差=-18。一致による追加効果は存在しない（むしろ微弱に逆効果）。
+これはid: kamata7-day-digit-zorome-no-effect（通常台の日ゾロ目効果なし）と整合する。
+
+## アクション
+ゾロ目台を選ぶ際に「今日のmod10と桁が合うゾロ目台」を優先する必要はない。
+ゾロ目台の選択はmod10/曜日別のゾロ目効果テーブルに基づいて判断する。
+
+## 例
+7月7日(mod10=7): 77番台を特別視する必要なし。ゾロ目台全体の+49効果は享受できる。
+7月3日(mod10=3): 33番台 ≈ 55番台 ≈ 他のゾロ目台。桁一致の追加ボーナスはない。

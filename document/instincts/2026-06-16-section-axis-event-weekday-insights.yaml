@@ -1,0 +1,162 @@
+---
+id: section-axis-event-day-a-vs-at-stable-rate
+trigger: "Section（列）軸でis_event_day効果を検証するとき、またはイベント日の列選び戦略を設計するとき"
+confidence: 0.82
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# A群列はイベント日に安定的に好成績、AT群はstable列が限定的
+
+## 背景
+3ホール/フロア（蒲田7 2F/3F・蒲田1 2F）計84セクションについて、
+section_axis_split_half.csv の is_event_day=1 × payoutrate_pct の stable列を集計した。
+
+結果:
+- A群セクション stable率: 14/25 = **56%**（蒲田1_A=75%, 蒲田7_3F_A=53%）
+- AT群セクション stable率: 13/58 = **22%**（蒲田1_AT=36%, 蒲田7_3F_AT=18%, 蒲田7_2F_AT=12%）
+
+A群は全ホールでAT群より一貫してstable率が高い。
+AT群のstable率が低い理由は「上がらない」のではなく「1日の差枚分散が大きく
+split-half安定性が低い」構造的問題の可能性がある。方向（delta正）自体は
+多くのAT群セクションでも出ている。
+
+## アクション
+1. イベント日の朝一列選びでは A群列を優先する（stable率56%）。
+2. AT群列はstable判定が出た特定列のみを追加候補とする：
+   - 蒲田7 2F: 2264-2280(+3.93pt), 2115-2128(+3.69pt), 2230-2246(+1.83pt)
+   - 蒲田7 3F: 3234-3249(AT,+3.03pt), 3073-3087(AT,+1.65pt)
+   - 蒲田1 2F: 2177-2186(AT,+2.99pt), 2077-2087(AT,+2.51pt), 2060-2076(AT,+2.50pt) など
+3. 蒲田1 2F 2001-2020（AT）はis_event_day効果が逆方向stable(-0.78pt)のため優先度を下げる。
+4. 簡潔なルール: 「イベント日はA群列優先、AT群は確認済みstable列のみ追加で狙う」
+
+## 例
+```python
+# イベント日朝一列選び（蒲田7 2F）
+# 1. A群列（2155-2164）を最優先
+# 2. AT群stableセクション：2264-2280, 2115-2128, 2230-2246
+# 蒲田1: 逆方向stable 2001-2020 は後回し
+```
+
+---
+---
+id: section-2f-low-event-stable-rate-is-category-composition
+trigger: "蒲田7 2FのSection軸 is_event_day stable率（3/27=11%）を解釈するとき、またはフロア間でstable率に大差が出たとき"
+confidence: 0.85
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田7 2FのSection is_event_day stable率の低さはAT群比率92%で説明可能。2F固有の異常ではない
+
+## 背景
+蒲田7 2Fのis_event_day stable率は3/27=11%で、蒲田7 3F(77%)・蒲田1(59%)と比べ低く見えた。
+しかし全84セクションのcrosstab（tmp/kamata_section_axis_eda_deepdive/event_day_category_crosstab.csv）で、
+A群overall stable率=56%, AT群=22% と明確な差が存在し、
+蒲田7 2FはAT群が25/27（92%）を占めるため低くなるのは数学的帰結。
+
+また、蒲田7 2FのA群セクション（2セクション）はBT機を含む可能性があり、
+純粋なA群の挙動として解釈できないイレギュラーが存在する（stable=0/2）。
+
+## アクション
+1. 新規ホール/フロアでis_event_day stable率が低く見えた場合、
+   まず dominant_category × stable率 のcrosstabでカテゴリ構成比の影響を確認する。
+2. 「A群はeventに反応しやすい、AT群は反応しにくい」という一般則の例外として
+   解釈する前に、カテゴリ比率の確認を必ずはさむ。
+3. 蒲田7 2F A群セクション（2155-2164周辺）はBT機混在の疑いがあるため、
+   A群の典型挙動として一般化しない。
+
+---
+---
+id: section-2011-2022-saturday-amplified-stable-signal
+trigger: "蒲田7 2F 2011-2022セクションを土曜日に評価するとき、またはAT群×土曜の列決め打ち戦略を検討するとき"
+confidence: 0.87
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田7 2F 2011-2022列はフロア全体AT群×土曜(+1.71pt)の3.8倍に増幅(+6.52pt, 両split-half stable)
+
+## 背景
+kamata_section_axis_eda_deepdive.py の split-half 検定で、
+蒲田7 2F 2011-2022（AT群100%, 12台）× weekday=Sat:
+delta=+6.52pt, q=4.8e-07, 前半q=0.0047, 後半q=0.001 — 両half安定。
+
+machine_breakdown（section_2011_2022_sat_machine_breakdown.csv）では：
+- 全12台でdelta正（最小+2.02pt, 最大+11.48pt）→ 列全体の構造的現象
+- top_machine_share=0.157 < 0.3 → スパイク依存の偽陽性でない
+- **2017台のみsplit-half stable（delta=+10.76pt, hit_104=0.500）**
+
+## アクション
+1. 土曜の朝一、蒲田7 2F 2011-2022セクションを最優先確認リストに置く。
+2. セクション内では **2017台** を最優先（split-half stable, hit_104=50%）。
+   次いで2020(+11.5pt), 2018(+10.3pt)を代替候補とする。
+3. 全台delta正の構造なので2017が先客でも2020/2018/2012/2011（全て4pt以上）を選べる。
+4. データ蓄積後（n≈30/half超）に他台のstable化を再検証する。
+
+## 例
+```
+土曜朝一チェック（蒲田7 2F）
+最優先列: 2011-2022
+ └ 1位台: 2017（stable, hit_104=50%）
+ └ 代替: 2020, 2018（高delta、不安定ではなく単純に未安定）
+```
+
+---
+---
+id: kamata1-section-2001-2020-sat-strong-event-weak
+trigger: "蒲田1 2F 2001-2020セクションの土曜またはイベント日の立ち回りを検討するとき"
+confidence: 0.75
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1 2001-2020は土曜+4.61pt stable、イベント日は-0.78pt stableで逆方向。機種差が大きい
+
+## 背景
+section_axis_split_half.csv より：
+- weekday=Sat: delta=+4.61pt, q=3.4e-09, stable=True
+- is_event_day=1: delta=-0.78pt, q=2.4e-04, stable=True（他列と逆方向）
+
+ユーザーの現場認識「入口に近い目立つ列だが弱い」とis_event_day逆方向が整合。
+machine_breakdown（section_2001_2020_sat_machine_breakdown.csv）では：
+- Satトップ: 2011(マギアレコード系,+37.6pt), 2004(戦国乙女5系,+15.5pt)
+- Sat弱台: 2020(スマスロ北斗2,-2.6pt), 2014(マギアレコード,-3.1pt)
+- is_event_day最弱台: 2015(マギア,-7.5pt), 2011(マギア,-6.4pt) — 土曜トップ台がイベント日最弱候補
+- split-half stable台は土曜・イベント日どちらもゼロ（n=73/halfで不安定）
+
+## アクション
+1. 土曜: 2001-2020を候補に入れる。2011(マギア)・2004(戦国乙女5)を優先確認。
+   スマスロ北斗2（2016-2020付近）は土曜でも弱いため優先度低。
+2. イベント日: 他に良い列がある場合は 2001-2020 を後回しにする。
+3. 土曜×イベント日の交互作用は未検証（現データ量で不安定）。
+4. 台番号レベルstable台なし。さらなる確認は次回データ追加時。
+
+---
+---
+id: section-axis-dd-null-confirmed-3halls
+trigger: "Section（列）軸でDD（月内日付=1〜31）効果を検証しようとするとき"
+confidence: 0.88
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Section×DD軸はstable結果ゼロ。蒲田7 2F/3F・蒲田1 2F の3ホール全てで確認済み
+
+## 背景
+kamata_section_axis_eda_deepdive.py で全セクション×DD(1-31)を検定した結果、
+3ホール計でstable=Trueのセルは0件。
+machine_category軸でのDD検証でも同様だったことと一致。
+
+## アクション
+1. 「DD別に特定列が強い」仮説の検証は現時点では優先度を低くする。
+2. DD効果を立ち回りに使うなら、Section軸ではなくホール全体の
+   イベント日定義（is_event_day）の精度を上げる方が効果的。
+3. データが2年以上になった時点で再検証の余地あり。
+
+---

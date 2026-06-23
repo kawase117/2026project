@@ -1,0 +1,153 @@
+---
+id: lift-excess-normalization-for-weights
+trigger: "WFバックテストのlift値からコンポーネントウェイトを算出するとき"
+confidence: 0.88
+domain: scoring-model
+source: v7-design-session
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Lift値からウェイトへの変換は excess=max(0, lift-1.0) の正規化で行う
+
+## 背景
+WF166日バックテストで得られたコンポーネント別lift値（例: c4@2F_L_N=1.21）を
+そのままウェイトに使うと、lift=1.0（無効）のコンポーネントにも大きなウェイトが配分される。
+excess = max(0, lift - 1.0) とすることで:
+- lift<1.0（逆効果）は0にクランプされる
+- lift=1.0（無効）も0になる
+- lift>1.0の超過分のみがウェイトに反映される
+
+lift実測値がないコンポーネント（c3, c6_new）には小さなデフォルトexcess（0.03, 0.02）を設定し、
+完全にゼロにはしない。
+
+## アクション
+- `excess_i = max(0, lift_i - 1.0)` を全コンポーネントに適用
+- `weight_i = excess_i / sum(all_excess) * struct_ratio` で正規化
+- lift実測値がないコンポーネントにはドメイン知識に基づく小さなデフォルトexcessを使用
+- 全excessが0のセグメントは均等配分にフォールバック
+
+## 例
+```
+2F_L_N の場合:
+  c1: max(0, 1.13-1.0) = 0.13
+  c2: max(0, 1.00-1.0) = 0.00  ← 無効なので0
+  c3: 0.03 (デフォルト)
+  c4: max(0, 1.21-1.0) = 0.21  ← 最大
+  c5: max(0, 1.02-1.0) = 0.02
+  c6: 0.02 (デフォルト)
+  total_excess = 0.41
+  → c4のウェイト = 0.21/0.41 * 0.80 = 0.41 (struct_ratio=0.80の場合)
+```
+
+---
+id: hist-ratio-from-hist-lift-per-segment
+trigger: "struct/hist比率をセグメント別に設定するとき"
+confidence: 0.85
+domain: scoring-model
+source: v7-design-session
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# hist比率はhist_hit104のlift値から直接導出する
+
+## 背景
+現行モデルではstruct*0.90+hist*0.10が全セグメント共通。
+しかしhist_hit104のliftはセグメントごとに0.98〜1.14と大きく異なる:
+- 3F_R_N: 1.14（最強）→ hist=0.25
+- 2F_L_N/3F_L_N: 1.09 → hist=0.20
+- 3F_L_A: 1.05 → hist=0.15
+- 3F_R_A: 0.98（逆効果）→ hist=0.05
+
+histが逆効果のセグメント（3F_R_A）でhist比率を高くすると予測が悪化する。
+逆にhistが最強のセグメント（3F_R_N）では構造スコアよりhist重視が合理的。
+
+## アクション
+- hist_hit104のlift値に応じてhist比率を段階的に設定（0.05〜0.25）
+- lift<1.0のセグメントはhist最小（0.05）
+- lift>1.10のセグメントはhist大（0.20-0.25）
+- struct_ratio = 1.0 - hist_ratio で自動決定
+
+## 例
+```python
+SEGMENT_HIST_RATIO_V7 = {
+    "2F_L_N": 0.20,   # lift=1.09
+    "3F_L_A": 0.15,   # lift=1.05
+    "3F_L_N": 0.20,   # lift=1.09
+    "3F_R_A": 0.05,   # lift=0.98 → ほぼ使わない
+    "3F_R_N": 0.25,   # lift=1.14 → 最大配分
+}
+```
+
+---
+id: v7-adds-variant-not-modifies-existing
+trigger: "Walk-forward scoringに新しいスコアリングロジックを追加するとき"
+confidence: 0.95
+domain: ml-architecture
+source: v7-design-session
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 新ロジックは既存バリアントを変更せず、新バリアント追加で実装する
+
+## 背景
+v1-v6dは各々独立した検証結果を持っており、後方互換性が重要。
+v7のセグメント別ウェイトを既存の `_score_from_components()` に組み込むと、
+v6bの `SEGMENT_WEIGHTS_V6B` と競合し、過去のバックテスト結果が再現不能になる。
+
+v7では:
+- `_score_from_components_v7()` を新関数として追加
+- `VariantConfig` に `use_v7_weights` フィールドを追加
+- `score_day()` 内でフラグに応じて呼び分け
+- 既存のv1-v6dは一切変更しない
+
+## アクション
+- 新しいスコアリングロジックは常に新関数として追加する
+- 既存関数のシグネチャや動作は変更しない
+- VariantConfigにboolフィールドを追加してdispatchする
+- build_variant_configs()に新エントリを追加するだけ
+
+## 例
+```python
+# NG: 既存関数を条件分岐で肥大化
+def _score_from_components(frame, weights, *, use_segment_weights=False, use_v7=False):
+    if use_v7: ...  # 既存ロジックと混在
+
+# OK: 新関数を追加
+def _score_from_components_v7(frame):  # v7専用、独立
+    ...
+```
+
+---
+id: predict-day-script-alongside-wf-engine
+trigger: "Walk-forward scoringの結果を実運用で使うとき"
+confidence: 0.90
+domain: ml-delivery
+source: v7-design-session
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 1日予測スクリプト(predict_day.py)をWFエンジンと並行して用意する
+
+## 背景
+WFエンジン(walk_forward_engine.py)は全日のバックテスト用で、1日の予測出力には不向き。
+実運用では「明日のTOP50を出せ」が必要であり、以下の違いがある:
+- WF: 複数日×複数バリアント×複数windowを回す → CSV出力
+- predict_day: 1日×1バリアント×全期間train → コンソール+CSV出力
+
+predict_day.pyは score_day() を1回呼ぶだけのシンプルなスクリプトだが、
+コマンドライン引数(--date, --db-path)とTOP50テーブル出力を備える必要がある。
+
+## アクション
+- `predict_day.py` を `ml/experiments/walkforward_scoring/` に配置
+- `python -m ml.experiments.walkforward_scoring.predict_day --date YYYYMMDD` で実行
+- trainは全期間（WFの90日窓ではなく）
+- コンポーネント個別値もデバッグ列として出力
+- スモークテスト（classify_seg健全性、除外セグメント確認、ウェイト合計）を組み込む
+
+## 例
+```bash
+# 実運用
+python -m ml.experiments.walkforward_scoring.predict_day --date 20260622
+
+# 出力: TOP50テーブル + results/predict_20260622.csv
+```

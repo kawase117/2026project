@@ -1,0 +1,204 @@
+---
+id: hist-hit-threshold-segment-dependency
+trigger: "hist_hit特徴量の閾値を設定するとき"
+confidence: 0.92
+domain: ml-feature-engineering
+source: walkforward-backtest-166days
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Payout閾値はA/Nセグメントで最適値が異なる
+
+## 背景
+Walk-forward バックテスト（v4, 90日窓, 166テスト日）で hist_hit の閾値を
+100/102/104/106% の4段階で比較した結果、セグメントにより最適閾値が大きく異なることが判明。
+
+Nセグメント（AT機）は一貫して106%が最強。高い閾値ほどリフトが上がる単調傾向。
+Aセグメント（ジャグラー等）は104%がベスト（3F_L_Aでlift=1.092）。
+3F_R_Aのみ100%が最適だが、100%はhist_winrateと同一指標のため不採用。
+
+## アクション
+- Nセグメント: 106%閾値を使用（設定5-6の強い証拠をフィルタ）
+- Aセグメント: 104%閾値を使用（設定4の理論機械割と整合）
+- 100%閾値は winrate と完全重複するため、独立特徴量として採用しない
+- 特徴量名は `hist_hit_an`（A/N family threshold）とし、セグメント単位ではなくA/N分類単位であることを明示
+
+## 例
+```
+セグメント×閾値 lift@N 実測:
+           hit100  hit102  hit104  hit106
+2F_L_N     0.841   0.948   1.020   1.116  → 106%
+2F_R_N     0.786   0.921   1.013   1.072  → 106%
+3F_L_A     1.034   1.039   1.092   1.067  → 104%
+3F_L_N     0.855   1.071   1.099   1.157  → 106%
+3F_R_A     1.034   0.982   0.979   1.017  → 100%(不採用→104%)
+3F_R_N     0.887   1.022   1.072   1.074  → 106%
+```
+
+---
+id: hit100-equals-winrate-redundancy
+trigger: "payout閾値100%を特徴量候補に含めるとき"
+confidence: 0.99
+domain: ml-feature-engineering
+source: mathematical-identity
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Payout>=100%はWinrateと数学的に同一
+
+## 背景
+`payout >= 100%` は `(games*3 + diff) / (games*3) >= 1.0` すなわち `diff >= 0` と等価。
+これは勝率（winrate = (diff > 0).mean()）と同一の指標であり、独立した情報を持たない。
+
+Walk-forwardで hist_winrate が全Nセグメントで逆指標（lift < 1.0）だったことと、
+hit100%が同様に全Nセグメントで lift < 1.0 だったことは完全に整合する。
+
+## アクション
+payout閾値を検討する際、100%は候補から除外する。
+最低でも102%以上から開始すること。
+
+## 例
+```python
+# NG: winrateと重複
+hist_hit100 = (payout >= 100).mean()  # == (diff > 0).mean() == winrate
+
+# OK: 独立した情報を持つ
+hist_hit104 = (payout >= 104).mean()  # 設定4以上の出玉パターン
+hist_hit106 = (payout >= 106).mean()  # 設定5-6の強い証拠
+```
+
+---
+id: segment-component-effectiveness-map
+trigger: "スコアリングモデルのコンポーネントウェイトを設定するとき"
+confidence: 0.85
+domain: ml-model-design
+source: walkforward-segment-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# コンポーネント有効性はセグメントにより劇的に異なる
+
+## 背景
+v4の166日Walk-forwardでセグメント別にコンポーネント単独リフトを計測した結果、
+全セグメント共通のウェイトは次善策であることが判明。
+
+主な発見:
+- 2F_L_N: c4(曜日×角番)が突出(1.21)。c2/c5は無効
+- 2F_R_N: 全コンポーネント≈1.0。スコアリング自体が効かない
+- 3F_L_N: c2(理論最適)が1.12で最強。他では無効
+- 3F_R_N: hist_hit104が1.14で最強
+- c5(末尾): 全体lift=1.35は3F_L_N限定のセグメント選択効果だった
+
+## アクション
+- セグメント別ウェイトの導入を検討する
+- ただし事後チューニングバイアスに注意: テスト期間前半/後半分割で検証必須
+- 2F_R_Nは均等ウェイト（何をやっても効かない）
+- c5の全体リフトが高く見える場合、セグメント効果の混入を疑う
+
+## 例
+```
+Component  2F_L_N  2F_R_N  3F_L_A  3F_L_N  3F_R_A  3F_R_N
+c1          1.13    1.00    1.07    1.02    1.07    1.00
+c2          1.00    1.01    1.00    1.12    0.98    1.01
+c4          1.21    0.98    1.02    1.04    1.04    1.01
+c5          1.02    1.00    1.00    1.00    1.07    0.96
+hist_hit104 1.09    1.00    1.05    1.09    0.98    1.14
+```
+
+---
+id: post-hoc-tuning-bias-awareness
+trigger: "観測結果からウェイトやハイパーパラメータを決定してWalk-forwardで検証するとき"
+confidence: 0.90
+domain: ml-validation
+source: codex-review-feedback
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 事後チューニングバイアス: 同一期間での決定と検証は楽観バイアスを生む
+
+## 背景
+Walk-forward結果からセグメント別ウェイトを決定し、同じWalk-forward期間で検証すると、
+リークではないが楽観バイアスが生じる。Codexレビューで指摘された。
+
+## アクション
+1. レポートに「事後チューニングを含む」旨を必ず明記
+2. テスト期間を前半/後半に分割し、前半の結果で決めたパラメータを後半で検証
+3. 前半/後半の両方で改善がプラスなら「真の改善」、片方でもマイナスなら「過学習の疑い」
+4. 完全にバイアスフリーにするには、ウェイト決定用のデータを検証用から完全に分離する
+
+## 例
+```
+# 楽観バイアスの構造:
+# 1. v4のWalk-forward全期間の結果を見る
+# 2. 「c4は2F_L_Nで1.21だから重みを上げよう」と決定
+# 3. 同じ全期間でv6bを走らせて「改善した！」→ 当然改善して見える
+
+# 緩和策:
+# テスト日 1-83 (前半) の結果でウェイト決定
+# テスト日 84-166 (後半) で検証 → ここでも改善なら信頼できる
+```
+
+---
+id: short-window-hist-coverage-tracking
+trigger: "hist特徴量に短期ウィンドウ(7日/30日等)を適用するとき"
+confidence: 0.88
+domain: ml-feature-engineering
+source: codex-review-feedback
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 短期ウィンドウのfillna(0)は信号欠損と弱信号を混同する
+
+## 背景
+Aセグメント向けに7日/30日の短期ウィンドウでhist特徴量を計算する際、
+該当期間にデータがないmachine_numberにfillna(0)を適用すると、
+「短期トレンドが弱い（本当に0に近い）」と「履歴不足で計算不能」が区別できない。
+
+## アクション
+- `a_seg_hist_coverage`: 短期ウィンドウ内に1日以上データがあるAセグ台の割合を記録
+- `a_seg_fallback_count`: fillna(0)でフォールバックしたAセグ台数を記録
+- レポートに平均coverage率とfallback率を明記
+- coverage率が低すぎる場合(例: <50%)、その短期ウィンドウは信頼性不足と判断
+
+## 例
+```python
+# 7日ウィンドウの場合、週1-2回しか稼働しない台はデータ0-2件
+# → fillna(0) が大量発生し、信号がノイズに埋もれるリスク
+# coverage率を見て判断する
+
+a_machines = actual[actual['segment'].str.endswith('_A')]
+a_with_hist = a_machines[a_machines['hist_hit_an'] > 0]  # 簡易判定
+coverage = len(a_with_hist) / len(a_machines) if len(a_machines) > 0 else 0
+```
+
+---
+id: codex-prompt-naming-matches-implementation
+trigger: "Codexプロンプトで特徴量やバリアントに名前をつけるとき"
+confidence: 0.85
+domain: prompt-engineering
+source: codex-review-feedback
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 特徴量名は実装の粒度と一致させる
+
+## 背景
+`hist_hit_adaptive` という名前で設計したが、実際はセグメント単位の最適化ではなく
+A/N family単位の閾値選択だった。Codexから「名前と実装が一致しない」と指摘。
+`hist_hit_an` に修正。
+
+## アクション
+- "adaptive" は「データから自動的に閾値が変わる」印象を与えるため、
+  固定閾値のルックアップには使わない
+- 実装粒度を名前に反映: セグメント単位なら `_seg`、A/N単位なら `_an`、全体なら無印
+- Codexに渡すプロンプトでは名前と実装仕様の整合性を事前チェック
+
+## 例
+```python
+# NG: 名前がoverpromise
+hist_hit_adaptive  # "adaptive"だが実際は固定辞書ルックアップ
+
+# OK: 名前が実装と一致
+hist_hit_an        # A/N family別の閾値 (N=106%, A=104%)
+hist_hit_seg       # もしセグメント単位で6種類の閾値を使うなら
+```

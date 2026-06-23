@@ -1,0 +1,130 @@
+---
+id: spike-decompose-timeline-chain
+trigger: "集計スパイク（DD×角番、曜日×機種など）を発見したとき"
+confidence: 0.95
+domain: eda-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# スパイクは必ず「分解→台特定→時系列」の3ステップで検証する
+
+## 背景
+蒲田7の DD=19 × kakuban=8 でセクション残差 +364 のスパイクが検出された。
+単純に「DD=19に角番8台を狙え」と結論づけると誤り。
+スパイクには必ず「全体効果の混入」「特定台への偏り」「時系列での消滅」のいずれかが潜んでいる。
+
+## アクション
+スパイクを発見したら以下の3ステップを必ず踏む：
+
+**Step 1: 分解（主効果 vs 交互作用）**
+- 「DDが全体的に強い日か？」を全台平均で確認
+- 「当該 kakuban が全DD通じて強いのか？」を全DD平均で確認
+- 主効果の掛け合わせで説明できるなら「偽交互作用」として棄却
+
+**Step 2: 台特定**
+- スパイクに寄与している台番号を groupby machine_number で特定
+- 特定の1台が引っ張っていれば「台固有の設定傾向」として分離
+
+**Step 3: 時系列検証**
+- その台の該当DD別成績を年月順に並べる
+- games_normalized を必ず確認。G数激減は「もはや打たれていない」シグナル
+- 特定年の前半に集中して後半〜翌年で消滅 → ML特徴量として無効と判断
+
+## 例
+DD=19 × kakuban=8 (kamata7_3F_A) → mean_residual +364 のスパイク
+
+Step 1: DD=19の全体平均=+150（DD=1の+515より低い中程度）、kakuban=8の全DD平均=+253 → 主効果で説明可能
+Step 2: 台3273（マイジャグV）が mean_diff=+1555 を引っ張っていた
+Step 3: 2025/07-10月は diff=+4800/+4400/+2100/+1500、2026年入って games=829-2975 に激減
+→ 「2025年前半限定の高設定台」と確定。ML特徴量として不採用。
+
+---
+id: section-middle-kakuban-advantage-kamata7-3fa
+trigger: "蒲田7の3F_A台選択戦略を考えるとき、またはkakuban特徴量を設計するとき"
+confidence: 0.87
+domain: hall-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田7 3F_A: 中間台（kakuban 5-11）が全DD通じて優位
+
+## 背景
+蒲田7の3F_Aセグメント（ジャグラー/ハナハナ系）を全342日・全DDで集計した結果、
+セクション端台（kakuban=1: +80, kakuban=22: +67）に対して
+中間台（kakuban 5-11）が +247〜+269 と明確に優位。
+セクション残差分析でも kakuban=1 は q<0.001 で有意に弱いことが確認済み。
+
+## アクション
+- 蒲田7 3F でジャグ/ハナハナを狙うなら、セクション内の端台（両角）を避け
+  kakuban 5-11 の台を優先する
+- ML特徴量として `kakuban_bin`（1-4 / 5-11 / 12+）の3値分類が有効候補
+- kakuban=1 の弱さは両端から見ても成立（rank_from_min=1 かつ rank_from_max が大きい台が特に弱い）
+
+## 例
+kakuban別全DD平均差枚（3F_A, 全342日）:
+- kakuban 9: +269（最強）
+- kakuban 6,5,7,8,11: +248〜+268（中間群）
+- kakuban 1: +80（最弱）
+- kakuban 22: +67（最弱）
+
+---
+id: dd-kakuban-no-linear-trend-kamata7
+trigger: "DDと角番の線形的な交互作用をML特徴量に追加しようとするとき（蒲田7）"
+confidence: 0.88
+domain: ml-feature-design
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田7では DD × kakuban の線形トレンドは存在しない
+
+## 背景
+Spearman 相関で全セグメント×全kakuban の (dd, residual) を検証した結果、
+有意なペアはゼロ（最強でも r=-0.067, q=0.617）。
+DD を連続変数として角番効果を説明することはできない。
+DDビン×kakuban の Kruskal は全ビンで有意だが top_kakuban がビンごとにランダムに変わるため
+ルール化不可能。
+
+## アクション
+- `dd × kakuban` 型の線形特徴量は蒲田7では採用しない
+- DDビン（1-6/7-12/13-18/19-24/25-31）×kakuban_bin の交互作用項を試すなら
+  必ずホールドアウトで過学習確認すること
+- 実用的な次の一手は「kakuban_bin 単体」の非線形効果をモデルに入れること
+
+## 例
+Analysis D2 結果: 全 kakuban で Spearman q > 0.6 → 採用しない
+Analysis D3: DDビン別 Kruskal は全ビン有意だが top_kakuban=20/15/6/20/7 とバラバラ
+→ 月の特定時期に特定角番が有利というルールは蒲田7には存在しない
+
+---
+id: games-normalized-thinning-signal
+trigger: "台のDD別・曜日別成績を見て特定条件でG数が極端に少ないとき"
+confidence: 0.88
+domain: data-quality
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# G数激減はホール全体の稼働水準低下を反映している可能性が高い
+
+## 背景
+台3273（マイジャグラーV）のDD=19における2026年1-3月のG数が 829〜2975 に激減（2025年は 6000〜9000）。
+ただし2026年4-5月には 5878/7829 に回復している。
+マイジャグラーは最人気クラスの機種であり、撤去・機種交換とは基本的に無縁。
+したがって「台固有の廃止」ではなく「その時期のホール全体の稼働水準の低下」が原因と考えるのが自然。
+G数が少ない日は設定が低くて客が早抜けした可能性もあるが、いずれにせよ分析上の信頼性は低い。
+
+## アクション
+- DD別 or 曜日別の集計でスパイクを見つけたら、必ず年月別の G数推移も確認する
+- `mean_games < 3000` の（DD × 台）組み合わせは分析の信頼性が低い。除外か重み付け低減を検討
+- G数激減を「台廃止・機種変更」と即断しない。ホール全体の月次稼働推移と照合して判断する
+- 過去データで計算したスパイクを ML 学習に使う前に、G数も含めた時系列で有効期限を確認する
+
+## 例
+台3273（マイジャグラーV）DD=19 の時系列:
+- 2025/07: games=8147, diff=+4800（高設定確実）
+- 2025/10: games=9336, diff=+1500（有効）
+- 2026/01-03: games=829〜2975, diff=0〜-200（G数激減 → ホール稼働低下期と推定）
+- 2026/04-05: games=5878〜7829（回復 → 機種交換ではなかったことが確認できる）

@@ -1,0 +1,136 @@
+---
+id: dynamic-weight-cross-segment-scale-mismatch
+trigger: "セグメント別に動的ウェイトを算出してスコアリングする場合"
+confidence: 0.95
+domain: ml-scoring-architecture
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# セグメント別動的ウェイトはセグメント間スケール不一致を引き起こす
+
+## 背景
+v8はセグメント毎にlift（動的ウェイト）を算出し、セグメント内の台選択精度は全セグメントでv6aを上回った。
+しかし全体Top50では、弱セグメント（3F_R_N: vs_other=-131）から+4.8台過剰選出し、
+強セグメント（2F_L_N, 2F_R_N）から合計-5.8台不足する結果となった。
+全体avg_diff: v8=146.5 vs v6a=170.5（-23.9）。
+
+根本原因: 動的ウェイトはセグメント内の最適化であり、セグメント間のスコアスケールを揃えない。
+弱セグメントでliftが高く出ると、そのセグメントの台に不釣り合いに高いcompositeスコアがつく。
+
+## アクション
+セグメント別動的ウェイトを使う場合は「監督役」を必ず併設する:
+1. 方法A: グローバルスコア（v6a式固定ウェイト）とのブレンド（alpha=0.5-0.7）
+2. 方法B: セグメント内パーセンタイル変換 + セグメント強度ウェイト
+方法Aが推奨（v6aが実績ある監督役として機能するため）。
+
+## 例
+v8のTop50セグメント構成（1日平均）:
+- 3F_R_N: v6a=8.6台, v8=13.4台（+4.8、最弱セグメント）
+- 2F_L_N: v6a=13.8台, v8=11.5台（-2.3、最強セグメント）
+- 2F_R_N: v6a=17.1台, v8=13.6台（-3.5、強セグメント）
+
+---
+id: segment-daily-results-vs-overall-mismatch-diagnosis
+trigger: "セグメント別評価が良好なのに全体評価が悪い場合"
+confidence: 0.95
+domain: ml-evaluation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# セグメント別avg_diff改善と全体avg_diff改善は別問題
+
+## 背景
+v8はセグメント別avg_diffで全6セグメントv6aに勝利（+3.0から+17.1）。
+しかし全体avg_diff_vs_otherではv6a=51.0 > v8=25.3で敗北。
+原因はTop50のセグメント構成比率の変化。セグメント別の勝ちは
+そのセグメントに割り当てられた枠内での精度であり、枠の配分自体が変わると全体は悪化する。
+
+## アクション
+セグメント別改善を確認したら、必ずTop50のセグメント構成比率を検証する。
+弱セグメントへの過剰配分がないか確認。correlation(diff_top50, diff_other) = -1.000は
+異なる台を選んでいるだけでゼロサムのシグナル。
+
+## 例
+top50 = scored.head(50)
+print(top50['segment'].value_counts())
+各セグメントのvs_other値と並べて弱セグメント台数増加パターンを確認する。
+
+---
+id: fixed-weight-as-natural-cross-segment-normalizer
+trigger: "v6aの固定ウェイトがなぜ強いか疑問に思った場合"
+confidence: 0.90
+domain: ml-scoring-architecture
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 固定ウェイトはセグメント間スケール統一の暗黙的メカニズム
+
+## 背景
+v6aの固定ウェイト(0.40, 0.15, 0.20, 0.15, 0.05, 0.05)が動的ウェイトv8より
+全体性能で勝る理由: 全セグメントに同じウェイトを適用するとcompositeスコアのスケールが
+セグメント間で自然に揃い、強セグメントの台が自然にTop50上位に来る。
+
+## アクション
+動的ウェイトの導入時は、固定ウェイトが持つ暗黙的なスケール統一効果を代替する
+メカニズムを必ず設計すること。ブレンド方式が最も安全。
+
+## 例
+v9a設計: composite = alpha * global_score(固定) + (1-alpha) * segment_score(動的)
+alpha=0.7で固定ウェイトの安定性を70%維持しつつ動的ウェイトの精度改善を30%取り込む。
+
+---
+id: monthly-lift-cache-first-day-dependency
+trigger: "月次キャッシュでlift値を再利用する場合"
+confidence: 0.85
+domain: ml-implementation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 月次キャッシュは月初日のtrainに依存する
+
+## 背景
+v8の月次キャッシュはWFエンジンが処理する最初の日のlift値をその月全体に適用する。
+直接score_day呼び出し（特定日のtrainで計算）とWFエンジン結果（月初のtrainで計算）で
+異なるlift値が使われ、評価結果の乖離を引き起こす。
+
+## アクション
+月次キャッシュを使う場合:
+1. WFエンジン内での処理順序（日付昇順）を確認
+2. 直接score_day呼び出しで検証する際はclear_v8_lift_cache()してから月初日から順に処理
+3. 乖離調査時はキャッシュの初期化タイミングを最初に疑う
+
+## 例
+clear_v8_lift_cache()
+for test_date in sorted(all_dates):
+    scored = score_day(train, actual, variant, test_date=test_date, ...)
+
+---
+id: codex-prompt-delivery-method-selection
+trigger: "Codexにタスクを依頼する場合"
+confidence: 0.80
+domain: workflow
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Codexプロンプトはファイルとintermindを使い分ける
+
+## 背景
+Codexへのプロンプト送信方法として、ファイル(docs/codex_prompts/)とIntermindの2つがある。
+ファイルは永続的な記録・git管理・構造化に優れるが双方向やりとりができない。
+Intermindは会話的な修正指示・質問応答に優れるが記録が残りにくい。
+
+## アクション
+- 設計判断・仕様が複雑 → ファイルに書いてからIntermindで送る
+- シンプルな修正・バグ修正 → Intermindで直接送る
+- 反復的なやりとり → Intermind
+
+## 例
+v9設計プロンプト: ファイル作成後にIntermindで通知。
+バグ修正: Intermindで直接「この関数のNaN処理を修正して」と送信。
+
+---

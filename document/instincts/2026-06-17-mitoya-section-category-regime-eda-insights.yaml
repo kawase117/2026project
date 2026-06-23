@@ -1,0 +1,182 @@
+---
+id: mitoya-section-y-split-correct-granularity
+trigger: "みとやでsection(列)単位の分析を設計・実装するとき"
+confidence: 0.90
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# みとやのmachine_layoutセクションは各島の両面(2列)を1セクションとして格納しており、y座標で分割しないと異機種が混在する
+
+## 背景
+みとや大森町店の machine_layout テーブルは section 列に島単位の範囲(例: "624-657")を持つ。
+しかし各主要島セクションはy座標の異なる2列で構成されており、それぞれ全く異なる機種が配置されている。
+
+実測例(section "624-657"):
+- y=21 (台番号624-640, 17台): AT機バラエティ混在 (東京喰種IV, バジリスク絆2, スマスロ北斗, 化物語 2nd等)
+- y=20 (台番号641-657, 17台): マイジャグラーV 専用
+
+同様に section "658-691":
+- y=17 (658-674): マイジャグラーV
+- y=16 (675-691): ネオアイムジャグラーEX
+
+section単位でグループ化すると A群/AT群が混在し、誤ったパターン学習の原因になる。
+
+## アクション
+- section × y の複合キーを分析単位として使用する:
+  `df["section_key"] = df["section"] + "_y" + df["y"].astype(str)`
+- これにより "624-657_y20"(マイジャグラー) と "624-657_y21"(AT混合) に自動分離される
+- section単位のみのグループ化でA群/AT群を判定した既存スクリプトは結果を再確認すること
+
+## 例
+```python
+# machine_layout JOIN後に追加
+df["section"] = df["section"] + "_y" + df["y"].astype(str)
+# 結果: "624-657_y20"=マイジャグラーV, "624-657_y21"=AT混合, "658-691_y17"=マイジャグラーV
+```
+
+---
+id: mitoya-section-xdds-stable-confirmed
+trigger: "みとや大森町店でX_DDS日(DD=4/7/14/17/24/27)の立ち回り列選択をするとき"
+confidence: 0.72
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# X_DDS日にstableなセクション: 658-691_y16/y17とand 624-657_y20(A群, q=0) と 557-590_y28/591-623_y25(AT群, delta最大)。section×y分割済み結果
+
+## 背景
+eda/mitoya_section_category_eda.py の Branch A (section × X_DDS split-half EDA)を
+section×y複合キー適用後に実行した結果。
+MIN_CELL_DAYS=20、Mann-Whitney + BH FDR補正。
+
+stable confirmed (X_DDS日, is_xdds=1):
+| section      | dominant_category | delta_pct | q値    |
+|--------------|-------------------|-----------|--------|
+| 658-691_y16  | A群                | +2.916%   | 0.000  |
+| 624-657_y20  | A群                | +1.658%   | 0.000  |
+| 658-691_y17  | A群                | +1.707%   | 0.000  |
+| 557-590_y28  | AT群               | +5.082%   | 0.017  |
+| 591-623_y25  | AT群               | +4.160%   | 0.021  |
+
+non-stable (X_DDS日: delta正だがq高くstable=False):
+| section      | dominant_category | delta_pct | q値    |
+|--------------|-------------------|-----------|--------|
+| 624-657_y21  | AT群               | +2.462%   | 0.103  |
+| 501-522_y36  | AT群               | +3.626%   | 0.069  |
+| 523-556_y33  | mixed             | +3.205%   | 0.148  |
+
+旧section×axis("624-657"混合)での誤判定を解消した。
+658-691は y=16(ネオアイムジャグラー) と y=17(マイジャグラーV) 両列がstable。
+624-657は y=20(マイジャグラーV)のみstable、y=21(AT混合)は非有意。
+
+## アクション
+- X_DDS日の列選択優先度:
+  1. 658-691_y16, 658-691_y17 (q≈0, A群) ← 最高信頼度
+  2. 624-657_y20 (q≈0, A群=マイジャグラーV) ← 最高信頼度
+  3. 557-590_y28 (q=0.017, AT群) ← delta最大+5%
+  4. 591-623_y25 (q=0.021, AT群) ← delta+4%
+- 624-657_y21(AT混合)はstableではない: 避けること
+- 曜日軸(weekday)ではstable rowsがゼロ。DD軸(X_DDS)のみ有意なシグナルあり
+
+---
+id: mitoya-at-group-xdds-persistence-over-lift
+trigger: "みとや大森町店でX_DDS日にA群/AT群どちらを優先するかを判断するとき"
+confidence: 0.75
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# X_DDS日のリフト(+2.27%)はA群が大きいが、AT群が絶対payout高く(101.38%)かつ持続性有意(rho=0.472)。「リフト最大=優先」は誤り
+
+## 背景
+eda/mitoya_section_category_eda.py の Branch B (A群/AT群 × X_DDS 2×2 + split-half Spearman)結果。
+
+2×2 summary (machine_days加重):
+| category | non_X_DDS | X_DDS   | lift   | hit_rate_104(X_DDS) | n_machine_days |
+|----------|-----------|---------|--------|---------------------|----------------|
+| AT群      | 99.60%    | 101.38% | +1.77% | 34.7%               | 17,184         |
+| A群       | 96.76%    | 99.03%  | +2.27% | 28.3%               | 10,264         |
+
+split-half Spearman (X_DDS日, machine_name単位):
+| category | rho   | p値   | n_machines | 判定       |
+|----------|-------|-------|------------|------------|
+| AT群      | 0.472 | 0.002 | 39         | ✅ 持続性有意 |
+| A群       | 0.280 | 0.354 | 13         | ❌ 非有意    |
+
+スクリプトの自動結論「A群を優先」は誤り。理由:
+1. A群のX_DDS絶対payout=99.03%は100%未満（期待値マイナス）
+2. A群の持続性rho=0.280はn=13と少なく統計的に非有意(p=0.354)
+3. AT群は絶対payout101.38%かつ持続性有意
+
+## アクション
+- 「リフト(差分)の大きさだけ」でカテゴリ優先度を決定するロジックは採用しないこと
+- 優先順位の判定基準: 「絶対payout水準 ≥ 100%」AND「持続性rho p値 < 0.05」AND「n_machines十分」の3つを確認
+- X_DDS日のみとやではAT群を機種平均として優先(101.38%, rho=0.472 p=0.002)
+- A群のX_DDS payout=99.03%は平均期待値マイナスだが、マイジャグラーV等の個別機種は上回る可能性
+  → Branch A のsection-level stable判定(658-691_y17=マイジャグラーV stableなど)と組み合わせ
+
+---
+id: mitoya-hallwide-low-ceiling-near-zero-hit104
+trigger: "みとやホール全体の設定水準を評価するとき、またはhit_rate_104を蒲田7と比較するとき"
+confidence: 0.85
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# みとやのホール全体median payoutは月次99.3〜100.7%で推移し、hit_rate_104はほぼ全月0%。蒲田7とは根本的に異なる低天井ホール
+
+## 背景
+eda/mitoya_section_category_eda.py の Branch C (daily_hall_summary × monthly集計 + レジーム変化検定)。
+
+月次推移(2025-01〜2026-06, n=18ヶ月):
+- median_payout: 99.26%〜100.68% の範囲で推移
+- hit_rate_104: 2025-07(9.7%), 2025-08(3.2%), 2025-09(3.3%) のみ有値、他は全て0%
+- hit_rate_100 (ホール全体が100%超の日): 33〜64%程度で毎月存在
+- 直近3ヶ月(2026-04〜06) median=99.84%, hit_rate_104=0.000
+
+レジーム変化検定 (split 2025-07-01):
+- 前半 median=99.61%, hit_rate_104=0.6%
+- 後半 median=99.93%, hit_rate_104=1.5%
+- Mann-Whitney p=0.0581 → 有意なシフトなし(正常: 均質な母集団)
+
+## アクション
+- みとやはホール全体が104%を超える日がほぼ存在しない低天井ホール
+  蒲田7のようなホール全体好調日の恩恵を期待する戦略は機能しない
+- 分析の焦点はホール全体ではなく「セクション/機種レベルの差異」に絞ること
+  Branch A のsection-level stable判定が本質的価値を持つ
+- hit_rate_104 ≈ 0%はデータ異常ではなく構造的なホール特性
+- 全期間split-halfは「均質な母集団」と確認できるため、
+  Branch A/B/X_DDS分析の split-half 結果は有効な検証
+
+---
+id: mitoya-dd-axis-dominates-weekday-axis-confirmed
+trigger: "みとやのEDAで軸(axis)を選択するとき"
+confidence: 0.88
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# みとやのEDAでは曜日(weekday)軸はstable rowsゼロ。DD軸(X_DDS: 7のつく日)のみ有意なシグナルあり。曜日軸の採用は不適切
+
+## 背景
+eda/mitoya_section_category_eda.py Branch A の実行結果で確認。
+
+曜日軸(weekday)での結果: stable sections → 0件（全てq値が高く非有意）
+X_DDS軸(is_xdds=1)での結果: stable sections → 5件（q≈0〜0.021）
+
+これは既存instinct「みとやでは曜日要素よりDD要素(7のつく日)の影響が強い」を
+EDAで直接検証し支持した結果。
+
+## アクション
+- みとやのsection/機種軸EDAでは weekday を主軸に採用しない
+- X_DDS = {4, 7, 14, 17, 24, 27} を主軸とすること
+- DD group分類(7系/4系/1系/月末/その他)を副軸として使用する場合は
+  7系={7,17,27}, 4系={4,14,24}, 1系={1,11,21}, 月末={30,31}, その他 で分類
+- weekday分析で「土曜stable」が出た場合は、X_DDS日と土曜の交絡を疑うこと
+  (7のつく日が土曜に重なるケースがある)

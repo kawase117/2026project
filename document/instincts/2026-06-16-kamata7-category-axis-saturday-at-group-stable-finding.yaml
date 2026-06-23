@@ -1,0 +1,53 @@
+---
+id: kamata7-category-axis-saturday-at-group-stable-finding
+trigger: "kamata7(または同様のホール)で曜日別法則(Sat/Thu等)をA群/AT群などの機種カテゴリ別に再検証するとき"
+confidence: 0.7
+domain: project-status
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# AT群×土曜は両split-halfで安定した正の効果(+1.71pt)。A群のSat/Thuは前半データで非有意でレジーム混入の疑いあり
+
+## 背景
+2026-06-16、kamata7のmachine_category軸EDA(tmp/kamata_machine_category_axis_eda_deepdive/)で、
+machine-category-a-at-weekday-effect-hypothesis.yaml の仮説(A群/AT群の土曜・木曜効果の切り分け)を
+Branch E/Fで検証した。
+
+突合率: ユニークmachine_nameの96.6%がmaster classificationと一致（行ベース99.0%）。
+unclassifiedは4機種・行数1.0%で別集計し結論から除外済み。
+
+結果:
+- AT群 / Sat: delta +1.7111, q=0.0001。full_sig=1, first_half_sig=1, second_half_sig=1,
+  same_direction=1, stable=1。両期間で一貫して正、最も信頼できる結果。
+- A群 / Sat: delta +1.3349, q=0。full_sig=1だが first_half_sig=0 (p=0.0651, delta+0.6055)、
+  second_half_sig=1 (delta+2.0644)。後半データだけで強く効いており stable=0。
+- A群 / Thu: delta -0.8930, q=0.0015。full_sig=1だが first_half_sig=0 (p=0.0588, delta-0.9155)、
+  second_half_sig=1 (delta-0.8464)。同様に後半依存で stable=0。
+- AT群 / Thu: delta -0.6822, q=0.1597。全期間で非有意。
+
+結論: 「土曜が良い」は A群固有ではなくAT群を含むホール全体に広がる現象で、AT群側が
+最も安定して検出できる。「木曜が悪い」は現状A群側でしか確認できず、しかも前半/後半で
+有意性が分かれる時期依存パターンのため、未確定。A群側のSat/Thuの「後半だけ強い」パターンは、
+先行instinct(kamata-seat-regime-change-cross-machine-name-followup, split_half_cutoff=2025-12-23)
+で見つかった2182/2180の機種入れ替え(レジーム変化)の混入が疑われる。
+
+## アクション
+1. AT群×土曜の+1.71pt(excess_pct)、両half安定という結果は、ML特徴量
+   (day_of_week=Sat × machine_category=AT の交互作用項)として優先的に検討してよい。
+2. A群のSat/Thu効果を「確定した法則」として扱わない。特に「全期間では有意だが
+   first_halfでは非有意」というパターンが出た場合、レジーム変化(機種入れ替え等)が
+   混入していないか、該当split_half_cutoff前後で台番号/機種名の入れ替えを確認すること。
+3. A群側のSat/Thu再検証を行う場合は、AT群についても同じ期間分割で再検定し、
+   「不安定さがデータ不足由来」か「期間特有のレジーム由来」かを切り分ける。
+
+## 例
+```python
+# AT群×土曜の交互作用特徴量イメージ
+df['feat_at_saturday'] = (
+    (df['machine_category'] == 'AT') & (df['weekday_label'] == 'Sat')
+).astype(int)
+# branch_eのcell_mean_excess_pct分布(AT/Sat: mean+2.18, median+2.05)を
+# 事前分布・正規化の参考値として利用できる
+```
+---

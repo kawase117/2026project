@@ -1,0 +1,100 @@
+---
+id: kamata1-kakuban-rank-extraction
+trigger: "蒲田1のフロアCSVから特定の角番位置（角からN番目）の台番号を抽出するとき"
+confidence: 0.95
+domain: floor-layout-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1 角番N番目の台番号はCSVのrank_from_min/rank_from_maxで抽出できる
+
+## 背景
+蒲田1のフロアレイアウトは `Heatmap/2F_floor_coordinates_kamata1.csv` に記録されており、
+各台に `rank_from_min`（セクション先頭から何番目）と `rank_from_max`（セクション末尾から何番目）が付与されている。
+「角番N」＝ rank_from_min==N OR rank_from_max==N で抽出できる。
+
+## アクション
+```python
+rank_n = set()
+with open('Heatmap/2F_floor_coordinates_kamata1.csv', encoding='utf-8') as f:
+    reader = csv.DictReader(f)
+    for row in reader:
+        mn = int(row['machine_number'])
+        if int(row['rank_from_min']) == N or int(row['rank_from_max']) == N:
+            rank_n.add(mn)
+```
+セクション台数が 2N-1 以下の場合、同一台が rank_from_min==N かつ rank_from_max==N になる（中央台）。
+12台セクション（2191-2202）では 2196が rank_from_min=6・rank_from_max=7、2197が逆になるため、
+角番6と角番7の両リストに重複して入る点に注意。
+
+## 例
+- 角番6: 43台、角番7: 49台（2026/06/16時点のDBで稼働確認済み）
+- 重複台: 2196・2197（セクション2191-2202の中間付近）
+
+---
+id: kamata1-20260616-kakuban7-jag-hana-spike
+trigger: "蒲田1の特定日に角番別×機種グループ分析を行うとき"
+confidence: 0.88
+domain: hall-strategy-detection
+source: empirical-result
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 2026/06/16 蒲田1は角番7ジャグ・ハナハナへの集中投資パターン
+
+## 背景
+2026/06/16の蒲田1データを分析した結果、角番6と角番7で明確な差が観測された。
+ユーザーが「角番6と7の日」と仮定していたが、実際にはジャグラー・ハナハナへの投入に絞ると
+角番7の優位性が顕著だった。
+
+## アクション
+角番N分析では以下の3グループを必ず比較する：
+1. 全台
+2. ジャグラー・ハナハナのみ（machine_nameに'ジャグラー'または'ハナハナ'を含む）
+3. ジャグラー・ハナハナを除く
+
+機械割の算出式: (games*3 + diff_coins) / (games*3) * 100
+
+## 例
+| グループ              | 台数 | 機械割    | ホール比    |
+|---------------------|------|---------|-----------|
+| ホール全体            | 336  | 103.84% | —         |
+| 角番6 全台           | 41   | 103.90% | +0.06pp   |
+| 角番6 ジャグ・ハナハナ | 13   | 100.66% | -3.18pp   |
+| 角番7 全台           | 46   | 107.80% | +3.96pp   |
+| 角番7 ジャグ・ハナハナ | 13   | 110.46% | +6.63pp   |
+
+角番7ジャグ・ハナハナ13台中8台がプラス差枚、勝率69.2%。
+
+---
+id: kamata1-jag-hana-name-filter
+trigger: "蒲田1DBでジャグラー・ハナハナ台を機種名フィルタするとき"
+confidence: 0.97
+domain: data-processing
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ジャグラー・ハナハナは machine_name の部分一致で判定できる
+
+## 背景
+蒲田1DBには多数の機種が混在しており、ジャグラー系・ハナハナ系を分離して分析する場面が多い。
+機種名に「ジャグラー」または「ハナハナ」を含む文字列で確実に捕捉できる。
+
+## アクション
+```python
+def is_jag_hana(name):
+    return 'ジャグラー' in name or 'ハナハナ' in name
+```
+
+2026/06/16時点で該当する機種（稼働確認済み）:
+- ジャグラー系: ウルトラミラクルジャグラー、ゴーゴージャグラー3、ジャグラーガールズ、
+  ネオアイムジャグラーEX、ハッピージャグラーVIII、ファンキージャグラー2、マイジャグラーV、ミスタージャグラー
+- ハナハナ系: キングハナハナ-30、スマート沖スロ ドラゴンハナハナ～閃光～
+
+## 例
+角番7のジャグ・ハナハナ台番号（2026/06/16稼働）:
+2155, 2157, 2196, 2197, 2229, 2242, 2249, 2288, 2295, 2308, 2310, 2323, 2324
+
+---

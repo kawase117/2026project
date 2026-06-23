@@ -1,0 +1,153 @@
+---
+id: 3frn-contradiction-resolved-kakuban-only
+trigger: "3F_R_Nセグメントの末尾or角番の有効性を議論するとき"
+confidence: 0.95
+domain: segment-structure
+source: session-verification
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 3F_R_N衝突解消：「二重ルール」は角番ルール単独だった
+
+## 背景
+lr-governing-rule Instinct が 3F_R 全体で raw_digit p=0.015, kakuban p=0.00002 を報告し「末尾+角番の二重ルール」と結論していた。一方 segment-baseline は 3F_R_N 単独で p=0.410 と報告。この矛盾を解消するために角番×末尾の交差表を含む再検証を実施した。
+
+## アクション
+- 3F_R_N は**角番のみ有効**(p=0.001, stat=19.5)。中間台を選ぶ
+- 3F_R_N の末尾は完全無効(p=0.4)。末尾で台を選んではいけない
+- lr-governing-rule の raw_digit p=0.015 は再検証で再現されなかった(p=0.5)。セクション除外条件の差異によるアーティファクトだった可能性が高い
+- 「二重ルール」という用語は誤り。3F_R では角番ルール単独が正しい
+- bootstrap power=0.503（3F_L_N効果量仮定）で検出力は境界。「シグナルが存在しない」とは断定しないが、実用上は末尾を無視してよい
+
+## 例
+- 3F_R_A 角番KW: p≈0 (stat=99.1) → A機でも角番効果は圧倒的
+- 3F_R_N 角番KW: p=0.001 (stat=19.5) → N機でも角番は有意
+- 3F_R_all 末尾KW: p=0.5 (stat=8.5) → A+N混合でも末尾は非有意
+- 3F_R_N 角番×末尾交差表: 角1は全末尾でマイナス(d0=-448, d4=-429)、中間台d5=+286が最強
+
+---
+id: event-day-definition-fix-impact-quantified
+trigger: "蒲田7のイベント日効果量を参照するとき、または旧Instinctの数値を使おうとするとき"
+confidence: 0.95
+domain: event-day-analysis
+source: session-verification
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# イベント日定義修正の影響定量化：土曜逆効果拡大・月曜符号反転
+
+## 背景
+2026-06-19以前のEDAはDD21欠落・月末ハードコード(30,31)・強ゾロ目未統合の不完全なis_x_dayで計算されていた。修正後の定義で全イベント日分析を再実行し、旧定義との効果量差を定量化した。
+
+## アクション
+- 旧定義の数値（event-day-position等のInstinct）は**無効**。新定義の数値を使うこと
+- **土曜イベントDDの逆効果が拡大**: delta_diff -90.7(旧) → -152.9(新)。土曜のイベント日は明確に避けるべき
+- **月曜が符号反転**: delta_diff -25.8(旧) → +21.8(新)。DD21の追加が影響。月曜イベントは「弱い正効果」に格上げ
+- **木曜は依然最強だが過大評価されていた**: delta_diff +195.3(旧) → +145.3(新)
+- **金曜が大幅上昇**: delta_diff +94.1(旧) → +138.0(新)。DD21追加の恩恵
+- 新定義: 98イベント日/342日中 (28.7%)。旧84日から+14日増加
+
+## 例
+- 差分内訳: DD21追加 11日、強ゾロ目追加 9日、動的月末 1日(2/28)、旧ハードコード誤検出修正 7日
+- 旧ハードコード誤検出: 31日まである月のDD30を月末扱い→修正で除外。影響日: 20250730, 20250830, 20251030, 20251230, 20260130, 20260330, 20260530
+- セグメント別イベント効果: 3F_R_A +122.4(最強), 3F_L_A +98.1, 2F_R_N +76.0, 3F_R_N +64.4, 3F_L_N +5.8, 2F_L_N +1.0
+
+---
+id: triple-filter-dd-kakuban-digit-not-viable
+trigger: "DD×角番×末尾の三重フィルタを候補選定に使おうとするとき"
+confidence: 0.90
+domain: filtering-strategy
+source: session-verification
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 三重フィルタ（DD×角番×末尾）は安定候補ゼロで実用不可
+
+## 背景
+2F_L_NでDD×角番×末尾の三重フィルタ候補を探索した。Top候補はavg_diff +1907(DD20×角N-1×d1)など高い数値を示すが、安定性検証（CI + split-half）を通過する候補はゼロだった。
+
+## アクション
+- 三重フィルタは**使わない**。多重比較問題（1,550組み合わせ）による偶然の産物
+- DD×角番の**二重フィルタ**で運用する（2F_L: DD27×角N-1=+790、2F_R: DD30×角N-1=+880）
+- 安定性検証の基準: CIが0を含まない AND split-halfの前半/後半両方でTop10に入る
+- Top5候補すべてstable=0: CIは0を含まないがsplit-halfで前半/後半のTop10に残らない
+
+## 例
+- DD20×角N-1×d1: n=30, avg_diff=+1907, CI=[633, 3380], split-half Top10入り=0/0 → stable=0
+- DD31×角2×d3: n=17, avg_diff=+1759, CI=[329, 3318], split-half=0/0 → stable=0
+- 二重フィルタ（DD×角番）なら2F_L DD27×角N-1=+790が安定して最強
+
+---
+id: 2f-dd-kakuban-cross-effect-confirmed
+trigger: "2FのDD×角番の交互作用を参照するとき"
+confidence: 0.85
+domain: dd-kakuban-interaction
+source: session-verification
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 2FでもDD×角番の交互作用が存在（3F同様）
+
+## 背景
+3Fでは DD×角番の交互作用が検証済みだったが、2Fは未検証だった。2F_L/2F_Rそれぞれで DD×角番のクロス集計を実施した。
+
+## アクション
+- 2F_L: DD27×角N-1=+790(最強)、DD10×角2=+686、DD20×角N-1=+589、DD12×角1=+580
+- 2F_R: DD30×角N-1=+880(最強)、DD11×角N-1=+838、DD22×角2=+777
+- 2F全体: DD10×角2=+554、DD17×角2=+544、DD30×中間=+499
+- DD30は2F_Rで特に強い（角N-1=+880）。3Fの「全面投入パターン」と整合
+- DD11は2F_Rで角N-1=+838。ゾロ目DD効果と角番効果の複合
+
+## 例
+- 2F_Lの月末期(DD27-31)は角N-1が圧倒的: DD27×角N-1=+790、DD30×角N-1=+367
+- 2F_Rのイベント日(DD11,22)は角2/角N-1が強い: DD11×角N-1=+838、DD22×角2=+777
+
+---
+id: weekday-kakuban-interaction-deepened
+trigger: "曜日別の角番効果を参照するとき、またはフェイク検出結果を使うとき"
+confidence: 0.85
+domain: weekday-analysis
+source: session-verification
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 曜日×角番の再検証：角1は全曜日最弱、フェイク検出で木火が突出
+
+## 背景
+曜日パターンのEDA再検証（Prompt 3）で、曜日×セグメント×角番×末尾の多角的分析を実施。曜日間KWは有意(p≈0)だがε²≈0で効果量極小。角番との交互作用のほうが実用的に重要。
+
+## アクション
+- **角1は全曜日で最弱**: 月+36, 火+87, 水+19, 木+6, 金+24, 土+60, 日-25。特に日曜角1は全角番中最低(-25)
+- **角Nも弱い**: 火-20, 木-9, 金**-117**。金曜の角Nは顕著な弱さ
+- **中間台が全曜日でトップ**: 角番の普遍的効果を再確認
+- **曜日×末尾KW**: 木曜のみ有意(p=0.01)。木曜d7=+288が突出
+- **フェイク検出**: イベント日×角番で木曜×角2(delta_diff=+306)と火曜×角N(+297)が異常に大きい。「イベント日効果」ではなく特定曜日×角番の構造的パターンの可能性
+
+## 例
+- 曜日×角番Top組み合わせ: 水×角N-1=+251, 木×中間=+243, 火×中間=+240, 土×中間=+238
+- フェイク検出Top3: 木×角2(+306), 火×角N(+297), 火×角1(+256) — これらはイベント日に集中するが角番位置効果と分離できていない
+
+---
+id: lr-governing-rule-digit-p015-was-artifact
+trigger: "lr-governing-ruleのraw_digit p=0.015を根拠として使おうとするとき"
+confidence: 0.90
+domain: methodology-warning
+source: session-verification
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# lr-governing-ruleのraw_digit p=0.015は再現されないアーティファクト
+
+## 背景
+lr-governing-rule Instinctは3F_R全体（A+N混合）でraw_digit p=0.015を報告し、末尾効果の存在を示唆していた。しかし同一のA/N分割・0707除外・鉄台除外条件で再検証したところ、3F_R全体の末尾別KWはp=0.5 (stat=8.5)で完全に非有意だった。
+
+## アクション
+- lr-governing-ruleの「raw_digit p=0.015」は引用しない
+- 同Instinctの「kakuban p=0.00002」は再現された（3F_R_all p≈0, stat=80.6）ので引用可
+- p=0.015と0.5の乖離原因はセクション除外条件・build_floor_side_mapの差異が最有力。追究の価値はない
+- **再現されないp値はアーティファクトとして扱う**。角番効果のみが構造的シグナル
+
+## 例
+- 再検証: 3F_R_all_digit KW stat=8.5, p=0.5, ε²=0 → 末尾効果なし
+- 対照: 3F_R_all kakuban KW stat=80.6, p≈0 → 角番効果は圧倒的
+- 個別: 3F_R_A digit p=0.2, 3F_R_N digit p=0.4 → A機・N機どちらでも末尾は非有意

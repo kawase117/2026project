@@ -1,0 +1,84 @@
+---
+id: v10-dow-kakuban-boost-monotonic-failure
+trigger: "残差分析で有意な交互作用をスコアリングファクターに変換しようとするとき"
+confidence: 0.95
+domain: ml-feature-engineering
+source: empirical-backtest
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 統計的有意≠予測有効：曜日×角番×セグメントブーストは全スケールでv6aに劣後
+
+## 背景
+残差法で3F_L_Aの曜日×角番交互作用が高度に有意（木q=1e-13、火q=2.6e-12）であることを確認。
+これをc1に乗数ブーストとして実装（v10a: scale=1.0, v10d: scale=0.25, v10e: scale=0.50）。
+結果: ブースト倍率を小さくするほどv6aに近づくが決して超えない単調関係。
+- v6a: lift@50=1.2495
+- v10d (scale=0.25): lift@50=1.2462
+- v10e (scale=0.50): lift@50=1.2450
+- v10a (scale=1.00): lift@50=1.2428
+イベント日・非イベント日の両方で同傾向。scale→0でv6aに収束するだけ。
+
+## アクション
+- 残差分析でp<0.001でも、バックテストのlift改善に繋がるとは限らない
+- 「有意な効果」と「予測に使えるほど大きな効果」は本質的に異なる概念
+- c1への乗数ブーストは、対象セグメント内では改善しても、クロスセグメント順位を歪ませてTop50全体のliftを下げる
+- 曜日×角番×セグメントの知見は、スコアリングファクターではなく定性的判断材料として使うのが妥当
+
+## 例
+3F_L_A セグメント内avg_diff: v10c=196.9 > v6a（改善）
+Top50全体lift@50: v10c=1.226 < v6a=1.250（悪化）
+→ セグメント内改善がTop50全体では逆効果
+
+---
+id: cross-segment-scale-distortion-recurring-pattern
+trigger: "セグメント固有のブースト・ウェイト・動的調整をcompositeに適用しようとするとき"
+confidence: 0.93
+domain: ml-architecture
+source: empirical-backtest
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# クロスセグメントスケール歪みは繰り返し発生する構造的問題
+
+## 背景
+v8（動的セグメントウェイト）、v10a-c（曜日×角番ブースト）の両方で同じ失敗パターンが発生。
+セグメント内では改善するが、セグメント間の相対スコアバランスが崩れ、Top50全体では悪化する。
+v9b（blend α=0.5）はv6aのグローバルスコアと混合することでこの問題を部分的に回避。
+
+## アクション
+- compositeの計算をセグメント固有に変更する施策は、必ずクロスセグメントスケール検証を含めること
+- 安全策: (1) blendでグローバルスコアと混合、(2) percentileでセグメント内順位に変換後に統合、(3) Top50選抜後のリランキングに限定
+- c1への直接乗数適用は避ける — compositeスケールを直接歪ませる最も危険な方法
+
+## 例
+v8: セグメント別動的ウェイト → lift@50=1.215（v6a=1.250より大幅悪化）
+v10a: c1曜日ブースト scale=1.0 → lift@50=1.243（同様に悪化）
+v10d: c1曜日ブースト scale=0.25 → lift@50=1.246（縮小しても超えない）
+
+---
+id: boost-scale-monotonic-convergence-diagnostic
+trigger: "ハイパーパラメータの強度を変えてバックテストする際の結果解釈"
+confidence: 0.90
+domain: ml-evaluation
+source: empirical-backtest
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# スケール→0でベースラインに単調収束する場合、その施策自体が無効
+
+## 背景
+v10d(0.25), v10e(0.50), v10a(1.00)のlift@50はscaleに対して単調減少。
+scale=0はv6aそのものであり、ブースト追加は常にマイナス方向。
+これは「最適スケールが0より大きいどこかにある」のではなく「この施策自体がliftを下げる構造」を意味する。
+
+## アクション
+- scale sweepで単調収束パターンが出た場合、さらに細かいscaleを試す必要はない
+- 施策の方向性自体を変更するべき（例: 乗数→加算、composite→リランキング、ファクター→フィルタ）
+- 逆に、中間スケールにピークがある場合は最適値探索の価値がある
+
+## 例
+lift@50: v6a=1.2495 > v10d(0.25)=1.2462 > v10e(0.50)=1.2450 > v10a(1.0)=1.2428
+→ 完全な単調減少 → この施策は打ち切り
+
+---

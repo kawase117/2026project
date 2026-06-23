@@ -1,0 +1,118 @@
+---
+id: durability-refutation-results
+trigger: "蒲田7の理論書の主張を引用・推薦・ML特徴量化するとき"
+confidence: 0.95
+domain: kamata7-theory
+source: session-eda-verification
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田7理論 耐久性検証結果（6主張の堅牢性判定）
+
+## 背景
+kamata7_theory.md の6つの「強い主張」に対して、3つの反証テスト（split-half期間分割、レジーム分割20251222、低稼働日除外）を実施した。台固有性定量化（top_machine_share）も併せて実施。
+
+## アクション
+以下の判定に基づき、主張の扱いを変えること:
+
+**堅牢（3テスト一致）:**
+- C2: 3F_L_N d8/d9最強 — ただしtop2_machine_share=51%で少数台依存あり。方向は安定だが特定台への注記が必要
+- C3: 角番中間台優位 — top1寄与率0.7%で完全な構造シグナル。理論の最強の柱
+- C4: AT群×土曜 +1.71pt — top1寄与率2.2%で構造シグナル。後半で+3.6ptに強化
+- C6: 台末尾ゾロ目 全体+49 — 全テスト一致、寄与率7.3%で低い
+
+**脆弱（格下げ対象）:**
+- C1: 2F_L_N d6最強 (+365) — 3テストすべてで不一致。2F全域がstability=0%で機種入替の影響大
+- C5: DD11ゾロ目 +210 — 前半+625.6→後半-173.7で符号反転。20251111（+2626）の1日が支配的
+
+## 例
+理論書更新時: C1を「強い主張」→「条件付き・不安定」に格下げ、C5を「少数日依存+レジーム変化」として注記
+
+---
+id: dd11-zorome-single-day-dominance
+trigger: "DD11ゾロ目効果を引用・推薦するとき"
+confidence: 0.92
+domain: kamata7-theory
+source: session-eda-deep-dive
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# DD11ゾロ目+210は20251111の1日が支配、2026年は逆転傾向
+
+## 背景
+DD11ゾロ目の+210効果を日別に分解した結果、20251111（11月11日=日ゾロ目+台末尾ゾロ目の三重ゾロ目）が+2626で全体を支配していた。2026年は6回中5回がマイナス（最悪は20260611の-801）。「少数台依存」ではなく「少数日依存+トレンド変化」が正確な分類。
+
+## アクション
+- DD11ゾロ目効果を台選びフローや推薦に使わないこと
+- 11/11（三重ゾロ目）は別枠の特殊日として扱う可能性はあるが、n=1なので検証不能
+- DD11の全体平均は依然ゾロ目>非ゾロ目（+224）だが、これは2025年後半の残響であり2026年では効いていない
+
+## 例
+DD11ゾロ目日別: 20251111=+2626, 20251011=+858, 20260211=+520 vs 20260611=-801, 20250811=-500, 20260111=-278
+
+---
+id: 2f-stability-zero-regime-vulnerability
+trigger: "2Fエリアの末尾法則・位置法則を引用するとき"
+confidence: 0.90
+domain: kamata7-theory
+source: session-eda-regime-ledger
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 2F全域はstability_rate=0% — 機種入替で法則が崩壊しやすい構造
+
+## 背景
+機種入替台帳（kamata7_regime_change_ledger）の結果、2Fの全セクション（2001-2351）はstability_rate=0%（全台が少なくとも1回機種入替）。一方、3F A機エリア（3001-3362の大半）はstability_rate=100%で全期間機種固定。
+
+## アクション
+- 2Fの法則（特に末尾効果）は機種入替レジームに対して本質的に脆い前提で扱うこと
+- 2F_L_N d6最強が「脆弱」判定になったのはこの構造が原因
+- 3F A機の法則が安定する構造的理由（機種固定）を理論書に明記すべき
+- 今後2Fで新たな法則を主張する際は、レジーム分割テストを必須にすること
+
+## 例
+Section stability: 3001-3016=100%, 3117-3130=100%, ..., 2001-2010=0%, 2011-2022=0%, 2F全滅
+
+---
+id: kakuban-strongest-structural-signal
+trigger: "蒲田7で最も信頼できる変数を選択するとき"
+confidence: 0.97
+domain: kamata7-theory
+source: session-eda-verification
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 角番中間台優位はtop1寄与率0.7%の完全構造シグナル
+
+## 背景
+台固有性定量化で角番中間台優位（C3）のtop1_machine_share=0.7%, top2_machine_share=1.4%であり、6法則中圧倒的に低い。特定台への依存がゼロに近い。かつ3テストすべてで堅牢。前半+130.1、後半+93.1で効果量は縮小しているが方向は一貫。
+
+## アクション
+- 角番は蒲田7で最も信頼できる変数として第一優先で使い続けること
+- ただし「中間台」は角3〜角N-2の広いバケツなので、実用上の細分化が次の課題
+- 細分化の方向: セグメント別の角番ピーク位置特定、DD×角番交互作用の精密化、島サイズ正規化
+
+## 例
+p_before=0, p_after_top1=0, p_after_top2=0 — 上位台を何台除いても構造が消えない
+
+---
+id: regime-split-date-20251222-confirmed
+trigger: "蒲田7のsplit-half分析で分割点を選ぶとき"
+confidence: 0.88
+domain: kamata7-theory
+source: session-eda-regime-ledger
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 推奨レジーム分割日20251222が台帳から客観的に確認された
+
+## 背景
+機種入替台帳から、20251222は63台入替・12セクション・前後166/176日で最もバランスの良い分割点と確認された。kamata7_theory.mdで以前から言及されていた日付が、データ駆動でも支持された。ただし最大の入替日は20260105（264台）であり、20251222は入替規模としては中程度。
+
+## アクション
+- split-half分析のレジーム分割点として20251222を標準採用すること
+- 20260105（264台入替）は期間が前寄り（180/162日）でバランスはやや劣るが、入替規模は最大
+- 複数分割点を使ったrobustness checkも将来検討の余地あり
+
+## 例
+推奨分割日選定ロジック: 入替台数の多さと前後日数バランスの積でスコアリング → 20251222が最良

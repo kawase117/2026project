@@ -1,0 +1,70 @@
+---
+id: kamata1-2fa-kakuban-corner-structurally-weak
+trigger: "蒲田1 2F ジャグラー/ハナハナ系（Aセグメント）で台を選ぶとき（全日・通常日）"
+confidence: 0.88
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1 2F_A kakuban=1（コーナー）は構造的に最弱、中間帯はアウトライア駆動で実質フラット
+
+## 背景
+kamata_kakuban_section_residual_eda/kamata1_2F_A_kakuban_residual_all.csv 読解（2026-06-18実施）。
+セクション平均を除いた残差（residual = diff_coins - section_mean）でポジション効果を分離。
+
+結果
+  8 sig rows
+  kakuban=1（コーナー端）  q=3e-12, mean=-81, median=-225  --- 圧倒的最弱、median が深くマイナス
+  中間帯（kakuban=8,9,10）  mean はわずかに正だが median は負  --- アウトライア駆動、構造的優位ではない
+
+## 種別別（kamata1_2F_A_species_summary.csv）
+  ジャグラー  p=7.7e-5（高有意）, middle_minus_corner=+26.4（n_corner=32362, n_middle=49786）
+  ハナハナ    p=0.024（有意）,    middle_minus_corner=+52.7（ハナハナで効果が最大）
+  BT機        p=0.52（非有意）--- BT では kakuban 効果なし
+
+## 時系列変化（kamata1_2F_A_temporal_summary.csv）
+  2025  kruskal_p=4e-6（高有意）, middle_minus_corner=+35.6
+  2026  kruskal_p=0.086（限界外）, middle_minus_corner=+19.5
+  中間台優位は 2025 に強く確認、2026 で弱体化傾向あり
+
+## アクション
+通常日に蒲田1 2F ジャグ系を選ぶ場合:
+kakuban=1（コーナー端）は最も避けるべき位置（median=-225, p=3e-12）。
+中間帯（kakuban=8〜10）は統計的には有意な優位を持つが median が負なので過信しないこと。
+ハナハナ機種がある列では中間帯の効果がより大きい（+52.7 vs +26.4）。
+BT機は kakuban 効果が認められないため、他の軸（DD、tail など）で選択する。
+2026 年は 2025 より中間帯優位が弱まっているため、強い台選択根拠がない場合はセクション軸を優先。
+
+---
+id: kamata1-2fn-kakuban-structurally-flat
+trigger: "蒲田1 2F AT/ART系（Nセグメント）で台を選ぶとき"
+confidence: 0.85
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1 2F_N は kakuban 効果が全期間・全時系列で非有意（通常日は位置で差別化できない）
+
+## 背景
+kamata_kakuban_section_residual_eda/kamata1_2F_N_kakuban_residual_all.csv と
+kamata_kakuban_temporal_species_eda/kamata1_2F_N_temporal_summary.csv を読解（2026-06-18実施）。
+
+全期間残差（7 sig rows あり）
+  kakuban=1   q=2.4e-5, mean=-106, median=-450（コーナーは弱い）
+  kakuban=20  mean=-182, median=-650（大型列の奥端も弱い）
+  kakuban=3,2,12  mean わずかに正だが median は全て負（アウトライア駆動）
+
+時系列検定
+  2025  kruskal_p=0.70（非有意）, middle_minus_corner=+25.0
+  2026  kruskal_p=0.34（非有意）, middle_minus_corner=+33.2
+  どの年も非有意。中間台の有利性を示す数値はあるが統計的に支持されない
+
+## アクション
+通常日に蒲田1 2F AT系を選ぶ場合:
+kakuban 位置による絞り込みは統計的根拠が薄い（kakuban=1,20 を避ける程度で十分）。
+イベント日は例外（[[kamata1-2fn-event-section-hotspot]] の通り section で絞る）。
+台選択の主軸は DD 軸・セクション（イベント日）を使うこと。
+
+---

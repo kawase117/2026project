@@ -1,0 +1,129 @@
+---
+id: kakuban-position-stable-kamata7-3fa
+trigger: "蒲田7 3F_A の角番位置効果を ML 特徴量として採用するかどうか判断するとき"
+confidence: 0.93
+domain: ml-feature-design
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田7 3F_A の中間台優位は時系列で安定・強化傾向
+
+## 背景
+kamata_kakuban_temporal_species_eda.py による年別検証結果。
+セクション残差法（section_mean 除去後）で kakuban_bin（corner/middle/deep_end）を比較。
+
+| 年 | middle-corner gap | kruskal_p |
+|---|---:|---|
+| 2025 | +64.6 | <0.001 |
+| 2026 | +80.0 | <0.001 |
+
+gap が縮小せず拡大しており、ML 特徴量として最も信頼できるセグメント。
+
+## アクション
+- `kakuban_bin`（corner=1-4 / middle=5-11 / deep_end=12+）を 蒲田7 3F_A の特徴量として採用する
+- 経年で gap が増加している点は「ホール側の設定戦略が固定化している」証拠と解釈してよい
+- 2027年以降も年別モニタリングを継続し、縮小トレンドが現れたら特徴量の重みを下げる
+
+## 例
+Analysis T 結果（kamata7_3F_A_temporal_summary.csv）:
+- 2025: corner=-28.2, middle=+36.4, deep_end=-34.2 → gap=+64.6
+- 2026: corner=-35.0, middle=+45.0, deep_end=-37.6 → gap=+80.0
+
+---
+id: kakuban-bt-no-position-effect-kamata7-2fa
+trigger: "蒲田7 2F の BT 機（AT 機）を角番位置で選台しようとするとき、または 2F_A に kakuban_bin を特徴量追加しようとするとき"
+confidence: 0.88
+domain: operational-strategy
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田7 2F_A (BT機) には角番位置効果が存在しない
+
+## 背景
+kamata_kakuban_temporal_species_eda.py による機種別検証（Analysis S）。
+kamata7_2F_A は BT機のみで構成される。
+
+| 年 | middle-corner gap | kruskal_p |
+|---|---:|---|
+| 2025 | +9.0 | 0.5（有意でない） |
+| 2026 | -12.7 | 0.4（有意でない） |
+
+機種別でも BT の gap = -1.8（kruskal_p=0.9）で完全に有意差なし。
+
+## アクション
+- 蒲田7 2F の BT 機には「中間台を選ぶ」戦略を適用しない
+- ML 特徴量として `kakuban_bin` を 2F_A セグメントに追加しない
+- 2F_A の次の分析軸は機種名・DD・曜日の単純集計から探索すべき
+
+## 例
+kamata7_2F_A_species_summary.csv:
+  BT: middle_minus_corner=-1.8, kruskal_q=0.9 → 採用しない
+
+---
+id: kamata7-3fn-gap-shrinking-trend
+trigger: "蒲田7 3F_N（AT機）の角番位置効果を ML 特徴量に使うとき・年別モニタリングするとき"
+confidence: 0.82
+domain: ml-feature-design
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田7 3F_N の中間台優位は有意だが 2025→2026 で大幅縮小
+
+## 背景
+Analysis T 年別結果（kamata7_3F_N）:
+
+| 年 | middle-corner gap | kruskal_p |
+|---|---:|---|
+| 2025 | +183.9 | <0.001 |
+| 2026 | +63.0 | 0.1（境界域） |
+
+gap が 183.9 → 63.0 と 66% 縮小。2026年は有意水準 0.1 まで落ちている。
+ホール側が AT 機の設定配置ルールを変えた可能性がある。
+
+## アクション
+- 現時点では kakuban_bin 特徴量を 3F_N にも採用するが、信頼度は 3F_A より低く設定
+- 2026年下半期のデータが追加されたら再検証し、gap がさらに縮小していれば特徴量から除外
+- ウォークフォワードで 2025 学習→2026 予測の精度低下が出た場合は特徴量を疑うこと
+
+## 例
+監視基準:
+  2025: gap=183.9（安全域）
+  2026: gap=63.0（警戒域）
+  次回更新後に gap < 30 なら特徴量除外を検討
+
+---
+id: segment-residual-eda-2f-bt-flag-fix
+trigger: "kamata_kakuban_section_residual_eda.py を修正・拡張するとき、または 2F_A セグメントのデータが 0 行になるとき"
+confidence: 0.95
+domain: known-issue
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 2F_A の machine_type_segment に bt_flag を含める（2026-06-17 修正済み）
+
+## 背景
+元のコードは jug_flag | hana_flag のみで A タイプを判定していたため、
+蒲田7 2F の BT 機が全て N に分類されて `kamata7_2F_A: rows=0` になっていた。
+
+修正箇所（314行目付近）:
+```python
+is_a = (merged["jug_flag"] == 1) | (merged["hana_flag"] == 1)
+if spec.floor == "2F":
+    is_a = is_a | (merged["bt_flag"] == 1)
+merged["machine_type_segment"] = np.where(is_a, "A", "N")
+```
+修正後: kamata7_2F_A = 11,898 eligible rows に回復。
+
+## アクション
+- `kamata_corner_mirror_analysis.py`（363行目）にも同じバグが残っている。未修正。
+- インポートしている 4 スクリプト（kamata7_x_kakuban_eda, kamata7_kakuban_rl_eda,
+  kamata7_kakuban_dd_cross_eda, kamata7_kakuban_colsize_eda）は 2F_A 分の出力が変わるため、
+  過去結果の再実行が必要
+
+## 例
+修正前: kamata7_2F_A eligible_rows=0
+修正後: kamata7_2F_A eligible_rows=11,898

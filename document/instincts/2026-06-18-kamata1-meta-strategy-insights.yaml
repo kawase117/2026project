@@ -1,0 +1,136 @@
+---
+id: kamata1-identity-a-specialized-hall
+trigger: "蒲田1 2F でどの分析軸を使うかを判断するとき、または蒲田1と蒲田7の戦略を比較するとき"
+confidence: 0.92
+domain: analysis-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1 は「A系特化ホール」— N系は DD軸が完全に無効で蒲田7 と根本的に異なる
+
+## 背景
+2026-06-18 の全軸分析（DD軸・tail軸・カクバン・X角番・orientation×size）を通じて確定。
+
+蒲田1 の軸別有効性（A系 vs N系）
+  DD軸:
+    A系: MWU p=0.0000（高有意）、有意DD=30,1,7,9
+    N系: MWU p=0.136（完全非有意）、全31日 q>0.05
+  tail軸:
+    A系: KW p=0.21（無効）
+    N系: KW p=0.18（無効）
+  カクバン: 両系統で有効（全島タイプ共通）
+  X角番:
+    A系: x_kk=8 のみ（軽微）
+    N系: x_kk=1,2,6 回避（重要）
+  イベント日×セクション: 両系統で有効
+
+## アクション
+蒲田1 N系の台選択に DD 値を使わない（全DD q>0.05）。
+蒲田1 A系は DD が主軸。ゾロ目 mm=dd（1/1・7/7・5/5）は全優先。
+蒲田7 で有効だった軸がそのまま蒲田1 に転移するとは限らない—必ず個別検証する。
+
+---
+id: kamata1-island-dd-mapping
+trigger: "蒲田1 2F で訪問当日の DD と島タイプを組み合わせて優先島を決めるとき"
+confidence: 0.90
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1 島タイプ別「最強DD」マッピング — DD によって狙うべき島タイプが変わる
+
+## 背景
+kamata1_orisize_dd_tail_eda（2026-06-18実施）。orientation×size 別 BH補正MWU DD分析。
+
+島タイプ × 最強DD（A系・median が正になる組み合わせ）
+  horizontal_medium × DD=7 : median=+200, q=0.003 ← 全組み合わせ中最強
+  diagonal_large    × DD=30: median=+100, q~0
+  diagonal_medium   × DD=1 : median=+100, q~0
+  diagonal_medium   × DD=30: median=+100, q=0.044
+
+避けるべき組み合わせ
+  diagonal_medium × A系 × DD=11: median=-300（全体A系では非有意だが中型斜めでは有意弱）
+  diagonal_medium × N系 × DD=3 : median=-800（全分析中最悪）
+
+## アクション
+DD=7  → 横向き中型（10-11台）のA系を最優先に探す（median=+200）
+DD=30 → 大型斜め（15台以上）のA系を優先（median=+100）
+DD=1  → 中型斜め（11-13台）のA系を優先（median=+100、大型斜めでは DD=1 は非有意）
+他のDD → カクバン・セクション重視で島タイプを問わず探す
+
+---
+id: kamata1-2fa-full-decision-flow
+trigger: "蒲田1 2F でジャグラー/ハナハナ系（A系）の台を当日選択するとき"
+confidence: 0.88
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1 A系 台選択 5ステップフロー（全軸統合）
+
+## 背景
+2026-06-18 の総合戦略策定で確定した統合フロー。
+
+## アクション（5ステップ）
+
+Step 1: 特別日の確認（最優先）
+  ゾロ目mm=dd（1/1・7/7・5/5）→ 全条件より優先。median=+100〜+750。
+  該当すれば Step 2-4 の制約をほぼ無視して参入判断してよい。
+
+Step 2: DD評価（通常日）
+  強い: DD=30, 1, 7, 9（median=0〜-100 で構造的シグナル、q<0.01）
+  弱い: DD=19, 20, 29（有意に平均以下、mean もマイナス）
+
+Step 3: 島タイプ × DD のベスト組み合わせを特定
+  DD=7  → horizontal_medium から探す（median=+200）
+  DD=30 → diagonal_large から探す（median=+100）
+  DD=1  → diagonal_medium から探す（median=+100）
+
+Step 4: カクバン フィルタ（必須）
+  全島: kakuban=1 を除外
+  diagonal_medium: kakuban=5 を積極選択（唯一の正方向シグナル、q=0.0018）
+  horizontal: kakuban=6 を優先
+
+Step 5: X角番 フィルタ（軽微）
+  x_kk=8 のみ除外（A系は X角番の影響が小さい）
+
+---
+id: kamata1-2fn-full-decision-flow
+trigger: "蒲田1 2F でAT/ART系（N系）の台を当日選択するとき"
+confidence: 0.87
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1 N系 台選択フロー（DD軸なし・カクバン・X角番主軸）
+
+## 背景
+2026-06-18 の総合戦略策定で確定した統合フロー。N系は DD軸が完全に無効。
+
+## アクション（順序付き）
+
+Step 1: セクション × イベント日の確認
+  イベント日（{1,7,11,17,21,27,30}・月末）であれば:
+    section 2177-2186（横向き左エリア、premium=+375）を最優先
+    section 2099-2109（中型斜め、premium=+353）を次点
+
+Step 2: 島タイプ別カクバン適用
+  diagonal_large_N: kakuban=1 AND 2 を除外（各 median=-600, -471）
+  diagonal_medium_N: kakuban=1 を除外（median=-464）
+  horizontal_medium_N: kakuban=1 AND 7 を除外（U字構造）、kakuban=6 優先
+  diagonal_small / horizontal_large: カクバンフィルタ不要
+
+Step 3: X角番 フィルタ（N系は重要）
+  x_kk=1 AND x_kk=2 を除外（median=-445〜-476、n=16000超）
+  x_kk=6 も避ける（median=-340）
+  カクバンと独立情報 → 重ねて適用する
+
+Step 4: DD の消極的活用（回避のみ）
+  diagonal_medium × DD=3 のみ避ける（median=-800）
+  その他の DD は N系では台選択の根拠にしない（全DD q>0.05）
+
+---

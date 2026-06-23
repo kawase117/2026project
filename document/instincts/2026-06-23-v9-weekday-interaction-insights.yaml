@@ -1,0 +1,140 @@
+---
+id: v9-variant-strengths-differ-by-hint-type
+trigger: "v6a/v9b/v9cのバリアントを運用・評価する場合"
+confidence: 0.90
+domain: ml-scoring-evaluation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# バリアントごとに捕捉できる示唆パターンが異なる
+
+## 背景
+6/15-6/21の7日間でTwitter答え合わせとTop50を照合した結果、各バリアントの得意パターンが判明:
+- v6a: イベント日に強い（vs_other=81.0）、角番示唆を間接的に捕捉（c4経由）
+- v9b: 非イベント日に強い（vs_other=60.6 vs v6aの40.4）、バランス型
+- v9c: 3F_L_A(ジャグラー)に偏重するが、結果的にAT角6を多く捕捉（6/16で5台）
+全バリアントでActual Top10の2F台を見逃す共通問題あり。
+
+## アクション
+単一バリアントでの運用ではなく、3バリアントのアンサンブルまたはイベント日/非イベント日での切り替えを検討する。
+加重平均期待値: イベント日v6a + 非イベント日v9b = vs_other 65.9（v6a一本の51.0より+14.9改善）。
+v9cは角番示唆日のサブ予測として価値がある。
+
+## 例
+6/16(火曜): v6a AT角6=5台, v9c AT角6=9台(v9cが有利)
+6/18(木曜): v6a シャーマンキングrank11, ヴァルヴレイヴrank6, 吉宗rank8(v6aが有利)
+6/20(土曜): v9b vs_other=542(v9bが圧勝)
+
+---
+id: weekday-component-interaction-key-finding
+trigger: "曜日別の設定投入パターンをスコアリングに組み込む場合"
+confidence: 0.95
+domain: ml-feature-engineering
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田7は曜日ごとに異なるコンポーネントが有効
+
+## 背景
+Twitter答え合わせから蒲田7の曜日別イベントパターンが確定:
+火曜=角番、水曜=末尾、土曜=3台並び、木曜=ニブイチ、金曜=列1台、月曜=列全体、日曜=機種1台。
+6/16(火曜)の検証で、AT角6台のc4(曜日)=1079 vs 非角6台=502(差+577)と、
+c4が間接的に火曜×角番の交互作用を捉えていることが判明。
+一方c5(末尾)はKWゲート(p<0.05)でほぼ全セグメント非有意→0化され、
+水曜・土曜の末尾パターンを完全に殺している。
+
+## アクション
+1. c5のKWゲートを水曜・土曜のみ緩和(p<0.20)または無効化
+2. 火曜日のみc1(角番)ウェイトを増幅（例: 1.5倍）
+3. 曜日×コンポーネント交互作用の統計検証をCodexに依頼済み（結果待ち）
+4. 全42パラメータ(7曜日×6コンポーネント)の交互作用は過学習リスク高→有意なものだけ採用
+
+## 例
+火曜日のv6a Top50: AT角6台5台がrank 1,3,4,11,15に入選。c4寄与が大きい。
+土曜日の全バリアント: 末尾7AT=0台、末尾2Norm=0台がTop50。c5=0のため完全に見逃し。
+
+---
+id: v9c-percentile-resolution-collapse
+trigger: "パーセンタイル正規化でスコアリングする場合"
+confidence: 0.90
+domain: ml-scoring-architecture
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# パーセンタイル変換はスコア解像度を潰す
+
+## 背景
+v9cはセグメント内パーセンタイル(0-1)に変換するため、compositeが0.8-1.0の狭い範囲に集中。
+Top10の大半がcomposite=1.0で同値となり、tiebreakがdiff_coins_normalizedに依存。
+また特定セグメント(3F_L_A)に偏重し、7日間で同じ台が毎日Top50に出現（x7が大量）。
+avg_diff=200.3(全バリアント最高)だが、lift@50=0.920(ランダム以下)。
+
+## アクション
+パーセンタイル変換を使う場合は、変換後のスコアに追加の差別化要素を加えて解像度を確保する。
+またはパーセンタイルではなくz-score正規化を検討する。
+v9cの「avg_diff最高」は強セグメントへの偏重結果であり、分散の欠如が裏にある。
+
+## 例
+6/15 v9c Top10: 6台が3F_L_A、全てcomposite=1.0。当たる日(+264)と外れる日(-817)の振れ幅が極端。
+v9cの頻出台: カバネリ海門x7日、戦国乙女5x7日、化物語x7日 — 毎日同じ台を推薦。
+
+---
+id: games-filter-2000-improves-all-variants
+trigger: "予測Top50の評価・運用時"
+confidence: 0.90
+domain: ml-evaluation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 回転数2000以下の台を除外するとavg_diffが大幅改善
+
+## 背景
+直近7日間のTop50で games>2000 フィルタを適用した結果:
+- v6a: +133 → +421 (改善+288, 残34.6台)
+- v9b: +226 → +443 (改善+217, 残36.7台)
+- v9c: -12 → +174 (改善+186, 残37.3台)
+低回転台は設定判別に必要な試行数が足りず、ランダムノイズが大きい。
+
+## アクション
+実運用時はTop50から games<2000 の台を除外して提示する。
+バックテスト評価時も games>=2000 フィルタ後の指標を主要KPIとする。
+ただしスコアリング自体には全台を含める（低回転でも高設定の可能性はある）。
+
+## 例
+6/15 v6a rank7: 台2330 games=1186 Pay=49.4% diff=-1800 → 低回転で極端な負け、除外対象。
+6/15 v6a rank8: 台2030 games=3311 Pay=152.4% diff=+5200 → 十分な回転で高設定確定。
+
+---
+id: twitter-hint-as-ground-truth-evaluation
+trigger: "予測精度の定性評価を行う場合"
+confidence: 0.85
+domain: ml-evaluation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Twitter答え合わせは差枚ベース評価の盲点を補完する
+
+## 背景
+diff_coins_normalizedベースの評価（avg_diff, lift@50）では、
+「高設定だが結果が出なかった台」を正しく評価できない。
+6/18 真打吉宗(diff=+4100, HIT)は検出できたが、
+シャーマンキング(diff=+100)やヴァルヴレイヴ2(diff=-900)は
+高設定にも関わらずdiffが低く、差枚評価では「ハズレ」扱い。
+
+## アクション
+定期的にTwitter答え合わせとTop50予測を照合し、以下を評価:
+1. 示唆機種がTop50に何台入っているか（機種捕捉率）
+2. 示唆パターン（角番、末尾、並び等）との一致度
+3. 差枚が低い高設定台の見逃し率
+バックテストの数値改善だけでなく、この定性評価で方向性を判断する。
+
+## 例
+6/18: v6aはシャーマンキング(rank11)、ヴァルヴレイヴ2(rank6)、吉宗(rank8)を全捕捉。
+しかしdiffベースでは吉宗のみHIT。示唆ベースでは3/3=100%捕捉率。
+
+---

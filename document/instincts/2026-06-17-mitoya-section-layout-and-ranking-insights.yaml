@@ -1,0 +1,134 @@
+---
+id: mitoya-section-equals-island-unit
+trigger: "みとやのフロアをgroupbyで集計するとき、またはEDA・MLで分析単位を選択するとき"
+confidence: 0.95
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# みとやの `section` 列 = 島(Island)そのものの名前。section×y への分割は誤り
+
+## 背景
+`Heatmap/mitoya_omorimachi_floor_coordinates.csv` の `section` 列が分析単位の正解。
+各 section は物理的な1島を表す。島内部のY値は行番号であり、section×yに分割すると
+「島の片面」または「バラエティ台の縦ペア2台」になってしまう。
+
+みとやの section 一覧:
+| section | Y値      | 台数 | 備考 |
+|---------|----------|------|------|
+| 501-522 | 36のみ   | 22台 | 片面島 |
+| 523-556 | 32,33    | 34台 | 両面島 |
+| 557-590 | 28,29    | 34台 | 両面島 |
+| 591-623 | 24,25    | 33台 | 両面島 |
+| 624-657 | 20,21    | 34台 | 両面島 |
+| 658-691 | 16,17    | 34台 | 両面島 |
+| 692-711 | 3-13     | 20台 | バラエティ(X=1,4の2列) |
+| 712-733 | 3-13     | 22台 | バラエティ(X=8,11の2列) |
+| 734-755 | 3-13     | 22台 | バラエティ(X=15,18の2列) |
+| 805-815 | 1のみ    | 11台 | 片面島 |
+
+## アクション
+- section をそのままgroupbyキーとして使用する
+- section×y, section×x への分割は「島の内部構造」を見る特定の分析のみで使用
+- バラエティ島(Y値が11個ある692-711等)はsection×yで分析不能(1グループ2台になる)
+- フロアレイアウトの正規情報源: `Heatmap/mitoya_omorimachi_floor_coordinates.csv`
+
+## 例
+```python
+# 正しい: section単位で集計
+day_sec = df.groupby(['section', 'date', 'is_xdds'])['payout'].mean().reset_index()
+
+# 誤り: バラエティ島で破綻する
+df["row_key"] = df["section"] + "_y" + df["y"].astype(str)
+```
+
+---
+id: mitoya-section-xdds-ranking-result
+trigger: "みとや大森町店でX_DDS日(DD=4/7/14/17/24/27)に立ち回るセクション(島)を選択するとき"
+confidence: 0.78
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Section別X_DDSランキング: 501-522(+4.0%)が首位。557-590・591-623が上位で安定
+
+## 背景
+section単位でX_DDS日 vs 通常日の平均payout差を集計した結果。
+期間: 2025-01-01〜2026-06-11, MIN_GAMES=500, n_xdds=104, n_non_xdds=421(全section共通)。
+
+| rank | section | xdds_mean | non_xdds_mean | lift  |
+|------|---------|-----------|---------------|-------|
+| 1    | 501-522 | 103.14%   | 99.12%        | +4.02 |
+| 2    | 591-623 | 100.91%   | 97.41%        | +3.49 |
+| 3    | 557-590 | 102.84%   | 99.51%        | +3.32 |
+| 4    | 523-556 | 100.94%   | 98.43%        | +2.51 |
+| 5    | 692-711 | 100.14%   | 97.92%        | +2.22 |
+| 6    | 658-691 | 99.32%    | 97.27%        | +2.05 |
+| 7    | 624-657 | 98.86%    | 96.93%        | +1.93 |
+| 8    | 734-755 | 98.86%    | 96.97%        | +1.89 |
+| 9    | 712-733 | 98.75%    | 96.97%        | +1.78 |
+| 10   | 805-815 | 98.09%    | 97.16%        | +0.94 |
+
+## アクション
+- X_DDS日の第1候補: 501-522 (xdds=103.14%, 期待値プラス)
+- 第2候補: 557-590 (xdds=102.84%, Branch A split-half stable確認済み)
+- 第3候補: 591-623 (xdds=100.91%, Branch A split-half stable確認済み)
+- 501-522はBranch A分析の対象外だったため split-half 安定性未検証。次回優先検証。
+- xdds_mean ≥ 100% = 期待値プラスの基準。501-522/557-590/591-623/523-556/692-711が該当。
+- 658-691以下はxdds_mean < 100%のため、X_DDS日でも期待値マイナス。
+
+---
+id: mitoya-692-711-y5-anomaly
+trigger: "みとやの692-711セクションの成績データを解釈するとき"
+confidence: 0.85
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 692-711_y5 が non_xdds_mean=169% という異常値を持ちセクション平均を汚染。セクション単位では正常(rank 5, +2.22%)
+
+## 背景
+section×y単位ランキングで 692-711_y5 の集計結果:
+- xdds_mean=93.47%, non_xdds_mean=169.08%, lift=-75.61
+
+non_xdds_mean=169%はパチスロとして物理的にあり得ない水準。
+Branch A で 692-711 セクション全体が「逆方向 -6.2%」と判定された原因はこの異常値が
+セクション平均を押し下げていたため。
+
+section単位での正規集計では692-711はrank 5 (lift=+2.22%, xdds_mean=100.14%)で正常。
+
+## アクション
+- 692-711 を「X_DDS日に不利なセクション」として除外するのは誤り
+- 疑わしい台: 692-711_y5 に含まれる機番(694, 709)の特定期間の稼働記録を確認
+- section×y単位の分析で極端な外れ値が出た場合は異常データの有無を先に確認すること
+
+---
+id: direct-compute-over-plan-for-simple-aggregations
+trigger: "シンプルな集計(groupby + mean)をEDAで実行したいとき、またはユーザーが「複雑な計算抜きに」「一列毎に計算できるはず」と言ったとき"
+confidence: 0.92
+domain: workflow
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 「複雑な計算抜きに計算できるはず」はBashで今すぐ実行せよのシグナル。計画書を書かない
+
+## 背景
+section単位のX_DDS lift集計は本質的に以下で完結する:
+```python
+df.groupby(['section','date','is_xdds'])['payout'].mean()
+→ .groupby(['section','is_xdds']).agg(['mean','count'])
+→ lift = xdds_mean - non_xdds_mean
+```
+にもかかわらず、計画書作成→Codex実装→修正指示書→再実装 という多段階を経て
+ユーザーを長時間待たせた。groupby+mean+diff の3ステップで完結する計算に計画書は不要。
+
+## アクション
+- ユーザーが「複雑な計算抜きに」「一列毎に計算できるはず」と言ったら
+  Bashツールで直接SQLまたはPythonを実行して結果を見せる
+- 計画書(docs/superpowers/plans/)やCodexへの指示書はMLパイプライン・統計検定など
+  実装が複雑な場合のみ使用する
+- groupby集計・pivot・単純な差分計算 → 即座にBashで実行

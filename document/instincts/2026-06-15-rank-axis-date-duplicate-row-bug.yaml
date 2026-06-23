@@ -1,0 +1,43 @@
+---
+id: rank-axis-date-duplicate-row-bug
+trigger: "日次データ(date×machine_numberの行)から座席位置などの空間カテゴリ軸をrank()で作成するとき"
+confidence: 0.85
+domain: ml-eda-validation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# rank()ベースの空間軸を日次データに対して計算するとtuple(物理ランク, 日付)が混在する
+
+## 背景
+kamata_weekday_event_axis_eda.py の `_build_kakuban_axis` は「角番(主通路からの距離ランク)」を
+作る目的で、セクションごとに `metric.rank(method="first", ascending=True)` を計算していた。
+しかし入力データフレームは (date × machine_number) の行を持つ日次データであり、
+同一machine_numberはX,Y(=distance metric)が全日付で同一値となるため、
+groupby("section")内で大量のタイが発生する。
+`method="first"` はタイを出現順に1,2,3...と連番化するため、
+結果の「kakuban」値は「物理的な角番位置(1,2,3...)」ではなく
+「(物理ランク, 出現順=日付インデックス)が混在した通し番号」になっていた。
+
+実際の出力では、machine_numberが1600-2400台のセクションに対して
+kakuban値が9235, 8209, 8722, 9748など5桁の値になっており、
+台番号レンジを大きく超えていたことから発覚した。
+kakuban=1のような最小値は「各セクションで主通路に最も近い台」を指す可能性が残るが、
+大きな値同士(9235 vs 8209など)を「角番が遠い/近い」として比較する解釈は無効。
+
+## アクション
+- rank()やgroupby().rank()を日次データ(date×IDの繰り返し行)に対して直接適用する前に、
+  rank対象の値(metric)がID単位で一意か、date方向に重複していないかを確認する。
+- 重複がある場合は、まずID単位でユニーク化(drop_duplicates)してrankを計算し、
+  その後元の日次データにIDでmergeする2段階処理にする。
+- 生成されたカテゴリ軸の値域が、意味的に期待される範囲(例: セクション内の台数程度)を
+  超えていないかをサニティチェックする。値域が想定外に大きい場合はrank計算の入力に
+  重複行が混在している可能性が高い。
+
+## 例
+セクション"2236-2255"(20台)に対しkakuban値が1〜10260まで出現していた場合、
+20台×513日=10260が一致することから「rankが(台,日付)の通し番号になっている」と推測できる。
+正しい実装は `unique_machines = work.drop_duplicates("machine_number")` でrankを計算し、
+`merged.merge(unique_machines[["machine_number","kakuban"]], on="machine_number")` で
+日次データにブロードキャストする。
+---

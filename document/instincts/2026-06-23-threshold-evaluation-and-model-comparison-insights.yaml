@@ -1,0 +1,243 @@
+---
+id: top50-border-exceeds-setting6-ceiling
+trigger: "lift@50やhit@50でモデル評価を行うとき"
+confidence: 0.95
+domain: ml-evaluation
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Top50ボーダーは設定6の理論上限を超えている
+
+## 背景
+実際のTop50ボーダー（50番目に差枚が高い台）は平均+4,100枚、最低日でも+3,100枚。
+設定6の最高機械割114.9%で実質8000G回して約+3,500枚が現実的上限。
+つまりTop50に入るには「高設定＋上振れ」が必要で、設定6を普通に回しただけでは届かない。
++3,100（最低日）こそ真の設定6ボーダーに近い。
+
+## アクション
+- hit@50/lift@50だけでモデルを評価しない
+- 差枚の絶対閾値ベース指標（hit_t2500/3500/4500, lift_t2500/3500/4500）を併用する
+- 2500は有利区間の壁（低設定では超えにくい）、3500は設定6現実上限、4500は上振れ込みライン
+
+## 例
+walk_forward_engine.py の THRESHOLD_CUTS = (2500, 3500, 4500) で実装済み。
+v9c: 旧lift@50=0.92（ランダム以下）→ lift_t3500=1.26（2Fセグメント限定）と正当に評価可能に。
+
+---
+id: threshold-lift-increases-with-stricter-threshold
+trigger: "閾値ベースliftの結果を解釈するとき"
+confidence: 0.95
+domain: ml-evaluation
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 厳しい閾値ほどliftが高くなるのは正常な挙動
+
+## 背景
+lift_t2500 < lift_t3500 < lift_t4500 という結果は直感に反するが正常。
+liftはランダム比であり、閾値を上げるとランダム期待hitは比例して減るが、
+モデルの当たり台は差枚分布の上位に集中しているため減り方が緩やか。
+結果として相対優位（lift）は閾値が厳しいほど拡大する。
+
+## アクション
+- lift_t4500が高いことは「最高設定のシグナルを捉えている」と解釈する
+- lift_t2500が相対的に低いことは「設定4-5と低設定上振れの分離が困難」と解釈する
+- 閾値間のlift差がモデルの予測能力の帯域特性を示す
+
+## 例
+v9c N-type: lift_t2500=1.18, lift_t3500=1.26, lift_t4500=1.30
+→ 最高設定検出は得意だが、+2500帯の微妙なラインは苦手。
+
+---
+id: atype-vs-at-evaluation-must-separate
+trigger: "Aタイプ（ジャグラー・ハナハナ）とATタイプを含むモデル評価時"
+confidence: 0.95
+domain: ml-evaluation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# AタイプとATタイプは評価指標を分離すべき
+
+## 背景
+ATもAタイプも最高機械割は114.9%で同じ。しかしAタイプは設定6の機械割が低めに設定される
+ケースが多く、差枚で+2,500に届きにくい。全体Top50で評価するとATの大当たり台に
+正解ラベルが偏り、Aタイプの高設定台を正しく拾っても「外れ」扱いになる。
+Aタイプのlift_t指標は全閾値で1.0以下だが、これはモデルの問題ではなく
+評価フレームワークの構造的欠陥。
+
+## アクション
+- lift@50やlift_t指標はセグメント別（A/AT分離）で評価する
+- Aタイプ専用の低い閾値（例: +1,500）を検討する
+- 全体lift@50の数字だけでモデルの優劣を判断しない
+
+## 例
+3F_L_A（Aタイプ）: lift_t2500=0.46, lift_t4500=0.11 — Aタイプの機械割上限が低いため。
+2F_R_N（AT混在）: lift_t2500=1.19, lift_t4500=1.32 — 同じモデルでも適正に評価される。
+
+---
+id: diff-only-evaluation-misses-high-setting-losers
+trigger: "モデルの予測精度を差枚だけで評価しようとするとき"
+confidence: 0.90
+domain: ml-evaluation
+source: user-domain-knowledge
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 差枚だけの評価は高設定の下振れ台を見逃す
+
+## 背景
+差枚が負けていても高設定である台は存在する（分散の下振れ）。
+その台をモデルが選んでいたなら予測は「正解」だが、diff評価では「外れ」になる。
+逆に低設定の上振れはdiff評価で「当たり」扱いされ過大評価になる。
+回転数（games_normalized）はこの問題の補助指標になりうるが、
+AタイプとATでは回転数の意味が根本的に異なる（後述instinct参照）。
+
+## アクション
+- 差枚閾値だけでなく、回転数ベースの評価軸を並行して持つ
+- ただしAタイプとATで回転数の解釈を分ける
+- 将来的にはBB/RB比率など機種固有指標も評価に組み込む検討
+
+## 例
+モデルTop50に games>=5000 & diff<0 の台があった場合、
+diff評価では外れだが「高設定を正しく選んでいた」可能性がある。
+
+---
+id: atype-high-games-is-hall-level-signal
+trigger: "Aタイプの回転数（games_normalized）を解釈するとき"
+confidence: 0.95
+domain: pachinko-domain
+source: user-domain-knowledge
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Aタイプの高回転は台単位ではなくホール・日単位のシグナル
+
+## 背景
+Aタイプ（ジャグラー・ハナハナ）は遊技中の設定示唆がほぼ無い。
+個別の台が高回転なのは「その台を高設定と判断した」からではなく、
+「この店がAタイプに設定を入れている」という店全体への信頼で打ち続ける人が多いため。
+設定判別ができない打ち手のだらだらプレイも回転を押し上げる。
+設定が入っていない店のジャグラーの回転が高水準になることはほとんどない。
+
+一方ATタイプは遊技中に設定示唆があるため、高回転の個別台は
+「その台を高設定と判断した打ち手がいた」可能性が高い。
+
+## アクション
+- Aタイプの台単位 games_normalized を「この台は高設定」の根拠にしない
+- Aタイプの回転数はセグメント全体・日単位の集計で「設定投入日かどうか」の判断に使う
+- ATタイプの回転数は台単位で高設定の補助シグナルとして使ってよい
+
+## 例
+水曜日に末尾3のAタイプ台が全体的に高回転 → 「今日は末尾3に設定が入っている」
+（個別台ではなくセグメント・末尾グループ全体の傾向として読む）
+
+---
+id: v9c-percentile-eliminates-weak-segments
+trigger: "v9c_percentileモデルの台配分を確認するとき"
+confidence: 0.95
+domain: ml-model-design
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# v9cのpercentile×seg_weight方式は弱セグメントを構造的に排除する
+
+## 背景
+v9cの最終スコア = seg_percentile × seg_weight。
+seg_weightは訓練データのセグメント別平均diffから算出（強=1.0, 弱=0.5）。
+3F_R_N（avg_diff≈-9）はweight≈0.5なので、セグメント内1位でも
+スコア=1.0×0.5=0.5にしかならず、他セグメント中位（例: 0.95×0.85=0.81）に勝てない。
+結果、v9cのTop50に3F_L_Nと3F_R_Nは0台配分される。
+
+## アクション
+- v9cの配分: 2F=33.9台/日, Aタイプ=16.1台/日, 3F_N=0台/日
+- v6aの配分: 2F=31.4台/日, Aタイプ=4.4台/日, 3F_N=14.2台/日
+- 3F_R_Nはlift_t4500=1.74で最もliftが高いセグメント。完全排除が最適かは要検討
+- ただし3F_R_Nのベース期待値が最悪（ランダムで座ると最も不利）なのも事実
+
+## 例
+seg_weight計算: _segment_strength_weights() in scoring_model.py L751-757
+0.5 + 0.5 * (seg_avg_diff - min) / (max - min) で 0.5〜1.0 にスケーリング
+
+---
+id: 2f-ln-best-random-baseline
+trigger: "予測なしでどのセグメントに座るか判断するとき"
+confidence: 0.90
+domain: pachinko-strategy
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 予測なしなら2F_L_Nがベスト
+
+## 背景
+セグメント別の平均diff（全台ランダムの期待値）:
+2F_L_N=+200, 3F_L_A=+193, 3F_R_A=+173, 2F_R_N=+169, 3F_L_N=+51, 3F_R_N=-9
+予測がない日は2F_L_Nに座るのが期待値最大。
+3F_R_Nはランダムで座ると最も不利だが、モデルで絞ればliftが最も高い（=選別の価値が最大）。
+
+## アクション
+- 予測が使えない日・信頼度が低い日は2F_L_Nをデフォルト選択
+- モデル予測がある日は、ベースの悪いセグメント（3F_R_N等）でも上位予測台は検討価値あり
+
+## 例
+2F_L_N: ランダム期待+200、lift_t3500=1.24（モデルで+24%上積み）
+3F_R_N: ランダム期待-9、lift_t3500=1.61（モデルで+61%上積み、ただしベースが悪い）
+
+---
+id: payout-rate-distortion-by-low-games
+trigger: "payout_rateとavg_diffが乖離しているとき"
+confidence: 0.90
+domain: ml-evaluation
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# payout_rateは低回転台で極端に歪む
+
+## 背景
+現行のpayout_rateは各台の (games×3+diff)/(games×3)×100 を個別計算してから平均。
+低回転で負けた台は分母が小さく比率が極端に低くなる（例: games=200, diff=-400 → 33%）。
+結果、avg_diffがプラスでもpayout_rateが100%を下回る現象が起きる。
+games_normalizedはAT中を除くため、特にATタイプで名目回転数が小さくなりやすく歪みが大きい。
+
+## アクション
+- payout_rateの絶対値を信頼しない（特にセグメント間比較で）
+- 正確に出すなら加重平均 sum(coins_out)/sum(coins_in) に変更すべき
+- avg_diffの方がセグメント間比較には適している
+
+## 例
+avg_diff=+200なのにpayout=99.5%になるケースが2F_L_Nで観測済み。
+
+---
+id: v6a-v9b-v9c-model-characteristics
+trigger: "v6a/v9b/v9cモデルの選択・比較を行うとき"
+confidence: 0.90
+domain: ml-model-design
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# v6a/v9b/v9cの特性まとめと使い分け
+
+## 背景
+3モデルの256日walk-forward比較結果:
+- v6a（固定ウェイト）: イベント日に強い（event avg_diff=+231）。安定したlift@50。全セグメントに満遍なく配分。
+- v9b（50:50ブレンド）: 非イベント日に強い（non_event avg_diff=+168）。バランス型。
+- v9c（percentile×seg_weight）: avg_diff最大（+200）。2F集中・Aタイプ重視・3F_Nゼロ配分。
+
+2F限定のlift_t指標では v9c > v9b > v6a だが差は小さい（lift_t3500: 1.258 vs 1.238 vs 1.234）。
+統計的有意性は未検証。現時点で1モデルに絞る根拠は不十分。
+
+## アクション
+- 即座にv6a/v9bを撤廃しない
+- 2F中心・非イベント日運用ならv9cが最適候補
+- イベント日にはv6aの方が強い可能性あり
+- 状況別切り替えまたはアンサンブルを検討
+
+## 例
+2F限定 non-event lift_t3500: v9c=1.258, v9b=1.238, v6a=1.234
+全体 lift@50: v6a=1.25, v9b=1.25, v9c=0.92（v9cは旧指標では過小評価）

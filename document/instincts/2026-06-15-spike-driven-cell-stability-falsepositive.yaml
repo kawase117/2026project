@@ -1,0 +1,119 @@
+---
+id: spike-driven-machine-can-fake-cell-vs-rest-stability
+trigger: "cell-vs-rest型のsplit-half安定性検定(full_sig & first_half_sig & second_half_sig & same_direction)で stable=True が出たとき"
+confidence: 0.93
+domain: ml-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# stable=True でも top_machine_share が高い場合は、median vs mean のギャップ(スパイク依存)を必ず確認する
+
+## 背景
+kamata_weekday_event_axis_deepdive.py の Branch D で、kamata7 2F N の
+tail=3 x kakuban=4 セルが cell-vs-rest split-half検定で
+full_sig=1, first_half_sig=1, second_half_sig=1, same_direction=1, stable=1
+と「2軸交互作用の安定セル」として検出された。
+
+しかし machine concentration check を追加したところ、
+top_machine_share=0.485(セル平均delta+114.9の約半分が1台 machine 2243 由来)
+だったため、2243を除外して再計算した。結果:
+- 除外前: delta=+555.4 (machine 2243), p=4.3e-05, stable=True
+- 除外後: トップ行が machine 2173 に変わり delta=-109.45, q=0.232, stable=False
+
+つまり「セル全体の安定した法則」ではなく、「machine 2243という1台の
+偶発的な大勝ち日」が split-half の両方の期間に1〜2回ずつ入っていたことで
+stable=Trueという偽の安定性が生まれていた。
+
+machine 2243 の日次差枚は mean=684.6 に対し median=50, p10=-2200, p90=4260
+で、上位日は+11000〜+12600という極端な値だった
+(machine_2243_daily_diff.csv)。median≒0付近で mean が極端に高い
+= 「日常的にはニュートラルだが稀に大きく跳ねる」スパイク型であり、
+これが split-half の両期間にそれぞれ1回ずつ入れば
+「再現性のある安定した法則」に見えてしまう。
+
+なお、2243は分析期間中に機種が
+スマスロ北斗の拳 -> 東京リベンジャーズ -> 範馬刃牙 -> 化物語 -> モンキーターンV
+と複数回変わっており、「看破しにくい機種に高設定を仕込む」という
+ドメイン仮説で stability の一貫性を説明することもできない
+(機種が変わってもstableな結果が出ていたため)。
+
+## アクション
+cell-vs-rest split-half検定で stable=True が出た場合、特徴量化や
+「法則」としての確定の前に、必ず以下を実施する:
+1. そのセルに対する machine concentration check (top_machine_share,
+   sig_machines, stable_machines) を計算する。
+2. top_machine_share が概ね0.3〜0.4を超える場合、そのセルの法則は
+   「セル全体の構造」ではなく「特定の1台の現象」である疑いが強い。
+3. 疑わしい台について、日次差枚の median と mean を比較する。
+   median が0近傍で mean だけが大きい場合はスパイク依存であり、
+   split-half両方に偶然スパイク日が1〜2回入っただけで stable=True に
+   なり得るため、「法則」として扱わない。
+4. その台を除外して同じセルを再計算し、delta/有意性が消滅するかを
+   確認する。消滅すれば、セル単位の交互作用ルールとしては棄却する。
+
+## 例
+```python
+# machine concentration check
+machine_summary, machine_daily = _cell_summary(machine_daily, cell_cols=["machine_number"], min_dates=10)
+top_abs_share = machine_summary["mean_diff"].abs().max() / machine_summary["mean_diff"].abs().sum()
+
+# スパイク依存の判定
+daily = machine_2243_daily_diff  # date, diff_coins_normalized など
+print(daily["diff_coins_normalized"].mean())    # 684.6
+print(daily["diff_coins_normalized"].median())  # 50
+print(daily["diff_coins_normalized"].quantile([0.1, 0.9]))  # -2200, 4260
+
+# 除外して再計算
+cell_without_outlier = cell_frame[cell_frame["machine_number"] != 2243]
+```
+
+---
+id: weekday-cell-effect-direction-consistent-but-underpowered-after-split
+trigger: "kamata7 2F section 2179-2186(イベント日除外)の曜日効果(Sun高い/Thu低い)をMLに使うか検討するとき"
+confidence: 0.75
+domain: project-status
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Sun/Thu weekday効果はsplit-half両方で方向一貫・effect size維持だが、サンプル数減でq値が0.05をわずかに超え stable=False
+
+## 背景
+kamata_weekday_event_axis_deepdive.py の Branch A で、kamata7 2F
+section 2179-2186 (イベント日除外) について Kruskal-Wallis p=0.000948、
+Sun(top, mean_diff=+390.5) と Thu(bottom, mean_diff=-176.0) が
+FDR補正後も有意 (q<0.05) だった。
+
+weekday cell の split-half安定性検定 (weekday_cell_stability.csv) を
+追加したところ:
+- Thu: full q=0.0013(有意), first_half q=0.0439(有意),
+  second_half q=0.0559(僅かに非有意)
+- Sun: full q=0.0118(有意), first_half q=0.263(非有意),
+  second_half q=0.0559(僅かに非有意)
+
+両セルとも same_direction=True(方向は前半・後半で一貫)、effect size も
+second_halfで縮小していない(Sunはむしろ+398.7に拡大)。
+second_half の q値が両方とも0.0559と、0.05の閾値をわずかに超えただけで、
+n_dates=18-20と半分のサンプルサイズによる検出力不足が主因と考えられる。
+
+[[spike-driven-machine-can-fake-cell-vs-rest-stability]] のケースとは異なり、
+machine concentration check では top_machine_share=0.22-0.24,
+sig_machines=0 と、特定の1台に依存していないことも確認済み。
+
+## アクション
+- この曜日効果は「効果なし」と断定せず、「方向性のある real signal だが
+  現データ量では検出力不足」として保留扱いにする。
+- ML特徴量への即時投入は見送る。データが蓄積され n_dates が
+  half-period で30程度に達した時点で再検証する。
+- 同様の Sun高/Thu低 パターンが他のセクション・フロアでも再現するか
+  横展開して検証することで、サンプルサイズを実質的に増やす方向も
+  検討する。
+
+## 例
+```python
+# weekday_cell_stability.csv の該当行
+# weekday=6(Sun): full_q=0.0118, second_half_q=0.0559, same_direction=True
+# weekday=3(Thu): full_q=0.0013, second_half_q=0.0559, same_direction=True
+```
+---

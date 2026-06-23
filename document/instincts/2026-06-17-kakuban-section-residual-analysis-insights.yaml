@@ -1,0 +1,186 @@
+---
+id: kakuban-corner-low-setting-structural-bias
+trigger: "角番1（コーナー台）の設定傾向を評価するとき・選台で角番を使うとき"
+confidence: 0.95
+domain: operational-strategy
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# コーナー台（角番1）は全セグメントで恒常的に低設定 — 選台で避けるべき位置
+
+## 背景
+2026-06-17: kamata_kakuban_section_residual_eda.py による残差分析結果。
+セクション日次平均を差し引いた残差で検定（セクション効果を除去済み）。
+
+全セグメント共通で 角番1 の平均残差がマイナス:
+
+| セグメント | 角1残差 | q値 |
+|---|---:|---|
+| 蒲田7 3F A | -140.7 | 1.4e-29（最強） |
+| 蒲田7 3F N | -205.9 | 1.2e-7 |
+| 蒲田7 2F N | -147.2 | 1.1e-9 |
+| 蒲田1 2F A | -80.9 | 3.1e-12 |
+| 蒲田1 2F N | -106.5 | 2.4e-5 |
+
+## アクション
+- コーナー台（角1）は「目立つ場所だから高設定」という直感は誤り
+- ホール側はコーナーに低設定を配置する傾向がある（全ホール・全フロアで一貫）
+- 選台においてコーナー台は最後の選択肢とする
+- 角15, 16, 17, 18, 20 も多くのセグメントでマイナス残差（深い位置も低い傾向）
+- 対して中間ポジション（角5-9）がプラス残差 — 優先候補
+
+---
+id: kakuban-middle-position-positive-residual
+trigger: "蒲田7・蒲田1でセクション内のどのポジションを選ぶか判断するとき"
+confidence: 0.88
+domain: operational-strategy
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# セクション内の中間ポジション（角5-9）が恒常的にプラス残差
+
+## 背景
+2026-06-17 残差分析（Analysis A）より。セクション効果除去後も有意。
+
+| セグメント | 有意なプラスポジション |
+|---|---|
+| 蒲田7 3F A | 角5(+43.6), 角6(+50.0), 角7(+46.1), 角8(+37.8), 角9(+51.1) |
+| 蒲田7 2F N | 角6(+108.3, q=5.5e-10), 角4(+55.8), 角5(+24.3) |
+| 蒲田1 2F A | 角8(+29.7), 角9(+31.5), 角10(+44.9) |
+| 蒲田1 2F N | 角2(+19.1), 角3(+25.5), 角12(+48.9) |
+
+## アクション
+- 選台の基本方針: セクション内の中間台（角5-9付近）を優先する
+- 特に 蒲田7 2F N の角6（残差+108.3, q=5.5e-10）は突出して強い
+- 蒲田7 3F A は角5〜9が均等にプラス（いずれも選択肢）
+- 蒲田1 2F A は角8〜10付近が最もプラス
+
+---
+id: kakuban-event-weekday-section-confound-resolved
+trigger: "イベント日・曜日と角番の関係を評価・選台に使おうとするとき"
+confidence: 0.93
+domain: analysis-methodology
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# イベント日×角番・曜日×角番のパターンはセクション効果の混入だった
+
+## 背景
+2026-06-17 セクション残差法による検証（Analysis B, C）結果:
+
+旧分析（生diff_coins）では有意だったもの:
+- 蒲田7 3F A / イベント日: 角15(+272, q=1.3e-6), 角1(+256, q=2.6e-5)
+- 蒲田7 2F A / 非イベント日: 角3,4,8 に曜日パターン
+- 蒲田1 2F A / イベント日: 15/20ポジションが有意
+
+残差化後(Analysis B, C): 有意ゼロ行
+
+## アクション
+- 「イベント日に角15を狙え」という戦略は誤り。角15はセクション平均以下（残差マイナス）
+- 「非イベント日の火曜に角3が強い」という戦略も証拠なし
+- イベント日はセクション全体が均等に上がるが、セクション内の角番格差は変わらない
+- ホール側の設定戦略はセクション（島）単位で動いており、角番単位では動いていない
+- 選台戦略: セクション選択（島の選択）が主軸、角番は「中間を選ぶ」だけで十分
+
+## 方法論的教訓
+生diff_coinsでの角番分析はセクション効果とポジション効果が混在する。
+残差(diff_coins - section_mean)で分析するとイベント日・曜日パターンが消えた。
+ポジション恒常効果（角1が低い、中間が高い）は残る = 真の位置効果。
+
+---
+id: section-residual-analysis-design-pattern
+trigger: "島内ポジション効果と島全体効果を分離したい分析を設計するとき"
+confidence: 0.92
+domain: analysis-methodology
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# セクション残差法: 島全体効果を除去してポジション効果を純粋に検出する設計パターン
+
+## 背景
+2026-06-17: kamata_kakuban_section_residual_eda.py で実装・検証済み。
+
+## アクション
+実装パターン:
+```python
+# Step 1: セクション日次平均（フィルタなし、生データで計算）
+section_mean = df.groupby(["date", "section"])["diff_coins_normalized"].transform("mean")
+
+# Step 2: 残差計算（セクション内n>=3の日のみ有効）
+df["residual"] = df["diff_coins_normalized"] - section_mean
+valid_mask = df.groupby(["date","section"])["machine_number"].transform("count") >= 3
+df.loc[~valid_mask, "residual"] = np.nan
+
+# Step 3: 分析フィルタ（games_normalized >= 400）はresidual計算後に適用
+df_analysis = df[df["games_normalized"] >= 400].dropna(subset=["residual"])
+
+# Step 4: kakuban双方向展開後にresidualでgroupby検定
+expanded = _expand_dual_kakuban(df_analysis)
+# Kruskal-Wallis on expanded["residual"] by expanded["kakuban"]
+```
+
+適用すべきケース:
+- 島ごとの良し悪しが大きく、台レベルのポジション効果を分離したい時
+- 旧分析の「ポジション効果」がセクション効果の混入でないかを検証したい時
+
+---
+id: kamata7-2f-a-zero-rows-known-issue
+trigger: "蒲田7 2F Aタイプ（ジャグ/AT系）の座標ベース分析を実装するとき"
+confidence: 0.82
+domain: known-issue
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田7 2F A の残差分析で rows=0 になる問題（2026-06-17 未解決）
+
+## 背景
+kamata_kakuban_section_residual_eda.py の segment coverage:
+  kamata7_2F_A: rows=0, dates=0, sections=0
+  kamata7_2F_N: rows=120042（同じ座標CSVで正常動作）
+
+原因候補:
+  1. AタイプフィルタリングがDBとのJOIN後に機能していない
+  2. jug_flag/bt_flag の機種名パターンが蒲田7 2F の機種名と不一致
+  3. machine_number 範囲の不一致
+
+## アクション
+次回スクリプト実行前に確認:
+```sql
+SELECT COUNT(*) FROM machine_detailed_results
+WHERE machine_number BETWEEN 2000 AND 2999
+AND (machine_name LIKE '%ジャグ%' OR machine_name LIKE '%ハナハナ%')
+```
+kamata_weekday_event_axis_eda.py では正常動作していた点と突き合わせてA-type判定ロジックを比較する。
+
+---
+id: kakuban-position-effect-confirmed-genuine
+trigger: "角番ポジション効果の信頼性を評価するとき・新たな角番分析を設計するとき"
+confidence: 0.90
+domain: analysis-methodology
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 角番位置効果は実在するが「恒常的な設定傾向」であり、日種や曜日では変化しない
+
+## 背景
+2026-06-17 の一連の分析（dual-kakuban 再分析 → 残差分析）により確定。
+
+| 問い | 答え |
+|---|---|
+| 角番ポジション効果は実在するか? | Yes（残差でも有意, Analysis A） |
+| それは特定台番号効果か位置効果か? | 位置効果（残差除去後も有意） |
+| イベント日で角番の相対格差が変わるか? | No（残差後に消える） |
+| 曜日で角番の相対格差が変わるか? | No（残差後に消える） |
+| どのポジションが恒常的に強いか? | 中間（角5-9）がプラス、コーナー（角1）がマイナス |
+
+## アクション
+1. 「角番 x イベント日/曜日」の交互作用は生diff_coinsでは偽陽性リスクがある
+2. 残差法（セクション平均除去）を必須の検定として位置付ける
+3. 残差後に有意なのは「恒常的な位置格差」のみ → これを選台の基盤として使う
+4. イベント日の戦略はセクション選択（どの島か）に集中し、角番は「中間を選ぶ」だけ

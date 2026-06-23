@@ -1,0 +1,221 @@
+---
+id: hist-payout-superior-to-diff-for-tiebreaker
+trigger: "推奨台スコアリングの個体タイブレーカー指標を選択するとき"
+confidence: 0.90
+domain: scoring-model
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 個体タイブレーカーは機械割(payout)が差枚(diff)より優位、勝率とG数は逆効果
+
+## 背景
+DD20バックテストで各hist指標を単独コンポーネントとしてTOP50を選定し、
+実績TOP50とのリフトを比較した。結果:
+- hist_payout（機械割）: lift = 2.29x — 最強
+- hist_diff（差枚）: lift = 1.43x — 有効だが機械割に劣る
+- hist_winrate（勝率）: lift = 0.29x — 逆効果（ランダム以下）
+- hist_games（G数）: lift = 0.29x — 逆効果（ランダム以下）
+
+差枚は高G数低機械割の台を過大評価する。機械割は台の設定を正規化して反映する。
+勝率とG数は設定情報をほぼ含まず、ノイズが支配的。
+
+## アクション
+1. 個体タイブレーカーには hist_payout（直近90日の台別平均機械割）を使用する
+2. hist_diff は次善策として残すが、機械割が使えるなら機械割優先
+3. hist_winrate と hist_games は個体評価に使用しない（逆効果）
+4. 機械割の計算: (games_normalized * 3 + diff_coins_normalized) / (games_normalized * 3) * 100
+
+## 例
+DD20 単独コンポーネントTOP50結果:
+- hist_payout TOP50: avg_diff=+906, hit@10=3/10 → lift 2.29x
+- hist_diff TOP50: avg_diff=+650, hit@10=2/10 → lift 1.43x
+- hist_winrate TOP50: avg_diff=-200 → lift 0.29x（ランダム以下）
+
+---
+id: c4-saturday-kakuban-highest-structural-lift
+trigger: "蒲田7のスコアリングで構造コンポーネントの重み付けを検討するとき"
+confidence: 0.85
+domain: scoring-model
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 土曜日×角番(C4)は構造コンポーネント中最高のリフトを記録
+
+## 背景
+DD20（土曜日）のバックテストで各構造コンポーネント単独のリフトを計算した結果:
+- C4（曜日×角番）: lift = 1.72x — 構造コンポーネント中最高
+- C1（seg×ssg×角番）: lift = 1.43x — 安定的
+- C3（DD個別×角番）: lift = 1.14x — DD個別化で改善余地あり
+- C2（セオリー最適角番）: lift = 0.86x — 単独では弱い
+- composite（6コンポーネント合成）: lift = 1.71x — C4単独とほぼ同等
+
+C4の高リフトは土曜日固有の可能性がある。他の曜日では異なるコンポーネントが
+最高リフトになる可能性があるため、Walk-forwardで曜日別のコンポーネント寄与度を検証する必要がある。
+
+## アクション
+1. Walk-forwardでは曜日別にコンポーネント単独リフトを記録する
+2. 土曜日にC4のウェイトを上げる曜日適応型ウェイト戦略を検討する
+3. 一方、1回のバックテストから過度に一般化しない（n=1問題）
+4. composite が C4 単独と同等のリフトを出したことは、他コンポーネントの冗長性を示唆する可能性あり
+
+## 例
+DD20コンポーネント別lift@50:
+  C1: 1.43x, C2: 0.86x, C3: 1.14x, C4: 1.72x, C5: 0.57x, C6: 0.86x
+  composite: 1.71x ≈ C4単独
+
+---
+id: walkforward-rolling-vs-expanding-design
+trigger: "蒲田7のWalk-forwardバックテストの窓設計を行うとき"
+confidence: 0.90
+domain: ml-validation
+source: session-decision
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Walk-forwardはRolling窓で実施し、3サイズ(90/180/365日)を並行比較する
+
+## 背景
+expanding窓（データ蓄積型）はトレンド変化への追従が遅い。
+ホール側の設定投入戦略は時間とともに変化する可能性があり、
+直近のパターンにより重みを置くrolling窓が適切と判断された。
+
+設計上の決定事項:
+- テスト開始日: データ開始から365日後（全窓サイズの公平比較のため）
+- 7/7（全台設定6の特殊日）は訓練・テスト両方から除外
+- 台番号2026（鉄台）は常に除外
+- MIN_GAMES = 400 でフィルタ
+- v5のウェイト最適化はテスト期間の前半50%のみ使用し、後半50%で検証
+
+## アクション
+1. 窓サイズ90/180/365日を全て実行し、結果を比較する
+2. 90日は短期トレンド追従力、365日は安定性を評価する主軸
+3. expanding窓は実装しない（ホール戦略変化への追従が目的）
+4. テスト開始日は全窓サイズで統一し、比較の公平性を確保
+
+## 例
+テスト日=20260620, 窓365日の場合:
+  訓練データ: 20250621 〜 20260619（test_date自体は含めない）
+  テストデータ: 20260620のgames_normalized>=400の台のみ
+
+---
+id: dd20-top50-backtest-validation-results
+trigger: "推奨TOP50の実績検証結果を参照するとき"
+confidence: 0.85
+domain: scoring-model
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# DD20(6/20)TOP50バックテスト: avg_diff+906, hit@10=3/10(4.29x lift)
+
+## 背景
+2026-06-20（土曜日、DD20、非イベント日）のTOP50推奨台リストを
+実績データと照合した初のバックテスト。角番反転バグ修正前のスコアリング。
+
+主要結果:
+- TOP50 avg_diff = +906（その他 avg_diff = -82）→ 差分 +988
+- TOP50 win_rate = 62%（全体 48%）
+- hit@10 = 3/10（期待値0.7 → lift 4.29x）
+- hit@50 = 12/50（期待値3.5 → lift 3.43x）
+
+個別的中例:
+- 7つの魔剣が全で: 推奨2台（2108, 3282）とも実績TOP10に入った全的中
+- 虚構推理(2349): 差枚は低いが異常に高いG数(9800G)。イベント日3ヶ月平均5400Gに対し+81%
+  → 全台設定6の可能性を示唆するが差枚からは判断不能
+
+## アクション
+1. 1回のバックテストで過度な結論を出さない（n=1）
+2. Walk-forwardで全営業日に拡張して真の予測力を検証する
+3. 角番修正後に再検証する（現在の数値はバグ込み）
+4. 虚構推理のようなG数異常台は「全疑惑」フラグとして追加指標にする価値あり
+
+## 例
+TOP50 Binning評価:
+  Top10: avg_diff=+3,285, win_rate=90%, payout_rate=110.3%
+  11-20: avg_diff=+1,154, win_rate=80%, payout_rate=103.8%
+  21-30: avg_diff=+584, win_rate=60%, payout_rate=101.9%
+  31-40: avg_diff=+179, win_rate=50%, payout_rate=100.6%
+  41-50: avg_diff=-178, win_rate=40%, payout_rate=99.4%
+  → TOP50内でもスコア順位と実績が相関している
+
+---
+id: walkforward-variant-comparison-structure
+trigger: "蒲田7のスコアリングバリアントを設計・比較するとき"
+confidence: 0.90
+domain: ml-validation
+source: session-decision
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Walk-forward 5バリアント比較: DD-bin→DD個別→hist機械割→角番修正→ウェイト最適化
+
+## 背景
+スコアリングモデルの改良を段階的に検証するため、5バリアントを設計した。
+各バリアントは前のバリアントから1要素だけ変更し、改善幅を分離する。
+
+v1_baseline:     角番old + DD-bin    + hist_diff    + default weights
+v2_dd_individual: 角番old + DD個別   + hist_diff    + default weights
+v3_hist_payout:  角番old + DD個別   + hist_payout  + default weights
+v4_kakuban_fix:  角番new + DD個別   + hist_payout  + default weights
+v5_optimized:    角番new + DD個別   + hist_payout  + optimized weights
+
+改善要因の分離:
+- v1→v2: DD-bin vs DD個別の効果（C3コンポーネント精度）
+- v2→v3: hist_diff vs hist_payout の効果（タイブレーカー精度）
+- v3→v4: 角番反転バグ修正の効果（全角番コンポーネントに影響）
+- v4→v5: ウェイト最適化の効果（コンポーネント配分）
+
+## アクション
+1. バリアント間の差分は必ず1要素のみにして因果を分離する
+2. v5のウェイト最適化はテスト期間前半で探索、後半で検証（オーバーフィット防止）
+3. 結果はlift@50, avg_diff_vs_other, win_rateの3指標で比較する
+4. イベント日/非イベント日で分割し、各バリアントの得意領域を特定する
+
+## 例
+期待される改善パス（DD20単発テストからの推測値）:
+  v1(DD-bin, hist_diff):     lift@50 ≈ 1.0〜1.5
+  v2(DD個別):                lift@50 ≈ 1.5〜2.0（C3精度向上）
+  v3(hist_payout):           lift@50 ≈ 2.0〜2.5（タイブレーカー精度向上）
+  v4(角番fix):               lift@50 ≈ ?（全コンポーネントに影響、改善方向は不明）
+  v5(weight opt):            lift@50 ≈ v4以上（最適化による上乗せ）
+
+---
+id: component-single-top50-evaluation-method
+trigger: "スコアリングモデルのコンポーネント寄与度を評価するとき"
+confidence: 0.90
+domain: ml-validation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 各コンポーネント単独でTOP50を選定し、リフトを測定する手法が有効
+
+## 背景
+6コンポーネント合成スコアのうち、どのコンポーネントが実際に予測に寄与しているかを
+定量化するため、各コンポーネントを単独スコアとしてTOP50を選定し、
+実績TOP50との一致度（lift@50）を測定する手法を採用した。
+
+DD20での結果:
+- hist_payout: 2.29x（最強だが過去実績の外挿）
+- C4(曜日×角番): 1.72x（構造コンポーネント最強）
+- composite: 1.71x（合成スコア）
+- C1(seg×ssg×角番): 1.43x（安定的ベース）
+- C3(DD×角番): 1.14x（DD個別化で改善余地）
+- C2(セオリー): 0.86x, C5(末尾): 0.57x, C6(ゾロ目): 0.86x
+
+composite ≈ C4単独 は、他コンポーネントの情報が冗長か、
+ウェイト配分が最適でない可能性を示唆する。
+
+## アクション
+1. Walk-forwardで全テスト日についてコンポーネント単独リフトを記録する
+2. lift@50 < 1.0 のコンポーネントはウェイトを下げるか除外を検討する
+3. コンポーネント間の相関を計算し、冗長なペアを特定する
+4. 曜日別・DD別にコンポーネント寄与度が変わるか検証する
+
+## 例
+コンポーネント単独評価の実装:
+  for comp in ['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'hist_payout']:
+      top50 = scores.nlargest(50, comp)
+      lift = len(top50_machines & actual_top50) / expected_hits

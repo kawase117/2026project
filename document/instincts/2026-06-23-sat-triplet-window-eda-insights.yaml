@@ -1,0 +1,124 @@
+---
+id: sat-triplet-window-no-signal
+trigger: "土曜「3台並び」イベントの効果を評価するとき・sliding windowで並び検出を試みるとき"
+confidence: 0.92
+domain: eda-pattern
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 土曜3台並びはsliding window(size=3)では検出不可
+
+## 背景
+蒲田7の曜日別EDAで土曜が末尾gap(d=+0.17)・角番gap(d=+0.18)の両方で全曜日最強だった。
+土曜イベントは「3台並び」＝連続台番号に高設定を投入する日。
+この並びが末尾集中として観測される仮説を検証した。
+
+kamata7_triplet_window_eda.py で土曜限定の分析を実施（30,144 windows, 50日, 4セグメント）。
+鉄台2026除外、2025-07-07除外済み。
+
+## アクション
+- sliding window(size=3)の差枚excessは全セグメントでsd_excess=735〜1998に対しmean_excess=+17〜22枚。S/N比が極めて低い。
+- 3F_Aのみt検定p=0.018だが効果量は+17枚と実用的に無意味。
+- 土曜 vs 非土曜のMann-Whitney比較は全セグメントでp>0.7。土曜固有のシグナルは皆無。
+- 「3台並び」の検出には別アプローチが必要：
+  1. 物理的に隣接する3台ではなく、同一island内の離散配置の可能性
+  2. 差枚ではなく機械割（payout）ベースの検出
+  3. 当日トップ3台の空間的クラスタリング（近接度の検定）
+
+## 例
+| セグメント | 土曜excess | 非土曜excess | Mann-Whitney p |
+|-----------|-----------|-------------|---------------|
+| 2F_A | -16.2 | +10.9 | 0.844 |
+| 2F_N | +21.4 | +16.8 | 0.938 |
+| 3F_A | +17.3 | +15.3 | 0.932 |
+| 3F_N | +22.0 | +24.9 | 0.733 |
+
+---
+id: sat-triplet-position-middle-dominant
+trigger: "3台並びの起点位置を分析するとき・セクション内位置分布を評価するとき"
+confidence: 0.88
+domain: eda-pattern
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 土曜の3台連続windowはセクション中央部が最もexcessが高い
+
+## 背景
+土曜限定のtriplet window分析で、起点位置をleft_edge/middle/right_edgeの3分割で評価。
+全セグメントでmiddle（セクション中央付近）のwindow excessが最大。
+
+## アクション
+- セクション端（left_edge/right_edge）に並びの起点が偏る仮説は否定された。
+- 特に3F_Nではmiddle=+120 vs left=+8 / right=-53と中央集中が顕著。
+- ただしこれはsliding windowの構造的アーティファクトの可能性もある（中央windowはより多くのoverlapを持つ）。
+- 注意: ここでのedgeはセクション内の台番号順の端であり、角番（通路側の台）とは別概念。
+
+## 例
+3F_N起点位置別excess:
+- left_edge: +8.1 (n=2727)
+- middle: +120.3 (n=2210)
+- right_edge: -53.5 (n=2379)
+
+---
+id: sat-weekday-eda-strongest-mechanism-unknown
+trigger: "土曜の末尾gap・角番gapが全曜日最強という結果を解釈するとき"
+confidence: 0.85
+domain: operational-strategy
+source: session-discussion
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 土曜が全曜日最強の理由は「3台並び」では説明できない — 別メカニズムの探索が必要
+
+## 背景
+曜日別EDAで土曜が末尾gap(d=+0.17)・角番gap(d=+0.18)で全曜日最強だった。
+「3台並び」イベントが原因と仮説したが、sliding window分析で否定された。
+
+## アクション
+- 土曜が強い理由として以下の代替仮説を検討すべき：
+  1. 土曜は単純に高設定の投入台数が多い（投入量仮説）
+  2. 土曜は特定セクション・特定島に集中投入する（空間集中仮説）
+  3. 「3台並び」は連続3台ではなく、同一機種3台や同一列3台かもしれない（並びの定義再検討）
+  4. 差枚の分散自体が土曜に大きい（ボラティリティ仮説）
+- 次の分析ステップ: 土曜のセクション別・island別のhit104%率を非土曜と比較
+
+## 例
+sliding window(size=3)で土曜固有のシグナルを検出できなかったことから、
+「3台並び」は少なくとも物理的に台番号が連続する3台の意味ではないか、
+またはその効果が個々の台の差枚ノイズに埋もれるほど小さい。
+
+---
+id: daily-hall-summary-weekday-nth-mostly-null
+trigger: "daily_hall_summaryのweekday_nthを使って曜日フィルタをかけるとき"
+confidence: 0.95
+domain: data-engineering
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# daily_hall_summary.weekday_nth はほぼNULL — 曜日フィルタにはフォールバック必須
+
+## 背景
+Codexが土曜フィルタを実装した際に発見。
+蒲田7の daily_hall_summary で weekday_nth は大半がNULL。
+値が入っている行でも形式は 'Sat1'/'Sat2'等の英語表記で、'土1'等の日本語表記ではない。
+
+## アクション
+- weekday_nth LIKE '土%' をそのまま使うとほぼ全行がフィルタされて空になる。
+- 実装では以下の優先順でフォールバックすること：
+  1. weekday_nth（値がある場合、'Sat'始まりで判定）
+  2. day_of_week = 'Sat'（daily_hall_summaryの別カラム）
+  3. date列からPythonで曜日を算出（最終フォールバック）
+- 既知のinstinct daily-hall-summary-date-features-null-bug と関連。date_info_calculatorが全日付で実行されていない問題。
+
+## 例
+```python
+# 正しいフォールバック実装
+saturday_dates = dhs[
+    dhs['weekday_nth'].str.startswith('Sat', na=False) |
+    (dhs['day_of_week'] == 'Sat') |
+    (pd.to_datetime(dhs['date']).dt.dayofweek == 5)
+]['date']
+```

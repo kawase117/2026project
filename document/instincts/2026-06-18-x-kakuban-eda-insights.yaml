@@ -1,0 +1,167 @@
+---
+id: x-kakuban-rank-must-be-per-machine-not-per-row
+trigger: "X角番（x_kakuban）をDataFrameに付与する実装を書くとき、またはGroupBy.rank()を使う類似の実装をするとき"
+confidence: 0.97
+domain: analysis-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# x_kakuban の rank() は台単位で先に計算し日次行にマージする
+
+## 背景
+2026-06-18: `kamata7_x_kakuban_eda.py` の初版で、1台×342日のフレームに直接
+`groupby(["floor","X"])["Y"].rank(method="first")` をかけたことで、
+同一台の342行が全て異なるx_kakuban値（1〜342）を持つバグが発生。
+
+さらに `run_analysis` と `_build_segment_run` で `_attach_x_kakuban_frame` を
+二重呼び出しして `x_kakuban_x / x_kakuban_y` に列が分裂する副作用も発生。
+
+症状: x_kakuban=29〜180+、各値 n=2 という不自然な分布。
+
+## アクション
+
+```python
+def _attach_x_kakuban_frame(frame: pd.DataFrame) -> pd.DataFrame:
+    # ① 台単位でrank（日次重複を除去）
+    machine_coords = (
+        frame[["machine_number", "floor", "X", "Y"]]
+        .drop_duplicates(subset=["machine_number"])
+        .copy()
+    )
+    machine_coords["x_kakuban"] = (
+        machine_coords.groupby(["floor", "X"])["Y"]
+        .rank(method="first", ascending=True)
+        .astype("Int64")
+    )
+    machine_coords["x_col_size"] = (
+        machine_coords.groupby(["floor", "X"])["machine_number"]
+        .transform("nunique")
+        .astype("Int64")
+    )
+    # ② 全日次行に machine_number 経由でマージ（台ごとに固定値）
+    return frame.merge(
+        machine_coords[["machine_number", "x_kakuban", "x_col_size"]],
+        on="machine_number", how="left"
+    )
+```
+
+二重 attach を防ぐため、フレームに既に `x_kakuban` 列があれば skip する:
+```python
+if "x_kakuban" not in base.columns:
+    base = _attach_x_kakuban_frame(base)
+```
+
+---
+id: x-kakuban-independent-from-section-kakuban
+trigger: "X角番とsection角番を特徴量として組み合わせるか検討するとき"
+confidence: 0.90
+domain: analysis-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# X角番とsection角番は独立した2軸（Spearman r≈0〜−0.14）
+
+## 背景
+2026-06-18: `kamata7_x_kakuban_eda.py` Section 5 の結果。
+
+| segment | Spearman r |
+|---|---|
+| 2F_A | 0.030 |
+| 2F_N | 0.008 |
+| 3F_A | −0.135 |
+| 3F_N | −0.064 |
+
+2F では r≈0（完全独立）。3F では弱い負相関（奥X台は島内の前方台になりやすい傾向）。
+
+## アクション
+ML特徴量として `x_kakuban` と `section_kakuban`（rank_from_min）を
+独立した2カラムとして両方使える。
+3F は r=−0.14 程度の交絡があるが実用上は独立とみなして問題ない。
+
+---
+id: x-kakuban-front-machine-negative-2fn
+trigger: "蒲田7 2F AT系（Nセグメント）で手前台（X列の入口寄り台）を評価するとき"
+confidence: 0.82
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 2F_N では手前1台目（x_kakuban=1）が support=34 列で有意にマイナス
+
+## 背景
+2026-06-18: 台単位ランクで修正後の `kamata7_x_kakuban_eda.py` 結果。
+
+2F_N の significant x_kakuban（support≥2 のもの）:
+| x_kakuban | mean_residual | q値 | support |
+|---|---|---|---|
+| 1 | −28 | 3.9e-3 | 34列 |
+| 5 | −16 | 7.3e-5 | 32列 |
+| 12 | +87 | 7.3e-5 | 11列（長列のみ） |
+
+x_kakuban=1（入口から最も手前の台）が全34列で有意にマイナス。
+section角番=1（島の端台）とは独立した軸で同方向のシグナル。
+x_kakuban=5 の効果量（mean=−16）は小さく実用優先度は低い。
+
+## アクション
+2F AT 系台を選ぶとき、各X列の入口から1番手前の台（x_kakuban=1）を回避する。
+section_kakuban=1 との組み合わせ（両方端）は二重ペナルティになるため最優先で除外。
+
+---
+id: x-kakuban-signal-weaker-than-section-kakuban
+trigger: "X角番とsection角番のどちらを優先すべきか判断するとき、またはMLで両方の特徴量を設計するとき"
+confidence: 0.88
+domain: analysis-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# X角番のシグナルはsection角番より弱い — 補助特徴量として使う
+
+## 背景
+2026-06-18: `kamata7_x_kakuban_eda.py` Cross-segment comparison。
+
+| segment | significant_x_kakuban | mean_abs_mean_residual |
+|---|---|---|
+| 2F_A | 0 | 63 |
+| 2F_N | 7 | 43 |
+| 3F_A | 3 | 22 |
+| 3F_N | 14（うち9件はsupport=1ノイズ） | 30 |
+
+section角番分析（`kamata7_kakuban_colsize_eda.py`）では 3F_medium_A が9件の有意
+かつ全て support≥9 の堅牢なシグナルだった。X角番は件数は多いがノイズが多い。
+
+## アクション
+ML特徴量設計では `section_kakuban` を主特徴量、`x_kakuban` を補助特徴量として扱う。
+X角番単体での選台優先度付けは行わない。
+x_kakuban 結果は常に support_x_columns >= 2 でフィルタしてから使う。
+
+---
+id: x-kakuban-3fn-single-column-noise
+trigger: "蒲田7 3F AT系（Nセグメント）の x_kakuban 高位値（10〜18）の分析結果を参照するとき"
+confidence: 0.95
+domain: analysis-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 3F_N の x_kakuban=10〜18 は全て18台X列1本のシグナル — 構造的知見として使えない
+
+## 背景
+2026-06-18: `kamata7_x_kakuban_eda.py` の 3F_N セグメント結果。
+
+3F の x_col_size=18 の X列は 1本のみ（Section 2 より）。
+x_kakuban=10〜18 は全て support_x_columns=1 → この1列固有の観察。
+14件の significant のうち 9件がこのパターン。
+
+support_x_columns >= 2 でフィルタすると実質シグナルは:
+- x_kakuban=5（support=17）、x_kakuban=3（support=32）
+- x_kakuban=2（support=33）、x_kakuban=6（support=16）
+
+`kakuban-high-position-single-section-trap` と同じ構造問題のX角番版。
+
+## アクション
+x_kakuban 分析では常に support_x_columns >= 2 でフィルタしてから解釈する。
+3F_N の x_kakuban=10+ のシグナルは使用禁止。

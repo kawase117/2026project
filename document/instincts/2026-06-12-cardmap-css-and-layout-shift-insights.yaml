@@ -1,0 +1,189 @@
+---
+id: flex-item-width-debugging-via-computed-style
+trigger: "CSS的に幅が十分なはずなのにテキストが省略表示(ellipsis)される問題を調査するとき"
+confidence: 0.9
+domain: css-debugging
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# flexアイテムの実効幅は align-items の影響を受けるため、computed style を直接測定する
+
+## 背景
+蒲田1カードマップで `.machine-name` に `max-width: 100%; font-size: 8px` を指定しても
+4文字中1文字しか表示されない問題が発生した。
+`.machine-card` が `display: flex; flex-direction: column; align-items: center;`
+であったため、子要素は cross-axis(横方向)で `align-items: center` の影響を受け、
+`max-width: 100%` だけでは親の content-box 幅まで広がらず、
+fit-content相当のごく狭い幅(実測14.3px)に縮小されていた。
+さらに `width: calc(var(--slot-x) - 2px)` の親要素は
+`box-sizing: border-box` + `padding: 1px 2px` + `border: 1px solid` のため、
+実際のcontent幅は `slot_x - 8px`(=22px@slot_x30)であり、
+単純な `slot_x - 2px` 等の見積もりとはズレる。
+
+## アクション
+1. CSSの数式だけで幅を見積もらず、`preview_eval` で
+   `getComputedStyle(el).width`, `el.scrollWidth`, `el.clientWidth`,
+   `el.scrollWidth > el.clientWidth` を実測する。
+2. flex子要素を親いっぱいに広げたい場合は `align-self: stretch` と
+   `width: 100%` を併用する(片方だけでは効かないケースがあった)。
+3. `box-sizing: border-box` のとき、content幅 = `width - padding*2 - border*2`
+   であることを念頭に置き、paddingとborderの合計を引いた値で
+   「文字数 × フォントサイズ」が収まるか検算する。
+
+## 例
+```css
+.machine-name {
+  font-size: var(--name-font-size, calc(var(--slot-x) * 0.2));
+  width: 100%;
+  max-width: 100%;
+  align-self: stretch;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+```
+```js
+// preview_eval で実測して確認
+const el = document.querySelector('.machine-name');
+({fontSize: getComputedStyle(el).fontSize,
+  width: getComputedStyle(el).width,
+  scrollWidth: el.scrollWidth,
+  overflowing: el.scrollWidth > el.clientWidth})
+```
+---
+id: css-var-with-calc-fallback-for-shared-renderer
+trigger: "複数のフロアマップ(蒲田1/蒲田7など)で共有しているCSSテンプレートを、片方だけ変更したいとき"
+confidence: 0.9
+domain: heatmap-floor-layout
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 共有CSSテンプレートは `var(--xxx, calc(...))` のフォールバック付きカスタムプロパティで個別調整する
+
+## 背景
+`generate_kamata7_cardmap_html.py` のCSSテンプレートは蒲田1/蒲田7両方から
+利用される。「蒲田七は修正不要」という制約のもとで蒲田1だけ
+machine-nameのフォントサイズを変えたかった。
+最初は `font-size: calc(var(--slot-x) * 0.2)` のように `--slot-x` から
+逆算する式にしたが、slot_xを変えるとカード全体のサイズも変わってしまい
+副作用が大きかった。
+
+最終的に `_render_map_viewport` 〜 `render_floor_section` 〜
+`build_cardmap_html` まで `name_font_size: float | None = None` を
+バケツリレーし、`--name-font-size` カスタムプロパティとして
+`.floor-map` の inline style に注入する形にした。
+CSS側は `font-size: var(--name-font-size, calc(var(--slot-x) * 0.2));`
+とし、未指定時は従来式(蒲田7は40*0.2=8pxで完全に不変)にフォールバックする。
+最終的には蒲田1も slot_x=40 に揃えたため name_font_size は不要になり
+パラメータ自体は削除したが、フォールバック付きCSS変数の仕組み自体は
+将来別途必要になった際に再利用できる。
+
+## アクション
+1. 共有レンダラーの関数チェーン(`_render_map_viewport` →
+   `render_floor_section` → `build_cardmap_html`)全てに
+   `Optional[float] = None` のパラメータを追加する。
+2. CSSは `var(--custom-prop, <default-expression>)` の形にし、
+   デフォルト式は既存の見た目を完全再現する式にする
+   (蒲田7のように呼び出し側で指定しない箇所は無変更を保証)。
+3. 個別調整が必要な側だけに新パラメータを設定する。不要になったら
+   呼び出し側のパラメータだけ削除すればよい(共有テンプレート側の
+   フォールバック機構はそのまま残してよい)。
+
+## 例
+```python
+# generate_kamata7_cardmap_html.py
+def _render_map_viewport(..., name_font_size: float | None = None) -> str:
+    name_font_style = (
+        f" --name-font-size: {name_font_size}px;" if name_font_size is not None else ""
+    )
+    return f'<div class="floor-map" style="--slot-x: {slot_x}px; ...{name_font_style} ...">'
+```
+```python
+# generate_kamata1_cardmap_html.py
+CARD_LAYOUT = {"slot_x": 40, "slot_y": 30, "pad": 8, "fit_mode": "scroll", "min_scale": 0.65}
+# slot_x=40なら --name-font-size 不要(8pxフォールバックが蒲田7と同じ比率になる)
+```
+---
+id: multi-section-rigid-shift-with-row-gap-bottleneck-analysis
+trigger: "複数セクション(斜め列・島など)をまとめて平行移動し、隙間を詰める/空けるよう依頼されたとき"
+confidence: 0.85
+domain: heatmap-floor-layout
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 複数セクションの平行移動量は「行ごとの隙間」のボトルネックで決まる
+
+## 背景
+[[floor-layout-rigid-delta-remap-workflow]] の発展形。
+「斜め列を左上に動かして2001を2399と同じx軸に揃え、右上の島も
+それに合わせて隙間を詰める」という依頼で、ユーザーの目算(7マス)と
+実際に詰められる量(4マス)に差が生じた。
+理由は、移動対象セクション群(島)を詰められる量は、
+y座標(行)ごとに「島の最小x」と「他セクションの最大x」の差の
+最小値(ボトルネック行)で決まるため。
+
+その後の追加依頼で「斜め列を1マス上に上げて2001/2399を離す」
+「右上の島を2マス右に動かして2120/2121を離す」のように、
+一度詰めた隙間を再度開け直す微調整も発生した
+(「必要な隙間」と「不要な隙間」を区別する必要がある)。
+
+## アクション
+1. 複数セクションをまとめて移動する前に、対象群の各y行について
+   `(他セクションの最大x) - (対象群の最小x) - 1` を計算し、
+   その最小値を「詰められる最大量」とする。
+2. 計算結果をユーザーの目算と比較し、差があれば正直に報告する
+   (例: 「目算7マスでしたが実際は4マスでした」)。
+3. 平行移動後は必ず cellwise overlap チェック(0件)と
+   max_x/max_y/min_x/min_y の変化を報告する。
+4. 「隙間を詰める」と「隙間を空ける」は逆方向の同じ計算であり、
+   ユーザーが「ここの隙間は必要」と指摘した箇所は
+   再度 dy/dx を逆方向に調整して個別に空け直す。
+
+## 例
+```python
+# 行ごとのボトルネック計算
+for y in island.display_y.unique():
+    isl_minx = island[island.display_y==y].display_x.min()
+    other_maxx = others[others.display_y==y].display_x.max()
+    gap = isl_minx - other_maxx - 1  # 0 = 接触, 1 = 1マス空き
+    max_n = min(max_n, gap)
+```
+---
+id: preview-screenshot-timeout-fallback-to-eval
+trigger: "preview_screenshot が繰り返しタイムアウトするが preview_eval は正常に動くとき"
+confidence: 0.75
+domain: tooling-workflow
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# preview_screenshot がタイムアウトする場合は preview_eval のDOM測定で代替検証する
+
+## 背景
+レイアウト変更後の最終確認で `preview_screenshot` が3回連続
+30秒タイムアウトした(サーバー再起動しても解消せず)。
+一方 `preview_eval` でのナビゲーションやDOM取得は正常に動作した。
+
+## アクション
+1. `preview_screenshot` がタイムアウトしたら、まず1回サーバーを
+   再起動して再試行する。
+2. 2回以上失敗する場合は `preview_eval` で対象要素を
+   `getBoundingClientRect()` や `style` 属性パースで直接取得し、
+   座標・重なり・テキストなどを数値で検証する。
+3. pytestのoverlapチェック(0件)とDOM実測値が一致していれば、
+   スクリーンショットなしでも「レイアウト崩れなし」と結論してよい。
+
+## 例
+```js
+// machine-numberのテキストから該当カードを特定し、left/top値を抽出
+const cards = [...document.querySelectorAll('.machine-card')];
+const find = (num) => {
+  const el = cards.find(c => c.querySelector('.machine-number').textContent == num);
+  const style = el.getAttribute('style');
+  return style.match(/\((\d+) - 1\) \* var\(--slot-x\)\); top: calc\(var\(--pad\) \+ \((\d+) - 1\)/).slice(1,3);
+};
+```
+---

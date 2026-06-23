@@ -1,0 +1,152 @@
+---
+id: gate-layer1-dominates-layer2
+trigger: "3層推薦アーキテクチャの改善優先度を検討するとき"
+confidence: 0.90
+domain: ml-architecture
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 第1層ゲートが改善の大半を稼ぎ、第2層ランキング改良は天井に近い
+
+## 背景
+5系列比較（195活性日）で、p@10の改善構造が明確になった。
+- ゲートなし→あり: 0.197→0.216 (+0.019pp, 約10%改善)
+- v6b特徴量追加: +0.002pp
+- CatBoost ML化: -0.001pp（ルールベースと互角）
+改善の95%以上は第1層（活性セグメント絞り込み）が担っている。
+
+## アクション
+第2層のランキング精度を上げるには、現在の12特徴量の非線形交互作用だけでは不十分。
+特徴量空間の拡張（machine_type等カテゴリカル変数の追加）か、第1層の粒度細分化に投資すべき。
+重み最適化やルール微調整への追加投資はROIが低い。
+
+## 例
+gate_v6a(0.216) vs gate_v6b_rule(0.218) vs gate_ml_shadow(0.217) — 第2層の3手法がほぼ同じp@10に収束。
+---
+id: catboost-auc-0539-feature-starvation
+trigger: "CatBoost/MLモデルのAUCが0.55未満のとき"
+confidence: 0.85
+domain: ml-diagnostics
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# AUC 0.539は特徴量不足のサイン
+
+## 背景
+CatBoost shadow（12特徴量、200 iterations、depth=4）のAUCが0.539。
+ランダム(0.5)をわずかに超えるだけ。fallback日数=0で全日学習成功しているため、モデル自体は動作している。
+c1-c6は既にセグメント×角番×DDの交互作用を手動計算済みのため、MLが再発見できる新しい交互作用が限定的。
+
+## アクション
+AUC < 0.55の場合、モデル構造やハイパーパラメータの調整よりも特徴量追加が先。
+第一候補: machine_type（5-7カテゴリ）をcat_featuresとして投入。
+機種カテゴリ×既存特徴量の交互作用をCatBoostに自動発見させる。
+
+## 例
+現状: c1-c6 + hist_* + seg_relative_* = 12特徴量 → AUC 0.539
+期待: + machine_type → 機種別の角番効果差・DD反応差を学習 → AUC改善
+---
+id: ml-event-weak-nonevent-strong-pattern
+trigger: "ML vs ルールベースのイベント日/非イベント日別評価を行うとき"
+confidence: 0.80
+domain: ml-evaluation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# MLは非イベント日で強く、イベント日ではルールベースが勝つ
+
+## 背景
+gate_ml_shadow vs gate_v6b_rule のevent/non_event分割:
+- Event日: ML 0.205 < Rule 0.236（ルールが大幅に勝つ）
+- Non-event日: ML 0.222 > Rule 0.210（MLが勝つ）
+イベント日のパターンはc3(DD別)・c4(曜日別)で既にルールベースが捉えている。
+MLが上乗せできるのは非イベント日の微妙な傾向のみ。
+
+## アクション
+MLとルールベースのアンサンブル（イベント日はルール重視、非イベント日はML重視）が有望。
+または、イベント日フラグ自体をCatBoostの特徴量に追加して日種別の重みを自動学習させる。
+
+## 例
+Event: Rule 0.236 >> ML 0.205 (差 -0.031)
+Non-event: ML 0.222 > Rule 0.210 (差 +0.012)
+---
+id: ml-back-period-improvement-signal
+trigger: "CatBoostのfront/back安定性を評価するとき"
+confidence: 0.70
+domain: ml-evaluation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# MLはBack期間で急上昇し、データ蓄積による改善余地を示唆
+
+## 背景
+gate_ml_shadow: Front 0.201 < Back 0.233（+0.032pp）
+gate_v6b_rule: Front 0.221 ≈ Back 0.215（安定）
+MLはBack期間（後半98日）でルールベースを大幅に超えた。
+学習データの蓄積が精度向上に寄与している可能性。
+
+## アクション
+この傾向が本物なら、より長い学習窓（90日→120日）や、データ量が増えた将来の再評価でMLが優位に立つ可能性がある。
+ただしBack期間のみの優位は過学習の可能性もあるため、confidence=0.70に留める。
+
+## 例
+Front(97日): ML 0.201 vs Rule 0.221 → Rule勝ち
+Back(98日): ML 0.233 vs Rule 0.215 → ML勝ち（+0.018pp）
+---
+id: codex-timeout-prevention-maxdays
+trigger: "Codexに長時間実行を含むプロンプトを書くとき"
+confidence: 0.95
+domain: codex-workflow
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# --max-daysオプションでCodexタイムアウトを防止する
+
+## 背景
+CatBoost shadowフル実行（257日×score_day 11回≈34分）がCodexで2回タイムアウト。
+実装→修正ループ後にフル実行すると60分制限に収まらない。
+
+## アクション
+1. 新規runnerには必ず `--max-days N` オプションを実装させる
+2. プロンプトに「Codexでは --max-days 10 でスモークテストのみ。フル実行はユーザー環境で行う」と明記
+3. 推定実行時間が15分を超える場合は、プロンプトにフル実行禁止を明示
+
+## 例
+```python
+parser.add_argument("--max-days", type=int, default=None)
+if args.max_days is not None:
+    test_dates = test_dates[:args.max_days]
+```
+プロンプト末尾: 「フル実行はユーザー環境で行う。Codexではスモークテスト（--max-days 10）のみ実行すること。」
+---
+id: ml-vs-rule-decision-framework
+trigger: "MLモデルをルールベースと比較して昇格/棄却を判断するとき"
+confidence: 0.85
+domain: ml-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ML昇格判定フレームワーク: 3条件 + AUC診断
+
+## 背景
+CatBoost shadow評価で使用した判定フレームワークが機能した。
+3条件: (1) ML > Rule + 5pp, (2) Front/Back両方でRule超え, (3) ML > Random。
+追加でAUC診断: AUC > 0.55なら特徴量追加で改善余地あり、≤ 0.55なら特徴量不足。
+
+## アクション
+ML昇格判定時は以下の決定木に従う:
+- 3条件すべてPASS → GRADUATE（ML昇格）
+- ML > Random だがGRADUATE条件未達 + AUC > 0.55 → 特徴量追加して再試行
+- ML > Random だがAUC ≤ 0.55 → ルールベースで運用開始、特徴量空間拡張後に再評価
+- ML < Random → FAIL（ML棄却）
+
+## 例
+今回の結果: ML > Random(PASS), ML ≈ Rule(FAIL), AUC=0.539(≤0.55)
+→ 判定: NOT YET、ルールベース運用開始 + machine_type追加で再評価
+---

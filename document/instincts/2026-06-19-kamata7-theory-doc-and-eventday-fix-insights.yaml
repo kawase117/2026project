@@ -1,0 +1,95 @@
+---
+id: kamata7-event-day-complete-definition
+trigger: "蒲田7または蒲田1のイベント日を定義・参照・計算するとき"
+confidence: 0.98
+domain: pachinko-data-engineering
+source: user-correction
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田7/蒲田1 イベント日定義 — 5カテゴリ完全版
+
+## 背景
+`eda/core.py` の `HALL_EVENT_DIGITS` にDD21が欠落、月末がハードコード(30,31)、
+強ゾロ目(MM=DD)が `is_x_day` に未統合だった。ユーザーが複数回指摘しても
+繰り返し不完全な定義が使われていた。2026-06-19に修正。
+
+正しい定義:
+- 7のつく日: DD 7, 17, 27
+- 1のつく日: DD 1, 11, 21, 31
+- ゾロ目: DD 11, 22
+- 強ゾロ目: MM=DD (月==日: 1/1, 2/2, ..., 12/12)
+- 月末: 月の最終日（動的計算、28/29/30/31）
+
+`is_x_day` = DDリスト OR is_month_end OR is_mmdd_zorome
+
+## アクション
+- イベント日を言及するとき、5カテゴリすべてを確認する
+- `eda/core.py` の `is_x_day` 計算が3条件ORであることを前提にする
+- 2026-06-19以前のInstinctのイベント日関連数値は不完全な定義で計算されている点に注意
+- 蒲田1も同一定義
+
+## 例
+修正前: HALL_EVENT_DIGITS["蒲田7"] = [1, 7, 11, 17, 22, 27, 30, 31]  # DD21欠落、月末ハードコード
+修正後: HALL_EVENT_DIGITS["蒲田7"] = [1, 7, 11, 17, 21, 22, 27, 31]  # + is_month_end + is_mmdd_zorome
+
+---
+id: kamata7-tetsu-dai-2026
+trigger: "蒲田7の末尾・角番・セクション分析を行うとき"
+confidence: 0.95
+domain: pachinko-strategy
+source: user-ground-truth
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田7の代表的鉄台 = 台番号2026
+
+## 背景
+台番号2026は蒲田7における代表的な鉄台（恒常的に強い台）。
+末尾・角番の統計検証では鉄台が偽シグナルの主要因であり、
+特に2026は2F_Lの末尾d6シグナルに影響を与えうる位置にある。
+
+## アクション
+- 末尾・角番の検証では台番号2026を除外して再検定する
+- 鉄台判定基準: pos_rate>=60% or median>=0
+- 台番号2026は具体的な個別除外対象としてスクリプトに明示すべき
+
+## 例
+df_clean = df[df["machine_number"] != 2026]  # 鉄台除外
+# または汎用的に:
+tetsu_mask = (df.groupby("machine_number")["plus"].transform("mean") >= 0.6)
+df_clean = df[~tetsu_mask]
+
+---
+id: kamata7-theory-doc-structure-decisions
+trigger: "蒲田7の知見ドキュメントを更新・拡張するとき"
+confidence: 0.90
+domain: pachinko-knowledge-management
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田7理論ドキュメントの設計判断
+
+## 背景
+2026-06-19に `document/kamata7_theory.md` を作成。grill-meで以下の設計を確定:
+- 目的: 理論理解(B)がメイン、台選びチートシート(A)は副産物
+- 構造: 変数の効果と限界を中心軸に、セグメント構造を前提、罠をアンチパターンとして整備
+- 確定知見と運営仮説（user-ground-truth由来）を明確に分離
+- 否定された仮説はインライン注記+罠セクションの両方に配置(方式C)
+- 台選びフローは固定優先順位ではなく条件分岐（通常日/DD11/DD30/イベント日）
+
+Codexレビューで以下を修正:
+- 3F_R_N: 「死亡セグメント」→「結論衝突中」に格下げ
+- 曜日: EDA再現済み事実と運営仮説を分離
+- イベント日: 定義を5カテゴリで固定、過去EDAの不完全定義を警告
+
+## アクション
+- 新しいInstinctが追加された場合、kamata7_theory.mdの該当セクションを更新
+- 否定された仮説が増えた場合、3.1テーブルに追記
+- 未探索ロードマップの項目が完了したら、本論に昇格させるか「否定」として3.1に追加
+- NotebookLMに投入する場合はこのファイル1つでOK
+
+## 例
+新しいInstinctで「3F_R_Nは角番で割れる」が判明した場合:
+→ 1章の3F_R_Nセクションを更新、セグメント表の?を具体値に変更、ロードマップ#1を完了に

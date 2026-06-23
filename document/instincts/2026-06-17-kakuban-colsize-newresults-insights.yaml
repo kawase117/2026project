@@ -1,0 +1,195 @@
+---
+id: kakuban-1-universal-avoidance-colsize-confirmed
+trigger: "蒲田7の台選びで列サイズ（short/medium/long）に関わらず角番1の評価をするとき"
+confidence: 0.97
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 角番1回避は列サイズを問わず普遍的ルール（section単位の正しい分析で再確認）
+
+## 背景
+2026-06-17: `section_max - section_min + 1` ベースの正しい colsize 定義で
+`kamata7_kakuban_colsize_eda.py` を再実行した結果。
+
+旧検証は **X角番の先行実験**（X座標列内の台数でビン分けする実装）として位置づけ直された。
+section 角番（島内順位）の colsize 分類としては軸がずれており、今回が section 単位での初めての有効な検証。
+
+| segment | mean_residual | q値 | sections |
+|---|---|---|---|
+| 2F_short_N | −146 | 3.9e-4 | 8 |
+| 2F_medium_N | −159 | 7.1e-7 | 10 |
+| 2F_long_N | −136 | 3.2e-4 | 9 |
+| 3F_medium_N | −199 | 4.6e-4 | 8 |
+| 3F_medium_A | −145 | 2.3e-19 | 9 |
+| 3F_long_N | −202 | 0.012 | 3 |
+| 3F_long_A | −134 | 8e-9 | 4 |
+
+3F_short_A のみ support_sections=1（1列依存）のため除外。
+
+## アクション
+蒲田7では列サイズ・フロア・機種系を問わず、各列の角番1（= section_min）は
+設定投入の対象外とみなして選台候補から外す。
+
+section_residual 分析（kakuban-section-residual-analysis-insights.yaml）でも
+独立して確認されており、二重に裏付けられた最強の回避ルール。
+
+---
+id: medium-column-mid-positions-positive-3f-a
+trigger: "蒲田7 3F のジャグラー系（Aセグメント）medium 列（12-15台列）で台を選ぶとき"
+confidence: 0.91
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 3F_medium_A では角番5-9が全て有意にプラス（9列分散・最信頼パターン）
+
+## 背景
+2026-06-17: `section_max - section_min + 1` ベースの正しい colsize 定義による再実行結果。
+旧検証は **X角番の先行実験**（X座標列台数ビン）として位置づけ直された。section 角番の medium bin としては軸がずれており、このセグメントの結論は今回が初めての有効な検証。
+
+3F_medium_A（12-15台のジャグラー列、9セクション）の significant kakuban:
+
+| kakuban | mean_residual | q値 | sections |
+|---|---|---|---|
+| 1 | −145 | 2.3e-19 | 9 |
+| 15 | −176 | 2.7e-8 | **2** |
+| 13 | −54 | 0.003 | 7 |
+| 14 | −62 | 0.014 | 5 |
+| 5 | +52 | 0.004 | 9 |
+| 6 | +45 | 0.049 | 9 |
+| 7 | +49 | 0.003 | 9 |
+| 8 | +44 | 0.039 | 9 |
+| 9 | +62 | 0.003 | 9 |
+
+→「両端マイナス・中間5-9プラス」のU字反転構造。
+プラス側は全て9セクション分散で信頼度が高い。
+角15（sections=2）と角14（sections=5）は注意。
+
+## アクション
+3F ジャグラー系 medium 列では各列の5-9番目台（section_min + 4 ～ section_min + 8）を優先候補にする。
+角1・角13-15 は候補から外す。
+
+---
+id: long-column-only-endpoints-significant
+trigger: "蒲田7の long 列（16台以上）で角番を評価するとき"
+confidence: 0.86
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Long 列では端点ペア（角1・角16付近）のみ有意、中間効果は出ない
+
+## 背景
+2026-06-17: `section_max - section_min + 1` ベースの正しい colsize 定義による再実行結果。
+旧検証は **X角番の先行実験**（X座標列台数ビン）として位置づけ直された。section 角番の long bin としては軸がずれており、このセグメントの結論は今回が初めての有効な検証。
+
+significant kakuban（section_max - section_min + 1 ベース）:
+
+| segment | sig kakuban | mean_residual | sections |
+|---|---|---|---|
+| 2F_long_N | 角1 / 角17 | −136 / −135 | 9 / 7 |
+| 3F_long_N | 角16 / 角1 | −230 / −202 | 3 / 3 |
+| 3F_long_A | 角1 / 角16 | −134 / −120 | 4 / 4 |
+
+中間台（角2-15）はいずれも q >> 0.05 で非有意。
+
+## 解釈
+中間効果が出ない理由（推測）:
+1. バラエティコーナー（2F long）では機種投入が角番効果を上書き
+2. long 列は台数が多く、中間の差異が平均化されて検出力不足
+
+## アクション
+long 列では「角1と末端角（列サイズ-1 以上）を避ける」だけで十分。
+中間台の積極的な優劣評価はしない。
+
+---
+id: short-column-front-heavy-positive-2f-n
+trigger: "蒲田7 2F AT系（Nセグメント）の short 列（7-10台）で台を選ぶとき"
+confidence: 0.80
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 2F_short_N では角番4・6がプラス（前半寄りの設定投入パターン）
+
+## 背景
+2026-06-17: `section_max - section_min + 1` ベースの正しい colsize 定義による再実行結果。
+旧検証は **X角番の先行実験**（X座標列台数ビン）として位置づけ直された。section 角番の short bin としては軸がずれており、このセグメントの結論は今回が初めての有効な検証。
+
+2F_short_N（7-10台のAT列、8セクション）の significant kakuban:
+
+| kakuban | mean_residual | q値 | sections |
+|---|---|---|---|
+| 1 | −146 | 3.9e-4 | 8 |
+| 4 | +144 | 5.1e-5 | 8 |
+| 6 | +165 | 5.5e-6 | 8 |
+| 9 | −119 | 1.5e-8 | 5 |
+
+角9は10台列にしか存在しない末端台（sections=5）。
+角4・6は全8セクションに存在する。
+
+## アクション
+2F の short 列では角4・角6（section_min + 3、section_min + 5）を優先候補にする。
+角1・角9は回避。confidence=0.80 で medium 列より確信度は低め。
+
+---
+id: 3f-short-single-section-analysis-invalid
+trigger: "蒲田7 3F short 列（9-10台）の角番分析結果を使おうとするとき"
+confidence: 0.97
+domain: analysis-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 3F short は実質 N/A 各1列のみ — 角番分析は信頼不可
+
+## 背景
+2026-06-17: `section_max - section_min + 1` ベースで確認。
+3F の short 列（9台・10台）は 3F_short_N と 3F_short_A それぞれ **1セクションのみ**。
+全 kakuban 行が support_sections=1 となり、構造シグナルと1列偏りを区別できない。
+
+旧検証（**X角番の先行実験**）では「9台列 / 7台列の均質性確認」として
+X座標集計ベースで分析していたが、セクション角番との軸混在のため section colsize としては解釈不能。
+X角番として改めてクリーンに実装する予定（`kamata7_x_kakuban_eda.py`）。
+
+## アクション
+3F short の角番分析は実施しない・参照しない。
+3F での角番選台は medium・long 列のシグナルのみ使う。
+
+---
+id: kakuban-colsize-pending-rerun-resolved
+trigger: "2026-06-17 の colsize EDA 再実行ブロック（kakuban-colsize-eda-pending-rerun）の状態を確認するとき"
+confidence: 0.99
+domain: analysis-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# colsize EDA 再実行完了 — 新 report.md は使用可能（旧 X軸集計ベースの数値は引き続き無効）
+
+## 背景
+2026-06-17 午前: `kamata7_kakuban_colsize_eda.py` の column_size が
+**X軸集計ベース（誤り）** で定義されており、bin の境界も台集合も実態と異なっていた。
+→ `2026-06-17-kakuban-colsize-correction-insights.yaml` の
+  `kakuban-colsize-eda-pending-rerun` で使用禁止を宣言。
+
+2026-06-17 同日: `section_max - section_min + 1` に修正して再実行。
+→ report.md が正しいセクション単位で再生成された。使用禁止ブロックは解除。
+
+## 有効化された結論（本ファイル参照）
+- `kakuban-1-universal-avoidance-colsize-confirmed`
+- `medium-column-mid-positions-positive-3f-a`
+- `long-column-only-endpoints-significant`
+- `short-column-front-heavy-positive-2f-n`
+- `3f-short-single-section-analysis-invalid`
+
+## 引き続き無効な数値
+旧 report.md（X軸集計ベース）に記載されていた以下の数値は依然として使用禁止：
+- 「short 列（≤9台）で kakuban=1・17 がマイナス」（X軸集計での short 定義に基づく）
+- 「medium 列で kakuban=6 がプラス」（X軸集計での medium 定義に基づく）
+- 「colsize と L/R は交絡している」（X軸集計ベースの confound check 結果、再検証待ち）

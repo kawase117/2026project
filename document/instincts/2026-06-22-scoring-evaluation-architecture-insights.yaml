@@ -1,0 +1,206 @@
+---
+id: single-day-weight-tuning-is-noise
+trigger: "1日の予測結果からスコアリングウェイトを変更しようとするとき"
+confidence: 0.95
+domain: ml-validation
+source: 2026-06-21-prediction-evaluation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# N=1日の結果でウェイトを変更するのは統計的に無意味
+
+## 背景
+6/21予測評価でC3(DD)のr=0.027が最低、hist_avgのr=0.137が最高だった。
+しかしこれはDD21（イベント日・日曜日）という特定条件下の1日の結果であり、
+DDのサンプル数不足（歴史的に11日）やAT機の1日バリアンスに大きく左右される。
+1日のコンポーネント相関でウェイトを動かすと、過学習と同じ構造の誤りを犯す。
+
+## アクション
+- ウェイト変更はwalk-forward backtestの複数日結果に基づいて行う
+- 1日の結果はインサイトとして記録するが、パラメータ変更の根拠にしない
+- 構造的な設計欠陥（冗長コンポーネント、サンプル不足）の発見には使える
+
+## 例
+```
+NG: 6/21でC3のr=0.027だったからウェイトを20%→10%に下げる
+OK: 166日WFでC3のliftが全セグメントで≈1.0だったからウェイトを再検討する
+```
+
+---
+id: c6-zorome-bonus-is-c5-duplicate
+trigger: "C6(ゾロ目ボーナス)コンポーネントを設計・評価するとき"
+confidence: 0.92
+domain: scoring-model
+source: 2026-06-21-prediction-evaluation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# C6(末尾0/5/9/6に+100)はC5(DD別末尾avg_diff)と完全重複
+
+## 背景
+C6の定義は「末尾0/5/9/6に固定+100ボーナス」。これは本来のis_zorome（台番号末尾2桁一致）
+ではなく、単なる特定末尾へのボーナス。C5がDD別末尾avg_diffを既に計算しているため、
+C6はC5に含まれる情報の劣化版（固定値 vs データ駆動値）に過ぎない。
+6/21評価でC6のr=-0.006（唯一の逆相関）はこの冗長性の帰結。
+
+## アクション
+- C6を廃止してC5のウェイトに統合する（5%+5%→10%）
+- ゾロ目効果を入れるなら、本来のis_zorome（台番号末尾2桁一致）に基づく設計にする
+- 固定ボーナスはデータ駆動の特徴量に常に劣後する
+
+## 例
+```
+現行C6: 末尾∈{0,5,9,6} → +100（固定、根拠不明）
+C5: DD21末尾8=+361, 末尾5=+84（データ駆動、DD別）
+→ C5がC6の情報を包含しており、C6は冗長
+```
+
+---
+id: top50-pool-ev-valid-rank-prediction-invalid
+trigger: "6コンポーネントスコアリングの予測精度を評価するとき"
+confidence: 0.90
+domain: scoring-model
+source: 2026-06-21-prediction-evaluation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# TOP50プール選択は有効だが、個別台の順位予測は不可能
+
+## 背景
+6/21評価結果:
+- TOP50 avg_diff=+408 vs 全体-136（+544の優位性）
+- TOP50機械割107.1% vs 全体98.9%（+8.2pp）
+- Spearman rho=0.124（p<0.001、有意）
+- しかしhit@10=0/10、hit@50=7/50（14%）
+- 実績TOP10は全てが予測300-690位
+
+実績TOP10は+8000〜+14400のAT機1日爆発であり、構造スコアでは捕捉不可能。
+このモデルの正しい使い方は「TOP50から選べば期待値プラス」であり「1位を当てる」ではない。
+
+## アクション
+- 評価指標としてhit@Kだけでなく、TOP50プールのavg_diff/WR/機械割を使う
+- 「当たり/外れ」の判定は差枚順位一致ではなく、プラス期待値の達成で行う
+- AT機の1日バリアンスは原理的に予測不可能であることを前提にする
+
+## 例
+```
+6/21実績:
+  TOP50: avg=+408, WR=42%, 機械割=107.1% → プール選択としてOK
+  hit@10: 0/10 → 順位予測としてNG
+  実績1位(+14,400)の予測順位: 343位 → AT爆発は構造で捕まらない
+```
+
+---
+id: hist-avg-strongest-component-underweighted
+trigger: "hist_avg(直近3ヶ月個体平均)のウェイトを検討するとき"
+confidence: 0.85
+domain: scoring-model
+source: 2026-06-21-prediction-evaluation-plus-walkforward
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# hist_avgは全コンポーネント中最強の相関だが10%しか配分されていない
+
+## 背景
+6/21評価: hist_avg r=0.137（最強）vs composite r=0.093 vs C1 r=0.067
+166日WFでもhist_hit104が3F_R_Nで1.14、2F_L_Nで1.09と上位コンポーネント。
+一方、現行モデルではhist_avgは10%のtiebreaker扱い。
+
+ただしhist_avgは「過去の良台は未来も良い」という仮定であり、
+設定変更が入ると無効化される。また鉄台（常に高設定）の影響を受けやすい。
+ウェイト引き上げは3層アーキテクチャの第2層（ranking）の文脈で検討すべき。
+
+## アクション
+- 3層アーキテクチャでは第2層のrelative ranking特徴量としてhist関連を重用する
+- 現行モデルのウェイト微調整（10%→20%等）は3層移行前の暫定措置としてはあり
+- hist_hit_an（A=104%/N=106%閾値）との使い分けを明確にする
+
+## 例
+```
+コンポーネント相関（6/21、全台）:
+  hist_avg: r=0.137 ← 最強
+  composite: r=0.093
+  C1: r=0.067
+  C4: r=0.061
+  C5: r=0.046
+  C2: r=0.043
+  C3: r=0.027
+  C6: r=-0.006 ← 逆相関
+```
+
+---
+id: 6component-to-3tier-migration-confirmed
+trigger: "蒲田7の推薦スコアリングモデルの次ステップを検討するとき"
+confidence: 0.93
+domain: ml-architecture
+source: instinct-cross-reference-plus-evaluation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 6コンポーネント固定ウェイト→3層アーキテクチャへの移行が確定
+
+## 背景
+166日WF検証（segment-component-effectiveness-map）と6/21実戦評価の両方が、
+6コンポーネント固定ウェイトモデルの限界を示した:
+- 全セグメント共通ウェイトは次善策（WF検証）
+- 2F_R_Nは全コンポーネント≈1.0で何をやっても効かない（WF検証）
+- C5の全体liftはセグメント選択効果の混入（WF検証）
+- hit@Kが壊滅的だがTOP50プールEVはプラス（6/21実戦）
+
+3者（ユーザー・Claude・Codex）で合意済みの3層アーキテクチャ:
+第1層gate（absolute活性判定）→ 第2層ranking（relative台順位）→ 第3層delivery（運用出力）
+
+gate_v6aが有効確認済み、gate_v6b_ruleの追加改善は小幅（前回セッション）。
+次は第2層rankingの改善フェーズ。
+
+## アクション
+- 現行6コンポーネントモデルは暫定運用として継続可能（TOP50プールEVはプラス）
+- 新規開発は3層アーキテクチャに集中する
+- 第1層: gate_v6a + hist_hit_an をベースに
+- 第2層: セグメント別ウェイトまたはCatBoost shadow mode
+- 第3層: AT優先Top10 + Backup + Context A
+
+## 例
+```
+移行ロードマップ:
+  現在: 6コンポーネント固定ウェイト（暫定運用）
+  Phase A: gate_v6a第1層を本番化（完了）
+  Phase B: 第2層ranking改善（着手中）
+  Phase C: 第3層delivery実装
+  Phase D: MLをshadow modeで並走開始
+```
+
+---
+id: 2f-r-n-segment-unresponsive-to-scoring
+trigger: "2F_R_Nセグメントのスコアリング改善を検討するとき"
+confidence: 0.88
+domain: scoring-model
+source: walkforward-166day-plus-single-day-evaluation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 2F_R_Nは全コンポーネントに無反応（lift≈1.0）
+
+## 背景
+166日Walk-forward検証で2F_R_Nは全5コンポーネントのliftが0.98-1.01の範囲:
+- c1=1.00, c2=1.01, c4=0.98, c5=1.00, hist_hit104=1.00
+6/21実戦でも2F_R_N台はTOP50に9台入ったがavg=+222と低水準。
+
+考えられる原因:
+- 2Fフロア右側は機種配置が均一で差別化特徴量が乏しい
+- セグメント内の設定投入パターンがランダムに近い
+- サンプル数不足で弱いシグナルが埋もれている
+
+## アクション
+- 2F_R_Nに対してコンポーネントウェイトを調整しても効果がない
+- 3層アーキテクチャでは第1層gateで2F_R_Nの活性/非活性を判定し、非活性日は推薦しない
+- 活性日でもrankingは均等ウェイト（≒ランダム）で運用する
+- 新しい特徴量（機種別、設置期間等）がないかCatBoost shadow modeで探索する
+
+## 例
+```
+2F_R_N Component Lift (166日WF):
+  c1: 1.00  c2: 1.01  c4: 0.98  c5: 1.00  hist_hit104: 1.00
+  → 全てノイズレベル。ウェイト調整は無効。
+  → gate判定 + 均等ランダム + ML探索 の3段階で対応
+```

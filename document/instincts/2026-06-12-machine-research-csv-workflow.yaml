@@ -1,0 +1,52 @@
+---
+id: machine-list-csv-relocated-after-cleanup
+trigger: "machine_list_for_research.csv (or any previously-used file) suddenly returns FileNotFoundError despite pwd being correct"
+confidence: 0.9
+domain: file-management
+source: session-observation
+project_id: pachinko-analyzer
+project_name: 2026project
+
+# 機種リサーチCSVは repo cleanup でパス変更された
+
+## 背景
+リポジトリルート直下にあった `machine_list_for_research.csv` は、2026-06-11のリポジトリ整理（document/plans/2026-06-11-repo-cleanup-prompt.md）で
+`document/machine_master_research/machine_list_for_research.csv` に移動された。
+セッション圧縮を挟むと旧パスを記憶したまま処理を続けてしまい、FileNotFoundError が発生する。
+
+## アクション
+ファイルが見つからない場合、まず `git status --porcelain | grep -i <filename>` や `git log --oneline -- "**/<filename>"` で
+過去のリネーム/移動コミットを確認する。`find . -iname "*<filename>*"` で現在地を特定してからパスを更新する。
+過去セッションのサマリに記載された絶対パスを鵜呑みにしない。
+
+## 例
+`document/machine_master_research/machine_list_for_research.csv` — manufacturer/release_date/machine_type/rtp_setting1-6/bb_setting1-6/rb_setting1-6/notes の23列CSV（utf-8-sig）。
+read-modify-write は csv.reader/csv.writer で行い、`row[0]==machine_name` で完全一致検索する。
+
+---
+id: pachislot-machine-research-batch-pattern
+trigger: "machine_list_for_research.csv の不人気台（低出現頻度）の RTP/スペック情報をリサーチして埋める"
+confidence: 0.85
+domain: data-research
+source: session-observation
+project_id: pachinko-analyzer
+project_name: 2026project
+
+# パチスロ機種スペックリサーチのバッチパターン
+
+## 背景
+~300機種のCSVに対し、5機種ずつ並列WebSearchでリサーチし、csv read-modify-write で一括反映するパターンが効率的。
+低出現頻度の機種は名前の表記ゆれ（半角/全角!、スペース有無、(スマスロ)サフィックス、(スマスロ)/(SLOT)別バージョン）が多く、
+事前に `row[0] == name` での完全一致検索を行い、見つからない場合は grep で候補一覧を出してから対応付ける必要がある。
+
+## アクション
+1. 「remaining machines」検出は row[4]=='' and row[10]=='' だけでなく row[9]=='' (rtp_setting6)も確認し、notesに既存データがある false positive を除外する。
+2. 名前が見つからない場合は部分一致grepで候補名を列挙し、正確な行を特定する。
+3. 同一機種の重複行（表記ゆれ）が複数ある場合は、同じ research 結果を全行にコピーする。
+4. "5号機データ割愛"等のスキップ済みnotesは絶対に上書きしない。
+5. スマスロ版で機械割の設定別具体値が見つからない場合でも、ボーナス確率・AT初当り確率・設定差要素などのnotesだけでも価値があるので埋める。
+
+## 例
+うみねこのなく頃に2、ヨルムンガンド、ゴジラ等で実施した手順：WebSearch(5並列) → 結果から rtp_setting1/6, bb/rb確率, notes をまとめる → csv read-modify-write一括反映 → 次バッチへ。
+
+---

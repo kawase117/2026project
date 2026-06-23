@@ -1,0 +1,275 @@
+---
+id: kakuban-dual-rank-correct-definition
+trigger: "角番（kakuban）の定義を実装・分析・プロンプトで扱うとき"
+confidence: 0.97
+domain: domain-definition
+source: user-correction
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 角番は両端からの2値 — rank_from_min と rank_from_max を同時に保持する
+
+## 背景
+2026-06-17 セッションでユーザーより訂正。
+旧実装（KAKUBAN_RULES）は「メイン通路＝台番号小側」と仮定して rank_from_min のみを角番とした。
+正しくは「どちら側がメイン通路かはランダム」であり、各台は両端から数えた2つの角番を同時に持つ。
+例: section 2001-2010 の台 2002 → 角番2（min側）かつ角番9（max側）。
+
+## アクション
+- 各台の角番は rank_from_min と rank_from_max の2カラムとして保持する
+- 「角N台を選ぶ」= rank_from_min == N OR rank_from_max == N
+- 集計時は _expand_dual_kakuban() で1台-日行を2行展開してから groupby する:
+  ```python
+  def _expand_dual_kakuban(frame):
+      part_min = frame.copy(); part_min["kakuban"] = part_min["kakuban_min"]
+      part_max = frame.copy(); part_max["kakuban"] = part_max["kakuban_max"]
+      return pd.concat([part_min, part_max], ignore_index=True)
+  ```
+- min(rank_from_min, rank_from_max) の単純集約は補助的には使えるが、メイン分析では2行展開を使う
+- 旧 KAKUBAN_RULES・_sort_rank・_resolve_kakuban_rule は廃止
+- 座標CSV（Heatmap/*_floor_coordinates_*.csv）の rank_from_min / rank_from_max 列を直接使用
+
+## 例
+kamata_weekday_event_axis_eda.py の対応箇所:
+```python
+# _build_segment_frame 内
+merged["kakuban_min"] = pd.to_numeric(merged["rank_from_min"], errors="coerce").astype("Int64")
+merged["kakuban_max"] = pd.to_numeric(merged["rank_from_max"], errors="coerce").astype("Int64")
+
+# メインループ内
+if axis_name == "kakuban":
+    ordered_frame = _expand_dual_kakuban(segment_frame)
+else:
+    ordered_frame = segment_frame.copy()
+```
+
+---
+id: codex-prompt-symbol-deletion-test-check
+trigger: "Codexへのプロンプトで関数・定数の削除を指示するとき"
+confidence: 0.95
+domain: workflow-codex-handoff
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 削除対象シンボルがテストで import されていないか先に確認してプロンプトに明記する
+
+## 背景
+2026-06-17 の KAKUBAN_RULES / assign_kakuban 削除プロンプトで、
+Codex がテストの import エラーにより複数回試行を繰り返した。
+assign_kakuban は test/ml/test_kamata_corner_mirror_analysis.py に import されており、
+単純削除ではテストが落ちた。
+
+## アクション
+削除指示を書く前に以下を確認してプロンプトに明記する:
+1. grep -r "from ml.analysis.X import" test/ で import 箇所を確認
+2. テストが使用しているシンボルは「削除せず薄いラッパーとして残す」と明示する
+3. ラッパーに必要な最低限のシグネチャ・戻り値を記述する
+
+追記テンプレ:
+```
+注意: <シンボル名> はテストが import しているため削除せず、
+薄いラッパー（<戻り値の説明>）として残す。
+<定数名> 等は削除してよい。
+```
+
+---
+id: codex-prompt-csv-schema-fixture-compat
+trigger: "Codexへのプロンプトで座標CSV・入力スキーマの変更を指示するとき"
+confidence: 0.93
+domain: workflow-codex-handoff
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# テスト用 fixture CSV は最小限の列しか持たない — 後方互換フォールバックを明示する
+
+## 背景
+2026-06-17 の実装で _read_coordinates が rank_from_min / rank_from_max を必須列にしたため、
+テスト fixture（最小限の列のみ）で MISSING_COLUMNS エラーが発生した。
+Codex は後方互換補完ロジックを追加して解決したが、プロンプトに明記がなかったため試行が増えた。
+
+## アクション
+CSVスキーマ変更プロンプトには必ず以下を追記する:
+「_read_coordinates は新列がない場合に section 内の machine_number 順から補完する
+フォールバックを入れること。テスト用 fixture CSV は新列を持たない可能性がある。」
+
+追記テンプレ:
+```
+_read_coordinates のフォールバック: rank_from_min / rank_from_max がCSVに存在しない場合は、
+section 内で machine_number を昇順ソートしてその順位を rank_from_min とし、
+逆順の順位を rank_from_max として補完する。テスト fixture 互換のため必須。
+```
+
+---
+id: ichikei-day-floor-gap-collapse
+trigger: "1系日（DD∈{1,11,21,31}）に蒲田7でフロア選択を考えるとき"
+confidence: 0.80
+domain: operational-strategy
+source: empirical-backtest
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 1系日は唯一 2F/3F フロア差がほぼ消滅する日（gap=19）— フロア縛り不要
+
+## 背景
+eda/kamata7_ichikei_analysis.py walk-forward 3ペア（n_dates=30, 2026-06-17）:
+
+| 日種 | Q5 excess | 2F/3F gap |
+|---|---:|---:|
+| 通常日 | +150 | 135 |
+| 7系日 | +301 | 132 |
+| 週末 | +144 | 90 |
+| 1系日 | +215 | 19 |
+
+1系日の gap=19 は他日種と桁違いに小さい（2F excess=+10, 3F excess=-9）。
+
+## アクション
+- Q5機種選択は1系日でも有効（excess +215）
+- 1系日のみフロア縛りを外してよい — 3F Q5も選択肢に入る
+- セクション戦略は通常日と逆転するため要注意:
+  - 通常日最強（2001-2010, 2041-2052, 2102-2114）が 1系日に大幅悪化（delta -300〜-400）
+  - 通常日弱（2330-2351, 2077-2088）が 1系日に逆転（delta +177〜+236）
+  - 3F は 3265-3280（delta +420）、3117-3130（delta +311）が 1系日に大幅上昇
+- まだ3ペアのため「有望」どまり。10ペア超えたら確信度を引き上げる
+
+---
+id: kamata7-when-which-map-v2
+trigger: "蒲田7の When/Which 状態マップを参照・更新するとき"
+confidence: 0.95
+domain: session-state
+source: session-conclusion
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田7 When/Which 状態マップ v2（2026-06-17）— 1系日行追加・Section軸完了
+
+## 背景
+2026-06-16 から継続の状態マップ探索。本セッション（2026-06-17）で完了した探索:
+- 週末×機種名: Q5 excess -34 減衰（✓）
+- 週末×フロア: 2F/3F gap 縮小（✓）
+- ゾロ目日×全軸: 全期間 n<10 で判定不能（△）
+- 1系日×機種名・フロア: Q5有効 +215、gap 消滅 gap=19（✓）
+- Section×通常日・7系日・週末・1系日: 座標CSV sectionベースで全完了（✓）
+
+## 探索済み（行×列）
+- 機種名(Q5): 通常日・7系日・週末・ゾロ目日・1系日（全5） ✓
+- フロア(2F/3F): 通常日・7系日・週末・1系日 ✓、ゾロ目日 △
+- Section: 通常日・7系日・週末・1系日 ✓、ゾロ目日 △
+- 台末尾×DD/曜: 全日種 ✓（4手法で棄却済み）
+
+## 残未探索
+- Hall-level When（どのホールのどの日に行くか）: 全行で未着手
+  → 蒲田1 vs 蒲田7 の日別比較が次の主要課題
+
+---
+id: kamata7-3f-a-kakuban-event-day-corner-effect
+trigger: "蒲田7 3F Aタイプの角番×イベント日を選台判断に使うとき"
+confidence: 0.88
+domain: operational-strategy
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田7 3F Aタイプ: イベント日は角1（コーナー）と角15前後（端から2番目）が突出
+
+## 背景
+2026-06-17: 新定義（dual-kakuban = rank_from_min AND rank_from_max）での再分析結果。
+kamata_weekday_event_axis_eda.py → kamata7_3F_A_kakuban_event.csv より。
+
+| kakuban | event_mean | non_event_mean | delta | q値 |
+|---|---:|---:|---:|---|
+| 角15 | 336.9 | 64.7 | +272 | 1.3e-6 |
+| 角1 | 285.4 | 29.8 | +256 | 2.6e-5 |
+| 角16 | 304.3 | 36.5 | +268 | 3.1e-4 |
+| 角2 | 356.5 | 143.7 | +213 | 8.2e-4 |
+| 角14 | 341.2 | 121.8 | +219 | 8.2e-4 |
+
+角15・16は3Fセクション（多くが16〜22台）で「端から2番目」に相当する。
+
+## アクション
+- 蒲田7 3F Aタイプのイベント日は角1（コーナー）または角15前後を優先する
+- 角1 = rank_from_min=1 OR rank_from_max=1 → そのセクションの両端台が候補
+- 角15前後 = コーナーから15番目（= 端から2番目の台、コーナーの隣の隣）
+- 物理解釈: ホール側がイベント日にコーナー台・その隣を目立つ位置として高設定を配置している可能性
+- 有意でないポジション: 角9, 11, 18, 19, 20, 21, 22 → 中間・最深部は相対的に弱い
+
+---
+id: kamata7-2f-a-kakuban-null-result
+trigger: "蒲田7 2F Aタイプの選台軸（角番 vs セクション）を選ぶとき"
+confidence: 0.87
+domain: operational-strategy
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田7 2F Aタイプ: 角番×イベント日は全て非有意 — 角番軸ではなくセクション軸が正解
+
+## 背景
+2026-06-17: kamata7_2F_A_kakuban_event.csv — 全14ポジションで kruskal_q > 0.39。
+最も小さい q でも 角9: q=0.40、角12: q=0.41 で FDR補正後に有意なし。
+
+旧定義（単側）では一部ポジションが有意に見えた可能性があり、これが定義ミスのアーティファクトだった可能性が高い。
+
+## アクション
+- 蒲田7 2F Aタイプのイベント日選台では**角番を判断軸にしない**
+- 代わりに Section軸を使う（通常日の通常TOP: 2001-2010, 2041-2052, 2102-2114 など）
+- 1系日は Section が逆転するため別に確認が必要
+- 注意: 角番よりセクションがより粗い粒度だが、現データでは Section の方が予測力がある
+
+---
+id: kamata1-2f-a-kakuban-broad-event-effect
+trigger: "蒲田1 2F Aタイプのイベント日戦略を組み立てるとき"
+confidence: 0.82
+domain: operational-strategy
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1 2F Aタイプ: イベント日は角番位置に関わらず全体的に強い（角番で絞り込む意義は薄い）
+
+## 背景
+2026-06-17: kamata1_2F_A_kakuban_event.csv — 20ポジション中15ポジションが q<0.05。
+最強は 角19 (+246), 角17 (+206), 角18 (+191), 角11 (+201)。
+唯一有意でなかったのは 角15 のみ（q=0.78）。
+
+| 角番 | delta | q |
+|---|---:|---|
+| 角19 | +246 | 1.5e-4 |
+| 角17 | +206 | 4.5e-3 |
+| 角18 | +191 | 2.2e-3 |
+| 角11 | +201 | 3.2e-6 |
+
+## アクション
+- 蒲田1 2F Aタイプはイベント日に「行けばどこも強い」状態であるため、角番の絞り込みより**機種選択**を優先する
+- 相対的に強い角番は 17〜19（端から2〜3番目）だが、差は小さい
+- 角15（q=0.78）の特異な非有意は解釈困難 — そのセクションの特定の機種構成による可能性あり
+- 蒲田7 3F（角番絞り込み有効）と対照的: 蒲田1 2F は全面的なイベント日強化パターン
+
+---
+id: kamata7-2f-n-kakuban-event-reversal
+trigger: "蒲田7 2F Nタイプ（ノーマル/BT系）のイベント日角番を判断するとき"
+confidence: 0.74
+domain: operational-strategy
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田7 2F Nタイプ: 角11・角5がイベント日にプラス、角20はイベント日に大幅マイナス（逆転）
+
+## 背景
+2026-06-17: kamata7_2F_N_kakuban_event.csv (FDR有意 q<0.05: 3ポジション)
+
+| kakuban | event | non_event | delta | q | 備考 |
+|---|---:|---:|---:|---|---|
+| 角11 | +468 | +173 | +295 | 0.042 | 正方向 |
+| 角5 | +420 | +229 | +191 | 0.047 | 正方向 |
+| 角20 | -277 | +483 | **-761** | 0.047 | **逆転** |
+
+角20は n=170台（イベント日）と小サンプルのため要注意。
+
+## アクション
+- 蒲田7 2F Nタイプのイベント日: 角11・角5を優先候補とする
+- 角20（最深部）はイベント日に避ける候補（ただし小サンプルにつき確信度低め）
+- サンプルが増えたら再検証: 角20のサンプルが500台超えたら信頼性が上がる
+- Nタイプ全体は Aタイプより有意ポジション数が少なく、ランダム性が高い

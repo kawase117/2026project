@@ -1,0 +1,128 @@
+---
+id: wed-digit-event-gap-not-identity
+trigger: "水曜末尾イベントの効果を評価するとき"
+confidence: 0.92
+domain: kamata7-event-pattern
+source: session-eda-2026-06-23
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 水曜末尾イベント：「どの末尾か」ではなく「gap」で評価すべき
+
+## 背景
+水曜日は末尾に高設定を集中させるイベント日。先行分析でBonferroni後に非有意という結論が出たが、
+これは「特定末尾がトップか」を検定していたため。正しい問いは「トップ末尾と他の差（gap）が水曜に大きいか」。
+
+## アクション
+- 末尾イベントの評価は、Mann-Whitney U で「水曜のgap > 他曜日のgap」を検定する
+- 全体pooledでp=0.009、Cohen's d=+0.078で有意（ただし効果量は小さい）
+- セグメント別では3F AT機（3F_L_A d=+0.68, 3F_R_A d=+0.77）で中〜大効果
+- N機では2F_L_N (d=+0.33)のみ有意
+- 「どの末尾がトップか」はセグメント間で完全分散（8セグメント8種類）し予測不可能
+
+## 例
+水曜日の末尾gap（トップ末尾avg_diff - 残りavg_diff）= 1807
+他曜日のgap = 1727、差 = +80、MW p=0.009
+
+---
+id: wed-digit-top-identity-random
+trigger: "水曜のトップ末尾を事前予測しようとするとき"
+confidence: 0.95
+domain: kamata7-event-pattern
+source: session-eda-2026-06-23
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 水曜のトップ末尾は毎週ランダムに選択される
+
+## 背景
+346日のカイ二乗検定で2F_L_A（末尾7, p<0.0001）と2F_R_A（末尾4, p=0.001）に偏りがあるが、
+これはAT機の物理的配置要因であり、水曜固有ではない。
+水曜限定の前半vs後半安定性は0/8（完全不一致）。
+
+## アクション
+- 水曜のトップ末尾を事前予測するモデルは構築しない
+- 全体avg_diffでのトップは8セグメントで8種の末尾に完全分散
+- 当日の途中経過（開店後の出玉速報）でトップ末尾を推定する戦略のみ有効
+
+## 例
+全体avg_diffトップ: 2F_L_A=7, 2F_L_N=9, 2F_R_A=1, 2F_R_N=0, 3F_L_A=3, 3F_L_N=2, 3F_R_A=4, 3F_R_N=8
+→ 0-9の10種中8種が登場、完全分散
+
+---
+id: wed-digit-no-rotation-rebalancing
+trigger: "末尾の累積差枚からローテーションを予測しようとするとき"
+confidence: 0.93
+domain: kamata7-event-pattern
+source: session-eda-2026-06-23
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 水曜末尾にローテーション・リバランスは存在しない
+
+## 背景
+「累積差枚が高い末尾は次週避けられる」仮説を検証。
+リピート率、Spearman相関、4週窓翌週順位の全てがランダムと一致。
+
+## アクション
+- 累積差枚に基づく末尾予測は無効
+- リピート率: 0.110（ランダム期待0.100）
+- 累積vs翌週 Spearman rho: -0.003（有意セグメント0/8）
+- 4週窓→翌週順位: 5.54（ランダム期待5.50）、Top3率31.8%（期待30%）
+- 木曜コントロールと差なし
+
+## 例
+ホール側は毎週独立にトップ末尾を選択しており、過去の累積を考慮していない。
+あるいは観測できない外部変数（機種入替、客足、店長判断）で決定。
+
+---
+id: tue-kakuban-k59-is-permanent-not-tuesday-specific
+trigger: "火曜角番イベントの効果を評価するとき"
+confidence: 0.92
+domain: kamata7-event-pattern
+source: session-eda-2026-06-23
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 火曜K5-9の優位性は火曜固有ではなく恒常的な構造バイアス
+
+## 背景
+火曜日の角番イベントをセクション別×角番グループ別にMann-Whitney U検定した結果、
+AT機左側（2F_L_A, 3F_L_A）でK5-9が有意だった。しかし既存Instinct
+（kakuban-middle-position-positive-residual, 2026-06-17）で「中間ポジション角5-9は
+恒常的にプラス残差」「イベント日/曜日で角番の相対格差は変わらない（残差後に消える）」
+と結論済み。今回の検定は恒常効果の再検出であり、火曜固有のイベント効果ではない。
+
+## アクション
+- 火曜の角番gap（全体）はp=0.29で非有意 → 火曜に角番集中度が上がる証拠なし
+- K5-9の優位性は全曜日で存在する構造バイアス（[[kakuban-middle-position-positive-residual]]参照）
+- 火曜「角◯イベント」の効果は、恒常的K5-9優位を超える追加ブーストとしては検出されなかった
+- N機は全セグメントで角番グループ間差が非有意（全曜日共通）
+
+## 例
+3F_L_A K5-9の残差法による曜日固有効果（2026-06-23 別セッション分析）:
+木+116, 火+104, 金+74, 日-108 → 恒常効果+179に対する変動であり、火曜だけが特別ではない。
+
+---
+id: weekend-digit-kakuban-concentration-strongest
+trigger: "曜日別の設定集中度を評価するとき"
+confidence: 0.88
+domain: kamata7-event-pattern
+source: session-eda-2026-06-23
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 土日が末尾・角番の両方で設定集中度が最大
+
+## 背景
+曜日別のgap分析で、土曜・日曜が末尾gap・角番gapの両方で最も高い値を示した。
+
+## アクション
+- 末尾gap: 土(1885, d=+0.17)、日(1920, d=+0.21) — 水(1807, d=+0.08)より大
+- 角番gap: 土(1390, d=+0.18)、日(1296, d=+0.05)
+- digit spread: 土(993, d=+0.27)、日(964, d=+0.19)
+- 土曜「3台並び」イベントが末尾連番に設定を集中させ、gapを増幅している可能性
+- 週末の設定配分は平日より偏りが大きく、予測シグナルが強い
+
+## 例
+曜日別digit gap ranking: 日(1920) > 土(1885) > 水(1807) > 火(1713) > 月(1636) > 金(1612) > 木(1598)

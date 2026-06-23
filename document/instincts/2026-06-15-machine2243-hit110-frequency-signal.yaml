@@ -1,0 +1,66 @@
+---
+id: machine-2243-hit110-frequency-elevated-vs-floor-baseline
+trigger: "machine 2243 (kamata7 2F)、または周辺台2240-2243クラスタを高設定候補として評価するとき"
+confidence: 0.8
+domain: project-status
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 2243は差枚meanではスパイク依存(false positive)だが、hit_110(機械割110%+の発生頻度)では蒲田7 2Fフロア上位4%の本物のシグナル
+
+## 背景
+[[spike-driven-machine-can-fake-cell-vs-rest-stability]] で、machine 2243 の
+差枚mean=684.6(median=50)は年23回(6.8%)の超大勝ち日(>150%)に依存する
+false positiveであると結論した。
+
+しかし機械割110%以上(設定5/6相当)の「到達頻度」hit_110で再検証したところ、
+これはマグニチュードに依存しない指標であり、2243は別の結果を示した。
+
+- 2243のhit_110 = 32.3% (109/337日)
+- 蒲田7 2Fフロア全351台(各337-338日)のhit_110: mean=25.7%, median=26.0%, std=4.6%
+- 2243のZスコア = +1.44σ, パーセンタイル = 上位4.3%(351台中15台のみ上回る)
+- フロア最高は machine 2026 (hit_110=50.5%)で2243の1.5倍以上 → 最強ではないが上位帯
+
+機種が5回変わっても(北斗の拳→東京リベンジャーズ→範馬刃牙→化物語→モンキーターンV)
+hit_110の高さは概ね継続していた(北斗0.331, 刃牙0.365, 化物語0.274)。
+
+曜日別・DOM別の二次パターンは検出されず(Tue 38.8% vs Thu 24.5%等もn≈48では
+ノイズ域)、特定日付に紐づく戦略というより「恒常的に高設定枠に入りやすい台」
+という解釈の方が整合的。
+
+周辺台(2230-2260)のhit_110を見ると、2240-2243が緩やかに高い帯
+(0.311, 0.293, 0.314, 0.323)を形成し2244で急落(0.272)。
+2252, 2258も0.322で別の高頻度クラスタを形成しており、台番号(位置)起因の
+可能性を示唆する。
+
+## アクション
+1. 差枚mean/medianのスパイク依存性チェック([[spike-driven-machine-can-fake-cell-vs-rest-stability]])
+   と、hit_110/hit_104のような「マグニチュード非依存の到達頻度」チェックは
+   別軸として両方実施する。前者が false positiveでも後者が real signalである
+   ケースがある。
+2. 単台のhit_110を評価する際は、同フロア全台(n>=100日)のhit_110分布
+   (mean, std, percentile)を必ずbaselineとして算出し、Zスコア/パーセンタイル
+   で相対評価する。絶対値(32%)だけでは判断しない。
+3. 高hit_110台が見つかった場合、周辺台(±10番台程度)のhit_110も算出し、
+   クラスタ状に高い帯が存在するか(位置起因の可能性)を確認する。
+4. 同様の高hit_110クラスタが他ホール(マルハン蒲田1など)の同位置にも
+   存在するか横展開して検証する(位置起因 vs ホール固有の切り分け)。
+5. MLとしての即時投入は見送り、まずEDAとして島構成図上での
+   位置マッピングを行う(次のアクション)。
+
+## 例
+```python
+# hit_110 baseline計算(蒲田7 2Fフロア)
+df['payoutrate'] = (df['games_normalized']*3 + df['diff_coins_normalized']) \
+    / (df['games_normalized']*3) * 100
+f2 = df[(df['machine_number']>=2000)&(df['machine_number']<3000)]
+per_m = f2.groupby('machine_number').apply(
+    lambda g: pd.Series({'hit_110': (g['payoutrate']>=110).mean(), 'n': len(g)})
+)
+per_m = per_m[per_m['n']>=100]
+z = (per_m.loc[2243,'hit_110'] - per_m['hit_110'].mean()) / per_m['hit_110'].std()
+percentile = (per_m['hit_110'] < per_m.loc[2243,'hit_110']).mean()
+# z=+1.44, percentile=0.957
+```
+---

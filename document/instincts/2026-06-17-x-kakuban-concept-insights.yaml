@@ -1,0 +1,85 @@
+---
+id: x-kakuban-concept-definition
+trigger: "X角番・X座標列内の台深度・手前奥シグナルを分析・実装しようとするとき"
+confidence: 0.90
+domain: analysis-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# X角番（x_kakuban）— X座標列内の深度順位による新しい分析軸
+
+## 背景
+2026-06-17: section 角番（kakuban）と混在していた旧 colsize 分析（X座標集計ベース）を
+「X角番の先行実験」として再定義したことを機に、X角番を正式な分析概念として定義する。
+
+section 角番（既存）と X角番（新規）は独立した2軸：
+
+| 概念 | 定義 | 捉えるもの |
+|---|---|---|
+| section 角番 | 島（連続台番号グループ）内での台番号順位 | 島の端/中間ポジション |
+| X角番（x_kakuban） | X座標列内でのY方向順位（Y昇順） | 物理的な手前/奥ポジション |
+
+## X角番の計算定義
+
+```python
+# floor_coordinates_*.csv の座標データを使用
+# 同じ X 座標を持つ台を Y 昇順（手前→奥）に並べてランク付け
+coords["x_kakuban"] = (
+    coords.groupby(["floor", "X"])["Y"]
+    .rank(method="first")
+    .astype(int)
+)
+# x_kakuban=1 が最も手前（Y値が小さい）の台
+```
+
+## section 角番との違い
+
+```
+例: 蒲田7 2F の X=5 列に 2 セクション・4台がある場合（模式）
+  台番号 2010 (section_A, Y=2) → section角番=1, X角番=1（手前）
+  台番号 2011 (section_A, Y=3) → section角番=2, X角番=2
+  台番号 2050 (section_B, Y=5) → section角番=1, X角番=3（別セクション・同X列）
+  台番号 2051 (section_B, Y=6) → section角番=2, X角番=4（奥）
+```
+
+→ X角番はセクション境界を無視して「入口から何番目か」を測る。
+
+## 先行実験との関係
+旧 kamata7_kakuban_colsize_eda.py の「X座標集計ベースの colsize」部分は、
+X角番の概念を意図せず混入させていた先行実験として位置づけ直された。
+ただし実装が section 角番と混在しているため、クリーンな再実装が必要。
+
+## アクション
+`kamata7_x_kakuban_eda.py` として新規実装する。
+section 角番分析スクリプト群とは独立したファイルとして管理する。
+
+---
+id: x-kakuban-hypothesis
+trigger: "X角番が設定投入パターンに影響するかを議論・検証するとき"
+confidence: 0.72
+domain: pachinko-domain
+source: domain-knowledge
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# X角番仮説：ホールは「手前台 vs 奥台」でも設定投入を変える可能性がある
+
+## 背景
+2026-06-17: X角番コンセプト定義と同時に立案。
+section 角番（島の端/中間）が有意なシグナルを示すことは確認済み。
+X角番（入口からの奥行き）も別の設定投入ロジックを反映している可能性がある。
+
+## 想定される投入パターン
+- **手前台優遇仮説**: 入口に近い台（X角番=1）に高設定 → 稼働率UP・ホール宣伝効果
+- **奥台優遇仮説**: 奥の台（X角番=最大）に高設定 → ハイエナ防止・常連優遇
+- **中間台優遇仮説**: section 角番と同様に中間が優遇
+
+## section 角番との交絡
+X角番と section 角番は相関する場合がある（同じ島内で並ぶ台は X も Y も近い）。
+交絡の有無は実装後に Spearman 相関で確認する。
+独立していれば 2 軸を組み合わせた特徴量設計が有効になる。
+
+## アクション
+`kamata7_x_kakuban_eda.py` の結果を受けて、X角番と section 角番のシグナルが
+独立しているか交絡しているかを確認する。

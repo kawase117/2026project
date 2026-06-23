@@ -1,0 +1,163 @@
+---
+id: rl-split-beats-na-split-for-q5-kakuban-strategy
+trigger: "蒲田7 Q5×角番バックテストでNA分割とRL分割どちらを使うか選択するとき"
+confidence: 0.88
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Q5×角番戦略ではNA分割よりRL分割が1日総差枚で約2.5倍優位
+
+## 背景
+2026-06-18: `eda/kamata7_q5_kakuban_backtest.py` のDD別角番戦略バックテスト結果。
+テスト期間: 2026-04-01〜06-16（75日間）
+
+| 分割軸 | 1日平均台数 | 平均差枚/台 | 1日総期待差枚 |
+|--------|-----------|------------|-------------|
+| NA分割（2F_N + 3F_A） | 5.5台 | +543 | ~2,987 |
+| RL分割（2F_L/R + 3F_L/R） | 11.2台 | +672 | ~7,526 |
+
+NA分割は機種タイプ（ジャグ/ハナ系 vs AT/ART系）で分割する。
+RL分割は空間位置（X座標で左/右）で分割する。
+
+RL優位の理由：
+1. **分解能** — RL分割は左右別々にEDAして最強角番を計算するため、左右で最適なターゲットが異なる（e.g., 3F_L:角番6 vs 3F_R:角番19）
+2. **カバレッジ** — NAでは2F_AとQ5機種が存在しないためカバレッジが低い。RLは同じQ5機種をL/R別に独立評価するため台数が増える
+3. **3F_A内部の格差を顕在化** — NA分割では3F_A=+317という平均に埋もれるが、RL分割で3F_L=+481 / 3F_R=+335と左側の優位性が見える
+
+## アクション
+Q5×角番の日次推薦にはRL分割（Pattern2）を基本戦略とする。
+NA分割（Pattern1）は3F_Aの1位候補（3345等の固有台）を補完的に参照する用途で使う。
+
+---
+id: dd-kakuban-fallback-to-next-best-when-no-q5
+trigger: "特定DDの最強角番にQ5台が存在しない場合の推薦台を探すとき"
+confidence: 0.92
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Q5台が最強角番にいない場合はEDA CSVを mean_residual 降順ソートして次善角番を順次探索する
+
+## 背景
+2026-06-18: DD=18 の日次推薦生成で複数セグメント（2F_N, 3F_A, 2F_R, 3F_R）において
+ターゲット角番にQ5台が存在しないケースが発生。
+
+例: 2F_R のDD=18最強角番=20 → 角番20の台は「プリズムナナ」（非Q5）
+Q5機種の最高kakuban は17（モンキーターンV、スマスロ北斗の拳）
+
+## アクション
+
+```python
+# EDA CSV を DD でフィルタして mean_residual 降順ソート
+dd_eda = eda[eda["dd"] == DD_TODAY].sort_values("mean_residual", ascending=False)
+
+for _, row in dd_eda.iterrows():
+    kk = int(row["kakuban"])
+    hits = seg_base[(seg_base["kakuban"] == kk) & (seg_base["is_q5"])]
+    if not hits.empty:
+        # ここが次善候補（何位目かをカウントして表示）
+        break
+```
+
+最低限 TOP5 まで探索し、見つからなければそのセグメントは「本日候補なし」とする。
+同じ mean_residual 値（n が小さく EDA テーブルに同点がある場合）は全て表示する。
+
+---
+id: 2fr-high-avg-diff-driven-by-outliers
+trigger: "蒲田7 2F_R セグメントの期待差枚（+1420）を参照・引用するとき"
+confidence: 0.93
+domain: data-interpretation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 2F_R の avg_diff=+1420 は12,300・11,200差枚の2件の爆発値に起因する — 信頼区間が極めて広い
+
+## 背景
+2026-06-18: 2F_R セグメント全69行（30台）の内訳を分析。
+
+高額1回ヒット:
+- 2311 戦国乙女4（1日のみ）: +12,300
+- 2234 新鬼武者3（1日のみ）: +11,200
+
+最も安定した台:
+- 2346 いざ！番長（6日間 avg+3,533）
+- 2257 スマスロ北斗の拳（6日間 avg+1,200）
+
+75日間で出現日数が1日のみの台が34台中約半数を占める。
+
+## アクション
+2F_R の推薦台を評価する際は avg_diff より「出現日数（n）」を優先的に確認する。
+出現日数 >= 3 かつ avg_diff > 0 の台を安定候補とみなす。
+avg_diff=+1420 は報告値として正確だが、実運用上の期待値としては過大評価になる可能性がある。
+
+---
+id: daily-recommendation-generation-workflow
+trigger: "蒲田7 Q5×角番 DD別日次推薦台リストを生成するとき"
+confidence: 0.90
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# DD別日次推薦はEDA CSV × 最新機種配置 × Q5フィルタの3ステップで生成する
+
+## 背景
+2026-06-18: `eda/kamata7_q5_kakuban_backtest.py` のDD別バックテストから
+日次推薦ワークフローが確立した。
+
+## アクション
+
+**ステップ1: Q5機種名セット取得**
+```python
+q5_names = _get_q5_names(df, train_period)  # 直近3ヶ月で差枚sum上位20%
+```
+
+**ステップ2: 最新機種配置×座標マージ**
+```python
+latest_df = df[df["date"] == latest_date][["machine_number","machine_name"]].drop_duplicates()
+base = coords.merge(latest_df, on="machine_number", how="left")
+base["is_q5"] = base["machine_name"].isin(q5_names)
+```
+
+**ステップ3: 各セグメントの EDA CSV を DD でフィルタして mean_residual 降順ランク**
+```python
+dd_eda = pd.read_csv(eda_path)
+dd_eda = dd_eda[dd_eda["dd"] == DD_TODAY].sort_values("mean_residual", ascending=False)
+```
+
+**ステップ4: Q5台が見つかるまで角番ランクを降順に走査（次善フォールバック）**
+
+**ステップ5: 全セグメントを統合し machine_number で重複除去（mean_residual 最大を採用）**
+
+日次推薦TOP50は「期待残差（mean_residual）降順」でソートし、
+台番号・機種名・セグメント・角番・期待残差・n・セクションを別カラムで出力する。
+nが小さい（< 50）エントリは高シグナルでも信頼度低として注釈する。
+
+---
+id: q5-dd-kakuban-top50-column-structure
+trigger: "蒲田7 日次推薦リストを出力・表示するとき"
+confidence: 0.88
+domain: analysis-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 日次推薦表は台番号と機種名を別カラムにし mean_residual 降順で TOP50 を出力する
+
+## 背景
+2026-06-18: ユーザーフィードバック「ソートするので台番号と機種名は別カラムにしてください」。
+台番号・機種名を同一セルに入れると Excel/Sheets でのソートができない。
+
+## アクション
+出力カラム順: 順位 | 台番号 | 機種名 | セグメント | 角番 | 期待残差 | n | セクション
+
+```python
+top50.columns = ["台番号","機種名","セグメント","角番","期待残差","n","セクション"]
+print(top50.to_csv(sep="\t", index=True, index_label="順位"))
+```
+
+同一台が複数セグメントに出現する場合は mean_residual が最大のセグメントを採用し重複除去する。

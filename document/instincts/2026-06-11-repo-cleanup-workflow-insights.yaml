@@ -1,0 +1,35 @@
+---
+id: repo-cleanup-staged-confirmation-workflow
+trigger: "when uncommitted changes have accumulated for ~1 month and span 300+ files across temp output, experiments, and real features"
+confidence: 0.9
+domain: git-workflow
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer-2026project
+title: 大量未コミット変更は4分類→確認2点→11コミットの段階で安全に整理できる
+background: |
+  document/instincts/ の日付から約1ヶ月分(2026-05-08〜2026-06-11)、約350件の未コミット変更が蓄積していた。
+  内訳は (1) 正規実装/ドキュメント (2) 実験成果物 (3) 一時/デバッグ出力 (4) 削除済みinstincts、の4種が混在。
+  一括 `git add -A` は禁止し、ファイル/ディレクトリ単位でグループ化する必要があった。
+action: |
+  1. `git status --porcelain` で全量取得し、ファイル名パターン(`_*`, `tmp_*`, `*.parquet`, `catboost_info/`, `.pytest-tmp/`等)で
+     「明確な一時ファイル」を機械的に分類する。中身を head で軽く確認してから一括削除してよい。
+  2. ルート直下に散らばった一回限りの分析スクリプトは、関連する既存ディレクトリ
+     (`ml/last_digit/`, `ml/island/` など新設も可)へ移動し、import元との整合を壊さないことを確認する。
+  3. `.gitignore` 済みだが追跡されているディレクトリ(`catboost_info/`等)は `git rm --cached -r` で追跡解除。
+  4. ローカル環境固有の設定(絶対パス・ホスト名を含む `.mcp.json`/`dbhub.toml`等)と、
+     再現可能な実験結果(reports/results)の扱いは、ユーザーに二択で確認してから一括方針を決める。
+     ここで往復を1回に抑えると、その後は機械的に進められる。
+  5. 残りをカテゴリ別(instincts archive, db schema, dashboard, ml機能群, テスト, docs)に
+     10〜12グループへ分割し、各グループごとに `git add <files...>` → `git commit -m "..."` を
+     順次実行。最後に `git status` がクリーンであることを確認してからまとめてpushする。
+example: |
+  分類結果:
+    G1 chore: untrack catboost_info and pytest temp dirs (.gitignoreにcatboost_info/, .pytest-tmp/,
+       .pytest-tmp-local/, .mcp.json, dbhub.toml を追加し git rm --cached)
+    G2 docs: update instincts archive
+    G3〜G11: feature/test/docsごとのまとまり
+  二択確認:
+    - .mcp.json/dbhub.toml(ローカル絶対パス含む) → .gitignoreで非コミット
+    - ml/last_digit/reports, document/reports, results/ (実験結果CSV/JSON) → コミットして保存
+---

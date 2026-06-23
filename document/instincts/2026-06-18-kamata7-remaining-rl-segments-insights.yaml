@@ -1,0 +1,100 @@
+---
+id: kamata7-3fln-dd712-kakuban9-signal
+trigger: "蒲田7 3F左側AT系（Nセグメント）でDDが7〜12のとき"
+confidence: 0.88
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 3F_L_N × DD7-12 の角番9が最強シグナル（q=4.8e-7、7セクション確認済み）
+
+## 背景
+2026-06-18: kamata7_kakuban_rl_eda.py の 3F_L_N セグメント結果。
+唯一の有意 DDビン: 7-12（q=4.8e-7）、top_kakuban=9、mean_residual=+386。
+DD1-6, 13-18, 19-24, 25-31 はすべて帰無（q>0.16）。
+
+DDビン内ランキング（DD7-12）:
+  角番9: +386, 角番7: +261, 角番4: +258
+
+## アクション
+DD7-12（月7〜12日）に蒲田7 3F を訪問する場合、左側AT系の角番9台を優先確認。
+
+具体候補台（2026-06-16時点機種配置）:
+- 3022 / 3025  沖ドキ!DUO アンコール [3017-3030]
+- 3034 / 3039  ソードアート・オンラインII [3031-3042]
+- 3049 / 3051  ビッグドリーム / シャーマンキング [3043-3057]
+- 3064 / 3066  ミリオンゴッド‐神々の軌跡‐ [3058-3072]
+- 3079 / 3081  ミリオンゴッド‐神々の軌跡‐ [3073-3087]
+- 3094 / 3096  革命機ヴァルヴレイヴ2 [3088-3102]
+- 3108 / 3111  からくりサーカス / 革命機ヴァルヴレイヴ2 [3103-3116]
+
+（角番9 = section_min + 8 が基本。dual-kakuban なので反対側端からの9番目も含む）
+
+## 対比: 3F_L_Aとの月内ローテーション分離
+- A系（ジャグ）: DD1-6=角5、DD7-12=有意なし、DD13-18以降=角7-9
+- N系（AT）: DD7-12のみ=角9が突出、他帯はすべて帰無
+→ ホールがAT機とジャグ機で月内のローテーション戦略を分けている可能性
+
+## 注意
+- kakuban=8 × DD=18 (cell_vs_rest q=0.006, mean=+936, median=-53) は
+  mean/median逆符号のため外れ値駆動と判断し使用しない
+  [[mean-median-divergence-outlier-indicator]]
+- A系機種がkakuban=9に配置されているセクション（3001-3016, 3117-3190）は
+  3F_L_Nの分析対象外（A機種はAセグメントに分類）
+
+---
+id: kamata7-2frn-dd1318-kakuban13-weak
+trigger: "蒲田7 2F右側AT系（Nセグメント）でDDが13〜18のとき"
+confidence: 0.66
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 2F_R_N × DD13-18 × 角番13は弱い有意（q=0.041）— 補助参照にとどめる
+
+## 背景
+2026-06-18: kamata7_kakuban_rl_eda.py の 2F_R_N セグメント結果。
+DDビン 13-18 のみ q=0.041 で有意。top_kakuban=13, mean_residual=+148。
+cell_vs_rest では有意セルがゼロ（個別セルレベルでは有意でない）。
+
+DDビン13-18内ランキング:
+  kakuban=13: +148, kakuban=5: +120, kakuban=6: +120, kakuban=14: +115
+
+## アクション
+- 角番13は9セクション（2196-2212〜2330-2351）に分散しており構造的だが、
+  隣接角番（5, 6, 14）との差が小さくシグナルの突出度が低い
+- 2F_R AT系では「角番13を最優先」にするのは証拠不十分
+- 参照する場合は「角番5〜6・13〜14の中間帯」を緩く候補とする程度にとどめる
+- 他セグメントのシグナルが使えない場合の補完用
+
+## 具体候補（kakuban=13、DD13-18）
+- 2208 スマスロ北斗の拳2 [2196-2212]
+- 2242 ハッピーターンV [2230-2246]
+- 2259 スマスロ北斗の拳 [2247-2263]
+- 2276 北斗の拳 転生ノ章2 [2264-2280]
+- 2293 誰も俺には勝てない [2281-2297]
+- 2310 スーパーリオエース2 [2298-2313]
+
+---
+id: kamata7-3frn-null-result
+trigger: "蒲田7 3F右側AT系（Nセグメント）で角番位置を使って選台しようとするとき"
+confidence: 0.90
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田7 3F_R_N: DD×角番クロスは全ビンで有意なし
+
+## 背景
+2026-06-18: kamata7_kakuban_rl_eda.py の 3F_R_N セグメント結果。
+全5DDビンでkruskal_q > 0.10（最小値 q=0.104 for DD13-18）。
+cell_vs_rest有意なし。
+
+## アクション
+- 蒲田7 3F右側のAT系では角番位置はDD軸では機能しない
+- 3F右側でAT機を選ぶ場合は [[kamata7-3frn-null-result]] の通り角番軸を使わない
+- 3F_R_Nの次の探索軸候補: 曜日別 or 機種名別シグナル
+---

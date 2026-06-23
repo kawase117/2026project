@@ -1,0 +1,100 @@
+---
+id: x-kakuban-dd-cross-null-all-segments
+trigger: "蒲田7のX角番（奥行き方向ランク）をDD軸と組み合わせた戦略を立案するとき"
+confidence: 0.92
+domain: analysis-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田7 X角番 × DD クロスは全4セグメントで帰無
+
+## 背景
+全4セグメント（2F_A, 2F_N, 3F_A, 3F_N）で Kruskal-Wallis + BH補正を実施した結果
+（2026-06-18実施）。
+
+最小 q 値まとめ
+  2F_N min_q=0.071（DD1-6 × x_kk=12 が +220、最も有望だが閾値未達）
+  3F_N min_q=0.135
+  2F_A min_q=0.089
+  3F_A min_q=0.236
+
+全セグメント全 DD ビンで q ≥ 0.071（閾値 0.05 未達）。
+X角番の全期間有意シグナル（2F_N x_kk=1 q=3.9e-3 など）はDD条件付けで検出力を失う。
+DDビン分割による多重検定補正が吸収してしまうため。
+
+## アクション
+X角番はDD軸との組み合わせ戦略には使えない。
+X角番（2F_N x_kk=1 回避等）は全期間の傾向として使い、DD選択とは独立に適用する。
+[[x-kakuban-front-machine-negative-2fn]] はDD非依存なので維持。
+
+---
+id: kamata7-2fn-event-kakuban-boost-and-reversal
+trigger: "蒲田7 2F AT系（Nセグメント）でイベント日（DD=1,7,11,17,21,27,30）に訪問するとき"
+confidence: 0.80
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 2F_N x イベント日 --- kakuban=5,11 がプレミアム、kakuban=20 が反転
+
+## 背景
+kamata7_2F_N_kakuban_event.csv を解読（2026-06-18実施）。
+イベント日定義は DD in {1,7,11,17,21,27,30} + 末日（n=85日/342日中）。
+
+有意シグナル（q 未満 0.05）の要約
+  kakuban=11: event_mean=+468, non_event=+173, premium=+295, q=0.042, n=3114 records
+  kakuban=5:  event_mean=+420, non_event=+229, premium=+191, q=0.047, n=3957 records
+  kakuban=20: event_mean=-277, non_event=+483, reversal=-761, q=0.047, n=170（小サンプル注意）
+
+## アクション
+イベント日に蒲田7 2F AT系を狙う場合:
+kakuban=11（section_min+10）を最優先候補とする（+295 premium, n充分）。
+kakuban=5（section_min+4）を次点候補とする（+191 premium, n充分）。
+kakuban=20（大型列の奥端）はイベント日に特に回避する（-761 reversal、ただし小サンプル）。
+
+非イベント日の kakuban 戦略は変わらない。[[rl-split-beats-na-split-for-q5-kakuban-strategy]] も引き続き適用。
+
+---
+id: kamata7-3fa-event-day-global-uplift
+trigger: "蒲田7 3F ジャグラー/ハナハナ系（Aセグメント）でイベント日（DD=1,7,11,17,21,27,30）に訪問するとき"
+confidence: 0.90
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 3F_A x イベント日 --- 全セクション底上げ（+165 global uplift）、section 3265-3280 が最強
+
+## 背景
+kamata7_3F_A_kakuban_event.csv + 全セクション Mann-Whitney 検定（2026-06-18実施）。
+
+全体効果
+  非イベント加重平均=+174 → イベント=+339 → 差=+165（約2倍の bottom up）
+  kakuban 単位でも 11 位置（kakuban=1,2,3,7,8,10,12,13,14,15,16）が全て有意（q<0.05）
+
+セクション別 event premium（p<0.01 のもの）
+  section 3265-3280  event=+425, non_event=+144, premium=+281, p=4.3e-8 （最強）
+  section 3310-3324  premium=+189, p=3.2e-4
+  section 3325-3340  premium=+152, p=1.7e-3
+  section 3131-3143  premium=+167, p=1.9e-3
+  section 3117-3130  premium=+182, p=2.9e-3
+  section 3144-3155  premium=+193, p=6.8e-3
+
+section 3265-3280 詳細
+  16台横一列（X=23〜38, Y=9）、全台マイジャグラーV（2026-06-16時点）
+  3F右エリア（X は 23 以上）
+  n=78日×16台=1248レコード（games=200以上フィルタ）
+
+## アクション
+イベント日に蒲田7 3F ジャグ系を訪問する場合:
+section 3265-3280（台番号 3265〜3280）を最優先確認する（p=4.3e-8, premium=+281）。
+次点は section 3310-3324、section 3144-3155（event_mean=+432）。
+コーナー（kakuban=1）もイベント日は+285に上昇するが全体平均+339より低い → 中間台優先は維持。
+
+非イベント日との切り替え方針
+  非イベント日: DD×角番 EDA に従い kakuban 中間帯を狙う
+  イベント日: section 3265-3280 最優先 → その後 3F_A を広く狙う
+
+---

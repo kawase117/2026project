@@ -1,0 +1,334 @@
+---
+id: kamata7-optimal-segment-granularity
+trigger: "蒲田7で末尾分析のセグメント粒度を決めるとき"
+confidence: 0.95
+domain: pachinko-eda
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 6段階粒度比較の結果、Level 5（2F/3F×L/R×A/N）が最適
+
+## 背景
+Level 0（全体）からLevel 5（6セグメント）まで段階的に末尾ランキングを集計し、
+Kruskal-Wallis検定とSpearman ρで最適粒度を判定した。
+
+結果:
+- Level 0 ALL: p=0.014（有意だが Simpson's Paradox で汚染）
+- Level 1 N: p=0.003（有意）、A: p=0.799（非有意）
+- Level 3 2F_N: p=0.210（2F_Lと2F_Rが相殺して信号消失）、3F_N: p=0.043
+- Level 5 2F_L_N: p=0.028（回復!）、3F_L_N: p=0.034、他4セグメント非有意
+
+Level 3（2F_N/3F_A/3F_N）では2F_N内のL/R差異が見えない。
+Level 5で分割して初めて2F_L_Nの信号が回復した。
+
+## アクション
+蒲田7の末尾分析は常にLevel 5（6セグメント）で実施する。
+ただし実際に末尾効果が有意なのは2F_L_Nと3F_L_Nの2セグメントのみ。
+残り4セグメントはランキングを参考値として保持するが、統計的根拠はない。
+
+## 例
+参照CSV: eda/reports/kamata7_segment_digit_baseline_rankings.csv（全Level全セグメント）
+参照CSV: eda/reports/kamata7_segment_digit_signal_strength.csv（ε²/Kruskal-Wallis）
+参照レポート: eda/reports/kamata7_segment_digit_baseline_report.md
+
+---
+id: kamata7-only-two-segments-have-digit-signal
+trigger: "蒲田7で末尾選択の戦略を立てるとき"
+confidence: 0.93
+domain: pachinko-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 末尾効果が統計的に有意なのは2F_L_N（p=0.028）と3F_L_N（p=0.034）だけ
+
+## 背景
+6セグメントのKruskal-Wallis検定結果:
+2F_L_N: H=18.7, p=0.028, digit_range=218, 176台 → 有意
+3F_L_N: H=18.1, p=0.034, digit_range=278, 100台 → 有意
+2F_R_N: H=11.0, p=0.278, digit_range=119, 156台 → 非有意
+3F_L_A: H=6.1, p=0.731, digit_range=87, 98台 → 非有意
+3F_R_A: H=9.8, p=0.368, digit_range=72, 98台 → 非有意
+3F_R_N: H=9.3, p=0.410, digit_range=346, 47台 → 死亡セグメント
+
+A機セグメント（3F_L_A, 3F_R_A）は全粒度で末尾効果が非有意。
+digit_range=72-87は差枚のノイズ範囲内。
+
+## アクション
+末尾選択で差をつけられるのは2F_L_Nと3F_L_Nのみ。
+2F_R_N、3F_L_A、3F_R_Aでは末尾選択は期待値に影響しない。
+3F_R_Nは47台・avg_diff≈0で分析対象外。
+
+## 例
+2F_L_N: d6(+365)が突出して強い。d3(+147)との差=218。
+3F_L_N: d8(+193)とd3(-85)の差=278。d3/d0はマイナス域で打つほど負ける。
+3F_L_A: d5(+274)とd7(+188)の差=87。これは差枚分散のノイズ範囲内で有意でない。
+
+---
+id: kamata7-2f-l-n-digit-ranking
+trigger: "蒲田7の2F左側（2F_L_N）で台を選ぶとき"
+confidence: 0.90
+domain: pachinko-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 2F_L_N: d6(+365)が圧倒的首位、d3/d5を回避
+
+## 背景
+2F_L_N（2F左側N機、176台、59,270観測）の末尾ランキング:
+d6: +365（1位）← 2位と+67差で突出
+d9: +298（2位）
+d0: +284（3位）
+d8: +284（4位）
+d7: +281（5位）
+d2: +253（6位）
+d1: +241（7位）
+d4: +223（8位）
+d5: +159（9位）
+d3: +147（10位）
+
+Kruskal-Wallis p=0.028で統計的に有意。
+3位以下（d0/d8/d7/d2/d1）は僅差で実質的に差がない。
+明確な差があるのはd6（上方）とd3/d5（下方）のみ。
+
+## アクション
+2F_L（2F左側）に行く場合、d6を最優先で検討する。
+d3とd5は明確に回避。d0/d8/d7/d9は互換的に選んでよい。
+dd_mod10×曜日の詳細はquickref CSV参照。
+
+## 例
+参照CSV: eda/reports/kamata7_segment_digit_quickref_lv5.csv（70セル×5セグメントのTop3/避け）
+2F_L_N全体: d6(+365) >>> d3(+147)、差=218
+旧分析のN機全体d6(+236)より+129高い — L側に分離することでシグナルが増幅。
+
+---
+id: kamata7-3f-l-n-digit-ranking
+trigger: "蒲田7の3F左側N機（3F_L_N）で台を選ぶとき"
+confidence: 0.90
+domain: pachinko-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 3F_L_N: d8(+193)/d9(+144)が強い、d3(-85)/d0(-31)はマイナス域
+
+## 背景
+3F_L_N（3F左側N機、100台、32,684観測）の末尾ランキング:
+d8: +193（1位）
+d9: +144（2位）
+d6: +106（3位）
+d1: +43 （4位）
+d7: +25 （5位）
+d4: +19 （6位）
+d2: +16 （7位）
+d5: +9  （8位）
+d0: -31 （9位）← マイナス域
+d3: -85 （10位）← マイナス域
+
+Kruskal-Wallis p=0.034で統計的に有意。
+d8/d9が明確に上位、d3/d0はマイナス域で打つほど期待値がマイナスになる。
+3F_L_N全体のavg_diff=+44と低く、末尾選択が特に重要なセグメント。
+
+## アクション
+3F_L（3F左側）でN機を打つ場合、d8/d9を最優先。
+d3とd0は絶対回避（マイナス域）。
+セグメント全体のavg_diffが低いため、正しい末尾を選ばないと負ける。
+
+## 例
+d8(+193) vs d3(-85): 差=278。同じ3F_L_NでもHit末尾とMiss末尾で278の差が出る。
+これは6/18 instinctの「3F_L_N×DD7-12×末尾9が唯一の構造シグナル」と整合する。
+
+---
+id: kamata7-a-machine-digit-effect-not-significant
+trigger: "蒲田7でA機（ジャグラー/ハナハナ）の末尾戦略を考えるとき"
+confidence: 0.92
+domain: pachinko-eda
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# A機は全粒度で末尾効果が統計的に非有意 — d3/d4優位は支持されない
+
+## 背景
+A機セグメントのKruskal-Wallis検定結果:
+Level 1 A全体: H=5.4, p=0.799, digit_range=36
+Level 5 3F_L_A: H=6.1, p=0.731, digit_range=87
+Level 5 3F_R_A: H=9.8, p=0.368, digit_range=72
+
+全粒度でp>0.3。digit_range=36-87は差枚の標準偏差に比べて微小。
+以前の分析で「A機はd3(+234)/d4(+228)が強い」と結論したが、
+digit_range=36（d3=+234とd7=+198の差）はノイズと区別できない。
+
+これは以下のinstinctを無効化する:
+- kamata7-segment-a-digit-baseline（A機はd3/d4/d2が安定して強い）
+- kamata7-kaku2-d3-dominant（角2でd3がmod10を問わず安定最強）
+- kamata7-segment-quickref-csv-system のA機部分
+
+## アクション
+A機を打つ場合、末尾で台を選ぶ統計的根拠はない。
+A機の台選択は末尾以外の軸（角番、セクション、機種別特性）で行うべき。
+A機のquickref CSVは参考値として残すが、信頼度を下げて利用すること。
+
+## 例
+3F_L_A: d5(+274) vs d7(+188)。差=87だがp=0.731。
+3F_R_A: d3(+238) vs d5(+166)。差=72だがp=0.368。
+これらの差は数百回の試行で容易に逆転するノイズ範囲内。
+
+---
+id: kamata7-lr-split-recovers-signal
+trigger: "蒲田7で2FのN機末尾シグナルが見えないとき、またはセグメント設計を見直すとき"
+confidence: 0.90
+domain: pachinko-eda
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# L/R分割で消失したシグナルが回復する（2F_N p=0.21 → 2F_L_N p=0.028）
+
+## 背景
+N機全体(Level 1): p=0.003（有意）
+2F_N(Level 3): p=0.210（非有意 ← シグナル消失!）
+2F_L_N(Level 5): p=0.028（有意 ← 回復!）
+2F_R_N(Level 5): p=0.278（非有意）
+
+2F_Lと2F_Rのランキング相関: ρ=0.333（弱い正相関）。
+2F_L_Nではd6(+365)が圧倒的だが、2F_R_Nではd7(+240)が1位でd6は4位(+221)。
+LとRを混ぜるとd6の優位性が薄まり、シグナルが消える。
+
+同様に:
+3F_N(Level 3): p=0.043（有意）→ 3F_L_N: p=0.034（維持）、3F_R_N: p=0.410（死亡）
+3F_Nのシグナルは実質的に3F_L_Nのみが担っていた。
+
+## アクション
+蒲田7の末尾分析は必ずL/R分割で実施する。
+L/Rを統合した集計は、存在するシグナルを消す方向に作用する。
+他ホールでも同様のL/R効果がありうるので、分析設計時に検討すべき。
+
+## 例
+2F_N全体: d6は1位(+297)だがp=0.210で非有意。
+2F_L_N単独: d6は1位(+365)でp=0.028。d6のリードが+297→+365に拡大。
+2F_R_N単独: d7が1位(+240)でd6は4位(+221)。LとRで首位末尾が異なる。
+
+---
+id: kamata7-pair-corr-segment-decomposition
+trigger: "蒲田7の末尾ペア連動（隣接相関）を解釈するとき"
+confidence: 0.90
+domain: pachinko-eda
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 全体p=0.006のペア連動はセグメント混合のアーティファクト
+
+## 背景
+全体の隣接末尾連動（p=0.006）を6セグメントに分解した結果:
+
+全曜日:
+3F_R_A: p=0.017（有意）— ただしA機は全ペアが高相関(r=0.23平均)で隣接だけが特別ではない
+2F_R_N: p=0.039（有意寄り）— d5-6ペア(r=0.19)が構造の中心
+2F_L_N: p=0.061（境界）
+3F_L_A/3F_L_N/3F_R_N: p>0.19（非有意）
+
+土曜日:
+3F_L_A: p=0.0017 — d5-6-7チェーン（6-7: r=0.54, 5-7: r=0.51）
+3F_R_A: p=0.0017 — d1-2-3-4チェーン（2-3: r=0.58, 1-2: r=0.52）
+3F_L_N: p=0.042 — d4-6: r=0.51（非隣接!）
+2F_R_N: p=0.210 — d5-6: r=0.52だが全体は非有意
+
+元の「d4-5-6土曜クラスター」は:
+- 2F_R_Nのd5-6連動
+- 3F_L_Aのd5-6-7連動（1つずれ）
+- 3F_L_Nのd4-6連動（間のd5は弱い）
+の混合だった。セグメントごとに異なるペア構造が存在する。
+
+## アクション
+「隣接末尾を並びで狙う」戦略は全般的には根拠不足。
+使えるのは:
+- 2F_R_N 土曜: d5-6連動(r=0.52)のみ実用的
+- 3F_R_A 土曜: d1-2-3-4チェーンだが A機の末尾効果自体が非有意なので価値限定的
+A機セグメントの高い全ペア相関は、台数が少なく日ごとの全体出玉変動が全末尾に共通影響しているだけの可能性が高い。
+
+以下のinstinctを修正:
+- kamata7-adjacent-digit-pair-correlation → セグメント非分離の結果で過大評価
+- kamata7-saturday-456-cluster → 3セグメントの混合アーティファクト
+
+## 例
+全体: 隣接r=0.193, p=0.006（有意に見える）
+2F_L_N単独: 隣接r=0.132, p=0.061（境界線）
+3F_R_N単独: 隣接r=0.025, p=0.644（完全にゼロ）
+セグメント分離すると「隣接が強い」という一般法則は消える。
+
+---
+id: kamata7-3f-r-n-dead-segment
+trigger: "蒲田7の3F右側N機（3F_R_N）を分析対象に含めるか判断するとき"
+confidence: 0.95
+domain: pachinko-eda
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 3F_R_Nは47台・avg_diff≈0の死亡セグメント — 分析対象外
+
+## 背景
+3F_R_N: 47台、15,889観測、avg_diff=+0.78（実質ゼロ）
+Kruskal-Wallis p=0.410、ペア連動 p=0.644
+末尾分布も偏り: d5/d6/d7が8.5%、d9が10.7%（通常は各10%前後）
+
+digit_range=346は一見大きいが、47台のうち特定末尾の台数が極端に少なく
+（d5: 1,352観測 vs d0: 1,672観測）、ノイズで説明できる。
+
+## アクション
+3F_R_Nは全ての末尾分析から除外する。
+quickref CSVにも含めない。
+3F_Rに行く場合はA機（3F_R_A）のみを対象とするが、A機の末尾効果は非有意なので
+末尾以外の軸で台選択する。
+
+## 例
+3F_R_N d5: +208（1位）vs d1: -138（10位）、差=346
+しかしd5は1,352観測（≈4台分）、d1は1,682観測（≈5台分）。
+台数1台の差で大きく変動するため、ランキングに信頼性がない。
+
+---
+id: kamata7-previous-instincts-partial-invalidation
+trigger: "蒲田7の過去のinstinct（2026-06-19付）を参照するとき"
+confidence: 0.95
+domain: pachinko-reference
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 2026-06-19の先行instinct 25件のうち、複数が修正・制限付きに変更
+
+## 背景
+同日の先行セッションで25件のinstinctをエクスポートしたが、
+その後の6段階粒度比較とペア連動分解により、以下が修正された:
+
+完全無効化:
+- kamata7-segment-a-digit-baseline: A機d3/d4優位 → Kruskal p=0.799で非有意
+- kamata7-kaku2-d3-dominant: 角2×d3最強 → A機末尾効果自体が非有意
+- kamata7-saturday-456-cluster: d4-5-6クラスター → 3セグメント混合のアーティファクト
+
+適用範囲の制限:
+- kamata7-segment-n-digit-baseline: N機d6最強 → 2F_L_N限定。2F_R_Nでは非有意
+- kamata7-adjacent-digit-pair-correlation: 隣接連動p=0.006 → セグメント分離で一般法則として消滅
+- kamata7-segment-kakuban-digit-top20: 三軸最強 → 角番の台固有性問題+有意セグメント限定
+
+変更なし:
+- kamata7-simpsons-paradox-digit-segment: 依然として正しい（さらに強化された）
+- kamata7-triplet-consecutive-rate-low: トリプレット低頻度は変わらない
+- kamata7-digit-selection-hierarchy: 階層構造は正しいが、使えるセグメントが絞られた
+- ゾロ目関連5件: セグメント粒度とは独立した効果なので影響なし
+
+## アクション
+2026-06-19の先行instinctファイルを参照する際は、本instinctの修正を適用すること。
+特にA機の末尾ランキングに基づく推奨は全て無視すべき。
+有効な末尾戦略は2F_L_N（d6優先）と3F_L_N（d8/d9優先）の2セグメントに限定される。
+
+## 例
+旧: 「A機を打つ場合、まずd3/d4を検討する」（kamata7-segment-a-digit-baseline）
+新: A機の末尾選択は統計的根拠がない。末尾以外の軸で台選択する。
+
+旧: 「d4-5-6が三角クラスター」（kamata7-saturday-456-cluster）
+新: 2F_R_N土曜のd5-6連動(r=0.52)のみが実用的。d4-5-6の三角構造は混合アーティファクト。

@@ -1,0 +1,1008 @@
+---
+id: mitoya-dd-x-group-persistence-top-stays-top
+trigger: "みとや大森町店でDD別(4のつく日/7のつく日/Xのつく日)台番号別の差枚傾向を調べるとき"
+confidence: 0.7
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Xのつく日(DD4/7/14/17/24/27)では台番号別差枚に弱い持続性があり、上位台が次期も上位に残る傾向
+
+## 背景
+2025-01〜2026-06のみとや大森町店データ(266台)を3ヶ月期間ごとに区切り、台番号別
+diff_coins_normalized合計をクインタイル(5段階)化して期間間の遷移を確認した。
+
+- 4group(DD4/14/24)単独: 全体Spearman rho=0.047 (p=0.086) — 有意な持続性なし
+- 7group(DD7/17/27)単独: 全体Spearman rho=0.014 (p=0.614) — 持続性なし
+- Xgroup(両者統合, 104日分): 全体Spearman rho=0.123 (p<0.001, n=1330) — 弱い有意な持続性
+
+Xgroupでの継続率(ランダム期待値20%との比較):
+- 前期Q5(最高)→次期Q5: 32.8%
+- 前期Q1(最低)→次期Q1: 30.7%
+
+最低クインタイルが次期に上位へ「逆転」する傾向は見られず、逆に上位・下位ともに
+やや固定化する(基礎的な台の強弱が3ヶ月スケールで持続する)結果だった。
+
+## アクション
+- DD別個別グループ(4group/7groupなど)だけではサンプル日数(約9日/3ヶ月)が薄く
+  ノイズに埋もれやすい。複数DDグループを統合(Xgroup)してサンプル数を確保すると
+  傾向が検出しやすくなる。
+- 「弱い台が次回は浮く」という逆転仮説をホール戦略の前提にする場合は要注意。
+  実データでは「強い台は強いまま、弱い台は弱いまま」が優勢なため、台選定では
+  直近3ヶ月の上位クインタイル台を継続ウォッチする方が期待値が高い可能性。
+- クインタイル(5段階)+Spearman相関+継続率(stay rate)の組み合わせは、サンプルが
+  数百件・期間数が5〜6程度の粗いデータでも傾向を検出できる軽量な分析手法として
+  再利用可能。スクリプト: eda/mitoya_dd_persistence_analysis.py
+
+## 例
+```python
+# 期間ごとにクインタイル付与
+agg["quintile"] = agg.groupby("period")["diff_coins_normalized"].transform(
+    lambda x: pd.qcut(x, 5, labels=False, duplicates="drop") + 1
+)
+# 継続率(前期Q5が次期もQ5である割合)
+stay_rate = (merged.loc[merged["quintile_cur"] == 5, "quintile_next"] == 5).mean()
+```
+
+---
+id: mitoya-machine-type-persistence-dominates-machine-number
+trigger: "みとや大森町店で台番号別/機種別の持続性・予測力を比較するとき、または台番号別持続性の解釈をするとき"
+confidence: 0.8
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 台番号別の持続性は機種効果でほぼ説明可能。機種別の持続性が圧倒的に強い
+
+## 背景
+mitoya-dd-x-group-persistence-top-stays-top の追加検証として、(1)期間長さの感度、
+(2)曜日別グルーピング、(3)機種別(machine_name)集計、(4)機種効果を除去した台番号別
+残差、の4パターンをXgroup(DD4/7/14/17/24/27)で検証した。
+
+1. Window長さ感度(台番号別): 1ヶ月rho=0.050 → 2ヶ月0.095 → 3ヶ月0.123 → 4ヶ月0.112
+   → 6ヶ月0.232。短期ほど弱く長期ほど強い傾向。6ヶ月は遷移数2と少なく不安定。
+   3〜4ヶ月がサンプル数と効果検出のバランスとして妥当(「3ヶ月が最適」の根拠は弱い)。
+
+2. 曜日別グルーピング(3ヶ月window, 台番号別): 全曜日でrho 0.02〜0.07程度、有意は
+   金曜のみ(rho=0.071, p=0.010)。Xgroup全体(rho=0.123)より弱く、曜日ベースより
+   DD(日付の日)ベースのグルーピングの方が持続性検出に有効。
+
+3. 機種別集計(3ヶ月window, machine_name, 143機種): rho=0.415 (p<0.001),
+   Q5stay=60.6%, Q1stay=35.3% — 台番号別(rho=0.123, Q5stay=32.8%)の3倍以上。
+
+4. 機種効果を除去した台番号別残差(period×machine_nameの平均をdiffから引いた値で
+   再クインタイル化): rho=0.017 (p=0.544), Q5stay=23.0%, Q1stay=21.9% —
+   ほぼランダム(20%)と有意差なし。
+
+→ 台番号別で見えていた持続性(rho=0.123)は、ほぼ全て「同じ機種が同じ台番号に
+置かれ続けること」由来であり、台の物理的位置(角・通路側など)自体には持続性が
+ほとんどない。
+
+## アクション
+- 「次回上がる台」を予測する際は、台番号ベースではなく**機種別の直近クインタイル
+  ランク**を主要な特徴量とすること。台番号別特徴量は機種効果の代理変数になっている
+  だけの可能性が高い。
+- 台の位置効果(角・通路側など)を独立に検証したい場合は、必ず機種効果を除去した
+  残差(period×machine_name平均をdiffから引く)で見ること。生のdiffで見ると機種効果
+  に汚染されて偽の持続性が出る。
+- Window長さは1〜6ヶ月で持続性の強さが単調ではないため、3ヶ月固定を前提にせず、
+  複数window(2/3/4/6ヶ月)で頑健性を確認するのが望ましい。
+- スクリプト: eda/mitoya_dd_persistence_extensions.py
+  (section_window_sizes, section_weekday, section_machine_type,
+   section_machine_number_residual)
+
+## 例
+```python
+# 機種効果除去(period内でmachine_nameの平均をdiffから引く)
+type_mean = agg.groupby(["period", "machine_name"])["diff_coins_normalized"].transform("mean")
+agg["residual"] = agg["diff_coins_normalized"] - type_mean
+# 残差でクインタイル化して再度Spearman/stay-rateを計算
+```
+
+---
+id: mitoya-no-substitution-effect-between-neighbor-machines
+trigger: "特定台番号(例: 522番)の好不調と近隣台番号の好不調に代替/シーソー関係があるかを検証するとき"
+confidence: 0.75
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 近隣台番号間の「片方が落ちたらもう片方が上がる」代替効果は検出されない。有意に見えても多重比較の偽陽性に注意
+
+## 背景
+522番(マギレコ角台、ユーザーが「長く好成績」と認識していた台)を対象に、近隣台番号
+(±5)との差枚クインタイル相関を3パターンで検証した。
+
+- 3ヶ月window(n=6): 全ペア非有意 (検出力不足)
+- 1ヶ月window(n=18, Xgroup): 522 vs 521 でrho=-0.517 (p=0.028) ※唯一有意な負の相関
+- 日次差枚(n=525, 全日): 522 vs 521 はrho=0.001 (p=0.977) — 1ヶ月windowの結果が
+  完全に消失。有意だったのは522 vs 520(rho=0.111, p=0.011), 522 vs 523(rho=0.091,
+  p=0.038)で、いずれも**正の相関**(共通要因による同方向の動き)。
+
+また522番自体は1ヶ月windowで Q1〜Q5 まで月によって大きく変動しており
+({0:1,1:1,2:3,3:3,4:1,5:4,6:1,7:3,8:4,9:2,10:3,11:1,12:3,13:5,14:2,15:5,16:5,17:1})、
+「長く好成績」という印象は直近の好調期間(period15,16)の影響が強い可能性がある。
+
+## アクション
+- 近隣台ペアでの代替/シーソー仮説を検証する際は、**複数の時間粒度(月次・日次)で
+  整合性を確認**すること。片方のwindowだけで有意(p<0.05)でも、10ペア程度を
+  テストすれば多重比較で偶然1つ出る確率は無視できない(期待値0.5)。
+- 日次レベルで有意な近隣台相関は、ホールの資源配分(シーソー)ではなく
+  曜日・客入り・イベント日などの**共通要因による同方向の動き(正の相関)**として
+  現れやすい。負の相関(代替効果)を主張するなら日次レベルでも再現することを
+  必須条件とする。
+- 「長く好成績」という主観的な印象を検証する際は、必ず**月次/期間別の時系列**で
+  実際の変動幅を確認する。直近の好調期間だけが記憶に残りやすいバイアスがある。
+- スクリプト: eda/mitoya_522_neighbor_correlation.py
+
+## 例
+```python
+# 日次ピボットで近隣台との直接相関(代替効果なら負相関が期待される)
+pivot = df.pivot_table(index="date", columns="machine_number", values="diff_coins_normalized")
+rho, pval = spearmanr(pivot[522].dropna(), pivot[521].dropna())
+```
+
+---
+id: mitoya-payout-rate-weaker-than-diff-coins-for-machine-type
+trigger: "機種別の持続性・予測力を差枚以外の指標(機械割・勝率)で検証するとき"
+confidence: 0.7
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 機種別持続性は差枚で最強、機械割では弱まる。差枚の強さは稼働量(人気)効果を含んでいる可能性
+
+## 背景
+Xgroup・3ヶ月windowで、台番号別/機種別それぞれに差枚合計・機械割
+((games*3+diff)/(games*3)*100)・勝率(diff>0の日の割合)で持続性を比較した。
+
+台番号別(n=1330): 差枚rho=0.123, 機械割rho=0.110, 勝率rho=0.131 — 3指標ほぼ同水準。
+
+機種別(n=248, 143機種): 差枚rho=0.415(Q5stay=60.6%) > 勝率rho=0.360(Q5stay=32.7%)
+> 機械割rho=0.242(Q5stay=43.1%)。3指標とも有意だが機械割が最も弱い。
+
+## アクション
+- 「機種別の強さの持続性」を主張する際、差枚ベース(rho=0.415)は最も強い結果だが
+  人気機種=稼働量(games)が多いことの影響を含んでいる可能性がある。機械割ベース
+  (rho=0.242)はより純粋な「設定の入りやすさ」に近い指標として、保守的な裏付けに
+  使うこと。
+- 台番号別では指標による差がほとんどない(rho 0.11〜0.13)ため、台番号別分析では
+  差枚をデフォルト指標として使って問題ない。
+- スクリプト: eda/mitoya_dd_persistence_metric_comparison.py
+  (section_metric_comparison: machine_number/machine_name x diff_sum/payout_rate/win_rate)
+
+---
+id: mitoya-rb-probability-persistence-needs-machine-spec-table
+trigger: "RB確率/BB確率を使って台番号別・機種別の設定持続性を検証するとき(機種スペック表が未整備の場合)"
+confidence: 0.7
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# RB確率は機種別では持続性が極端に強く出るが、機種スペック差を反映しているだけでトートロジー。機種固定の残差では有意性消失
+
+## 背景
+「BBよりRBの方が設定差が大きい」という前提に基づき、rb_rate=sum(rb_count)/sum(games)
+をXgroup・3ヶ月windowで台番号別/機種別に持続性検証した
+(eda/mitoya_dd_persistence_rb_probability.py)。
+
+- 機種別(n=248): RB確率rho=0.922(Q1stay=100%), BB確率rho=0.854 — 異常に強い
+- 台番号別(n=1330): RB確率rho=0.480, BB確率rho=0.428
+- 台番号別・機種効果除去後の残差: RB確率rho=0.045(p=0.099, 非有意),
+  BB確率rho=0.018(p=0.511, 非有意)。差枚残差(rho=0.017)とほぼ同水準。
+
+機種別rho=0.922は「機種ごとにRB確率の理論スペックが大きく異なる」という
+当たり前の事実(トートロジー)であり、設定持続性ではない。機種を固定した残差では
+RB確率の優位性は確認できなかった(差枚と同程度)。
+
+## アクション
+- RB確率/BB確率で「設定の強さの持続性」を検証する際は、**必ず機種を固定した
+  比較**(同一機種内での台番号別比較、または機種固有の理論RB確率からの偏差)
+  で行うこと。機種を跨いだ生のRB確率比較は機種スペック差にすぎない。
+- ユーザーが「機種スペック一覧表(理論RB確率など)」を作成中。これが揃ったら、
+  rb_rate / 機種理論RB確率 のような正規化指標で再検証すると、設定差を捉える
+  本来の目的に近づける可能性がある。再検証時はこのyamlとスクリプトを参照。
+- スクリプト: eda/mitoya_dd_persistence_rb_probability.py
+  (機種スペック表ができたら正規化ロジックを追加して再利用)
+
+---
+id: mitoya-day-score-binning-doubles-machine-number-persistence
+trigger: "みとや大森町店で差枚を使った持続性分析を行うとき、特に台番号別で結果が弱い場合"
+confidence: 0.7
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 日次差枚を6分位スコア化してから集計すると、台番号別の持続性が約2倍に向上する
+
+## 背景
+ユーザーの指摘(「設定は最大6段階、極端な大勝ち/大負けは偶然の影響が大きい」)に基づき、
+Xgroup・3ヶ月windowでdiff_coins_normalizedをそのまま合計する代わりに、日次diffを
+全体6分位(day_score=1〜6)に変換してからperiod内平均を取り、持続性を再検証した
+(eda/mitoya_dd_persistence_binned_diff.py)。
+
+- 台番号別(n=1330):
+  - 差枚合計(従来): rho=0.123
+  - day_score平均(6分位): rho=0.241 (約2倍)
+  - adjusted_score平均(高回転×最悪ビンを中立化): rho=0.235
+  - ただしQ5stay/Q1stayは逆転傾向: Q5stay 0.328→0.282、Q1stay 0.307→0.339
+    (「上位継続」より「下位継続」の検出力が強まった)
+- 機種別(n=248):
+  - 差枚合計: rho=0.415 → day_score平均: rho=0.412 → adjusted_score平均: rho=0.431
+  - 機種別では既に248台分の集計で平均化されているため、ビニングの効果は小さい
+
+「高回転(games上位25%)×最悪ビン」への中立化補正(不発高設定仮説)は対象が
+27,664日中563日(約2%)と少なく、結果への影響もrho±0.02程度で、この仮説単独の
+検証にはサンプル不足。
+
+## アクション
+- 台番号別で差枚ベースの持続性が弱く出る場合、生の合計値ではなく日次diffを
+  6分位スコア化(pd.qcut, N=6)してからperiod内平均を取る方法を試すこと。
+  極端値の影響を抑えることで持続性検出力が大きく向上する可能性がある。
+- ビニング後は「上位継続(Q5stay)」より「下位継続(Q1stay)」が強く出る傾向があるため、
+  「次回も悪い台を避ける」予測の方が「次回も良い台を当てる」予測より精度が高い
+  可能性を検討すること。
+- 機種別分析では既に集計効果でノイズが平均化されているため、ビニングの優先度は低い。
+- 「不発の高設定」補正(高回転×最悪ビン→中立化)は対象サンプルが少なく(約2%)、
+  効果も小さいため、現時点では優先度低。機種スペック表が揃った後に再検証候補。
+- スクリプト: eda/mitoya_dd_persistence_binned_diff.py
+
+## 例
+```python
+# 日次diffを6分位スコア化(設定6段階を意識)
+sub["day_score"] = pd.qcut(sub["diff_coins_normalized"], 6, labels=False, duplicates="drop") + 1
+# period内で平均を取り、これを従来の合計の代わりにクインタイル化
+agg = sub.groupby(["period", "machine_number"])["day_score"].mean().reset_index()
+```
+
+---
+id: mitoya-diff-sum-q5-is-contaminated-by-high-variance-lucky-machines
+trigger: "差枚合計ベースのクインタイル(特にQ5/最上位)の持続性を解釈するとき、または『大勝ち台を当てる』vs『大負け台を避ける』予測の優先度を検討するとき"
+confidence: 0.75
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 差枚合計のQ5(最上位)は分散の大きい"ラッキー台"に汚染されており、day_scoreビニングでQ5の構成が大きく変わる。Q1(最下位)は構成が安定しており持続性が強い
+
+## 背景
+mitoya-day-score-binning-doubles-machine-number-persistence の追加検証として、
+diff合計ベースのクインタイルとday_score(6分位)ベースのクインタイルで、Q5/Q1の
+メンバーシップ重複率と、各クインタイルの日次diff標準偏差(diff_std)を比較した
+(Xgroup, 3ヶ月window, 台番号別 n=1330)。
+
+- Q5メンバーシップ重複率(diff-Q5 vs score-Q5): **43.1%** — 半分以上が入れ替わる
+- Q1メンバーシップ重複率(diff-Q1 vs score-Q1): **74.4%** — 大部分は同じ台
+
+- diff合計クインタイル別のdiff_std:
+  q_diff=1:2188, q_diff=2:1972, q_diff=3:2134, q_diff=4:2341, **q_diff=5:3552**
+  → diff合計のQ5だけ突出して分散が大きい(他の約1.6倍)。1〜2回の大勝ち日に
+    依存している"ラッキー台"が混在している。
+
+- day_scoreクインタイル別のdiff_std:
+  q_score=1:2778 → q_score=5:2093 (単調減少)
+  → Q1側は元々分散があまり大きくなく、構成が安定している。
+
+これにより、mitoya-day-score-binning-doubles-machine-number-persistenceで観測した
+Q5stay低下(0.328→0.282)・Q1stay上昇(0.307→0.339)の理由が説明できる:
+- diff合計のQ5は"たまたま大勝ちした台"を多く含むため、次期にもQ5に残る保証がない
+  (実力ベースのQ5に絞っても持続性は0.282程度と高くない)
+- diff合計のQ1はもともと"安定して負けている台"の比率が高く、day_scoreでも
+  ほぼ同じ集合になるため持続性が強まる
+
+## アクション
+- 「次回も大勝ちする台を当てる」予測は、Q5自体の構成が偶然性に汚染されているため
+  根拠が弱い。一方「次回も大負けする台を避ける」予測はQ1の構成が安定しており、
+  統計的根拠がより強い。台選定の優先度は**下位クインタイル台の回避**を軸にすること。
+- diff合計ベースのQ5(最上位)を「強い台」として扱う際は、必ずその台のdiff_std
+  (分散)も確認し、分散が他グループの平均より明らかに大きい場合は「1〜2回の
+  大勝ちによる見かけ上の上位」である可能性を疑うこと。
+- スクリプト: 本検証はアドホックなBash python -c実行(ファイル未作成)。再現する場合は
+  eda/mitoya_dd_persistence_binned_diff.py の agg に q_diff/q_score の重複率・
+  diff_std集計を追加すること。
+
+## 例
+```python
+# Q5/Q1のメンバーシップ重複率を確認(period別に集合の積を取る)
+q5d = set(g[g["q_diff"] == 5]["machine_number"])
+q5s = set(g[g["q_score"] == 5]["machine_number"])
+overlap_q5 = len(q5d & q5s) / len(q5d)
+
+# クインタイル別のdiff_stdで"ラッキー台"混入を検出
+agg.groupby("q_diff")["diff_std"].mean()
+```
+
+---
+id: mitoya-period-sum-diff-overstates-magnitude-by-ndays
+trigger: "diff_coins_normalizedの期間合計(diff_sum)の大きさを解釈・議論するとき、特に『異様な大負け/大勝ち』かどうかを判断するとき"
+confidence: 0.8
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 期間合計diff_sumは集計対象日数(約17日)分の積分値であり、1日あたりに換算すると印象より穏当な値になる。機械割に変換して評価すること
+
+## 背景
+mitoya-diff-sum-q5-is-contaminated-by-high-variance-lucky-machines の議論で、
+Q1(最下位day_scoreクインタイル)のdiff_sum平均=-8707枚を「明らかに異様な大負け」
+(高設定だが閉店まで負け続けた/新台で低設定でも常に回された、等の特殊事象)と
+解釈する仮説が出た。しかし実際には diff_sum はXgroup・3ヶ月windowの集計対象日数
+(n_days平均17.3日)の**合計**であり、1日あたりに換算すると:
+
+q_score別 diff_mean(1日あたり)・games_mean(1日あたり)・払出率相当:
+- Q1: diff_mean=-502, games_mean=3953 → payout_rate=95.49%
+- Q2: diff_mean=+27,  games_mean=4255 → payout_rate=100.27%
+- Q3: diff_mean=+287, games_mean=4747 → payout_rate=102.46%
+- Q4: diff_mean=+552, games_mean=5022 → payout_rate=104.42%
+- Q5: diff_mean=+844, games_mean=5598 → payout_rate=105.83%
+
+1日あたり-502枚(3953G中)は機械割95.5%相当で、「特殊な異常事象」というより
+「穏当な低設定相当」の範囲。Q3〜Q5も102〜106%程度で、「設定6グループ」と
+呼べるような極端な分離(機械割114%超など)は確認できない。
+
+また games_mean がQ1→Q5で単調増加(3953→5598)しており、day_scoreクインタイルの
+上位ほど稼働量(人気)も高い ─ mitoya-payout-rate-weaker-than-diff-coins-for-machine-type
+の知見(差枚の強さは稼働量効果を含む)と整合的。
+
+## アクション
+- diff_sum(期間合計)の絶対値だけで「異様な大負け/大勝ち」と判断しないこと。
+  必ず n_days で割って1日あたりに換算し、可能ならgames_sumと合わせて
+  payout_rate((games*3+diff)/(games*3)*100)に変換してから評価する。
+- 「設定Nグループ」のような設定段階の呼称を使う際は、機械割の理論値
+  (設定1〜6の理論payout_rate)と対比して、実際にどの設定相当かを確認すること。
+  本データではQ1〜Q5の機械割は95.5%〜105.8%の範囲で、設定3〜4相当の差にしか
+  見えない。
+- 「高設定だが負け続けた」等の特殊シナリオを検出したい場合は、期間集計ではなく
+  **日次レベル**でgames_normalizedとdiff_coins_normalizedの散布図・外れ値分析を
+  行うこと(期間合計では希釈されて見えなくなる)。
+
+## 例
+```python
+# 期間合計を1日あたりに変換してから評価する
+agg["diff_mean"] = agg["diff_sum"] / agg["n_days"]
+agg["games_mean"] = agg["games_sum"] / agg["n_days"]
+agg["payout_rate"] = (agg["games_sum"]*3 + agg["diff_sum"]) / (agg["games_sum"]*3) * 100
+```
+
+---
+id: mitoya-main-aisle-x-position-payout-effect
+trigger: "みとや大森町店で台の物理配置(machine_layoutテーブルのx,y座標・section)と機械割の関係を調べるとき"
+confidence: 0.75
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# メイン島(横列)ではメイン通路側(x=3)の台ほど機械割が高く、バラエティ島(縦列)では位置効果なし
+
+## 背景
+machine_layoutテーブルを使い、Xgroup(DD4/7/14/17/24/27)の全期間で台番号別payout_rateを
+計算し、section内のx座標(横列=メイン島)・y座標(縦列=バラエティ島)との相関を検証した。
+
+きっかけは、マイジャグラーV(641-674, 624-657と658-691の2セクションに分割配置)で
+x=3(641番・674番、ユーザーの言うメイン通路に接する側)の機械割が102.7-102.9%、
+x=19(657番・658番、セクション境界側)が99.5-99.6%と明確に分かれていたこと。
+これをホール全体に拡張して再現性を確認した。
+
+### 横列(メイン島)6/7セクションで再現
+| section | n | x vs payout rho | p値 |
+|---|---|---|---|
+| 501-522 | 22 | 0.101 | 0.654 (例外、x範囲1-22で他と異なる) |
+| 523-556 | 34 | -0.561 | 0.001 |
+| 557-590 | 34 | -0.667 | <0.001 |
+| 591-623 | 33 | -0.457 | 0.007 |
+| 624-657 | 34 | -0.408 | 0.017 |
+| 658-691 | 34 | -0.586 | <0.001 |
+| 805-815 | 11 | 0.436 | 0.180 (例外、n=11と小さい) |
+
+x座標が小さい(x=3寄り=メイン通路側)ほど機械割が高い、という負の相関が標準的な
+x範囲(3-19)を持つ5セクション全てでp<0.02と有意。
+
+### 縦列(バラエティ島)3セクションでは位置効果なし
+| section | n | y vs payout rho | p値 |
+|---|---|---|---|
+| 692-711 | 20 | 0.108 | 0.651 |
+| 712-733 | 22 | 0.009 | 0.968 |
+| 734-755 | 22 | -0.025 | 0.912 |
+
+### メイン島 vs バラエティ島 全体比較
+| group | mean | std | n |
+|---|---|---|---|
+| メイン(横列) | 101.78% | 2.99 | 202 |
+| バラエティ(縦列) | 100.63% | 1.81 | 64 |
+
+バラエティ島は平均機械割が低いだけでなく分散も小さく(std 1.81 vs 2.99)、
+台ごとの設定差別化が少ない=高設定投入の優先度が低いゾーンである可能性を示唆。
+
+## アクション
+- 台選定モデルの特徴量に「メイン通路からの距離」(x座標、または機種固有のedge_distance
+  ではなく、machine_layoutのx座標そのもの)を追加することを検討する。特にメイン島
+  (横列, section ∈ {523-556,557-590,591-623,624-657,658-691})ではx座標と機械割に
+  rho -0.41〜-0.67の強い相関がある。
+- 501-522(x範囲1-22)と805-815(n=11)はこの傾向が見られない例外として扱い、
+  x座標のスケール・レイアウト解釈が他セクションと異なる可能性を確認すること
+  (要・追加レイアウト調査)。
+- バラエティ島(縦列, section ∈ {692-711,712-733,734-755})では位置情報を特徴量に
+  使う優先度は低い(rho≈0)。代わりに「バラエティ島か否か」自体が機械割が低めである
+  ことを示す弱い特徴量になりうる。
+
+## 例
+```python
+# machine_layoutとmachine_detailed_resultsをmachine_numberで結合し、
+# section別にx(横列)またはy(縦列)とpayout_rateのSpearman相関を見る
+horiz = ['523-556','557-590','591-623','624-657','658-691']
+vert = ['692-711','712-733','734-755']
+```
+
+---
+id: mitoya-main-aisle-x-position-effect-confounded-by-machine-name
+trigger: "machine_layoutのx/y座標とpayout_rateの相関を機種配置と無関係に解釈しようとするとき(前エントリmitoya-main-aisle-x-position-payout-effectを参照する前)"
+confidence: 0.8
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 直前のentryで報告した「メイン通路側(x=3)ほど機械割が高い」は大部分が機種名効果の交絡
+
+## 背景
+直前のentry(mitoya-main-aisle-x-position-payout-effect)で、横列5セクションで
+x座標とpayout_rateにrho -0.41〜-0.67(全てp<0.02)の相関を報告したが、
+ユーザーから「物理配置より機種名の影響が大きいことは既にEDAで分かっている」との
+指摘を受けて再検証した。
+
+各machine_numberのpayout_rateから、同一section内のmachine_name平均を引いた残差
+(機種名効果除去後)でx座標との相関を取り直した結果:
+
+| section | n | 機種数 | raw rho | 残差rho | p値(残差) |
+|---|---|---|---|---|---|
+| 523-556 | 34 | 11 | -0.561 | +0.305 | 0.079 (符号反転・非有意) |
+| 557-590 | 34 | 6 | -0.667 | -0.255 | 0.146 (非有意) |
+| 591-623 | 33 | 8 | -0.457 | -0.208 | 0.245 (非有意) |
+| 624-657 | 34 | 5 | -0.408 | -0.268 | 0.125 (非有意) |
+| 658-691 | 34 | 3 | -0.586 | -0.504 | 0.002 (有意のまま) |
+
+7セクション中6セクションで有意性が消失または符号が反転した。唯一658-691
+(機種数3=最少)のみ残差でも有意。machine_name平均を除去すると「位置効果」の
+大部分が消える=「機械割の高い機種ほど低x側に配置されている」という機種配置の
+パターンを位置効果と誤認していた可能性が高い。
+
+マイジャグラーV単独の分析(641-674)についても、674番が属する658-691側は
+残差でも有意だが、641番が属する624-657側は残差rho=-0.268(p=0.125)で非有意
+となり、当初の「x=3で102.7-102.9% vs x=19で99.5-99.6%」という主張のうち
+624-657側は機種名効果込みの見かけ上の差である可能性がある。
+
+## アクション
+- machine_layoutの座標(x,y)とpayout_rate/差枚の相関を見る際は、**必ず
+  machine_name(または機種カテゴリ)平均を除去した残差で再検証する**こと。
+  rawの相関だけで「位置効果」を主張しない。
+- 658-691のように機種数が極端に少ない(2-3機種)セクションでは、残差後も
+  位置効果が残る可能性があるため、個別に深掘りする価値がある。
+- 「メイン通路からの距離」を特徴量としてMLに追加する提案は、この交絡検証が
+  終わるまで保留すること。直前entry(mitoya-main-aisle-x-position-payout-effect)
+  はconfidenceを下げて参照すること(実質的に否定された)。
+
+## 例
+```python
+type_mean = merged.groupby(['section','machine_name'])['payout_rate'].transform('mean')
+merged['residual'] = merged['payout_rate'] - type_mean
+rho, p = spearmanr(merged['x'], merged['residual'])
+```
+
+---
+id: mitoya-machine-type-corner-effect-not-supported-even-in-main-islands
+trigger: "『機種角(同一機種が並ぶ範囲の最小/最大台番号)は差枚/機械割が高い』という仮説を検証するとき、特にヒートマップで角台が高く見えるとき"
+confidence: 0.7
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 「機種角=高設定」はAT・メイン島に限定しても支持されない。むしろ機種角の方がresidualが低い(逆方向)
+
+## 背景
+ユーザーがヒートマップから「メイン島(横列)のXgroup高差枚台は機種角(522,513,512,539,
+556,573,574,608,614)に集中している」と指摘。一つ前の配置期間(2026-02-07~05-08,
+機種入替前)のXgroup日データで、is_type_edge(同一machine_nameのmachine_number範囲の
+min/maxに該当する台)と機械割residual(機種名平均payout_rateを除去した値)の関係を検証した。
+
+- 全体(grp_size>=3, n=243): 機種角 residual平均=+0.065(n=70) vs 非角=-0.026(n=173)
+  ほぼゼロ、有意差なし
+- AT・メイン島限定(n=133): 機種角 residual平均=**-0.259**(n=44) vs 非角=**+0.128**(n=89)
+  Mann-Whitney p=0.505、非有意かつ符号が逆(機種角の方が低い)
+
+ユーザー指摘の9台のうち6台(539,556,522,574,513,608)はresidual+1.0〜+11.5と高いが、
+3台(512,573,614)はresidual-1.6〜-10.2と低い。AT・メイン島限定でもこの3台は変わらず
+マイナス。573(北斗の拳転生の章2)はAT・メイン島の機種角の中でも最も低いresidual
+(-10.2)であり、「機種角だから高い」という説明と正反対の実例。
+
+## アクション
+- ヒートマップで「角台が高く見える」という視覚的印象は、機種角という位置属性自体の
+  効果ではなく、その機種固有の人気・回転率・導入時期などの要因による可能性が高い。
+  機種角を独立した特徴量としてML/台選定に使う優先度は低い。
+- 「N台中M台が当てはまる」型の部分的パターンを報告する際は、必ず**当てはまらない
+  個体(この場合573,512,614)を明示**し、その個体が何によって説明されるかを
+  別途分析すること。当てはまる個体だけを抜き出して法則化しない。
+- 次の深掘り方向: 539/556/522/574/513/608(高residual6台)と512/573/614(低residual
+  3台)を分ける要因として、x座標(メイン通路距離)、機種の導入時期(新台か否か)、
+  機種人気度(games_sum)などを個別に確認する。
+
+---
+id: mitoya-9-machine-corner-sample-explained-by-individual-variance-not-common-factor
+trigger: "少数(5-10台程度)の『高差枚台リスト』に共通する位置・人気・導入時期などの要因を探そうとするとき"
+confidence: 0.65
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 9台中3台の外れ値(512,573,614)は、x座標・人気度(games_sum)・機種変更時期のいずれでも説明できない。共通要因ではなく個別の期間内分散として扱うべき
+
+## 背景
+mitoya-machine-type-corner-effect-not-supported-even-in-main-islandsの追加検証。
+9台(522,513,512,539,556,573,574,608,614)のうち、高residual6台と低residual3台
+(512:-1.6, 573:-10.2, 614:-4.4)を分ける要因として、x座標(メイン通路距離)・
+games_sum(稼働量/人気)・直近の機種変更からの経過日数を確認したが、いずれも
+単調な関係は見られなかった。
+
+- x座標: 573はx=3(「メイン通路側」)で最も悪い(-10.2)。539/574/608もx=3で
+  良い(+1.0〜+11.5)。x=3内で-10.2〜+11.5の幅があり説明力なし。
+- games_sum: 512が9台中最大(396,564)なのにresidual=-1.6。614が最小(226,955)でも
+  residual=-4.4。573は中の上(336,815)で最悪(-10.2)。
+- 機種別diff_std(2000〜4000程度)を考えると、residual ±10程度は1期間内の
+  通常の分散範囲内に収まる。
+
+## アクション
+- 9台のような小規模(5-10台)サンプルから「共通の位置・属性要因」を探す前に、
+  まず機種別diff_stdと比較して、観測されたresidualの幅が「通常の分散の範囲内」か
+  どうかを確認すること。範囲内であれば、共通要因探索よりも単純なノイズと
+  解釈するのが妥当。
+- ヒートマップ上で「高く見える台」のリストアップは、視覚的な閾値(上位N台等)
+  によるサンプリングバイアスを含むため、そのリストの中の外れ値(説明できない
+  低residual台)を無視せず、リスト全体の説明力を評価すること。
+- この系列(機種角・物理配置)の深掘りは、サンプルサイズ不足と一貫した説明変数が
+  見つからないため、ここで一旦終了することを推奨。今後は機種別(machine_name)
+  レベルの直近実績(mitoya-machine-type-persistence-dominates-machine-number)
+  を主軸にした台選定に注力する方が生産的。
+
+---
+id: mitoya-kabaneri-corner-effect-consistent-512-current-top
+trigger: "甲鉄城のカバネリ(またはAT機種一般)の機種角(同一機種番号グループのmin/max)が強いかどうかを台選定で検討するとき"
+confidence: 0.65
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 「機種角の強弱は機種ごとに異なる」仮説を検証: 甲鉄城のカバネリは5期間連続で角台residualが正(角効果が強い機種)。現在の角(512番)が現役グループ内で機械割1位
+
+## 背景
+mitoya-machine-type-corner-effect-not-supported-even-in-main-islands /
+mitoya-9-machine-corner-sample-explained-by-individual-variance-not-common-factor
+で「機種角」全体としての効果は否定されたが、ユーザーから「機種ごとに角効果の
+強弱が違うのでは」との指摘を受け、AT機種ごとにperiod別edge_effect
+(角residual平均-非角residual平均)の符号一致率を検証した(n_periods>=4の23機種中
+11機種、Xgroup・3ヶ月period)。
+
+- **甲鉄城のカバネリ**: 5期間全てでedge_effectが正 [+1.5,+5.8,+1.8,+2.0,+9.3]
+  (二項検定 5/5, p≈0.03) → 角台が一貫して強い
+- 東京喰種: 5/6が負 → 角台が一貫して弱い(避けるべき)
+- ゴッドイーターリザレクション: 4/5が負
+- モンスターハンターライズ: 4/5が負
+- かぐや様/からくりサーカス/スマスロ北斗の拳/マギアレコード/モンキーターンV/
+  戦国乙女4: 符号一致率50-67%(ランダムと有意差なし)
+
+現在(Xgroup・直近6ヶ月、2026-06-07時点)の甲鉄城のカバネリは501-512の12台。
+角(501,512)の平均機械割=108.97% vs 中央(502-511)=102.25%。
+**512番は12台中1位(機械割115.0%)で、かつ角台**。501番は6位(102.9%)。
+
+## アクション
+- 「機種角」を特徴量として使う際は、機種全体で一律に扱わず**機種別に角効果の
+  方向性(正/負/なし)を個別に評価**すること。甲鉄城のカバネリのように一貫して
+  正の機種では角台を優先、東京喰種/ゴッドイーター/モンハンライズのように
+  一貫して負の機種では角台を避ける。
+- 2026/06/14(DD14, Xgroup, イベント日)のAT機候補として、**甲鉄城のカバネリ512番**
+  (現役グループ501-512中1位・角台・角効果が一貫して正の機種)を新たな有力候補に
+  追加検討すること。
+- ただしn_periods=5(甲鉄城のカバネリ)は依然サンプルが少なく、二項検定p≈0.03も
+  多重比較(11機種でテスト)を考慮すれば厳密にはボーダーライン。過信せず、
+  既存の機種別persistence(法則①)と併用して判断すること。
+- 他の機種(東京喰種・ゴッドイーター・モンハンライズ)が稼働中の場合、その角台
+  (min/max番号)は避ける方向で検討する。
+
+---
+id: mitoya-kabaneri-corner-effect-was-wrong-machine-correction
+trigger: "machine_nameでgroupbyして複数periodをまたいだ持続性・角効果を検証するとき。特に『甲鉄城のカバネリ』のように初代とスマスロ版が別名称で存在する機種シリーズを扱うとき"
+confidence: 0.85
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# mitoya-kabaneri-corner-effect-consistent-512-current-top は誤り。5期間連続正の角効果は初代「甲鉄城のカバネリ」(692-700/813-815, バラエティ島, 2026-04-19撤去済み)についてのものであり、現在の501-512「甲鉄城のカバネリ 海門(うなと)決戦」(2026-03~稼働, メイン島)とは無関係
+
+## 背景
+ユーザーから「甲鉄城のカバネリにはスマスロ『海門決戦』と初代があり、混同しないように」
+との指摘を受け確認。machine_detailed_resultsでは両者は別のmachine_name文字列
+("甲鉄城のカバネリ" vs "甲鉄城のカバネリ 海門(うなと)決戦")として正しく区別されており、
+machine_masterでも両方"other"(AT)に正しく分類されていた。
+
+しかし、period別edge_effect検証(mitoya-kabaneri-corner-effect-consistent-512-current-top)
+で「甲鉄城のカバネリ」としてn_periods=5・全期間正の角効果を観測したのは、
+
+- 初代「甲鉄城のカバネリ」: 2025-01-01~2026-04-19稼働, 台番号692-700・813-815
+  (バラエティ島セクション692-711・805-815) → 約15.5ヶ月=5期間(3ヶ月window)に合致
+
+であり、現在の
+
+- 「甲鉄城のカバネリ 海門(うなと)決戦」: 2026-03-02~現在稼働, 台番号501-514
+  (メイン島セクション501-522)
+
+とは**全く別の機種・別の物理位置**。海門決戦は稼働開始から3ヶ月程度のため
+n_periods>=4のフィルタを満たさず、そもそもedge_effect検証の対象に含まれて
+いなかった可能性が高い。
+
+512番(海門決戦)の直近6ヶ月機械割=115.0%(12台中1位)という実測値自体は有効だが、
+「機種固有の角効果が一貫して正だから角台512が強い」という根拠付けは誤り。
+512番が現在のグループ内で1位である理由は、稼働開始から約3ヶ月のサンプル
+(n_days=36程度)に基づく単一期間の結果であり、法則②(Q5は分散の大きい
+ラッキー台に汚染されやすい)の対象になりうる。
+
+## アクション
+- machine_nameでgroupby/persistence検証を行う際は、**同一シリーズの初代/スマスロ版
+  などで名称が分かれているケースに注意**し、各machine_nameがどの台番号・どの期間
+  で稼働していたか(売却/撤去/新規導入のタイミング)を必ず確認すること。
+  「同じ機種名だから過去の傾向が引き継がれる」と仮定しない。
+- 稼働開始から3ヶ月未満(n_periods<2)の機種については、period別persistence/
+  edge_effect検証の対象外とし、その機種の過去傾向を新台に適用しない。
+- 512番(海門決戦)を候補とする場合は、mitoya-diff-sum-q5-is-contaminated-by-
+  high-variance-lucky-machinesの観点で、単一期間の機械割115.0%が"ラッキー台"
+  由来でないか(diff_std等)を別途確認すること。機種固有角効果という根拠は撤回。
+
+---
+id: mitoya-501-514-block-recent-volatility-20260608
+trigger: "501-514付近(海門決戦ブロック)を機種角・台選定の根拠に使うとき"
+confidence: 0.7
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 2026/06/08に501-514ブロックでレイアウト変動。512は角台ではなくなり514が新たな角台に。513/514は新規導入で評価不能
+
+## 背景
+2026-06-11時点(最新)で「甲鉄城のカバネリ 海門(うなと)決戦」は501-514の14台に拡大。
+513・514は2026-06-08からの新規導入で稼働4日のみ。同時に539番も06-08から
+「戦国乙女5」に変更(4日のみ)。
+
+これにより、mitoya-kabaneri-corner-effect-consistent-512-current-top
+(既に別の理由で撤回済み)の「512=角台」という前提も事実として崩れている。
+現在の角台は501と514。
+
+## アクション
+- 501-514ブロックおよび539番は、機種・グループ構成が06-08に変動したばかりで
+  evaluation期間(n_days>=20程度)を満たさないため、台選定の根拠として
+  使用しない。
+- 「一つ前の配置(06-08以前)」を前提にした角台議論(522,513,512,539等)を行う
+  場合は、その配置がいつまで有効だったか、現在の配置と異なる点を必ず
+  明示すること。
+---
+id: mitoya-20260614-final-at-candidate-screening
+trigger: "みとや大森町店のXgroup日(DD4/7/14/17/24/27)にAT機の台選定を行うとき"
+confidence: 0.7
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 2026/06/14向け最終スクリーニング: payout_rate>=100% AND diff_std<median(3615)でメイン島AT機をフィルタした結果
+
+## 背景
+機種角効果(mitoya-machine-type-corner-effect-not-supported-even-in-main-islands,
+mitoya-kabaneri-corner-effect-was-wrong-machine-correction)が支持されなかったため、
+機種角ではなく「payout_rate × diff_std(分散)」の2軸スクリーニングに切り替えた。
+
+直近6ヶ月Xgroup日・現在の機種名と同一期間のデータのみを対象に、
+メイン島(y<692)・AT機(machine_master全flag=False)・n_days>=8を対象として
+payout_rate>=100% AND diff_std<median(全体med=3615)でフィルタした結果:
+
+- **化物語 609番**: payout_rate=103.96%, diff_std=2878, n_days=36
+  → 598番と同等以上の信頼性を持つ新候補
+- **モンキーターンV 598番**: payout_rate=103.54%, diff_std=2296, n_days=38
+  → 既存主軸、最低分散
+- モンキーターンV 597番(598隣台): payout_rate=103.06%, diff_std=2088, n_days=38
+- カバネリ海門決戦 502/506/510番: payout_rate=108-110%, diff_std=2932-3579, n_days=20
+  (稼働3ヶ月のため経過観察が必要)
+- 北斗の拳 転生の章2 568/572/569/573番: payout_rate=101-106%, diff_std=2947-3307, n_days=31
+
+## アクション
+- 機種角ではなく、この「payout_rate>=100% AND diff_std<全体median」の2軸スクリーニング
+  を台選定の標準ロジックとして再利用する。
+- n_days(稼働期間のXgroup日数)が短い機種(n_days<20)は、サンプル不足として
+  優先度を下げ、n_days>=30程度の機種を優先する。
+---
+id: mitoya-same-group-machines-differ-in-variance-pattern
+trigger: "同一機種グループ(連続台番号で同じmachine_name)内から台を選定するとき"
+confidence: 0.75
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# マギアレコード518-522の5台中、518・522だけがdiff_std>medianの高分散・好成績台で、519-521は低分散
+
+## 背景
+ユーザーから「マギレコは3ヶ月集計だと522も良いがそれは候補に入らないのか」との質問。
+確認したところ、518-522の5台(同一機種・同一グループ)で:
+- 518番: payout=111.6%, diff_std=3669(>median3615)
+- 522番: payout=105.8%, diff_std=3995(>median3615)
+- 519番: payout=101.8%, diff_std=2731(<median)
+- 520番: payout=105.5%, diff_std=3167(<median)
+- 521番: payout=101.2%, diff_std=2469(<median)
+
+同一機種・同一島内の隣接台でも、台ごとにdiff_stdが大きく異なり、518・522は
+法則②(高分散=ラッキー台疑い)に抵触する一方、519-521は低分散で信頼性が高い。
+
+## アクション
+- 「同じ機種グループだから傾向は同じ」と仮定せず、グループ内でも台番号単位で
+  payout_rateとdiff_stdを個別に確認すること。
+- 高payout_rateだけで判断せず、必ずdiff_std(分散)とセットで評価し、
+  グループ内の他台と比較して相対的に高分散な台は除外する。
+---
+id: mitoya-saturday-screening-exploratory-20260613
+trigger: "みとや大森町店で、Xgroup/イベント日以外の通常営業日(特に土曜)にAT機を選定するとき"
+confidence: 0.4
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 土曜限定(直近26週)でpayout_rate>=100% AND diff_std<median(土曜内)スクリーニングを実施。518番・東京喰種5台が合格
+
+## 背景
+2026/06/13(土曜・非イベント日)向けに、Xgroup日基準のスクリーニング手法
+(mitoya-20260614-final-at-candidate-screening)を「土曜日」に置き換えて
+初めて試行した。直近6ヶ月の土曜26日分のデータで、現在の機種名と同一期間の
+payout_rate・diff_stdを集計。
+
+結果:
+- マギアレコード518番: payout=107.3%, diff_std=2500, n=21日
+  → Xgroup基準ではdiff_std=3669>medianで除外(法則②)だったが、土曜限定では
+    diff_std=2500<medianで合格。518番の高分散はXgroup/イベント日特有の
+    大勝ち・大負けに起因し、通常の土曜は安定している可能性。
+- 東京喰種586/585/579/583/576番(5台)が合格: Xgroupでは579番1台のみ合格
+  だったのに対し、土曜は5台合格。東京喰種シリーズの高分散もXgroup日特有で、
+  通常営業日は安定している可能性。
+- モンキーターンV598番(Xgroup主軸)は土曜の合格リストに非掲載。隣台597番が
+  土曜では合格(102.7%, diff_std=2573, n=26)。598はXgroup特有に強い可能性。
+
+## アクション
+- **この知見はconfidence=0.4の単発・未検証の結果**。Xgroup日のような複数期間
+  walk-forward検証を一度も行っていないため、法則として確立されたものではない。
+- 土曜(または平日・非イベント日)向けの台選定が必要な場合は、この
+  「payout_rate/diff_std」スクリーニングを曜日別・日付属性別に再実行できる
+  ことを覚えておく(同じロジックを属性別に適用可能)。
+- 「Xgroup/イベント日で高分散→ラッキー台疑い」という法則②は、Xgroup日に
+  限定した話であり、通常営業日には別の(おそらくより緩い)分散基準が
+  必要かもしれない、という仮説を今後複数の土曜データで検証する。
+---
+id: mitoya-saturday-screening-retracted-no-persistence
+trigger: "曜日別(土曜等)の単発集計スクリーニング結果を台選定に使う前"
+confidence: 0.75
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# mitoya-saturday-screening-exploratory-20260613を撤回。土曜26週をsplit-half検証した結果、payout_rate・diff_stdともに前半→後半の持続性なし(rho=-0.137/-0.096、ともにp>0.4)
+
+## 背景
+mitoya-saturday-screening-exploratory-20260613で「土曜限定だと518番・東京喰種
+クラスタ(586/585/579/583/576)がpayout_rate>=100%・diff_std<medianで合格する」
+と報告したが、これは直近26週分を1つの集計としたものだった。
+
+これを前半13週/後半13週に分割してSpearman持続性検定を行った結果:
+- payout_rate: rho=-0.137 (p=0.404) → ランダムと有意差なし
+- diff_std: rho=-0.096 (p=0.560) → ランダムと有意差なし
+
+個別にも、579番・597番は前半<100%→後半>100%、585番は前半>100%→後半<100%と
+逆転しており、26週単発集計の「土曜の有利機種」は再現性のないノイズだった
+可能性が高い。598番のみdiff_stdが両期間で低い(1801→1689)ものの、
+payout自体は両期間とも100%前後で平凡。
+
+## アクション
+- **mitoya-saturday-screening-exploratory-20260613の結論("518・東京喰種が土曜に
+  強い")は撤回**。曜日固有の優位機種という仮説は現時点で支持されない。
+- 曜日別など新しい属性でのスクリーニングを行う場合、単発の集計値だけで結論を
+  出さず、必ずsplit-half(または複数period)の持続性検証(Spearman rho)を
+  セットで行うこと。1回の集計で「良い台」が見つかっても、それだけでは
+  ノイズと区別できない。
+- イベント日でない通常営業日(土曜含む)の台選定は、Xgroup基準で検証済みの
+  候補(598番・609番等, mitoya-20260614-final-at-candidate-screening)を
+  そのまま使うのが妥当。曜日固有の調整は現時点で根拠なし。
+---
+id: mitoya-diff-std-machine-name-level-highly-persistent
+trigger: "diff_std(分散)に基づくスクリーニング(法則②)をみとやで適用するとき、またはその妥当性を検証するとき"
+confidence: 0.85
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# machine_name単位・Xgroup104日のsplit-half検証で、diff_std持続性rho=0.814(p<0.001)、payout_rate持続性rho=0.346(p=0.020)。土曜・machine_number単位の検証(rho≈-0.1)とは対照的に強く再現
+
+## 背景
+mitoya-saturday-screening-retracted-no-persistenceで「payout/diff_stdスクリーニングは
+土曜・machine_number単位・26週では持続性なし(rho≈-0.1, p>0.4)」と撤回したが、
+これがスクリーニング手法全体の欠陥か、サンプル/粒度の問題かを切り分けるため、
+Xgroup全期間(2025-01-04〜2026-06-07, 104日)をmachine_name単位・split-half
+(52日/52日, n>=10機種45種)で再検証した。
+
+結果:
+- payout_rate 前半→後半: rho=0.346 (p=0.020) → 有意な持続性
+- **diff_std 前半→後半: rho=0.814 (p<0.001)** → 非常に強い持続性
+- payout Q5stay=0.444 / Q1stay=0.444 (ランダム0.2の倍以上)
+- diff_std 低分散維持率=0.667 / 高分散維持率=0.556
+
+モンキーターンV: payout 105.9%→106.2%, diff_std 3240→3051 と両指標とも安定。
+
+土曜検証(machine_number単位・26週・rho≈-0.1)と対照的に、Xgroup・machine_name単位・
+104日では強い持続性が出た。差は「サンプルサイズ(104日vs26週)」と
+「集計粒度(machine_name vs machine_number)」の両方に起因する可能性が高い。
+
+## アクション
+- **diff_std(機種の分散特性)はmachine_name単位・十分なサンプル(n>=10程度)があれば
+  非常に安定した機種固有の特性**であり、法則②(高分散=ラッキー台疑いで除外)の
+  根拠として今後も使用してよい。
+- ただし、この持続性検証は「machine_name単位・Xgroup104日」という条件下でのもの。
+  machine_number単位や、曜日限定など小サンプルの属性で同様のスクリーニングを
+  行う場合は、再度split-half検証を行うこと(土曜の前例参照)。
+- 598/609の選定根拠(diff_std<median)は、この機種レベルでの強い持続性により
+  概念実証として補強された。
+---
+id: mitoya-rule2-screening-backtest-fails-q5-prediction
+trigger: "diff_std<median & payout_rate>=100%(法則②)のスクリーニングを台選定の根拠として使うとき"
+confidence: 0.85
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 法則②スクリーニング(diff_std<median)は当日Q5到達率がランダム期待値を下回り、Q5選定の根拠としては逆効果
+
+## 背景
+mitoya-diff-std-machine-name-level-highly-persistentで「diff_std/payout_rateの
+持続性は強い(rho=0.6-0.8)」と検証したが、その持続性を実際にQ5(当日上位クインタイル)
+選定に使えるかをバックテストした(eda/mitoya_backtest_and_eventday_range.py)。
+
+各Xgroup日について、その日より前の履歴(machine_name単位, n_days>=10)で
+payout_rate>=100% & diff_std<medianの候補を選び、当日のクインタイルを確認した結果:
+- n=906件(94日分)
+- Q5到達率=0.107 (ランダム期待値0.200) ← 期待値の約半分
+- Q4+Q5到達率=0.386 (ランダム期待値0.400) ← ほぼ期待値通り
+
+機種別では新鬼武者3(top_rate=0.25)・スーパーブラックジャック(0.67,n=3)が高いが、
+カバネリ(0.08)・モンキーターンV系は集計に出てこない(候補から外れているか低頻度)。
+
+## アクション
+- diff_std<medianフィルタは「分散が低い=安定」を選ぶため、定義上Q5(高分散側の
+  上振れ)になりにくい台を選んでいる。法則②の「持続性が強い」という結果と
+  「Q5選定に使える」は別問題であり、混同してはならない。
+- 06/14の598/609推薦は「安定して稼働している機種」という保証はあるが、
+  「Q5(爆益)になる」根拠としては支持されない。台選定の主目的が
+  Q5(爆益)狙いであれば、このスクリーニングロジックは見直しが必要
+  (例: diff_std上位かつpayout_rate上位、のような逆方向のフィルタを試すべき)。
+- 新しいスクリーニングロジックを提案する際は、必ず本バックテストと
+  同様の「事後Q5到達率 vs ランダム期待値」検証を行うこと。
+---
+
+id: mitoya-eventday-range-x-dds-exclusion-justified
+trigger: "イベント日の定義(X_DDS等)を変更・拡張するとき"
+confidence: 0.8
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# X_DDS=[4,7,14,17,24,27]がDD1・DD30を除外しているのは妥当。含めるとpayout_rate持続性が崩れる
+
+## 背景
+確定イベント日[1,4,7,14,17,24,27,30]とX_DDS([4,7,14,17,24,27])でmachine_name単位
+split-half持続性(eda/mitoya_backtest_and_eventday_range.py)を比較した結果:
+- X_DDS: payout_rate rho=0.346(p=0.020,有意), diff_std rho=0.619(p<0.001)
+- 確定イベント日全体(+DD1,30): payout_rate rho=0.141(p=0.349,有意性消失), diff_std rho=0.660(p<0.001)
+- DD1+DD30のみ(n=32日): payout_rate rho=-0.265(p=0.129,逆相関の兆候), diff_std rho=0.773(p<0.001)
+
+DD1単体payout_rate=99.29%(他のDD群は101.25-101.50%)とやや低く、DD1/DD30を
+含めるとpayout_rate信号が希釈される。
+
+## アクション
+- X_DDSの現行定義(DD1/DD30除外)は変更不要。むしろ正しい絞り込みだったと
+  裏付けられた。
+- diff_std持続性はDD範囲を広げても安定して強い(0.6-0.77)ため、diff_stdベースの
+  分析では確定イベント日全体やDD1/30単体を使っても大きな問題はない。
+  payout_rateベースの分析でのみX_DDSの厳密な定義を守ること。
+---
+id: mitoya-high-variance-high-payout-screening-improves-q5-rate
+trigger: "Q5(当日上位クインタイル)到達率を上げる台選定スクリーニングを検討するとき"
+confidence: 0.55
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# diff_std>=median(高分散) & payout_rate>=100% のスクリーニングはQ5到達率を期待値の1.5倍に上げるが、Q1到達率も上昇する
+
+## 背景
+mitoya-rule2-screening-backtest-fails-q5-predictionで法則②(diff_std<median)が
+Q5回避フィルタとして機能することを確認した後、逆方向の戦略をXgroup94日で
+バックテストした(eda/mitoya_backtest_and_eventday_range.py の
+section_alternative_strategies)。
+
+- 戦略1: diff_std>=median(高分散) & payout_rate>=100%
+  n=1918, Q5到達率=0.306(期待値0.200), Q4+Q5=0.464(期待値0.400),
+  Q1到達率=0.246(期待値0.200)
+- 戦略2: payout_rate上位20%(分散フィルタ無し)
+  n=1212, Q5到達率=0.274, Q4+Q5=0.450, Q1到達率=0.242
+
+両戦略ともQ5到達率は明確に期待値超え、Q4+Q5も期待値超え。一方でQ1到達率も
+わずかに期待値超えで、「大勝ちもするが大負けもする」高ボラティリティ型。
+
+## アクション
+- Q5(爆益)狙いの台選定では、法則②(低分散フィルタ)とは逆に「高分散かつ
+  payout_rate>=100%」の機種を優先する方が有効な可能性が高い。
+- ただしこれは事後的な単一バックテストであり、split-half等の頑健性検証は
+  未実施。多重検定(法則②否定後に複数の代替戦略を試した)による偽陽性の
+  可能性も排除できないため、信頼度は中程度(0.55)に留める。
+- 06/14の598/609(法則②通過=低分散側)は、この知見に従えばQ5を狙う上では
+  むしろ不利な選択。カバネリ502/506/510(diff_std高め)等の高分散側機種を
+  優先する方向性が次の検証候補。
+- 次のステップ: 戦略1をsplit-half(前半/後半)で再現性検証し、さらに
+  「リスク許容度」をユーザーに確認した上で運用方針(法則②=安定志向 vs
+  戦略1=Q5狙い)を選択する。
+---
+id: mitoya-high-variance-strategy-split-half-reproducible
+trigger: "mitoya-high-variance-high-payout-screening-improves-q5-rateの信頼度を再評価するとき、または高分散戦略の頑健性を確認するとき"
+confidence: 0.7
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 高分散・高payout戦略のQ5到達率向上は前半/後半split-halfで再現。単一バックテストの偶然ではない
+
+## 背景
+mitoya-high-variance-high-payout-screening-improves-q5-rateで報告した戦略1
+(diff_std>=median & payout>=100%)・戦略2(payout_rate上位20%)のQ5到達率向上が、
+Xgroup104日を前半52日/後半52日に分割したsplit-halfでも再現するかを検証した
+(eda/mitoya_backtest_and_eventday_range.py の section_alt_strategies_split_half)。
+
+結果:
+- 戦略1 Q5到達率: 前半0.336(n=755) / 後半0.285(n=1163) (期待値0.200) → 両半期で明確に超過
+- 戦略1 Q1到達率: 前半0.269 / 後半0.231 (期待値0.200) → Q1も両半期で超過(ハイリスク性も一貫)
+- 戦略2 Q5到達率: 前半0.283(n=459) / 後半0.268(n=753) (期待値0.200) → 両半期で超過
+- 戦略2 Q1到達率: 前半0.248 / 後半0.238 (期待値0.200)
+
+戦略1は戦略2よりQ5効果が大きいが、Q1も大きい(高分散フィルタがリスク・リターン
+両方を増幅)。
+
+## アクション
+- 高分散・高payout戦略のQ5到達率向上(期待値比+30-68%)は単一バックテストの
+  偶然ではなく、前半/後半で再現性のある安定したパターンと判断できる
+  (信頼度0.55→0.7に上昇)。
+- ただしQ1到達率も一貫して期待値超え(ハイリスク・ハイリターン)である点は
+  変わらず、ローリスク運用には適さない。
+- 法則②(低分散=安定)と本戦略(高分散=Q5狙い)は目的が異なる:
+  「大負け回避」なら法則②、「Q5(爆益)期待値最大化、Q1リスク許容」なら
+  本戦略(戦略1)を使う、という運用方針の二分化が妥当。
+- 06/14の598/609(法則②=低分散側)は安定志向の選択であり、Q5を最優先する
+  なら高分散側(カバネリ502/506/510等)を再検討する余地がある。
+---

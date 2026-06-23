@@ -1,0 +1,166 @@
+---
+id: kamata1-2fa-dd2531-kakuban8-reliable
+trigger: "蒲田1 2FジャグラーHanaHana系でDDが25〜31のとき"
+confidence: 0.87
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1 2F_A × DD25-31 の角番8が最信頼シグナル（q=0.001、26セクション確認済み）
+
+## 背景
+2026-06-18: kamata7_kakuban_dd_cross_eda.py を蒲田1に適用した結果。
+有意DDビン: DD25-31(q=0.001)・DD19-24(q=0.001)。
+DD25-31の top_kakuban=8, mean_residual=+66。
+角番8は26セクションに分散（全31セクション中）→ 構造的シグナル。
+
+DDビン内ランキング（DD25-31）:
+  角番8: +66, 角番18: +55, 角番10: +51
+
+## アクション
+DD25-31（月25〜31日）に蒲田1 2F ジャグラー系を訪問する場合、角番8台を優先候補とする。
+
+具体候補台（2026-06-16時点）:
+- 2154 / 2158 マイジャグラーV [2151-2161]
+- 2195 / 2198 ファンキージャグラー2 [2191-2202]
+- 2228 / 2230 ハッピージャグラーVIII [2223-2235]
+- 2243 / 2248 マイジャグラーV [2236-2255]
+- 2289 / 2294 ネオアイムジャグラーEX [2282-2301]
+（他多数のセクションにも分散）
+
+---
+id: kamata1-2fa-dd1924-kakuban17-moderate
+trigger: "蒲田1 2FジャグラーHanaHana系でDDが19〜24のとき"
+confidence: 0.74
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1 2F_A × DD19-24 の角番17は6セクション限定（大型列専用）
+
+## 背景
+2026-06-18: DD19-24 q=0.001 で有意。top_kakuban=17, mean_residual=+66。
+しかし角番17は20台セクション(3本)と17台セクション(3本)の計6セクションにしか存在しない。
+全31セクション中の19%と少なく、「大型列の奥から4番目ポジション」に特定の効果がある。
+
+具体候補台（kakuban=17のA系台）:
+- 2239 マイジャグラーV / 2252 ミスタージャグラー [2236-2255]
+- 2285 / 2298 ネオアイムジャグラーEX [2282-2301]
+
+## アクション
+DD19-24は角番17の大型列候補台を確認しつつ、角番8〜10の中間帯（全セクション分散）も候補とする。
+6セクション依存のため確信度は中程度（[[kakuban-high-position-single-section-trap]]に準ずる）。
+
+---
+id: kamata1-2fn-dd2531-kakuban12-reliable
+trigger: "蒲田1 2F AT系でDDが25〜31のとき"
+confidence: 0.82
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1 2F_N × DD25-31 の角番12が構造的シグナル（q=0.037、12セクション確認済み）
+
+## 背景
+2026-06-18: DD25-31 q=0.037 で有意。top_kakuban=12, mean_residual=+142。
+角番12は12セクション（全31中の39%）に存在 → 構造的シグナル。
+DD7-12(q=0.048)・DD13-18(q=0.007) も有意だが top_kakuban が3セクション依存（要注意）。
+
+DDビン内ランキング（DD25-31）:
+  角番12: +142, 角番9: +69, 角番15: +55
+
+## アクション
+DD25-31（月末）に蒲田1 2F AT系を訪問する場合、角番12台を優先候補とする。
+
+具体候補台（kakuban=12、N系）:
+- 2009 / 2012 戦国乙女5 / マギアレコード外伝 [2001-2020]
+- 2048 / 2054 甲鉄城のカバネリ 海門決戦 [2043-2059]
+- 2065 / 2071 北斗の拳 転生の章2 [2060-2076]
+- 2257 / 2267 BIRDIE WING / 化物語 [2256-2268]
+- 2270 / 2280 チバリヨ2プラス / 沖ドキ!BLACK [2269-2281]
+- 2404 / 2410 モンキーターンV / ヨルムンガンド [2399-2415]
+
+---
+id: kamata1-2fn-high-kakuban-low-section-trap
+trigger: "蒲田1 2F AT系でDD7-12またはDD13-18のとき"
+confidence: 0.64
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1 2F_N × DD7-12/13-18 の top_kakuban は3セクション依存 — 次善角番を使う
+
+## 背景
+2026-06-18:
+- DD7-12: q=0.048、top_kakuban=20(mean=+198)、しかし角番20は3セクション依存
+- DD13-18: q=0.007、top_kakuban=19(mean=+250)、しかし角番19は3セクション依存
+  → [[kakuban-high-position-single-section-trap]] の3セクション版
+
+実用候補（多セクション分散）:
+- DD7-12: 角番6(mean=+129, 26セクション) ← こちらを使う
+- DD13-18: 角番12(mean=+105, 12セクション) ← こちらを使う
+
+## アクション
+- DD7-12: 角番6（section_min+5 の台）を優先候補にする
+- DD13-18: 角番12（section_min+11 の台）を優先候補にする
+- top_kakuban=20/19 は「大型列の特定ポジション観察」として記録にとどめ、選台指示には使わない
+
+---
+id: kamata1-corner-low-setting-universal
+trigger: "蒲田1 2F のコーナー台（角番1）を選台候補に入れるとき"
+confidence: 0.94
+domain: operational-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1でもコーナー（角番1）は恒常的にマイナス — 蒲田7と共通の汎用法則
+
+## 背景
+2026-06-18: 蒲田1 cell_vs_rest 有意（q<0.05）結果:
+- 2F_N × kakuban=1 × DD2:  mean=-474, median=-777 (q=0.014)
+- 2F_A × kakuban=1 × DD5:  mean=-246, median=-309 (q=0.037)
+- 2F_N × kakuban=1 × DD27: mean=-424, median=-719 (q=0.031)
+
+全て mean/median 同方向（ともにマイナス）→ 外れ値ではなく構造的効果。
+蒲田7では残差法でも角番1が全セグメントでマイナス [[kakuban-corner-low-setting-structural-bias]] と同じ結果。
+
+## アクション
+コーナー台（角番1）は蒲田1でも最後の選択肢とする。
+ジャグ系・AT系ともに、訪問日や曜日に関わらずコーナー回避を基本とする。
+「コーナー低設定」は蒲田7・蒲田1共通の汎用ルールとして確立。
+
+---
+id: kamata1-dd-kakuban-cross-summary
+trigger: "蒲田1 2F を訪問する日付（DD）に合わせた選台方針を立てるとき"
+confidence: 0.82
+domain: operational-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1 2F DD別・機種タイプ別 角番推薦マップ（2026-06-18確立）
+
+| DDビン | 機種タイプ | 実用角番 | セクション数 | q値 |
+|---|---|---|---|---|
+| 1-6 | A/N | シグナルなし | - | >0.1 |
+| 7-12 | A | シグナルなし | - | 0.11 |
+| 7-12 | N | 角番6(+129) | 26 | 0.048 |
+| 13-18 | A | シグナルなし | - | 0.11 |
+| 13-18 | N | 角番12(+105) | 12 | 0.007 |
+| 19-24 | A | 角番17(+66) | 6 | 0.001 |
+| 19-24 | N | シグナルなし | - | 0.14 |
+| 25-31 | A | 角番8(+66) | 26 | 0.001 |
+| 25-31 | N | 角番12(+142) | 12 | 0.037 |
+
+共通回避: **角番1は全日種でマイナス（コーナー低設定確立）**
+
+## 蒲田1 vs 蒲田7 の比較
+- 蒲田7: 多数の有意シグナル（3F_R_A DD19-24=角9、3F_L_A DDシフト等）
+- 蒲田1: 月末（DD25-31）に有意シグナルが集中する特徴
+- 共通: コーナー低設定、中間台優位の方向性
+---

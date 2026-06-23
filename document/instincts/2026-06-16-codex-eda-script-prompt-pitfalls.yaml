@@ -1,0 +1,58 @@
+---
+id: codex-eda-script-prompt-pitfalls-machine-axis
+trigger: "Codexにkamata系(または同様のホール)EDA深掘りスクリプトの新規作成を/create_goalで依頼するとき"
+confidence: 0.75
+domain: workflow
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# kamata7 machine_name軸の深掘り依頼で発生した試行錯誤7件のうち、5件はプロンプトへの事前明記で回避可能だった
+
+## 背景
+2026-06-16、kamata7のmachine_name軸EDA深掘りをCodexに/create_goalで一括依頼した。
+実装完了までに以下の試行錯誤が発生し、修正に手間がかかった：
+
+1. 機械割(%)を自前実装し、games=0でinfが発生してp値・順位が破壊された
+   （既存の compute_payoutrate_pct() が ml/analysis/kamata_weekday_event_axis_payoutrate_deepdive.py に存在するのに再利用しなかった）
+2. min_entity_dates（観測日数フィルタ）を「セル単位のユニーク日数」で判定し、
+   曜日/イベント軸が全滅した（DD/末尾軸はサンプル数の都合で偶然通った）
+3. machine_name の表記ゆれにより2182の対象データを取りこぼし、
+   最終的にmachine_numberベースの同定に切り替えた
+4. kamata7のDBファイル名（マルハンメガシティ2000-蒲田7.db）を最初取り違え、
+   後から明示的に再取得した
+5. 新規スクリプトを `python file.py` で直接実行し、sys.path未設定でエラー。
+   既存スクリプト群の起動パターンを後から模倣した
+6. dd列のint/str型不一致でmerge失敗（実装の細部、事前指定は非現実的）
+7. 集計テーブルで「セル単位の観測日数」と「エンティティの総稼働日数」を
+   同名(n_dates)で扱い、concat時に列重複エラーが発生
+
+## アクション
+kamata系（またはホールDB全体）のEDA深掘りスクリプトを新規作成させる/create_goalプロンプトには、
+以下を定型文として含めること：
+
+1. 「機械割(%)の計算は自前で再実装せず、`ml/analysis/kamata_weekday_event_axis_payoutrate_deepdive.py`
+   の `compute_payoutrate_pct()` を再利用すること」
+2. 「`min_entity_dates`等の観測日数フィルタは『対象エンティティ(機種/台番号)の総稼働日数』で
+   判定し、各ラベルセル単位の日数では絞らないこと」
+3. 「機種の同定は`machine_name`（表記ゆれの恐れあり）ではなく`machine_number`を主キーとし、
+   `machine_name`は履歴・ラベル情報として併記すること」
+4. 「対象ホールのDBパスは既存スクリプト（例: kamata_weekday_event_axis_eda.py の
+   DEFAULT_DB_7等の定数）を import して使用し、ファイル名を再指定しないこと」
+5. 「新規スクリプトの起動方法・sys.path設定は、既存の ml/analysis/kamata_*.py と
+   同じパターンに従うこと」
+6. 「集計テーブルで複数粒度の『日数』を扱う場合は、`cell_n_dates`（セル単位の観測日数）と
+   `entity_n_dates`（エンティティの総稼働日数）のように別名で区別すること」
+
+## 例
+```
+【今回の分析条件・実装規約】
+- 機械割(%)計算は ml/analysis/kamata_weekday_event_axis_payoutrate_deepdive.py の
+  compute_payoutrate_pct() を import して使うこと（自前実装禁止）
+- min_entity_dates は対象エンティティの総稼働日数(entity_n_dates)で判定する
+- 機種は machine_number で同定し、machine_name は履歴ラベルとして保持する
+- DBパス・起動パターンは既存の ml/analysis/kamata_weekday_event_axis_eda.py の
+  定数・sys.path設定を再利用する
+- 集計テーブルの日数カラムは cell_n_dates / entity_n_dates で命名を分離する
+```
+---

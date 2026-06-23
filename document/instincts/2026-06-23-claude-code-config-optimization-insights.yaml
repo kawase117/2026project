@@ -1,0 +1,112 @@
+---
+id: claude-md-200-line-target
+trigger: "CLAUDE.mdを編集・追記するとき"
+confidence: 0.95
+domain: claude-code-config
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# CLAUDE.mdは200行以下に維持する
+
+## 背景
+Anthropic公式記事の推奨に基づき、CLAUDE.mdの行数上限を設定。443行から122行に削減した実績がある。全行が毎セッション読み込まれるため、不要な行はコンテキストコストに直結する。
+
+## アクション
+- 手順書・チェックリストはSkill化する（move-to-skill）
+- 特定ディレクトリでしか使わない情報はサブディレクトリCLAUDE.mdに移動する
+- 完了済みの改善記録はgit履歴で十分なので削除する
+- 全セッションで必要な事実（型注意、ビルドコマンド、is_zorome定義）のみルートに残す
+
+## 例
+削減前: ディレクトリツリー82行 → 削減後: エントリーポイント5行
+削減前: セッションログ月次手順70行 → Skill化で0行
+
+---
+id: unscoped-rules-max-three
+trigger: ".claude/rules/ にrulesファイルを追加するとき"
+confidence: 0.90
+domain: claude-code-config
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Unscoped rulesは3本以下に制限する
+
+## 背景
+path-scopeなしのrulesは毎セッション常時ロードされる。手順書的なrules（agents.md, development-workflow.md）をSkill化して5本→3本に削減した。
+
+## アクション
+- 新規ruleを追加する前に、path-scopeが可能か検討する
+- 手順書的な内容（ワークフロー、エージェント選択ガイド）はSkillにする
+- 特定ファイルタイプにのみ適用されるルールは必ずpaths:フロントマターを付ける
+
+## 例
+agents.md (unscoped, 51行) → skills/agent-orchestration/SKILL.md に移行
+
+---
+id: subdirectory-claude-md-pattern
+trigger: "サブディレクトリ固有の詳細をCLAUDE.mdに追記しようとするとき"
+confidence: 0.90
+domain: claude-code-config
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# サブディレクトリ固有の情報はサブディレクトリCLAUDE.mdに配置する
+
+## 背景
+database/のスキーマ全列定義やml/のPhase4詳細はルートCLAUDE.mdに不要。サブディレクトリCLAUDE.mdに移動すると、該当ディレクトリの作業時のみオンデマンドでロードされる。Codex互換のためAGENTS.mdにサブディレクトリCLAUDE.md探索ルールを追記する必要がある。
+
+## アクション
+- ルートCLAUDE.mdには要約1行（「詳細はdatabase/CLAUDE.md参照」）のみ残す
+- Codex用にAGENTS.mdに「サブディレクトリのCLAUDE.mdを読む」指示を入れる
+- ただしis_zorome定義や型差分注意など、DB/ML横断で頻出する情報はルートに残す
+
+## 例
+DBスキーマ24行 → database/CLAUDE.mdに移動、ルートには型差分3行のみ
+
+---
+id: deterministic-rules-need-hooks
+trigger: "CLAUDE.mdやRulesに「必ずXせよ」「絶対にYするな」と書こうとするとき"
+confidence: 0.85
+domain: claude-code-config
+source: article-learning
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 決定的に守りたいルールは指示ではなくHookで強制する
+
+## 背景
+Anthropic公式記事の指摘: 「"Never do this" in CLAUDE.md — the model can fail to follow a prompted rule under pressure.」指示ベースのルールはコンテキスト圧迫時やプロンプトインジェクションで破られる可能性がある。
+
+## アクション
+- 「絶対にXするな」系のルールはPreToolUse hookで検証・ブロック（exit code 2）する
+- 「必ずXせよ」系はPostToolUse hookで検証する
+- ソフトなガイドライン（「推奨」「望ましい」）は指示のままでよい
+
+## 例
+「git push前に確認」→ 現在の運用ではユーザーが明示的に指示するパターンが確立しているため、hookは不要と判断。ケースバイケース。
+
+---
+id: monthly-config-audit-practice
+trigger: "月初の定期メンテナンス時"
+confidence: 0.90
+domain: claude-code-config
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 月次でClaude Code設定を監査する
+
+## 背景
+CLAUDE.mdは自然に肥大化する。チーム全員が追記し、削除されない傾向がある。月次の定期監査で膨張を早期検知する仕組みを構築した。
+
+## アクション
+- /config-audit スキルを毎月1日に自動実行（/schedule設定済み）
+- PreCompact hookでCLAUDE.md 200行超を即時警告
+- 監査項目: 行数、unscoped rules数、stale skills、hook照合、内容6分類
+
+## 例
+/schedule --cron "0 0 1 * *" --task "config-audit"
+PreCompact hook: CLAUDE.md行数チェック → stderr警告

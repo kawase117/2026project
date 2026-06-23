@@ -1,0 +1,109 @@
+---
+id: confidence-means-hypothesis-strength-only
+trigger: "instinctのconfidence値を設定・解釈するとき"
+confidence: 0.95
+domain: knowledge-management
+source: cross-agent-discussion
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# confidenceは「仮説の強さ」のみを表す
+
+## 背景
+confidence値に「仮説の強さ」「検証再現性」「運用優先度」の3つが混在していた。
+Codexとの議論で、この曖昧さが知見管理の信頼性を下げていると指摘された。
+
+## アクション
+- confidence = 書いた時点での仮説としての確信度（0.0-1.0）
+- 検証の進捗は `verification_status` フィールドで管理する（unverified/confirmed/refuted/superseded）
+- 検証履歴は `verified_by[]` で追跡する
+- confidenceが高い ≠ 検証済み。この2軸を混同しない
+
+## 例
+confidence: 0.99 + verification_status: unverified → 強い仮説だが未検証
+confidence: 0.80 + verification_status: confirmed → 中程度の仮説だが検証済み
+
+---
+id: instinct-verification-status-schema
+trigger: "instinct YAMLを新規作成・更新するとき / compile_instincts.pyを修正するとき"
+confidence: 0.95
+domain: knowledge-management
+source: cross-agent-discussion
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Instinct YAMLにverification_statusとverified_by[]を追加する
+
+## 背景
+938レコード中120件がactiveだが、「検証済み」と「confidence高い」が混同されていた。
+検証→知見→セオリー昇格のパイプラインに検証ステータス追跡がなかった。
+
+## アクション
+YAMLヘッダーに以下を追加（任意フィールド、後方互換）：
+- `verification_status`: unverified（デフォルト）/ confirmed / refuted / superseded
+- `verified_by[]`: [{session, method, result, evidence}] のリスト
+- compile_instincts.py v1.2.0 で refuted/superseded を自動除外
+- 実装プロンプト: `docs/codex_prompts/2026-06-23-instinct-verification-status.md`
+
+## 例
+```yaml
+verification_status: confirmed
+verified_by:
+  - session: "2026-06-23"
+    method: "walk-forward backtest"
+    result: "confirmed"
+    evidence: "lift 1.43x on holdout, p<0.01"
+```
+
+---
+id: theory-update-notification-before-manual-edit
+trigger: "セオリー.mdの更新タイミングを検討するとき"
+confidence: 0.85
+domain: knowledge-management
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# セオリー.md更新は自動検知→手動更新の2段階で行う
+
+## 背景
+セオリー.mdの手動更新が煩雑で陳腐化が追えない問題があった。
+全自動化はノイズが増えるため、まずverification_statusとverified_by[]が整った後に
+「confirmed/refutedになったinstinctのうちセオリーに影響するもの」を自動列挙する仕組みを入れる。
+
+## アクション
+1. まずverification_status + verified_by[]を実装（最優先）
+2. 次にセッション終了時の差分チェックスキルを作成
+3. 更新自体は手動（何を更新すべきかの検知のみ自動化）
+
+## 例
+セッション終了時に「confirmed: 3件、うちセオリー影響: 1件（角番効果の数値更新）」と通知
+
+---
+id: hermes-agent-minimal-viable-loop
+trigger: "自己改善ループ・知識昇格システムを設計するとき"
+confidence: 0.90
+domain: agent-architecture
+source: cross-agent-discussion
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# HermesAgent的ループの最小構成は4要素で十分
+
+## 背景
+HermesAgentのself-improving loopに触発された記事について、Codexと構成の実用性を議論した。
+従量課金下では常時自己改善ループはコスト超過のリスクがある。
+
+## アクション
+最小構成:
+1. AGENTS.md相当の行動ルール
+2. 案件ごとの _epic.md（知識蓄積先）
+3. タスクファイル
+4. 完了時に昇格メモを追記するhook
+
+HermesAgentの記憶検索・要約・次アクション提案は、この最小ループが回ることを検証した後に追加する。
+推論回数は人間トリガーに寄せ、hookでは要約・昇格のみ自動化する。
+
+## 例
+ボトルネックはモデル性能ではなく運用コストとノイズ管理。
+昇格対象の選別ルール品質が成否を決める。

@@ -1,0 +1,73 @@
+---
+id: kamata1-2fn-x-kakuban-front2-rows-weakest
+trigger: "蒲田1 2F AT/ART系（Nセグメント）で台を選ぶとき"
+confidence: 0.88
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1 2F_N の X角番 --- x_kk=2（2列目）と x_kk=1（最前列）の両方が有意に弱い
+
+## 背景
+kamata1_x_kakuban_eda（2026-06-18実施）。
+X角番（x_kakuban）= 同一X列内での通路側から何番目か。
+
+有意シグナル（q<0.05）
+  x_kk=2  q=3.5e-4, mean=-13, median=-476, n=16160, support=34列  最弱（最強シグナル）
+  x_kk=1  q=4.1e-3, mean=-5,  median=-445, n=16681, support=35列  最前列も弱い
+  x_kk=6  q=0.017,  mean=-16, median=-340, n=11081, support=29列  6列目も弱い
+  x_kk=8  q=0.002,  mean=+46, median=-300, n=5922,  support=14列  meanが正だがmedianが大きく負（アウトライア駆動、除外）
+
+median が大きくマイナスなのは x_kk=2 が最悪（-476）、x_kk=1 も深くマイナス（-445）。
+両者とも n が大きく（16000件以上）support が全 X列にわたる（34〜35列中）ため、構造的シグナルとして信頼性高い。
+
+## 蒲田7との比較
+蒲田7 2F_N は x_kk=1（最前列）が弱いシグナル（q=3.9e-3）。
+蒲田1 2F_N は x_kk=1 に加えて x_kk=2（2列目）が更に弱い。
+通路側から前2列をまとめて回避する戦略が有効。
+
+## セクション角番との独立性
+spearman_r = -0.104（弱い負相関）→ X角番と島角番は独立情報として使える。
+X角番でフィルタした上で、島角番フィルタ（コーナー回避）を重ねることが可能。
+
+## アクション
+蒲田1 2F AT系を選ぶとき:
+通路から1列目（x_kk=1）と2列目（x_kk=2）の台は避ける（median=-445〜-476、n充分）。
+6列目（x_kk=6）も弱い傾向あり、他候補がある場合は避けること。
+8列目（x_kk=8）は mean が正に見えるが median が-300 でアウトライア駆動なので優先しない。
+この回避ルールは全日（通常日・イベント日）に適用してよい。
+
+---
+id: kamata1-2fa-x-kakuban-depth8-weak
+trigger: "蒲田1 2F ジャグラー/ハナハナ系（Aセグメント）で台を選ぶとき"
+confidence: 0.80
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1 2F_A の X角番 --- x_kk=8（奥から8列目）が有意に弱い
+
+## 背景
+kamata1_x_kakuban_eda（2026-06-18実施）。
+
+有意シグナル（q<0.05）は x_kk=8 のみ（1位置）
+  x_kk=8  q=0.014, mean=-27, median=-200, n=9583, support=20列
+
+median が-200 と負かつ mean も負 → アウトライア駆動ではなく構造的シグナル。
+support=20列（35 X列中）で広くカバーされており信頼性高い。
+
+2F_A は全体的に mean_abs_mean_residual=18.9 と低く（2F_N=75.5 と比べて）、
+X角番の効果が 2F_N より小さい。有意位置も 1 位置のみ。
+
+## セクション角番との独立性
+spearman_r = +0.089（弱い正相関）→ 独立情報として使える。
+X角番=8 回避の上で島角番フィルタ（kakuban=1 回避など）を重ねることが可能。
+
+## アクション
+蒲田1 2F ジャグ系を選ぶとき:
+通路から8列目（x_kk=8）の台は避けること（median=-200, q=0.014, support=20列）。
+他の X角番位置は現時点で有意差なし（前列も弱い傾向はあるが非有意）。
+
+---

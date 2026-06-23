@@ -1,0 +1,128 @@
+---
+id: machine-type-non-name-features-largely-null
+trigger: "機種名(machine_name)以外の単独特徴量で差枚/is_top_3を説明しようとするとき"
+confidence: 0.8
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 機種名以外の単独要因(物理配置/前日連動/月間人気度/ホール調子/曜日/イベント日)はいずれも弱い
+
+## 背景
+2026-06-15、機種名が最大ファクターである前提のもと、それ以外で差枚に繋がる
+要素を6軸でEDA(全9ホール pooled, 297,450行, 311機種, 2025-01-01〜2026-06-11):
+
+1. 台番号末尾/ゾロ目などの物理配置 -> 既に「向いていない」と判明済み
+2. 前日・前々日のefficiency/diff_coins/is_top_3ラグ -> pooled rhoは
+   -0.02〜+0.03でほぼゼロ。機種別クラスタリングしても311機種中
+   93%が|rho|<0.15の無関係型で、残りも n<60では多重検定ノイズと
+   区別不能 ([[lag-persistence-clustering-mostly-noise]]参照)
+3. 先月/先々月の機種人気度(monthly_total_games等) -> pooled相関は
+   efficiencyに対し0.10-0.15だが、機種内補正後は0.068に減衰し、
+   is_top_3への効果はほぼ消失(0.064->0.014)。「人気機種ほど高設定」は
+   主に機種間差(=機種名factorの言い換え)
+4. ホール全体の当日win_rate -> is_top_3との相関は rho=0.0108
+   (全9ホールで-0.0005〜+0.0055)。ホールが好調な日でも個別台への
+   波及は検出されない。efficiency_minus_hall_avgもefficiency単体と
+   ほぼ同じ(is_top_3はhall×date内ランクのため定数オフセットは無意味)
+5. 曜日効果 -> is_top_3_rateは7曜日全てで0.0449前後、小数点3桁まで
+   横並び。mean_efficiencyも-0.04〜-0.065の範囲でほぼフラット
+6. event_group(_event_group_for_dayベース)/ゾロ目日(11,22日) ->
+   is_top_3_rateはそれぞれ0.0448〜0.0492、0.04488 vs 0.04485で
+   実質差なし
+
+## アクション
+- 「機種名以外の単独特徴量」を探すアプローチはここで一区切りとする。
+  新しい単独特徴量を探すより、(a) 機種×他軸の交互作用、または
+  (b) games_zscore系の同日関係をライブ分析側機能に転用する方向
+  ([[games-zscore-same-day-correlation-not-predictive]]参照)に
+  比重を移す
+- 機種×曜日/機種×イベント日の交互作用テーブル(run_machine_weekday_event_eda)
+  には|delta|0.2〜1.4の値が並ぶが、n=20〜160の小サンプルで
+  lag persistence clusteringと同型の多重検定ノイズ問題を抱える。
+  そのまま「この機種は水曜に強い」と解釈しない
+
+## 例
+ml/machine_type/exploratory/output/{temporal_popularity_eda_report,
+hall_relative_performance_eda_report,machine_weekday_event_eda_report,
+games_efficiency_eda_report}.md に詳細値あり
+---
+
+id: games-zscore-same-day-correlation-not-predictive
+trigger: "回転数(avg_games/games_normalized)関連の特徴量を予測モデルに追加検討するとき"
+confidence: 0.75
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# games_zscore(当日回転数のzスコア)はefficiencyと機種内でも相関するが、ラグでは消える
+
+## 背景
+run_games_efficiency_eda.py: (hall_id, machine_name)別に過去30日
+rolling(shift(1))から算出したgames_zscoreは、
+- pooled: vs efficiency rho=0.171, vs is_top_3 rho=0.082
+- 機種内(within-machine, n>=10, 276機種): vs efficiency
+  mean_rho=0.149/median_rho=0.149(std=0.164) -> mean=median で
+  特定機種への偏りではなく広く成立する同日関係
+- vs is_top_3: mean_rho=0.088/median_rho=0.089
+
+しかし lag1_games_zscore(前日の回転数zスコア)は
+vs efficiency rho=0.006, vs is_top_3 rho=-0.006 でほぼゼロ。
+回転数も差枚も「その日の結果」であり、回転数が先行指標にはならない。
+
+## アクション
+- games_zscoreを「翌日の高設定予測」特徴量として追加するのは無意味
+  (lag1で消失するため)
+- 同日関係としては実質的なので、当日のホール観察(ライブ分析/
+  session-recommend系)で「今日は回転数が多い=今日勝負すべき」の
+  補助指標として転用を検討する。次予測モデル(machine_type ML)への
+  組み込みは見送り
+
+## 例
+ml/machine_type/exploratory/output/games_efficiency_eda_report.md
+---
+
+id: lag-persistence-clustering-mostly-noise
+trigger: "機種別の前日連動パターン(据え置き型/リバウンド型)を特徴量化しようとするとき"
+confidence: 0.7
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 機種別ラグ持続性クラスタリングは311機種中93%が無関係型、残りも小サンプルノイズ
+
+## 背景
+run_lag_persistence_clustering.py (machine_name単位, n>=10, rho!=NaN,
+|rho|>=0.15を据え置き/リバウンド型、それ以外を無関係型):
+- lag1_total_diff_coins->efficiency: persistence 11 / reversal 9 / neutral 260
+- lag1_efficiency->efficiency: persistence 10 / reversal 9 / neutral 261
+- lag1_total_diff_coins->is_top_3: persistence 2 / reversal 10 / neutral 220
+- lag1_is_top_3->is_top_3: persistence 3 / reversal 1 / neutral 227
+
+n=15〜40程度ではrho>=0.15が偶然だけで30〜45%発生するため、上記の
+非neutral機種の大半はノイズ。複数パターンで符号一致 & n>=60の
+「robust」候補は少数:
+- リバウンド型最有力: にゃんこ大戦争BIGBANG (n=60, 3パターン全て負: -0.218/-0.222/-0.155)
+- 据え置き型候補(n>=87): コードギアス反逆のルルーシュ/復活のルルーシュ(n=169,
+  +0.186/+0.207), 1000ちゃんA(n=175, +0.180/+0.209),
+  フレームアームズ・ガール(n=150, +0.196/+0.167), リングにかけろ1 V(n=87, +0.169/+0.165)
+
+hall_machineグルーピング(よりサンプル少)では非neutral比率が
+7%->10.8%に増加。これはサンプルが減るほど見かけの極端値が
+増えるという、偶然由来であることを示す典型パターン。
+
+## アクション
+- このクラスタリングをそのまま特徴量化しない
+- 上記の数機種(robust候補)に限れば再検証の価値はあるが、
+  件数が少なすぎて汎用特徴量にはならない。個別ルール扱いが限界
+- 同種の分析を別軸でやる場合は、最初から
+  「permutation testでp値算出」または「n>=50 & 複数ターゲットで
+  符号一致」をフィルタ条件に組み込むこと
+
+## 例
+ml/machine_type/exploratory/output/lag_persistence_clustering_report.md
+(1.8MB, machine_name/hall_machineの両方の分類結果とhall conflicts表を含む)
+---

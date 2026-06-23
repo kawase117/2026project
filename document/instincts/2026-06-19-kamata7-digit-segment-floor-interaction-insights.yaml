@@ -1,0 +1,256 @@
+---
+id: kamata7-simpsons-paradox-digit-segment
+trigger: "蒲田7で末尾分析を行うとき、またはセグメントを無視して末尾全体を集計しようとするとき"
+confidence: 0.95
+domain: pachinko-eda
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# A機とN機の末尾ランキングは逆相関（Simpson's Paradox）— 全体集計は無意味
+
+## 背景
+蒲田7の全データでセグメント別に末尾ランキングを算出した結果:
+A機（ジャグラー/ハナハナ）Top3: d3(+234), d4(+228), d2(+223)。Bottom: d7(+198), d0(+207)
+N機（AT系）Top3: d6(+236), d8(+217), d9(+207)。Bottom: d3(+92), d1(+143)
+全体Spearman ρ(A vs N) = -0.418（逆相関）。
+
+N機が全体の約73%を占めるため、セグメント無視の全体集計ではN機ランキングに引きずられ、
+A機の真のシグナル（d3, d4強い）が消失する。
+以前「末尾に有意性なし」と結論した原因はこのSimpson's Paradoxだった。
+
+dd_mod10×曜日別でも70セル中63セルでρ < 0.5。
+極端な例: 土曜mod10=5 ρ=-0.9、木曜mod10=0 ρ=-0.8。
+ほぼ全ての条件下でA/Nランキングは独立または逆転している。
+
+## アクション
+蒲田7の末尾分析は必ずセグメント（A/N）別に実施する。
+全体集計での末尾ランキングは参照してはならない。
+他ホールでも同様のSimpson's Paradoxが存在する可能性があり、セグメント分割を先行すべき。
+
+## 例
+全体: d6が1位に見える（N機73%の影響）
+A機のみ: d3が1位（+234）、d6は6位（+217）
+N機のみ: d6が1位（+236）、d3は最下位（+92）
+d3を打つべきかどうかの判断がA機かN機かで完全に逆転する。
+
+---
+id: kamata7-segment-a-digit-baseline
+trigger: "蒲田7でA機（ジャグラー/ハナハナ）の末尾を選ぶとき"
+confidence: 0.88
+domain: pachinko-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# A機は末尾d3/d4/d2が安定して強い（d7/d0が弱い）
+
+## 背景
+A機の末尾ベースライン（全dd_mod10・全曜日平均）:
+d3: +234（1位）
+d4: +228（2位）
+d2: +223（3位）
+d8: +220（4位）
+...
+d0: +207（9位）
+d7: +198（10位）
+
+Top3のd3/d4/d2はいずれもN機ではBottom寄り（d3=最下位、d4=7位、d2=6位）。
+A機とN機で真逆のパターンが存在するため、A機を打つ場合はA専用ランキングに従う必要がある。
+
+dd_mod10別でも安定:
+mod10=1: d8(+416), d4(+415)が突出
+mod10=4: d3(+275), d1(+266)
+mod10=7: d5(+340), d3(+329)（イベントDD）
+mod10=9: d3(+317), d8(+279)
+
+## アクション
+A機を打つと決めた場合、まずd3/d4を検討する。
+ただしdd_mod10×曜日でランキングは変動するため、早見表(kamata7_digit_segment_quickref.csv)で具体的条件を確認する。
+
+## 例
+土曜mod10=5（7/5相当）: A機はd2(+939), d3(+830)が突出。d0(-267)は絶対避ける。
+水曜mod10=9（6/19相当）: A機はd3(+650), d8(+547)。N機はd4(+1010), d3(+645)で偶然一致。
+
+---
+id: kamata7-segment-n-digit-baseline
+trigger: "蒲田7でN機（AT系）の末尾を選ぶとき"
+confidence: 0.88
+domain: pachinko-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# N機は末尾d6が圧倒的に強い（d3/d1が弱い）
+
+## 背景
+N機の末尾ベースライン（全dd_mod10・全曜日平均）:
+d6: +236（1位）— 2位と+19差で安定的首位
+d8: +217（2位）
+d9: +207（3位）
+d7: +181（4位）
+...
+d5: +163（8位）
+d1: +143（9位）
+d3: +92 （10位）— 最下位、1位との差は+144で巨大
+
+d6の優位はdd_mod10別でも頻出:
+mod10=1: d6が1位(+215)
+mod10=2: d6が1位(+410)
+mod10=4: d6が1位(+320)
+mod10=6: d7が1位だがd6は9位（例外的に弱いケース）
+
+d3は10セル中5セルでBottom2入り。N機のd3回避はほぼ鉄則。
+
+## アクション
+N機を打つ場合、d6を最優先で検討する。次点でd8/d9。
+d3は特別な理由がない限り避ける（全体最下位+92、最強d6との差=144）。
+2Fは100% N機のため、2Fに行く場合は自動的にこのN機ランキングが適用される。
+
+## 例
+土曜mod10=2: N機d6=+1214（全セル中最大値）、d1=+21（最弱）。d6とd1で1193の差。
+水曜mod10=6: N機d1=+1005（例外的にd1が1位）、d3=-345（やはり最弱）。
+
+---
+id: kamata7-segment-quickref-csv-system
+trigger: "蒲田7でセグメント別の末尾狙い目を確認するとき"
+confidence: 0.95
+domain: pachinko-reference
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# セグメント×末尾の早見表CSVを構築済み
+
+## 背景
+セグメント(A/N) × dd_mod10(0-9) × 曜日(月-日) × 台番号末尾(0-9) の全組み合わせについて
+avg_diff, plus_rate, hit104_rate, n, rank を算出し、CSVに保存した。
+水曜・土曜に特化した早見表も生成済み。
+
+## アクション
+セグメント別末尾選択時は以下のCSVを参照:
+1. eda/reports/kamata7_digit_segment_quickref.csv — 水曜/土曜 × セグメント別 Top3/避け
+2. eda/reports/kamata7_digit_segment_full_reference.csv — 全条件の詳細データ
+セグメント未分割のCSV（kamata7_quickref_dow_mod10.csv等）とは異なる結果になるため注意。
+
+## 例
+kamata7_digit_segment_quickref.csv の形式:
+day_of_week, dd_mod10, segment, top3, avoid2
+水, 0, A, d4(+411)/d7(+400)/d3(+364), d0(-50)/d6(+159)
+水, 0, N, d8(+572)/d2(+495)/d9(+453), d7(-304)/d0(-245)
+同じ「水曜mod10=0」でもA機ならd4、N機ならd8と全く異なる。
+
+---
+id: kamata7-floor-2f-3f-digit-divergence
+trigger: "蒲田7で2Fか3Fかを選ぶとき、またはフロア別の末尾戦略を考えるとき"
+confidence: 0.90
+domain: pachinko-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 2F(N機100%)と3F(A53%+N47%)で末尾ランキングが大きく異なる
+
+## 背景
+蒲田7のフロア構造:
+2F: 台番号2001-2352、351台、avg_diff=+235、100% N機
+3F: 台番号3001-3365、364台、avg_diff=+140、52.7% A + 47.3% N
+
+フロア間の末尾ランキングSpearman = 0.4（低相関）。
+
+2F Top3: d6(+307), d9(+271), d7(+262)。Bottom: d3(+99), d1(+120)
+3F Top3: d8(+183), d5(+157), d6(+157)。Bottom: d1(+86), d3(+90)
+
+2Fは100% N機のため、N機ベースラインランキング(d6>d8>d9)とほぼ一致。
+3FはA/N混合のため、Simpson's Paradoxにより両方のランキングが混合して出現。
+3Fでの末尾選択はセグメント(A/N)を先に決めてからランキング参照すべき。
+
+dd_mod10別の2Fランキング（土曜）:
+mod10=2: d6(+1430)が圧倒的
+mod10=9: d9(+1257)が圧倒的
+mod10=6: d6(+801), d4(+774), d5(+763)が拮抗
+
+3F土曜では異なる:
+mod10=2: d6(+692), d5(+472) — d6は共通だが値は半分
+mod10=9: d8(+549), d3(+378) — 2Fのd9首位とは全く別
+mod10=5: d1(+356), d2(+321) — 2Fはd7(+537)が1位
+
+## アクション
+2Fに行くと決めた場合: N機ランキング（d6優先）をそのまま適用。
+3Fに行く場合: まずA機/N機を決め、セグメント別ランキングを参照。
+N機を打ちたいなら2F（avg_diff=+235 > 3F全体のavg_diff=+140）。
+A機を打ちたいなら3F一択（2FにはA機がない）。
+
+## 例
+2F土曜mod10=2: d6(+1430)が圧倒的最強。3F同条件: d6(+692)で半分以下。
+→ N機d6狙いなら2Fの方が有利。
+3F土曜mod10=5: d1(+356), d2(+321)。2F同条件: d7(+537), d8(+358)。
+→ フロアで狙い末尾が完全に異なる。
+
+---
+id: kamata7-floor-quickref-csv-system
+trigger: "蒲田7でフロア別の末尾狙い目を確認するとき"
+confidence: 0.95
+domain: pachinko-reference
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# フロア×末尾の早見表CSVを構築済み
+
+## 背景
+フロア(2F/3F) × dd_mod10(0-9) × 曜日(水/土) × 台番号末尾(0-9) の組み合わせについて
+avg_diff, plus_rate, hit104_rate, n, rank を算出。
+フロア判定はmachine_number: 2000-2999→2F, 3000-3999→3F。
+
+## アクション
+フロア別末尾選択時は以下のCSVを参照:
+1. eda/reports/kamata7_digit_floor_quickref.csv — 2F/3F × 水曜/土曜 × mod10別 Top3/避け
+2. eda/reports/kamata7_digit_floor_interaction_report.md — 全分析の詳細レポート
+セグメント別CSV（kamata7_digit_segment_quickref.csv）と併用し、
+フロア→セグメント→末尾の順で絞り込むのが最も精度が高い。
+
+## 例
+kamata7_digit_floor_quickref.csv の形式:
+floor, day_of_week, dd_mod10, n_cells, top3, avoid2
+2F, 土, 2, 10, d6(+1430)/d0(+859)/d4(+843), d1(+250)/d5(+310)
+3F, 土, 2, 10, d6(+692)/d5(+472)/d7(+343), d1(-217)/d2(-90)
+同じmod10=2土曜でもフロアで2位以降が異なる（2F: d0/d4、3F: d5/d7）。
+
+---
+id: kamata7-digit-selection-hierarchy
+trigger: "蒲田7で台を選ぶ際の優先順位を考えるとき"
+confidence: 0.92
+domain: pachinko-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 末尾選択の意思決定階層: フロア→セグメント→dd_mod10×曜日→末尾→ゾロ目
+
+## 背景
+今回の一連の分析で判明した各軸の効果量と独立性:
+1. セグメント(A/N): ρ=-0.418で末尾ランキングが逆転。分割必須。
+2. フロア(2F/3F): ρ=0.4で異なるパターン。2F=100%N機のためセグメントと連動。
+3. dd_mod10×曜日: 70セル中63セルでA/Nが独立。セル別ランキング参照必須。
+4. ゾロ目台: +49の安定効果だが、mod10×曜日で+333〜-330の変動あり。
+
+効果量の順序:
+- セグメント×末尾ランキング差: 最大144（N機d6=+236 vs d3=+92）
+- ゾロ目×DD11: +210（最大の単一効果）
+- フロア差(2F vs 3F): +95（avg_diff差）
+- ゾロ目全体: +49
+
+## アクション
+台選びの判断フロー:
+1. フロアを選ぶ（N機なら2F優位、A機なら3F一択）
+2. セグメントを決める（イベント日はA機が+122のイベント効果）
+3. dd_mod10と曜日から早見表でTop3末尾を確認
+4. Top3末尾のうちゾロ目台があれば優先（ただしmod10×曜日のゾロ目効果を確認）
+5. DD11なら最優先でゾロ目台（+210効果）
+
+## 例
+7/17(木) DD17 mod10=7 イベント日:
+1. A機狙い → 3Fへ
+2. セグメントA × mod10=7: d5(+340), d3(+329), d0(+298)
+3. d3のゾロ目台=33番台があれば候補（ただし木曜mod10=7のゾロ目効果を別途確認）

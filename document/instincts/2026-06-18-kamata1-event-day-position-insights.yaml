@@ -1,0 +1,106 @@
+---
+id: kamata1-2fa-event-near-universal-uplift
+trigger: "蒲田1 2F ジャグラー/ハナハナ系（Aセグメント）でイベント日（DD=1,7,11,17,21,27,30）に訪問するとき"
+confidence: 0.92
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1 2F_A x イベント日 --- kakuban 40位置中32位置が有意（ほぼ全面底上げ）
+
+## 背景
+kamata1_2F_A_kakuban_event.csv を読解（2026-06-18実施）。
+イベント日定義は DD in {1,7,11,17,21,27,30} + 末日。
+40 kakuban 位置中 32 位置が q<0.05 で有意（全面底上げパターン）。
+
+kakuban 別主要 premium
+  kakuban=19  premium=+246（n=512）
+  kakuban=11  premium=+201（n=1950, q=3e-6）
+  kakuban=1   premium=+131（コーナーもイベント日は底上げされる）
+
+## セクション別最強シグナル
+kamata1_2F_A_section_event.csv  16 sig rows
+  section 2236-2255  premium=+249, q=8.5e-8（最強）
+  他の sig section も全て正方向の premium
+
+section 2236-2255 内訳（Heatmap/2F_floor_coordinates_kamata1.csv）
+  20台 斜め配置（X=20-39, Y=16-35）
+  機種構成  マイジャグラーV / ミスタージャグラー / ウルトラミラクルジャグラー / アイムジャグラーEX-TP
+
+## 台末尾別（2F_A tail x event）
+22 tail 中 20 が有意
+  tail=8  premium=+247（n=1164, q=3.1e-5）
+  tail=1  premium=+176
+  ゾロ目台 premium=+150
+
+## アクション
+イベント日に蒲田1 2F ジャグ系を訪問する場合:
+section 2236-2255（台番号 2236〜2255）を最優先確認する（p=8.5e-8, premium=+249）。
+kakuban=11 または kakuban=19 の台を優先（n が大きく信頼性高い）。
+コーナー（kakuban=1）もイベント日は +131 で底上げされるが全体平均より低いので中間帯を優先。
+tail=8 の台が複数ある場合は追加フィルタとして活用できる。
+
+---
+id: kamata1-2fn-event-section-hotspot
+trigger: "蒲田1 2F AT/ART系（Nセグメント）でイベント日（DD=1,7,11,17,21,27,30）に訪問するとき"
+confidence: 0.85
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 2F_N x イベント日 --- section 2177-2186 と 2099-2109 が突出、kakuban=3,9 が安定
+
+## 背景
+kamata1_2F_N_kakuban_event.csv と kamata1_2F_N_section_event.csv を読解（2026-06-18実施）。
+2F_A と比べて有意位置数は少なく、ポイント集中型のパターン。
+
+kakuban 別（12 sig rows）
+  kakuban=3   premium=+195（n=5482, q=7.4e-4）--- 最大 n の信頼シグナル
+  kakuban=9   premium=+189
+  kakuban=1   premium=+131（コーナーも底上げ）
+
+セクション別（4 sig rows）
+  section 2177-2186  premium=+375（q=0.012）--- 最高プレミアム
+  section 2099-2109  premium=+353
+
+## アクション
+イベント日に蒲田1 2F AT系を狙う場合:
+section 2177-2186（台番号 2177〜2186）を最優先とする（premium +375）。
+section 2099-2109 を次点とする（premium +353）。
+kakuban=3 を信頼性軸として使う（n が最大で安定したシグナル）。
+kakuban=9 も候補に入れる（+189 premium）。
+
+---
+id: kamata1-2fa-weekday-kakuban9-saturday
+trigger: "蒲田1 2F ジャグラー/ハナハナ系（Aセグメント）で曜日別台選択をするとき"
+confidence: 0.78
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1 2F_A の kakuban=9 が土曜日に突出（+269）、曜日感応性は kakuban=9 に集中
+
+## 背景
+kamata1_2F_A_kakuban_weekday.csv 読解（2026-06-18実施）。
+7 sig rows があり、全て kakuban=9 の 7 曜日分（q=2.5e-3、同一 kakuban 内比較）。
+
+kakuban=9 の曜日別 diff_coins 平均値
+  土曜  +269（最高）
+  木曜  +132
+  月曜  +89
+  その他曜日は平均 +80 前後
+
+他の kakuban は曜日感応性なし（non-significant）。
+
+## アクション
+土曜日に蒲田1 2F_A を訪問する場合:
+kakuban=9 に相当する台を最優先候補とする（他曜日比 +180 のボーナス）。
+それ以外の曜日は kakuban=9 を特別視せず、通常の残差ランクに従う。
+
+注意  kakuban=9 の絶対的な戦略的優位は確認されていない（全期間残差では中間帯の mean が正でも median が負）。
+土曜日のみ戦術的に浮上するシグナル。
+
+---

@@ -1,0 +1,120 @@
+---
+id: sqlite-groupby-arbitrary-machine-name
+trigger: "SQLite で GROUP BY machine_number しながら machine_name を取得するクエリを書くとき"
+confidence: 0.97
+domain: sql-pitfall
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# SQLite の GROUP BY は集約なし列に任意の値を返す（最古・最新保証なし）
+
+## 背景
+mitoya_xdds_screening.py の `_load_latest_machine_names` で
+`GROUP BY machine_number HAVING COUNT(DISTINCT date) >= 5` を使っていた。
+台番号608-614には過去に複数の機種が設置されており、
+SQLite が GROUP BY の非集約列（machine_name）に最少登場の機種名を返した。
+compute_machine_xdds_perf は machine_name キーで集計するため、
+merge 時にキーが不一致 → section = NaN（section 不明）に見えるバグが発生。
+
+## アクション
+- `GROUP BY machine_number` で machine_name を取る SQL は**必ず最新日付を明示**して取得する
+- 正しいパターン（CTE + MAX(date) JOIN）:
+
+```sql
+WITH counts AS (
+    SELECT machine_number, MAX(date) AS max_date, COUNT(DISTINCT date) AS total_dates
+    FROM machine_detailed_results
+    GROUP BY machine_number
+    HAVING total_dates >= 5
+)
+SELECT c.machine_number, mdr.machine_name
+FROM counts c
+JOIN machine_detailed_results mdr
+    ON mdr.machine_number = c.machine_number AND mdr.date = c.max_date
+GROUP BY c.machine_number
+```
+
+- `COUNT(DISTINCT ...) OVER (PARTITION BY ...)` は SQLite では使えない（エラー）
+- section 不明になったら「台番号変更」ではなく「GROUP BY の機種名ミスマッチ」を先に疑う
+
+## 例
+台番号608に A機種215日・B機種188日・C機種19日が存在する場合、
+GROUP BY machine_number → SQLite は C機種（最少）を返す可能性がある
+CTE + MAX(date) JOIN → 最終登場日の機種名を正しく返す
+
+---
+id: xdds-screening-score-negative-lift-penalty
+trigger: "X_DDS スクリーニングのスコア式を設計・変更するとき"
+confidence: 0.90
+domain: mitoya-hall-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# X_DDS lift が負の機種には Q5 ボーナスを適用しない
+
+## 背景
+旧スコア式: `is_q5 * 100 + (11 - sec_rank) * 5 + lift`
+Q5=True かつ X_DDS lift=-2.29 の機種が Q5 ボーナス 100 の重みで rank4 に入っていた。
+「X_DDS 日にパフォーマンスが落ちる Q5 機種」を推奨するのは意味論的に誤り。
+
+## アクション
+- Q5 ボーナスは **lift > 0 のときのみ**付与する
+- 修正後スコア式:
+
+```python
+lift = result["lift_machine"].fillna(0)
+q5_bonus = result["is_q5"].astype(int) * (lift > 0).astype(int) * 100
+result["score"] = q5_bonus + (11 - result["section_rank"].fillna(10)) * 5 + lift
+```
+
+- lift < 0 の Q5 機種は補助情報扱い（Q5リスト末尾に表示）
+- section 不明・lift 高い非 Q5 機種は補助リストに別掲する
+
+## 例
+修正前: lift=-2.29 の Q5 機種 score=112.71（rank4）
+修正後: score=2.71（Q5リスト末尾）← 正しく格下げ
+修正後 rank1: section rank1 + Q5 + lift=+5.59 の機種 score=155.59
+
+---
+id: mitoya-section-unknown-debug-procedure
+trigger: "みとやのスクリーニングで section 不明機種が多数出たとき"
+confidence: 0.92
+domain: mitoya-hall-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# section 不明のデバッグ手順：台番号変更より SQL バグを先に疑う
+
+## 背景
+化物語・東京喰種・マギアレコード・甲鉄城のカバネリ等が section = NaN になっていた。
+「設置変更で台番号が変わったのでは？」と仮定したが誤りだった。
+実際には台番号は CSV に全て存在し、バグは SQL の GROUP BY に起因していた。
+修正後は全 Q5 機種で section が判明し、ランキングが大幅変動した。
+
+## アクション
+section 不明が出たら以下の順で確認する:
+
+1. 台番号が CSV 範囲内か確認:
+```python
+csv_nums = set(csv["machine_number"].tolist())
+missing = [n for n in machine_nums if n not in csv_nums]
+```
+
+2. missing=[] なら SQL バグを疑う。台番号に複数機種名が存在するか確認:
+```sql
+SELECT machine_number, machine_name, COUNT(DISTINCT date) as n
+FROM machine_detailed_results
+WHERE machine_number IN (...)
+GROUP BY machine_number, machine_name
+ORDER BY machine_number, n DESC
+```
+
+3. 複数機種名あり → `_load_latest_machine_names` 系の SQL を CTE + MAX(date) JOIN に修正
+
+## 例
+台番号 608-614 → CSV に全て在籍（missing=[]）
+→ 複数機種名あり → SQL 修正で section 判明 → rank 大幅変動
+

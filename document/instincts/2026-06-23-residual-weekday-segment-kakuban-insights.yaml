@@ -1,0 +1,147 @@
+---
+id: residual-weekday-segment-kakuban-survives-section-removal
+trigger: "曜日×セグメント×角番の交互作用をスコアリングに組み込むか判断するとき"
+confidence: 0.92
+domain: ml-feature-engineering
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 残差法でも3F_L_Aの曜日×角番交互作用は有意に残る
+
+## 背景
+2026-06-17の残差分析ではA/N 2分割で「曜日×角番はセクション効果の混入」と結論。
+しかし6セグメント(2F_L_N等)分解で再検証した結果、残差法でも有意なパターンが残った。
+KW検定(Bonferroni補正後):
+- 木×3F_L_A: q=1.0e-13（最強）
+- 火×3F_L_A: q=2.6e-12
+- 金×3F_R_A: q=1.7e-08
+- 金×3F_L_A: q=1.1e-06
+A/N 2分割では混入で消えたパターンが、6セグメント分解では分離できた。
+
+## アクション
+- 2026-06-17のInstinct「イベント日×角番はセクション効果の混入」は6セグメント分解では部分的に覆る
+- 3F A機（ジャグラー系）の角番効果には曜日依存性がある → c1に曜日×セグメント別ブースト追加の根拠
+- 2F N機（AT機）の曜日×角番は依然として非有意 → ブースト不要
+- 分析粒度の教訓: A/Nの2分割と6セグメント分解で結論が変わりうる
+
+## 例
+eda/kamata7_dow_segment_kakuban_residual_analysis.py で検証済み。
+出力: eda/reports/kamata7_dow_segment_kakuban_residual/
+
+---
+id: 3f-la-kakuban-weekday-specific-boost
+trigger: "3F_L_A（ジャグラー3F左）のスコアリングを設計するとき"
+confidence: 0.90
+domain: ml-feature-engineering
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 3F_L_Aの中間帯(K5-9)は木/火曜にブースト、日曜にディスカウント
+
+## 背景
+残差法による曜日固有効果(恒常効果を引いた残り)の検定結果:
+- 3F_L_A K5-9 木曜: +116 (q=7.9e-05)
+- 3F_L_A K5-9 火曜: +104 (q=4.6e-04)
+- 3F_L_A K5-9 金曜: +74 (q=0.034)
+- 3F_L_A K5-9 日曜: -108 (q=2.7e-05)
+恒常効果は+179なので、木曜合計+295、日曜合計+71。
+3F_R_Aも土曜に特異パターン:
+- 3F_R_A K10-14 土曜: -148 (q=5.3e-08)
+- 3F_R_A K3-4 土曜: -141 (q=0.001)
+
+## アクション
+c1のセグメント別ウェイトに曜日修正を加える:
+- 3F_L_A: 木/火曜は中間帯スコアを+20%程度ブースト
+- 3F_L_A: 日曜は中間帯スコアを-15%程度ディスカウント
+- 3F_R_A: 土曜はK3-4, K10-14のスコアを下げる
+- 2F系・N機系には曜日ブーストを適用しない（非有意のため）
+
+## 例
+木曜3F_L_A角7: 恒常残差+179 + 曜日固有+116 = 合計+295（強い推奨）
+日曜3F_L_A角7: 恒常残差+179 + 曜日固有-108 = 合計+71（推奨度下がる）
+
+---
+id: tuesday-n-kaku6-single-day-not-systematic
+trigger: "火曜のN機(AT)角6をルール化しようとするとき"
+confidence: 0.85
+domain: ml-evaluation
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 6/16火曜N機角6は単日有意だが全火曜では非有意
+
+## 背景
+6/16(火曜)のN機角6台(60台)の残差平均=+1441、t=2.58、q=0.025で有意。
+しかし曜日固有効果分析では、火曜×N機×角6の系統的効果は検出されず。
+6/16は「たまたま角6が当たった火曜」であり、「火曜は常に角6が強い」ではない。
+Twitter示唆の「角◯」は毎週異なる角番を指定している可能性が高い。
+
+## アクション
+- 火曜N機の角番を固定ルール（常に角6）にするのは誤り
+- N機の角番効果は曜日非依存の恒常効果（角6が+108残差）をc1に反映するだけで十分
+- 曜日別ブーストはA機(3F_L_A, 3F_R_A)に限定する
+
+## 例
+6/16: N機角6残差+1441（この日だけ異常に強い）
+全火曜: N機角6の曜日固有効果 → 非有意（系統的パターンなし）
+
+---
+id: saturday-3consecutive-strongest-new-factor
+trigger: "土曜日のスコアリングファクターを設計するとき"
+confidence: 0.88
+domain: ml-feature-engineering
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 土曜×3台連番ATは最も強い新ファクター候補（eta_sq=0.31）
+
+## 背景
+土曜の3連番AT分析:
+- F=21.0, eta_sq=0.31（大効果量）, Bonferroni p=0.001
+- consecutive_without7: diff=+1301 vs non_consecutive=+682（差+473, Cohen's d=1.3）
+- 土曜のconsecutive_rate=18%（他曜日の2-3倍、top_triplet=4-5-6）
+残差法では土曜の3F_R_Aが弱体化（K10-14: -148, K3-4: -141）。
+土曜は3台並びに設定が集中し、角番の通常構造が崩れる。
+
+## アクション
+新ファクターc7として「隣接台スコア」を土曜専用に実装:
+- score(台X) = 通常composite + alpha * (score(台X-1) + score(台X+1)) / 2
+- 土曜のみalpha > 0、他曜日はalpha = 0
+- consecutive_with7（末尾7含む）はサンプル不足、まずは全連番で実装
+
+## 例
+土曜: 台2105のscore=300、隣接台2104=280、2106=310
+→ 隣接平均=295、c7加算後=300 + 0.3*295 = 388.5
+
+---
+id: analysis-granularity-changes-conclusions
+trigger: "角番・セグメント・曜日の分析で結論を出すとき"
+confidence: 0.95
+domain: analysis-methodology
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 分析の粒度（A/N vs 6セグメント）で結論が逆転する
+
+## 背景
+2026-06-17: A/N 2分割の残差分析 → 「曜日×角番はセクション効果の混入で消える」
+2026-06-23: 6セグメント分解の残差分析 → 「3F_L_Aの曜日×角番交互作用は有意に残る(q=1e-13)」
+A/N分割では3F_L_Aの強いシグナルが他のA機サブセグメントのノイズで希釈された。
+
+## アクション
+- 角番・曜日・イベント日の分析は必ず6セグメント(2F_L_N等)で実施する
+- A/N 2分割は初期スクリーニングとしてのみ使い、結論はフルセグメントで確認
+- 過去の「非有意」結論もフルセグメントで再検証する価値がある
+
+## 例
+木曜A機全体: KW=87.1（有意だが何が効いているか不明）
+木曜3F_L_A: KW q=1e-13（極めて有意、中間帯K5-9が+294）
+木曜2F_L_A: KW q=0.04（ぎりぎり有意、弱いシグナル）
+→ 木曜の角番効果は3F_L_Aが支配的
+
+---

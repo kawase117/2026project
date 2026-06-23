@@ -1,0 +1,130 @@
+---
+id: kamata7-dd-event-axis-null-section-and-hallwide
+trigger: "kamata7(または類似ホール)でDD(日付の日)/イベント日(7のつく日・1のつく日・ゾロ目・強ゾロ目・月末)を軸に強弱パターンを探索するとき"
+confidence: 0.75
+domain: project-status
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# kamata7のDD/イベント日軸は、セクション単位(2179-2186)でもホール全体(daily_hall_summary)でも法則性なし(stable=0)
+
+## 背景
+CLAUDE.mdのイベント日仮説(1日/7・17・27日/1・11・21・31日/22日ゾロ目/MM=DD強ゾロ目/月末)に基づき、
+kamata7で2段階のDD軸検証を実施した。
+
+1. セクション単位(2F 2179-2186、8台、entity_n_dates=338):
+   - DD単独31カテゴリ、イベントグループ6種類とも stable=0
+   - all_event vs non-event: q_value=0.8171で非有意
+2. ホール全体(daily_hall_summary、715台平均、entity_n_dates=338):
+   - 同じグループ定義で再検証(個別グループのrest baselineバグ修正後も結果不変)
+   - DD単独31カテゴリ、イベントグループ6種類とも stable=0
+   - all_event vs non-event: q_value=0.9450で非有意(cell_rate=0.0306, rest_rate=0.0292)
+
+セクション単位・ホール全体のどちらでも、DD/イベント日だけでは
+payoutrate(機械割)の強弱を予測できないことが確認された。
+
+## アクション
+1. kamata7において、DD/イベント日を単独の特徴量として使うのは避ける。
+   weekday軸([[kamata7-2179-2186-weekday-law-rejected-thu-weak-survives]])のような
+   「曜日×台」レベルの方が信号が見つかりやすい。
+2. 今後DD/イベント日を扱う場合は、単独軸ではなく
+   「weekday × event-day」や「machine_regime × event-day」のような
+   交互作用軸として検討する(単独では棄却済み)。
+3. 他ホール(kamata1など)でDD/イベント日軸を試す場合も、
+   今回と同じnull結果になる可能性を念頭に置き、
+   早期にstable=0が出た場合は深追いしない。
+
+## 例
+```python
+# DD/イベント日単独のグループ化では検出できなかった
+# -> weekdayや機種レジームとの交互作用として再検討する
+df['dd_event_label'] = ...  # 単独では使わない
+df['weekday_x_event'] = df['weekday_label'] + "_" + df['dd_event_label']
+```
+
+---
+id: kamata7-hallwide-hit104-vanishes-after-20251222-followup
+trigger: "kamata7のホール全体payoutrate_pct/hit_rate_104の時系列を分析するとき、または2025-12-22前後のレジーム変化を調べるとき"
+confidence: 0.5
+domain: project-status
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# kamata7ホール全体で、2025-12-23以降hit_rate_104(全体payoutrate>=104%の日)が実質ゼロになっている(未調査の異常)
+
+## 背景
+DD/イベント日軸のhallwide split-half検証([[kamata7-dd-event-axis-null-section-and-hallwide]])で、
+split_half_cutoff=2025-12-23を境に、全31DD・全6イベントグループについて
+second_half(2025-12-23〜2026年6月、約169日)のhit_rate_104が
+cell側・rest側ともに完全に0になっていることが分かった
+(first_halfでは0.05〜0.33程度の値があった)。
+
+これは「DDに効果がない」という結論とは別に、
+**ホール全体(715台平均)のpayoutrate_pctが104%を超える日が
+2025-12-23以降ほぼ消失した**という現象を示している。
+
+タイミングは、[[kamata-seat-regime-change-cross-machine-name-followup]]で見つかった
+2180/2182の機種交代日(2025-12-22)とほぼ一致しており、関連の可能性がある
+(ただし2台の機種交代だけで715台平均が動くとは考えにくく、
+他の要因の可能性も高い)。
+
+## アクション
+1. kamata7のhallwide median_payoutrate_pct / hit_rate_104 / hit_rate_100を
+   月単位の時系列でプロットし、2025-12-23前後で実際にレベルシフトが
+   起きているかを確認する。
+2. レベルシフトが確認できた場合、原因を切り分ける:
+   - データ収集範囲・対象台数の変化(715台という台数自体が変わっていないか)
+   - ホール全体の運用方針転換(複数台の機種入替が同時期に集中していないか)
+   - 季節性(12月末〜1月の年末年始要因である可能性)
+3. このレベルシフトが本物であれば、338日分の全期間データを
+   「1つの均質な母集団」として扱う他の分析(DD軸・曜日軸など)の
+   split-half検証は、前後半で分布が異なる集団を比較していることになり、
+   stable判定の解釈に注意が必要(false negativeの一因になりうる)。
+
+## 例
+```python
+# hallwide payoutrate_pctの月次推移を確認する
+monthly = daily_hall_summary.groupby(daily_hall_summary['date'].dt.to_period('M')).agg(
+    median_pr=('payoutrate_pct', 'median'),
+    hit104=('payoutrate_pct', lambda s: (s >= 104).mean()),
+)
+```
+
+---
+id: codex-eda-group-rest-baseline-completeness-check
+trigger: "Codexにグループ別split-half比較(cell vs rest)を実装させるとき"
+confidence: 0.65
+domain: project-status
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# グループ別split-half比較では、各グループについて cell_n + rest_n == entity_n_dates を検算するよう指示する
+
+## 背景
+kamata_dd_axis_hallwide_deepdive.pyの初回実装で、`all_event`グループの
+rest baselineは正しく「全期間 - all_event」(cell_n+rest_n=338)だったが、
+個別5グループ(event_7等)のrest baselineは「他のイベント日グループの日数」
+(cell_n+rest_n=119)になっており、「通常日との比較」ではなく
+「他のイベント日タイプとの比較」になっていた。
+
+この種のバグは、stacked table(イベント行のみ)からrestを作る実装で
+発生しやすく、グループ別のq値が一見妥当に見えるため気づきにくい
+([[codex-eda-script-prompt-pitfalls-machine-axis]]の追加パターン)。
+
+## アクション
+1. グループ別split-half比較を依頼するプロンプトには、
+   「各グループでcell_n + rest_n == entity_n_dates(全期間日数)を
+   syntheticテストでアサートする」ことを明示的に含める。
+2. 実データのレポートでも、グループ別テーブルにcell_n/rest_nの合計列を
+   確認し、entity_n_datesと一致するかをレビュー時にチェックする。
+
+## 例
+```python
+# synthetic test
+for _, row in compare.iterrows():
+    assert row['cell_n'] + row['rest_n'] == entity_n_dates
+```
+---

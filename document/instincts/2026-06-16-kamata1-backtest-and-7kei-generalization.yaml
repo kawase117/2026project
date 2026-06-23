@@ -1,0 +1,63 @@
+---
+id: kamata1-q5-backtest-confirmed
+trigger: "蒲田1でどの機種（machine_name）を優先すべきか戦略を立てるとき"
+confidence: 0.85
+domain: operational-strategy
+source: empirical-backtest
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1 Q5機種名（前3ヶ月上位）は翌3ヶ月もホール平均を+86上回ると検証済み
+
+## 背景
+`eda/kamata1_machinename_q5_backtest.py` で3ヶ月窓×5ペアのwalk-forwardを実施:
+- 全5ペアでQ5 excess がプラス（+71, +48, +132, +96, +83）
+- 平均: Q5 avg_diff=+157.81 vs All=+71.73、excess=+86.08
+- 蒲田7（excess=+107）より低いが絶対値はホール全体稼働水準の差
+
+フロア構造:
+- 台番号 1631〜2415（全台 < 3000）→ 全台が「2F」扱い
+- フロア分割は意味なし（蒲田7の「2F優先」ルールは蒲田1に適用不可）
+- 3F列は全NaN（設定ミスではなく台番号が存在しない）
+
+実装:
+- バックテスト: `eda/kamata1_machinename_q5_backtest.py`
+- 現在Q5リスト: `eda/kamata1_current_q5_list.py`
+- 出力: `tmp/kamata1_machinename_q5_backtest/`, `tmp/kamata1_current_q5_list/`
+
+## アクション
+- 蒲田1ではフロア縛りなしでQ5機種名全体を同等優先度で扱う
+- 3ヶ月ごとに `eda/kamata1_current_q5_list.py` でリストを更新
+- [[which-axis-machinename-q5-backtest-confirmed]]（蒲田7版）と比較すると
+  蒲田1のexcessは約80%水準（86 vs 107）
+- [[kamata1-q5-backtest-not-yet-validated]] は本検証により陳腐化（削除対象）
+
+---
+id: 7kei-substitution-pattern-cross-hall-generalized
+trigger: "7系日（DD∈{7,17,27}）のQ5戦略を複数ホールで検討するとき"
+confidence: 0.82
+domain: operational-strategy
+source: cross-hall-empirical
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 7系日の「When/Which代替パターン」は蒲田7・蒲田1の両方で独立に再現した
+
+## 背景
+2ホール独立検証（各3〜5ペア）で同じ方向の結果が出た:
+
+| ホール | 全体excess | 7系日excess boost |
+|---|---:|---:|
+| 蒲田7（3ペア） | +107 | -7.98 |
+| 蒲田1（5ペア） | +86 | -5.72 |
+
+どちらも「7系日はAll avg_diffが上昇するが、Q5の相対優位（excess）は縮む」パターン。
+解釈: 7系日はホールが設定を「広く浅く」入れる可能性が高く、
+通常日に不調だった中位機種にも設定が入り、Q5の集中効果が薄れる。
+
+## アクション
+- 「7系日 × Q5 = ダブル効果」の期待は2ホールで棄却。他ホールでも否定的な先入観を持つ
+- 7系日の正しい読み方: 「Q5以外でも打てる台が増える日」
+- Q5リストは7系日かどうかに関わらず毎日適用するのが合理的
+- 3ホール目（例: 楽園蒲田）で同様の検証を行えば汎化の確信がさらに上がる
+- [[7kei-day-when-which-are-substitutes]]（蒲田7単独版）の上位互換として参照

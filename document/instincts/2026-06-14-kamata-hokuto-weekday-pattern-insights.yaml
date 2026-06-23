@@ -1,0 +1,89 @@
+---
+id: kamata-hokuto-weekday-machine-type-dominance-RETRACTED
+trigger: "(撤回済み) 蒲田1・蒲田7で曜日別(土曜/日曜)の候補台スクリーニングを行うとき"
+confidence: 0.1
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# [撤回] 「スマスロ北斗の拳が曜日別候補リストを支配する」は先読みバイアスによる過学習だった
+
+## 背景
+当初、全期間集計(先読み)で「payout_rate>=100% AND diff_std<median」スクリーニング
+を蒲田1/蒲田7の土曜/日曜データに適用したところ、安定候補top8がほぼ
+スマスロ北斗の拳で占められた。
+
+しかし eda/kamata_weekday_backtest.py でwalk-forward検証(各日曜より前の
+日曜データのみで判定 -> 当日のQuintile到達率を確認)したところ、
+**スマスロ北斗の拳はこの条件(diff_std<median & payout>=100%)の候補に
+ほぼ一度も入らない**(蒲田1で類似機種「北斗の拳 転生の章2」がn=2のみ)。
+さらにこの条件自体のQ5到達率は蒲田1=0.090, 蒲田7=0.111(期待値0.200)で
+**予測力なし**。みとやのXgroupでも同条件でQ5到達率=0.107と同様に機能しない
+ことが確認された([[mitoya-dd-group-persistence-insights]]参照)。
+
+## アクション
+- この知見・confidence=0.6の仮説は撤回。今後「diff_std<median & payout>=100%」
+  (法則②)を曜日別/Xgroup別の候補スクリーニングに使わない。
+- 代わりに [[kamata-hokuto-strategy1-high-variance-generalizes]] を参照する。
+
+## 例
+(撤回のため例なし)
+---
+
+id: kamata-hokuto-strategy1-high-variance-generalizes
+trigger: "蒲田1・蒲田7・みとや大森町店で曜日別/Xgroup別のAT機候補スクリーニングを行うとき"
+confidence: 0.7
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 「高分散(diff_std>=median) AND payout_rate>=100%」(法則①)はみとや・蒲田1・蒲田7の3ホールでQ5予測力を持つ
+
+## 背景
+eda/mitoya_backtest_and_eventday_range.py の戦略1(Xgroup, walk-forward)と
+eda/kamata_weekday_backtest.py の戦略1(日曜, walk-forward)で、
+「diff_std>=median(高分散) AND payout_rate>=100%」のスクリーニングを検証した。
+
+| ホール | Q5到達率(期待0.200) | Q1到達率 | Q4+Q5到達率(期待0.400) |
+|---|---|---|---|
+| みとや(Xgroup) | 0.306 | 0.246 | 0.464 |
+| 蒲田1(日曜) | 0.259 | 0.210 | 0.449 |
+| 蒲田7(日曜) | 0.267 | 0.249 | 0.462 |
+
+3ホール全てでQ5到達率・Q4+Q5到達率が期待値を一貫して上回る。
+みとやではさらにsplit-half(前半Q5=0.336, 後半Q5=0.285)でも再現済み。
+
+機種別の内訳:
+- 蒲田7のスマスロ北斗の拳: n=36, mean_quintile=3.64(良好)。
+  当初の「北斗の拳優位」仮説は、実はこの法則①の文脈でのみ
+  部分的に成立していた可能性がある。
+- 蒲田1のスマスロ北斗の拳: n=63, mean_quintile=2.71(平凡、蒲田7とは対照的)。
+- 蒲田1で目立つのは「甲鉄城のカバネリ」(3.83)・「東京リベンジャーズ」(3.64)・
+  「痛いのは嫌なので防御力に極振りしたいと思います。」(3.49, n=61)。
+- 蒲田7では「モンキーターンV」(3.58, n=36)・「七つの魔剣が支配する」(3.53, n=36)
+  も北斗の拳と同水準。
+
+直感的解釈: 「機械割100%超 かつ 日々の差枚分散が大きい」機種は、
+大勝ち日に強く偏った"ラッキー台型"機種であり、そうした機種は
+継続して大勝ち日(Q5)を生みやすい可能性がある。
+
+## アクション
+- 蒲田1/蒲田7/みとやで台選定ロジックを組む際、法則①
+  (diff_std>=median AND payout_rate>=100%, machine_name単位)を
+  ベースのスクリーニングとして優先的に採用する。法則②
+  (diff_std<median側)は使わない([[kamata-hokuto-weekday-machine-type-dominance-RETRACTED]]参照)。
+- 蒲田7では北斗の拳、蒲田1では甲鉄城のカバネリ/東京リベンジャーズ/
+  「痛いのは嫌なので防御力に極振りしたいと思います。」を法則①候補の
+  優先機種として扱う。
+- 3ホール一致のため confidence=0.7とした。他ホール(8ホール検証済みの
+  cross-hall系)でも法則①のwalk-forward検証を行えば、confidenceを
+  さらに上げられる。
+
+## 例
+```python
+# eda/kamata_weekday_backtest.py の results_rev (戦略1) を
+# 他ホール・他曜日に対して実行し、Q5到達率が期待値0.200を
+# 上回るか確認する
+```
