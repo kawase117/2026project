@@ -579,7 +579,20 @@ def run_backtest(
                 segment_daily["variant"] = variant_id
                 segment_daily["window"] = int(window)
                 segment_daily["event_type"] = "event" if _is_event_date(test_date) else "non_event"
+                segment_daily["selection"] = "top50"
                 segment_rows.extend(segment_daily.to_dict("records"))
+
+                segment_daily_bottom = (
+                    scored.groupby("segment", as_index=False)
+                    .apply(lambda group: pd.Series(_summarize_metrics(group.sort_values("composite", ascending=True), actual)))
+                    .reset_index()
+                )
+                segment_daily_bottom["test_date"] = test_date.strftime("%Y-%m-%d")
+                segment_daily_bottom["variant"] = variant_id
+                segment_daily_bottom["window"] = int(window)
+                segment_daily_bottom["event_type"] = "event" if _is_event_date(test_date) else "non_event"
+                segment_daily_bottom["selection"] = "bottom50"
+                segment_rows.extend(segment_daily_bottom.to_dict("records"))
 
                 processed_count += 1
                 if processed_count % 50 == 0:
@@ -607,7 +620,9 @@ def run_backtest(
     correlation_df = _compute_correlation_matrix(pd.concat(scored_pool, ignore_index=True) if scored_pool else pd.DataFrame())
     island_df = _cluster_islands(pd.concat(scored_pool, ignore_index=True) if scored_pool else pd.DataFrame())
     adjacency_df = _adjacency_effect(pd.concat(scored_pool, ignore_index=True) if scored_pool else pd.DataFrame())
-    segment_df = _segment_best_variant(pd.DataFrame(segment_rows))
+    _seg_rows_df = pd.DataFrame(segment_rows)
+    _seg_top_only = _seg_rows_df[_seg_rows_df.get("selection", pd.Series("top50")).eq("top50")] if not _seg_rows_df.empty else _seg_rows_df
+    segment_df = _segment_best_variant(_seg_top_only)
     split_df = (
         daily_df.groupby(["window", "split_period"], as_index=False)
         .agg(
@@ -621,6 +636,9 @@ def run_backtest(
         if not daily_df.empty
         else pd.DataFrame(columns=["window", "split_period", "avg_diff_vs_other", "lift50", "n_test_days", "avg_a_seg_hist_coverage", "avg_a_seg_fallback_count"])
     )
+
+    scored_pool_df = pd.concat(scored_pool, ignore_index=True) if scored_pool else pd.DataFrame()
+    _write_csv(scored_pool_df, output_dir / "scored_pool.csv")
 
     _write_csv(daily_df, daily_path)
     _write_csv(component_df, component_path)

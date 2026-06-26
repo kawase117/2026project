@@ -1,0 +1,142 @@
+---
+id: model-vs-random-segment-divergence
+trigger: "MLモデルのセグメント別実用性を評価するとき"
+confidence: 0.95
+domain: ml-evaluation
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# モデル vs ランダム検定でセグメント別の実用性が大きく異なる
+
+## 背景
+v6a/v9cの有意性検定で、モデル間比較（v6a vs v9c）よりも本質的な問いとして「そもそもモデルはランダムより良い台を選べているか」を検定した。結果、セグメントごとにモデルの実用性が劇的に異なることが判明。
+
+## アクション
+モデル評価では必ず vs ランダム検定（H0: avg_diff_vs_other = 0）をセグメント×イベント日/非イベント日で実施する。全セグメント一括の評価は誤解を招く。
+
+## 例
+非イベント日 v9c:
+- 3F_L_A: +60/日, p=0.0007 → USEFUL
+- 3F_R_A: +65/日, p=0.0009 → USEFUL
+- 2F_L_N: +89/日, p=0.0023 → USEFUL
+- 3F_R_N: -114/日, p=0.0015 → WORSE（ランダム以下）
+- 3F_L_N: -21/日, p=0.36 → ns（シグナルなし）
+
+---
+id: bottom50-inverse-strategy-invalid
+trigger: "逆張り戦略（モデルが低評価の台を選ぶ）を検討するとき"
+confidence: 0.92
+domain: ml-strategy
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Bottom50逆張り戦略は3F_L_N/3F_R_Nで成立しない
+
+## 背景
+モデルのTop50が逆効果（勝率30-40%）なら、Bottom50を避けて「中間層」を選べばプラスになるのでは？という仮説を検証。walk_forward_engineにBottom50記録を追加し、Top50/Bottom50/残り台の3層分析を実施。
+
+## アクション
+3F_L_N（100台）と3F_R_N（74台）はTop50+Bottom50で全台をカバーしてしまうため、「中間層」が物理的に存在しない。逆張り戦略は台数が十分なセグメント（2F_L_N 178台、2F_R_N 173台）でのみ検討可能。
+
+## 例
+3F_R_N (74台): Top50=-45, Bottom50=-70, 重複26台 → Middle=0台
+3F_L_N (100台): Top50=-35, Bottom50=-110 → 両方マイナス、Bottom50はさらに悪い
+3F_R_A (108台): Top50=+86, Bottom50=-53 → 理想的な分離。モデルが正しく台を区別
+
+---
+id: event-day-component-power-collapse
+trigger: "イベント日のモデル予測力を評価するとき"
+confidence: 0.93
+domain: ml-evaluation
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# イベント日は全コンポーネントの予測力が崩壊する
+
+## 背景
+コンポーネント分解（c1-c6を個別にランキング基準として使い、セグメント×イベント日別にvs ランダム検定）で、非イベント日にUSEFULなコンポーネントがイベント日で全滅することを発見。
+
+## アクション
+イベント日の重み変更は4-fold CVで全て失敗した。イベント日はデフォルト重みを維持し、重み最適化は非イベント日に限定する。イベント日のA機（3F_L_A, 3F_R_A）はTop50もBottom50も両方プラスなので、台選択よりセグメント選択が重要。
+
+## 例
+3F_L_A非イベント日: hist(+98,USEFUL), kakuban(+85,USEFUL), digit(+83,USEFUL), dow(+76,USEFUL)
+3F_L_Aイベント日: hist(+6,ns), kakuban(+51,ns), digit(+37,ns), dow(-7,ns) → 全滅
+3F_L_Nイベント日: DD*kakuban=-235(bad?) → イベント日にDD×角番パターンが反転
+
+---
+id: component-weight-one-size-does-not-fit
+trigger: "スコアリングモデルの重み配分を設計するとき"
+confidence: 0.90
+domain: ml-architecture
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 全セグメント一括の重みは情報を破壊する
+
+## 背景
+デフォルト重み(c1=0.40,c2=0.15,c3=0.20,c4=0.15,c5=0.05,c6=0.05)は全セグメント共通。コンポーネント分解で、セグメントごとに有効なコンポーネントが全く異なることが判明。特に3F_R_Nでは個別コンポーネント（hist+155, kakuban+133, dow+122）がそれぞれ「maybe」だが、composite=+62(ns)に落ちる「合成劣化」が発生。
+
+## アクション
+v11ではセグメント別重みを実装。4-fold temporal CVで検証し、out-of-sampleで有意(p<0.05)だった3件のみ採用:
+- 3F_R_A: (.28,.39,.03,.00,.30,.00) → p=0.001, 4/4 fold一貫
+- 3F_R_N: (.30,.35,.00,.28,.04,.02) → p=0.046, 3/4 fold一貫
+- 2F_L_N: (.34,.47,.05,.00,.07,.07) → p=0.094, 4/4 fold一貫
+
+## 例
+3F_R_A非イベント日: default +79 → v11 +128 (+49改善, p=0.001)
+3F_R_N非イベント日: default +30 → v11 +135 (+105改善, p=0.046)
+2F_R_N非イベント日: in-sample +114(p=0.008) → CV後 -2 → 過学習で棄却
+
+---
+id: insample-cv-overfitting-guard
+trigger: "重み最適化やモデル改善をインサンプルで評価するとき"
+confidence: 0.95
+domain: ml-methodology
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# インサンプル検証は過学習を見逃す: 4-fold temporal CVが必須
+
+## 背景
+セグメント別重みをインサンプルで検証したところ、2F_R_N非イベント日が+114(p=0.008)で「ADOPT」判定。しかし4-fold temporal CVでは-2に崩壊し、完全な過学習だった。3F_L_Nイベント日も+208(in-sample) → -38(CV)で同様。
+
+## アクション
+重み最適化は必ず4-fold temporal CV（2ヶ月ブロック×4、3ブロックで設計→1ブロックで検証）で検証する。ADOPTの基準: (1) p<0.05, (2) 4foldのうち3fold以上で改善方向。差枚の減少トレンドがあるため単純な前半/後半分割は避ける。
+
+## 例
+2F_R_N: in-sample p=0.008(+114) → CV fold deltas: +46/-31/-37/+15 → 不安定、棄却
+3F_R_A: in-sample p=0.001(+46) → CV fold deltas: +63/+50/+52/+31 → 4/4一貫、採用
+
+---
+id: v11-walkforward-validation-results
+trigger: "v11セグメント別重みモデルの実績を確認するとき"
+confidence: 0.93
+domain: ml-evaluation
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# v11 walk-forward検証: 3F_R_Aで有意改善、2F_L_NがUSEFUL昇格
+
+## 背景
+v11_seg_weights（非イベント日のみ3セグメントで重みを変更）をwalk-forwardで検証。v6aとのペア比較+vsランダム検定を実施。
+
+## アクション
+v11は非イベント日の3F_R_Aで統計的に有意な改善（p<0.05）を達成。2F_L_NはvsランダムでUSEFULに昇格。イベント日はv6aと同一動作（設計通り）。3F_R_Nは改善したがまだWORSE。次のステップは3F_R_Nの構造的問題の解決（重みだけでは不十分）。
+
+## 例
+v11 vs v6a ペア比較（非イベント日）:
+- 3F_R_A: +22/日 (p<0.05, 勝率63%) → 有意改善
+- 2F_L_N: +33/日 (ns, 勝率56%) → 改善傾向
+- 3F_R_N: +35/日 (ns, 勝率54%) → 改善傾向
+
+vs ランダム昇格:
+- 2F_L_N: maybe(+79) → USEFUL(+112)
+- 3F_R_A: maybe(+47) → USEFUL(+69)
+- 3F_R_N: WORSE(-127) → WORSE(-92) ← 縮小したが未解決

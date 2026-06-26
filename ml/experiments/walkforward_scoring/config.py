@@ -170,6 +170,12 @@ SEGMENT_WEIGHTS_V6B = {
     "3F_R_N": (0.15, 0.15, 0.15, 0.15, 0.00, 0.30),
 }
 
+SEGMENT_WEIGHTS_V11 = {
+    "3F_R_A": (0.28, 0.39, 0.03, 0.00, 0.30, 0.00),
+    "3F_R_N": (0.50, 0.00, 0.00, 0.50, 0.00, 0.00),
+    "2F_L_N": (0.34, 0.47, 0.05, 0.00, 0.07, 0.07),
+}
+
 DOW_SEGMENT_KAKUBAN_BOOST_V10 = {
     (3, "3F_L_A", "K5-9"): 1.20,
     (1, "3F_L_A", "K5-9"): 1.17,
@@ -203,6 +209,7 @@ class VariantConfig:
     dow_kakuban_boost_scale: float = 1.0
     use_saturday_adjacent: bool = False
     saturday_adjacent_alpha: float = 0.3
+    use_v11_weights: bool = False
 
 
 def compute_segment_weights_from_lifts(
@@ -434,6 +441,16 @@ def build_variant_configs() -> "OrderedDict[str, VariantConfig]":
                     use_new_kakuban=True,
                     use_dow_kakuban_boost=True,
                     dow_kakuban_boost_scale=0.50,
+                ),
+            ),
+            (
+                "v11_seg_weights",
+                VariantConfig(
+                    variant_id="v11_seg_weights",
+                    dd_mode="individual",
+                    hist_metric="hit_an",
+                    use_new_kakuban=True,
+                    use_v11_weights=True,
                 ),
             ),
         ]

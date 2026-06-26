@@ -1,0 +1,35 @@
+================================================================================
+SIGNIFICANCE TEST RESULTS
+================================================================================
+
+--- v9b_blend_05 vs v6a_hit_an | event ---
+  2F_L_N   | diff=+11 [-59, +81] [FRAGILE] | win 21/46 (54%) | ACF1=-0.01
+  2F_R_N   | diff=-14 [-91, +51] [FRAGILE] | win 19/46 (46%) | ACF1=-0.01
+  3F_L_A   | diff=+3 [-24, +32] [FRAGILE] | win 20/46 (44%) | ACF1=0.09
+  3F_L_N   | diff=+6 [-39, +52] [FRAGILE] | win 20/46 (61%) | ACF1=-0.08
+  3F_R_A   | diff=+3 [-20, +28] [FRAGILE] | win 18/46 (47%) | ACF1=0.14
+  3F_R_N   | diff=-9 [-27, +0] | win 2/46 (29%) | ACF1=0.37
+
+--- v9b_blend_05 vs v6a_hit_an | non_event ---
+  2F_L_N   | diff=-7 [-46, +31] | win 54/127 (47%) | ACF1=0.11
+  2F_R_N   | diff=+11 [-16, +38] | win 54/127 (50%) | ACF1=-0.11
+  3F_L_A   | diff=+9 [-6, +24] | win 65/127 (56%) | ACF1=-0.07
+  3F_L_N   | diff=-11 [-36, +16]*** | win 33/127 (38%)*** | ACF1=-0.17
+  3F_R_A   | diff=+6 [-8, +20] | win 60/127 (52%) | ACF1=-0.00
+  3F_R_N   | diff=+1 [-6, +10] [FRAGILE] | win 8/127 (62%) | ACF1=0.02
+
+--- v9c_percentile vs v6a_hit_an | event ---
+  2F_L_N   | diff=+36 [-64, +109] | win 25/46 (54%) | ACF1=0.20
+  2F_R_N   | diff=-5 [-123, +105] [FRAGILE] | win 21/46 (49%) | ACF1=-0.00
+  3F_L_A   | diff=+16 [-33, +62] | win 25/46 (56%) | ACF1=0.09
+  3F_L_N   | diff=+14 [-59, +91] [FRAGILE] | win 19/46 (53%) | ACF1=0.14
+  3F_R_A   | diff=+19 [-18, +56] | win 25/46 (54%) | ACF1=0.05
+  3F_R_N   | diff=-26 [-71, +0] | win 2/46 (25%) | ACF1=0.45
+
+--- v9c_percentile vs v6a_hit_an | non_event ---
+  2F_L_N   | diff=-6 [-70, +58] [FRAGILE] | win 60/127 (49%) | ACF1=0.05
+  2F_R_N   | diff=+48 [-20, +117] | win 67/127 (55%) | ACF1=0.14
+  3F_L_A   | diff=+3 [-17, +28] [FRAGILE] | win 68/127 (55%) | ACF1=0.10
+  3F_L_N   | diff=+16 [-23, +58] | win 48/127 (50%) | ACF1=0.08
+  3F_R_A   | diff=+26 [+6, +46]*** | win 74/127 (59%)*** | ACF1=-0.09
+  3F_R_N   | diff=+6 [-2, +14] | win 12/127 (63%) | ACF1=-0.19

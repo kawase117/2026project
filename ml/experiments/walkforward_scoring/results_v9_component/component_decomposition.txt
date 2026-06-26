@@ -1,0 +1,117 @@
+====================================================================================================
+COMPONENT DECOMPOSITION: which EDA rule works in which segment?
+====================================================================================================
+
+=== 2F_L_N ===
+  [non_event] (n=189)
+    hist            | vs_other=   +113*** | win=  61% | p=0.0014 | USEFUL
+    kakuban         | vs_other=    +80*** | win=  54% | p=0.0442 | maybe
+    zorome          | vs_other=    +58    | win=  54% | p=0.1382 | ns
+    ALL(weighted)   | vs_other=    +56    | win=  58% | p=0.0916 | ns
+    last_digit      | vs_other=    +56    | win=  58% | p=0.0916 | ns
+    DD*kakuban      | vs_other=    +39    | win=  53% | p=0.3043 | ns
+    dow*kakuban     | vs_other=    +26    | win=  52% | p=0.5037 | ns
+
+  [event] (n=68)
+    ALL(weighted)   | vs_other=   +142*** | win=  65% | p=0.0320 | maybe
+    kakuban         | vs_other=   +134*** | win=  60% | p=0.0380 | maybe
+    last_digit      | vs_other=   +125    | win=  63% | p=0.0677 | ns
+    hist            | vs_other=   +115    | win=  57% | p=0.0929 | ns
+    dow*kakuban     | vs_other=    +89    | win=  60% | p=0.1360 | ns
+    DD*kakuban      | vs_other=    +23    | win=  54% | p=0.7139 | ns
+    zorome          | vs_other=    -27    | win=  46% | p=0.3374 | ns
+
+=== 2F_R_N ===
+  [non_event] (n=189)
+    kakuban         | vs_other=    +70    | win=  56% | p=0.0819 | ns
+    zorome          | vs_other=    +67    | win=  51% | p=0.0878 | ns
+    hist            | vs_other=    +66    | win=  52% | p=0.1094 | ns
+    ALL(weighted)   | vs_other=    +33    | win=  53% | p=0.2692 | ns
+    last_digit      | vs_other=    +33    | win=  53% | p=0.2692 | ns
+    dow*kakuban     | vs_other=    +30    | win=  54% | p=0.3387 | ns
+    DD*kakuban      | vs_other=    -14    | win=  47% | p=0.6521 | ns
+
+  [event] (n=68)
+    zorome          | vs_other=    +81    | win=  54% | p=0.2583 | ns
+    hist            | vs_other=    +67    | win=  62% | p=0.2583 | ns
+    DD*kakuban      | vs_other=    +31    | win=  46% | p=0.8498 | ns
+    dow*kakuban     | vs_other=    +25    | win=  56% | p=0.6206 | ns
+    last_digit      | vs_other=    +17    | win=  50% | p=0.7461 | ns
+    ALL(weighted)   | vs_other=    +17    | win=  50% | p=0.7461 | ns
+    kakuban         | vs_other=    -38    | win=  40% | p=0.3957 | ns
+
+=== 3F_L_A ===
+  [non_event] (n=189)
+    hist            | vs_other=    +98*** | win=  69% | p=0.0000 | USEFUL
+    ALL(weighted)   | vs_other=    +88*** | win=  67% | p=0.0000 | USEFUL
+    kakuban         | vs_other=    +85*** | win=  61% | p=0.0000 | USEFUL
+    last_digit      | vs_other=    +83*** | win=  66% | p=0.0000 | USEFUL
+    dow*kakuban     | vs_other=    +76*** | win=  61% | p=0.0002 | USEFUL
+    DD*kakuban      | vs_other=    +28    | win=  55% | p=0.1673 | ns
+    zorome          | vs_other=    +24    | win=  53% | p=0.2173 | ns
+
+  [event] (n=68)
+    kakuban         | vs_other=    +51    | win=  57% | p=0.0607 | ns
+    last_digit      | vs_other=    +37    | win=  57% | p=0.2103 | ns
+    ALL(weighted)   | vs_other=    +30    | win=  53% | p=0.3282 | ns
+    hist            | vs_other=     +6    | win=  52% | p=0.7833 | ns
+    DD*kakuban      | vs_other=     +2    | win=  41% | p=0.6644 | ns
+    dow*kakuban     | vs_other=     -7    | win=  54% | p=0.8402 | ns
+    zorome          | vs_other=    -17    | win=  46% | p=0.7048 | ns
+
+=== 3F_L_N ===
+  [non_event] (n=189)
+    ALL(weighted)   | vs_other=    +96*** | win=  54% | p=0.0346 | maybe
+    DD*kakuban      | vs_other=    +73    | win=  56% | p=0.1173 | ns
+    hist            | vs_other=    +29    | win=  50% | p=0.5930 | ns
+    zorome          | vs_other=    +28    | win=  50% | p=0.9370 | ns
+    kakuban         | vs_other=    +16    | win=  48% | p=0.8437 | ns
+    last_digit      | vs_other=    +11    | win=  54% | p=0.7090 | ns
+    dow*kakuban     | vs_other=    -98    | win=  43% | p=0.0538 | ns
+
+  [event] (n=68)
+    kakuban         | vs_other=    +35    | win=  52% | p=0.8164 | ns
+    dow*kakuban     | vs_other=    +16    | win=  47% | p=0.9805 | ns
+    last_digit      | vs_other=     +0    | win=  52% | p=0.9173 | ns
+    hist            | vs_other=    -72    | win=  44% | p=0.3436 | ns
+    ALL(weighted)   | vs_other=   -108    | win=  44% | p=0.4060 | ns
+    zorome          | vs_other=   -124    | win=  47% | p=0.1654 | ns
+    DD*kakuban      | vs_other=   -235*** | win=  38% | p=0.0366 | bad?
+
+=== 3F_R_A ===
+  [non_event] (n=189)
+    hist            | vs_other=   +143*** | win=  72% | p=0.0000 | USEFUL
+    ALL(weighted)   | vs_other=   +114*** | win=  64% | p=0.0000 | USEFUL
+    last_digit      | vs_other=   +109*** | win=  62% | p=0.0000 | USEFUL
+    kakuban         | vs_other=   +100*** | win=  66% | p=0.0000 | USEFUL
+    DD*kakuban      | vs_other=    +33    | win=  55% | p=0.0566 | ns
+    dow*kakuban     | vs_other=    +22    | win=  53% | p=0.3170 | ns
+    zorome          | vs_other=    +15    | win=  54% | p=0.3768 | ns
+
+  [event] (n=68)
+    zorome          | vs_other=    +71*** | win=  62% | p=0.0431 | maybe
+    dow*kakuban     | vs_other=    +41    | win=  56% | p=0.0959 | ns
+    kakuban         | vs_other=    +31    | win=  59% | p=0.4094 | ns
+    ALL(weighted)   | vs_other=    +12    | win=  50% | p=0.9805 | ns
+    last_digit      | vs_other=    +10    | win=  50% | p=0.9173 | ns
+    hist            | vs_other=     +2    | win=  53% | p=0.6778 | ns
+    DD*kakuban      | vs_other=     -3    | win=  47% | p=0.8402 | ns
+
+=== 3F_R_N ===
+  [non_event] (n=189)
+    hist            | vs_other=   +155*** | win=  60% | p=0.0106 | maybe
+    kakuban         | vs_other=   +133*** | win=  56% | p=0.0420 | maybe
+    dow*kakuban     | vs_other=   +122*** | win=  57% | p=0.0357 | maybe
+    ALL(weighted)   | vs_other=    +62    | win=  53% | p=0.3718 | ns
+    last_digit      | vs_other=    +62    | win=  53% | p=0.3783 | ns
+    zorome          | vs_other=    +35    | win=  51% | p=0.4754 | ns
+    DD*kakuban      | vs_other=     +1    | win=  50% | p=0.8786 | ns
+
+  [event] (n=68)
+    hist            | vs_other=   +155    | win=  57% | p=0.2334 | ns
+    ALL(weighted)   | vs_other=   +149    | win=  56% | p=0.2217 | ns
+    last_digit      | vs_other=   +149    | win=  56% | p=0.2217 | ns
+    kakuban         | vs_other=   +120    | win=  54% | p=0.2148 | ns
+    DD*kakuban      | vs_other=   +108    | win=  47% | p=0.4486 | ns
+    zorome          | vs_other=    +23    | win=  52% | p=0.7975 | ns
+    dow*kakuban     | vs_other=     -9    | win=  54% | p=0.6733 | ns

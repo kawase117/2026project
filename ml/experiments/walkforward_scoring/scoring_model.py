@@ -23,6 +23,7 @@ from .config import (
     SECTION_RANGES_2F,
     SECTION_RANGES_3F,
     SEGMENT_WEIGHTS_V6B,
+    SEGMENT_WEIGHTS_V11,
     ZOROME_DIGITS,
     VariantConfig,
     WEIGHT_GRID,
@@ -814,6 +815,20 @@ def score_day(
             work["composite"] = variant.blend_alpha * global_score + (1 - variant.blend_alpha) * segment_score
         else:
             work["composite"] = segment_score
+    elif variant.use_v11_weights:
+        weights = _component_weights_for_variant(variant, weight_override)
+        is_event = int(test_dt.day) in EVENT_DDS or bool(test_dt.is_month_end)
+        if is_event:
+            work["composite"] = _score_from_components(work, weights, use_segment_weights=False)
+        else:
+            def _v11_score_row(row: pd.Series) -> float:
+                rw = SEGMENT_WEIGHTS_V11.get(str(row["segment"]), weights)
+                struct = (
+                    row["c1"] * rw[0] + row["c2"] * rw[1] + row["c3"] * rw[2]
+                    + row["c4"] * rw[3] + row["c5"] * rw[4] + row["c6"] * rw[5]
+                )
+                return float(struct * 0.90 + row["hist_metric"] * 0.10)
+            work["composite"] = work.apply(_v11_score_row, axis=1)
     elif variant.use_v7_weights:
         work["composite"] = _score_from_components_v7(work)
         work = work.dropna(subset=["composite"]).copy()

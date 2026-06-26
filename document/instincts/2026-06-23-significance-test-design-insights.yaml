@@ -1,0 +1,165 @@
+---
+id: significance-test-unit-is-day-not-machine
+trigger: "v6a/v9b/v9cのモデル間比較を統計的に検定するとき"
+confidence: 0.95
+domain: ml-evaluation
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# リサンプリング単位は「日」であり「台」ではない
+
+## 背景
+同一日内の台は独立でない。v9cは特定台番号を連日選択する（リピート台）。
+台を1標本にすると独立性仮定が崩れ、p値が過小（偽陽性率上昇）になる。
+各日に全variantが同じ台プールをスコアリングするため、日単位でモデルがペアになる。
+ペア化で「当たり日/外れ日」の共通変動が相殺され検出力が上がる。
+
+## アクション
+- ブートストラップ/並べ替えで入れ替える対象は「日」（台ではない）
+- ペアリングキー = (segment, test_date)。同一セルでvariantをペア比較
+- 検定母体は segment_daily_results.csv（既存出力・モデル改変不要）
+- 集計後のsummary（.mean()済み）は日次分布を捨てるため検定に使えない
+
+## 例
+segment_daily_results.csv の1行 = 1 (segment, variant, window, test_date)
+同一(segment, test_date)でv6aとv9cの行を引き当て、差分 d_t を構成する
+
+---
+id: lift-daily-mean-is-statistically-wrong
+trigger: "lift_t指標を日次で平均して集約するとき"
+confidence: 0.95
+domain: ml-evaluation
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 日次liftの平均は「比の平均≠平均の比」で統計的に誤り
+
+## 背景
+lift = hit/expected の比率を日次で出して平均するのは数学的に不正確。
+正しい集約量はプール比 Σhit/Σexpected。
+現状 _aggregate_daily_results および segment_daily は日次liftの .mean() を取っている。
+これはレポート用の概算としては許容範囲だが、検定用途には不適。
+
+## アクション
+- 検定でlift系を使う場合、日をブートストラップしてΣhit/Σexpectedを再計算する
+- segment_daily_results.csv にはhit_tとlift_tはあるがexpected列が欠落
+- hit_t=0の日はlift_t=0で逆算不能 → _summarize_metricsにexpected_t出力追加が最小改修
+- 加算系・勝敗系だけなら改修不要で即検定可能
+
+## 例
+NG: mean(lift_t3500) over 256 days = 1.258
+OK: sum(hit_t3500) / sum(expected_t3500) over 256 days（プール比）
+差は通常小さいが、hit=0の日が多いセグメントで乖離する
+
+---
+id: single-day-dependency-leave-one-out-required
+trigger: "avg_diffやavg_diff_vs_otherの平均ベース検定を行うとき"
+confidence: 0.95
+domain: ml-evaluation
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 平均ベースの検定は単一日への依存が強く leave-one-day-out 感度が必須
+
+## 背景
+2F_L_N std=3003はDD07の+12,920が、3F_L_NはDD28の+6,126が平均を正に見せている。
+ブートストラップやt検定の平均ベース結論は、この1日に支配される。
+Wilcoxon（中央値）や符号検定（勝敗0/1）は外れ値に頑健だが、
+平均系の指標を使う場合はleave-one-day-out感度分析で「1日抜いたら有意性が消えないか」を確認すべき。
+
+## アクション
+- 加算系検定（avg_diff_vs_other）にはleave-one-day-outを必ず併用する
+- 1日抜きで有意性が消える差は「本物でない」と判定する
+- 勝敗系（符号検定）を見出し指標にすると外れ値問題を回避できる
+
+## 例
+2F_L_N: DD07を抜くとavg_diff_vs_otherが+1,009→大幅低下
+3F_L_N: DD28を抜くとavg_diff_vs_otherが正→負に反転する可能性
+
+---
+id: event-day-subset-underpowered
+trigger: "イベント日サブセットでモデル比較を行うとき"
+confidence: 0.95
+domain: ml-evaluation
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# イベント日はN=6で検出力不足。統計的結論は出せない。
+
+## 背景
+28日間バックテストでイベント日はわずか6日。256日間でも30-40日程度。
+符号検定で勝率83%(5/6)をp<0.05にするにはN≥6でちょうどギリギリ（片側p=0.109）。
+つまり「イベント日はv6aが強い」はサンプル数的に確定不能。
+
+## アクション
+- イベント日サブセットの結論は「定性的傾向」に留め、「有意に優れている」とは言わない
+- 256日walk-forwardでもイベント日N≈30-40。二項検定でp<0.05にするには勝率≥70%が必要（N=30）
+- イベント/非イベントの分割は全体検定の補足情報として使う（主検定にしない）
+
+## 例
+N=6, 勝利5日: 片側二項検定 p=0.109（有意でない）
+N=30, 勝利21日(70%): 片側二項検定 p=0.043（ギリギリ有意）
+
+---
+id: model-exploration-saturated-v6-to-v10
+trigger: "新しいモデルvariant（v11以降）の作成を検討するとき"
+confidence: 0.90
+domain: ml-architecture
+source: session-synthesis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# v6→v10の探索は飽和。新variant作成より検定・評価基盤整備を優先すべき
+
+## 背景
+2F lift_t3500でv6a=1.234, v9b=1.238, v9c=1.258。差は0.024で誤差レベル。
+v8（動的セグメントウェイト）は全スケールでv6aに劣後。
+v10a-e（曜日×角番ブースト）もscale→0で単調収束=施策自体が無効。
+クロスセグメントスケール歪みがv8/v10で繰り返し発生。
+統計的有意性は未検証のまま。差が本物か判定する手段がない状態で新variantを作っても意味がない。
+
+## アクション
+- 新variantは有意性検定・評価指標修正の完了まで凍結
+- レバレッジの順序: ①有意性検定（Track A） ②評価指標修正（Track B） ③ゲート堅牢化（Track C）
+- composite直接介入（セグメントブースト・動的ウェイト）は構造的に失敗する → Top50後リランキング限定
+- 設計文書: document/plans/2026-06-23-post-instinct-improvement-roadmap.md
+
+## 例
+v10d(scale=0.25): lift@50=1.2462 < v6a=1.2495（縮小しても超えない）
+→ scale sweep全域でv6aに劣後 = 施策自体が無効（打ち切り判断）
+
+---
+id: three-metric-families-for-significance
+trigger: "モデル間の有意性検定を実装するとき"
+confidence: 0.90
+domain: ml-evaluation
+source: session-synthesis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 検定する量は3族に分けて扱う（加算系・勝敗系・比率系）
+
+## 背景
+指標の数学的性質によって検定手法が変わる。
+加算系（avg_diff_vs_other）は日次差分の平均→ペアブートストラップ。
+勝敗系（win）は日次の勝敗フラグ→符号/二項検定（最も頑健、見出し指標）。
+比率系（lift_t）はプール比Σhit/Σexpected→日次平均は誤り。
+3族を混同するとすべての結論が無効になる。
+
+## アクション
+- 見出し指標 = 勝敗系（外れ値に左右されない）
+- 頑健性チェック = Wilcoxon符号順位（加算系の中央値）
+- 効果量 = ペアブートストラップ95%CI（差の大きさ）
+- 比率系はexpected列追加後にプールブートストラップ
+- 設計文書: document/plans/2026-06-23-significance-test-unit-and-quantity-spec.md
+
+## 例
+加算系: d_t = vs_other(v6a)_t - vs_other(v9c)_t → mean(d_t)の95%CI
+勝敗系: N日中v6aが勝った日数 → 二項検定 H0: p=0.5
+比率系: Σhit_t3500(v6a) / Σexpected_t3500(v6a) vs 同v9c
+
+---

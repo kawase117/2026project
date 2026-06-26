@@ -54,6 +54,7 @@ def test_variant_configs_include_expected_baselines() -> None:
         "v10c_full",
         "v10d_boost_quarter",
         "v10e_boost_half",
+        "v11_seg_weights",
     ]
     assert variants["v1_baseline"].dd_mode == "bin"
     assert variants["v4_kakuban_fix"].use_new_kakuban is True
