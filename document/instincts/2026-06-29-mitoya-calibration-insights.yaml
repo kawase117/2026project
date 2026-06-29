@@ -1,0 +1,126 @@
+---
+id: mitoya-hist-metric-strongest-signal
+trigger: "みとや大森町の台選択・予測モデルを設計するとき"
+confidence: 0.95
+domain: ml-evaluation
+source: walk-forward-calibration-mitoya-60days
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# みとやでもhist_metricが最強の予測シグナル（蒲田7と共通）
+
+## 背景
+60日walk-forward（n=15,960）でみとやのコンポーネント別キャリブレーションを検証。
+hist_metric: rho=+0.042, p<0.0001, D0=26.0%→D9=33.4%（+7.4pp）。
+c_dd_sec: rho=+0.017, p=0.036（弱い正）。
+c_dow_sec, c_debut_sec, c_corner: 全て非有意。
+蒲田7（rho=+0.038, +6.0pp）と同等以上の効果量で、ホール横断的にhist_metricが有効。
+
+## アクション
+- みとやでもhist_metric（台個別の過去104%超え率）を予測の中核に使う
+- DD構造はグローバルでわずかに有意だが、セクション内では全て非有意 — セクション内台選びには使えない
+- 曜日・debut_phase・角番位置はグローバルで予測力なし
+
+## 例
+グローバルSpearman（みとや、60日）:
+  hist_metric: rho=+0.042 *** (D0=26.0%→D9=33.4%)
+  c_dd_sec:    rho=+0.017 *   (D0=29.5%→D9=32.6%)
+  c_dow_sec:   rho=+0.001 ns
+  c_debut_sec: rho=+0.006 ns
+  c_corner:    rho=-0.014 ns
+
+---
+id: mitoya-section-level-no-signal
+trigger: "みとやのセクション内で台選びを予測モデルで行おうとするとき"
+confidence: 0.90
+domain: ml-evaluation
+source: walk-forward-calibration-mitoya-section-60days
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# みとやではセクション内の予測シグナルがほぼ存在しない
+
+## 背景
+18セクション×5コンポーネントのSpearmanを60日walk-forwardで検証。
+主力セクション（641-657, 540-556, 675-691等）は全コンポーネントで非有意。
+有意になったのは補助・準主力の一部でc_cornerやc_debut_secの反予測的シグナルのみ。
+セクションあたり9〜22台しかなく、セクション内ランキングではサンプル不足で信号を検出できない。
+Top5評価でも全18セクションでWilcoxon非有意。
+
+## アクション
+- みとやではセクション内の台選びに予測モデルを適用しても統計的改善が期待できない
+- セクション横断のhist_metricランキング（全266台からhist上位を選ぶ）が現実的
+- セクション選択（主力/補助の判別）はtheoryの優先度テーブルに従う
+- セクション内の台選びは現時点ではランダムと同等
+
+## 例
+主力セクション（xdays限定、Spearman）:
+  501-522: 全コンポーネント ns
+  540-556: 全コンポーネント ns
+  574-590: 全コンポーネント ns
+  641-657: 全コンポーネント ns
+  675-691: hist rho=-0.14*, c_corner rho=-0.15* (反予測)
+
+---
+id: mitoya-xdays-corner-antipredictive
+trigger: "みとやのxdays日（DD=4/7/14/17/24/27）に角番位置を使って台選びをするとき"
+confidence: 0.80
+domain: ml-evaluation
+source: walk-forward-calibration-mitoya-xdays-60days
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# xdaysではc_cornerとc_dow_secが反予測的 — ホールが通常パターンを避けている可能性
+
+## 背景
+xdays限定（13日、n=3,458）でキャリブレーション検証した結果:
+- c_corner: rho=-0.052, p=0.002 (D0=38.2%→D9=30.3%, -7.8pp) — 過去に角番で好成績だった位置ほどxdaysでは当たらない
+- c_dow_sec: rho=-0.041, p=0.016 (D0=36.7%→D9=27.3%, -9.5pp) — 曜日パターンも逆
+- hist_metric: rho=+0.034, p=0.044 — xdaysでも正方向で有意（台個別の過去成績は日付カテゴリに依存しない）
+
+通常日ではc_cornerは非有意（rho=+0.001）なので、xdays特有の現象。
+ホールがxdaysに通常とは異なる設定投入パターンを使っている可能性があるが、xdays=13日しかないためサンプル不足で断定できない。
+
+## アクション
+- xdaysに角番位置や曜日パターンを正方向の予測に使ってはならない
+- xdaysでもhist_metricは正方向で使える
+- この知見はconfidence=0.80（サンプル13日は少ない）。データ蓄積後に再検証が必要
+
+## 例
+xdays限定Spearman:
+  c_corner:    rho=-0.052 ** (D0=38.2%, D9=30.3%) ← 反予測
+  c_dow_sec:   rho=-0.041 *  (D0=36.7%, D9=27.3%) ← 反予測
+  hist_metric: rho=+0.034 *  (D0=27.7%, D9=34.0%) ← 正常に機能
+
+通常日:
+  c_corner:    rho=+0.001 ns
+  hist_metric: rho=+0.047 *** (D0=25.5%, D9=33.6%) ← 通常日の方が強い
+
+---
+id: mitoya-segment-is-section-not-lr-an
+trigger: "みとやのデータをセグメント分割するとき、または蒲田7のモデルをみとやに移植するとき"
+confidence: 0.95
+domain: ml-model-design
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# みとやのセグメントはセクション（島）単位であり、蒲田7のLR×A/Nは適用不適切
+
+## 背景
+蒲田7はフロア×LR×A/Nで6セグメントに分割し、セグメント別に戦略を変えることが有効だった。
+みとやは全台2F（フロア分割なし）、18セクション（島）が分析の基本粒度。
+LR×A/Nで分割（2F_L_A, 2F_L_N, 2F_R_A, 2F_R_N）すると、セクション構造が無視され、
+同じ島内でL側とR側で別機種が配置されている構造（section×y分割が必要）と矛盾する。
+実際、LR×A/Nで検証したところ全セグメントで全コンポーネントが非有意だった。
+
+## アクション
+- みとやではsection（島）を基本セグメントとして使う
+- 蒲田7のスコアリングモデル（config.pyのセクション定義やSEGMENT_WEIGHTS）を直接適用しない
+- ホールごとにセグメント定義を確立してからモデルを適用する
+- mitoya_theory.mdのセクション優先度テーブルが正しい粒度
+
+## 例
+蒲田7: 2F_L_N, 2F_R_N, 3F_L_A, 3F_L_N, 3F_R_A, 3F_R_N（フロア×LR×A/N）
+みとや: 501-522, 523-539, ..., 805-815（島単位18セクション、主力/準主力/補助の3段階）
+変数の有効性もセクションごとに異なる（debut_phase, day_of_week, last_digit, is_zorome）

@@ -1,0 +1,123 @@
+---
+id: segment-ranking-eval-results
+trigger: "セグメント別予測の出力形式や戦略を設計するとき、またはcomposite vs hist_metricの使い分けを決めるとき"
+confidence: 0.95
+domain: ml-evaluation
+source: walk-forward-segment-eval-60days
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# セグメント別評価：compositeとhist_metricの最適戦略はセグメントで異なる
+
+## 背景
+60日walk-forwardでセグメントごとにcomposite Top10とhist_metric Top10の的中率（104%超え）をベースラインと比較した。
+統計的に有意な差があるのは3F_L_Nのみ（hist_only +8.8pp, Wilcoxon p=0.002）。
+他5セグメントではcompositeとhist_metricに有意差なし。
+
+## アクション
+- 3F_L_N: hist_metricで順位付けすべき（compositeはベースライン以下で害を与える）
+- 3F_L_A, 3F_R_A, 3F_R_N: compositeがやや優位だが有意差なし。どちらでも可
+- 2F_R_N: hist_metricがやや優位（+3.0pp）だが有意差なし（p=0.32）
+- 2F_L_N: 両者同等（差0.2pp）
+- 「全セグメントでhist_only」は3F_R_NのTop10で差枚を大きく失う（comp +330 vs hist -12）
+
+## 例
+Top10 hit率（60日平均、ベースライン比較）:
+  3F_L_N: base=32.0%, comp=29.8%(-2.1pp), hist=38.7%(+6.7pp) → hist *** p=0.002
+  2F_R_N: base=32.9%, comp=34.0%(+1.1pp), hist=37.0%(+4.1pp) → hist ns p=0.32
+  3F_R_N: base=33.1%, comp=36.5%(+3.4pp), hist=32.5%(-0.6pp) → comp ns p=0.10
+  3F_L_A: base=27.5%, comp=30.0%(+2.5pp), hist=28.7%(+1.1pp) → comp ns p=0.82
+  3F_R_A: base=26.1%, comp=28.0%(+1.9pp), hist=26.3%(+0.3pp) → comp ns p=0.44
+  2F_L_N: base=31.9%, comp=33.7%(+1.7pp), hist=33.5%(+1.6pp) → 同等 ns p=0.89
+
+---
+id: 3fln-composite-harmful
+trigger: "3F_L_Nセグメントの予測やスコアリングを行うとき"
+confidence: 0.95
+domain: ml-model-design
+source: walk-forward-segment-eval-60days
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 3F_L_Nではcompositeスコアがベースライン以下で有害
+
+## 背景
+3F_L_NのcompositeスコアTop10のhit率は29.8%で、ベースライン32.0%より低い（-2.1pp）。
+一方hist_metric Top10は38.7%でベースラインを+6.7pp上回る。
+Wilcoxon検定でhist-comp差は+8.8pp, p=0.002（有意）。
+差枚でもcomp=-10/台に対しhist=+116/台と大きな差がある。
+compositeのc1-c6がこのセグメントで反予測的に作用している。
+
+## アクション
+- 3F_L_Nでは必ずhist_metricで順位付けする
+- compositeスコアを3F_L_Nに適用してはならない
+- predict_gated.pyの--segment-rankingモードではSEGMENT_RANKING_DEFAULT="hist_metric"でこれを実現済み
+
+## 例
+3F_L_N Top10 (60日walk-forward):
+  composite:   hit=29.8% (base以下), diff=-10/台
+  hist_metric: hit=38.7% (+6.7pp),   diff=+116/台
+  Wilcoxon p=0.002 **
+
+---
+id: hist-metric-beats-composite-globally
+trigger: "スコアリングモデル全体の方針を議論するとき、またはモデル簡素化を検討するとき"
+confidence: 0.93
+domain: ml-model-design
+source: walk-forward-ranking-comparison-60days
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# hist_metric単体がcomposite全体より高い予測性能を持つ
+
+## 背景
+60日walk-forwardでhist_metric単体ランキングとcompositeランキングを比較:
+- hist_only Top50: hit率35.4% (Spearman rho=+0.038, p<0.0001)
+- composite Top50: hit率32.1% (Spearman rho=-0.001, p=0.80)
+6コンポーネント（c1-c6）を加重合計することで、hist_metricの信号が破壊される。
+hist+c2のブレンドでもrhoが+0.025に低下し、c2の追加すら劣化要因。
+hist_heavy_80（hist 80% + composite 20%）でもrho=+0.005に低下。
+
+## アクション
+- compositeスコアよりhist_metric単体のランキングを優先する
+- c1-c6のブレンドはhist_metricの信号を薄めるだけなので、混ぜない
+- 例外: 3F_L_A・3F_R_A・3F_R_NではcompositeがTop10で優位だが有意差なし
+- モデル改善は「compositeの重みチューニング」ではなく「hist_metricの改善」に集中すべき
+
+## 例
+Top50 hit率比較 (60日walk-forward):
+  hist_only:     35.4% (rho=+0.038 ***)
+  composite:     32.1% (rho=-0.001 ns)
+  hist+c2:       32.5% (rho=+0.025 ***)  ← c2追加で劣化
+  hist_heavy_80: 33.6% (rho=+0.005 ns)   ← 20%混入で信号消失
+
+---
+id: segment-eval-must-be-per-segment
+trigger: "セグメント別予測モデルの評価方法を設計するとき"
+confidence: 0.90
+domain: ml-evaluation
+source: session-methodology
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# セグメント別予測の評価はセグメント別に行わなければならない
+
+## 背景
+セグメント別ランキング（各セグメントTop10を合計60台）をグローバルTop60と比較して「劣る」と誤って結論しかけた。
+問題は、セグメント別に予測を出しているのに、評価を全セグメントまとめて行ったこと。
+セグメント別に評価すると、3F_L_Nでは+6.7ppの有意な改善が見える。
+グローバル評価は弱いセグメント（3F_R_A 26.3%）の枠割り当てによる平均低下を「戦略の失敗」と見なしてしまう。
+
+## アクション
+- セグメント別モデルの評価は必ずセグメント別に行う
+- グローバル指標（全体hit率）は、セグメント別戦略の評価には不適切
+- 各セグメントのベースライン（セグメント内ランダム選択のhit率）との差で評価する
+- セグメント間のhit率の違いは戦略の良し悪しではなく、セグメントの性質の違い
+
+## 例
+seg_rank_10（60台）をhist_top60（60台）とグローバル比較:
+  → seg 33.0% vs hist 35.1%, Wilcoxon p=0.005 → 「seg_rankが劣る」
+しかしセグメント別に見ると:
+  → 3F_L_N: hist Top10 = 38.7% vs base 32.0% (+6.7pp, p=0.002)
+  → 3F_R_A: comp Top10 = 28.0% vs base 26.1% (+1.9pp)
+グローバル比較は3F_R_Aの低base率が全体を引き下げているだけ

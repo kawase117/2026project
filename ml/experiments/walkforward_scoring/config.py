@@ -30,6 +30,12 @@ SEGMENT_HIST_RATIO_V7 = {
 }
 EXCLUDED_SEGMENTS_V7 = frozenset()
 
+GATE_QUALITY_TIERS: dict[str, frozenset[str]] = {
+    "good": frozenset({"3F_L_A", "3F_R_A", "2F_L_N"}),
+    "ok": frozenset({"3F_R_N"}),
+    "bad": frozenset({"2F_R_N", "3F_L_N"}),
+}
+
 DD_BINS = {
     1: "DD01-05",
     2: "DD01-05",
@@ -176,6 +182,115 @@ SEGMENT_WEIGHTS_V11 = {
     "2F_L_N": (0.34, 0.47, 0.05, 0.00, 0.07, 0.07),
 }
 
+DEBUT_PHASE_ORDER = ("pre_existing", "1-14日", "15-60日", "61-180日", "181日+", "unknown")
+
+DEBUT_MULTIPLIER_BASE = {
+    "2F_L_N": {
+        "pre_existing": 1.00,
+        "1-14日": 0.65,
+        "15-60日": 0.80,
+        "61-180日": 0.95,
+        "181日+": 1.00,
+        "unknown": 1.00,
+    },
+    "2F_R_N": {
+        "pre_existing": 1.00,
+        "1-14日": 0.40,
+        "15-60日": 0.60,
+        "61-180日": 0.85,
+        "181日+": 0.95,
+        "unknown": 1.00,
+    },
+    "3F_L_A": {
+        "pre_existing": 1.00,
+        "1-14日": 1.00,
+        "15-60日": 0.95,
+        "61-180日": 1.00,
+        "181日+": 1.05,
+        "unknown": 1.00,
+    },
+    "3F_L_N": {
+        "pre_existing": 1.00,
+        "1-14日": 0.60,
+        "15-60日": 0.75,
+        "61-180日": 0.90,
+        "181日+": 0.95,
+        "unknown": 1.00,
+    },
+    "3F_R_A": {
+        "pre_existing": 1.00,
+        "1-14日": 1.00,
+        "15-60日": 1.00,
+        "61-180日": 1.05,
+        "181日+": 1.05,
+        "unknown": 1.00,
+    },
+    "3F_R_N": {
+        "pre_existing": 1.00,
+        "1-14日": 0.55,
+        "15-60日": 0.70,
+        "61-180日": 0.90,
+        "181日+": 0.95,
+        "unknown": 1.00,
+    },
+}
+
+DEBUT_MULTIPLIER_TUNED = {
+    "2F_L_N": {
+        "pre_existing": 1.00,
+        "1-14日": 0.65,
+        "15-60日": 0.80,
+        "61-180日": 0.95,
+        "181日+": 1.00,
+        "unknown": 1.00,
+    },
+    "2F_R_N": {
+        "pre_existing": 1.00,
+        "1-14日": 0.60,
+        "15-60日": 0.75,
+        "61-180日": 0.90,
+        "181日+": 0.95,
+        "unknown": 1.00,
+    },
+    "3F_L_A": {
+        "pre_existing": 1.00,
+        "1-14日": 1.00,
+        "15-60日": 0.95,
+        "61-180日": 1.00,
+        "181日+": 1.05,
+        "unknown": 1.00,
+    },
+    "3F_L_N": {
+        "pre_existing": 1.00,
+        "1-14日": 0.60,
+        "15-60日": 0.75,
+        "61-180日": 0.90,
+        "181日+": 0.95,
+        "unknown": 1.00,
+    },
+    "3F_R_A": {
+        "pre_existing": 1.00,
+        "1-14日": 1.00,
+        "15-60日": 1.00,
+        "61-180日": 1.05,
+        "181日+": 1.05,
+        "unknown": 1.00,
+    },
+    "3F_R_N": {
+        "pre_existing": 1.00,
+        "1-14日": 1.00,
+        "15-60日": 1.00,
+        "61-180日": 1.00,
+        "181日+": 1.00,
+        "unknown": 1.00,
+    },
+}
+
+DEBUT_MULTIPLIER_TABLES = {
+    "base": DEBUT_MULTIPLIER_BASE,
+    "tuned": DEBUT_MULTIPLIER_TUNED,
+}
+
 DOW_SEGMENT_KAKUBAN_BOOST_V10 = {
     (3, "3F_L_A", "K5-9"): 1.20,
     (1, "3F_L_A", "K5-9"): 1.17,
@@ -189,6 +304,19 @@ DOW_SEGMENT_KAKUBAN_BOOST_V10 = {
     (6, "3F_R_A", "K5-9"): 0.85,
 }
 
+DD_SEGMENT_KAKUBAN_BOOST_V13 = {
+    ("DD06-11", "3F_L_N", "K5-9"): 1.20,
+    ("DD18-23", "3F_R_A", "K5-9"): 1.20,
+    ("DD01-05", "3F_L_A", "K5-9"): 1.15,
+    ("DD12-17", "3F_L_A", "K5-9"): 1.15,
+    ("DD18-23", "3F_L_A", "K5-9"): 1.15,
+    ("DD24-28", "3F_L_A", "K5-9"): 1.15,
+    ("DD06-11", "2F_R_N", "K10-14"): 1.15,
+    ("DD18-23", "2F_R_N", "K2"): 1.10,
+    ("DD24-28", "2F_L_N", "K10-14"): 1.15,
+    ("DD29-31", "2F_R_N", "K10-14"): 1.15,
+}
+
 
 @dataclass(frozen=True)
 class VariantConfig:
@@ -196,6 +324,7 @@ class VariantConfig:
     dd_mode: str
     hist_metric: str
     use_new_kakuban: bool
+    use_kakuban: bool = True
     optimize_weights: bool = False
     component_weights: tuple[float, float, float, float, float, float] = DEFAULT_COMPONENT_WEIGHTS
     use_segment_weights: bool = False
@@ -207,9 +336,14 @@ class VariantConfig:
     hist_window_n: int | None = None
     use_dow_kakuban_boost: bool = False
     dow_kakuban_boost_scale: float = 1.0
+    use_dd_kakuban_boost: bool = False
+    dd_kakuban_boost_scale: float = 1.0
     use_saturday_adjacent: bool = False
     saturday_adjacent_alpha: float = 0.3
     use_v11_weights: bool = False
+    use_debut_multiplier: bool = False
+    debut_multiplier_scale: float = 1.0
+    debut_multiplier_table: str = "base"
 
 
 def compute_segment_weights_from_lifts(
@@ -451,6 +585,97 @@ def build_variant_configs() -> "OrderedDict[str, VariantConfig]":
                     hist_metric="hit_an",
                     use_new_kakuban=True,
                     use_v11_weights=True,
+                ),
+            ),
+            (
+                "v12a_debut_multiplier",
+                VariantConfig(
+                    variant_id="v12a_debut_multiplier",
+                    dd_mode="individual",
+                    hist_metric="hit_an",
+                    use_new_kakuban=True,
+                    use_v11_weights=True,
+                    use_debut_multiplier=True,
+                    debut_multiplier_scale=1.0,
+                ),
+            ),
+            (
+                "v12b_debut_multiplier_half",
+                VariantConfig(
+                    variant_id="v12b_debut_multiplier_half",
+                    dd_mode="individual",
+                    hist_metric="hit_an",
+                    use_new_kakuban=True,
+                    use_v11_weights=True,
+                    use_debut_multiplier=True,
+                    debut_multiplier_scale=0.5,
+                ),
+            ),
+            (
+                "v12b_no_kakuban",
+                VariantConfig(
+                    variant_id="v12b_no_kakuban",
+                    dd_mode="individual",
+                    hist_metric="hit_an",
+                    use_new_kakuban=True,
+                    use_kakuban=False,
+                    use_v11_weights=True,
+                    use_debut_multiplier=True,
+                    debut_multiplier_scale=0.5,
+                ),
+            ),
+            (
+                "v12c_tuned",
+                VariantConfig(
+                    variant_id="v12c_tuned",
+                    dd_mode="individual",
+                    hist_metric="hit_an",
+                    use_new_kakuban=True,
+                    use_v11_weights=True,
+                    use_debut_multiplier=True,
+                    debut_multiplier_scale=1.0,
+                    debut_multiplier_table="tuned",
+                ),
+            ),
+            (
+                "v12d_tuned_half",
+                VariantConfig(
+                    variant_id="v12d_tuned_half",
+                    dd_mode="individual",
+                    hist_metric="hit_an",
+                    use_new_kakuban=True,
+                    use_v11_weights=True,
+                    use_debut_multiplier=True,
+                    debut_multiplier_scale=0.5,
+                    debut_multiplier_table="tuned",
+                ),
+            ),
+            (
+                "v13a_dd_kakuban_boost",
+                VariantConfig(
+                    variant_id="v13a_dd_kakuban_boost",
+                    dd_mode="individual",
+                    hist_metric="hit_an",
+                    use_new_kakuban=True,
+                    use_v11_weights=True,
+                    use_debut_multiplier=True,
+                    debut_multiplier_scale=0.5,
+                    use_dd_kakuban_boost=True,
+                    dd_kakuban_boost_scale=1.0,
+                ),
+            ),
+            (
+                "v13b_dd_kakuban_boost_half",
+                VariantConfig(
+                    variant_id="v13b_dd_kakuban_boost_half",
+                    dd_mode="individual",
+                    hist_metric="hit_an",
+                    use_new_kakuban=True,
+                    use_v11_weights=True,
+                    use_debut_multiplier=True,
+                    debut_multiplier_scale=0.5,
+                    use_dd_kakuban_boost=True,
+                    dd_kakuban_boost_scale=0.5,
                 ),
             ),
         ]

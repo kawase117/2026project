@@ -1,0 +1,190 @@
+---
+id: v12b-composite-score-no-calibration
+trigger: "スコアリングモデルの予測結果をTop-Nで絞り込むとき、またはcompositeスコアに基づく台選択推薦を行うとき"
+confidence: 0.98
+domain: ml-evaluation
+source: walk-forward-calibration-60days
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# v12b compositeスコアにキャリブレーションが存在しない
+
+## 背景
+v12b_debut_multiplier_halfのcompositeスコアと実際の104%超え確率の対応関係を、60日間のwalk-forward評価（42,840行）で検証した。
+スコア十分位別の104%超え率はD0=32.9%からD9=32.8%まで実質フラットで、スコアの高低が的中確率をほぼ予測しない。
+ベースライン（ランダム選択）31.1%に対し、Top50のリフトは+1.6ppのみ。
+スコア500以上はむしろ25.3%でベースライン以下（反予測的）。
+
+## アクション
+- compositeスコアのTop-N絞り込みに統計的根拠がないことを前提に推薦設計を行う
+- スコアの絶対値による閾値フィルタも無効（単調増加しないため）
+- 推薦を出す場合は、セグメント別のquota割り当てまたはセグメント内パーセンタイルでカバレッジを確保する
+- キャリブレーション改善前に、スコア構造自体の見直し（v11重みの極端な集中など）が必要
+
+## 例
+スコア十分位と104%超え率（60日walk-forward）:
+  D0 (avg=-171): 32.9%
+  D5 (avg=+90):  31.0%
+  D9 (avg=+273): 32.8%
+  Baseline:      31.1%
+Top50 coverage: 全104%+台の7.4%しか捕捉できていない
+
+---
+id: v11-segment-weight-concentration-artifact
+trigger: "v11のセグメント別重みを使用するとき、または特定機種・セクションがTop-Nを支配するとき"
+confidence: 0.95
+domain: ml-model-design
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# v11セグメント別重みの極端な集中がスコア歪みを生む
+
+## 背景
+SEGMENT_WEIGHTS_V11で3F_R_Nはc1=0.50, c4=0.50（2成分のみで100%）、2F_L_Nはc2=0.47（末尾が47%を支配）。
+この極端な集中により、DD28×日曜のような特定コンテキストで東京喰種セクション（3209-3217）がTop5を独占する一方、2F_L_N（182台で最大セグメント）はTop50に3台しか入らない。
+東京喰種3209-3217のDD24-28実績はavg_diff=-228（セグメント全体+32と比較してマイナス）にもかかわらず、モデルは最高スコアを付けている。
+
+## アクション
+- v11重みの集中度を確認してから使用する（2成分で100%は危険信号）
+- 特定セクション・機種がTop-Nを支配する場合は重み設計を疑う
+- セグメント間のスコアスケールの違いが推薦のカバレッジを破壊していないか検証する
+
+## 例
+v11 weights:
+  3F_R_N: c1=0.50, c4=0.50 (c2/c3/c5/c6=0)
+  2F_L_N: c1=0.34, c2=0.47 (c3=0.05, c4/c5/c6≈0)
+結果: 東京喰種(avg_diff=-228)がスコア575で1位、2F_L_Nの182台中Top50に入ったのは3台のみ
+
+---
+id: top-n-coverage-vs-precision-tradeoff
+trigger: "推薦台数（Top-N）の設定を決めるとき、またはスコアモデルの出力をユーザーに提示するとき"
+confidence: 0.95
+domain: recommendation-design
+source: walk-forward-calibration-60days
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Top-N絞り込みはキャリブレーション済みモデルでのみ正当化される
+
+## 背景
+Top50のhit率32.7%はベースライン31.1%と+1.6ppしか差がなく、Top50は全104%+台の7.4%しか捕捉しない。
+セグメント別では3F_R_Aが0.8%、2F_L_Nが3.7%の捕捉率で、特定セグメントの高設定台を体系的に見逃している。
+問題は「高スコア台が高設定でない」ことではなく、「低スコア台にも同程度の確率で高設定台が存在し、Top-Nで切ることで有用な情報が失われる」こと。
+
+## アクション
+- キャリブレーションが確立されるまで、Top-Nでの絞り込みは推薦の根拠として不十分
+- 推薦出力はセグメントごとの上位台を含める設計にする（quota方式）
+- またはスコアではなく、セグメント内パーセンタイル順位を使う
+- ユーザーには「スコア順＝確度順ではない」ことを明示する
+
+## 例
+セグメント別Top50捕捉率:
+  2F_L_N: Top50 share=12.4%, hits captured=3.7%
+  3F_R_A: Top50 share=1.5%,  hits captured=0.8%
+  2F_R_N: Top50 share=47.2%, hits captured=14.4%
+Top200に広げても全体の28.5%しか捕捉できない
+
+---
+id: component-calibration-hist-only-signal
+trigger: "スコアリングモデルのコンポーネント設計を見直すとき、または新バリアントの重み配分を検討するとき"
+confidence: 0.95
+domain: ml-evaluation
+source: component-level-calibration-v6a-60days
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 予測力を持つコンポーネントはhist_metricのみ（全9バリアント共通）
+
+## 背景
+v6aの6コンポーネント＋hist_metricを個別にSpearman相関で検証した結果:
+- hist_metric: rho=+0.037, p<0.0001 (D0=28.9%→D9=35.0%, +6.1pp) — 唯一の実効的シグナル
+- c2（角番距離）: rho=+0.015, p=0.002 — 有意だが効果量は小さい（+1.4pp）
+- c5（末尾）: rho=-0.021, p<0.0001 — 反予測的（高スコアほど的中率低下）
+- c1, c3, c4: 全て非有意（p>0.12）
+- composite全体: 非有意（rho=-0.003, p=0.55）
+また全9バリアント（v1〜v12b）のcompositeスコアで検証しても、全てSpearman rho≈0、p>0.27で非有意。
+バリアントの進化はキャリブレーションを改善していない。
+
+## アクション
+- hist_metric（台個別の過去成績）をスコアリングの中核に据える
+- c1〜c4の構造コンポーネントは3F_L_A以外で予測力がないため、全セグメント共通の重み設計は無効
+- c5は害を与えている（反予測的）ため、除外または符号反転を検討する
+- 構造コンポーネントの重みチューニングより、hist_metricの改善（窓幅、正規化、shrinkage）に投資すべき
+
+## 例
+グローバルSpearman (v6a, 60日, n=42,840):
+  hist_metric: rho=+0.037 *** (D0=28.9%→D9=35.0%)
+  c2:          rho=+0.015 **  (D0=30.8%→D9=32.2%)
+  c5:          rho=-0.021 *** (D0=31.5%→D9=27.9%) ← 反予測的
+  c1:          rho=-0.003 ns
+  c3:          rho=-0.001 ns
+  c4:          rho=-0.007 ns
+
+---
+id: 3fla-only-segment-with-structural-signal
+trigger: "セグメント別のモデル戦略を設計するとき、またはA系（ジャグラー/ハナハナ）とN系の予測方法を分けるとき"
+confidence: 0.90
+domain: ml-model-design
+source: component-level-calibration-v6a-60days
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 3F_L_Aだけがcompositeスコアで有意なキャリブレーションを持つ
+
+## 背景
+6セグメントのうち3F_L_Aのみがcomposite全体で有意（rho=+0.051, p=0.0001）。
+Q0=22.7%→Q4=29.3%で、ベースライン27.1%に対し最上位群で+2.2pp、最下位群で-4.4ppの分離がある。
+c1, c3, c4, hist_metricの4コンポーネントが全て正方向で有意に寄与している。
+他5セグメント（2F_L_N, 2F_R_N, 3F_L_N, 3F_R_A, 3F_R_N）のcompositeは全て非有意。
+hist_metricだけは3F_L_N(p=0.0001)と2F_R_N(p=0.045)でも個別に有意。
+
+原因としてA系（ジャグラー/ハナハナ）は設定差が出力率に直結するためノイズが小さいが、
+2F_L_N(n=10,920)が3F_L_A(n=5,760)の2倍のサンプルでも非有意であることから、
+N系は「ノイズで隠れている」のではなく「日次出力率からは設定を読み取れない」可能性が高い。
+
+## アクション
+- A系とN系で予測戦略を根本的に分ける設計を検討する
+- 3F_L_Aにはcompositeスコア（c1/c3/c4/hist）をそのまま適用できる
+- N系にはhist_metricのみを使うか、日次でない別指標（複数日移動平均、G数トレンド等）を検討する
+- 3F_R_Aも同じA系だが構造シグナルは非有意（n=5,520）— LR分割やセクション構成の違いが原因の可能性
+
+## 例
+セグメント別composite Spearman:
+  3F_L_A: rho=+0.051, p=0.0001 *** ← 唯一有意
+  3F_R_N: rho=+0.012, p=0.41 ns
+  2F_L_N: rho=+0.008, p=0.42 ns
+  2F_R_N: rho=-0.001, p=0.92 ns
+  3F_L_N: rho=-0.009, p=0.51 ns
+  3F_R_A: rho=-0.002, p=0.88 ns
+
+---
+id: no-hall-counteraction-evidence
+trigger: "ホール側の逆張り戦略（好調台の設定を下げる）を仮説として検討するとき"
+confidence: 0.90
+domain: domain-analysis
+source: trailing-payout-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ホールの「好調台逆張り」仮説はデータで否定される
+
+## 背景
+過去成績が良い台の翌日パフォーマンスを検証した結果、逆張りの証拠は見つからなかった。
+むしろ好調台は翌日もわずかに好調な傾向がある（慣性効果）。
+- 30日trailing payout最低群(D0): 翌日104%+=32.3%
+- 30日trailing payout最高群(D9): 翌日104%+=34.7% (+2.4pp)
+- 前日104%超えの台: 翌日104%+=32.5%（非該当: 31.8%）
+- 連続104%超えstreak>=4: 翌日104%+=33.2%（streak=0: 31.8%）
+
+## アクション
+- 「好調台を避ける」戦略には根拠がない
+- スコア500+の低的中率（25.3%）はホールの逆張りではなくモデルのアーティファクト
+- hist_metricの正の予測力と整合的：過去成績はそのまま未来予測に使える
+
+## 例
+30日trailing payout vs 翌日104%+率:
+  D0 (avg=91.8%): 32.3%
+  D5 (avg=99.5%): 30.7%
+  D9 (avg=112.1%): 34.7%
+  → 好調台ほど翌日も好調（+2.4pp）

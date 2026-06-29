@@ -1,0 +1,62 @@
+---
+id: section-daily-pipeline-validated
+trigger: "蒲田7の予測・推薦パイプラインを設計するとき、またはpredict_section.pyの結果を解釈するとき"
+confidence: 0.95
+domain: ml-model-design
+source: walk-forward-eval-60days-predict-section
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# セクション×日の2段階パイプラインが台×日の5倍の予測力を持つ
+
+## 背景
+predict_section.pyの60日walk-forward評価で検証:
+- Stage 1（セクション選択）: section_avg_hist rho=+0.172, p<0.0001
+- Stage 1+2（セクション選択＋台選び）: Top1sec×5台で104%超え率39.6%（baseline 31.6%, +8.0pp）
+- グローバルhist Top5は34.0%（+2.4pp）→ 2段階の方が+5.6pp優位
+- 全ての台数（5/15/25/50台）でStage1+2がグローバルhist単体を上回る
+
+台×日のcompositeスコアはrho≈0で予測力ゼロだったが、セクション粒度にすることでrhoが+0.172に。
+hist_metricの信号（rho=+0.038）に加え、「好調台が集まるセクション」の構造シグナルが追加される。
+
+## アクション
+- 蒲田7の予測はpredict_section.pyの2段階パイプラインを使う
+- predict_gated.pyのcomposite Top50は予測根拠がないため、推薦の主力にしない
+- セクション選択（Stage 1）が台選び（Stage 2）より大きな信号を持つため、セクション選択を優先する
+- 実運用では--top-sections 5 --top-machines-per-section 5（25台）が精度と網羅性のバランス点
+
+## 例
+60日walk-forward評価（台数揃え比較）:
+  Stage1+2 top1sec×5台:  39.6% (lift=1.25x) vs グローバルhist Top5:  34.0% (lift=1.08x)
+  Stage1+2 top5sec×5台:  36.8% (lift=1.16x) vs グローバルhist Top25: 34.4% (lift=1.09x)
+  Stage1+2 top10sec×5台: 35.9% (lift=1.14x) vs グローバルhist Top50: 34.7% (lift=1.10x)
+
+---
+id: granularity-shift-section-wins-weekly-loses
+trigger: "予測粒度（台×日/セクション×日/台×週）の選択を議論するとき"
+confidence: 0.95
+domain: ml-model-design
+source: granularity-shift-experiments
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 予測粒度シフト: セクション×日は有効、台×週は無効
+
+## 背景
+台×日のhist_metric（rho=+0.038, D0→D9=+6.0pp）をベンチマークに2つの粒度シフトを検証:
+- セクション×日: section_avg_hist rho=+0.195, D0→D9=+10.1pp → ベンチマークの5倍
+- 台×週: hist_metric rho=+0.043, D0→D9=+2.2pp → ベンチマークと同等（改善なし）
+
+セクション集約が有効な理由: N台の平均を取ることでノイズが√N倍縮小する。
+週集約が無効な理由: 台単位のままでは7日平均でもノイズ縮小が不十分。
+
+## アクション
+- 予測粒度の改善はセクション（空間集約）方向で進める
+- 台×週（時間集約）はこれ以上追求しない
+- みとや等他ホールでもセクション×日の粒度が有効か検証する価値がある
+
+## 例
+ベンチマーク比較:
+  台×日 hist_metric:       rho=+0.038, D0→D9=+6.0pp
+  セクション×日 section_avg_hist: rho=+0.195, D0→D9=+10.1pp ← 5倍
+  台×週 hist_metric:       rho=+0.043, D0→D9=+2.2pp ← 改善なし
