@@ -1,0 +1,253 @@
+---
+id: iso-week-calculation-pattern
+trigger: "when implementing date-range based aggregation (weekly, monthly consolidation)"
+confidence: 0.95
+domain: system-design
+source: session-observation
+project_id: wiki
+project_name: wiki-memo-organization
+
+# ISO Week計算パターン
+
+## 背景
+複数の日時を週単位で管理する際、ISO 8601 週番号を使用することで国際標準の日付範囲を確保できる。Monday-Sunday の統一された範囲計算が重要。
+
+## アクション
+- `datetime.now()` から `weekday()` で月曜日（0）を基準に計算
+- 先週の範囲は `current_monday - timedelta(weeks=1)` で取得
+- `isocalendar()` で ISO year, week_num を取得
+- フォーマット: `f"{iso_year}-W{week_num:02d}"` で YYYY-WXX 形式に統一
+
+## 例
+```python
+today = datetime.now()
+current_monday = today - timedelta(days=today.weekday())
+last_monday = current_monday - timedelta(weeks=1)
+last_sunday = current_monday - timedelta(days=1)
+
+iso_year, week_num, _ = last_monday.isocalendar()
+week_id = f"{iso_year}-W{week_num:02d}"  # "2026-W19"
+```
+
+---
+id: utf8-encoding-japanese-windows
+trigger: "when testing with Japanese filenames on Windows in Python"
+confidence: 0.95
+domain: testing
+source: session-observation
+project_id: wiki
+project_name: wiki-memo-organization
+
+# Windows日本語ファイル名のUTF-8エンコーディング
+
+## 背景
+Windows のデフォルト エンコーディングは cp932（Shift-JIS）。日本語ファイル名を含むテストは、明示的に UTF-8 を指定しないと デコード失敗（UnicodeDecodeError）が発生する。
+
+## アクション
+- `Path.read_text()`, `open()` 呼び出しで常に `encoding='utf-8'` を指定
+- テスト環境でも同様に指定（pytest fixtures を含む）
+- JSON ファイル、markdown ファイル、ログファイルすべてに適用
+
+## 例
+```python
+# 正しい
+content = file.read_text(encoding='utf-8')
+with open(path, 'r', encoding='utf-8') as f:
+    data = f.read()
+
+# 間違い（失敗する）
+content = file.read_text()  # cp932 で解析、日本語でエラー
+```
+
+---
+id: relative-absolute-import-hybrid
+trigger: "when writing tests for Python packages with relative imports"
+confidence: 0.90
+domain: testing
+source: session-observation
+project_id: wiki
+project_name: wiki-memo-organization
+
+# 相対/絶対インポート ハイブリッドパターン
+
+## 背景
+テストファイルが `sys.path.insert(0, parent)` で親ディレクトリを追加する場合、モジュール内の相対インポートは失敗する。テスト実行時のパスと実際の運用環境のパスが異なるため。
+
+## アクション
+- モジュール内で try/except でインポート方式を2つ定義
+- 相対インポート (`from . import`) が失敗したら、絶対インポート (`from module import`) に fallback
+- テストと運用コード両方の実行パスに対応
+
+## 例
+```python
+try:
+    from . import setup_logging, parse_frontmatter, git_add_commit
+except ImportError:
+    from __init__ import setup_logging, parse_frontmatter, git_add_commit
+```
+
+---
+id: yaml-frontmatter-extraction
+trigger: "when parsing markdown with YAML frontmatter headers"
+confidence: 0.95
+domain: data-processing
+source: session-observation
+project_id: wiki
+project_name: wiki-memo-organization
+
+# YAML フロントマッター抽出パターン
+
+## 背景
+Markdown ファイルの frontmatter（`---` で囲まれた YAML）を安全に解析するには、分割と例外処理が必要。存在しない frontmatter や形式エラーに対応する必要がある。
+
+## アクション
+- ファイル先頭が `---` で始まるかチェック
+- `content.split("---", 2)` で3部に分割（frontmatter, separator, body）
+- `yaml.safe_load()` で frontmatter を解析（失敗時は空 dict）
+- body は `.strip()` で前後空白を削除
+
+## 例
+```python
+def parse_frontmatter(file_path: Path) -> Tuple[Dict, str]:
+    with open(file_path, 'r', encoding='utf-8') as f:
+        content = f.read()
+
+    if not content.startswith("---"):
+        return {}, content
+
+    parts = content.split("---", 2)
+    if len(parts) < 3:
+        return {}, content
+
+    fm = yaml.safe_load(parts[1]) or {}
+    body = parts[2].strip()
+    return fm, body
+```
+
+---
+id: multi-phase-adr-implementation
+trigger: "when implementing complex architectural decision with multiple independent components"
+confidence: 0.90
+domain: system-design
+source: session-observation
+project_id: wiki
+project_name: wiki-memo-organization
+
+# 複数フェーズ ADR 実装パターン
+
+## 背景
+大規模な ADR を複数フェーズに分割することで、各フェーズの独立性を保ちながら段階的に実装できる。各フェーズは異なるコンポーネント（外部スキル、既存システム改修、新規スキル）に対応。
+
+## アクション
+1. Phase 1: 既存システム（ingest-v2）を除外ルールで改修
+2. Phase 2: 新規スキル（weekly-notes-aggregator）を完全に独立実装
+3. Phase 3: 別の既存システム（monthly-healthcheck）に新機能追加
+4. 各フェーズ完成後に git commit で区切る
+5. ドキュメンテーション（spec、SKILL.md）を最後にまとめて作成
+
+## 例
+ADR 0004: 3層パイプライン
+- Phase 1: ingest-v2 ← `raw/notes/` 除外ルール
+- Phase 2: weekly-notes-aggregator ← 新規スキル（8ファイル、11テスト）
+- Phase 3: monthly-healthcheck ← CHECK7 統合機能
+
+---
+id: fact-forcing-gate-presentation
+trigger: "when editing complex configuration or implementation files (SKILL.md, config JSON)"
+confidence: 0.85
+domain: development-process
+source: session-observation
+project_id: wiki
+project_name: wiki-memo-organization
+
+# ファクト・フォーシング・ゲート プレゼンテーション
+
+## 背景
+複雑なシステムファイル（SKILL.md、実装ファイル）の編集前に、gate が必要な事実をリスト化するよう要求する。これにより編集の正当性と影響範囲が明確になる。
+
+## アクション
+1. **参照ファイル** — 当該ファイルをインポート/参照するファイルを Grep で列挙
+2. **公開インターフェース** — 変更の影響を受ける関数/クラス/定数をリスト化
+3. **データ構造** — 入力/出力形式、frontmatter フィールド、ファイルパス
+4. **ユーザー指示** — 変更を要求したユーザーの指示を verbatim で引用
+5. 提示後に元の編集操作を再実行
+
+## 例
+- **Files that reference**: `.claude/skills/monthly-healthcheck/SKILL.md`
+- **Public functions**: `extract_weekly_digest_links()`, `consolidate_weekly_to_monthly()`, `reset_scratch_pad_digest_section()`
+- **Data structures**: `week_ids: List[str]`, `year_month: str`, frontmatter fields
+- **User instruction**: "ドキュメントを作成してください"
+
+---
+id: pytest-fixtures-synthetic-data
+trigger: "when creating isolated test environments for file system operations"
+confidence: 0.90
+domain: testing
+source: session-observation
+project_id: wiki
+project_name: wiki-memo-organization
+
+# Pytest フィクスチャ：合成データパターン
+
+## 背景
+ファイル I/O テストは、実際の wiki 構造を複製した一時ディレクトリ上で実行する必要がある。各テストが独立した環境で動作するよう、pytest fixture で合成データを構築・クリーンアップ。
+
+## アクション
+1. `@pytest.fixture` で temp directory, config, sample notes, scratch pad を作成
+2. conftest.py で共通 fixture を定義（全テストで再利用）
+3. sample notes は複数日（7日）のデータを含む（日付パターン: YYYY-MM-DD*.md）
+4. scratch pad は `## 📝 先週のメモ集約` セクションを含む template として初期化
+5. テスト後は自動クリーンアップ（tmp_pytest, 一時ファイル）
+
+## 例
+```python
+@pytest.fixture
+def temp_wiki(tmp_path):
+    """Create temporary wiki structure"""
+    wiki_root = tmp_path / "wiki"
+    wiki_root.mkdir()
+    (wiki_root / "raw" / "notes").mkdir(parents=True)
+    (wiki_root / "wiki" / "life").mkdir(parents=True)
+    return wiki_root
+
+@pytest.fixture
+def sample_notes(temp_wiki):
+    """Create 7 days of sample notes"""
+    base_date = datetime.now() - timedelta(days=6)
+    for i in range(7):
+        date = base_date + timedelta(days=i)
+        file_path = temp_wiki / "raw" / "notes" / f"{date.strftime('%Y-%m-%d')}.md"
+        file_path.write_text("Sample content", encoding='utf-8')
+    return temp_wiki / "raw" / "notes"
+```
+
+---
+id: documentation-first-spec-design
+trigger: "when designing a new skill or major feature with multiple phases"
+confidence: 0.85
+domain: documentation
+source: session-observation
+project_id: wiki
+project_name: wiki-memo-organization
+
+# ドキュメンテーション・ファースト仕様設計
+
+## 背景
+複数フェーズの機能実装では、実装前に仕様書（spec.md）を詳細に設計することで、実装漏れやインターフェース矛盾を事前に防ぐことができる。仕様書は関連スキル間の依存関係も明確にする。
+
+## アクション
+1. **ファイルフォーマット** — ファイル名、frontmatter、内容構造を詳細に定義
+2. **世代フロー** — 各フェーズの処理ステップを箇条書きで記載
+3. **データ構造** — 入出力フォーマット、日付形式、フィールド名を表で整理
+4. **エラーハンドリング** — 各エラーケースの動作を明示
+5. **関連スキル** — 依存するスキル、連携パターンを明記
+6. 実装時はこの仕様書を reference として参照
+
+## 例
+wiki/_system/weekly-digest-spec.md:
+- File Naming Convention （YYYY-WXX 形式）
+- Frontmatter Structure （type, week, date_range, tags, compiled）
+- Content Format （Daily sections with Japanese day names）
+- Generation Flow （6 phases: Validate, Date Range, Scan, Aggregate, Write, Update Pad）
+- Error Handling Table （各エラーケースの挙動）
+- References （関連スキル、関連 ADR）
