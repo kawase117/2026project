@@ -1,0 +1,20 @@
+# ローカルフック構成（ネットワーク不要・rev固定不要）
+repos:
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: ruff check (syntax errors / undefined names)
+        entry: py -3 -m ruff check --fix
+        language: system
+        types: [python]
+      - id: ruff-format
+        name: ruff format
+        entry: py -3 -m ruff format
+        language: system
+        types: [python]
+      - id: pytest-fast
+        name: pytest (manual stage - run with `pre-commit run pytest-fast --hook-stage manual`)
+        entry: py -3 -m pytest test/ -x -q
+        language: system
+        pass_filenames: false
+        stages: [manual]

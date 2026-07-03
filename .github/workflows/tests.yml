@@ -1,0 +1,32 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - run: pip install ruff
+      - name: ruff check (syntax errors / undefined names)
+        run: ruff check .
+
+  pytest:
+    runs-on: ubuntu-latest
+    # ローカルDB依存のテストが安定するまで非ブロッキング。
+    # 全テストがCIでグリーンになったら continue-on-error を削除すること。
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - run: pip install -r requirements.txt
+      - name: pytest
+        run: python -m pytest test/ -q
