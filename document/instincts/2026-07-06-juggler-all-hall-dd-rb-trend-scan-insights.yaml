@@ -1,0 +1,86 @@
+---
+id: juggler-all-hall-rb-dd-scan-methodology
+trigger: "全ジャグラー機種×全ホールでDD別(日付の日)偏りをRB確率ベースで検証したいとき"
+confidence: 0.85
+domain: ml-methodology
+source: session-observation
+project_id: pachinko-analyzer-2026project
+project_name: 2026project
+
+# 全ジャグラー×全ホールDD別RB確率スキャン：全体期間vs直近60日の二段検定パターン
+
+## 背景
+「ゴーゴージャグラーはDD別に上振れる」という単一機種の観察を、全ジャグラー機種
+(アイム/マイジャグ/ファンキー/ゴーゴー3/ミスター/ガールズ/ネオアイム/ウルトラミラクル/
+ハッピーVIII)×全9ホールに拡張する際、diff/plus_rate ではなく
+rb_probability_decimal（RB確率）を指標にすることで、変動が大きいコイン差枚系
+指標より本来のスペック差に近いシグナルを見られる。ホール横断のプール集計は
+過去の知見(feedback-no-cross-hall-pooling)により禁止のため、hall×machine_name
+単位で独立に検定する必要がある。
+
+## アクション
+1. `machine_detailed_results` から date, machine_name, machine_number,
+   games_normalized, rb_count, rb_probability_decimal を抽出
+   (`WHERE machine_name LIKE '%ジャグラー%' AND rb_probability_decimal > 0`)。
+2. hall×machine_name ごとに「全体期間」と「直近60日(≒2か月)」の2つのDD別
+   RB確率プロファイル(dd=1..31、rb_rate_pooled=sum(rb_count)/sum(games))を作る。
+3. 各期間内でKruskal-Wallis(DD群間、rb_probability_decimalを連続値として)を実施し
+   epsilon_squaredを効果量とする。RB確率は分散が小さいためdiff系の閾値(0.1)より
+   緩い基準(0.02程度)を使う。
+4. 両期間で共通してn>=5のDDレベルのみを使い、Spearman相関で「全体期間の
+   DDランキング」と「直近60日のDDランキング」の一致度(rho)を測る。
+5. verdict分類: 両期間で効果量とrho>=0.4が揃えば`stable_dd_bias`
+   (固定的な偏り)、直近だけ効果があれば`recent_drift`
+   (トレンド変化/ランダム化の可能性、ただし小標本ノイズの疑いも強い)、
+   両方なければ`no_signal`。
+6. game_normalizedフィルタ(400→2000等)を変えて頑健性を確認する。
+   フィルタ強度を変えてもverdictが崩れない組み合わせのみ信頼する。
+
+## 例
+実装は `eda/juggler_all_hall_dd_rb_trend_scan.py`。76(hall×machine)組を
+game>=400で走らせると stable_dd_bias=2, recent_drift=35, no_signal=37, faded=2。
+game>=2000に厳格化すると stable_dd_bias=2(内訳変化), recent_drift=31,
+no_signal=41, faded=2 に変化。recent_driftが最多カテゴリだが、直近60日窓は
+DD31レベルに対してセルあたりサンプルが薄く(min_cell_n=5ぎりぎり)、
+「ホールが戦略を変えている」証拠と決めつけず、ノイズの可能性を先に検討すること。
+
+---
+id: arrow-neo-im-juggler-dd5-stable-rb-bias
+trigger: "ARROWホールのネオアイムジャグラーEXのDD別戦略を検討するとき"
+confidence: 0.7
+domain: pachinko-hall-strategy
+source: session-observation
+project_id: pachinko-analyzer-2026project
+project_name: 2026project
+
+# ARROW×ネオアイムジャグラーEXはDD=5(5・15・25系)でRB確率が有意かつ頑健に高い
+
+## 背景
+全ジャグラー×全ホールDD別RB確率スキャン(juggler-all-hall-rb-dd-scan-methodology参照)
+で、76(hall×machine)組のうちARROWのネオアイムジャグラーEXだけが
+game>=400とgame>=2000の両フィルタで一貫して`stable_dd_bias`と判定された。
+全体期間p=1.4e-11〜3e-17、直近60日p=0.002〜0.006、Spearman rho=0.68〜0.71。
+DD=5が全体期間・直近60日ともトップで、DD=15・25・22・30も上位に入る
+「5の倍数日」パターン。ARROWの既知イベント日定義
+`HALL_EVENT_DIGITS['ARROW'] = [8,18,28,11,22]`(core.py)には5/15/25が
+含まれておらず、既存のイベント日ロジックでは捉えられていない。
+同じARROWのゴーゴージャグラー3も同方向の傾向を見せたが、
+game>=2000にすると`recent_drift`に落ちる(rho 0.42→0.325)ため
+ネオアイムジャグラーEXより頑健性が低い。
+
+## アクション
+- ARROW×ネオアイムジャグラーEXのDD=5/15/25偏りをさらに検証する場合、
+  曜日交互作用・設置台番号との関係・他機種への波及有無を優先して見る。
+- ARROWのイベント日定義に5/15/25を追加すべきか検討する前に、
+  この効果量(epsilon_sq=0.02〜0.03)は「小さいが本物」レベルであり、
+  diff/plus_rateベースの過大評価とは違うことを踏まえて運用判断すること。
+- 蒲田7・蒲田1・みとや等の主力ホールではDD別RB確率の固定バイアスは
+  検出されなかった(no_signalかrecent_drift止まり)。「ゴーゴージャグラーは
+  DD別に上振れる」という当初仮説はRB確率ベースでは全ホール共通の
+  法則としては支持されず、ARROWのみの例外的パターンとして扱うこと。
+
+## 例
+`eda/results/juggler_dd_rb_trend/ARROW_dd_profile.csv` の
+ネオアイムジャグラーEX行(period=full): DD5のrb_rate_pooled≈1/317(400フィルタ時)、
+直近60日ではDD5≈1/305.5。他DD(15,25,22)は1/330〜1/354程度に留まる。
+---

@@ -1,0 +1,81 @@
+---
+id: v12b-near-random-performance-10day
+trigger: "predict_gated実運用評価・モデル性能議論時"
+confidence: 0.95
+domain: ml-evaluation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# v12b_debut_multiplier_halfモデルは10日間テストでほぼランダム水準
+
+## 背景
+2026-06-16〜06-25の10日間でpredict_gated(v12b_debut_multiplier_half)を実行し、
+Top50推奨台の実績を検証した。hit@50 rate=8.2%（ランダム期待値≈8.5%）、
+勝率=40.8%、平均percentile=53.1%と、統計的にランダム選択と区別不能な結果。
+平均lift=+102枚は正だが、中央値は大半の日でマイナス（外れ値依存）。
+
+## アクション
+- v12bモデル単体での実運用投入は時期尚早と判断する
+- 性能改善なしにTop50リストをそのまま使わない
+- liftの平均値だけでなく中央値・分布を必ず確認する
+
+## 例
+| 指標 | 実績 | ランダム期待値 |
+|------|------|--------------|
+| hit@50 rate | 8.2% | ~8.5% |
+| 勝率 | 40.8% | ~40-45% |
+| percentile | 53.1% | 50% |
+| lift平均 | +102枚 | 0枚 |
+| lift中央値 | 大半マイナス | 0枚 |
+
+---
+id: gated-vs-nogate-critical-difference
+trigger: "predict_gatedのゲート条件・MIN_ACTIVE_SEGMENTS調整時"
+confidence: 0.90
+domain: ml-pipeline
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# GATED日とNOGATE日で性能に決定的な差がある
+
+## 背景
+10日中8日がNOGATE fallback（active segmentが2未満でゲート無効化）。
+GATED日（6/17, 6/23）のみlift=+446枚平均、percentile=58.3%と有望な結果。
+NOGATE日は実質ランダム選択。MIN_ACTIVE_SEGMENTS=2が厳しすぎて
+ゲート機能が80%の日で無効化されている。
+
+## アクション
+- ゲート条件（MIN_ACTIVE_SEGMENTS）の緩和を検討する
+- GATED日のみの性能を分離評価してモデルの真の能力を測定する
+- ゲートが効かない日は「推奨なし」とする運用も検討
+
+## 例
+GATED日(2日): lift=+647, +245 → 平均+446枚, percentile=58.3%
+NOGATE日(8日): lift平均≈+3枚, percentile≈51.6% → ランダム同等
+
+---
+id: top50-median-negative-outlier-driven-lift
+trigger: "予測モデルのlift評価・推奨リスト品質検証時"
+confidence: 0.88
+domain: ml-evaluation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Top50の平均liftがプラスでも中央値がマイナスなら実質無効
+
+## 背景
+10日間テストでTop50平均差枚は多くの日でプラスだが、中央値(med_diff_top50)は
+-200〜-500枚と大半の日でマイナス。少数の大勝ち台が平均を引き上げているだけで、
+50台中の大半は負け台。平均liftだけを見ると「効いている」と誤認するリスクがある。
+
+## アクション
+- 予測評価では必ず平均値と中央値の両方を報告する
+- 中央値がマイナスの場合、平均liftがプラスでも「実用的でない」と判断する
+- 勝率（プラス差枚の台の割合）50%超を最低ラインとする
+
+## 例
+6/20: avg_diff_top50=+106枚(プラス) だが med_diff_top50=-500枚(大幅マイナス)
+→ 平均だけ見ると「+114枚のlift」だが、実際は50台中33台が負け(勝率34%)

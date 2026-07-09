@@ -1,0 +1,35 @@
+================================================================================
+SIGNIFICANCE TEST RESULTS
+================================================================================
+
+--- v12a_debut_multiplier vs v11_seg_weights | event ---
+  2F_L_N   | diff=+44 [+8, +80] | win 48/88 (56%) | ACF1=0.08 | pay=+0.064%
+  2F_R_N   | diff=+29 [-32, +89] | win 48/88 (56%) | ACF1=0.10 | pay=-0.363%
+  3F_L_A   | diff=+0 [+0, +0] | win 0/88 (50%) | ACF1=0.00 | pay=+0.000%
+  3F_L_N   | diff=-14 [-45, +14] | win 29/88 (59%) | ACF1=0.02 | pay=-0.067%
+  3F_R_A   | diff=-3 [-8, -0] | win 3/88 (27%) | ACF1=0.01 | pay=-0.009%
+  3F_R_N   | diff=-12 [-59, +31] | win 35/88 (51%) | ACF1=0.30 | pay=-0.023%
+
+--- v12a_debut_multiplier vs v11_seg_weights | non_event ---
+  2F_L_N   | diff=+24 [+4, +47]*** | win 137/254 (56%) | ACF1=0.13 | pay=-0.042%
+  2F_R_N   | diff=+80 [+45, +117]*** | win 165/254 (65%)*** | ACF1=0.17 | pay=+0.158%
+  3F_L_A   | diff=+0 [+0, +0] [FRAGILE] | win 1/254 (100%) | ACF1=-0.00 | pay=+0.001%
+  3F_L_N   | diff=+15 [+3, +28]*** | win 78/254 (56%) | ACF1=0.03 | pay=+0.099%
+  3F_R_A   | diff=-0 [-2, +1] | win 11/254 (55%) | ACF1=-0.00 | pay=-0.000%
+  3F_R_N   | diff=-1 [-17, +17] [FRAGILE] | win 93/254 (49%) | ACF1=0.04 | pay=+0.093%
+
+--- v12b_debut_multiplier_half vs v11_seg_weights | event ---
+  2F_L_N   | diff=+18 [-11, +47] | win 45/88 (56%) | ACF1=0.03 | pay=+0.055%
+  2F_R_N   | diff=+11 [-31, +55] | win 50/88 (60%) | ACF1=0.04 | pay=-0.269%
+  3F_L_A   | diff=+0 [+0, +0] | win 0/88 (50%) | ACF1=0.00 | pay=+0.000%
+  3F_L_N   | diff=-7 [-30, +12] | win 20/88 (57%) | ACF1=0.05 | pay=-0.023%
+  3F_R_A   | diff=-3 [-6, +0] | win 3/88 (30%) | ACF1=0.05 | pay=-0.007%
+  3F_R_N   | diff=-5 [-34, +23] | win 31/88 (53%) | ACF1=0.14 | pay=+0.006%
+
+--- v12b_debut_multiplier_half vs v11_seg_weights | non_event ---
+  2F_L_N   | diff=+18 [+3, +33]*** | win 126/254 (56%) | ACF1=0.06 | pay=+0.022%
+  2F_R_N   | diff=+44 [+15, +73]*** | win 148/254 (61%)*** | ACF1=0.18 | pay=+0.129%
+  3F_L_A   | diff=+0 [+0, +0] | win 0/254 (50%) | ACF1=0.00 | pay=-0.000%
+  3F_L_N   | diff=+10 [+2, +19]*** | win 60/254 (62%)*** | ACF1=0.03 | pay=+0.071%
+  3F_R_A   | diff=-0 [-1, +1] [FRAGILE] | win 7/254 (54%) | ACF1=-0.00 | pay=-0.000%
+  3F_R_N   | diff=-5 [-20, +9] | win 78/254 (46%) | ACF1=0.01 | pay=+0.063%

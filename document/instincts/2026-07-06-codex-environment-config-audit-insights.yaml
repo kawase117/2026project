@@ -1,0 +1,40 @@
+---
+id: codex-profile-is-standalone-file-not-toml-table
+trigger: "Codex CLIのprofile機構を扱う/設定する場面"
+confidence: 0.9
+domain: tooling-environment
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Codex CLIのprofileは独立ファイル方式(`[profiles.name]`テーブルではない)
+
+## 背景
+Codex環境監査で `~/.codex/audit-readonly.config.toml` のようなstandaloneファイルを`--profile audit-readonly`で読ませる設計にした際、レビュー側は「Codexのprofileは`config.toml`内の`[profiles.<name>]`テーブル方式のはず」と誤って指摘した。公式ドキュメント(developers.openai.com/codex/config-basic, config-advanced)で確認した結果、実際は`~/.codex/<profile-name>.config.toml`という独立ファイルを`--profile`で直接読む仕組みが正しい。CLIバイナリがローカルPATHに無く実行テストでの検証はできなかったため、設計の仕様整合性はドキュメントでの確認どまり。
+
+## アクション
+Codexのprofile設定を扱うときは、`[profiles.name]`テーブル方式を仮定せず、`~/.codex/<profile-name>.config.toml`という独立ファイルとして作成する。ファイルは既存のbase `~/.codex/config.toml`の値の上に重なる(overlay)ため、profile内で明示しなかったキー(例: `[windows] sandbox`、`trust_level`)はbase側の値がそのまま残る点に注意。read-only監査などbaseと逆方向の値にしたい設定は、profileファイル自身に明示的に書く必要がある。
+
+## 例
+`codex --profile audit-readonly` は `model_reasoning_effort = "high"` / `[windows] sandbox = "elevated"` のbase configに対し、`~/.codex/audit-readonly.config.toml`に書かれた `model_reasoning_effort = "medium"`, `sandbox_mode = "read-only"`, `approval_policy = "untrusted"` だけを上書きする。`[windows] sandbox`は明示していないため`elevated`のままになる。
+
+---
+id: ci-continue-on-error-with-removal-condition-is-tracked-debt
+trigger: "CIの継続的失敗許容設定(continue-on-error等)を問題として指摘する場面"
+confidence: 0.85
+domain: tooling-environment
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# `continue-on-error: true` にコメント付き解除条件がある場合は「弱いゲート」と即断しない
+
+## 背景
+`.github/workflows/tests.yml`のpytestジョブに`continue-on-error: true`があり、外部レビュー(Codex)はこれを「品質ゲートとして弱い」とP2課題に分類した。しかし実際にはワークフロー内に「ローカルDB依存のテストが安定するまで非ブロッキング。全テストがCIでグリーンになったら`continue-on-error`を削除すること」という明示コメントがあり、意図的な暫定措置として既に追跡されていた。実際にローカルで`pytest test/`をフル実行したところ、`test/heatmap/test_floor_coordinates.py`の2件のassertion失敗と、Windows特有の`.pytest-tmp`クリーンアップが`hall7.db`をロックすることによる42件のsetup/runtimeエラーが確認され、「まだ緑ではない」ため解除は時期尚早と判断した。
+
+## アクション
+CI設定の`continue-on-error`等の緩和設定を指摘する際は、まずコメント・commit historyに解除条件が明記されていないか確認する。条件が明記されていれば「放置」ではなく「意図的な暫定運用」として扱い、対応の要否は該当条件(ローカルでの全テストパス)が満たされているかどうかで判断する。満たされていなければ、それを解除する提案自体が誤り。
+
+## 例
+`python -m pytest test/ -q`をローカルフル実行し、`test/heatmap/test_floor_coordinates.py`のassertion失敗2件とWindows上のDBファイルロックによるteardownエラー42件を確認。これが解消するまで`continue-on-error: true`は維持が正しい判断。
+---

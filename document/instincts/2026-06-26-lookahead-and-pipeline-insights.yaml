@@ -1,0 +1,125 @@
+---
+id: lookahead-detection-by-reimplementation
+trigger: "walk-forward検証で有望な結果が出たとき / リランキングやフィルタの効果を検証するとき / scored DataFrameの列を後処理で使うとき"
+confidence: 0.98
+scope: methodology
+domain: ml-evaluation
+source: bug-fix
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ルックアヘッド検出法: 同じロジックを別実装で走らせて結果が再現するか確認する
+
+## 背景
+2026-06-26 Track D。seg_percentileリランキングの初回検証で+108枚/日（p=0.000003）という
+高度に有意な結果が出た。しかしpool_n sweepで別実装を走らせたところ結果が再現せず、
+原因を追ったらstrength_weightの計算に当日の `diff_coins_normalized`（実績値）を
+使っていたルックアヘッドが発覚した。
+
+## ルックアヘッドが起きやすいパターン
+1. `scored` DataFrameには当日の `diff_coins_normalized`（実績）が含まれている
+2. score_day()の出力を後処理するとき、compositeやc1-c6はtrain由来だが、
+   diff_coins_normalizedやgames_normalizedは当日のactualから来ている
+3. groupby("segment")["diff_coins_normalized"].mean() のような集計は
+   「今日どのセグメントが勝ったか」を見ているのでルックアヘッド
+
+## 安全な列（ルックアヘッドなし）
+- composite, c1-c6: train期間の統計から算出
+- hist_diff, hist_payout, hist_winrate, hist_hit_an: train期間の台別履歴
+- segment, floor, lr, kakuban: 固定属性
+- debut_phase, debut_multiplier: train期間のdebut_date計算
+
+## 危険な列（ルックアヘッドの可能性）
+- diff_coins_normalized: 当日実績
+- games_normalized: 当日の実稼働（当日の人気度を反映）
+- machine_payout, hist_payout_row: 当日実績から算出
+
+## アクション
+- 有望な結果が出たら、別実装で再現を確認する（特にp < 0.01の場合）
+- scored DataFrameの列を後処理で使うとき、その列がtrain由来かactual由来かを確認する
+- strength_weightやフィルタ条件にはcompositeかtrain期間の集計値のみを使う
+
+---
+id: kamata7-payout-trend-opening-boost-normalization
+trigger: "蒲田7の全期間データを分析するとき / 前半と後半で分布が異なる可能性を考慮するとき / window sizeを決めるとき"
+confidence: 0.92
+scope: finding
+domain: hall-behavior
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田7は開店ブースト（2025年7月）から12ヶ月かけて正常化 — 全期間均質ではない
+
+## 背景
+2026-06-26 レジーム変化調査。月次payout推移と個別台hit104率を分析。
+
+## 発見
+### ホール全体加重平均payout
+- 2025-07: 103.70% → 2025-09: 101.67% → 2026-06: 100.68%
+- 12ヶ月にわたる連続的下降。特定日付の急変はなし
+
+### 個別台hit104率
+- 2025-07: 282台/日(39.5%) → 2025-09以降: 215-234台/日(30-32%)で横ばい
+- 104%超え台数は安定しているが、超え幅が縮小
+
+### 台数
+- 全期間で714台一定
+
+## アクション
+- 全期間をflatに扱う分析は前半バイアスに注意
+- window=90は蒲田7のトレンドに対して適切なサイズと確認
+- 将来的に安定期のみで再検証する価値あり
+
+---
+id: predict-daily-pipeline-created
+trigger: "蒲田7の日次予測を実行するとき / predict_gated.pyを手動で実行するとき"
+confidence: 0.95
+scope: methodology
+domain: implementation
+source: implementation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# predict_daily.py で scrape → DB → predict_gated を一気通貫実行可能
+
+## 背景
+2026-06-26 実装。3ステップの手動実行を1コマンドに統合。
+
+## 使い方
+```bash
+# DBに昨日のデータがある場合
+python -m ml.experiments.walkforward_scoring.predict_daily --skip-scrape --skip-db
+
+# 特定日付を指定
+python -m ml.experiments.walkforward_scoring.predict_daily --date 20260625 --skip-scrape --skip-db
+```
+
+## 注意
+- スクレイパーは --date/--hall CLI引数未対応のため --skip-scrape が必須
+- JSONなし + --skip-scrape → エラー終了（安全ガード）
+- DBに当日データなし + --skip-db → エラー終了（安全ガード）
+
+---
+id: scored-pool-streaming-csv-fix
+trigger: "walk-forward backtestを長時間実行するとき / メモリエラーが発生するとき"
+confidence: 0.95
+scope: methodology
+domain: implementation
+source: bug-fix
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# scored_poolはCSV追記方式に修正済み — メモリ蓄積は直近10日分のみ
+
+## 背景
+2026-06-26 修正。walk-forward backtestがscored_poolをリスト蓄積してメモリ枯渇していた問題を修正。
+
+## 修正内容
+- scored_poolの各DataFrameを scored_pool.csv に都度追記（mode="a"）
+- メモリには直近10日分（scored_pool_tail）のみ保持
+- correlation_matrix / island_clustering / adjacency_effectは直近10日分から計算
+
+## アクション
+- 3バリアント以上×全日実行でもメモリ枯渇しない
+- --resume時はCSVにヘッダーを重複書き込みしない

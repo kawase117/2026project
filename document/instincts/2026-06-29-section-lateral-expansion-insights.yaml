@@ -1,0 +1,171 @@
+---
+id: section-prediction-hall-typology
+trigger: "セクション予測を新ホールに横展開するとき"
+confidence: 0.90
+domain: ml-section-prediction
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# セクション予測のホール類型化
+
+## 背景
+蒲田7・蒲田1・みとや・楽園の4ホールでセクション予測を walk-forward 評価した結果、3つの類型が判明した。
+
+## アクション
+新ホールにセクション予測を適用する際は、まず60日 walk-forward の Top3 unique sets 数で類型を判定する:
+- 固定効果型 (Top3 sets <= 5): みとや型。予測モデル不要、決め打ちで十分
+- 有効型 (Top3 sets 10-20, rho > 0.1): 蒲田7型。walk-forward モデルに価値がある
+- ランダム型 (rho <= 0, Top1が3種以下でも lift > 1.0): 蒲田1型。上位セクション決め打ちは有効だが順位予測力なし
+
+## 例
+みとや: Top3 sets=3/60, rho=0.20(k=5), lift=1.25x → 501-522に行くだけでOK
+蒲田7: Top3 sets=13/60, rho=0.19(k=5), lift=1.24x → walk-forward が有効
+蒲田1: Top3 sets=9/60, rho=-0.06(k=3), lift=1.17x → 上位決め打ちのみ有効、順位予測は無意味
+
+---
+id: mini-section-score-instability
+trigger: "section_size <= 4 のセクションがランキング上位に来たとき"
+confidence: 0.85
+domain: ml-section-prediction
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ミニセクション（4台以下）のスコア不安定性
+
+## 背景
+蒲田1の1631-1633（3台セクション）がスコア最高（0.366）・hit_rate 44.9%でTop1を25/60日占有。しかしDD別分析でhit104率が11.1%-50.0%と変動しており、サンプルサイズ不足による見かけの強さの可能性が高い。
+
+## アクション
+section_size <= 4 のセクションがランキング上位に来た場合:
+1. mini_section_audit.csv の section_score_std を確認（std > 0.015 なら不安定）
+2. DD別・曜日別の分布が均一かチェック（特定条件だけで稼いでいないか）
+3. 可能であればミニセクション除外後に rho を再計算し、ランキング歪みの影響を測定
+
+## 例
+蒲田1 1631-1633: section_score_std=0.010だが3台x18日=54試行のDD分析は信頼性不足
+蒲田7 3400-3401: 2台セクション、std=0.014、56日出現 → 同様に不安定
+
+---
+id: kamata1-section-prediction-not-viable
+trigger: "蒲田1でセクション予測を検討するとき"
+confidence: 0.80
+domain: ml-section-prediction
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1はセクション予測が効かない
+
+## 背景
+蒲田1は360台・31セクション・529日のデータで walk-forward 評価を実施。rho は全 top_k でほぼゼロか負（-0.06〜0.02）。lift > 1.0 は上位セクション決め打ち効果であり、順位予測力ではない。min_games を 3000 に上げても rho=0.085 で有意水準に達しない。イベント日限定にしても改善なし。
+
+## アクション
+蒲田1では:
+- セクション予測パイプラインの投入は見送る
+- 代替として DD×角番、機種別分析を検討
+- 上位セクション（2167-2176, 1631-1633）への決め打ちは有効（lift 1.17x）だが予測モデルの価値は低い
+
+## 例
+min_games=1000, top_k=3: rho=-0.063, lift=1.167
+min_games=3000, top_k=10: rho=0.085, lift=1.044
+event_only, top_k=3: rho=-0.102, lift=1.146
+
+---
+id: mitoya-fixed-effect-top2-sections
+trigger: "みとやのセクション選択を考えるとき"
+confidence: 0.92
+domain: hall-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# みとやはTop2セクションが固定（予測不要）
+
+## 背景
+みとや大森町店のセクション予測 walk-forward 評価で、Top1セクションが60日中2種類のみ（501-522が33日、574-590が27日）、Top3セットは3パターンだけ。セクション間の序列がほぼ固定されている。
+
+## アクション
+みとやでは walk-forward モデルを回す必要がない。501-522（22台）を第一候補、574-590（17台）を第二候補として固定運用する。ただし機種入替でセクション構成が変わった場合は再評価が必要。
+
+## 例
+Top1分布: 501-522 (33/60日) vs 574-590 (27/60日)
+Top3 unique sets: 3パターン / 60日
+section_lift: 1.25x (top_k=1)
+
+---
+id: rakuen-floor-split-required
+trigger: "楽園のセクション予測を構築するとき"
+confidence: 0.75
+domain: ml-section-prediction
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 楽園はフロア統合ではなくフロア別分析が必要
+
+## 背景
+楽園蒲田店は5フロア（本館3F+新館2F）に569台が分散。全フロア統合でのセクション予測は lift=1.33x と高いが、rho=0.15 (p=0.41) で有意性なし。Top5入替が57/60日とほぼ毎日変動し不安定。フロア別では本館1Fのみ lift=1.37x で有望、本館2Fは lift=0.89x で逆効果。
+
+## アクション
+楽園でセクション予測を本番化する場合:
+1. フロア統合モデルは使わない
+2. 本館1Fのみに絞って再検証
+3. ミニセクション（2-3台が9個）の除外を検討
+4. 新館2Fの2004-2007セクションは個別深掘り済み（別instinct参照）
+
+## 例
+全体統合: lift=1.33x, rho=0.15, Top5 sets=57/60 → 不安定
+本館1F: lift=1.37x → 有望
+本館2F: lift=0.89x → 逆効果
+
+---
+id: kamata1-1631-1633-weekend-bias
+trigger: "蒲田1の1631-1633セクションを評価するとき"
+confidence: 0.70
+domain: hall-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1 1631-1633は土日に偏った3台ミニセクション
+
+## 背景
+Codex深掘り分析で蒲田1の1631-1633（3台セクション、現行HEY!鏡）を DD別・曜日別・台別に分析。土日の hit104 が 39.5%/36.8% と平日（25-32%）を大きく上回る。avg_games=1474で低稼働寄り。DD別ではDD=11(50%), DD=2/9(44.4%)が強いが、3台x18日=54試行でサンプル不足。
+
+## アクション
+1631-1633を狙う場合:
+- 土日に限定する（hit104: 39.5%/36.8%）
+- DD=11, 2, 9, 21 が強DDだが統計的信頼性は低い
+- 1631が最安定、1633は差枚が弱め
+- 3台セクションのため、セクションスコアの安定性は inherently 低い
+
+## 例
+曜日別hit104: Mon=29.3, Sat=39.5, Sun=36.8
+DD別hit104: DD11=50.0, DD27=11.8 (極端な差はサンプルサイズ由来の可能性)
+台別: 1631=安定, 1632=土曜特化, 1633=金曜14.7%で極弱
+
+---
+id: event-dds-per-hall-not-verified
+trigger: "蒲田1または楽園のイベント日定義を使うとき"
+confidence: 0.65
+domain: data-definition
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1・楽園のイベント日定義は未精査
+
+## 背景
+蒲田1のEVENT_DDSは蒲田7と同じ{1,7,11,17,21,22,27,31}を仮定で流用。楽園は{1,4,7,14,17,24,27,30}をみとやから流用。いずれもホール固有のイベント日精査は行っていない。蒲田1のDD=27がhit104=11.8%と異常に弱い（蒲田7ではイベント日扱い）という矛盾が出ている。
+
+## アクション
+蒲田1・楽園で EVENT_DDS を分析に使う前に:
+1. DD別の機械割分布からイベント日候補を独自に特定する（みとやで実施済みの手法を適用）
+2. 蒲田7のイベント日定義をそのまま流用しない
+3. 特に蒲田1のDD=27は「7のつく日」だが実績が弱く、蒲田1固有の定義が必要
+
+## 例
+蒲田1 DD=27: hit104=11.8% (全DD中最弱) ← 蒲田7のイベント日定義では「7のつく日」
+みとやのイベント日精査手法: DD別hit104率の分布からbreakpointを検出

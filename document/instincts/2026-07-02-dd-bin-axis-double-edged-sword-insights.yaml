@@ -1,0 +1,42 @@
+---
+id: dd-bin-axis-available-in-machine-axis-pattern-scan
+trigger: "全機種横断で週単位(DD1-7,8-14,15-21,22-28,29-31)の法則性を探したいとき"
+confidence: 0.9
+domain: tooling
+source: session-implementation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# machine_axis_pattern_scan.pyにdd_bin軸(週単位5区分)を追加済み
+
+## 背景
+2026-07-02、既存の`eda/machine_axis_pattern_scan.py`(全機種×dd/day_of_week/is_x_dayの法則性スキャン)に4つ目の軸`dd_bin`(DD1-31を"1-7","8-14","15-21","22-28","29-31"の5区分にまとめたもの)を追加した。`_axis_order`/`_sorted_axis_values`/`_axis_level_order`に加法的にbranchを追加し、既存軸の挙動は変更していない(9個の依存ファイル全てのテスト通過を確認済み)。9ホール全実行済み、出力は既存の`eda/results/machine_axis_pattern_scan/`に同居(`axis`列で判別)。
+
+## アクション
+機種単体のDD法則性を調べる際は、`dd`軸だけでなく`dd_bin`軸の結果も必ず併せて確認する。個別DDセルがsparse warning付き(期待セル数<5が多い)の機種は特にdd_bin側で信頼性を検証すべき。
+
+## 例
+`eda/results/machine_axis_pattern_scan/{hall}_pattern_summary.csv`の`axis=="dd_bin"`行。既存のkamata7_theory.mdの「DDビン」(DD1-6,DD7-12,...)とは境界が異なる(こちらは7日区切り)点に注意。
+
+---
+id: dd-bin-double-edged-dilutes-single-day-reveals-week-scale
+trigger: "機種のDD別信号をBin(週単位)でまとめて検出力を上げようとするとき"
+confidence: 0.9
+domain: statistical-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# DD Binningは単日の鋭い信号を薄める一方、週スケールの信号を新たに発見することもある。機種ごとに効果が逆
+
+## 背景
+「DDX単日よりBin(1-7,8-15等)の方が強い信号を掴めるのでは」という仮説を検証した結果、機種によって真逆の結果が出た。
+1. **クレアの秘宝伝(みとや)**: dd軸でhit104効果量0.204(有意)だったが、dd_binでは0.086まで低下し非有意に。内訳を見るとdd27だけが62.1%(他日は平均25%)と突出する単日スパイクで、22-28日のBinにまとめると残り6日の平凡な値に薄められて消えた。**単日スパイク型の信号はBinで殺される**。
+2. **バイオハザードRE:3(蒲田7)**: dd軸は効果量0.211-0.218だが期待セルの50%が<5で警告付き(信頼度低)。dd_binでは効果量0.171-0.187で警告なし。効果の大きさはほぼ同じままセル数不足の不安が解消された。**Binはノイズの多い結果をクリーンにする**。
+3. **バーサスリヴァイズ(金時)**: dd軸単独では完全に非有意(p=0.20, 効果量0.099)だったが、dd_binではp=0.005, 効果量0.132で有意になった。個々の日には出ない週スケールの緩やかな傾向が、束ねることで初めて可視化された。**Binで新規発見できるケースも実在する**。
+
+## アクション
+「Binにすれば信号が強まる」という単純な期待は持たない。機種ごとにdd軸とdd_bin軸の両方を必ず比較し、(a)dd軸で有意・dd_binで消える→単日スパイク型、(b)dd軸で有意(警告付き)・dd_binでも有意(警告なし)→Binで信頼性向上、(c)dd軸で非有意・dd_binで有意→週スケール型の新規発見、の3パターンに分類して解釈する。
+
+## 例
+eda/results/machine_axis_pattern_scan/みとや_pattern_summary.csv(クレアの秘宝伝、パターンa)、蒲田7_pattern_summary.csv(バイオハザードRE:3、パターンb)、金時_pattern_summary.csv(バーサスリヴァイズ、パターンc)。

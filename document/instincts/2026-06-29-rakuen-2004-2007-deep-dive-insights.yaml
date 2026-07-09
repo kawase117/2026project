@@ -1,0 +1,122 @@
+---
+id: rakuen-2004-2007-not-elite-section
+trigger: "楽園蒲田2004-2007セクションを高設定セクションとして扱おうとするとき"
+confidence: 0.90
+domain: hall-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 楽園2004-2007は新館2F平均と同等の普通セクション
+
+## 背景
+楽園蒲田新館2F台番号2004-2007（4台）の542日分データを分析。全期間avg_diff=+22.5は新館2F全体+25.3とほぼ同等、hit_rate 25.7% vs 26.5%。G数は2,212 vs 3,059と大幅に低く、客付きの悪いポジション。「上位セクション」ではない。
+
+## アクション
+楽園蒲田の台選択で2004-2007を優先セクションとして扱わない。他セクションとのwalk-forward比較で相対的な位置づけを確認してから判断する。
+
+## 例
+section avg_diff=+22.5, shinkan2F_other avg_diff=+25.3 → 差は誤差範囲。avg_games 2,212 vs 3,059で客付きも劣る。
+
+---
+id: rakuen-2004-2007-bimodal-distribution
+trigger: "楽園蒲田のセクション差枚が微プラスの場合にその構造を解釈するとき"
+confidence: 0.95
+domain: statistical-interpretation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# avg_diff微プラスの正体は5k+G日の少数スパイク
+
+## 背景
+鏡期間(2026-01~)の日別分析で、全体avg_diff +96の構造を分解。日の66%はマイナス（中央値-238）。5k+G日（全体の17%）だけがavg_diff +1,709で全体を引き上げている極端な二峰分布。
+
+## アクション
+セクションのavg_diffが微プラスの場合、平均値だけで判断せず必ずG数バケット別に分解する。低G数帯がプラスならリセット効果、高G数帯だけプラスなら散発的高設定、全帯域プラスなら真の上位セクション。
+
+## 例
+G数バケット別avg_diff: 0-500G=-252(勝率3.4%), 501-1k=-348, 1k-2k=-362, 2k-3k=-197, 3k-5k=+67, 5k+=+1,709(勝率75%)。低G数ほど負けており、リセット仮説は明確に否定された。
+
+---
+id: rakuen-reset-hypothesis-rejection-method
+trigger: "パチスロセクションのプラス差枚がリセット恩恵か高設定かを判別するとき"
+confidence: 0.92
+domain: analytical-method
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# リセット vs 高設定の判別はG数バケット×差枚クロスで行う
+
+## 背景
+ユーザーが鏡期間の微プラスについて「リセットで出玉が良いだけでは」と指摘。G数バケット別差枚を算出したところ、低G数帯が全てマイナスでリセット仮説を定量的に否定できた。リセット恩恵なら0-500G帯がプラスになるはず。
+
+## アクション
+新機種・新セクションの評価時に「リセット恩恵か高設定か」の疑問が出たら、games_normalizedを[0-500, 501-1000, 1001-2000, 2001-3000, 3001-5000, 5001+]でバケット化し、各帯のavg_diffと勝率を算出する。低G帯プラス→リセット効果、高G帯のみプラス→散発高設定。
+
+## 例
+判別パターン:
+- リセット型: 0-500G=+200, 1k-2k=+50, 5k+=+100 → 朝一で出て後は平均回帰
+- 散発高設定型: 0-500G=-250, 5k+=+1700 → 大半の日は低設定、稀に高設定
+- 真の上位セクション: 全帯域でプラス → 恒常的に高設定投入
+
+---
+id: rakuen-2004-2007-monday-strongest
+trigger: "楽園蒲田の曜日選択を検討するとき"
+confidence: 0.85
+domain: hall-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 楽園蒲田2004-2007は月曜が最強曜日
+
+## 背景
+曜日別分析で月曜がavg_diff +191.4, hit_rate 31.4%と他曜日を大きく引き離す。5k+バケットでも月曜はn=11でavg_diff +2,585と最高。台番号別でも2006月曜hit 38.7%で一貫。木曜が最弱(hit 21.2%)。週末は客付きでG数は伸びるが差枚効率は月曜の半分以下。
+
+## アクション
+楽園蒲田2004-2007を打つなら月曜を最優先。週末の5k+はG数が伸びるだけで差枚効率が低い（土曜+1,130 vs 月曜+2,585）。ただしn=11なのでサンプルサイズに注意。
+
+## 例
+5k+ bucket DOW: Mon +2,585(n=11) > Tue +2,112(n=6) > Wed +2,103(n=19) > Sun +1,759(n=31) > Sat +1,130(n=25)
+
+---
+id: rakuen-2004-2007-strong-dds
+trigger: "楽園蒲田のDD選択を検討するとき"
+confidence: 0.80
+domain: hall-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 楽園蒲田2004-2007はDD20/22/25/30に5k+日が集中
+
+## 背景
+5k+バケットのDD分布で、DD20(n=9, +3,572), DD22(n=10, +2,176), DD30(n=9, +1,916), DD25(n=7, +2,232)に集中。DD8とDD24は5k+がゼロ。DD30は16台日中9台が5k+(56.2%)だが、3/30一日で3台分を稼いでおりn=4日では統計的に不十分。
+
+## アクション
+楽園蒲田2004-2007のDD選択ではDD20-25の月末前ゾーンとDD30を優先。DD8/DD24は避ける。ただしイベントDD定義は楽園では未精査のため、DD効果とイベント効果の分離は今後の課題。
+
+## 例
+5k+ DD top: DD22(10回), DD20(9回,+3572最強), DD30(9回), DD11(8回), DD1(8回), DD25(7回)
+
+---
+id: rakuen-event-dd-not-validated
+trigger: "楽園蒲田のイベントDD定義を使おうとするとき"
+confidence: 0.95
+domain: data-quality
+source: user-correction
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 楽園蒲田のイベントDD定義は未精査・使用禁止
+
+## 背景
+分析で使用したis_event_ddフラグはみとや由来の定義で、楽園に適合するか未検証。実際にイベントDD(avg_diff -53.1)が非イベントDD(+49.6)を下回る逆転現象が発生し、ユーザーから「楽園はまだ精査していないので無視」と指示。
+
+## アクション
+楽園蒲田のDD分析ではis_event_ddフラグを参照しない。楽園固有のイベントDD定義が確立されるまで、DDは番号単位の実績ベースでのみ評価する。
+
+## 例
+Event DD avg_diff=-53.1 vs Non-event +49.6 → 定義が適合していない証拠。DD14(event, -450.8), DD4(event, -215.9)など「イベント日なのに最弱」が多数。

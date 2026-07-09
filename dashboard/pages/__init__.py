@@ -18,6 +18,11 @@ from . import (
     page_15_backtest_validation,
     page_16_cross_search_bulk,
     page_17_heatmap,
+    page_18_daily_report,
+    page_19_daily_report_visual_test,
+    page_20_kamata7_theory,
+    page_21_kamata7_event_checks,
+    page_22_kamata7_segments,
 )
 
 __all__ = [
@@ -38,4 +43,9 @@ __all__ = [
     'page_15_backtest_validation',
     'page_16_cross_search_bulk',
     'page_17_heatmap',
+    'page_18_daily_report',
+    'page_19_daily_report_visual_test',
+    'page_20_kamata7_theory',
+    'page_21_kamata7_event_checks',
+    'page_22_kamata7_segments',
 ]

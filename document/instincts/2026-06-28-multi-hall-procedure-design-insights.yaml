@@ -1,0 +1,160 @@
+---
+id: bayesian-shrinkage-k20-adaptive
+trigger: "DD×セグメントのクロス集計でサンプルサイズが不均一なとき"
+confidence: 0.88
+domain: statistical-methodology
+source: session-design
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ベイズ縮小 k=20 適応型
+
+## 背景
+DD=1〜31 × セグメント のクロス集計では、DD=31のように出現回数が少ないセルが発生する。
+小規模ホールでは1セルに5件しかないこともある。
+単純な閾値カット（N未満は除外）ではなく、ベイズ的縮小を採用した。
+
+## アクション
+- 推定値 = (n × 観測値 + k × 全体平均) / (n + k)
+- k = 20 を基本値とする
+- ホールの1DD×1セグメントの平均サンプル数が20未満の場合、k = その平均値に調整
+- kがサンプル数と同程度のとき、観測値と全体平均が半々でブレンドされる
+
+## 例
+DD=31, セグメントA, n=8, 観測値=55%, 全体平均=43%, k=20
+→ 推定値 = (8×55 + 20×43) / (8+20) = 46.4% （55%→46.4%に縮小）
+
+---
+id: step1-step2-circular-dependency
+trigger: "他ホール検証手順を実行するとき"
+confidence: 0.92
+domain: hall-analysis-methodology
+source: session-design
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Step 1 と Step 2 は循環的に実施する
+
+## 背景
+セグメント判別（Step 1）とイベント日判別（Step 2）は独立ではない。
+蒲田7のLR効果が全期間平均では差ゼロだがDD条件付きで出現した事実から、
+DD分析の結果がセグメント定義にフィードバックされる循環構造が必要と判明。
+
+## アクション
+実行順序:
+1. Step 1-1〜1-4: セグメント初期判別（10台ブロックヒートマップ、クォータイル、冷却/加熱ゾーン）
+2. Step 2-1〜2-5: イベント日判別（DD×セグメント全出し、スパイク検出）
+3. Step 1-5〜1-6: DD条件付きセグメント検出 → セグメント定義確定（循環フィードバック）
+4. Step 3以降に進む
+
+## 例
+蒲田7: Even/Odd差=0pp（全期間）→ DD別に分解 → 特定DDでのみLR効果出現 → セグメント再定義
+
+---
+id: residual-use-daily-mean-not-global
+trigger: "残差法でセグメント効果を除去するとき"
+confidence: 0.90
+domain: statistical-methodology
+source: session-design
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 残差計算は当日平均を使用する
+
+## 背景
+残差₁ = 差枚 - セグメント平均 の「セグメント平均」に全期間平均を使うと、
+イベント日にホール全体が上がる変動が残差に残る。
+当日平均を使えば「その日のセグメント内での相対的な強さ」を見ることになり、
+日ごとの全体変動を自然に除去できる。
+
+## アクション
+- 残差₁ = 台Xの差枚 - 所属セグメントの**当日**平均差枚
+- 全期間平均は使わない
+- この残差₁に対してDD効果（残差₂）を計算する
+
+## 例
+イベント日に全セグメント平均+500枚の場合:
+- 全期間平均使用: 残差₁に+500が残る → DD効果と混入
+- 当日平均使用: 残差₁は0周辺 → クリーンな要素効果検出
+
+---
+id: scoring-two-phase-additive-then-ltr
+trigger: "他ホールのスコアリングモデルを設計するとき"
+confidence: 0.85
+domain: hall-analysis-methodology
+source: session-design
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# スコアリングは加算方式→LTR移行の2段階
+
+## 背景
+蒲田7ではLTRアプローチで進めたが、他ホール展開の初期段階では
+どの要素が効いているか把握しやすい加算方式の方が透明性が高い。
+効果が確認できたホールから段階的にLTRに移行する。
+
+## アクション
+- Phase 1（加算方式）: スコア = Σ（要素iの効果量pp × 該当フラグ）
+- Phase 2（LTR移行）: 要素を特徴量として学習モデルに投入
+- 移行判断: バックテストで加算方式のliftが安定して正 → LTR移行を検討
+
+## 例
+角番効果+5pp + 末尾効果+3pp → 角番かつ末尾該当台のスコア = +8pp
+
+---
+id: parameter-tuning-sensitivity-not-grid
+trigger: "バックテストのパラメータを調整するとき"
+confidence: 0.93
+domain: statistical-methodology
+source: session-design
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# グリッドサーチ禁止、感度分析のみ
+
+## 背景
+パラメータの全組み合わせを試す（グリッドサーチ）と、
+最良の組み合わせがデータに過適合するリスクがある。
+パラメータ数を5個に制限し、1変数ずつの感度分析で調整する。
+
+## アクション
+- 調整対象: アクション閾値(3pp)、縮小k(20)、訓練期間(60日)、min_games(1500)、スパイク閾値(5pp)
+- 手順:
+  1. デフォルト値でバックテスト → ベースラインlift
+  2. パラメータを1つずつ変化させ、liftの感度を確認
+  3. 感度が高いパラメータのみ微調整
+  4. 最終パラメータで再度バックテスト → 確定
+- パラメータの追加は禁止（5個固定）
+
+## 例
+訓練期間を60→90日に変更 → lift@10が+2%改善 → 感度あり → 採用検討
+アクション閾値を3→2ppに変更 → lift@10が-1%悪化 → 感度低い → デフォルト維持
+
+---
+id: spike-classification-three-types
+trigger: "イベント日候補のスパイクを分類するとき"
+confidence: 0.87
+domain: hall-analysis-methodology
+source: session-design
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# スパイクの3分類
+
+## 背景
+DD×セグメントのヒートマップでスパイクを検出した際、
+その性質によって対応が異なる。3種に分類して処理する。
+
+## アクション
+| パターン | 判定基準 | 対応 |
+|----------|----------|------|
+| 全セグメント共通 | 全セグメントで+5pp以上 | ホール全体のイベント日として採用 |
+| セグメント限定 | 特定セグメントのみ+5pp | 条件付きイベントとして記録 |
+| 単発 | 1-2セルのみ | 周年・強ゾロ目等を個別調査 |
+
+帰納的グルーピング: スパイク検出後に{7,17,27}→「7のつく日」と命名。
+先にDD群を仮説として定義してはいけない。
+
+## 例
+蒲田7: DD={7,17,27}が全セグメント共通スパイク → 「7のつく日」イベント
+DD=22がセグメント限定 → 条件付きイベント

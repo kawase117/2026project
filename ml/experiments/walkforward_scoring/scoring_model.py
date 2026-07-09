@@ -12,6 +12,10 @@ from .config import (
     ANNIVERSARY_MMDD,
     DD_BINS,
     DEFAULT_COMPONENT_WEIGHTS,
+    DEBUT_MULTIPLIER_BASE,
+    DEBUT_MULTIPLIER_TABLES,
+    DEBUT_PHASE_ORDER,
+    DD_SEGMENT_KAKUBAN_BOOST_V13,
     DOW_SEGMENT_KAKUBAN_BOOST_V10,
     EVENT_DDS,
     EXCLUDED_SEGMENTS_V7,
@@ -78,14 +82,18 @@ def _section_size_group(section_size: int | float | None) -> str:
     return "large"
 
 
-def _calc_pay_rate(games_sum: pd.Series | pd.Index | np.ndarray, diff_sum: pd.Series | pd.Index | np.ndarray) -> pd.Series:
+def _calc_pay_rate(
+    games_sum: pd.Series | pd.Index | np.ndarray, diff_sum: pd.Series | pd.Index | np.ndarray
+) -> pd.Series:
     denom = pd.to_numeric(games_sum, errors="coerce") * 3
     denom = denom.replace(0, np.nan)
     return ((denom + pd.to_numeric(diff_sum, errors="coerce")) / denom) * 100
 
 
 def _resolve_default_db_path() -> Path:
-    candidates = [path for path in (PROJECT_ROOT / "db").glob("*闥ｲ逕ｰ7*.db") if path.is_file() and path.stat().st_size > 0]
+    candidates = [
+        path for path in (PROJECT_ROOT / "db").glob("*闥ｲ逕ｰ7*.db") if path.is_file() and path.stat().st_size > 0
+    ]
     if candidates:
         return sorted(candidates, key=lambda path: path.stat().st_size, reverse=True)[0]
     return PROJECT_ROOT / "db" / "繝槭Ν繝上Φ繝｡繧ｬ繧ｷ繝・ぅ2000-闥ｲ逕ｰ7.db"
@@ -109,7 +117,9 @@ def load_coords_bundle(
         frame["rank_from_min"] = pd.to_numeric(frame["rank_from_min"], errors="coerce").astype(int)
         frame["rank_from_max"] = pd.to_numeric(frame["rank_from_max"], errors="coerce").astype(int)
         frame["X"] = pd.to_numeric(frame["X"], errors="coerce")
-        frame["section_size"] = frame.groupby("section", dropna=False)["machine_number"].transform("nunique").astype(int)
+        frame["section_size"] = (
+            frame.groupby("section", dropna=False)["machine_number"].transform("nunique").astype(int)
+        )
         frame["section_size_group"] = frame["section_size"].map(_section_size_group)
         frame["lr"] = _infer_lr(frame)
         frame["kakuban_old"] = frame.apply(lambda row: _calc_kakuban(row, use_new=False), axis=1)
@@ -192,7 +202,9 @@ def _prepare_rows(frame: pd.DataFrame, context: ScoreContext) -> pd.DataFrame:
     out["last_digit"] = out["last_digit"].astype(str)
     out["seg"] = out["machine_name"].map(classify_seg)
     out["segment"] = out["floor"].astype(str) + "_" + out["lr"].astype(str) + "_" + out["seg"].astype(str)
-    out["hist_payout_row"] = ((out["games_normalized"] * 3 + out["diff_coins_normalized"]) / (out["games_normalized"] * 3)) * 100
+    out["hist_payout_row"] = (
+        (out["games_normalized"] * 3 + out["diff_coins_normalized"]) / (out["games_normalized"] * 3)
+    ) * 100
     return out.dropna(subset=["date_dt", "machine_number", "floor", "section"]).reset_index(drop=True)
 
 
@@ -202,10 +214,30 @@ def _dd_key_for_row(dd: int, variant: VariantConfig) -> str | int:
     return int(dd)
 
 
-def _lookup_mean(frame: pd.DataFrame, key_cols: list[str], value_col: str = "diff_coins_normalized") -> pd.DataFrame:
-    if frame.empty:
-        return pd.DataFrame(columns=key_cols + ["value", "n"])
-    grouped = frame.groupby(key_cols, dropna=False)[value_col].agg(value="mean", n="size").reset_index()
+def _lookup_stats(
+    frame: pd.DataFrame,
+    key_cols: list[str],
+    value_col: str = "diff_coins_normalized",
+) -> pd.DataFrame:
+    columns = key_cols + ["value", "n", "n_machines", "n_dates"]
+    if frame.empty or value_col not in frame.columns:
+        return pd.DataFrame(columns=columns)
+    working = frame.copy()
+    working[value_col] = pd.to_numeric(working[value_col], errors="coerce")
+    if "machine_number" not in working.columns:
+        working["machine_number"] = pd.NA
+    if "date" not in working.columns:
+        working["date"] = pd.NA
+    grouped = (
+        working.groupby(key_cols, dropna=False)
+        .agg(
+            value=(value_col, "mean"),
+            n=(value_col, "size"),
+            n_machines=("machine_number", "nunique"),
+            n_dates=("date", "nunique"),
+        )
+        .reset_index()
+    )
     return grouped
 
 
@@ -215,14 +247,48 @@ def _hier_lookup(
     *,
     exact_keys: list[str],
     fallback_keys: list[list[str]],
+    value_col: str = "diff_coins_normalized",
+    shrinkage_k: float = 5.0,
+    shrinkage_m: float = 2.0,
 ) -> pd.Series:
-    out = pd.Series(np.nan, index=target.index, dtype="float64")
-    current = _lookup_mean(frame, exact_keys)
-    out = out.combine_first(target.merge(current[exact_keys + ["value"]], on=exact_keys, how="left")["value"])
-    for key_cols in fallback_keys:
-        current = _lookup_mean(frame, key_cols)
-        out = out.combine_first(target.merge(current[key_cols + ["value"]], on=key_cols, how="left")["value"])
-    return out.fillna(0.0)
+    layers = [exact_keys] + fallback_keys
+    if target.empty:
+        return pd.Series(dtype="float64", index=target.index)
+
+    merged_layers: list[pd.DataFrame] = []
+    for key_cols in layers:
+        stats = _lookup_stats(frame, key_cols, value_col=value_col)
+        merged = target.merge(stats, on=key_cols, how="left")
+        layer_idx = len(merged_layers)
+        merged_layers.append(
+            merged[["value", "n", "n_machines", "n_dates"]].rename(
+                columns={
+                    "value": f"value_{layer_idx}",
+                    "n": f"n_{layer_idx}",
+                    "n_machines": f"n_machines_{layer_idx}",
+                    "n_dates": f"n_dates_{layer_idx}",
+                }
+            )
+        )
+
+    result = merged_layers[-1][f"value_{len(merged_layers) - 1}"].astype("float64")
+    for idx in range(len(merged_layers) - 2, -1, -1):
+        local_value = merged_layers[idx][f"value_{idx}"].astype("float64")
+        machine_days = merged_layers[idx][f"n_{idx}"].astype("float64")
+        distinct_machines = merged_layers[idx][f"n_machines_{idx}"].astype("float64")
+        diversity_weight = distinct_machines / (distinct_machines + float(shrinkage_m))
+        n_effective = machine_days * diversity_weight
+
+        combined = result.copy()
+        has_local = local_value.notna()
+        has_parent = result.notna()
+        blend_mask = has_local & has_parent
+        combined.loc[blend_mask] = (
+            n_effective.loc[blend_mask] * local_value.loc[blend_mask] + float(shrinkage_k) * result.loc[blend_mask]
+        ) / (n_effective.loc[blend_mask] + float(shrinkage_k))
+        combined.loc[has_local & ~has_parent] = local_value.loc[has_local & ~has_parent]
+        result = combined
+    return result.fillna(0.0)
 
 
 def _build_component_columns(
@@ -246,50 +312,94 @@ def _build_component_columns(
     train_dd = train[train["date_dt"].dt.day.eq(test_date.day)].copy()
     train_dow = train[train["date_dt"].dt.dayofweek.eq(test_date.dayofweek)].copy()
 
-    work["c1"] = _hier_lookup(
-        work,
-        train,
-        exact_keys=["segment", "section_size_group", "kakuban"],
-        fallback_keys=[["section_size_group", "kakuban"], ["kakuban"]],
-    )
-    if variant.use_dow_kakuban_boost:
+    if variant.use_kakuban:
+        work["c1"] = _hier_lookup(
+            work,
+            train,
+            exact_keys=["segment", "section_size_group", "kakuban"],
+            fallback_keys=[["section_size_group", "kakuban"], ["kakuban"]],
+            value_col="diff_coins_normalized",
+        )
+    else:
+        work["c1"] = _hier_lookup(
+            work,
+            train,
+            exact_keys=["segment", "section_size_group"],
+            fallback_keys=[["section_size_group"]],
+            value_col="diff_coins_normalized",
+        )
+    kakuban_group: pd.Series | None = None
+    if variant.use_dow_kakuban_boost and variant.use_kakuban:
         kakuban_group = work["kakuban"].map(_kakuban_group)
         boost = pd.Series(1.0, index=work.index, dtype="float64")
         for (dow_key, segment, group), multiplier in DOW_SEGMENT_KAKUBAN_BOOST_V10.items():
-            mask = (
-                work["dow_key"].eq(int(dow_key))
-                & work["segment"].eq(str(segment))
-                & kakuban_group.eq(str(group))
-            )
+            mask = work["dow_key"].eq(int(dow_key)) & work["segment"].eq(str(segment)) & kakuban_group.eq(str(group))
             scaled = 1.0 + variant.dow_kakuban_boost_scale * (float(multiplier) - 1.0)
             boost.loc[mask] = scaled
         work["c1"] = work["c1"] * boost
 
-    work["c2"] = work.apply(lambda row: _calc_c2(row), axis=1)
+    if variant.use_dd_kakuban_boost and variant.use_kakuban:
+        if kakuban_group is None:
+            kakuban_group = work["kakuban"].map(_kakuban_group)
+        dd_bin = DD_BINS.get(int(test_date.day), "")
+        boost = pd.Series(1.0, index=work.index, dtype="float64")
+        for (dd_key, segment, group), multiplier in DD_SEGMENT_KAKUBAN_BOOST_V13.items():
+            if dd_key != dd_bin:
+                continue
+            mask = work["segment"].eq(str(segment)) & kakuban_group.eq(str(group))
+            scaled = 1.0 + variant.dd_kakuban_boost_scale * (float(multiplier) - 1.0)
+            boost.loc[mask] = scaled
+        work["c1"] = work["c1"] * boost
+
+    if variant.use_kakuban:
+        work["c2"] = work.apply(lambda row: _calc_c2(row), axis=1)
+    else:
+        work["c2"] = 200.0
 
     if variant.dd_mode == "bin":
         target_bin = DD_BINS[int(test_date.day)]
         c3_source = train[train["date_dt"].dt.day.map(lambda value: DD_BINS.get(int(value), "")) == target_bin].copy()
     else:
         c3_source = train_dd.copy() if not train_dd.empty else train.copy()
-    work["c3"] = _hier_lookup(
-        work,
-        c3_source,
-        exact_keys=["segment", "kakuban"],
-        fallback_keys=[["section_size_group", "kakuban"], ["kakuban"]],
-    )
+    if variant.use_kakuban:
+        work["c3"] = _hier_lookup(
+            work,
+            c3_source,
+            exact_keys=["segment", "kakuban"],
+            fallback_keys=[["section_size_group", "kakuban"], ["kakuban"]],
+            value_col="diff_coins_normalized",
+        )
+    else:
+        work["c3"] = _hier_lookup(
+            work,
+            c3_source,
+            exact_keys=["segment"],
+            fallback_keys=[["section_size_group"]],
+            value_col="diff_coins_normalized",
+        )
 
     c4_frame = train_dow if not train_dow.empty else train
-    work["c4"] = _hier_lookup(
-        work,
-        c4_frame,
-        exact_keys=["segment", "kakuban"],
-        fallback_keys=[["section_size_group", "kakuban"], ["kakuban"]],
-    )
+    if variant.use_kakuban:
+        work["c4"] = _hier_lookup(
+            work,
+            c4_frame,
+            exact_keys=["segment", "kakuban"],
+            fallback_keys=[["section_size_group", "kakuban"], ["kakuban"]],
+            value_col="diff_coins_normalized",
+        )
+    else:
+        work["c4"] = _hier_lookup(
+            work,
+            c4_frame,
+            exact_keys=["segment"],
+            fallback_keys=[["section_size_group"]],
+            value_col="diff_coins_normalized",
+        )
 
     c5_gate_source = full_train if full_train is not None else train
     c5_significant_segments: set[str] = set()
     from scipy.stats import kruskal as _kruskal
+
     for segment, group in c5_gate_source.groupby("segment", dropna=False):
         digit_groups = group.groupby("last_digit")["diff_coins_normalized"].apply(list)
         if len(digit_groups) >= 2 and all(len(v) >= 3 for v in digit_groups.values):
@@ -343,7 +453,14 @@ def _build_component_columns(
         work["c6"] = work["last_digit"].map(lambda value: _calc_c6(value))
 
     hist = _build_hist_features(train, work, variant)
-    for column in ("hist_diff", "hist_payout", "hist_winrate", "hist_hit_an", "a_seg_hist_coverage", "a_seg_fallback_count"):
+    for column in (
+        "hist_diff",
+        "hist_payout",
+        "hist_winrate",
+        "hist_hit_an",
+        "a_seg_hist_coverage",
+        "a_seg_fallback_count",
+    ):
         work[column] = hist[column]
 
     return work
@@ -351,7 +468,8 @@ def _build_component_columns(
 
 def _calc_c2(row: pd.Series) -> float:
     optimal = {"small": 5, "medium": 6, "large": 11}.get(str(row["section_size_group"]), 6)
-    kakuban = int(row["kakuban"])
+    kakuban_value = pd.to_numeric(pd.Series([row.get("kakuban")]), errors="coerce").iloc[0]
+    kakuban = optimal if pd.isna(kakuban_value) else int(kakuban_value)
     return float(max(0, 200 - abs(kakuban - optimal) * 50))
 
 
@@ -375,7 +493,14 @@ def _calc_c6_zorome(is_zorome_flag: int, zorome_avg: float | None, non_zorome_av
 
 
 def _build_hist_features(train: pd.DataFrame, actual: pd.DataFrame, variant: VariantConfig) -> pd.DataFrame:
-    hist_cols = ["hist_diff", "hist_payout", "hist_winrate", "hist_hit_an", "a_seg_hist_coverage", "a_seg_fallback_count"]
+    hist_cols = [
+        "hist_diff",
+        "hist_payout",
+        "hist_winrate",
+        "hist_hit_an",
+        "a_seg_hist_coverage",
+        "a_seg_fallback_count",
+    ]
     if actual.empty:
         return pd.DataFrame({col: np.zeros(0, dtype=float) for col in hist_cols}, index=actual.index)
     if train.empty:
@@ -390,7 +515,11 @@ def _build_hist_features(train: pd.DataFrame, actual: pd.DataFrame, variant: Var
         )
         .reset_index()
     )
-    merged = actual.reset_index(drop=False).rename(columns={"index": "_actual_index"}).merge(grouped, on="machine_number", how="left")
+    merged = (
+        actual.reset_index(drop=False)
+        .rename(columns={"index": "_actual_index"})
+        .merge(grouped, on="machine_number", how="left")
+    )
     merged["hist_hit_an"] = 0.0
     merged["a_seg_hist_coverage"] = 0.0
     merged["a_seg_fallback_count"] = 0.0
@@ -435,7 +564,11 @@ def _build_hist_features(train: pd.DataFrame, actual: pd.DataFrame, variant: Var
 
         if window_history.empty:
             hist_hit_an = 0.0
-            fallback = 1.0 if family == "A" and (variant.hist_window_a is not None or variant.hist_window_n is not None) else 0.0
+            fallback = (
+                1.0
+                if family == "A" and (variant.hist_window_a is not None or variant.hist_window_n is not None)
+                else 0.0
+            )
             coverage = np.nan
             if family == "A":
                 a_fallback += 1
@@ -469,7 +602,9 @@ def _build_hist_features(train: pd.DataFrame, actual: pd.DataFrame, variant: Var
     return merged[hist_cols]
 
 
-def _component_weights_for_variant(variant: VariantConfig, weight_override: tuple[float, float, float, float, float, float] | None) -> tuple[float, float, float, float, float, float]:
+def _component_weights_for_variant(
+    variant: VariantConfig, weight_override: tuple[float, float, float, float, float, float] | None
+) -> tuple[float, float, float, float, float, float]:
     if weight_override is not None:
         return weight_override
     return variant.component_weights
@@ -482,6 +617,7 @@ def _score_from_components(
     use_segment_weights: bool = False,
 ) -> pd.Series:
     if use_segment_weights and "segment" in frame.columns:
+
         def _score_row(row: pd.Series) -> float:
             row_weights = SEGMENT_WEIGHTS_V6B.get(str(row["segment"]), weights)
             struct = (
@@ -542,7 +678,9 @@ def _build_dynamic_lift_proxy_frame(
             work["date_dt"] = pd.NaT
 
     if "kakuban" not in work.columns:
-        kakuban_source = "kakuban_new" if "kakuban_new" in work.columns else "kakuban_old" if "kakuban_old" in work.columns else None
+        kakuban_source = (
+            "kakuban_new" if "kakuban_new" in work.columns else "kakuban_old" if "kakuban_old" in work.columns else None
+        )
         if kakuban_source is not None:
             work["kakuban"] = pd.to_numeric(work[kakuban_source], errors="coerce").astype("Int64")
         else:
@@ -570,6 +708,7 @@ def _build_dynamic_lift_proxy_frame(
         work,
         exact_keys=["segment", "section_size_group", "kakuban"],
         fallback_keys=[["section_size_group", "kakuban"], ["kakuban"]],
+        value_col="diff_coins_normalized",
     )
     seg_train["c2"] = seg_train.apply(lambda row: _calc_c2(row), axis=1)
 
@@ -585,6 +724,7 @@ def _build_dynamic_lift_proxy_frame(
                 source,
                 exact_keys=["segment", "kakuban"],
                 fallback_keys=[["section_size_group", "kakuban"], ["kakuban"]],
+                value_col="diff_coins_normalized",
             )
 
     seg_train["c4"] = 0.0
@@ -599,6 +739,7 @@ def _build_dynamic_lift_proxy_frame(
                 source,
                 exact_keys=["segment", "kakuban"],
                 fallback_keys=[["section_size_group", "kakuban"], ["kakuban"]],
+                value_col="diff_coins_normalized",
             )
 
     from scipy.stats import kruskal as _kruskal
@@ -778,6 +919,70 @@ def _hist_metric_series(frame: pd.DataFrame, metric: str) -> pd.Series:
     raise ValueError(f"Unknown hist metric: {metric}")
 
 
+def _debut_phase_label(days_since_debut: object, pre_existing: bool) -> str:
+    if pre_existing:
+        return "pre_existing"
+    if pd.isna(days_since_debut):
+        return "unknown"
+    days = int(days_since_debut)
+    if days <= 14:
+        return "1-14日"
+    if days <= 60:
+        return "15-60日"
+    if days <= 180:
+        return "61-180日"
+    return "181日+"
+
+
+def _debut_multiplier_base(segment: object, debut_phase: object, table_name: str = "base") -> float:
+    table = DEBUT_MULTIPLIER_TABLES.get(table_name, DEBUT_MULTIPLIER_BASE)
+    return float(table.get(str(segment), {}).get(str(debut_phase), 1.0))
+
+
+def _apply_debut_multiplier(
+    work: pd.DataFrame,
+    train: pd.DataFrame,
+    *,
+    test_dt: pd.Timestamp,
+    scale: float,
+    table_name: str = "base",
+) -> pd.DataFrame:
+    out = work.copy()
+    if out.empty or train.empty:
+        out["debut_date"] = pd.NA
+        out["debut_days_since"] = pd.NA
+        out["pre_existing"] = False
+        out["debut_phase"] = "unknown"
+        out["debut_multiplier_base"] = 1.0
+        out["debut_multiplier"] = 1.0
+        return out
+
+    debut_lookup = train.groupby("machine_name", dropna=False)["date_dt"].min()
+    train_start = pd.Timestamp(train["date_dt"].min()).normalize()
+
+    debut_dates = pd.to_datetime(out["machine_name"].map(debut_lookup), errors="coerce")
+    out["debut_date"] = debut_dates.dt.strftime("%Y-%m-%d")
+    out["debut_days_since"] = (test_dt - debut_dates).dt.days
+    out["pre_existing"] = debut_dates.notna() & debut_dates.eq(train_start)
+
+    phase = pd.Series("unknown", index=out.index, dtype="string")
+    phase.loc[out["pre_existing"]] = "pre_existing"
+    new_mask = debut_dates.notna() & ~out["pre_existing"]
+    phase.loc[new_mask & out["debut_days_since"].between(1, 14, inclusive="both")] = "1-14日"
+    phase.loc[new_mask & out["debut_days_since"].between(15, 60, inclusive="both")] = "15-60日"
+    phase.loc[new_mask & out["debut_days_since"].between(61, 180, inclusive="both")] = "61-180日"
+    phase.loc[new_mask & (out["debut_days_since"] > 180)] = "181日+"
+    out["debut_phase"] = phase
+    out["debut_phase"] = out["debut_phase"].astype("string")
+    out["debut_phase"] = out["debut_phase"].where(out["debut_phase"].isin(DEBUT_PHASE_ORDER), other="unknown")
+    out["debut_multiplier_base"] = out.apply(
+        lambda row: _debut_multiplier_base(row["segment"], row["debut_phase"], table_name),
+        axis=1,
+    )
+    out["debut_multiplier"] = 1.0 + float(scale) * (out["debut_multiplier_base"] - 1.0)
+    return out
+
+
 def score_day(
     train: pd.DataFrame,
     actual: pd.DataFrame,
@@ -821,13 +1026,19 @@ def score_day(
         if is_event:
             work["composite"] = _score_from_components(work, weights, use_segment_weights=False)
         else:
+
             def _v11_score_row(row: pd.Series) -> float:
                 rw = SEGMENT_WEIGHTS_V11.get(str(row["segment"]), weights)
                 struct = (
-                    row["c1"] * rw[0] + row["c2"] * rw[1] + row["c3"] * rw[2]
-                    + row["c4"] * rw[3] + row["c5"] * rw[4] + row["c6"] * rw[5]
+                    row["c1"] * rw[0]
+                    + row["c2"] * rw[1]
+                    + row["c3"] * rw[2]
+                    + row["c4"] * rw[3]
+                    + row["c5"] * rw[4]
+                    + row["c6"] * rw[5]
                 )
                 return float(struct * 0.90 + row["hist_metric"] * 0.10)
+
             work["composite"] = work.apply(_v11_score_row, axis=1)
     elif variant.use_v7_weights:
         work["composite"] = _score_from_components_v7(work)
@@ -844,11 +1055,28 @@ def score_day(
         alpha = float(variant.saturday_adjacent_alpha)
         work["composite"] = (1.0 - alpha) * work["composite"] + alpha * adj_mean
         work = work.drop(columns=["prev_composite", "next_composite"])
+    if variant.use_debut_multiplier:
+        work = _apply_debut_multiplier(
+            work,
+            train_p,
+            test_dt=test_dt,
+            scale=variant.debut_multiplier_scale,
+            table_name=variant.debut_multiplier_table,
+        )
+        work["composite"] = work["composite"] * work["debut_multiplier"]
+    machine_avg_games = work.groupby("machine_name", dropna=False)["games_normalized"].transform("mean")
+    work["games_relative"] = np.where(
+        machine_avg_games > 0,
+        work["games_normalized"] / machine_avg_games,
+        1.0,
+    )
     work["dd_key"] = work["dd"].map(lambda value: _dd_key_for_row(int(value), variant))
     work["variant"] = variant.variant_id
     work["test_date"] = work["date_dt"].dt.strftime("%Y-%m-%d")
     work["dow_name"] = work["date_dt"].dt.day_name()
-    return work.sort_values(["composite", "diff_coins_normalized", "machine_number"], ascending=[False, False, True]).reset_index(drop=True)
+    return work.sort_values(
+        ["composite", "diff_coins_normalized", "machine_number"], ascending=[False, False, True]
+    ).reset_index(drop=True)
 
 
 def candidate_weights() -> list[tuple[float, float, float, float, float, float]]:

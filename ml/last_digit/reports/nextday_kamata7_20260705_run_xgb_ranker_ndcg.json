@@ -1,0 +1,1320 @@
+{
+  "model_device": "gpu",
+  "model_name": "xgb_ranker_ndcg",
+  "target_label": "is_top_2",
+  "target_topk_k": 2,
+  "model_params": {
+    "tree_method": "hist",
+    "device": "cuda"
+  },
+  "binary_mode": "off",
+  "binary_threshold": 0.5,
+  "binary_c": 0.1,
+  "binary_max_iter": 1000,
+  "enable_digit_lag_bundle": false,
+  "digit_lag_bundle_experts": [],
+  "enable_2fn_weekday_patch": false,
+  "objective_mode": "raw",
+  "source_latest_date": "2026-07-04",
+  "target_date": "2026-07-05",
+  "target_weekday": "Sunday",
+  "model_mode": "floor_atype4",
+  "combine_method": "equal_weight_rank_points_with_indeterminate_expert_exclusion",
+  "combine_min_pred_span": 1e-12,
+  "combine_experts_included": [
+    "2F_N",
+    "3F_N",
+    "3F_A",
+    "2F_A"
+  ],
+  "combine_experts_excluded": [],
+  "expert_predictions": {
+    "2F_N": {
+      "status": "ok",
+      "combined_used": true,
+      "combined_exclude_reason": "",
+      "pred_span_top12": 0.12003416586740645,
+      "confidence_band": "medium",
+      "selected_candidate": {
+        "window": "recent_60d",
+        "lambda": 1.0,
+        "q": 0.4,
+        "threshold": 0.06862902214288688,
+        "blend_weight": 0.0,
+        "cal_score": 95.90649801587301
+      },
+      "ranking": [
+        {
+          "rank": 1,
+          "last_digit": "8",
+          "pred": 0.49299669853500333,
+          "actual_raw_diff": 0.0,
+          "machine_count": 32,
+          "prob_positive": 0.5,
+          "final_score": 0.49299669853500333,
+          "ltr_pred": 0.49299669853500333,
+          "rank_pct_ltr": 1.0
+        },
+        {
+          "rank": 2,
+          "last_digit": "1",
+          "pred": 0.3729625326675969,
+          "actual_raw_diff": 0.0,
+          "machine_count": 32,
+          "prob_positive": 0.5,
+          "final_score": 0.3729625326675969,
+          "ltr_pred": 0.3729625326675969,
+          "rank_pct_ltr": 0.9
+        },
+        {
+          "rank": 3,
+          "last_digit": "3",
+          "pred": 0.22107600380300654,
+          "actual_raw_diff": 0.0,
+          "machine_count": 31,
+          "prob_positive": 0.5,
+          "final_score": 0.22107600380300654,
+          "ltr_pred": 0.22107600380300654,
+          "rank_pct_ltr": 0.8
+        },
+        {
+          "rank": 4,
+          "last_digit": "6",
+          "pred": 0.19694693558988088,
+          "actual_raw_diff": 0.0,
+          "machine_count": 31,
+          "prob_positive": 0.5,
+          "final_score": 0.19694693558988088,
+          "ltr_pred": 0.19694693558988088,
+          "rank_pct_ltr": 0.7
+        },
+        {
+          "rank": 5,
+          "last_digit": "5",
+          "pred": 0.19317701326406062,
+          "actual_raw_diff": 0.0,
+          "machine_count": 31,
+          "prob_positive": 0.5,
+          "final_score": 0.19317701326406062,
+          "ltr_pred": 0.19317701326406062,
+          "rank_pct_ltr": 0.6
+        },
+        {
+          "rank": 6,
+          "last_digit": "0",
+          "pred": 0.1572770444449058,
+          "actual_raw_diff": 0.0,
+          "machine_count": 32,
+          "prob_positive": 0.5,
+          "final_score": 0.1572770444449058,
+          "ltr_pred": 0.1572770444449058,
+          "rank_pct_ltr": 0.5
+        },
+        {
+          "rank": 7,
+          "last_digit": "9",
+          "pred": 0.12996977333776252,
+          "actual_raw_diff": 0.0,
+          "machine_count": 32,
+          "prob_positive": 0.5,
+          "final_score": 0.12996977333776252,
+          "ltr_pred": 0.12996977333776252,
+          "rank_pct_ltr": 0.4
+        },
+        {
+          "rank": 8,
+          "last_digit": "2",
+          "pred": 0.0835651935012083,
+          "actual_raw_diff": 0.0,
+          "machine_count": 31,
+          "prob_positive": 0.5,
+          "final_score": 0.0835651935012083,
+          "ltr_pred": 0.0835651935012083,
+          "rank_pct_ltr": 0.3
+        },
+        {
+          "rank": 9,
+          "last_digit": "7",
+          "pred": 0.07938709254655213,
+          "actual_raw_diff": 0.0,
+          "machine_count": 32,
+          "prob_positive": 0.5,
+          "final_score": 0.07938709254655213,
+          "ltr_pred": 0.07938709254655213,
+          "rank_pct_ltr": 0.2
+        },
+        {
+          "rank": 10,
+          "last_digit": "4",
+          "pred": 0.01898957671262936,
+          "actual_raw_diff": 0.0,
+          "machine_count": 31,
+          "prob_positive": 0.5,
+          "final_score": 0.01898957671262936,
+          "ltr_pred": 0.01898957671262936,
+          "rank_pct_ltr": 0.1
+        }
+      ]
+    },
+    "3F_N": {
+      "status": "ok",
+      "combined_used": true,
+      "combined_exclude_reason": "",
+      "pred_span_top12": 0.009738017286672118,
+      "confidence_band": "low",
+      "selected_candidate": {
+        "window": "recent_60d",
+        "lambda": 0.75,
+        "q": 0.4,
+        "threshold": 0.10514824207838827,
+        "blend_weight": 0.0,
+        "cal_score": 56.76344139706211
+      },
+      "ranking": [
+        {
+          "rank": 1,
+          "last_digit": "3",
+          "pred": 0.7254585371935397,
+          "actual_raw_diff": 0.0,
+          "machine_count": 15,
+          "prob_positive": 0.5,
+          "final_score": 0.7254585371935397,
+          "ltr_pred": 0.7254585371935397,
+          "rank_pct_ltr": 1.0
+        },
+        {
+          "rank": 2,
+          "last_digit": "9",
+          "pred": 0.7157205199068676,
+          "actual_raw_diff": 0.0,
+          "machine_count": 14,
+          "prob_positive": 0.5,
+          "final_score": 0.7157205199068676,
+          "ltr_pred": 0.7157205199068676,
+          "rank_pct_ltr": 0.9
+        },
+        {
+          "rank": 3,
+          "last_digit": "6",
+          "pred": 0.4949044007167076,
+          "actual_raw_diff": 0.0,
+          "machine_count": 15,
+          "prob_positive": 0.5,
+          "final_score": 0.4949044007167076,
+          "ltr_pred": 0.4949044007167076,
+          "rank_pct_ltr": 0.8
+        },
+        {
+          "rank": 4,
+          "last_digit": "7",
+          "pred": 0.40242654928953864,
+          "actual_raw_diff": 0.0,
+          "machine_count": 14,
+          "prob_positive": 0.5,
+          "final_score": 0.40242654928953864,
+          "ltr_pred": 0.40242654928953864,
+          "rank_pct_ltr": 0.7
+        },
+        {
+          "rank": 5,
+          "last_digit": "0",
+          "pred": 0.34643571339959306,
+          "actual_raw_diff": 0.0,
+          "machine_count": 15,
+          "prob_positive": 0.5,
+          "final_score": 0.34643571339959306,
+          "ltr_pred": 0.34643571339959306,
+          "rank_pct_ltr": 0.6
+        },
+        {
+          "rank": 6,
+          "last_digit": "5",
+          "pred": 0.3273163948186706,
+          "actual_raw_diff": 0.0,
+          "machine_count": 15,
+          "prob_positive": 0.5,
+          "final_score": 0.3273163948186706,
+          "ltr_pred": 0.3273163948186706,
+          "rank_pct_ltr": 0.5
+        },
+        {
+          "rank": 7,
+          "last_digit": "1",
+          "pred": 0.1935672121522581,
+          "actual_raw_diff": 0.0,
+          "machine_count": 15,
+          "prob_positive": 0.5,
+          "final_score": 0.1935672121522581,
+          "ltr_pred": 0.1935672121522581,
+          "rank_pct_ltr": 0.4
+        },
+        {
+          "rank": 8,
+          "last_digit": "2",
+          "pred": 0.16529797621499256,
+          "actual_raw_diff": 0.0,
+          "machine_count": 15,
+          "prob_positive": 0.5,
+          "final_score": 0.16529797621499256,
+          "ltr_pred": 0.16529797621499256,
+          "rank_pct_ltr": 0.3
+        },
+        {
+          "rank": 9,
+          "last_digit": "4",
+          "pred": 0.1566451745093797,
+          "actual_raw_diff": 0.0,
+          "machine_count": 16,
+          "prob_positive": 0.5,
+          "final_score": 0.1566451745093797,
+          "ltr_pred": 0.1566451745093797,
+          "rank_pct_ltr": 0.2
+        },
+        {
+          "rank": 10,
+          "last_digit": "8",
+          "pred": 0.02482339198669631,
+          "actual_raw_diff": 0.0,
+          "machine_count": 14,
+          "prob_positive": 0.5,
+          "final_score": 0.02482339198669631,
+          "ltr_pred": 0.02482339198669631,
+          "rank_pct_ltr": 0.1
+        }
+      ]
+    },
+    "3F_A": {
+      "status": "ok",
+      "combined_used": true,
+      "combined_exclude_reason": "",
+      "pred_span_top12": 0.09251563426921228,
+      "confidence_band": "low",
+      "selected_candidate": {
+        "window": "full_2025",
+        "lambda": 0.75,
+        "q": 0.4,
+        "threshold": 0.041456823275574074,
+        "blend_weight": 0.0,
+        "cal_score": 20.388895565331662
+      },
+      "ranking": [
+        {
+          "rank": 1,
+          "last_digit": "0",
+          "pred": 0.5007106563878913,
+          "actual_raw_diff": 0.0,
+          "machine_count": 22,
+          "prob_positive": 0.5,
+          "final_score": 0.5007106563878913,
+          "ltr_pred": 0.5007106563878913,
+          "rank_pct_ltr": 1.0
+        },
+        {
+          "rank": 2,
+          "last_digit": "2",
+          "pred": 0.408195022118679,
+          "actual_raw_diff": 0.0,
+          "machine_count": 22,
+          "prob_positive": 0.5,
+          "final_score": 0.408195022118679,
+          "ltr_pred": 0.408195022118679,
+          "rank_pct_ltr": 0.9
+        },
+        {
+          "rank": 3,
+          "last_digit": "8",
+          "pred": 0.36920403483020964,
+          "actual_raw_diff": 0.0,
+          "machine_count": 22,
+          "prob_positive": 0.5,
+          "final_score": 0.36920403483020964,
+          "ltr_pred": 0.36920403483020964,
+          "rank_pct_ltr": 0.8
+        },
+        {
+          "rank": 4,
+          "last_digit": "6",
+          "pred": 0.3522492853008132,
+          "actual_raw_diff": 0.0,
+          "machine_count": 21,
+          "prob_positive": 0.5,
+          "final_score": 0.3522492853008132,
+          "ltr_pred": 0.3522492853008132,
+          "rank_pct_ltr": 0.7
+        },
+        {
+          "rank": 5,
+          "last_digit": "7",
+          "pred": 0.3212866538662699,
+          "actual_raw_diff": 0.0,
+          "machine_count": 22,
+          "prob_positive": 0.5,
+          "final_score": 0.3212866538662699,
+          "ltr_pred": 0.3212866538662699,
+          "rank_pct_ltr": 0.6
+        },
+        {
+          "rank": 6,
+          "last_digit": "1",
+          "pred": 0.2860130780438898,
+          "actual_raw_diff": 0.0,
+          "machine_count": 23,
+          "prob_positive": 0.5,
+          "final_score": 0.2860130780438898,
+          "ltr_pred": 0.2860130780438898,
+          "rank_pct_ltr": 0.5
+        },
+        {
+          "rank": 7,
+          "last_digit": "4",
+          "pred": 0.2850426574377735,
+          "actual_raw_diff": 0.0,
+          "machine_count": 20,
+          "prob_positive": 0.5,
+          "final_score": 0.2850426574377735,
+          "ltr_pred": 0.2850426574377735,
+          "rank_pct_ltr": 0.4
+        },
+        {
+          "rank": 8,
+          "last_digit": "5",
+          "pred": 0.22271122039220762,
+          "actual_raw_diff": 0.0,
+          "machine_count": 21,
+          "prob_positive": 0.5,
+          "final_score": 0.22271122039220762,
+          "ltr_pred": 0.22271122039220762,
+          "rank_pct_ltr": 0.3
+        },
+        {
+          "rank": 9,
+          "last_digit": "9",
+          "pred": 0.17090917882998624,
+          "actual_raw_diff": 0.0,
+          "machine_count": 22,
+          "prob_positive": 0.5,
+          "final_score": 0.17090917882998624,
+          "ltr_pred": 0.17090917882998624,
+          "rank_pct_ltr": 0.2
+        },
+        {
+          "rank": 10,
+          "last_digit": "3",
+          "pred": 0.12823456827300786,
+          "actual_raw_diff": 0.0,
+          "machine_count": 21,
+          "prob_positive": 0.5,
+          "final_score": 0.12823456827300786,
+          "ltr_pred": 0.12823456827300786,
+          "rank_pct_ltr": 0.1
+        }
+      ]
+    },
+    "2F_A": {
+      "status": "ok",
+      "combined_used": true,
+      "combined_exclude_reason": "",
+      "pred_span_top12": 0.1768973857289709,
+      "confidence_band": "medium",
+      "selected_candidate": {
+        "window": "full_2025",
+        "lambda": 0.75,
+        "q": 0.1,
+        "threshold": 0.023967319907254005,
+        "blend_weight": 0.0,
+        "cal_score": 255.01664433889496
+      },
+      "ranking": [
+        {
+          "rank": 1,
+          "last_digit": "3",
+          "pred": 0.48987910018967146,
+          "actual_raw_diff": 0.0,
+          "machine_count": 4,
+          "prob_positive": 0.5,
+          "final_score": 0.48987910018967146,
+          "ltr_pred": 0.48987910018967146,
+          "rank_pct_ltr": 1.0
+        },
+        {
+          "rank": 2,
+          "last_digit": "5",
+          "pred": 0.31298171446070056,
+          "actual_raw_diff": 0.0,
+          "machine_count": 4,
+          "prob_positive": 0.5,
+          "final_score": 0.31298171446070056,
+          "ltr_pred": 0.31298171446070056,
+          "rank_pct_ltr": 0.9
+        },
+        {
+          "rank": 3,
+          "last_digit": "1",
+          "pred": 0.28116941609690677,
+          "actual_raw_diff": 0.0,
+          "machine_count": 4,
+          "prob_positive": 0.5,
+          "final_score": 0.28116941609690677,
+          "ltr_pred": 0.28116941609690677,
+          "rank_pct_ltr": 0.8
+        },
+        {
+          "rank": 4,
+          "last_digit": "4",
+          "pred": 0.2753489890133613,
+          "actual_raw_diff": 0.0,
+          "machine_count": 4,
+          "prob_positive": 0.5,
+          "final_score": 0.2753489890133613,
+          "ltr_pred": 0.2753489890133613,
+          "rank_pct_ltr": 0.7
+        },
+        {
+          "rank": 5,
+          "last_digit": "9",
+          "pred": 0.17365657679300003,
+          "actual_raw_diff": 0.0,
+          "machine_count": 3,
+          "prob_positive": 0.5,
+          "final_score": 0.17365657679300003,
+          "ltr_pred": 0.17365657679300003,
+          "rank_pct_ltr": 0.6
+        },
+        {
+          "rank": 6,
+          "last_digit": "2",
+          "pred": 0.1620349586067002,
+          "actual_raw_diff": 0.0,
+          "machine_count": 4,
+          "prob_positive": 0.5,
+          "final_score": 0.1620349586067002,
+          "ltr_pred": 0.1620349586067002,
+          "rank_pct_ltr": 0.5
+        },
+        {
+          "rank": 7,
+          "last_digit": "6",
+          "pred": 0.16071030293565322,
+          "actual_raw_diff": 0.0,
+          "machine_count": 4,
+          "prob_positive": 0.5,
+          "final_score": 0.16071030293565322,
+          "ltr_pred": 0.16071030293565322,
+          "rank_pct_ltr": 0.4
+        },
+        {
+          "rank": 8,
+          "last_digit": "0",
+          "pred": 0.14496944427685288,
+          "actual_raw_diff": 0.0,
+          "machine_count": 3,
+          "prob_positive": 0.5,
+          "final_score": 0.14496944427685288,
+          "ltr_pred": 0.14496944427685288,
+          "rank_pct_ltr": 0.3
+        },
+        {
+          "rank": 9,
+          "last_digit": "7",
+          "pred": 0.1311191070073359,
+          "actual_raw_diff": 0.0,
+          "machine_count": 3,
+          "prob_positive": 0.5,
+          "final_score": 0.1311191070073359,
+          "ltr_pred": 0.1311191070073359,
+          "rank_pct_ltr": 0.2
+        },
+        {
+          "rank": 10,
+          "last_digit": "8",
+          "pred": 0.12435990743432129,
+          "actual_raw_diff": 0.0,
+          "machine_count": 3,
+          "prob_positive": 0.5,
+          "final_score": 0.12435990743432129,
+          "ltr_pred": 0.12435990743432129,
+          "rank_pct_ltr": 0.1
+        }
+      ]
+    }
+  },
+  "combined_priority_ranking": [
+    {
+      "rank": 1,
+      "last_digit": "3",
+      "combined_score": 2.9000000000000004
+    },
+    {
+      "rank": 2,
+      "last_digit": "1",
+      "combined_score": 2.6
+    },
+    {
+      "rank": 3,
+      "last_digit": "6",
+      "combined_score": 2.6
+    },
+    {
+      "rank": 4,
+      "last_digit": "0",
+      "combined_score": 2.4
+    },
+    {
+      "rank": 5,
+      "last_digit": "5",
+      "combined_score": 2.3000000000000003
+    },
+    {
+      "rank": 6,
+      "last_digit": "9",
+      "combined_score": 2.1
+    },
+    {
+      "rank": 7,
+      "last_digit": "8",
+      "combined_score": 2.0
+    },
+    {
+      "rank": 8,
+      "last_digit": "2",
+      "combined_score": 2.0
+    },
+    {
+      "rank": 9,
+      "last_digit": "7",
+      "combined_score": 1.7
+    },
+    {
+      "rank": 10,
+      "last_digit": "4",
+      "combined_score": 1.4
+    }
+  ],
+  "latest_test_date": "2026-07-04",
+  "latest_test_weekday": "Saturday",
+  "latest_test_top3_by_expert": [
+    {
+      "expert": "2F_N",
+      "rank": 1,
+      "last_digit": "1",
+      "pred": 0.5007193989860581,
+      "actual_raw_diff": 19200.0,
+      "prob_positive": 0.5,
+      "final_score": 0.5007193989860581,
+      "ltr_pred": 0.5007193989860581
+    },
+    {
+      "expert": "2F_N",
+      "rank": 2,
+      "last_digit": "7",
+      "pred": 0.42837895923386715,
+      "actual_raw_diff": -8900.0,
+      "prob_positive": 0.5,
+      "final_score": 0.42837895923386715,
+      "ltr_pred": 0.42837895923386715
+    },
+    {
+      "expert": "2F_N",
+      "rank": 3,
+      "last_digit": "5",
+      "pred": 0.3187294705528359,
+      "actual_raw_diff": 22600.0,
+      "prob_positive": 0.5,
+      "final_score": 0.3187294705528359,
+      "ltr_pred": 0.3187294705528359
+    },
+    {
+      "expert": "3F_N",
+      "rank": 1,
+      "last_digit": "7",
+      "pred": 0.6373616338909968,
+      "actual_raw_diff": -10900.0,
+      "prob_positive": 0.5,
+      "final_score": 0.6373616338909968,
+      "ltr_pred": 0.6373616338909968
+    },
+    {
+      "expert": "3F_N",
+      "rank": 2,
+      "last_digit": "0",
+      "pred": 0.4970674743926809,
+      "actual_raw_diff": 36700.0,
+      "prob_positive": 0.5,
+      "final_score": 0.4970674743926809,
+      "ltr_pred": 0.4970674743926809
+    },
+    {
+      "expert": "3F_N",
+      "rank": 3,
+      "last_digit": "9",
+      "pred": 0.44143230028074637,
+      "actual_raw_diff": 18200.0,
+      "prob_positive": 0.5,
+      "final_score": 0.44143230028074637,
+      "ltr_pred": 0.44143230028074637
+    },
+    {
+      "expert": "3F_A",
+      "rank": 1,
+      "last_digit": "4",
+      "pred": 0.6139413785770189,
+      "actual_raw_diff": 21400.0,
+      "prob_positive": 0.5,
+      "final_score": 0.6139413785770189,
+      "ltr_pred": 0.6139413785770189
+    },
+    {
+      "expert": "3F_A",
+      "rank": 2,
+      "last_digit": "5",
+      "pred": 0.43819888904722765,
+      "actual_raw_diff": 3000.0,
+      "prob_positive": 0.5,
+      "final_score": 0.43819888904722765,
+      "ltr_pred": 0.43819888904722765
+    },
+    {
+      "expert": "3F_A",
+      "rank": 3,
+      "last_digit": "0",
+      "pred": 0.43574834610689667,
+      "actual_raw_diff": -6300.0,
+      "prob_positive": 0.5,
+      "final_score": 0.43574834610689667,
+      "ltr_pred": 0.43574834610689667
+    },
+    {
+      "expert": "2F_A",
+      "rank": 1,
+      "last_digit": "0",
+      "pred": 0.4926669114445797,
+      "actual_raw_diff": 700.0,
+      "prob_positive": 0.5,
+      "final_score": 0.4926669114445797,
+      "ltr_pred": 0.4926669114445797
+    },
+    {
+      "expert": "2F_A",
+      "rank": 2,
+      "last_digit": "3",
+      "pred": 0.3129760752553199,
+      "actual_raw_diff": -900.0,
+      "prob_positive": 0.5,
+      "final_score": 0.3129760752553199,
+      "ltr_pred": 0.3129760752553199
+    },
+    {
+      "expert": "2F_A",
+      "rank": 3,
+      "last_digit": "4",
+      "pred": 0.2678536306858523,
+      "actual_raw_diff": 6400.0,
+      "prob_positive": 0.5,
+      "final_score": 0.2678536306858523,
+      "ltr_pred": 0.2678536306858523
+    }
+  ],
+  "latest_test_bottom3_by_expert": [
+    {
+      "expert": "2F_N",
+      "rank": 8,
+      "last_digit": "6",
+      "pred": 0.17817784469894138,
+      "actual_raw_diff": -17800.0,
+      "prob_positive": 0.5,
+      "final_score": 0.17817784469894138,
+      "ltr_pred": 0.17817784469894138
+    },
+    {
+      "expert": "2F_N",
+      "rank": 9,
+      "last_digit": "0",
+      "pred": 0.14371347532167952,
+      "actual_raw_diff": 5100.0,
+      "prob_positive": 0.5,
+      "final_score": 0.14371347532167952,
+      "ltr_pred": 0.14371347532167952
+    },
+    {
+      "expert": "2F_N",
+      "rank": 10,
+      "last_digit": "4",
+      "pred": 0.13876801397900262,
+      "actual_raw_diff": -400.0,
+      "prob_positive": 0.5,
+      "final_score": 0.13876801397900262,
+      "ltr_pred": 0.13876801397900262
+    },
+    {
+      "expert": "3F_N",
+      "rank": 8,
+      "last_digit": "5",
+      "pred": 0.25426018153453855,
+      "actual_raw_diff": -11200.0,
+      "prob_positive": 0.5,
+      "final_score": 0.25426018153453855,
+      "ltr_pred": 0.25426018153453855
+    },
+    {
+      "expert": "3F_N",
+      "rank": 9,
+      "last_digit": "8",
+      "pred": 0.2526671593657442,
+      "actual_raw_diff": 4700.0,
+      "prob_positive": 0.5,
+      "final_score": 0.2526671593657442,
+      "ltr_pred": 0.2526671593657442
+    },
+    {
+      "expert": "3F_N",
+      "rank": 10,
+      "last_digit": "4",
+      "pred": 0.11525895745828975,
+      "actual_raw_diff": 10100.0,
+      "prob_positive": 0.5,
+      "final_score": 0.11525895745828975,
+      "ltr_pred": 0.11525895745828975
+    },
+    {
+      "expert": "3F_A",
+      "rank": 8,
+      "last_digit": "6",
+      "pred": 0.21839018835286522,
+      "actual_raw_diff": -2700.0,
+      "prob_positive": 0.5,
+      "final_score": 0.21839018835286522,
+      "ltr_pred": 0.21839018835286522
+    },
+    {
+      "expert": "3F_A",
+      "rank": 9,
+      "last_digit": "9",
+      "pred": 0.20085708539787267,
+      "actual_raw_diff": -9700.0,
+      "prob_positive": 0.5,
+      "final_score": 0.20085708539787267,
+      "ltr_pred": 0.20085708539787267
+    },
+    {
+      "expert": "3F_A",
+      "rank": 10,
+      "last_digit": "3",
+      "pred": 0.08649797246769617,
+      "actual_raw_diff": 5400.0,
+      "prob_positive": 0.5,
+      "final_score": 0.08649797246769617,
+      "ltr_pred": 0.08649797246769617
+    },
+    {
+      "expert": "2F_A",
+      "rank": 8,
+      "last_digit": "9",
+      "pred": 0.17460745590324642,
+      "actual_raw_diff": 2200.0,
+      "prob_positive": 0.5,
+      "final_score": 0.17460745590324642,
+      "ltr_pred": 0.17460745590324642
+    },
+    {
+      "expert": "2F_A",
+      "rank": 9,
+      "last_digit": "7",
+      "pred": 0.11297671986355647,
+      "actual_raw_diff": -1000.0,
+      "prob_positive": 0.5,
+      "final_score": 0.11297671986355647,
+      "ltr_pred": 0.11297671986355647
+    },
+    {
+      "expert": "2F_A",
+      "rank": 10,
+      "last_digit": "8",
+      "pred": 0.11223084741567191,
+      "actual_raw_diff": 200.0,
+      "prob_positive": 0.5,
+      "final_score": 0.11223084741567191,
+      "ltr_pred": 0.11223084741567191
+    }
+  ],
+  "reliability_history_path": "db\\experiments\\tail_ltr_split4_reliability_history.csv",
+  "reliability_excluded_experts": [],
+  "reliability_overall_by_expert": [
+    {
+      "expert": "2F_A",
+      "precision": 0.6818181818181818,
+      "recall": 0.6818181818181818,
+      "f1": 0.6818181818181818,
+      "hit_at_2": 0.7272727272727273,
+      "hit_at_3": 0.8181818181818182,
+      "n_days": 11
+    },
+    {
+      "expert": "2F_N",
+      "precision": 0.7727272727272727,
+      "recall": 0.7727272727272727,
+      "f1": 0.7727272727272727,
+      "hit_at_2": 0.9090909090909091,
+      "hit_at_3": 1.0,
+      "n_days": 11
+    },
+    {
+      "expert": "3F_A",
+      "precision": 0.7272727272727273,
+      "recall": 0.7272727272727273,
+      "f1": 0.7272727272727273,
+      "hit_at_2": 0.9090909090909091,
+      "hit_at_3": 1.0,
+      "n_days": 11
+    },
+    {
+      "expert": "3F_N",
+      "precision": 0.8636363636363636,
+      "recall": 0.8636363636363636,
+      "f1": 0.8636363636363636,
+      "hit_at_2": 1.0,
+      "hit_at_3": 1.0,
+      "n_days": 11
+    }
+  ],
+  "test_period_report_enabled": false,
+  "test_period_config": {},
+  "test_period_overall_by_expert": [],
+  "ceiling_effect_report_enabled": false,
+  "notes": "latest_test_top3_by_expert uses known latest date as one-step holdout style check with selected candidates.",
+  "forecast_summary": {
+    "combined": [
+      {
+        "rank": 1,
+        "last_digit": "3",
+        "combined_score": 2.9000000000000004,
+        "zorome_machines": [
+          {
+            "machine_number": 2033,
+            "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦"
+          },
+          {
+            "machine_number": 2133,
+            "machine_name": "甲鉄城のカバネリ"
+          },
+          {
+            "machine_number": 2233,
+            "machine_name": "新鬼武者3"
+          },
+          {
+            "machine_number": 2333,
+            "machine_name": "ドッチ"
+          },
+          {
+            "machine_number": 3033,
+            "machine_name": "ソードアート・オンラインII"
+          },
+          {
+            "machine_number": 3133,
+            "machine_name": "マイジャグラーV"
+          },
+          {
+            "machine_number": 3233,
+            "machine_name": "東京喰種"
+          },
+          {
+            "machine_number": 3333,
+            "machine_name": "ネオアイムジャグラーEX"
+          }
+        ]
+      },
+      {
+        "rank": 2,
+        "last_digit": "1",
+        "combined_score": 2.6,
+        "zorome_machines": [
+          {
+            "machine_number": 2011,
+            "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦"
+          },
+          {
+            "machine_number": 2111,
+            "machine_name": "モンスターハンターライズ"
+          },
+          {
+            "machine_number": 2211,
+            "machine_name": "スマスロ炎炎ノ消防隊2"
+          },
+          {
+            "machine_number": 2311,
+            "machine_name": "スーパーリオエース2"
+          },
+          {
+            "machine_number": 3011,
+            "machine_name": "キングハナハナ-30"
+          },
+          {
+            "machine_number": 3111,
+            "machine_name": "革命機ヴァルヴレイヴ2"
+          },
+          {
+            "machine_number": 3211,
+            "machine_name": "東京喰種"
+          },
+          {
+            "machine_number": 3311,
+            "machine_name": "ミスタージャグラー"
+          }
+        ]
+      },
+      {
+        "rank": 3,
+        "last_digit": "6",
+        "combined_score": 2.6,
+        "zorome_machines": [
+          {
+            "machine_number": 2066,
+            "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃"
+          },
+          {
+            "machine_number": 2166,
+            "machine_name": "うみねこのなく頃に2"
+          },
+          {
+            "machine_number": 2266,
+            "machine_name": "北斗の拳 転生の章2"
+          },
+          {
+            "machine_number": 3066,
+            "machine_name": "ミリオンゴッド‐神々の軌跡‐"
+          },
+          {
+            "machine_number": 3166,
+            "machine_name": "ファンキージャグラー2"
+          },
+          {
+            "machine_number": 3266,
+            "machine_name": "マイジャグラーV"
+          }
+        ]
+      }
+    ],
+    "by_expert": {
+      "2F_N": [
+        {
+          "rank": 1,
+          "last_digit": "8",
+          "pred": 0.49299669853500333,
+          "model_score": 0.49299669853500333,
+          "zorome_machines": [
+            {
+              "machine_number": 2088,
+              "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝"
+            },
+            {
+              "machine_number": 2188,
+              "machine_name": "化物語"
+            },
+            {
+              "machine_number": 2288,
+              "machine_name": "スーパーブラックジャック"
+            }
+          ]
+        },
+        {
+          "rank": 2,
+          "last_digit": "1",
+          "pred": 0.3729625326675969,
+          "model_score": 0.3729625326675969,
+          "zorome_machines": [
+            {
+              "machine_number": 2011,
+              "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦"
+            },
+            {
+              "machine_number": 2111,
+              "machine_name": "モンスターハンターライズ"
+            },
+            {
+              "machine_number": 2211,
+              "machine_name": "スマスロ炎炎ノ消防隊2"
+            },
+            {
+              "machine_number": 2311,
+              "machine_name": "スーパーリオエース2"
+            }
+          ]
+        },
+        {
+          "rank": 3,
+          "last_digit": "3",
+          "pred": 0.22107600380300654,
+          "model_score": 0.22107600380300654,
+          "zorome_machines": [
+            {
+              "machine_number": 2033,
+              "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦"
+            },
+            {
+              "machine_number": 2133,
+              "machine_name": "甲鉄城のカバネリ"
+            },
+            {
+              "machine_number": 2233,
+              "machine_name": "新鬼武者3"
+            },
+            {
+              "machine_number": 2333,
+              "machine_name": "ドッチ"
+            }
+          ]
+        }
+      ],
+      "3F_N": [
+        {
+          "rank": 1,
+          "last_digit": "3",
+          "pred": 0.7254585371935397,
+          "model_score": 0.7254585371935397,
+          "zorome_machines": [
+            {
+              "machine_number": 3033,
+              "machine_name": "ソードアート・オンラインII"
+            },
+            {
+              "machine_number": 3233,
+              "machine_name": "東京喰種"
+            }
+          ]
+        },
+        {
+          "rank": 2,
+          "last_digit": "9",
+          "pred": 0.7157205199068676,
+          "model_score": 0.7157205199068676,
+          "zorome_machines": [
+            {
+              "machine_number": 3099,
+              "machine_name": "革命機ヴァルヴレイヴ2"
+            }
+          ]
+        },
+        {
+          "rank": 3,
+          "last_digit": "6",
+          "pred": 0.4949044007167076,
+          "model_score": 0.4949044007167076,
+          "zorome_machines": [
+            {
+              "machine_number": 3066,
+              "machine_name": "ミリオンゴッド‐神々の軌跡‐"
+            }
+          ]
+        }
+      ],
+      "3F_A": [
+        {
+          "rank": 1,
+          "last_digit": "0",
+          "pred": 0.5007106563878913,
+          "model_score": 0.5007106563878913,
+          "zorome_machines": [
+            {
+              "machine_number": 3200,
+              "machine_name": "新ハナビ"
+            },
+            {
+              "machine_number": 3300,
+              "machine_name": "ハッピージャグラーVIII"
+            }
+          ]
+        },
+        {
+          "rank": 2,
+          "last_digit": "2",
+          "pred": 0.408195022118679,
+          "model_score": 0.408195022118679,
+          "zorome_machines": [
+            {
+              "machine_number": 3022,
+              "machine_name": "沖ドキ!DUO アンコール"
+            },
+            {
+              "machine_number": 3122,
+              "machine_name": "マイジャグラーV"
+            },
+            {
+              "machine_number": 3322,
+              "machine_name": "ジャグラーガールズ"
+            }
+          ]
+        },
+        {
+          "rank": 3,
+          "last_digit": "8",
+          "pred": 0.36920403483020964,
+          "model_score": 0.36920403483020964,
+          "zorome_machines": [
+            {
+              "machine_number": 3188,
+              "machine_name": "ゴーゴージャグラー3"
+            },
+            {
+              "machine_number": 3288,
+              "machine_name": "マイジャグラーV"
+            }
+          ]
+        }
+      ],
+      "2F_A": [
+        {
+          "rank": 1,
+          "last_digit": "3",
+          "pred": 0.48987910018967146,
+          "model_score": 0.48987910018967146,
+          "zorome_machines": []
+        },
+        {
+          "rank": 2,
+          "last_digit": "5",
+          "pred": 0.31298171446070056,
+          "model_score": 0.31298171446070056,
+          "zorome_machines": [
+            {
+              "machine_number": 2155,
+              "machine_name": "ディスクアップ ULTRAREMIX"
+            }
+          ]
+        },
+        {
+          "rank": 3,
+          "last_digit": "1",
+          "pred": 0.28116941609690677,
+          "model_score": 0.28116941609690677,
+          "zorome_machines": []
+        }
+      ]
+    },
+    "machine_list_by_expert": {
+      "2F_N": [
+        {
+          "machine_number": 2011,
+          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+          "last_digit": "1"
+        },
+        {
+          "machine_number": 2033,
+          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+          "last_digit": "3"
+        },
+        {
+          "machine_number": 2088,
+          "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+          "last_digit": "8"
+        },
+        {
+          "machine_number": 2111,
+          "machine_name": "モンスターハンターライズ",
+          "last_digit": "1"
+        },
+        {
+          "machine_number": 2133,
+          "machine_name": "甲鉄城のカバネリ",
+          "last_digit": "3"
+        },
+        {
+          "machine_number": 2188,
+          "machine_name": "化物語",
+          "last_digit": "8"
+        },
+        {
+          "machine_number": 2211,
+          "machine_name": "スマスロ炎炎ノ消防隊2",
+          "last_digit": "1"
+        },
+        {
+          "machine_number": 2233,
+          "machine_name": "新鬼武者3",
+          "last_digit": "3"
+        },
+        {
+          "machine_number": 2288,
+          "machine_name": "スーパーブラックジャック",
+          "last_digit": "8"
+        },
+        {
+          "machine_number": 2311,
+          "machine_name": "スーパーリオエース2",
+          "last_digit": "1"
+        },
+        {
+          "machine_number": 2333,
+          "machine_name": "ドッチ",
+          "last_digit": "3"
+        }
+      ],
+      "3F_N": [
+        {
+          "machine_number": 3033,
+          "machine_name": "ソードアート・オンラインII",
+          "last_digit": "3"
+        },
+        {
+          "machine_number": 3066,
+          "machine_name": "ミリオンゴッド‐神々の軌跡‐",
+          "last_digit": "6"
+        },
+        {
+          "machine_number": 3099,
+          "machine_name": "革命機ヴァルヴレイヴ2",
+          "last_digit": "9"
+        },
+        {
+          "machine_number": 3233,
+          "machine_name": "東京喰種",
+          "last_digit": "3"
+        }
+      ],
+      "3F_A": [
+        {
+          "machine_number": 3022,
+          "machine_name": "沖ドキ!DUO アンコール",
+          "last_digit": "2"
+        },
+        {
+          "machine_number": 3122,
+          "machine_name": "マイジャグラーV",
+          "last_digit": "2"
+        },
+        {
+          "machine_number": 3188,
+          "machine_name": "ゴーゴージャグラー3",
+          "last_digit": "8"
+        },
+        {
+          "machine_number": 3200,
+          "machine_name": "新ハナビ",
+          "last_digit": "0"
+        },
+        {
+          "machine_number": 3288,
+          "machine_name": "マイジャグラーV",
+          "last_digit": "8"
+        },
+        {
+          "machine_number": 3300,
+          "machine_name": "ハッピージャグラーVIII",
+          "last_digit": "0"
+        },
+        {
+          "machine_number": 3322,
+          "machine_name": "ジャグラーガールズ",
+          "last_digit": "2"
+        }
+      ],
+      "2F_A": [
+        {
+          "machine_number": 2155,
+          "machine_name": "ディスクアップ ULTRAREMIX",
+          "last_digit": "5"
+        }
+      ]
+    },
+    "score_scale": "absolute_model_score"
+  },
+  "forecast_summary_zorome_ref_date": "20260704"
+}

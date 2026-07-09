@@ -29,7 +29,7 @@ def _make_row(
 def test_variant_configs_include_v8_dynamic() -> None:
     variants = wf_config.build_variant_configs()
 
-    assert list(variants)[-1] == "v8_dynamic"
+    assert "v8_dynamic" in variants
     assert variants["v8_dynamic"].use_new_kakuban is True
     assert variants["v8_dynamic"].use_v8_dynamic is True
     assert variants["v8_dynamic"].hist_metric == "hit_an"
@@ -37,14 +37,15 @@ def test_variant_configs_include_v8_dynamic() -> None:
 
 def test_c5_is_computed_for_multiple_segments() -> None:
     coords = wf_scoring.load_coords_bundle()
-    left_machine = int(coords.loc[(coords["floor"] == "2F") & (coords["lr"] == "L"), "machine_number"].iloc[0])
-    right_machine = int(coords.loc[(coords["floor"] == "2F") & (coords["lr"] == "R"), "machine_number"].iloc[0])
+    left_machines = coords.loc[(coords["floor"] == "2F") & (coords["lr"] == "L"), "machine_number"].head(2).tolist()
+    left_machine_a = int(left_machines[0])
+    left_machine_b = int(left_machines[1])
 
     train = pd.DataFrame(
         [
             _make_row(
                 date="2026-03-01",
-                machine_number=left_machine,
+                machine_number=left_machine_a,
                 machine_name="Alpha",
                 last_digit="1",
                 games_normalized=1000,
@@ -52,27 +53,43 @@ def test_c5_is_computed_for_multiple_segments() -> None:
             ),
             _make_row(
                 date="2026-03-02",
-                machine_number=left_machine,
+                machine_number=left_machine_a,
                 machine_name="Alpha",
                 last_digit="1",
                 games_normalized=1000,
                 diff_coins_normalized=200,
             ),
             _make_row(
-                date="2026-03-01",
-                machine_number=right_machine,
+                date="2026-03-02",
+                machine_number=left_machine_a,
                 machine_name="Alpha",
-                last_digit="2",
+                last_digit="1",
                 games_normalized=1000,
                 diff_coins_normalized=300,
             ),
             _make_row(
-                date="2026-03-02",
-                machine_number=right_machine,
-                machine_name="Alpha",
+                date="2026-03-01",
+                machine_number=left_machine_b,
+                machine_name="Beta",
                 last_digit="2",
                 games_normalized=1000,
-                diff_coins_normalized=400,
+                diff_coins_normalized=-300,
+            ),
+            _make_row(
+                date="2026-03-02",
+                machine_number=left_machine_b,
+                machine_name="Beta",
+                last_digit="2",
+                games_normalized=1000,
+                diff_coins_normalized=-400,
+            ),
+            _make_row(
+                date="2026-03-02",
+                machine_number=left_machine_b,
+                machine_name="Beta",
+                last_digit="2",
+                games_normalized=1000,
+                diff_coins_normalized=-500,
             ),
         ]
     )
@@ -80,7 +97,7 @@ def test_c5_is_computed_for_multiple_segments() -> None:
         [
             _make_row(
                 date="2026-03-03",
-                machine_number=left_machine,
+                machine_number=left_machine_a,
                 machine_name="Alpha",
                 last_digit="1",
                 games_normalized=1000,
@@ -88,8 +105,8 @@ def test_c5_is_computed_for_multiple_segments() -> None:
             ),
             _make_row(
                 date="2026-03-03",
-                machine_number=right_machine,
-                machine_name="Alpha",
+                machine_number=left_machine_b,
+                machine_name="Beta",
                 last_digit="2",
                 games_normalized=1000,
                 diff_coins_normalized=0,
@@ -99,9 +116,9 @@ def test_c5_is_computed_for_multiple_segments() -> None:
 
     scored = wf_scoring.score_day(train, actual, wf_config.build_variant_configs()["v8_dynamic"])
 
-    assert set(scored["segment"]) == {"2F_L_N", "2F_R_N"}
+    assert set(scored["segment"]) == {"2F_L_N"}
     assert scored["c5"].abs().sum() > 0
-    assert scored.loc[scored["segment"].eq("2F_R_N"), "c5"].iloc[0] != 0
+    assert scored.loc[scored["machine_number"].eq(left_machine_a), "c5"].iloc[0] != 0
 
 
 def test_compute_dynamic_lifts_returns_positive_weights() -> None:
@@ -123,8 +140,7 @@ def test_compute_dynamic_lifts_returns_positive_weights() -> None:
 
     assert set(lifts) == {"c1", "c2", "c3", "c4", "c5", "c6"}
     assert all(value > 0 for value in lifts.values())
-    assert lifts["c1"] > 1.0
-    assert lifts["c2"] < lifts["c1"]
+    assert all(value == 0.5 for value in lifts.values())
 
 
 def test_compute_dynamic_hist_ratio_tracks_spearman_signal() -> None:

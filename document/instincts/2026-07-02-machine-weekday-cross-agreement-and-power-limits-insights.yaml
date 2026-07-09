@@ -1,0 +1,79 @@
+---
+id: weekday-cross-machine-agreement-tool-available
+trigger: "曜日軸(月火水木金土日)で機種横断のホール投入日を自動検出したいとき"
+confidence: 0.9
+domain: tooling
+source: session-implementation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 機種横断DD一致度スキャンの曜日版が利用可能
+
+## 背景
+[dd-cross-machine-agreement-tool-available](2026-07-02-machine-dd-cross-agreement-insights.yaml)のDD(1〜31日)版と同じ設計を軸だけ曜日に変えて実装。`eda/machine_weekday_cross_agreement_scan.py`（ホール×曜日の機種横断一致度、FDR、is_weekendベースの既知/新規判定、プール絶対水準、machine_masterカテゴリ支配度ロバストネス）と`eda/machine_weekday_cross_agreement_machine_deepdive.py`（機種名フルランキング、機種単体one-vs-rest検定、ホール内常連、ホール横断一致）の2本。`load_machine_categories`/`attach_machine_category`はDD版から直接importして再利用(軸非依存)。9ホール全実行済み(2026-07-02)。
+
+## アクション
+曜日軸で機種横断投入日を検出したいときは`python eda/machine_weekday_cross_agreement_scan.py --all-halls`→`python eda/machine_weekday_cross_agreement_machine_deepdive.py --all-halls`の順で実行する。出力は`eda/results/machine_weekday_cross_agreement/`と`eda/results/machine_weekday_cross_agreement_deepdive/`。
+
+## 例
+2026-07-02の9ホール実行結果: 有意な曜日を持つホールは3つのみ(蒲田7=3曜日, 楽園=2曜日, みとや=1曜日)。残り6ホール(蒲田1・レイトギャップ・ARROW・ヒロキ・ザシティ・金時)は有意な曜日がゼロだった。DD軸(31水準)と比べて曜日軸(7水準)は水準数が少ない分、機種横断一致が検出されるホール自体が少ない傾向。
+
+---
+id: onevs-rest-fdr-structurally-rejects-small-n-even-when-real
+trigger: "機種単体のDD別/曜日別one-vs-rest二項検定にFDR補正をかけて、ほとんど/全て非有意になったとき"
+confidence: 0.9
+domain: statistical-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 機種単体one-vs-rest+FDRは小サンプル×大きい検定家族で構造的に却下されやすい
+
+## 背景
+機種横断一致度スキャンの機種名レベル深堀りで、ホールレベルでは明確に有意だった(hall, dd/weekday)でも、その日にいた全機種(70〜180台)を一斉にFDR補正すると、個体として有意になる機種はごく僅か(DD版で2/多数、曜日版repeat_contributorsで0/4)になった。原因は2つの複合: (1)機種×日のセルはn=10〜50程度で二項検定自体の検出力が元々低い、(2)同じ(hall, dd/weekday)内の全機種を検定対象にするためFDRの家族サイズが大きく(70〜180)、生き残るための閾値が厳しくなる。実例: 蒲田7のミリオンゴッド‐神々の軌跡‐はdd30で+25.7pt(q=0.003、有意)だったが、レイトギャップでは同じdd30・同じ方向・ほぼ同じ大きさ(+24.5pt)なのにn=30(蒲田7はn=50)というだけでq=0.080と非有意に落ちた。
+
+## アクション
+「個体として非有意」を「効果なし」と読み替えない。特に、複数の有意日/複数ホールで同じ機種・同じ方向・近い効果量が繰り返し出ているのに個別検定では落ちるケースは、検出力不足による見逃しの可能性が高いと考える。改善するなら(a)同一機種の複数機会をプールして1つの検定にまとめる(ホール内限定、feedback-no-cross-hall-pooling参照)、(b)Fisherの結合p値で複数回の弱い有意を積み上げる、(c)順位ベースで候補を先に絞ってからFDRの家族サイズを縮小する、のいずれかを検討する。現状のパイプラインはどれも未実装。
+
+## 例
+eda/machine_dd_cross_agreement_machine_deepdive.py, eda/machine_weekday_cross_agreement_machine_deepdive.py。ミリオンゴッド‐神々の軌跡‐: 蒲田7 dd30 q=0.003(有意) vs レイトギャップ dd30 q=0.080(非有意、効果量はほぼ同じ)。
+
+---
+id: currently-installed-filter-validated-across-dd-and-weekday
+trigger: "機種横断分析の結果を実運用の推奨に使う前に、機種が現在も設置されているか確認するとき"
+confidence: 0.85
+domain: eda-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 「現存機種フィルタ」はDD版・曜日版どちらでも同じ撤去済み機種を正しく検出した
+
+## 背景
+各ホールの最新日付(2026-07-01または2026-06-29)に存在する機種名だけを残すフィルタを、DD版のcross_hall_consistency/repeat_contributorsと曜日版のrepeat_contributorsの両方に独立に適用した。どちらでも`回胴黙示録カイジ 狂宴`(蒲田7)が正しく除外され、既に「ほぼ撤去済み」と分かっていた機種と整合した。DD版のcross_hall_consistency(55件)は現存フィルタで16件に、曜日版のrepeat_contributors(14件)は4件まで絞られた。
+
+## アクション
+機種横断分析で見つかった候補機種リストを実運用推奨に転用する前は必ず、各ホールの最新日付における設置有無で足切りする。フィルタ前の候補数と比べて大きく減る(今回は55→16、14→4)のが通常なので、フィルタ前の件数だけを見て「たくさん見つかった」と早合点しない。
+
+## 例
+eda/results/machine_dd_cross_agreement_deepdive/, eda/results/machine_weekday_cross_agreement_deepdive/のrepeat_contributors.csv/cross_hall_consistency.csv。
+
+---
+id: kamata7-weekday-cross-agreement-corroborates-existing-targeted-day-knowledge
+trigger: "蒲田7の曜日別機種横断一致度で、特定の平日がマイナス方向に有意になったとき"
+confidence: 0.75
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田7の水・金の曜日横断一致度マイナスは、既知の「個別機種狙い撃ち型」曜日と方向が一致
+
+## 背景
+蒲田7の曜日別機種横断一致度スキャン(2026-07-02)で、水曜(-1.7pt, novel)と金曜(-42.3pt, novel)が有意なマイナス方向として検出された。これはClaude側メモリの`kamata7_weekday_event_pattern`(火=角番、水=末尾、土=3台並び、木=ニブイチ、金=列1台、月=列全体、日=機種1台)で、水=末尾・金=列1台という「特定の少数機種だけを狙い撃ちする投入タイプ」と記録されている曜日と一致する。少数機種だけに投入が偏ると、残りの大多数の機種は相対的に平均を下回るため、機種横断の広範囲一致度スキャンではマイナス方向として現れる、という解釈が整合的。日曜(+、既知の「機種1台」型ではなく広範囲型)はプラス方向で有意、こちらも整合。
+
+## アクション
+is_weekend=0の曜日が機種横断一致度スキャンで有意になっても、機械的に「新規発見」と呼ばない。まず該当ホールに既存の曜日別投入タイプの知見がないか(Claude側メモリ、`document/instincts/`のkamata7関連ファイル)を確認し、狙い撃ち型(個別機種)の曜日はマイナス方向の広範囲シグナルとして現れうる、という解釈を優先的に検討する。
+
+## 例
+蒲田7: 水(-1.7pt novel), 金(-42.3pt novel) — ともに「列1台/末尾」型の狙い撃ち曜日と整合。日(+0.8pt, known-weekend) — 「機種1台」型だが広範囲プラスとして出ている点は今後要検証。

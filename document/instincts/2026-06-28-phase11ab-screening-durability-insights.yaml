@@ -1,0 +1,144 @@
+---
+id: mitoya-dd-fullspectrum-no-trough-zone
+trigger: "みとやの DD 個別（1-31）で non-X_DDS のトラフゾーンを探索するとき"
+confidence: 0.90
+domain: mitoya-segment-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# みとやに DD full spectrum のトラフゾーンは存在しない
+
+## 背景
+Phase11a で DD 1-31 を 3 粒度（ホール全体 / セグメント別 / セグメント×event_scope）でスクリーニング。蒲田7では DD18-23 のトラフゾーン発見が重要だったが、みとやでは composite（X_DDS / 非イベント日分割）にすると X_DDS 側は全セグメント脱落（p>0.4）。DD full spectrum の有意性は X_DDS 日の DD4/7/14/17/24/27 が引き上げているだけ。
+
+## アクション
+- DD full spectrum の深掘りは不要
+- DD 軸は is_xdds（binary）の粒度で十分。DD 個別フラグを ML 特徴量にする価値はない
+- 蒲田7との構造差: 蒲田7はイベント日定義が「7のつく日+1のつく日」で DD が 12 種、みとやは X_DDS が 6 種。DD 内部の変動が小さいためトラフが出ない
+
+## 例
+v_jug segment: p=0.001 で有意だが、composite/非イベント日: p=0.009, ε²=0.002 と効果量が極小
+h_nonjug composite/非イベント日: p=0.034 だが ε²=0.000。DD30(+278) のみプラスだが n=1197 で信頼性低
+
+---
+id: mitoya-weekday-small-effect-nonevent-only
+trigger: "みとやの曜日効果を台選びやMLに使おうとするとき"
+confidence: 0.85
+domain: mitoya-segment-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# みとやの曜日効果は非イベント日限定で効果量が小さい
+
+## 背景
+Phase11a で曜日を 3 粒度でスクリーニング。h_jug/h_nonjug/v_jug の segment 粒度で有意（p<0.01）だが、X_DDS 日限定では h_nonjug のみ境界的（p=0.018）で他は脱落。曜日別の avg_diff 差は最大 72（h_nonjug 非イベント日: 金=-38 vs 水=-110）で、角番効果（差=483）の 1/7。
+
+## アクション
+- 曜日を主軸の特徴量にしない。ε²=0.001 で寄与が小さすぎる
+- ルールベース補正としても優先度は低い
+- 唯一検討に値するのは「h_nonjug X_DDS 日の金曜は他曜日の半分」（+188 vs 火+393/木+391）だが、ANOVA 交互作用 p=0.007 で ε² は小さい
+
+## 例
+h_nonjug 非イベント日曜日別: 金=-38, 月=-80, 日=-27, 火=-99, 水=-110, 木=-105, 土=-60
+差の最大値 72 は角番効果 483 の 15%
+
+---
+id: mitoya-event-weekday-interaction-h-nonjug-friday-weak
+trigger: "みとやのイベント日×曜日の交互作用を解釈するとき"
+confidence: 0.80
+domain: mitoya-segment-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# h_nonjug X_DDS日の金曜はプレミアムが弱い（交互作用 p=0.007）
+
+## 背景
+Phase11a の 2-way ANOVA で h_nonjug のイベント日×曜日交互作用が p=0.007。蒲田7の「イベント日×土曜逆効果」に相当するパターンを探索した結果、みとやでは「金曜 X_DDS」のプレミアムが他曜日の半分程度。ただし mixed_805 の交互作用 p=0.017 は n=4,510 で統計力が弱い。
+
+## アクション
+- h_nonjug X_DDS 日の金曜は他曜日より控えめに評価する（+188 vs 平均+289）
+- ただしマイナスではないので「避ける」ではなく「期待値を下げる」程度
+- ホール全体では交互作用 p=0.069 で非有意。セグメント依存の弱いシグナル
+
+## 例
+h_nonjug X_DDS 曜日別: 火+393, 木+391, 水+348, 土+321, 月+205, 金+188, 日+176
+
+---
+id: mitoya-zorome-machine-v-nonjug-avoidance-amplifier
+trigger: "みとやのゾロ目台（台番号末尾ゾロ目）を評価するとき"
+confidence: 0.88
+domain: mitoya-segment-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 台番号末尾ゾロ目は v_nonjug でのみ有意（回避強化の方向）
+
+## 背景
+Phase11a で is_zorome（台番号末尾ゾロ目）を 3 粒度でスクリーニング。ホール全体 p=0.402 で脱落。唯一有意なのは v_nonjug（segment p<0.001, composite/非イベント日 p<0.001）だが、方向は「ゾロ目台がさらに悪い」（ゾロ目=-264 vs 非ゾロ目=-98）。v_nonjug 自体が回避セグメントなので新しい正のシグナルではない。
+
+## アクション
+- ゾロ目を台選びの正のシグナルとして使わない
+- v_nonjug のゾロ目台は avg_diff=-264 で回避をさらに強化する情報にはなる
+- h_nonjug segment で p=0.030 だが ε²=0.000 で実用価値なし
+- 蒲田7のゾロ目（+49, 堅牢）とは構造が異なる。みとやではゾロ目に設定を入れる傾向がない
+
+## 例
+v_nonjug: ゾロ目=-264 (n=1705), 非ゾロ目=-98 (n=11654)。差=-166
+h_nonjug 非イベント日: ゾロ目=+15 (n=3749), 非ゾロ目=-80 (n=36612)。ゾロ目がやや良いが ε²=0.000
+
+---
+id: mitoya-h-jug-corner-regime-stable
+trigger: "みとやの角番効果のレジーム耐性を評価するとき"
+confidence: 0.93
+domain: mitoya-segment-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# h_jug corner は唯一のレジーム耐性ありシグナル（ρ=1.000）
+
+## 背景
+Phase11b でレジーム境界（2025-07-07、74台同日変更）の前後で角番・debut 効果の安定性を検証。全 5 セグメント × 2 軸 = 10 組のうち、✅安定 は h_jug corner のみ。
+
+## アクション
+- h_jug corner1 は機種入替を跨いでも信頼できる唯一のシグナル
+- pre 期 corner1=+480, post 期 corner1=+361。絶対値は下がるが序列は完全一致
+- 他のすべてのセグメント×軸はレジーム耐性がないか効果自体がない
+- ML モデルで h_jug corner を特徴量にする場合、レジーム分割での再学習は不要
+
+## 例
+安定性サマリ:
+  h_jug corner: ✅安定 (pre/post p<0.001, ρ=1.000, top1=corner1 維持)
+  h_nonjug corner: ⚠️不安定 (ρ=0.800, top1 維持だが序列にブレ)
+  h_nonjug debut: ❌崩壊 (ρ=0.400, mature が pre=-267→post=+134 に反転)
+  v_jug/v_nonjug/mixed_805: ❌崩壊 or ✗効果なし
+
+---
+id: mitoya-debut-effect-regime-dependent
+trigger: "みとやの debut_phase をML特徴量やルールに使おうとするとき"
+confidence: 0.90
+domain: mitoya-segment-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# debut_phase 効果はレジーム依存が強く、walk-forward での再学習が必須
+
+## 背景
+Phase11b で h_nonjug の debut 効果がレジーム分割で ρ=0.400（❌崩壊）と判定。pre 期の mature=-267（n=566）が post 期で mature=+134（n=8015）に反転。Phase10f で確認した生存バイアスがレジーム分割で再確認 — pre 期は mature サンプルが少なく不安定。v_nonjug は ρ=-0.500 で完全崩壊。
+
+## アクション
+- debut_phase を ML 特徴量にする場合、walk-forward で直近期間のデータから再学習すること
+- 固定ウェイトで debut_phase を使うのは危険（序列が反転する）
+- h_nonjug の top1=pre_existing は pre/post で維持されるが、下位の序列は安定しない
+- v_jug は pre 期に debut/growth/mature が極少数（n=48/57/27）で検定不能。post 期のみ有意
+
+## 例
+h_nonjug debut 序列:
+  pre期: pre_existing(+80) > growth(-55) > debut(-106) > mature(-267)
+  post期: pre_existing(+283) > mature(+134) > growth(+34) > debut(-82)
+  mature が最下位から2位に急上昇。ρ=0.400

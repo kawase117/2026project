@@ -1,0 +1,139 @@
+---
+id: codex-agmsg-must-use-git-bash-on-windows
+trigger: "Codex Desktop on WindowsからagmsgでClaude Codeと連絡するとき"
+confidence: 0.99
+scope: methodology
+domain: tooling-environment
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Codex DesktopのagmsgはWindowsApps bashではなくGit Bashを明示する
+
+## 背景
+Kamata7 dashboard計画でClaude Codeとagmsg連携した際、Codex側で `bash ...`
+をそのまま実行すると `C:\Users\apto117\AppData\Local\Microsoft\WindowsApps\bash.exe`
+経由のWSL bashに流れ、`$HOME=/home/apto117` 側の別ストレージを見た。
+その結果、Claude側では `Sent to codex in team main` と表示されているのに、
+Codex側の `inbox.sh main codex` は空、`whoami.sh` は `not_joined=true available_teams=none`
+になる状態が発生した。
+
+## アクション
+Codex Desktopからagmsgを使うときは、必ずGit Bashをフルパスで指定する。
+受信確認は以下を標準形にする。
+
+`& 'C:\Program Files\Git\bin\bash.exe' -lc 'cd /c/Users/apto117/Documents/pachinko-analyzer/src/2026project; ~/.agents/skills/agmsg/scripts/inbox.sh main codex'`
+
+送信も同じGit Bash経路に固定する。`bash` だけを呼ばない。
+
+## 例
+正常確認:
+- `command -v sqlite3` が `/c/Users/apto117/bin/sqlite3`
+- `inbox.sh main codex` でClaudeからのメッセージが読める
+- `whoami.sh "$(pwd)" codex` が `not_joined=true` にならない
+
+---
+id: cross-agent-dashboard-workflow-claude-design-codex-implementation
+trigger: "Claude CodeとCodexでdashboard機能を共同設計・実装するとき"
+confidence: 0.97
+scope: methodology
+domain: agent-coordination
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Claude=設計/仕様/テスト戦略、Codex=実装の役割分担を最初に明示する
+
+## 背景
+Kamata7 dashboard拡張では、初期状態でCodexからClaudeへの相談文が届いたか不明になり、
+ユーザーが両画面を中継して状況確認した。通信経路をGit Bashに固定した後、
+Claude側が「Claude=設計・仕様・テスト戦略、Codex=実装」と役割を明示し、
+`document/plans/kamata7_dashboard_implementation_plan.md` を作成したことで流れが安定した。
+
+## アクション
+agmsgで協働を始める最初のメッセージに、必ず以下を含める。
+- 依頼の対象ファイルまたは対象機能
+- Claude側に期待する成果物: 設計、仕様、優先順位、テスト戦略
+- Codex側の担当: 実装、検証、ルーティング登録、テスト
+- 返信先agent名と、短いACK要求
+
+長文の本依頼を送る前に `ACK test from codex. Please reply OK.` のような短い疎通確認を行う。
+
+## 例
+推奨メッセージ:
+`ACK test from codex. Please reply OK. Then review Kamata7 dashboard priorities. Claude: design/spec/test strategy. Codex: implementation/verification.`
+
+---
+id: kamata7-dashboard-initial-scope-safe-top5
+trigger: "蒲田7セオリーをdashboardで可視化・検証する初期実装を設計するとき"
+confidence: 0.95
+scope: methodology
+domain: dashboard-ui-patterns
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田7dashboard初期実装はTop5に絞り、GATED/debut/広範な機種DDは後回しにする
+
+## 背景
+蒲田7セオリーのdashboard化では、最初に全論点を対象にすると
+GATED/NOGATE、debut age/regime、machine-specific DD/weekdayなど、
+ライブ表示にはデータ品質・誤読リスクが高い項目まで混ざる。
+Claudeレビューでは初期Top5として
+Six physical segments、Event-day checks、DD by kakuban matrix、
+Cooling zones、Refutation warning panelsが推奨された。
+Codex実装ではこのTop5を `page_20_kamata7_theory.py` のタブ構成にまとめ、
+実DB smokeで `rows=257400`, `filtered=239222`, `segment_rows=6`,
+`matrix_shape=(31, 22)` を確認した。
+
+## アクション
+蒲田7セオリーdashboardを拡張するときは、まず以下の安全なTop5を優先する。
+1. Six physical segments
+2. Event-day checks
+3. DD x kakuban matrix
+4. Cooling zones
+5. Refutation warning panels
+
+GATED/NOGATEはライブ予測設計が別途必要、debut/regimeはデータ品質監査が前提、
+machine-specific DD/weekdayはホワイトリスト化まで広範表示しない。
+
+## 例
+初期ページ構成:
+- Coverage
+- Events
+- Segments
+- DD x Kakuban
+- Cooling
+- Warnings
+
+---
+id: dashboard-constants-mojibake-file-must-preserve-existing-labels
+trigger: "dashboard/config/constants.pyを編集してページを追加するとき"
+confidence: 0.92
+scope: methodology
+domain: dashboard-ui-patterns
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# constants.pyの文字化け表示に引きずられて既存ラベルをASCII化しない
+
+## 背景
+Kamata7 Theoryページ登録時、PowerShell表示では `dashboard/config/constants.py`
+がmojibakeして見え、最初にASCIIの有効定義へ置き換えた。しかしgit diffでは元ファイルが
+日本語ラベルとemojiを持つ正常なUTF-8ファイルであることが分かり、既存UIラベルまで
+変更してしまう不要差分になりかけた。
+
+## アクション
+`dashboard/config/constants.py` を編集するときは、端末表示のmojibakeだけで
+ファイル全体をASCII化しない。git diffで実際の差分を確認し、既存ページ名・iconは保持して、
+新規ページの `PAGES` / `PAGE_REGISTRY` 追加だけに留める。
+
+## 例
+悪い変更:
+- `"ホール全体"` を `"Hall Overview"` に置換
+- 既存emoji iconを数字に置換
+
+良い変更:
+- `{"icon": "K7", "title": "Kamata7 Theory", "key": "kamata7_theory"}` を追加
+- 既存エントリは変更しない

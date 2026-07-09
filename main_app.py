@@ -33,6 +33,11 @@ from dashboard.pages import (
     page_15_backtest_validation,
     page_16_cross_search_bulk,
     page_17_heatmap,
+    page_18_daily_report,
+    page_19_daily_report_visual_test,
+    page_20_kamata7_theory,
+    page_21_kamata7_event_checks,
+    page_22_kamata7_segments,
 )
 
 # ページキーと関数のマッピング
@@ -54,6 +59,11 @@ PAGE_ROUTER = {
     "notion_exporter": page_14_notion_exporter.render,
     "backtest_validation": page_15_backtest_validation.render,
     "heatmap": page_17_heatmap.render,
+    "daily_report": page_18_daily_report.render,
+    "daily_report_visual_test": page_19_daily_report_visual_test.render,
+    "kamata7_theory": page_20_kamata7_theory.render,
+    "kamata7_event_checks": page_21_kamata7_event_checks.render,
+    "kamata7_segments": page_22_kamata7_segments.render,
 }
 
 
@@ -102,7 +112,11 @@ if available_halls:
     selected_hall = st.sidebar.selectbox(
         "📍 ホールを選択",
         available_halls,
-        index=0 if not st.session_state.hall_name else available_halls.index(st.session_state.hall_name) if st.session_state.hall_name in available_halls else 0
+        index=0
+        if not st.session_state.hall_name
+        else available_halls.index(st.session_state.hall_name)
+        if st.session_state.hall_name in available_halls
+        else 0,
     )
     st.session_state.hall_name = selected_hall
     st.session_state.db_path = db_dir / f"{selected_hall}.db"
@@ -122,7 +136,7 @@ page_idx = st.sidebar.radio(
     "📊 分析ページ",
     range(len(page_titles)),
     format_func=lambda i: page_titles[i],
-    index=next((i for i, p in enumerate(PAGES) if p["key"] == st.session_state.page_key), 0)
+    index=next((i for i, p in enumerate(PAGES) if p["key"] == st.session_state.page_key), 0),
 )
 st.session_state.page_key = PAGES[page_idx]["key"]
 
@@ -141,17 +155,10 @@ if not df.empty:
     default_end = max_date
 
     date_range_tuple = st.sidebar.slider(
-        "📅 期間選択",
-        min_value=min_date,
-        max_value=max_date,
-        value=(default_start, default_end),
-        format="YYYY-MM-DD"
+        "📅 期間選択", min_value=min_date, max_value=max_date, value=(default_start, default_end), format="YYYY-MM-DD"
     )
 
-    st.session_state.date_range = (
-        pd.to_datetime(date_range_tuple[0]),
-        pd.to_datetime(date_range_tuple[1])
-    )
+    st.session_state.date_range = (pd.to_datetime(date_range_tuple[0]), pd.to_datetime(date_range_tuple[1]))
 
     # 信頼性フィルタ
     st.session_state.min_games = st.sidebar.slider(
@@ -159,20 +166,16 @@ if not df.empty:
         min_value=0,
         max_value=int(df['avg_games_per_machine'].max()),
         value=1000,
-        step=100
+        step=100,
     )
 
     st.session_state.show_low_confidence = st.sidebar.checkbox(
-        "参考値を表示（低信頼度）",
-        value=False,
-        help="G数が少ないデータも表示"
+        "参考値を表示（低信頼度）", value=False, help="G数が少ないデータも表示"
     )
 
     # 機種フィルタ
     st.session_state.machine_type = st.sidebar.selectbox(
-        "🎰 機種タイプ",
-        ["all", "jug", "hana", "oki", "other"],
-        help="末尾別分析で使用"
+        "🎰 機種タイプ", ["all", "jug", "hana", "oki", "other"], help="末尾別分析で使用"
     )
 
 st.sidebar.markdown("---")
@@ -199,8 +202,11 @@ except Exception as e:
 # ========================================
 
 st.markdown("---")
-st.markdown(f"""
+st.markdown(
+    f"""
 <div style="text-align: center; color: #888; font-size: 12px;">
     {FOOTER_TEXT}
 </div>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)

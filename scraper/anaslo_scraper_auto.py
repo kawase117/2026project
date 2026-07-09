@@ -25,9 +25,9 @@ from typing import Any
 from bs4 import BeautifulSoup
 
 
-DEFAULT_LIST_URL = "https://ana-slo.com/%e3%83%9b%e3%83%bc%e3%83%ab%e3%83%87%e3%83%bc%e3%82%bf/%e6%9d%b1%e4%ba%ac%e9%83%bd/%e3%81%bf%e3%81%a8%e3%82%84%e5%a4%a7%e6%a3%ae%e7%94%ba%e5%ba%97-%e3%83%87%e3%83%bc%e3%82%bf%e4%b8%80%e8%a6%a7/"
-DEFAULT_START_DATE = "20260601"
-DEFAULT_END_DATE = "20260604"
+DEFAULT_LIST_URL = "https://ana-slo.com/%E3%83%9B%E3%83%BC%E3%83%AB%E3%83%87%E3%83%BC%E3%82%BF/%E6%9D%B1%E4%BA%AC%E9%83%BD/%E6%A5%BD%E5%9C%92%E8%92%B2%E7%94%B0%E5%BA%97-%E3%83%87%E3%83%BC%E3%82%BF%E4%B8%80%E8%A6%A7/"
+DEFAULT_START_DATE = "20260612"
+DEFAULT_END_DATE = "20260612"
 
 
 def project_root() -> Path:
@@ -100,11 +100,7 @@ def load_hall_config(config_filename: str = "hall_config.json") -> list[dict[str
         return []
 
     halls = config.get("halls", [])
-    active_halls = [
-        hall
-        for hall in halls
-        if hall.get("active", hall.get("enabled", True))
-    ]
+    active_halls = [hall for hall in halls if hall.get("active", hall.get("enabled", True))]
     if not active_halls:
         print("[ERROR] アクティブなホール設定が見つかりません")
         return []
@@ -143,9 +139,7 @@ async def launch_browser(headless: bool):
     try:
         from playwright.async_api import async_playwright
     except ImportError as exc:
-        raise RuntimeError(
-            "playwright が見つかりません。venv に依存関係を入れてから実行してください。"
-        ) from exc
+        raise RuntimeError("playwright が見つかりません。venv に依存関係を入れてから実行してください。") from exc
 
     playwright = await async_playwright().start()
     browser = await playwright.chromium.launch(
@@ -255,7 +249,7 @@ async def find_and_click_link_hybrid(page, target_url: str, date_str: str) -> bo
         space_url = target_url
         prefix = f"https://ana-slo.com/{hyphen_date}-"
         if target_url.startswith(prefix):
-            hall_and_suffix = target_url[len(prefix):]
+            hall_and_suffix = target_url[len(prefix) :]
             if hall_and_suffix.endswith("-data/"):
                 hall_encoded = hall_and_suffix[: -len("-data/")]
                 space_url = prefix + hall_encoded.replace("-", "%20") + "-data/"
@@ -535,7 +529,9 @@ def print_summary(success_dates: list[str], failed_dates: list[str], hall_name: 
     print("=" * 70)
 
 
-async def date_range_scrape(start_date_str: str, end_date_str: str, list_url: str, *, headless: bool = False, db_path: str = "pachinko_data.db") -> tuple[int, int]:
+async def date_range_scrape(
+    start_date_str: str, end_date_str: str, list_url: str, *, headless: bool = False, db_path: str = "pachinko_data.db"
+) -> tuple[int, int]:
     browser = None
     try:
         browser = await launch_browser(headless=headless)

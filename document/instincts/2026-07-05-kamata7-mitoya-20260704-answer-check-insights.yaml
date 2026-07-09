@@ -1,0 +1,79 @@
+---
+id: kamata7-saturday-triplet-splits-by-machine-type-digit
+trigger: "蒲田七の土曜（三台並びイベント日）に台選びを行う時、または[[kamata7-weekday-investment-pattern-ground-truth]]の『土曜=末尾連番3台』ルールを適用する時"
+confidence: 0.85
+scope: hall-specific
+hall: kamata7
+domain: pachinko-domain-analysis
+source: user-ground-truth
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田七の土曜「三台並び」は機種タイプ(A/N)で対象末尾が分岐する（2026-07-04で実証）
+
+## 背景
+2026/07/04（土曜、DD=4・通常日）の蒲田七の実績データ（DB更新後）で答え合わせを行ったところ、ユーザーから「ノーマル機（ジャグ・ハナハナ＝A機）は末尾4を含む三台並び、AT（A機以外＝N機）は末尾8を含む三台並びだった」という現場情報が提供され、実データでも極めて明確に裏付けられた。
+
+- **N機の8トリオ**: 台3068-3070（ミリオンゴッド‐神々の軌跡‐）平均diff **+10,333**、台3037-3039（ソードアート・オンラインII）平均diff **+9,800**。いずれもホール全体平均(+97.6)を100倍以上上回る突出値。
+- **A機の4トリオ**: 台3272-3274（マイジャグラーV）平均diff **+3,966.7**（3273=+5,000, 3272=+4,500がA機全体で当日TOP2）。
+
+既存instinct `kamata7-weekday-investment-pattern-ground-truth`（2026-05-25作成）は「土曜=三台並び、末尾クラスタ6-7-8」とA/N機種タイプを分けずに記載していたが、今回の実データはN機ではこのクラスタと整合する一方、A機は全く別の末尾帯（3-4付近）に投入されていたことを示した。**土曜の三台並びルールは機種タイプで対象末尾帯が分岐する**ことが2026-07-04の1日分だが具体的な数値で確認された。
+
+## アクション
+- 蒲田七の土曜の台選びでは、「三台並び」を機種タイプ非依存の単一ルールとして適用しない。**A機（ジャグ・ハナハナ）は末尾4付近、N機（AT系）は末尾8付近の連番3台ブロック**を別々に探索する。
+- 角番ルール（中間台優位）で選んだ候補プールの中に、末尾クラスタの中心となる台番号が含まれているかを追加でチェックする。今回、3F_R_Aの「角番5-11中間台」候補プールには実際に当たった3272-3274ブロックが含まれていたが、最終推薦の例示リストでは具体的に明示されていなかった（候補プールに入っているだけでは不十分、明示的な「連番3台ブロック」抽出を推薦ロジックに組み込む必要がある）。
+- サンプルはまだ1日分のみ。次回以降の土曜データでも同じA=4/N=8の分岐が再現するか確認し、再現すれば`kamata7-weekday-investment-pattern-ground-truth`本体の表を「土曜: A機=末尾4トリオ, N機=末尾8トリオ」に更新する。
+
+## 例
+```python
+def find_hot_triplet(df, center_digit, seg_filter):
+    """center_digitを含む連番3台ブロックのうち平均diffが最大のものを返す"""
+    sub = df[df["seg"] == seg_filter].set_index("machine_number")["diff_coins_normalized"]
+    candidates = []
+    for m in sub.index:
+        if any((m + offset) % 10 == center_digit for offset in (-1, 0, 1)):
+            trip = [m - 1, m, m + 1]
+            if all(t in sub.index for t in trip):
+                candidates.append((trip, sub.loc[trip].mean()))
+    return max(candidates, key=lambda x: x[1]) if candidates else None
+
+# 土曜の推薦生成時:
+a_hot = find_hot_triplet(df, center_digit=4, seg_filter="A")   # 例: [3272,3273,3274]
+n_hot = find_hot_triplet(df, center_digit=8, seg_filter="N")   # 例: [3068,3069,3070]
+```
+
+---
+id: kamata7-cooling-zone-3061-3070-refuted-on-20260704
+trigger: "蒲田七の可変冷却ゾーン(3061-3070等)の回避判断を行う時、または[[kamata7-cooling-zone-vs-corner-rule-cross-check-required]]を適用する時"
+confidence: 0.6
+scope: hall-specific
+hall: kamata7
+domain: pachinko-domain-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 「可変冷却ゾーンは非イベント日に回避」ルールが2026-07-04（非イベント日）に外れた
+
+## 背景
+document/kamata7_theory.mdの冷却ゾーンの二分法では、3061-3070は「可変冷却」（DD7等のイベント日のみ回復、非イベント日は回避）に分類されている。2026/07/04はDD=4の非イベント日だったため、このルールに従い3061-3070を推薦候補から除外した。
+
+しかし実績データでは、台3068-3070（ミリオンゴッド‐神々の軌跡‐）が当日+8,800/+13,100/+9,100という蒲田七全体で最大級の値を記録した。これは[[kamata7-saturday-triplet-splits-by-machine-type-digit]]で確認した「土曜×N機×末尾8トリオ」パターンの中心そのものであり、DD由来のイベント回復ではなく、曜日由来（土曜=三台並び）の別の投入ロジックがこのゾーンを一時的に「熱く」した可能性が高い。
+
+## アクション
+- 冷却ゾーンの「非イベント日は回避」判定は、**DD由来のイベント日判定のみを見ている**ため、曜日由来の投入パターン（土曜の三台並び等）と衝突しうる。冷却ゾーン判定を適用する前に、当日が「曜日固有の投入イベント」（土曜=三台並び等）に該当しないかを先にチェックすること。
+- 該当する場合は、冷却ゾーンの回避判定よりも曜日ベースの末尾トリオ探索（[[kamata7-saturday-triplet-splits-by-machine-type-digit]]参照）を優先する。
+- サンプル1日のみのため、次回の非イベント日・非土曜のケースでも3061-3070が冷えたままかを再確認し、再現すれば元の「可変冷却」判定自体は維持してよい（今回はDD由来ルールと曜日由来ルールが競合しただけで、DD側の判定自体が誤りとは断定しない）。
+
+## 例
+```python
+# NG: DD由来の冷却ゾーン判定だけで機械的に除外
+if is_variable_cooling_zone(machine) and not is_event_day(dd):
+    exclude(machine)
+
+# OK: 曜日由来の投入イベントを先にチェックしてから冷却ゾーン判定を適用
+if weekday == "土" :
+    check_saturday_triplet_pattern(machines)  # 該当ブロックは冷却ゾーン判定より優先
+elif is_variable_cooling_zone(machine) and not is_event_day(dd):
+    exclude(machine)
+```

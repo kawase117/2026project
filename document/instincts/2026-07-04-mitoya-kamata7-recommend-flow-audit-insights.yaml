@@ -1,0 +1,99 @@
+---
+id: mitoya-recommend-optimized-weights-never-synced-to-production
+trigger: "みとやの台選びスクリプト(eda/mitoya_recommend.py, eda/mitoya_recommend_backtest.py)を実行・修正する時、または『台選びフローが古くないか確認して』と依頼された時"
+confidence: 0.95
+domain: pachinko-domain-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# みとや台選びスクリプトが独自にwalk-forward最適化済みの重みを本番コードに反映していなかった
+
+## 背景
+ユーザーから「台選びフローが古い形式になっていないか確認して、更新できるフローがあれば更新して」という依頼を受けた。調査の結果、`eda/mitoya_recommend_optimize.py`によるwalk-forward最適化が既に実行済みで、結果が`eda/results/mitoya_optimize_best.json`（lift@10_avg=255.4）に保存されていたにもかかわらず、本番スクリプト`eda/mitoya_recommend.py`の`_score_machine()`と`eda/mitoya_recommend_backtest.py`の`CURRENT_WEIGHTS`は旧い手動重み（lift@10_avg=185.5相当）のまま放置されていた。
+
+さらに重大なバグとして、`h_nonjug_corner1_nonevent_penalty`という変数名にもかかわらず値が **+50**（ボーナス）になっていた。document/mitoya_theory.mdでは非イベント日のh_nonjug corner1はavg_diff **-160**の「罠」と明記されており、既存の最適化グリッドサーチ（`STAGE2_GRID`）も最初から負の値[-200,-150,-100,-50,0]を探索するよう設計されていた形跡があった（つまり開発者は本来ネガティブになるべきと認識していたが、本番の初期値・現行値には反映し忘れていた）。最適化結果は-100だった。
+
+## アクション
+- 「フローが古くないか」「更新できる箇所はあるか」と聞かれたら、理論文書(theory.md)とスコアリングコード(_score_machine等)の数値を1行ずつ突き合わせるだけでなく、**該当ドメインのoptimize/backtestスクリプトの出力ファイル（JSON/CSV）が既に存在しないか確認する**。既に検証済みの改善結果が本番コードに反映されず眠っているケースがある。
+- 変数名・辞書キーの命名（`_penalty`, `_bonus`等）だけで符号が正しいと判断しない。必ず実際の値を確認し、理論文書に記載の実測avg_diffの符号と一致するか照合する。
+- optimize系スクリプトのグリッド定義（探索範囲）自体が、開発者の「本来あるべき符号」についての手がかりになる場合がある（このケースでは負の値を含むグリッドが定義されていたのに、ベースライン値は正のままだった）。
+- 修正は本番CLIスクリプト（`mitoya_recommend.py`の`_score_machine`）と、optimizeの基準値として使われる`mitoya_recommend_backtest.py`の`CURRENT_WEIGHTS`の両方に同期させること。前者だけ直すと「現行=最適化結果」の前提が崩れ、次回の最適化実行時に古い基準と比較してしまう。
+
+## 例
+```python
+# NG: 変数名は "penalty" だが値が正でボーナスとして機能してしまう
+CURRENT_WEIGHTS = {
+    "h_nonjug_corner1_nonevent_penalty": 50.0,  # 理論書のavg_diff=-160と矛盾
+}
+
+# OK: eda/results/mitoya_optimize_best.jsonの最適化結果(-100)と同期
+CURRENT_WEIGHTS = {
+    "h_nonjug_corner1_nonevent_penalty": -100.0,
+}
+```
+
+---
+id: kamata7-cooling-zone-vs-corner-rule-cross-check-required
+trigger: "蒲田七でDDビン別角番ルール(3F_L_A角5, 3F_L_N/3F_R_A中間台等)から具体的な台番号を選定する時"
+confidence: 0.85
+domain: pachinko-domain-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田七の角番ルールと冷却ゾーン判定は独立に適用すると衝突する
+
+## 背景
+2026/07/04（DD=4, 通常日, 土曜）の台選び予測で、DD1-6ビンの角番ルール「3F_L_A→角5」を機械的に全セクションに適用したところ、候補の1つ（台3135、マイジャグラーV、セクション3131-3143の角5）が、document/kamata7_theory.mdに記載の「構造的冷却ゾーン」（3131-3140、常時回避）に含まれていることが判明した。同様に3F_L_Nの中間台(角番5-11)ルールも、セクション3058-3072・3073-3087の一部が「可変冷却ゾーン」（非イベント日は回避、イベント日のみ回復）と重なっていた。
+
+角番ルールと冷却ゾーンルールは理論文書の別々の節（2.1角番 / 冷却ゾーンの二分法）に記載されており、machine-levelで統合されていない。単純に「DDビン表→最強角番→該当セクション全部」を機械的に適用すると、回避すべき台を推薦してしまう。
+
+## アクション
+- 蒲田七の台選定では、角番/末尾ルールで候補を出した後、必ず「その台番号が既知の冷却ゾーンブロック（3061-3070, 3081-3090, 3131-3140等）に含まれないか」を最終チェックとして通すこと。
+- 今日が非イベント日なら「可変冷却」も「構造的冷却」も両方回避対象（可変冷却はイベント日のみ回復するため）。イベント日なら可変冷却は候補に戻してよいが構造的冷却は常時回避。
+- 同一セクション内で複数の角番が候補になり得る場合（例: 角5とd8/d9末尾台特定シグナルが同じセクションにある場合）、冷却ゾーンに触れていない方の台・セクションを優先する。
+
+## 例
+```python
+COOLING_ZONES_STRUCTURAL = [(3131, 3140)]  # 常時回避
+COOLING_ZONES_VARIABLE = [(3061, 3070), (3081, 3090)]  # 非イベント日のみ回避
+
+def in_cooling_zone(machine_number: int, is_event_day: bool) -> bool:
+    if any(lo <= machine_number <= hi for lo, hi in COOLING_ZONES_STRUCTURAL):
+        return True
+    if not is_event_day and any(lo <= machine_number <= hi for lo, hi in COOLING_ZONES_VARIABLE):
+        return True
+    return False
+
+candidates = [m for m in corner_rule_candidates if not in_cooling_zone(m, is_event_day)]
+```
+
+---
+id: predict-gated-requires-actual-outcome-data-not-for-live-prediction
+trigger: "ml/experiments/walkforward_scoring/predict_gated.py や類似のwalk-forward評価スクリプトを『今日・明日の予測』のために実行しようとする時"
+confidence: 0.9
+domain: pachinko-domain-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# predict_gated.pyはプレイ済みの過去日を評価するツールであり、未実施の当日を事前予測するツールではない
+
+## 背景
+蒲田七の2026/07/04（当日）予測でLayer0（GATED/NOGATE判定）を確認しようと`python -m ml.experiments.walkforward_scoring.predict_gated --date 20260704`を実行したところ、`No data for 2026-07-04`のエラーで失敗した。原因を確認すると、このスクリプトは対象日の実績データ（machine_detailed_results等）が既にDBに存在することを前提にした**バックテスト/事後評価ツール**であり、まだプレイされていない当日・翌日には原理的に使えない。
+
+「当日の台選び予測をしてほしい」という依頼に対して、既存のwalk-forward MLパイプラインをそのまま流用しようとすると、この種の失敗が起きる。事前予測には理論文書ベースのルールベース判断（Layer1-4の手動適用）か、専用の「ライブ予測」モードを持つスクリプトが必要。
+
+## アクション
+- 当日・未来日の予測を依頼された場合、まず対象スクリプトが「事後評価用」か「事前予測用」かを確認する。DBに対象日の行が存在するかどうかで簡単に判定できる（`SELECT MAX(date) FROM machine_detailed_results`と比較）。
+- 事後評価専用ツールしか存在しない場合は、理論文書(theory.md)のルール（Layer0-4等）を手動適用し、DB最新日のレイアウト・実績データで具体的な台番号を特定する運用に切り替える。
+- Layer0（GATED/NOGATE）のように「その日にならないと判定できない」項目は、事前予測では「判定不能」と明示し、確信度を標準にとどめる。存在しないデータを無理に埋めない。
+
+## 例
+```python
+# 事前チェック: 対象日がDBに存在するか確認してから実行方針を決める
+latest_date = pd.read_sql_query("SELECT MAX(date) as d FROM machine_detailed_results", conn)["d"].iloc[0]
+if target_date > latest_date:
+    print("対象日は未プレイ。predict_gated.py等の事後評価ツールは使えない。理論ルールを手動適用する。")
+```

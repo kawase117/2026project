@@ -1,0 +1,217 @@
+---
+id: mitoya-h-jug-corner1-structural-premium
+trigger: "みとやh_jugセグメントの角番効果を評価するとき"
+confidence: 0.90
+domain: hall-strategy-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# h_jugのcorner1は構造的プレミアム（イベント日非依存）
+
+## 背景
+Phase 10cで水平ジャグラー（h_jug）のcorner1（rank_from_aisle=1）が全日+463、非イベント日+407、plus_rate 57-59%と、イベント日に依存せず常時プラスであることが判明。rank1→4で+463→+259→+135→+6の単調減少グラデーションが確認された。KW p<0.001だがε²=0.007と効果量は小さい。
+
+## アクション
+- h_jugのcorner1（rank_from_aisle=1-3）は「角番ゾーン」として特徴量に組み込む価値がある
+- 非イベント日でも有効なため、全日モデルに適用可能
+- ただしε²が小さいため、単独特徴量としては弱い。他の軸（DD、末尾）との組み合わせで増幅を検証すべき
+
+## 例
+h_jug corner1 all_day: avg_diff=+463, plus_rate=59.1%, n=1610
+h_jug corner1 nonevent: avg_diff=+407, plus_rate=57.3%, n=1091
+h_jug corner2-4 all_day: avg_diff=+134, n=4710
+h_jug corner5-9 all_day: avg_diff=+54, n=7744
+
+---
+id: mitoya-h-nonjug-corner1-event-only-trap
+trigger: "みとやh_nonjugセグメントの角番をML特徴量に使うとき"
+confidence: 0.88
+domain: hall-strategy-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# h_nonjugのcorner1は非イベント日で罠、イベント日のみ有効
+
+## 背景
+h_nonjug（水平非ジャグ＝AT機等）のcorner1は全日で+67と弱プラスだが、非イベント日では-160と全バケット最悪。一方X_DDSでは+639、月末では+729と爆発的にプラスになる。ホール側の戦略として「イベント日だけAT機の通路端に高設定を投入し、非イベント日は低設定で回転率を稼ぐ」パターンが推測される。
+
+## アクション
+- h_nonjugのcorner1は必ずイベント日フラグとの交互作用項として使う（単体使用は逆効果）
+- 非イベント日のcorner1は「避けるべき台」のシグナルになりうる
+- Phase 10dで検証済み: DD個別の角番効果はn=54で不安定。DD=7ではdelta=-222（逆効果）、DD=24のみdelta=+895(p=0.003)だが多重比較補正後は境界的。DD個別フラグは作らず is_xdds レベルに留める
+
+## 例
+h_nonjug corner1 X_DDS: avg_diff=+639, n=843
+h_nonjug corner1 月末: avg_diff=+729, n=121
+h_nonjug corner1 非イベント日: avg_diff=-160, n=2593
+h_nonjug corner10+ 非イベント日: avg_diff=-117, n=18111
+
+---
+id: mitoya-vertical-section-no-corner-effect
+trigger: "みとや縦島（v_jug/v_nonjug）で角番分析を行うとき"
+confidence: 0.85
+domain: hall-strategy-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 縦島では角番効果が存在しない
+
+## 背景
+v_jugはKW p=0.123（全日）/ p=0.153（非イベント日）、v_nonjugは全日p=0.001だがcorner1が最低値（-282）という逆パターン。イベントカテゴリ別でもv系は全カテゴリでKW p>0.2（v_nonjug非イベント日のp=0.003のみ例外）。通路から見える位置関係が水平島と根本的に異なり、角番という概念自体が縦島では機能していない。
+
+## アクション
+- v_jug/v_nonjugではcorner_bucketやrank_from_aisleを特徴量として使わない
+- 縦島には別の位置シグナル（上下端、中央等）の探索が必要かもしれないが、現データでは有意な構造は見えない
+- v_nonjugのcorner1は-358（非イベント日）と顕著にマイナス→低設定配置の可能性
+
+## 例
+v_jug corner KW: p=0.123 (all_day), p=0.153 (nonevent)
+v_nonjug corner1 all_day: avg_diff=-282, n=1410
+v_nonjug corner1 nonevent: avg_diff=-358, n=927
+v_jug X_DDS corner KW: p=0.644 (no effect even on event days)
+
+---
+id: mitoya-corner-effect-orientation-dependent
+trigger: "みとやの角番効果をモデルに組み込むとき"
+confidence: 0.92
+domain: feature-engineering
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 角番効果はorientation依存：水平島のみ有効、縦島では無効
+
+## 背景
+Phase 10cの全セグメント分析により、角番効果はorientation（水平/垂直）で根本的に異なることが確定。水平島（h_jug: ε²=0.007, h_nonjug: ε²小だがイベント日交互作用大）では有意、縦島（v_jug/v_nonjug）では無効またはcorner1が最低値。mixed_805はp=0.227で効果なし。
+
+## アクション
+- corner_bucket特徴量にはorientation条件を必ず付与する
+- h系: corner_bucket（またはrank_from_aisle binned）を特徴量に含める
+- v系/mixed: corner関連特徴量を除外するか、ゼロ埋めする
+- h_nonjugではイベント日交互作用が必須（非イベント日で逆効果のため）
+
+## 例
+feature_engineering:
+  h_jug: corner_bucket (standalone OK)
+  h_nonjug: corner_bucket × is_event_day (interaction required)
+  v_jug: DO NOT USE corner features
+  v_nonjug: DO NOT USE corner features
+  mixed_805: DO NOT USE corner features
+
+---
+id: mitoya-dd-individual-corner-not-reliable
+trigger: "みとやのDD個別（4,7,14,17,24,27）で角番フラグを作ろうとするとき"
+confidence: 0.92
+domain: feature-engineering
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# DD個別の角番フラグは過学習リスクが高く作るべきではない
+
+## 背景
+Phase 10dでDD別corner1 vs restのMWU検定を5セグメント×6DD=30回実施。有意(p<0.05)は8件だがBonferroni補正(α=0.0017)後はh_jug DD=7,14の2件のみ。各セルn=51-54と極めて薄い。DD=7ではh_jug corner1が+643だがh_nonjugは-222、DD=24ではh_nonjug corner1が+895だがh_jugは+175(n.s.)と、DDごとにセグメント間で挙動が逆転する。「DD=7,14,24だけ角番有効日」というフラグ化は、ノイズからパターンを切り出すリスクが高い。
+
+## アクション
+- DD個別の角番フラグは作らない
+- 特徴量は `corner1 × is_xdds × jug_flag` の粒度に留める（Phase 10cの知見を維持）
+- DD個別の差は「存在するかもしれないが現データ量では確定不能」として保留
+- ホール側が「14日はジャグ角1、24日はAT角1」という日替わり戦略を取る合理的理由もない
+
+## 例
+Bonferroni補正後に有意なDD×segment:
+  h_jug DD=7: delta=+643, MWU p=0.001 (survives)
+  h_jug DD=14: delta=+696, MWU p=0.001 (survives)
+  h_nonjug DD=24: delta=+895, MWU p=0.003 (DOES NOT survive α=0.0017)
+30回中2件のみ→特定DDフラグではなく is_xdds 一括が安全
+
+---
+id: mitoya-xdds-fine-rank-not-monotonic
+trigger: "みとやX_DDS日のrank_from_aisleで単調減少を前提とするとき"
+confidence: 0.88
+domain: hall-strategy-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# X_DDS日のfine rank分析は単調減少ではない
+
+## 背景
+Phase 10dでX_DDS日のrank 1-5を精密検証。h_jugはrank1=+566が最高だがrank5=+370, rank3=+379と非単調（rank4=+83だけ急落）。h_nonjugではrank2=+669, rank4=+674がrank1=+639を上回り、奇数rankが低い周期的パターンが見える。v系・mixed_805はKW非有意(p>0.2)。
+
+## アクション
+- rank_from_aisleの生値を連続特徴量として使うのは不適切（非単調のため）
+- corner_bucket（1, 2-4, 5-9, 10+）のバケット化が妥当
+- h_nonjugの偶奇パターンは追加検証でノイズ確定（MWU p=0.258、セクション間で符号バラバラ、物理配置も1列で左右交互なし）
+- mixed_805のみrank1→5の単調減少が成立するがn=106/rank、統計的に弱い
+
+## 例
+h_jug X_DDS fine rank: 1→+566, 2→+351, 3→+379, 4→+83, 5→+370 (非単調)
+h_nonjug X_DDS fine rank: 1→+639, 2→+669, 3→+185, 4→+674, 5→+302 (偶数rank優位に見えたがノイズ)
+v_jug X_DDS fine rank KW: p=0.617 (no structure)
+
+---
+id: mitoya-dd24-h-nonjug-corner1-rule-based
+trigger: "みとやDD=24の推薦ロジックを設計するとき"
+confidence: 0.82
+domain: recommendation-rule
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# DD=24はh_nonjug corner1に高設定投入の再現性が高い（ルールベース補正向き）
+
+## 背景
+DD=7 vs DD=24の日別データ深掘りにより、h_nonjug corner1の投入パターンが質的に異なることが判明。DD=24は18日中16日がプラス（平均+1147）で安定。DD=7は18日中8日がマイナス（平均+73）で日ごとのブレが大きい。全体平均（corner1以外含む）はDD=7とDD=24で差なし（MWU p=0.37）→角1だけの投入戦略差。h_jugは逆にDD=7で角1が強い（+747, p=0.001）。ただしn=143（DD=24 h_nonjug corner1全体）、n=8/日と薄く、ML特徴量としての3重交互作用（dd==24 × h_nonjug × corner1）は過学習リスクが高い。
+
+## アクション
+- ML特徴量にはしない（過学習リスク）
+- 推薦ロジックのルールベース補正として保持: DD=24のh_nonjug corner1を+1段階ブースト
+- DD=7ではh_jug corner1をブースト、h_nonjug corner1はニュートラルまたは減点
+- セクション523-539のDD=24 corner1は-770で例外（この列だけDD=24に角1を入れない）
+- 月次で再現性をモニタリングし、パターン崩壊を検知する仕組みが必要
+
+## 例
+DD=24 h_nonjug corner1 日別: 18日中16日プラス, avg=+1147
+  高い日: 20250724(+4005), 20260324(+3643), 20250924(+1986)
+  低い日: 20250224(-2125), 20250324(-466) のみマイナス
+DD=7 h_nonjug corner1 日別: 18日中10日プラス, avg=+73
+  ブレ幅: +2229 ~ -1139
+DD=7 h_jug corner1: avg=+747, 安定（MWU p=0.001）
+
+推薦ルール案:
+  if dd==24 and segment==h_nonjug and rank_from_aisle==1 and section!='523-539':
+    boost += 1
+  if dd==7 and segment==h_jug and rank_from_aisle<=3:
+    boost += 1
+
+---
+id: mitoya-h-nonjug-oddeven-rank-noise-confirmed
+trigger: "みとやh_nonjugのrank偶奇パターンを検討するとき"
+confidence: 0.95
+domain: hall-strategy-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# h_nonjugのrank偶奇パターンはノイズ（検証済み）
+
+## 背景
+Phase 10dでh_nonjug X_DDS日のfine rank分析でrank2,4がrank1,3,5を上回る偶奇パターンが見えたが、追加検証でノイズと確定。Odd vs Even MWU p=0.258。11セクション個別にdelta(even-odd)を計算すると+539～-209で符号がバラバラ。物理配置もy=定数の1列配置で、左右交互という構造は存在しない。
+
+## アクション
+- rank偶奇の区別は特徴量にもルールにも使わない
+- Phase 10dの少量サンプル（rank1つあたりn≈820）が作った偶然の偏り
+- 今後同様の「綺麗すぎるパターン」が出たら、セクション別分解で再現性を確認してからアクションする
+
+## 例
+h_nonjug X_DDS Odd vs Even: MWU p=0.258
+Section-level delta(even-odd):
+  501-522: +539, 523-539: -68, 540-556: -76, 557-573: +273
+  574-590: -209, 591-607: +62, 608-623: +43, 624-640: -69
+  → 符号がバラバラ、セクション横断の構造的パターンではない
+
+---

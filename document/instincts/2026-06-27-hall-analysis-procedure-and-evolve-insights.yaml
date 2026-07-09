@@ -1,0 +1,163 @@
+---
+id: hall-analysis-procedure-six-phases
+trigger: "新しいホールの分析を開始するとき / 蒲田7以外のホールにMLモデルを適用するとき"
+confidence: 0.95
+scope: methodology
+domain: methodology
+source: session-design
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 他ホール分析は6フェーズの手順で進める
+
+## 背景
+2026-06-27 蒲田7で確立した分析手順を一般化し、document/plans/hall-analysis-procedure.mdとして手順書化。
+蒲田7での地雷（Simpson's Paradox、角番定義誤り、イベント日流用、鉄台除外忘れ等）を回避する構造化されたフローを設計。
+
+## アクション
+Phase 0(データ基盤) → Phase 1(セグメント決定) → Phase 2(角番定義) → Phase 3(変数スクリーニング) → Phase 4(耐久性検証) → Phase 5(theory.md作成) → Phase 6(ML組み込み) の順で進める。Phase 1が最重要で、これを間違えると全ての下流分析が汚染される。
+
+## 例
+手順書: document/plans/hall-analysis-procedure.md
+
+---
+id: segment-determination-must-come-first
+trigger: "新ホールでEDAを開始するとき / セグメント未確定の状態で変数効果を分析しようとするとき"
+confidence: 0.98
+scope: methodology
+domain: analysis-methodology
+source: session-design
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# セグメント決定は全ての分析に先行する — 後回しにすると全結果が汚染される
+
+## 背景
+蒲田7で全体集計のA機Top3(d3/d4)とN機Top3(d6/d8)が逆相関(ρ=-0.418)になるSimpson's Paradoxが発生。
+セグメント未分割の状態で「末尾Xが強い」と主張しても、フロア/機種タイプ/セクションサイズの交絡で無意味になる。
+
+## アクション
+1. フロア分割（複数フロアなら必須）
+2. A/N分割（機種名でジャグラー/ハナハナを判定。A機<10%なら分割しない）
+3. セクションサイズ確認（small≤8/medium9-14/large15+）
+4. LR分割は安易に入れない（蒲田7でF値=0.03、section_sizeの1/1000）
+5. 1セグメント50台未満は統計的に危険
+
+## 例
+蒲田7: 2F_L_N/2F_R_N/3F_L_A/3F_L_N/3F_R_A/3F_R_N の6セグメント
+みとや: section列がそのまま物理的な島単位
+
+---
+id: kakuban-definition-requires-epsilon-comparison
+trigger: "新ホールで角番の定義を決めるとき / rank_from_min vs rank_from_max vs rank_from_aisle を選ぶとき"
+confidence: 0.96
+scope: methodology
+domain: analysis-methodology
+source: session-design
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 角番定義はε²で3種比較して選ぶ — 定義を間違えると効果が5倍変わる
+
+## 背景
+みとや大森町店で rank_from_aisle のε²=0.002482 vs rank_from_min のε²=0.000488 で5.1倍の差。
+台番号の並び方向が島ごとに交互に逆転するホール（みとやなど）では、rank_from_minだけでは通路からの距離を正しく表せない。
+
+## アクション
+1. 座標CSVがあれば、各セクション内の台番号×X座標の相関で正順/逆順を判定
+2. 座標CSVがなければ、rank_from_min/max両方でKW検定し、ε²が大きい方を採用
+3. 交互配置が判明したら hall_config.json の reversed_sections に登録 → rank_from_aisle が自動計算される
+
+## 例
+```python
+for rank_col in ['rank_from_min', 'rank_from_max', 'rank_from_aisle']:
+    stat, p = kruskal(*[seg_df[seg_df[rank_col]==k]['diff_coins_normalized'] for k in seg_df[rank_col].unique()])
+    epsilon_sq = stat / (len(seg_df) - 1)
+    print(f"{rank_col}: ε²={epsilon_sq:.6f}")
+```
+
+---
+id: kamata7-findings-not-transferable-procedure-is
+trigger: "蒲田7の知見を他ホールに適用しようとするとき / 他ホールで「末尾Xが強い」と主張するとき"
+confidence: 0.97
+scope: methodology
+domain: methodology
+source: session-design
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田7の結論は移植禁止、手順のみ移植する
+
+## 背景
+蒲田7と蒲田1（同系列マルハン）で曜日効果が完全に逆転している実証例がある:
+- 蒲田7: 水曜最強(+1.5pp) / 金曜最弱(-4.2pp)
+- 蒲田1: 火曜最強(+3.4pp) / 水曜弱い(-2.0pp)
+末尾、DD、イベント日の法則もすべてホール固有。
+
+## アクション
+移植可能なもの: 分析手順（KW検定→耐久性検証→theory.md作成）、アンチパターンの検出方法、3フェーズモデルの方向（新台→テコ入れ→定番の改善方向）
+移植禁止なもの: 「末尾d8が強い」「水曜がイベント日」「角番5-11が最強」等の具体的な結論
+
+## 例
+| 項目 | 移植可否 | 理由 |
+|------|---------|------|
+| 角番中間台優位の方向 | △条件付き | 島サイズで最強角番が変わる |
+| 曜日パターン | ✗禁止 | ホール間で逆転する |
+| イベント日定義 | ✗禁止 | event_digitsがホール固有 |
+| 3フェーズ単調改善 | ○方向のみ | 全9ホールで確認済み |
+
+---
+id: evolve-manual-clustering-needed-for-domain-specific
+trigger: "instinct evolve --generateの結果が不十分だったとき / ドメイン特化プロジェクトでinstinctをスキル化するとき"
+confidence: 0.85
+scope: methodology
+domain: claude-code-config
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ドメイン特化プロジェクトではinstinct evolveの自動クラスタリングは不十分 — 手動分析が必要
+
+## 背景
+2026-06-27 instinct-cli.py evolve --generate を実行。460 instinctsに対してスキル候補0件、
+コマンド候補1件（文字化けで無効）。パチンコドメインの専門用語が多く、汎用的なテキスト類似度では
+意味のあるクラスタが形成されない。
+
+## アクション
+1. domain列でグルーピング（python3スクリプトで集計）
+2. 5件以上×平均confidence≥0.85のドメインを進化候補として抽出
+3. キーワード検索で横断的なクラスタ（walkforward/debut/lookahead等）を手動で特定
+4. 既存の進化済みスキルとの重複を確認してから新規作成/更新を判断
+
+## 例
+手動分析結果: ml-evaluation(52件), pachinko-analysis(50件), ml-feature-engineering(44件)等のクラスタを発見。
+walkforward(43件), debut-lifecycle(25件), lookahead-prevention(16件)の横断クラスタを特定し、
+5つのスキルを新規作成/更新。
+
+---
+id: segment-50-machine-minimum-for-statistical-power
+trigger: "セグメント分割で小さなセグメントを作ろうとするとき / A機セグメントの分割を検討するとき"
+confidence: 0.90
+scope: methodology
+domain: analysis-methodology
+source: session-design
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 1セグメント50台未満は検定力不足で偽シグナルを生む
+
+## 背景
+蒲田7の3F_R_N（74台）でさえbootstrap検出力=0.503（境界）で「シグナルが存在しないとは断定しない」レベル。
+みとやのバラエティ島（20台）を独立セグメントとして分析すると、少数台依存のアーティファクトが頻発する。
+
+## アクション
+- 50台未満のセグメントは隣接セグメントと統合するか、分析対象から除外
+- A機が全体の10%未満（例: 2F A機が15台しかない）なら、A/N分割しない
+- 小規模ホール（100台未満）ではセグメント数を2-3に抑える
+
+## 例
+| ホール規模 | 推奨セグメント数 |
+|-----------|---------------|
+| 100台未満 | 2-3（A/Nのみ or フロアのみ） |
+| 100-300台 | 3-4（フロア×A/N） |
+| 300台+ | 4-6（フロア×LR×A/N、LR有効な場合のみ） |

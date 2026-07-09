@@ -1,0 +1,125 @@
+---
+id: juggler-hall-pooled-dd-rb-5series-verdict
+trigger: "ホールのジャグラー全体でDD別(日付の日)の設定投入戦略(5のつく日など)を検証したいとき"
+confidence: 0.75
+domain: pachinko-hall-strategy
+source: session-observation
+project_id: pachinko-analyzer-2026project
+project_name: 2026project
+
+# 全ジャグラー機種をホール内で合算したDD別RB確率スキャン：ARROW・楽園に5系日パターン、金時は非該当
+
+## 背景
+「ゴーゴージャグラーはDD別に上振れる」仮説を機種別に検証すると効果量が小さく閾値
+未満のものが多かったが、機種別ではなく**ホール内の全ジャグラー機種を合算**して
+DD別RB確率を見ると、ARROWと楽園でだけ明確な「5のつく日(5,15,25系)」パターンが
+浮き上がった。ホール横断でのプールは行わず、あくまでhall内でmachine_nameを
+横断して合算している(feedback-no-cross-hall-pooling とは矛盾しない)。
+
+具体的な結果(eda/juggler_all_hall_dd_rb_trend_scan.py の
+build_hall_pooled_dd_profile、game>=2000フィルタ):
+- ARROW: 全体期間top3={15,5,25}、直近60日top3={5,15,25} → 両期間で完全に同じ
+  集合(順位のみ入れ替わり)。rho=0.620。effect_sizeは全体0.0135/直近0.0296で
+  直近側のみ閾値0.02を超える。
+- 楽園: 全体期間top3={25,22,15}、直近60日top3={5,25,11} → 5・15・25・22が
+  両期間に散らばって出現し方向性は一致するが、effect_sizeは両期間とも0.02未満
+  (0.0059/0.0184)でギリギリ閾値割れ。rho=0.417。
+- 金時: 全体期間top3={9,13,23}、直近60日top3={16,26,11} → 5・15・25は
+  どちらにも一切出現しない。ユーザーの当初仮説「楽園・ARROW・金時が5のつく日
+  傾向」のうち、金時はホール合算で見ても機種別で見ても支持されない。
+- その他(みとや/蒲田7/蒲田1/レイトギャップ/ヒロキ/ザシティ)は5系日パターンは
+  見られない。
+
+## アクション
+- 「5のつく日」戦略はARROW・楽園に限定した仮説として扱い、他ホールや金時には
+  適用しないこと。
+- 機種別のKruskal-Wallis effect_size(閾値0.02)だけで判定すると弱い信号を
+  見逃すため、「ホール内で全機種のtop3 DDが同じ集合に収束するか」を
+  補助的な検証軸として併用する。単一機種では閾値割れでも、ホール全体で
+  一貫していれば実在する可能性が高い(ARROWは9機種中9機種が5系にヒット、
+  金時は2/9で偶然の範囲内だった)。
+- 機種別分析からホール合算分析へ切り替える際は、既存の`load_jug_frame`の
+  出力(dd, rb_prob, rb_count, games列)をmachine_nameでgroupbyせず全体で
+  集計すればよく、`_dd_profile`/`_kruskal_on_rb`/`_format_range`は
+  そのまま再利用できる。
+
+## 例
+`eda/results/juggler_dd_rb_trend/all_halls_pooled_summary.csv` の
+ARROW行: full_top3_dd=[15,5,25], recent_top3_dd=[5,15,25], spearman_rho=0.620。
+金時行: full_top3_dd=[9,13,23], recent_top3_dd=[16,26,11]（5系皆無）。
+
+---
+id: mitoya-juggler-girls-dd24-setting5-6-level-rb
+trigger: "みとやのジャグラーガールズ(または縦島の弱いSection配置機種)のDD別強さを評価するとき"
+confidence: 0.55
+domain: pachinko-hall-strategy
+source: session-observation
+project_id: pachinko-analyzer-2026project
+project_name: 2026project
+
+# みとや×ジャグラーガールズはSection的に弱い配置でもDD24だけ設定5〜6級のRB確率が出る
+
+## 背景
+みとやのジャグラーガールズは縦島配置で「弱い」Sectionに置かれている機種だが、
+DD別RB確率スキャンでは直近60日のDD24だけ突出して高い値(rb_rate_pooled≈1/263.9,
+n=12)を示した。ジャグラーガールズSSの設定別RB確率スペック
+(ml/experiments/jug_rb_setting_prediction/config.py の "GALS" エントリ)では
+設定5=1/270.8、設定6=1/252.1であり、観測値1/263.9はちょうどこの間に入る。
+つまりSectionとしては弱い置かれ方をしている機種でも、DD24限定で設定5〜6級の
+挙動が出ている可能性がある。ただしn=12は`min_cell_n_for_dd`(5)は満たすが
+かなり薄いサンプルで、単発の当たりで確定視するのは早い。
+
+## アクション
+- 機種のSection配置の強弱(縦島/横島、角番など)だけで機種のポテンシャルを
+  判断せず、DD別に薄いサンプルでも局所的なスパイクがあるかを必ず確認する。
+- RB確率の実測値を評価する際は、ml/experiments/jug_rb_setting_prediction/config.py
+  の設定別スペック表(rb_probability/bb_probability/payout_rate)と対比して
+  「設定何番相当か」で語ると説得力が増す。rb_probability_analysis.py の
+  TARGETS辞書(設定4相当のみ)より config.py の方が全設定(1-6)をカバーしており
+  詳細な比較にはこちらを使う。
+- n=12のような薄いセルは、複数期(次の60日ウィンドウなど)で再現するかを
+  確認してから instinct の確信度を上げること。
+
+## 例
+`eda/results/juggler_dd_rb_trend/all_halls_dd_profile.csv` の
+(hall=みとや, machine_name=ジャグラーガールズ, period=recent60d, dd=24)行:
+n=12, rb_rate_pooled=0.003789(=1/263.9)。
+config.py: GALS設定5={rb_probability: 1/270.8}, 設定6={rb_probability: 1/252.1}。
+
+---
+id: kamata1-dd-switch-cycle-multi-window-needed
+trigger: "蒲田1のジャグラーDD戦略を『長期的には信号ゼロ、短期では信号あり』と評価するとき"
+confidence: 0.5
+domain: ml-methodology
+source: session-observation
+project_id: pachinko-analyzer-2026project
+project_name: 2026project
+
+# 蒲田1は全体期間effect_sizeが軒並み閾値未満なのに直近60日は6/9機種で閾値超え：短周期切替の仮説だが未証明
+
+## 背景
+蒲田1はジャグラー9機種全てで全体期間のKruskal effect_sizeが0.02未満
+(最大0.0121)とほぼ信号ゼロだが、直近60日だけ見ると6/9機種
+(ウルトラミラクル/ゴーゴー3/ジャグラーガールズ/ハッピー/ファンキー2/マイジャグ)
+でeffect_size>=0.02の信号が出る。これは「長期平均では均されて消えるが、
+どの60日窓を切っても中では強い偏りがある(戦略を頻繁に切り替えている)」
+という仮説と整合するが、全体期間 vs 直近60日の2点比較だけでは
+「一度だけ変わって今の状態が続いている」のか「数週間おきに切り替わっている」
+のかを区別できない。
+
+## アクション
+- 蒲田1で短周期切替仮説を検証したい場合、直近1年を60日窓4〜6個程度に
+  分割し、各窓でtop_ddが窓ごとに入れ替わるか(連続する窓同士のrhoが低いか)
+  を確認する連続ウィンドウ分析が必要。既存の`build_hall_pooled_dd_profile`/
+  `analyze_machine`はwindow_index=0(直近)/1(全体)の2値設計なので、
+  複数窓対応には`machine_dd_recent_window_scan.py`の
+  `_window_bounds(window_index=0,1,2,...)`パターンを拡張する。
+- 「全体期間で信号なし・直近だけ信号あり」を即座に「戦略変更」と解釈しない。
+  同じ理屈は蒲田7・楽園・金時の一部機種にも当てはまるため、蒲田1固有の
+  現象と主張する前に他ホールとの発生率比較が必要。
+
+## 例
+蒲田1サマリー(game>=2000): ゴーゴージャグラー3 full_effect=0.0081→
+recent_effect=0.0210、ジャグラーガールズ full_effect=0.0089→recent_effect=0.0442、
+ファンキージャグラー2 full_effect=0.0056→recent_effect=0.0336。
+---

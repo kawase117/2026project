@@ -1,0 +1,119 @@
+---
+id: hit104-rate-confounds-machine-spec-with-hall-intent
+trigger: "機種間でhit104_rate/payout_rateを直接比較するとき"
+confidence: 0.90
+domain: ml-feature-engineering
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 絶対閾値(104%)による機種比較は機種スペックとホール裁量を混同する
+
+## 背景
+3ホール(蒲田1/蒲田7/みとや)で機種別hit104_rateを集計した結果、ジャグラー系ノーマル機（ジャグラーガールズ、ネオアイムジャグラーEX、ゴーゴージャグラー3、マイジャグラーV等）が全ホール共通でhit104_rate=25〜26%と低く、かつホール間のばらつきも小さかった(range 1.1〜4.3pt)。これは公表機械割レンジが狭い機種スペックの限界であり、ホールの設定投入戦略とは無関係。一方、同じ機種群のbottom3_lift（その日のホール内相対順位で下位3台に入る頻度、設置台数で正規化したリフト比）はほぼ0(0.00〜0.02)で、相対指標では全く不利ではなかった。
+
+## アクション
+機種間比較では絶対閾値ベースの指標(hit104_rate、payout_rateの絶対値)を主指標にしない。設置台数で正規化した相対順位ベースの指標（Top3/Bottom3選出リフト比など）を優先する。機種スペックの影響を切り分けたい場合は、同一機種名が複数ホールに存在するケースを使い、ホール間のばらつき(range/std)が小さければスペック起因、大きければホール裁量の候補と判定する。
+
+## 例
+eda/machine_name_significance_scan.py の hit104_rate と bottom3_lift を比較。ジャグラー系: hit104_rate=25-26%(全ホール共通で低い) だが bottom3_lift≈0(不利ではない)。
+
+---
+id: large-n-kruskal-chi2-pvalue-uninformative
+trigger: "n=10万件超のデータでKruskal-Wallis/カイ二乗検定を行うとき"
+confidence: 0.93
+domain: statistical-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 大サンプルでのp値はほぼ常に0になり判断材料にならない。効果量を主指標にする
+
+## 背景
+機種別のKruskal-Wallis検定(n=125,608〜236,469)で全指標・全ホールでp≈0だったが、効果量(epsilon squared)はhit104_rateで0.007〜0.008、avg_payout_rateで0.017〜0.033と、いずれも"small"閾値(0.01〜0.06)以下かその境界。同様にTop3/Bottom3選出のカイ二乗検定でもp≈0だがCramér's Vは0.08〜0.17程度。p値だけを見ると「機種間に有意差がある」と誤読するが、実質的な説明力は乏しい。
+
+## アクション
+n>1万件クラスのデータで検定するときは、p値を「発見」として報告しない。Kruskal-Wallisはepsilon squared(small≈0.01, medium≈0.06, large≈0.14)、カイ二乗はCramér's V(small≈0.1, medium≈0.3, large≈0.5)を主指標として結果を解釈する。複数機種×複数ホール×複数軸で検定数が多い場合はさらに多重比較の観点から個別p値を無視し、効果量ランキングで議論する。
+
+## 例
+eda/machine_name_significance_scan.py, eda/machine_volatility_event_gap_scan.py の significance_summary.csv で epsilon_sq/cramers_v 列を主指標として運用。
+
+---
+id: n-active-is-hall-wide-not-per-machine-type
+trigger: "n_active列やホール全体の稼働台数フィルタの意味を確認するとき"
+confidence: 0.85
+domain: eda-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# n_activeは特定機種の設置台数ではなくホール全体の当日稼働台数
+
+## 背景
+Top3/Bottom3ランキングはホール全体の中でのその日の順位なので、n_active(games_normalized>=400を満たす当日の稼働台数)もホール全体の合計値。蒲田七のような数百台規模のホールではn_active<6（ホール全体が6台未満稼働）はほぼ発生しない。ユーザーが「特定機種が6台以上ある日がほとんど無い」という意味だと誤解した実例があった。
+
+## アクション
+n_active系のフィルタや列を説明するときは「ホール全体の当日稼働台数」であることを明示する。機種単位の設置台数と混同されやすいので、変数名や出力列名にhall/machineのスコープを明記するか、説明時に必ず両者を対比して述べる。
+
+## 例
+eda/machine_name_significance_scan.py の n_active = groupby("date")["machine_number"].transform("nunique")（全機種合算）。
+
+---
+id: chronic-bottom-machine-not-explained-by-known-event-axis
+trigger: "特定機種の高ボラティリティ(hit104率とbottom3率が両方高い)をイベント軸で説明しようとするとき"
+confidence: 0.85
+domain: ml-feature-engineering
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 慢性的ワースト機種の下振れは既知のDD/曜日イベント軸ではほぼ説明できない
+
+## 背景
+東京喰種は全3ホール共通でbottom3_lift最高（慢性的にその日のワースト3に入りやすい）かつhit104_rateも平均より高い(高ボラティリティ機種)。is_any_event/is_x_day/is_weekendでevent日/通常日に分割して検定した結果、hit104_gapは全ホール・全軸で弱いが一貫してプラス(Cramér's V 0.017〜0.12、ほぼsmall未満)だったが、bottom3_gapはホールごとに符号が割れ(蒲田1+、蒲田7/みとや-)、Cramér's Vはほぼ0(0.0002〜0.031)で信号なし。ボラティリティ上位機種全体で見ても、既知のイベント軸でCramér's V>=0.1を示す機種は蒲田1で5.9%、蒲田7/みとやで0%だった。
+
+## アクション
+「機種の高ボラティリティ＝既知のイベントカレンダーによる投入格差」という仮説は安易に採用しない。hit104側の弱い上振れ効果と、bottom3側の説明力ゼロは別々に評価する。集約軸(is_x_day全体)でテストすると、ホール×特定DD限定の鋭い信号が平均化されて薄まる点に注意し、必要なら機種×DD単位(1〜31)の粒度まで分解して確認する。
+
+## 例
+eda/machine_volatility_event_gap_scan.py の summary_report.csv。東京喰種のbottom3_gap: 蒲田1=+0.63(p=0.35), 蒲田7=-0.33(p=0.18), みとや=-0.65(p=0.29)。全て非有意かつ符号不安定。
+
+---
+id: event-day-effect-is-hall-and-dd-specific-not-uniform
+trigger: "「27日」「7のつく日」等のDD群イベント効果を複数ホールで一般化しようとするとき"
+confidence: 0.87
+domain: hall-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 「27日全設定」等のDD単位の強い日は特定ホール・特定機種に限定され、他ホールには一般化できない
+
+## 背景
+東京喰種のDD別(1〜31)hit104_rate/avg_payoutを3ホールで比較。蒲田7ではdd27がavg_payout=107.14(31日中最高)、hit104_rate=45.5%(最高)で明確に突出。蒲田1ではdd27は平凡(36.8%, 102.10)で、代わりにdd7が突出(46.2%, 106.30)。みとやではdd27もdd7も平凡で、dd14/dd4/dd24が突出。「7のつく日」グループ内でも蒲田7はdd7とdd27が強くdd17は平凡、というように同一グループ内でも一様ではない。
+
+## アクション
+特定DD（27日など）のイベント効果を語るときは、必ずホール名と機種名をセットで確認する。is_x_dayのようなDD群を束ねた集約軸での検定は、ホール×DD特異的な強い信号を平均化して薄めてしまうため、集約軸で効果が小さく出ても個別DDで強い信号が隠れている可能性を疑う。
+
+## 例
+東京喰種dd27: 蒲田7=45.5%/107.14(最高), 蒲田1=36.8%/102.10(平凡), みとや=40.8%/102.10(平凡)。
+
+---
+id: cross-hall-same-machine-name-disentangles-spec-vs-hall-intent
+trigger: "機種の低パフォーマンスが機種スペック起因かホールの設定投入戦略起因か切り分けたいとき"
+confidence: 0.85
+domain: ml-feature-engineering
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 同一機種名の複数ホール比較で機種スペックとホール裁量を切り分けられる
+
+## 背景
+新規DBクエリなしで、既存の機種別サマリーCSV(eda/results/machine_name_significance/*.csv)を機種名でマージするだけで実施可能。ホール間のhit104_rateのばらつき(range)が小さい機種はスペック起因（ジャグラー系: range 1.1〜4.3pt）、大きい機種はホール裁量の候補（回胴黙示録カイジ 狂宴: range 22.7pt、ただし現在ほぼ撤去済みのため実運用価値は低い）と分類できた。
+
+## アクション
+機種の強弱を評価する際、可能な限り複数ホールに設置されている機種を対象に選び、ホール間分散の大小で「スペック限界」と「ホール裁量」を切り分けてから、bottom3_lift等の相対指標を解釈する。単一ホールのみのデータで機種を評価すると、この2つの原因を混同したまま結論を出すリスクがある。
+
+## 例
+Bashでの即時集計: 3ホールのmachine_summary.csvをmachine_nameでマージし、groupby("machine_name")でhit104_rateのstd/rangeを比較。

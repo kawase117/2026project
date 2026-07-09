@@ -1,0 +1,78 @@
+---
+id: next-day-persistence-test-invalid-for-daily-rerandomized-halls
+trigger: "台単位の今日ラベル(hit104等)が翌日の実績をどれだけ予測できるかで、2つのラベル(例: hit104 vs ソフトラベルp_high_setting)の優劣を判定しようとするとき"
+confidence: 0.7
+scope: methodology
+domain: hall-behavior
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 台単位の翌日persistence検証は「設定が日毎に再ランダム化されるホール」では判定力そのものが無い
+
+## 背景
+`p_high_setting`(GMMソフトラベル)が`hit104`より情報量を持つかを検証するため、
+`ml/experiments/label_redesign/persistence_validation.py`で台単位の翌日ペア(暦日連続日のみ)を
+構築し、「今日のラベル→翌日のhit104/payout_rate」のAUC・相関を比較した。
+
+蒲田7・蒲田1・みとやの3ホール全てで、`hit104`自身の翌日予測AUCが0.4936〜0.5038
+（実質チャンスレベル）、`corr_hit104_vs_next_payout`もほぼゼロ（±0.003程度）だった。
+つまりベースラインのラベルすら翌日をほとんど予測できておらず、
+「今日→翌日」という枠組みでは2つのラベルの優劣を判定する検定力が原理的に存在しなかった。
+`auc_diff`はp_high_settingの方がわずかに低く(−0.011〜−0.015)ブートストラップCIも
+0を跨がなかったが、これはn=11万〜23万という桁違いの標本数による統計的有意性であり、
+効果量としては実務的に無視できる水準だった。
+
+## アクション
+- 台単位の「今日→翌日」persistence testを、ラベルの優劣判定の主手段として採用する前に、
+  まずベースラインラベル自身の翌日予測AUCがチャンスレベル(0.5付近)でないかを確認する。
+  ベースライン自体がチャンスレベルなら、この検証設計では判定不能と判断し、
+  「ラベルに情報がない」と結論しない
+- このプロジェクトの前提（設定は台単位で日毎に再ランダム化される、`ml/CLAUDE.md`の
+  店側ランダム化戦略）と整合する結果であり、台個体レベルの日次持続性を前提にした検証は
+  そもそもこのドメインに合わない
+- ラベル比較をやり直す場合は、`ml/experiments/walkforward_scoring/`の既存walk-forward
+  パイプライン（曜日・DD・角番等の構造的特徴量→held-out日の予測）に載せて比較する方が
+  検定力・妥当性ともに高い
+- 日次persistenceの切り口自体を維持したい場合は、個別台ではなく`(dd, machine_digit)`や
+  曜日等のセル集計単位での持続性を見る（集計で検定力を稼ぐ）
+
+## 例
+蒲田7: n_pairs=231,620, auc(hit104)=0.5037, auc(p_high_setting)=0.4924, auc_diff=-0.0113
+（significant=Trueだが効果量は無視できる水準）。蒲田1・みとやも同様のパターン。
+
+---
+id: bootstrap-significance-flag-must-be-direction-agnostic
+trigger: "2群の差(A−B)についてブートストラップ信頼区間から有意性フラグ(bool)を実装するとき"
+confidence: 0.75
+scope: code-review-checklist
+domain: ml-code-review
+source: code-review
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 有意性フラグを「diff>0かつCI下限>0」のように片方向だけで実装すると、逆方向の有意差を「有意差なし」と誤報告する
+
+## 背景
+`ml/experiments/label_redesign/persistence_validation.py`のレビューで、
+`significant = bool(base_diff > 0 and ci_lo > 0)`という実装を発見した。
+これだとA(p_high_setting)がBより有意に劣る場合（diff<0かつCI上限<0、つまり
+CIは0を跨いでいない）でも`significant=False`と報告されてしまい、
+「Bの方が有意に優れていた」という重要な結果を「有意差なし」と誤って握りつぶす。
+
+指示元の計画書は「CIが0を跨がなければ有意」と方向を問わず定義しており、
+「diff>0かつ有意」という条件は解釈・結論を書く段階でのみ使うべきものだった。
+実装時にこの2つ（統計的有意性の判定 と 解釈上の推奨可否）を混同していた。
+
+## アクション
+- 差の有意性フラグは`ci_lo > 0 or ci_hi < 0`のように方向非依存で実装する
+- 「Aの方が優れている場合のみ有意扱いにする」といった片方向条件は、
+  有意性フラグそのものではなく、その後の解釈・レコメンド文言の側に置く
+- レビュー時は`base_diff > 0 and ...`のような片方向条件が有意性判定に混入していないかを
+  必ずチェックする。テストケースとして「逆方向でも有意になるべきケース」
+  （例: `test_negative_auc_diff_can_still_be_significant`）を用意させる
+
+## 例
+修正前: `significant = bool(base_diff > 0 and ci_lo > 0)`
+修正後: `significant = bool(ci_lo > 0 or ci_hi < 0)`
+（方向判定は`auc_diff > 0`を別途参照して解釈文言側で行う）

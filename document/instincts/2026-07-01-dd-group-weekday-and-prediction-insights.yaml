@@ -1,0 +1,219 @@
+---
+id: kamata7-7kei-monday-signal-corrected
+trigger: "蒲田7の7系×月曜のシグナル強度を使うとき、または既存instinct kamata7-7kei-monday-strongest-signalを参照するとき"
+confidence: 0.92
+domain: hall-strategy
+source: session-correction
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 【修正】蒲田7 7系×月 は +207（+807ではない）— 7/7除外後の正確値
+
+## 背景
+既存instinct `kamata7-7kei-monday-strongest-signal` の +807 という値は、蒲田7の7/7周年イベント（全台高設定日）を除外していない状態で計算されたものだった。
+2026-06-30に `eda/dd_group_weekday_interaction_3halls.py` を7/7除外ありで実行した結果、7系×月 は avg +207（Tier C）に修正された。
+周年日が全台高設定であることが統計を大幅に歪めていたことが判明。
+
+## アクション
+- 蒲田7の7系シグナルとして月曜を「最強」扱いしてはならない
+- 7系の実際の強い曜日は **7系×木(+386, Tier B)** と **7系×日(+323, Tier B)**
+- +807という数値を根拠に月曜への大量投資をする戦略は再評価が必要
+- 7/7周年日を含むあらゆる統計計算では除外ロジックが必須
+
+## 例
+修正前（誤）: 7系×月 = +807, CI=[692,930], Tier A
+修正後（正）: 7系×月 = +207, Tier C
+正しい強シグナル: 7系×木 = +386 (Tier B), 7系×日 = +323 (Tier B)
+
+---
+id: mitoya-4kei-all-weekday-tier-b
+trigger: "みとやの4系イベント日の曜日選択を検討するとき"
+confidence: 0.88
+domain: hall-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# みとや 4系は全曜日でTier B — 土曜限定ではなかった
+
+## 背景
+既存instinct `mitoya-4kei-saturday-signal` はみとやの4系×土曜（+356）を報告していたが、
+全曜日スキャンを実施した結果、4系は土曜以外の曜日でもすべてTier B圏内であることが判明。
+みとやの4系イベント日は曜日を問わず安定してプラスになる構造。
+
+## アクション
+- みとや4系イベント日は曜日に関係なく全日程でプラス期待値がある
+- 特定曜日に限定してみとやを避ける必要はない
+- 土曜(+356)が最強であることは変わらないが、平日でも投資対象として有効
+- 4系イベントカレンダー（DD4,14,24,7,17,27 のうちDDが4系に相当する日）は全曜日でカバー可
+
+## 例
+みとや4系×全曜日: Tier B（月〜日すべて）
+土曜が最強(+356)、最弱曜日でも Tier B 範囲内
+比較: 蒲田7・蒲田1の4系は Tier C（みとやの4系は特別に安定）
+
+---
+id: mitoya-7kei-sunday-tier-b
+trigger: "みとやの7系イベント日を検討するとき"
+confidence: 0.82
+domain: hall-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# みとや 7系×日曜 Tier B（+168）— 新発見シグナル
+
+## 背景
+みとやの7系シグナルは4系ほど強くなく、ほとんどの曜日でTier C だが、
+日曜だけ例外的に Tier B（+168）を示す。
+これまで `mitoya-4kei-saturday-signal` のみが報告されており、みとやの7系は未検証だった。
+
+## アクション
+- みとや DD27（7系）は基本的に信号弱いが、日曜との組み合わせは Tier B
+- DD7/17/27×日曜はみとやで積極的に狙える組み合わせ
+- 土曜×DD27（7系×土曜）は Tier C — 2026-06-27の的中率低迷と一致
+
+## 例
+みとや7系×日 = +168, Tier B
+みとや7系×土 = Tier C（DD27/土曜の予測失敗の構造的説明）
+みとや4系×全曜日 > みとや7系（4系の方が信頼度が高い）
+
+---
+id: kamata1-dd-group-weekday-all-null
+trigger: "蒲田1でDD系統×曜日の組み合わせを根拠に台選択をしようとするとき"
+confidence: 0.90
+domain: hall-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1 DD系統×曜日 全パターンTier C — 初回スキャン結果
+
+## 背景
+蒲田1のDD系統×曜日の交互作用スキャンは今まで実施されたことがなかった。
+2026-06-30に `eda/dd_group_weekday_interaction_3halls.py` で初めて全組み合わせを検証。
+結果：蒲田1は4系×全曜日、7系×全曜日ともにすべてTier C。
+既存instinct `weekday-digit-nth-single-dim-all-null` が蒲田1でも成立することを確認。
+
+## アクション
+- 蒲田1でDD系統×曜日を根拠に台を絞り込んではならない
+- 蒲田1の正しい絞り込み軸は末尾（特に末尾8、spread=586）
+- DD30の蒲田1は曜日ではなく末尾・個別台の過去実績で判断する
+
+## 例
+蒲田1 4系×月〜日: 全てTier C
+蒲田1 7系×月〜日: 全てTier C
+有効な軸: 末尾8(avg +564, 14日中12日プラス) → `kamata1-dd30-digit8-dominant` 参照
+
+---
+id: 7kei-saturday-weakest-dd27-failure-explanation
+trigger: "DD27（7系×土曜）の予測精度が低かった原因を考えるとき、または7系イベント日が土曜に当たるとき"
+confidence: 0.88
+domain: prediction-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 7系×土曜は全ホールで7系最弱曜日 — DD27/土曜の予測失敗の構造的原因
+
+## 背景
+2026-06-27（DD27、土曜）の3ホール候補台予測が全て実績と大幅に外れた（台レベルヒット率20-30%、Top10重複0-1件）。
+全ホールのDD系統×曜日スキャン結果を照合した結果、7系×土曜はどのホールでも7系の中で最弱曜日であることが判明。
+- 蒲田7: 7系×土曜 = +150（Tier C）、7系×木(+386)・日(+323)に比べて著しく弱い
+- みとや: 7系×土曜 = Tier C
+- 蒲田1: 7系×土曜 = Tier C（全組み合わせTier C）
+
+## アクション
+- 7系イベントが土曜に当たる週は「外しやすい週」として期待値を下げる
+- DD7/17/27が土曜の場合、投資金額を減額または見送りを検討
+- 同じDD27でも日曜や木曜なら期待値が高い（曜日ローテーション考慮が必要）
+- 土曜は3台並び戦略（蒲田7 weekday pattern）が本命で、7系狙いは副次的に留める
+
+## 例
+2026-06-27: DD27×土曜 → 蒲田7 Top10重複0件、みとや Top10重複1件
+7系×土曜 vs 7系×木曜（蒲田7）: +150 vs +386（+236差）
+曜日別7系期待値: 木≈日 > 月（修正後+207） > 火・水 > 土（最弱+150）
+
+---
+id: zenki-event-unpredictable-from-avg-diff
+trigger: "全台系イベント（特定機種全台高設定）を事前に予測しようとするとき"
+confidence: 0.85
+domain: prediction-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 全台系イベントは平均差枚ベースでは予測不可 — ただし機種×曜日×DD条件で兆候あり
+
+## 背景
+2026-06-27の蒲田7で東京喰種全台系イベントが発生。事前の候補台予測はこれを全く捉えられなかった。
+- 歴史的DD27における東京喰種のランク: 中位（rank=56/101）— 平均差枚ベースでは上位に来ない
+- ただし 土曜×DD27 の東京喰種全台系イベント発生率: 2/3回=67%（全体ベースライン1.7%）
+全台系が入ると非参加機種のTop10差枚が圧縮される（3000枚未満が並ぶ異常）。
+
+## アクション
+- 平均差枚・過去実績ランキングだけでは全台系イベントを予測できない
+- 機種×曜日×DDの組み合わせ条件でフラグを立てる追加チェックが有効
+- 土曜×DD27×東京喰種はほぼ全台系フラグ（n=3で過学習リスクあり、継続観察必要）
+- 全台系が発生した日はその機種を除いたTop10実績が通常比で圧縮されることに注意
+
+## 例
+東京喰種×土曜×DD27 全台系発生率: 67%（2/3件）vs ベースライン1.7%
+全台系発生日のTop10: avg 2,500-3,000枚（通常の Top10: avg 5,000枚以上）
+全台系フラグ定義: plus率≥70% かつ n≥5台 の機種が出現した日
+
+---
+id: machine-turnover-invalidates-long-window-training
+trigger: "長期間の個別台過去実績を予測モデルの特徴量として使おうとするとき"
+confidence: 0.87
+domain: ml-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 機種入替が長期窓学習を無効化する — 個別台予測の根本的制約
+
+## 背景
+2026-06-27予測で、過去DD27実績のTop候補台と実際のTop10の重複が0-1件に留まった原因のひとつが機種入替。
+蒲田7は1年以上のデータで「過去のTop台」が特定できても、その台が同一機種であり続ける保証がない。
+機種入替後は台番号は同じでも全く別の機種が座っており、過去実績が無意味になる。
+
+## アクション
+- 個別台の学習窓は最大6ヶ月を上限として検討（機種サイクルを考慮）
+- 台番号固定の特徴量を使う場合は最終入替日を必ずチェック
+- 機種名+台番号の複合キーで管理し、機種変更時に実績をリセット
+- 機種レベルの特徴量（機種別過去実績）は台番号より安定した代替になりうる
+
+## 例
+蒲田7 DD27 Top10候補台のうち、実際にDD27でもTop10だった台: 0-1件
+主因: (1)7系×土曜が最弱曜日, (2)東京喰種全台系、(3)機種入替による学習データ無効化
+推奨窓: 直近3-6ヶ月（機種入替サイクルより短く保つ）
+
+---
+id: kishu-total-diff-as-budget-compression-metric
+trigger: "全台系・機種別出玉の規模を比較するとき、または機種の予算圧縮効果を評価するとき"
+confidence: 0.90
+domain: analysis-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 機種総差枚（n×avg_diff）が正しい予算圧縮評価指標
+
+## 背景
+全台系イベントが他機種のTop10差枚を圧縮するメカニズムを評価するとき、
+「平均差枚」だけを比べると台数の違いが見えなくなる。
+3台機種の平均+5,000枚 と 20台機種の平均+5,000枚 では、後者がホール投資の大半を占めており、他機種への配分は激減する。
+機種総差枚 = n × avg_diff が正しい「この機種がホール出玉バジェットのどれだけを使ったか」の指標。
+
+## アクション
+- 全台系イベントの「圧縮効果」分析には 機種総差枚（sum_diff または n×avg_diff）を使う
+- 機種ランキングを作るときは avg_diff と sum_diff の両方を確認する
+- ホール全体の出玉バジェットが一定だという仮定のもと、大台数機種の好調は他機種の低調を示唆
+- 実装は未完了（今後のEDAタスクとして残存）
+
+## 例
+東京喰種（20台）× avg+3,000 = 機種総差枚 +60,000
+ジャグラー（5台）× avg+5,000 = 機種総差枚 +25,000
+→ 出玉バジェット的にはジャグラーより東京喰種の方が大きい日だった
+分析スクリプト: 未実装（`eda/kishu_total_diff_analysis.py` として設計予定）

@@ -1,0 +1,105 @@
+---
+id: cooling-zone-bifurcation-variable-vs-structural
+trigger: "冷却ゾーンの性質を判定するとき、または新ホールでブロック別DD分析を行うとき"
+confidence: 0.88
+domain: segment-structure
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 冷却ゾーン二分法：可変冷却 vs 構造的冷却
+
+## 背景
+蒲田7の3Fで、DD条件付き10台ブロック分析により、冷却ゾーンには2種類あることが判明。
+全期間平均で低いブロックが、イベント日（DD7）に回復するか否かで性質が根本的に異なる。
+
+## アクション
+冷却ゾーンを検出したら、DD7（またはホール固有のイベント日）のリフト量で分類する：
+- **可変冷却**（DD7リフト≧5pp）: イベント日に通常レベルまで回復する。非イベント日のみ回避。
+  - 例: 3061-3070（avg=32.2%, DD7=37.5%, +5.3pp）、3081-3090（avg=32.1%, DD7=42.0%, +9.9pp）
+- **構造的冷却**（DD7リフト<2pp）: 全DD共通で冷え続ける死地。常時回避。
+  - 例: 3131-3140（avg=27.8%, DD7=28.3%, +0.5pp）
+検出基準: 全DD平均<30%かつイベント日リフト<2ppのブロック = 構造的冷却
+
+## 例
+```python
+# 構造的冷却ゾーン検出
+structural_cold = blocks[
+    (blocks['avg_all'] < 30) &
+    (blocks['dd7_lift'] < 2)
+]
+# 可変冷却ゾーン検出
+variable_cold = blocks[
+    (blocks['avg_all'] < 33) &
+    (blocks['dd7_lift'] >= 5)
+]
+```
+
+---
+id: dd7-floor-asymmetric-activation
+trigger: "イベント日の台選択戦略を決めるとき、またはフロア別推奨を生成するとき"
+confidence: 0.90
+domain: event-day-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# DD7フロア非対称活性化：2F全面 vs 3F Q2限定
+
+## 背景
+蒲田7のDD7（7のつく日）において、2Fと3Fで104%率のリフトパターンが大きく異なることが判明。
+2Fは全クォータイルで均等に+4.0pp上昇するが、3FはQ2（端から2番目のポジション）のみ+4.5pp突出し、
+Q4（中央奥）はむしろ控えめ（33.1%）。
+
+## アクション
+イベント日（DD7系）の台選択を2段階で分岐させる：
+1. **2F**: 全ポジションが候補。Q1-Q4の差が小さいため、加熱ゾーン（2131-2140: 49.6%等）を優先。
+2. **3F**: Q2ポジション（端から2番目）を重点候補にする。Q1（端席）とQ4（中央奥）は非イベント日と変わらず低い。
+   - 3F Q2のDD7: 37.0%（全体平均34.4%から+2.6pp）
+   - 3F Q1のDD7: 32.5%（全体平均以下）
+
+数値根拠：
+- 2F DD7 lift: avg 35.9% → 39.9%（+4.0pp）
+- 3F DD7 lift: avg 33.2% → 34.7%（+1.5pp）
+- DD7 特異ブロック: 2231-2240が56.0%（+18.9pp）、3241-3250が50.8%（+12.7pp）
+
+## 例
+```python
+if is_event_day_7(dd):
+    if floor == '2F':
+        # 全ポジション候補、加熱ゾーン優先
+        candidates = hot_blocks_2f
+    elif floor == '3F':
+        # Q2ポジション重点、Q1/Q4は避ける
+        candidates = blocks_3f[blocks_3f['quartile'] == 'Q2']
+```
+
+---
+id: even-odd-lr-axis-ineffective-under-dd
+trigger: "セグメント定義にEven/Odd（台番号偶奇）軸を含めるか検討するとき"
+confidence: 0.92
+domain: segment-definition
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Even/Odd（LR）軸はDD条件付きでも無効
+
+## 背景
+蒲田7の全31DD日で台番号の偶奇（Even/Odd）別104%率を比較した結果、
+5pp以上の差が出るDDは1つもなかった（最大: DD28の2.9pp）。
+全期間でも差なし（両方43.8%）であったが、DD条件付きでも差が出ないことが確認された。
+N数は各DD各群3000-4200と十分。
+
+## アクション
+蒲田7のセグメント定義からEven/Odd軸を除外してよい。
+セグメント軸はクォータイル（Q1-Q4）× フロア（2F/3F）を主軸とする。
+他ホールでも同様の3系統CSV（even_odd / quartile / section）を生成し、
+Even/Odd差が5pp超のDDが存在しないことを確認してから除外する。
+
+## 例
+全31DD日のEven/Odd差:
+- 最大: DD28 = 2.9pp（Odd優位）
+- 次点: DD2 = 2.4pp, DD18 = 2.3pp
+- 平均|diff|: 1.1pp
+- 5pp超のDD: なし

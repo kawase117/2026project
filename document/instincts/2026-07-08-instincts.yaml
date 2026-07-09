@@ -1,0 +1,157 @@
+---
+id: agmsg-on-windows-use-git-bash-not-windowsapps-bash
+trigger: "when sending agmsg messages from Codex Desktop on Windows"
+confidence: 0.98
+scope: methodology
+domain: tooling-environment
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# agmsg on Windows must be driven through Git Bash
+
+## Core claim
+Using the WindowsApps `bash.exe` path can route the command into the wrong shell and produce empty or misleading agmsg sends.
+
+## Evidence
+- n_observations: 1
+- data scope: tooling / cross-agent messaging
+- metric scope: delivery reliability
+- result summary: Git Bash preserved the expected environment, while the WindowsApps bash path did not.
+
+## Interpretation
+- For agmsg on this machine, explicitly invoke Git Bash.
+- Do not assume a generic `bash` resolves to the right runtime on Windows.
+
+## Action
+- Use the full Git Bash path when sending inbox/reply commands.
+- Verify the inbox result if the message body or shell context matters.
+
+## Status
+- status: active
+---
+id: kamata7-dashboard-routing-must-stay-in-sync-across-main-entrypoints
+trigger: "when adding, renaming, or moving Kamata7 dashboard pages"
+confidence: 0.96
+scope: dashboard-routing
+domain: dashboard-ui-patterns
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Kamata7 dashboard routes must be updated in both entrypoints
+
+## Core claim
+The Kamata7 dashboard only resolves new page keys reliably when `main_app.py` and `dashboard/main.py` are kept in sync; updating one router alone can still produce page-not-found errors.
+
+## Evidence
+- n_observations: 1
+- data scope: dashboard routing / page registry
+- metric scope: page lookup success
+- result summary: `kamata7_event_checks` and `kamata7_segments` were unavailable until the runtime entrypoint router was synced too.
+
+## Interpretation
+- `dashboard/main.py` is not the only routing surface in this repo.
+- A page can appear registered in one place and still fail at runtime if the other entrypoint is stale.
+
+## Action
+- When adding a Kamata7 page, patch both routers together and verify the actual startup path.
+- Keep routing tests aligned with the page registry update.
+
+## Status
+- status: active
+---
+id: kamata7-event-kind-summary-should-be-machine-count-weighted
+trigger: "when summarizing Kamata7 event kinds, DD buckets, or other day-level aggregates"
+confidence: 0.95
+scope: hall-dashboard
+domain: dashboard-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Day-level Kamata7 event summaries should be weighted by machine count
+
+## Core claim
+Kamata7 event-kind and DD summaries should use `machine_count`-weighted averages for rate-like columns so small cohorts do not distort the aggregate view.
+
+## Evidence
+- n_observations: 1
+- data scope: hall-day event summaries
+- metric scope: `avg_diff` / `avg_hit104_rate`
+- result summary: weighting corrected the DD17 count discrepancy and kept larger cohorts from being underrepresented.
+
+## Interpretation
+- Simple averaging of per-day rows is too coarse when cohort size varies.
+- Keep raw totals and counts visible alongside the weighted aggregate so the underlying volume is still auditable.
+
+## Action
+- Use `machine_count` as the weight for summary averages.
+- Report day counts and total diff separately from the weighted rates.
+
+## Status
+- status: active
+---
+id: agmsg-needs-ack-before-long-analysis
+trigger: "when a cross-agent task will involve multi-step analysis or implementation"
+confidence: 0.91
+scope: methodology
+domain: agent-coordination
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Send an early ACK before long work
+
+## Core claim
+agmsg coordination is cleaner when the receiver sends an early acknowledgment and a short plan before doing the full analysis.
+
+## Evidence
+- n_observations: 1
+- data scope: cross-agent coordination
+- metric scope: handoff clarity
+- result summary: "事後報告だけ" だと、相手の認識合わせが遅れた。
+
+## Interpretation
+- Final reports are necessary, but they are not enough for multi-step work.
+- Early ACKs reduce drift on scope, assumptions, and priorities.
+
+## Action
+- Start with receipt confirmation.
+- Follow with a brief plan or blocking question.
+- Send intermediate status when the task is large.
+
+## Status
+- status: active
+---
+id: kamata7-theory-dashboard-needs-japanese-tabs-and-fallbacks
+trigger: "when building or revising the Kamata7 theory dashboard"
+confidence: 0.97
+scope: dashboard
+domain: dashboard-ui-patterns
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Kamata7 theory tabs must be Japanese, explanatory, and failure-tolerant
+
+## Core claim
+The Kamata7 theory page is only useful when each tab explains its purpose in Japanese and falls back gracefully when a sample threshold removes all cells.
+
+## Evidence
+- n_observations: 1
+- data scope: hall dashboard / theory verification
+- metric scope: segment, event-day, dd x kakuban, cooling zone
+- result summary: 2F segments should always map to `*_N`, 3F uses A/N, and DD-kind/event-day breakdowns need explicit contribution views.
+
+## Interpretation
+- English labels or unlabeled tabs hide the theory being checked.
+- A strict `min_n` should not produce an empty dead-end; the page should explain what got filtered and show a lower-threshold reference view when appropriate.
+
+## Action
+- Keep tab labels, captions, and table headings in Japanese.
+- Show the six physical segments, DD-kind contribution, cooling-zone labels, and refutation notes explicitly.
+- If a filter empties a view, offer a reference view with `min_n=1`.
+
+## Status
+- status: active

@@ -1,0 +1,131 @@
+---
+id: dd30-all-three-halls-positive
+trigger: "DD30のホール選択を検討するとき"
+confidence: 0.90
+domain: hall-selection
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# DD30は蒲田1・蒲田7・みとや全3ホールでプラス圏
+
+## 背景
+2026-06-30セッションで3ホールのDD30平均差枚を比較。全ホールがDD30でプラス圏であることを確認。
+蒲田7: avg +342（lift +157, 10日中10日プラス）、蒲田1: avg +199（lift +148, 14日中13日プラス）、みとや: avg +148（lift +133, 14日中11日プラス）。
+
+## アクション
+DD30はどのホールに行っても全体平均よりプラス期待値が高い。ホール選択は「店全体の強さ」ではなく「台レベルの予測精度」で決めるべき。
+
+## 例
+DD30平均差枚ランキング: 蒲田7(+342) > 蒲田1(+199) > みとや(+148)
+ただし蒲田7はマイナス日ゼロ、みとやはマイナス3日で信頼度に差がある。
+
+---
+id: dd30-signal-strength-varies-by-hall
+trigger: "DD候補台の絞り込み方法を検討するとき"
+confidence: 0.92
+domain: prediction-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ホールごとに台予測の有効軸が異なる
+
+## 背景
+3ホールのDD30でシグナル強度を比較。末尾spread、セクションTop5再現率、個別台勝率を分析した結果、ホールごとに最適な絞り込み軸が全く異なることが判明。
+
+## アクション
+- 蒲田1: 末尾8を軸に絞る（spread=586、末尾8が79%でDD30平均超え）
+- みとや: セクション501-522（ミリゴ島）に集中（Top5再現率71%、3店中最高）
+- 蒲田7: 個別台を記憶して狙う（末尾/セクション軸は弱いが、個別台で勝率90%の台が存在）
+
+## 例
+蒲田1末尾8: 14日中12日プラス、avg +564。セクション再現率は7%で低い。
+みとやsec 501-522: Top5が日別Top5と3個以上重複する率71%。
+蒲田7 #2237モンキーターンV: 勝率90%（9/10日）だがセクション再現率は10%。
+
+---
+id: kamata1-dd30-digit8-dominant
+trigger: "蒲田1のDD30で台選択するとき"
+confidence: 0.88
+domain: hall-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1 DD30は末尾8が支配的シグナル
+
+## 背景
+蒲田1のDD30末尾別分析で末尾8がavg +564（2位の末尾5: +301を大幅に上回る）。14日中12日プラス。末尾8×sec 2177-2186の交差はavg +2,793で全交差中1位。
+
+## アクション
+DD30の蒲田1では末尾8台を優先的に狙う。特に信頼度重視なら#2228(ハッピージャグラーVIII, 勝率86%)、#2297(ネオアイムジャグラーEX, 勝率86%)。期待値重視なら#2178(ToLOVEる, avg +2,793)。
+
+## 例
+Top候補: #2178 avg+2793(57%), #2228 avg+1457(86%), #2297 avg+1636(86%), #2101 avg+1857(79%)
+避ける: #2040(avg -1686, 14%), #2166(avg -1643), #2120(avg -1571)
+
+---
+id: mitoya-dd30-section-540-556-cluster
+trigger: "みとやのDD30で台選択するとき"
+confidence: 0.87
+domain: hall-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# みとや DD30はセクション540-556（ミリゴ島）の末尾2・4・8が最強クラスタ
+
+## 背景
+みとやDD30はセクションTop5再現率71%で3店中最高の構造安定性。sec 540-556はミリオンゴッド島で、末尾4×sec 540-556がavg +2,230（全交差中1位）。この島の末尾2・4・8に3台集中すれば効率的。
+
+## アクション
+みとやDD30ではsec 540-556の末尾2(#542)・末尾4(#544)・末尾8(#548)を中心に狙う。#548は勝率79%（11/14日）で最も安定。#544はavg +2,580で期待値最大。
+
+## 例
+sec 540-556候補: #544(avg+2580, 64%), #542(avg+1877, 64%), #548(avg+1157, 79%)
+避ける: #517(avg -1684, 14%), #538(avg -1481, 21%), #636(avg -1346)
+
+---
+id: kamata7-dd30-individual-memory-required
+trigger: "蒲田7のDD30で台選択するとき"
+confidence: 0.85
+domain: hall-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田7 DD30は法則軸がなく個別台記憶型の戦略が必要
+
+## 背景
+蒲田7はDD30の店全体出玉が3店中最大（avg +342）だが、末尾spread=356（最小）、セクションTop5再現率=10%（最低）で「どの台に入るか」の予測シグナルが最弱。53セクション中Top1が10日間で9回異なるセクションになる。ただし個別台では#2237モンキーターンV（勝率90%）など高勝率台が存在。
+
+## アクション
+蒲田7DD30では事前に候補台リストを覚えて行くスタイルが必要。信頼度重視: #2237(90%), #2123(80%), #2302(80%), #2211(80%), #2279(80%)。期待値重視: #3264(avg+4380, 70%), #2201(avg+3830, 70%)。
+
+## 例
+Top候補: #2237 avg+2580(90%), #2123 avg+3420(80%), #2302 avg+3080(80%)
+避ける: sec 3234-3249（東京喰種島）3台連続Worst、sec 3088-3102（ヴァルヴレイヴ島）
+
+---
+id: dd30-heatmap-export-tool-available
+trigger: "DD別の候補台を視覚的に確認したいとき"
+confidence: 0.95
+domain: tooling
+source: session-implementation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# DD候補台ハイライトマップのエクスポートツールが利用可能
+
+## 背景
+2026-06-30セッションで設計、Codexが実装。平均差枚（背景色7段階: 赤→グレー→緑→金）×勝率（枠線4段階: 金太枠→緑→なし→赤点線）の二軸でフロアマップ上に候補台をハイライト表示するHTMLを生成する。
+
+## アクション
+python Heatmap/export_dd_candidates.py --dd 30 で3ホール分のHTMLを一括生成。html2canvasによるPNG保存ボタン付き。実戦前に毎日実行して候補台を視覚的に確認する。
+
+## 例
+python Heatmap/export_dd_candidates.py --dd 30
+python Heatmap/export_dd_candidates.py --dd 30 --halls kamata7
+python Heatmap/export_dd_candidates.py --dd 7 --output-dir tmp/
+設計プロンプト: document/plans/prompt_dd_candidate_heatmap_export.md

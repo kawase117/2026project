@@ -1,0 +1,118 @@
+---
+id: mitoya-section-was-two-rows-merged
+trigger: "みとやのセクション定義・角番分析・rank_from_aisle を扱うとき"
+confidence: 1.0
+domain: data-infrastructure
+source: session-discovery
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# みとやのHeatmap CSVセクション定義は2列が1セクションにまとまっていた
+
+## 背景
+Heatmap/mitoya_omorimachi_floor_coordinates.csv で 557-590 のような34台セクションが、実際には2つの物理列（y=29: 557-573, y=28: 574-590）を1セクションにまとめていた。これにより rank_from_aisle が列単位ではなくセクション通しの1-34になり、角番分析が不可能だった。hall_config.json の reversed_sections は最初から列単位（523-539, 557-573等）で正しく定義されていたが、CSV側が追いついていなかった。
+
+## アクション
+- 横列は y で分割、縦列は x で分割して物理列単位のセクションにする
+- db_setup.py の rank_from_aisle 計算ロジック自体は正しい（reversed なら rank_from_max, そうでなければ rank_from_min）
+- CSV を修正後に DB を再インポートすれば rank_from_aisle は自動で正しくなる
+- 他ホールでも同じ問題がないか確認すべき
+
+## 例
+旧: section=557-590, rank_from_min=1-34（2列まとめ）
+新: section=557-573 (reversed, y=29), section=574-590 (not reversed, y=28), 各17台
+
+---
+id: mitoya-corner-effect-reversed0-strong
+trigger: "みとやの台選び・設定推測・角番分析を行うとき"
+confidence: 0.85
+domain: hall-strategy
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# みとや横列はreversed=0側の角番が一貫して強い
+
+## 背景
+物理列単位に分割後のPhase 8分析で、背中合わせの島ペアにおいて reversed=0（台番号昇順）側の通路寄り角番が一貫して高い avg_diff を示した。reversed=1側は逆に角番が弱く奥側が強い。これはホール側が設定を入れる物理位置に偏りがあることを示唆する。
+
+## アクション
+- reversed=0 の corner1-4 を優先的に狙う
+- 特に 641-657 の corner1（台641, avg_diff=+542, 勝率61.9%, n=535）と 540-556 の corner1（台540, avg_diff=+415, 勝率46.6%, n=519）が突出
+- reversed=1 側では奥側（corner10+）が強い傾向があるため、角番を避けて奥を狙う
+- この効果が out-of-sample でも持続するかバックテストで検証が必要
+
+## 例
+島624-657:
+  624-640 (reversed=1): corner1=-306, corner10+=-145（全面弱い）
+  641-657 (reversed=0): corner1=+542, corner10+=-20（角番に集中）
+
+---
+id: mitoya-vertical-sections-island-level-alternation
+trigger: "みとやの縦列セクション（692-755）を分析するとき"
+confidence: 0.75
+domain: hall-strategy
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# みとや縦列は島単位で強弱が交互に出る
+
+## 背景
+縦列セクション（692-711, 712-733, 734-755）はy方向に台が並ぶ。横列とは異なり、島の片側だけが強いパターンではなく、島ごとに強弱が交互になる傾向がある。692-711は両列マイナス、712-733は両列プラス、734-755は片側プラス片側マイナス。
+
+## アクション
+- 縦列では島単位（2列セット）で強弱を判断する
+- 712-733（特に723-733のcorner1=+181）が最も安定
+- 692-711は全面的に弱いため回避
+- Phase 8の build_machine_layout_table では DISTINCT x=1 なら縦列と判定し、y順で角番を振る
+
+## 例
+692-711: 692-700(corner1=-283), 701-711(corner1=-258) → 島全体が弱い
+712-733: 712-722(corner1=+58), 723-733(corner1=+181) → 島全体が強い
+
+---
+id: mitoya-shortlist-min-n-and-existence-check
+trigger: "みとやのshortlist・バックテスト・機種選定を実装するとき"
+confidence: 0.95
+domain: ml-methodology
+source: session-debugging
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Shortlistはテスト窓の実在チェックとmin_nフィルタが必須
+
+## 背景
+Phase 7 shortlist バックテストで、学習窓の avg_diff 上位機種がテスト窓に存在しないケース（撤去済み機種）が大量発生。犬夜叉2（n=37, pre_existing, 撤去済み）が学習窓で1位を取りテスト窓で空振りし、591-623 で X_DDS=-1017 の壊滅的結果を出した。また n=5 のからくりサーカスが shortlist 1位になるなど、min_n フィルタの不備も発見。
+
+## アクション
+- shortlist 候補はテスト窓（または最新日付）に実稼働データがある機種のみに限定
+- min_n >= 50 を学習窓の best_n に適用（100は厳しすぎた）
+- moved判定（台番号移動）は初出日の台番号セットで判定し、同機種の複数台設置と区別する
+- pre_existing 機種は撤去リスクが高いため、最新稼働日の確認を特に厳密にする
+
+## 例
+犬夜叉2: 学習窓でavg_diff=840だがテスト窓に台がない → shortlistから除外すべき
+からくりサーカス: n=5でavg_diff=1489 → min_nフィルタで除外すべき
+
+---
+id: mitoya-top-n-unnecessary-at-current-granularity
+trigger: "みとやのshortlist設計・top_n パラメータを検討するとき"
+confidence: 0.80
+domain: ml-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# みとやの列単位セクションでは top_n による機種厳選は不要
+
+## 背景
+みとやの各セクション（物理列単位、9-17台）には同時期に稼働する機種が2-3種しかない。top_n=2で「上位2機種を厳選」しても、実質的にほぼ全機種を残すことになり、フィルタとして機能しない。shortlistの選択力は角番位置やDD条件など別の軸で発揮すべき。
+
+## アクション
+- machine_name は最重要シグナルだが、top_n による厳選ではなく、角番・DD・debut_phase との交互作用で台を絞る
+- 列単位セクションでは機種数が少ないため、機種名単体での統計検定力も限られる
+- バックテストでは top_n ではなく、section × corner × machine_name の組み合わせで候補を生成する方が自然
+
+## 例
+557-573に現在稼働中の機種が3種 → top_n=2は「1種だけ落とす」操作でしかない

@@ -25,6 +25,11 @@ PAGES = [
     {"icon": "📌", "title": "Notion へ保存", "key": "notion_exporter"},
     {"icon": "📊", "title": "バックテスト検証", "key": "backtest_validation"},
     {"icon": "H", "title": "Heatmap", "key": "heatmap"},
+    {"icon": "📝", "title": "前日レポート", "key": "daily_report"},
+    {"icon": "🧪", "title": "前日レポート Visual Test", "key": "daily_report_visual_test"},
+    {"icon": "K7", "title": "Kamata7 Theory", "key": "kamata7_theory"},
+    {"icon": "K7", "title": "Kamata7 Event Checks", "key": "kamata7_event_checks"},
+    {"icon": "K7", "title": "Kamata7 Segments", "key": "kamata7_segments"},
 ]
 
 # ========================================
@@ -35,88 +40,113 @@ PAGE_REGISTRY = {
     1: {
         "name": "ホール全体",
         "file": "page_01_hall_overview",
-        "icon": "🏠"
+        "icon": "🏠",
     },
     2: {
         "name": "日別分析",
         "file": "page_02_daily_analysis",
-        "icon": "📅"
+        "icon": "📅",
     },
     3: {
         "name": "曜日別分析",
         "file": "page_03_weekday_analysis",
-        "icon": "📆"
+        "icon": "📆",
     },
     4: {
         "name": "DD別分析",
         "file": "page_04_dd_analysis",
-        "icon": "📆"
+        "icon": "📆",
     },
     5: {
         "name": "末尾別分析",
         "file": "page_05_last_digit",
-        "icon": "📊"
+        "icon": "📊",
     },
     6: {
         "name": "日末日別分析",
         "file": "page_06_day_last_digit",
-        "icon": "📊"
+        "icon": "📊",
     },
     7: {
         "name": "第X曜日別分析",
         "file": "page_07_nth_weekday",
-        "icon": "📋"
+        "icon": "📋",
     },
     8: {
         "name": "個別台分析",
         "file": "page_08_individual_machines",
-        "icon": "💻"
+        "icon": "💻",
     },
     9: {
         "name": "台番号末尾別分析",
         "file": "page_09_machine_tail",
-        "icon": "🎯"
+        "icon": "🎯",
     },
     10: {
         "name": "期間TOP10分析",
         "file": "page_10_period_top10",
-        "icon": "⭐"
+        "icon": "⭐",
     },
     11: {
         "name": "クロス検索分析",
         "file": "page_11_cross_search",
-        "icon": "🔀"
+        "icon": "🔀",
     },
     12: {
         "name": "統計情報",
         "file": "page_12_statistics",
-        "icon": "ℹ️"
+        "icon": "ℹ️",
     },
     13: {
         "name": "ホール選択支援",
         "file": "page_13_hall_selection",
-        "icon": "🏪"
+        "icon": "🏪",
     },
     14: {
         "name": "Notion Exporter",
         "file": "page_14_notion_exporter",
-        "icon": "📌"
+        "icon": "📌",
     },
     15: {
         "name": "バックテスト検証",
         "file": "page_15_backtest_validation",
-        "icon": "📊"
+        "icon": "📊",
     },
     16: {
         "name": "クロス検索一括",
         "file": "page_16_cross_search_bulk",
-        "icon": "📑"
+        "icon": "📑",
     },
     17: {
         "name": "Heatmap",
         "file": "page_17_heatmap",
-        "icon": "H"
-    }
+        "icon": "H",
+    },
+    18: {
+        "name": "前日レポート",
+        "file": "page_18_daily_report",
+        "icon": "📝",
+    },
+    19: {
+        "name": "前日レポート Visual Test",
+        "file": "page_19_daily_report_visual_test",
+        "icon": "🧪",
+    },
+    20: {
+        "name": "Kamata7 Theory",
+        "file": "page_20_kamata7_theory",
+        "icon": "K7",
+    },
+    21: {
+        "name": "Kamata7 Event Checks",
+        "file": "page_21_kamata7_event_checks",
+        "icon": "K7",
+    },
+    22: {
+        "name": "Kamata7 Segments",
+        "file": "page_22_kamata7_segments",
+        "icon": "K7",
+    },
 }
 
 # ========================================

@@ -1,0 +1,51 @@
+---
+id: kakuban-section-2d-groupby-min-size-pitfall
+trigger: rank_from_min × section のような2軸クロス集計（ピボット系ヒートマップ）に min_group_size フィルタを適用するとき
+confidence: 0.9
+domain: dashboard-development
+source: session-observation
+project_id: pachinko-2026project
+project_name: 2026project
+title: 2軸クロス集計は1セル=1台が普通 — 1次元集計用の min_group_size を流用するとセル全滅する
+background: >
+  page_19 の角番×セクションヒートマップ（build_kakuban_section_pivot）で
+  MIN_GROUP_SIZE_FOR_RANKING（=3、1次元集計 summarize_group_performance 用の定数）を
+  デフォルトとして流用した結果、蒲田七DB（715台）で全715セルが avg_diff=NaN になった。
+  rank_from_min × section の組み合わせは物理的に1台=1セルであり、n>=3 を要求する閾値は
+  原理的に満たせない。合成テストデータ（1セルに複数台を仕込んだもの）ではこの構造的欠陥を
+  検出できず、テストは green のまま本番相当データで100%欠損というギャップが生じた。
+action: >
+  2軸クロス集計を新規実装する際は、min_group_size 等の1次元集計向け定数をそのまま流用せず、
+  実データで各セルのn分布（groupby(...).size().value_counts()）を先に確認してから
+  デフォルト値を決める。物理的に1台1セルになる軸の組み合わせでは DEFAULT_GROUP_MIN_SIZE
+  （=1）が正しい。合成テストも実データの分布（1セル1台など）を再現したケースを別途用意する。
+example: >
+  build_kakuban_section_pivot() のデフォルトを MIN_GROUP_SIZE_FOR_RANKING(=3) から
+  DEFAULT_GROUP_MIN_SIZE(=1) に変更して解決。実データ検証:
+  pivot_frame の avg_diff NaN行が 715/715 → 0/712 に改善。
+
+---
+id: pivot-rectangular-grid-nan-from-uneven-groups
+trigger: tidy形式の集計結果を pandas .pivot() で行列化してヒートマップ表示するとき（特にsection/islandのようにグループサイズが不揃いな軸を使う場合）
+confidence: 0.85
+domain: dashboard-development
+source: session-observation
+project_id: pachinko-2026project
+project_name: 2026project
+title: 不揃いなグループサイズの軸を .pivot() すると大量の構造的NaNが発生する — バグと誤認しやすい
+background: >
+  角番(rank_from_min)×セクション(section)のヒートマップで、セクションサイズが2台〜22台と
+  ばらつくため、.pivot() が最大サイズ（22）を基準に長方形グリッド（22行×53列=1166セル）を
+  作り、そのうち454セルがNaNになった。tidy frame自体（pivot前の集計結果）はNaN0件で正常
+  だったため、これは集計バグではなく「その rank_from_min の位置にその section の台が
+  物理的に存在しない」という構造的な空白だった。ユーザーは当初「データ取得が不完全」と
+  誤認したが、tidy frame と matrix（pivot後）でNaN件数を比較することで切り分けられた。
+action: >
+  セクション/島のようにグループサイズが不揃いな軸でヒートマップを作る際は、.pivot() 前に
+  各グループの実サイズ分布（min/max）を確認し、NaNセルの意味（データ欠損 vs 物理的に
+  存在しない）をUI上で明示する（キャプション追加等）。「NaNが多い=バグ」と早合点せず、
+  まず pivot 前の tidy frame にNaNがあるかどうかで原因を切り分ける。
+example: >
+  蒲田七で section size min=2, max=22 → 22×53グリッドのうち715セルのみ実在、
+  451セルは構造的NaN（残りはmin_gamesフィルタ除外分）。tidy pivot_frame のNaN件数(0件)と
+  matrix化後のNaN件数(454件)を比較して「集計は正常、pivotの長方形化が原因」と特定した。

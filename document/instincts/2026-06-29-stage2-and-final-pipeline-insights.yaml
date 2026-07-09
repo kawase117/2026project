@@ -1,0 +1,116 @@
+---
+id: stage2-machine-selection-no-improvement
+trigger: "セクション内の台選び（Stage 2）を改善しようとするとき"
+confidence: 0.93
+domain: ml-evaluation
+source: stage2-machine-selection-60days
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Stage 2の台選びはhist_metricを超える特徴量が存在しない
+
+## 背景
+Top5セクション内に限定して、角番・debut_phase・直近トレンド・momentumの予測力を検証した（60日walk-forward）。
+
+特徴量評価（セクション内Spearman）:
+- debut_days: rho=+0.030, p=0.084（唯一の弱い信号だが戦略に組み込んでも改善ゼロ）
+- kakuban_group/raw: rho≈+0.005, p>0.7（無効）
+- trail_7d/14d_hit: rho≈-0.014（負、トレンド追従は逆効果）
+- kakuban_edge: rho=-0.038, p=0.028（有意だが負。端台がやや不利）
+
+戦略比較: 全戦略でhit率41.4%±0.3%、diff/台+443〜+490の範囲に収束。
+
+## アクション
+- Stage 2はhist_metricのまま変更しない
+- セクション内の台選びは現在のDBデータでは限界に達している
+
+## 例
+  hist_only: hit=41.4%, diff/台=+481
+  kakuban_weighted: hit=41.7%, diff/台=+490 (+8, 誤差)
+  trail_weighted: hit=40.7%, diff/台=+443 (-38, 悪化)
+
+---
+id: kakuban-effect-absorbed-by-section-selection
+trigger: "角番の効果をStage 2で使おうとするとき"
+confidence: 0.90
+domain: ml-model-design
+source: stage2-machine-selection-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 角番の効果はStage 1のセクション選択に吸収されている
+
+## 背景
+全台分析では「角1はコーナー低設定、中間角5-9が最強」だった。
+しかしTop5セクション内ではkakuban_edge rho=-0.038、delta_pp=+0.1ppでほぼ差なし。
+原因: 角1が悪いセクションはStage 1で既に除外されている。
+Top5セクションは設定がランダムに近く分布しているため、端台にも高設定が入ることがある。
+角番の効果はsection_avg_histが既に反映しており、Stage 2での追加は情報の二重取り。
+
+## アクション
+- 角番情報はStage 2に追加しない
+- 角番の効果はStage 1のセクション選択時点で既に活用されている
+
+## 例
+  全台: 角1=低設定傾向あり
+  Top5セクション内: kakuban_edge rho=-0.038, delta_pp=+0.1pp → 差なし
+
+---
+id: section-ranking-pipeline-final-spec
+trigger: "predict_section.pyの最終仕様を確認するとき"
+confidence: 0.95
+domain: ml-operations
+source: session-cumulative
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# セクション履歴ランキングの最終仕様
+
+## 背景
+セッションで確立した最終仕様:
+- Stage 1: section_avg_hist（60日窓）でセクションランキング
+- Stage 2: hist_metric（60日窓）でセクション内台ランキング
+- 推奨: Top5セクション × 5台 = 25台/日
+
+検証済みパラメータ:
+- 窓幅60日（90日より+73枚/台、6期間中4勝2敗）
+- N系閾値104%（106%よりrho+0.021改善）
+- 曜日補正β=0.1（小さいが安定した改善）
+- DD補正/イベント分割/台×週/連続値ターゲット/Stage2追加特徴量 → 全て無効
+
+## アクション
+- predict_section.pyに窓幅60日とN系閾値104を反映する
+- これ以上のパラメータチューニングは見込みが薄い
+- 改善方向は「他ホール横展開」または「新しいデータソースの追加」
+
+## 例
+バックテスト（60日窓, section_5x5）:
+  diff/台: +570, hit率: 42.7%, 勝率: 78.3%, lift: 1.264x
+
+---
+id: stage2-limited-by-data-sources
+trigger: "セクション内の台選び精度を向上させたいとき"
+confidence: 0.85
+domain: ml-model-design
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# セクション内台選びの改善にはDBにない情報が必要
+
+## 背景
+同一機種・同一セクション内でDB上で使える区別情報は:
+- hist_metric → 使用中、rho=+0.04
+- 台番号末尾 → 効果なし
+- 角番位置 → Stage 1に吸収済み
+- debut_phase → 信号なし
+
+改善に必要だがDBにない情報:
+- 当日のG数推移（常連の設定読み手がかり）
+- BIG/REG比率（A系限定、設定推定の直接手がかり）
+
+これらは「ホールに行ってから得られる情報」であり事前予測には使えない。
+
+## アクション
+- 事前予測としてのStage 2改善は現在のデータソースでは限界
+- 運用上は「セクションまで事前に絞り、台選びは現地判断」が現実的

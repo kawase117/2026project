@@ -1,0 +1,129 @@
+---
+id: kakuban-is-model-backbone-not-auxiliary
+trigger: "角番特徴量の重要度を評価するとき、または角番を補助特徴量として扱おうとするとき"
+confidence: 0.95
+domain: ml-feature-importance
+source: walk-forward-ablation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 角番特徴量はモデルの根幹であり補助ではない
+
+## 背景
+角番（kakuban）が「あると少し良くなる補助特徴量」か「モデルの根幹」かを判定するため、v12b_debut_multiplier_half から角番依存を完全に除去した v12b_no_kakuban との対称ablation実験を実施。c1/c2/c3/c4の全4コンポーネントから角番を除去。
+
+## アクション
+角番を外す・弱めるような変更を検討する際は、モデル全体の崩壊リスクを認識すること。角番は c1（segment×section_size×kakuban）、c2（最適角番距離）、c3（DD×segment×kakuban）、c4（曜日×segment×kakuban）の4箇所に組み込まれており、除去すると lift@10 が 1.0 未満（ランダム以下）に落ちる。
+
+## 例
+walk-forward 260日間の結果:
+- hit@10: with kakuban 0.91 vs no kakuban 0.64 (+42%)
+- hit@15: 1.38 vs 0.92 (+50%)
+- lift@10: 1.30 vs 0.92（no kakubanはランダム以下）
+- event/non-event 両方で一貫して角番ありが優位
+
+---
+id: dd-kakuban-boost-already-captured-by-c3
+trigger: "DD×角番の交互作用をモデルに追加しようとするとき"
+confidence: 0.90
+domain: ml-feature-engineering
+source: walk-forward-experiment
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# DD×角番ブーストは c3 の既存メカニズムで十分に捕捉済み
+
+## 背景
+kamata7_theory.md の DD×角番テーブル（DD7-12で角9が最強、DD19-24で角9が最強等）をブーストとして c1 に乗算する v13a/v13b を作成し、v12b との比較実験を実施。EDAでは有意だった交互作用が、walk-forward では精度改善に寄与しなかった。
+
+## アクション
+DD×角番の交互作用を新たに追加する前に、c3 が _hier_lookup(exact_keys=["segment", "kakuban"]) を DD別データソースで引いている点を確認すること。この既存メカニズムが DD×角番の情報を暗黙に捕捉しているため、明示的なブーストや gate 化は二重計上になる。
+
+## 例
+walk-forward 260日間の結果:
+- v12b baseline hit@10=0.91, v13a full boost hit@10=0.90 (-1.3%), v13b half hit@10=0.90 (-0.8%)
+- lift@10: v12b 1.30 vs v13a 1.29 vs v13b 1.29
+- event/non-event 両分割でも改善なし
+- 結論: DD×角番 gate化（Step 2A）も不要
+
+---
+id: gate-vs-feature-classification-framework
+trigger: "新しい変数を gate として使うか特徴量として使うか判断するとき"
+confidence: 0.85
+domain: ml-architecture
+source: session-discussion
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# gate候補か特徴量かは「日変動するか」で判定する
+
+## 背景
+segment gate（2F/3F/L/R/A/N）と角番を同列に gate 候補として扱おうとしたが、両者の性質は異なる。segment gate は「今日どこが活性か」という日変動する判定。角番は台の静的な物理位置属性で、日によって変わらない。
+
+## アクション
+変数を gate に昇格させるかの判断基準:
+- 日変動あり（segment活性度、DD条件）→ gate候補
+- 静的属性（角番、末尾、台番号）→ 特徴量
+- 静的属性×日条件の交互作用（DD×角番）→ 条件付きgate候補だが、まず特徴量/ブーストで検証
+gate化は候補集合を変えるため、精度改善が「効果」か「偶然の濃縮」か分離しにくい。ブーストで先に増分を測るのが安全。
+
+## 例
+- segment: 日変動あり → gate として有効（既存実装で採用）
+- 角番: 静的属性 → 特徴量として根幹（ablationで+42%確認）
+- DD×角番: 条件付き → ブーストで検証したが c3 で既に捕捉済み、gate化も不要
+
+---
+id: 104pct-threshold-useless-for-daily-machine-target
+trigger: "機械割の絶対閾値（104%等）を台単位の予測ターゲットにしようとするとき"
+confidence: 0.90
+domain: prediction-target-design
+source: data-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 機械割104%は台単位の当日ターゲットとして機能しない
+
+## 背景
+蒲田7のデータで機械割分布を分析した結果、104%超は1日平均216台（全稼働台の34.5%）が該当。1日の観測機械割は分散が巨大で、設定1でも運で104%超に到達しうるため、「高設定」の代理指標にならない。
+
+## アクション
+予測ターゲットの設計では:
+- 台単位の絶対閾値（104%超の二値分類）→ 使わない
+- 相対ランキング（Top-K）→ 分散にロバストで有効
+- 104%率はセグメント集計やA機評価の補助指標として残す（kamata7_theory.md L214）
+- Go/NoGo判断にはホール全体/セグメント集計の指標を使う
+
+## 例
+蒲田7（G>=1500、351日間）:
+- 104%超: 1日平均216台（34.5%）— 閾値として無意味
+- Top50相当: 機械割約132%以上（上位8%）
+- 0台の日: 0日（どんな日でも100台以上が104%超）
+
+---
+id: prediction-target-three-layer-framework
+trigger: "予測の運用目標を設計するとき、またはTop50の妥当性を議論するとき"
+confidence: 0.80
+domain: prediction-target-design
+source: session-discussion
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 予測は3層構造（gate → ranking → 評価補助）で設計する
+
+## 背景
+「Top50だけでよいか」「機械割104%超を使うべきか」の議論から、予測目標は単一ターゲットではなく3層構造が必要と整理された。ただし「ランキング一本が正解」と言い切るのは飛躍で、gate と ranking の分離が正しいフレームワーク。
+
+## アクション
+| 層 | 目的 | 指標 |
+|---|---|---|
+| Gate | 今日打てる日か・どのセグメントが活性か | segment活性判定、DD、イベント判定 |
+| Ranking | 活性セグメント内での台選択 | 相対ランキング（precision@10主、@15副） |
+| 評価補助 | A機/角番などの構造評価 | 104%率（差枚より安定）、lift、payout |
+
+gate の採用根拠は因果解釈（ホールの意思決定再現）ではなく予測効用（precision改善）で判断する。
+
+## 例
+現行の predict_gated.py がこの3層を実装:
+- Gate: _get_active_segments() でセグメント活性判定
+- Ranking: score_day() + _build_variant_pool() で相対ランキング
+- 評価: hit@10/15, lift, avg_diff で測定

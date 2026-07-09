@@ -1,0 +1,149 @@
+---
+id: community-hook-configs-assume-tools-that-may-not-exist
+trigger: "when implementing a hooks/skill setup copied from a blog post or X/Twitter article"
+confidence: 0.85
+domain: claude-code-config-optimization
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# コミュニティ発のhook設定はコピペ前に環境検証が必須
+
+## 背景
+「Claude Codeのcompactの問題点と対策」という記事のhook/skill設定一式(compact-prep skill、
+PostCompact/UserPromptSubmit連鎖hook、60%通知用statusline拡張)を実装する依頼を受けた。
+記事の実装コードは`jq`・`~/.claude/scripts/get-session-id.sh`・既存の`~/.claude/hooks/statusline.sh`
+の存在を前提にしていたが、このマシンには3つとも存在しなかった(`jq`未インストール、
+`get-session-id.sh`は記事著者の環境にのみ存在する未公開ヘルパー、`statusline.sh`はそもそも
+statusLine自体が未設定)。「実物はそのままコピペで動く」という記事の主張を鵜呑みにせず、
+先に`command -v jq`、対象ファイルの`test -f`を行ってから着手したことで、素の実装が
+サイレントに壊れる事態を防げた。
+
+## アクション
+外部記事・他人の設定例をhook/skillとして導入する際は、実装前に必ず
+「本文が前提にしている外部コマンド・補助スクリプト・既存ファイルが、このマシンに実在するか」
+を`command -v`・`test -f`で確認する。存在しない場合は代替手段(pythonでのJSON処理、
+新規ヘルパースクリプトの作成など)に置き換える判断をし、それを実装報告に明記する。
+
+## 例
+`jq`が無かったため全hookで`py -c "import json; ..."`に置換。`get-session-id.sh`は
+「最終更新のtranscript(*.jsonl)をsession_idとみなす(agent-*.jsonl除外)」という
+独自実装で代替し、実際に現在のセッションIDと一致することをpipe-testで検証した。
+
+---
+id: windows-python-launcher-py-more-reliable-than-python-command
+trigger: "when a hook script or CLI needs Python on Windows and jq/python is unavailable"
+confidence: 0.9
+domain: claude-code-config-optimization
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Windows環境でのPython呼び出しは`python`ではなく`py`ランチャーを使う
+
+## 背景
+Git Bash環境で`python`および`python3`コマンドは、いずれも
+`C:\Users\apto117\AppData\Local\Microsoft\WindowsApps\python(3)`という
+Microsoft Store誘導用の壊れたstub(実行すると"Python"とだけ出力し終了コード49で終わる)を
+指していた。一方`py`(Python Launcher for Windows、
+`C:\Users\apto117\AppData\Local\Programs\Python\Launcher\py.exe`)は正しくPython 3.14.2を
+起動できた。この問題は`extract_session_summaries.py`実行時にも一度発生し、
+その時は明示的なフルパス指定で回避したが、hookスクリプトのような繰り返し実行される
+軽量処理では`py`コマンドの方が簡潔で保守しやすい。
+
+## アクション
+このマシン上でbashスクリプトからPythonを呼ぶ場合は、`python`/`python3`ではなく
+`py`コマンドを使う。事前に`command -v py`で存在確認してから採用する。
+
+## 例
+`~/.claude/hooks/compaction-recovery.sh`等、compact-prep関連の全hookスクリプトで
+JSON parse/構築に`py -c "..."`を使用し、pipe-testで正常動作を確認した。
+
+---
+id: session-id-inferred-from-most-recent-non-agent-transcript
+trigger: "when a skill or hook needs the current Claude Code session_id but no direct API/env var is available"
+confidence: 0.8
+domain: claude-code-config-optimization
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# session_idは「最終更新のtranscript」から推定できるが、サブエージェントのtranscriptを除外する必要がある
+
+## 背景
+compact-prep skillが呼ぶ`get-session-id.sh`を自作する際、`~/.claude/projects/**/*.jsonl`のうち
+最終更新のものをsession_idとみなす方式を実装した。最初の実装ではサブエージェント
+(Agent tool経由で起動したclaude-code-guideエージェント等)のtranscriptファイルが
+`agent-<id>.jsonl`という名前で保存され、これが親セッションのtranscriptより新しくなる
+瞬間があり、誤ったIDを返した。`agent-*.jsonl`を除外するよう修正したところ、
+実際にこのセッションのIDと一致する正しい値を返すようになった。
+
+## アクション
+「最終更新ファイルから現在のセッションを推定する」系のスクリプトを書く際は、
+バックグラウンドで動くサブエージェント・サブプロセスが同種のファイルを
+別名パターンで生成していないかを事前に確認し、除外条件に組み込む。
+
+## 例
+`agent-*.jsonl`を除外するglobフィルタを追加した後、
+`bash get-session-id.sh`の出力(`9d269ade-...`)が、実際にこのセッションの
+tool結果パス(`.../9d269ade-.../tasks/...`)と一致することを確認した。
+
+---
+id: statusline-context-window-used-percentage-is-directly-provided
+trigger: "when building a Claude Code statusLine command that needs context window usage percentage"
+confidence: 0.9
+domain: claude-code-config-optimization
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# statusLineのstdin JSONにはcontext_window.used_percentageが直接含まれる
+
+## 背景
+60%通知の実装のため、statusLineコマンドのstdin JSONスキーマを推測で実装しかけたが、
+先にclaude-code-guideエージェントに公式ドキュメント(https://code.claude.com/docs/en/statusline.md)
+を調査させたところ、`context_window.used_percentage`(0-100、input+cacheトークンのみで
+outputトークンは含まない)と`exceeds_200k_tokens`が既に提供されていることが分かった。
+自前でトークン数から使用率を計算するロジックは一切不要だった。
+
+## アクション
+statusLine/hookの実装で「値をどう計算するか」を悩む前に、まずstdinで
+何が既に提供されているかを公式ドキュメントで確認する。推測でロジックを組んでから
+後で「実は直接提供されていた」と気づくと手戻りが大きい。
+
+## 例
+`~/.claude/hooks/statusline.sh`は`d['context_window']['used_percentage']`を
+そのまま閾値判定に使うだけで実装でき、pipe-testで65%入力時に正しくwarn markerが
+書かれることを確認した。
+
+---
+id: hook-chain-needs-every-producer-not-just-consumers
+trigger: "when wiring multiple hooks that communicate via marker/pointer files across different hook events"
+confidence: 0.85
+domain: claude-code-config-optimization
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# marker/pointerファイルで連携するhook群は、読む側だけでなく書く側も全て揃っているか確認する
+
+## 背景
+記事のUserPromptSubmit復旧hookは`${TMPDIR}/claude-active-plan/<session_id>`という
+pointerファイルを読んで「Active Plan」を案内する設計だったが、記事本文にはこの
+pointerファイルを実際に書き込むhookが含まれていなかった(著者の環境では別の仕組みが
+既に存在していたと推測される)。実装直後の報告でこの欠落に気づき、ユーザーに
+明示的に伝えた上で、別途`~/.claude/plans/`へのWrite/Editを検知してpointerを書く
+PostToolUse hookを追加実装した。
+
+## アクション
+複数hookがファイル経由で連携する設計を実装するときは、各hookが「読むだけ」か
+「書くだけ」かを一覧化し、読む側があるのに書く側が存在しない(またはその逆)
+ペアが無いかを完了報告前に確認する。片方だけ実装して「動くはず」と報告すると、
+実際には何も起きない機能を「実装済み」と誤解させてしまう。
+
+## 例
+`userpromptsubmit-compaction-recovery.sh`(読む側)に対して
+`posttooluse-plan-pointer.sh`(書く側、PostToolUse matcher: Write|Edit)を
+追加し、pipe-testで実際にplanファイルパスがpointerに記録されることを確認した。
+
+---

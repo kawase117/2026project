@@ -1,0 +1,163 @@
+---
+id: segment-quality-gate-good-ok-validated
+trigger: "predict_gatedのゲート戦略選択・gate_mode設定時"
+confidence: 0.88
+domain: ml-pipeline
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 品質ゲート(good_ok)は従来ゲート(count>=2)よりEVが高い
+
+## 背景
+260日バックテストで5戦略を比較。セグメントを品質tier（good/ok/bad）で
+分類し、activeセグメントの品質でゲート発動を判断する方式が最良。
+
+good: 3F_L_A, 3F_R_A, 2F_L_N（lift高・中央値マシ・勝率47-48%）
+ok: 3F_R_N（lift正だが高分散）
+bad: 2F_R_N, 3F_L_N（lift負~ゼロ・スコア解像度低）
+
+| 戦略 | lift | 発動率 | EV/日 | lift>0率 |
+|------|------|--------|-------|---------|
+| NOGATE毎日 | +60 | 100% | +60 | 53% |
+| 従来(active>=2) | +213 | 44% | +93 | 69% |
+| good_only | +215 | 47% | +100 | 74% |
+| good_ok(採用) | +187 | 60% | +111 | 69% |
+
+## アクション
+- predict_gatedのデフォルトgate_modeをgood_okに設定（実装済み）
+- 2F_R_Nのみactiveの日は推奨を出さない（bad tierで自動fallback）
+- --gate-mode countで従来動作にも戻せる
+
+## 例
+config.py GATE_QUALITY_TIERS で定義。predict_gated.py _apply_gate_mode()で適用。
+
+---
+id: hier-lookup-shrinkage-n-effective
+trigger: "_hier_lookupのスコア計算・少数サンプル問題の対応時"
+confidence: 0.92
+domain: ml-scoring
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# _hier_lookupにparent-aware hierarchical shrinkageを導入し少数台暴走を抑制
+
+## 背景
+c3コンポーネントで「1台x2日のグループ平均がそのままスコアになる」問題が発覚。
+例: #2188 化物語がc3=+7,200で常にTop1に居座っていた（seg=2F_R_N, kb=2, DD=26、
+該当台1台のみ、訓練日2日のみ）。
+
+Top50選出グループの50-67%がdistinct_machines<=2で、問題は広範。
+
+対策として_hier_lookupに再帰的shrinkageを導入:
+- 各階層(exact->fallback1->fallback2)で上から下へ(n*local + k*parent)/(n+k)をブレンド
+- n_effective = machine_days * distinct_machines / (distinct_machines + m) で
+  台多様性が低いグループのnを割引（m=2, k=5）
+- 閾値なし、連続的にself-weightが増加
+
+## アクション
+- 新しい台やセグメントでスコアが異常に高い場合、n_effectiveを確認する
+- k, mの値は将来コンポーネント別に分離可能（SHRINKAGE_K_PER_COMPONENT）
+- shrinkage_k=0で従来動作に戻せる（後方互換）
+
+## 例
+#2188 化物語: c3 = 7200 -> 1681（-77%圧縮）、順位 1位->6位
+#3216 東京喰種: c3 = 138 -> 176（多台数グループのため影響小）、順位 5位->1位
+
+---
+id: shrinkage-quality-gate-combined-effect
+trigger: "predict_gated全体の実運用評価・改善効果測定時"
+confidence: 0.85
+domain: ml-evaluation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# shrinkage+品質ゲートの組み合わせでlift +102->+236枚（+131%改善）
+
+## 背景
+2026-06-16〜25の10日間で、shrinkage前（gate_mode=count）と
+shrinkage後（gate_mode=good_ok）を比較。
+
+| 指標 | 前 | 後 | 変化 |
+|------|-----|-----|------|
+| lift | +102 | +236 | +134(+131%) |
+| 中央値 | -250 | -190 | +60改善 |
+| 5回以上常連 | 18台 | 5台 | -72%（居座り解消） |
+| ユニーク台数 | 131 | 278 | 2.1倍（多様性改善） |
+| GATED日 | 2日 | 5日 | +3日（発動率向上） |
+
+特に6/18 lift +29->+509, 6/20 lift +114->+448と大幅改善。
+NOGATE日もlift +3->+82に改善（shrinkageの波及効果）。
+
+## アクション
+- shrinkage+品質ゲートをデフォルト運用とする
+- 中央値は依然マイナス(-190)。liftがプラスでも過信しない
+- 次の改善候補: c3のDD individual modeの見直し、n_effectiveへのdistinct_dates反映
+
+## 例
+GATED日のlift平均: +389枚（5日間）
+NOGATE日のlift平均: +82枚（5日間）
+
+---
+id: 3frn-not-dead-segment-eda-vs-operational
+trigger: "セグメント評価・過去EDA結論の見直し時"
+confidence: 0.80
+domain: ml-evaluation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 3F_R_Nは「死亡セグメント」ではなく実運用で最強セグメント
+
+## 背景
+過去EDA(2026-06-19)で3F_R_NはKruskal H=9.3, p=0.410で「死亡セグメント」と判定。
+しかし10日間実運用テストで平均差枚+834、勝率52%と全セグメント中最強だった。
+
+過去の「死亡」判定は末尾効果のKruskal-Wallis検定に基づいており、
+「末尾軸での予測力がない」ことを意味するだけで「セグメント自体の実力が低い」わけではない。
+3F_R_Nは東京喰種(3211-3216)を中心に台の地力が高く、c4(角番xDD交互作用)の
+スコア解像度が88%と他セグメントより圧倒的に高い。
+
+逆に3F_L_Nはp=0.013の「構造的シグナル」があったが実績は-157枚で最弱。
+統計的有意性と実用的な予測力は別物。
+
+## アクション
+- 3F_R_Nを品質ゲートの「ok」tierに分類（実装済み）
+- EDAの「死亡」判定を「末尾軸限定の非有意」に限定解釈する
+- 過去instinct(2026-06-19 kamata7-segment-baseline)の「3F_R_N除外」は撤回
+
+## 例
+セグメント別10日間実績:
+3F_R_N: +834枚, 勝率52%, スコアSD=329（解像度高）
+3F_L_N: -157枚, 勝率35%, スコアSD=89（解像度低）
+
+---
+id: score-resolution-determines-segment-value
+trigger: "セグメント評価・モデル改善方針策定時"
+confidence: 0.85
+domain: ml-scoring
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# セグメントの実運用価値はスコア解像度（SD・c1ユニーク率）で決まる
+
+## 背景
+10日間テストでセグメント別の実績を分析した結果、
+compositeスコアのSD（セグメント内の台間差異）が高いセグメントほど実績が良い。
+
+| セグメント | スコアSD | c1ユニーク率 | 平均差枚 | 勝率 |
+|-----------|---------|------------|---------|------|
+| 3F_R_N | 329 | 88% | +834 | 52% |
+| 2F_R_N | 124 | 26% | +20 | 35% |
+| 3F_L_A | 79 | 31% | +294 | 48% |
+
+2F_R_Nは1日平均23台を選出するがc1のユニーク値が6種しかなく、
+同じ角番グループの台が同一スコアになりhist_metricの微差でランキングされるだけ。
+
+## アクション
+- セグメントの品質評価にスコアSD/c1ユニーク率を使う
+- スコア解像度が低いセグメント(2F_R_N等)は推奨台数を絞るか除外する
+- 解像度向上には角番以外の台差別化特徴量（機種特性、位置情報等）が必要

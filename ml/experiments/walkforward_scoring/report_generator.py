@@ -26,14 +26,26 @@ def _variant_comparison(summary: pd.DataFrame) -> str:
         w_rows = all_rows[all_rows["window"] == window].sort_values("lift@50", ascending=False)
         lines.append(f"### Window {window} days")
         lines.append("")
-        cols = ["variant", "lift@50", "avg_diff_vs_other", "win_rate", "payout_rate", "hit@50", "n_test_days"]
+        cols = [
+            "variant",
+            "lift@50",
+            "lift@15",
+            "avg_diff_vs_other",
+            "win_rate",
+            "payout_rate",
+            "hit@50",
+            "hit@15",
+            "n_test_days",
+        ]
         available = [c for c in cols if c in w_rows.columns]
         lines.append(_table(w_rows[available], limit=10))
         lines.append("")
 
         best = w_rows.iloc[0]
         worst = w_rows.iloc[-1]
-        lines.append(f"- **Best**: {best['variant']} (lift@50={best['lift@50']:.3f}, avg_diff_vs_other={best.get('avg_diff_vs_other', 0):.0f})")
+        lines.append(
+            f"- **Best**: {best['variant']} (lift@50={best['lift@50']:.3f}, avg_diff_vs_other={best.get('avg_diff_vs_other', 0):.0f})"
+        )
         lines.append(f"- **Worst**: {worst['variant']} (lift@50={worst['lift@50']:.3f})")
         lines.append("")
 
@@ -53,7 +65,7 @@ def _event_split(summary: pd.DataFrame) -> str:
             continue
         lines.append(f"### Window {window} days")
         lines.append("")
-        cols = ["variant", "event_type", "lift@50", "avg_diff_vs_other", "win_rate", "n_test_days"]
+        cols = ["variant", "event_type", "lift@50", "lift@15", "avg_diff_vs_other", "win_rate", "n_test_days"]
         available = [c for c in cols if c in w_rows.columns]
         combined = pd.concat([event, non_event]).sort_values(["variant", "event_type"])
         lines.append(_table(combined[available], limit=20))
@@ -70,7 +82,9 @@ def _a_segment_history(daily_results: pd.DataFrame) -> str:
     cols = ["variant", "window", "split_period", "a_seg_hist_coverage", "a_seg_fallback_count", "n_machines_scored"]
     available = [c for c in cols if c in daily_results.columns]
     grouped = (
-        daily_results.groupby([c for c in ["variant", "window", "split_period"] if c in daily_results.columns], as_index=False)
+        daily_results.groupby(
+            [c for c in ["variant", "window", "split_period"] if c in daily_results.columns], as_index=False
+        )
         .agg(
             a_seg_hist_coverage=("a_seg_hist_coverage", "mean"),
             a_seg_fallback_count=("a_seg_fallback_count", "mean"),
@@ -93,8 +107,13 @@ def _split_verification(daily_results: pd.DataFrame) -> str:
         .agg(
             avg_diff_vs_other=("avg_diff_vs_other", "mean"),
             lift50=("lift@50", "mean"),
-            a_seg_hist_coverage=("a_seg_hist_coverage", "mean") if "a_seg_hist_coverage" in daily_results.columns else ("lift@50", "mean"),
-            a_seg_fallback_count=("a_seg_fallback_count", "mean") if "a_seg_fallback_count" in daily_results.columns else ("lift@50", "mean"),
+            lift15=("lift@15", "mean") if "lift@15" in daily_results.columns else ("lift@50", "mean"),
+            a_seg_hist_coverage=("a_seg_hist_coverage", "mean")
+            if "a_seg_hist_coverage" in daily_results.columns
+            else ("lift@50", "mean"),
+            a_seg_fallback_count=("a_seg_fallback_count", "mean")
+            if "a_seg_fallback_count" in daily_results.columns
+            else ("lift@50", "mean"),
             n_test_days=("test_date", "nunique"),
         )
         .sort_values([c for c in ["window", "split_period"] if c in daily_results.columns])
@@ -113,6 +132,7 @@ def _component_summary(component_analysis: pd.DataFrame) -> str:
         component_analysis.groupby(["component", "window"], dropna=False)
         .agg(
             avg_lift50=("lift@50", "mean"),
+            avg_lift15=("lift@15", "mean") if "lift@15" in component_analysis.columns else ("lift@50", "mean"),
             std_lift50=("lift@50", "std"),
             avg_diff=("avg_diff", "mean"),
             n=("lift@50", "count"),
@@ -149,11 +169,16 @@ def _window_comparison(summary: pd.DataFrame) -> str:
     if all_rows.empty:
         return "\n".join(lines + ["No data."])
 
-    pivot = all_rows.groupby("window").agg(
-        avg_lift50=("lift@50", "mean"),
-        avg_diff_vs_other=("avg_diff_vs_other", "mean"),
-        avg_win_rate=("win_rate", "mean"),
-    ).reset_index().sort_values("window")
+    pivot = (
+        all_rows.groupby("window")
+        .agg(
+            avg_lift50=("lift@50", "mean"),
+            avg_diff_vs_other=("avg_diff_vs_other", "mean"),
+            avg_win_rate=("win_rate", "mean"),
+        )
+        .reset_index()
+        .sort_values("window")
+    )
 
     lines.append(_table(pivot))
     lines.append("")
@@ -180,7 +205,9 @@ def _weight_recommendation(weight_optimization: pd.DataFrame) -> str:
     available = [c for c in cols if c in selected.columns]
     lines.append(_table(selected[available].drop_duplicates()))
     lines.append("")
-    lines.append("Weights: w1=C1(seg*ssg*kakuban), w2=C2(theory), w3=C3(DD*kakuban), w4=C4(dow*kakuban), w5=C5(last_digit), w6=C6(zorome)")
+    lines.append(
+        "Weights: w1=C1(seg*ssg*kakuban), w2=C2(theory), w3=C3(DD*kakuban), w4=C4(dow*kakuban), w5=C5(last_digit), w6=C6(zorome)"
+    )
     lines.append("")
 
     return "\n".join(lines)

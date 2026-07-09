@@ -7,6 +7,7 @@ date_info_calculator.py が全日付で実行されておらず大半がNULL。
 load_hall_df ではこれらを daily_hall_summary JOIN に依存せず
 machine_detailed_results.date 文字列から Python で直接計算する。
 """
+
 import calendar as _cal
 import sqlite3
 import warnings
@@ -21,28 +22,28 @@ warnings.filterwarnings("ignore")
 DB_DIR = Path(__file__).parent.parent / "db"
 
 HALL_DBS = {
-    "みとや":        "みとや大森町店.db",
-    "蒲田7":         "マルハンメガシティ2000-蒲田7.db",
-    "蒲田1":         "マルハンメガシティ2000-蒲田1.db",
-    "楽園":          "楽園蒲田店.db",
+    "みとや": "みとや大森町店.db",
+    "蒲田7": "マルハンメガシティ2000-蒲田7.db",
+    "蒲田1": "マルハンメガシティ2000-蒲田1.db",
+    "楽園": "楽園蒲田店.db",
     "レイトギャップ": "レイトギャップ平和島.db",
-    "ARROW":        "ARROW池上店.db",
-    "ヒロキ":        "ヒロキ東口店.db",
-    "ザシティ":      "ザ-シティ-ベルシティ雑色店.db",
-    "金時":          "金時京急蒲田店.db",
+    "ARROW": "ARROW池上店.db",
+    "ヒロキ": "ヒロキ東口店.db",
+    "ザシティ": "ザ-シティ-ベルシティ雑色店.db",
+    "金時": "金時京急蒲田店.db",
 }
 
 # hall_config.json の event_digits（date_info_calculator に依存しない）
 HALL_EVENT_DIGITS: dict = {
-    "みとや":        [4, 14, 24, 7, 17, 27],
-    "蒲田7":         [1, 7, 11, 17, 21, 22, 27, 31],
-    "蒲田1":         [1, 7, 11, 17, 21, 22, 27, 31],
-    "楽園":          [11, 22],
+    "みとや": [4, 14, 24, 7, 17, 27],
+    "蒲田7": [1, 7, 11, 17, 21, 22, 27, 30, 31],
+    "蒲田1": [1, 7, 11, 17, 21, 22, 27, 31],
+    "楽園": [11, 22],
     "レイトギャップ": [6, 16, 26],
-    "ARROW":        [8, 18, 28, 11, 22],
-    "ヒロキ":        [6, 16, 26],
-    "ザシティ":      [5, 15, 25, 8, 18, 28],
-    "金時":          [5, 15, 25, 20],
+    "ARROW": [8, 18, 28, 11, 22],
+    "ヒロキ": [6, 16, 26],
+    "ザシティ": [5, 15, 25, 8, 18, 28],
+    "金時": [5, 15, 25, 20],
 }
 
 _WEEKDAY_JP = ['月', '火', '水', '木', '金', '土', '日']
@@ -52,6 +53,7 @@ MIN_GAMES = 400  # この未満の台は除外
 
 
 # ── 統計ヘルパー ──────────────────────────────────────────────────────────────
+
 
 def _epsilon_squared(H: float, k: int, n: int) -> float:
     """Kruskal-Wallis 効果量 ε²。small≈0.01, medium≈0.06, large≈0.14"""
@@ -65,15 +67,14 @@ def _bootstrap_ci(values: np.ndarray, n_boot: int = 1000, ci: float = 95) -> tup
     if len(values) < 3:
         return np.nan, np.nan
     rng = np.random.default_rng(42)
-    means = [rng.choice(values, size=len(values), replace=True).mean()
-             for _ in range(n_boot)]
+    means = [rng.choice(values, size=len(values), replace=True).mean() for _ in range(n_boot)]
     lo = (100 - ci) / 2
     return float(np.percentile(means, lo)), float(np.percentile(means, 100 - lo))
 
 
-def _classify_tier(n: int, plus_rate: float, avg_diff: float,
-                   p_value: float, epsilon_sq: float,
-                   baseline_plus_rate: float = 50.0) -> str:
+def _classify_tier(
+    n: int, plus_rate: float, avg_diff: float, p_value: float, epsilon_sq: float, baseline_plus_rate: float = 50.0
+) -> str:
     """
     Tier A/B/C/Avoid/insufficient を返す。
 
@@ -98,6 +99,7 @@ def _classify_tier(n: int, plus_rate: float, avg_diff: float,
 
 
 # ── データ読み込み ─────────────────────────────────────────────────────────────
+
 
 def load_hall_df(hall_name: str) -> pd.DataFrame:
     """
@@ -149,43 +151,31 @@ def load_hall_df(hall_name: str) -> pd.DataFrame:
 
     # ── Python で日付フィーチャーを直接計算 ──────────────────────────────
     dates = pd.to_datetime(df["date"], format="%Y%m%d")
-    wd    = dates.dt.weekday  # 0=月 … 6=日
+    wd = dates.dt.weekday  # 0=月 … 6=日
 
-    df["plus"]         = (df["diff"] > 0).astype(int)
-    df["year_month"]   = df["date"].str[:6]
-    df["dd_mod10"]     = df["dd"] % 10
-    df["date_digit"]   = df["dd_mod10"]          # 旧来列名を維持
-    df["dd_group"]     = df["dd"].apply(
-        lambda x: "4系" if x % 10 == 4 else ("7系" if x % 10 == 7 else "その他")
-    )
+    df["plus"] = (df["diff"] > 0).astype(int)
+    df["year_month"] = df["date"].str[:6]
+    df["dd_mod10"] = df["dd"] % 10
+    df["date_digit"] = df["dd_mod10"]  # 旧来列名を維持
+    df["dd_group"] = df["dd"].apply(lambda x: "4系" if x % 10 == 4 else ("7系" if x % 10 == 7 else "その他"))
 
-    df["day_of_week"]  = wd.map(lambda x: _WEEKDAY_JP[x])
-    df["weekday_nth"]  = dates.apply(
-        lambda d: f"{_WEEKDAY_EN[d.weekday()]}{(d.day - 1) // 7 + 1}"
-    )
-    df["is_weekend"]   = (wd >= 5).astype(int)
+    df["day_of_week"] = wd.map(lambda x: _WEEKDAY_JP[x])
+    df["weekday_nth"] = dates.apply(lambda d: f"{_WEEKDAY_EN[d.weekday()]}{(d.day - 1) // 7 + 1}")
+    df["is_weekend"] = (wd >= 5).astype(int)
 
-    event_digits       = HALL_EVENT_DIGITS.get(hall_name, [])
+    event_digits = HALL_EVENT_DIGITS.get(hall_name, [])
 
     # MMDDゾロ目（強ゾロ目）: 月==日 (1/1, 2/2, ..., 9/9, 10/10, 11/11, 12/12)
     df["is_mmdd_zorome"] = (dates.dt.month == dates.dt.day).astype(int)
 
-    month_end = dates.apply(
-        lambda d: _cal.monthrange(d.year, d.month)[1]
-    )
+    month_end = dates.apply(lambda d: _cal.monthrange(d.year, d.month)[1])
     df["is_month_start"] = (df["dd"] == 1).astype(int)
-    df["is_month_end"]   = (df["dd"] == month_end.values).astype(int)
+    df["is_month_end"] = (df["dd"] == month_end.values).astype(int)
 
     # is_x_day: DDリスト + 月末 + 強ゾロ目(MM=DD) を統合
-    df["is_x_day"] = (
-        df["dd"].isin(event_digits)
-        | (df["is_month_end"] == 1)
-        | (df["is_mmdd_zorome"] == 1)
-    ).astype(int)
+    df["is_x_day"] = (df["dd"].isin(event_digits) | (df["is_month_end"] == 1) | (df["is_mmdd_zorome"] == 1)).astype(int)
 
-    df["is_any_event"] = (
-        (df["is_weekend"] == 1) | (df["is_x_day"] == 1)
-    ).astype(int)
+    df["is_any_event"] = ((df["is_weekend"] == 1) | (df["is_x_day"] == 1)).astype(int)
 
     df["hall"] = hall_name
 
@@ -194,11 +184,10 @@ def load_hall_df(hall_name: str) -> pd.DataFrame:
 
 # ── 次元スキャン ──────────────────────────────────────────────────────────────
 
-def scan_dimension(hall_name: str,
-                   group_cols: list,
-                   filters: dict = None,
-                   min_n: int = 5,
-                   df: pd.DataFrame = None) -> pd.DataFrame:
+
+def scan_dimension(
+    hall_name: str, group_cols: list, filters: dict = None, min_n: int = 5, df: pd.DataFrame = None
+) -> pd.DataFrame:
     """
     指定次元の組み合わせを集計し、Tier・統計量付きの結果を返す。
 
@@ -234,17 +223,17 @@ def scan_dimension(hall_name: str,
     agg = (
         df.groupby(group_cols)
         .agg(
-            n           = ("diff", "count"),
-            avg_diff    = ("diff", "mean"),
-            median_diff = ("diff", "median"),
-            std_diff    = ("diff", "std"),
-            plus_rate   = ("plus", "mean"),
+            n=("diff", "count"),
+            avg_diff=("diff", "mean"),
+            median_diff=("diff", "median"),
+            std_diff=("diff", "std"),
+            plus_rate=("plus", "mean"),
         )
         .reset_index()
     )
 
-    agg["plus_rate"]   = (agg["plus_rate"] * 100).round(1)
-    agg["avg_diff"]    = agg["avg_diff"].round(0).astype(int)
+    agg["plus_rate"] = (agg["plus_rate"] * 100).round(1)
+    agg["avg_diff"] = agg["avg_diff"].round(0).astype(int)
     agg["median_diff"] = agg["median_diff"].round(0).astype(int)
     agg = agg[agg["n"] >= min_n].copy()
 
@@ -252,25 +241,21 @@ def scan_dimension(hall_name: str,
         return pd.DataFrame()
 
     # Kruskal-Wallis（次元全体の有意性）
-    group_arrays = [
-        grp["diff"].values
-        for _, grp in df.groupby(group_cols)
-        if len(grp) >= 2
-    ]
+    group_arrays = [grp["diff"].values for _, grp in df.groupby(group_cols) if len(grp) >= 2]
     if len(group_arrays) >= 2:
         try:
             H, p_value = kruskal(*group_arrays)
-            k      = len(group_arrays)
+            k = len(group_arrays)
             n_total = sum(len(g) for g in group_arrays)
-            eps_sq  = _epsilon_squared(H, k, n_total)
+            eps_sq = _epsilon_squared(H, k, n_total)
         except Exception:
             H, p_value, eps_sq = np.nan, np.nan, np.nan
     else:
         H, p_value, eps_sq = np.nan, np.nan, np.nan
 
-    agg["kruskal_H"]  = round(H, 3)      if not np.isnan(H)       else np.nan
-    agg["p_value"]    = round(p_value, 4) if not np.isnan(p_value) else np.nan
-    agg["epsilon_sq"] = round(eps_sq, 4)  if not np.isnan(eps_sq)  else np.nan
+    agg["kruskal_H"] = round(H, 3) if not np.isnan(H) else np.nan
+    agg["p_value"] = round(p_value, 4) if not np.isnan(p_value) else np.nan
+    agg["epsilon_sq"] = round(eps_sq, 4) if not np.isnan(eps_sq) else np.nan
 
     # Bootstrap CI（グループごと）
     ci_los, ci_his = [], []
@@ -309,7 +294,11 @@ def scan_dimension(hall_name: str,
     agg["baseline_plus_rate"] = round(baseline_plus_rate, 1)
     agg["tier"] = agg.apply(
         lambda r: _classify_tier(
-            r["n"], r["plus_rate"], r["avg_diff"], r["p_value"], r["epsilon_sq"],
+            r["n"],
+            r["plus_rate"],
+            r["avg_diff"],
+            r["p_value"],
+            r["epsilon_sq"],
             baseline_plus_rate=baseline_plus_rate,
         ),
         axis=1,
@@ -322,10 +311,8 @@ def scan_dimension(hall_name: str,
 
 # ── クロスホール比較 ───────────────────────────────────────────────────────────
 
-def cross_hall_scan(group_cols: list,
-                    filters: dict = None,
-                    min_n: int = 5,
-                    halls: list = None) -> pd.DataFrame:
+
+def cross_hall_scan(group_cols: list, filters: dict = None, min_n: int = 5, halls: list = None) -> pd.DataFrame:
     """
     複数ホールで同一次元をスキャンし、共通・固有パターンを判定する。
 
@@ -354,33 +341,19 @@ def cross_hall_scan(group_cols: list,
 
     combined = pd.concat(results, ignore_index=True)
 
-    combined["pattern_key"] = combined[group_cols].apply(
-        lambda r: "_".join(str(r[c]) for c in group_cols), axis=1
-    )
+    combined["pattern_key"] = combined[group_cols].apply(lambda r: "_".join(str(r[c]) for c in group_cols), axis=1)
 
-    ab_counts = (
-        combined[combined["tier"].isin(["A", "B"])]
-        .groupby("pattern_key")["hall"]
-        .nunique()
-    )
-    combined["n_halls_tier_ab"] = (
-        combined["pattern_key"].map(ab_counts).fillna(0).astype(int)
-    )
-    combined["universality"] = combined["n_halls_tier_ab"].apply(
-        lambda x: "universal" if x >= 2 else "hall_specific"
-    )
+    ab_counts = combined[combined["tier"].isin(["A", "B"])].groupby("pattern_key")["hall"].nunique()
+    combined["n_halls_tier_ab"] = combined["pattern_key"].map(ab_counts).fillna(0).astype(int)
+    combined["universality"] = combined["n_halls_tier_ab"].apply(lambda x: "universal" if x >= 2 else "hall_specific")
 
-    return combined.sort_values(
-        ["n_halls_tier_ab", "avg_diff"], ascending=[False, False]
-    ).reset_index(drop=True)
+    return combined.sort_values(["n_halls_tier_ab", "avg_diff"], ascending=[False, False]).reset_index(drop=True)
 
 
 # ── ラグ分析（据え・上げ・リバウンド）─────────────────────────────────────────
 
-def lag_analysis(hall_name: str,
-                 group_col: str,
-                 lag: int = 1,
-                 min_n: int = 5) -> pd.DataFrame:
+
+def lag_analysis(hall_name: str, group_col: str, lag: int = 1, min_n: int = 5) -> pd.DataFrame:
     """
     前日→翌日の連続性を分析する（据え・上げ・リバウンド検証）。
 
@@ -394,11 +367,7 @@ def lag_analysis(hall_name: str,
     """
     df = load_hall_df(hall_name)
 
-    daily = (
-        df.groupby(["date", group_col])
-        .agg(avg_diff=("diff", "mean"), n=("diff", "count"))
-        .reset_index()
-    )
+    daily = df.groupby(["date", group_col]).agg(avg_diff=("diff", "mean"), n=("diff", "count")).reset_index()
     daily = daily[daily["n"] >= min_n].sort_values("date")
 
     daily["prev_diff"] = daily.groupby(group_col)["avg_diff"].shift(lag)
@@ -407,19 +376,21 @@ def lag_analysis(hall_name: str,
 
     rows = []
     for val, grp in daily.groupby(group_col):
-        after_plus  = grp[grp["prev_plus"] == 1]["avg_diff"]
+        after_plus = grp[grp["prev_plus"] == 1]["avg_diff"]
         after_minus = grp[grp["prev_plus"] == 0]["avg_diff"]
 
-        rows.append({
-            group_col:               val,
-            "n_transitions":         len(grp),
-            "n_after_plus":          len(after_plus),
-            "avg_diff_after_plus":   round(after_plus.mean(), 0)       if len(after_plus)  >= 3 else np.nan,
-            "streak_rate":           round((after_plus  > 0).mean() * 100, 1) if len(after_plus)  >= 3 else np.nan,
-            "n_after_minus":         len(after_minus),
-            "avg_diff_after_minus":  round(after_minus.mean(), 0)      if len(after_minus) >= 3 else np.nan,
-            "rebound_rate":          round((after_minus > 0).mean() * 100, 1) if len(after_minus) >= 3 else np.nan,
-        })
+        rows.append(
+            {
+                group_col: val,
+                "n_transitions": len(grp),
+                "n_after_plus": len(after_plus),
+                "avg_diff_after_plus": round(after_plus.mean(), 0) if len(after_plus) >= 3 else np.nan,
+                "streak_rate": round((after_plus > 0).mean() * 100, 1) if len(after_plus) >= 3 else np.nan,
+                "n_after_minus": len(after_minus),
+                "avg_diff_after_minus": round(after_minus.mean(), 0) if len(after_minus) >= 3 else np.nan,
+                "rebound_rate": round((after_minus > 0).mean() * 100, 1) if len(after_minus) >= 3 else np.nan,
+            }
+        )
 
     result = pd.DataFrame(rows).sort_values("rebound_rate", ascending=False)
     result["hall"] = hall_name
@@ -428,8 +399,8 @@ def lag_analysis(hall_name: str,
 
 # ── 導入日フィーチャー ─────────────────────────────────────────────────────────
 
-def compute_debut_features(df: pd.DataFrame,
-                           db_start_grace_days: int = 0) -> pd.DataFrame:
+
+def compute_debut_features(df: pd.DataFrame, db_start_grace_days: int = 0) -> pd.DataFrame:
     """
     ホール別の「機種初登場日（debut）」を付与する。
 
@@ -455,17 +426,12 @@ def compute_debut_features(df: pd.DataFrame,
     db_start = pd.to_datetime(df["date"], format="%Y%m%d").min()
 
     # ── 機種ごとの初登場日（ホール内） ──
-    debut_map = (
-        df.groupby("machine_name")["date"]
-        .min()
-        .reset_index()
-        .rename(columns={"date": "debut_date"})
-    )
+    debut_map = df.groupby("machine_name")["date"].min().reset_index().rename(columns={"date": "debut_date"})
     df = df.merge(debut_map, on="machine_name", how="left")
 
     # ── 日付変換 ──
-    df["date_dt"]    = pd.to_datetime(df["date"],        format="%Y%m%d")
-    df["debut_dt"]   = pd.to_datetime(df["debut_date"],  format="%Y%m%d")
+    df["date_dt"] = pd.to_datetime(df["date"], format="%Y%m%d")
+    df["debut_dt"] = pd.to_datetime(df["debut_date"], format="%Y%m%d")
 
     # ── pre_existing フラグ ──
     df["pre_existing"] = (df["debut_dt"] - db_start).dt.days <= db_start_grace_days
@@ -489,13 +455,16 @@ def compute_debut_features(df: pd.DataFrame,
 
 # ── ANOMALY 検出 ───────────────────────────────────────────────────────────────
 
-def anomaly_detection(hall_name: str,
-                      baseline_days: int = 30,
-                      min_games: int = 1000,
-                      anomaly_threshold: float = 2.0,
-                      min_baseline_obs: int = 10,
-                      db_start_grace_days: int = 0,
-                      df: pd.DataFrame = None) -> pd.DataFrame:
+
+def anomaly_detection(
+    hall_name: str,
+    baseline_days: int = 30,
+    min_games: int = 1000,
+    anomaly_threshold: float = 2.0,
+    min_baseline_obs: int = 10,
+    db_start_grace_days: int = 0,
+    df: pd.DataFrame = None,
+) -> pd.DataFrame:
     """
     台レベルで「直近N日ベースラインから大幅に逸脱した日」を検出する。
 
@@ -530,58 +499,54 @@ def anomaly_detection(hall_name: str,
 
     # ── rolling baseline（前日までのN日間） ──
     baseline_mean_list = []
-    baseline_std_list  = []
+    baseline_std_list = []
 
     for mn, grp in df.groupby("machine_number", sort=False):
         diff_series = grp["diff"].reset_index(drop=True)
-        rolled_mean = (
-            diff_series
-            .shift(1)
-            .rolling(window=baseline_days, min_periods=min_baseline_obs)
-            .mean()
-        )
-        rolled_std = (
-            diff_series
-            .shift(1)
-            .rolling(window=baseline_days, min_periods=min_baseline_obs)
-            .std()
-        )
+        rolled_mean = diff_series.shift(1).rolling(window=baseline_days, min_periods=min_baseline_obs).mean()
+        rolled_std = diff_series.shift(1).rolling(window=baseline_days, min_periods=min_baseline_obs).std()
         baseline_mean_list.append(rolled_mean)
         baseline_std_list.append(rolled_std)
 
     df["baseline_mean"] = pd.concat(baseline_mean_list).values
-    df["baseline_std"]  = pd.concat(baseline_std_list).values
+    df["baseline_std"] = pd.concat(baseline_std_list).values
 
     # ── anomaly_score ──
     # std=0 （全日同値）は NaN に
     df["baseline_std"] = df["baseline_std"].replace(0, np.nan)
-    df["anomaly_score"] = (
-        (df["diff"] - df["baseline_mean"]) / df["baseline_std"]
-    ).round(2)
+    df["anomaly_score"] = ((df["diff"] - df["baseline_mean"]) / df["baseline_std"]).round(2)
 
     # ── is_anomaly フラグ ──
     df["is_anomaly"] = (
-        (df["anomaly_score"] >= anomaly_threshold)
-        & (df["games"] >= min_games)
-        & df["anomaly_score"].notna()
+        (df["anomaly_score"] >= anomaly_threshold) & (df["games"] >= min_games) & df["anomaly_score"].notna()
     )
 
     # ── days_since_debut_bucket ──
-    bins   = [-1, 7, 14, 30, 60, 90, 180, 365, 9999]
-    labels = ["0-7日", "8-14日", "15-30日", "31-60日",
-              "61-90日", "91-180日", "181-365日", "365日超"]
-    df["days_since_debut_bucket"] = pd.cut(
-        df["days_since_debut"], bins=bins, labels=labels
-    )
+    bins = [-1, 7, 14, 30, 60, 90, 180, 365, 9999]
+    labels = ["0-7日", "8-14日", "15-30日", "31-60日", "61-90日", "91-180日", "181-365日", "365日超"]
+    df["days_since_debut_bucket"] = pd.cut(df["days_since_debut"], bins=bins, labels=labels)
 
     # 必要列のみ返す
     keep = [
-        "date", "machine_name", "machine_number",
-        "diff", "games", "plus",
-        "day_of_week", "dd", "dd_group", "is_x_day", "is_any_event",
-        "baseline_mean", "baseline_std", "anomaly_score", "is_anomaly",
-        "days_since_debut", "days_since_debut_bucket",
-        "pre_existing", "machine_count",
+        "date",
+        "machine_name",
+        "machine_number",
+        "diff",
+        "games",
+        "plus",
+        "day_of_week",
+        "dd",
+        "dd_group",
+        "is_x_day",
+        "is_any_event",
+        "baseline_mean",
+        "baseline_std",
+        "anomaly_score",
+        "is_anomaly",
+        "days_since_debut",
+        "days_since_debut_bucket",
+        "pre_existing",
+        "machine_count",
         "debut_date",
     ]
     keep = [c for c in keep if c in df.columns]

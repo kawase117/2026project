@@ -1,0 +1,61 @@
+---
+id: cramers-v-inflated-by-high-cardinality-axis
+trigger: "水準数が大きく異なる複数の軸(例: 31水準のDD vs 2水準のイベントフラグ)でカイ二乗検定の効果量を同じ閾値で比較するとき"
+confidence: 0.92
+domain: statistical-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 未補正Cramér's Vは水準数が多い軸で見かけ上大きくなる。バイアス補正が必須
+
+## 背景
+machine_axis_pattern_scan.pyの初回実装で、dd軸(31水準)×hit104/plusのCramér's Vがeffect_size>=0.1を示す機種の割合が69〜97%（day_of_week(7水準)は16〜33%、is_x_day(2水準)は2〜8%）という異常な差になった。原因は、二値アウトカム(c=2)の分割表でCramér's Vの分母min(r-1,c-1)が常に1になる一方、分子のchi2は帰無仮説下でも期待値df=(r-1)(c-1)を持つため、水準数rが大きいほどノイズだけでchi2が膨らみVが水増しされること。実証: dd×hit104のeffect_sizeとlog(n_obs)の相関が-0.89〜-0.92（真の効果ならサンプル数と無関係のはず）。Bergsma & Wicher (2013)のバイアス補正版Cramér's Vに切り替えたところ、相関は-0.16〜-0.32まで改善し、pct_effect_ge_0_1もdd軸で13〜24%という現実的な値になった。
+
+## アクション
+水準数が大きく異なる複数の軸を同じ効果量閾値で比較する分析を組むときは、必ずバイアス補正版Cramér's V（`phi2_tilde = max(0, chi2/n - (r-1)(c-1)/(n-1))`から計算）を使う。未補正版を使う場合は、水準数が多い軸(10水準超など)の結果を他の軸と直接比較しない。疑わしい結果が出たら、effect_sizeとlog(n_obs)の相関を確認する診断が有効（強い負の相関は水増しのサイン）。
+
+## 例
+eda/machine_name_significance_scan.py の `_cramers_v_bias_corrected`。eda/machine_axis_pattern_scan.py の `_scan_binary_outcome` で使用。
+
+---
+id: dd-level-machine-patterns-exceed-official-event-day-list
+trigger: "特定機種のDD別（1〜31日）成績パターンをホールの公式イベント日リストと照らし合わせるとき"
+confidence: 0.85
+domain: hall-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 機種ごとの強いDDは、ホールの公式イベント日リストと部分的にしか一致しない
+
+## 背景
+機種名×DD軸の法則性スキャンで判明。スマスロ北斗の拳(蒲田1, n=9617)はDD1・DD11(蒲田1のイベント日)に加えDD10・DD9(非イベント日)も好調で、DD12(-331枚)が最弱だった。クレアの秘宝伝(みとや, n=830)はDD27(勝率72.4%, hit104率62.1%)が突出する一方、みとやの公式イベント日であるDD7(勝率19.2%、全31日中最弱クラス)・DD14(24.1%)はむしろ弱かった。ファンキージャグラー2(蒲田7, n=8457)はDD14(勝率57.9%, 平均+982枚)が最強だが、蒲田7の公式イベント日リストには含まれない。
+
+## アクション
+機種の強いDDを見つけたい場合、ホールの公式イベント日フラグ(is_x_day)だけに頼らず、必ず機種×dd(1〜31)の個別breakdownを確認する。逆に「イベント日だから強いはず」という前提で特定日を評価せず、同じイベント日リスト内でも機種によって強弱が大きく割れることを踏まえる。
+
+## 例
+eda/results/machine_axis_pattern_scan/{hall}_top_signal_breakdown.csv。クレアの秘宝伝dd27: hit104率62.1%(n=29) vs dd7: 19.2%(n=26)、同じ「イベント日」区分内でも47ptの差。
+
+---
+id: machine-axis-pattern-scan-tooling-available
+trigger: "機種×DD/曜日/イベント日の法則性を確認したいとき"
+confidence: 0.90
+domain: tooling
+source: session-implementation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 機種×DD/曜日/イベント日の法則性スキャンツールが利用可能
+
+## 背景
+2026-07-02セッションで設計、Codexが実装。全機種を対象に、DD(1-31)/曜日(7水準)/イベント日(is_x_day, 2水準)の3軸それぞれについて、差枚(Kruskal-Wallis)・勝率・104%超え率(カイ二乗、バイアス補正Cramér's V)の法則性をスクリーニングし、効果量上位シグナルとその水準別内訳を出力する。現在設置されている機種のみを対象とし(30日grace)、新台除外(30日)も適用済み。
+
+## アクション
+python eda/machine_axis_pattern_scan.py で3ホール(蒲田1/蒲田7/みとや)分を一括実行。出力はeda/results/machine_axis_pattern_scan/配下の{hall}_pattern_summary.csv(全件)、{hall}_top_signals.csv(効果量上位30件)、{hall}_top_signal_breakdown.csv(上位シグナルの水準別内訳)、summary_report.csv(軸×アウトカム別の集計)。p値ではなくeffect_size列（Kruskal-Wallisはepsilon_sq相当、カイ二乗はバイアス補正Cramér's V）を主指標として解釈すること。
+
+## 例
+python eda/machine_axis_pattern_scan.py
+python eda/machine_axis_pattern_scan.py --halls 蒲田7 --top-n 50
+設計プロンプト: document/plans/prompt_machine_axis_pattern_scan.md, document/plans/prompt_machine_axis_pattern_scan_bias_correction_fix.md

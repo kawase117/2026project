@@ -56,8 +56,8 @@ def _seed_breakdown_db(db_path: Path) -> None:
         ]
         sections = [
             ("501-522", 1, 22, 60),
-            ("557-590", 10, 15, 10),
-            ("692-711", 3, 20, -50),
+            ("557-573", 10, 15, 10),
+            ("692-700", 3, 20, -50),
         ]
 
         master_rows = []
@@ -127,8 +127,8 @@ def test_section_and_physical_corner_reports(tmp_path: Path) -> None:
     assert {"section", "machine_type", "avg_diff", "plus_rate", "sample_n"}.issubset(section_cross.columns)
     assert section_cross.groupby("section")["sample_n"].sum().to_dict() == {
         "501-522": 150,
-        "557-590": 150,
-        "692-711": 150,
+        "557-573": 150,
+        "692-700": 150,
     }
 
     assert set(section_kruskal["machine_type"]) == {"jug", "bt", "hana", "oki", "other"}

@@ -1,0 +1,167 @@
+---
+id: h-nonjug-debut-survival-bias-confirmed
+trigger: "h_nonjug セグメントで debut→mature の diff 逆転パターンを解釈するとき"
+confidence: 0.90
+domain: mitoya-segment-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# h_nonjug debut→mature 逆転は生存バイアス + X_DDSプレミアムの複合
+
+## 背景
+Phase10e で h_nonjug に debut avg_diff=-89.9 → mature avg_diff=+107.9 の逆転を検出。
+3仮説を Phase10f で分離検証した。
+
+## アクション
+- 仮説B（生存バイアス）支持: survived群の debut期 avg_diff=-16.7 vs removed群=-179.9 (MWU p=0.003)。mature の高成績は「好成績機種の生き残り」であり、設定変更ではない
+- 仮説C（X_DDS限定プレミアム）支持: debut期でも X_DDS日は avg_diff=+52.2 vs 非イベント日=-139.1。X_DDS日なら新台でもプラス
+- 「mature台だから高設定」と解釈してはならない。生存バイアスが混入している
+- 「新台だから避ける」も不正確。X_DDS日なら debut 台も期待値プラス
+
+## 例
+- removed 機種は debut 期から avg_diff=-179.9 で既に悪い → 撤去予兆は初動成績で読める
+- h_nonjug 121+ bin の X_DDS日 avg_diff=+548.5 vs 非イベント日=-99.4 → X_DDSプレミアムは経過日数が長いほど拡大
+
+---
+id: mixed-805-debut-xdds-interaction-driver
+trigger: "mixed_805 セグメントの debut×X_DDS 交互作用を解釈するとき"
+confidence: 0.85
+domain: mitoya-segment-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# mixed_805 の交互作用は debut×X_DDS と growth×X_DDS の反転が駆動
+
+## 背景
+Phase10e で mixed_805 に debut主効果なし (p=0.702) だが debut×X_DDS交互作用が強い (F=10.82, p<0.001) という異常を検出。Phase10g でセル分解した。
+
+## アクション
+- 駆動セル: debut × X_DDS = avg_diff +408.6 (z=1.96, 外れセル判定)
+- 反転セル: growth × X_DDS = avg_diff -169.2 (z=-1.62, 外れセル判定)
+- 主効果がないのは全フェーズ通しで差が小さいが、X_DDS日限定で debut/growth が正反対の振る舞いをするため交互作用だけが浮上した構造
+- h_nonjug との違い: h_nonjug は mature×X_DDS が最大 contrast (+501.8)。mixed_805 は debut×X_DDS が最大 (417.8)。セグメントごとにホール戦略が異なる
+
+## 例
+mixed_805 のコントラスト: debut=+417.8 > mature=+201.6 > pre_existing=+127.9 > growth=-269.8
+
+---
+id: vjug-corner-effect-absent-physical-layout
+trigger: "v_jug セグメントで角番位置を特徴量や台選択に使おうとするとき"
+confidence: 0.92
+domain: mitoya-segment-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# v_jug には角番効果がない（物理配置が原因、機種構成は無関係）
+
+## 背景
+Phase10e で h_jug の corner主効果 F=51.3 (p<0.001) に対し v_jug は F=1.84 (p=0.137)。Phase10h で3仮説を検証した。
+
+## アクション
+- 仮説D（物理的可視性）支持: 残差法（機種効果除去後）でも v_jug は p=0.551。角番効果は島の物理構造に起因
+- 仮説E（セクションサイズ差）部分支持: v_jug は全セクション11台、corner10+ が 18% のみ。ただし仮説D と同じ構造を別角度から見ているだけ
+- 仮説F（機種構成差）棄却: v_jug の機種は5機種に分散するが、残差法で機種効果を除去しても結果は変わらない
+- v_jug で角番を台選択の判断材料にしてはならない。他の軸（X_DDS、debut_phase等）を使うこと
+- h_jug では corner1 が avg_diff +405 で強いシグナル。h_jug 限定で角番は有効
+
+## 例
+- h_jug: corner1=+405 → corner10+=+1.8 (勾配-403, KW residual p<0.001)
+- v_jug: corner1=+124 → corner10+=+48 (勾配-76, KW residual p=0.551)
+
+---
+id: xdds-corner-interaction-horizontal-only
+trigger: "X_DDS×角番の交互作用をセグメント横断で解釈するとき"
+confidence: 0.88
+domain: mitoya-segment-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# X_DDS×角番 交互作用は水平セグメントのみ有意
+
+## 背景
+Phase10e の 2-way ANOVA で X_DDS×corner_bucket 交互作用をセグメント別に検定した。
+
+## アクション
+- h_jug (p=0.006) と h_nonjug (p<0.001) で交互作用が有意。X_DDS日に角番への設定傾斜が強まる
+- v_jug (p=0.908), v_nonjug (p=0.988), mixed_805 (p=0.145) は交互作用なし
+- X_DDS日の角番プレミアムは水平島に限定される。垂直島では角番×イベント日の組み合わせは無効
+- h_nonjug の交互作用 F=9.09 は h_jug の F=4.16 より強い。非ジャグラー水平島でのX_DDS角番プレミアムが最大
+
+## 例
+h_nonjug Step 1: X_DDS日 corner1 avg_diff=+622.7, corner10+=+139.7 (差=483)。非イベント日 corner1=-163.5, corner10+=-113.3 (差=50)。X_DDS日に角番勾配が 10倍に拡大
+
+---
+id: add-debut-phase-index-alignment-bug
+trigger: "add_debut_phase の出力で debut_days が NaN になるとき"
+confidence: 0.95
+domain: implementation-bug
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# add_debut_phase の debut_days インデックス不整合バグ（修正済み）
+
+## 背景
+mitoya_prompt_common.py line 246 で pd.Series(debut_days, dtype=object) が group のインデックスと不整合を起こし、debut/growth/mature 行の debut_days が全行 NaN になっていた。Phase10e Step 7 の Spearman 相関が全行 n=0 で発覚。
+
+## アクション
+- 修正: pd.Series(debut_days, dtype=object, index=group.index) に変更済み
+- pd.Series をリストから生成して DataFrame 列に代入する場合、index を明示的に渡すこと
+- debut_phase（リスト直接代入）は位置ベースで動くが、pd.Series はインデックス整列されるため挙動が異なる
+
+## 例
+修正前: debut/growth/mature 73,623行のうち debut_days notna = 0
+修正後: debut/growth/mature 73,623行のうち debut_days notna = 73,623
+
+---
+id: prepare-frame-call-order-debut-phase
+trigger: "add_debut_phase と phase10._prepare_frame を組み合わせて使うとき"
+confidence: 0.93
+domain: implementation-pattern
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# add_debut_phase は _prepare_frame の前に呼ぶこと（順序厳守）
+
+## 背景
+phase10._prepare_frame (line 115-116) は machine_name が空の場合に空文字で埋める。add_debut_phase は machine_name の実値（日本語機種名）を必要とする。順序を間違えると全台が pre_existing に分類される。
+
+## アクション
+呼び出し順序を厳守:
+1. add_debut_phase(df) — machine_name が生きている状態で
+2. add_event_category(work)
+3. phase10._prepare_frame(work) — games>=1000フィルタ等
+4. is_moved 列（bool）で moved を除外
+
+## 例
+Phase10e/f/g/h すべてでこの順序を適用。逆順にすると debut_phase が全行 pre_existing になり、debut/growth/mature の分析が不可能になる
+
+---
+id: vjug-no-digit-effect-confirmed
+trigger: "v_jug セグメントで末尾（last_digit）を特徴量や台選択に使おうとするとき"
+confidence: 0.90
+domain: mitoya-segment-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# v_jug には末尾効果も存在しない（角番効果と同様）
+
+## 背景
+Phase10h で v_jug の角番効果不在を確認した後、Phase10 (step4_digit_kw) と Phase10b (nonevent_digit_kw) のデータで末尾効果も検証した。
+
+## アクション
+- v_jug 末尾 KW: 全日 p=0.265、非イベント日 p=0.474。いずれも非有意
+- 対照: h_jug は全日 p=0.004、非イベント日 p<0.001 で末尾効果が強い
+- v_jug では角番も末尾もシグナルにならない。有効な軸は X_DDS主効果 (F=50.1) と debut_phase×X_DDS交互作用 (F=5.55) の2つ
+- 垂直島（11台構成）ではホールが末尾・角番で設定を傾斜させるインセンティブが薄い。小さい島で偏らせると客に読まれやすいため
+
+## 例
+- v_jug 末尾 KW 全日: stat=11.16, p=0.265, epsilon_sq=0.000
+- h_jug 末尾 KW 全日: stat=24.44, p=0.004, epsilon_sq=0.001
+- v_jug で有効: X_DDS日の主効果のみ。台選択はイベント日×debut_phase に絞るのが合理的

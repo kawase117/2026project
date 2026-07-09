@@ -1,0 +1,181 @@
+---
+id: weekday-axis-weaker-than-dd-axis-across-all-halls
+trigger: "機種×曜日 or 機種×DD の法則性スキャンで、どちらの軸を主軸にすべきか判断するとき"
+confidence: 0.90
+domain: statistical-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 曜日軸はDD軸より一貫して弱い。投入日探索はDD軸を主軸にすべき
+
+## 背景
+machine_axis_pattern_scan.pyを全9ホール・全機種で実行し、summary_report.csvの効果量≥0.1比率を軸別に比較した。DD軸(31水準)は全9ホールで12〜30%だったのに対し、曜日軸(7水準)は0〜9.7%（金時ホールは全41機種×3outcomeで0件）。p<0.05かつ効果量≥0.1のペア数も、1491レコード中DD軸67件・曜日軸19件と3.5倍の差があった。曜日軸のうち全期間で有意だった機種（攻殻機動隊等）も、後の90日ウィンドウ検証で消えるケースが多かった（下記dd-target-day-rotates-not-full-reset参照）。
+
+## アクション
+投入日戦略の探索・機種選定はDD軸(日付1-31)を主軸に置く。曜日軸は補助的な確認に留め、曜日軸単独の発見を強く主張しない。曜日軸で有意だった機種を採用する場合は特に、90日ウィンドウ等での再現性チェックを必須にする。
+
+## 例
+eda/results/machine_axis_pattern_scan/summary_report.csv。金時: dd軸hit104効果量≥0.1が22.0%、曜日軸hit104は0%。
+
+---
+id: dd-target-day-rotates-not-full-reset
+trigger: "短期(90日程度)ウィンドウで機種のDD/日付別パターンの持続性を評価するとき"
+confidence: 0.85
+domain: statistical-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 短期ウィンドウ間でパターンが「消える」のではなく「狙う日付が移動する」ケースがある
+
+## 背景
+90日ウィンドウ検証（machine_dd_recent_window_scan.py）で、蒲田1のスマスロ北斗の拳とファンキージャグラー2(蒲田7)は、直近90日・その前90日の両方が独立に強く有意（p<0.001クラス、n=900〜2000超）だったが、ピークとなるDD値(日付)自体が移動していた（北斗の拳: 17日→1日、ファンキージャグラー2: 9日→1日）。両ウィンドウ間のSpearman順位相関は低い（0.07〜0.19）にもかかわらず、両方とも実質的な効果量（0.13〜0.22）を持っていた。
+これは document/instincts/2026-07-02-machine-dd-persistence-check-insights.yaml の
+persistence-rho-cannot-distinguish-no-signal-from-regime-shift（北斗の拳の前半/後半split rho≈0.015を「後継機投入による一度きりの市場変化」と解釈した instinct）を精緻化する発見。実際には一度きりの regime shift というより、90日規模で継続的にターゲット日がローテーションしている可能性が高い。
+
+## アクション
+短期ウィンドウ比較で「同じ日付/曜日が続けて光るか」だけを一致条件にすると、この種の実在する構造的シグナルを誤って棄却する。一致判定には「隣接ウィンドウにも実質的な効果量（閾値0.05程度）があるか」を用い、対象日の完全一致は要求しない。全期間一括の前半/後半50/50splitでrho≈0が出た場合も、即座に「法則性なし」と判断せず、90日規模の細かいウィンドウで再検証する。
+
+## 例
+蒲田1 スマスロ北斗の拳 hit104: window0(2026-04-02..2026-06-30) p=3.0e-5 効果量0.217 トップ17日、window1(2026-01-02..2026-04-01) p=7.7e-4 効果量0.178 トップ1日。
+
+---
+id: consistency-flag-needs-nonzero-effect-gate
+trigger: "2つの独立ウィンドウ間の一致度をSpearman順位相関だけで判定する仕組みを設計・レビューするとき"
+confidence: 0.85
+domain: statistical-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 比較先ウィンドウの効果量がゼロ(ノイズ状態)だと、順位相関だけの一致判定は誤検出する
+
+## 背景
+曜日軸90日ウィンドウ検証で、蒲田7のいざ！番長(plus)はwindow1の効果量が実質ゼロ(0.00、完全にノイズ状態=曜日間でほぼ差がない)だったにもかかわらず、window0とのSpearman rho=0.89という高い一致度を示した。効果量ゼロの状態では「どの曜日/日が一番高いか」はノイズによる僅差で決まるため、この種の一致は偶然の可能性が高い。DD軸版(machine_dd_recent_window_scan.py)ではこれを教訓に、consistent_with_prior_windowの条件へwindow1_effect>=0.05を追加した。曜日軸版(machine_weekday_recent_window_scan.py)には未反映。
+
+## アクション
+複数ウィンドウ間の一致をSpearman順位相関(または類似の順位ベース指標)で判定する仕組みを作る/レビューするときは、比較対象ウィンドウ側にも最低限の実質的な効果量があることを追加条件にする。効果量が閾値未満のウィンドウとの「一致」は無視するか、noteに理由を残して別枠にする。
+
+## 例
+eda/machine_dd_recent_window_scan.py の consistent_with_prior_window 判定に window1_effect >= 0.05 を追加。eda/machine_weekday_recent_window_scan.py は未修正のため、同種の誤検出が起こりうる。
+
+---
+id: dd-axis-window-needs-larger-min-n-than-weekday
+trigger: "曜日軸(7水準)向けに設計したウィンドウ/期間限定の検定手法をDD軸(31水準)に転用するとき"
+confidence: 0.90
+domain: statistical-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 曜日軸のウィンドウ内最低件数閾値をそのままDD軸に流用すると水準あたりのサンプルが薄くなりすぎる
+
+## 背景
+曜日軸90日窓スキャンはMIN_MACHINE_DAYS_PER_WINDOW=40（1曜日あたり平均5.7件）で設計した。これをそのままDD軸(31水準、曜日の4.4倍)に流用すると1日あたり平均1.3件しかなく、大半がスパース警告か検定不能になる。DD軸版では閾値を200に引き上げ（1日あたり約6.5件を確保）、セル/共通水準の閾値は既存のeda/machine_dd_persistence_check.pyの定数(MIN_CELL_N_FOR_SPLIT=3, MIN_COMMON_LEVELS=10)をそのまま流用した。
+
+## アクション
+ある軸(水準数A)向けに設計したウィンドウ内最低件数閾値を、水準数が異なる別の軸(水準数B)に転用する際は、少なくとも閾値を(B/A)倍程度に引き上げる。既に同じ水準数の軸で類似のサンプルサイズ制約を扱った既存ツールがあれば、その定数を再利用する方が新規にチューニングするより信頼できる。
+
+## 例
+eda/machine_dd_recent_window_scan.py DEFAULT_MIN_MACHINE_DAYS_PER_WINDOW=200（曜日版の40から5倍に引き上げ）。
+
+---
+id: cross-hall-machine-match-needs-chain-check
+trigger: "同一機種名が複数ホールでDD/曜日軸の統計的パターンを示したとき、それをホール戦略の共有と解釈してよいか判断するとき"
+confidence: 0.85
+domain: hall-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 複数ホールでの一致は、同一チェーンかどうかで解釈が全く異なる
+
+## 背景
+DD軸全機種スキャンで、東京喰種がみとや・レイトギャップ・蒲田7という互いに無関係な3チェーンで一致して有意になった。ハッピージャグラーVIII・ファンキージャグラー2等のジャグラー系も同様に無関係な複数チェーンで頻出。一方、攻殻機動隊・スマスロ北斗の拳は同一マルハンチェーン内(蒲田1/蒲田7)でのみ一致していた。
+
+## アクション
+複数ホールで同一機種のパターンが一致したら、まずそのホールが同一チェーン(同一運営会社)かどうかを確認する。同一チェーンでの一致はホール戦略の共有を示唆するが、無関係なチェーンでの一致は機種自体の出玉設計・ボラティリティ特性（ジャグラーはRB確率が設定に直結、東京喰種は大型機で偏りやすい等）による可能性が高く、ホール戦略の証拠として扱うべきでない。
+
+## 例
+eda/results/machine_axis_pattern_scan/dd_multi_hall_machines_detail.csv。スマスロ北斗の拳=[蒲田1,蒲田7](同一マルハンチェーン)、東京喰種=[みとや,レイトギャップ,蒲田7](無関係3チェーン)。
+
+---
+id: significance-csv-duplicate-rows-by-outcome
+trigger: "全機種スキャンのCSVで同じホール×機種名の行が複数出て重複バグに見えるとき"
+confidence: 0.95
+domain: tooling
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# hall×machine_nameの重複はoutcome違い(plus/hit104)であり、両方クリアはむしろ良い兆候
+
+## 背景
+machine_axis_pattern_scan.py系のpattern_summary.csvは1機種につきdiff(Kruskal-Wallis)/plus(カイ二乗)/hit104(カイ二乗)の3種の検定を独立行として出力する。p<0.05かつ効果量≥0.1でフィルタしたCSVで同じhall×machine_nameが複数行残るのは、複数のoutcomeで基準をクリアしたことを意味し、バグではない。実際に確認した67件中32件がこのパターンで、hall+machine_name+outcomeの完全一致重複は0件だった。
+
+## アクション
+重複に見えたらまずoutcome列を確認する。hall+machine_name+outcomeの完全一致がなければ設計通り。plus/hit104両方でクリアしている機種は一方だけの機種よりむしろ一貫性の高い(信頼度の高い)シグナルとして扱ってよい。
+
+## 例
+蒲田1のミリオンゴッド‐神々の軌跡‐がplus(p=0.0088,効果量0.255)とhit104(p=0.0155,効果量0.240)の両方で基準をクリアし2行残った。
+
+---
+id: sparse-cell-warning-invalidates-top-effect-size
+trigger: "DD軸(31水準)の効果量ランキングで最大値を示した機種を信頼しようとするとき"
+confidence: 0.90
+domain: statistical-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 効果量ランキング単独最大の機種が、実は最もスパースで信頼度の低い結果だった
+
+## 背景
+全機種DD軸スキャンで単独最大の効果量(0.265, 金時のスマスロ炎炎ノ消防隊2)を記録した行は、期待セル数5未満が62セル中59.7%という重度のスパース警告付きだった。n=235を31日に分配すると1日あたり平均7.6件しかなく、コインを7〜8回投げただけの偏りを日別法則性として誤検出しやすい状態だった。
+
+## アクション
+効果量ランキング単体で機種を選ばず、note列のスパースセル警告(期待値<5の割合)を必ず確認する。警告ありの行は「clean」リストとして別集計し、比較・報告の際は明示的に区別する。
+
+## 例
+eda/results/machine_axis_pattern_scan/all_hall_dd_significant_clean.csv(警告なし59件) vs all_hall_dd_significant.csv(全67件)。
+
+---
+id: three-month-window-is-target-rotation-not-full-reset
+trigger: "パチスロの設定投入戦略が短期(3ヶ月程度)で変わるか長期一貫性があるかを議論するとき"
+confidence: 0.80
+domain: hall-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 投入戦略は3ヶ月ごとに完全リセットではなく、構造は持続しつつ狙う日付がローテーションする
+
+## 背景
+ユーザーが「投入傾向は3ヶ月単位で変わるのが基本」という仮説を提示。90日ウィンドウでの実データ検証の結果、完全な仮説通り(3ヶ月ごとに完全リセット)ではなく、「特定機種にDD別パターンが出やすいという構造的傾向は持続するが、狙う具体的な日付(DD値)自体は90日規模でローテーションする」という中間的な実態が判明した(dd-target-day-rotates-not-full-reset参照)。一方で蒲田7の北斗の拳のように、直前90日は有意だったのに直近90日で完全に消えるケース(真のトレンド変化・減衰)も同時に存在する。
+
+## アクション
+短期ウィンドウでの検証は「同じ日付が続けて光るか」を要求せず、「隣接ウィンドウにも構造(実質的な効果量)があるか」を見る。実運用の台選びは直近ウィンドウの結果を主軸にしつつ、多重検定によるノイズ拾いを避けるため、隣接ウィンドウでの緩いサニティチェック(効果量が閾値以上)は残す。全期間一括統計は「どの機種がそもそもパターンを持ちやすいか」の一次スクリーニングに使い、「今どの日を狙うべきか」の答えには使わない。四半期ごとに独立して大量の検定を繰り返す運用は、insample-cv-overfitting-guard instinctと同種の過学習リスクを持つことを常に意識する。
+
+## 例
+蒲田1スマスロ北斗の拳: window0(直近90日)ピーク17日p=3.0e-5、window1(直前90日)ピーク1日p=7.7e-4。両方強いが対象日が移動。蒲田7の北斗の拳はwindow1(p=0.0074)有意→window0(p=0.38)で消滅、こちらは真の減衰。
+
+---
+id: relative-time-terms-need-explicit-dates
+trigger: "複数の時間ウィンドウ(直近90日・その前の90日等)を日本語の相対語で説明するとき"
+confidence: 0.75
+domain: communication
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 「直近」と「直前」は基準点なしでは同じ意味に読める。実日付を併記すべき
+
+## 背景
+2つの90日ウィンドウを「直近90日」「直前90日」と呼んで説明したところ、「直前」は基準点(何の直前か)を明示しないと「今の直前=直近」と同じ意味に読めてしまい、ユーザーに混同された。
+
+## アクション
+複数ウィンドウを説明する際は、相対的な時間語(直前・直近)だけに頼らず、実際の日付範囲(YYYY-MM-DD..YYYY-MM-DD)を必ず併記する。
+
+## 例
+window0(直近90日: 2026-04-02〜2026-06-30) vs window1(その一つ前の90日: 2026-01-02〜2026-04-01)。

@@ -1,0 +1,128 @@
+---
+id: v12-debut-multiplier-avg-diff-up-lift-flat
+trigger: "debut_multiplierの効果を評価するとき / V12バリアントの採用判断をするとき / compositeスコアに経過日数ペナルティを適用するとき"
+confidence: 0.92
+scope: finding
+domain: ml-evaluation
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# V12b(base, scale=0.5)が最適: avg_diff+48.7かつhit@50/lift@50がV11を上回る唯一のバリアント
+
+## 背景
+2026-06-26 walk-forward正式検証。V11のcompositeスコアにセグメント別debut_multiplierを掛けた
+5バリアント（V12a/b/c/d）を全期間（171テスト日, window=90）で比較。
+
+## 発見（Window 90, event_type=all, 正式検証）
+
+| 指標 | V11 | V12a(base) | **V12b(base½)** | V12c(tuned) | V12d(tuned½) |
+|------|-----|-----------|----------------|-------------|-------------|
+| avg_diff | +181.6 | +244.7 | **+230.3** | +220.4 | +207.0 |
+| vs_other | +63.8 | +153.5 | **+138.0** | +105.6 | +91.1 |
+| hit@50 | 4.64 | 4.58 | **4.68** | 4.61 | 4.67 |
+| lift@50 | 1.326 | 1.308 | **1.336** | 1.317 | 1.332 |
+| payout | 100.40 | 100.64 | **100.64** | 100.55 | 100.49 |
+
+### V12b が最適解である理由
+- **avg_diffとlift@50の両方がV11を上回る唯一のバリアント**
+- avg_diff: +181.6 → +230.3（+48.7改善）
+- hit@50: 4.64 → 4.68（+0.04改善）
+- lift@50: 1.326 → 1.336（+0.010改善）
+- V12a(フル適用)はavg_diffは最大だが、lift@50が1.308に悪化
+- V12c(tuned)はlift@50が1.317でV11を下回る
+
+### event/non-event分割
+| | V11 vs_other | V12b vs_other | Δ |
+|---|---|---|---|
+| Event | +80.0 | **+220.5** | **+140.5** |
+| Non-event | +58.1 | **+109.4** | **+51.3** |
+
+イベント日で特に大きな改善（+140.5枚）。
+
+### 効果の構造
+- baseテーブルの方向性は正しいが、フル適用は過剰
+- scale=0.5で「大外し回避」と「ランキング精度維持」のバランスが最適
+- 「新台を避ける」＋「定番台を微ブースト」の両方が半分の強さで効く
+
+## アクション
+- **V12b(base, scale=0.5)を推奨バリアントとする**
+- tuned版（V12c/V12d）はbase版に及ばない → 乗数テーブルの微調整は不要
+- 3F_R_Nの無効化は正しかったが、2F_R_Nの緩和は逆効果 → baseのまま半分緩和が最適
+
+---
+id: v12-tuned-vs-base-comparison
+trigger: "debut_multiplierの乗数テーブルを調整しようとするとき / セグメント別の乗数を個別に最適化しようとするとき"
+confidence: 0.85
+scope: finding
+domain: ml-evaluation
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# tuned版（V12c/V12d）はbase版（V12a/V12b）に及ばない — セグメント個別調整は過学習リスク
+
+## 背景
+2026-06-26 正式walk-forward。base版の乗数テーブルに対し以下の調整を加えたtuned版を検証:
+- 2F_R_N: 0.40→0.60（ペナルティ緩和）
+- 3F_R_N: 全フェーズ1.0（無効化）
+
+## 発見
+
+### 全体指標
+| variant | avg_diff | lift@50 | vs V11 avg_diff | vs V11 lift |
+|---------|---------|---------|-----------------|-------------|
+| V12a(base) | +244.7 | 1.308 | +63.1 | -0.018 |
+| **V12b(base½)** | **+230.3** | **1.336** | **+48.7** | **+0.010** |
+| V12c(tuned) | +220.4 | 1.317 | +38.8 | -0.009 |
+| V12d(tuned½) | +207.0 | 1.332 | +25.4 | +0.006 |
+
+### セグメント別の調整効果
+tuned版で修正した2セグメント:
+
+| セグメント | V12a | V12c | 調整効果 |
+|-----------|------|------|---------|
+| 3F_R_N avg_diff | +8.9 | **+35.8** | **復旧（正しい修正）** |
+| 3F_R_N lift | 1.692 | **1.714** | **復旧** |
+| 2F_R_N avg_diff | **+206.6** | +198.5 | **悪化（緩和が裏目）** |
+| 2F_R_N lift | **1.268** | 1.243 | **悪化** |
+
+3F_R_Nの無効化は正しかったが、2F_R_Nの緩和は逆効果。
+結果として全体指標ではbase版が優位。
+
+## 解釈
+- セグメント個別の乗数調整は「1セグメントの改善が他セグメントの悪化で相殺される」構造
+- scale=0.5（半分緩和）というグローバルな調整の方が、個別セグメント調整より頑健
+- 乗数テーブルの過学習リスクは高い → 細かい調整を追わない方が良い
+
+## アクション
+- 乗数テーブルはbase版のまま維持。追加の個別調整はしない
+- scale=0.5が最適なスケーリングパラメータ
+- 将来的にデータが倍増した場合に再検証する余地はある
+
+---
+id: v12-debut-multiplier-machine-name-not-number
+trigger: "debut_dateやpre_existingを計算するとき / 機種の初出日をgroupbyで算出するとき"
+confidence: 0.98
+scope: methodology
+domain: implementation
+source: bug-fix
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# debut_dateの計算はmachine_nameでgroupbyすること（machine_numberは誤り）
+
+## 背景
+2026-06-26 V12実装時のバグ。初回walk-forwardでV11/V12a/V12bの全指標が完全一致。
+
+## 原因
+`train.groupby("machine_number")["date_dt"].min()` でdebut_dateを計算していた。
+同じ台番号に異なる機種が入れ替わっても（新台入替）、最古の日付を返すため、
+ほぼ全台がtrain開始日に一致 → 全台pre_existing → 全台乗数1.0。
+
+## 修正
+`train.groupby("machine_name")["date_dt"].min()` に変更。
+
+## アクション
+- debut系の計算は必ずmachine_nameでgroupbyする
+- テストデータでも同一machine_nameの台は同じdebut_dateになることを考慮

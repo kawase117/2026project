@@ -1,0 +1,168 @@
+---
+id: kamata7-no-survival-bias-in-3phase-model
+trigger: "蒲田7の経過日数3フェーズモデルの信頼性を評価するとき"
+confidence: 0.88
+domain: kamata7-segment-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田7の3フェーズモデルには生存バイアスが混入していない
+
+## 背景
+みとやPhase10fで h_nonjug の debut→mature 逆転が生存バイアスと判明（survived debut=-16.7 vs removed debut=-179.9, MWU p=0.003）。蒲田7でも同じ検証を実施したが、結果は対照的だった。
+
+## アクション
+- 2F_N: survived debut=-194 vs removed debut=-124。survived の方がむしろ悪い（p=0.60, 非有意）。生存バイアスなし
+- 3F_N: survived=-131 vs removed=-134。ほぼ同等（差+3, p=0.04）
+- 3フェーズモデル（-358→+132→+157）は生存バイアスではなく、ホールの実際の設定投入戦略を反映している
+- 蒲田7 2F の stability=0%（全台入替）は「成績に関係なく定期的に入れ替える」構造。撤去判断が成績ベースではないため、生存バイアスが起きにくい
+- みとやとの構造差: みとやは小規模ホールで「売れない台を撤去」する判断が成績ベース → 生存バイアスが強い
+
+## 例
+蒲田7 2F_N コホート追跡: 1-14日=-358, 15-60日=-157, 61-180日=+132, 181日+=+157
+みとや h_nonjug: survived debut=-16.7 vs removed debut=-179.9 → 生存バイアスあり
+蒲田7 2F_N: survived debut=-194 vs removed debut=-124 → 生存バイアスなし
+
+---
+id: machine-dependency-top2share-is-targeting-signal
+trigger: "machine_dependency テストで top2_share が高い結果を解釈するとき"
+confidence: 0.90
+domain: ml-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# top2_share が高い = 偽シグナルではなく「台特定シグナル」
+
+## 背景
+machine_dependency テストで top2_share >= 50% を「偽シグナル」と判定していたが、解釈を修正。top2_share が高いことは「一般ルールとしては無効」だが、「特定の台が一貫して強い」ことを示しており、その台を直接狙う価値がある。鉄台（完全に高設定と長期証明されたもの）とは区別し「強い台」程度の位置づけ。
+
+## アクション
+- top2_share >= 50% → 「台特定シグナル」と分類する。一般ルール（末尾8/9は強い）としては使えないが、特定台（台3108, 3048等）として直接狙う価値がある
+- 特定台が機種入替を跨いでも一貫してプラスなら、台番号に紐づくホールの設定投入戦略（物理位置への傾斜）を反映している可能性が高い
+- みとやの台674（マイジャグ角1）も同じ構造: 末尾 d4 は偽シグナルだが台674を狙うのは有効
+
+## 例
+蒲田7 3F_L_N d8: top2_share=54%, top2=台3108/3048
+  台3108: 吉宗(+1462), からくりサーカス(+770), アズールレーン(+470), 鉄拳6(+200) → 機種が変わっても一貫プラス
+  台3048: 吉宗(+1257), かぐや様(+966), ToLOVE(+935) → 同上
+  → 「末尾8は強い」ではなく「台3108/3048は強い台」
+
+---
+id: kamata7-3fln-d8d9-machine-specific-not-digit-rule
+trigger: "蒲田7の3F_L_Nで末尾d8/d9を台選びに使おうとするとき"
+confidence: 0.90
+domain: kamata7-segment-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 3F_L_N d8/d9 は末尾ルールではなく台特定シグナル
+
+## 背景
+kamata7_theory.md では d8/d9 を「堅牢（少数台依存注意）」としていたが、machine_dependency テストで top2_share=54%(d8)/75.5%(d9) と判定。top2 除外で d8 p=0.155, d9 p=0.059 に低下。
+
+## アクション
+- 「末尾8/9を狙え」ではなく「台3108, 3048, 3109, 3039を直接狙え」
+- split-half PASS は台固有性の安定性を反映しているだけ（みとやのアンチパターン3と同じ構造）
+- kamata7_theory.md の §2.2 を「台特定シグナル」に更新すべき
+- ML特徴量としての last_digit は 3F_L_N でも信頼性が低い。角番のみで選択が安全
+
+## 例
+d9 top2: 台3109(吉宗+1636, 鉄拳6+1272), 台3039(アズールレーン+1382, シャーマンキング+652)
+top2除外後: d9 p=0.059（境界的非有意）
+
+---
+id: kamata7-3frn-kakuban-machine-specific
+trigger: "蒲田7の3F_R_Nで角番を台選びに使おうとするとき"
+confidence: 0.85
+domain: kamata7-segment-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 3F_R_N の角番効果は top2_share=48.5% で台特定シグナル
+
+## 背景
+kamata7_theory.md では 3F_R_N を「角番のみ有効(p=0.001)」としていたが、machine_dependency テストで top2_share=48.5%、除外後 p=0.054 と判明。
+
+## アクション
+- 3F_R_N の角番効果は特定2台に依存
+- 一般ルールとしての「中間台優位」は 3F_R_N では弱い
+- 対照: 3F_L_A(top2_share=5.7%), 3F_R_A(6.6%) は除外後も p<0.001 で構造シグナル
+
+## 例
+3F_R_N: original_p=0.020, excluded_p=0.054, top2_share=48.5%
+3F_R_A: original_p<0.001, excluded_p<0.001, top2_share=6.6% → 構造シグナル
+
+---
+id: kamata7-saturday-at-structural-signal-confirmed
+trigger: "蒲田7のAT群×土曜効果を評価するとき"
+confidence: 0.93
+domain: kamata7-segment-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# AT群×土曜は machine_dependency テストでも構造シグナル（top2_share=7.4%）
+
+## 背景
+kamata7_theory.md で「堅牢」とされていた AT群×土曜効果を machine_dependency テストで再検証。
+
+## アクション
+- top2_share=7.4%、除外後も p<0.001 で構造シグナルと確定
+- split-half + regime + machine_dependency の3テスト全てでPASS
+- 非イベント日限定のルールとして引き続き有効
+
+## 例
+saturday_at: top2_share=7.4%, original_p<0.001, excluded_p<0.001
+
+---
+id: mitoya-104pct-confirms-diff-based-analysis
+trigger: "みとやで差枚と104%率の使い分けを検討するとき"
+confidence: 0.88
+domain: mitoya-segment-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# みとやでは差枚と104%率が高相関（ρ=0.873）で、104%率への切り替えは不要
+
+## 背景
+蒲田7では DD を 104%率で分析して DD18-23 トラフゾーンを発見した手法をみとやに導入。差枚と104%率の Spearman ρ = 0.873 で高い一致。
+
+## アクション
+- みとやの分析は差枚ベースで十分。104%率への切り替えは不要
+- h_jug の角番×104%率ランキングは差枚と完全一致 → corner1 の信頼性をさらに補強
+- mixed_805 のみ差枚と104%率の角番ランキングが大きく乖離（少数台の爆発型）
+- non-X_DDS DD の 104%率 KW もホール全体 p=0.130 で非有意
+
+## 例
+ホール全体: diff vs rate_104 Spearman ρ=0.873
+h_jug 角番: diff_rank = rate104_rank（完全一致）
+mixed_805 角番: diff_rank vs rate104_rank が大きく乖離
+
+---
+id: cross-hall-survival-bias-depends-on-hall-size
+trigger: "新ホールの経過日数効果を分析するとき"
+confidence: 0.85
+domain: ml-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 生存バイアスの有無はホール規模と入替戦略に依存する
+
+## 背景
+みとや（小規模、266台）では生存バイアスあり。蒲田7（大規模、535台）ではなし。大規模ホールは機種入替を定期的に行い成績ベースの判断が薄い。小規模ホールは「売れない台を撤去」する判断が成績ベースで行われやすい。
+
+## アクション
+- 新ホール分析時、経過日数効果を検出したら必ず survived/removed の debut 期比較を行う
+- 小規模ホール（200台以下）は生存バイアスの混入を強く疑う
+- 大規模ホール（500台以上）は3フェーズモデルが実際の投入戦略を反映している可能性が高い
+- stability_rate（機種安定率）が低いほど生存バイアスが起きにくい
+
+## 例
+みとや(266台): survived debut=-17 vs removed=-180 → バイアスあり
+蒲田7(535台, stability=0%): survived=-194 vs removed=-124 → なし

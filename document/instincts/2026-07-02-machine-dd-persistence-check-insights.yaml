@@ -1,0 +1,100 @@
+---
+id: persistence-rho-cannot-distinguish-no-signal-from-regime-shift
+trigger: "機種のDD/軸パターンが期間分割の再現性チェックでrho≈0になったとき"
+confidence: 0.88
+domain: statistical-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 持続性チェックのrho低下は「法則性がない」と「投入戦略が変化した」を区別できない
+
+## 背景
+スマスロ北斗の拳(蒲田1, n=9617)は前半・後半のDD別hit104率のSpearman rhoが0.015とほぼ完全にゼロだった。当初「大サンプルでも再現しない＝元々ノイズだった」と解釈したが、ユーザーの実地知識により、2026年に後継機種が登場し北斗の拳が「旬を終えた」状態になったことが判明。後継機種が不評で現有台数は多いままだが、ホール側の設定投入戦略自体が変化したと推測される。単純な2期間分割によるrhoは「元々法則性がなかった」場合と「法則性はあったが外的要因(新台入替、機種の人気度変化)で戦略が変わった」場合を統計的に見分けられない。
+
+## アクション
+rho低下を「法則性なし」と即断する前に、その機種のライフサイクル（後継機種の登場時期、人気度の変化、新台入替時期）を確認する。疑わしい場合は、外的要因の発生時期を境に再分割し、「変化前だけで安定していたか」を別途検証する。`compute_debut_features`のdebut_dateで後継機種名の初出日を特定できる。
+
+## 例
+eda/machine_dd_persistence_check.py の2分割はホール単位の中央日で固定されているため、機種固有のライフサイクル変化点とは一致しない場合がある。
+
+---
+id: kabaneri-signal-survives-market-regime-change
+trigger: "市場環境やホールの機種構成が変化した期間を跨いで再現した法則性を評価するとき"
+confidence: 0.82
+domain: hall-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 市場変化を跨いで再現した機種のDDパターンは、跨がない場合より信頼度を上げてよい
+
+## 背景
+甲鉄城のカバネリは蒲田1(plus rho=0.364, p=0.044)・蒲田7(plus rho=0.339, p=0.062)の2ホールで独立に中程度の正の持続性を示した。スマスロ北斗の拳より古い機種でありながら、北斗の拳が旬を終える(後継機種投入・投資配分変化)期間を跨いでも再現しており、単なる偶然にしては出来すぎている。
+
+## アクション
+機種のDD/軸パターンの信頼度を評価する際、単一ホールでの再現性だけでなく「ホールの機種構成・市場環境が変化した期間を跨いでいるか」も評価軸に加える。跨いで再現した機種は、外的要因に左右されない構造的な法則性を持つ可能性が高いとして優先的に注目する。
+
+## 例
+eda/results/machine_axis_pattern_scan/persistence_check.csv。甲鉄城のカバネリはplus outcomeで2ホール一致、hit104は非有意（勝率軸に限定した弱いクセの可能性）。
+
+---
+id: low-unit-count-machine-persistence-is-notable
+trigger: "設置台数が少ない機種(ジャグラーシリーズの二番手・三番手機種等)でDD/軸パターンの再現性を評価するとき"
+confidence: 0.75
+domain: hall-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 少数台機種での再現性はホール側の個別管理を示唆する可能性がある
+
+## 背景
+ジャグラーガールズ（ジャグラーシリーズの中では二番手・三番手、少数台機種）が、みとや(plus rho=0.337, p=0.064)・蒲田7(plus rho=0.412, p=0.021)の2ホールで独立にプラスの持続性を示した。台数が少ない機種は通常サンプルが薄くノイズに埋もれやすいはずだが、それでも再現したのは、少数台だからこそホール側の個別管理（角番判断・特定台への手動投入判断）が反映されやすいという仮説を支持する。
+
+## アクション
+少数台機種で法則性を発見した場合、多数台機種より軽視せず、むしろホールの個別管理が反映されやすい対象として注目する。ただしサンプル数自体は少ないため、スパースセルの警告と合わせて評価すること。
+
+## 例
+persistence_check.csv。ジャグラーガールズはマイジャグラーV等の主力ジャグラー機種と異なり設置台数が少ないにもかかわらず持続性が確認された。
+
+---
+id: hall-specific-investment-style-informs-untested-signals
+trigger: "統計的に未検証（サンプル不足・期間不足）だが、ホールの運用スタイルの実地知識がある機種のシグナルを評価するとき"
+confidence: 0.78
+domain: hall-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ホールの運用スタイルの実地知識は、統計未検証のシグナルへの信頼度判断に使ってよい
+
+## 背景
+みとやのクレアの秘宝伝はDD27で勝率72.4%・hit104率62.1%・平均+1,176枚という極端な数値を示したが、機種の設置が新しく、期間分割による再現性検証では「skip: empty period after split」となり統計的に検証不能だった。ユーザーの実地知識によれば、みとやは「設定を入れる時は全台ガッツリ入れる」運用スタイルであり、これは極端な数値が出やすい入れ方と整合する。
+
+## アクション
+統計的再現性検証ができない（サンプル不足・期間不足）シグナルについて、ホールの運用スタイルに関する実地知識と整合するかを判断材料に加えてよい。ただし「統計的に未検証」であることは変わらないため、実運用に使う前にデータが十分溜まった時点で改めて再検証する。
+
+## 例
+eda/results/machine_axis_pattern_scan/{hall}_top_signal_breakdown.csv でクレアの秘宝伝dd27の値を確認。半年程度データが溜まれば eda/machine_dd_persistence_check.py で再検証可能。
+
+---
+id: machine-dd-persistence-check-tooling-available
+trigger: "機種×DD/軸パターンの再現性（in-sampleの偶然か、繰り返し起きる法則か）を検証したいとき"
+confidence: 0.90
+domain: tooling
+source: session-implementation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 機種×DDパターンの期間分割・再現性チェックツールが利用可能
+
+## 背景
+2026-07-02セッションで設計、Codexが実装。eda/machine_axis_pattern_scan.pyのtop_signals.csvを候補として読み込み、ホールの日付範囲の中央日で前半・後半に分割し、機種のDD別成績（勝率・104%超え率）のSpearman順位相関で再現性を評価する。実行の結果、TOP20候補の大半が非有意〜低相関で、in-sample検定で見えた法則性のほとんどが再現しないことが判明した（大サンプルのスマスロ北斗の拳もrho≈0）。
+
+## アクション
+python eda/machine_dd_persistence_check.py で3ホール一括実行。出力はeda/results/machine_axis_pattern_scan/persistence_check.csv。spearman_rhoが低い候補はtop_signals.csvのランキングから除外する根拠にする。ただし新しく設置された機種は期間分割で片側が空になり検証不能（note: skip: empty period after split）になる点に注意。
+
+## 例
+python eda/machine_dd_persistence_check.py
+設計プロンプト: document/plans/prompt_machine_dd_pattern_persistence_check.md

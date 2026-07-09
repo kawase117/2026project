@@ -1,0 +1,43 @@
+---
+id: kamata7-dashboard-theory-visualization-gaps
+trigger: "when extending dashboard to visualize all kamata7_theory.md law patterns"
+confidence: 0.95
+scope: dashboard-feature-planning
+domain: visualization-feature-design
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田七セオリー対応ダッシュボード拡張ロードマップ
+
+## Core claim
+現在のダッシュボード19ページは、セオリーの主要法則性（15項目）のうち6項目のみ実装済み。
+残り9項目を段階的に追加することで、全法則性をダッシュボードから可視化可能にする。
+
+## Evidence
+- n_observations: 1
+- data scope: kamata7_theory.md（セオリー文書）vs dashboard/pages/（現実装）
+- metric scope: 実装カバレッジ
+- result summary:
+  実装済み ✅: DD分析、曜日分析、末尾分析（3項目）
+  部分実装 ⚠️: イベント日、ゾロ目（2項目）
+  未実装 ❌: セグメント別、角番、交互作用、経過日数、冷却ゾーン、機種別パターン（9項目）
+
+## Action
+Phase 1（優先度 S）: セグメント別分析、角番分析、DD×角番ヒートマップ を追加
+  → 3ページ、所要時間 1日、インパクト 高（セオリーの核心3項目）
+
+Phase 2（優先度 A）: 経過日数、イベント日分離、セクションサイズ別、104%率分析 を追加
+  → 4ページ、所要時間 2日、インパクト 中（交互作用と評価指標）
+
+Phase 3（優先度 B）: 冷却ゾーン、ゾロ目×曜日、機種別パターン を統合
+  → 2ページ、所要時間 1日、インパクト 低（細粒度パターン）
+
+## Implementation notes
+- Codex プラグイン（GPT-5.5）を使用実装推奨
+- Desktop版 Claude Code で `/model fable` → Fable Advisor の orchestration pattern で委譲
+- 各ページは既存の design_system（COLORS, section_title等）で統一
+
+## Status
+- status: active
+- next_session_action: Phase 1 実装開始（Desktop版で Fable に仕様書作成指示）

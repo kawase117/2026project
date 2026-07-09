@@ -1,0 +1,79 @@
+---
+id: mitoya-no-pure-digit-effect
+trigger: "みとやの台番号末尾を台選びに使おうとするとき"
+confidence: 0.95
+domain: hall-strategy
+source: durability-test
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# みとやに純粋な末尾効果は存在しない
+
+## 背景
+Phase 10b で h_jug の非イベント日末尾 KW が p=6.2e-7 と強有意だったが、Phase 10c の耐久性検証で machine_dependency が FAIL（d4 の top2_share=96.0%）。台674（658-674の角番1、マイジャグラーV）が d4 全体の avg_diff の87.3%を担っており、674を除外すると d4 は +135→+17 に崩壊。d2 も台642（641-657の角番2）が55%を占め、top2除外で +124→+39 に低下。末尾に見えるものは全て角番効果または特定台の個体効果だった。
+
+## アクション
+- みとやの台選びに末尾を使わない
+- 台選びの軸はセグメント → 角番 → machine_name / debut_phase の順
+- h_nonjug の全日 p=0.038 も DD 混入の偽陽性（非イベント日限定で p=0.442 に消滅）
+- 「末尾が有意」に見えたら、必ず台固有性（top1/top2_share）を確認してから採用判断する
+
+## 例
+d4 の台別内訳:
+  台674(角番1): avg_diff=+573 → d4全体の87.3%
+  台654(角番11): avg_diff=+57
+  台664(角番11): avg_diff=+26
+  台644(角番14): avg_diff=±0
+  → 674除外で d4 avg_diff +135→+17。末尾効果ではなく角番1の個体効果。
+
+---
+id: mitoya-h-nonjug-digit-dd-contamination
+trigger: "みとやの h_nonjug セグメントで末尾分析を行うとき"
+confidence: 0.90
+domain: ml-methodology
+source: event-day-control
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# h_nonjug の末尾有意（p=0.038）は DD 混入の偽陽性
+
+## 背景
+Phase 10 で h_nonjug の last_digit KW が p=0.038 で境界的有意、d4 が首位だった。しかし Phase 10b で非イベント日に限定すると p=0.442 で完全に消滅。DD4/14/24（X_DDS日）の全体底上げが d4 の台番号に乗っていただけ。みとやのイベント日定義に DD4 が含まれるため、末尾 d4 の台が恩恵を受ける構造的な交絡が存在する。
+
+## アクション
+- 末尾分析では必ず非イベント日限定の再検証を行う
+- 特にイベント日定義に含まれる DD の下一桁（みとやでは 4 と 7）は末尾との交絡が起きやすい
+- h_nonjug では末尾を使わず角番のみで台選びする
+
+## 例
+h_nonjug 末尾 d4:
+  全日: avg_diff=+89（首位）→ p=0.038
+  非イベント日: avg_diff=-72（下位）→ p=0.442
+  差分の原因: DD4(+299), DD14(+236), DD24(+242) の底上げ
+
+---
+id: mitoya-digit-durability-split-half-stable-but-machine-dependent
+trigger: "末尾効果の耐久性検証を解釈するとき"
+confidence: 0.90
+domain: ml-methodology
+source: durability-test
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Split-half PASS でも machine_dependency FAIL なら末尾効果ではない
+
+## 背景
+h_jug の末尾効果は split-half（ρ=0.891）、regime（入替前後で Top3 重複2/3）、corner2-4（ρ=0.607）の3テストで PASS だが、machine_dependency で FAIL（top2_share=96%）。「時間的に安定している」と「構造的シグナルである」は別の概念。特定台が常に強ければ、その台の末尾は split-half でも regime でも常に上位に来る。時間安定性は台固有性の安定性を反映しているだけで、末尾という変数の効果を示すものではない。
+
+## アクション
+- split-half PASS だけで「堅牢」と判定しない。必ず machine_dependency テストを組み合わせる
+- top2_share >= 50% の場合、split-half と regime の結果は参考程度に扱う
+- 蒲田7の 3F_L_N d8/d9 は少数台依存（top2_share=51%）だが方向は安定と判定された。みとやの96%はそれよりはるかに深刻
+- 耐久性検証の4テスト体制（split-half, regime, machine_dependency, corner制御）は今後の標準にする
+
+## 例
+h_jug 末尾 d4 耐久性:
+  split-half: PASS（ρ=0.891）
+  regime: PASS（入替前後 Top3 重複）
+  machine_dependency: FAIL（top2_share=96.0%、台674が87.3%）
+  → 時間的に安定しているが、台674の個体効果。末尾効果とは言えない。

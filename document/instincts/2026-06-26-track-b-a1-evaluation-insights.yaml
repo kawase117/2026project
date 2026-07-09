@@ -1,0 +1,136 @@
+---
+id: payout-rate-weighted-avg-mandatory
+trigger: "payout_rateを計算するとき / walk-forward評価指標を追加・修正するとき / 台別meanで集計しようとするとき"
+confidence: 0.95
+scope: methodology
+domain: ml-evaluation
+source: implementation-fix
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# payout_rateは加重平均（sum/sum）で計算すること — 台別meanは構造的に歪む
+
+## 背景
+2026-06-26 Track B実装。従来のpayout_rate計算は台別に `(games*3+diff)/(games*3)*100` を計算してから `.mean()` を取っていた。
+これはgames=100の台（payout 200%）とgames=8000の台（payout 101%）を同じ重みで平均するため、低回転台が過大に歪む。
+
+## 発見
+修正前: `((top["games_normalized"] * 3 + top["diff_coins_normalized"]) / (top["games_normalized"] * 3) * 100).mean()`
+修正後: `sum(games*3+diff) / sum(games*3) * 100` — コイン総量ベースの加重平均
+
+変更箇所: `walk_forward_engine.py:_summarize_metrics()` L182-190
+
+## アクション
+- payout_rateの計算は常に `sum(coins_out) / sum(coins_in) * 100` で行う
+- 台別meanを使ってはいけない
+- ゼロ除算ガード: `if payout_denominator > 0` を必ず入れる
+
+---
+id: games-relative-weak-but-consistent-signal
+trigger: "games_relativeをcompositeに組み込もうとするとき / 回転数ベースの特徴量を追加するとき / 高回転台をブーストしようとするとき"
+confidence: 0.88
+scope: finding
+domain: ml-evaluation
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# games_relative（機種別相対回転数）は弱いが一貫した正シグナル — compositeには入れない
+
+## 背景
+2026-06-26 Track B実装 + 分析。`games_relative = games_normalized / machine_name当日平均` を52日サンプルで検証。
+
+## 発見
+| 指標 | 値 | 評価 |
+|------|-----|------|
+| Spearman rho | +0.143 ± 0.052 | 100%の日でプラス。一貫性あり |
+| lift@50 | 1.170 ± 0.816 | c2(1.04)やc5(1.05)より強い |
+| lift_diff | 9.6 ± 16.0 | 分散が平均の1.7倍。不安定 |
+| segment別lift std | 全セグメントで平均の数倍 | 信頼区間がゼロを跨ぐ |
+
+## アクション
+- compositeスコアに組み込まない
+- component_analysisとcorrelation_matrixにdiagnostic指標として残す
+- Track D（セグメント別法則）フェーズでリランキング限定で再検討
+- データ量倍増後に再評価の余地あり
+
+---
+id: track-a1-v12b-confirmed-over-v11
+trigger: "V11とV12bの選択判断をするとき / debut_multiplierの採用可否を判断するとき / 推奨バリアントを決定するとき"
+confidence: 0.92
+scope: finding
+domain: ml-evaluation
+source: significance-test
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Track A1確定: V12b（base, scale=0.5）がV11に対し統計的有意に改善 — 正式推奨バリアント
+
+## 背景
+2026-06-26 Track A1。Track Bで修正した評価指標でsignificance_test.pyを実行。
+V11 vs V12b、paired bootstrap + Wilcoxon signed-rank + sign test、segment×event_type別。
+
+## 発見（非イベント日, n=254）
+
+### V12b が V11 を有意に上回るセグメント（Wilcoxon p < 0.05）
+| Segment | Mean diff | 95% CI | Win % |
+|---------|----------|--------|-------|
+| 2F_R_N | +44 | [+15, +73] | 61% |
+| 2F_L_N | +18 | [+3, +33] | 56% |
+| 3F_L_N | +10 | [+2, +19] | 62% |
+
+### 最重要発見: 2F_R_N の ns → USEFUL 昇格
+- V11単体: 2F_R_N は「ランダムと区別不能」(p=0.17, +41枚)
+- V12b: 「統計的に有用」(p=0.002, +85枚)
+
+## アクション
+- V12b（base, scale=0.5）を正式推奨バリアントとして確定
+- イベント日の検定はn=88で検出力不足 — データ蓄積後に再検定
+
+---
+id: track-b-payout-fix-does-not-change-model-comparison
+trigger: "KPI修正後にモデル比較結論が変わるか検証するとき / A0とA1の差分を解釈するとき"
+confidence: 0.90
+scope: finding
+domain: ml-evaluation
+source: significance-test
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# payout_rate修正はモデル比較結論に影響しない — avg_diff_vs_otherとhit_t/lift_tが主要検定指標
+
+## 背景
+2026-06-26 Track A1。payout_rateを加重平均に修正後、significance_testを再実行。
+
+## 発見
+significance_test.pyが検定する主要指標（avg_diff_vs_other, hit_t/lift_t）は
+payout_rate計算の影響を受けない。payout_rate差は全セグメントで ±0.3% 以内（非有意）。
+
+## アクション
+- 「KPI修正で結論が変わるかもしれない」という懸念は解消済み
+- モデル比較の主要指標はavg_diff_vs_otherとlift@50で十分
+
+---
+id: walkforward-memory-limit-scored-pool-accumulation
+trigger: "walk-forward backtestがメモリエラーで落ちるとき / scored_poolのサイズが問題になるとき"
+confidence: 0.95
+scope: methodology
+domain: implementation
+source: bug-encounter
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# walk-forward backtestはscored_pool蓄積でメモリ枯渇する
+
+## 背景
+2026-06-26 Track A1実行時。V11+V12b（2バリアント, window=90, 260日）のwalk-forwardが
+100タスク目付近でMemoryError。scored_poolがDataFrameリストとして蓄積される。
+
+## 対策案
+1. scored_pool を都度CSVに追記し、メモリから解放する（推奨）
+2. scored_pool の蓄積を無効化するオプションを追加
+3. 1日ずつSQLiteから読む軽量スクリプトで代替分析が可能
+
+## アクション
+- 3バリアント以上×全日実行時は `--resume` を前提にする
+- scored_pool蓄積の改善は別タスクとして対応

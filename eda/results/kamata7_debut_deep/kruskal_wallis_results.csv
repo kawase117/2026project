@@ -1,0 +1,11 @@
+﻿analysis,hypothesis_type,group_col,H,p_value,epsilon_sq,n_groups,n_total,significant
+1_segment,primary,floor_seg+debut_phase,1275.9136987585969,6.992526798025133e-267,0.019964861006022964,12,63369,True
+2_position_kakuban,exploratory,debut_phase+kakuban_group,529.6401446848017,1.5203402577904783e-106,0.008185995938646112,12,63369,False
+2_position_section_size,exploratory,debut_phase+section_size_group,766.887172258368,2.42929180811009e-157,0.011930602336890446,12,63369,False
+3_preexisting_full_event,primary,debut_phase_full+is_any_event,1888.3518330159638,0.0,0.00767085511784115,10,245009,True
+3_preexisting_full_dd_category,primary,debut_phase_full+dd_category,1998.4825000830965,0.0,0.008039393172815207,30,245009,True
+3_preexisting_family_compare,primary,debut_phase_full+family+is_any_event,2953.9126855490463,0.0,0.015452056669113602,14,190339,True
+4_weekday,exploratory,debut_phase+day_of_week,549.8905780334018,7.419117399853693e-99,0.008255167711804389,28,63369,False
+5_dd_category,primary,debut_phase+dd_category,550.5901361303125,1.0001212993954693e-101,0.008328836311158142,24,63369,True
+5_dd_category_full,primary,debut_phase_full+dd_category,1998.4825000830965,0.0,0.008039393172815207,30,245009,True
+6_count_group,exploratory,debut_phase+count_group,1093.3618463769978,6.031286112859763e-220,0.01695941287750395,20,63369,False

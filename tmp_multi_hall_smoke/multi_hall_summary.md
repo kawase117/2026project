@@ -1,0 +1,10 @@
+# Multi Hall Summary
+
+| hall | hall_slug | db_path | n_stage1_catalog | n_stage1_unknown | n_stage2_rows | n_stage3_rows | n_eval_days | B1R_minus_B0_mean | ci_lower | ci_upper | verdict | alloc_weekday_gap | alloc_event_gap | alloc_kakuban1_mean | alloc_family_gap_mean |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| kamata1 | kamata1 | C:\Users\apto117\Documents\pachinko-analyzer\src\2026project\db\マルハンメガシティ2000-蒲田1.db | 9 | 0 | 54526 | 54526 | 184 | -0.3853027156783955 | -1.4411326852911224 | 0.633252307959986 | neutral | 0.001664484624637863 | nan | 0.4797771456796189 | -0.0015944168435160003 |
+
+## Notes
+
+- `verdict` is based on the B1R-minus-B0 bootstrap CI.
+- Allocation metrics are descriptive and come from stage5_alloc outputs.

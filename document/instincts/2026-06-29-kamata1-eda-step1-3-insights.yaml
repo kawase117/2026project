@@ -1,0 +1,436 @@
+---
+id: kamata1-section-structure-30sec-350machines
+trigger: "蒲田1のセクション定義・フロア構成を参照するとき"
+confidence: 0.95
+domain: floor-layout-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1セクション構成：30セクション/350台/2Fのみ
+
+## 背景
+座標CSV (Heatmap/2F_floor_coordinates_kamata1.csv) から全セクションを確認。
+2331-2340（10台、Y=68-77の孤立ゾーン）は2025-08-17に撤去されておりCSVから削除済み。
+1631-1633は厳密には1Fだが同一フロア扱い。
+
+## アクション
+- 有効セクション: 30個 / 350台
+- ミニセクション（5台以下）: 1631-1633(3台), 2143-2146(4台), 2147-2150(4台), 2187-2190(4台), 2162-2166(5台)
+- 最大島: 2001-2020(20台), 2236-2255(20台), 2282-2301(20台)
+- 背中合わせペアが多数存在（2021-2031/2032-2042等）
+- 角番はrank_from_min/rank_from_maxの両方を使用。rank_from_aisleは通路が複雑なため定義しない
+
+## 例
+```python
+EVENT_DDS = {1, 7, 11, 17, 21, 22, 27, 30, 31}
+# 2331-2340は除外
+df = df[~df['machine_number'].between(2331, 2340)]
+# 角番 = 両端からの距離の小さい方
+df['kakuban'] = df[['rank_from_min', 'rank_from_max']].min(axis=1)
+```
+
+---
+id: kamata1-event-day-definition-v2
+trigger: "蒲田1のイベント日定義・DD判定を行うとき"
+confidence: 0.90
+domain: event-day-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1イベント日定義: {1,7,11,17,21,22,27,30,31}
+
+## 背景
+2026年以降のDD別分析で帰納的に検証。全体hit rateでは+5pp超えのDDは存在しないが、
+セクション別スパイク検出（ベイズ縮小k=20適用）で多セグメント型スパイクを確認。
+DD=30を新規追加（全期間+2.0pp、7セクションでスパイク）。
+DD=27は全体では弱いが蒲田7との共通体系として維持。
+
+## アクション
+```python
+EVENT_DDS = {1, 7, 11, 17, 21, 22, 27, 30, 31}
+# 体系: 1のつく日{1,11,21,31} + 7のつく日{7,17,27} + ゾロ目{11,22} + 月末{30,31}
+```
+- 蒲田7と同一体系だが、蒲田1では効果が弱い（全体+2.0pp vs 蒲田7の明確なスパイク）
+- DD=11が最強（diff+282）、DD=30が2番手（diff+232）
+- DD=27は蒲田1では差枚マイナス（K7に予算を取られている）
+
+## 例
+DD別強度ランキング（2026年以降、diff順）:
+DD=11 +282 / DD=30 +232 / DD=7 +168 / DD=22 +141 / DD=1 +119
+
+---
+id: kamata1-vs-kamata7-dd-budget-shift
+trigger: "蒲田1と蒲田7のDD別比較・見せ選び・ホール選択判断を行うとき"
+confidence: 0.90
+domain: hall-comparison
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1 vs 蒲田7: DD別予算配分の対比（見せ選びに直結）
+
+## 背景
+蒲田1と蒲田7は徒歩圏内の同一企業（マルハン）。蒲田7は2025-07新規オープンで予算的に優勢。
+2026年以降のデータで、DDごとにどちらのホールに予算が回っているかを差枚で比較。
+蒲田1平均回転数3267 vs 蒲田7平均4044で稼働率にも差がある。
+
+## アクション
+**K1がK7を上回るDD（K1を選ぶべき日）:**
+- DD=11: K1 +282 vs K7 +128 → K1が+154差で圧勝（ゾロ目日）
+- DD=31: K1 +37 vs K7 -150 → K1が+187差で圧勝（月末）
+- DD=23: K1 +20 vs K7 -31 → K1がわずかに上（非イベント日）
+- DD=7: K1 +168 vs K7 +178 → ほぼ互角
+
+**K7が圧倒的に優勢なDD（K7を選ぶべき日）:**
+- DD=8: K1 -112 vs K7 +158 → K7が269差（K1最弱日）
+- DD=16: K1 -64 vs K7 +172 → K7が236差
+- DD=10: K1 -64 vs K7 +143 → K7が207差
+- DD=27: K1 -63 vs K7 +113 → K7が176差（イベント日なのにK1弱い）
+
+**両方強いDD:**
+- DD=30: K1 +232 vs K7 +307 → 両方出すがK7がやや上
+- DD=1: K1 +119 vs K7 +246 → 両方出すがK7が倍強い
+
+## 例
+見せ選びの判断フロー:
+1. DD=11,31 → K1優先
+2. DD=8,10,16,27 → K7一択
+3. DD=1,7,22,30 → 両方候補だがK7がやや有利
+4. DD=17 → K1 +56 vs K7 +156、K7優勢
+
+---
+id: kamata1-three-layer-section-structure
+trigger: "蒲田1のセクション×イベント日の構造を参照するとき"
+confidence: 0.90
+domain: section-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1の3層セクション構造
+
+## 背景
+Step 1-5（DD条件付きセクション検出）で、イベント日/非イベント日でセクションhit rateを比較。
+蒲田1のセクションrhoが弱い（≈0）理由が判明：イベント日と非イベント日でセクション順位が入れ替わるため、
+全日混合するとキャンセルし合う。
+
+## アクション
+**Event-responsive型（イベント日に集中投入される）:**
+- 2143-2146 (4台ミニ): +9.6pp lift, diff gap +582
+- 2099-2109 (11台): +7.3pp lift, diff gap +359 — DD=11,1,30が特に強い
+- 2060-2076 (17台): +5.0pp lift, diff gap +326 — DD=1,11で+11.9pp
+
+**常時HOT型（イベント日に関係なく常に強い）:**
+- 2399-2415 (17台左壁沿い): 非イベント日38.8%で全セクション最高。イベント日はむしろ下がる(-2.6pp)
+- 2167-2176 (10台): 常時37%台
+
+**ニュートラル型（24セクション）:**
+- イベント日の恩恵がほぼない（±3pp以内）
+
+→ section_lateral_expansionのwalk-forwardをイベント/非イベント分割で再実行すべき
+
+## 例
+```python
+# セクション評価はイベント/非イベントで分割が必須
+event_mask = df['dd'].isin(EVENT_DDS)
+event_section_score = df[event_mask].groupby('section')['hit'].mean()
+nonevent_section_score = df[~event_mask].groupby('section')['hit'].mean()
+```
+
+---
+id: kamata1-residual-analysis-no-signal
+trigger: "蒲田1の曜日・末尾・角番効果を検討するとき"
+confidence: 0.95
+domain: residual-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1残差法: 曜日・末尾・角番は全て3pp未満（使えない）
+
+## 背景
+手順書Step 3に従い、セクション当日平均→DD×セクション×イベント効果を階層的に除去した
+resid2に対して、曜日・末尾・角番の効果量を検出。アクション閾値3ppを超える要素はゼロ。
+
+## アクション
+- **曜日**: 完全にフラット（≈0.00pp）。曜日×イベント交互作用もなし
+- **末尾**: レンジ1.2pp（末尾5が+0.56pp最高、末尾2が-0.66pp最低）。ノイズ
+- **角番**: 角1が-1.88pp（端台がやや弱い）、角10が+2.06pp（n=2677で少ない）。閾値未達
+- **結論**: 蒲田1のスコアリングに曜日・末尾・角番は不要。セクション×イベント日の2軸のみ
+
+蒲田7との対比:
+- 蒲田7は曜日×末尾の交互作用が存在し（c4×c1/c5）、末尾効果も検出されていた
+- 蒲田1はそうした要素効果が全くない、よりシンプルな構造
+
+## 例
+蒲田1のバックテスト用スコア = セクション履歴スコア × イベント/非イベント重み
+（曜日・末尾・角番の加算項は不要）
+
+---
+id: kamata1-hot-cold-zones-step1
+trigger: "蒲田1のフロアゾーン特性・10台ブロック分析を参照するとき"
+confidence: 0.85
+domain: floor-layout-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1: Hot/Coldゾーンと位置クォータイル
+
+## 背景
+Step 1-2〜1-4で10台ブロックヒートマップ、クォータイル分析、Hot/Cold検出を実施。
+全体hit rate=31.9%に対し、±5pp超えのブロック/セクションを検出。
+クォータイルレンジ3.4pp（Q1=34.0%→Q4=30.6%）で緩やかな勾配パターン。
+
+## アクション
+**HOTセクション（+5pp以上）:**
+- 1631-1633 (3台): 41.0% (+9.0pp) — ミニ、サンプル注意
+- 2399-2415 (17台): 37.9% (+6.0pp) — 左壁沿い、常時HOT
+- 2167-2176 (10台): 37.7% (+5.8pp) — 常時HOT
+
+**COLDセクション（-5pp以下）:**
+- 2187-2190 (4台): 25.3% (-6.6pp) — ミニ、隣接する2167-2176(HOT)と対照的
+
+**位置クォータイル:**
+- Q1(台番号小)=34.0% → Q4(台番号大)=30.6%、レンジ3.4pp
+- 手順書基準「差<5pp→位置セグメントの価値は限定的」に該当
+- ただし台番号小→大で単調減少の勾配パターンあり
+
+## 例
+台番号2001-2117エリア（B00-B11）が全般的に33-36%で高く、
+2228-2317エリア（B23-B31）が27-29%で低い。物理的に異なるゾーン。
+
+---
+id: kamata1-event-split-walkforward-improvement
+trigger: "蒲田1のセクション履歴ランキングを実装・評価するとき"
+confidence: 0.90
+domain: section-ranking
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1セクション履歴ランキング: イベント/非イベント分割で大幅改善
+
+## 背景
+section_lateral_expansionの全日混合walk-forwardでは蒲田1のrho≈0.018（4ホール中最弱）だった。
+原因はイベント日と非イベント日でセクション順位が入れ替わるため、全日混合するとキャンセルし合う構造。
+イベント/非イベントで訓練データを分割するsplitモデルを検証。
+
+## アクション
+**splitモデル**: 評価日がイベント日→イベント日のみの履歴で訓練、非イベント日→非イベント日のみの履歴で訓練
+
+walk-forward結果（60日評価、top_k=5）:
+- all→all (baseline): rho=0.169, sec_lift=1.118, mac_lift=1.139
+- nonevent→nonevent: rho=0.181, sec_lift=**1.248**, mac_lift=**1.266** (top5 hit=40.2%)
+- event→event: rho=0.133, sec_lift=1.117, mac_lift=1.126
+- all→event: sec_lift=**0.995** (1.0以下=ランダム以下)
+
+**非イベント日に限定すれば予測力が大幅改善。イベント日は全日混合では予測不可。**
+
+## 例
+```python
+# splitモデルの実装
+is_event_day = target_dt.day in EVENT_DDS
+if is_event_day:
+    train = train[train['is_event'] == 1]
+else:
+    train = train[train['is_event'] == 0]
+section_scores = train.groupby('section')['hit'].mean()
+```
+
+---
+id: kamata1-backtest-split-model-results
+trigger: "蒲田1のバックテスト結果・推薦枠・運用指標を参照するとき"
+confidence: 0.90
+domain: backtest
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1 バックテスト結果: splitモデル top_k=5 が最良
+
+## 背景
+Step 5バックテスト（120日評価）で、splitモデル（イベント/非イベント分割訓練）と
+baseline（全日混合訓練）を比較。
+
+## アクション
+**全体（120日）**:
+| モデル | top_k | precision | lift | 差枚優位/日 |
+|--------|-------|-----------|------|------------|
+| split | 5 | 38.0% | 1.182 | +247 |
+| baseline | 5 | 36.5% | 1.135 | +176 |
+| split | 10 | 36.0% | 1.119 | +140 |
+| split | 20 | 34.2% | 1.064 | +27 |
+
+**内訳**:
+- 非イベント日(87日): split precision=38.3%, lift=1.202, 差枚優位+274
+- イベント日(33日): split precision=37.2%, lift=1.128, 差枚優位+173
+
+**推薦枠**: top_k=5（~27台/日）が推奨。top_k=10でliftが1.119に急落。
+**差枚換算**: top5選択で1日あたり+247枚優位 → 月20日で約+4,940枚
+
+**Lift drop-off**: K=5→10で急落するため、推薦枠を広げすぎないこと。
+
+## 例
+運用フロー:
+1. 当日のDDを確認 → EVENT_DDS該当ならイベント日モード
+2. 過去90日の同モード（event/nonevent）履歴でセクションスコア計算
+3. top5セクション内の台から選択（~27台が候補）
+4. 1日1台を上から順に確認する運用
+
+---
+id: kamata1-step6-parameter-tuning
+trigger: "蒲田1のsplitモデルのパラメータを設定・調整するとき"
+confidence: 0.90
+domain: parameter-tuning
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1 Step6パラメータ感度分析: min_games=2000が最適妥協点
+
+## 背景
+手順書Step 6に従い、1変数ずつの感度分析を実施。グリッドサーチは禁止。
+splitモデル（イベント/非イベント分割訓練）top_k=5を基準に120日評価。
+
+## アクション
+**感度結果:**
+- window_days: 感度低。60-180で安定。30日で急落。**90を維持**
+- min_games: **感度最高**。1000→3000で単調改善（lift 1.141→1.213、差枚+147→+488）
+  - 1500→2000: lift +0.009、差枚+63改善、台数27→23
+  - 2000→3000: lift +0.022、差枚+178改善、台数23→17（候補が狭すぎるリスク）
+  - **2000を採用**
+- top_k: K=5がバランス最良。K=3はlift 1.149でK=5より低い。K=7以上でlift急落
+
+**最終パラメータ:**
+| パラメータ | 値 | 変更 |
+|-----------|-----|------|
+| window_days | 90 | 変更なし |
+| min_games | 2000 | 1500→2000 |
+| top_k | 5 | 変更なし |
+| EVENT_DDS | {1,7,11,17,21,22,27,30,31} | 30追加 |
+
+**最終性能:** lift=1.191, precision=39.9%, 差枚優位=+310/日
+
+## 例
+```python
+WINDOW_DAYS = 90
+MIN_GAMES = 2000
+TOP_K = 5
+EVENT_DDS = {1, 7, 11, 17, 21, 22, 27, 30, 31}
+```
+
+---
+id: kamata1-games-normalized-signal-analysis
+trigger: "games_normalizedフィルタの閾値設定・回転数と設定の関係を検討するとき"
+confidence: 0.90
+domain: feature-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1: games_normalizedは当日設定の同時シグナル（リード信号ではない）
+
+## 背景
+min_games=3000で性能が大きく向上する理由を調査。回転数が高設定の信号なのか、
+単なるノイズ除去なのかを5つの検証で切り分けた。
+
+## アクション
+**発見1: 当日の同時相関は巨大**
+- 同日同セクション比較: >=3000G hit=35.7% vs <3000G hit=23.2% (gap=+12.5pp)
+- 高設定台は回される（因果: 設定→回転数）
+
+**発見2: 前日回転数は翌日hitを予測しない**
+- 前日>=3000G → 翌日hit=31.6% vs 前日<3000G → 翌日hit=32.8% (gap=-1.1pp)
+- むしろ逆方向。前日高設定→翌日は下げるホール行動と整合
+
+**発見3: 強セクションほど低稼働（逆相関rho=-0.510, p=0.004）**
+- 2399-2415（常時HOT, hit=37.9%）: 3000G+比率=56.8%（最低）
+- 2187-2190（COLD, hit=25.3%）: 3000G+比率=84.8%（最高）
+- 穴場セクション構造: 客が少ないが設定は入っている
+
+**結論: min_gamesフィルタの効果はノイズ除去が主因。**
+ただし3000Gまで上げると穴場HOTセクションのデータが半減するリスクあり。
+2000Gが安全な妥協点。
+
+**注意: 新台は設定不問で高回転するため、次回以降の分析では新台を除外して
+計算する方がgames_normalizedの信号をより正確に捉えられる。**
+
+## 例
+```python
+# 新台除外の実装例（次回以降）
+# machine_name に「新台」「導入初週」等のフラグがあれば除外
+# または導入日からN日以内の台を除外
+```
+
+---
+id: kamata1-event-day-machine-level-prediction
+trigger: "蒲田1のイベント日に台レベルの推薦・予測を行うとき"
+confidence: 0.85
+domain: machine-prediction
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1 イベント日台レベル予測: hybrid sec3+mac10 が有効
+
+## 背景
+Event-responsive 3セクション（2143-2146, 2099-2109, 2060-2076）計32台の中で、
+イベント日に台レベルの絞り込みが可能かを検証。
+セクション単独（sec_only k=5）ではlift 1.053に対し、
+セクション→台の2段階絞り込みで大幅改善。
+
+## アクション
+**walk-forward比較（イベント日33日評価）:**
+| 方式 | lift | precision | 差枚優位 | 候補台数 |
+|------|------|-----------|---------|---------|
+| sec_only k=5 | 1.053 | 36.3% | +93 | 28 |
+| sec_only k=3 | 1.111 | 38.5% | +242 | 13 |
+| **sec3+mac10 (hybrid)** | **1.212** | **41.7%** | **+378** | **9** |
+| resp内 top3 | 1.331 | 47.5% | +263 | 3 |
+
+**推奨: sec3+mac10**（top3セクション→その中のtop10台、候補≈9台）
+
+**角番効果（Event-responsive × イベント日限定）:**
+全体の残差法では角番効果3pp未満だが、条件限定で差枚に明確な信号あり:
+- 角番7: hit 46.0%, 差枚+970 — 台2066(hit53.1%,diff+1056) + 台2070(hit38.5%,diff+878)
+- 角番5-6: hit 40%, 差枚+481
+- 角番1: hit 35.1%, 差枚+75（最弱）
+
+**2066を除外しても角番7（台2070単独）の差枚+878は全角番中トップクラス。**
+hit率だけで見ると+1.7ppに落ちるが、差枚で評価すれば角番7は明確に最強位置。
+→ 優先順位は2066→2070。hit率と差枚の両面で評価すべき。
+
+## 例
+イベント日の運用フロー:
+1. イベント日履歴でセクションスコア算出 → top3セクション選出
+2. top3セクション内の台をイベント日履歴でスコア → top10台を候補
+3. 候補≈9台の中から、角番5-7を優先、角1は避ける
+4. 台2066/2070が候補に入っていれば最優先
+
+---
+id: kamata1-evaluation-hit-vs-diff-lesson
+trigger: "hit率だけでなく差枚での評価が必要な場面を判断するとき"
+confidence: 0.90
+domain: evaluation-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 評価指標の教訓: hit率と差枚の乖離に注意
+
+## 背景
+蒲田1の角番7分析で、台2066を除外すると角番7のhit率は46.0%→38.5%（delta +1.7pp）に落ち、
+hit率ベースでは角番5-6（+3pp）より弱く見える。
+しかし差枚ベースでは台2070単独でも+878で全角番中圧倒的トップ。
+
+## アクション
+- hit率が高くなくても差枚が大きい台は「勝つ時に大きく勝つ」パターン
+- 特に少数台（n=122程度）ではhit率の分散が大きいため、差枚での補完評価が必要
+- 「hit率ではシグナルが薄い→見せかけ」と即断してはいけない
+- 効果量の評価にはhit率(precision)と差枚(profit)の両面を使うこと
+
+## 例
+角番7: hit +1.7pp（弱い）だが差枚+878（圧倒的）→ 差枚で見れば最強位置

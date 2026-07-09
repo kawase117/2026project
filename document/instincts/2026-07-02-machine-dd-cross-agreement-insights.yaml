@@ -1,0 +1,99 @@
+---
+id: dd-cross-machine-agreement-tool-available
+trigger: "2〜3機種の手動突き合わせではなく、ホール全体で機種横断のDD別投入日を自動検出したいとき"
+confidence: 0.9
+domain: tooling
+source: session-implementation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 機種横断DD一致度スキャンツールが利用可能
+
+## 背景
+dd-pattern-shared-across-machines-signals-hall-strategy（2026-06-15由来）の「複数機種が同じDDで揃って上振れする＝ホール投入日」という知見を、手動2〜3機種突き合わせから全機種自動検出に拡張した。2026-07-02セッションでeda/machine_dd_cross_agreement_scan.pyを新規実装。機種ごとにDD別hit104率から自分自身のbaselineを引いた残差を計算し、ホール×DDで「何機種が自分の平均を上回ったか」を二項検定(FDR補正はホール単位でBH法)。さらにis_x_dayとの突き合わせで既知イベント日か新規候補かを判定し、machine_masterのjug/hana/oki/bt/otherフラグでカテゴリ濃度のロバストネス検定(支配カテゴリを除外しても有意性が残るか)まで実装済み。
+
+## アクション
+機種横断のDD投入日を検出したいときは`python eda/machine_dd_cross_agreement_scan.py --all-halls`を実行する。出力は`eda/results/machine_dd_cross_agreement/`配下に`{hall}_machine_dd_residuals.csv`(機種×DD残差、category列付き)、`{hall}_dd_agreement.csv`(プール絶対水準・イベント日カバレッジ付き)、`{hall}_category_breakdown.csv`、`{hall}_category_robustness.csv`、`summary_report.csv`(有意日のみ、新規/既知フラグ・支配カテゴリ付き)。
+
+## 例
+2026-07-02時点で9ホール実行、有意12件中novel(既知イベント軸で説明できない)候補はみとやdd22/29、蒲田1dd16、レイトギャップdd19/15/23、金時dd23。特にdd=23はレイトギャップと金時で独立に負方向が再現(q=0.012, q=0.034)し、最有力の未知投入日候補。
+
+---
+id: agreement-rate-cohens-h-not-magnitude-proxy
+trigger: "機種横断一致率(agreement_rate)やcohens_hを『信号の強さ』の指標として解釈しようとするとき"
+confidence: 0.9
+domain: statistical-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# agreement_rate/cohens_hは符号の多数決であり、実際の上げ幅の大きさとは別物
+
+## 背景
+機種横断DD一致度は「機種ごとの残差(自分のbaselineとの差)の符号」だけを二項検定しており、残差の大きさは検定に使われない。実データで検証した結果、蒲田7の有意3日(dd7,17,30)のうちdd17はcohens_h=0.407(3日中最大)だがプール絶対水準の乖離(pooled_hit104_rate_vs_hall=+1.94pt, pooled_diff_vs_hall=+58.5)は3日中最小。逆にdd7はcohens_h=0.340(2番目)だが絶対水準の乖離は+4.73pt/+245.3で3日中最大。レイトギャップでも同型の逆転(dd6のcohens_hが最大だがdd19のpooled diffが最大)を確認。方向(プラス/マイナス)は全ケースで一致したが、「どのDDが一番強いか」の順位はagreement系指標とpooled絶対水準系指標で食い違う。
+
+## アクション
+機種横断一致度の結果を報告する際は、agreement_rate/cohens_hだけで「強い/弱い」の順位付けをしない。必ずpooled_hit104_rate_vs_hall・pooled_diff_vs_hallを併記し、多くの機種が薄く同方向に動いた日(agreement高いが絶対水準は平凡)と、少数機種が大きく動いた日(agreement低いが絶対水準は大きい)を区別する。
+
+## 例
+eda/machine_dd_cross_agreement_scan.pyのattach_pooled_stats/compute_pooled_dd_stats。蒲田7: dd17(cohens_h=0.407, pooled_diff_vs_hall=+58.5) vs dd7(cohens_h=0.340, pooled_diff_vs_hall=+245.3)。
+
+---
+id: kamata7-hall-event-digits-missing-dd30-fixed
+trigger: "蒲田7のdd=30またはis_x_day/is_any_event列の挙動を確認するとき"
+confidence: 0.85
+domain: bug-fix
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# HALL_EVENT_DIGITS[蒲田7]にdd=30が欠落していたバグを修正済み(2026-07-02)
+
+## 背景
+eda/core.pyのHALL_EVENT_DIGITS["蒲田7"]は元々[1,7,11,17,21,22,27,31]で30を含まず、is_x_dayはdd=30をその月が30日で終わる月末(4月/6月/9月/11月、12ヶ月中4ヶ月)の場合のみイベント扱いしていた(カバレッジ率約33%)。ユーザーの「蒲田七はdd30もイベント日」という指摘を受けて確認し、機種横断DD一致度スキャンでdd=30がホール全体で有意な上振れ(一致率67%)を示していたにもかかわらず、この欠落により「novel(未知)」と誤分類されていた。30を固定リストに追加して修正。
+
+## アクション
+蒲田7のdd30がらみの分析結果を見るときは、この修正(30追加)より前に生成されたキャッシュ・レポートは「dd30=非イベント」の前提で書かれている可能性がある点に注意する。他ホールでも同様の固定DDリスト欠落がないか、実際のドメイン知識と`eda.core.HALL_EVENT_DIGITS`の内容を照合すべき(未実施)。この定義はeda/配下27本以上のスクリプトが依存する共有定義なので、修正時は影響範囲を確認してから変更する。
+
+## 例
+eda/core.py:38。修正前: `"蒲田7": [1, 7, 11, 17, 21, 22, 27, 31]` → 修正後: `"蒲田7": [1, 7, 11, 17, 21, 22, 27, 30, 31]`（蒲田1は同じ内容のまま据え置き、ユーザーが蒲田7のみ指定したため）。
+
+---
+id: jug-category-amplifies-not-diverges-from-hall-wide-signal
+trigger: "機種横断の広範囲な投入シグナルが実はジャグラー等の特定機種カテゴリだけで作られていないか懸念するとき"
+confidence: 0.8
+domain: pachinko-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ジャグラー系はホール全体シグナルと同方向に動く(逆行しない)。むしろ増幅する傾向
+
+## 背景
+machine_masterのjug/hana/oki/bt/otherフラグでカテゴリ分解した結果、9ホール12件の有意日全てで、jugカテゴリ(母数比率6〜12%、n=8〜9台と小サンプル)はホール全体の一致方向と一度も逆行しなかった。むしろ小サンプルゆえに極端な値を取りやすく、蒲田7 dd30ではjug 9/9=100%陽性(全体67%)、レイトギャップdd15ではjug 0/8=0%陰性(全体36%)と、全体より強く同方向に振れるケースが複数あった。「other」カテゴリが多数決で勝つのは機種プール内で66〜73%を占める母数比率通りであり、濃度の偏りの証拠ではない。
+
+## アクション
+「この広範囲シグナルは特定カテゴリだけで作られていないか」を検証する際は、単に多数決で勝つカテゴリ(母数が大きいカテゴリが自動的に勝つ)を見るのではなく、各カテゴリの一致率の方向が全体と一致するか・母数比率相応かを個別に確認する。全カテゴリが同方向なら「広範囲な合意」として扱ってよい。hana/okiはn=1〜4程度になることが多く、個別の一致率は参考値に留める。
+
+## 例
+eda/machine_dd_cross_agreement_scan.pyのbuild_category_breakdown出力。蒲田7 dd30: jug=100%(9/9), other=67%(42/63), 全体=67%。みとやdd22(負方向): jug=12.5%(1/8), other=36%(20/55), 全体=33%。
+
+---
+id: windows-gitbash-ls-japanese-path-false-empty
+trigger: "Windows環境のGit Bashで日本語ディレクトリ名配下を`ls`しても中身が空に見えるとき"
+confidence: 0.75
+domain: tooling
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# `ls -la`が日本語パス配下で偽の空表示を返すことがある。`find`で再確認すること
+
+## 背景
+2026-07-02セッションで`ls -la db/`および`find . -iname "*.db" -maxdepth 3`が実際にはファイルが存在する`db/`ディレクトリを「空」と報告し、これを信じて「実DBが存在しない」という誤った結論をユーザーに報告してしまった。直後に`find . -iname "*.db"`(maxdepth指定なし)を実行したところ`db/マルハンメガシティ2000-蒲田7.db`等が正しく列挙され、実際にはDBファイルが存在していたことが判明。原因はGit Bash側のロケール/エンコーディングの癖と見られる。
+
+## アクション
+Windows Git Bash環境で日本語を含むパスの存在確認をする際、`ls`や`find -maxdepth`が空/0件を返しても即座に「存在しない」と結論しない。`find`をmaxdepth無指定で再実行するか、Pythonの`pathlib`/`os.listdir`等の別手段でクロスチェックしてから報告する。特にユーザーへの「〜が存在しない」という否定的な報告は、複数手段で確認できるまで断定的に言わない。
+
+## 例
+`ls -la db/` → `(empty)`、`find . -iname "*.db" -maxdepth 3` → `0 for '*.db'`(誤り)。`find . -iname "*.db"`(maxdepth無指定) → `./db/マルハンメガシティ2000-蒲田7.db`等58件を正しく列挙。

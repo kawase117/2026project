@@ -1,0 +1,153 @@
+---
+id: dashboard-machine-layout-machine-master-reuse
+trigger: "ダッシュボードで角番・Section・セグメント別集計を実装するとき"
+confidence: 0.9
+scope: methodology
+domain: database-maintenance
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 角番・Section・セグメント情報は machine_layout / machine_master テーブルから直接JOINできる
+
+## 背景
+蒲田1/蒲田7/みとやのホールDBには `machine_layout`（section, rank_from_min, rank_from_max、みとやのみ追加で rank_from_aisle, physical_corner）と `machine_master`（jug_flag/hana_flag/oki_flag/bt_flag）が既に投入済み。EDA側のkakuban関連スクリプトはHeatmap座標CSVを都度パースしているが、ダッシュボード用途ではDBの単純JOINで十分足りる。
+
+確認済みの投入状況:
+- `machine_layout`: マルハンメガシティ2000-蒲田1.db(360行), -蒲田7.db(715行), みとや大森町店.db(266行)
+- `machine_master`: 上記3ホールいずれも100件超で投入済み
+
+## アクション
+角番/Section/セグメント別集計が必要な新規ページでは、まず対象ホールDBに `machine_layout` / `machine_master` テーブルがあるか `sqlite_master` で確認し、あれば `machine_number` でJOINする。座標CSVパースやEDAのkakuban専用モジュール（`eda/kamata7_lastdigit_lr_eda.load_coords()`等）は再利用しない。テーブルが無いホールは該当セクションを非表示にする（try/exceptで握りつぶすのではなく事前にテーブル存在確認で分岐する）。
+
+## 例
+```python
+def has_table(db_path, table_name) -> bool:
+    with sqlite3.connect(db_path) as con:
+        row = con.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name=? LIMIT 1",
+            (table_name,),
+        ).fetchone()
+    return row is not None
+```
+
+---
+id: dashboard-page-registration-four-files
+trigger: "ダッシュボードに新規ページを追加するとき"
+confidence: 0.95
+scope: methodology
+domain: dashboard-ui-patterns
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 新規ページは4ファイルへの登録が必要（main_app.pyとdashboard/main.pyは重複コード）
+
+## 背景
+ダッシュボードのページルーティングは `dashboard/pages/__init__.py`（import + `__all__`）、`dashboard/config/constants.py`（`PAGES`リスト）、`dashboard/main.py`（import + `PAGE_ROUTER`）、`main_app.py`（`dashboard/main.py`とほぼ同一内容の重複エントリーポイント）の4ファイルに分散している。1つでも漏れるとページがサイドバーに出ない、またはルーティングエラーになる。
+
+なお `constants.py` には `PAGE_REGISTRY` という辞書も存在するが、grepで確認した限りどこからも参照されていない未使用コード（死んだコード）。ページ到達性には無関係。
+
+## アクション
+新規ページ追加時は必ず以下4ファイルすべてを更新する。`PAGE_REGISTRY` は触らなくてよい。
+1. `dashboard/pages/__init__.py`
+2. `dashboard/config/constants.py`（`PAGES`リストのみ）
+3. `dashboard/main.py`
+4. `main_app.py`
+
+## 例
+page_18_daily_report.py 追加時の実際の変更箇所:
+- `dashboard/pages/__init__.py`: import + `__all__` に `page_18_daily_report` 追加
+- `dashboard/main.py` / `main_app.py`: import + `PAGE_ROUTER["daily_report"] = page_18_daily_report.render`
+- `dashboard/config/constants.py`: `PAGES` に `{"icon": "🗒️", "title": "前日レポート", "key": "daily_report"}` 追加
+
+---
+id: dashboard-min-group-size-scope-separation
+trigger: "集計テーブルにノイズ削減用の最小サンプル数フィルタを実装するとき"
+confidence: 0.85
+scope: methodology
+domain: dashboard-ui-patterns
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 最小サンプル数フィルタ(min_group_size)は「基本の内訳テーブル」と「ランキング専用テーブル」で別々に適用する
+
+## 背景
+単日レポートページで「機種別104%超え率TOP5」等のランキングにノイズ削減用の `min_group_size>=3` を導入した際、共有集計関数のデフォルト値にそのまま設定してしまい、機種別/角番別/Section別の**基本成績テーブル**からも1〜2台しかない機種・角番が無言で消える不具合をコードレビューで指摘された。基本テーブルの目的は「その日何が起きたか漏れなく見る」ことであり、ランキング専用の閾値を巻き込んではいけない。
+
+## アクション
+共有集計ヘルパーの`min_group_size`はデフォルトを1（フィルタなし）にし、ノイズ削減が必要なランキング系の呼び出し側だけで明示的に閾値を渡す。「基本表示用の集計」と「ランキング/ハイライト用の集計」は同じ関数を使っていても閾値のスコープを混同しない。
+
+## 例
+```python
+DEFAULT_GROUP_MIN_SIZE = 1
+MIN_GROUP_SIZE_FOR_RANKING = 3
+
+def summarize_group_performance(df, group_column, *, min_group_size=DEFAULT_GROUP_MIN_SIZE):
+    ...
+
+# 基本テーブル（全件保持）
+machine_summary = summarize_group_performance(daily_df, "machine_name")
+# TOP5ランキング（呼び出し側で明示指定）
+top5 = summarize_group_performance(daily_df, "machine_name", min_group_size=MIN_GROUP_SIZE_FOR_RANKING)
+```
+
+---
+id: timezone-named-function-must-use-explicit-zoneinfo
+trigger: "「JST」等タイムゾーン名を関数名に含めるとき"
+confidence: 0.9
+scope: methodology
+domain: python-patterns
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 関数名に「JST」を含めるなら zoneinfo で明示変換する（datetime.now()だけでは名前と実装が乖離する）
+
+## 背景
+`_jst_today()` という名前の関数の中身が `datetime.now().date()`（ホストのローカル時刻）だった。開発機がJSTだったため一見問題なく動いていたが、UTC等のサーバー環境で実行すると「前日」のデフォルト値が日付境界（JST深夜〜早朝）でズレる。名前が実装を保証しない典型例で、コードレビューで指摘され`zoneinfo.ZoneInfo("Asia/Tokyo")`による明示変換に修正された。
+
+## アクション
+タイムゾーンを名前に明記する関数は必ず`zoneinfo.ZoneInfo`等で明示変換する。`datetime.now()`のみに頼らない。実行環境のローカルタイムゾーンに依存する日付計算（「前日」「今日」のデフォルト値など）は特に注意する。
+
+## 例
+```python
+from zoneinfo import ZoneInfo
+
+def _jst_today() -> date:
+    return datetime.now(ZoneInfo("Asia/Tokyo")).date()
+```
+
+---
+id: machine-payout-rate-three-bet-approximation
+trigger: "games_normalized/diff_coins_normalizedから機械割%を計算するとき"
+confidence: 0.85
+scope: finding
+domain: database-maintenance
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 機械割%は「games_normalized×3枚/G」を投入枚数とみなす近似式で計算する
+
+## 背景
+機械割(%) = 総払出枚数 ÷ 総投入枚数 × 100、総払出枚数 = 総投入枚数 ± 差枚数。DBには機種ごとの正確なベット数（3枚固定/1〜2枚等）が保存されていないため、現行機の大半を占める3枚ベット固定を前提にした近似式を採用した。1〜2枚ベット機種が混在すると誤差が出る既知の限界がある。
+
+## アクション
+機械割・104%超え判定が必要な箇所では `bet = games_normalized * 3`, `payout_rate = (bet + diff_coins_normalized) / bet * 100` を共通関数として一箇所に実装し、`games_normalized`が0またはNaNの行はNaNを返す（0除算回避）。3枚/G近似の限界をdocstringに明記する。同じ式を複数箇所に再実装しない。
+
+## 例
+```python
+def compute_payout_rate(df: pd.DataFrame) -> pd.Series:
+    """3枚/G固定を前提とした近似式。正確なベット数がDBに無いための既知の限界。"""
+    games = pd.to_numeric(df["games_normalized"], errors="coerce")
+    diff = pd.to_numeric(df["diff_coins_normalized"], errors="coerce")
+    bet = games * 3.0
+    rate = (bet + diff) / bet * 100.0
+    return rate.where((bet > 0) & bet.notna())
+
+# 検証済み: 総投入2100枚・+300枚 → 114.3%
+```
+
+---

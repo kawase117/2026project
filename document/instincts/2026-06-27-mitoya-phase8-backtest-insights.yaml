@@ -1,0 +1,75 @@
+---
+id: mitoya-corner-rule-xdds-strongest
+trigger: "みとやのX_DDS日（DD 4,7,14,17,24,27）の台選びを行うとき"
+confidence: 0.85
+domain: hall-strategy
+source: walk-forward-backtest
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# X_DDS日は角番ルール単独でShortlist（機種名）を上回る
+
+## 背景
+Phase 8 バックテスト（5ウィンドウ walk-forward）で、CornerRule（reversed=0 の corner1-4 を狙う）が X_DDS 日に Target 比 +313.1 を記録。Shortlist（機種名 top_n=2）の +281.0 を上回った。機種名情報なしのシンプルな物理位置ルールでこの数字が出ることは、ホール側の設定投入が物理位置に強く依存していることを示す。
+
+## アクション
+- X_DDS 日はまず CornerRule（reversed=0 セクションの角番1-4）を基本戦略にする
+- 機種名は補助情報として使い、CornerRule と矛盾しない場合にのみ採用
+- 特に Period 1→2 (+552) と Period 2→3 (+516) で角番効果が強く出る
+
+## 例
+X_DDS日の戦略比較:
+  Shortlist (機種名): +281.0
+  CornerRule (角番): +313.1
+  MachineCorner (機種×角番): +266.3
+
+---
+id: mitoya-machine-corner-best-overall-but-unstable
+trigger: "みとやの全日（通常日+X_DDS）の台選び戦略を設計するとき"
+confidence: 0.75
+domain: ml-methodology
+source: walk-forward-backtest
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# MachineCorner（機種×角番）は全体最強だがウィンドウ間の振れが大きい
+
+## 背景
+MachineCorner 戦略は全体で Target 比 +165.3 と3戦略中最高だが、ウィンドウ別では +259.7, +314.3, +53.4, +139.8, +59.1 と大きく振れる。CornerRule も Period 3→4 で -6.4 に崩れる。どの戦略も単独では全ウィンドウ安定しない。
+
+## アクション
+- 単一戦略への依存を避け、CornerRule と MachineCorner を組み合わせる
+- CornerRule を基本にし、MachineCorner の情報で補強する形が実運用向き
+- 特定ウィンドウでの崩壊を検知するモニタリング（直近N日の実績追跡）が必要
+- Shortlist は安定性では最も均一（+93〜+170）なので、フォールバック戦略として残す
+
+## 例
+Period別 CornerRule vs MachineCorner:
+  0→1: CornerRule +125, MachineCorner +260
+  3→4: CornerRule -6, MachineCorner +140
+  → どちらかが崩れても他方で補える
+
+---
+id: mitoya-no-single-strategy-dominates-all-windows
+trigger: "みとやのバックテスト結果を解釈・運用戦略に落とすとき"
+confidence: 0.90
+domain: ml-methodology
+source: walk-forward-backtest
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# どの戦略も単独では全ウィンドウを支配しない
+
+## 背景
+5ウィンドウの walk-forward バックテストで、Shortlist・CornerRule・MachineCorner の3戦略すべてが少なくとも1ウィンドウで大幅に劣化する。CornerRule は Period 3→4 で -6.4、MachineCorner は Period 2→3 で +53.4、Shortlist は Period 3→4 で +93.5。ホール側の戦略変更やレイアウト変更による regime change が原因と考えられる。
+
+## アクション
+- バックテストの「平均」だけで戦略を選ばない。ウィンドウ別の最悪ケースを必ず確認する
+- 複数戦略のアンサンブルまたは切り替えロジックを検討する
+- regime change の検知（直近の実績が過去平均から大幅に乖離したとき）を組み込む
+- 新しい戦略を追加するときも、全ウィンドウで均一に効くことを確認してから採用する
+
+## 例
+全体の平均だけ見ると MachineCorner (+165.3) が最強に見えるが、
+Period 2→3 では +53.4 まで落ちる。平均の高さだけで採用すると、
+このウィンドウに当たったとき期待外れになる。

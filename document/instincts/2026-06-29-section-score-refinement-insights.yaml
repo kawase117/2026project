@@ -1,0 +1,272 @@
+---
+id: section-score-refinement-results
+trigger: "predict_section.pyのセクションスコアを改善するとき、またはA系閾値やDD/曜日補正を検討するとき"
+confidence: 0.90
+domain: ml-model-design
+source: section-score-refinement-60days
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# セクションスコア改善: N系閾値104統一+曜日補正β=0.1で+23.6%改善
+
+## 背景
+predict_section.pyのセクションスコアを2軸で改善検証した（60日walk-forward）。
+
+実験A: A系閾値を下げても改善しない。N系の閾値を106→104に変えるとrho +0.174→+0.195。
+実験B: DD補正は無効。曜日補正β=0.1でlift 1.126→1.161。
+Part 3結合: rho=+0.197, lift=1.168x, 累積+521,300枚（現行+421,800枚、+23.6%改善）。
+イベント日でのliftが特に大きい（1.071→1.212）。
+
+## アクション
+- predict_section.pyにN系閾値104と曜日補正β=0.1を組み込む
+- A系閾値変更は不要、DD補正は入れない
+
+## 例
+  baseline: A=104,N=106,α=0,β=0 → rho=+0.174, lift=1.126x, cum=+421,800
+  combined: A=104,N=104,α=0,β=0.1 → rho=+0.197, lift=1.168x, cum=+521,300
+
+---
+id: a-type-threshold-lowering-ineffective
+trigger: "A系（ジャグラー/ハナハナ）の設定差検出閾値を検討するとき"
+confidence: 0.90
+domain: ml-model-design
+source: section-score-refinement-60days
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# A系の閾値を104%以下に下げてもセクションスコアは改善しない
+
+## 背景
+A系閾値を100-104%でグリッドサーチしたが下げるほどrhoが低下。
+A=104でrho_all=+0.195、A=102で+0.003。rho_A_onlyは閾値にほぼ依存しない。
+A系閾値を下げるとA系hit_flag率が上がり、N系との差が縮まって識別力が落ちる。
+
+## アクション
+- A系閾値は104%のまま変更しない
+- N系閾値は106→104に変更する（rho +0.174→+0.195）
+
+## 例
+  A=104,N=104: rho=+0.195, rho_A=+0.157
+  A=102,N=104: rho=+0.003, rho_A=+0.131
+
+---
+id: dd-adjustment-ineffective-dow-slightly-effective
+trigger: "セクションスコアにDD（日付の日）や曜日の補正を加えるとき"
+confidence: 0.85
+domain: ml-model-design
+source: section-score-refinement-60days
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# DD補正は無効、曜日補正はβ=0.1でわずかに有効
+
+## 背景
+DD補正: alpha>0で常に劣化。各DDは90日中3回程度でサンプル不足。
+曜日補正: beta=0.1でlift +3.5pp、差枚+64,900枚。イベント日/非イベント日で安定。
+各曜日は90日中12-13回あり曜日パターンを捉えられる。
+
+## アクション
+- DD補正は入れない（alpha=0固定）
+- 曜日補正はβ=0.1を採用
+
+## 例
+  (α=0,β=0): lift=1.126, cum=+421,800
+  (α=0,β=0.1): lift=1.161, cum=+486,700
+  (α=0.1,β=0): lift=1.098 ← DD補正で劣化
+
+---
+id: section-score-is-fixed-effect-not-prediction
+trigger: "セクションスコアの予測力について議論するとき"
+confidence: 0.90
+domain: ml-model-design
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# セクションスコアは「予測」ではなく「固定効果の検出」
+
+## 背景
+蒲田7: Top5セクションは60日中ほぼ固定（最頻85%、日次overlap 3.4/5）。
+DD/イベントで選ばれるセクションに差がない。上位はN-only独占（rho=-0.636 vs A比率）。
+みとや: Top3が100%/95%/95%で完全固定。
+
+セクションスコアは「今日どのセクションが熱いか」ではなく「長期的に成績の良いセクション」を検出しているだけ。
+ただしN-only内・A-only内でもSpearmanが有意なので、機種構成だけでは説明できないホールの設定投入戦略差が存在する。
+
+## アクション
+- 改善余地はセクション選択よりセクション内の台選び（Stage 2）の方が大きい
+- DD/曜日で動的にセクション選択を変える方向は有望ではない
+
+---
+id: window-60d-best-diff-but-rho-stable
+trigger: "predict_section.pyのwindow_daysパラメータを決めるとき"
+confidence: 0.85
+domain: ml-model-design
+source: window-optimization-60days
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 窓幅60dが1台あたり差枚で最強だが、rhoは全窓幅でほぼ同じ
+
+## 背景
+窓幅60-300日でsection_avg_histのパフォーマンスを系統的に比較した（60日walk-forward, Top5x5）。
+rhoは全窓幅で+0.185〜+0.201の範囲に収まり、窓幅への依存はほぼない。
+一方diff/台は短窓ほど高い: 60d=+570, 90d=+440, 120d以降=+288〜+345。
+hit率も60d=42.7%, 90d=40.6%で、120d以降は37-40%に落ちる。
+
+rhoが変わらずdiff/台が下がる理由:
+セクション順位は長期固定効果で安定しているが、短い窓の方が
+「現在の設定投入パターン」に近い推定値を出せるため、Stage 2の台選び精度が上がる。
+
+120dの谷（rho=+0.185, diff=+296）は年末年始データの影響ではなく（除外しても変わらず）、
+ノイズと判断。機種入替もこの期間で7台（1%）のみで影響なし。
+
+## アクション
+- diff/台を最大化するなら60d窓が最適
+- 安定性を重視するなら90d窓（現行）を維持
+- 60dの優位性がeval期間を変えても再現するか追加検証してから変更する
+- 120d以上に伸ばしても改善しない
+
+## 例
+窓幅別パフォーマンス（Top5x5, 60日walk-forward）:
+  60d:  rho=+0.193, hit=42.7%, diff/台=+570, win=78.3%
+  90d:  rho=+0.195, hit=40.6%, diff/台=+440, win=78.3%
+  120d: rho=+0.185, hit=37.2%, diff/台=+296, win=70.0%
+  270d: rho=+0.197, hit=40.6%, diff/台=+329, win=70.0%
+  300d: rho=+0.201, hit=40.0%, diff/台=+288, win=66.7%
+
+---
+id: event-nonevent-split-scoring-ineffective
+trigger: "イベント日と非イベント日でセクションスコアの計算方法を分けるとき"
+confidence: 0.85
+domain: ml-model-design
+source: section-score-refinement-part4-window-comparison
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# イベント/非イベント分割スコアリングは有効ではない
+
+## 背景
+イベント日限定のsection_avg_hist（event_only）とadaptive（イベント日→event_blend, 非イベント日→nonevent_blend）を
+90日/180日/270日窓で検証した。
+
+全窓幅でevent_onlyのrhoはbase_only（全日平均）を下回る:
+  90d: event_only rho=+0.119 vs base_only +0.174
+  180d: event_only rho=+0.118 vs base_only +0.163
+  270d: event_only rho=+0.154 vs base_only +0.172
+
+270日窓で改善が見られたが（+0.119→+0.154）、base_onlyを超えるには至らない。
+窓拡張でイベント日のサンプルが増えても、base_only（全日平均）の方が安定。
+
+adaptiveモード（イベント日と非イベント日で自動切替）も改善せず、全窓幅でbase_only以下。
+
+原因: セクションスコアは固定効果の検出であり、イベント日と非イベント日で
+ホールがセクション単位の設定投入パターンを変えている証拠がない。
+
+## アクション
+- イベント/非イベント分割は入れない
+- 窓幅拡張よりも窓幅短縮（60-90d）の方が有効
+- DD補正（alpha）、曜日補正（beta）、イベント分割の全てが無効→セクションスコアはDD/曜日/イベントに依存しない
+
+## 例
+270日窓（最もevent_onlyに有利な条件）:
+  base_only:   rho=+0.172, lift=1.247, diff/台=+412
+  event_only:  rho=+0.154, lift=1.217, diff/台=+442
+  adaptive:    rho=+0.165, lift=1.214, diff/台=+385
+  → event_onlyは差枚でやや勝つがrhoで劣る。adaptiveは両方で劣る
+
+---
+id: yearend-data-no-special-treatment
+trigger: "年末年始のデータを特別扱い（除外やフラグ付け）するか検討するとき"
+confidence: 0.90
+domain: data-processing
+source: yearend-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 年末年始データは特別扱い不要
+
+## 背景
+120日窓のrho低下（+0.185）が年末年始データの混入によるものか検証した。
+- 年末年始（12/20-1/10）: hit率33.7%, diff+197
+- 通常期（1/15-2/15）: hit率33.2%, diff+168
+- 有意な差なし
+- 120日窓から年末年始を除外してもrhoは変わらず（+0.1845→+0.1844）
+- 機種入替も全窓幅で7台（1%）のみ
+
+120日の谷は年末年始ではなく統計ノイズ。
+
+## アクション
+- 年末年始の除外フィルタは不要
+- 0707（周年記念日）の除外は引き続き必要（これは既に実装済み）
+
+---
+id: at-machines-structurally-higher-hit104
+trigger: "104%超え率をセクション間やA/N間で比較するとき、またはセクションスコアの上位がN系に偏る理由を理解するとき"
+confidence: 0.90
+domain: domain-analysis
+source: section-composition-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# AT機（N系）はA系より構造的に104%超え頻度が高い
+
+## 背景
+蒲田7のセクションスコア上位15セクションは全てN-only（AT機のみ）。
+Section score vs A-type ratio: rho=-0.636（強い負の相関）。
+A-onlyセクション avg score=29.7%、N-onlyセクション avg score=35.4%。
+
+原因: AT機は大当たり1回で差枚が数千枚振れるため、1日の出力率が104%を超える頻度が高い。
+A系は設定6でも機械割107-109%で低めに運用されるため、104%超え頻度がN系より低い。
+これは設定の良し悪しではなく、機種のノイズ特性の違い。
+
+ただしN-only内でもA-only内でもSpearmanが有意（N: +0.120, A: +0.160）なので、
+機種構成を超えたセクション間の差（ホールの設定投入戦略差）は存在する。
+
+## アクション
+- セクションスコアでA系とN系を直接比較してはならない（スケールが違う）
+- A系セクションがスコア下位に集まるのは構造的な理由であり、「A系セクションが弱い」とは限らない
+- A系の評価には別閾値（102%等）を検討する価値があるが、セクションスコアレベルでは104%が最適だった
+
+## 例
+蒲田7セクションスコア（最終日）:
+  Top5: 3209-3217(42.1%, N), 2230-2246(41.8%, N), 2155-2164(40.9%, N), ...
+  A-only avg: 29.7%
+  N-only avg: 35.4%
+  差: -5.7pp（設定差ではなくノイズ特性差）
+
+---
+id: mitoya-coords-section-already-split
+trigger: "みとやの座標データでsection×y分割を検討するとき"
+confidence: 0.95
+domain: data-processing
+source: session-verification
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# みとやの座標ファイルのsection列は既に横列分離済みでsection×y分割は不要
+
+## 背景
+mitoya_theoryの instinct (mitoya-section-y-split-correct-granularity) では
+「section×yの複合キーを分析単位として使用する」と指示している。
+しかしこれは machine_layout テーブルの旧定義への注意であり、
+Heatmap/mitoya_omorimachi_floor_coordinates.csv の section 列は既に横列が分離されている。
+
+実データ確認:
+- 横列セクション（501-691）: 各sectionは単一のy値を持ち、16-22台
+- 縦列セクション（692-755）: 各sectionが複数y値にまたがるが、各y値に1台のみ
+- 805-815: 単一y値、11台
+
+section×yで分割すると縦列セクションが1台ずつ76グループに分裂し、分析不能になる。
+座標ファイルの18セクション定義をそのまま使うのが正しい。
+
+## アクション
+- mitoya_omorimachi_floor_coordinates.csvのsection列をそのまま使う
+- section×y分割は適用しない
+- machine_layoutテーブルを直接使う場合のみsection×y分割が必要
+
+## 例
+座標ファイルのsection:
+  501-522_y36: 22台（横列、単一y）→ そのままでOK
+  692-700: 9台（縦列、y=3〜y=13）→ section_yにすると1台ずつ9グループに分裂
+  section×y分割: 18セクション → 76グループ（大半が1台）

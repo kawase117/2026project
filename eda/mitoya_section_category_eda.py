@@ -20,10 +20,7 @@ from statsmodels.stats.multitest import multipletests
 
 DB_PATH = Path(__file__).resolve().parents[1] / "db" / "みとや大森町店.db"
 MACHINE_MASTER = (
-    Path(__file__).resolve().parents[1]
-    / "document"
-    / "machine_master_research"
-    / "machine_list_for_research.csv"
+    Path(__file__).resolve().parents[1] / "document" / "machine_master_research" / "machine_list_for_research.csv"
 )
 X_DDS = {4, 7, 14, 17, 24, 27}
 A_GROUP = {"ノーマル", "Aタイプ", "A+AT", "A+ART"}
@@ -35,14 +32,22 @@ MIN_SECTION_SIZE = 3
 
 SECTION_RANGES = {
     "501-522": (501, 522),
-    "523-556": (523, 556),
-    "557-590": (557, 590),
-    "591-623": (591, 623),
-    "624-657": (624, 657),
-    "658-691": (658, 691),
-    "692-711": (692, 711),
-    "712-733": (712, 733),
-    "734-755": (734, 755),
+    "523-539": (523, 539),
+    "540-556": (540, 556),
+    "557-573": (557, 573),
+    "574-590": (574, 590),
+    "591-607": (591, 607),
+    "608-623": (608, 623),
+    "624-640": (624, 640),
+    "641-657": (641, 657),
+    "658-674": (658, 674),
+    "675-691": (675, 691),
+    "692-700": (692, 700),
+    "701-711": (701, 711),
+    "712-722": (712, 722),
+    "723-733": (723, 733),
+    "734-744": (734, 744),
+    "745-755": (745, 755),
     "805-815": (805, 815),
 }
 
@@ -472,11 +477,7 @@ def _regime_shift_test(hall: pd.DataFrame, split_date: pd.Timestamp = DEFAULT_SP
 
 
 def _stable_rate_table(df_a: pd.DataFrame) -> pd.DataFrame:
-    sections = (
-        df_a[["section", "dominant_category", "stable"]]
-        .drop_duplicates("section")
-        .copy()
-    )
+    sections = df_a[["section", "dominant_category", "stable"]].drop_duplicates("section").copy()
     if sections.empty:
         return pd.DataFrame(columns=["category", "n_sections", "stable_sections", "stable_rate"])
     return (
@@ -523,9 +524,7 @@ def _top_branch_a_rows(
 
 def _branch_a_reverse_rows(df_a: pd.DataFrame) -> pd.DataFrame:
     work = df_a[
-        (df_a["axis_label"] == "is_xdds")
-        & (df_a["axis_value"] == "1")
-        & ((~df_a["stable"]) | (df_a["delta_pct"] < 0))
+        (df_a["axis_label"] == "is_xdds") & (df_a["axis_value"] == "1") & ((~df_a["stable"]) | (df_a["delta_pct"] < 0))
     ].copy()
     if work.empty:
         return work
@@ -589,7 +588,10 @@ def _write_branch_b_report(df_b: pd.DataFrame, rho_df: pd.DataFrame) -> str:
         "## Branch B: A群/AT群 × X_DDS 交互作用",
         "",
         "### 2×2 summary",
-        _markdown_table(category_summary, columns=["category", "day_type", "mean_payout", "hit_rate_104", "hit_rate_100", "n_machine_days"]),
+        _markdown_table(
+            category_summary,
+            columns=["category", "day_type", "mean_payout", "hit_rate_104", "hit_rate_100", "n_machine_days"],
+        ),
         "",
         "### X_DDS lift per category",
         _markdown_table(lift_table),
@@ -650,7 +652,9 @@ def _write_branch_c_report(df_c: pd.DataFrame, hall: pd.DataFrame, regime_test: 
     return "\n".join(lines)
 
 
-def _write_master_report(df_a: pd.DataFrame, df_b: pd.DataFrame, df_c: pd.DataFrame, hall: pd.DataFrame, regime_test: dict[str, object]) -> str:
+def _write_master_report(
+    df_a: pd.DataFrame, df_b: pd.DataFrame, df_c: pd.DataFrame, hall: pd.DataFrame, regime_test: dict[str, object]
+) -> str:
     stable_table = _stable_rate_table(df_a)
     lift_table = _branch_b_lift_table(df_b)
     branch_a_stable = _top_branch_a_rows(df_a, "is_xdds", stable_only=True, axis_value="1")
@@ -692,10 +696,18 @@ def _write_master_report(df_a: pd.DataFrame, df_b: pd.DataFrame, df_c: pd.DataFr
         "## 今日の実戦向け示唆 (2026-06-17, X_DDS日 DD=7)",
         "",
         "### Section(列)選び - Branch A 結果",
-        _markdown_table(branch_a_stable.loc[:, ["section", "delta_pct", "dominant_category"]] if not branch_a_stable.empty else branch_a_stable),
+        _markdown_table(
+            branch_a_stable.loc[:, ["section", "delta_pct", "dominant_category"]]
+            if not branch_a_stable.empty
+            else branch_a_stable
+        ),
         "",
         "逆方向 / non-stable sections:",
-        _markdown_table(branch_a_reverse.loc[:, ["section", "delta_pct", "dominant_category", "stable"]] if not branch_a_reverse.empty else branch_a_reverse),
+        _markdown_table(
+            branch_a_reverse.loc[:, ["section", "delta_pct", "dominant_category", "stable"]]
+            if not branch_a_reverse.empty
+            else branch_a_reverse
+        ),
         "",
         "### A群/AT群 どちらを優先するか - Branch B 結果",
         _markdown_table(lift_table),

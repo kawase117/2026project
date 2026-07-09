@@ -16,6 +16,7 @@ Usage:
       --baseline v6a_hit_an \
       --output ml/experiments/walkforward_scoring/results_v9_threshold/significance_results.csv
 """
+
 from __future__ import annotations
 
 import argparse
@@ -48,6 +49,7 @@ def build_parser() -> argparse.ArgumentParser:
 # ---------------------------------------------------------------------------
 # Step 1: ACF check
 # ---------------------------------------------------------------------------
+
 
 def compute_acf(series: np.ndarray, max_lag: int = 3) -> list[float]:
     """Autocorrelation for lags 1..max_lag (Pearson)."""
@@ -84,6 +86,7 @@ def acf_check(diffs: np.ndarray, max_lag: int = 3) -> dict:
 # ---------------------------------------------------------------------------
 # Step 2: Paired bootstrap for additive metrics
 # ---------------------------------------------------------------------------
+
 
 def paired_bootstrap_ci(
     diffs: np.ndarray,
@@ -127,6 +130,7 @@ def paired_bootstrap_ci(
 # Step 3: Leave-one-day-out sensitivity
 # ---------------------------------------------------------------------------
 
+
 def leave_one_out_sensitivity(diffs: np.ndarray) -> dict:
     """Check if any single day drives the result."""
     n = len(diffs)
@@ -147,6 +151,7 @@ def leave_one_out_sensitivity(diffs: np.ndarray) -> dict:
 # ---------------------------------------------------------------------------
 # Step 4: Win/loss sign test
 # ---------------------------------------------------------------------------
+
 
 def win_loss_test(diffs: np.ndarray) -> dict:
     """Binomial sign test: H0 = variant wins 50% of days."""
@@ -171,6 +176,7 @@ def win_loss_test(diffs: np.ndarray) -> dict:
 # Step 5: Wilcoxon signed-rank test
 # ---------------------------------------------------------------------------
 
+
 def wilcoxon_test(diffs: np.ndarray) -> dict:
     """Wilcoxon signed-rank test on paired differences."""
     nonzero = diffs[diffs != 0]
@@ -183,6 +189,7 @@ def wilcoxon_test(diffs: np.ndarray) -> dict:
 # ---------------------------------------------------------------------------
 # Step 6: Pooled ratio bootstrap (for hit_t / expected_t)
 # ---------------------------------------------------------------------------
+
 
 def pooled_ratio_bootstrap(
     hits_a: np.ndarray,
@@ -207,9 +214,7 @@ def pooled_ratio_bootstrap(
         return la - lb
 
     observed = pooled_lift_diff(np.arange(n))
-    boot_diffs = np.array(
-        [pooled_lift_diff(rng.integers(0, n, size=n)) for _ in range(n_boot)]
-    )
+    boot_diffs = np.array([pooled_lift_diff(rng.integers(0, n, size=n)) for _ in range(n_boot)])
     ci_lo, ci_hi = np.quantile(boot_diffs, [0.025, 0.975])
     p_val = float(np.mean(boot_diffs <= 0)) if observed > 0 else float(np.mean(boot_diffs >= 0))
     p_val = min(2 * p_val, 1.0)
@@ -224,6 +229,7 @@ def pooled_ratio_bootstrap(
 # ---------------------------------------------------------------------------
 # BH FDR correction
 # ---------------------------------------------------------------------------
+
 
 def benjamini_hochberg(p_values: list[float], alpha: float = 0.05) -> list[float]:
     """Return BH-adjusted q-values."""
@@ -246,6 +252,7 @@ def benjamini_hochberg(p_values: list[float], alpha: float = 0.05) -> list[float
 # ---------------------------------------------------------------------------
 # Main orchestration
 # ---------------------------------------------------------------------------
+
 
 def run_tests(
     df: pd.DataFrame,
@@ -303,6 +310,20 @@ def run_tests(
         wl = win_loss_test(diff_additive)
         row.update(wl)
 
+        # --- Additive: payout_rate (weighted) ---
+        payout_base_col = "payout_rate_base"
+        payout_comp_col = "payout_rate_comp"
+        if payout_base_col in merged.columns and payout_comp_col in merged.columns:
+            diff_payout = (merged[payout_comp_col] - merged[payout_base_col]).to_numpy(dtype=float)
+            diff_payout = diff_payout[~np.isnan(diff_payout)]
+            if len(diff_payout) >= 3:
+                boot_p = paired_bootstrap_ci(diff_payout, n_boot=n_boot, seed=seed, block=use_block)
+                row["payout_mean_diff"] = boot_p["mean_diff"]
+                row["payout_ci_lower"] = boot_p["ci_lower"]
+                row["payout_ci_upper"] = boot_p["ci_upper"]
+                wilc_p = wilcoxon_test(diff_payout)
+                row["p_value_wilcoxon_payout"] = wilc_p["p_value_wilcoxon"]
+
         # --- Pooled ratio for hit_t thresholds ---
         for threshold in [2500, 3500, 4500]:
             hit_col = f"hit_t{threshold}"
@@ -356,6 +377,7 @@ def run_tests(
 # ---------------------------------------------------------------------------
 # vs Random: each model independently tested against chance
 # ---------------------------------------------------------------------------
+
 
 def run_vs_random(
     df: pd.DataFrame,
@@ -493,12 +515,18 @@ def format_summary(df: pd.DataFrame) -> str:
             sig_win = "***" if r.get("p_value_sign", 1) < 0.05 else ""
             fragile = " [FRAGILE]" if r.get("loo_fragile", False) else ""
 
+            payout_str = ""
+            if "payout_mean_diff" in r and not (
+                isinstance(r["payout_mean_diff"], float) and np.isnan(r["payout_mean_diff"])
+            ):
+                sig_pay = "***" if r.get("p_value_wilcoxon_payout", 1) < 0.05 else ""
+                payout_str = f" | pay={r['payout_mean_diff']:+.3f}%{sig_pay}"
             lines.append(
                 f"  {seg:8s} | "
                 f"diff={r['additive_mean_diff']:+.0f} "
                 f"[{r['additive_ci_lower']:+.0f}, {r['additive_ci_upper']:+.0f}]{sig_add}{fragile} | "
                 f"win {r['wins']}/{r['n_days']} ({r['win_pct']:.0f}%){sig_win} | "
-                f"ACF1={r.get('acf_acf_lag1', 0):.2f}"
+                f"ACF1={r.get('acf_acf_lag1', 0):.2f}{payout_str}"
             )
         lines.append("")
 

@@ -1,0 +1,102 @@
+---
+id: mitoya-theory-partial-autogeneration-gotcha
+trigger: "document/*_theory.md や、それを生成するeda/*_theory.pyスクリプトを扱うとき、または長大なtheory文書が自動生成か手動作成か判断するとき"
+confidence: 0.95
+domain: documentation-architecture
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# theory文書が「一部だけ自動生成」の場合、全文を読まずに判断すると誤診断する
+
+## 背景
+document/mitoya_theory.md を調査した際、最初の100行程度（Phase3の生データ羅列部分）だけを見て「ファイル全体が自動生成の産物」と誤判断した。
+実際には eda/mitoya_phase5b_theory.py の build_theory_document() が生成するのはPhase3〜8（旧ファイルの約1〜1085行目）のみで、
+Phase10以降（1087〜1695行目）には否定された仮説カタログ・アンチパターン7類型・ホール間比較・実運用フローという、
+既に手作業品質の内容が同居していた。
+Readツールが25000トークン超でtruncateされた際、続きをoffsetパラメータで読み切らずに結論を出したことが誤りの直接の原因。
+
+## アクション
+長大なdocument/*.mdファイルの生成元（自動 vs 手動）を判断する際は、
+(1) 生成スクリプトの出力範囲（output_path、build関数に渡しているPhase番号等の引数）を確認する、
+(2) ファイル全体をoffset+limitで最後まで読み切る、
+の両方を行ってから結論を出す。truncate通知が出た時点では絶対に判断を確定させない。
+
+## 例
+eda/mitoya_phase5b_theory.py の build_theory_document() は phase3_path〜phase8_path のみを引数に取り、Phase9以降は一切扱わない。
+main()の呼び出し引数を見れば自動生成の範囲は正確に特定できる。
+
+---
+id: okf-format-is-lightweight-markdown-not-graph-db
+trigger: "OKF (Open Knowledge Format) の採用可否を検討するとき、またはInstinct/Theoryの保存形式を知識グラフ化する提案を評価するとき"
+confidence: 0.9
+domain: documentation-architecture
+source: web-fetch-GoogleCloudPlatform-knowledge-catalog
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# OKFはmarkdown+YAML frontmatter+クロスリンクの軽量フォーマットで、専用グラフDBではない
+
+## 背景
+kamata7_theory.md の未探索ロードマップにあった「OKFフォーマットへの移行」の実体が不明だったため、
+参照先(github.com/GoogleCloudPlatform/knowledge-catalog/tree/main/okf)を実際にfetchして確認した。
+OKFは「plain markdown files with YAML frontmatter」であり、markdownのクロスリンクからノード/エッジの有向グラフを導出する。
+専用のグラフDBやAPIは不要で、git管理下（ファイルベース）で完結する。
+
+## アクション
+OKF移行を検討する際は「重いグラフDB導入」ではなく「frontmatter付きmarkdownファイル＋相互リンク」という軽量な変更として計画する。
+既存のInstinct YAML（id/trigger/confidence等のフィールド＋prose本文）は既にOKFのfrontmatter+bodyパターンに近く、大規模な作り直しは不要。
+全1231件の一括移行は避け、新規に作る個別台信号レジストリ等から試験導入するのが妥当（project-okf-migration-decision memory参照）。
+
+## 例
+OKF構成要素 = bundles/(完成品コレクション) + samples/(recipe+bundle対) + SPEC.md + reference_agent/。
+frontmatter必須/推奨フィールド: type, resource, tags, timestamp（+カスタムキー許容）。
+
+---
+id: mitoya-rate104-vs-hallwide-hit104-definition-conflict
+trigger: "みとやのhit104%やrate_104指標を使った分析・キャリブレーションを行うとき"
+confidence: 0.7
+domain: data-quality
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# みとやには「hit_rate_104≈0%」と「DD別rate_104=27-34%」という矛盾する2つの数値がInstinctに存在する
+
+## 背景
+mitoya-hallwide-low-ceiling-near-zero-hit104 Instinctは「median payout 99.3-100.7%, hit_rate_104≈0%」としている一方、
+104%率分析（蒲田7手法をみとやに導入した検証）ではDD別rate_104が27〜34%の範囲で観測されている。
+指標定義（ホール平均payoutの閾値判定 vs 台単位でpayout_rate>=104%となった比率）が異なる可能性が高いが、未確認のまま。
+
+## アクション
+みとやの104%系指標を使う前に、まずこの2つの数値の算出ロジック（集計単位・分母）を突き合わせて確認する。
+確認が取れるまでは差枚(avg_diff)ベースの分析を優先する — 差枚と104%率はSpearman rho=0.873で高相関のため代替可能。
+
+## 例
+document/mitoya_theory.md 1章「低天井構造 — 評価軸に未解決の齟齬あり」および7章の未探索ロードマップ#1に記載。
+
+---
+id: theory-doc-generation-must-not-be-scripted
+trigger: "ホールtheory文書(document/*_theory.md)を新規作成または更新するスクリプトを書こうとするとき"
+confidence: 0.9
+domain: documentation-architecture
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# theory文書の生成は生データ連結スクリプトで自動化してはならない
+
+## 背景
+eda/mitoya_phase5b_theory.py の build_theory_document() がPhase3-8の生データを _read_text() で連結するだけの実装で、
+矛盾の調停・耐久性格付け・否定仮説カタログという「有機的判断」を要する作業を代替できていなかった。
+この部分だけ他ホール（kamata7/kamata1）のtheory文書と品質が乖離していた。
+
+## アクション
+theory文書の新規作成・更新は必ずセッション内での分析者判断（Claude）が行う。
+生データの自動集約自体は有用なので、それは別ファイル（例: document/<hall>_evidence_bundle.md）に出力し、theory本体には混ぜない。
+eda/mitoya_phase5b_theory.py の OUTPUT_PATH は2026-07-02に document/mitoya_evidence_bundle.md へ変更済み
+（ただしスクリプト自体はまだ再実行しておらず、bundleファイルは未生成）。
+
+## 例
+kamata7_theory.md / kamata1_theory.md は「なぜ全体集計は信用できないか」「3F_R_Nの結論衝突→解消済み」のような
+矛盾調停セクションを持つ。これを生成スクリプトに実装するのは非現実的。

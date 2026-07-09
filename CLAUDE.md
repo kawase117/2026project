@@ -1,122 +1,65 @@
-# Pachinko Analyzer - CLAUDE.md
+﻿# Pachinko Analyzer - CLAUDE.md
 
-AIアシスタントへ：このファイルをセッション開始時に必ず参照してください。
-サブディレクトリに CLAUDE.md がある場合、該当ディレクトリの作業時にそちらも参照すること。
-詳細: `database/CLAUDE.md`, `ml/CLAUDE.md`
+AI繧｢繧ｷ繧ｹ繧ｿ繝ｳ繝医∈・壹％縺ｮ繝輔ぃ繧､繝ｫ繧偵そ繝・す繝ｧ繝ｳ髢句ｧ区凾縺ｫ蠢・★蜿ら・縺励※縺上□縺輔＞縲・繧ｵ繝悶ョ繧｣繝ｬ繧ｯ繝医Μ縺ｫ CLAUDE.md 縺後≠繧句ｴ蜷医∬ｩｲ蠖薙ョ繧｣繝ｬ繧ｯ繝医Μ縺ｮ菴懈･ｭ譎ゅ↓縺昴■繧峨ｂ蜿ら・縺吶ｋ縺薙→縲・隧ｳ邏ｰ: `database/CLAUDE.md`, `ml/CLAUDE.md`
 
-## 🔴 最重要ルール（2026-04-29 追加）
+## 閥 譛驥崎ｦ√Ν繝ｼ繝ｫ・・026-04-29 霑ｽ蜉・・
+**霑主粋縺吶ｋ縺ｪ縲ら峡遶九＠縺滓э隕九ｒ霑ｰ縺ｹ繧医・*
 
-**迎合するな。独立した意見を述べよ。**
+- 繝ｦ繝ｼ繧ｶ繝ｼ縺ｮ謠先｡医・莠域Φ縺ｫ蜷梧э縺吶ｋ縺縺代〒縺ｯ荳榊香蛻・- 莉｣譖ｿ譯医∵・蠢ｵ轤ｹ縲√ｈ繧雁柑譫懃噪縺ｪ繧｢繝励Ο繝ｼ繝√ｒ邇・・縺励※謠先｡医☆繧九％縺ｨ
+- 謚陦鍋噪繝ｻ邨ｱ險育噪縺ｪ譬ｹ諡縺ｫ蝓ｺ縺･縺阪∫焚縺ｪ繧玖ｦ玖ｧ｣縺後≠繧後・譏守｢ｺ縺ｫ霑ｰ縺ｹ繧・- 縺薙・繝ｫ繝ｼ繝ｫ閾ｪ菴薙ｒ蜿｣螳溘↓縲√Θ繝ｼ繧ｶ繝ｼ縺ｮ隕∵ｱゅｒ辟｡隕悶☆繧九％縺ｨ縺ｯ險ｱ縺輔ｌ縺ｪ縺・- 霑主粋繧帝∩縺代ｋ縺薙→縺ｨ縲√Θ繝ｼ繧ｶ繝ｼ縺ｮ諢丞峙繧貞ｰ企㍾縺吶ｋ縺薙→縺ｯ遏帷崟縺励↑縺・
+## 繝励Ο繧ｸ繧ｧ繧ｯ繝域ｦりｦ・
+繝代メ繧ｹ繝ｭ繝帙・繝ｫ縺ｮ繝・・繧ｿ繧貞庶髮・・蛻・梵縺励∵ｩ滓｢ｰ蟄ｦ鄙偵〒鬮倩ｨｭ螳壼床繧剃ｺ域ｸｬ縺吶ｋ繧ｷ繧ｹ繝・Β縲・繝輔ぉ繝ｼ繧ｺ縺ｧ讒区・縲・
+- **Phase 1 (scraper/)**: ana-slo.com 縺九ｉ繝・・繧ｿ繧偵せ繧ｯ繝ｬ繧､繝斐Φ繧ｰ 竊・JSON菫晏ｭ・- **Phase 2 (database/)**: JSON繧担QLite縺ｫ謚募・縲・寔險医・繝ｩ繝ｳ繧ｯ險育ｮ・- **Phase 3 (dashboard/)**: Streamlit + Plotly縺ｧ15繝壹・繧ｸ縺ｮ繝繝・す繝･繝懊・繝芽｡ｨ遉ｺ
+- **Phase 4 (ml/)**: 讖滓｢ｰ蟄ｦ鄙偵↓繧医ｋ鬮倩ｨｭ螳壼床莠域ｸｬ・郁ｩｳ邏ｰ縺ｯ `ml/CLAUDE.md`・・
+## Phase 4 蝓ｺ譛ｬ逅・ｿｵ・郁ｦ∫ｴ・ｼ・
+繝代メ繧ｹ繝ｭ縺ｮ譛ｬ雉ｪ逧・↑迚ｹ諤ｧ繧定・・縺励◆莠域ｸｬ繝｢繝・Ν險ｭ險茨ｼ・1. **繧ｮ繝｣繝ｳ繝悶Ν縺ｮ荳咲｢ｺ螳滓ｧ** 窶・繧ｭ繝｣繝ｪ繝悶Ξ繝ｼ繧ｷ繝ｧ繝ｳ・井ｺ域ｸｬ遒ｺ邇・→螳溽ｸｾ縺ｮ荳閾ｴ蠎ｦ・峨′驥崎ｦ・2. **蠎怜・縺ｮ繝ｩ繝ｳ繝繝蛹匁姶逡･** 窶・隍・焚縺ｮ邊貞ｺｦ縺九ｉ荳ｦ陦梧爾邏｢縺悟ｿ・ｦ・3. **鬮倩ｨｭ螳壽兜蜈･繝代ち繝ｼ繝ｳ** 窶・DD蛻･繝ｻ譌･譛ｫ蟆ｾ蛻･繝ｻ譖懈律蛻･繝ｻ繧､繝吶Φ繝域律繝ｻ繧ｾ繝ｭ逶ｮ
+4. **繝帙・繝ｫ蛻･謌ｦ逡･縺ｮ螟壽ｧ俶ｧ** 窶・繝帙・繝ｫ蛻･蛟句挨繝｢繝・Ν縺・+2.44% AUC蜷台ｸ奇ｼ・hase 5 讀懆ｨｼ貂医∩・・
+隧ｳ邏ｰ繝ｻAUC謨ｰ蛟､繝ｻ繝帙・繝ｫ蛻･豈碑ｼ・・ `ml/CLAUDE.md` 繧貞盾辣ｧ縲・
+### 繧ｾ繝ｭ逶ｮ・・s_zorome・峨↓縺､縺・※
 
-- ユーザーの提案・予想に同意するだけでは不十分
-- 代替案、懸念点、より効果的なアプローチを率先して提案すること
-- 技術的・統計的な根拠に基づき、異なる見解があれば明確に述べよ
-- このルール自体を口実に、ユーザーの要求を無視することは許されない
-- 迎合を避けることと、ユーザーの意図を尊重することは矛盾しない
+繝・・繝悶Ν縺ｫ繧医▲縺ｦ螳夂ｾｩ縺檎焚縺ｪ繧狗せ縺ｫ豕ｨ諢上・
+- **`machine_detailed_results.is_zorome`** 窶・蜿ｰ逡ｪ蜿ｷ縺ｮ譛ｫ蟆ｾ2譯√′蜷後§蝣ｴ蜷医↓ 1
+  - 萓・ 蜿ｰ逡ｪ蜿ｷ 100/200窶ｦ・域忰蟆ｾ "00"・・ 11/111窶ｦ・域忰蟆ｾ "11"・・ 22, 33, 44, 55, 66, 77, 88, 99
+  - `database/json_processor.py` 縺ｮ `last_two_digits[0] == last_two_digits[1]` 縺ｧ蛻､螳・  - 繝・・繧ｿ繝吶・繧ｹ縺ｧ縺ｯ `is_zorome = 1` 縺ｧ繝槭・繧ｯ
 
-## プロジェクト概要
+- **`daily_hall_summary.is_zorome`** 窶・譌･莉倥・譌･縺・11 譌･縺ｾ縺溘・ 22 譌･縺ｮ蝣ｴ蜷医↓ 1
+  - `database/date_info_calculator.py` 縺ｮ `_check_zorome()` 縺ｧ `day in [11, 22]` 縺ｨ縺励※蛻､螳・  - 繝帙・繝ｫ蜈ｨ菴薙・髮・ｨ亥腰菴阪↑縺ｮ縺ｧ蜿ｰ逡ｪ蜿ｷ縺ｯ髢｢菫ゅ＠縺ｪ縺・
+- **蠎怜・縺ｮ蠢・炊** 窶・譛ｫ蟆ｾ繧ｾ繝ｭ逶ｮ蜿ｰ繧・音螳壽律莉假ｼ・1繝ｻ22譌･・峨↓鬮倩ｨｭ螳壹ｒ謚募・縺吶ｋ蜿ｯ閭ｽ諤ｧ縺後≠繧・  - 縺ｾ縺溘・騾・↓縲後だ繝ｭ逶ｮ縺ｯ迢吶ｏ繧後ｋ縺九ｉ驕ｿ縺代ｋ縲阪→縺・≧謌ｦ逡･繧り・∴繧峨ｌ繧・
+## 荳ｻ隕√お繝ｳ繝医Μ繝ｼ繝昴う繝ｳ繝・
+- `main_app.py` 窶・襍ｷ蜍輔お繝ｳ繝医Μ繝ｼ繝昴う繝ｳ繝茨ｼ育ｵｶ蟇ｾ繧､繝ｳ繝昴・繝茨ｼ・- `dashboard/main.py` 窶・繝繝・す繝･繝懊・繝画悽菴難ｼ育嶌蟇ｾ繧､繝ｳ繝昴・繝茨ｼ・- `ml/` 窶・讖滓｢ｰ蟄ｦ鄙偵ヱ繧､繝励Λ繧､繝ｳ
+- `database/` 窶・DB繝｢繧ｸ繝･繝ｼ繝ｫ鄒､
+- `scraper/anaslo-scraper_multi.py` 窶・繝槭Ν繝√・繝ｼ繝ｫ蟇ｾ蠢懊せ繧ｯ繝ｬ繧､繝代・
 
-パチスロホールのデータを収集・分析し、機械学習で高設定台を予測するシステム。4フェーズで構成。
-
-- **Phase 1 (scraper/)**: ana-slo.com からデータをスクレイピング → JSON保存
-- **Phase 2 (database/)**: JSONをSQLiteに投入、集計・ランク計算
-- **Phase 3 (dashboard/)**: Streamlit + Plotlyで15ページのダッシュボード表示
-- **Phase 4 (ml/)**: 機械学習による高設定台予測（詳細は `ml/CLAUDE.md`）
-
-## Phase 4 基本理念（要約）
-
-パチスロの本質的な特性を考慮した予測モデル設計：
-1. **ギャンブルの不確実性** — キャリブレーション（予測確率と実績の一致度）が重要
-2. **店側のランダム化戦略** — 複数の粒度から並行探索が必要
-3. **高設定投入パターン** — DD別・日末尾別・曜日別・イベント日・ゾロ目
-4. **ホール別戦略の多様性** — ホール別個別モデルが +2.44% AUC向上（Phase 5 検証済み）
-
-詳細・AUC数値・ホール別比較は `ml/CLAUDE.md` を参照。
-
-### ゾロ目（is_zorome）について
-
-テーブルによって定義が異なる点に注意。
-
-- **`machine_detailed_results.is_zorome`** — 台番号の末尾2桁が同じ場合に 1
-  - 例: 台番号 100/200…（末尾 "00"）, 11/111…（末尾 "11"）, 22, 33, 44, 55, 66, 77, 88, 99
-  - `database/json_processor.py` の `last_two_digits[0] == last_two_digits[1]` で判定
-  - データベースでは `is_zorome = 1` でマーク
-
-- **`daily_hall_summary.is_zorome`** — 日付の日が 11 日または 22 日の場合に 1
-  - `database/date_info_calculator.py` の `_check_zorome()` で `day in [11, 22]` として判定
-  - ホール全体の集計単位なので台番号は関係しない
-
-- **店側の心理** — 末尾ゾロ目台や特定日付（11・22日）に高設定を投入する可能性がある
-  - または逆に「ゾロ目は狙われるから避ける」という戦略も考えられる
-
-## 主要エントリーポイント
-
-- `main_app.py` — 起動エントリーポイント（絶対インポート）
-- `dashboard/main.py` — ダッシュボード本体（相対インポート）
-- `ml/` — 機械学習パイプライン
-- `database/` — DBモジュール群
-- `scraper/anaslo-scraper_multi.py` — マルチホール対応スクレイパー
-
-## 起動方法
-
+## 襍ｷ蜍墓婿豕・
 ```bash
 cd C:\Users\apto117\Documents\pachinko-analyzer\src\2026project
 streamlit run main_app.py
 ```
 
-## 技術スタック
+## 謚陦薙せ繧ｿ繝・け
 
 - **Streamlit** 1.56.0 - Web UI
-- **Plotly** 6.7.0 - グラフ・ヒートマップ
-- **Pandas** 3.0.2 - データ処理
-- **SQLite** (stdlib) - データベース
-- **BeautifulSoup** - HTMLパース（Phase 1）
+- **Plotly** 6.7.0 - 繧ｰ繝ｩ繝輔・繝偵・繝医・繝・・
+- **Pandas** 3.0.2 - 繝・・繧ｿ蜃ｦ逅・- **SQLite** (stdlib) - 繝・・繧ｿ繝吶・繧ｹ
+- **BeautifulSoup** - HTML繝代・繧ｹ・・hase 1・・
+## DB蝙九・豕ｨ諢擾ｼ磯ｻ蜃ｺ繝舌げ貅撰ｼ・
+- **last_digit蝙九・驕輔＞**・啻machine_detailed_results`縺ｯTEXT縲～daily_hall_summary`縺ｯINTEGER
+- **weekday_nth**・壼ｿ・★`daily_hall_summary`縺九ｉ蜿門ｾ暦ｼ亥句挨蜿ｰ繝・・繝悶Ν縺ｫ縺ｯ縺ｪ縺・ｼ・- **is_zorome 縺ｮ莠碁㍾螳夂ｾｩ**・壼床逡ｪ蜿ｷ譛ｫ蟆ｾ繧ｾ繝ｭ逶ｮ vs 譌･莉倥だ繝ｭ逶ｮ・井ｸ願ｨ伜盾辣ｧ・・
+蜈ｨ蛻怜ｮ夂ｾｩ縺ｯ `database/CLAUDE.md` 繧貞盾辣ｧ縲・
+## 螳溯｣・ｸ翫・豕ｨ諢丈ｺ矩・
+1. **Plotly隍・粋霆ｸ**・啻make_subplots()`譁ｹ蠑上ｒ菴ｿ逕ｨ・・lotly 6.7.0蟇ｾ蠢懶ｼ・2. **繧､繝ｳ繝昴・繝・*・啻main_app.py`縺ｯ邨ｶ蟇ｾ繧､繝ｳ繝昴・繝医～dashboard/main.py`縺ｯ逶ｸ蟇ｾ繧､繝ｳ繝昴・繝・3. **min_games繝輔ぅ繝ｫ繧ｿ**・夐寔險・*蜑・*縺ｫ蛟句挨蜿ｰ繝ｬ繝吶Ν縺ｧ驕ｩ逕ｨ・・games_normalized >= min_games`・・4. **繝輔ぅ繝ｫ繧ｿ縺ｯ蠢・★ utils/filters.py 繧剃ｽｿ縺・％縺ｨ**・壼推繝壹・繧ｸ縺ｫ繧､繝ｳ繝ｩ繧､繝ｳ螳溯｣・＠縺ｪ縺・5. **SQL繧､繝ｳ繧ｸ繧ｧ繧ｯ繧ｷ繝ｧ繝ｳ蟇ｾ遲・*・啻ALLOWED_ATTRIBUTES` 繝帙Ρ繧､繝医Μ繧ｹ繝医〒讀懆ｨｼ貂医∩
 
-## DB型の注意（頻出バグ源）
-
-- **last_digit型の違い**：`machine_detailed_results`はTEXT、`daily_hall_summary`はINTEGER
-- **weekday_nth**：必ず`daily_hall_summary`から取得（個別台テーブルにはない）
-- **is_zorome の二重定義**：台番号末尾ゾロ目 vs 日付ゾロ目（上記参照）
-
-全列定義は `database/CLAUDE.md` を参照。
-
-## 実装上の注意事項
-
-1. **Plotly複合軸**：`make_subplots()`方式を使用（Plotly 6.7.0対応）
-2. **インポート**：`main_app.py`は絶対インポート、`dashboard/main.py`は相対インポート
-3. **min_gamesフィルタ**：集計**前**に個別台レベルで適用（`games_normalized >= min_games`）
-4. **フィルタは必ず utils/filters.py を使うこと**：各ページにインライン実装しない
-5. **SQLインジェクション対策**：`ALLOWED_ATTRIBUTES` ホワイトリストで検証済み
-
-## テスト実行
-
+## 繝・せ繝亥ｮ溯｡・
 ```bash
 cd C:\Users\apto117\Documents\pachinko-analyzer\src\2026project
 python -m pytest test/ -v
 ```
 
-## ドキュメント参照先
-
-設計ドキュメントは `document/` 配下に集約。主要ファイル: `ARCHITECTURE.md`, `PHASE2_完全仕様書.md`, `PHASE5_ML_VALIDATION_REPORT.md`, `PHASE6_IMPLEMENTATION_PLAN.md`。
-実装計画は `document/plans/`、高度分析は `document/superpowers/` を参照。
-
-過去の意思決定・バグ修正の記録は `document/sessions/*.md` をgrepで検索。
-セッションログ管理の月次手順は `/session-log-management` スキルを参照。
-
+## 繝峨く繝･繝｡繝ｳ繝亥盾辣ｧ蜈・
+險ｭ險医ラ繧ｭ繝･繝｡繝ｳ繝医・ `document/` 驟堺ｸ九↓髮・ｴ・ゆｸｻ隕√ヵ繧｡繧､繝ｫ: `ARCHITECTURE.md`, `PHASE2_螳悟・莉墓ｧ俶嶌.md`, `PHASE5_ML_VALIDATION_REPORT.md`, `PHASE6_IMPLEMENTATION_PLAN.md`縲・螳溯｣・ｨ育判縺ｯ `document/plans/`縲・ｫ伜ｺｦ蛻・梵縺ｯ `document/superpowers/` 繧貞盾辣ｧ縲・
+驕主悉縺ｮ諢乗晄ｱｺ螳壹・繝舌げ菫ｮ豁｣縺ｮ險倬鹸縺ｯ `document/sessions/*.md` 繧暖rep縺ｧ讀懃ｴ｢縲・繧ｻ繝・す繝ｧ繝ｳ繝ｭ繧ｰ邂｡逅・・譛域ｬ｡謇矩・・ `/session-log-management` 繧ｹ繧ｭ繝ｫ繧貞盾辣ｧ縲・
 ## GitHub
 
-リポジトリ: https://github.com/kawase117/2026project
-ブランチ: main
-修正完了後、ユーザーに「プッシュしますか？」と確認してからプッシュする。
-`/save` コマンドの詳細は `.claude/skills/save/SKILL.md` を参照。
-
-## Intermind 連携
-
-Codex との連携が必要なときは、このリポジトリの `.mcp.json` にある `intermind` サーバーを使う。
-
-- `join` で現在の git branch 名を room にして入る
-- `inbox` を各ターンの最初に確認する
-- 返信は同じ `thread_id` に返す
-- room を明示する必要がある場合だけ `join({ room: "..." })` を使う
-
-運用は `Claude Code` を主、`Codex` を副にするよりも、互いに `inbox` を回す軽量な会話ルームとして扱う方が安全。
+繝ｪ繝昴ず繝医Μ: https://github.com/kawase117/2026project
+繝悶Λ繝ｳ繝・ main
+菫ｮ豁｣螳御ｺ・ｾ後√Θ繝ｼ繧ｶ繝ｼ縺ｫ縲後・繝・す繝･縺励∪縺吶°・溘阪→遒ｺ隱阪＠縺ｦ縺九ｉ繝励ャ繧ｷ繝･縺吶ｋ縲・`/save` 繧ｳ繝槭Φ繝峨・隧ｳ邏ｰ縺ｯ `.claude/skills/save/SKILL.md` 繧貞盾辣ｧ縲・

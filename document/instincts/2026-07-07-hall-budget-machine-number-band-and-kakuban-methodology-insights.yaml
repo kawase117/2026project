@@ -1,0 +1,225 @@
+---
+id: machine-number-band-effect-explained-by-machine-identity-not-independent
+trigger: "台番号帯(10刻み等の数値ビン)による差枚・機械割の偏りを『帯そのものの規則性』として報告しようとするとき"
+confidence: 0.85
+domain: pachinko-live-analysis
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 台番号帯効果は「その帯にある個々の台の通期平均」でほぼ完全に説明できる
+
+## 背景
+楽園・金時・レイトギャップ・ザシティの4ホールで、台番号10刻み帯ごとの excess_vs_hall_day を
+split-half検証したところ、23区分中23区分がsplit-half安定(符号一致・|t|>=1.0)だった。
+しかし各台自身の通期平均(games加重: total_diff/total_games)で残差化して再検定すると、
+符号一致かつ|t|>=2.0を維持したのは23区分中1区分のみ(楽園1151-1160)で、これは23回検定した場合の
+偶然の期待値(約1件)と同水準。つまり「帯効果」の実体は、その帯を構成する個々の台番号自身の
+平均的な強さ・弱さでほぼ説明し尽くされる。
+
+さらに機種入れ替え(入替)をまたいだ持続性を見ると、9区分中8区分で入替後も符号が変わらず持続した。
+一見「残差で消える」ことと「入替をまたいで持続する」ことは矛盾するように見えるが、
+最も整合的な解釈は「特定の台番号スロットには、機種が入れ替わっても毎回似たカテゴリ・人気度の
+機種が繰り返し配置される」という運用上の配置パターンがある、というもの。番号そのものにも
+1台の筐体の人気にも還元されない。
+
+## アクション
+台番号帯・machine_category帯などで有意な偏りを見つけたら、報告前に必ず
+「個々の台の通期平均(games加重)で残差化しても残るか」を検証する。残差で消えるなら
+「帯の効果」ではなく「たまたまその帯に強い/弱い台が集まっているだけ」として扱う。
+入替イベントが観測期間内にあれば、入替前後で符号・大きさが持続するかも合わせて確認し、
+「番号スロットの配置ポリシー」なのか「個体の実力」なのかを切り分ける。
+
+## 例
+楽園1131-1140: 全期間t=-6.62(強い負の効果)だが、games加重残差ではt=-0.77に縮小し
+explained_by_machine_identity。楽園1151-1160のみ残差後もt=-2.78で生存したが、
+この帯は観測期間中に機種入替が一度も起きておらず(アイムジャグラーEX-TP/ゴーゴージャグラー3/
+ハッピージャグラーVIII固定)、入替検証で追加確認ができないため、23回検定中の偶然の1件である
+可能性を否定できない。
+
+---
+id: residual-baseline-must-match-aggregation-weight
+trigger: "台・機種単位の『自分自身の平均』を差し引いて残差を作り、日次でgames加重集計するとき"
+confidence: 0.9
+domain: pachinko-live-analysis
+source: bug-discovery
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 残差の中心化に使う平均は、後段の集計と同じ重み付けにしないと系統バイアスが出る
+
+## 背景
+台番号帯の効果を「各台自身の平均」で残差化する実装で、中心化に単純平均
+(`groupby("machine_number")["rate"].transform("mean")`、日次rateの算術平均)を使い、
+その後の残差集計をgames加重(`residual * games`を日合計してtotal_gamesで割る)で行ったところ、
+23区分中21区分で残差t値が元の符号に関係なくプラス側に系統的に膨張した(最大26倍)。
+原因は中心化の重み(単純平均)と集計の重み(games加重)が一致していないこと。
+パチスロでは「出玉が良い日ほどgamesも伸びる」という日次相関が普通に起こり得るため、
+この不一致は生データの構造上、無視できないバイアスを生む。
+
+## アクション
+台・機種単位の基準値(ベースライン)を計算する際は、後段でその残差をどう集計するか
+(games加重か単純平均か)を先に決め、**中心化とその後の集計で同じ重み付けを使う**。
+games加重で集計するなら、基準値も `total_diff / total_games`(games加重平均)を使うこと。
+単純平均で中心化して加重集計する組み合わせは系統バイアスを生むため禁止。
+実装後は「各台についてgames加重残差の通期合計がゼロに戻るか」をテストで固定すること。
+
+## 例
+修正前: 楽園2131-2140 t_full=+4.02 → 残差t=+12.88(符号維持だが5倍近く膨張、バイアス濃厚)
+修正後: 同区分 t_full=+4.02 → 残差t=-2.44(符号反転、元の効果が個体差にほぼ吸収された)
+修正後の値の方が、23区分全体で振れ幅・符号のばらつきともに自然な分布になった。
+
+---
+id: kakuban-bin-must-not-silently-collapse-into-section
+trigger: "レイアウトCSVが無いホールで角番(kakuban)や台番号帯の代理指標を実装するとき"
+confidence: 0.85
+domain: pachinko-live-analysis
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# kakuban_binとsectionは「どの島か(//10)」と「島内の位置(%10)」に分解すべき、片方に統合してはいけない
+
+## 背景
+`eda/hall_budget_allocation_light.py` で、レイアウトCSVが無いホールのkakuban_bin代理指標を
+実装する過程で2段階の誤りが起きた。(1) kakuban_bin列がsectionと同じ「台番号10刻みの絶対区間」
+(`//10`)を無条件に使うようになり、レイアウトCSVがある蒲田7を含む全ホールでkakuban_binとsectionが
+完全に重複した。(2) 修正時も、レイアウトの無い6ホールに対してkakuban_binをsection由来の
+decade-labelでそのまま埋めており、位置(%10)の情報を持たなかった。
+台番号を`(number-1)//10`(島ID)と`(number-1)%10`(島内位置、0-2/3-5/6-9で角番近似)に分解すれば、
+この2つは対立する概念ではなく直交する2軸であり、統合すると角番の情報が完全に失われる。
+
+## アクション
+台番号ベースの代理指標を実装するときは、section(島ID、`//10`)とkakuban_bin(島内位置、`%10`)を
+必ず別関数・別ロジックで計算し、同じ値を使い回さない。レイアウトCSVがあるホールでは実座標由来の
+section+角番ランクを、無いホールでは`//10`/`%10`の分解を、一貫した設計で適用する。
+「物理配置(角番)による法則性」と「台番号そのものによる法則性(機種配置ポリシー等)」は
+別のメカニズムであり、代理指標で片方しか計算していない場合はその旨を明示すること。
+
+## 例
+ARROW(レイアウトCSV無し)で修正前確認: `section`と`kakuban_bin`の全行が完全に同一値
+(`541-550`等)だった。蒲田7・蒲田1・みとやはEXACT_LAYOUT_HALLSとして実座標section+
+`%10`ランクのkakuban_binを使うよう分離。ただしrank基準(局所ランクの定義)を変えるだけで
+「有意」とされるセルが入れ替わる(蒲田7: 旧v2は6-9が正、新v5では0-2が負で有意)ことも確認され、
+この種の代理指標は定義のブレに弱く、単独では確定的な結論の根拠にしない方がよい。
+
+---
+id: hall-relative-zscore-required-for-cross-hall-budget-regime-comparison
+trigger: "複数ホールの日次差枚・機械割から『強い日/弱い日』を絶対閾値で判定しようとするとき"
+confidence: 0.9
+domain: pachinko-live-analysis
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ホール間で budget_regime を比較するときは絶対閾値ではなくホール内z-scoreを使う
+
+## 背景
+`budget_index = total_diff/total_games*100` に固定閾値(±1.0)でunder/balanced/overを
+判定したところ、ホール平均水準自体が大きく異なるため(蒲田7 mean=+4.06、蒲田1 mean=+1.04、
+みとや mean=-0.38)、蒲田7だけが常時over_budget判定(79%の日)になり、
+ホール間比較が破綻した。ホール内z-score(閾値±0.75σ)に変更したところ、
+3ホールともunder/balanced/overがほぼ対称な分布になり、初めて比較可能になった。
+
+## アクション
+複数ホールを横断して「強い/弱い日」を分類・比較する指標を作るときは、必ずホール内の
+平均・標準偏差で標準化(z-score化)してから閾値判定する。絶対値の閾値をそのまま複数ホールに
+適用しない。
+
+## 例
+蒲田7: 絶対閾値で under=32/balanced=43/over=285(360日中)。
+z-score閾値(±0.75σ)に変更後: under=65/balanced=234/over=61。
+蒲田1・みとやも同様に対称分布になった。
+
+---
+id: model-status-must-use-auc-not-accuracy-under-class-imbalance
+trigger: "class_weight='balanced'なロジスティック回帰等を不均衡データ・時系列分割で評価し、accuracyでbaseline比較しようとするとき"
+confidence: 0.85
+domain: ml-evaluation
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 不均衡クラス+class_weight='balanced'+時系列splitではaccuracyがbaselineより悪化するのが普通、判定はAUC基準にする
+
+## 背景
+蒲田7のホール予算配分モデルで、時系列分割(直近30%をtest)によりtest期間に
+positiveクラス(over_budget)が極端に少なくなり(baseline_accuracy=0.963)、
+class_weight='balanced'で学習したモデルはaccuracy=0.704とbaselineを大きく下回った
+(accuracy_delta=-0.259)。しかしroc_auc=0.851と、3ホール中最も強いランキング能力を示していた。
+accuracy_deltaだけでmodel_statusを判定すると、実際には最強のシグナルを持つホールが
+「trained_below_baseline」と誤ってラベル付けされる。
+
+## アクション
+不均衡データ+class_weight='balanced'+時系列分割の組み合わせでモデルの良し悪しを判定する際は、
+accuracyやaccuracy_deltaを主指標にしない。閾値に依存しないroc_auc(または balanced_accuracy)を
+主指標にし、0.5からの乖離でtrained_above_baseline/below_baseline/near_baselineを判定する。
+accuracyは参考値として残してもよいが、レポートには「判定根拠はAUC」であることを明記する。
+
+## 例
+蒲田7: baseline_accuracy=0.963, accuracy=0.704(delta=-0.259)だがroc_auc=0.851 → 実際は最強シグナル。
+AUC基準(>=0.6=above, <=0.55=below)に切り替えた結果、蒲田7=above、みとや=above、
+蒲田1=below(auc=0.548、実際にチャンスレベル)と、実態に即した分類になった。
+
+---
+id: offset-same-regime-rate-needs-chance-correction-and-compositional-identity-check
+trigger: "複数カテゴリに分割した指標間の『翌日以降も同じ状態が続くか』をcorrelationや一致率で評価するとき"
+confidence: 0.8
+domain: pachinko-live-analysis
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# カテゴリ間offset相関は、区分数が少ないほど会計的恒等式で見かけ上強くなる。一致率は偶然一致率で補正する
+
+## 背景
+`atype`(2値: A/N)で区切ったexcessのoffset相関が全9ホールで-0.99前後と極端に強かったが、
+これは「share_A×excess_A + share_N×excess_N = 0」というシェア加重の恒等式が2値分割で
+ほぼ厳密に成り立つために生じる会計的アーティファクトだった。kakuban_bin(3区分)は
+相関が-0.2~-0.49に弱まり、machine_category(4-5区分)ではほぼ0になった。区分数が
+増えるほど見かけの相関が弱まるという傾向自体が、この現象がアーティファクトであることの
+追加証拠になる。同様に、budget_regimeの「同一状態が翌週も続く確率」(same_regime_rate)も、
+周辺分布の偏りだけから偶然一致する確率(chance rate = Σp_i²)と大差ない水準だった。
+
+## アクション
+2値(または少数値)カテゴリ間のoffset相関・一致率を「持続性の発見」として報告する前に、
+(1) 区分数を増やしても同じ傾向が残るか確認する、(2) 一致率は必ず周辺分布から求まる
+偶然一致率との差分(uplift)で報告する。
+
+## 例
+atype A→N相関: 蒲田7 -0.998、蒲田1 -0.994、みとや -0.989(2値、ほぼアーティファクト)。
+kakuban_bin(3値): -0.2~-0.49。machine_category(4-5値): 0.03~0.19(ほぼ実質シグナルなし)。
+budget_regimeのsame_regime_rate: 観測値と偶然一致率の差(uplift)は蒲田7+0.079、
+蒲田1+0.023、みとや+0.012程度で、蒲田7以外はノイズの範囲内。
+
+---
+id: reproducibility-requires-committed-script-not-just-output-artifacts
+trigger: "分析結果(CSV/レポート)を提示するとき、生成元スクリプトがコミット候補に含まれているか確認するとき"
+confidence: 0.85
+domain: research-methodology
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 出力だけでなく生成元スクリプトの所在を毎回確認する。既知の異常日除外も分析ごとに再確認する
+
+## 背景
+ホール予算配分の「計画版」出力(`hall_budget_allocation_plan_all`)がgit statusの新規ファイルに
+含まれておらず、生成元スクリプトが存在しないまま出力だけが提示されたことがあった。
+さらに蒲田7の既知の異常日(2025-07-07、全台設定6)が計画版の集計から除外されていなかった
+ことも発覚した。どちらも「出力を見て終わり」では気づけず、生成元コードと既知の除外ルールを
+明示的に確認して初めて分かった。
+
+## アクション
+分析結果を提示・レビューする際は、(1) `git status`で生成元スクリプトが実際にコミット候補に
+含まれているか確認する、(2) そのホールに既知の異常日除外ルールがあれば
+(document/instincts検索、kamata7-0707-all-setting6等)分析対象期間から実際に除外されているか
+実データで確認する。出力の見た目が整っているだけでは再現性・正確性を保証しない。
+
+## 例
+`hall_budget_allocation_plan_all`ディレクトリの出力はあったが、生成元の
+`prepare_plan_source_frame()`等がどのファイルにあるか一見不明で、後に
+`hall_budget_allocation_light.py`に同居していると判明(専用スクリプトではなかった)。
+蒲田7の`allocation_by_axis.csv`先頭行に`date=20250707`が残っていたことも、
+実データを直接grepして初めて発覚した。
+---

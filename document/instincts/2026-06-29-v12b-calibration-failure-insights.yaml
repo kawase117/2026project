@@ -188,3 +188,36 @@ project_name: pachinko-analyzer
   D5 (avg=99.5%): 30.7%
   D9 (avg=112.1%): 34.7%
   → 好調台ほど翌日も好調（+2.4pp）
+
+---
+id: machine-performance-inertia
+trigger: "台の過去成績を使って予測するとき、または好調台の翌日パフォーマンスを議論するとき"
+confidence: 0.90
+domain: domain-analysis
+source: trailing-payout-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 台のパフォーマンスには慣性がある（好調台は翌日も好調）
+
+## 背景
+trailing payoutと翌日の104%超え率を検証した結果、好調台は翌日もわずかに好調な傾向がある。
+これはhist_metricが予測力を持つ根本的な理由でもある。
+
+7日trailing: D0=34.8%, D9=33.9%（差小さい、短期では不安定）
+14日trailing: D0=33.5%, D9=34.4%（+0.9pp）
+30日trailing: D0=32.3%, D9=34.7%（+2.4pp）← 窓が長いほど安定
+
+前日104%超え→翌日104%超え: 32.5% vs 31.8%（+0.7pp）
+連続streak: streak=0→31.8%, streak≥4→33.2%（+1.4pp）
+
+## アクション
+- hist_metricの窓幅は長い方が安定（90日が妥当）
+- 短期（7日）の成績変動は予測に使えない
+- 「最近好調だから避ける」は根拠なし
+
+## 例
+trailing payout窓幅別D0→D9:
+  7日:  +34.8%→33.9% (-0.9pp) ← 不安定
+  14日: +33.5%→34.4% (+0.9pp)
+  30日: +32.3%→34.7% (+2.4pp) ← 窓が長いほど信号が安定

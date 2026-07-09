@@ -139,4 +139,64 @@ v11 vs v6a ペア比較（非イベント日）:
 vs ランダム昇格:
 - 2F_L_N: maybe(+79) → USEFUL(+112)
 - 3F_R_A: maybe(+47) → USEFUL(+69)
-- 3F_R_N: WORSE(-127) → WORSE(-92) ← 縮小したが未解決
+- 3F_R_N: WORSE(-127) → WORSE(-72) ← v11b(kaku+dow)で43%縮小
+
+---
+id: 3fln-3frn-subtype-composition-divergence
+trigger: "3F_L_Nまたは3F_R_Nのモデル性能を分析・改善するとき"
+confidence: 0.95
+domain: segment-structure
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 3F_L_Nと3F_R_Nの機種構成が根本的に異なり、N機セグメント内の異質性がモデル失敗の原因
+
+## 背景
+3F_L_Nでモデルが機能しない原因を調査。3F_L_Nと3F_R_Nの機種構成を比較した結果、決定的な構造差が判明。
+
+## アクション
+3F_L_Nでのモデル改善は、セグメント内の機種異質性を解消する方向で行うべき。選択肢:
+1. 沖ドキ/GODをサブセグメントとして分離し、別ルールを適用
+2. 機種サブタイプをスコアリング特徴量として追加
+3. 沖ドキ/GODをスコアリング対象から除外（平均-375で推薦対象として不適）
+
+3F_R_NではA-like-N(21%)が安定高性能(mean=+303, std=1287)。これらは実質的にA機と同じ挙動をしており、A機セグメントに移すか独立セグメントにする検討が有効。
+
+## 例
+3F_L_N (100台/日):
+- Standard-AT: 71% | mean=+159 | std=4026 | 勝率39%
+- OkiDoki: 13% | mean=-226 | std=3134 | 勝率37%（低G数3499）
+- GOD: 5% | mean=-797 | std=4102 | 勝率31%（最悪）
+- A-like-N: 5% | mean=+291 | std=1678 | 勝率49%
+→ OkiDoki+GOD(18.5%): mean=-375 が全体を汚染
+
+3F_R_N (74台/日):
+- Standard-AT: 65% | mean=+48 | std=3774
+- A-like-N: 21% | mean=+303 | std=1287（低ボラ・高勝率）
+- Yoshimune: 14% | mean=-59
+→ 沖ドキ/GODが一切ない。A-like-Nが安定要素
+
+---
+id: 3frn-kaku-dow-optimal-single-pair
+trigger: "3F_R_Nのスコアリング重みを設計するとき"
+confidence: 0.90
+domain: ml-architecture
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 3F_R_Nはkakuban+dow*kakubanの2コンポーネント等配分が最適
+
+## 背景
+3F_R_Nでは個別コンポーネント（hist+155, kakuban+133, dow+122）がそれぞれ「maybe」だが、6コンポーネント合成(composite=+62)でnsに劣化する問題があった。2-3コンポーネント組み合わせを網羅検証し、kaku+dow(50:50)が+170(p=0.004)で最強と判明。4-fold temporal CVでも+140(p=0.022, 4/4 fold一貫)で確認。
+
+## アクション
+v11のSEGMENT_WEIGHTS_V11で3F_R_Nは(0.50, 0.00, 0.00, 0.50, 0.00, 0.00)を使用。c2(hist), c3(DD*kakuban), c5(digit), c6(zorome)は全てゼロ。walk-forward検証でv6a比+55/日(p<0.05)の有意改善を達成。
+
+## 例
+3F_R_N非イベント日:
+- composite(v6a 6comp): +62 (ns, p=0.37)
+- hist単体: +155 (maybe, p=0.011)
+- kaku+dow(50:50): +170 (p=0.004) ← 最強
+- v11実装後walk-forward: v6a -127 → v11b -72 (WORSE幅43%縮小)

@@ -30,31 +30,6 @@ MIN_GAMES = 400
 MIN_GAMES_Q5 = 1000
 X_DDS = {4, 7, 14, 17, 24, 27}
 
-SECTION_XDDS_RANK = {
-    "501-522": 1,
-    "591-623": 2,
-    "557-590": 3,
-    "523-556": 4,
-    "692-711": 5,
-    "658-691": 6,
-    "624-657": 7,
-    "734-755": 8,
-    "712-733": 9,
-    "805-815": 10,
-}
-SECTION_XDDS_MEAN = {
-    "501-522": 103.14,
-    "591-623": 100.91,
-    "557-590": 102.84,
-    "523-556": 100.94,
-    "692-711": 100.14,
-    "658-691": 99.32,
-    "624-657": 98.86,
-    "734-755": 98.86,
-    "712-733": 98.75,
-    "805-815": 98.09,
-}
-
 
 def load_floor_layout(floor_csv: Path) -> pd.DataFrame:
     df = pd.read_csv(floor_csv, encoding="utf-8-sig")
@@ -77,12 +52,9 @@ def compute_current_q5_machines(
     if df_window.empty:
         return set()
 
-    agg = (
-        df_window.groupby("machine_name", as_index=False)
-        .agg(
-            diff_sum=("diff_coins_normalized", "sum"),
-            games_sum=("games_normalized", "sum"),
-        )
+    agg = df_window.groupby("machine_name", as_index=False).agg(
+        diff_sum=("diff_coins_normalized", "sum"),
+        games_sum=("games_normalized", "sum"),
     )
     if agg.empty:
         return set()
@@ -123,11 +95,7 @@ def compute_machine_xdds_perf(db_path: Path, min_games: int) -> pd.DataFrame:
             n_xdds=("date", "nunique"),
         )
     )
-    norm = (
-        df[~df["is_xdds"]]
-        .groupby("machine_name", as_index=False)
-        .agg(norm_payout=("payout", "mean"))
-    )
+    norm = df[~df["is_xdds"]].groupby("machine_name", as_index=False).agg(norm_payout=("payout", "mean"))
     out = xdds.merge(norm, on="machine_name", how="outer")
     out["lift_machine"] = out["xdds_payout"] - out["norm_payout"]
     return out
@@ -166,12 +134,9 @@ def _build_machine_section_table(db_path: Path, floor_csv: Path) -> pd.DataFrame
     if machine_section.empty:
         return pd.DataFrame(columns=["machine_name", "section", "machine_range", "n_machines"])
 
-    main_section = (
-        machine_section.groupby(["machine_name", "section"], as_index=False)
-        .agg(
-            n_machines=("machine_number", "count"),
-            machine_range=("machine_number", lambda x: f"{int(x.min())}-{int(x.max())}"),
-        )
+    main_section = machine_section.groupby(["machine_name", "section"], as_index=False).agg(
+        n_machines=("machine_number", "count"),
+        machine_range=("machine_number", lambda x: f"{int(x.min())}-{int(x.max())}"),
     )
     main_section = main_section.loc[main_section.groupby("machine_name")["n_machines"].idxmax()].copy()
     return main_section
@@ -190,17 +155,20 @@ def build_screening_table(db_path: Path, floor_csv: Path, target_dd: int) -> pd.
 
     result["is_q5"] = result["machine_name"].isin(q5_names)
     result = result.merge(section_table, on="machine_name", how="left")
-    result["section_rank"] = result["section"].map(SECTION_XDDS_RANK)
-    result["section_xdds_mean"] = result["section"].map(SECTION_XDDS_MEAN)
+    section_stats = (
+        result.dropna(subset=["section"])
+        .groupby("section", as_index=False)
+        .agg(section_xdds_mean=("xdds_payout", "mean"))
+        .sort_values(["section_xdds_mean", "section"], ascending=[False, True], kind="mergesort")
+        .reset_index(drop=True)
+    )
+    section_stats["section_rank"] = range(1, len(section_stats) + 1)
+    result = result.merge(section_stats, on="section", how="left")
     result["is_xdds_day"] = target_dd in X_DDS
     lift = result["lift_machine"].fillna(0)
     # Q5 bonus is suppressed when X_DDS lift is negative (machine underperforms on event days)
     q5_bonus = result["is_q5"].astype(int) * (lift > 0).astype(int) * 100
-    result["score"] = (
-        q5_bonus
-        + (11 - result["section_rank"].fillna(10)) * 5
-        + lift
-    )
+    result["score"] = q5_bonus + (11 - result["section_rank"].fillna(10)) * 5 + lift
     return result.sort_values("score", ascending=False).reset_index(drop=True)
 
 
@@ -266,16 +234,16 @@ def build_report(table: pd.DataFrame, target_date: dt.date) -> str:
             )
 
     # Auxiliary list: high X_DDS lift but section unknown
-    no_section_lift = table[
-        table["section"].isna() & (table["lift_machine"].fillna(0) > 5)
-    ].copy()
+    no_section_lift = table[table["section"].isna() & (table["lift_machine"].fillna(0) > 5)].copy()
     if not no_section_lift.empty:
-        lines.extend([
-            "",
-            "## 補助リスト: section不明・X_DDS lift >5（台番要現地確認）",
-            "| 機種名 | xdds% | lift | Q5 |",
-            "|---|---:|---:|---|",
-        ])
+        lines.extend(
+            [
+                "",
+                "## 補助リスト: section不明・X_DDS lift >5（台番要現地確認）",
+                "| 機種名 | xdds% | lift | Q5 |",
+                "|---|---:|---:|---|",
+            ]
+        )
         for _, row in no_section_lift.iterrows():
             lines.append(
                 f"| {row['machine_name']} | {_fmt_num(row.get('xdds_payout'))} | "

@@ -1,0 +1,94 @@
+---
+id: seg-percentile-reranking-verified
+trigger: "Top50選抜方法を検討するとき / リランキング戦略を比較するとき / predict_gated.pyの出力を改善するとき"
+confidence: 0.95
+scope: finding
+domain: ml-evaluation
+source: full-walkforward-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 【撤回】seg_percentileリランキングの+108枚はルックアヘッドによる偽陽性だった
+
+## 背景
+2026-06-26 Track D。V12bのTop50選抜後にseg_percentileリランキングを適用する効果を検証。
+
+## 初回検証（ルックアヘッドあり — 無効な結果）
+strength_weightに `scored["diff_coins_normalized"]`（当日実績）を使用。
+結果: +108枚/日, p=0.000003。**ルックアヘッド（未来情報の使用）による偽陽性。**
+
+## 再検証（ルックアヘッドなし — 有効な結果）
+
+### 方法B: composite平均ベース（260日全期間）
+strength_weight = scored["composite"]平均。ルックアヘッドなし。
+pool_n=80: +7枚/日, p=0.75。**効果なし。**
+
+### 方法C: train期間diff平均ベース（260日全期間）
+strength_weight = train 90日間のセグメント別diff_coins平均。ルックアヘッドなし。
+pool_n=80: -0枚/日, p=0.78。**効果なし。**
+全pool_n (60/70/80/90/100) で p > 0.39。
+
+## 教訓
+- ルックアヘッドチェックは検証の必須ステップ
+- 「同じロジックを別実装で走らせて結果が異なる」ことで発見できた
+- composite平均もtrain diffも、V12bのcomposite順位に対する追加情報を含んでいなかった
+
+## アクション
+- predict_gated.pyのリランキングは**デフォルト無効**（--rerankで明示的に有効化可能）
+- V12bのcomposite順位をそのまま使うのが現時点の最善
+
+---
+id: reranking-strategy-comparison-three-methods
+trigger: "新しいリランキング指標を検討するとき / games_relativeやhist_diffをリランキングに使おうとするとき"
+confidence: 0.88
+scope: finding
+domain: ml-evaluation
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 【撤回】3手法比較はルックアヘッド汚染のため無効 — リランキング全般が効果なし
+
+## 背景
+2026-06-26 Track D。V12b Top80プールから3つのリランキング手法でTop50を選び直し、52日サンプルで比較。
+**ただしseg_percentileのstrength_weightに当日実績を使用していたため、結果は無効。**
+
+## 当初の発見（ルックアヘッドあり — 無効）
+| Strategy | vs_other | Delta vs baseline | lift@50 | W/L |
+|----------|---------|------------------|---------|-----|
+| baseline | +94 | - | 1.230 | - |
+| seg_percentile | +209 | +115 | 1.280 | 30/22 |
+| games_relative | +123 | +30 | 1.236 | 31/21 |
+| hist_diff | +78 | -15 | 1.164 | 22/30 |
+
+## 解釈
+- seg_percentile: セグメント間のスケール差を吸収し、弱セグメントの中位台を排除。最も効果的
+- games_relative: 微改善だが効果が小さい。非イベント日のみ有効、イベント日で悪化
+- hist_diff: compositeに既に10%組み込み済みのため、追加リランキングは過学習方向。悪化
+
+## アクション
+- seg_percentileを採用。games_relativeとhist_diffはリランキング指標としては不採用
+
+---
+id: reranking-pool-size-80-is-default
+trigger: "リランキングのプールサイズを変更しようとするとき / --pool-nの値を調整するとき"
+confidence: 0.75
+scope: methodology
+domain: ml-evaluation
+source: empirical-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# pool_n=80は検証済みだが、最適値の探索は未実施
+
+## 背景
+2026-06-26 Track D。pool_n=80（Top80からTop50を選び直す）で全期間検証を実施。
+
+## 発見
+pool_n=80での結果: vs_other +108, p=0.000003。
+ただしpool_n=60/70/90/100等の比較は未実施。
+
+## アクション
+- 当面はpool_n=80をデフォルトとして使用
+- pool_nの最適化はデータ量倍増後に検討（現状は過学習リスク）
+- --pool-nオプションで実験可能

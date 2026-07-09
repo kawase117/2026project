@@ -1,0 +1,122 @@
+---
+id: kamata7-backtest-section-pipeline-profitable
+trigger: "蒲田7の実運用推薦を出すとき、またはpredict_section.pyの結果を判断するとき"
+confidence: 0.93
+domain: ml-evaluation
+source: walk-forward-backtest-60days
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田7のセクション×日パイプラインは60日バックテストで累積プラス
+
+## 背景
+predict_section.pyの2段階パイプラインを60日walk-forwardでバックテスト。
+毎日の推薦に従って打った場合の累積収支をシミュレーションした。
+
+section_5x5（Top5セクション×5台=25台/日）:
+- 累積差枚: +545,700枚（60日）
+- 勝率: 76.7%（46勝14敗）
+- 平均hit率: 39.2%（baseline 33.8%, lift=1.16x）
+- 勝ち日平均: +14,611枚 / 負け日平均: -9,029枚
+- ベースライン（ランダム25台）: +234,625枚 → パイプラインが+133%超過
+
+グローバルhist Top25との同台数比較:
+- section_5x5: +545,700 vs global_hist_top25: +323,700（+68%優位）
+
+## アクション
+- 蒲田7の推薦はpredict_section.pyを主力として運用する
+- section_5x5（25台/日）が精度と安定性のバランス点
+- predict_dailyパイプラインにpredict_sectionを統合済み
+
+## 例
+60日バックテスト（section_5x5, 25台/日）:
+  累積差枚: +545,700 (baseline +234,625)
+  勝率: 46W/14L (76.7%)
+  月別: 4月+35,100 / 5月+255,500 / 6月+255,100
+
+---
+id: mitoya-backtest-section-pipeline-weak
+trigger: "みとやのセクション×日パイプラインを検討するとき"
+confidence: 0.90
+domain: ml-evaluation
+source: walk-forward-backtest-mitoya-60days
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# みとやのセクション×日パイプラインはキャリブレーションは有効だが収支は限定的
+
+## 背景
+みとやで蒲田7と同じ2段階パイプラインを60日バックテスト。
+セクションスコアのキャリブレーションはrho=+0.205（蒲田7の+0.172より強い）。
+しかし収支面では蒲田7ほど強くない:
+
+section_5x5（24台/日）: 累積差枚+80,191、勝率50.0%（蒲田7は+545,700、76.7%）。
+原因: みとやは全266台（蒲田7は714台）、セクションあたり9-22台で、
+セクション内の台選び（Stage 2）でのノイズが大きい。
+
+みとやの座標ファイルのsection列は既に横列分離済みで、section×y分割は不要。
+mitoya_theoryのsection×y注意は旧machine_layoutテーブルへの注意であり、
+座標ファイルの18セクション定義は正しい。
+
+## アクション
+- みとやではセクション×日パイプラインの収益改善は蒲田7ほど期待できない
+- セクションスコア自体は有効（rho=+0.205）なので「どのセクションに行くか」の情報としては価値がある
+- 台数が少ないため小規模選択（section_1x3）が安定
+
+## 例
+みとやバックテスト（60日）:
+  section_1x3 (3台/日):  cum=+17,126
+  section_5x5 (24台/日): cum=+80,191, W/L=30/30
+  section_10x3 (30台/日): cum=-132,682 ← 大規模はマイナス
+
+---
+id: predict-daily-pipeline-integrated
+trigger: "predict_daily.pyのパイプラインを実行するとき"
+confidence: 0.95
+domain: ml-operations
+source: implementation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# predict_dailyにpredict_sectionを統合済み
+
+## 背景
+predict_daily.pyのパイプラインにpredict_sectionを統合。
+実行順序: scrape → DB update → predict_section → predict_gated。
+predict_sectionが主力、predict_gatedは後方互換。
+predict_sectionの失敗はnon-fatal。
+
+## アクション
+- 日次予測は `python -m ml.experiments.walkforward_scoring.predict_daily --date YYYYMMDD` で実行
+- predict_sectionの出力（results/predict_section_YYYYMMDD.md）を主力として参照
+- predict_gatedの出力は参考情報（compositeスコアに予測力なし）
+
+## 例
+パイプライン:
+  1. scrape → 2. db → 3. predict_section → 4. predict_gated
+
+---
+id: target-104-binary-is-optimal
+trigger: "ターゲット指標（104%超え vs 連続値）を選択するとき"
+confidence: 0.90
+domain: ml-model-design
+source: target-metric-comparison-60days
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 104%超えの二値化が連続値指標より優れている
+
+## 背景
+7候補を60日walk-forwardで比較。hit_104_rateが台レベル（rho=+0.042）でもセクションレベル（rho=+0.204）でも最強。
+104%の二値化はAT機の外れ値ノイズを除去するフィルタとして機能している。
+連続値（avg_diff, avg_payout, median等）はノイズに支配され信号が埋もれる。
+
+## アクション
+- ターゲット指標は104%超え率を使い続ける
+- 連続値への変更は改善をもたらさない
+- 改善余地は指標ではなく粒度（セクション×日）の方向
+
+## 例
+台レベルSpearman: hit_104_rate +0.042 > avg_payout +0.029 > winsorized_diff +0.011
+セクションレベル: section_avg_hit_104_rate +0.204 > section_avg_avg_payout +0.150
+パイプライン: hit_104×hit_104 = 40.4% > avg_payout×avg_payout = 37.5%

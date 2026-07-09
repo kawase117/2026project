@@ -1,0 +1,59 @@
+---
+id: dd-pattern-shared-across-machines-signals-hall-strategy
+trigger: "同一ホール内で複数機種のDD別法則性を比較するとき"
+confidence: 0.85
+domain: hall-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 複数機種で同じDDが揃って光る場合、機種固有ではなくホールの投入日戦略を反映している可能性が高い
+
+## 背景
+みとや/蒲田7/蒲田1で甲鉄城のカバネリ・ジャグラーガールズ・クレアの秘宝伝のDD深堀りを行った結果、同一ホール内の異なる機種が同じDDで揃って好調になる現象を確認した。蒲田7ではカバネリ(hit104率上位DD1・4・23・21・28・7、baseline44.0%)とジャグラーガールズ(上位DD30・19・7・9・27・15、baseline27.7%)が共にDD7で有意な上振れ(カバネリ51.6%, ジャグラーガールズ37.0%)。みとやではジャグラーガールズ(上位DD24・16・5・9・30・14・7)とクレアの秘宝伝(上位DD27・31・4・24)が共にDD24・DD4近辺で上振れした。機種ごとに独立にDD別クセが決まるなら偶然の一致は起きにくく、ホール側が特定の日に複数機種へ横断的に設定を投入していると解釈するのが自然。
+
+## アクション
+機種別のDD分析結果を評価するときは、単独機種の結果だけで「この機種特有のクセ」と結論せず、同じホールの他機種でも同じDDに山が出ていないか必ず突き合わせる。複数機種で一致すればホール全体のイベント日投入戦略、その機種だけで突出していれば機種固有の設定表(ボーダー・出玉設計)起因、という切り分けに使う。
+
+## 例
+eda/results/machine_dd_deepdive/dd_breakdown.csv。蒲田7: カバネリDD7 hit104率=51.6%(baseline44.0%)、ジャグラーガールズDD7 hit104率=37.0%(baseline27.7%)。両機種ともDD7で一致して上振れ。
+
+---
+id: successor-machine-dd-divergence-may-be-sample-noise-not-strategy-shift
+trigger: "同一シリーズの旧機種→後継機種(例: 甲鉄城のカバネリ→海門(うなと)決戦)でDD別法則性を比較するとき"
+confidence: 0.75
+domain: statistical-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 後継機で旧機種とDDパターンが変わって見えても、セルサイズを確認するまでは戦略変化と断定しない
+
+## 背景
+甲鉄城のカバネリ(オリジナル)は蒲田1(plus効果量0.168)・蒲田7(plus効果量0.122)で有意になり、上位DDが各ホールの公式イベント日(1・7・17・21・22)と部分一致した。一方、後継機の海門(うなと)決戦はみとや(上位DD5・6・14、事実上非イベント日中心)とヒロキ(上位DD11・14・20・29、公式イベント日[6,16,26]と一つも一致せず)でのみ有意になり、オリジナルとは全く異なるDDセットだった。ヒロキの結果はn_machine_days=445をDD31水準で割るとセルあたりn≈14〜15と極小で、二項比率の95%信頼区間が±20pt超と非常に広い。plus効果量0.227は今回の分析全体で最大の数値だが、公式イベント日と上位DDが一つも重ならないことと合わせると、「後継機で投入戦略が変わった」という解釈よりサンプル不足由来のノイズである可能性のほうが高い。
+
+## アクション
+シリーズ後継機のDDパターンが旧機種と異なって見えても、即座に「戦略変化」と結論しない。まずDD区分あたりのn(セルサイズ)を確認し、n<20程度なら機種名×DD持続性チェック(eda/machine_dd_persistence_check.pyと同様の前半/後半split・Spearman)にかけて再現するか検証してから解釈する。
+
+## 例
+eda/results/machine_dd_deepdive/summary.csv。ヒロキ/海門決戦: n_machine_days=445, DD1セルあたりn≈14〜15。plus_effect=0.227(全体最大)だが公式イベント日[6,16,26]と上位DD[11,14,20,29]が不一致。
+
+---
+id: machine-dd-deepdive-target-machines-tooling-available
+trigger: "特定の機種名を指定して全ホール横断でDD別法則性を深堀りしたいとき"
+confidence: 0.90
+domain: tooling
+source: session-implementation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 指定機種名×全ホール横断のDD深堀りツールが利用可能
+
+## 背景
+既存のmachine_axis_pattern_scan.pyは蒲田1/蒲田7/みとやの3ホール限定・ホール内min_machine_days_total=200かつtop_n=30に絞る設計のため、任意の指定機種(カバネリ・ジャグラーガールズ・クレアの秘宝伝など)が全ホール中の一部でしか結果に現れず、後継機(海門(うなと)決戦)のような表記違いの別machine_nameも見落としやすい。2026-07-02セッションでeda/machine_dd_deepdive_target_machines.pyを新規作成し、TARGET_MACHINESリストで指定した機種名を全9ホール(eda.core.HALL_DBS)横断・min_machine_days_total=100に緩和して、DD軸のKruskal-Wallis(diff)/カイ二乗(plus,hit104、バイアス補正Cramér's V)検定とDD別内訳(n・avg_diff・plus_rate・hit104_rate)を出力する。
+
+## アクション
+特定機種名を指定したDD深堀りが必要なときは、eda/machine_dd_deepdive_target_machines.pyのTARGET_MACHINESリストを対象機種名に書き換えて再実行する。出力はeda/results/machine_dd_deepdive/summary.csv(ホール×機種ごとの検定結果とbaseline)とdd_breakdown.csv(DD値1-31別の内訳)。
+
+## 例
+python eda/machine_dd_deepdive_target_machines.py

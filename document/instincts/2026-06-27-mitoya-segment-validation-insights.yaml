@@ -1,0 +1,124 @@
+---
+id: mitoya-5segment-definition-validated
+trigger: "みとやのセグメント分割・分析粒度を設計するとき"
+confidence: 0.90
+domain: data-infrastructure
+source: anova-interaction-test
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# みとやの5セグメント分割が統計的に支持された
+
+## 背景
+orientation（横列/縦列）× jug_flag（ジャグラー/非ジャグラー）の交互作用がANOVAで有意（F=26.05, p=3.3e-7）。単体軸では jug_flag の ε²=0.018 が最大で、機種タイプが最も強い分割軸。805-815 は唯一の混在セクションで内部分割も有意（KW p=7.6e-4）だが台数が少ないため独立セグメントとして扱う。
+
+## アクション
+- 5セグメントで分析を進める: h_jug, h_nonjug, v_jug, v_nonjug, mixed_805
+- セクション（列）単位の分析は5セグメントの下位粒度として維持する
+- 末尾・DD・角番の分析はセグメント単位で実施し、全体集計は参考値にとどめる
+- v_nonjug は全面マイナス（avg_diff=-119）の回避セグメント
+
+## 例
+h_jug: 641-657, 658-674, 675-691（横列ジャグラー、51台、n≈28,000）
+h_nonjug: 501-622, 624-640（横列非ジャグラー、139台、n≈63,000）
+v_jug: 712-722, 723-733, 734-744（縦列ジャグラー、33台、n≈16,000）
+v_nonjug: 692-700, 701-711, 745-755（縦列非ジャグラー、30台、n≈13,000）→回避
+mixed_805: 805-815（混在、19台、n≈5,000）
+
+---
+id: mitoya-digit-effect-horizontal-only
+trigger: "みとやの台番号末尾効果を検証・運用するとき"
+confidence: 0.80
+domain: hall-strategy
+source: kruskal-wallis-test
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# みとやの末尾効果は横列セグメントでのみ検出される
+
+## 背景
+5セグメントで last_digit の Kruskal-Wallis 検定を実施した結果、h_jug（p=0.0037）と h_nonjug（p=0.038）でのみ有意。縦列（v_jug, v_nonjug）と mixed_805 は非有意。両横列セグメントで d4 が首位だが、DD4/14/24（X_DDS日）の全体底上げが混入している可能性がある。蒲田7のような Simpson's Paradox（jug/non_jug で末尾ランキング逆転）はみとやでは発生していない。
+
+## アクション
+- 末尾ルールは横列セグメント（h_jug, h_nonjug）でのみ検討する
+- 縦列で末尾を使うのは無意味
+- d4 首位がDD混入か純粋な末尾効果かは非イベント日限定の再検証が必要
+- h_jug ε²=0.0005 と効果量は小さいので、末尾を主軸にするのは危険。角番の補助として使う
+
+## 例
+h_jug 末尾ランキング: d4(+150) > d2(+123) > d3(+107) > d1(+87)
+h_nonjug 末尾ランキング: d4(+89) > d2(+66) > d1(+62) > d3(+42)
+v_jug: KW p=0.265（非有意）
+v_nonjug: KW p=0.149（非有意）
+
+---
+id: mitoya-v-nonjug-avoid-segment
+trigger: "みとやの台選び・推薦リストを作成するとき"
+confidence: 0.95
+domain: hall-strategy
+source: segment-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 縦列×非ジャグラー（v_nonjug）は全面マイナスの回避セグメント
+
+## 背景
+v_nonjug（692-700, 701-711, 745-755）はavg_diff=-119で全角番帯マイナス（corner1=-282, corner2-4=-107, corner5-9=-115, corner10+=-32）。バラエティ島で設定投入が薄い。5セグメント分割の交互作用検証でこのセグメントの分離が有意差の主因（横では jug/non_jug 差が41だが縦では202に拡大）。
+
+## アクション
+- 推薦リストから v_nonjug セクションを除外する
+- 692-700, 701-711, 745-755 の台は原則打たない
+- v_nonjug の中で唯一プラスの角番帯もないため、条件付きで拾う余地もない
+
+## 例
+v_nonjug 角番別: corner1=-282, corner2-4=-107, corner5-9=-115, corner10+=-32
+（参考）v_jug: corner1=+124, corner2-4=+100, corner5-9=+78, corner10+=+48 → 全角番プラス
+
+---
+id: mitoya-segment-exploration-procedure
+trigger: "新ホールのセグメント分割を設計するとき"
+confidence: 0.85
+domain: ml-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# セグメント分割は単体軸→交互作用の段階的検証で進める
+
+## 背景
+みとやの分析で、いきなり複合セグメント（横jug/横nonjug/縦jug/縦nonjug）を定義するのではなく、単体軸の効果を先に確認してから組み合わせの交互作用を検証する手順が有効だった。蒲田7でも同じ手順で6セグメントに到達している。
+
+## アクション
+1. 単体軸の検証: 列（section）、N/A（機種タイプ）、縦列/横列（orientation）それぞれ単独の KW 検定
+2. 2軸の交互作用検証: ANOVA の交互作用項で追加情報があるか統計検定
+3. 交互作用が有意なら組み合わせセグメントを採用、非有意なら単体軸で十分
+4. 確定したセグメント単位で末尾・DD・角番の分析を再実行
+- いきなり組み合わせを作ると、効果のない軸で分割してデータを薄めるリスクがある
+
+## 例
+みとや: 列(18分割) → N/A(2分割) → 縦横(2分割) → 交互作用有意 → 5セグメント確定
+蒲田7: フロア(2F/3F) → L/R(左右) → A/N(機種) → 6セグメント確定
+
+---
+id: mitoya-juggler-corner1-strongest
+trigger: "みとやのジャグラー島の台選びを行うとき"
+confidence: 0.85
+domain: hall-strategy
+source: segment-validation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# h_jug の角番1（corner1）はavg_diff=+405で全セグメント・全角番帯の最大値
+
+## 背景
+横列ジャグラー（h_jug: 641-657, 658-674, 675-691）の corner1 は avg_diff=+405, plus_rate=56.9% で、全5セグメント×4角番帯の中で最も高い。Phase 8 のセクション別分析では 641-657 の corner1=+542 が最強だったが、h_jug 全体でも+405を維持しており、641-657 単独の特殊効果ではなくジャグラー島共通の構造。
+
+## アクション
+- ジャグラー島では corner1（通路端の台）を最優先で選ぶ
+- 641（corner1 of 641-657, +542）、674（corner1 of 658-674, +580）、675（corner1 of 675-691, +266）が具体的な最有力台
+- h_nonjug の corner1 は+59と控えめなので、角番1狙いはジャグラー島に集中すべき
+- ただし Phase 8 バックテストでは CornerRule が Period 3→4 で崩れた（-6.4）ので、時系列安定性の確認は必要
+
+## 例
+h_jug corner別: corner1=+405, corner2-4=+133, corner5-9=+55, corner10+=+2
+h_nonjug corner別: corner1=+59, corner2-4=+131, corner5-9=+72, corner10+=-37

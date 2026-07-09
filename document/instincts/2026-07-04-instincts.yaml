@@ -1,0 +1,149 @@
+---
+id: evolve-generated-skills-are-safe-to-hand-edit
+trigger: "when a SKILL.md has evolved_from + confidence frontmatter and needs manual cleanup"
+confidence: 0.85
+domain: claude-code-config-optimization
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# evolveで生成されたSkillは手動編集して安全
+
+## 背景
+prediction-evaluation/SKILL.mdにはevolved_from(11 instinct ID)とconfidenceフィールドがあり、
+`everything-claude-code`の`/evolve`コマンドで生成された形跡があった。当初「次回evolve実行時に
+再生成されて上書きされるのでは」と懸念し、ユーザーにも「放置すべきか」と問われた。
+`commands/evolve.md`の実装を確認したところ、`/evolve --generate`はユーザーが明示的に叩いた時のみ動き、
+生成物は`~/.claude/homunculus/.../evolved/`というステージング領域に出力される。`~/.claude/skills/`への
+昇格は別の手動ステップであり、バックグラウンドでの自動上書きは発生しない。
+
+## アクション
+evolved_from/confidenceフィールドを持つSKILL.mdでも、手動での分割・修正・統合をためらう必要はない。
+リスクがあるとすれば「ユーザーが将来同じinstinctクラスタで/evolveを再実行し、かつ生成物を再度手動で
+昇格させた場合」のみで、これは目に見える形でユーザーが判断する行為。ただし`~/.claude/skills`自体が
+git管理外だと手動編集の差分照合ができなくなる点は別途注意(他instinct参照)。
+
+## 例
+prediction-evaluation(evolved_from 11件)から2項目(ゾロ目補正精度の検証単位、3F_Aの信頼度)を
+pachinko-live-analysis(evolved_from 10件)へ移動し、両ファイルのevolved_from/件数/進化の背景を
+整合させた。移動後も自動発火・自動上書きの問題は発生していない。
+
+---
+id: skill-doc-must-be-verified-against-companion-script
+trigger: "when a SKILL.md documents CLI options, exit codes, or behavior for a companion .py/.sh implementation"
+confidence: 0.88
+domain: claude-code-config-optimization
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# SKILL.mdの記述は必ず実装スクリプトと照合する
+
+## 背景
+tag-normalizerの仕立て直しで、Sonnetエージェントが1回目の書き直し時にSKILL.mdの記述(旧文書)を
+整理しただけで完了と申告したが、監督役のFableが`tag-normalizer.py`を実際に読んで照合したところ
+`--isolate`オプション(実装に存在しない)、Exit Status 1/3/4(実装は0と2のみ)、Tag Master自体の
+YAML検証・品質スコア(0-100)・タグ頻度分布(いずれも未実装)など、複数の記載が実装と乖離していた。
+SKILL.mdの「読みやすさ」を整えるだけでは、内容が正しいかどうかは検証できない。
+
+## アクション
+companion script(.py/.sh)を持つSkillのSKILL.mdを修正・監査する際は、旧ドキュメントの記述をそのまま
+信用せず、実装ファイルを実際に読んでCLIオプション・Exit Status・実装済み機能を突き合わせる。
+argparseの引数一覧、sys.exit()の呼び出し箇所、実際にprintしている統計項目を直接確認するのが最も確実。
+
+## 例
+`tag-normalizer.py`のargparseには`--dry-run`/`--apply`/`--stats`/`--category`/`--report`/`--outputs`/
+`--all`のみが存在し、旧SKILL.mdに書かれていた`--isolate`は存在しなかった。sys.exit(2)以外の明示的な
+exit codeも実装になく、Exit Status 1/3/4は削除して0/2のみに修正した。
+
+---
+id: dead-reference-network-signals-abandoned-pipeline
+trigger: "when a SKILL.md references another skill name that no longer exists in ~/.claude/skills/"
+confidence: 0.8
+domain: claude-code-config-optimization
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 死んだSkill参照は旧パイプライン全体の遺物であることが多い
+
+## 背景
+backlink-generatorとtag-normalizerの両方が、Integration/Related Skills節で`ingest-v2`という
+存在しないSkillと、改名済みの旧名`monthly-healthcheck`(正しくは`wiki-monthly-healthcheck`)を
+参照していた。1つのSkillだけの記載ミスではなく、複数のSkillに同一パターンの死んだ参照が
+横断的に残っていたことから、`ingest-v2`という統合パイプラインが過去に存在し、廃止された後も
+参照網が全面的に更新されていなかったと判断できた。
+
+## アクション
+あるSkillで死んだ参照を1件見つけたら、同じ参照先を含む他のSkillも横断的にgrepし、
+同一の旧パイプライン由来の遺物が他にも残っていないか確認する。単発の記載ミスと
+パイプライン全体の陳腐化は、修正の緊急度・範囲の判断が異なる。
+
+## 例
+`grep -rl "ingest-v2" ~/.claude/skills/`でbacklink-generatorとtag-normalizerの2件がヒット。
+一方でtag-normalizer.pyの実装コードは`D:/wiki/.claude/skills/ingest-v2/categories.json`という
+データファイルパスに今も依存しており、「ingest-v2という名前のSkill」は消えたが
+「ingest-v2という名前のディレクトリ配下のデータファイル」は生きている、という
+部分的な生存状態だった。参照除去の際はSkill名への言及とデータパスへの依存を区別する必要がある。
+
+---
+id: schema-duplication-fix-does-not-require-merging-skills
+trigger: "when two skills read/write the same data schema and are flagged as merge candidates"
+confidence: 0.75
+domain: claude-code-config-optimization
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# データスキーマの重複解消は、Skill統合ではなく共有referencesファイルで十分なことが多い
+
+## 背景
+Skill棚卸し監査でinstinct-export/instinct-importが「責務重複・統合候補」と評価されたが、
+ユーザーから「正反対の操作(export/import)なのに統合できるのか」と問われ、再検討した。
+両者は同じYAMLスキーマ・同じディレクトリ(document/instincts/)を扱うが、発火タイミングは
+セッション終盤(export)とセッション冒頭(import)で正反対であり、1つのdescriptionに
+両方の発火条件を書くと自動発火の精度がむしろ下がるリスクがあった。
+
+## アクション
+「同じデータ資源を読み書きする2つのSkill」は、統合の第一候補にせず、まず
+「スキーマ定義を共有referencesファイルに切り出し、両方のSkillから参照する」という
+より低リスクな代替案を検討する。統合は発火タイミングが同じ・操作が同一文脈で
+切り替わる場合(tag-normalizerの--dry-run/--apply等)にのみ適する。
+
+## 例
+instinct-export/references/schema.mdを新設し、instinct-export・instinct-import両方の
+SKILL.mdからこの1ファイルを参照する形にした。Skill自体は分離したまま、
+スキーマの二重管理だけを解消した。
+
+---
+id: sonnet-fable-supervisor-pattern-catches-overconfident-audit-claims
+trigger: "when running a multi-agent skill audit or rewrite with different model tiers"
+confidence: 0.82
+domain: claude-code-config-optimization
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Sonnet実行→Fable監督の二層体制は過信した断定を検出できる
+
+## 背景
+Sonnetエージェントが個人Skill22件を監査し、agent-orchestration/development-workflowについて
+「実在しない10エージェントに依存している」と深刻度「高」で断定した。しかし監督役のFableが
+実際に`~/.claude/agents/`とプラグイン提供エージェント一覧を確認したところ、10エージェントは
+`everything-claude-code`プラグインの名前空間で実際に起動可能であり、「実在しない」という
+断定は誤りだった。同時にFableは行数の実測ミス(295行→実際は285/294行)や、
+「descriptionがほぼ同一」という言い過ぎ(実際は本文冒頭のみ同一)も検出した。
+
+## アクション
+Skillの棚卸しや仕立て直しをエージェントに任せる際は、実行役(Sonnet)の断定的な指摘を
+そのままユーザーに提示せず、別モデル(Fable)に一次情報(実ファイル・実際のエージェント一覧)を
+再確認させる監督ステップを挟む。特に「〜は存在しない」「〜と依存している」という
+断定形の指摘は、参照先の実態(名前空間・改名・移動)を見落としている可能性がある。
+
+## 例
+本セッションでbacklink-generator・tag-normalizer・agent-orchestration/development-workflowの
+4件でこのSonnet実行→Fable監督→(必要なら)Sonnet修正、というパイプラインを使い、
+tag-normalizerでは実装スクリプトとの乖離、agent-orchestrationでは「実在しない」という
+誤断定という、性質の異なる2種類の誤りをそれぞれ検出できた。
+
+---

@@ -1,0 +1,67 @@
+---
+id: codex-desktop-agmsg-monitor-requires-cli-shim-not-desktop-app
+trigger: "when expecting agmsg monitor-mode real-time delivery inside the Codex desktop app"
+confidence: 0.98
+scope: methodology
+domain: tooling-environment
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Codex Desktop does not satisfy agmsg monitor bridge startup by itself
+
+## Core claim
+Setting `agmsg` delivery mode to `monitor` for `codex` is not sufficient when the session is running inside the Codex desktop app. The monitor bridge only becomes active when Codex is launched through the agmsg CLI shim path.
+
+## Evidence
+- n_observations: 1
+- data scope: cross-agent messaging / Codex runtime startup
+- metric scope: bridge startup and near-real-time delivery
+- result summary: `delivery.sh set monitor codex` succeeded and `delivery.sh status codex "$(pwd)"` showed `mode: monitor` with `SessionStart` and `SessionEnd` hooks present, but the same status still reported `Codex bridge: main/codex not running` after restarting the desktop app session.
+
+## Interpretation
+- `monitor` state in the project settings only means the hooks were configured.
+- A desktop-app Codex session can still remain effectively non-monitored if it did not start through the shimmed `codex` launch path.
+- For the desktop app, the practical fallback is `turn` delivery or manual `inbox.sh` checks.
+
+## Action
+- Do not assume monitor-mode delivery is active merely because the mode says `monitor`.
+- Verify `Codex bridge: ... running` before relying on near-real-time delivery.
+- Use CLI `codex` via the agmsg shim for true monitor-mode testing.
+- Treat the desktop app as `turn`/manual delivery unless bridge status proves otherwise.
+
+## Status
+- status: active
+---
+id: agmsg-history-vs-inbox-must-not-be-confused-during-debugging
+trigger: "when debugging whether a Codex or Claude agmsg message was actually delivered"
+confidence: 0.96
+scope: methodology
+domain: agent-coordination
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# `history.sh` and `inbox.sh` answer different delivery questions
+
+## Core claim
+`inbox.sh` showing `No new messages.` does not mean a message was never sent. Delivery debugging must distinguish unread inbox state from persistent message history.
+
+## Evidence
+- n_observations: 1
+- data scope: cross-agent messaging
+- metric scope: send visibility / receive confirmation
+- result summary: a newly sent Codex test message appeared in `history.sh main codex`, while `inbox.sh main codex` still showed no new unread messages afterward.
+
+## Interpretation
+- `history.sh` is the correct tool for verifying whether a send reached the shared message store.
+- `inbox.sh` only reports unread arrivals for that agent at that moment.
+- If `history` contains the message but `inbox` is empty, the problem is not "unsent"; it is state, timing, or already-read behavior.
+
+## Action
+- During agmsg debugging, check `history.sh` before concluding that send failed.
+- Use `inbox.sh` to detect unread work, not to prove durable send success.
+- When reporting delivery issues, state explicitly whether the failure is `history-missing` or `inbox-empty`.
+
+## Status
+- status: active

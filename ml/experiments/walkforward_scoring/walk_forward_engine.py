@@ -34,9 +34,11 @@ SUMMARY_COLUMNS = [
     "win_rate",
     "payout_rate",
     "hit@10",
+    "hit@15",
     "hit@20",
     "hit@50",
     "lift@10",
+    "lift@15",
     "lift@20",
     "lift@50",
     "hit_t2500",
@@ -62,9 +64,11 @@ DAILY_COLUMNS = [
     "win_rate",
     "payout_rate",
     "hit@10",
+    "hit@15",
     "hit@20",
     "hit@50",
     "lift@10",
+    "lift@15",
     "lift@20",
     "lift@50",
     "hit_t2500",
@@ -162,9 +166,11 @@ def _summarize_metrics(rows: pd.DataFrame, actual: pd.DataFrame) -> dict[str, fl
             "win_rate": 0.0,
             "payout_rate": 0.0,
             "hit@10": 0.0,
+            "hit@15": 0.0,
             "hit@20": 0.0,
             "hit@50": 0.0,
             "lift@10": 0.0,
+            "lift@15": 0.0,
             "lift@20": 0.0,
             "lift@50": 0.0,
             "hit_t2500": 0.0,
@@ -179,16 +185,18 @@ def _summarize_metrics(rows: pd.DataFrame, actual: pd.DataFrame) -> dict[str, fl
     other = actual[~actual["machine_number"].isin(top["machine_number"])]
     top_n = len(top)
     total_n = max(len(actual), 1)
+    payout_numerator = float((top["games_normalized"] * 3 + top["diff_coins_normalized"]).sum())
+    payout_denominator = float((top["games_normalized"] * 3).sum())
     metrics = {
         "avg_diff": float(top["diff_coins_normalized"].mean()) if len(top) else 0.0,
         "avg_diff_other": float(other["diff_coins_normalized"].mean()) if len(other) else 0.0,
         "win_rate": float((top["diff_coins_normalized"] > 0).mean() * 100) if len(top) else 0.0,
-        "payout_rate": float((((top["games_normalized"] * 3 + top["diff_coins_normalized"]) / (top["games_normalized"] * 3)) * 100).mean())
-        if len(top)
+        "payout_rate": float(payout_numerator / payout_denominator * 100)
+        if len(top) and payout_denominator > 0
         else 0.0,
     }
     metrics["avg_diff_vs_other"] = metrics["avg_diff"] - metrics["avg_diff_other"]
-    for n in (10, 20, 50):
+    for n in (10, 15, 20, 50):
         actual_n = actual_sorted.head(min(n, len(actual_sorted)))
         hits = len(set(top["machine_number"]) & set(actual_n["machine_number"]))
         expected = (min(n, len(actual_sorted)) * len(top) / total_n) if total_n else 0.0
@@ -226,9 +234,11 @@ def _aggregate_daily_results(daily_results: pd.DataFrame) -> pd.DataFrame:
             win_rate=("win_rate", "mean"),
             payout_rate=("payout_rate", "mean"),
             hit_10=("hit@10", "mean"),
+            hit_15=("hit@15", "mean"),
             hit_20=("hit@20", "mean"),
             hit_50=("hit@50", "mean"),
             lift_10=("lift@10", "mean"),
+            lift_15=("lift@15", "mean"),
             lift_20=("lift@20", "mean"),
             lift_50=("lift@50", "mean"),
             n_test_days=("test_date", "nunique"),
@@ -237,9 +247,11 @@ def _aggregate_daily_results(daily_results: pd.DataFrame) -> pd.DataFrame:
         .rename(
             columns={
                 "hit_10": "hit@10",
+                "hit_15": "hit@15",
                 "hit_20": "hit@20",
                 "hit_50": "hit@50",
                 "lift_10": "lift@10",
+                "lift_15": "lift@15",
                 "lift_20": "lift@20",
                 "lift_50": "lift@50",
             }
@@ -254,9 +266,11 @@ def _aggregate_daily_results(daily_results: pd.DataFrame) -> pd.DataFrame:
             win_rate=("win_rate", "mean"),
             payout_rate=("payout_rate", "mean"),
             hit_10=("hit@10", "mean"),
+            hit_15=("hit@15", "mean"),
             hit_20=("hit@20", "mean"),
             hit_50=("hit@50", "mean"),
             lift_10=("lift@10", "mean"),
+            lift_15=("lift@15", "mean"),
             lift_20=("lift@20", "mean"),
             lift_50=("lift@50", "mean"),
             n_test_days=("test_date", "nunique"),
@@ -266,9 +280,11 @@ def _aggregate_daily_results(daily_results: pd.DataFrame) -> pd.DataFrame:
         .rename(
             columns={
                 "hit_10": "hit@10",
+                "hit_15": "hit@15",
                 "hit_20": "hit@20",
                 "hit_50": "hit@50",
                 "lift_10": "lift@10",
+                "lift_15": "lift@15",
                 "lift_20": "lift@20",
                 "lift_50": "lift@50",
             }
@@ -279,7 +295,9 @@ def _aggregate_daily_results(daily_results: pd.DataFrame) -> pd.DataFrame:
     return grouped[SUMMARY_COLUMNS]
 
 
-def _select_test_dates(df: pd.DataFrame, windows: Iterable[int], test_dates: Iterable[pd.Timestamp] | None) -> list[pd.Timestamp]:
+def _select_test_dates(
+    df: pd.DataFrame, windows: Iterable[int], test_dates: Iterable[pd.Timestamp] | None
+) -> list[pd.Timestamp]:
     if test_dates is not None:
         return [pd.Timestamp(value).normalize() for value in test_dates]
     sorted_dates = sorted(pd.to_datetime(df["date"], format="%Y%m%d", errors="coerce").dropna().dt.normalize().unique())
@@ -348,7 +366,9 @@ def _optimization_candidates_for_window(
         for _, scored_base, actual_fold in validation_frames:
             scored = scored_base.copy()
             scored["composite"] = _score_from_components(scored, weights)
-            scored = scored.sort_values(["composite", "diff_coins_normalized", "machine_number"], ascending=[False, False, True]).reset_index(drop=True)
+            scored = scored.sort_values(
+                ["composite", "diff_coins_normalized", "machine_number"], ascending=[False, False, True]
+            ).reset_index(drop=True)
             metrics_rows.append(_summarize_metrics(scored, actual_fold))
         if not metrics_rows:
             continue
@@ -390,10 +410,23 @@ def _optimization_candidates_for_window(
 
 
 def _compute_correlation_matrix(scored_rows: pd.DataFrame) -> pd.DataFrame:
-    columns = ["c1", "c2", "c3", "c4", "c5", "c6", "hist_diff", "hist_payout", "hist_winrate", "hist_hit_an"]
+    columns = [
+        "c1",
+        "c2",
+        "c3",
+        "c4",
+        "c5",
+        "c6",
+        "hist_diff",
+        "hist_payout",
+        "hist_winrate",
+        "hist_hit_an",
+        "games_relative",
+    ]
     if scored_rows.empty:
         return pd.DataFrame(index=columns, columns=columns)
-    return scored_rows[columns].corr(method="spearman").round(4)
+    available = [column for column in columns if column in scored_rows.columns]
+    return scored_rows[available].corr(method="spearman").round(4)
 
 
 def _cluster_islands(scored_rows: pd.DataFrame) -> pd.DataFrame:
@@ -452,6 +485,17 @@ def _segment_best_variant(daily_segment_results: pd.DataFrame) -> pd.DataFrame:
     return summary.groupby("segment", as_index=False).head(1).reset_index(drop=True)
 
 
+def _debut_phase_best_variant(daily_debut_results: pd.DataFrame) -> pd.DataFrame:
+    if daily_debut_results.empty:
+        return pd.DataFrame(columns=["debut_phase", "best_variant", "best_window", "avg_diff"])
+    summary = (
+        daily_debut_results.groupby(["debut_phase", "variant", "window"], as_index=False)
+        .agg(avg_diff=("avg_diff", "mean"), hit50=("hit@50", "mean"))
+        .sort_values(["debut_phase", "avg_diff", "hit50"], ascending=[True, False, False])
+    )
+    return summary.groupby("debut_phase", as_index=False).head(1).reset_index(drop=True)
+
+
 def run_backtest(
     df: pd.DataFrame,
     *,
@@ -489,7 +533,11 @@ def run_backtest(
     component_rows: list[dict[str, object]] = []
     weight_rows: list[dict[str, object]] = []
     segment_rows: list[dict[str, object]] = []
-    scored_pool: list[pd.DataFrame] = []
+    debut_rows: list[dict[str, object]] = []
+    scored_pool_path = output_dir / "scored_pool.csv"
+    scored_pool_header_written = scored_pool_path.exists() and resume
+    scored_pool_tail: list[pd.DataFrame] = []
+    SCORED_POOL_TAIL_DAYS = 10
 
     t0 = time.time()
     processed_count = 0
@@ -510,7 +558,9 @@ def run_backtest(
                 weights_override = None
                 if variant.optimize_weights:
                     train_dates = sorted(train["date_dt"].dropna().dt.normalize().unique().tolist())
-                    weights_override, weight_table = _optimization_candidates_for_window(train, train_dates, variant, context)
+                    weights_override, weight_table = _optimization_candidates_for_window(
+                        train, train_dates, variant, context
+                    )
                     if not weight_table.empty:
                         table = weight_table.copy()
                         table.insert(0, "test_date", test_date.strftime("%Y-%m-%d"))
@@ -527,7 +577,20 @@ def run_backtest(
                 )
                 if scored.empty:
                     continue
-                scored_pool.append(scored.assign(test_date=test_date.strftime("%Y-%m-%d"), window=int(window), variant=variant_id))
+                scored_tagged = scored.assign(
+                    test_date=test_date.strftime("%Y-%m-%d"), window=int(window), variant=variant_id
+                )
+                scored_tagged.to_csv(
+                    scored_pool_path,
+                    mode="a",
+                    header=not scored_pool_header_written,
+                    index=False,
+                    encoding="utf-8-sig",
+                )
+                scored_pool_header_written = True
+                scored_pool_tail.append(scored_tagged)
+                if len(scored_pool_tail) > SCORED_POOL_TAIL_DAYS:
+                    scored_pool_tail.pop(0)
                 metrics = _summarize_metrics(scored, actual)
                 daily_rows.append(
                     {
@@ -551,7 +614,21 @@ def run_backtest(
                 )
                 existing_keys.add(key)
 
-                for component in ["c1", "c2", "c3", "c4", "c5", "c6", "hist_diff", "hist_payout", "hist_winrate", "hist_hit_an"]:
+                for component in [
+                    "c1",
+                    "c2",
+                    "c3",
+                    "c4",
+                    "c5",
+                    "c6",
+                    "hist_diff",
+                    "hist_payout",
+                    "hist_winrate",
+                    "hist_hit_an",
+                    "games_relative",
+                ]:
+                    if component not in scored.columns:
+                        continue
                     comp_rows = scored.copy()
                     comp_rows = comp_rows.sort_values(component, ascending=False).reset_index(drop=True)
                     comp_metrics = _summarize_metrics(comp_rows, actual)
@@ -572,7 +649,11 @@ def run_backtest(
 
                 segment_daily = (
                     scored.groupby("segment", as_index=False)
-                    .apply(lambda group: pd.Series(_summarize_metrics(group.sort_values("composite", ascending=False), actual)))
+                    .apply(
+                        lambda group: pd.Series(
+                            _summarize_metrics(group.sort_values("composite", ascending=False), actual)
+                        )
+                    )
                     .reset_index()
                 )
                 segment_daily["test_date"] = test_date.strftime("%Y-%m-%d")
@@ -584,7 +665,11 @@ def run_backtest(
 
                 segment_daily_bottom = (
                     scored.groupby("segment", as_index=False)
-                    .apply(lambda group: pd.Series(_summarize_metrics(group.sort_values("composite", ascending=True), actual)))
+                    .apply(
+                        lambda group: pd.Series(
+                            _summarize_metrics(group.sort_values("composite", ascending=True), actual)
+                        )
+                    )
                     .reset_index()
                 )
                 segment_daily_bottom["test_date"] = test_date.strftime("%Y-%m-%d")
@@ -594,6 +679,39 @@ def run_backtest(
                 segment_daily_bottom["selection"] = "bottom50"
                 segment_rows.extend(segment_daily_bottom.to_dict("records"))
 
+                if "debut_phase" in scored.columns:
+                    debut_daily = (
+                        scored.groupby("debut_phase", as_index=False)
+                        .apply(
+                            lambda group: pd.Series(
+                                _summarize_metrics(group.sort_values("composite", ascending=False), actual)
+                            )
+                        )
+                        .reset_index()
+                    )
+                    debut_daily["test_date"] = test_date.strftime("%Y-%m-%d")
+                    debut_daily["variant"] = variant_id
+                    debut_daily["window"] = int(window)
+                    debut_daily["event_type"] = "event" if _is_event_date(test_date) else "non_event"
+                    debut_daily["selection"] = "top50"
+                    debut_rows.extend(debut_daily.to_dict("records"))
+
+                    debut_daily_bottom = (
+                        scored.groupby("debut_phase", as_index=False)
+                        .apply(
+                            lambda group: pd.Series(
+                                _summarize_metrics(group.sort_values("composite", ascending=True), actual)
+                            )
+                        )
+                        .reset_index()
+                    )
+                    debut_daily_bottom["test_date"] = test_date.strftime("%Y-%m-%d")
+                    debut_daily_bottom["variant"] = variant_id
+                    debut_daily_bottom["window"] = int(window)
+                    debut_daily_bottom["event_type"] = "event" if _is_event_date(test_date) else "non_event"
+                    debut_daily_bottom["selection"] = "bottom50"
+                    debut_rows.extend(debut_daily_bottom.to_dict("records"))
+
                 processed_count += 1
                 if processed_count % 50 == 0:
                     elapsed = time.time() - t0
@@ -601,7 +719,7 @@ def run_backtest(
                     remaining = (total_tasks - processed_count) / rate if rate > 0 else 0
                     print(
                         f"[Progress] {processed_count}/{total_tasks} "
-                        f"({processed_count*100//total_tasks}%) "
+                        f"({processed_count * 100 // total_tasks}%) "
                         f"elapsed={elapsed:.0f}s remaining≈{remaining:.0f}s "
                         f"date={test_date.strftime('%Y-%m-%d')} window={window} variant={variant_id}",
                         file=sys.stderr,
@@ -617,12 +735,24 @@ def run_backtest(
         weight_df["selected"] = False
 
     summary_df = _aggregate_daily_results(daily_df)
-    correlation_df = _compute_correlation_matrix(pd.concat(scored_pool, ignore_index=True) if scored_pool else pd.DataFrame())
-    island_df = _cluster_islands(pd.concat(scored_pool, ignore_index=True) if scored_pool else pd.DataFrame())
-    adjacency_df = _adjacency_effect(pd.concat(scored_pool, ignore_index=True) if scored_pool else pd.DataFrame())
+    scored_pool_sample = pd.concat(scored_pool_tail, ignore_index=True) if scored_pool_tail else pd.DataFrame()
+    correlation_df = _compute_correlation_matrix(scored_pool_sample)
+    island_df = _cluster_islands(scored_pool_sample)
+    adjacency_df = _adjacency_effect(scored_pool_sample)
     _seg_rows_df = pd.DataFrame(segment_rows)
-    _seg_top_only = _seg_rows_df[_seg_rows_df.get("selection", pd.Series("top50")).eq("top50")] if not _seg_rows_df.empty else _seg_rows_df
+    _seg_top_only = (
+        _seg_rows_df[_seg_rows_df.get("selection", pd.Series("top50")).eq("top50")]
+        if not _seg_rows_df.empty
+        else _seg_rows_df
+    )
     segment_df = _segment_best_variant(_seg_top_only)
+    debut_rows_df = pd.DataFrame(debut_rows)
+    _debut_top_only = (
+        debut_rows_df[debut_rows_df.get("selection", pd.Series("top50")).eq("top50")]
+        if not debut_rows_df.empty
+        else debut_rows_df
+    )
+    debut_df = _debut_phase_best_variant(_debut_top_only)
     split_df = (
         daily_df.groupby(["window", "split_period"], as_index=False)
         .agg(
@@ -634,25 +764,39 @@ def run_backtest(
         )
         .sort_values(["window", "split_period"])
         if not daily_df.empty
-        else pd.DataFrame(columns=["window", "split_period", "avg_diff_vs_other", "lift50", "n_test_days", "avg_a_seg_hist_coverage", "avg_a_seg_fallback_count"])
+        else pd.DataFrame(
+            columns=[
+                "window",
+                "split_period",
+                "avg_diff_vs_other",
+                "lift50",
+                "n_test_days",
+                "avg_a_seg_hist_coverage",
+                "avg_a_seg_fallback_count",
+            ]
+        )
     )
-
-    scored_pool_df = pd.concat(scored_pool, ignore_index=True) if scored_pool else pd.DataFrame()
-    _write_csv(scored_pool_df, output_dir / "scored_pool.csv")
 
     _write_csv(daily_df, daily_path)
     _write_csv(component_df, component_path)
     _write_csv(weight_df, weight_path)
     _write_csv(summary_df, output_dir / "summary.csv")
-    _write_csv(correlation_df.reset_index().rename(columns={"index": "component"}), output_dir / "correlation_matrix.csv")
+    _write_csv(
+        correlation_df.reset_index().rename(columns={"index": "component"}), output_dir / "correlation_matrix.csv"
+    )
     segment_daily_df = pd.DataFrame(segment_rows)
     _write_csv(segment_daily_df, output_dir / "segment_daily_results.csv")
+    debut_phase_daily_df = pd.DataFrame(debut_rows)
+    _write_csv(debut_phase_daily_df, output_dir / "debut_phase_daily_results.csv")
 
     extra_checks = {
         "Island Clustering": island_df,
-        "Sensitivity": weight_df.sort_values(["window", "avg_lift50"], ascending=[True, False]).head(15) if not weight_df.empty else weight_df,
+        "Sensitivity": weight_df.sort_values(["window", "avg_lift50"], ascending=[True, False]).head(15)
+        if not weight_df.empty
+        else weight_df,
         "Adjacency Effect": adjacency_df,
         "Segment Best Variant": segment_df,
+        "Debut Phase Best Variant": debut_df,
         "Front/Back Split Verification": split_df,
     }
     report = build_report(
@@ -674,4 +818,5 @@ def run_backtest(
         "correlation_matrix": correlation_df,
         "extra_checks": pd.DataFrame(),
         "segment_daily_results": segment_daily_df,
+        "debut_phase_daily_results": debut_phase_daily_df,
     }

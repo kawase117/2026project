@@ -1,0 +1,95 @@
+---
+id: section-kakuban-axis-scan-implemented-no-strong-signal
+trigger: "セクション/角番軸でmachine_axis_pattern_scan.py相当のdd/dd_bin/day_of_week/is_x_dayスキャンを使おうとするとき"
+confidence: 0.92
+domain: eda-implementation
+source: session-implementation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# section/kakuban軸のdd chi2+dd_binスキャンは実装済み・全ホール実行済み・強い新規信号なし
+
+## 背景
+2026-07-03、バイオハザードRE:3(蒲田7)がmachine_axis_pattern_scan.pyのdd_bin軸でsparse-cell警告を
+解消し信頼性向上した事例（[dd-bin-double-edged-sword](2026-07-02-dd-bin-axis-double-edged-sword-insights.yaml)
+パターンb）を受け、「同じ手法をsection/kakuban軸に適用したら何か掴めるのでは」という仮説を検証した。
+eda/section_kakuban_axis_pattern_scan.py を新規実装（machine_axis_pattern_scan.pyの統計エンジンを
+そのまま流用、group_colをsection/kakubanにパラメータ化）し、蒲田7・蒲田1・みとやの全section・
+全kakuban値（rank_from_min）を対象にdd/day_of_week/is_x_day/dd_bin × diff/plus/hit104を実行した。
+
+## アクション
+結果: 3ホール合計でpattern_summaryは0件なしだったが、top effect_sizeは最大0.16
+（蒲田7 kakuban=22, n=716）で、RE:3クラス(0.20超)の強い信号は出ていない。
+「セクション/角番のBin軸スキャンで新発見」を狙う前に、まずこのスキャン結果
+（eda/results/section_kakuban_axis_pattern_scan/）を確認し、車輪の再発見を避けること。
+新規に強い信号を探すなら、素のdd/dd_bin軸スキャンではなく下記の
+[section-kakuban-scan-confounded-by-hallwide-event-day]の残差化が必要。
+
+## 例
+eda/results/section_kakuban_axis_pattern_scan/{hall}_{section,kakuban}_top_signals.csv
+
+---
+id: section-kakuban-scan-confounded-by-hallwide-event-day
+trigger: "section粒度でdd軸のchi2有意を「セクション固有効果」として解釈しようとするとき"
+confidence: 0.9
+domain: statistical-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# section粒度のdd軸有意は既知のホール全体イベント日効果を再検出しているだけの可能性が高い
+
+## 背景
+section_kakuban_axis_pattern_scan.pyの蒲田7セクション"2230-2246"のdd別plus率breakdownを見ると、
+ピークはDD7=53.0%, DD21=49.2%, DD30=51.4%——kamata7-event-day-complete-definitionで確定済みの
+イベント日リスト[1,7,11,17,21,22,27,30,31]と完全に一致した。
+section粒度は複数台を同時に束ねるため、同じ日に属する行は全て同じdd/is_x_day値を共有する。
+ホール全体で特定日に投入強化する既知の挙動があると、どのsectionを切り取っても同じ山が出て
+しまい、section固有の位置効果と区別できない（machine_name軸スキャンでは1台=1日1行なので
+この重複は起きないが、section軸のような多対1グルーピングでは起きる）。
+kakuban粒度（同じ角番が複数の異なる島に分散）はこの汚染が弱く出た（kakuban=22のピークDD24/29/18/20
+は既知イベント日リストと一致しない）ため、section軸よりも汚染が少ない可能性がある。
+
+## アクション
+section粒度のtop_signalsは、ドライバーとなっているdd値がHALL_EVENT_DIGITS（eda/core.py）と
+一致するかを機械的にチェックし、一致するものは既知効果の再検出として割り引いて解釈する。
+本当にsection固有効果を見たいなら、生の値ではなく「その日のホール全体平均を引いた残差」
+（section_daily_value - hall_wide_daily_mean）でdd/dd_bin軸を再スキャンする必要がある。
+これは ml/analysis/kamata_kakuban_section_residual_eda.py の残差（セクション内平均を引いて
+角番効果を見る、比較の粒度が違う）とは別物なので混同しないこと。この残差版は未実装（2026-07-03時点）。
+
+## 例
+蒲田7 section "2230-2246" dd=7: n=202, plus_rate=53.0%
+蒲田7 section "2230-2246" dd=21: n=197, plus_rate=49.2%
+蒲田7 section "2230-2246" dd=30: n=185, plus_rate=51.4%
+→ HALL_EVENT_DIGITS["蒲田7"] = [1,7,11,17,21,22,27,30,31] と完全一致。
+
+---
+id: dd-bin-sparse-warning-requires-genuinely-thin-cells
+trigger: "dd_bin軸が個別dd軸より信頼性向上すると期待してBinを導入するとき"
+confidence: 0.88
+domain: statistical-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# dd_binの「sparse-cell警告解消」効果は、対象が真に低サンプルでないと発動しない
+
+## 背景
+RE:3(蒲田7, 新台・低サンプル)ではdd軸のchi2検定でexpected cell<5が50%超となりwarning付き
+だったが、dd_binで束ねることでwarningが解消された（dd-bin-double-edged-swordパターンb）。
+これを期待してsection/kakuban軸（machine_axis_pattern_scan.pyの複数台×多日数を束ねたグループ）
+にも同じdd_binスキャンを適用したところ、dd軸のchi2でwarning付きになった行はほぼ皆無だった
+（蒲田7_section: 0/159, 蒲田7_kakuban: 0/66, 蒲田1_kakuban: 0/60, みとや_kakuban: 2/66）。
+section/kakubanは複数台のdaily行を束ねる設計そのものにより、個別DDセルのサンプル数が
+最初から数百〜数万あり、そもそも「薄いセル」の問題が存在しなかった。
+
+## アクション
+「Binにすれば信頼性が上がる/新発見できる」という期待を持つ前に、対象グループの
+n_obsと軸のカーディナリティ（dd=31水準）から1セルあたりの期待サンプル数を概算し、
+既に十分（目安: 1セルあたり5を大きく上回る）であればBinの追加価値はほぼないと判断する。
+Binが効くのは「機種単体・新台・短期間」のような本質的に低サンプルな軸粒度に限られる。
+
+## 例
+蒲田7_kakuban n=716（kakuban=22）でも1セル(dd31水準)あたり平均23件でwarning未発生。
+RE:3は機種単体で数十日分のみのため1セルあたり5件未満が頻発しwarning発生。

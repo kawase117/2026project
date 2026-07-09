@@ -46,51 +46,48 @@ df['weekday_x_event'] = df['weekday_label'] + "_" + df['dd_event_label']
 ---
 id: kamata7-hallwide-hit104-vanishes-after-20251222-followup
 trigger: "kamata7のホール全体payoutrate_pct/hit_rate_104の時系列を分析するとき、または2025-12-22前後のレジーム変化を調べるとき"
-confidence: 0.5
+confidence: 0.90
 domain: project-status
-source: session-observation
+source: empirical-analysis
 project_id: 2026project
 project_name: pachinko-analyzer
 
-# kamata7ホール全体で、2025-12-23以降hit_rate_104(全体payoutrate>=104%の日)が実質ゼロになっている(未調査の異常)
+# 【解決済み】kamata7のhit104消失は「突然のレジーム変化」ではなく「開店ブースト終了後の緩やかな正常化」
 
-## 背景
-DD/イベント日軸のhallwide split-half検証([[kamata7-dd-event-axis-null-section-and-hallwide]])で、
-split_half_cutoff=2025-12-23を境に、全31DD・全6イベントグループについて
-second_half(2025-12-23〜2026年6月、約169日)のhit_rate_104が
-cell側・rest側ともに完全に0になっていることが分かった
-(first_halfでは0.05〜0.33程度の値があった)。
+## 背景（元の仮説）
+2025-12-23を境にホール全体(加重平均)のhit104が消失。突然のレジーム変化を疑っていた。
 
-これは「DDに効果がない」という結論とは別に、
-**ホール全体(715台平均)のpayoutrate_pctが104%を超える日が
-2025-12-23以降ほぼ消失した**という現象を示している。
+## 調査結果（2026-06-26）
 
-タイミングは、[[kamata-seat-regime-change-cross-machine-name-followup]]で見つかった
-2180/2182の機種交代日(2025-12-22)とほぼ一致しており、関連の可能性がある
-(ただし2台の機種交代だけで715台平均が動くとは考えにくく、
-他の要因の可能性も高い)。
+### ホール全体加重平均payout（月次）
+- 2025-07: 103.70% (hit104=28%) ← 開店ブースト期
+- 2025-09: 101.67% (hit104=0%) ← 8月→9月で急低下
+- 2025-12: 101.24% (hit104=0%)
+- 2026-06: 100.68% (hit104=0%)
+→ 12ヶ月にわたる連続的下降。12月22日に急変した形跡なし。
+
+### 個別台レベルのhit104率（1日あたり104%超え台数）
+- 2025-07: 282台/日 (39.5%) ← 開店ブースト
+- 2025-09: 234台/日 (32.8%) ← 9月以降は横ばい
+- 2025-12: 222台/日 (31.0%)
+- 2026-06: 215台/日 (30.1%)
+→ 104%超え台数は9月以降ほぼ一定（30-32%）。突然の消失ではない。
+
+### 解釈
+- ホール全体加重平均が下がったのに個別hit104率が安定 → 「超え幅の縮小」か「低設定台の回収強化」
+- ホール側の設定配分の微調整（設定6→設定5など）で説明がつく
+- 台数は全期間714台で一定（データ収集範囲の変化ではない）
+- 7月→9月の低下が最大 → 開店ブースト（2025年7月開店の蒲田7）の終了が主因
+
+## MLモデルへの影響
+- 影響は小さい: vs_otherは全体水準シフトをキャンセルする相対指標
+- walk-forward window=90が局所分布に追従するため、トレンドの影響を吸収
+- split-half検証の解釈に注意は必要だが、paired differenceベースの検定結果は有効
 
 ## アクション
-1. kamata7のhallwide median_payoutrate_pct / hit_rate_104 / hit_rate_100を
-   月単位の時系列でプロットし、2025-12-23前後で実際にレベルシフトが
-   起きているかを確認する。
-2. レベルシフトが確認できた場合、原因を切り分ける:
-   - データ収集範囲・対象台数の変化(715台という台数自体が変わっていないか)
-   - ホール全体の運用方針転換(複数台の機種入替が同時期に集中していないか)
-   - 季節性(12月末〜1月の年末年始要因である可能性)
-3. このレベルシフトが本物であれば、338日分の全期間データを
-   「1つの均質な母集団」として扱う他の分析(DD軸・曜日軸など)の
-   split-half検証は、前後半で分布が異なる集団を比較していることになり、
-   stable判定の解釈に注意が必要(false negativeの一因になりうる)。
-
-## 例
-```python
-# hallwide payoutrate_pctの月次推移を確認する
-monthly = daily_hall_summary.groupby(daily_hall_summary['date'].dt.to_period('M')).agg(
-    median_pr=('payoutrate_pct', 'median'),
-    hit104=('payoutrate_pct', lambda s: (s >= 104).mean()),
-)
-```
+- ~~月次プロットで急変を確認する~~ → 調査完了。急変ではなく緩やかな正常化
+- 全期間を均質に扱う分析には依然として注意が必要（前半が高payout期）
+- window=90のwalk-forwardが正しい選択であることの追加根拠になった
 
 ---
 id: codex-eda-group-rest-baseline-completeness-check
