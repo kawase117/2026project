@@ -4,156 +4,47 @@ Pachinko Analyzer Dashboard - Constants
 """
 
 # ========================================
-# ページ定義
+# ページグループ（サイドバーナビの分類）
 # ========================================
 
-PAGES = [
-    {"icon": "🏠", "title": "ホール全体", "key": "hall_overview"},
-    {"icon": "📅", "title": "日別分析", "key": "daily_analysis"},
-    {"icon": "📆", "title": "曜日別分析", "key": "weekday_analysis"},
-    {"icon": "📆", "title": "DD別分析", "key": "dd_analysis"},
-    {"icon": "📊", "title": "末尾別分析", "key": "last_digit"},
-    {"icon": "📊", "title": "日末日別分析", "key": "day_last_digit"},
-    {"icon": "📋", "title": "第X曜日別分析", "key": "nth_weekday"},
-    {"icon": "💻", "title": "個別台分析", "key": "individual_machines"},
-    {"icon": "🎯", "title": "台番号末尾別分析", "key": "machine_tail"},
-    {"icon": "⭐", "title": "期間TOP10分析", "key": "period_top10"},
-    {"icon": "🔀", "title": "クロス検索分析", "key": "cross_search"},
-    {"icon": "📑", "title": "クロス検索一括", "key": "cross_search_bulk"},
-    {"icon": "ℹ️", "title": "統計情報", "key": "statistics"},
-    {"icon": "🏪", "title": "ホール選択支援", "key": "hall_selection"},
-    {"icon": "📌", "title": "Notion へ保存", "key": "notion_exporter"},
-    {"icon": "📊", "title": "バックテスト検証", "key": "backtest_validation"},
-    {"icon": "H", "title": "Heatmap", "key": "heatmap"},
-    {"icon": "📝", "title": "前日レポート", "key": "daily_report"},
-    {"icon": "🧪", "title": "前日レポート Visual Test", "key": "daily_report_visual_test"},
-    {"icon": "K7", "title": "Kamata7 Theory", "key": "kamata7_theory"},
-    {"icon": "K7", "title": "Kamata7 Event Checks", "key": "kamata7_event_checks"},
-    {"icon": "K7", "title": "Kamata7 Segments", "key": "kamata7_segments"},
+PAGE_GROUPS = [
+    {"key": "explore", "label": "📊 探索（発見）"},
+    {"key": "theory", "label": "🔬 セオリー検証"},
+    {"key": "ops", "label": "📝 運用"},
+    {"key": "admin", "label": "ℹ️ 管理"},
 ]
 
 # ========================================
-# ページレジストリ
+# ページ定義（単一の情報源）
+# main.py / main_app.py の PAGE_ROUTER はこのリストのキーに対応するモジュールをマッピングする。
+# visible=False のページはサイドバーに表示されない（テストページ等）。
 # ========================================
 
-PAGE_REGISTRY = {
-    1: {
-        "name": "ホール全体",
-        "file": "page_01_hall_overview",
-        "icon": "🏠",
-    },
-    2: {
-        "name": "日別分析",
-        "file": "page_02_daily_analysis",
-        "icon": "📅",
-    },
-    3: {
-        "name": "曜日別分析",
-        "file": "page_03_weekday_analysis",
-        "icon": "📆",
-    },
-    4: {
-        "name": "DD別分析",
-        "file": "page_04_dd_analysis",
-        "icon": "📆",
-    },
-    5: {
-        "name": "末尾別分析",
-        "file": "page_05_last_digit",
-        "icon": "📊",
-    },
-    6: {
-        "name": "日末日別分析",
-        "file": "page_06_day_last_digit",
-        "icon": "📊",
-    },
-    7: {
-        "name": "第X曜日別分析",
-        "file": "page_07_nth_weekday",
-        "icon": "📋",
-    },
-    8: {
-        "name": "個別台分析",
-        "file": "page_08_individual_machines",
-        "icon": "💻",
-    },
-    9: {
-        "name": "台番号末尾別分析",
-        "file": "page_09_machine_tail",
-        "icon": "🎯",
-    },
-    10: {
-        "name": "期間TOP10分析",
-        "file": "page_10_period_top10",
-        "icon": "⭐",
-    },
-    11: {
-        "name": "クロス検索分析",
-        "file": "page_11_cross_search",
-        "icon": "🔀",
-    },
-    12: {
-        "name": "統計情報",
-        "file": "page_12_statistics",
-        "icon": "ℹ️",
-    },
-    13: {
-        "name": "ホール選択支援",
-        "file": "page_13_hall_selection",
-        "icon": "🏪",
-    },
-    14: {
-        "name": "Notion Exporter",
-        "file": "page_14_notion_exporter",
-        "icon": "📌",
-    },
-    15: {
-        "name": "バックテスト検証",
-        "file": "page_15_backtest_validation",
-        "icon": "📊",
-    },
-    16: {
-        "name": "クロス検索一括",
-        "file": "page_16_cross_search_bulk",
-        "icon": "📑",
-    },
-    17: {
-        "name": "Heatmap",
-        "file": "page_17_heatmap",
-        "icon": "H",
-    },
-    18: {
-        "name": "前日レポート",
-        "file": "page_18_daily_report",
-        "icon": "📝",
-    },
-    19: {
-        "name": "前日レポート Visual Test",
-        "file": "page_19_daily_report_visual_test",
+PAGE_DEFS = [
+    {"key": "hall_overview", "title": "ホール全体", "icon": "🏠", "group": "admin"},
+    {"key": "single_axis_viewer", "title": "単一軸ビューア", "icon": "📈", "group": "explore"},
+    {"key": "dd_analysis", "title": "DD別分析", "icon": "📆", "group": "explore"},
+    {"key": "individual_machines", "title": "個別台分析", "icon": "💻", "group": "explore"},
+    {"key": "period_top10", "title": "期間TOP10分析", "icon": "⭐", "group": "explore"},
+    {"key": "cross_search", "title": "クロス検索分析", "icon": "🔀", "group": "explore"},
+    {"key": "cross_search_bulk", "title": "クロス検索一括", "icon": "📑", "group": "explore"},
+    {"key": "heatmap", "title": "Heatmap", "icon": "H", "group": "explore"},
+    {"key": "kamata7_theory", "title": "Kamata7 Theory", "icon": "K7", "group": "theory"},
+    {"key": "kamata7_event_checks", "title": "Kamata7 Event Checks", "icon": "K7", "group": "theory"},
+    {"key": "kamata7_segments", "title": "Kamata7 Segments", "icon": "K7", "group": "theory"},
+    {"key": "daily_report", "title": "前日レポート", "icon": "📝", "group": "ops"},
+    {"key": "hall_selection", "title": "ホール選択支援", "icon": "🏪", "group": "ops"},
+    {"key": "backtest_validation", "title": "バックテスト検証", "icon": "📊", "group": "ops"},
+    {"key": "notion_exporter", "title": "Notion へ保存", "icon": "📌", "group": "ops"},
+    {"key": "statistics", "title": "統計情報", "icon": "ℹ️", "group": "admin"},
+    {
+        "key": "daily_report_visual_test",
+        "title": "前日レポート Visual Test",
         "icon": "🧪",
+        "group": "admin",
+        "visible": False,
     },
-    20: {
-        "name": "Kamata7 Theory",
-        "file": "page_20_kamata7_theory",
-        "icon": "K7",
-    },
-    21: {
-        "name": "Kamata7 Event Checks",
-        "file": "page_21_kamata7_event_checks",
-        "icon": "K7",
-    },
-    22: {
-        "name": "Kamata7 Segments",
-        "file": "page_22_kamata7_segments",
-        "icon": "K7",
-    },
-}
-
-# ========================================
-# ページルーター（遅延インポート避けのため main.py で設定）
-# ========================================
-
-PAGE_ROUTER = None  # main.py で初期化される
+]
 
 # ========================================
 # デフォルト値

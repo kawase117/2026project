@@ -261,8 +261,8 @@ def test_build_daily_highlight_summary_mentions_top_machine() -> None:
 
 
 def test_page_registration_includes_visual_test_page() -> None:
-    from dashboard.config.constants import PAGES
+    from dashboard.config.constants import PAGE_DEFS
     from dashboard.pages import __all__ as page_exports
 
-    assert any(page["key"] == "daily_report_visual_test" for page in PAGES)
+    assert any(page["key"] == "daily_report_visual_test" for page in PAGE_DEFS)
     assert "page_19_daily_report_visual_test" in page_exports

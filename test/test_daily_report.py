@@ -318,10 +318,10 @@ def test_render_heatmap_views_mirrors_multi_floor_tabs(monkeypatch: pytest.Monke
 
 
 def test_page_registration_includes_daily_report() -> None:
-    from dashboard.config.constants import PAGES
+    from dashboard.config.constants import PAGE_DEFS
     from dashboard.pages import __all__ as page_exports
 
-    assert any(page["key"] == "daily_report" for page in PAGES)
+    assert any(page["key"] == "daily_report" for page in PAGE_DEFS)
     assert "page_18_daily_report" in page_exports
 
 
