@@ -27,6 +27,8 @@ PAGE_DEFS = [
     {"key": "individual_machines", "title": "個別台分析", "icon": "💻", "group": "explore"},
     {"key": "period_top10", "title": "期間TOP10分析", "icon": "⭐", "group": "explore"},
     {"key": "cross_search", "title": "クロス検索分析", "icon": "🔀", "group": "explore"},
+    {"key": "interaction_explorer", "title": "交互作用エクスプローラ", "icon": "🧩", "group": "explore"},
+    {"key": "axis_screening", "title": "横断スクリーニング", "icon": "🔎", "group": "explore"},
     {"key": "cross_search_bulk", "title": "クロス検索一括", "icon": "📑", "group": "explore"},
     {"key": "heatmap", "title": "Heatmap", "icon": "H", "group": "explore"},
     {"key": "theory_verification", "title": "Theory Verification", "icon": "K7", "group": "theory"},
@@ -50,8 +52,8 @@ PAGE_DEFS = [
 
 DEFAULT_MIN_GAMES = 1000
 DEFAULT_MIN_SAMPLE_SIZE = 5
-DEFAULT_DB_DIR = './db'
-DEFAULT_START_DATE = '2026-01-01'
+DEFAULT_DB_DIR = "./db"
+DEFAULT_START_DATE = "2026-01-01"
 
 # ========================================
 # 機種タイプ
