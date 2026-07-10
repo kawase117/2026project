@@ -1,7 +1,7 @@
 # ARCHITECTURE.md
 ## システムアーキテクチャ
 
-**最終更新**: 2026-04-15
+**最終更新**: 2026-07-10（dashboard/ セクションをPhase 1-4再構築後の構成に更新）
 **システム**: Pachinko Analyzer v2.0（モジュール化版）
 **テクノロジー**: Streamlit + Plotly + SQLite + Pandas
 
@@ -70,40 +70,61 @@ db/{hall_name}.db
     ├─ load_daily_hall_summary()
     └─ load_last_digit_summary()
         ↓
-dashboard/pages/page_01〜13.py（描画）
+dashboard/pages/*.py（描画、詳細は下記モジュール構成を参照）
 ```
 
 ---
 
 ## 📦 モジュール構成（現在）
 
-### dashboard/ （Phase 3）
+### dashboard/ （2026-07-10 再構築後）
+
+ページ定義は `config/constants.py` の `PAGE_DEFS`（単一の情報源）が持ち、
+`main.py` / `main_app.py` の `PAGE_ROUTER` はそのキーに対応するモジュールを
+マッピングするだけの薄いエントリーポイント。共通のサイドバー・フィルタ・
+ルーティングロジックは `app_shell.py` に集約されている。
 
 ```
 dashboard/
-├── main.py              # サイドバー・ルーティング・session_state管理
+├── main.py              # PAGE_ROUTER 定義 + app_shell.render_app() 呼び出し（相対import版）
+├── app_shell.py          # サイドバー・ホール選択・フィルタ・ルーティングの共通ロジック
 ├── design_system.py     # カラーパレット・UIコンポーネント
-├── old-dashboard.py     # 旧monolithicダッシュボード（参照用）
 ├── config/
-│   └── constants.py     # ページ定義・定数
+│   ├── constants.py      # PAGE_GROUPS / PAGE_DEFS（ページ定義の単一の情報源）
+│   └── hall_configs/     # ホール別セグメント定義（フロア/LR/イベント日/冷却帯等）
+│       ├── kamata1.yaml
+│       └── kamata7.yaml
 ├── utils/
-│   ├── data_loader.py   # DB読み込み関数（キャッシュ付き）
-│   └── styling.py       # CSSダークテーマ
+│   ├── data_loader.py         # DB読み込み関数（キャッシュ付き）
+│   ├── theory_engine.py       # ホール非依存のセオリー検証エンジン
+│   ├── interaction_analysis.py # 交互作用エクスプローラ用の集計・検定
+│   ├── single_axis_viewer.py  # 単一軸ビューアの集計ロジック
+│   └── styling.py             # CSSダークテーマ
 └── pages/
     ├── page_01_hall_overview.py
-    ├── page_02_daily_analysis.py
-    ├── page_03_weekday_analysis.py
+    ├── page_02_single_axis_viewer.py      # 旧02,03,05,06,07,09を統合
     ├── page_04_dd_analysis.py
-    ├── page_05_last_digit.py
-    ├── page_06_day_last_digit.py
-    ├── page_07_nth_weekday.py
     ├── page_08_individual_machines.py
-    ├── page_09_machine_tail.py
     ├── page_10_period_top10.py
     ├── page_11_cross_search.py
+    ├── page_11b_interaction_explorer.py
+    ├── page_11c_axis_screening.py
     ├── page_12_statistics.py
-    └── page_13_hall_selection.py
+    ├── page_13_hall_selection.py
+    ├── page_14_notion_exporter.py
+    ├── page_15_backtest_validation.py
+    ├── page_16_cross_search_bulk.py
+    ├── page_17_heatmap.py
+    ├── page_18_daily_report.py
+    ├── page_19_daily_report_visual_test.py  # visible=False（devのみ）
+    └── page_20_theory_verification.py     # 旧20,21,22を統合、ホール非依存
 ```
+
+セオリー・クレームの本体は `document/theory_registry/<hall>.yaml`
+（`document/<hall>_theory.md` の検証対象インデックス。theory.md 自体は
+手動管理を維持し、レジストリからの自動生成はしない）。
+
+詳細は `document/plans/2026-07-10-dashboard-refactoring-plan.md` を参照。
 
 ### database/ （Phase 2）
 

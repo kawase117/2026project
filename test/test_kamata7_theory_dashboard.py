@@ -186,3 +186,47 @@ def test_dd_kakuban_matrix_hides_sparse_cells():
 
     assert matrix.loc[7, 1] == 200
     assert 2 not in matrix.columns
+
+
+def test_resolve_hall_key_matches_hall_name_and_db_path():
+    assert theory.resolve_hall_key(hall_name="蒲田7") == "kamata7"
+    assert theory.resolve_hall_key(db_path=r"C:\db\マルハンメガシティ2000-蒲田1.db") == "kamata1"
+    assert theory.resolve_hall_key(hall_name=None, db_path=None) == theory.DEFAULT_HALL_KEY
+
+
+def test_filter_theory_frame_applies_date_and_min_games():
+    frame = pd.DataFrame(
+        {
+            "date_dt": pd.to_datetime(["20260101", "20260201", "20260301"], format="%Y%m%d"),
+            "games_normalized": [500, 1500, 2000],
+            "diff_coins_normalized": [10, 20, 30],
+        }
+    )
+
+    filtered = theory.filter_theory_frame(frame, start_date=pd.Timestamp("2026-02-01"), min_games=1000)
+
+    assert filtered["date_dt"].tolist() == [pd.Timestamp("2026-02-01"), pd.Timestamp("2026-03-01")]
+
+
+def test_classify_cooling_zone_uses_hall_config_ranges():
+    config = theory.load_hall_config("kamata7")
+
+    assert theory.classify_cooling_zone(3065, config) == "variable"
+    assert theory.classify_cooling_zone(3135, config) == "structural"
+    assert theory.classify_cooling_zone(9999, config) == "outside"
+
+
+def test_summarize_by_respects_min_n_threshold():
+    frame = pd.DataFrame(
+        {
+            "segment": ["A", "A", "A", "B"],
+            "machine_number": [1, 2, 3, 4],
+            "diff_coins_normalized": [100, 200, 300, 500],
+            "games_normalized": [1000, 1000, 1000, 1000],
+            "hit104": [0, 1, 1, 1],
+        }
+    )
+
+    summary = theory.summarize_by(frame, ["segment"], min_n=3)
+
+    assert set(summary["segment"]) == {"A"}

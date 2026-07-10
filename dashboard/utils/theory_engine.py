@@ -174,37 +174,6 @@ def classify_setting_family(machine_name: object, hall_config: dict[str, Any] | 
     return "N"
 
 
-def _match_segment_rule(row: pd.Series, rule: dict[str, Any]) -> bool:
-    conditions = rule.get("conditions", {})
-    for field, expected in conditions.items():
-        actual = row.get(field)
-        if isinstance(expected, list):
-            if actual not in expected:
-                return False
-        else:
-            if actual != expected:
-                return False
-    return bool(conditions)
-
-
-def classify_theory_segment(
-    floor: object,
-    lr: object,
-    family: object,
-    hall_config: dict[str, Any] | None = None,
-) -> str:
-    """Return a hall-specific theory segment name or an outside bucket."""
-
-    config = hall_config or _default_config()
-    segment_scheme = config.get("segment_scheme", {})
-    definitions = segment_scheme.get("definitions", [])
-    row = {"floor": floor, "lr": lr, "family": family}
-    for rule in definitions:
-        if _match_segment_rule(row, rule):
-            return str(rule.get("name", "不明"))
-    return str(segment_scheme.get("outside", "対象外"))
-
-
 def _classify_theory_segment_vectorized(frame: pd.DataFrame, hall_config: dict[str, Any]) -> pd.Series:
     """Vectorized equivalent of classify_theory_segment for whole-frame use.
 
@@ -661,37 +630,3 @@ def build_event_bucket_summary(frame: pd.DataFrame, *, min_n: int = THEORY_MIN_S
     return summary.sort_values(["total_diff", "days"], ascending=[False, False], kind="mergesort").reset_index(
         drop=True
     )
-
-
-def refutation_warnings(hall_key: str | None = None) -> list[dict[str, str]]:
-    """Return guardrail warnings from the current theory review."""
-
-    key = hall_key or DEFAULT_HALL_KEY
-    config = load_hall_config(key)
-    warnings = config.get("warnings", [])
-    if isinstance(warnings, list) and warnings:
-        return [warning for warning in warnings if isinstance(warning, dict)]
-    return [
-        {
-            "論点": "サンプル 5 未満は参考値",
-            "注意": "少数セルを強い結論として扱わない。必要なら閾値を下げた参考表示を併記する。",
-        }
-    ]
-
-
-def theory_coverage_rows(hall_key: str | None = None) -> list[dict[str, str]]:
-    """Backward-compatible coverage rows used by the legacy hub view."""
-
-    key = hall_key or DEFAULT_HALL_KEY
-    registry = load_theory_registry(key)
-    rows: list[dict[str, str]] = []
-    for index, claim in enumerate(registry.get("claims", []), start=1):
-        rows.append(
-            {
-                "優先度": f"P{index}",
-                "論点": str(claim.get("title", "")),
-                "状態": str(claim.get("status", "")),
-                "ダッシュボード": str(claim.get("metric", "")),
-            }
-        )
-    return rows
