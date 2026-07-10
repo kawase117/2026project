@@ -165,7 +165,7 @@ def _claim_mask(frame: pd.DataFrame, claim_segment: dict[str, Any]) -> pd.Series
     return mask
 
 
-def _baseline_mask(frame: pd.DataFrame, baseline: str) -> pd.Series:
+def _baseline_mask(frame: pd.DataFrame, baseline: str, claim_segment: dict[str, Any] | None = None) -> pd.Series:
     if frame.empty:
         return pd.Series(dtype=bool)
     if baseline == "hall_all":
@@ -174,6 +174,13 @@ def _baseline_mask(frame: pd.DataFrame, baseline: str) -> pd.Series:
         return frame["is_event_day"].fillna(False)
     if baseline == "hall_non_event":
         return ~frame["is_event_day"].fillna(False)
+    if baseline == "segment_non_event":
+        # Same segment definition, but forced to the opposite side of the
+        # event_day axis — needed for claims about the event_day effect
+        # *within* a segment (e.g. family=A), where hall_all mixes in other
+        # families with a structurally different baseline metric level.
+        segment_ex_event = {k: v for k, v in (claim_segment or {}).items() if k != "event_day"}
+        return _claim_mask(frame, segment_ex_event) & ~frame["is_event_day"].fillna(False)
     raise ValueError(f"Unsupported baseline: {baseline}")
 
 
@@ -183,7 +190,7 @@ def _summarize_claim(frame: pd.DataFrame, claim: dict[str, Any]) -> tuple[pd.Dat
     metric = str(claim.get("metric", "avg_diff"))
 
     subset_mask = _claim_mask(frame, claim_segment)
-    baseline_mask = _baseline_mask(frame, baseline)
+    baseline_mask = _baseline_mask(frame, baseline, claim_segment)
     subset = frame.loc[subset_mask].copy()
     baseline_frame = frame.loc[baseline_mask].copy()
 
@@ -281,6 +288,146 @@ def _comparison_chart(summary: pd.DataFrame, metric: str, claim_title: str) -> g
     return fig
 
 
+def _kakuban_breakdown_chart(
+    frame: pd.DataFrame,
+    claim_segment: dict[str, Any],
+    metric: str,
+    kakuban_focus: dict[str, Any],
+) -> go.Figure:
+    subset = frame.loc[_claim_mask(frame, claim_segment)].copy()
+    value_label = METRIC_LABELS.get(metric, metric)
+    fig = go.Figure()
+
+    if subset.empty:
+        fig.update_layout(
+            title="角番別内訳",
+            yaxis_title=value_label,
+            xaxis_title="角番",
+            height=320,
+        )
+        return fig
+
+    axis = (
+        subset["kakuban"]
+        if "kakuban" in subset.columns
+        else subset.get("rank_from_min", pd.Series(index=subset.index, dtype="float64"))
+    )
+    work = pd.DataFrame(
+        {
+            "kakuban": pd.to_numeric(axis, errors="coerce"),
+            "metric": _metric_series(subset, metric),
+        }
+    ).dropna(subset=["kakuban", "metric"])
+
+    if work.empty:
+        fig.update_layout(
+            title="角番別内訳",
+            yaxis_title=value_label,
+            xaxis_title="角番",
+            height=320,
+        )
+        return fig
+
+    grouped = (
+        work.groupby("kakuban", as_index=False)
+        .agg(value=("metric", "mean"), n=("metric", "size"))
+        .loc[lambda data: data["n"] >= 5]
+        .sort_values("kakuban")
+    )
+
+    best = {int(value) for value in (kakuban_focus.get("best") or []) if pd.notna(value)}
+    avoid = {int(value) for value in (kakuban_focus.get("avoid") or []) if pd.notna(value)}
+    colors = [
+        "#2f9e44" if int(value) in best else "#e03131" if int(value) in avoid else "#868e96"
+        for value in grouped["kakuban"]
+    ]
+
+    fig.add_trace(
+        go.Bar(
+            x=grouped["kakuban"].astype(int),
+            y=grouped["value"],
+            marker_color=colors,
+            text=[f"n={int(value)}" for value in grouped["n"]],
+            textposition="outside",
+            hovertemplate="角番=%{x}<br>値=%{y}<extra></extra>",
+        )
+    )
+    fig.update_layout(
+        title="角番別内訳",
+        yaxis_title=value_label,
+        xaxis_title="角番",
+        height=320,
+        showlegend=False,
+    )
+    if metric in {"win_rate", "hit104_rate"}:
+        fig.update_yaxes(tickformat=".0%")
+    return fig
+
+
+def _zorome_digit_breakdown_chart(frame: pd.DataFrame, claim_segment: dict[str, Any], metric: str) -> go.Figure:
+    subset = frame.loc[_claim_mask(frame, claim_segment)].copy()
+    value_label = METRIC_LABELS.get(metric, metric)
+    fig = go.Figure()
+
+    if subset.empty or "last_digit" not in subset.columns:
+        fig.update_layout(
+            title="ゾロ目桁別内訳（00〜99）",
+            yaxis_title=value_label,
+            xaxis_title="桁",
+            height=320,
+        )
+        return fig
+
+    work = pd.DataFrame(
+        {
+            "digit": pd.to_numeric(subset["last_digit"], errors="coerce"),
+            "metric": _metric_series(subset, metric),
+        }
+    ).dropna(subset=["digit", "metric"])
+
+    if work.empty:
+        fig.update_layout(
+            title="ゾロ目桁別内訳（00〜99）",
+            yaxis_title=value_label,
+            xaxis_title="桁",
+            height=320,
+        )
+        return fig
+
+    grouped = (
+        work.groupby("digit", as_index=False)
+        .agg(value=("metric", "mean"), n=("metric", "size"))
+        .loc[lambda data: data["n"] >= 5]
+        .sort_values("digit")
+    )
+
+    fig.add_trace(
+        go.Bar(
+            x=grouped["digit"].astype(int),
+            y=grouped["value"],
+            marker_color="#4263eb",
+            text=[f"n={int(value)}" for value in grouped["n"]],
+            textposition="outside",
+            hovertemplate="桁=%{x}<br>値=%{y}<extra></extra>",
+        )
+    )
+    fig.update_layout(
+        title="ゾロ目桁別内訳（00〜99）",
+        yaxis_title=value_label,
+        xaxis_title="桁",
+        height=320,
+        showlegend=False,
+    )
+    fig.update_xaxes(
+        tickmode="array",
+        tickvals=list(range(10)),
+        ticktext=[f"{digit}{digit}" for digit in range(10)],
+    )
+    if metric in {"win_rate", "hit104_rate"}:
+        fig.update_yaxes(tickformat=".0%")
+    return fig
+
+
 def _render_claim_block(frame: pd.DataFrame, hall_config: dict[str, Any], claim: dict[str, Any]) -> None:
     summary, comparison = _summarize_claim(frame, claim)
     metric = str(claim.get("metric", "avg_diff"))
@@ -326,6 +473,20 @@ def _render_claim_block(frame: pd.DataFrame, hall_config: dict[str, Any], claim:
         st.dataframe(display_summary, use_container_width=True, hide_index=True)
 
         st.plotly_chart(_comparison_chart(summary, metric, title), use_container_width=True)
+        kakuban_focus = claim.get("kakuban_focus")
+        if kakuban_focus:
+            note = kakuban_focus.get("note")
+            if note:
+                st.caption(str(note))
+            st.plotly_chart(
+                _kakuban_breakdown_chart(frame, claim.get("segment", {}), metric, kakuban_focus),
+                use_container_width=True,
+            )
+        if claim.get("id") == "k7-zorome-tail":
+            st.plotly_chart(
+                _zorome_digit_breakdown_chart(frame, claim.get("segment", {}), metric),
+                use_container_width=True,
+            )
 
 
 def _render_registry_overview(registry: dict[str, Any]) -> None:
@@ -541,6 +702,14 @@ def render() -> None:
     display_name = hall_config.get("display_name", hall_key)
     st.markdown(f"## {display_name} Theory Verification")
     st.caption("Claim-driven verification for the current hall, with raw-axis tabs kept as a secondary view.")
+
+    with st.expander("用語集", expanded=False):
+        st.markdown(
+            """- **角番 (kakuban)**: セクション（島）内で両端からの近さを示す位置番号。`kakuban = min(rank_from_min, rank_from_max)`。角1=島の端、数字が大きいほど中央寄り。最強の角番はセグメントごとに異なる（各クレームの「角番別内訳」チャートを参照）。
+- **台特定シグナル**: 効果が「末尾」や「角番」という一般ルールではなく、少数の特定物理台（台番号）に集中している場合の判定。上位2台を除外して再検定し、有意性が消える場合にこの判定となる。
+- **可変冷却帯 / 構造冷却帯**: 全期間平均が低い「冷却ゾーン」の分類。判定基準はDD7（イベント日）での104%率リフト。可変冷却=リフト≧5pp（イベント日に通常水準まで回復、非イベント日のみ回避すればよい）。構造冷却=リフト<2pp（イベント日でも回復しない、常時回避）。
+- **「最強」「最優先」「構造的に強い」などの表現について**: これらは全て「そのセグメントで対象の軸が統計的に有意（p<0.001程度）かつ耐久性検証（split-half等）を通過した」ことを指す定性的な表現であり、強さの序列を表すものではない。具体的な数値は各クレームの本文・チャートを参照すること。"""
+        )
 
     if not db_path:
         st.warning("サイドバーでホール DB を選択してください。")

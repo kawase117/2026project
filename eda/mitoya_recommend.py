@@ -77,6 +77,8 @@ def _score_machine(
     is_xdds: bool,
     section_baselines: dict[str, float],
 ) -> float:
+    from eda.mitoya_recommend_backtest import current_weight_vector
+
     segment = row["segment"]
     corner_bucket = row["corner_bucket"]
     section = row["section"]
@@ -85,7 +87,8 @@ def _score_machine(
         return -9999.0
 
     score = 0.0
-    score += section_baselines.get(section, 0.0) * 0.1
+    section_baseline_scale = float(current_weight_vector()["section_baseline_scale"])
+    score += section_baselines.get(section, 0.0) * section_baseline_scale
 
     if segment == "h_jug":
         # 重みは eda/mitoya_recommend_optimize.py の walk-forward 最適化結果
