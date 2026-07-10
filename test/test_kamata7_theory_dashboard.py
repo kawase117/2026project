@@ -4,56 +4,72 @@ from pathlib import Path
 
 import pandas as pd
 
-from dashboard.utils import kamata7_theory as theory
+from dashboard.utils import theory_engine as theory
 
 
-def test_infer_floor_from_kamata7_machine_number():
-    assert theory.infer_floor(2001) == "2F"
-    assert theory.infer_floor(3135) == "3F"
-    assert theory.infer_floor(711) == "不明"
+def test_hall_configs_and_registries_load_for_both_halls():
+    kama7 = theory.load_hall_config("kamata7")
+    kama1 = theory.load_hall_config("kamata1")
+    reg7 = theory.load_theory_registry("kamata7")
+    reg1 = theory.load_theory_registry("kamata1")
+
+    assert kama7["segment_scheme"]["order"][0] == "2F_L_N"
+    assert kama1["segment_scheme"]["order"] == ["2F_A", "2F_N"]
+    assert len(reg7["claims"]) > 0
+    assert len(reg1["claims"]) > 0
+    assert any(claim["id"] == "k7-2f-l-n-corner" for claim in reg7["claims"])
+    assert any(claim["id"] == "k1-a-dd30" for claim in reg1["claims"])
 
 
-def test_infer_lr_uses_section_median_and_vertical_fallback():
-    layout = pd.DataFrame(
+def test_attach_theory_axes_uses_hall_specific_segment_rules():
+    layout7 = pd.DataFrame(
         {
-            "machine_number": [2001, 2002, 3001, 3002],
-            "section": ["A", "A", "B", "B"],
-            "x": [1, 3, 5, 5],
+            "machine_number": [2001, 3001],
+            "section": ["A", "B"],
+            "x": [1, 1],
+            "section_min": [2001, 3001],
+            "section_max": [2010, 3010],
+            "rank_from_min": [1, 2],
+            "rank_from_max": [10, 9],
         }
     )
-
-    assert theory.infer_lr(layout).tolist() == ["L", "R", "R", "R"]
-
-
-def test_attach_theory_axes_builds_segment_event_and_cooling_flags():
-    machines = pd.DataFrame(
+    machines7 = pd.DataFrame(
         {
-            "date": ["20260730", "20260715", "20260715"],
-            "machine_number": [2001, 3065, 3135],
-            "machine_name": ["normal", "normal", "normal"],
-            "games_normalized": [1200, 1300, 1400],
-            "diff_coins_normalized": [300, -100, 500],
+            "date": ["20260730", "20260730"],
+            "machine_number": [2001, 3001],
+            "machine_name": ["AT machine", "ジャグラー"],
+            "games_normalized": [1200, 1300],
+            "diff_coins_normalized": [300, 500],
         }
     )
-    layout = pd.DataFrame(
+    out7 = theory.attach_theory_axes(machines7, layout7, theory.load_hall_config("kamata7"))
+
+    layout1 = pd.DataFrame(
         {
-            "machine_number": [2001, 3065, 3135],
-            "section": ["A", "B", "C"],
-            "x": [1, 1, 2],
-            "section_min": [2001, 3061, 3131],
-            "section_max": [2010, 3070, 3140],
-            "rank_from_min": [1, 5, 5],
-            "rank_from_max": [10, 6, 6],
+            "machine_number": [1631, 1632],
+            "section": ["A", "A"],
+            "x": [1, 2],
+            "section_min": [1631, 1631],
+            "section_max": [1640, 1640],
+            "rank_from_min": [1, 2],
+            "rank_from_max": [10, 9],
         }
     )
+    machines1 = pd.DataFrame(
+        {
+            "date": ["20260730", "20260730"],
+            "machine_number": [1631, 1632],
+            "machine_name": ["ジャグラー", "AT machine"],
+            "games_normalized": [1200, 1300],
+            "diff_coins_normalized": [300, -100],
+        }
+    )
+    out1 = theory.attach_theory_axes(machines1, layout1, theory.load_hall_config("kamata1"))
 
-    out = theory.attach_theory_axes(machines, layout)
-
-    assert "2F_L_N" in set(out["segment"])
-    assert out.loc[out["machine_number"].eq(2001), "is_event_day"].iloc[0]
-    assert out.loc[out["machine_number"].eq(3065), "cooling_zone"].iloc[0] == "variable"
-    assert out.loc[out["machine_number"].eq(3135), "cooling_zone"].iloc[0] == "structural"
-    assert out.loc[out["machine_number"].eq(2001), "segment"].iloc[0] == "2F_L_N"
+    assert set(out7["segment"]) == {"2F_L_N", "3F_L_A"}
+    assert set(out1["segment"]) == {"2F_A", "2F_N"}
+    assert out1["lr"].eq("不明").all()
+    assert out1["kakuban"].tolist() == [1, 2]
 
 
 def test_event_kind_summary_groups_dd_and_month_end_days():

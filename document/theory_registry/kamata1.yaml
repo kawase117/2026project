@@ -1,0 +1,139 @@
+hall: kamata1
+claims:
+  - id: k1-a-dd30
+    title: A 系の DD30 は最強
+    status: robust
+    segment:
+      family: A
+      dd: [30]
+    metric: avg_diff
+    direction: up
+    baseline: hall_all
+    min_n: 5
+    source: document/kamata1_theory.md#2-1-dd--a系のみ有効、n系は完全無効
+    last_reviewed: 2026-07-10
+  - id: k1-a-dd1
+    title: A 系の DD1 は強い
+    status: robust
+    segment:
+      family: A
+      dd: [1]
+    metric: avg_diff
+    direction: up
+    baseline: hall_all
+    min_n: 5
+    source: document/kamata1_theory.md#2-1-dd--a系のみ有効、n系は完全無効
+    last_reviewed: 2026-07-10
+  - id: k1-a-dd7
+    title: A 系の DD7 は強い
+    status: robust
+    segment:
+      family: A
+      dd: [7]
+    metric: avg_diff
+    direction: up
+    baseline: hall_all
+    min_n: 5
+    source: document/kamata1_theory.md#2-1-dd--a系のみ有効、n系は完全無効
+    last_reviewed: 2026-07-10
+  - id: k1-n-dd-null
+    title: N 系の DD 軸はフラット
+    status: robust
+    segment:
+      family: N
+    metric: avg_diff
+    direction: flat
+    baseline: hall_all
+    min_n: 5
+    source: document/kamata1_theory.md#2-1-dd--a系のみ有効、n系は完全無効
+    last_reviewed: 2026-07-10
+  - id: k1-a-tail-null
+    title: A 系の台番号末尾は無効
+    status: refuted
+    segment:
+      family: A
+    metric: avg_diff
+    direction: flat
+    baseline: hall_all
+    min_n: 5
+    source: document/kamata1_theory.md#2-2-台番号末尾—a系・n系ともに無効
+    last_reviewed: 2026-07-10
+  - id: k1-n-tail-null
+    title: N 系の台番号末尾は無効
+    status: refuted
+    segment:
+      family: N
+    metric: avg_diff
+    direction: flat
+    baseline: hall_all
+    min_n: 5
+    source: document/kamata1_theory.md#2-2-台番号末尾—a系・n系ともに無効
+    last_reviewed: 2026-07-10
+  - id: k1-a-kakuban-structural
+    title: A 系の角番は構造的に効く
+    status: robust
+    segment:
+      family: A
+    metric: hit104_rate
+    direction: up
+    baseline: hall_all
+    min_n: 5
+    source: document/kamata1_theory.md#2-3-角番—a系で構造的n系はコーナー回避のみ
+    last_reviewed: 2026-07-10
+  - id: k1-n-kakuban-corner
+    title: N 系の角番はコーナー回避のみ
+    status: watching
+    segment:
+      family: N
+    metric: avg_diff
+    direction: down
+    baseline: hall_all
+    min_n: 5
+    source: document/kamata1_theory.md#2-3-角番—a系で構造的n系はコーナー回避のみ
+    last_reviewed: 2026-07-10
+  - id: k1-section-event-day
+    title: セクション × イベント日が最強軸
+    status: robust
+    segment:
+      event_day: true
+    metric: avg_diff
+    direction: up
+    baseline: hall_all
+    min_n: 5
+    source: document/kamata1_theory.md#2-5-セクションイベント日--蒲田1最強の分析軸
+    last_reviewed: 2026-07-10
+  - id: k1-mmdd-a
+    title: MM=DD は A 系の年間最強シグナル
+    status: robust
+    segment:
+      family: A
+      strong_mmdd: true
+    metric: hit104_rate
+    direction: up
+    baseline: hall_all
+    min_n: 5
+    source: document/kamata1_theory.md#2-6-ゾロ目mmdd--a系の年間最強シグナル
+    last_reviewed: 2026-07-10
+  - id: k1-xkakuban-n
+    title: X 角番は N 系で重要
+    status: robust
+    segment:
+      family: N
+    metric: avg_diff
+    direction: up
+    baseline: hall_all
+    min_n: 5
+    source: document/kamata1_theory.md#2-8-x角番—n系で重要a系は軽微
+    last_reviewed: 2026-07-10
+  - id: k1-dd-vs-weekday
+    title: 機種別 DD/曜日では DD が優勢
+    status: watching
+    segment:
+      event_day: true
+    metric: avg_diff
+    direction: up
+    baseline: hall_all
+    min_n: 5
+    source: document/kamata1_theory.md#2-9-機種別dd曜日パターン（全機種横断スキャン）
+    last_reviewed: 2026-07-10
+

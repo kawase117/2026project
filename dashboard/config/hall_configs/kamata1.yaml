@@ -1,0 +1,48 @@
+hall: kamata1
+display_name: 蒲田1
+aliases:
+  - 蒲田1
+  - kamata1
+floors:
+  - label: 2F
+    min_machine_number: 1631
+    max_machine_number: 2415
+use_lr: false
+kakuban_rule: min_rank
+family_keywords:
+  A:
+    - ジャグラー
+    - ハナハナ
+event_day:
+  digits: [1, 7, 11, 17, 21, 22, 27, 30, 31]
+  use_month_end: true
+  use_strong_mmdd: true
+cooling_zones: []
+durable_machine_numbers: []
+segment_scheme:
+  outside: 対象外
+  order:
+    - 2F_A
+    - 2F_N
+  labels:
+    2F_A: 2F A
+    2F_N: 2F N
+    対象外: 対象外
+    不明: 不明
+  definitions:
+    - name: 2F_A
+      conditions:
+        floor: 2F
+        family: A
+    - name: 2F_N
+      conditions:
+        floor: 2F
+        family: N
+warnings:
+  - 論点: DD は A 系のみ有効
+    注意: N 系で DD を使うとほぼフラットに落ちるため、A/N を先に分ける。
+  - 論点: 角番はスコアではなくフィルタ
+    注意: A 系のイベント日は角番で順位付けせず、回避/優先の補助として使う。
+  - 論点: 末尾は一部機種だけで使う
+    注意: N 系の末尾は台により無効なので、無条件の末尾採用はしない。
+

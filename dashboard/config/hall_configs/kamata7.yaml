@@ -1,0 +1,112 @@
+hall: kamata7
+display_name: 蒲田7
+aliases:
+  - 蒲田7
+  - kamata7
+  - マルハンメガシティ2000-蒲田7
+floors:
+  - label: 2F
+    min_machine_number: 2001
+    max_machine_number: 2351
+  - label: 3F
+    min_machine_number: 3001
+    max_machine_number: 3362
+use_lr: true
+kakuban_rule: min_rank
+family_keywords:
+  A:
+    - ジャグラー
+    - アイム
+    - マイジャグ
+    - ファンキー
+    - ゴーゴー
+    - ハッピー
+    - ハナハナ
+    - 沖ドキ
+    - チバリヨ
+    - ニューパル
+    - ディスクアップ
+    - クランキー
+    - バーサス
+    - アレックス
+    - エヴァ
+    - マタドール
+    - ウルトラミラクル
+    - ピンクパンサー
+    - トリプルクラウン
+event_day:
+  digits: [1, 7, 11, 17, 21, 22, 27, 30, 31]
+  use_month_end: true
+  use_strong_mmdd: true
+cooling_zones:
+  - name: variable
+    label: 可変冷却帯
+    ranges:
+      - [3061, 3070]
+      - [3081, 3090]
+  - name: structural
+    label: 構造冷却帯
+    ranges:
+      - [3131, 3140]
+durable_machine_numbers: [2026]
+segment_scheme:
+  outside: 対象外
+  order:
+    - 2F_L_N
+    - 2F_R_N
+    - 3F_L_A
+    - 3F_L_N
+    - 3F_R_A
+    - 3F_R_N
+  labels:
+    2F_L_N: 2F 左 N
+    2F_R_N: 2F 右 N
+    3F_L_A: 3F 左 A
+    3F_L_N: 3F 左 N
+    3F_R_A: 3F 右 A
+    3F_R_N: 3F 右 N
+    対象外: 対象外
+    不明: 不明
+  definitions:
+    - name: 2F_L_N
+      conditions:
+        floor: 2F
+        lr: L
+    - name: 2F_R_N
+      conditions:
+        floor: 2F
+        lr: R
+    - name: 3F_L_A
+      conditions:
+        floor: 3F
+        lr: L
+        family: A
+    - name: 3F_L_N
+      conditions:
+        floor: 3F
+        lr: L
+        family: N
+    - name: 3F_R_A
+      conditions:
+        floor: 3F
+        lr: R
+        family: A
+    - name: 3F_R_N
+      conditions:
+        floor: 3F
+        lr: R
+        family: N
+warnings:
+  - 論点: L/R を機械番号の偶奇で決めない
+    注意: 左右判定はセクション内の X 座標で決める。機械番号の並びだけでは左右が逆転する。
+  - 論点: DD×角番の細かいセルは少数サンプルに弱い
+    注意: サンプルが薄いセルはすぐにブレる。ヒートマップは必ず n と一緒に読む。
+  - 論点: 104% は主指標ではなく補助指標
+    注意: hit104 は閾値判定であり、差玉の大きさや分散を代替しない。
+  - 論点: GATED / NOGATE は表示補助に留める
+    注意: このページでは日付ゲートの説明に使うが、結論そのものにはしない。
+  - 論点: 機種別 DD の広域表示はノイズが大きい
+    注意: ホワイトリストや対象機種の固定がない広域表示は誤読しやすい。
+  - 論点: サンプル 5 未満は参考値
+    注意: 少数セルを強い結論として扱わない。必要なら閾値を下げた参考表示を併記する。
+

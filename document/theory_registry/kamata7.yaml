@@ -1,0 +1,180 @@
+hall: kamata7
+claims:
+  - id: k7-2f-l-n-corner
+    title: 2F_L_N は角番が最優先
+    status: robust
+    segment:
+      floor: 2F
+      lr: L
+      family: N
+    metric: avg_diff
+    direction: up
+    baseline: hall_all
+    min_n: 5
+    source: document/kamata7_theory.md#2-1-角番（普遍的効果）
+    last_reviewed: 2026-07-10
+  - id: k7-2f-l-n-tail6
+    title: 2F_L_N の末尾 d6 は脆弱
+    status: fragile
+    segment:
+      floor: 2F
+      lr: L
+      family: N
+      machine_tail: [6]
+    metric: avg_diff
+    direction: up
+    baseline: hall_all
+    min_n: 5
+    source: document/kamata7_theory.md#2-2-台番号末尾（セグメント依存）
+    last_reviewed: 2026-07-10
+  - id: k7-2f-r-n-corner
+    title: 2F_R_N は角番のみで見る
+    status: robust
+    segment:
+      floor: 2F
+      lr: R
+      family: N
+    metric: avg_diff
+    direction: up
+    baseline: hall_all
+    min_n: 5
+    source: document/kamata7_theory.md#1-セグメント構造
+    last_reviewed: 2026-07-10
+  - id: k7-2f-r-n-tail-null
+    title: 2F_R_N の末尾は無効
+    status: refuted
+    segment:
+      floor: 2F
+      lr: R
+      family: N
+    metric: avg_diff
+    direction: flat
+    baseline: hall_all
+    min_n: 5
+    source: document/kamata7_theory.md#2-2-台番号末尾（セグメント依存）
+    last_reviewed: 2026-07-10
+  - id: k7-3f-l-a-corner
+    title: 3F_L_A は角番が構造的に強い
+    status: robust
+    segment:
+      floor: 3F
+      lr: L
+      family: A
+    metric: hit104_rate
+    direction: up
+    baseline: hall_all
+    min_n: 5
+    source: document/kamata7_theory.md#2-1-角番（普遍的効果）
+    last_reviewed: 2026-07-10
+  - id: k7-3f-l-a-dd-kakuban
+    title: 3F_L_A の DD×角番は有効
+    status: robust
+    segment:
+      floor: 3F
+      lr: L
+      family: A
+    metric: avg_diff
+    direction: up
+    baseline: hall_all
+    min_n: 5
+    source: document/kamata7_theory.md#2-1-角番（普遍的効果）
+    last_reviewed: 2026-07-10
+  - id: k7-3f-l-n-tail89
+    title: 3F_L_N の末尾 d8/d9 は台特定シグナル寄り
+    status: fragile
+    segment:
+      floor: 3F
+      lr: L
+      family: N
+      machine_tail: [8, 9]
+    metric: avg_diff
+    direction: up
+    baseline: hall_all
+    min_n: 5
+    source: document/kamata7_theory.md#2-2-台番号末尾（セグメント依存）
+    last_reviewed: 2026-07-10
+  - id: k7-3f-r-a-corner
+    title: 3F_R_A は角番が最強軸
+    status: robust
+    segment:
+      floor: 3F
+      lr: R
+      family: A
+    metric: hit104_rate
+    direction: up
+    baseline: hall_all
+    min_n: 5
+    source: document/kamata7_theory.md#2-1-角番（普遍的効果）
+    last_reviewed: 2026-07-10
+  - id: k7-3f-r-a-dd-kakuban
+    title: 3F_R_A の DD×角番は最強
+    status: robust
+    segment:
+      floor: 3F
+      lr: R
+      family: A
+    metric: avg_diff
+    direction: up
+    baseline: hall_all
+    min_n: 5
+    source: document/kamata7_theory.md#2-1-角番（普遍的効果）
+    last_reviewed: 2026-07-10
+  - id: k7-3f-r-n-corner-weak
+    title: 3F_R_N の角番は弱い
+    status: watching
+    segment:
+      floor: 3F
+      lr: R
+      family: N
+    metric: avg_diff
+    direction: up
+    baseline: hall_all
+    min_n: 5
+    source: document/kamata7_theory.md#1-セグメント構造
+    last_reviewed: 2026-07-10
+  - id: k7-event-a-concentration
+    title: イベント日は A 機に集中する
+    status: robust
+    segment:
+      family: A
+      event_day: true
+    metric: hit104_rate
+    direction: up
+    baseline: hall_all
+    min_n: 5
+    source: document/kamata7_theory.md#2-5-イベント日（A機に集中）
+    last_reviewed: 2026-07-10
+  - id: k7-zorome-tail
+    title: 台末尾ゾロ目は安定的に強い
+    status: robust
+    segment:
+      is_zorome: 1
+    metric: hit104_rate
+    direction: up
+    baseline: hall_all
+    min_n: 5
+    source: document/kamata7_theory.md#2-6-ゾロ目（台末尾ゾロ目の安定的優位）
+    last_reviewed: 2026-07-10
+  - id: k7-cooling-variable
+    title: 3061-3070 と 3081-3090 は可変冷却帯
+    status: robust
+    segment:
+      cooling_zone: variable
+    metric: avg_diff
+    direction: up
+    baseline: hall_all
+    min_n: 5
+    source: document/kamata7_theory.md#冷却ゾーンの二分法（2026-06-28 DD条件付き10台ブロック分析）
+    last_reviewed: 2026-07-10
+  - id: k7-cooling-structural
+    title: 3131-3140 は構造冷却帯
+    status: robust
+    segment:
+      cooling_zone: structural
+    metric: avg_diff
+    direction: down
+    baseline: hall_all
+    min_n: 5
+    source: document/kamata7_theory.md#冷却ゾーンの二分法（2026-06-28 DD条件付き10台ブロック分析）
+    last_reviewed: 2026-07-10
+

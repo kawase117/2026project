@@ -20,9 +20,7 @@ from .pages import (
     page_17_heatmap,
     page_18_daily_report,
     page_19_daily_report_visual_test,
-    page_20_kamata7_theory,
-    page_21_kamata7_event_checks,
-    page_22_kamata7_segments,
+    page_20_theory_verification,
 )
 from .app_shell import render_app
 
@@ -42,9 +40,7 @@ PAGE_ROUTER = {
     "heatmap": page_17_heatmap.render,
     "daily_report": page_18_daily_report.render,
     "daily_report_visual_test": page_19_daily_report_visual_test.render,
-    "kamata7_theory": page_20_kamata7_theory.render,
-    "kamata7_event_checks": page_21_kamata7_event_checks.render,
-    "kamata7_segments": page_22_kamata7_segments.render,
+    "theory_verification": page_20_theory_verification.render,
 }
 
 render_app(PAGE_ROUTER)

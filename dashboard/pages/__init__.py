@@ -15,9 +15,7 @@ from . import (
     page_17_heatmap,
     page_18_daily_report,
     page_19_daily_report_visual_test,
-    page_20_kamata7_theory,
-    page_21_kamata7_event_checks,
-    page_22_kamata7_segments,
+    page_20_theory_verification,
 )
 
 __all__ = [
@@ -35,7 +33,5 @@ __all__ = [
     'page_17_heatmap',
     'page_18_daily_report',
     'page_19_daily_report_visual_test',
-    'page_20_kamata7_theory',
-    'page_21_kamata7_event_checks',
-    'page_22_kamata7_segments',
+    'page_20_theory_verification',
 ]
