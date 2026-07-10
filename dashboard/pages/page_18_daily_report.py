@@ -280,7 +280,7 @@ def render() -> None:
     if not layout_frame.empty and {"machine_number", "rank_from_min", "section"} <= set(layout_frame.columns):
         kakuban_summary = build_layout_summary(daily_df, layout_frame, group_column="rank_from_min")
         section_summary = build_layout_summary(daily_df, layout_frame, group_column="section")
-        _render_table("角番別成績", kakuban_summary)
+        _render_table("端番別（min側）成績", kakuban_summary)
         _render_table("Section別成績", section_summary)
 
     master_frame = load_optional_table(str(db_path), "machine_master")
@@ -332,7 +332,7 @@ def render() -> None:
             tables.insert(
                 1,
                 (
-                    "角番別",
+                    "端番別（min側）",
                     build_layout_summary(
                         daily_df,
                         layout_frame,

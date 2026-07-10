@@ -78,7 +78,7 @@ def test_compute_diff_distribution_stats_returns_mean_median_and_count() -> None
     assert empty_stats["n"] == 0
 
 
-def test_build_kakuban_section_pivot_applies_min_group_size_and_matches_summary() -> None:
+def test_build_hanaban_section_pivot_applies_min_group_size_and_matches_summary() -> None:
     import dashboard.utils.daily_report as report
 
     daily = pd.DataFrame(
@@ -96,7 +96,7 @@ def test_build_kakuban_section_pivot_applies_min_group_size_and_matches_summary(
         }
     )
 
-    pivot = report.build_kakuban_section_pivot(daily, layout, min_group_size=3)
+    pivot = report.build_hanaban_section_pivot(daily, layout, min_group_size=3)
     small_cell = pivot.loc[(pivot["rank_from_min"] == 1) & (pivot["section"] == "A")].iloc[0]
     large_cell = pivot.loc[(pivot["rank_from_min"] == 2) & (pivot["section"] == "B")].iloc[0]
 
@@ -115,7 +115,7 @@ def test_build_kakuban_section_pivot_applies_min_group_size_and_matches_summary(
     assert large_cell["hit104_rate"] == pytest.approx(expected["hit104_rate"])
 
 
-def test_build_kakuban_section_pivot_defaults_to_single_cell_groups() -> None:
+def test_build_hanaban_section_pivot_defaults_to_single_cell_groups() -> None:
     import dashboard.utils.daily_report as report
 
     daily = pd.DataFrame(
@@ -133,7 +133,7 @@ def test_build_kakuban_section_pivot_defaults_to_single_cell_groups() -> None:
         }
     )
 
-    pivot = report.build_kakuban_section_pivot(daily, layout)
+    pivot = report.build_hanaban_section_pivot(daily, layout)
 
     assert pivot["avg_diff"].notna().all()
     assert pivot["win_rate"].notna().all()

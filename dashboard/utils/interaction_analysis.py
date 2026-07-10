@@ -13,7 +13,17 @@ from eda.machine_axis_pattern_scan import DD_BIN_EDGES
 from eda.machine_name_significance_scan import _cramers_v_bias_corrected
 
 
-INTERACTION_AXIS_OPTIONS = ["segment", "dd", "dd_bin", "kakuban", "machine_tail", "event_day", "family"]
+INTERACTION_AXIS_OPTIONS = [
+    "segment",
+    "dd",
+    "dd_bin",
+    "hanaban_min",
+    "hanaban_max",
+    "kakuban",
+    "machine_tail",
+    "event_day",
+    "family",
+]
 INTERACTION_METRIC_OPTIONS = ["avg_diff", "win_rate", "hit104_rate"]
 DEFAULT_EFFECT_SIZE_THRESHOLD = 0.1
 DEFAULT_MIN_CELL_N = 5
@@ -84,12 +94,14 @@ def axis_series(frame: pd.DataFrame, axis: str) -> pd.Series:
             right=True,
             ordered=True,
         ).astype("string")
+    if axis == "hanaban_min":
+        source = frame.get("rank_from_min", pd.Series(np.nan, index=frame.index))
+        return pd.to_numeric(source, errors="coerce").astype("Int64")
+    if axis == "hanaban_max":
+        source = frame.get("rank_from_max", pd.Series(np.nan, index=frame.index))
+        return pd.to_numeric(source, errors="coerce").astype("Int64")
     if axis == "kakuban":
-        source = (
-            frame["kakuban"]
-            if "kakuban" in frame.columns
-            else frame.get("rank_from_min", pd.Series(np.nan, index=frame.index))
-        )
+        source = frame.get("kakuban", pd.Series(np.nan, index=frame.index))
         return pd.to_numeric(source, errors="coerce").astype("Int64")
     if axis == "machine_tail":
         if "machine_tail" in frame.columns:
@@ -109,7 +121,7 @@ def sorted_axis_values(values: pd.Series, axis: str) -> list[object]:
     observed = pd.Series(values.dropna().tolist())
     if observed.empty:
         return []
-    if axis in {"dd", "kakuban", "machine_tail"}:
+    if axis in {"dd", "hanaban_min", "hanaban_max", "kakuban", "machine_tail"}:
         numeric = pd.to_numeric(observed, errors="coerce").dropna().astype(int)
         return sorted(numeric.unique().tolist())
     if axis == "dd_bin":
@@ -145,7 +157,7 @@ def summarize_cells(
 
     work = frame.copy()
     for axis in axes + ([facet_axis] if facet_axis else []):
-        if axis is None or axis in work.columns:
+        if axis is None or axis in INTERACTION_AXIS_OPTIONS:
             continue
         raise KeyError(axis)
 
@@ -315,11 +327,13 @@ def build_claim_draft(
                 segment["dd_bin"] = [text]
         elif axis == "event_day":
             segment["event_day"] = bool(value)
-        elif axis in {"dd", "kakuban", "machine_tail"}:
+        elif axis in {"dd", "hanaban_min", "hanaban_max", "kakuban", "machine_tail"}:
             try:
-                segment[axis] = [int(value)]
+                segment_key = {"hanaban_min": "rank_from_min", "hanaban_max": "rank_from_max"}.get(axis, axis)
+                segment[segment_key] = [int(value)]
             except Exception:
-                segment[axis] = [value]
+                segment_key = {"hanaban_min": "rank_from_min", "hanaban_max": "rank_from_max"}.get(axis, axis)
+                segment[segment_key] = [value]
         elif axis == "segment":
             segment["segment"] = [str(value)]
         elif axis == "family":

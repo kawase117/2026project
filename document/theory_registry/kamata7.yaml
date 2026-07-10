@@ -1,7 +1,7 @@
 hall: kamata7
 claims:
   - id: k7-2f-l-n-corner
-    title: 2F_L_N は角5〜7が最強、角1・8・9は回避
+    title: 2F_L_N は端番5〜7が最強、端番1・8・9は回避
     status: robust
     segment:
       floor: 2F
@@ -11,10 +11,10 @@ claims:
     direction: up
     baseline: hall_all
     min_n: 5
-    kakuban_focus:
+    hanaban_focus:
       best: [5, 6, 7]
       avoid: [1, 8, 9]
-      note: 角1はn=9360で最大サンプルながらavg_diff=+112と全角番中最低。角6が最高値+335。
+      note: 端番1はn=9360で最大サンプルながらavg_diff=+112と全端番中最低。端番6が最高値+335。
     source: document/kamata7_theory.md#2-1-角番（普遍的効果）
     last_reviewed: 2026-07-10
   - id: k7-2f-l-n-tail6
@@ -32,7 +32,7 @@ claims:
     source: document/kamata7_theory.md#2-2-台番号末尾（セグメント依存）
     last_reviewed: 2026-07-10
   - id: k7-2f-r-n-corner
-    title: 2F_R_N は角4・5・6が強い（末尾は末尾軸のp=0.400で無効のため角番のみ採用）
+    title: 2F_R_N は端番4・5・6が強い（末尾は末尾軸のp=0.400で無効のため端番のみ採用）
     status: robust
     segment:
       floor: 2F
@@ -42,10 +42,10 @@ claims:
     direction: up
     baseline: hall_all
     min_n: 5
-    kakuban_focus:
+    hanaban_focus:
       best: [4, 5, 6]
       avoid: [1]
-      note: 角1はn=9312でavg_diff=+87と全角番中最低。角4が+438で最高（n=8376）。末尾軸はKruskal-Wallis p=0.400で無効なため角番単軸を採用。
+      note: 端番1はn=9312でavg_diff=+87と全端番中最低。端番4が+438で最高（n=8376）。末尾軸はKruskal-Wallis p=0.400で無効なため端番単軸を採用。
     source: document/kamata7_theory.md#1-セグメント構造
     last_reviewed: 2026-07-10
   - id: k7-2f-r-n-tail-null
@@ -62,7 +62,7 @@ claims:
     source: document/kamata7_theory.md#2-2-台番号末尾（セグメント依存）
     last_reviewed: 2026-07-10
   - id: k7-3f-l-a-corner
-    title: 3F_L_A は角4〜7が最強（hit104率31%前後）、角1〜3は回避
+    title: 3F_L_A は端番4〜7が最強（hit104率31%前後）、端番1〜3は回避
     status: robust
     segment:
       floor: 3F
@@ -72,14 +72,14 @@ claims:
     direction: up
     baseline: hall_all
     min_n: 5
-    kakuban_focus:
+    hanaban_focus:
       best: [4, 5, 6, 7]
       avoid: [1, 2, 3]
-      note: 角1はn=5233でhit104率26.0%と最低。角7が31.5%で最高（n=3861）。top2寄与率5.7%で機種依存の少ない構造シグナル（machine_dependencyテスト確認済み）。
+      note: 端番1はn=5233でhit104率26.0%と最低。端番7が31.5%で最高（n=3861）。top2寄与率5.7%で機種依存の少ない構造シグナル（machine_dependencyテスト確認済み）。
     source: document/kamata7_theory.md#2-1-角番（普遍的効果）
     last_reviewed: 2026-07-10
   - id: k7-3f-l-a-dd-kakuban
-    title: 3F_L_A は DD1-6で角5、DD13-24で角8〜9、DD25-31で角7が最強
+    title: 3F_L_A は DD1-6で端番5、DD13-24で端番8〜9、DD25-31で端番7が最強
     status: robust
     segment:
       floor: 3F
@@ -89,9 +89,9 @@ claims:
     direction: up
     baseline: hall_all
     min_n: 5
-    kakuban_focus:
+    hanaban_focus:
       best: [5, 7, 8, 9]
-      note: 最強角番はDDビンごとに手前→奥へシフトする（DD1-6=角5, DD13-18=角9, DD19-24=角8, DD25-31=角7）。単純な線形トレンドではなく離散的なDDビン単位のパターン。
+      note: 最強端番はDDビンごとに手前→奥へシフトする（DD1-6=端番5, DD13-18=端番9, DD19-24=端番8, DD25-31=端番7）。単純な線形トレンドではなく離散的なDDビン単位のパターン。
     source: document/kamata7_theory.md#2-1-角番（普遍的効果）
     last_reviewed: 2026-07-10
   - id: k7-3f-l-n-tail89
@@ -109,7 +109,7 @@ claims:
     source: document/kamata7_theory.md#2-2-台番号末尾（セグメント依存）
     last_reviewed: 2026-07-10
   - id: k7-3f-r-a-corner
-    title: 3F_R_A は角5〜7が最強（hit104率30%前後）— 末尾軸・機種名軸より効果量が大きい
+    title: 3F_R_A は端番5〜7が最強（hit104率30%前後）— 末尾軸・機種名軸より効果量が大きい
     status: robust
     segment:
       floor: 3F
@@ -119,14 +119,14 @@ claims:
     direction: up
     baseline: hall_all
     min_n: 5
-    kakuban_focus:
+    hanaban_focus:
       best: [5, 6, 7]
       avoid: [1, 2]
-      note: 角1はn=5101でhit104率26.0%と最低。角6が30.5%で最高（n=4531、n>3000の信頼域内では最良）。末尾軸は3F_R_Aでp>0.3で無効（doc 2.2節）。機種名軸との定量比較（効果量表）はまだ未実施 — axis_screeningページで別途検証予定。
+      note: 端番1はn=5101でhit104率26.0%と最低。端番6が30.5%で最高（n=4531、n>3000の信頼域内では最良）。末尾軸は3F_R_Aでp>0.3で無効（doc 2.2節）。機種名軸との定量比較（効果量表）はまだ未実施 — axis_screeningページで別途検証予定。
     source: document/kamata7_theory.md#2-1-角番（普遍的効果）
     last_reviewed: 2026-07-10
   - id: k7-3f-r-a-dd-kakuban
-    title: 3F_R_A は DD19-24×角9が最強セル（q=3.6e-6）
+    title: 3F_R_A は DD19-24×端番9が最強セル（q=3.6e-6）
     status: robust
     segment:
       floor: 3F
@@ -136,13 +136,13 @@ claims:
     direction: up
     baseline: hall_all
     min_n: 5
-    kakuban_focus:
+    hanaban_focus:
       best: [9]
-      note: DD19-24に限定した場合のみ角9が突出（doc記載 q=3.6e-6）。DD限定なしの角9はn=313とやや小さいため、単独では角5〜7ほど頑健ではない。
+      note: DD19-24に限定した場合のみ端番9が突出（doc記載 q=3.6e-6）。DD限定なしの端番9はn=313とやや小さいため、単独では端番5〜7ほど頑健ではない。
     source: document/kamata7_theory.md#2-1-角番（普遍的効果）
     last_reviewed: 2026-07-10
   - id: k7-3f-r-n-corner-weak
-    title: 3F_R_N は角5〜7で改善するが台依存の疑いが強く一般則としては弱い
+    title: 3F_R_N は端番5〜7で改善するが台依存の疑いが強く一般則としては弱い
     status: watching
     segment:
       floor: 3F
@@ -152,10 +152,10 @@ claims:
     direction: up
     baseline: hall_all
     min_n: 5
-    kakuban_focus:
+    hanaban_focus:
       best: [5, 6, 7]
       avoid: [1, 2]
-      note: 角1は+-239（n=4051）、角2は-72（n=3646）と赤字。角6は+212（n=2872）まで改善するが、machine_dependencyテストでtop2寄与率48.5%（特定台への依存）が判明し、上位2台除外でp=0.001→p=0.054に低下。3F_L_A(5.7%)/3F_R_A(6.6%)と対照的なため一般ルールとしては参考程度（status=watching維持）。
+      note: 端番1は+-239（n=4051）、端番2は-72（n=3646）と赤字。端番6は+212（n=2872）まで改善するが、machine_dependencyテストでtop2寄与率48.5%（特定台への依存）が判明し、上位2台除外でp=0.001→p=0.054に低下。3F_L_A(5.7%)/3F_R_A(6.6%)と対照的なため一般ルールとしては参考程度（status=watching維持）。
     source: document/kamata7_theory.md#1-セグメント構造
     last_reviewed: 2026-07-10
   - id: k7-event-a-concentration
@@ -204,4 +204,88 @@ claims:
     min_n: 5
     source: document/kamata7_theory.md#冷却ゾーンの二分法（2026-06-28 DD条件付き10台ブロック分析）
     last_reviewed: 2026-07-10
-
+  - id: k7-2f-l-n-kakuban-aisle
+    title: 2F_L_N は角番(通路)5〜8が強い、角番1は回避
+    status: robust
+    segment:
+      floor: 2F
+      lr: L
+      family: N
+    metric: avg_diff
+    direction: up
+    baseline: hall_all
+    min_n: 5
+    kakuban_focus:
+      best: [5, 6, 7, 8]
+      avoid: [1]
+      note: 通路距離(rank_from_aisle)ベース。角番7=+322(n7984)・角番8=+262が強く、角番1=+28(n3483)が最弱。折りたたみ端番では端番8が弱く見えるが、通路角番では角番8が強い（折りたたみが両端を混ぜるため）。
+    source: eda/reports/kamata7_kakuban_concept_experiment_report.md
+    last_reviewed: 2026-07-11
+  - id: k7-2f-r-n-kakuban-aisle
+    title: 2F_R_N は角番(通路)4が突出、角番1は回避
+    status: robust
+    segment:
+      floor: 2F
+      lr: R
+      family: N
+    metric: avg_diff
+    direction: up
+    baseline: hall_all
+    min_n: 5
+    kakuban_focus:
+      best: [4, 6]
+      avoid: [1]
+      note: 通路距離ベース。角番4=+505(n5077)が突出、角番6=+361。角番1=+54が最弱。折りたたみ端番4の+438よりさらに強い。
+    source: eda/reports/kamata7_kakuban_concept_experiment_report.md
+    last_reviewed: 2026-07-11
+  - id: k7-3f-l-a-kakuban-aisle
+    title: 3F_L_A は角番(通路)5・7・8が強い、角番1は回避
+    status: robust
+    segment:
+      floor: 3F
+      lr: L
+      family: A
+    metric: avg_diff
+    direction: up
+    baseline: hall_all
+    min_n: 5
+    kakuban_focus:
+      best: [5, 7, 8]
+      avoid: [1]
+      note: 通路距離ベース。角番7=+311(n3739)・角番8=+291(n4105)・角番5=+303が強く、角番1=+47(n2128)が最弱。
+    source: eda/reports/kamata7_kakuban_concept_experiment_report.md
+    last_reviewed: 2026-07-11
+  - id: k7-3f-r-a-kakuban-aisle
+    title: 3F_R_A は角番(通路)5-6と中央島9-11が強い、角番1-2は回避
+    status: robust
+    segment:
+      floor: 3F
+      lr: R
+      family: A
+    metric: avg_diff
+    direction: up
+    baseline: hall_all
+    min_n: 5
+    kakuban_focus:
+      best: [5, 6, 9, 10, 11]
+      avoid: [1, 2]
+      note: 通路距離ベース。通路寄りの角番5-6=+275/+279に加え、中央島の角番9-11が+300前後で二峰性。角番1=+62・角番2=+166が下位。折りたたみ端番では見えない中央島ピークが通路角番で顕在化。
+    source: eda/reports/kamata7_kakuban_concept_experiment_report.md
+    last_reviewed: 2026-07-11
+  - id: k7-3f-r-n-kakuban-aisle
+    title: 3F_R_N は角番(通路)7がピーク、角番1-2は赤字（台依存注意）
+    status: watching
+    segment:
+      floor: 3F
+      lr: R
+      family: N
+    metric: avg_diff
+    direction: up
+    baseline: hall_all
+    min_n: 5
+    kakuban_focus:
+      best: [5, 6, 7]
+      avoid: [1, 2]
+      note: 通路距離ベース。角番7=+279(n1973)がピーク、角番1=-223・角番2=-106は赤字。ただし3F_R_Nは台依存の疑いが強くwatching維持（一般則として過信しない）。
+    source: eda/reports/kamata7_kakuban_concept_experiment_report.md
+    last_reviewed: 2026-07-11

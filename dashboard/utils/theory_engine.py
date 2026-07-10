@@ -220,7 +220,7 @@ def _segment_labels_from_config(hall_config: dict[str, Any] | None = None) -> di
 
 
 def prepare_layout_segments(layout: pd.DataFrame, hall_config: dict[str, Any] | None = None) -> pd.DataFrame:
-    """Attach floor, L/R, kakuban and section-size fields needed by theory summaries."""
+    """Attach floor, L/R, hanaban/kakuban and section-size fields needed by theory summaries."""
 
     config = hall_config or _default_config()
     if layout.empty or "machine_number" not in layout.columns:
@@ -245,12 +245,17 @@ def prepare_layout_segments(layout: pd.DataFrame, hall_config: dict[str, Any] | 
     if {"rank_from_min", "rank_from_max"}.issubset(work.columns):
         rank_from_min = pd.to_numeric(work["rank_from_min"], errors="coerce")
         rank_from_max = pd.to_numeric(work["rank_from_max"], errors="coerce")
-        if config.get("kakuban_rule", "min_rank") == "min_rank":
-            work["kakuban"] = pd.concat([rank_from_min, rank_from_max], axis=1).min(axis=1).astype("Int64")
+        if config.get("hanaban_rule", "min_rank") == "min_rank":
+            work["hanaban"] = pd.concat([rank_from_min, rank_from_max], axis=1).min(axis=1).astype("Int64")
         else:
-            work["kakuban"] = rank_from_min.astype("Int64")
+            work["hanaban"] = rank_from_min.astype("Int64")
     elif "rank_from_min" in work.columns:
-        work["kakuban"] = pd.to_numeric(work["rank_from_min"], errors="coerce").astype("Int64")
+        work["hanaban"] = pd.to_numeric(work["rank_from_min"], errors="coerce").astype("Int64")
+    else:
+        work["hanaban"] = pd.NA
+
+    if config.get("has_aisle") and "rank_from_aisle" in work.columns:
+        work["kakuban"] = pd.to_numeric(work["rank_from_aisle"], errors="coerce").astype("Int64")
     else:
         work["kakuban"] = pd.NA
     return work
@@ -351,6 +356,8 @@ def attach_theory_axes(
                 "section_size",
                 "rank_from_min",
                 "rank_from_max",
+                "rank_from_aisle",
+                "hanaban",
                 "kakuban",
             ]
             if column in layout.columns
@@ -359,15 +366,22 @@ def attach_theory_axes(
     else:
         work["floor"] = work["machine_number"].map(lambda value: infer_floor(value, config))
         work["lr"] = "不明"
+        work["hanaban"] = pd.NA
         work["kakuban"] = pd.NA
 
-    if "kakuban" not in work.columns:
+    if "hanaban" not in work.columns:
         if "rank_from_min" in work.columns and "rank_from_max" in work.columns:
             rank_from_min = pd.to_numeric(work["rank_from_min"], errors="coerce")
             rank_from_max = pd.to_numeric(work["rank_from_max"], errors="coerce")
-            work["kakuban"] = pd.concat([rank_from_min, rank_from_max], axis=1).min(axis=1).astype("Int64")
+            work["hanaban"] = pd.concat([rank_from_min, rank_from_max], axis=1).min(axis=1).astype("Int64")
         elif "rank_from_min" in work.columns:
-            work["kakuban"] = pd.to_numeric(work["rank_from_min"], errors="coerce").astype("Int64")
+            work["hanaban"] = pd.to_numeric(work["rank_from_min"], errors="coerce").astype("Int64")
+        else:
+            work["hanaban"] = pd.NA
+
+    if "kakuban" not in work.columns:
+        if config.get("has_aisle") and "rank_from_aisle" in work.columns:
+            work["kakuban"] = pd.to_numeric(work["rank_from_aisle"], errors="coerce").astype("Int64")
         else:
             work["kakuban"] = pd.NA
 
@@ -459,16 +473,33 @@ def summarize_by(frame: pd.DataFrame, group_columns: list[str], *, min_n: int = 
     ).reset_index(drop=True)
 
 
+def build_dd_position_matrix(
+    frame: pd.DataFrame, axis_column: str, *, metric: str = "avg_diff", min_n: int = THEORY_MIN_SAMPLE
+) -> pd.DataFrame:
+    """Return a DD x position-axis matrix for the requested metric."""
+
+    if axis_column not in frame.columns:
+        return pd.DataFrame()
+    summary = summarize_by(frame, ["dd", axis_column], min_n=min_n)
+    if summary.empty or metric not in summary.columns:
+        return pd.DataFrame()
+    return summary.pivot(index="dd", columns=axis_column, values=metric).sort_index().sort_index(axis=1)
+
+
 def build_dd_kakuban_matrix(
     frame: pd.DataFrame, *, metric: str = "avg_diff", min_n: int = THEORY_MIN_SAMPLE
 ) -> pd.DataFrame:
     """Return a DD x kakuban matrix for the requested metric."""
 
-    axis_column = "kakuban" if "kakuban" in frame.columns else "rank_from_min"
-    summary = summarize_by(frame, ["dd", axis_column], min_n=min_n)
-    if summary.empty or metric not in summary.columns:
-        return pd.DataFrame()
-    return summary.pivot(index="dd", columns=axis_column, values=metric).sort_index().sort_index(axis=1)
+    return build_dd_position_matrix(frame, "kakuban", metric=metric, min_n=min_n)
+
+
+def build_dd_hanaban_matrix(
+    frame: pd.DataFrame, *, metric: str = "avg_diff", min_n: int = THEORY_MIN_SAMPLE
+) -> pd.DataFrame:
+    """Return a DD x hanaban matrix for the requested metric."""
+
+    return build_dd_position_matrix(frame, "hanaban", metric=metric, min_n=min_n)
 
 
 def build_daily_event_summary(frame: pd.DataFrame, *, min_n: int = THEORY_MIN_SAMPLE) -> pd.DataFrame:

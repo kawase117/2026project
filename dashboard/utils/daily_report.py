@@ -370,13 +370,13 @@ def compute_diff_distribution_stats(frame: pd.DataFrame) -> dict[str, float]:
     }
 
 
-def build_kakuban_section_pivot(
+def build_hanaban_section_pivot(
     daily_frame: pd.DataFrame,
     layout_frame: pd.DataFrame,
     *,
     min_group_size: int = DEFAULT_GROUP_MIN_SIZE,
 ) -> pd.DataFrame:
-    """Return a tidy rank_from_min x section summary for the visual heatmap."""
+    """Return a tidy hanaban-min x section summary for the visual heatmap."""
 
     required = {"machine_number", "rank_from_min", "section"}
     if daily_frame.empty or layout_frame.empty or not required.issubset(layout_frame.columns):

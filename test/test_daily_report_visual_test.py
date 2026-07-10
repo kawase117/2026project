@@ -176,7 +176,7 @@ def test_render_emits_daily_highlight_summary(monkeypatch: pytest.MonkeyPatch) -
     assert any("讖溽ｨｮ蛻･" in str(value) for value in written)
 
 
-def test_render_kakuban_section_heatmap_uses_mocked_streamlit(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_render_hanaban_section_heatmap_uses_mocked_streamlit(monkeypatch: pytest.MonkeyPatch) -> None:
     from dashboard.pages import page_19_daily_report_visual_test as page
 
     plot_calls: list[object] = []
@@ -208,7 +208,7 @@ def test_render_kakuban_section_heatmap_uses_mocked_streamlit(monkeypatch: pytes
         }
     )
 
-    page._render_kakuban_section_heatmap(daily_frame, layout_frame)
+    page._render_hanaban_section_heatmap(daily_frame, layout_frame)
 
     assert len(plot_calls) == 1
     heatmap = plot_calls[0]

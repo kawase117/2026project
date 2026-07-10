@@ -29,6 +29,12 @@ METRIC_TITLES = {
     "hit104_rate": "hit104_rate",
 }
 
+AXIS_LABELS = {
+    "hanaban_min": "端番min",
+    "hanaban_max": "端番max",
+    "kakuban": "角番(通路)",
+}
+
 
 def _resolve_hall_key() -> str:
     hall_name = st.session_state.get("hall_name")
@@ -46,7 +52,7 @@ def _format_axis_value(value: object, axis: str) -> str:
         return "不明"
     if axis == "event_day":
         return "イベント日" if bool(value) else "通常日"
-    if axis in {"dd", "kakuban", "machine_tail"}:
+    if axis in {"dd", "hanaban_min", "hanaban_max", "kakuban", "machine_tail"}:
         try:
             return str(int(value))
         except Exception:
@@ -237,10 +243,16 @@ def render() -> None:
         f"ホール: {hall_key} | Rows: {len(filtered):,} | Dates: {filtered['date_dt'].min():%Y-%m-%d} to {filtered['date_dt'].max():%Y-%m-%d}"
     )
 
+    axis_options = [
+        axis
+        for axis in INTERACTION_AXIS_OPTIONS
+        if axis != "kakuban" or theory.load_hall_config(hall_key).get("has_aisle")
+    ]
     axes = st.multiselect(
         "🔎 軸を選択（2〜3軸）",
-        INTERACTION_AXIS_OPTIONS,
+        axis_options,
         default=["segment", "dd_bin"],
+        format_func=lambda value: AXIS_LABELS.get(value, value),
         key=f"interaction_axes_{hall_key}",
     )
     if len(axes) < 2:
@@ -281,7 +293,7 @@ def render() -> None:
             _render_claim_draft(filtered, summary, [axis_x, axis_y], metric, hall_key, min_n)
         return
 
-    facet_values = sorted_axis_values(filtered[facet_axis], facet_axis)
+    facet_values = sorted_axis_values(axis_series(filtered, facet_axis), facet_axis)
     tabs = st.tabs([f"{facet_axis}={_format_axis_value(value, facet_axis)}" for value in facet_values])
     all_cells: list[pd.DataFrame] = []
     for tab, facet_value in zip(tabs, facet_values, strict=True):

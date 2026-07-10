@@ -12,7 +12,8 @@ floors:
     min_machine_number: 3001
     max_machine_number: 3362
 use_lr: true
-kakuban_rule: min_rank
+has_aisle: true
+hanaban_rule: min_rank
 family_keywords:
   A:
     - ジャグラー
@@ -109,4 +110,3 @@ warnings:
     注意: ホワイトリストや対象機種の固定がない広域表示は誤読しやすい。
   - 論点: サンプル 5 未満は参考値
     注意: 少数セルを強い結論として扱わない。必要なら閾値を下げた参考表示を併記する。
-

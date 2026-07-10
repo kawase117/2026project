@@ -156,7 +156,11 @@ def _claim_mask(frame: pd.DataFrame, claim_segment: dict[str, Any]) -> pd.Series
             mask &= frame["machine_number"].isin(values)
         elif key == "kakuban":
             values = expected if isinstance(expected, list) else [expected]
-            axis = frame["kakuban"] if "kakuban" in frame.columns else frame.get("rank_from_min")
+            axis = frame.get("kakuban", pd.Series(pd.NA, index=frame.index))
+            mask &= pd.to_numeric(axis, errors="coerce").isin(values)
+        elif key == "hanaban":
+            values = expected if isinstance(expected, list) else [expected]
+            axis = frame.get("hanaban", pd.Series(pd.NA, index=frame.index))
             mask &= pd.to_numeric(axis, errors="coerce").isin(values)
         else:
             values = expected if isinstance(expected, list) else [expected]
@@ -288,74 +292,72 @@ def _comparison_chart(summary: pd.DataFrame, metric: str, claim_title: str) -> g
     return fig
 
 
-def _kakuban_breakdown_chart(
+def _position_breakdown_chart(
     frame: pd.DataFrame,
     claim_segment: dict[str, Any],
     metric: str,
-    kakuban_focus: dict[str, Any],
+    focus: dict[str, Any],
+    axis_col: str,
+    title: str,
 ) -> go.Figure:
     subset = frame.loc[_claim_mask(frame, claim_segment)].copy()
     value_label = METRIC_LABELS.get(metric, metric)
+    axis_label = {"hanaban": "端番", "kakuban": "角番"}.get(axis_col, axis_col)
     fig = go.Figure()
 
-    if subset.empty:
+    if subset.empty or axis_col not in subset.columns:
         fig.update_layout(
-            title="角番別内訳",
+            title=title,
             yaxis_title=value_label,
-            xaxis_title="角番",
+            xaxis_title=axis_label,
             height=320,
         )
         return fig
 
-    axis = (
-        subset["kakuban"]
-        if "kakuban" in subset.columns
-        else subset.get("rank_from_min", pd.Series(index=subset.index, dtype="float64"))
-    )
     work = pd.DataFrame(
         {
-            "kakuban": pd.to_numeric(axis, errors="coerce"),
+            axis_col: pd.to_numeric(subset[axis_col], errors="coerce"),
             "metric": _metric_series(subset, metric),
         }
-    ).dropna(subset=["kakuban", "metric"])
+    ).dropna(subset=[axis_col, "metric"])
 
     if work.empty:
         fig.update_layout(
-            title="角番別内訳",
+            title=title,
             yaxis_title=value_label,
-            xaxis_title="角番",
+            xaxis_title=axis_label,
             height=320,
         )
         return fig
 
     grouped = (
-        work.groupby("kakuban", as_index=False)
+        work.groupby(axis_col, as_index=False)
         .agg(value=("metric", "mean"), n=("metric", "size"))
         .loc[lambda data: data["n"] >= 5]
-        .sort_values("kakuban")
+        .sort_values(axis_col)
     )
 
-    best = {int(value) for value in (kakuban_focus.get("best") or []) if pd.notna(value)}
-    avoid = {int(value) for value in (kakuban_focus.get("avoid") or []) if pd.notna(value)}
+    best = {int(value) for value in (focus.get("best") or []) if pd.notna(value)}
+    avoid = {int(value) for value in (focus.get("avoid") or []) if pd.notna(value)}
     colors = [
         "#2f9e44" if int(value) in best else "#e03131" if int(value) in avoid else "#868e96"
-        for value in grouped["kakuban"]
+        for value in grouped[axis_col]
     ]
 
     fig.add_trace(
         go.Bar(
-            x=grouped["kakuban"].astype(int),
+            x=grouped[axis_col].astype(int),
             y=grouped["value"],
             marker_color=colors,
             text=[f"n={int(value)}" for value in grouped["n"]],
             textposition="outside",
-            hovertemplate="角番=%{x}<br>値=%{y}<extra></extra>",
+            hovertemplate=f"{axis_label}=%{{x}}<br>値=%{{y}}<extra></extra>",
         )
     )
     fig.update_layout(
-        title="角番別内訳",
+        title=title,
         yaxis_title=value_label,
-        xaxis_title="角番",
+        xaxis_title=axis_label,
         height=320,
         showlegend=False,
     )
@@ -473,13 +475,35 @@ def _render_claim_block(frame: pd.DataFrame, hall_config: dict[str, Any], claim:
         st.dataframe(display_summary, use_container_width=True, hide_index=True)
 
         st.plotly_chart(_comparison_chart(summary, metric, title), use_container_width=True)
+        hanaban_focus = claim.get("hanaban_focus")
+        if hanaban_focus:
+            note = hanaban_focus.get("note")
+            if note:
+                st.caption(str(note))
+            st.plotly_chart(
+                _position_breakdown_chart(
+                    frame, claim.get("segment", {}), metric, hanaban_focus, "hanaban", "端番別内訳"
+                ),
+                use_container_width=True,
+            )
         kakuban_focus = claim.get("kakuban_focus")
-        if kakuban_focus:
+        if (
+            kakuban_focus
+            and "kakuban" in frame.columns
+            and pd.to_numeric(frame["kakuban"], errors="coerce").notna().any()
+        ):
             note = kakuban_focus.get("note")
             if note:
                 st.caption(str(note))
             st.plotly_chart(
-                _kakuban_breakdown_chart(frame, claim.get("segment", {}), metric, kakuban_focus),
+                _position_breakdown_chart(
+                    frame,
+                    claim.get("segment", {}),
+                    metric,
+                    kakuban_focus,
+                    "kakuban",
+                    "角番別内訳（通路距離）",
+                ),
                 use_container_width=True,
             )
         if claim.get("id") == "k7-zorome-tail":
@@ -489,20 +513,77 @@ def _render_claim_block(frame: pd.DataFrame, hall_config: dict[str, Any], claim:
             )
 
 
-def _render_registry_overview(registry: dict[str, Any]) -> None:
+_HEALTH_SORT_ORDER = {
+    "❌ 消失/逆転": 0,
+    "⚠️ 弱化": 1,
+    "⚠️ サンプル不足": 2,
+    "✅ 健在": 3,
+    "ℹ️ 対象外": 4,
+    "🚫 却下済み": 5,
+}
+
+
+def _claim_health(claim: dict[str, Any], comparison: ClaimComparison) -> str:
+    if str(claim.get("status", "")) == "refuted":
+        return "🚫 却下済み"
+
+    direction = str(claim.get("direction", "up"))
+    if direction not in {"up", "down"}:
+        return "ℹ️ 対象外"
+
+    min_n = int(claim.get("min_n", theory.THEORY_MIN_SAMPLE))
+    if comparison.recent_subset_n < min_n:
+        return "⚠️ サンプル不足"
+
+    if pd.isna(comparison.recent_value) or pd.isna(comparison.recent_baseline_value):
+        return "⚠️ サンプル不足"
+
+    recent_delta = comparison.recent_value - comparison.recent_baseline_value
+    expected_sign = 1 if direction == "up" else -1
+
+    if recent_delta * expected_sign <= 0:
+        return "❌ 消失/逆転"
+
+    full_delta = comparison.full_value - comparison.full_baseline_value
+    if not pd.isna(full_delta) and full_delta != 0 and abs(recent_delta) < abs(full_delta) * 0.5:
+        return "⚠️ 弱化"
+
+    return "✅ 健在"
+
+
+def _render_registry_overview(frame: pd.DataFrame, registry: dict[str, Any]) -> None:
     claims = registry.get("claims", [])
     if not claims:
         st.info("このホールの theory registry には claims がありません。")
         return
 
-    overview = pd.DataFrame(claims)
-    columns = [
-        column
-        for column in ["id", "title", "status", "metric", "baseline", "min_n", "last_reviewed"]
-        if column in overview.columns
-    ]
-    if columns:
-        st.dataframe(overview.loc[:, columns], use_container_width=True, hide_index=True)
+    rows = []
+    for claim in claims:
+        _, comparison = _summarize_claim(frame, claim)
+        metric = str(claim.get("metric", "avg_diff"))
+        full_delta = comparison.full_value - comparison.full_baseline_value
+        recent_delta = comparison.recent_value - comparison.recent_baseline_value
+        rows.append(
+            {
+                "id": claim.get("id", ""),
+                "title": claim.get("title", ""),
+                "status": claim.get("status", ""),
+                "health(直近90日)": _claim_health(claim, comparison),
+                "full_delta": _format_metric_value(metric, full_delta) if not pd.isna(full_delta) else "",
+                "recent_delta": _format_metric_value(metric, recent_delta) if not pd.isna(recent_delta) else "",
+                "recent_n": comparison.recent_subset_n,
+                "last_reviewed": claim.get("last_reviewed", ""),
+            }
+        )
+
+    overview = pd.DataFrame(rows)
+    overview["_order"] = overview["health(直近90日)"].map(_HEALTH_SORT_ORDER).fillna(9)
+    overview = overview.sort_values(["_order", "title"]).drop(columns=["_order"]).reset_index(drop=True)
+    st.caption(
+        "health(直近90日) は各クレームの direction に対し、直近90日の delta が同符号かつ全期間比50%以上を"
+        "維持しているかで判定。並び順は問題のあるクレームが上に来るようにしています。"
+    )
+    st.dataframe(overview, use_container_width=True, hide_index=True)
 
 
 def _render_segment_tab(frame: pd.DataFrame, hall_config: dict[str, Any], min_n: int) -> None:
@@ -589,8 +670,8 @@ def _render_event_tab(frame: pd.DataFrame, min_n: int) -> None:
 
 
 def _render_dd_kakuban_tab(frame: pd.DataFrame, min_n: int) -> None:
-    st.markdown("### DD × 角番")
-    st.caption("縦軸が DD、横軸が角番です。ホール配置によっては kakuban が rank_from_min の代わりになります。")
+    st.markdown("### DD × 位置軸")
+    st.caption("DD×端番min、DD×端番max、DD×角番（通路距離）を確認します。")
 
     metric = st.selectbox(
         "表示指標",
@@ -599,42 +680,58 @@ def _render_dd_kakuban_tab(frame: pd.DataFrame, min_n: int) -> None:
         key="theory_dd_metric",
     )
 
-    matrix = theory.build_dd_kakuban_matrix(frame, metric=metric, min_n=min_n)
-    used_min_n = min_n
-    if matrix.empty and min_n > 1:
-        st.warning(f"現在の最小サンプル={min_n} ではセルが出ないため、参考として最小サンプル=1 を表示します。")
-        matrix = theory.build_dd_kakuban_matrix(frame, metric=metric, min_n=1)
-        used_min_n = 1
+    axes = [
+        ("rank_from_min", "端番min"),
+        ("rank_from_max", "端番max"),
+    ]
+    if "kakuban" in frame.columns and pd.to_numeric(frame["kakuban"], errors="coerce").notna().any():
+        axes.append(("kakuban", "角番（通路）"))
 
-    if matrix.empty:
-        st.info("DD × 角番のセルがまだ作れませんでした。")
-        return
+    rendered = False
+    for axis_column, axis_label in axes:
+        if axis_column not in frame.columns:
+            continue
 
-    text = matrix.copy()
-    if metric in {"hit104_rate", "win_rate"}:
-        text = text.map(lambda value: "" if pd.isna(value) else f"{value * 100:.0f}%")
-    else:
-        text = text.map(lambda value: "" if pd.isna(value) else f"{value:.0f}")
+        matrix = theory.build_dd_position_matrix(frame, axis_column, metric=metric, min_n=min_n)
+        used_min_n = min_n
+        if matrix.empty and min_n > 1:
+            st.warning(
+                f"{axis_label}: 現在の最小サンプル={min_n} ではセルが出ないため、参考として最小サンプル=1 を表示します。"
+            )
+            matrix = theory.build_dd_position_matrix(frame, axis_column, metric=metric, min_n=1)
+            used_min_n = 1
 
-    fig = go.Figure(
-        data=go.Heatmap(
-            z=matrix.to_numpy(),
-            x=[str(column) for column in matrix.columns],
-            y=[int(index) for index in matrix.index],
-            text=text.to_numpy(),
-            texttemplate="%{text}",
-            colorscale="RdYlGn",
-            colorbar={"title": metric},
-            hovertemplate="DD=%{y}<br>角番=%{x}<br>値=%{z}<extra></extra>",
+        if matrix.empty:
+            continue
+
+        rendered = True
+        text = matrix.copy()
+        if metric in {"hit104_rate", "win_rate"}:
+            text = text.map(lambda value: "" if pd.isna(value) else f"{value * 100:.0f}%")
+        else:
+            text = text.map(lambda value: "" if pd.isna(value) else f"{value:.0f}")
+
+        fig = go.Figure(
+            data=go.Heatmap(
+                z=matrix.to_numpy(),
+                x=[str(column) for column in matrix.columns],
+                y=[int(index) for index in matrix.index],
+                text=text.to_numpy(),
+                texttemplate="%{text}",
+                colorscale="RdYlGn",
+                colorbar={"title": metric},
+                hovertemplate=f"DD=%{{y}}<br>{axis_label}=%{{x}}<br>値=%{{z}}<extra></extra>",
+            )
         )
-    )
-    fig.update_layout(title=f"DD × 角番: {METRIC_LABELS[metric]}", xaxis_title="角番", yaxis_title="DD")
-    st.plotly_chart(fig, use_container_width=True)
+        fig.update_layout(title=f"DD × {axis_label}: {METRIC_LABELS[metric]}", xaxis_title=axis_label, yaxis_title="DD")
+        st.plotly_chart(fig, use_container_width=True)
 
-    axis = "kakuban" if "kakuban" in frame.columns else "rank_from_min"
-    summary = theory.summarize_by(frame, ["dd", axis], min_n=used_min_n) if axis in frame.columns else pd.DataFrame()
-    if not summary.empty:
-        st.dataframe(_format_summary(summary.head(100)), use_container_width=True, hide_index=True)
+        summary = theory.summarize_by(frame, ["dd", axis_column], min_n=used_min_n)
+        if not summary.empty:
+            st.dataframe(_format_summary(summary.head(100)), use_container_width=True, hide_index=True)
+
+    if not rendered:
+        st.info("DD × 位置軸のセルがまだ作れませんでした。")
 
 
 def _render_cooling_tab(frame: pd.DataFrame, hall_config: dict[str, Any], min_n: int) -> None:
@@ -705,8 +802,9 @@ def render() -> None:
 
     with st.expander("用語集", expanded=False):
         st.markdown(
-            """- **角番 (kakuban)**: セクション（島）内で両端からの近さを示す位置番号。`kakuban = min(rank_from_min, rank_from_max)`。角1=島の端、数字が大きいほど中央寄り。最強の角番はセグメントごとに異なる（各クレームの「角番別内訳」チャートを参照）。
-- **台特定シグナル**: 効果が「末尾」や「角番」という一般ルールではなく、少数の特定物理台（台番号）に集中している場合の判定。上位2台を除外して再検定し、有意性が消える場合にこの判定となる。
+            """- **角番 (kakuban)**: メイン通路からの距離でカウントする位置番号（`rank_from_aisle`）。通路が定義されたホール（蒲田7）でのみ有効。角番1=通路直近、数字が大きいほど通路から遠い。
+- **端番 (hanaban)**: 列（島）の両端からの距離でカウントする位置番号。1台は min 側・max 側の2つの端番を持つ（`rank_from_min` / `rank_from_max`）。クレーム別内訳では両端の近い方に折りたたんだ値（`min(rank_from_min, rank_from_max)`、値1〜11）を使い、探索用の DD ヒートマップでは min と max を折りたたまず別々に表示する。
+- **台特定シグナル**: 効果が「末尾」や「角番/端番」という一般ルールではなく、少数の特定物理台（台番号）に集中している場合の判定。上位2台を除外して再検定し、有意性が消える場合にこの判定となる。
 - **可変冷却帯 / 構造冷却帯**: 全期間平均が低い「冷却ゾーン」の分類。判定基準はDD7（イベント日）での104%率リフト。可変冷却=リフト≧5pp（イベント日に通常水準まで回復、非イベント日のみ回避すればよい）。構造冷却=リフト<2pp（イベント日でも回復しない、常時回避）。
 - **「最強」「最優先」「構造的に強い」などの表現について**: これらは全て「そのセグメントで対象の軸が統計的に有意（p<0.001程度）かつ耐久性検証（split-half等）を通過した」ことを指す定性的な表現であり、強さの序列を表すものではない。具体的な数値は各クレームの本文・チャートを参照すること。"""
         )
@@ -737,7 +835,7 @@ def render() -> None:
     )
 
     st.markdown("### Claims")
-    _render_registry_overview(registry)
+    _render_registry_overview(filtered, registry)
     _render_claims(filtered, hall_config, registry)
 
     tabs = st.tabs(["segment", "event", "dd-kakuban", "cooling", "warnings"])

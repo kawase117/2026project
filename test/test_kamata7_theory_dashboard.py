@@ -31,6 +31,7 @@ def test_attach_theory_axes_uses_hall_specific_segment_rules():
             "section_max": [2010, 3010],
             "rank_from_min": [1, 2],
             "rank_from_max": [10, 9],
+            "rank_from_aisle": [3, 4],
         }
     )
     machines7 = pd.DataFrame(
@@ -69,7 +70,10 @@ def test_attach_theory_axes_uses_hall_specific_segment_rules():
     assert set(out7["segment"]) == {"2F_L_N", "3F_L_A"}
     assert set(out1["segment"]) == {"2F_A", "2F_N"}
     assert out1["lr"].eq("不明").all()
-    assert out1["kakuban"].tolist() == [1, 2]
+    assert out1["hanaban"].tolist() == [1, 2]
+    assert out1["kakuban"].isna().all()
+    assert out7["hanaban"].tolist() == [1, 2]
+    assert out7["kakuban"].tolist() == [3, 4]
 
 
 def test_event_kind_summary_groups_dd_and_month_end_days():
@@ -175,6 +179,7 @@ def test_dd_kakuban_matrix_hides_sparse_cells():
         {
             "dd": [7, 7, 7, 30],
             "rank_from_min": [1, 1, 2, 1],
+            "hanaban": [1, 1, 2, 1],
             "machine_number": [1, 2, 3, 4],
             "diff_coins_normalized": [100, 300, 900, 500],
             "games_normalized": [1000, 1000, 1000, 1000],
@@ -182,7 +187,7 @@ def test_dd_kakuban_matrix_hides_sparse_cells():
         }
     )
 
-    matrix = theory.build_dd_kakuban_matrix(frame, metric="avg_diff", min_n=2)
+    matrix = theory.build_dd_hanaban_matrix(frame, metric="avg_diff", min_n=2)
 
     assert matrix.loc[7, 1] == 200
     assert 2 not in matrix.columns

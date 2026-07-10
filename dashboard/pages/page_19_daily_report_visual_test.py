@@ -30,7 +30,7 @@ from dashboard.utils.filters import apply_machine_filters
 GROUP_LABELS = {
     "machine_name": "機種別",
     "last_digit": "末尾別",
-    "rank_from_min": "角番別",
+    "rank_from_min": "端番別（min側）",
     "section": "セクション別",
     "segment": "セグメント別",
 }
@@ -275,13 +275,13 @@ def _render_diff_histogram(daily_df: pd.DataFrame) -> None:
     st.plotly_chart(fig, use_container_width=True)
 
 
-def _render_kakuban_section_heatmap(daily_df: pd.DataFrame, layout_frame: pd.DataFrame) -> None:
+def _render_hanaban_section_heatmap(daily_df: pd.DataFrame, layout_frame: pd.DataFrame) -> None:
     required = {"machine_number", "rank_from_min", "section"}
     if layout_frame.empty or not required.issubset(layout_frame.columns):
-        st.info("角番×セクションのヒートマップに必要なデータがありません")
+        st.info("端番×セクションのヒートマップに必要なデータがありません")
         return
 
-    st.markdown("### 角番×セクション ヒートマップ")
+    st.markdown("### 端番×セクション ヒートマップ")
     metric = st.selectbox(
         "表示指標",
         ["avg_diff", "win_rate", "hit104_rate"],
@@ -293,9 +293,9 @@ def _render_kakuban_section_heatmap(daily_df: pd.DataFrame, layout_frame: pd.Dat
         key="daily_report_visual_test_kakuban_metric",
     )
 
-    pivot_frame = daily_report_utils.build_kakuban_section_pivot(daily_df, layout_frame)
+    pivot_frame = daily_report_utils.build_hanaban_section_pivot(daily_df, layout_frame)
     if pivot_frame.empty:
-        st.info("角番×セクションのヒートマップを作成できるデータがありません")
+        st.info("端番×セクションのヒートマップを作成できるデータがありません")
         return
 
     matrix = pivot_frame.pivot(index="rank_from_min", columns="section", values=metric).sort_index().sort_index(axis=1)
@@ -304,7 +304,7 @@ def _render_kakuban_section_heatmap(daily_df: pd.DataFrame, layout_frame: pd.Dat
         columns=matrix.columns,
     )
     if matrix.dropna(how="all").empty:
-        st.info("角番×セクションのヒートマップを作成できるデータがありません")
+        st.info("端番×セクションのヒートマップを作成できるデータがありません")
         return
 
     text_matrix = matrix.copy()
@@ -330,7 +330,7 @@ def _render_kakuban_section_heatmap(daily_df: pd.DataFrame, layout_frame: pd.Dat
                 }[metric]
             },
             hovertemplate=(
-                "rank_from_min=%{y}<br>"
+                "端番min=%{y}<br>"
                 "セクション=%{x}<br>"
                 "機種名=%{customdata}<br>"
                 + {
@@ -342,7 +342,7 @@ def _render_kakuban_section_heatmap(daily_df: pd.DataFrame, layout_frame: pd.Dat
             ),
         )
     )
-    fig.update_layout(title="角番×セクションの成績分布")
+    fig.update_layout(title="端番×セクションの成績分布")
     st.plotly_chart(fig, use_container_width=True)
 
 
@@ -445,7 +445,7 @@ def render() -> None:
     _render_grouped_bar_charts(group_frames)
     _render_diff_histogram(daily_df)
     _render_diff_games_scatter(daily_df)
-    _render_kakuban_section_heatmap(daily_df, layout_frame)
+    _render_hanaban_section_heatmap(daily_df, layout_frame)
 
     st.markdown("---")
     st.markdown("### 集計テーブル")
