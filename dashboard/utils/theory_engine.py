@@ -457,7 +457,14 @@ def summarize_by(frame: pd.DataFrame, group_columns: list[str], *, min_n: int = 
             n=("machine_number", "size"),
             avg_diff=("diff_coins_normalized", "mean"),
             avg_games=("games_normalized", "mean"),
-            win_rate=("diff_coins_normalized", lambda s: float(pd.to_numeric(s, errors="coerce").gt(0).mean())),
+            win_rate=(
+                "diff_coins_normalized",
+                lambda s: (
+                    float(pd.to_numeric(s, errors="coerce").dropna().gt(0).mean())
+                    if pd.to_numeric(s, errors="coerce").notna().any()
+                    else np.nan
+                ),
+            ),
             hit104_rate=(
                 "hit104",
                 lambda s: float(pd.to_numeric(s, errors="coerce").dropna().mean()) if s.notna().any() else np.nan,

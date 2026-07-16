@@ -95,7 +95,14 @@ def _build_group_summary_frame(work: pd.DataFrame, group_columns: list[str]) -> 
             avg_diff=("diff_coins_normalized", "mean"),
             avg_games=("games_normalized", "mean"),
             avg_payout_rate=("payout_rate", "mean"),
-            win_rate=("diff_coins_normalized", lambda s: float(pd.to_numeric(s, errors="coerce").gt(0).mean())),
+            win_rate=(
+                "diff_coins_normalized",
+                lambda s: (
+                    float(pd.to_numeric(s, errors="coerce").dropna().gt(0).mean())
+                    if pd.to_numeric(s, errors="coerce").notna().any()
+                    else np.nan
+                ),
+            ),
             hit104_count=("hit104", lambda s: int(pd.to_numeric(s, errors="coerce").fillna(0).sum())),
             hit104_rate=(
                 "hit104",

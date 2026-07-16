@@ -98,7 +98,8 @@ def _metric_series(frame: pd.DataFrame, metric: str) -> pd.Series:
     if metric == "avg_diff":
         return pd.to_numeric(frame.get("diff_coins_normalized"), errors="coerce")
     if metric == "win_rate":
-        return pd.to_numeric(frame.get("diff_coins_normalized"), errors="coerce").gt(0).astype(float)
+        source = pd.to_numeric(frame.get("diff_coins_normalized"), errors="coerce")
+        return source.gt(0).astype(float).where(source.notna())
     if metric == "hit104_rate":
         return pd.to_numeric(frame.get("hit104"), errors="coerce")
     if metric == "avg_games":

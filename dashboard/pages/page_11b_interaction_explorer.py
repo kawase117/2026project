@@ -33,7 +33,31 @@ AXIS_LABELS = {
     "hanaban_min": "端番min",
     "hanaban_max": "端番max",
     "kakuban": "角番(通路)",
+    "section": "Section",
+    "machine_name": "機種名(全期間)",
+    "machine_name_current": "機種名(最新日のみ)",
 }
+
+
+_AXIS_SOURCE_COLUMNS = {
+    "hanaban_min": "rank_from_min",
+    "hanaban_max": "rank_from_max",
+    "kakuban": "rank_from_aisle",
+    "section": "section",
+}
+
+
+def _axis_has_data(frame: pd.DataFrame, axis: str) -> bool:
+    """Check the raw source column, not axis_series() output — several axes
+    (segment/family/section/machine_name) fillna() before returning, which
+    would make a notna() check on axis_series() always true."""
+
+    source_column = _AXIS_SOURCE_COLUMNS.get(axis)
+    if source_column is None:
+        return True
+    if source_column not in frame.columns:
+        return False
+    return bool(frame[source_column].notna().any())
 
 
 def _resolve_hall_key() -> str:
@@ -243,11 +267,7 @@ def render() -> None:
         f"ホール: {hall_key} | Rows: {len(filtered):,} | Dates: {filtered['date_dt'].min():%Y-%m-%d} to {filtered['date_dt'].max():%Y-%m-%d}"
     )
 
-    axis_options = [
-        axis
-        for axis in INTERACTION_AXIS_OPTIONS
-        if axis != "kakuban" or theory.load_hall_config(hall_key).get("has_aisle")
-    ]
+    axis_options = [axis for axis in INTERACTION_AXIS_OPTIONS if _axis_has_data(frame, axis)]
     axes = st.multiselect(
         "🔎 軸を選択（2〜3軸）",
         axis_options,

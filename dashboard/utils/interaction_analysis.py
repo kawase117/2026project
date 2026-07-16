@@ -23,6 +23,9 @@ INTERACTION_AXIS_OPTIONS = [
     "machine_tail",
     "event_day",
     "family",
+    "section",
+    "machine_name",
+    "machine_name_current",
 ]
 INTERACTION_METRIC_OPTIONS = ["avg_diff", "win_rate", "hit104_rate"]
 DEFAULT_EFFECT_SIZE_THRESHOLD = 0.1
@@ -114,6 +117,18 @@ def axis_series(frame: pd.DataFrame, axis: str) -> pd.Series:
         return frame.get("is_event_day", pd.Series(False, index=frame.index)).fillna(False).astype(bool)
     if axis == "family":
         return frame.get("family", pd.Series(index=frame.index, dtype="object")).fillna("N").astype("string")
+    if axis == "section":
+        return frame.get("section", pd.Series(index=frame.index, dtype="object")).fillna("不明").astype("string")
+    if axis == "machine_name":
+        return frame.get("machine_name", pd.Series(index=frame.index, dtype="object")).fillna("不明").astype("string")
+    if axis == "machine_name_current":
+        names = frame.get("machine_name", pd.Series(index=frame.index, dtype="object"))
+        dates = frame.get("date_dt", pd.Series(pd.NaT, index=frame.index))
+        latest_date = dates.max()
+        if pd.isna(latest_date):
+            return pd.Series(pd.NA, index=frame.index, dtype="string")
+        current_names = set(names.loc[dates.eq(latest_date)].dropna().unique())
+        return names.where(names.isin(current_names)).astype("string")
     raise KeyError(axis)
 
 
@@ -137,8 +152,10 @@ def metric_series(frame: pd.DataFrame, metric: str) -> pd.Series:
         source = frame.get("diff_coins_normalized", pd.Series(np.nan, index=frame.index))
         return pd.to_numeric(source, errors="coerce")
     if metric == "win_rate":
-        source = frame.get("diff_coins_normalized", pd.Series(np.nan, index=frame.index))
-        return pd.to_numeric(source, errors="coerce").gt(0).astype(float)
+        source = pd.to_numeric(
+            frame.get("diff_coins_normalized", pd.Series(np.nan, index=frame.index)), errors="coerce"
+        )
+        return source.gt(0).astype(float).where(source.notna())
     if metric == "hit104_rate":
         source = frame.get("hit104", pd.Series(np.nan, index=frame.index))
         return pd.to_numeric(source, errors="coerce")
@@ -172,7 +189,14 @@ def summarize_cells(
         .agg(
             n=("machine_number", "size"),
             avg_diff=("diff_coins_normalized", "mean"),
-            win_rate=("diff_coins_normalized", lambda s: float(pd.to_numeric(s, errors="coerce").gt(0).mean())),
+            win_rate=(
+                "diff_coins_normalized",
+                lambda s: (
+                    float(pd.to_numeric(s, errors="coerce").dropna().gt(0).mean())
+                    if pd.to_numeric(s, errors="coerce").notna().any()
+                    else np.nan
+                ),
+            ),
             hit104_rate=(
                 "hit104",
                 lambda s: float(pd.to_numeric(s, errors="coerce").dropna().mean()) if s.notna().any() else np.nan,
@@ -248,7 +272,7 @@ def run_pairwise_axis_test(
         )
 
     outcome = metric_series(work, metric)
-    contingency = pd.crosstab(list(zip(work["_axis_a"], work["_axis_b"])), outcome)
+    contingency = pd.crosstab([work["_axis_a"], work["_axis_b"]], outcome)
     contingency = contingency.reindex(columns=[0.0, 1.0], fill_value=0)
     n_obs = int(contingency.to_numpy().sum())
     if contingency.empty or contingency.shape[0] < 2 or contingency.shape[1] < 2 or n_obs == 0:
@@ -338,6 +362,12 @@ def build_claim_draft(
             segment["segment"] = [str(value)]
         elif axis == "family":
             segment["family"] = [str(value)]
+        elif axis == "section":
+            segment["section"] = [str(value)]
+        elif axis == "machine_name":
+            segment["machine_name"] = [str(value)]
+        elif axis == "machine_name_current":
+            segment["machine_name"] = [str(value)]
         else:
             segment[axis] = [value]
 
