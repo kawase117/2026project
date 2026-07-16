@@ -44,6 +44,7 @@
 6. [MLモデル構造と運用知見](#6-mlモデル構造と運用知見)
 7. [未探索ロードマップ](#7-未探索ロードマップ)
 8. [Instinct参照マップ](#8-instinct参照マップ)
+9. [設定確率推定パイプラインからの知見](#9-設定確率推定パイプラインからの知見)
 
 ---
 
@@ -475,3 +476,21 @@ X_DDS日限定の予測では、角番コンポーネント(c_corner)と曜日×
 **否定された仮説・方法論**: `mitoya-dd-group-section-antipattern-RETRACTED`, `mitoya-dd-group-digit-antipattern-RETRACTED`, `mitoya-juggler-payday-hypothesis-rejected-by-data`, `mitoya-saturday-screening-retracted-no-persistence`, `cross-segment-aggregation-creates-dominance-artifact`, `mitoya-island-mixing-artifact-warning`, `mitoya-period-sum-diff-overstates-magnitude-by-ndays`, `mitoya-daily-hall-summary-null-flags`
 
 **横断スキャン(2026-07-02)**: `document/instincts/2026-07-02-machine-dd-cross-agreement-insights.yaml`, `document/instincts/2026-07-02-machine-weekday-cross-agreement-and-power-limits-insights.yaml`
+
+---
+
+## 9. 設定確率推定パイプラインからの知見
+
+> 本節は §1-8 の**差枚・物理位置ベースの分析**とは異なるレイヤーの知見。BB/RB回数を設定別公表確率に当てはめた二項尤度事後分布で「その日実際に高設定相当の出目だったか」を推定し、前日までの情報だけで翌日の候補を選ぶday-aheadランキングパイプライン（`eda/highsetting_*.py`, `run_highsetting_daily.py`, 2026-07-15/16実装）から得られた知見。
+
+### 9.1 非イベント日は高設定ゼロの日が33%
+
+みとやのジャグラー高設定（P(設定5-6)≥0.8）は、非イベントDD（X_DDS以外の日）の**33%が高設定ゼロの日**という結果になった。イベントDD平均2.97台/日に対し非イベント日平均1.43台/日で、既存の[X_DDS（イベント日）定義](#用語定義llm向け契約)を裏付ける新しい定量値。運用上は「非イベント日は棄権が合理的な選択肢である」という判断の根拠を補強する。
+
+### 9.2 高設定の据置強度
+
+台別の「前日高設定だった場合、翌日も高設定である確率 ÷ ベースレート」は、ジャグラー1.66倍・AT（北斗+モンキーターンV）1.30倍。4ホール中では蒲田7（1.28〜1.63倍）と並んで据置文化がある部類で、蒲田1（0.75〜1.04倍、実質据置なし）とは対照的。
+
+### 9.3 day-aheadランキングモデルの成績（参考）
+
+同一パイプラインでのwalk-forwardバックテスト（設置台の10%を候補とした場合の翌日的中率）: ジャグラーlift=1.44〜1.60倍、AT=2.10〜2.22倍。ATの的中率が比較的高いが、[8節]の`mitoya-hist-metric-strongest-signal`（台別履歴が最強シグナル）という既存知見と整合する結果。ただしAT機のラベル的中率と実差枚は別軸の指標であり、的中率が高いことがそのまま実戦価値を意味しない点に注意（差枚ベースでの直接検証は未実施）。
