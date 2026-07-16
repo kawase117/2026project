@@ -16,6 +16,7 @@ import argparse
 import asyncio
 import json
 import os
+import re
 import sqlite3
 import urllib.parse
 from datetime import datetime, timedelta
@@ -23,11 +24,76 @@ from pathlib import Path
 from typing import Any
 
 from bs4 import BeautifulSoup
+import nodriver as uc
 
 
 DEFAULT_LIST_URL = "https://ana-slo.com/%E3%83%9B%E3%83%BC%E3%83%AB%E3%83%87%E3%83%BC%E3%82%BF/%E6%9D%B1%E4%BA%AC%E9%83%BD/%E6%A5%BD%E5%9C%92%E8%92%B2%E7%94%B0%E5%BA%97-%E3%83%87%E3%83%BC%E3%82%BF%E4%B8%80%E8%A6%A7/"
-DEFAULT_START_DATE = "20260612"
-DEFAULT_END_DATE = "20260612"
+DEFAULT_START_DATE = None
+DEFAULT_END_DATE = None
+
+CHALLENGE_TEXT_MARKERS = (
+    "just a moment",
+    "verify you are human",
+    "performing security verification",
+    "enable javascript and cookies to continue",
+    "error 1015",
+    "403 forbidden",
+)
+
+
+def classify_page_html(html: str, status: int | None = None) -> str:
+    """ページを、取得処理で使える粗い状態に分類する。
+
+    status が None の場合（nodriver でステータスを取得できなかった場合）は
+    HTML本文ベースの判定のみで分類する。403/429 の blocked 判定は
+    status が渡されたときだけ機能する。
+    """
+
+    soup = BeautifulSoup(html, "html.parser")
+    visible_text = soup.get_text(" ", strip=True).casefold()
+    title = soup.title.get_text(" ", strip=True).casefold() if soup.title else ""
+    if any(marker in visible_text or marker in title for marker in CHALLENGE_TEXT_MARKERS):
+        return "challenge"
+    if soup.find(id="challenge-stage") or soup.find(id=re.compile(r"^cf-chl-")):
+        return "challenge"
+
+    if status in {403, 429}:
+        return "blocked"
+
+    if soup.find("h4", string=lambda text: text and "全データ一覧" in text):
+        return "detail"
+
+    for table in soup.find_all("table"):
+        header = table.get_text(" ", strip=True)
+        if "台番号" in header and "機種名" in header:
+            return "detail"
+
+    if soup.find("a", href=re.compile(r"\d{4}-\d{2}-\d{2}.*-data/")):
+        return "list"
+
+    if "日付をクリックすると詳細データ" in soup.get_text(" ", strip=True):
+        return "list"
+
+    if len(html.strip()) < 500:
+        return "blank"
+
+    return "unknown"
+
+
+def extract_date_links(html: str) -> dict[str, str]:
+    """一覧HTMLから、実在する日付別詳細URLを抽出する。"""
+
+    soup = BeautifulSoup(html, "html.parser")
+    links: dict[str, str] = {}
+    date_pattern = re.compile(r"(?<!\d)(\d{4})-(\d{2})-(\d{2})(?=.*-data/)")
+    for tag in soup.find_all("a", href=True):
+        href = str(tag["href"])
+        match = date_pattern.search(href)
+        if not match:
+            continue
+        date_str = "".join(match.groups())
+        links[date_str] = urllib.parse.urljoin("https://ana-slo.com/", href)
+    return links
 
 
 def project_root() -> Path:
@@ -109,47 +175,65 @@ def load_hall_config(config_filename: str = "hall_config.json") -> list[dict[str
     return active_halls
 
 
-class PlaywrightPageAdapter:
+class NodriverPageAdapter:
     def __init__(self, page) -> None:
         self._page = page
+        self.last_status = None
 
     async def get_content(self) -> str:
-        return await self._page.content()
+        return await self._page.get_content()
+
+    async def refresh_status(self) -> int | None:
+        # nodriver はレスポンスの HTTP ステータスを直接公開しないため、
+        # PerformanceNavigationTiming.responseStatus (Chrome 109+) を参照する。
+        # 取得できない環境では last_status を None のまま維持し、
+        # classify_page_html は HTML 本文ベースの判定にフォールバックする。
+        try:
+            status = await self._page.evaluate(
+                "(() => {"
+                " const entries = performance.getEntriesByType('navigation');"
+                " if (!entries.length) return null;"
+                " const s = entries[entries.length - 1].responseStatus;"
+                " return (typeof s === 'number' && s > 0) ? s : null;"
+                " })()"
+            )
+            if isinstance(status, (int, float)) and status:
+                self.last_status = int(status)
+        except Exception as exc:
+            print(f"   [DEBUG] HTTPステータス取得に失敗（HTML判定にフォールバック）: {exc}")
+        return self.last_status
 
     async def evaluate(self, js: str):
         return await self._page.evaluate(js)
 
+    async def navigate(self, url: str) -> None:
+        # 旧版で実績のある、同一タブ内のJavaScript遷移を維持する。
+        escaped_url = json.dumps(url, ensure_ascii=False)
+        await self._page.evaluate(f"window.location.href = {escaped_url}")
 
-class PlaywrightBrowserAdapter:
-    def __init__(self, playwright, browser) -> None:
-        self._playwright = playwright
+
+class NodriverBrowserAdapter:
+    def __init__(self, browser) -> None:
         self._browser = browser
+        self._page = None
 
-    async def get(self, url: str) -> PlaywrightPageAdapter:
-        page = await self._browser.new_page()
-        await page.goto(url, wait_until="domcontentloaded", timeout=60000)
-        return PlaywrightPageAdapter(page)
+    async def get(self, url: str) -> NodriverPageAdapter:
+        if self._page is None:
+            self._page = await self._browser.get(url)
+        else:
+            await NodriverPageAdapter(self._page).navigate(url)
+        return NodriverPageAdapter(self._page)
 
     async def stop(self) -> None:
-        await self._browser.close()
-        await self._playwright.stop()
+        self._browser.stop()
 
 
 async def launch_browser(headless: bool):
-    try:
-        from playwright.async_api import async_playwright
-    except ImportError as exc:
-        raise RuntimeError("playwright が見つかりません。venv に依存関係を入れてから実行してください。") from exc
-
-    playwright = await async_playwright().start()
-    browser = await playwright.chromium.launch(
-        channel="chrome",
-        headless=False,
-    )
-    return PlaywrightBrowserAdapter(playwright, browser)
+    browser = await uc.start(headless=headless, sandbox=False)
+    return NodriverBrowserAdapter(browser)
 
 
-async def wait_for_page_stable(page, *, timeout: int = 15, poll_interval: float = 1.0) -> str:
+async def wait_for_page_stable(page, *, timeout: int = 15, poll_interval: float = 1.0, expected: str = "either") -> str:
     """
     manual_ad_step の代替。
 
@@ -163,17 +247,62 @@ async def wait_for_page_stable(page, *, timeout: int = 15, poll_interval: float 
     last_html = ""
     while asyncio.get_event_loop().time() < deadline:
         try:
+            refresh_status = getattr(page, "refresh_status", None)
+            if refresh_status:
+                await refresh_status()
             last_html = await page.get_content()
-            soup = BeautifulSoup(last_html, "html.parser")
-            if soup.find(id="all_data_table") or soup.find(id="last_digit_data_table"):
+            state = classify_page_html(last_html, getattr(page, "last_status", None))
+            if state in {"blocked", "challenge"}:
                 return last_html
-            if soup.find(string=lambda text: text and "全データ一覧" in text):
+            if state == "blank":
+                # Same-tab navigation can briefly expose an empty document.
+                await asyncio.sleep(poll_interval)
+                continue
+            if expected == "list" and state == "list":
                 return last_html
-        except Exception:
-            pass
+            if expected == "detail" and state == "detail":
+                return last_html
+            if expected == "either" and state in {"list", "detail"}:
+                return last_html
+        except Exception as exc:
+            print(f"   [DEBUG] ページ状態の取得に失敗（再試行します）: {exc}")
         await asyncio.sleep(poll_interval)
 
     return last_html
+
+
+async def ensure_page_accessible(
+    page,
+    *,
+    manual_challenge: bool = False,
+    timeout: int = 90,
+    initial_wait_timeout: int = 30,
+) -> str:
+    """一覧ページが実データページとして利用可能か確認する。"""
+
+    html = await wait_for_page_stable(
+        page,
+        timeout=initial_wait_timeout,
+        poll_interval=1,
+        expected="list",
+    )
+    state = classify_page_html(html, getattr(page, "last_status", None))
+
+    if state == "challenge" and manual_challenge:
+        print("[WAIT] Cloudflareチャレンジをブラウザ画面で解決してください")
+        deadline = asyncio.get_event_loop().time() + timeout
+        while asyncio.get_event_loop().time() < deadline:
+            await asyncio.sleep(2)
+            html = await page.get_content()
+            # チャレンジ初回応答の403を保持していても、解決後のHTMLを再評価する。
+            state = classify_page_html(html, None)
+            if state == "list":
+                return html
+
+    if state != "list":
+        status = getattr(page, "last_status", None)
+        raise RuntimeError(f"一覧ページを利用できません: state={state}, status={status}")
+    return html
 
 
 async def attempt_auto_close_overlays(page) -> None:
@@ -231,58 +360,71 @@ async def attempt_auto_close_overlays(page) -> None:
 async def find_and_click_link_hybrid(page, target_url: str, date_str: str) -> bool:
     try:
         html_content = await page.get_content()
-        soup = BeautifulSoup(html_content, "html.parser")
-        slash_date = f"{date_str[:4]}/{date_str[4:6]}/{date_str[6:8]}"
-        hyphen_date = f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:8]}"
-
-        if slash_date not in soup.get_text():
-            print(f"   [ERROR] ページ内に '{slash_date}' が見つかりません")
+        state = classify_page_html(html_content, getattr(page, "last_status", None))
+        if state != "list":
+            print(f"   [ERROR] 一覧ページ状態が不正です: {state}")
             return False
 
-        actual_url = None
-        for a_tag in soup.find_all("a", href=True):
-            href = a_tag["href"]
-            if hyphen_date in href and "-data" in href:
-                actual_url = href
-                break
+        actual_url = extract_date_links(html_content).get(date_str)
+        if not actual_url:
+            print(f"   [WARN] {date_str}: 一覧ページに実在リンクがありません")
+            return False
 
-        space_url = target_url
-        prefix = f"https://ana-slo.com/{hyphen_date}-"
-        if target_url.startswith(prefix):
-            hall_and_suffix = target_url[len(prefix) :]
-            if hall_and_suffix.endswith("-data/"):
-                hall_encoded = hall_and_suffix[: -len("-data/")]
-                space_url = prefix + hall_encoded.replace("-", "%20") + "-data/"
+        navigate = getattr(page, "navigate", None)
+        if navigate:
+            await navigate(actual_url)
+        else:
+            await page.evaluate("url => { window.location.href = url; }", actual_url)
 
-        candidate_urls = []
-        if actual_url:
-            candidate_urls.append(actual_url)
-        candidate_urls.append(target_url)
-        if space_url != target_url:
-            candidate_urls.append(space_url)
+        current_html = await wait_for_page_stable(page, timeout=12, poll_interval=1, expected="detail")
+        current_state = classify_page_html(current_html, getattr(page, "last_status", None))
+        if current_state == "detail":
+            return True
 
-        for attempt_url in candidate_urls:
-            try:
-                await page.evaluate(f'window.location.href = "{attempt_url}"')
-                await wait_for_page_stable(page, timeout=12, poll_interval=1)
-                current_html = await page.get_content()
-                if "全データ一覧" in current_html or "all_data_table" in current_html:
-                    return True
-            except Exception:
-                continue
-
+        print(
+            f"   [ERROR] {date_str}: 詳細ページを確認できません "
+            f"(state={current_state}, status={getattr(page, 'last_status', None)})"
+        )
         return False
     except Exception as e:
         print(f"   [ERROR] リンク検索エラー: {e}")
         return False
 
 
-async def return_to_list_page_hybrid(page, list_url: str) -> None:
-    try:
-        await page.evaluate(f'window.location.href = "{list_url}"')
-        await wait_for_page_stable(page, timeout=12, poll_interval=1)
-    except Exception as e:
-        raise RuntimeError(f"一覧ページ移動エラー: {e}") from e
+async def return_to_list_page_hybrid(
+    page,
+    list_url: str,
+    *,
+    manual_challenge: bool = False,
+    retries: int = 3,
+) -> None:
+    """一覧ページへ戻る。短時間の白紙HTMLは再試行して吸収する。"""
+
+    last_error: Exception | None = None
+    for attempt in range(1, retries + 1):
+        try:
+            if attempt > 1:
+                await asyncio.sleep(min(2 * attempt, 6))
+
+            navigate = getattr(page, "navigate", None)
+            if navigate:
+                await navigate(list_url)
+            else:
+                await page.evaluate("url => { window.location.href = url; }", list_url)
+
+            await ensure_page_accessible(
+                page,
+                manual_challenge=manual_challenge,
+                timeout=90 if attempt == 1 else 30,
+                initial_wait_timeout=45 if attempt == 1 else 30,
+            )
+            return
+        except Exception as e:
+            last_error = e
+            if attempt < retries:
+                print(f"   [RETRY] 一覧ページ復旧 {attempt}/{retries}: {e}")
+
+    raise RuntimeError(f"一覧ページ遷移エラー（{retries}回試行）: {last_error}") from last_error
 
 
 async def get_hall_name_from_html(page) -> str | None:
@@ -333,8 +475,12 @@ def _extract_table_rows(table) -> list[dict[str, str]]:
 
 async def process_target_page_html(page, date_str: str, hall_name: str, save_dir: Path) -> dict[str, Any] | None:
     try:
-        await wait_for_page_stable(page, timeout=12, poll_interval=1)
+        await wait_for_page_stable(page, timeout=12, poll_interval=1, expected="detail")
         html_content = await page.get_content()
+        state = classify_page_html(html_content, getattr(page, "last_status", None))
+        if state != "detail":
+            print(f"   [ERROR] 詳細ページ状態が不正です: {state}")
+            return None
         soup = BeautifulSoup(html_content, "html.parser")
 
         extracted_data: dict[str, Any] = {
@@ -359,6 +505,10 @@ async def process_target_page_html(page, date_str: str, hall_name: str, save_dir
             table = last_digit_table if last_digit_table.name == "table" else last_digit_table.find("table")
             if table:
                 extracted_data["last_digit_data"] = _extract_table_rows(table)
+
+        if not extracted_data["all_data"]:
+            print("   [ERROR] 全データ一覧の行が0件です")
+            return None
 
         json_filename = f"{date_str}_{hall_name}_data.json"
         json_filepath = save_dir / json_filename
@@ -386,6 +536,7 @@ def _safe_float(value: Any) -> float | None:
 
 
 async def save_to_database(extracted_data: dict[str, Any], db_path: str = "pachinko_data.db") -> bool:
+    conn = None
     try:
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
@@ -440,6 +591,17 @@ async def save_to_database(extracted_data: dict[str, Any], db_path: str = "pachi
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
             """
+        )
+
+        # 同じ日付・ホールを再実行しても明細が二重登録されないよう、
+        # スナップショット対象の子テーブルを先に置き換える。
+        cursor.execute(
+            "DELETE FROM machine_data WHERE date=? AND hall_name=?",
+            (extracted_data["date"], extracted_data["hall_name"]),
+        )
+        cursor.execute(
+            "DELETE FROM last_digit_summary WHERE date=? AND hall_name=?",
+            (extracted_data["date"], extracted_data["hall_name"]),
         )
 
         cursor.execute(
@@ -505,6 +667,13 @@ async def save_to_database(extracted_data: dict[str, Any], db_path: str = "pachi
         return True
     except Exception as e:
         print(f"[ERROR] データベース保存エラー: {e}")
+        # DELETE後にINSERTで失敗した場合、部分削除がコミットされないよう明示的に戻す
+        if conn is not None:
+            try:
+                conn.rollback()
+                conn.close()
+            except Exception:
+                pass
         return False
 
 
@@ -530,19 +699,48 @@ def print_summary(success_dates: list[str], failed_dates: list[str], hall_name: 
 
 
 async def date_range_scrape(
-    start_date_str: str, end_date_str: str, list_url: str, *, headless: bool = False, db_path: str = "pachinko_data.db"
+    start_date_str: str | None,
+    end_date_str: str | None,
+    list_url: str,
+    *,
+    headless: bool = False,
+    db_path: str = "pachinko_data.db",
+    manual_challenge: bool = False,
 ) -> tuple[int, int]:
     browser = None
     try:
         browser = await launch_browser(headless=headless)
         page = await browser.get(list_url)
-        await wait_for_page_stable(page, timeout=15, poll_interval=1)
+        try:
+            list_html = await ensure_page_accessible(
+                page,
+                manual_challenge=manual_challenge,
+                initial_wait_timeout=45,
+            )
+        except Exception as initial_error:
+            print(f"[RETRY] 初回一覧ページが白紙/未読込のため再遷移します: {initial_error}")
+            await return_to_list_page_hybrid(
+                page,
+                list_url,
+                manual_challenge=manual_challenge,
+            )
+            list_html = await page.get_content()
+        date_links = extract_date_links(list_html)
+        if not date_links:
+            raise RuntimeError("一覧ページから日付リンクを抽出できません")
 
         hall_name = await get_hall_name_from_html(page)
         if not hall_name:
             hall_name = extract_hall_name_from_url(list_url) or "unknown_hall"
 
-        date_list = generate_date_list(start_date_str, end_date_str)
+        if start_date_str is None and end_date_str is None:
+            date_list = [max(date_links)]
+            print(f"[DATE] 指定なしのため最新掲載日を使用: {date_list[0]}")
+        else:
+            resolved_start = start_date_str or min(date_links)
+            resolved_end = end_date_str or max(date_links)
+            date_list = generate_date_list(resolved_start, resolved_end)
+        print(f"[DATE] 一覧から確認できた日付リンク: {len(date_links)}件")
 
         script_dir = project_root()
         hall_save_dir = resolve_data_dir() / hall_name
@@ -554,11 +752,19 @@ async def date_range_scrape(
         max_consecutive_failures = 3
 
         for i, date_str in enumerate(date_list, 1):
+            date_saved = False
             try:
+                if date_str not in date_links:
+                    print(f"   [WARN] {date_str}: 一覧ページに日付リンクがありません")
+                    if date_str not in failed_dates:
+                        failed_dates.append(date_str)
+                    continue
+
                 target_url = generate_target_url(date_str, hall_name)
                 click_success = await find_and_click_link_hybrid(page, target_url, date_str)
                 if not click_success:
-                    failed_dates.append(date_str)
+                    if date_str not in failed_dates:
+                        failed_dates.append(date_str)
                     consecutive_failures += 1
                     if consecutive_failures >= max_consecutive_failures:
                         break
@@ -566,28 +772,51 @@ async def date_range_scrape(
 
                 extracted_data = await process_target_page_html(page, date_str, hall_name, hall_save_dir)
                 if extracted_data is None:
-                    failed_dates.append(date_str)
+                    if date_str not in failed_dates:
+                        failed_dates.append(date_str)
                     consecutive_failures += 1
                 else:
                     db_success = await save_to_database(extracted_data, db_path=db_path)
                     if db_success:
-                        success_dates.append(date_str)
-                        consecutive_failures = 0
+                        if date_str not in success_dates:
+                            success_dates.append(date_str)
                     else:
-                        success_dates.append(date_str)
-                        consecutive_failures = 0
+                        print(f"   [WARN] {date_str}: JSONは保存済みですがDB保存に失敗したため失敗扱いにします")
+                        if date_str not in failed_dates:
+                            failed_dates.append(date_str)
+                    # サイトアクセス自体は成功しているのでブロック検知用カウンタは戻す
+                    consecutive_failures = 0
+                    date_saved = True
 
                 if i < len(date_list):
-                    await return_to_list_page_hybrid(page, list_url)
+                    try:
+                        await return_to_list_page_hybrid(
+                            page,
+                            list_url,
+                            manual_challenge=manual_challenge,
+                        )
+                    except Exception as navigation_error:
+                        # 詳細ページの保存後に一覧復帰だけ失敗しても、
+                        # その日付自体を失敗扱いにしない。
+                        print(f"   [ERROR] {date_str}: 一覧ページ復旧に失敗しました: {navigation_error}")
+                        if date_saved:
+                            consecutive_failures = 0
+                        raise
             except Exception as e:
                 print(f"   [ERROR] {date_str}: {e}")
-                failed_dates.append(date_str)
-                consecutive_failures += 1
+                if not date_saved:
+                    if date_str not in failed_dates:
+                        failed_dates.append(date_str)
+                    consecutive_failures += 1
                 if consecutive_failures >= max_consecutive_failures:
                     break
                 try:
                     if i < len(date_list):
-                        await return_to_list_page_hybrid(page, list_url)
+                        await return_to_list_page_hybrid(
+                            page,
+                            list_url,
+                            manual_challenge=manual_challenge,
+                        )
                 except Exception:
                     pass
 
@@ -608,6 +837,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--end-date", default=DEFAULT_END_DATE, help="終了日 YYYYMMDD")
     parser.add_argument("--db-path", default="pachinko_data.db", help="SQLite DB パス")
     parser.add_argument("--headless", action="store_true", help="ヘッドレスで起動")
+    parser.add_argument(
+        "--manual-challenge",
+        action="store_true",
+        help="Cloudflareチャレンジが出た場合、画面上での手動解決を待つ",
+    )
     parser.add_argument("--config", default="hall_config.json", help="設定ファイル名")
     return parser
 
@@ -622,7 +856,7 @@ async def main_async(argv: list[str] | None = None) -> int:
         halls = load_hall_config(args.config)
         if halls:
             selected = halls[0]
-            list_url = selected.get("url", list_url)
+            list_url = selected.get("scraper_url") or selected.get("url") or list_url
 
     success_count, failed_count = await date_range_scrape(
         start_date,
@@ -630,6 +864,7 @@ async def main_async(argv: list[str] | None = None) -> int:
         list_url,
         headless=args.headless,
         db_path=args.db_path,
+        manual_challenge=args.manual_challenge,
     )
 
     print(f"\n🎯 最終結果: 成功 {success_count}件、失敗 {failed_count}件")

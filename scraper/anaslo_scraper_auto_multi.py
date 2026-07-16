@@ -23,6 +23,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--end-date", default=base.DEFAULT_END_DATE, help="終了日 YYYYMMDD")
     parser.add_argument("--db-path", default="pachinko_data.db", help="SQLite DB パス")
     parser.add_argument("--headless", action="store_true", help="ヘッドレスで起動")
+    parser.add_argument(
+        "--manual-challenge",
+        action="store_true",
+        help="Cloudflareチャレンジが出た場合、画面上での手動解決を待つ",
+    )
     parser.add_argument("--config", default="hall_config.json", help="設定ファイル名")
     return parser
 
@@ -31,21 +36,34 @@ async def scrape_one_hall(
     browser,
     hall: dict[str, Any],
     *,
-    start_date: str,
-    end_date: str,
+    start_date: str | None,
+    end_date: str | None,
     db_path: str,
+    manual_challenge: bool = False,
 ) -> tuple[str, int, int]:
     list_url = hall.get("scraper_url") or hall.get("url") or base.DEFAULT_LIST_URL
     page = await browser.get(list_url)
-    await base.wait_for_page_stable(page, timeout=15, poll_interval=1)
+    list_html = await base.ensure_page_accessible(page, manual_challenge=manual_challenge)
+    date_links = base.extract_date_links(list_html)
+    if not date_links:
+        raise RuntimeError(f"{list_url}: 日付リンクを抽出できません")
 
     hall_name = hall.get("hall_name") or hall.get("name")
     if not hall_name:
         hall_name = await base.get_hall_name_from_html(page)
     if not hall_name:
-        hall_name = base.normalize_hall_name(hall.get("name")) or base.extract_hall_name_from_url(list_url) or "unknown_hall"
+        hall_name = (
+            base.normalize_hall_name(hall.get("name")) or base.extract_hall_name_from_url(list_url) or "unknown_hall"
+        )
 
-    date_list = base.generate_date_list(start_date, end_date)
+    if start_date is None and end_date is None:
+        date_list = [max(date_links)]
+        print(f"[DATE] 指定なしのため最新掲載日を使用: {date_list[0]}")
+    else:
+        resolved_start = start_date or min(date_links)
+        resolved_end = end_date or max(date_links)
+        date_list = base.generate_date_list(resolved_start, resolved_end)
+    print(f"[DATE] 一覧から確認できた日付リンク: {len(date_links)}件")
     hall_save_dir = base.resolve_data_dir() / hall_name
     hall_save_dir.mkdir(parents=True, exist_ok=True)
 
@@ -62,6 +80,11 @@ async def scrape_one_hall(
 
     for i, date_str in enumerate(date_list, 1):
         try:
+            if date_str not in date_links:
+                print(f"   [WARN] {date_str}: 一覧ページに日付リンクがありません")
+                failed_dates.append(date_str)
+                continue
+
             target_url = base.generate_target_url(date_str, hall_name)
             click_success = await base.find_and_click_link_hybrid(page, target_url, date_str)
             if not click_success:
@@ -82,14 +105,14 @@ async def scrape_one_hall(
                 if db_success:
                     print(f"   [OK] {date_str}: 取得・保存成功")
                     success_dates.append(date_str)
-                    consecutive_failures = 0
                 else:
-                    print(f"   [WARN] {date_str}: 取得成功、DB保存失敗")
-                    success_dates.append(date_str)
-                    consecutive_failures = 0
+                    print(f"   [WARN] {date_str}: 取得成功、DB保存失敗のため失敗扱い")
+                    failed_dates.append(date_str)
+                # サイトアクセス自体は成功しているのでブロック検知用カウンタは戻す
+                consecutive_failures = 0
 
             if i < len(date_list):
-                await base.return_to_list_page_hybrid(page, list_url)
+                await base.return_to_list_page_hybrid(page, list_url, manual_challenge=manual_challenge)
 
         except Exception as e:
             print(f"   [ERROR] {date_str}: {e}")
@@ -99,7 +122,7 @@ async def scrape_one_hall(
                 break
             try:
                 if i < len(date_list):
-                    await base.return_to_list_page_hybrid(page, list_url)
+                    await base.return_to_list_page_hybrid(page, list_url, manual_challenge=manual_challenge)
             except Exception:
                 pass
 
@@ -128,6 +151,7 @@ async def main_async(argv: list[str] | None = None) -> int:
                 start_date=args.start_date,
                 end_date=args.end_date,
                 db_path=args.db_path,
+                manual_challenge=args.manual_challenge,
             )
             total_success += success_count
             total_failed += failed_count
@@ -145,7 +169,7 @@ async def main_async(argv: list[str] | None = None) -> int:
     finally:
         if browser:
             try:
-                browser.stop()
+                await browser.stop()
             except Exception:
                 pass
 

@@ -688,10 +688,10 @@ async def main():
     # URL指定
     target_url = (
         ""
-        "https://ana-slo.com/%E3%83%9B%E3%83%BC%E3%83%AB%E3%83%87%E3%83%BC%E3%82%BF/%E6%9D%B1%E4%BA%AC%E9%83%BD/%E6%A5%BD%E5%9C%92%E8%92%B2%E7%94%B0%E5%BA%97-%E3%83%87%E3%83%BC%E3%82%BF%E4%B8%80%E8%A6%A7/"
+        "https://ana-slo.com/%E3%83%9B%E3%83%BC%E3%83%AB%E3%83%87%E3%83%BC%E3%82%BF/%E6%9D%B1%E4%BA%AC%E9%83%BD/big%E3%83%87%E3%82%A3%E3%83%83%E3%83%91%E3%83%BC%E6%88%B8%E8%B6%8A%E9%8A%80%E5%BA%A7%E5%BA%97-%E3%83%87%E3%83%BC%E3%82%BF%E4%B8%80%E8%A6%A7/"
     )
-    start_date = "20260612"
-    end_date = "20260612"
+    start_date = "20250719"
+    end_date = "20260923"
 
     print("🚀 ハイブリッド版スクレイピング開始...")
     print("   ページ遷移のみJavaScript、その他はHTML解析")

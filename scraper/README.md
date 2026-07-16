@@ -59,3 +59,21 @@ data/{hall_name}/{date}_{hall_name}_data.json
 - 機種名の正規化・フラグ判定はPhase 2で行う（Phase 1ではやらない）
 - 出力先の`data/`フォルダはgitignore対象
 - 1geki 系の補助バッチ出力は `scratch/1geki_batches/` に置き、root には出さない
+
+## 自動版の実行
+
+```powershell
+venv\Scripts\python.exe scraper\anaslo_scraper_auto.py
+```
+
+開始日・終了日を省略した場合は、一覧ページから実在する最新日付を自動選択する。
+明示的な期間を取得する場合は `--start-date YYYYMMDD --end-date YYYYMMDD` を指定する。
+
+Cloudflareのチャレンジ画面が表示された場合に、画面上での手動解決を待つには次を指定する。
+
+```powershell
+venv\Scripts\python.exe scraper\anaslo_scraper_auto.py --manual-challenge
+```
+
+自動版は403、チャレンジ、空ページをデータ抽出失敗と混同せず停止する。
+チャレンジの自動突破やプロキシローテーションは行わず、現行安定版と同じnodriverの同一タブを再利用する。
