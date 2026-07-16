@@ -453,6 +453,49 @@ def compute_debut_features(df: pd.DataFrame, db_start_grace_days: int = 0) -> pd
     return df
 
 
+# ── レイアウト派生カラム（machine_layout用） ────────────────────────────────────
+
+
+def compute_section_size(layout_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    machine_layout に section_size（セクション実台数）を付与する。
+
+    section_max - section_min + 1 ではなく、section内の実際の台番号数
+    (nunique) を使う。番号が欠番になっているセクションがあり、
+    range計算では台数を過大評価するため。
+
+    Parameters
+    ----------
+    layout_df : 'section', 'machine_number' 列を含む DataFrame
+                （SELECT * FROM machine_layout の読み込み結果を想定）
+    """
+    df = layout_df.copy()
+    df["section_size"] = df.groupby("section")["machine_number"].transform("nunique")
+    return df
+
+
+def compute_edge_side(layout_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    machine_layout に edge_side（端番の向き）を付与する。
+
+    rank_from_min / rank_from_max のうち小さい方（= physical_corner の
+    根拠）がどちら側かを 'min_side' / 'max_side' で返す。同値または
+    値が欠損している場合は None。
+
+    角番(kakuban)・section末端とは別概念。距離そのものは既存の
+    rank_from_min / rank_from_max / physical_corner を参照すること
+    （本関数は「向き」のみを追加する）。
+    """
+    df = layout_df.copy()
+    rmin, rmax = df["rank_from_min"], df["rank_from_max"]
+    df["edge_side"] = np.select(
+        [rmin.notna() & rmax.notna() & (rmin < rmax), rmin.notna() & rmax.notna() & (rmax < rmin)],
+        ["min_side", "max_side"],
+        default=None,
+    )
+    return df
+
+
 # ── ANOMALY 検出 ───────────────────────────────────────────────────────────────
 
 

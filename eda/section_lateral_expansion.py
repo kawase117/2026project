@@ -39,6 +39,7 @@ class HallConfig:
     exclude_machine: int | None
     exclude_mmdd: str | None
     event_dds: frozenset[int]
+    strong_zorome: bool = False
 
 
 HALL_CONFIGS: dict[str, HallConfig] = {
@@ -73,7 +74,8 @@ HALL_CONFIGS: dict[str, HallConfig] = {
         ),
         exclude_machine=None,
         exclude_mmdd=None,
-        event_dds=frozenset({1, 4, 7, 14, 17, 24, 27, 30}),
+        event_dds=frozenset({10, 11, 22, 30}),
+        strong_zorome=True,
     ),
     "mitoya": HallConfig(
         label="みとや大森町店",
@@ -151,6 +153,10 @@ def _parse_hall_list(raw: str) -> tuple[str, ...]:
     if invalid:
         raise ValueError(f"unknown hall(s): {', '.join(invalid)}")
     return tuple(dict.fromkeys(halls))
+
+
+def is_event_day(date: pd.Timestamp, cfg: HallConfig) -> bool:
+    return int(date.day) in cfg.event_dds or (cfg.strong_zorome and int(date.month) == int(date.day))
 
 
 def _safe_spearman(x: pd.Series, y: pd.Series) -> tuple[float, float]:
