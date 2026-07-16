@@ -1,0 +1,149 @@
+---
+id: kamata1-dd14-section-streak-not-robust
+trigger: "蒲田1でDDごとの連続セクションプラス現象(9セクション連続など)を発見したとき"
+confidence: 0.85
+domain: pachinko-analysis-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# DD14×2077-2161「9セクション連続プラス」は通期集計のみで成立する不安定な現象
+
+## 背景
+蒲田1のDD14(18日分)で、セクション2077-2161の9セクション連続で平均diffがプラスという珍しい現象を発見。
+四半期4分割(Q1-Q4)で検証したところ、9セクション全プラスを維持した四半期は0/4。
+2000回ブートストラップでも「9セクション全プラス」の再現率はP=7.65%と低く、通期集計でのみ見える見かけ上の現象だった。
+一方、「全プラス」という完璧基準ではなく「日次勝率(その日の平均diffがプラスだった日の割合)」で見直すと、
+2110-2120セクション(単一機種=モンスターハンターライズ)が82.4%(n=17日)という突出した値を示し、実用的な候補として浮上した。
+
+## アクション
+```python
+# 連続セクション現象を見つけたら
+if "N セクション連続プラス" in observation:
+    # 1. 完璧基準(全プラス)ではなく日次勝率で再評価する
+    # 2. 四半期分割で全プラスが何回維持されるか確認する(0/4なら通期のみの見かけ)
+    # 3. ブートストラップで再現確率を出す(10%未満なら脆弱)
+    # 4. 勝率が突出するセクションを個別に探す(全体ではなく一部が牽引している可能性)
+    action = "完璧基準(全プラス)で頑健性判定せず、日次勝率+四半期分割+bootstrapの3点セットで検証する"
+```
+
+## 例
+```
+2077-2161 (9セクション): 四半期全プラス維持=0/4, bootstrap P(全9プラス)=7.65% → 脆弱
+日次勝率で再評価:
+  2110-2120 (モンスターハンターライズ単一機種): 82.4%(n=17) → 突出、実用候補
+  2088-2098 (からくりサーカス/かぐや様/SAO混在): 61.1% → 機種混在でセクション根拠は薄い
+  2147-2150 (東京喰種): 41.8% → 平均以下、既存instinct(全台系は平均差枚で予測不可)にも該当
+```
+
+---
+id: pooled-kakuban-illusion-must-decompose-per-section
+trigger: "複数セクションをプールして角番/端番の効果を集計したとき"
+confidence: 0.9
+domain: pachinko-analysis-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# プールした端番(rank_from_min)の優位は少数セクションのアーティファクトになりやすい
+
+## 背景
+蒲田1 DD14の9セクションをプールしてrank_from_min別平均diffを集計したところ、端番1(通路端に相当する末端)が
++502.8枚(n=142)と突出して見えた。しかしセクション別に分解すると、端番1が最強なのは9セクション中1セクション
+(2147-2150, +2,652.9)のみで、他3セクションではむしろマイナスだった。プールした集計の突出値は、特定の
+小セクション(n=48-57と薄い)の極端な数値が平均を持ち上げていただけだった。
+kakuban-not-section-edgeと同系統の「プール集計の落とし穴」。
+
+## アクション
+```python
+# 角番/端番の効果をプールで見つけたら
+if "端番Xが強い(プール集計)" in claim:
+    # 必ずセクション別に分解して再確認する
+    per_section = groupby(["section", "rank_from_min"])
+    # 9セクション中何セクションで同じ順位が最強かを数える
+    # 1-2セクションのみが根拠なら「汎用ルール」ではなく「特定セクションの局所効果」と呼ぶ
+    action = "プールした角番/端番の優位はセクション別分解で再現するかを必ず確認する"
+```
+
+## 例
+```
+プール集計: 端番1 mean=+502.8 (n=142, 9セクション合算)
+セクション別分解:
+  2147-2150: 端番1=+2,652.9 (最強、この1セクションが牽引)
+  2143-2146: 端番1=+1,023.1 (2位、端番3が+1,309で上回る)
+  2077-2087, 2121-2131, 2132-2142: 端番1はマイナス
+→ 「端番1優位」は汎用ルールではなく2147-2150という特定セクションのみの局所効果
+```
+
+---
+id: codex-resume-must-go-through-rescue-subagent-not-raw-cli
+trigger: "Codexへの委任セッションを--resumeで再開しようとするとき"
+confidence: 0.95
+domain: workflow-codex-handoff
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# codex-companion.mjsのtaskコマンドを直接叩くと--resumeがCodexへの生プロンプト文字列として誤解釈される
+
+## 背景
+Codexへの委任タスクが確認質問(閾値選択)で止まった後、再開のために
+`node codex-companion.mjs task "--resume-last <指示文>"` をBashから直接叩いたところ、
+"--resume-last"という文字列がCLIフラグではなくCodexへの生プロンプトテキストとして渡り、
+Codexがリポジトリ内に存在しない"--resume-last"という機能を探し回るという誤動作が発生(約10分・2万トークン以上浪費)。
+codex-cli-runtimeスキルによれば、--resume/--effort/--modelなどのルーティングフラグは
+codex:codex-rescueサブエージェント経由でのみ正しく解釈される(サブエージェントが内部で
+`--resume` → `task --resume-last`のようにテキストを変換してから実際のtaskコマンドを呼ぶ)。
+Bashから直接codex-companion.mjsのtaskサブコマンドを呼ぶと、その変換ロジックをバイパスしてしまい、
+渡した文字列がそのままCodexへの指示として解釈される。
+
+## アクション
+```python
+# Codexタスクを--resumeで再開したいとき
+if need_to_resume_codex_task:
+    # NG: Bashから直接 codex-companion.mjs task "--resume ..." を叩く
+    # OK: Agent(subagent_type="codex:codex-rescue", prompt="--resume <指示文>") を使う
+    action = "Codexの再開・ルーティングフラグは必ずAgentツール経由でcodex:codex-rescueサブエージェントに渡す。" \
+             "codex-companion.mjsをBashから直接叩いてよいのはstatus/resultなどの読み取り専用コマンドのみ。"
+```
+
+## 例
+```
+誤った呼び出し(実際に発生):
+  Bash: node codex-companion.mjs task "--resume-last 閾値は...で進めてください"
+  → Codexが "--resume-last" をコードベース内の未実装機能として検索し始める(誤動作)
+
+正しい呼び出し:
+  Agent(subagent_type="codex:codex-rescue", prompt="--resume 閾値は...で進めてください")
+  → サブエージェントが内部で `task --resume-last` に変換して正しく再開
+```
+
+---
+id: kamata1-no-aisle-rank-is-hashiban-not-kakuban
+trigger: "蒲田1でrank_from_min/rank_from_maxを用いた台位置分析を説明するとき"
+confidence: 0.9
+domain: terminology
+source: user-instruction
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 蒲田1はhas_aisle=falseのため角番(通路距離)は定義されず、rank_from_min/maxは端番と呼ぶ
+
+## 背景
+2026-07-11のリファクタ(コミット088d5d2)で「角番」(通路距離,rank_from_aisle)と「端番」(台番号順の末端位置,
+rank_from_min/max)の用語が分離された。蒲田1はhas_aisle=falseのホールでrank_from_aisleが定義されないため、
+rank_from_min/maxを使った位置分析は常に「端番」と呼ぶべきで、「角番」は誤用になる。
+セッション中に一度「角番クロス」と表現してしまい、ユーザーから訂正が入った。
+
+## アクション
+```python
+if hall == "kamata1" and analysis_uses in ["rank_from_min", "rank_from_max"]:
+    correct_term = "端番"  # 角番(rank_from_aisle)ではない
+    # 角番という語を使うのはhas_aisle=trueのホール(蒲田7など)でrank_from_aisleを使うときのみ
+```
+
+## 例
+```
+誤: 「角番クロス(rank_from_min)」
+正: 「端番クロス(rank_from_min)」— 蒲田1はhas_aisle=falseのため角番は未定義
+```

@@ -1,0 +1,166 @@
+---
+id: codex-job-can-zombie-without-reporting-failure
+trigger: "Codexへ大きめの実装タスクを委譲し、進捗確認や結果取得を行うとき"
+confidence: 0.9
+domain: codex-collaboration
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Codexジョブはクラッシュ後も「running」のままゾンビ化することがある
+
+## 背景
+ダッシュボードPhase 3（交互作用エクスプローラ＋横断スクリーニング）実装をCodexに委譲したところ、
+タスクがコード内の実バグ（KeyError）で実際には数秒〜数分で異常終了していたにもかかわらず、
+`codex-companion.mjs status` は1時間以上「running」を返し続けた。プロセス（pid）は
+既に存在しないことを`Get-Process`で確認済みで、ジョブトラッカー側の状態更新漏れだった。
+`result`サブコマンドは "No job found" を返し、最終レポートは一切得られなかった。
+
+## アクション
+- 長時間「running」のまま進捗ログ（`progressPreview`/ログファイル）が更新されない場合、
+  まずOSレベルで実プロセスの生存確認をする（`Get-Process -Id <pid>`）。プロセスが存在しなければ
+  ジョブは実質クラッシュ済みなので、`result`取得を待たずに作業ツリーを直接精査する。
+- ログファイル（`jobs/<job-id>.log`）の末尾を見て、最後の"Running command"に対応する
+  "completed"/"failed"が無ければ、その直前のコマンドで異常終了した可能性が高い。
+- Codexの自己申告（"tests passed"等）を鵜呑みにせず、必ず自分でスモークテスト・
+  ブラウザ実機確認を行う。今回はCodexが完走したと見せた既存タスクでも、
+  テストがバグの実際の実行パス（`_build_raw_like_frame`→`build_hall_outputs`の統合経路）を
+  カバーしておらず、モックで迂回していたため検出できていなかった。
+
+## 例
+`node codex-companion.mjs status <job-id> --json` が1時間以上同じ`updatedAt`を返し、
+`pid`のプロセスが`Get-Process`で見つからない → ジョブは死んでいる。
+`result`は"No job found"を返す可能性が高いので、git status で残置ファイルを確認し
+自分でレビュー・修正を進める。
+
+---
+id: dataframe-apply-axis1-plus-per-row-series-is-slow
+trigger: "DataFrameの各行に分類・判定関数を適用するコードを書くとき"
+confidence: 0.95
+domain: performance
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 行ごとapply(axis=1)＋関数内pd.Series再構築は約5倍遅い
+
+## 背景
+セオリー検証エンジンの一般化（Phase 2）で、YAML駆動のセグメント判定を
+`work.apply(lambda row: classify_theory_segment(...), axis=1)` で実装したところ、
+蒲田7の実DB（259,545行）で`load_theory_frame`が90秒以上かかった。
+旧ハードコード版（単純なif/elif比較、Series構築なし）は同条件で約18秒だった。
+原因は `DataFrame.apply(axis=1)` 自体のオーバーヘッドに加え、
+呼び出される関数内でさらに `pd.Series({"floor": ..., "lr": ..., "family": ...})` を
+毎行構築していたことで、コストが二重にかかっていたため。
+
+## アクション
+- 行ごとの分類ロジックをルール（フィールド=値の条件リスト）で表現する場合、
+  `DataFrame.apply(axis=1)` ではなく列ごとのブールマスク（`df[col].eq(value)` /
+  `df[col].isin(values)`）を組み合わせて実装する。
+- 関数内で複数のスカラー値から`pd.Series`を作ってから比較する設計は避ける。
+  プレーンな`dict`で十分な場合はdictを使う（Series構築自体がボトルネックになりうる）。
+- 大きい実DB（数十万行）を使う機能を実装したら、必ず最大サイズのホールDBで
+  実測してから完了報告する。小さいテストデータだけでは性能問題は顕在化しない。
+
+## 例
+`_classify_theory_segment_vectorized`（`dashboard/utils/theory_engine.py`）：
+ルールごとに`pd.Series(True, index=frame.index)`のマスクを作り、
+`mask &= frame[field].isin(expected)`で条件を積み重ねる方式に書き換えたところ、
+蒲田7 259,545行で90秒→22秒に改善（旧ハードコード版の18秒とほぼ同等）。
+
+---
+id: last-digit-summary-tables-embed-zorome-row-with-encoding-risk
+trigger: "last_digit_summary_* テーブルをlast_digit列でgroupby/sortするとき"
+confidence: 0.9
+domain: data-quality
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# last_digit_summaryテーブルは0-9以外に「ゾロ目」集計行を持ち、文字化けしていることがある
+
+## 背景
+台番号末尾別ページの統合作業で、`last_digit_summary_*`テーブルの`last_digit`列（TEXT型）に
+"0"〜"9"の数字文字列に加えて、あらかじめ集計済みの「ゾロ目」行が1件含まれることが判明した。
+さらに実際のDBでは、この「ゾロ目」という文字列自体がETL側のエンコード不整合により
+文字化けした状態（`ã‚¾ãƒ\xadç›®`のようなバイト列）でそのまま格納されていた。
+`int(tail)`や文字列の完全一致比較（`tail != "ゾロ目"`）はこの行に対して失敗する
+（前者はValueError、後者は文字化けにより一致しない）。
+
+## アクション
+- `last_digit`列を数値に変換するコードは、必ず先に`str(t).isdigit()`等で
+  数字行かどうかを判定してから変換する。非数字行を「ゾロ目」として扱う場合、
+  DBの生の文字列と一致させようとせず、「数字でない」という条件で頑健に検出し、
+  表示は常にコード側で定義したクリーンなラベルに置き換える。
+- 手動で機種別ゾロ目統計を`machine_detailed_results`から再計算するのではなく、
+  `last_digit_summary_*`テーブルの既存のゾロ目集計行をそのまま使う方が
+  `machine_type`フィルタ済みで正確（手動再計算はmachine_typeフィルタを見落としがち）。
+
+## 例
+`dashboard/utils/single_axis_viewer.py`の`render_machine_tail`：
+`digit_order = sorted((t for t in tail_summary.index if str(t).isdigit()), key=int)`、
+`zorome_keys = [t for t in tail_summary.index if not str(t).isdigit()]`で検出し、
+表示ラベルは`ZOROME_LABEL = "ゾロ目"`（コード側の定数）に統一。
+
+---
+id: eda-cli-frame-inputs-need-full-column-contract
+trigger: "eda/配下のCLIスクリプトの関数をダッシュボード等の別コンテキストから直接呼び出すとき"
+confidence: 0.85
+domain: eda-integration
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# eda CLIスクリプトの内部関数は暗黙の列契約を持ち、部分的な入力フレームでKeyErrorになる
+
+## 背景
+横断スクリーニングページで`eda/machine_axis_pattern_scan.py`の`build_hall_outputs`を
+ダッシュボード側フレームから直接呼び出す実装で、`day_of_week`と`is_x_day`列が
+欠落したままKeyErrorでクラッシュした。原因は、CLIスクリプトが通常`eda/core.py`の
+`load_hall_df`経由でDBから読み込まれる前提で、`day_of_week`（日本語曜日ラベル）・
+`is_x_day`（ホール別イベント日フラグ）が事前に計算済みである、という暗黙の列契約に
+依存していたため。ダッシュボード側で「raw風フレーム」を手作りする際にこの契約が
+見落とされた。
+
+## アクション
+- eda CLIスクリプトの関数を別経路のデータで呼び出す場合、まず`eda/core.py`の
+  `load_hall_df`のdocstring（追加列一覧のコメント）を読み、必要な列を全て列挙してから
+  変換関数を書く。「動くまで足す」のではなく最初から契約を確認する。
+- ダッシュボード側で既に計算済みの同等概念（例: `theory_engine`の`is_event_day`）が
+  あれば、それをリネーム/型変換して渡す方が、独自に再計算するより一貫性が保てる。
+- この種の統合バグは、モックデータでのユニットテストでは検出できない
+  （モックは通常フル列を用意してしまうため）。実DBを使ったスモークテストが必須。
+
+## 例
+`dashboard/pages/page_11c_axis_screening.py`の`_build_raw_like_frame`：
+`work["day_of_week"] = work["date_dt"].dt.weekday.map(lambda idx: analysis.WEEKDAY_ORDER[int(idx)])`、
+`work["is_x_day"] = frame["is_event_day"].fillna(False).astype(bool).astype(int)`を追加して解消。
+
+---
+id: pandas3-dataframe-applymap-removed-use-map
+trigger: "pandas DataFrameの全セルに関数を適用するコードを書くとき"
+confidence: 0.9
+domain: python-compat
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# pandas 3.0系では DataFrame.applymap が完全に廃止されている
+
+## 背景
+交互作用エクスプローラのヒートマップ描画で`pivot_n.applymap(lambda value: ...)`を
+使ったコードが、本プロジェクトの環境（pandas 3.0.3）で
+`AttributeError: 'DataFrame' object has no attribute 'applymap'`となった。
+`applymap`はpandas 2.1で非推奨化され、後継としてSeries/DataFrame共通の`.map()`が
+提供されていたが、3.0系で完全に削除されている。
+
+## アクション
+- 新規コードでDataFrame全セルへの関数適用を書く際は`applymap`ではなく`.map()`を使う。
+- 既存コードやCodexが生成したコードに`applymap`が残っていないか、
+  `grep -rn "applymap"` で確認する習慣を持つ（CLAUDE.mdに明記されたPandas 3.0.2/3.0.3運用のため）。
+
+## 例
+`dashboard/pages/page_11b_interaction_explorer.py`：
+`text = pivot_n.applymap(lambda value: "" if pd.isna(value) else f"n={int(value)}")`を
+`text = pivot_n.map(lambda value: "" if pd.isna(value) else f"n={int(value)}")`に修正。
+---

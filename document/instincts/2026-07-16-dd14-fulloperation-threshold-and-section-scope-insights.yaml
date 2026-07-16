@@ -1,0 +1,64 @@
+---
+id: hall-specific-full-operation-threshold-must-be-empirical
+trigger: "「フル稼働」「full day」のようなゲーム数(G数)の閾値を分析コードで決め打ちしようとする場面"
+confidence: 0.9
+domain: pachinko-domain
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 「フル稼働」の閾値をG数で決め打ちせず、必ずそのホールの実分布(パーセンタイル)で確認する
+
+## 背景
+蒲田1セクション2269-2281のDD14データを分析した際、games_normalized>=1000を「フル稼働日」と呼んで低ゲーム数グループと比較する分解を行った。ユーザーから「1000Gでは足りません。フル稼働は5～6000Gほどになります」と指摘され、蒲田1全体のgames_normalizedパーセンタイルを実際に計算したところ p10=830, p25=1852, p50=3663, p75=5378, p90=6875, max=10503 であり、1000Gは全体の25パーセンタイル程度に過ぎなかった。この誤った閾値のまま「フル稼働日」とラベル付けして集計すると、実際には稼働時間が短い途中稼働台まで「フル稼働」に混入してしまう。
+
+## アクション
+「フル稼働」「full day」のような稼働完了を意味するラベルをG数閾値で表現する前に、必ず対象ホールのgames_normalizedの実際のパーセンタイル分布（p10/p25/p50/p75/p90/max）をSQLで確認する。ホールごとに営業時間・集客力・台数が異なるため、汎用的な閾値（1000G等）を他のホールやプロジェクト全体に流用しない。閾値の妥当性に確信が持てない場合は、ラベルを付ける前にユーザーに実分布を提示して確認を仰ぐ。
+
+## 例
+NG: `games_normalized >= 1000` を「フル稼働日」とラベル付け → 実際は25パーセンタイル相当で、大半の途中稼働台を含んでしまう。
+OK: 事前に `SELECT games_normalized の percentile分布` を確認（p50=3663, p75=5378, p90=6875）した上で、5000G以上を「フル稼働」の閾値として採用。同じ蒲田1セクションの5000G以上グループ(n=41)は平均差枚-663.4・104%超え率36.6%という、より正確な実態を示した。
+
+---
+id: left-censored-instance-start-must-be-excluded-from-new-machine-analysis
+trigger: "DB記録期間の先頭付近まで遡る「導入日」「instance開始日」を使って新台判定(new_machine_flag等)をする場面"
+confidence: 0.85
+domain: pandas-pitfall
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# instance_startがDB記録開始日と一致する行は「導入日不明」であり、新台か否かの判定に使ってはならない
+
+## 背景
+「セクション2269-2281は平均差枚がマイナスなのに104%超え率が高い」という乖離について、ユーザーが「新台（リリース直後）は設定不問で高回転になりやすく、それが低設定でも混ざっているのでは」という仮説を提示した。検証のため machine_name の変化を LAG/window関数で検出し、各レコードの instance_start（現在の機種名になった開始日）から days_since_install を計算した。しかし多くのinstanceのinstance_startがDB記録の最古日(2025-01-01)と一致しており、これは「その日から導入された」のではなく「記録開始時点で既に稼働していた（真の導入日は不明）」ことを意味する左検閲(left-censoring)だった。この左検閲行を除外すると、games>=5000の41件中17件しか判定可能な行が残らず、さらに104%超えを記録した15件全てが除外された（判定不能な）側に集中しており、新台仮説は「確認も否定もできない」という結論になった。
+
+## アクション
+LAG/window関数でmachine_nameの変化点からinstance_start（導入日相当）を計算する際は、必ず `instance_start = MIN(date) across the whole table` に一致する行を検出し、それらを「導入日不明（左検閲）」として新台判定から除外またはフラグ立てする。除外せずに全instanceの経過日数をそのまま「新台か否か」の根拠にすると、記録期間より前から稼働している長期在籍台を誤って「起源不明の巨大サンプル」として結果に混入させ、因果関係の誤った結論（またはその逆の過度な否定）を招く。データの制約で判定不能な場合は、断定せず「このデータでは検証も反証もできない」とユーザーに正直に報告する。
+
+## 例
+NG: 全てのinstance_startをそのまま信頼し、`days_since_install <= 14`だけで新台フラグを立てる → DB記録開始日(2025-01-01)由来の左検閲instanceも「導入から〇〇日」と誤ってラベル付けされる。
+OK: `WHERE instance_start <> (SELECT MIN(date) FROM machine_detailed_results)` で左検閲instanceを明示的に除外してから新台判定を行い、除外後のサンプル数が十分か（この事例ではn=17に激減）を必ず確認・報告する。
+
+---
+id: section-is-one-physical-row-not-a-broad-zone
+trigger: "machine_layout.section列を使った分析結果を「セクションX-Yが有望」のようにユーザーへ報告する場面"
+confidence: 0.9
+domain: pachinko-domain
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# sectionは「特定の列（島）」1つを指す。フロアの広い区画だと誤解されないよう、報告時に物理的な範囲を明示する
+
+## 背景
+DD14ホール横断スキャンで「セクション2269-2281が有望」と報告した際、ユーザーから「Sectionというのは特定の列の台しか見ていないということですか？」と問われた。Heatmap/2F_floor_coordinates_kamata1.csvの実座標(X,Y)を確認したところ、セクション"2269-2281"の13台は全てY=36で共通し、X座標(5〜16、+17)だけが異なっていた。つまりsectionは物理的に横一列（1島）に並んだ連番台の集合であり、rank_from_min/rank_from_maxはその列の両端からの位置を表す。ただし全sectionが単純な水平列とは限らず、例えば"2001-2020"はX,Y両方が変化する斜めの島だった（フロアの実形状に応じて島が斜めに配置される場合がある）。
+
+## アクション
+「セクションX-Yが有望」のような報告をする際は、それが13〜20台程度の1つの物理的な島（列）を指しているのであって、フロアの広い区画ではないことを明示する。sectionの物理的な向き（水平か斜めか）を精緻に確認したい場合は、machine_number範囲やsection名だけで推測せず、必ずHeatmap/{hall}_floor_coordinates_*.csvのX,Y列を実際に確認する。
+
+## 例
+NG: 「セクション2269-2281が有望」とだけ報告し、フロアの広い区画であるかのような誤解を残す。
+OK: Heatmap CSVでX,Y座標を確認 → セクション2269-2281は全13台がY=36の1列（水平）、セクション2001-2020はX,Y共に変化する斜めの1島、と物理的な範囲を明示した上で報告する。
+
+---

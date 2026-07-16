@@ -1,0 +1,73 @@
+---
+id: rakuen-lastdigit-segment-split-no-new-signal
+trigger: "楽園の末尾効果をセグメント別に再検証するとき"
+confidence: 0.85
+domain: interaction-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 楽園: 末尾×DDはセグメント分割しても新規シグナルなし（本館1F_Nの小サンプルε²のみ目立つがp<0.05に届かない）
+
+## 背景
+§7.1の全体プールでの末尾×DD検定は弱かったが、Simpson's Paradoxの可能性を疑い5セグメント（本館1F_N/2F_N/3F_N/新館_N/本館_A）別にKW検定+ε²を再計算した（`eda/rakuen_dd_lastdigit_hanaban_interaction.py`拡張）。
+
+## アクション
+- セグメント別トップ5はいずれも本館1F_N（21台の小規模セグメント）が独占するが、最良のDD31でもp=0.081, ε²=0.068とp<0.05に届かない
+- 他の4セグメント（本館2F_N/3F_N/新館_N/本館_A）はε²が0.004〜0.009程度でさらに弱い
+- 「全体プールでは見えにくかったが分割で浮上したDD」は該当なし（No rows）
+- 結論: 末尾は全体でもセグメントでも楽園では使えない変数。この検証を再度繰り返す必要はない
+
+## 例
+セグメント分割による再検証は「常に新しい発見がある」わけではなく、「既存の非有意判定が正しかった」ことを確認する場合もある。両方の結果を等しく記録する。
+
+---
+id: rakuen-hanaban-segment-split-4-new-findings
+trigger: "楽園の端番(hanaban)効果をセグメント別・DD別に参照するとき"
+confidence: 0.85
+domain: interaction-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 楽園: 端番×DDのセグメント分割で4件の本物のセグメント固有パターンを発見
+
+## 背景
+§7.1の全体プールでの端番×DD検定はDD=30のみ有意(ε²=0.0037)だった。5セグメント別にKW検定+ε²を再計算したところ、全体プールでは見えなかった/薄かったパターンが複数浮上した。
+
+## アクション
+| DD | 発見の性質 | 最強セグメント | p/ε² | 全体プールでの値 |
+|---|---|---|---|---|
+| DD4 | 全体でも境界線上だが本館1F_Nに強く集中 | 本館1F_N | p=0.003, ε²=0.059（本セッション最強） | p=0.007, ε²=0.003（22倍薄い） |
+| DD24 | **全体プールでは完全に非有意(p=0.31)なのに本館_A限定だと浮上** | 本館_A | p=0.048, ε²=0.012 | p=0.312（見えていなかった） |
+| DD25 | 全体でも境界線上だが本館2F_Nに集中 | 本館2F_N | p=0.030, ε²=0.009 | p=0.041 |
+| DD27 | 2セグメントで再現（本館_A含む） | 本館_A | p=0.010, ε²=0.015 | p=0.039 |
+
+DD3も新館_Nと本館2F_Nの2セグメントで独立に有意再現（sig_segment_count=2）。
+DD4の結果は§1.1「本館1Fだけ極端に異なる挙動」という発見と端番の面でも整合する。ただし本館1F_Nは21台の少数セグメントなので「参考」扱いで運用する。
+
+## 例
+DD24のように「全体プールでは非有意→特定セグメントでは有意」というケースこそがセグメント分割の価値。全体p値だけで変数を切り捨てず、セグメント別に再検証する価値がある（特に本セッションで確立した本館1F_N/2F_N/3F_N/新館_N/本館_Aのフロア別segment_schemeのように、既にSimpson's Paradoxが実証されているセグメント構造がある場合）。
+
+---
+id: segment-level-kw-retest-workflow
+trigger: "全体プールでの検定結果が弱い変数を、セグメント分割後に再検証するとき"
+confidence: 0.8
+domain: evaluation-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 「全体では見えにくかったDD」比較テーブルによるセグメント再検証ワークフロー
+
+## 背景
+楽園の末尾・端番×DD検定で、全体プールのKW検定結果とセグメント別KW検定結果を横並びで比較する「DD別の勝ちセグメント」テーブル（best_segment, best_p_value, best_epsilon_sq, all_p_value, all_epsilon_sq, epsilon_gap, epsilon_ratio列）を使うことで、「セグメント分割で新規に浮上したDD」を機械的に抽出できた（`eda/rakuen_dd_lastdigit_hanaban_interaction.py`のreport.md §8.1/8.2）。
+
+## アクション
+- 全セグメント+全体の計6区分でKW検定+ε²を計算し、DDごとに「最良セグメントのε² / 全体プールのε²」の比（epsilon_ratio）を算出する
+- epsilon_ratioが大きい（例: 20倍以上）DDは、全体プールでは薄まって見えなかった可能性が高い候補として優先的に確認する
+- sig_segment_count（複数セグメントで独立にp<0.05を達成した回数）が2以上のDDは、単発の偶然ではなく構造的な傾向として信頼度を上げる
+- 末尾のようにセグメント分割しても何も出ないケースと、端番のように4件浮上するケースの両方があり得るため、「セグメント分割すれば必ず何か見つかる」という期待は持たないこと
+
+## 例
+このワークフローは他ホール（蒲田7/蒲田1/みとや）の変数×DD再検証にも移植可能。既存のsegment_scheme定義があるホールであれば、同じ「6区分KW検定+epsilon_ratio比較」パターンをそのまま適用できる。

@@ -1,0 +1,114 @@
+---
+id: mitoya-position-vs-machine-axis-separation-required
+trigger: "複数台のグループ間で相関・トレードオフ仮説を検証する場面（例: セクションAとセクションBの設定投入が排他的か）"
+confidence: 0.9
+domain: pachinko-analysis-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 台番号グループと機種グループの比較は必ず入替履歴を確認してから分離する
+
+## 背景
+みとや大森町で「異世界かるてっと(705-706)とクレアBT(709-711)はトレード・オフ関係にあるのでは」という仮説を検証した際、最初の集計で「過去60日で対照的60%」という結果が出た。しかしこれは誤りだった。異世界かるてっとは2026-04-06〜04-19の14日間だけ749-750に存在し、04-20以降は705-706に移動していたが、集計時に「749-750=異世界かるてっと」という前提のまま過去に遡ったため、749-750にいた全く別の機種（ヨルムンガンド、主役は銭形5、バジリスク等）の実績を異世界かるてっとの実績として合算していた。台番号ベースの集計と機種名ベースの集計を正しく分離し、各機種の実際の在籍期間（`MIN(date)`〜`MAX(date)` per machine_number+machine_name）に絞って再計算したところ、対照的な日はどちらの軸でも約52%（コイントスの偶然水準）となり、トレード・オフ仮説は棄却された。
+
+## アクション
+1. 台番号グループ同士、あるいは機種名グループ同士を比較する前に、必ず `SELECT machine_number, machine_name, MIN(date), MAX(date), COUNT(*) FROM machine_detailed_results WHERE machine_number IN (...) GROUP BY machine_number, machine_name` で入替履歴を確認する。
+2. 「台番号軸」（位置に固定、機種が何であれ）と「機種軸」（機種名に固定、位置が何であれ）は明確に異なる集計であり、機種が過去に移動している場合、無条件に同一視してはいけない。
+3. 機種軸で比較する場合、比較対象の機種が存在する期間（在籍開始日以降）に集計対象を絞る。存在しない期間を0扱いで合算すると見かけの相関が歪む。
+4. 「〇〇と△△はトレードオフでは」という仮説自体は、ユーザーの現場観察（配置の隣接関係、稀な全台設定投入の目撃）に基づく貴重な着想である。着想を安易に肯定・否定せず、集計の正しさを先に固めてから判定すること。
+
+## 例
+誤: `WHERE machine_number IN (705, 706, 749, 750)` として60日分を機種名区別なく集計 → 749-750にいた別機種の実績が異世界かるてっとの実績として混入。
+正: `WHERE machine_name LIKE '%異世界%かるてっと%'`（機種名軸）と `WHERE machine_number IN (705, 706)`（位置軸、2026-04-20以降）を分離し、それぞれ対応する期間のみで対クレアBT(709-711)の対照日率を計算 → 両軸とも約52%で一致、トレードオフなしと判定。
+
+---
+id: mitoya-corner1-rule-not-universal-single-day-failure
+trigger: "みとやのDD14×h_jug角番1（台641/674/675）を狙い目として提示する場面"
+confidence: 0.65
+domain: pachinko-analysis-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# DD14×火曜のh_jug角番1が2026-07-14に外れた（641: -2953, 674: +394）
+
+## 背景
+過去18日分のDD14集計では641(+982)・674(+912)が最有力候補として繰り返し確認され、機種入替混入バグ修正後も数値は再現した。しかし実際の2026-07-14（火曜・DD14）では641が-2953、674が+394（ほぼ横ばい）となり、事前予想は外れた。同日、東京喰種(574)も-3794と大敗。一方で推奨台全体(30台)の勝率は43.3%、非推奨(236台)は39.0%と、全体としてはわずかに推奨側が有利な結果ではあった。
+
+## アクション
+1. h_jug角番1ルールは過去実績の平均としては堅牢だが、単日の的中を保証するものではない。単日評価でルールの成否を断定しない（[[feedback-statistical-certainty-calibration]]と同じ原則）。
+2. 火曜×DD14の組み合わせは本セッション時点でn=3日程度と薄く、「火曜は下振れしない」という前回の暫定判断は今回の実績で反証された。曜日×DD相互作用は今後も継続観察が必要。
+3. 推奨リストは「複数候補への分散」を前提に設計し、単一候補（641/674のみ）に賭けない運用を維持する。
+
+## 例
+2026-07-14実績: 641=-2953(✗), 674=+394(◎), 574=-3794(✗大敗)。過去平均(641=+982, 674=+912, 574=+917)から見て統計的に十分あり得る分散内の外れだが、単日では容易に逆転しうることを示す実例として記録。
+
+---
+id: codex-iron-machine-caution-misread-as-exclusion-rule
+trigger: "Codexに『特定台の個体依存に注意』という理論文書の注記を踏まえた集計スクリプトを依頼する場面"
+confidence: 0.8
+domain: codex-delegation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 「鉄台による偽シグナル」という注意書きは「台の除外」ではなく「帰属の注意」
+
+## 背景
+`mitoya_theory.md`の「パターン1: 鉄台による偽シグナル（台固有性）」は、h_jug末尾d4の末尾効果が実は台674という特定1台の個体効果だった（末尾という切り口自体には根拠がない）という**帰属の注意**を意味していた。しかしCodexに全DD一括検証スクリプトの実装を委任した際、この記述を誤読し `KNOWN_IRON_MACHINE_NUMBERS = {641, 642, 674}` として該当台を集計から完全除外してしまった。台674は理論文書のStep 3・4では実は最有力候補（h_jug reversedセクションの角番1そのもの）として明記されており、除外は完全な逆効果だった。修正依頼で除外ロジックを撤廃し、代わりに`single_machine_dominance_flag`（特定1台の寄与率50%以上を検出する注記列）に置き換えた。
+
+## アクション
+1. Codexへの委任プロンプトで理論文書の注意書きを参照させる場合、「除外せよ」なのか「注記・警告フラグを立てよ」なのかを明示的に区別して指示する。曖昧な参照だけでは誤読リスクが残る。
+2. 台の除外を伴うロジックをCodexが自律的に追加した場合、除外理由と除外対象を必ず人間側で照合する（今回は手動分析値641=+982, 674=+912との突合で誤りが発覚した）。
+3. 個体依存の強さを扱いたい場合は「除外」より「フラグ付け」の方が安全（データを隠さずに注意喚起できる）。[[codex-prompt-precision]]の契約明示チェックリストに「除外 vs フラグ」の区別も追加検討。
+
+## 例
+修正前: 641・642・674が集計から欠落し、最有力候補が一括検証システムから恒久的に見えなくなっていた。
+修正後: 全台を集計対象に含めた上で、`single_machine_dominance_flag`列で「この位置の数値は特定1台に依存している」と警告するのみ。641・674のDD14実績は手動分析値とほぼ一致（981.5≈982, 911.6≈912）し、dominance_flag=Falseで個体依存の懸念もないことを確認。
+
+---
+id: mitoya-win-rate-vs-avgdiff-divergence-thin-sample
+trigger: "n<15程度の薄いサンプルで機種・台の有望度を判定する場面"
+confidence: 0.7
+domain: pachinko-analysis-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 薄いサンプルではavg_diffと勝率(win_rate)が逆の結論を示すことがある
+
+## 背景
+みとやDD14実績で「異世界かるてっと・SHAKE・リオエース」の3機種はいずれもavg_diffが高く見えたが、勝率で見ると実態が分かれた: 異世界かるてっと n=6 win_rate=83.3%（avg_diffの高さと整合）、SHAKE n=11 win_rate=72.7%、リオエース n=8 win_rate=50.0%（avg_diffは+1519と高いが実際は五分五分で、6/14の2台の爆発的勝利(+7676,+8444)がavg_diffを牽引していただけ）。avg_diffだけで3機種を一律に「強い」と評価すると、リオエースのような「稀に大勝ちするだけで実際は五分五分の機種」を見誤る。
+
+## アクション
+1. n<15程度の薄いサンプルを評価する際は、avg_diffに加えて必ずwin_rate（104%超え率や差枚>0の割合）を併記し、両者の乖離を確認する。
+2. avg_diffは極端値（爆発的な1日の大勝ち）に強く引っ張られる指標であるため、win_rateとの乖離が大きい場合は「特定日の爆発に依存した高avg_diff」を疑う。
+3. win_rateが高くavg_diffも高い機種（両指標が一致）が最も信頼度が高い。win_rateが低くavg_diffだけ高い機種は格下げ対象とする。
+
+## 例
+リオエース: avg_diff=+1519(高) だが win_rate=50%(五分五分) → 6/14の2台大勝ち(+7676,+8444)への依存が判明、「強い」の評価を撤回。
+異世界かるてっと: avg_diff=+1871(高) かつ win_rate=83.3%(高) → 両指標一致、候補として格上げ妥当と判断。
+
+---
+id: mitoya-full-dd-sweep-reference-csv-available
+trigger: "みとやの特定DD（日付の日部分）における位置別・機種別・セグメント別の実績を調べたい場面"
+confidence: 0.85
+domain: pachinko-analysis-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# みとや全DD一括頑健性検証スクリプトとCSVが生成済み、対話的DB調査を都度行う必要はない
+
+## 背景
+DD14について対話的に「角番18は？角番6は？機種別では？」と複数往復した経緯を踏まえ、Codexに委任して`eda/mitoya_dd_full_sweep_robustness.py`を実装した。DD(1〜31)×セグメント×rank_from_aisle×機種インスタンス（入替期間で正しく分離）の粒度で集計し、`document/mitoya_dd_full_sweep_20260713.csv`（主要値・機種インスタンスベース）、`document/mitoya_dd_full_sweep_positionbased_reference_20260713.csv`（参考値・台番号ベース）、`document/mitoya_dd_hallwide_baseline_20260713.csv`（DD別ホール全体ベースライン）の3ファイルを出力する。n<10の行には`low_confidence`フラグ、特定1台への依存が強い行には`single_machine_dominance_flag`が付与される。7/7の全設定6特殊日は除外済み。
+
+## アクション
+1. みとやの特定DDについて位置別・機種別実績を聞かれたら、まずこの3つのCSVを参照する。DBへの都度SQLクエリより優先する。
+2. CSVの日付（ファイル名の`_20260713`）が古くなっている場合（DB更新後など）は、`eda/mitoya_dd_full_sweep_robustness.py`を再実行してCSVを更新してから参照する。
+3. `single_machine_dominance_flag=True`の行は、その位置の強さが特定1台に依存していることを意味するため、機種入替リスクとして言及すること。
+
+## 例
+518番(角番18, rank_from_aisle=18)のDD14実績+1168、519番(角番19)+741は、いずれもこのCSVから即座に参照可能。前回の対話的DB調査結果と一致することを確認済み。
+---

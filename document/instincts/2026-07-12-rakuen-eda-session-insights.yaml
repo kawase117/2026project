@@ -1,0 +1,116 @@
+---
+id: rakuen-event-day-definition-corrected
+trigger: "楽園のイベント日定義を参照・使用するとき"
+confidence: 0.95
+domain: event-day-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 楽園イベント日定義: DD∈{10,11,22,30} + 強ゾロ目（旧定義は誤り）
+
+## 背景
+`document/rakuen_theory.md`の旧記載は「HALL_EVENT_DIGITS=[11,22]」、`eda/section_lateral_expansion.py`のHALL_CONFIGSは「{1,4,7,14,17,24,27,30}」（みとやの定義を誤って転用）と、2つの矛盾する定義が存在していた。DD別の実測スキャン（avg_diff/hit104率/avg_games、全期間2025-01-01〜2026-07-10）でどちらも不正確と判明。
+
+## アクション
+```python
+event_dds = {10, 11, 22, 30}
+strong_zorome = True  # 月=日（例1/1〜12/12）を独立イベント軸として扱う
+is_event_day = (date.day in event_dds) or (strong_zorome and date.month == date.day)
+```
+- DD=22(+188.2), DD=30(+168.5), DD=11(+138.3), DD=10(+147.5)がavg_diffで突出（全体平均+34.5）
+- 強ゾロ目は avg_diff +29.2→+174.3、avg_games 2950→4410（+50%）と楽園最強の単一シグナル
+- 他ホールのイベント日定義（みとや式{1,4,7,14,17,24,27,30}等）を検証なしに転用しないこと。DD=4/14/24は楽園では平均以下
+
+## 例
+`eda/section_lateral_expansion.py`のHallConfigに`strong_zorome: bool`フィールドを追加し`is_event_day()`ヘルパーで判定する実装パターンは他ホールにも展開可能（デフォルトFalseなので既存ホールの動作は変わらない）。
+
+---
+id: rakuen-honkan-floor-simpson-paradox
+trigger: "楽園のセグメント定義・フロア構成を参照するとき"
+confidence: 0.95
+domain: floor-layout-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 楽園: 本館1FをN家系セグメントに混ぜるとSimpson's Paradoxが発生
+
+## 背景
+`dashboard/config/hall_configs/rakuen.yaml`のsegment_scheme初版は「本館_N」として本館1F/2F/3Fを1セグメントに統合していた。実データでは本館1F(N)だけ極端に悪く(avg_diff -997.9円, hit率26.2%)、本館2F/3F(N)は良い(avg_diff +290〜325円, hit率48-50%)。1200円超の差を平均化すると本館フロアの真の差が見えなくなる。
+
+## アクション
+- KW検定（本館フロア間、Nセグメント内）: n_groups=3, n_obs=74,434, p=4.5e-235, **ε²=0.0145**——本セッションの他の効果量(0.001〜0.005)より5〜10倍大きい本物の構造シグナル
+- `document/plans/hall-analysis-procedure.md`が「フロア分割はA/N分割より優先」と定めている理由の実例。セグメント設計は必ず軸ごとにKW検定で検証してから決めること（仮定で丸めない）
+- 新館1F vs 2Fは差が小さく(+328.6円 vs +304.7円)、統合維持は許容範囲
+
+## 例
+セグメント設計時のチェックリスト: 「まとめる前に、まとめる候補同士でKW検定+ε²を必ず取る」。ε²が他の変数の判定閾値(このプロジェクトでは概ね0.003〜0.005が「ボーダーライン」)を超えたら分離必須。
+
+---
+id: rakuen-split-model-loses-to-baseline
+trigger: "楽園のセクションランキング・walk-forwardバックテストを設計するとき"
+confidence: 0.9
+domain: backtest
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 楽園: イベント/非イベント分割学習(splitモデル)はbaselineに劣る（蒲田1と逆）
+
+## 背景
+蒲田1で有効だった「イベント日はイベント日履歴のみ、非イベント日は非イベント日履歴のみで学習するsplitモデル」を楽園にそのまま適用（event_dds={10,11,22,30}+強ゾロ目、window=90日、min_games=2000、評価120日）したところ、baseline（全履歴混合学習）に一貫して劣った。
+
+## アクション
+- イベント日(n=20日)でsplitはbaseline比 precision -1.9〜-2.8pp、差枚excess最大-90.1円（マイナス転落）
+- 非イベント日(n=100日)はほぼ互角
+- 原因推定: 楽園はセクション構造が本館/新館の建物勾配に支配されており、全履歴学習の方が安定。イベント日サンプルが少ない(n=20日)ためsplit学習がノイズに弱い
+- 「他ホールで効いた手法をそのまま移植しない」の実例。`hall-analysis-procedure.md`アンチパターン#1に該当
+
+## 例
+運用: 楽園はbaselineモデル（全履歴混合、window=90日、min_games=2000）+ top_k=3〜5のセクション推薦を採用する。イベント/非イベント分割は使わない。
+
+---
+id: rakuen-dd-position-interaction-marginal-not-true
+trigger: "楽園のDD×末尾・DD×端番(hanaban/hanaban_min)の交互作用を評価するとき"
+confidence: 0.85
+domain: interaction-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 楽園: DD×末尾/端番の「強いセル」の大半は周辺効果（DDの強さ）の重ね合わせ
+
+## 背景
+ダッシュボード「交互作用エクスプローラ」でDD×hanaban_min、DD×machine_tailの目立つセル（例: DD30×hanaban_min16 n=233 avg_diff+856.5、DD10×末尾1 n=781 avg_diff+456.9）をユーザーが発見。DD限定でのKW検定（そのDD内で軸の水準間に差があるか）を実施したところ、いずれも非有意（p=0.32〜0.49、ε²≈0）だった。
+
+## アクション
+- DD30の全hanaban_min水準はほぼ全てプラス、DD10の全末尾水準もほぼ全てプラス——「そのDD自体が強い日」という既知効果が軸全体に一様に乗っているだけ
+- 末尾で見ると10桁中6桁で「avg_diffトップ4のDD」が確定イベント日{10,11,22,30}で埋まる——「特定の軸水準がそのDDで特別」ではなく「イベント日はほぼ全水準を底上げする」ことの確認
+- 検証手順: (1)そのDD限定で軸内KW検定 (2)軸の全水準でそのセルが浮くか俯瞰 (3)複数の軸水準で「強い日トップN」が同じDD群に支配されるか確認、の3点セットで「真の交互作用」と「周辺効果の重ね合わせ」を切り分ける
+- 全体でのDD×hanaban_min検定はp=6.8e-16と有意だがε²=0.0012と極小——n=31万の大標本では些細な効果でも有意になるため、ε²を必ず併記すること
+
+## 例
+`dashboard/utils/interaction_analysis.py`の`run_pairwise_axis_test`/`summarize_cells`を直接呼び出せば、この種の検証はCodex委譲不要でメインループから数分で実行できる。
+
+---
+id: statistical-certainty-vs-watching-status
+trigger: "非有意・小さい効果量の結果を報告するとき"
+confidence: 0.9
+domain: evaluation-methodology
+source: user-feedback
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 統計的確実性を求めすぎない: watchingステータスでの継続観察を選択肢にする
+
+## 背景
+ユーザー指摘（2026-07-12）: 「あなたは確実性を求めすぎに思います。スロットの設定投入にはある程度のランダム性があり、またスロット自体にも引きのブレ、そして投入傾向のトレンドがあります。サンプル数の多さは大事ですが、あまりそればかりを見ても傾向が読めなくなるのではと思います」
+
+## アクション
+- p値非有意・ε²閾値未満のセル/変数を「効果なし」と即断せず、`status: watching`として観察継続の選択肢を残す
+- 判断材料をp値/ε²だけでなく複数角度に広げる: (1)古典的検定 (2)イベント日/非イベント日間でのランキング入れ替わり(Spearman順位相関) (3)セグメント間の方向一貫性。この3点が揃えば単独のp値が非有意でも「watching」候補として記録する
+- ただし小サンプル(n<20程度)由来の極端な効果量は引き続き警戒する（両者のバランスが必要）
+
+## 例
+楽園のDD×末尾/端番分析で、`report.md`に「watching候補」セクションを設け、統計的有意性の有無に関わらず差分上位/下位を機械的にリストアップする形式を採用した（`eda/results/rakuen_event_vs_nonevent_tail_hanaban/watching_candidates.csv`）。

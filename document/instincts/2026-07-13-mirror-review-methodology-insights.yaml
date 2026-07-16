@@ -1,0 +1,109 @@
+---
+id: phenomenon-vs-predictability-distinction
+trigger: "when a domain-known phenomenon (e.g. a hall's known weekday-based setting strategy) shows a non-significant or random-looking result in a specific statistical test"
+confidence: 0.9
+domain: statistical-methodology
+source: session-observation
+project_id: 2026project
+project_name: 2026project
+
+# 「現象が実在するか」と「その現れ方を予測できるか」は別の問い
+
+## 背景
+蒲田七の「火曜日は角番基準で設定を入れている」という既知のドメイン事実に対し、統計検証で「どの角番に入れているかは予測できない、ランダムに見える」という非有意な結果が出た。この非有意という結果は、現象そのものへの反証ではなく、「予測可能性」という別の問いへのnoの回答として正しく受理されるべきだった。ClaudeとユーザーがこれをClaude側の言葉の齟齬で一時的に否定と誤読した。
+
+## アクション
+非有意/nullな結果が出たとき、まず「この検定は現象の実在を問うているのか、それとも具体的な現れ方の予測可能性を問うているのか」を明示的に切り分ける。ドメイン側で既知の事実(実運用観察・過去実績で確定済み)まで疑わない。予測可能性がnullでも、現象自体の存在は独立して扱う。
+
+## 例
+「Xホールの曜日Yは高設定を入れている」は事実として確定済みだが、「どの角番/どの列に入れているか」の統計検定がnullの場合、「Xホールは曜日Yに高設定を入れていない」と結論してはいけない。「入れ方が予測できない(狭く/ランダムに配置している可能性)」とだけ結論する。
+
+---
+
+---
+id: reattribute-not-reject-narrow-effects
+trigger: "when a highly significant result (e.g. extreme p-value) turns out to be driven by n=1 or a tiny subset within a broader category"
+confidence: 0.85
+domain: statistical-methodology
+source: session-observation
+project_id: 2026project
+project_name: 2026project
+
+# n=1に支えられた有意な結果は「棄却」ではなく「粒度の再帰属」
+
+## 背景
+蒲田七角番×3F type Aで p=5.0e-45 という極端に有意な結果が、near/farそれぞれセクション内の1台にのみ支えられていたことが判明した際、「構造的な角番効果としては採用できない」と結論したが、これは結果自体を捨てることを意味しない。ユーザー本人の指摘: 「この場合はより優先度の高い、その一台専用のルール・法則性があると見るべきではないか」。
+
+## アクション
+n=1やごく少数の台に支えられた有意な結果に遭遇したら、「広い括り(角番・セクション等の構造効果)としては不採用」だが「個別の台固有ルールの候補としては有効」という二段階評価を行う。棄却ではなく、正しい粒度への再分類を明示する。
+
+## 例
+「角番効果」として提案された結果が実は特定の1台(例: 台番号XXXX)の癖だった場合 → 「角番セオリー」からは除外しつつ、「台XXXX個別の法則候補」としてinstinct化を検討する。
+
+---
+
+---
+id: hall-independent-replication-rationale
+trigger: "when deciding whether to pool data across multiple halls for a cross-hall theory"
+confidence: 0.85
+domain: statistical-methodology
+source: session-observation
+project_id: 2026project
+project_name: 2026project
+
+# ホール別独立分析はプーリング回避ではなく高検出力設計
+
+## 背景
+既存ルール `feedback_no_cross_hall_pooling` は「ホール横断の共通法則はほぼ存在しない」という前提で運用されてきたが、その理由付けを本人が明確化した: ホールを跨いだ普遍法則は事前予測として存在しないと見込まれる一方、ホール別に独立検証する設計そのものが、もし本当に類似の法則性があれば複数ホールで独立に検出できるという、プーリングより検出力の高い方法になっている。
+
+## アクション
+「ホールを跨いだ分析をしない」という制約を、単なる近道の禁止ではなく、独立レプリケーションによる高感度検出設計として説明する。もし複数ホールで同じ効果が独立に検出されたら、それは偶然の一致ではなく真にプールしてよい根拠として扱う。
+
+## 例
+蒲田1・蒲田7・みとやそれぞれで独立にDD11分析を行い、結果が真逆(蒲田7=negative, みとや=negative, 蒲田1=部分採用)だったことは、プーリングでは見えなかった「ホールごとの真の異質性」を独立検証だからこそ検出できた例。
+
+---
+
+---
+id: rigor-applies-regardless-of-author
+trigger: "when deciding how thoroughly to review implementation output, whether from Codex, Claude, or the user's own code"
+confidence: 0.9
+domain: workflow
+source: session-observation
+project_id: 2026project
+project_name: 2026project
+
+# 重大度タグ付き構造化レビューは実装者を問わず適用される普遍基準
+
+## 背景
+Codexの実装プランに対して行番号付き・severityタグ付きの構造化批判を繰り返してきたことは、対Codexの警戒・統制手段ではないかという仮説があったが、本人は「自分の成果物に対しても同じレビューを行う」と明言した。「目的遂行が最重要であって、情緒的な部分はあまり考慮しなくて良い」という価値観がその根拠。
+
+## アクション
+実装レビューの厳しさを、実装者(Codex/Claude/本人)によって使い分けない。誰が書いたコードであっても、契約の曖昧さ・スキーマ粒度・実運用リスクを同じ基準でチェックする。レビューを簡略化したくなったら、それが「相手への配慮」ではなく「基準の劣化」であることを疑う。
+
+## 例
+Codexへのプロンプトレビューでload_hall_daily_frame契約の曖昧さを指摘したのと同じ厳しさで、自分(Claude)が書いたコードの契約定義も事前にセルフチェックする。
+
+---
+
+---
+id: monetization-threshold-not-yet-defined
+trigger: "when asked whether the prediction pipeline is ready to start tracking real P&L / monetization outcomes"
+confidence: 0.6
+domain: project-tracking
+source: session-observation
+project_id: 2026project
+project_name: 2026project
+
+# 「精度が上がったら収益化検証に移る」の判定基準が未定義
+
+## 背景
+mirror-review(2026-07-13)で、収益化・実運用の損益総括がほぼ無いことを指摘したところ、本人は「まだその段階まで達していない。予測精度を上げることに成功してから取り組む」と回答した。この順序づけ自体は合理的だが、「いつ精度が十分と判定するか」の具体的な基準(閾値・指標)はこの時点でまだ言語化されていない。既存の `prediction-evaluation` スキルにある「30日移動Hit@3が40%超」が流用候補として存在する。
+
+## アクション
+次にこの話題に触れる機会があれば、「精度が上がった」を判定する具体的な数値基準(例: 30日移動Hit@3の閾値)をこの時点で確定しているか確認する。確定していなければ、confidence 0.6のまま保留とし、断定的な進捗報告をしない。
+
+## 例
+`document/roadmap.md` の「30日後の確認事項」に同じ論点が記載されている。次回の `/mirror-review` 実行時、この基準が言葉になっているかどうかを最優先で確認する。
+
+---

@@ -1,0 +1,41 @@
+---
+id: rb-probability-verifies-coarse-kakuban-rule-not-fine-dd-interaction
+trigger: "when deciding whether an independent metric (e.g. RB probability) can substitute for or corroborate a diff-based (差枚/機械割) theory claim"
+confidence: 0.85
+domain: theory-verification-methodology
+source: session-observation
+project_id: 2026project
+project_name: 2026project
+
+# RB確率は「粗い普遍的効果」の裏取りには強いが、DD条件付きの細粒度ルールの裏取りには弱い
+
+## 背景
+蒲田7・蒲田1で確立済みの「角番1(コーナー)は最弱」という差枚・機械割ベースの結論を、設定に直結する独立指標RB確率(rb_probability_decimal)で再検証した(eda/kakuban_rb_probability_verification.py)。結果、角1のRB確率が他バケットより有意に低いことは両ホール・両games閾値(400/2000)の全4条件で確認され(蒲田7: p=5.0e-13〜3.7e-37、蒲田1: p=3.6e-6〜2.3e-15)、粗い角番ルールはRB確率で強く裏取りできた。一方、DD×角番の細粒度な「最強角番」一致率(RBベース vs 差枚ベース)は蒲田7で40%(min_games=400)/70%(min_games=2000)、蒲田1で27%/60%にとどまり、5分類のランダム一致率(≈20%)は上回るものの完全一致には程遠かった。また角番バケット全体の順位相関(Spearman)はgames_normalized≥2000で両ホールともρ=1.0(完全一致)だが、蒲田1でmin_games=400にするとρ=0.5(p=0.391、非有意)まで崩れた。
+
+## アクション
+「差枚ベースの粗い普遍的効果(全体平均で見た主効果)」は独立指標での裏取り検証に向いており、確信度を引き上げる材料になる。一方「DD×角番のような条件付き細粒度の交互作用ルール」は、独立指標での再現率がせいぜい中程度(40-70%)にとどまることを前提に、「構造シグナル」ではなく「戦術的シグナル」程度の確信度で扱うべきで、独立指標での不一致だけを理由に棄却しない(ノイズの影響が大きいだけの可能性がある)。低ゲーム数(low n)の台を含めると独立指標との相関が崩れやすいため、独立指標での検証はgames_normalized≥2000程度の高稼働台に絞るのが安全。
+
+## 例
+蒲田1 min_games=400: kakuban 5分類のRB確率 vs 機械割の順位相関がSpearman ρ=0.5(p=0.391、非有意)。同じ蒲田1でmin_games=2000に絞るとρ=1.0(p=1.4e-24)に急改善。閾値次第で「相関なし」から「完全相関」まで結論が変わりうる。
+
+---
+id: codex-model-requires-newer-version-error-is-often-account-gating-not-cli-version
+trigger: "Codex CLI task fails with an error like \"The 'X' model requires a newer version of Codex. Please upgrade to the latest app or CLI\""
+confidence: 0.8
+domain: coding-agent-tooling
+source: session-observation
+project_id: 2026project
+project_name: 2026project
+
+# Codexの「要CLI更新」エラーは実際にはモデル単位のアカウント側gatingであることが多い
+
+## 背景
+~/.codex/config.tomlのデフォルトmodel(例: gpt-5.6-luna)を使ったCodexタスクが"requires a newer version of Codex"エラーで4回連続失敗した。npm経由の`@openai/codex`アップグレード(0.142.5→0.144.5)、さらにOpenAI Codexデスクトップアプリ本体の手動更新(CODEX_CLI_PATHが指すバイナリを`codex.exe --version`で0.144.5に上がったことまで確認)を行っても、gpt-5.6-luna・gpt-5.6-terra・gpt-5.6-solの3モデル全てで同一エラーが再現した。エラー文言はCLIバージョン起因を示唆するが、実際には旧世代モデル(gpt-5.5)を--model指定した軽量診断タスクは即座に成功し、CLI自体は正常でgpt-5.6系モデルだけがこのアカウントで未解放(gating)であることが判明した。
+
+## アクション
+Codexが"requires a newer version"エラーで失敗した場合、CLI/アプリの更新を繰り返す前に、まず軽量な診断タスク(例: cwdとgit statusを返すだけ)を`--model gpt-5.5`のような枯れた旧モデルで1本投げて原因を切り分ける。それが成功すればCLIは正常でモデル単位のアカウントgatingが原因と確定でき、以降はそのモデルで本タスクを再投入すればよい。CLI更新はnpm経由では効かない場合があり(実際に使われるバイナリはOpenAI Codexデスクトップアプリ同梱のCODEX_CLI_PATH側であることが多い、~/.codex/config.tomlで確認可能)、CLI更新自体に時間を浪費しないこと。
+
+## 例
+task-mrn63e1x/mrn7mu2l/mrn84fbc/mrn8qmg8の4タスクがgpt-5.6-luna/terraで同一エラーにより失敗。5本目の軽量診断タスク(--model gpt-5.5)が即成功し、以降--model gpt-5.5指定で本題(RB確率検証)のCodexタスクが9分18秒で正常完了した。
+
+---

@@ -1,0 +1,43 @@
+---
+id: per-machine-metric-must-not-use-hallwide-daily-aggregate
+trigger: "個別台×個別日レベルの指標（win_rate, 機械割104%超えなど）をカテゴリ別に集計するスクリプトを新規作成する場面"
+confidence: 0.9
+domain: pandas-pitfall
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ホール全体の日次集計値を個別台に merge して「個別台の指標」として使うと、カテゴリ別の差が消える
+
+## 背景
+eda/dd_crosstab_analysis.py の初版で、machine_detailed_results（個別台×日）に daily_hall_summary.win_rate（ホール全体の日次勝率）を date キーで merge し、その値をそのままカテゴリ別の hit104_rate 判定（win_rate >= 104）に使っていた。同じ日の台は全て同じホール全体勝率を持つため、カテゴリ（section・machine_tail等）でグループ化しても意味のある差が出ず、ホール全体勝率が104%を超えることはほぼ無いため hit104_rate が常に0.0になった。ユーザーから「機械割104%超えの台が無いなんてありえない」「win_rateはカテゴリ別に算出するもの」と指摘され、既存コード（dashboard/utils/daily_report.py:52-66, eda/hit104_scan.py:58-62）に個別台ベースの正しい実装が既にあることを確認した。
+
+## アクション
+「個別台の機械割」は `bet = games_normalized * 3.0; payout_rate = (bet + diff_coins_normalized) / bet * 100.0` で個別台×個別日ごとに計算し、hit104 フラグは `payout_rate >= 104.0` を個別レコード単位で立ててからカテゴリでgroupby.mean()する。「カテゴリ別win_rate」は `diff_coins_normalized > 0`（プラス収支だった台の割合）を個別レコード単位で判定してから平均する。ホール全体の日次サマリーテーブル（daily_hall_summary等）の集計済み値を個別レコードに横展開してカテゴリ別集計の母数に使ってはならない。同種の指標計算スクリプトを書く前に、既存の dashboard/utils/ や eda/ 配下に同じ指標の実装がないか grep で必ず確認する。
+
+## 例
+NG: `daily.merge(machine, on="date")` してから `(merged["win_rate"] >= 104).mean()` per category → 全カテゴリで同じホール全体日次値を見ているだけなのでhit104_rateが常に0近辺になる。
+OK: `bet = games_normalized*3; payout_rate = (bet+diff_coins_normalized)/bet*100; hit104 = payout_rate>=104` を個別台×日で計算してからカテゴリでgroupby → hit104_rateがホールごとに26.9%〜32.0%の妥当な分布になり、avg_diffとの相関もr=0.76〜0.97と直感的な関係が確認できた。
+
+---
+id: substring-machine-name-grouping-conflates-different-specs
+trigger: "機種名文字列から「ジャグラー」「北斗」のような部分一致キーワードで機種カテゴリ（machine_type等）を作ろうとする場面"
+confidence: 0.9
+domain: pachinko-domain
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 部分文字列マッチによる機種グルーピングは、スペックの異なる別機種を1カテゴリに混ぜてしまう
+
+## 背景
+eda/dd_crosstab_analysis.py の detect_machine_type() で `"北斗" in name_str` のような部分一致判定を使い、「スマスロ北斗の拳」「北斗の拳 転生の章2」「スマスロ真・北斗無双」「北斗の拳 宿命」という4つの別機種（旧筐体とスマスロ機は確率・払い出し設計が根本的に異なる）を "北斗" という1カテゴリに統合していた。同様に "ジャグラー" というキーワードでも、マイジャグラーV・アイムジャグラーEX-TP・ゴーゴージャグラー3・ジャグラーガールズ・ウルトラミラクルジャグラー・ファンキージャグラー2・ミスタージャグラー・ネオアイムジャグラーEX・ハッピージャグラーVIIIという8〜9種の別機種（それぞれ設定判別要素や機械割レンジが異なる）が1カテゴリに混在していた。ユーザーから「machine_typeは機種名ではないか。似た名前の別機種があるので略し方はやめてほしい」と指摘された。
+
+## アクション
+機種別の分析カテゴリを作る際は、部分文字列マッチによる略称グルーピングをせず、machine_name列の値をそのまま（完全一致で）カテゴリとして使う。同一シリーズでも筐体世代（スマスロ/旧規則等）や副題（転生の章2/宿命等）が違えば別機種として扱う。もし意図的に機種ファミリーでグルーピングしたい場合は、実際の distinct machine_name一覧をSQLで確認してから、ユーザーに正式なグルーピング定義（どれとどれを同一視してよいか）を確認した上で実装する。「それっぽいキーワード」だけで自己判断でグルーピングしない。
+
+## 例
+NG: `if "北斗" in name_str: return "北斗"` → スマスロ北斗の拳(新世代機)と北斗の拳 転生の章2(旧規則機)が同一視され、差枚・104%超え率が意味をなさない平均値になる。
+OK: category列に machine_name の値をそのまま使う（例："スマスロ北斗の拳" と "北斗の拳 転生の章2" は別々の行としてDD別集計される）。SQLで `SELECT DISTINCT machine_name FROM machine_detailed_results WHERE machine_name LIKE '%北斗%'` を実行し、実際に何種類の機種が混在しているかを必ず事前確認する。
+
+---

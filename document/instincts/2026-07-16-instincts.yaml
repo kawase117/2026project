@@ -1,0 +1,41 @@
+---
+id: evolve-cli-clustering-fails-on-fragmented-single-purpose-instincts
+trigger: "when running /evolve --generate on this project's document/instincts/ corpus expecting skill/command clusters"
+confidence: 0.7
+domain: coding-agent-tooling
+source: session-observation
+project_id: 2026project
+project_name: 2026project
+
+# /evolve は460件のinstinctから0スキルクラスタしか検出できなかった
+
+## 背景
+instinct-cli.py evolve --generateを460件のプロジェクトinstinctに対して実行したところ、80%以上confidenceの411件があったにもかかわらず、スキルクラスタは0件、コマンド候補は信頼度75%の1件のみで、生成されたcommand fileも本文が空のスタブだった(codex-eda-script-prompt-pitfalls-machine-axisという単一instinctから生成されたcodex-kamata-eda-cre.md、タイトルと信頼度のみで内容3行)。この結果は、蒲田7・蒲田1・楽園・みとや等ホールごと・DD条件ごとに極めて具体的で相互に独立したinstinctが大量にあり、trigger/domainの文字列的な類似度に基づく自動クラスタリングでは意味のあるグルーピングを見つけられないことを示唆する。
+
+## アクション
+大量のinstinctから自動でスキル・コマンド・エージェントを生成したい場合、/evolveの自動クラスタリングに頼らず、memory/MEMORY.mdやdocument/instinctsのdomain分布を手動で俯瞰してから、意図的にスキル化したいテーマ(既存のkamata7-data-processing、ltr-pipeline-guide等のように)を選んで手動でSKILL.mdを書く方が確実。/evolveは「クラスタ候補の発見」ではなく「手動で決めたテーマの雛形生成」程度の補助と位置づける。
+
+## 例
+2026-07-16実行、460 instincts(project-scoped 460, global 0)、高confidence(>=80%) 411件に対し、skill clusters=0、command candidates=1(confidence 75%)。生成ファイル`~/.claude/homunculus/projects/257beeaeb232/evolved/commands/codex-kamata-eda-cre.md`は見出しと出典行のみで実質的な内容を含まなかった。
+
+---
+id: writing-style-skills-scope-global-not-project-for-pachinko-analyzer
+trigger: "when asked to create or apply a prose/writing-rhythm skill (narrative tension, cognitive-mode switching, essay style) in this project"
+confidence: 0.85
+domain: skill-scoping
+source: session-observation
+project_id: 2026project
+project_name: 2026project
+
+# 文章術・ライティングリズム系スキルはグローバルスコープに置き、プロジェクトのtheory文書には適用しない
+
+## 背景
+cognitive-rhythm-writing(緩急・認知モード切替の設計規範)とjapanese-tech-writing(日本語技術文書の整形・論証規範)という2つの文章術スキルを新規作成する際、pachinko-analyzerプロジェクトのtheory文書(kamata1_theory.md、kamata7_theory.md等)向けに使うか検討した。プロジェクトのtheory文書は根拠明示・直接的記述が要求され(CLAUDE.mdの「技術的・統計的な根拠に基づき明確に述べる」原則、および理論文書は手動作成という既存方針)、未回収の緊張を意図的に残す物語的リズム設計とは相性が悪いと判断した。ユーザーもこの判断に同意し、用途を「一般向け解説文」に限定したため、両SKILL.mdは`~/.claude/skills/`(グローバルスコープ)に配置し、プロジェクトの`.claude/skills/`には置かなかった。
+
+## アクション
+今後このプロジェクトで文章術・ライティングスタイル系のスキルを追加・適用する際は、対象がtheory文書/分析レポート(直接性・根拠重視、迎合禁止)か、それ以外の一般向け解説文(可読性・リズム重視)かを先に切り分ける。前者にはcognitive-rhythm-writing等の物語的リズム規範を適用しない。後者向けの汎用スキルは原則グローバルスコープに置き、プロジェクトスコープには複製しない。
+
+## 例
+`~/.claude/skills/japanese-tech-writing/SKILL.md`と`~/.claude/skills/cognitive-rhythm-writing/SKILL.md`を作成(2026-07-16)。プロジェクトの`C:\Users\apto117\Documents\pachinko-analyzer\src\2026project\.claude\skills\`配下には作成しなかった。
+
+---

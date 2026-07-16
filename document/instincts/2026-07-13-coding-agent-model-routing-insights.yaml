@@ -1,0 +1,42 @@
+---
+id: coding-agent-model-selection-favors-cost-performance-frontier
+trigger: "コーディングエージェントのモデルを選定・切替するとき、公開ベンチマークの性能差を実運用へ反映するとき"
+confidence: 0.88
+scope: cross-model coding-agent operations
+stability: provisional
+actionability: high
+domain: model-selection
+source: user-provided-benchmark-review
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# コーディングエージェントは費用対効果のフロンティアでルーティングする
+
+## Core claim
+モデルは最高性能を固定利用するのではなく、成功率・タスク時間・タスク単価のトレードオフに基づき、通常はLuna XHigh/Max、難題はTerra Max、失敗コストが極めて高い課題だけSol Maxへ振り分ける。
+
+## Evidence
+- n_observations: 1
+- data scope: public coding-agent benchmark
+- metric scope: pass@1 / time per task / cost per task
+- result summary: DeepSWE、Terminal-Bench v2、SWE-Atlas-QnAの複合評価では、成功率の高いモデルほど時間・コストも増える傾向があり、単純な性能順位と実運用上の最適解は一致しない。
+
+## Interpretation
+- この結果はモデルの「本来の用途」を決めるものではなく、エージェント運用時の費用対効果を示す。
+- Luna XHigh/Maxを標準、Terra Maxを複雑な設計・デバッグ、Sol Maxを失敗許容度が極めて低い作業に割り当てる方針は合理的である。
+- Sol XHighを原則使わない判断は、Terra MaxまたはSol Maxとの性能・速度・コスト差をローカルタスクで検証するまでの暫定ルールとする。
+- 公開ベンチマークだけでは、対象リポジトリ、プロンプト、ツール利用、再試行回数、失敗修正コストまで含む実際の総費用は確定しない。
+
+## Action
+- 通常作業はLuna XHigh/Maxをデフォルトにする。
+- 複雑な設計、広範囲のデバッグ、複数ファイルにまたがる高難度作業はTerra Maxへ昇格する。
+- 最重要課題、失敗時の損失が大きい課題、最終レビュー相当の作業だけSol Maxを使う。
+- Sol XHighを恒久的に除外する前に、同一タスク集合で成功率、完了時間、再試行込みの実コストを比較する。
+- ローカル評価では、公開ベンチマークの順位ではなく「タスク完了率」「人手修正時間」「総コスト」を優先指標にする。
+
+## Relation
+- related:
+  - statistical-certainty-vs-watching-status
+
+## Status
+- status: active

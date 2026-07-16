@@ -1,0 +1,35 @@
+---
+id: 2026-07-13-anaslo-cloudflare-automation-blocked
+trigger: "When scraping ana-slo.com hall data pages with browser automation"
+confidence: 0.93
+domain: data-pipeline
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ana-slo hall pages can block automation with Cloudflare
+
+## Core claim
+For ana-slo.com hall data pages, headless and headed browser automation can both be blocked by Cloudflare and return challenge or empty HTML instead of the real table content.
+
+## Evidence
+- n_observations: 4
+- data scope: all-hall
+- metric scope: page fetch / HTML availability
+- result summary: requests returned 403; Playwright headless and headed returned `Just a moment...` or empty 39-byte HTML; nodriver also returned empty HTML for the target pages
+
+## Interpretation
+- The page content cannot be assumed available just because the URL resolves.
+- For this site, successful scraping may require a human-in-the-loop browser session or a different access path.
+- This does not prove the target data does not exist; it only shows the automation path is blocked.
+
+## Action
+- Treat ana-slo scraping as manual-approval / browser-session dependent unless a site-specific bypass is proven.
+- Before investing in scraper changes, verify the session can actually reach the table markup (`all_data_table` / `last_digit_data_table`).
+
+## Relation
+- related:
+  - 2026-06-01-instinct-management-insights
+
+## Status
+- status: active

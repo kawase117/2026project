@@ -1,0 +1,44 @@
+---
+id: pandas-crosstab-list-of-tuples-vs-list-of-series
+trigger: "pd.crosstab()で2軸以上を組み合わせた行キーを作る場面（zip()でタプル化して渡したくなる時）"
+confidence: 0.9
+domain: pandas-pitfall
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# pd.crosstabの複合行キーは「Seriesのリスト」で渡す。zip()でタプル化したリストを渡すと壊れる
+
+## 背景
+dashboard/utils/interaction_analysis.pyのrun_pairwise_axis_test()で、2軸×outcomeのクロス集計を`pd.crosstab(list(zip(work["_axis_a"], work["_axis_b"])), outcome)`と実装していた。zip()でタプル化した値のリストを渡すと、pandas内部の`maybe_make_list`が「すでにlistだから」とラップせずそのまま扱ってしまい、`index + columns`のリスト結合のつもりが意図しないSeries同士の演算やcommon_idx構築に迷い込み、`ValueError: Length of values (2) does not match length of index (N)`という原因の分かりにくいエラーになる。avg_diff指標はkruskal検定の別経路を通るため発生せず、win_rate/hit104_rate（crosstabを使うchi2経路）を選んだ時だけ再現した。ユーザーから「総当たりで調べるようなことか、コードの一部にミスがあるはずだ」と指摘され、実際に1箇所の誤用が原因だった。
+
+## アクション
+pd.crosstabで複数軸をまとめて1つの行キーとして扱いたい時は、値をzip/タプル化せず`pd.crosstab([series_a, series_b], outcome)`のように**Seriesそのものをリストに入れて**渡す。エラーメッセージが「Length of values (N) does not match length of index (M)」のように無関係に見える場合、まずcrosstab/pivot_table系の呼び出し引数の型（Series vs 生のlist/tuple)を疑う。総当たりでdbやaxisの組み合わせを検証する前に、まずコード自体の型の誤用を疑うべき（ユーザー指摘通り）。
+
+## 例
+NG: `pd.crosstab(list(zip(work["_axis_a"], work["_axis_b"])), outcome)` → 全ホール・全軸組み合わせで同じ箇所がクラッシュ。
+OK: `pd.crosstab([work["_axis_a"], work["_axis_b"]], outcome)` → MultiIndexの行(row_0, row_1)を持つ正常なcontingency tableが返る。修正1行で楽園蒲田・蒲田7など複数DBで再現→解消を確認済み。
+
+---
+id: winrate-metric-must-exclude-nan-not-treat-as-loss
+trigger: "diff_coins_normalized（差枚）のような欠損しうる数値列から.gt(0)で勝敗フラグを作る場面"
+confidence: 0.9
+domain: pandas-pitfall
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# NaN.gt(0)はFalseになるため、そのままastype(float)すると欠損が「負け」として混入する
+
+## 背景
+dashboard/utils/interaction_analysis.py・theory_engine.py・daily_report.py・page_20_theory_verification.pyのwin_rate計算が`pd.to_numeric(s, errors="coerce").gt(0).astype(float)`という書き方で、diff_coins_normalizedがNaN（値が取れなかった台）の行も`.gt(0)`が`False`→`0.0`という具体的な値になり「負けた試行」として母数・分子に混入していた。同じファイル内のhit104_rateは`dropna()`してから平均を取る実装になっており、非対称だった。今回検証した2ホール（楽園蒲田・蒲田7、min_games=1000フィルタ後）ではdiff_coins_normalizedのNaNが0件だったため実害は出ていなかったが、欠損データがあり得る他ホールでは母数の水増し・win_rateの過小評価が起き得る。0（イーブン）とNaN（欠損）は別物であり、0はnotna()なので除外対象にならない。
+
+## アクション
+`.gt(0)`のような比較→astype(float)でフラグ化する集計を書く時は、必ず`.where(source.notna())`（Series全体を返す関数の場合）または`.dropna()`してから比率計算（groupby.agg内のlambdaの場合）を行い、NaNの行が「0/False」という確定値にすり替わらないようにする。同じ計算パターンが他ファイルに複数あった場合は、1箇所直して終わりにせず`grep`で同型の`.gt(0).mean()`/`.gt(0).astype(float)`パターンを横断的に探して揃える。ただし過去の分析結果（eda/配下の一回限りの研究スクリプト）に紐づく既存ドキュメントの数値がある場合は、無断で書き換えず対象をユーザーに確認してから直す。
+
+## 例
+NG: `win_rate=("diff_coins_normalized", lambda s: float(pd.to_numeric(s, errors="coerce").gt(0).mean()))` — NaN行が負け扱いで母数に混入。
+OK: `lambda s: (float(pd.to_numeric(s, errors="coerce").dropna().gt(0).mean()) if pd.to_numeric(s, errors="coerce").notna().any() else np.nan)` — hit104_rateと同じ「欠損は除外」ルールに統一。
+合成データ検証: diff=[100,-50,NaN,200,NaN,NaN]を2グループ(A:100,-50,NaN / B:200,NaN,NaN)に分けると、修正前はB=1/3=0.33、修正後はB=1/1=1.0（NaN2件を正しく除外）。
+
+---

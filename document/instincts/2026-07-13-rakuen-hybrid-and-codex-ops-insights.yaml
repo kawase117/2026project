@@ -1,0 +1,88 @@
+---
+id: rakuen-fixed-candidate-pool-underperforms-free-baseline
+trigger: "楽園（または他ホール）でセクション/台の固定候補プール方式(hybrid絞り込み)を検討するとき"
+confidence: 0.9
+domain: backtest
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 楽園: sec3+mac10 hybrid（固定候補プール）はbaselineモデル（全セクション自由選択）に劣る——蒲田1と逆
+
+## 背景
+蒲田1で有効だった「Event-responsiveな上位3セクション→その中の台を過去成績で上位10台に絞り込む」2段階hybrid手法（sec3+mac10、蒲田1ではlift 1.053→1.212に改善）を楽園に適用したところ逆効果だった。walk-forward比較（評価120日）: all_hall_top3_sec_only（全43セクション自由選択）がイベント日lift=1.193・非イベント日lift=1.225なのに対し、candidate_sec_only（1209-1216/3117-3120に固定）はイベント日lift=1.058・非イベント日lift=0.828（ランダム以下）。
+
+## アクション
+- 固定候補プールは市況変化（今どのセクションが強いか）を追えず機会損失が大きい。§1・§8で確立した「頑健な発見」であっても、日々のスコアリングを固定候補に限定すると劣化することがある
+- 「他ホールで効いた絞り込み手法をそのまま移植しない」の実例（`hall-analysis-procedure.md`アンチパターン#1）。hybrid手法を適用する前に、必ずbaseline（自由選択モデル）との比較を取ること
+- 副産物として、baselineモデル（90日ローリング窓）が既知の恒常マイナス区画（1130-1134）を稀に誤選択することを発見。長期エビデンスとローリング窓スコアの矛盾は起こりうる
+
+## 例
+評価軸は必ず「固定候補プール vs 自由選択baseline」の両方を含めること（`hybrid_walkforward_comparison.csv`のように）。片方だけでは「hybridが効くかどうか」を判定できない。
+
+---
+id: rakuen-type-a-hard-exclusion-filter-concept
+trigger: "楽園のセクションスコアリングモデルにハード除外フィルタを追加するかどうか検討するとき"
+confidence: 0.75
+domain: scoring-model
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Type A確定区画のハード除外フィルタ構想（未実装、MLパイプライン実用化まで見送り）
+
+## 背景
+baselineモデル（直近90日ローリング窓でセクションスコアリング）が、§8.2・§9で「全期間・split-half両方で一貫してマイナス」と確定した1130-1134を1日だけ誤って推薦した（その日average_diff-1725円）。長期エビデンスと短期ローリング窓の間に矛盾が生じうる。
+
+## アクション
+- 対策案: スコア計算とは独立に「確定済みType A区画は候補から機械的に除外する」ブラックリスト方式のフィルタ。`eda/section_lateral_expansion.py`の`HallConfig.exclude_machine`（蒲田7の鉄台2026除外）と同じ発想をセクション単位に拡張したもの
+- 2026-07-13時点でユーザー判断により実装は見送り（「MLに関してはまだ実用性に乏しいのでこれはセオリーに記載する程度でOK」）。当面は`rakuen_theory.md` §12の台選びフロー（手動ルール「1106-1115・1130-1134は日を問わず避ける」）で代替
+- MLパイプラインが実用段階に進んだ際は、この構想メモを起点に実装すること
+
+## 例
+セオリー文書に「未実装だが構想は残す」形で記録するパターン。実装コストが低い改善案でも、上位のML統合自体が実用段階でなければ後回しにしてよい——ドキュメント化だけで十分な場合もある。
+
+---
+id: codex-stale-job-recovery-fresh-not-resume
+trigger: "Codexバックグラウンドタスクが長時間ハングし、statusが running のまま更新されないとき"
+confidence: 0.85
+domain: codex-delegation-workflow
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Codexのハングしたジョブは--resumeで直そうとせず--freshで新規依頼し直す
+
+## 背景
+`codex-companion.mjs`のジョブが長時間（数時間〜1日以上）「running」のまま進まなくなることがある。`cancel`コマンドはWindows Git Bashの`/PID`パス変換エラー（`taskkill /PID 57444 /T /F`が`C:/Program Files/Git/PID`に誤変換される）で失敗しやすく、`MSYS_NO_PATHCONV=1`を付けても対象PIDが既に消滅していて「プロセスが見つかりません」エラーになることが多い（＝実害はなく単なる状態ファイルの残留）。ジョブの状態JSONファイルを直接編集してstatusを書き換えても、トラッカーがメモリ上に状態をキャッシュしているらしく反映されない。
+
+## アクション
+- ハングしたジョブへの`--resume`（前回の確認質問への回答等）は、その古いジョブが「Active jobs」を占有していると失敗する（`Codex Resume`ジョブが数秒でfailedになる）
+- 対策: `--resume`を諦め、**元の依頼内容全体（＋回答すべきだった確認事項への回答）を含めた新規`--fresh`タスク**として再依頼する。新規`task`ディスパッチはハングしたジョブの存在下でも成功することが多い（実績: 複数回この方法で回避成功）
+- ハング検出の目安: `status`のログタイムスタンプが10分以上更新されない、または同じProgress行が繰り返し表示される
+- ハング中でも既に生成済みのファイルがあれば、Codexの最終応答を待たずに自分で該当スクリプトを直接再実行して結果を取得する選択肢もある（前回の分類ロジック修正後の再実行で実施済み）
+
+## 例
+`node codex-companion.mjs status task-xxx`のPhaseが同じ内容のまま20分以上変化しない場合、`--resume`せず新規`task`として全文を再送する。
+
+---
+id: codex-model-tier-nicknames-unverifiable
+trigger: "ユーザーがCodexの--modelを愛称（例: Luna/Terra/Sol）で指定してきたとき"
+confidence: 0.6
+domain: codex-delegation-workflow
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Codexモデルの愛称指定（Luna/Terra/Sol等）は正確なマッピングを確認できないことがある
+
+## 背景
+ユーザーから「Luna XHigh/Max, Terra Max, Sol Maxだけ使う」という指示を受けたが、`~/.codex/config.toml`・プラグインキャッシュ・`codex --help`のいずれにもLuna/Terra/Solの定義が見つからなかった。Codex CLI自身に尋ねても「Sol=軽量ティア、Luna=上位ティア」という、ユーザーの想定（Sol/Terraが重い、Lunaが軽い）と矛盾する回答をし、かつ「最新のCLI定義とは差があるかもしれません」と自ら精度に自信がないことを明言した。
+
+## アクション
+- 確信のない`--model`文字列を推測で設定しない。誤ったモデル名を指定するとタスクが即座にエラー終了し、手戻りが発生する
+- 代わりに、ユーザーの指示文をそのままCodexへのプロンプトに含め、モデル選択の解釈をCodex側（`codex:gpt-5-4-prompting`スキル等）に委ねる
+- ユーザーに対しては、正確なマッピングを確認できなかった旨を正直に伝え、代替方針（指示文の転送）を説明すること
+
+## 例
+「Luna XHigh/Maxを基本とし、実装が難航する場合のみTerra Maxへ引き上げる、という判断で進めてほしい（正確なモデル名の解決はそちら側の知識に委ねる）」という形でプロンプトに埋め込んだ。

@@ -1,0 +1,79 @@
+---
+id: lift-metric-vs-real-money-edge-at-variance
+trigger: "when reporting a setting-inference label's precision@N% lift as if it were a payout/profit multiplier, especially for AT-type (non-Juggler) machines"
+confidence: 0.9
+domain: evaluation-metrics
+source: session-observation
+project_id: 2026project
+project_name: 2026project
+
+# ラベル的中率(lift)は差枚エッジと同義ではない、特にAT機種では乖離しうる
+
+## 背景
+「precision@10% lift=1.81x」のような数値を「差枚がランダムの1.81倍」と誤解されやすい。実際は「その日実際に出たBB/RB回数から推定した『高設定っぽい』ラベルに、前日までの情報だけでどれだけ近づけたか」という的中率の比に過ぎない。楽園蒲田ATトラック(スマスロ北斗の拳)で実測したところ、lift=7.45xという高い的中率でも同期間のdiff_edge(候補台平均差枚-プール平均差枚)は-533枚とマイナスだった。原因を機種内で分解すると、15候補中12件はラベル自体が外れており(precision実質20%)、外れた台に-2952,-2381×2などの大きなマイナスが混在して平均を押し下げていた。さらに的中した3件のうち1件も同日プール平均を大幅に下回った(191 vs 1396)。AT機は1回の当選の払い出し量自体が大きくブレるため、「RB回数が設定5-6相当だった」というラベル的中と実際の差枚は別物になりうる。対照的にジャグラー・ハナハナ(純ボーナス機、AT演出なし)では蒲田7ジャグlift=2.85x/diff_edge=+232枚、蒲田7ハナハナは候補の勝率60.6%(プール47.4%)・平均差枚+1006枚(プール+287枚)と、ラベル的中と差枚がほぼ同方向に動いた。
+
+## アクション
+設定推定パイプラインの成果を報告する際は、precision@N%やliftのような「ラベル的中率」指標と、実際のdiff_coins_normalized(差枚)ベースの指標を必ず分離して両方提示する。特にAT/ART系の機種(1回の当選による払い出し変動が大きい機種)では、ラベルlift単体を実戦価値の指標として使わない。答え合わせログには両方(precision/base/liftとpicks_diff_mean/pool_diff_mean/diff_edge)を必ず記録し、機種混合プールで異常な値(liftとdiff_edgeが逆方向)が出たら個別機種・個別日に分解して原因を特定する。
+
+## 例
+run_highsetting_answercheck.py の LOG_COLS に precision/day_base/lift と picks_diff_mean/pool_diff_mean/diff_edge を両方含める設計。楽園AT: lift=7.45x, diff_edge=-533。この乖離を報告せず lift だけ見せると「実戦で1.8倍儲かる」という誤解を招く。
+
+---
+id: hall-machine-counter-semantics-need-validation-not-assumption
+trigger: "when building a setting-inference label from a machine's BB/RB (or similar bonus) count columns across multiple halls"
+confidence: 0.9
+domain: label-engineering
+source: session-observation
+project_id: 2026project
+project_name: 2026project
+
+# BB/RB列の意味はホール×機種ごとに異なるため、レンジ+スプレッド+中央値の3点検証が必須
+
+## 背景
+同じ機種でもホールが導入しているデータカウンターによって「RB」列に何を集計するかが変わる(ユーザー指摘)。実例: 甲鉄城のカバネリのRB列は蒲田7/蒲田1/みとやでは「ボーナス初当り」レンジに適合したが、楽園だけ「ST初当り」レンジに適合した。楽園のモンキーターンVはBB・RB列ともどのスペック表のレンジにも入らず(RB観測1/466 vs スペックレンジ1/300〜1/223)、ユーザー解説によれば「当たり中もG数をカウントするカウンターのため通常時確率が復元不能」と判明し計算不可能と結論した。さらに、レンジ内に収まっていても罠がある: エウレカTYPE-ARTの「BB=ボーナス合算」表は観測1/190がレンジ1/196〜1/183に収まる(PASS)が、設定間の差がわずか6.9%しかなく判別力が実質ゼロ(誤採用するとlift=1.03xのゴミラベルになる)。戦国乙女4のBB列は複数ホールで観測1/215がレンジ上限1/217(設定6相当)にたまたま近接していただけで誤採用されていた。
+
+## アクション
+BB/RB等のカウント列から設定推定ラベルを作る際は、単純な「観測レートがスペックのレンジ内か」だけでなく3点を検証する: (1) レンジ内か(観測が公表確率の最小〜最大×若干のマージンに収まるか)、(2) スプレッド十分か(設定間の確率比が最低1.10倍程度ないと判別力不足で誤ラベル源になる)、(3) 中央値より濃すぎないか(ホール平均観測レートが中央設定(設定3-4相当)の確率を超えて「常に高設定寄り」に見える場合、別のセマンティクスの偶然一致を疑う)。この3点はホール×機種×列の組み合わせごとに独立に検証すること。
+
+## 例
+eda/at_semantics_validator.py の tech_range_ok()/choose_mapping()。RANGE_LO_MARGIN=0.88, RANGE_HI_MARGIN=1.06, MIN_SPREAD=1.10, かつ観測上限=中央設定確率、の3制約を組み合わせて自動検出。これにより楽園エウレカのBB=CM誤採用と戦国乙女4のBB列誤採用を自動排除できた。
+
+---
+id: mislabeled-machine-pooling-inflates-lift-via-base-dilution
+trigger: "when pooling multiple machines/populations into one evaluation metric (e.g. precision@N%, lift) and one sub-population's label is invalid or near-constant-negative"
+confidence: 0.85
+domain: evaluation-metrics
+source: session-observation
+project_id: 2026project
+project_name: 2026project
+
+# 誤ラベル・低情報量の機種をプールに混ぜるとbase希釈でliftが見かけ上膨らむ
+
+## 背景
+楽園蒲田のAT(モンキーターンV+北斗)を素朴にプールしたところlift=2.27xと良好に見えたが、後にモンキーターンVのRB列が楽園では別のセマンティクス(カウンター差)で常にis_high=Falseに近いラベルになっていたと判明。北斗単独で計測し直すとlift=1.36x(ベースレート4.9%→9.2%)だった。メカニズム: 無情報な負ラベル台を混ぜるとプールの分母(day_base)が薄まる一方、モデルはその台をほとんど選ばないため分子(precision)はほぼ影響を受けず、liftが見かけ上膨張する。同じ現象が戦国乙女4(複数ホールでBB列がたまたま設定6付近の値に一致し誤採用)でも再現した。
+
+## アクション
+複数の機種・母集団をプールしてlift等の比率指標を報告する前に、必ず機種別・母集団別に指標を分解して個別確認する。プール値と個別値が大きく乖離する場合(特にプール値の方が良く見える場合)、無情報・誤ラベルの母集団が混入していないか疑う。母集団を追加するたびに、追加前後でのbase rateの変化を確認し、説明できない変化があれば追加した母集団のラベル妥当性を再検証する。
+
+## 例
+楽園AT: プール(モンキーV+北斗)lift=2.27x → 北斗単独lift=1.36xに補正。エウレカ混入時も同様にプール数値が個別機種と乖離した。
+
+---
+id: model-complexity-should-match-single-factor-vs-interaction-regime
+trigger: "when choosing between a simple heuristic model (single dominant feature) and a learned model (e.g. LightGBM) for a day-ahead ranking/prediction task"
+confidence: 0.85
+domain: ml-model-selection
+source: session-observation
+project_id: 2026project
+project_name: 2026project
+
+# 単一の強い要因が支配的な環境ではシンプルなモデルが学習モデルに勝つ
+
+## 背景
+高設定台の翌日位置予測で、蒲田7ジャグは「台効果(過去の高設定率)×据置倍率」という単純な経験ベイズ(v1, lift=1.81x)がLightGBM(v2, lift=1.34x)に一貫して勝ち続けた。v1スコアを特徴量として与えるスタッキング(1.38x)やv1/v2のランク平均ブレンド(1.68x)を試してもv1単体を上回れなかった。一方、楽園蒲田ジャグはv1が機能せず(0.94x、事実上シグナルなし)、LightGBM(v2, lift=1.26x)の方が優位だった。楽園は「特定の台に高設定が入りやすい」という単一の強い台効果が薄く、DD・曜日・末尾・位置などの交互作用でしか予測できない構造だったためと考えられる。逆に蒲田7は台効果が非常に強い(信頼性の高い単一シグナル)ため、学習モデルが多数の弱い特徴量でそのシグナルを希釈してしまう。
+
+## アクション
+day-aheadランキング系の予測タスクで、まず「単一の強い要因(例: 台の履歴)だけでどれだけ予測できるか」の単純なベースライン(v1的な経験ベイズ・移動平均)を必ず作り、学習モデルと同一の評価プロトコルで比較する。学習モデルが単純ベースラインに負ける場合、それは学習モデルの実装ミスではなく「その環境は単一要因が支配的で、多特徴量学習はノイズを持ち込むだけ」という構造的な結果である可能性が高い。ホール・トラックごとに勝者モデルが異なることを前提とし、統一モデルを強制しない。
+
+## 例
+run_highsetting_daily.py の CHAMPIONS辞書: 蒲田7ジャグ=v1(1.81x)、楽園ジャグ=v2(1.26x)、蒲田1ジャグ=v1+v4ブレンド(1.57x)など、ホール×トラックごとに異なる勝者モデルを個別採用。

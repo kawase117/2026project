@@ -1,0 +1,108 @@
+---
+id: agreement-rate-fixed-definition-not-majority
+trigger: "機種横断一致度スキャン(machine_weekday/dd_cross_agreement_scan.py)の「一致率」を解釈するとき"
+confidence: 0.9
+domain: terminology
+source: user-feedback
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 「一致率」は常に「residualがプラスだった機種の割合」を指す固定定義
+
+## 背景
+`eda/machine_weekday_cross_agreement_scan.py`の`agreement_rate = n_positive / n_machines`は、mean_residualの符号に関わらず常に「プラス方向に動いた機種の割合」を意味する固定定義。「多数派がどちらに一致したか」という可変の意味だと誤解しやすい。楽園の日曜「一致率31%」を「70%がプラス」と誤読しかけた実例あり。
+
+## アクション
+- 一致率がX%と報告されている場合、常に「プラスの機種がX%、残り(100-X)%がマイナスまたはゼロ」と読む
+- mean_residualがマイナスの曜日/DDでは、一致率が低いほど「多数派がマイナスに強く偏っている」ことを意味する（一致率と多数派の方向は独立に確認する必要がある）
+- 同様の分析（DD版cross_agreement_scan等）でも同じ定義が使われているはずなので、他ホール・他軸の分析でも同じ注意が必要
+
+## 例
+日一致率31%, mean_residual=-1.49pp → 「プラスの機種は31%だけ、69%がマイナスかゼロ」が正しい読み方。
+
+---
+id: is-weekend-derived-flag-exactly-binary
+trigger: "novel/既知(is_weekend)というカテゴリラベルの意味を説明するとき"
+confidence: 0.9
+domain: terminology
+source: user-feedback
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# is_weekendは date.weekday()>=5 の完全決定式——「ほぼ0/100%」ではなく厳密に0/100%
+
+## 背景
+`database/date_info_calculator.py`の`_check_weekend()`は`date_obj.weekday() >= 5`という日付から一意に決まる計算式。曜日別のis_weekend平均を取ると月〜金は必ず厳密に0%、土日は必ず厳密に100%になる（祝日等の他要因は混入しない）。「ほぼ」という曖昧な表現を使ったことをユーザーに指摘され訂正した。
+
+## アクション
+- 決定的な計算式から派生したフラグの曜日別カバレッジ率を説明するときは「ほぼ」等の曖昧語を使わず、厳密に0/100%であることを明記する
+- 「novel」ラベルは「is_weekendという既存フラグで説明できない曜日」という分類であり、月曜=novelは「既存の枠組みでは捉えられない独立した発見」という意味
+
+## 例
+言葉を濁さず「is_weekendはdate.weekday()>=5という決定式なので、月〜金は必ず0%、土日は必ず100%」と言い切ること。
+
+---
+id: rakuen-diff-unit-is-coins-not-yen
+trigger: "diff_coins_normalized（差枚）の数値を報告・記述するとき"
+confidence: 0.95
+domain: terminology
+source: user-feedback
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 差枚の単位は「枚」であり「円」ではない
+
+## 背景
+`document/rakuen_theory.md`全体で`diff_coins_normalized`由来の数値を「円」と誤記していた（約45箇所）。ユーザー指摘を受けて文書全体を「枚」に一括修正した。
+
+## アクション
+- `diff_coins_normalized`・`avg_diff`・`excess_diff`・`diff_excess`等、差枚由来の数値は必ず「枚」単位で記述する
+- 新規に差枚の数値を書く前に、単位が「円」になっていないか確認する（他ホールのtheory.mdでも同様のミスがないか横展開で確認する価値がある）
+
+## 例
+「+42.6枚/台」であり「+42.6円/台」ではない。
+
+---
+id: hit104-vs-diff-breadth-vs-depth-framework
+trigger: "曜日/DD別のhit104率パターンと差枚パターンを比較するとき"
+confidence: 0.85
+domain: analysis-methodology
+source: user-feedback
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 「広さ×深さ」フレーム: 機械割(hit104)=広さ、差枚(pooled)=深さ
+
+## 背景
+ユーザー提案の分析フレーム。機械割の一致率（機種ごとの自己平均比較、%表示）は「何%の機種が動いたか」という広さの指標、差枚のpooled比較（ホール全体プールの平均レベル比較、枚表示）は「平均してどれだけ動いたか」という深さの指標。この2軸を組み合わせることで「広く浅い投入(例: 設定4を広く)」と「狭く深い投入(例: 設定6を狭く)」を区別できる。
+
+## アクション
+- 曜日/DD別のパターンを報告する際は、hit104一致率(広さ)とpooled_diff(深さ)の両方を提示し、単独の指標で「投入パターン」を断定しない
+- 広さ・深さが同じ方向に動く（広い日はプラスも大きい）場合と、逆行する（一致率は低いのに一部だけ突出してプラス＝狭く深い）場合を区別して報告する
+- 楽園の曜日軸では「狭く深いプラス」パターンは観測されなかった（広さ・深さが概ね同方向）。DD軸・イベント日軸の方がこのパターンが出やすい可能性があり、今後の検証候補
+
+## 例
+楽園月曜: 広さ60%(広い)×深さ+29.2枚(穏やか)＝広く浅い投入。楽園日曜: 広さ31%(狭い=69%マイナス)×深さ-73.1枚(大きい)＝広く深い抑制。
+
+---
+id: weekend-traffic-confounds-diff-use-hit104-crosscheck
+trigger: "土日など客層が変わる可能性のある日の差枚パターンを解釈するとき"
+confidence: 0.9
+domain: analysis-methodology
+source: user-feedback
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 土日は設定不問の客の増加で回転数が底上げされ、差枚の解釈が歪みうる——機械割との併読で検証する
+
+## 背景
+ユーザー指摘: 土日は高設定狙いの客だけでなく設定関係なく遊技する客も増えるため、回転数が他の曜日より増加し、低設定の台も回され続ける。差枚は回転数の影響を受ける指標のため、この交絡が混入しうる。実データ検証（楽園）: 土曜平均回転数3,790・日曜3,576 vs 平日2,100〜2,540——土日は平日比+40〜70%の回転数増加を確認。
+
+## アクション
+- 差枚だけで曜日/日タイプ別の傾向を語らず、回転数に依存しにくい機械割(hit104率)との併読を必須にする
+- 機械割と差枚が同じ方向で一致していれば、回転数交絡だけでは説明できない本物のシグナルと判断できる（楽園の月曜・日曜はこのパターンで両方が一致）
+- 一方の指標のみ有意（例: 楽園土曜は機械割非有意・差枚のみ弱マイナス）の場合は、証拠が弱いと明示し、他の曜日と同列に扱わない
+- 曜日別平均回転数の確認は`games_normalized`をgroupby weekdayするだけの軽量な検証で実施可能
+
+## 例
+楽園の「土日に絞って月曜に出す」という特徴は、機械割・差枚の両指標が一致して支持しているため頑健と判定した（土曜単体は機械割非有意のため確度を落として扱う）。

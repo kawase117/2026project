@@ -1,0 +1,66 @@
+---
+id: rakuen-section-label-spans-multiple-machine-types
+trigger: "machine_layoutのsection(島)を機種別分析の端番算出に使うとき"
+confidence: 0.9
+domain: floor-layout-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# machine_layoutのsectionラベルは物理島全体を指し、1機種で島を専有するとは限らない
+
+## 背景
+楽園蒲田店3F、`section='3226-3249'`(24台分の物理島)を「エウレカTYPE-ARTの島」として扱っていたが、ユーザー指摘で確認したところ実際は3226-3239(14台)がエウレカ、3240-3249(10台)はソードアート・オンラインIIという別機種だった。`rank_from_min`/`rank_from_max`はsection内の全機種を対象にした物理配置ランクであり、特定機種だけの相対順位ではない。
+
+## アクション
+- 機種別に端番分析する前に、対象sectionの`machine_number`範囲全体で実際に何機種が入っているか(`SELECT DISTINCT machine_number, machine_name FROM machine_detailed_results WHERE date=<最新日> AND machine_number BETWEEN section_min AND section_max`)を確認すること
+- rank_from_min/maxの値自体は物理的に正しいので再計算不要。ただし「機種内での端」と「島全体での端」は別概念であり、解釈時にどちらを指しているか明示する
+- 台の稼働機種は同じ台番号でも入れ替わる(2025年は2F+3Fの49台にエウレカがあったが、2026年1月以降は3F 3215-3239のみに縮小)。分析対象台リストは`machine_detailed_results`の最新日付でフィルタして取得し、DB全期間のDISTINCT machine_numberだけに頼らないこと
+
+## 例
+`eda/core.py`の`load_hall_df`後、対象機種名でフィルタしてから`machine_number`のユニーク集合を「最新日付時点」で再確認する一手間を、機種別の端番/DD分析では必ず入れる。
+
+---
+id: rakuen-eureka-dd7-edge-direction-asymmetric
+trigger: "楽園エウレカTYPE-ARTのDD(7のつく日等)×端番の交互作用を評価するとき"
+confidence: 0.75
+domain: interaction-analysis
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 楽園エウレカ: 7のつく日の効果は「端番なら良い」ではなく特定方向の端のみ
+
+## 背景
+3F現行25台(3215-3239)で7のつく日(7/17/27, date_digit=7)を見ると、隣接する2つの物理島の「入口側端(3226-3228, 3226-3249島のmin_side)」は強く伸びる(例: 3227 n=14 avg+1004 勝率71%, 3226 avg+722 勝率62%)一方、もう一方の島の「出口側端(3224-3225, 3200-3225島のmax_side)」はむしろ悪化する(3225 avg-95 勝率38%, 3224 avg-90 勝率33%)。全体の端番相関(Spearman)も弱く(rho=-0.009, p=0.35)、線形の「端=良い」効果は存在しない。
+
+## アクション
+- 端番分析では`edge_rank`(min(rank_from_min, rank_from_max))だけでなく`edge_side`(min_side/max_side)も必ず分けて集計する。方向を潰すと相殺されて「効果なし」に見えるが、実際は方向付きの強い効果が隠れている場合がある
+- DD=17単体(台あたりn=3〜5)は個別ランキングには使わず、date_digit=7(7/17/27合算、台あたりn=12〜16)の方を判断材料にする。粗い集計→細かい絞り込みの原則([[exploration-coarse-to-fine]])通り、日別ピンポイントの前に下一桁の合算を先に見る
+- 3226/3227/3228は本セッション時点で7のつく日の最有力候補として繰り返し確認された。運用推薦時はこの3台を優先し、3224/3225/3219/3233は同条件下で避ける
+
+## 例
+`scratch/eureka_dd17_3f.py`のパターン(machine_layoutとload_hall_dfをmerge後、`edge_side`列で層別しつつgroupby)は他機種・他ホールの端番×DD検証にも転用可能。
+
+---
+id: windows-bash-japanese-stdout-mangled
+trigger: "BashツールでPython -c 経由のprint()に日本語文字列を含めるとき"
+confidence: 0.85
+domain: environment-setup
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Windows環境のBashツールでは日本語print出力がデフォルトで文字化けする
+
+## 背景
+`venv/Scripts/python.exe -c "print(japanese_string)"`をBashツール経由で実行すると、コンソールのコードページ(cp932相当)によって日本語が文字化けした状態で返ってくる(例: 機種名`交響詩篇エウレカセブン...`が読めない記号列になる)。`PYTHONIOENCODING=utf-8`と`-X utf8`を付けると正しく表示される。
+
+## アクション
+- 日本語を含むワンショットのDB確認は`PYTHONIOENCODING=utf-8 venv/Scripts/python.exe -X utf8 -c "..."`の形にするか、スクリプトファイルにして結果をUTF-8ファイルへ書き出しReadツールで読む(こちらがより確実)
+- 複数行にわたる集計結果は特にファイル出力+Read推奨。文字化けしたままだと機種名の突き合わせ(LIKE検索の条件文字列など)も同時に壊れるため、クエリ条件の日本語文字列は必ずファイル経由で確認してから使う
+
+## 例
+本セッションでは`scratch/eureka_analysis.py`で集計結果を`scratch/eureka_analysis_output.txt`にUTF-8で書き出し、Readツールで読み込むことで文字化けを回避した。
+
+---

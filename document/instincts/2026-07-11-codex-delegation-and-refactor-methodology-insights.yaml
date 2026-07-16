@@ -1,0 +1,177 @@
+---
+id: codex-default-model-config-can-be-unsupported
+trigger: "codex:codex-rescue subagent経由でCodexタスクを起動したが即座にエラーで失敗したとき"
+confidence: 0.9
+domain: codex-collaboration
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ~/.codex/config.toml のデフォルトmodelが現行CLIで未対応のことがある
+
+## 背景
+角番/端番用語分離リファクタをCodexに委譲した際、1回目のタスクが起動20秒程度で
+即座に失敗した。ステータス確認（`node codex-companion.mjs status <job-id> --json`）
+すると `progressPreview` に "The 'gpt-5.6-luna' model requires a newer version of
+Codex. Please upgrade to the latest app or CLI and try again." というエラーが記録
+されていた。`~/.codex/config.toml` の `model = "gpt-5.6-luna"` がこの環境の
+インストール済みCodex CLIでは未対応で、`--model` を明示指定しない限りこのデフォルト
+値が使われて即失敗する。同じ設定ファイル内の他のプロファイル（`workspace-dev.config.toml`
+等）は `model = "gpt-5.5"` を使っており、これは実際に動作した。
+
+## アクション
+- codex-rescue経由でCodexタスクが「起動直後（1分未満）に failed」した場合、まず
+  `status <job-id> --json` の `progressPreview`/`summary` を見てモデル関連の
+  エラーメッセージが無いか確認する（サンドボックス書き込み不可の症状とは別種の
+  失敗モード）。
+- モデルエラーが疑われる場合は、そのリポジトリの他のCodexプロファイル
+  （`~/.codex/*.config.toml`）で実際に使われているmodel名を確認し、
+  Agent呼び出し時のプロンプト先頭に `--model <確認済みモデル名>` を明示する。
+- codex-rescueへの依頼文の先頭に `--write --background --model <name>` の形で
+  ルーティングフラグを並べて渡せる（本セッションで実証済み）。
+
+## 例
+`--write --background --model gpt-5.5 Implement the terminology refactor...`
+という形でcodex-rescueに再依頼し、`task-mrf65vyr-gdtk67` として正常に起動・
+完走した（約17分、7フェーズの多ファイル変更）。
+
+---
+id: codex-model-tier-by-task-reasoning-depth
+trigger: "Codexへの委譲タスクでモデル（reasoning tier）を選ぶとき"
+confidence: 0.85
+domain: codex-collaboration
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 仕様書ベースの機械的実装タスクは軽量モデルで十分、原因推論タスクは重いモデルが必要
+
+## 背景
+角番/端番リファクタは事前にClaude側で全ての判断（新旧概念の対応、具体的な数値、
+一字一句のJapanese文言）を確定した「仕様書に従って配線するだけ」のタスクだった。
+ユーザーから「GPT5.5はオーバースペックですね。5.4ミニでいいのでは？」という指摘を
+受け、確かにこの種のタスクは reasoning より instruction-following の精度が問われる
+性質だと合意した。対照的に、以前のmitoyaスコア同期バグ修正では「なぜ2つの実装が
+食い違うのか」をコード読解から推論する必要があり、これは軽量モデルでは危険。
+
+## アクション
+- Codexへの委譲前に、そのタスクが「判断は済んでいて機械的に反映するだけ」か
+  「まだ原因不明で調査・推論が必要」かを見極める。
+- 前者（仕様書ベースの配線、決まった文字列のコピー、リネームの横展開等）は
+  軽量モデル（例: gpt-5.4-mini相当）で依頼する。
+- 後者（バグの原因推論、設計判断が必要な修正、ドキュメント読解からの結論導出）は
+  上位モデル（例: gpt-5.5）を使う。
+- 判断に迷う場合はユーザーに一声かけて確認する（本セッションでは既に走り出した
+  タスクは完走させ、次回以降の運用ルールとして合意した）。
+
+## 例
+角番/端番リファクタ（7フェーズ、数値・文言確定済み）→ 次回はgpt-5.4-mini基準。
+mitoya `_score_machine` のsection_baseline係数不一致の原因調査・修正 → gpt-5.5等
+の上位モデルを使うべきだったタスクの実例。
+
+---
+id: ruff-py314-target-allows-unparenthesized-multi-except
+trigger: "pre-commitのruff-formatフックがexcept節を書き換えて再フォーマットするとき"
+confidence: 0.8
+domain: python-tooling
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# pyproject.tomlのtarget-version=py314では except (A, B): が except A, B: に整形される
+
+## 背景
+Codexが生成した `database/migrate_add_rank_from_aisle.py` に
+`except (TypeError, ValueError):` と書いたところ、コミット時のpre-commit
+`ruff-format` フックが自動的に `except TypeError, ValueError:`（括弧なし）に
+書き換えた。一見Python 2時代の無効構文に見えたため手動で括弧に戻したが、
+`ast.parse`・実行テストの両方で問題なく複数例外を捕捉することを確認した。
+`pyproject.toml` の `target-version = "py314"` により、ruffがPython 3.14で
+正式にサポートされた括弧省略構文をより短い正規形として採用しているためと判明。
+括弧に戻して再コミットしても、次のpre-commit実行で再び括弧なしに戻された。
+
+## アクション
+- pre-commitのruff-formatが自分の意図と違う書き方に「直してくる」場合、まず
+  それが構文的に壊れているか（`ast.parse`や実際の実行で確認）を検証する。
+  壊れていなければ、プロジェクトの `pyproject.toml` の `target-version` 設定に
+  従った意図的な整形である可能性が高く、手動で元に戻すのを繰り返さない
+  （フォーマッタと戦わず、そのまま受け入れて再ステージ・再コミットする）。
+- 見慣れない構文に遭遇したら、まず対象Pythonバージョンの言語仕様変更を疑う
+  （本件はPython 3.14でexcept節の複数例外指定の括弧が省略可能になったことが原因）。
+
+## 例
+`database/migrate_add_rank_from_aisle.py` の `except TypeError, ValueError:` は
+Python 3.14.2環境で `compile()` が成功し、`except (TypeError, ValueError):` と
+完全に同じ挙動（両方の例外を捕捉）をすることを直接実行して確認済み。
+
+---
+id: terminology-refactor-is-a-semantic-swap-not-a-rename
+trigger: "既存の変数・列名が意味の異なる2つの概念を混同していたと判明し、名前を分離するとき"
+confidence: 0.9
+domain: refactoring-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 概念分離リファクタは「名前の付け替え」ではなく「値の付け替え（セマンティック・スワップ）」
+
+## 背景
+蒲田7の「角番」という一語が、theory_engine.pyでは`min(rank_from_min, rank_from_max)`
+（両端位置の折りたたみ）を指し、DB/CSVの`rank_from_aisle`（メイン通路からの距離）とは
+別概念だった。ユーザーが用語を「角番＝通路距離」「端番＝両端位置」と再定義した際、
+単純に`kakuban`という変数名を`hanaban`に一括リネームするだけでは、旧`kakuban`列の
+「値」（折りたたみ計算）が新しい`kakuban`という名前の元で本来あるべき`rank_from_aisle`
+の値ではなく、古い折りたたみ値のまま残ってしまう危険があった。実装をCodexに委譲する際、
+「これは名前の付け替えではなくセマンティック・スワップだ」と明記しなかった場合、
+Codexが単純な文字列置換をしてしまうリスクがあったため、仕様書に太字で明記した。
+
+## アクション
+- 混同されていた2概念を分離するリファクタでは、まず「旧名の値がどちらの新名に
+  移るのか」「新名にはどのデータが入るのか」を表で明示してから着手する。
+- 実装を他者（Codex等）に委譲する場合、仕様書に「これは単純なリネームではない」
+  ことを明記し、旧変数の計算式がどちらの新変数に移動するかを具体的なコード片で示す。
+- 実装後は必ず実データで新旧2つの列の値が実際に異なることを確認する
+  （本セッションでは`hanaban`と`kakuban`が蒲田7の同一台で異なる値を持つこと、
+  蒲田1では`kakuban`が全NAであることをPythonで直接検証した）。
+
+## 例
+蒲田7 台番号2001: `hanaban=1`（旧kakuban値、rank_from_min=1由来）、
+`kakuban=10`（新定義、rank_from_aisle=10由来）と、意図通り別値になっていることを
+`theory.load_theory_frame()`の実行結果で確認した。
+
+---
+id: db-setup-schema-can-drift-from-live-db-tables
+trigger: "database/db_setup.py 等のスキーマ定義ファイルを見て、そのカラムが実際のDBに存在すると仮定するとき"
+confidence: 0.85
+domain: data-quality
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# スキーマ定義スクリプトに書かれた列が、実際のDBファイルに存在するとは限らない
+
+## 背景
+`database/db_setup.py`の`machine_layout`テーブル定義には`rank_from_aisle`列が
+含まれていたため、真の角番（通路距離）は既にDBに投入済みだろうと想定して分析を
+始めたところ、`sqlite3`で`PRAGMA table_info(machine_layout)`を実行すると
+実際のDBファイル（`db/*.db`）にはその列が存在しなかった。スキーマ定義ファイルは
+更新されていたが、既存のDBファイル自体が`db_setup.py`から再生成されていなかった
+（新規列追加時にマイグレーションが走っていなかった）ため、定義と実体が乖離していた。
+`Heatmap/*.csv`（座標生成スクリプトの出力）には該当列が既にあり、そちらが
+真のデータソースだった。
+
+## アクション
+- スキーマ定義ファイル（`db_setup.py`等）に書かれている列の存在を、実データでの
+  検証なしに信頼しない。必ず`sqlite3`で対象DBファイルに対して
+  `PRAGMA table_info(<table>)`を実行し、実列一覧を確認してから分析コードを書く。
+- 定義と実体が乖離している場合は、CSVや他の一次データソースに正しい値が
+  既に存在しないか確認してから、一回限りのマイグレーションスクリプトで
+  DBへ追加投入する（冪等性を持たせ、対象ホールが限定的な場合はスキップ条件を
+  明示する）。
+
+## 例
+`db/マルハンメガシティ2000-蒲田7.db`の`machine_layout`は当初
+`rank_from_min`/`rank_from_max`のみで`rank_from_aisle`が無かった。
+`Heatmap/2F・3F_floor_coordinates_kamata7.csv`から`database/migrate_add_rank_from_aisle.py`
+で投入し、715行更新して解消した。
+---

@@ -1,0 +1,64 @@
+---
+id: db-derived-column-vs-shared-function-decision
+trigger: "DBに新しい派生カラムを追加すべきか検討する場面（分析のたびに毎回計算しているカラムがある等）"
+confidence: 0.9
+domain: database-schema-design
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# DBカラム化 vs 共通関数化の判断基準
+
+## 背景
+「毎回計算せずDBにカラムとして持たせたい」という要望が出た際、機種内RANK・機種台数・所属セクションは実は既にDB（machine_detailed_results.machine_rank_in_type, daily_machine_type_summary.machine_count, machine_layout.section）に存在していた。一方で section_size は定義がスクリプト間でズレており実害があった。Codex（codex:codex-rescue）に相談したところ、経過日数系（新台日/増減台日/機種変更日からのカウント）はDBカラム化を推奨しない判断が出た。理由は database/incremental_db_updater.py がappend専用（新規日付のみ流す）構成で、過去に遡って再計算する仕組みがないため、バックフィルが発生した瞬間に固定カラムが事故る、というもの。
+
+## アクション
+新規カラム要望が出たら以下の順でチェックする。
+1. 既存テーブルに同義カラムが無いか確認する（database/CLAUDE.md・db_setup.pyのCREATE TABLEをgrep）。あれば「再周知」で済み、追加不要。
+2. 値がほぼ不変（物理配置など）かつ計算式が1行程度で済むなら、DBカラムではなく共通関数（eda/core.py等）に寄せる。
+3. 日次バッチ増分更新（incremental_db_updater.py）のappend専用構成と衝突しないか確認する。過去に遡って再計算が必要な系（経過日数カウント等）はDBカラム化するとバックフィル事故のリスクが高いため、まずSQLのLAG()ウィンドウ関数でクエリ時計算し、信号が強いと確認できたものだけ後から専用の履歴テーブルへ昇格させる二段階アプローチを取る。
+
+## 例
+section_size（セクション実台数）とedge_side（端番の向き）はDBカラム化せずeda/core.pyの共通関数（compute_section_size, compute_edge_side）として実装した。経過日数系（新台日/増減台日/機種変更日カウント）はDBカラム化せず、SQLのLAG()ウィンドウ関数でクエリ時計算する方針とした（ml/analysis/kamata_corner_mirror_analysis.pyにLAG(machine_name)の実装例あり）。
+
+---
+id: physical-corner-is-magnitude-not-direction
+trigger: "端番(edge)や角番(kakuban)関連のカラムを設計・分析する場面"
+confidence: 0.85
+domain: kakuban-terminology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# physical_cornerは「端からの距離」のみで「どちら側の端か」は持たない
+
+## 背景
+machine_layout.physical_corner = min(rank_from_min, rank_from_max) という定義（db_setup.py:378）。rank_from_min/rank_from_maxという生の距離データは両方ともDBに保存済みだが、physical_corner自体は距離の最小値（片側だけ）しか表さず、min側の端かmax側の端かという「向き」の情報を単体からは判定できない。角番(kakuban)ともsection末端(touches_edge)とも別概念。
+
+## アクション
+「どちらの端か」が必要な分析ではphysical_cornerだけを見るのではなく、rank_from_minとrank_from_maxを直接比較するか、eda/core.pyのcompute_edge_side()を使う。新規の距離用DBカラムは不要（rank_from_min/rank_from_maxで足りる）。
+
+## 例
+compute_edge_side(layout_df) は rank_from_min < rank_from_max なら 'min_side'、rank_from_max < rank_from_min なら 'max_side' を返す（np.selectで実装、同値・欠損時はNone）。
+
+---
+id: section-size-two-conflicting-definitions-found
+trigger: "セクション内の台数(section_size)を計算するスクリプトを書く/読む場面"
+confidence: 0.9
+domain: rakuen-eda
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# section_sizeの定義がスクリプト間で2通り混在し実際にズレていた
+
+## 背景
+section_max - section_min + 1（範囲ベース、欠番を考慮しない）と groupby("section")["machine_number"].transform("nunique")（実台数カウント）の2通りの実装がeda/スクリプト間で混在していることが判明した（eda/kamata7_kakuban_concept_experiment.py:77 vs eda/section_lateral_expansion.py:236-238）。範囲ベースの計算は台番号に欠番があるセクションで台数を過大評価する。
+
+## アクション
+section_sizeが必要な箇所では自前でsection_max-section_min+1やnuniqueを書かず、eda/core.pyのcompute_section_size(layout_df)を使う。台配置はほぼ不変なのでDBカラム化は不要（改装が起きた時だけ再生成すれば良い）。
+
+## 例
+compute_section_size(layout_df) は df.groupby("section")["machine_number"].transform("nunique") で実台数を返す（machine_layoutテーブル読み込み結果に対して使用）。動作確認: セクション内の台番号がmachine_number=[2001,2002,2004]（2003が欠番）の場合、section_size=3（範囲計算だと4になり過大評価）。
+
+---
