@@ -1,0 +1,81 @@
+hall: rakuen
+display_name: 楽園蒲田店
+aliases:
+  - 楽園蒲田店
+  - rakuen
+  - 楽園
+floors:
+  - label: 本館1F
+    min_machine_number: 1100
+    max_machine_number: 1216
+  - label: 本館2F
+    min_machine_number: 2100
+    max_machine_number: 2240
+  - label: 本館3F
+    min_machine_number: 3107
+    max_machine_number: 3266
+  - label: 新館1F
+    min_machine_number: 1000
+    max_machine_number: 1059
+  - label: 新館2F
+    min_machine_number: 2000
+    max_machine_number: 2090
+use_lr: false
+has_aisle: false
+hanaban_rule: min_rank
+family_keywords:
+  A:
+    - ジャグラー
+    - ハナハナ
+event_day:
+  digits: [10, 11, 22, 30]
+  use_month_end: false
+  use_strong_mmdd: true
+cooling_zones: []
+durable_machine_numbers: []
+segment_scheme:
+  outside: 対象外/不明
+  order:
+    - 本館_A
+    - 本館1F_N
+    - 本館2F_N
+    - 本館3F_N
+    - 新館_N
+  labels:
+    本館_A: 本館 A
+    本館1F_N: 本館1F N
+    本館2F_N: 本館2F N
+    本館3F_N: 本館3F N
+    新館_N: 新館 N
+    対象外/不明: 対象外/不明
+  definitions:
+    - name: 本館_A
+      conditions:
+        floor:
+          - 本館1F
+        family: A
+    - name: 本館1F_N
+      conditions:
+        floor:
+          - 本館1F
+        family: N
+    - name: 本館2F_N
+      conditions:
+        floor:
+          - 本館2F
+        family: N
+    - name: 本館3F_N
+      conditions:
+        floor:
+          - 本館3F
+        family: N
+    - name: 新館_N
+      conditions:
+        floor:
+          - 新館1F
+          - 新館2F
+        family: N
+warnings:
+  - 本館1F_N は 21 台で 50 台基準を下回るため、floor 粒度の最小分割として残すが、統計解釈は慎重に扱う。
+  - 本館3F_A は少数群なので専用セグメント化せず、対象外/不明に寄せる。
+  - 新館1F_N と 新館2F_N は KW 差が小さいため、統合した 新館_N を維持する。
