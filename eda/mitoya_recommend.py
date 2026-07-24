@@ -86,64 +86,70 @@ def _score_machine(
     if segment in AVOID_SEGMENTS:
         return -9999.0
 
+    # 重みは mitoya_recommend_backtest.CURRENT_WEIGHTS を唯一の出所とする。
+    # 以前はここに同じ数値をハードコードで複製しており、片方だけ更新すると
+    # 推薦とバックテストのスコアが静かに食い違う状態だった（実際に h_nonjug の
+    # corner2-4 / corner5-9 加点はここにしか存在せず、検証されていなかった）。
+    w = current_weight_vector()
+
     score = 0.0
-    section_baseline_scale = float(current_weight_vector()["section_baseline_scale"])
-    score += section_baselines.get(section, 0.0) * section_baseline_scale
+    score += section_baselines.get(section, 0.0) * float(w["section_baseline_scale"])
 
     if segment == "h_jug":
-        # 重みは eda/mitoya_recommend_optimize.py の walk-forward 最適化結果
-        # (eda/results/mitoya_optimize_best.json, lift@10_avg=255.4) と同期させている
         corner_bonus = {
-            "corner1": 500,
-            "corner2-4": 250,
-            "corner5-9": 0,
-            "corner10+": 0,
+            "corner1": w["h_jug_corner1"],
+            "corner2-4": w["h_jug_corner24"],
+            "corner5-9": w["h_jug_corner59"],
+            "corner10+": 0.0,
         }
-        score += corner_bonus.get(corner_bucket, 0)
+        score += corner_bonus.get(corner_bucket, 0.0)
         if is_xdds:
-            score += 100
+            score += w["h_jug_xdds"]
         section_rank_bonus = {
-            "641-657": 80,
-            "675-691": 40,
-            "658-674": 10,
+            "641-657": w["h_jug_section_641_657"],
+            "675-691": w["h_jug_section_675_691"],
+            "658-674": w["h_jug_section_658_674"],
         }
-        score += section_rank_bonus.get(section, 0)
+        score += section_rank_bonus.get(section, 0.0)
 
     elif segment == "h_nonjug":
         if is_xdds:
-            score += 300
+            score += w["h_nonjug_xdds"]
+            # 523-539 の角1は角1プレミアムを付けない（build_feature_frame と同期。
+            # 全期間プールで他セクション角1に劣り、セクション内でも角の優位なし）。
+            corner1_weight = w["h_nonjug_corner1_xdds"] if section != "523-539" else 0.0
             corner_bonus_xdds = {
-                "corner1": 300,
-                "corner2-4": 200,
-                "corner5-9": 50,
-                "corner10+": 0,
+                "corner1": corner1_weight,
+                "corner2-4": w["h_nonjug_corner24_xdds"],
+                "corner5-9": w["h_nonjug_corner59_xdds"],
+                "corner10+": 0.0,
             }
-            score += corner_bonus_xdds.get(corner_bucket, 0)
+            score += corner_bonus_xdds.get(corner_bucket, 0.0)
         else:
             if corner_bucket == "corner1":
                 # 非イベント日のcorner1はavg_diff -160の罠（mitoya_theory.md 2.1節）。
                 # 最適化結果でも-100が最良だったため、ボーナスではなくペナルティを課す。
-                score -= 100
+                score += w["h_nonjug_corner1_nonevent_penalty"]
 
         if dd == 24 and corner_bucket == "corner1" and section != "523-539":
-            score += 200
+            score += w["dd24_boost"]
 
     elif segment == "v_jug":
         if is_xdds:
-            score += 100
+            score += w["v_jug_xdds"]
         section_rank_bonus = {
-            "723-733": 20,
-            "734-744": 10,
-            "712-722": 5,
+            "723-733": w["v_jug_section_723_733"],
+            "734-744": w["v_jug_section_734_744"],
+            "712-722": w["v_jug_section_712_722"],
         }
-        score += section_rank_bonus.get(section, 0)
+        score += section_rank_bonus.get(section, 0.0)
 
     elif segment == "mixed_805":
         debut = row.get("debut_phase", "unknown")
         if is_xdds and debut == "debut":
-            score += 300
+            score += w["mixed_805_debut_xdds"]
         elif is_xdds and debut == "growth":
-            score -= 100
+            score += w["mixed_805_growth_xdds_penalty"]
 
     return score
 
@@ -189,13 +195,18 @@ def _format_factors(row: pd.Series, dd: int, is_xdds: bool) -> str:
     cb = row["corner_bucket"]
 
     if seg == "h_jug" and cb == "corner1":
-        factors.append("h_jug角番1(+463)")
+        factors.append("h_jug角番1=回避(post -432/全分位で角2+以下)")
     elif seg == "h_jug" and cb == "corner2-4":
-        factors.append("h_jug角番2-4(+150)")
+        factors.append("h_jug角番2-4(post +172)")
     if seg == "h_nonjug" and is_xdds and cb == "corner1":
-        factors.append("h_nonjug角番1×X_DDS(+639)")
+        # 523-539 の角1は加点対象外（_score_machine と同期）。加点していないのに
+        # 理由だけ表示すると誤解を招くため、除外セクションは明示する。
+        if row["section"] == "523-539":
+            factors.append("角番1だが523-539は加点対象外")
+        else:
+            factors.append("h_nonjug角番1×X_DDS(大勝ち1.5-1.7倍/勝率は同等)")
     if seg == "h_nonjug" and dd == 24 and cb == "corner1" and row["section"] != "523-539":
-        factors.append("DD24特殊(+1147)")
+        factors.append("DD24特殊(pre p=0.001/post判定不能)")
     if seg == "h_nonjug" and not is_xdds and cb == "corner1":
         factors.append("角番1罠(-160)")
     if seg == "mixed_805" and is_xdds and row.get("debut_phase") == "debut":
@@ -219,10 +230,14 @@ def main():
     print(f"  みとや大森町 台選び推薦 - DD={args.dd} ({event_label})")
     print(f"{'=' * 60}\n")
 
+    print("[2026-04-27 レジーム破断後の重みを適用中]")
+    print("  h_jug corner1 は回避対象 (-200)。h_jug の X_DDS 加点も 0 に変更済み。")
+    print("  詳細: document/mitoya_theory.md 冒頭の 2026-07-24 追記")
     if args.dd == 24:
-        print("DD=24 特殊日: h_nonjug corner1 に boost (+1147, 523-539除外)")
+        print("DD=24 特殊日: h_nonjug corner1 に boost (523-539除外)")
+        print("  pre では MWU p=0.0011 で有意。post は DD24 が2日・n=14 で判定不能。")
     if not is_xdds:
-        print("非イベント日: h_jug corner1 のみ有効。h_nonjug corner1 は罠。")
+        print("非イベント日: h_nonjug corner1 は罠 (-160)。h_jug corner1 も現在は回避対象。")
     print()
 
     result = recommend(args.dd, args.top)

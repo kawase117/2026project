@@ -40,9 +40,15 @@ MIN_GAMES = 1000
 SUMMARY_EVENT_TYPES = ("all", "xdds", "non_xdds")
 WINDOW_ORDER = ("pre", "post")
 
-CURRENT_WEIGHTS: dict[str, float] = {
-    # eda/mitoya_recommend_optimize.py の walk-forward 最適化結果
-    # (eda/results/mitoya_optimize_best.json, lift@10_avg=255.4) を現行値として採用。
+# eda/mitoya_recommend_optimize.py の walk-forward 最適化結果
+# (eda/results/mitoya_optimize_best.json, lift@10_avg=255.4)。
+# 学習データは 2025-01〜2026-04 が主体で、2026-04-27 のレジーム破断より前の値である。
+# 履歴として保持し、post-regime の上書きとの差分を追えるようにしておく。
+#
+# h_nonjug_corner24_xdds / h_nonjug_corner59_xdds は最適化対象ではなかったが、
+# mitoya_recommend._score_machine が独自に +200 / +50 を加点していた値である。
+# バックテスト側に対応する特徴量が無く、推薦の実挙動を検証できていなかったため取り込んだ。
+PRE_REGIME_WEIGHTS: dict[str, float] = {
     "section_baseline_scale": 0.0,
     "h_jug_corner1": 500.0,
     "h_jug_corner24": 250.0,
@@ -53,6 +59,8 @@ CURRENT_WEIGHTS: dict[str, float] = {
     "h_jug_section_658_674": 10.0,
     "h_nonjug_xdds": 300.0,
     "h_nonjug_corner1_xdds": 300.0,
+    "h_nonjug_corner24_xdds": 200.0,
+    "h_nonjug_corner59_xdds": 50.0,
     "h_nonjug_corner1_nonevent_penalty": -100.0,
     "dd24_boost": 200.0,
     "v_jug_xdds": 100.0,
@@ -62,6 +70,22 @@ CURRENT_WEIGHTS: dict[str, float] = {
     "mixed_805_debut_xdds": 300.0,
     "mixed_805_growth_xdds_penalty": -100.0,
 }
+
+# 2026-04-27 のレジーム破断（店長交代）を受けた手動上書き。
+# 根拠は document/mitoya_theory.md 冒頭の 2026-07-24 追記。
+# 最適化スクリプトの再実行では**ない**ため、値は保守的に置いている。
+# post のサンプルは79日（X_DDS日17日）しかなく、再最適化はデータが積まれてから行う。
+POST_REGIME_OVERRIDES: dict[str, float] = {
+    # h_jug corner1 は「消失」ではなく符号反転。post X_DDS日 -432 vs corner2+ +46
+    # (pre-vs-post MWU p<0.0001、機種内z -0.311 CI[-0.587,-0.044]、対象3台とも同方向)。
+    # 裾でも P(diff>2000)=3.9% vs 9.3%、P(diff>5000)=0/51日 と全分位で corner2+ 以下。
+    # 点推定の差は -478 だが n=51 と薄いため、その半分以下の -200 に留める。
+    "h_jug_corner1": -200.0,
+    # h_jug は角番だけでなく X_DDS 効果そのものも消えている (post +18 vs 非イベント +34)。
+    "h_jug_xdds": 0.0,
+}
+
+CURRENT_WEIGHTS: dict[str, float] = {**PRE_REGIME_WEIGHTS, **POST_REGIME_OVERRIDES}
 
 
 @dataclass(frozen=True)
@@ -142,8 +166,20 @@ def build_feature_frame(
     work["h_jug_section_658_674"] = ((work["segment"] == "h_jug") & (work["section"] == "658-674")).astype(int)
 
     work["h_nonjug_xdds"] = ((work["segment"] == "h_nonjug") & work["is_xdds"]).astype(int)
+    # 523-539 の角1は角1プレミアムから除外する。全期間プールで 523-539角1=-27 は
+    # 他セクション角1=+797 より有意に低く（MWU p=0.019）、523-539 内では角1と角2+に
+    # 差がない（p=0.50）。dd24_boost が既に 523-539 を外しているのと同じ扱い。
     work["h_nonjug_corner1_xdds"] = (
-        (work["segment"] == "h_nonjug") & work["is_xdds"] & (work["corner_bucket"] == "corner1")
+        (work["segment"] == "h_nonjug")
+        & work["is_xdds"]
+        & (work["corner_bucket"] == "corner1")
+        & (work["section"] != "523-539")
+    ).astype(int)
+    work["h_nonjug_corner24_xdds"] = (
+        (work["segment"] == "h_nonjug") & work["is_xdds"] & (work["corner_bucket"] == "corner2-4")
+    ).astype(int)
+    work["h_nonjug_corner59_xdds"] = (
+        (work["segment"] == "h_nonjug") & work["is_xdds"] & (work["corner_bucket"] == "corner5-9")
     ).astype(int)
     work["h_nonjug_corner1_nonevent_penalty"] = (
         (work["segment"] == "h_nonjug") & (~work["is_xdds"]) & (work["corner_bucket"] == "corner1")

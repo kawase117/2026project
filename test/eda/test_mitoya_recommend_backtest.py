@@ -143,3 +143,93 @@ def test_optimize_outputs_grid_best_and_vectorized_score_matches_row_score(tmp_p
     vector_score = optimize.score_features(feature_frame.iloc[[0]], weights).iloc[0]
     row_score = recommend._score_machine(row, 4, True, section_baselines)
     assert vector_score == row_score
+
+
+def test_every_weight_key_has_a_feature_column() -> None:
+    """CURRENT_WEIGHTS のキーは必ず特徴量列を持つ。
+
+    score_features は feature_frame に無い重みキーを黙ってスキップするため、
+    列名の typo や追加漏れがあっても例外にならず、加点だけが静かに消える。
+    """
+    frame = _make_frame()
+    prepared = backtest.prepare_backtest_frame(frame)
+    section_baselines = backtest.build_section_baselines(prepared)
+    feature_frame = backtest.build_feature_frame(prepared, dd=4, section_baselines=section_baselines)
+
+    expected = set(backtest.CURRENT_WEIGHTS) - {"section_baseline_scale"}
+    missing = expected - set(feature_frame.columns)
+    assert not missing, f"重みキーに対応する特徴量列が無い: {sorted(missing)}"
+
+
+def test_optimizer_feature_keys_cover_all_weights() -> None:
+    """optimizer の FEATURE_KEYS が CURRENT_WEIGHTS と一致する。
+
+    ここが欠けると最適化の高速パスだけが新特徴を無視して探索する。
+    実際 h_nonjug_corner24_xdds / h_nonjug_corner59_xdds が漏れていた（2026-07-24）。
+    """
+    expected = set(backtest.CURRENT_WEIGHTS) - {"section_baseline_scale"}
+    assert set(optimize.FEATURE_KEYS) == expected
+    assert "section_baseline_scale" not in optimize.FEATURE_KEYS
+
+
+def test_scorer_parity_across_all_segments_and_buckets() -> None:
+    """_score_machine（if分岐）と score_features（ベクトル内積）が全行で一致する。
+
+    従来のテストは feature_frame.iloc[0]（h_jug/641-657/rank1）1行のみを比較しており、
+    h_nonjug の corner2-4 / corner5-9、523-539 除外、corner10+ を検証できていなかった。
+    """
+    frame = _make_frame()
+    prepared = backtest.prepare_backtest_frame(frame)
+    section_baselines = backtest.build_section_baselines(prepared)
+    weights = backtest.current_weight_vector()
+
+    # v_nonjug は _score_machine のみ -9999 を返す仕様なので比較対象から外す
+    target = prepared.loc[~prepared["segment"].isin(recommend.AVOID_SEGMENTS)]
+    assert not target.empty
+
+    # X_DDS日 / DD24特殊 / 非イベント日 を網羅する
+    for dd in (4, 24, 15):
+        feature_frame = backtest.build_feature_frame(target, dd=dd, section_baselines=section_baselines)
+        vector_scores = backtest.score_features(feature_frame, weights).to_numpy()
+        row_scores = feature_frame.apply(
+            lambda r: recommend._score_machine(r, dd, dd in recommend.X_DDS, section_baselines),
+            axis=1,
+        ).to_numpy()
+        mismatched = [
+            (int(feature_frame.iloc[i]["machine_number"]), float(vector_scores[i]), float(row_scores[i]))
+            for i in range(len(feature_frame))
+            if abs(vector_scores[i] - row_scores[i]) > 1e-9
+        ]
+        assert not mismatched, f"dd={dd} でスコア不一致: {mismatched[:5]}"
+
+    # カバレッジ自体の確認（フィクスチャが痩せたら気づけるように）
+    buckets = set(backtest.build_feature_frame(target, dd=4, section_baselines=section_baselines)["corner_bucket"])
+    assert {"corner1", "corner2-4", "corner5-9", "corner10+"} <= buckets
+    assert "523-539" in set(target["section"])
+
+
+def test_523_539_corner1_gets_no_premium() -> None:
+    """523-539 の角1は X_DDS日でも角1プレミアムを受け取らない。
+
+    全期間プールで 523-539角1=-27 は他セクション角1=+797 に劣り（MWU p=0.019）、
+    セクション内でも角1と角2+に差がない（p=0.50）ため除外している。
+    """
+    frame = _make_frame()
+    prepared = backtest.prepare_backtest_frame(frame)
+    section_baselines = backtest.build_section_baselines(prepared)
+    feature_frame = backtest.build_feature_frame(prepared, dd=4, section_baselines=section_baselines)
+
+    excluded = feature_frame.loc[
+        (feature_frame["section"] == "523-539") & (feature_frame["corner_bucket"] == "corner1")
+    ]
+    included = feature_frame.loc[
+        (feature_frame["section"] == "501-522") & (feature_frame["corner_bucket"] == "corner1")
+    ]
+    assert not excluded.empty and not included.empty
+    assert (excluded["h_nonjug_corner1_xdds"] == 0).all()
+    assert (included["h_nonjug_corner1_xdds"] == 1).all()
+
+    # dd24_boost も同様に 523-539 を外す（二重抑制ではなく、どちらも非付与）
+    dd24_frame = backtest.build_feature_frame(prepared, dd=24, section_baselines=section_baselines)
+    excluded_24 = dd24_frame.loc[(dd24_frame["section"] == "523-539") & (dd24_frame["corner_bucket"] == "corner1")]
+    assert (excluded_24["dd24_boost"] == 0).all()

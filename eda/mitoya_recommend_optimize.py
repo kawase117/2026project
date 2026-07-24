@@ -16,6 +16,7 @@ if __package__ in {None, ""}:
 from eda.mitoya_prompt_common import ensure_results_dir, render_markdown_table  # noqa: E402
 from eda import mitoya_recommend_backtest as backtest_mod  # noqa: E402
 from eda.mitoya_recommend_backtest import (  # noqa: E402
+    CURRENT_WEIGHTS,
     DEFAULT_RANDOM_SAMPLES,
     DEFAULT_SPLIT_DATE,
     DEFAULT_TOP_N,
@@ -71,25 +72,13 @@ def _build_cases(prepared: pd.DataFrame, *, split_date: str = DEFAULT_SPLIT_DATE
     return backtest_mod._build_cases(prepared, split_date=split_date)
 
 
-FEATURE_KEYS = [
-    "h_jug_corner1",
-    "h_jug_corner24",
-    "h_jug_corner59",
-    "h_jug_xdds",
-    "h_jug_section_641_657",
-    "h_jug_section_675_691",
-    "h_jug_section_658_674",
-    "h_nonjug_xdds",
-    "h_nonjug_corner1_xdds",
-    "h_nonjug_corner1_nonevent_penalty",
-    "dd24_boost",
-    "v_jug_xdds",
-    "v_jug_section_723_733",
-    "v_jug_section_734_744",
-    "v_jug_section_712_722",
-    "mixed_805_debut_xdds",
-    "mixed_805_growth_xdds_penalty",
-]
+# 重みキーの一覧はハードコードせず CURRENT_WEIGHTS から導出する。
+# 以前はここに同じキー名を手書きで並べており、backtest 側に特徴量を追加しても
+# ここへの追記を忘れると、最適化の高速パス（_weights_to_vector / _precompute_cases）
+# だけが新特徴を無視して探索する——という静かな不整合が起きていた。
+# 実際 h_nonjug_corner24_xdds / h_nonjug_corner59_xdds が漏れていた（2026-07-24 修正）。
+# section_baseline_scale は特徴量列ではなくスケール係数なので除外する。
+FEATURE_KEYS = [key for key in CURRENT_WEIGHTS if key != "section_baseline_scale"]
 
 
 def _weights_to_vector(weights: dict[str, float]) -> tuple[np.ndarray, float]:
