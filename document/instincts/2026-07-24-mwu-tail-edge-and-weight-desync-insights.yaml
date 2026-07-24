@@ -104,3 +104,43 @@ project_name: pachinko-analyzer
 **Yes/No 条件の加点だけで組んだスコアは、条件を満たす集団内の序列を表現できない。**
 連続量（セクション実績等）をスケール項として入れるか、少なくとも同点時の
 tie-break を明示的に定義する必要がある。
+
+---
+id: known-duplicate-fix-does-not-rule-out-a-third-copy
+trigger: "同じ値/ロジックが2箇所に重複していたバグを直したあと。特に「重み一本化」「single source of truth化」を完了したと思ったとき"
+confidence: 0.85
+domain: implementation
+source: session-analysis
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 重複を2箇所直しても、3箇所目が隠れている前提で探す
+
+## 背景
+`_score_machine`(recommend.py) と `CURRENT_WEIGHTS`(backtest.py) の重み二重定義を
+一本化し、実データ218行×DD5パターンでスコア一致を自分で数値検証して0件不一致を確認した。
+「直った」と判断してCodexに read-only レビューを依頼したところ、
+**3つ目の重複**が見つかった: `mitoya_recommend_optimize.py` の `FEATURE_KEYS` が
+リストリテラルで独自に重みキー名を保持しており、新規2キーの追加漏れにより
+最適化の高速パスだけが古いキー集合のまま探索を続けていた。
+
+自分の検証（scalar実装とvector実装の一致）は「知っている2つの実装」の間だけを
+比較しており、**3つ目の実装（optimizer の高速パス）の存在を検証設計に含めていなかった**。
+Grep で `mitoya_recommend_backtest` を import するファイルを洗い出してはいたが、
+「重みキーの集合を独自に保持しているか」という観点でその中身までは見ていなかった。
+
+## アクション
+1. 重複値/ロジックを発見したら、直す前に**その値を使っている全箇所**を機械的に列挙する
+   （Grep で値そのもの、あるいは意味的に等価なキー名を検索する。import元の一覧だけでは足りない）
+2. 「2箇所で一致した」ことは「3箇所目が無い」ことの証拠にならない。
+   独立したレビュー（Codex 委任、別セッション、別の検索軸）で裏取りする
+3. 一本化の対象が「値のリスト/キー集合」の場合、リテラルで複製せず
+   **単一の定数から導出**する（`FEATURE_KEYS = [k for k in CURRENT_WEIGHTS if ...]`）。
+   これにより4つ目以降の重複が構造的に発生しなくなる
+4. 一本化後は「一致することを示すテスト」に加えて「キー集合が一致することを示すテスト」を書く。
+   値の一致だけでは、片方に存在しないキーが黙ってスキップされるケースを検出できない
+
+## 例
+`test/eda/test_mitoya_recommend_backtest.py::test_optimizer_feature_keys_cover_all_weights`
+— `set(optimize.FEATURE_KEYS) == set(CURRENT_WEIGHTS) - {"section_baseline_scale"}` を
+アサートする。旧実装（新規2キー欠落）を意図的に再現すると実際に失敗することを確認済み。
