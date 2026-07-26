@@ -1,0 +1,92 @@
+---
+id: mitoya-dd24-recommend-tiebreak-selected-losing-half
+trigger: "みとや大森町 h_nonjug 角1バスケット(全8台同点)から台別履歴でtie-breakして推薦するとき"
+confidence: 0.85
+domain: pachinko-visit-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 2026-07-24実績: セクション同点8台を台別履歴でtie-breakした結果、負ける側を選んだ
+
+## 背景
+2026-07-24(DD24、X_DDS日)のみとや推薦で、h_nonjug角1の8台(全て800点で同点)を
+直近X_DDS履歴でtie-breakし、574(東京喰種)・607(SAOⅡ)を最上位に置いた。
+実績は574=-5,814(266台中264位)、607=-4,644(260位)で、266台中ワースト3・7位という
+最悪の引き当てだった。一方で選ばなかった640(スマスロ炎炎)=+11,014(2位)、
+540(ミリオンゴッド)=+7,028(8位)が当日の勝ち台だった。
+
+バスケット全体(8台)では平均+402(ホール平均+70を上回る)・中央値-484・3/8プラス率で、
+セグメントの信号自体は生きていた([[mwu-cannot-detect-tail-only-edges]]の
+「角1は勝率でなく裾でエッジがある」という2026-07-24時点の分析と整合)。
+失敗したのは信号ではなく、**同点8台からの銘柄選択**だった。
+
+推薦の他の判断も同日に検証:
+- 523-539角1除外(2026-07-24にコードへ追加): 539=-4,117(256位)。除外は正解
+- ジャグラー全般回避: 平均-172・プラス率33%。回避は妥当
+- h_jug corner1回避: 平均+284(675が+2,522と例外的にプラス)。この日は回避が不正解
+- v_nonjug回避: 平均+736(プラス圏)。この日は回避が裏目
+- フォワード凍結2本(rb_top3, rbz_top3): ともにマイナス(-1,028 / -545)。
+  theory 3.1c の事前予想(角番1シグナル死亡により+200枚基準達成困難)と整合
+
+## アクション
+```python
+# section_baseline_scale=0 のため h_nonjug 角1が全台同点になる状況で、
+# 台別履歴だけで tie-break するのは根拠が薄い(n=1日でコインフリップに近い結果)。
+if segment == "h_nonjug" and corner_bucket == "corner1" and all_scores_tied:
+    # 単一銘柄への集中ではなく、複数台に分散して当てる設計にする。
+    # あるいは section_baseline_scale の再最適化(post データ蓄積後)を優先する。
+    strategy = "basket_diversify_or_wait_for_rescoring"
+```
+
+## 例
+```
+2026-07-24 h_nonjug 角1 全8台 (ホール平均+70, 中央値-375):
+  推薦した側(履歴上位): 574=-5814(264位), 607=-4644(260位), 504=-542, 581=-189, 501=+722, 550=-1258, 570=+2903
+  推薦TOP7平均=-1260, ホール平均比 lift=-1330
+
+  選ばなかった側: 640=+11014(2位/266), 540=+7028(8位/266)
+  バスケット全体8台平均=+402(ホール平均を上回る) ← セグメント信号自体は機能した
+```
+
+---
+id: single-day-answercheck-cannot-separate-signal-from-selection-failure
+trigger: "1日分の推薦結果を答え合わせして「シグナルが効かなかった」と結論しそうになったとき"
+confidence: 0.9
+domain: analysis-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# セグメント全体の実績とtop-N推薦の実績を分けて見ないと、失敗の原因(信号 vs 選択)を誤診する
+
+## 背景
+2026-07-24のみとや答え合わせで、推薦TOP7は明確に負けた(lift -1330)。
+ここで「h_nonjug角1シグナルは効かない」と結論するのは誤り。
+バスケット全体(候補となった8台全部)を見ると平均+402でホール平均+70を上回っており、
+**信号自体は機能し、TOP-N絞り込みの銘柄選択だけが外れた**ことが分かった。
+
+区別しないと、正しい信号を誤って廃棄したり(false negative)、
+逆に本当に死んだ信号を「たまたま選択が悪かっただけ」と誤ってかばう(false positive)
+両方向の間違いを起こしうる。
+
+## アクション
+```python
+# 推薦結果を答え合わせするとき、必ず2段階で見る
+def answercheck(recommended_topN, full_candidate_basket, hall_average):
+    basket_lift = full_candidate_basket.mean() - hall_average       # 信号の有無
+    topn_lift = recommended_topN.mean() - hall_average              # 選択の精度
+    if basket_lift > 0 and topn_lift < 0:
+        return "信号は生きている。tie-break/ランキングロジックを疑う"
+    if basket_lift <= 0:
+        return "信号自体が消えている可能性。セグメント再検定が必要"
+```
+n=1日では両方とも確定的な結論は出せないが、少なくとも「どちらを疑うべきか」の
+仮説を正しく立てられる。
+
+## 例
+```
+2026-07-24: basket_lift = +402-70 = +332 (信号は機能)
+            topn_lift   = -1260-70 = -1330 (選択が失敗)
+            → 「信号なし」ではなく「tie-break根拠不足」が正しい診断
+```
