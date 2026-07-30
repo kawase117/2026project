@@ -241,6 +241,27 @@ def test_allocate_records_reserves_slots_for_recent_work(tmp_path: Path) -> None
     assert sum(1 for i in ids if i.startswith("old-")) == 4
 
 
+def test_ttl_retires_stale_records_unless_confirmed(tmp_path: Path) -> None:
+    old_date = (datetime.now(timezone.utc).date() - timedelta(days=200)).isoformat()
+    write_instinct(tmp_path / f"{old_date}-stale.yaml", header=_relation_header("stale-claim", confidence=1.0))
+    # Above high_confidence_pin so the pre-existing recency filter keeps it;
+    # this isolates TTL as the only thing under test.
+    write_instinct(
+        tmp_path / f"{old_date}-kept.yaml",
+        header=_relation_header("kept-claim", confidence=0.96) + "\nverification_status: confirmed",
+    )
+    write_instinct(tmp_path / f"{RECENT_DATE}-fresh.yaml", header=_relation_header("fresh-claim", confidence=0.85))
+
+    records = ci.dedupe_latest(ci.collect_records(tmp_path, include_underscored_sources=False))
+
+    without_ttl = {r.record_id for r in ci.filter_records(records, 0.80, 0.95, 21, False, ttl_days=0)}
+    assert without_ttl == {"stale-claim", "kept-claim", "fresh-claim"}
+
+    with_ttl = {r.record_id for r in ci.filter_records(records, 0.80, 0.95, 21, False, ttl_days=90)}
+    # confidence 1.0 does not buy an exemption; an explicit confirmation does.
+    assert with_ttl == {"kept-claim", "fresh-claim"}
+
+
 def test_extract_action_prefers_japanese_action_heading(tmp_path: Path) -> None:
     body = "# title\n\n## 背景\nbackground line\n\n## アクション\n- 折り返された\n  指針の続き\n\n## 例\nexample\n"
     assert ci.extract_action(body, "fallback trigger") == "折り返された 指針の続き"

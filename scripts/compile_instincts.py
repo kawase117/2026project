@@ -85,6 +85,15 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--ttl-days",
+        type=int,
+        default=90,
+        help=(
+            "Drop records older than this unless verification_status is 'confirmed'. "
+            "Retirement should not depend on someone remembering to declare it. 0 disables."
+        ),
+    )
+    parser.add_argument(
         "--include-underscored-sources",
         action="store_true",
         help="Include source files that start with '_' (for example '_cli_export.yaml').",
@@ -427,14 +436,32 @@ def filter_records(
     high_confidence_pin: float,
     recent_days: int,
     include_refuted: bool,
+    ttl_days: int = 0,
 ) -> list[InstinctRecord]:
+    """Select records for the ACTIVE list.
+
+    `ttl_days` inverts the burden of retirement. Requiring an author to declare
+    `supersedes` on the record that replaces a claim works only when they
+    remember to; measured over three months, 108 of 111 corrections never named
+    their target, so nothing ever retired. A TTL needs no bookkeeping to drop a
+    record — it needs bookkeeping (`verification_status: confirmed`) to KEEP one.
+    """
     today = datetime.now(timezone.utc).date()
     cutoff = today - timedelta(days=recent_days)
+    ttl_cutoff = today - timedelta(days=ttl_days) if ttl_days > 0 else None
 
     filtered: list[InstinctRecord] = []
     for record in records:
         if not include_refuted and record.verification_status in EXCLUDED_STATUSES:
             continue
+
+        # Anything explicitly confirmed is exempt: someone vouched for it.
+        if ttl_cutoff is not None and record.verification_status != "confirmed" and record.file_date:
+            try:
+                if datetime.strptime(record.file_date, "%Y-%m-%d").date() < ttl_cutoff:
+                    continue
+            except ValueError:
+                pass
 
         conf = record.confidence if record.confidence is not None else -1.0
         if conf < min_confidence:
@@ -784,6 +811,7 @@ def main() -> int:
         "recent_days": args.recent_days,
         "max_records": args.max_records,
         "recent_slots": args.recent_slots,
+        "ttl_days": args.ttl_days,
         "include_underscored_sources": args.include_underscored_sources,
         "include_refuted": args.include_refuted,
         "output_path": str(output_path.as_posix()),
@@ -816,6 +844,7 @@ def main() -> int:
         high_confidence_pin=args.high_confidence_pin,
         recent_days=args.recent_days,
         include_refuted=args.include_refuted,
+        ttl_days=args.ttl_days,
     )
     sorted_records = allocate_records(
         filtered,

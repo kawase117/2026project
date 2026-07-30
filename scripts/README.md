@@ -26,6 +26,12 @@
     上がり続け（1476件時点で0.97）、直近21日の適格140件中3件しか載らない状態になっていた。
   - frontmatter の `supersedes` / `invalidates` を読み、対象レコードを
     `superseded` / `refuted` に自動で落として出力から除外する。詳細は `INSTINCT_TEMPLATE.md`。
+  - `--ttl-days`（既定90）で古いレコードを自動的に引退させる。
+    `verification_status: confirmed` が付いたものだけが免除される。
+    訂正時の `supersedes` 記帳は3ヶ月で111件中3件しか行われなかったため、
+    「引退させるのに作業が要る」方式から「残すのに作業が要る」方式へ反転させたもの。
+    2026-07-31 時点では0件（コーパスが2026-05-08開始のため）で、
+    2026-08-06頃から効き始める。`0` で無効化。
 - 主な実行例:
   - `venv\Scripts\python.exe scripts/compile_instincts.py`
   - `venv\Scripts\python.exe scripts/compile_instincts.py --force`

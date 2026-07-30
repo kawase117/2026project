@@ -3,6 +3,10 @@
 Use this template when recording a new instinct from EDA, verification, or code review.
 Keep the core claim narrow. Separate raw observation from interpretation.
 
+> **書く前に**: 何を instinct にすべきか（3つの判定基準）と `trigger` の書き方は
+> `.claude/skills/instinct-export/SKILL.md` を見ること。目安は1セッション1〜3件。
+> `trigger` は `instinct-import` の検索キーなので、悪いと二度と発見されない。
+
 ## Required Fields
 
 ```yaml
