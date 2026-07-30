@@ -21,9 +21,37 @@
 - 特徴:
   - 差分なし時は再生成をスキップ（高速）。
   - 既定で `_cli_export.yaml` は除外（必要時のみ `--include-underscored-sources`）。
+  - `--recent-slots`（既定60）で `--max-records`（既定120）のうち直近分の枠を確保する。
+    confidence だけで並べると、閾値超えのレコード数が枠を大きく上回るため実効カットラインが
+    上がり続け（1476件時点で0.97）、直近21日の適格140件中3件しか載らない状態になっていた。
+  - frontmatter の `supersedes` / `invalidates` を読み、対象レコードを
+    `superseded` / `refuted` に自動で落として出力から除外する。詳細は `INSTINCT_TEMPLATE.md`。
 - 主な実行例:
   - `venv\Scripts\python.exe scripts/compile_instincts.py`
   - `venv\Scripts\python.exe scripts/compile_instincts.py --force`
+
+#### `--sync-homunculus`（セッション開始時の自動注入）
+
+`ACTIVE_INSTINCTS.*` は**人とCodexが読む一覧**であって、セッション開始時に
+自動注入される経路ではない。注入は `everything-claude-code` プラグインの
+`session-start.js` が `~/.claude/homunculus/projects/257beeaeb232/instincts/`
+を読んで行う。このフラグはそこへ書き出す。
+
+```bash
+venv\Scripts\python.exe scripts/compile_instincts.py --sync-homunculus --force
+```
+
+- 注入枠は**6件**固定（プラグインの `MAX_INJECTED_INSTINCTS`）。多く置いても届かない。
+- 1レコード1ファイルで書き出す。連結形式はプラグインのパーサが誤読する。
+- 選定は **confidence 順ではなく日付順**。confidence は同点時のみ見る。
+- `--dry-run` で書き込まずに注入予定を確認できる。
+- 反映は**次のセッション開始時**。実行しただけでは現セッションに影響しない。
+- 既存ファイルは毎回退避（`*_archive_YYYYMMDD/`）してから書き直す。`--no-archive` で削除に変更。
+
+特定のInstinctを常に注入したい場合は `document/instincts/INJECTION_PINS.txt` に
+id を1行ずつ書く（`#` 以降はコメント）。
+
+経緯と故障の詳細は `document/instinct_injection_investigation_20260727.md` を参照。
 
 ### `refresh_instincts.ps1`
 

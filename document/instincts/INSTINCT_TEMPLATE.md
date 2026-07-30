@@ -71,6 +71,25 @@ Use these when the claim is meant to be reused by Claude/Codex in later work.
 - Do not upgrade a common pattern above a hall-specific pattern for operational use unless it is actually more useful in the target hall.
 - If the claim depends on a minimum sample size, write the threshold in the entry.
 
+## `supersedes` / `invalidates` は自動適用される（2026-07-31〜）
+
+frontmatter に書いた `supersedes` / `invalidates` は `compile_instincts.py` が読み、
+**対象レコードの `verification_status` を自動で書き換える**。
+
+- `supersedes: [{id: X}]` → X が `superseded` になる
+- `invalidates: [{id: X}]` → X が `refuted` になる
+- どちらも `ACTIVE_INSTINCTS` から自動的に除外される
+- 既に `confirmed` 等が手で付いているレコードは降格されない（他人の宣言では覆せない）
+
+古い主張を訂正する instinct を書くときは、**必ず対象を名指しすること**。
+名指ししないと古い主張は永久に生き続ける。2026-07-31 の棚卸し時点で
+1476レコード中 `refuted`/`superseded` はゼロ、訂正を示唆する記述は111件あったが、
+すべて「新しいレコードを足す」だけで古い方が閉じられていなかった。
+
+confidence は自己申告で、肯定的な発見には高く、それを訂正する反証には低く付きやすい。
+`ACTIVE_INSTINCTS` 側は日付枠の確保で緩和したが、
+**訂正が確実に効くのは対象を名指しした場合だけ**。
+
 ## `invalidates` Rules
 
 Use `invalidates` only when the older instinct is materially wrong at the same decision level.

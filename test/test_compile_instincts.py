@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sys
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -11,13 +12,19 @@ if str(PROJECT_ROOT) not in sys.path:
 from scripts import compile_instincts as ci  # noqa: E402
 
 
+# filter_records() compares file dates against datetime.now(), so fixtures must
+# be dated relative to the run. A hardcoded date silently rots the suite once
+# wall-clock passes the recency window.
+RECENT_DATE = datetime.now(timezone.utc).date().isoformat()
+
+
 def write_instinct(path: Path, *, header: str, body: str = "body text") -> None:
     path.write_text(f"---\n{header}\n---\n{body}\n", encoding="utf-8")
 
 
 def build_test_records(tmp_path: Path) -> list[ci.InstinctRecord]:
     write_instinct(
-        tmp_path / "2026-06-23-confirmed.yaml",
+        tmp_path / f"{RECENT_DATE}-confirmed.yaml",
         header=(
             'id: confirmed-instinct\n'
             'trigger: "confirmed trigger"\n'
@@ -35,7 +42,7 @@ def build_test_records(tmp_path: Path) -> list[ci.InstinctRecord]:
         ),
     )
     write_instinct(
-        tmp_path / "2026-06-23-unverified.yaml",
+        tmp_path / f"{RECENT_DATE}-unverified.yaml",
         header=(
             'id: unverified-instinct\n'
             'trigger: "unverified trigger"\n'
@@ -47,7 +54,7 @@ def build_test_records(tmp_path: Path) -> list[ci.InstinctRecord]:
         ),
     )
     write_instinct(
-        tmp_path / "2026-06-23-refuted.yaml",
+        tmp_path / f"{RECENT_DATE}-refuted.yaml",
         header=(
             'id: refuted-instinct\n'
             'trigger: "refuted trigger"\n'
@@ -60,7 +67,7 @@ def build_test_records(tmp_path: Path) -> list[ci.InstinctRecord]:
         ),
     )
     write_instinct(
-        tmp_path / "2026-06-23-superseded.yaml",
+        tmp_path / f"{RECENT_DATE}-superseded.yaml",
         header=(
             'id: superseded-instinct\n'
             'trigger: "superseded trigger"\n'
@@ -154,6 +161,90 @@ def test_jsonl_and_markdown_include_status_and_verified_by(tmp_path: Path) -> No
     assert "status: `refuted`" in markdown
     assert "status: `superseded`" in markdown
     assert "status: `unverified`" in markdown
+
+
+def _relation_header(record_id: str, *, confidence: float, relation: str = "", target: str = "") -> str:
+    lines = [
+        f"id: {record_id}",
+        f'trigger: "{record_id} trigger"',
+        f"confidence: {confidence}",
+    ]
+    if relation:
+        lines += [f"{relation}:", f"  - id: {target}", "    reason: data_bug"]
+    lines += [
+        "domain: test",
+        "source: session-observation",
+        "project_id: 2026project",
+        "project_name: pachinko-analyzer",
+    ]
+    return "\n".join(lines)
+
+
+def test_declared_supersedes_closes_the_target(tmp_path: Path) -> None:
+    write_instinct(tmp_path / f"{RECENT_DATE}-old.yaml", header=_relation_header("old-claim", confidence=0.99))
+    write_instinct(
+        tmp_path / f"{RECENT_DATE}-new.yaml",
+        header=_relation_header("new-claim", confidence=0.85, relation="supersedes", target="old-claim"),
+    )
+
+    records = ci.dedupe_latest(ci.collect_records(tmp_path, include_underscored_sources=False))
+    applied = ci.apply_relations(records)
+    by_id = {record.record_id: record for record in records}
+
+    assert applied == {"superseded": 1}
+    assert by_id["old-claim"].verification_status == "superseded"
+    assert by_id["new-claim"].verification_status == "unverified"
+    # The superseded record must drop out even though its confidence is higher.
+    kept = ci.filter_records(
+        records, min_confidence=0.80, high_confidence_pin=0.95, recent_days=30, include_refuted=False
+    )
+    assert [record.record_id for record in kept] == ["new-claim"]
+
+
+def test_declared_invalidates_marks_refuted_and_respects_manual_status(tmp_path: Path) -> None:
+    write_instinct(
+        tmp_path / f"{RECENT_DATE}-confirmed.yaml",
+        header=_relation_header("already-confirmed", confidence=0.9) + "\nverification_status: confirmed",
+    )
+    write_instinct(tmp_path / f"{RECENT_DATE}-target.yaml", header=_relation_header("bad-claim", confidence=0.9))
+    write_instinct(
+        tmp_path / f"{RECENT_DATE}-refuter.yaml",
+        header=_relation_header("refuter", confidence=0.8, relation="invalidates", target="bad-claim"),
+    )
+    write_instinct(
+        tmp_path / f"{RECENT_DATE}-overreach.yaml",
+        header=_relation_header("overreach", confidence=0.8, relation="invalidates", target="already-confirmed"),
+    )
+
+    records = ci.dedupe_latest(ci.collect_records(tmp_path, include_underscored_sources=False))
+    ci.apply_relations(records)
+    by_id = {record.record_id: record for record in records}
+
+    assert by_id["bad-claim"].verification_status == "refuted"
+    # A hand-verified record is never downgraded by someone else's declaration.
+    assert by_id["already-confirmed"].verification_status == "confirmed"
+
+
+def test_allocate_records_reserves_slots_for_recent_work(tmp_path: Path) -> None:
+    old_date = (datetime.now(timezone.utc).date() - timedelta(days=120)).isoformat()
+    for i in range(10):
+        write_instinct(tmp_path / f"{old_date}-old{i}.yaml", header=_relation_header(f"old-{i}", confidence=1.0))
+    for i in range(10):
+        write_instinct(tmp_path / f"{RECENT_DATE}-new{i}.yaml", header=_relation_header(f"new-{i}", confidence=0.81))
+
+    records = ci.dedupe_latest(ci.collect_records(tmp_path, include_underscored_sources=False))
+    selected = ci.allocate_records(records, max_records=10, recent_days=21, recent_slots=6)
+    ids = [record.record_id for record in selected]
+
+    # Without a reserve, all ten slots would go to the confidence-1.0 old records.
+    assert sum(1 for i in ids if i.startswith("new-")) == 6
+    assert sum(1 for i in ids if i.startswith("old-")) == 4
+
+
+def test_extract_action_prefers_japanese_action_heading(tmp_path: Path) -> None:
+    body = "# title\n\n## 背景\nbackground line\n\n## アクション\n- 折り返された\n  指針の続き\n\n## 例\nexample\n"
+    assert ci.extract_action(body, "fallback trigger") == "折り返された 指針の続き"
+    assert ci.extract_action("# title\n\nno sections here", "fallback trigger") == "fallback trigger"
 
 
 def test_collect_records_and_filtering_can_be_used_end_to_end(tmp_path: Path) -> None:

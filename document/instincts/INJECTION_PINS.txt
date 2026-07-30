@@ -1,0 +1,7 @@
+# セッション開始時の注入枠(6件)に必ず含めたい instinct の id を1行ずつ書く。
+# `#` 以降はコメント。ここに書いた順に上から枠を確保し、残りは日付の新しい順で埋まる。
+# 反映: venv\Scripts\python.exe scripts/compile_instincts.py --sync-homunculus --force
+#       （効くのは次のセッション開始時）
+#
+# 例:
+# hall-regime-needs-external-event-calendar

@@ -4,6 +4,12 @@ trigger: "machine 2243 (kamata7 2F)、または周辺台2240-2243クラスタを
 confidence: 0.8
 domain: project-status
 source: session-observation
+verification_status: confirmed
+verified_by:
+  - session: "2026-06-16"
+    method: "split-half 安定性検定 (前半169日 / 後半169日)"
+    result: "confirmed"
+    evidence: "2243 hit_110 は前半0.331(z=+1.18) / 後半0.315(z=+1.24) で両期間安定。machine-2243-2252-splithalf-stable-hit110-cluster-rejected が棄却したのは後続3仮説(隣接クラスタ説・角台説・他ホール横展開説)であって本シグナルそのものではない"
 project_id: 2026project
 project_name: pachinko-analyzer
 

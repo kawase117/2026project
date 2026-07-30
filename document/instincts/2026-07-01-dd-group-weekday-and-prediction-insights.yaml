@@ -4,6 +4,10 @@ trigger: "蒲田7の7系×月曜のシグナル強度を使うとき、または
 confidence: 0.92
 domain: hall-strategy
 source: session-correction
+supersedes:
+  - id: kamata7-7kei-monday-strongest-signal
+    reason: data_bug
+    note: 7/7周年（全台高設定日）未除外で算出された+807。除外後は+207 Tier C
 project_id: 2026project
 project_name: pachinko-analyzer
 
@@ -28,6 +32,10 @@ project_name: pachinko-analyzer
 ---
 id: mitoya-4kei-all-weekday-tier-b
 trigger: "みとやの4系イベント日の曜日選択を検討するとき"
+supersedes:
+  - id: mitoya-4kei-saturday-signal
+    reason: scope_error
+    note: 土曜限定と報告していたが全曜日Tier B。土曜最強(+356)自体は維持
 confidence: 0.88
 domain: hall-strategy
 source: session-observation
