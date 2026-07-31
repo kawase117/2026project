@@ -1,0 +1,89 @@
+{
+  "rule_id": "k7_jug_rb_top3",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "freeze_hash": "9e914424a794c5e3",
+  "target_date": "20260729",
+  "data_asof": "20260728",
+  "lookback_window": [
+    "2026-06-29",
+    "2026-07-29"
+  ],
+  "score": "hist_mean_rb_prob",
+  "success_criterion": "エッジ（同日ジャグ全台平均との差枚差）の平均が +150枚/台 以上、かつ 95%CI 下限が 0 を上回ること。下回れば実弾投入しない。",
+  "is_dry_run": false,
+  "picks": [
+    {
+      "machine_number": 3170,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 0.003425,
+      "history_days": 27
+    },
+    {
+      "machine_number": 3183,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 0.003306,
+      "history_days": 28
+    },
+    {
+      "machine_number": 3171,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 0.003291,
+      "history_days": 26
+    }
+  ],
+  "result": {
+    "scored_with_hash": "9e914424a794c5e3",
+    "day_baseline": 203.6,
+    "universe_size": 165,
+    "picks_realized": [
+      {
+        "machine_number": 3170,
+        "games": 1610.0,
+        "diff": -500.0,
+        "edge": -703.6363636363636
+      },
+      {
+        "machine_number": 3171,
+        "games": 3364.0,
+        "diff": -3200.0,
+        "edge": -3403.6363636363635
+      },
+      {
+        "machine_number": 3183,
+        "games": 6008.0,
+        "diff": 700.0,
+        "edge": 496.3636363636364
+      }
+    ],
+    "mean_diff_per_pick": -1000.0,
+    "mean_edge_per_pick": -1203.6,
+    "missing_machines": [],
+    "rb_perspective": {
+      "day_baseline_rb_rate": 0.00261,
+      "picks_rb": [
+        {
+          "machine_number": 3170,
+          "rb_rate": 0.00186,
+          "baseline_ratio": 0.71,
+          "rb_rank": 129,
+          "rb_universe_size": 165
+        },
+        {
+          "machine_number": 3183,
+          "rb_rate": 0.00366,
+          "baseline_ratio": 1.4,
+          "rb_rank": 27,
+          "rb_universe_size": 165
+        },
+        {
+          "machine_number": 3171,
+          "rb_rate": 0.00178,
+          "baseline_ratio": 0.68,
+          "rb_rank": 132,
+          "rb_universe_size": 165
+        }
+      ]
+    }
+  },
+  "plan_digest": "51219bbe563537b0"
+}

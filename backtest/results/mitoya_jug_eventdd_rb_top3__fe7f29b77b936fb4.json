@@ -1,0 +1,66 @@
+{
+  "rule_id": "mitoya_jug_eventdd_rb_top3",
+  "hall": "みとや大森町店",
+  "freeze_hash": "fe7f29b77b936fb4",
+  "data_fingerprint": {
+    "n_rows": 76342,
+    "sum_games": 261278610,
+    "sum_diff": 176823,
+    "max_date_in_db": "20260726"
+  },
+  "hypothesis": "みとや大森町はイベント日DD{1,4,7,14,17,24,27,30}に高設定を集中投入する。その日に限り、直近30日の平均RB確率が高いジャグ台を選べばエッジが出る。",
+  "source_instinct": "mitoya-event-definition-confirmed / project-jug-rb-setting-prediction-pipeline-20260711（9ホール中みとやのみ positive）",
+  "success_criterion": "エッジの平均が +200枚/台 以上かつ 95%CI 下限 > 0。エントリー日が限定される分、1日あたりの取り分は蒲田7ルールより高くないと交通費に負ける。",
+  "eval_range": "20251001-20260720",
+  "n_eval_days": 75,
+  "n_days_skipped_no_history": 0,
+  "n_days_traded": 75,
+  "n_picks": 225,
+  "mean_games_per_pick": 6243.3,
+  "pick_low_games_rate": 0.004,
+  "mean_diff_per_pick": 196.6,
+  "mean_baseline": 108.6,
+  "mean_edge_per_pick": 87.9,
+  "edge_ci95": [
+    -83.2,
+    262.5
+  ],
+  "edge_ci95_block7": [
+    -54.1,
+    249.1
+  ],
+  "mean_edge_vs_excluded": 91.2,
+  "edge_vs_excluded_ci95_block7": [
+    -56.0,
+    258.2
+  ],
+  "mean_pick_share": 0.034,
+  "edge_positive_day_rate": 0.547,
+  "win_rate_abs": 0.471,
+  "cumulative_diff": 14741.3,
+  "yen_per_day_at_20": 3931,
+  "period_split": {
+    "split_date": "20260501",
+    "caveat": "post-hoc 部分集団解析。採否根拠にしないこと。既知の外部変化点にのみ使う。",
+    "before": {
+      "n_days_traded": 55,
+      "n_picks": 165,
+      "mean_edge_per_pick": 22.6,
+      "edge_ci95_block7": [
+        -155.2,
+        191.2
+      ],
+      "edge_positive_day_rate": 0.473
+    },
+    "after": {
+      "n_days_traded": 20,
+      "n_picks": 60,
+      "mean_edge_per_pick": 267.5,
+      "edge_ci95_block7": [
+        164.9,
+        342.2
+      ],
+      "edge_positive_day_rate": 0.75
+    }
+  }
+}

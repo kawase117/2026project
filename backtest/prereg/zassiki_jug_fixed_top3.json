@@ -1,0 +1,17 @@
+{
+  "rule_id": "zassiki_jug_fixed_top3",
+  "hypothesis": "分散分解によれば雑色店のジャグは台×日シグナルが 0.00pp（＝日替わりで設定を動かしていない）一方、固定的な台効果が 2.02pp（9ホール中最大、信頼性0.95）ある。したがって『その日どの台か』を当てる必要はなく、長期履歴で恒常的に優秀な台を特定して座り続ければよい。",
+  "hall": "ザ-シティ-ベルシティ雑色店",
+  "source_instinct": "signal-ceiling-variance-decomposition-20260706 / eda/variance_decomposition.py 2026-07-23 実行結果",
+  "eval_start": "20260101",
+  "eval_end": "20260720",
+  "success_criterion": "edge（同日ジャグ全台平均との差枚差）の平均が +150枚/台 以上、かつ 7日ブロックbootstrap の 95%CI 下限 > 0。分散分解が示す固定台効果 2.02pp は平均投資額換算で約300枚/日に相当するため、その半分は取れて然るべき。下回れば固定効果仮説も棄却する。",
+  "universe": { "jug_flag": 1 },
+  "eligibility": { "jug_flag": 1 },
+  "entry_days": {},
+  "score": "hist_mean_diff",
+  "lookback_days": 180,
+  "min_history_days": 60,
+  "top_n": 3,
+  "min_games": 1000
+}

@@ -1,0 +1,17 @@
+{
+  "rule_id": "k7_jug_hit104_top3",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "hypothesis": "設定継続仮説の素直版。直近30日で機械割104%超えの頻度が高かったジャグ台は、当日も高設定が入りやすい。",
+  "source_instinct": "highsetting-placement-prediction-phase0-20260715（lift 1.5-1.8x の指標違い版）",
+  "eval_start": "20251001",
+  "eval_end": "20260720",
+  "success_criterion": "エッジの平均が +150枚/台 以上かつ 95%CI 下限 > 0。RB確率版（k7_jug_rb_top3）に劣る場合はこちらを破棄する。",
+  "universe": { "jug_flag": 1 },
+  "eligibility": { "jug_flag": 1 },
+  "entry_days": {},
+  "score": "hist_hit104_rate",
+  "lookback_days": 30,
+  "min_history_days": 10,
+  "top_n": 3,
+  "min_games": 1000
+}

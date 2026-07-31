@@ -1,0 +1,17 @@
+{
+  "rule_id": "mitoya_at_eventdd_histdiff_top3",
+  "hall": "みとや大森町店",
+  "hypothesis": "みとやのイベントDD戦略の本体はジャグではなくAT一般である。2026-05の店長交代でジャグのイベントDDギャップは +0.75pp [+0.54,+0.96] → +0.20pp [-0.22,+0.58] とゼロを跨いで消滅したが、AT一般は +3.14pp [+2.57,+3.72] → +1.86pp [+0.44,+3.20] と減衰しつつ生存し、イベント日の絶対機械割は 101.31% を保っている。イベントDD{1,4,7,14,17,24,27,30}に限り、直近30日の平均差枚が高いAT一般台を選ぶ。",
+  "source_instinct": "feedback-hall-regime-needs-external-event-calendar（2026-07-27にユーザーから店長交代の情報を得て期間分割した結果） / mitoya-event-definition-confirmed の2026-07-27追記 / backtest/results/regime/FINDINGS.md 追試1（蒲田7 AT一般の hist_mean_diff がラインナップレジームの器として機能する）",
+  "eval_start": "20251001",
+  "eval_end": "20260720",
+  "success_criterion": "【重要】AT一般×イベントDD という組み合わせは 2026-07-27 に同じデータを見て発見したものであり、バックテストは in-sample である。数値を採否根拠にしてはならない。判定はフォワードのみ。フォワード20エントリー日を経過した時点で edge 平均が +200枚/台 以上かつ 95%CI 下限 > 0 であること。満たさなければ破棄し、みとやのAT系スコアの派生はこの1本で打ち止めとする。なお 2026-05 の店長交代以降のイベントDD日は実測21日しかなく、レジーム再変化の可能性は常に残る。",
+  "universe": { "jug_flag": 0, "hana_flag": 0, "oki_flag": 0, "bt_flag": 0 },
+  "eligibility": { "jug_flag": 0, "hana_flag": 0, "oki_flag": 0, "bt_flag": 0 },
+  "entry_days": { "dd": [1, 4, 7, 14, 17, 24, 27, 30] },
+  "score": "hist_mean_diff",
+  "lookback_days": 30,
+  "min_history_days": 10,
+  "top_n": 3,
+  "min_games": 1000
+}

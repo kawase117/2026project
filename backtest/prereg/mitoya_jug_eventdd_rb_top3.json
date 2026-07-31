@@ -1,0 +1,17 @@
+{
+  "rule_id": "mitoya_jug_eventdd_rb_top3",
+  "hall": "みとや大森町店",
+  "hypothesis": "みとや大森町はイベント日DD{1,4,7,14,17,24,27,30}に高設定を集中投入する。その日に限り、直近30日の平均RB確率が高いジャグ台を選べばエッジが出る。",
+  "source_instinct": "mitoya-event-definition-confirmed / project-jug-rb-setting-prediction-pipeline-20260711（9ホール中みとやのみ positive）",
+  "eval_start": "20251001",
+  "eval_end": "20260720",
+  "success_criterion": "エッジの平均が +200枚/台 以上かつ 95%CI 下限 > 0。エントリー日が限定される分、1日あたりの取り分は蒲田7ルールより高くないと交通費に負ける。",
+  "universe": { "jug_flag": 1 },
+  "eligibility": { "jug_flag": 1 },
+  "entry_days": { "dd": [1, 4, 7, 14, 17, 24, 27, 30] },
+  "score": "hist_mean_rb_prob",
+  "lookback_days": 30,
+  "min_history_days": 10,
+  "top_n": 3,
+  "min_games": 1000
+}

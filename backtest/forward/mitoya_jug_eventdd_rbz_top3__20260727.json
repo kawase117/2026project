@@ -1,0 +1,63 @@
+{
+  "rule_id": "mitoya_jug_eventdd_rbz_top3",
+  "hall": "みとや大森町店",
+  "freeze_hash": "ee07f55cce1c5154",
+  "target_date": "20260727",
+  "data_asof": "20260726",
+  "lookback_window": [
+    "2026-06-27",
+    "2026-07-27"
+  ],
+  "score": "hist_mean_rb_prob_model_z",
+  "success_criterion": "【重要】このルールは既存ルールの失敗を見た後に作られた変種であり、バックテストの数値を採否根拠にしてはならない。判定はフォワードテストのみで行う。フォワード20エントリー日を経過した時点で edge 平均が +200枚/台 以上かつ 95%CI 下限 > 0 であること。満たさなければ破棄。またRB確率系のバリアントはこの1本で打ち止めとし、これ以上の派生を作らない。",
+  "is_dry_run": false,
+  "picks": [
+    {
+      "machine_number": 726,
+      "machine_name": "ミスタージャグラー",
+      "score": 0.448694,
+      "history_days": 19
+    },
+    {
+      "machine_number": 669,
+      "machine_name": "マイジャグラーV",
+      "score": 0.376952,
+      "history_days": 26
+    },
+    {
+      "machine_number": 735,
+      "machine_name": "ウルトラミラクルジャグラー",
+      "score": 0.338435,
+      "history_days": 24
+    }
+  ],
+  "result": {
+    "scored_with_hash": "ee07f55cce1c5154",
+    "day_baseline": 3.5,
+    "universe_size": 84,
+    "picks_realized": [
+      {
+        "machine_number": 669,
+        "games": 9697.0,
+        "diff": 1167.0,
+        "edge": 1163.547619047619
+      },
+      {
+        "machine_number": 735,
+        "games": 7694.0,
+        "diff": -428.0,
+        "edge": -431.45238095238096
+      },
+      {
+        "machine_number": 726,
+        "games": 5916.0,
+        "diff": -72.0,
+        "edge": -75.45238095238095
+      }
+    ],
+    "mean_diff_per_pick": 222.3,
+    "mean_edge_per_pick": 218.9,
+    "missing_machines": []
+  },
+  "plan_digest": "738292ad796ff1d1"
+}

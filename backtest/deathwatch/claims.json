@@ -1,0 +1,131 @@
+[
+  {
+    "claim_id": "mitoya_jug_corner1",
+    "hall": "みとや大森町店",
+    "source": "document/mitoya_theory.md §2.1 h_jug corner1",
+    "universe": {"jug_flag": 1},
+    "target": {"rank_from_aisle": 1},
+    "metrics": ["payout", "rb_rate", "bonus_rate"],
+    "note": "陽性対照。2026-04-27 に消失済みと判定されている（追試6・追試7）。この仕組みが DEAD を出せなければ検知器として使えない"
+  },
+  {
+    "claim_id": "k7_jug_kakuban1",
+    "hall": "マルハンメガシティ2000-蒲田7",
+    "source": "document/kamata7_theory.md §2.1a",
+    "universe": {"jug_flag": 1},
+    "target": {"rank_from_aisle": 1},
+    "metrics": ["payout", "rb_rate", "bonus_rate"],
+    "note": "陰性対照。追試8・追試9で設定差なしと判定済み。NO_BASELINE が出るのが正しい"
+  },
+  {
+    "claim_id": "k7_at_kakuban1",
+    "hall": "マルハンメガシティ2000-蒲田7",
+    "source": "backtest/results/regime/FINDINGS.md 追試2（AT一般 -1.205pp）",
+    "universe": {"jug_flag": 0, "hana_flag": 0, "oki_flag": 0, "bt_flag": 0},
+    "target": {"rank_from_aisle": 1},
+    "metrics": ["payout"],
+    "note": "AT機は bb_count/rb_count が意味を持たないため payout のみ。追試8の回転数分解は未実施の主張"
+  },
+  {
+    "claim_id": "rakuen_bt_edge1",
+    "hall": "楽園蒲田店",
+    "source": "document/rakuen_theory.md §2.1b（技術介入 +1.127pp）",
+    "universe": {"jug_flag": 0, "hana_flag": 0, "oki_flag": 0, "bt_flag": 1},
+    "target": {"section_edge1": true},
+    "metrics": ["payout", "rb_rate", "bonus_rate"],
+    "note": "2026-07-06 に島配列の工事あり。machine_layout_history の日付次元で工事前後それぞれ正しい位置が当たるので、期間の打ち切りは不要になった（旧: date_max=20260705）"
+  },
+  {
+    "claim_id": "rakuen_jug_edge1",
+    "hall": "楽園蒲田店",
+    "source": "document/rakuen_theory.md §2.1b（ジャグ +0.349pp）",
+    "universe": {"jug_flag": 1},
+    "target": {"section_edge1": true},
+    "metrics": ["payout", "rb_rate", "bonus_rate"],
+    "note": "旧§2.1bの端番定義。§2.1cで rakuen_clean_edge1_jug に置き換わったが旧定義の生死も追う。date_max=20260705 は machine_layout_history 導入前の暫定措置なので撤去（load_frame が日付結合するようになった）"
+  },
+  {
+    "claim_id": "rakuen_hana_edge1",
+    "hall": "楽園蒲田店",
+    "source": "document/rakuen_theory.md §2.1b（ハナハナ +0.869pp）",
+    "universe": {"hana_flag": 1},
+    "target": {"section_edge1": true},
+    "metrics": ["payout", "rb_rate", "bonus_rate"],
+    "note": "旧§2.1bの端番定義。date_max=20260705 は machine_layout_history 導入前の暫定措置なので撤去"
+  },
+  {
+    "claim_id": "rakuen_clean_edge1_jug",
+    "hall": "楽園蒲田店",
+    "source": "document/rakuen_theory.md §2.1c / registry rk-clean-edge1-jug（ジャグ +1.207pp [+0.784,+1.638]、6期中6期有意）",
+    "universe": {"jug_flag": 1},
+    "target": {"rakuen_clean_edge1": true},
+    "metrics": ["payout", "rb_rate", "bonus_rate"],
+    "note": "現行の端番定義。frame/interior_split/special を除いた clean 列の depth=1。工事前後の両エポックで成立とされているため期間は打ち切らない"
+  },
+  {
+    "claim_id": "rakuen_clean_edge1_bt",
+    "hall": "楽園蒲田店",
+    "source": "document/rakuen_theory.md §2.1c / registry rk-clean-edge1-bt（技術介入 +1.403pp [+0.914,+1.826]、6期中5期有意）",
+    "universe": {"jug_flag": 0, "hana_flag": 0, "bt_flag": 1},
+    "target": {"rakuen_clean_edge1": true},
+    "metrics": ["payout", "rb_rate", "bonus_rate"],
+    "note": "§2.1c は jug/hana を先に取る排他カテゴリで測っているので universe も同じ優先順で切る"
+  },
+  {
+    "claim_id": "rakuen_dd_jug",
+    "hall": "楽園蒲田店",
+    "source": "document/rakuen_theory.md §3.1a / registry rk-event-dd-jug（イベントDD {22,5,11,25,15}）",
+    "universe": {"jug_flag": 1},
+    "target": {"dd": [22, 5, 11, 25, 15]},
+    "contrast": "cross_day",
+    "metrics": ["payout", "rb_rate", "bonus_rate"],
+    "note": "日付軸。同日対比が作れないので cross_day（機種構成調整済みの日次水準を、対象日 vs 対照日で比較）"
+  },
+  {
+    "claim_id": "rakuen_dd_hana",
+    "hall": "楽園蒲田店",
+    "source": "document/rakuen_theory.md §3.1a / registry rk-event-dd-hana（イベントDD {7,17,27}）",
+    "universe": {"hana_flag": 1},
+    "target": {"dd": [7, 17, 27]},
+    "contrast": "cross_day",
+    "metrics": ["payout", "rb_rate", "bonus_rate"],
+    "note": "全カテゴリ中で最も日差が大きい。位置軸は検定不能（外周配置）なので、このホールのハナハナはこの claim が唯一の監視対象"
+  },
+  {
+    "claim_id": "rakuen_dd_bt",
+    "hall": "楽園蒲田店",
+    "source": "document/rakuen_theory.md §3.1a / registry rk-event-dd-bt（イベントDD {30,22,11}）",
+    "universe": {"jug_flag": 0, "hana_flag": 0, "bt_flag": 1},
+    "target": {"dd": [30, 22, 11]},
+    "contrast": "cross_day",
+    "metrics": ["payout", "rb_rate", "bonus_rate"]
+  },
+  {
+    "claim_id": "rakuen_dd_at",
+    "hall": "楽園蒲田店",
+    "source": "document/rakuen_theory.md §3.1a / registry rk-event-dd-at（イベントDD {30,22,11,10}）",
+    "universe": {"jug_flag": 0, "hana_flag": 0, "oki_flag": 0, "bt_flag": 0},
+    "target": {"dd": [30, 22, 11, 10]},
+    "contrast": "cross_day",
+    "metrics": ["payout"],
+    "note": "AT機は bb_count/rb_count が概念的に対応しないため payout のみ"
+  },
+  {
+    "claim_id": "k1_jug_edge1",
+    "hall": "マルハンメガシティ2000-蒲田1",
+    "source": "backtest/results/regime/FINDINGS.md 追試3（蒲田1 +0.068pp、プールでは検出されず）",
+    "universe": {"jug_flag": 1},
+    "target": {"section_edge1": true},
+    "metrics": ["payout", "rb_rate", "bonus_rate"],
+    "note": "蒲田1は rank_from_aisle が全NULLのためセクション端で代用。追試3ではプール平均で null"
+  },
+  {
+    "claim_id": "mitoya_jug_edge1",
+    "hall": "みとや大森町店",
+    "source": "backtest/results/regime/FINDINGS.md 追試3（みとや +1.575pp）",
+    "universe": {"jug_flag": 1},
+    "target": {"section_edge1": true},
+    "metrics": ["payout", "rb_rate", "bonus_rate"],
+    "note": "通路角番とは別軸。角番1の死亡がセクション端にも及んでいるかを見る"
+  }
+]

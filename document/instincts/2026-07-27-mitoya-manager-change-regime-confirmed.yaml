@@ -1,0 +1,50 @@
+---
+id: mitoya-manager-change-regime-confirmed-2026-05
+trigger: "みとや大森町の推薦・イベントDD分析・過去のバックテスト数値を参照するとき"
+confidence: 0.90
+domain: hall-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+---
+
+# みとや大森町は2026-05に店長交代でレジームが変わった（ユーザー情報を実測で確認）
+
+## 核心の主張
+みとやのジャグラーのイベントDD効果は2026-05にゼロへ縮小して消滅したが、AT一般では
+弱まりつつも生き残っている。以前のイベントDD戦略（ジャグ中心）はもう機能しない。
+
+## 根拠
+- n_observations: JUG月別 11ヶ月分 / AT一般月別 11ヶ月分（2025-09〜2026-07）
+- data scope: single-hall（みとや大森町のみ）
+- metric scope: games加重機械割・イベントDD日({1,4,7,14,17,24,27,30})とそれ以外の差(gap)
+- result summary:
+  - JUGのgap: ~2026-04は+0.25〜+0.87pp → 2026-05 -0.04pp → 2026-06 +0.08pp → 2026-07 +0.26pp。
+    実質ゼロに落ちて回復していない。
+  - AT一般のgap: ~2026-04は+2.57〜+3.72pp(95%CI) → 2026-05以降+0.44〜+3.20pp(95%CI)。
+    縮小したが下限>0で生存。イベント日の絶対機械割101.31%は維持。
+  - ジャグ全体の水準も100.88%(2025-09)→99.73%(2026-07)と単調低下。
+  - 既存の凍結バックテスト mitoya_jug_eventdd_rbz_top3 を20260501で事後分割すると
+    edge +263枚[+165,+439] → +166枚[-105,+429]（n=20日）とCIがゼロを跨ぐ。
+
+## 解釈
+- ユーザーから「店長交代で不調」という外部情報を得るまで、この変化点をClaude側から
+  自力で検出できていなかった（レジーム検出は自動走査ではなく外部情報が起点だった）。
+- ジャグに限定した過去のみとやイベントDD戦略は今後使えない。
+- AT一般側は縮小しつつ残っているが、台選びまでは機能しない（別instinct参照）。
+- 2026-05以降のイベントDD日は実測21日しかなく、判定にはまだ心もとない。
+
+## Action
+- みとやのジャグイベントDDルール(mitoya_jug_eventdd_rb_top3 / mitoya_jug_eventdd_rbz_top3)は
+  今後の推薦の主根拠にしない。フォワード記録は継続するが実弾判断には使わない。
+- ホール推薦の前に「最近運営上の変化はあったか」をユーザーに確認する運用を標準化する
+  （[[hall-regime-external-event-calendar-methodology]] 参照）。
+- 凍結済みバックテストで既知の外部変化点がある場合は --split-date で事後分割し、
+  前後のCIを見てから判断する。
+
+## Relation
+- related:
+  - hall-regime-external-event-calendar-methodology
+
+## Status
+- status: active

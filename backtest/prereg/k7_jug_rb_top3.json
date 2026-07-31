@@ -1,0 +1,17 @@
+{
+  "rule_id": "k7_jug_rb_top3",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "hypothesis": "蒲田7のジャグラー系は設定が台に固定的に張り付く傾向があり、直近30日の平均RB確率が高い台は当日も高設定が入りやすい。",
+  "source_instinct": "rb-probability-juggler-hall-ranking-confirms-fixed-effect / highsetting-placement-prediction-phase0-20260715",
+  "eval_start": "20251001",
+  "eval_end": "20260720",
+  "success_criterion": "エッジ（同日ジャグ全台平均との差枚差）の平均が +150枚/台 以上、かつ 95%CI 下限が 0 を上回ること。下回れば実弾投入しない。",
+  "universe": { "jug_flag": 1 },
+  "eligibility": { "jug_flag": 1 },
+  "entry_days": {},
+  "score": "hist_mean_rb_prob",
+  "lookback_days": 30,
+  "min_history_days": 10,
+  "top_n": 3,
+  "min_games": 1000
+}

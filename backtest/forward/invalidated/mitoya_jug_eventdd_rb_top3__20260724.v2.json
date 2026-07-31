@@ -1,0 +1,36 @@
+{
+  "rule_id": "mitoya_jug_eventdd_rb_top3",
+  "hall": "みとや大森町店",
+  "freeze_hash": "fe7f29b77b936fb4",
+  "target_date": "20260724",
+  "data_asof": "20260720",
+  "lookback_window": [
+    "2026-06-24",
+    "2026-07-24"
+  ],
+  "score": "hist_mean_rb_prob",
+  "success_criterion": "エッジの平均が +200枚/台 以上かつ 95%CI 下限 > 0。エントリー日が限定される分、1日あたりの取り分は蒲田7ルールより高くないと交通費に負ける。",
+  "is_dry_run": false,
+  "picks": [
+    {
+      "machine_number": 722,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 0.003283,
+      "history_days": 24
+    },
+    {
+      "machine_number": 719,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 0.003103,
+      "history_days": 24
+    },
+    {
+      "machine_number": 721,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 0.003087,
+      "history_days": 24
+    }
+  ],
+  "result": null,
+  "plan_digest": "3e9b2e5054a2e9d3"
+}

@@ -1,0 +1,66 @@
+{
+  "rule_id": "k7_jug_hit104_top3",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "freeze_hash": "da834a49ac60a45d",
+  "data_fingerprint": {
+    "n_rows": 206635,
+    "sum_games": 839262986,
+    "sum_diff": 26022800,
+    "max_date_in_db": "20260726"
+  },
+  "hypothesis": "設定継続仮説の素直版。直近30日で機械割104%超えの頻度が高かったジャグ台は、当日も高設定が入りやすい。",
+  "source_instinct": "highsetting-placement-prediction-phase0-20260715（lift 1.5-1.8x の指標違い版）",
+  "success_criterion": "エッジの平均が +150枚/台 以上かつ 95%CI 下限 > 0。RB確率版（k7_jug_rb_top3）に劣る場合はこちらを破棄する。",
+  "eval_range": "20251001-20260720",
+  "n_eval_days": 289,
+  "n_days_skipped_no_history": 0,
+  "n_days_traded": 289,
+  "n_picks": 867,
+  "mean_games_per_pick": 4086.9,
+  "pick_low_games_rate": 0.13,
+  "mean_diff_per_pick": 88.9,
+  "mean_baseline": 147.5,
+  "mean_edge_per_pick": -58.6,
+  "edge_ci95": [
+    -129.0,
+    14.4
+  ],
+  "edge_ci95_block7": [
+    -118.5,
+    4.0
+  ],
+  "mean_edge_vs_excluded": -59.7,
+  "edge_vs_excluded_ci95_block7": [
+    -120.6,
+    4.1
+  ],
+  "mean_pick_share": 0.017,
+  "edge_positive_day_rate": 0.384,
+  "win_rate_abs": 0.377,
+  "cumulative_diff": 25700.0,
+  "yen_per_day_at_20": 1779,
+  "period_split": {
+    "split_date": "20260501",
+    "caveat": "post-hoc 部分集団解析。採否根拠にしないこと。既知の外部変化点にのみ使う。",
+    "before": {
+      "n_days_traded": 211,
+      "n_picks": 633,
+      "mean_edge_per_pick": -36.8,
+      "edge_ci95_block7": [
+        -104.5,
+        31.4
+      ],
+      "edge_positive_day_rate": 0.389
+    },
+    "after": {
+      "n_days_traded": 78,
+      "n_picks": 234,
+      "mean_edge_per_pick": -117.5,
+      "edge_ci95_block7": [
+        -242.3,
+        1.1
+      ],
+      "edge_positive_day_rate": 0.372
+    }
+  }
+}

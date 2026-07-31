@@ -1,0 +1,63 @@
+{
+  "rule_id": "k7_jug_rb_top3",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "freeze_hash": "9e914424a794c5e3",
+  "target_date": "20260727",
+  "data_asof": "20260726",
+  "lookback_window": [
+    "2026-06-27",
+    "2026-07-27"
+  ],
+  "score": "hist_mean_rb_prob",
+  "success_criterion": "エッジ（同日ジャグ全台平均との差枚差）の平均が +150枚/台 以上、かつ 95%CI 下限が 0 を上回ること。下回れば実弾投入しない。",
+  "is_dry_run": false,
+  "picks": [
+    {
+      "machine_number": 3170,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 0.00341,
+      "history_days": 27
+    },
+    {
+      "machine_number": 3179,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 0.003291,
+      "history_days": 27
+    },
+    {
+      "machine_number": 3174,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 0.003279,
+      "history_days": 22
+    }
+  ],
+  "result": {
+    "scored_with_hash": "9e914424a794c5e3",
+    "day_baseline": 214.5,
+    "universe_size": 165,
+    "picks_realized": [
+      {
+        "machine_number": 3170,
+        "games": 2705.0,
+        "diff": 300.0,
+        "edge": 85.45454545454547
+      },
+      {
+        "machine_number": 3174,
+        "games": 4891.0,
+        "diff": -700.0,
+        "edge": -914.5454545454545
+      },
+      {
+        "machine_number": 3179,
+        "games": 2298.0,
+        "diff": -1100.0,
+        "edge": -1314.5454545454545
+      }
+    ],
+    "mean_diff_per_pick": -500.0,
+    "mean_edge_per_pick": -714.5,
+    "missing_machines": []
+  },
+  "plan_digest": "15165d36394769ec"
+}

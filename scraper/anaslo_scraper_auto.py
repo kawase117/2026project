@@ -18,6 +18,7 @@ import json
 import os
 import re
 import sqlite3
+import sys
 import urllib.parse
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -107,6 +108,20 @@ def resolve_config_path(config_filename: str = "hall_config.json") -> Path:
 def resolve_data_dir() -> Path:
     path = project_root() / "data"
     path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def save_debug_html(html: str, label: str) -> Path:
+    """classify_page_htmlが list と判定できなかった際の生HTMLを保存する。
+
+    再現性の低いブロック/中間ページの実体を次回の診断で確認できるようにする。
+    """
+
+    debug_dir = project_root() / "scraper" / "debug_html"
+    debug_dir.mkdir(parents=True, exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    path = debug_dir / f"{timestamp}_{label}.html"
+    path.write_text(html, encoding="utf-8")
     return path
 
 
@@ -301,7 +316,8 @@ async def ensure_page_accessible(
 
     if state != "list":
         status = getattr(page, "last_status", None)
-        raise RuntimeError(f"一覧ページを利用できません: state={state}, status={status}")
+        debug_path = save_debug_html(html, state)
+        raise RuntimeError(f"一覧ページを利用できません: state={state}, status={status} (html保存: {debug_path})")
     return html
 
 
@@ -873,6 +889,14 @@ async def main_async(argv: list[str] | None = None) -> int:
 
 
 def main() -> None:
+    # Windows既定のcp932コンソールでは絵文字がエンコードできずクラッシュするため、
+    # 未対応文字は置換して継続する（データ取得・保存が完了していても
+    # サマリー表示だけで異常終了するのを防ぐ）。
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(errors="replace")
+        except Exception:
+            pass
     asyncio.run(main_async())
 
 

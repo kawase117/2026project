@@ -1,0 +1,66 @@
+{
+  "rule_id": "k7_jug_kakuban1_avoid",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "freeze_hash": "37bca07db1b6d8b7",
+  "data_fingerprint": {
+    "n_rows": 206635,
+    "sum_games": 839262986,
+    "sum_diff": 26022800,
+    "max_date_in_db": "20260726"
+  },
+  "hypothesis": "通路角番1（rank_from_aisle=1）は全セグメントで残差マイナスの冷遇ポジションなので、そこを外すだけでジャグ全台平均を上回る。",
+  "source_instinct": "kakuban-section-residual-insights-20260617 / highsetting-rb-probability-kakuban-verification-20260716",
+  "success_criterion": "エッジの平均が +50枚/台 以上かつ 95%CI 下限 > 0。角1除外はほぼコストゼロの操作なので閾値は低めに置く。",
+  "eval_range": "20251001-20260720",
+  "n_eval_days": 289,
+  "n_days_skipped_no_history": 0,
+  "n_days_traded": 289,
+  "n_picks": 46142,
+  "mean_games_per_pick": 4566.3,
+  "pick_low_games_rate": 0.087,
+  "mean_diff_per_pick": 158.3,
+  "mean_baseline": 147.6,
+  "mean_edge_per_pick": 10.8,
+  "edge_ci95": [
+    7.8,
+    13.7
+  ],
+  "edge_ci95_block7": [
+    7.3,
+    13.8
+  ],
+  "mean_edge_vs_excluded": 154.0,
+  "edge_vs_excluded_ci95_block7": [
+    104.7,
+    197.4
+  ],
+  "mean_pick_share": 0.93,
+  "edge_positive_day_rate": 0.661,
+  "win_rate_abs": 0.411,
+  "cumulative_diff": 45753.3,
+  "yen_per_day_at_20": 3166,
+  "period_split": {
+    "split_date": "20260501",
+    "caveat": "post-hoc 部分集団解析。採否根拠にしないこと。既知の外部変化点にのみ使う。",
+    "before": {
+      "n_days_traded": 211,
+      "n_picks": 33760,
+      "mean_edge_per_pick": 8.7,
+      "edge_ci95_block7": [
+        4.8,
+        12.1
+      ],
+      "edge_positive_day_rate": 0.635
+    },
+    "after": {
+      "n_days_traded": 78,
+      "n_picks": 12382,
+      "mean_edge_per_pick": 16.4,
+      "edge_ci95_block7": [
+        10.9,
+        22.5
+      ],
+      "edge_positive_day_rate": 0.731
+    }
+  }
+}

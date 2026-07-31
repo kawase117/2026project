@@ -1,0 +1,179 @@
+---
+id: emulator-arm64-translation-requires-api34-plus
+trigger: "x86_64エミュレーターでarm64専用ネイティブライブラリを含む商用アプリを動かそうとするとき"
+confidence: 0.97
+domain: mobile-scraping
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# ARM変換(ndk_translation)はAPI 34以降のgoogle_apis x86_64イメージでのみ有効
+
+## 背景
+API 33 (r17) google_apis x86_64は abilist=x86_64のみ、native.bridge=0で、arm64専用アプリは
+INSTALL_FAILED_NO_MATCHING_ABIS で弾かれる。API 34 (r14) は abilist=x86_64,arm64-v8a、
+native.bridge=libndk_translation.so が有効で、同じarm64専用アプリがそのまま起動できた。
+2026-06-17時点のInstinct(android-user-cert-app-trust等)で頓挫していた壁はこれで解消。
+
+## アクション
+- arm64専用の商用APKをエミュで動かすときは API 34以降の google_apis(Play無し, root可) x86_64
+  イメージを選ぶ。API 33以下は変換非搭載と判断し時間を使わない。
+- 確認コマンド: `adb shell getprop ro.product.cpu.abilist` に arm64-v8a が出るか、
+  `adb shell getprop ro.dalvik.vm.native.bridge` が libndk_translation.so か。
+
+## 例
+```
+API33 r17: abilist=x86_64            → arm64 split install失敗
+API34 r14: abilist=x86_64,arm64-v8a  → 同一APKが起動成功
+```
+
+---
+id: frida-incompatible-with-arm-translation-layer
+trigger: "ARM変換(libndk_translation)エミュ上でFridaによる動的計装・SSLアンピンを試みるとき"
+confidence: 0.95
+domain: mobile-scraping
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Frida(server/gadget)はARM変換レイヤーと根本的に非互換
+
+## 背景
+x86_64エミュ上でarm64アプリを動かすため libndk_translation で変換実行させると、
+Fridaは3つとも失敗する:
+1. x86_64 frida-server は変換実行中のarm64プロセスにアタッチ不可("need Gadget"エラー)。
+2. arm64 frida-server はエミュのシェルからstandalone実行不可(変換はアプリ内libのみ対象、
+   単体実行ファイルは "No such file or directory" で拒否される)。
+3. objectionでarm64 frida-gadgetをAPKに埋め込み再署名して起動しても、
+   `libndk_translation.so (RunKernelSyscall)` 内でSIGABRT。バックトレース:
+   `libc.so(syscall) <- libndk_translation.so(RunKernelSyscall) <- gadget`
+これはアプリの保護機構ではなく、FridaのランタイムコードとARM→x86トランスレータの
+非互換が原因(fatal signal 6)。
+
+## アクション
+- ARM変換エミュ上でFridaを使う計画は立てない。エミュでピンニング回避するなら
+  Frida不使用の静的パッチ(apktoolでnetwork_security_config編集→再署名→user CA登録)しかない。
+- Fridaが必須なら root化arm64実機(ネイティブフル速度、変換レイヤー無し)に切り替える。
+
+## 例
+```
+frida-server(x86_64) -> "need Gadget to attach on jailed Android"
+frida-server(arm64) standalone実行 -> "su: failed to exec ... No such file or directory"
+gadget埋め込み起動 -> Fatal signal 6 (SIGABRT) in libndk_translation::RunKernelSyscall
+```
+
+---
+id: objection-patchapk-windows-posix-path-and-gadget-lib-bug
+trigger: "Windows(git-bash)上でobjection patchapkを使いfrida-gadgetをAPKに埋め込むとき"
+confidence: 0.9
+domain: mobile-scraping
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# objection patchapkはPOSIX形式PATHが必須、かつgadgetをlib/arm64(誤)に置くバグがある
+
+## 背景
+- objectionがaapt/apktool/zipalign/apksignerをPATHから探す際、`C:/...`形式(コロン含む)
+  だとWindowsパスがコロンで分断され見つからない。`/c/...`のPOSIX形式でPATHを通す必要がある。
+- objectionはaapt単体(aapt.exe)も要求する(aapt2だけでは "Unable to find aapt" になる)。
+  build-tools配下のaapt.exeをコピーして専用binディレクトリに集約すると解決した。
+- apktool/apksignerはjarなのでbatラッパー(`java -jar ...`)が必要。printf でバックスラッシュ
+  混じりのパスを組むと壊れる(`jbr\bin`→`jbrin`のような欠落)。Writeツールで直接書くこと。
+- objection patchapk --architecture arm64 は成功するが、埋め込んだ
+  `libfrida-gadget.so` を `lib/arm64/`(誤) に置く。正しいABIディレクトリは `lib/arm64-v8a/`。
+  修正しないと起動時に `UnsatisfiedLinkError: dlopen failed: library "libfrida-gadget.so" not found`。
+
+## アクション
+1. PATHはPOSIX形式(`/c/...`)で通す。
+2. aapt.exe/aapt2.exe/zipalign.exeを1つのbinディレクトリにコピーし、apktool.bat/apksigner.bat
+   ラッパー(java -jar呼び出し)をWriteで作成してそこに置く。
+3. objection patchapk実行後、zip内の `lib/arm64/libfrida-gadget.so` を `lib/arm64-v8a/` に
+   Pythonのzipfileでリネームしてから zipalign→apksigner再署名。
+4. App Bundle(分割APK)は先にAPKEditorで universal APK に統合してからpatchapkに渡す。
+
+## 例
+```python
+# gadgetパス修正の要点
+WRONG = "lib/arm64/libfrida-gadget.so"
+RIGHT = "lib/arm64-v8a/libfrida-gadget.so"
+```
+
+---
+id: android-nsc-static-patch-bypasses-pinning-without-frida
+trigger: "証明書ピンニング(network_security_config pin-set)を実装したアプリをFrida無しで傍受したいとき"
+confidence: 0.93
+domain: mobile-scraping
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# apktoolでnetwork_config.xmlのpin-setを削除しbase-configで全ドメイン信頼にすればFrida不要で傍受できる
+
+## 背景
+NSCのpin-set(SHA-256公開鍵ピン)はOkHttp CertificatePinnerと独立してTLSチェーン検証時に働く。
+Fridaが使えない環境(ARM変換エミュ等)でも、apktoolでAPKをデコードし
+`res/xml/network_config.xml` を「domain-config + pin-set」から
+「base-config + trust-anchors(system,user)」に書き換え→再ビルド→zipalign→
+デバッグ鍵で再署名→mitmproxyのCA証明書をユーザー証明書ストア
+(`/data/misc/user/0/cacerts-added/<subject_hash_old>.0`、system:system所有・644・restorecon要)
+にインストールすれば、TLS復号に成功する。
+
+## アクション
+- ピンニングアプリの静的解析・トラフィック解析だけが目的なら、Frida/実機を用意する前に
+  この静的パッチ+mitmproxy CA登録を試す。再署名で足りることが多い。
+- 証明書ハッシュ計算: `openssl x509 -inform PEM -subject_hash_old -in ca.pem -noout`
+- APIのバージョンチェック(サーバー側でrequired_version等を強制)に引っかかる場合は
+  mitmproxyアドオン(response()フックでJSON書き換え)で回避できる。
+
+## 例
+```xml
+<!-- 書き換え後のnetwork_config.xml -->
+<network-security-config>
+  <base-config cleartextTrafficPermitted="true">
+    <trust-anchors>
+      <certificates src="system" />
+      <certificates src="user" />
+    </trust-anchors>
+  </base-config>
+</network-security-config>
+```
+
+---
+id: play-integrity-attestation-defeats-repackaged-app-scraping
+trigger: "再署名/root化/エミュ環境で商用アプリのAPIを叩き、特定エンドポイントだけ401が返るとき"
+confidence: 0.9
+domain: mobile-scraping
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Google Play Integrity(StandardIntegrity)アテステーションはcatch-22構造で再署名アプリを恒久的に締め出す
+
+## 背景
+マルハンアプリの逆解析(jadx)で判明した認証チェーン: 台データ系エンドポイントは
+`Auth-Key`ヘッダを必須とし、その値は `auth_segment_v12`(サーバーが発行するauth_key)から
+生成される。`auth_segment_v12`は `checkAppIntegrity` APIが返すが、これはアプリが
+Google Play StandardIntegrityトークンを取得しサーバーがGoogleと照合して合格した場合のみ
+発行される。
+root化/エミュ/再署名/Frida計装のいずれもIntegrity verdictを不合格にするため
+auth_segment_v12が取得できず、Auth-Key生成が恒久的に失敗する(実測: 10種類の
+トークン配置を全て試したが全滅、かつ再署名した本物のアプリ自身も同じ401)。
+一方、Integrityが通る正規端末では逆に傍受(root化/ピンニング回避)ができない。
+これは「静的キー(android_auth_key)は通るが、Auth-Key必須のエンドポイントだけ通らない」
+という形で観測される。
+
+## アクション
+- 特定エンドポイントのみ401/認証エラーで、他の公開系エンドポイントは通る場合、
+  Play Integrity(またはSafetyNet)ゲートの存在を疑う。dexで
+  `play/core/integrity`または`StandardIntegrityManager`を grep すれば確認できる。
+- このゲートが確認できたら、再署名・root環境での突破は時間を投資しても不可能と判断し、
+  深追いしない。回避策(トークン配置変更、追加ヘッダ推測)を試す前にこの構造を確認すること。
+- 代替: 別データ源(Web版、提携サイト等)を探す、または対象を自動化対象から除外する。
+
+## 例
+```java
+// 認証チェーンの核心(jadxデコンパイル結果)
+Auth-Key = ApiSec.generateAuth(署名, auth_segment_v12)  // auth_segment_v12がnullなら結果もnull
+auth_segment_v12 <- checkAppIntegrity(StandardIntegrityToken).data.auth_key  // root/エミュ/再署名で不合格
+```

@@ -1,0 +1,64 @@
+{
+  "rule_id": "k7_at_histdiff_top3",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "freeze_hash": "71526fa786ee4e6e",
+  "target_date": "20260730",
+  "data_asof": "20260729",
+  "lookback_window": [
+    "2026-06-30",
+    "2026-07-30"
+  ],
+  "score": "hist_mean_diff",
+  "success_criterion": "この主張は FINDINGS 追試1 で既に walk-forward 計測済みのため、バックテストは再現確認にすぎず採否根拠にしない。判定はフォワードのみ。フォワード30エントリー日を経過した時点で edge 平均が +300枚/台 以上かつ 95%CI 下限 > 0 であること。満たさなければ破棄し、AT系スコアの派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "picks": [
+    {
+      "machine_number": 2026,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 4762.068966,
+      "history_days": 29
+    },
+    {
+      "machine_number": 3089,
+      "machine_name": "からくりサーカス",
+      "score": 3394.117647,
+      "history_days": 17
+    },
+    {
+      "machine_number": 3108,
+      "machine_name": "からくりサーカス2",
+      "score": 2327.272727,
+      "history_days": 22
+    }
+  ],
+  "result": {
+    "scored_with_hash": "71526fa786ee4e6e",
+    "day_baseline": 171.0,
+    "universe_size": 476,
+    "picks_realized": [
+      {
+        "machine_number": 2026,
+        "games": 3734.0,
+        "diff": 14400.0,
+        "edge": 14228.991596638656
+      },
+      {
+        "machine_number": 3108,
+        "games": 1963.0,
+        "diff": -1200.0,
+        "edge": -1371.0084033613446
+      },
+      {
+        "machine_number": 3089,
+        "games": 5159.0,
+        "diff": 5300.0,
+        "edge": 5128.991596638655
+      }
+    ],
+    "mean_diff_per_pick": 6166.7,
+    "mean_edge_per_pick": 5995.7,
+    "missing_machines": [],
+    "rb_perspective": null
+  },
+  "plan_digest": "a915b891d53e9b38"
+}

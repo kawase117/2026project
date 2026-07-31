@@ -1,0 +1,238 @@
+---
+id: rb-probability-decimal-null-on-zero-count
+trigger: "rb_probability_decimal または bb_probability_decimal / total_probability_decimal に notna() / IS NOT NULL / > 0 のフィルタをかけようとするとき"
+confidence: 0.98
+domain: data-quality
+source: session-observation
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# rb_probability_decimal は rb_count==0 の行でNULLになる。notna()フィルタがRB0回の日を非ランダムに落とす
+
+## 背景
+`rb_probability_decimal` は `rb_count / games_normalized` から作られる派生列だが、
+`rb_count == 0` の行では NULL になる（9ホール全てでNaN率とRB0回率が完全一致、
+rb_count>0でNULLの行は0件）。`bb_probability_decimal`も同様（楽園40.8%、みとや38.0%）。
+`notna()` / `IS NOT NULL` / `> 0` フィルタをかけると「RBが1回も出なかった日」が
+丸ごと脱落する。脱落は非ランダムで、回転数の少ない台ほどRB0回の日が多いため、
+その台だけ「最悪の日」が除かれて平均RB確率が過大評価される（低回転台を優遇する
+方向のバイアス）。実測: 蒲田7の角番1検証で汚染版RB差-0.111回/1000Gが修正版-0.053に半減。
+NULL率はホールで大きく異なる（蒲田7 2.5% 〜 楽園 24.5%）ため、影響も一様ではない。
+既存4スクリプト（eda/kakuban_rb_probability_verification.py等）とみとやの凍結
+フォワードplanがこのバグを含んでいた。
+
+## アクション
+RB/BB確率は `rb_count / games_normalized`（bb_countも同様）のようにカウントから
+直接計算する。`*_probability_decimal`列はフィルタ条件に使わない。既にこの列を
+使ったコードを見つけたら、影響率（そのホールのrb_count==0率）を必ず確認する。
+影響率が小さくても(蒲田7 2.5%)効果量の半分近くを動かしうるので「小さいから無視」
+は禁物。凍結済みフォワードテストがこのバグを含む場合、対象日が未到来なら
+INVALIDATED扱いにして修正版で再生成する（結果を見ていないので結果駆動の
+書き換えにはならない）。
+
+## 例
+```python
+# NG: RB0回の日を非ランダムに落とす
+df[df["rb_probability_decimal"].notna()]
+
+# OK: カウントから直接計算、ゼロを含む
+df["rb_rate"] = np.where(df["games_normalized"] > 0,
+                          df["rb_count"] / df["games_normalized"], np.nan)
+```
+
+---
+id: diff-coins-confounds-setting-with-turnover
+trigger: "差枚(diff_coins_normalized)ベースで位置・人気度など回転数に影響しうる変数の効果を測るとき"
+confidence: 0.95
+domain: statistical-methodology
+source: session-observation
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# 差枚は「機械割×回転数」の積。回転数に効く変数を差枚で評価すると設定差でないものを設定差として計上する
+
+## 背景
+diff = 3 * G * (payout - 1) なので、機械割が同じでもG(回転数)が違えば差枚は動く。
+蒲田7角番1の検証で、差枚ベースの-162枚のほぼ全部(-124枚が共分散差、-37枚がG数差、
+機械割の寄与はわずか-0.5枚)が「角1は+624G多く回されている」という回転数差の
+帰結だった。角1は「設定が低い位置」ではなく「他の客に多く回されている位置」で、
+ジャグ平均機械割が98.03%(100%未満)なので回るほど負ける。プレイヤーは自分の
+回転数を自分で決めるので、この-162枚は座っても継承しない。G数で層別して
+効果量を測るのも誤り(コライダーバイアス。位置とG数の両方に影響されるG数で
+条件付けると見せかけの関連が生まれる)。
+
+## アクション
+位置・人気度など回転数に影響しうる変数の効果を測るときは、差枚ではなく
+payout(機械割)とrb_rate/bonus_rate(BB+RB、設定の直接推定量)を主指標にする。
+差枚で有意な効果が出た場合は、必ずG数の差も確認し、diff=3G(payout-1)で
+機械割の寄与とG数の寄与を分解する。G数で層別した効果量は採用しない
+(コライダーバイアスで実際より大きく出る)。BBとRBは必ず両方見る
+(設定は両方を同じ向きに動かすため、片方だけだと符号が食い違って
+判断を誤る。蒲田7角番1ではBB+0.071/RB-0.053と逆向きで、
+これが「設定差なし」の決め手になった)。
+
+## 例
+```python
+# 差枚の差を機械割とG数の寄与に分解する
+total = 3 * (G1 * (P1 - 1) - G0 * (P0 - 1))
+games_part = 3 * (G1 - G0) * (P0 - 1)      # G数の差による寄与
+payout_part = 3 * G1 * (P1 - P0)            # 機械割の差による寄与
+```
+
+---
+id: machine-layout-single-snapshot-breaks-across-renovation
+trigger: "machine_layoutを使って過去データに位置(section/rank_from_*)を結合するとき、または改装・島配列変更があったホールの位置分析を行うとき"
+confidence: 0.97
+domain: data-quality
+source: session-observation
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# machine_layoutはmachine_number単独PKの単一スナップショットで、構造上ただ1つの時代しか正しく表現できない
+
+## 背景
+machine_layoutは日付次元を持たないため、改装で位置定義が変わると新しい位置が
+過去データに遡って適用される。楽園蒲田の2026-07-06の改装でsection定義が
+書き換わり(2223-2240→2225-2242等)、技術介入の端番効果が+1.127pp→+0.211pp(ns)に
+変化した。これは効果の消滅ではなく測定対象の破壊だったが、一見「セオリーが
+死んだ」ように見えるため、死亡検知の仕組みが誤検知を出しかけた。machine_layoutを
+参照するコードは約60ファイルあり、いずれもmachine_number単独での単純結合。
+テーブル自体を日付次元化すると1台に複数行が対応し全て静かに二重計上になるため、
+machine_layoutは現行スナップショットのまま温存し、日付次元を持つ
+machine_layout_history(PK: machine_number, valid_from)を正本として別途構築した。
+
+## アクション
+過去データに位置を結合する新しいコードは必ずmachine_layout_historyを使う
+(database/CLAUDE.mdに結合SQLの書式あり)。改装・島配列変更のニュースを
+聞いたら、その時点でmachine_layout_historyに新エポックをinsert-eraで
+追加すること(machine_layoutを直接上書きしない)。位置ベースの効果が
+「突然消えた」ように見えたら、まずその期間にレイアウト変更が無かったか、
+そしてmachine_layoutが最新スナップショットに差し替わっていないかを疑う。
+真の効果消失と測定対象の破壊は、実装を切り替えて同じ数値が出るかで
+区別できる(このケースでは日付次元化で旧数値が完全に復元した)。
+
+## 例
+```sql
+-- NG: 単一スナップショット結合(改装をまたぐと過去データが汚染される)
+LEFT JOIN machine_layout l ON r.machine_number = l.machine_number
+
+-- OK: 日付でエポックをマッチさせる
+LEFT JOIN machine_layout_history l
+       ON r.machine_number = l.machine_number
+      AND r.date >= l.valid_from
+      AND (l.valid_to IS NULL OR r.date <= l.valid_to)
+```
+
+---
+id: deathwatch-tests-drift-from-baseline-not-zero-effect
+trigger: "既に確認済みのセオリー(角番・端番等の位置効果、DD効果など)が今も有効か継続監視する仕組みを設計するとき"
+confidence: 0.92
+domain: statistical-methodology
+source: session-observation
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# 死亡検知は「効果がゼロか」ではなく「効果がbaseline期から変わったか」を検定すべき
+
+## 背景
+みとやの角番1シグナルは16か月間+0.327z(RB確率z)で安定し、2026-04-27に一度きり
+終わった(店長交代と一致)。これは「2-3ヶ月で入れ替わる循環レジーム」ではなく
+「長く効く法則がある日死ぬ」という形。循環モデルなら常時レジーム推定が必要だが
+(60日窓でも検出まで時間がかかり、2-3ヶ月のレジームには間に合わない)、
+この形なら「安定した法則を使い続け、死んだら事後検知する監視」だけで足りる。
+検知が数ヶ月遅れても、16ヶ月効く法則には十分価値がある。したがって
+死亡検知の帰無仮説は「効果がゼロ」ではなく「recentの効果==baselineの効果」に
+すべき。効果がゼロでないことはbaseline期間で既に確認済みで、知りたいのは
+差分だから。UNDERPOWERED(分解能不足で判定不能)をALIVE(変化なしを確認)と
+区別することも重要。日次分散が大きい系列ではnullが情報を持たない。
+
+## アクション
+既知セオリーの継続監視を作るときは、(1)baseline期とrecent期の日次効果系列を
+それぞれ独立にブロックブートストラップし、(2)差の分布のCIがゼロを跨ぐかで
+判定する。「baseline期のCIがゼロを跨がない(NO_BASELINE除外)→差が有意なら
+DEAD/REVERSED/WEAKENED/STRENGTHENED、有意でなければ検出限界とbaseline効果量を
+比較してALIVE/UNDERPOWEREDを判定」という分類が実用的。指標は差枚を避け、
+機械割とBB+RB(ボーナス確率)を使う(diff-coins-confounds-setting-with-turnover参照)。
+陽性対照(既に死亡が確定している既知ケース)と陰性対照(死亡していないケース)の
+両方で仕組みを検証してから運用に載せる。
+
+## 例
+```python
+# 期間ごとに独立にリサンプルし、差の分布を作る(同じseedで両期間を引くと
+# 差の分散を過小評価する)
+b_boot = block_bootstrap_means(baseline_daily, seed=A, block=7)
+r_boot = block_bootstrap_means(recent_daily, seed=B, block=7)
+delta_ci = percentile(r_boot - b_boot, [2.5, 97.5])
+status = "DEAD" if delta_ci_significant and not recent_ci_significant else ...
+```
+
+---
+id: games-filter-is-selection-on-setting
+trigger: "games_normalized >= N / min_games フィルタを集計前にかけて、区画・軸・カテゴリの成績や設定シグナルを測るとき"
+confidence: 0.95
+domain: statistical-methodology
+source: session-observation
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# games は設定の下流。games>=N フィルタは低設定の日を選択的に落とし、残った成績を押し上げる
+
+## 背景
+「低設定→早く見切られる／高設定→長く回される」という基本法則により、games は
+設定の下流にある（独立指標RBで確認: 台レベル相関 ハナ+0.94/ジャグ+0.69、
+日レベルでジャグの稼働帯別RBz が -1.33→+0.97 と単調）。したがって
+`games >= N` のフィルタは低設定の日を選択的に落とす選択バイアスを生む。
+大きさはカテゴリと閾値による（機種内RBzシフト）: ジャグ 400→+0.01 / 2000→+0.21 /
+3000→+0.31 / 5000→+0.49、ハナはさらに大、AT一般は小(+0.06〜0.10)。
+ジャグでgames>=3000を使うだけで既知の最強シグナル(みとや角番1 +0.327z)と
+同オーダーの見かけの効果が作れる。eda/core.py の load_hall_df は MIN_GAMES=400 で
+41分析が使うが、400は残存99%でほぼ無害。dashboardの既定1000は+0.10程度。
+危険なのは2000+を使う個別分析。フィルタ後の平均は「N回転まで回った日に条件づけた
+機械割」という正当な条件付き量であり、誤りになるのは(a)無条件の水準として読む、
+(b)カテゴリ構成や稼働分布が違う群の比較に使う、ときに限る。
+
+## アクション
+区画・軸の設定シグナルを測るときは games フィルタを集計前にかけない
+（追試2以降のharnessはそうしている）。測定精度で回転数の下限が要る場合は、
+足切りではなく回転数を尤度の重み/観測分散に入れる（ベイズ事後や加重回帰）。
+どうしても閾値が必要なら、(1)結果を「高稼働日に条件づけた率」と明記、
+(2)カテゴリ横断で同じ閾値を並べない（残存率で揃えるかカテゴリ内比較に限る）、
+(3)閾値なし版と併記して差を確認する。カテゴリ間で比較するときは
+ジャグ/ハナをAT一般より過大評価する方向にバイアスが出ることを念頭に置く。
+
+## 例
+```python
+# NG: 集計前に足切り → 低設定日が非ランダムに脱落
+df = df[df.games_normalized >= 2000]
+seg_payout = df.groupby("section").payout.mean()   # 膨張＋区画間で差別的
+
+# OK: フィルタせず、回転数を重みにする / 日と機種を統制した残差で測る
+# （games を条件に入れたいなら「conditional on games>=N」と明記して報告）
+```
+
+---
+id: hit-rate-measures-volatility-not-setting
+trigger: "hit率・勝率（P(差枚>0)や104%率）で区画・機種・軸の設定の良さを比較しようとするとき"
+confidence: 0.9
+domain: statistical-methodology
+source: session-observation
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# hit率(勝率)は平均でなく分布の形に依存する。機種構成が違う区画を比べると設定でなくボラティリティを測る
+
+## 背景
+hit率 = P(差枚>0) は平均だけでなく分布の歪みに依存する。AT機は「多くの日は小さく
+負け、稀に大きく勝つ」右歪み分布なので、同じ期待値でも P(差枚>0) が低く出る。
+ジャグ・ハナハナは対称に近く高く出る。楽園§1のHot/Coldを63列で測り直すと
+hit差 vs 差枚SD = -0.490、hit差 vs 機械割 = -0.209（逆相関）。§1のHot上位3件は
+機械割ではプラスでなく2列が有意にマイナスだった。つまりhit率ランキングは区画の
+機種構成のボラティリティを主に測っていた。この右歪みは「低設定→早く見切られ小さく負け、
+高設定→長く回され大きく勝つ」の当然の帰結で、ノイズではない。
+
+## アクション
+区画・機種・軸を横断して設定の良さを比較するときは hit率(勝率)を主指標にしない。
+日と機種を統制した機械割残差、またはBB+RB(ボーナス確率、設定の直接推定量)を使う。
+hit率を出す場合も、比較対象の機種構成（低ボラのジャグ/ハナ vs 高ボラのAT）が
+揃っているかを必ず確認する。104%率も同じ分布依存性を持つので同様に扱う。
+

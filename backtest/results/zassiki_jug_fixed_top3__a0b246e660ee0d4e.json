@@ -1,0 +1,66 @@
+{
+  "rule_id": "zassiki_jug_fixed_top3",
+  "hall": "ザ-シティ-ベルシティ雑色店",
+  "freeze_hash": "a0b246e660ee0d4e",
+  "data_fingerprint": {
+    "n_rows": 25384,
+    "sum_games": 67744637,
+    "sum_diff": -2682004,
+    "max_date_in_db": "20260725"
+  },
+  "hypothesis": "分散分解によれば雑色店のジャグは台×日シグナルが 0.00pp（＝日替わりで設定を動かしていない）一方、固定的な台効果が 2.02pp（9ホール中最大、信頼性0.95）ある。したがって『その日どの台か』を当てる必要はなく、長期履歴で恒常的に優秀な台を特定して座り続ければよい。",
+  "source_instinct": "signal-ceiling-variance-decomposition-20260706 / eda/variance_decomposition.py 2026-07-23 実行結果",
+  "success_criterion": "edge（同日ジャグ全台平均との差枚差）の平均が +150枚/台 以上、かつ 7日ブロックbootstrap の 95%CI 下限 > 0。分散分解が示す固定台効果 2.02pp は平均投資額換算で約300枚/日に相当するため、その半分は取れて然るべき。下回れば固定効果仮説も棄却する。",
+  "eval_range": "20260101-20260720",
+  "n_eval_days": 198,
+  "n_days_skipped_no_history": 0,
+  "n_days_traded": 198,
+  "n_picks": 594,
+  "mean_games_per_pick": 3583.9,
+  "pick_low_games_rate": 0.125,
+  "mean_diff_per_pick": -29.1,
+  "mean_baseline": -76.4,
+  "mean_edge_per_pick": 47.2,
+  "edge_ci95": [
+    -24.6,
+    122.6
+  ],
+  "edge_ci95_block7": [
+    -26.4,
+    128.3
+  ],
+  "mean_edge_vs_excluded": 50.4,
+  "edge_vs_excluded_ci95_block7": [
+    -28.5,
+    137.3
+  ],
+  "mean_pick_share": 0.066,
+  "edge_positive_day_rate": 0.49,
+  "win_rate_abs": 0.352,
+  "cumulative_diff": -5770.3,
+  "yen_per_day_at_20": -583,
+  "period_split": {
+    "split_date": "20260501",
+    "caveat": "post-hoc 部分集団解析。採否根拠にしないこと。既知の外部変化点にのみ使う。",
+    "before": {
+      "n_days_traded": 120,
+      "n_picks": 360,
+      "mean_edge_per_pick": -9.8,
+      "edge_ci95_block7": [
+        -98.8,
+        84.3
+      ],
+      "edge_positive_day_rate": 0.433
+    },
+    "after": {
+      "n_days_traded": 78,
+      "n_picks": 234,
+      "mean_edge_per_pick": 134.9,
+      "edge_ci95_block7": [
+        28.8,
+        264.6
+      ],
+      "edge_positive_day_rate": 0.577
+    }
+  }
+}

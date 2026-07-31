@@ -1,0 +1,138 @@
+---
+id: verify-grouping-unit-via-leave-group-out-correlation
+trigger: "分析の集計単位（島・区画・カテゴリ等）を統合すべきか分割すべきか判断に迷うとき"
+confidence: 0.9
+domain: statistical-methodology
+source: session-observation
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# 集計単位の統合/分割は直感でなく leave-group-out 相関の3階層テストで決める
+
+## 背景
+楽園のsectionは背中合わせ2列を1つに統合していた欠陥が見つかり63列に分割したが、
+「まとめることで物理配置ではない真の設定投入単位が見えるのでは」という対立仮説が
+出た（ユーザー指摘）。これをleave-island-out残差の相関で検定した。単純な同日×同機種
+残差は、その機種が島内を独占していると残差の総和が構造的にゼロになり機械的な
+負相関を作るため、ベースラインから対象の島を除外する必要があった。3階層の物差し
+（(1)同じ列を半分に割った半分どうし=上限、(2)同一島の列どうし=対象、(3)別の島の
+列どうし=下限）で測ると、対象は上限の1/3程度、かつ個別ペアで見ると日数の多い
+ペアほどゼロに近くばらつき、一律の統合は支持されなかった。
+
+## アクション
+集計単位の統合/分割を決めるときは直感や「業務上こう動いているはず」という
+推測だけで決めない。leave-target-out（対象グループをベースラインから除外）した
+残差で、(1)真に同一単位のときの上限、(2)対象ペア、(3)無関係な下限、の3つを
+並べて測る。対象が上限に近ければ統合、下限に近ければ分割維持。個別ペアのばらつきも
+必ず確認し、統合値の平均だけで判断しない（少数の外れペアが平均を引き上げていないか）。
+
+## 例
+```python
+# 対象グループXをベースラインから除いて残差を作る（機械的な負相関を回避）
+resid = value - baseline_excluding(X)
+corr_same_group = corr(daily(resid, half_a), daily(resid, half_b))   # 上限
+corr_target      = corr(daily(resid, col_a), daily(resid, col_b))     # 対象
+corr_unrelated    = corr(daily(resid, other_a), daily(resid, other_b)) # 下限
+```
+
+---
+id: uniform-physical-threshold-across-categories-produces-false-anomalies
+trigger: "確率・機械割等に「物理的にありえない」閾値を設定して、複数の機種カテゴリを横断して異常値/破損データを検出しようとするとき"
+confidence: 0.95
+domain: data-quality
+source: session-observation
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# 単一の物理限界閾値をカテゴリ横断で適用すると大量の偽陽性が出る。AT機とジャグ/ハナ/沖スロはボーナス確率が2桁違う
+
+## 背景
+本セッションで2回、同じ失敗パターンが起きた。(1) 機械割>200%かつdiff>1000で
+「破損」を検出→14,554行のうち89%がAT機で、AT機のボーナス/AT当選確率(1/15〜150)は
+ジャグ/ハナ/沖スロ(1/300+)と2桁違うため単に正常な高分散日だった。(2) ボーナス確率
+>1/20で再検出→3,415行のうち89.3%が同じくAT機の誤検出。低天井系（ジャグ・ハナ・
+沖スロ）に絞ると真の異常候補は364行(0.024%)まで減り、台番号の連続日数も最大2日で
+物理故障の証拠もなかった。いずれも「1つの閾値を全カテゴリに当てはめる」ことが
+原因で、カテゴリ別に閾値を分けるか機種内標準化を使えば防げた。
+
+## アクション
+異常値・破損データを検出するときは、AT機とジャグ/ハナ/沖スロを同じ閾値で
+判定しない（当選確率が2桁違うため）。カテゴリ別に閾値を導出するか、機種内で
+標準化した値（z-score）で判定する。さらに機種固有のスペック検証器
+（eda/at_semantics_validator.pyのAT_SPECS）が既にあるなら、独自に閾値を
+発明する前にまずそれを確認する（see: check-existing-per-machine-spec-validator）。
+
+## 例
+```python
+# NG: 全カテゴリに同一の物理限界を適用
+corrupt = df[(df.payout > 2.0) & (df.diff > 1000)]  # AT機を大量に誤検出
+
+# OK: カテゴリ別、または機種内標準化で判定
+corrupt = df[df.bonus_rate > CATEGORY_LIMITS[df.cat]]  # カテゴリごとの物理上限
+# または AT_SPECS 等の既存スペック検証器を先に確認する
+```
+
+---
+id: check-existing-per-machine-spec-validator-before-flagging-anomaly
+trigger: "特定機種のボーナス/AT確率が異常に高い/低いと感じ、独自にデータ品質問題や物理故障の調査を始めようとするとき"
+confidence: 0.9
+domain: feedback-methodology
+source: session-observation
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# 機種の異常値を扱う前に eda/at_semantics_validator.py の AT_SPECS を確認する。独自の物理限界判定より先に既存資産を見る
+
+## 背景
+ゴッドイーター リザレクションとスマスロ北斗の拳のボーナス確率がホール間で
+食い違って見えたため、「台番号への物理的な結線ミス」という仮説を立てて
+1ラウンド分の検証（台番号の連続日数・機種入替をまたぐ継続性の検定）を
+丸ごと消費した。実際には eda/at_semantics_validator.py に両機種の公式スペック
+（AT_SPECS、1geki.jp出典）が既に登録されており、ホール×列(bb/rb)の適合検証も
+既に実行済みだった（ゴッドイーターは rb=at がPASS、bb=at がfail、という
+判定が既に出ていた）。これを先に見ていれば、台番号仮説の検証は不要だった。
+
+## アクション
+機種名でボーナス/AT確率が異常に見えたら、まず `grep 機種名 eda/at_semantics_validator.py`
+でAT_SPECSに登録済みか確認し、登録済みならそのファイルを実行して該当機種の
+判定行（PASS/fail、採用列）を見る。登録されていない機種だけが真に未検証。
+独自の物理限界仮説（台番号の物理故障等）を立てる前に、既存の検証器・過去の
+instinct・spawn済みツールを検索する一手間を必ず挟む。
+
+---
+id: bb-rb-column-can-be-duplicate-not-just-mismatched
+trigger: "bb_count/rb_countのどちらかがat_semantics_validatorでPASS、もう片方がfailと判定された機種で、ホールごとに観測確率が大きく食い違うとき"
+confidence: 0.9
+domain: data-quality
+source: session-observation
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# ホール間の確率食い違いは「別の信号を集計している」だけでなく「片方の列が単に未使用/重複記録」という単純な形もある
+
+## 背景
+ゴッドイーター リザレクションでbb+rb合算のボーナス確率がホール間で最大9倍
+食い違い、「ホールごとに違う当選種別をbb/rbに記録している」という複雑な
+仮説を立てた。実際にrb_countを単独で見ると全9ホールが1/334〜540とスペック
+範囲にほぼ収まって一致し、bb_countだけが原因だった：5ホールでbb_countは
+ほぼゼロ（未使用列）、残り4ホール（蒲田7・蒲田1・金時・雑色）ではbb_countが
+rb_countとほぼ同値（AT初当りを重複記録）。bb+rbを合算すると後者4ホールだけ
+分母が実質2倍になり、確率が約2倍に見かけ上膨らんでいた。「ホールごとに違う
+信号」という前提が誤りで、正しくは「一部ホールで片方の列が重複記録」という
+より単純な機械的原因だった。
+
+## アクション
+bb_count/rb_countがスペックと食い違う機種を見つけたら、まず両方を単独で
+ホール別に見る（合算する前に）。片方の列だけが全ホールでスペックに一致するなら、
+もう片方は「意味が違う」のではなく「単に壊れている/未使用/重複」である
+可能性が高い。この場合の対処は該当列を無視するだけで済み、ホールごとに
+別の集計対象へ再マッピングするような複雑な対応は不要。
+
+## 例
+```python
+# ホールをまたいで合算せず、まず列ごと・ホールごとに単独確認する
+for col in ["bb_count", "rb_count"]:
+    rate_by_hall = df.groupby("hall").apply(
+        lambda s: s.games_normalized.sum() / max(s[col].sum(), 1))
+    print(col, rate_by_hall)   # 片方だけが全ホールで揃うか確認
+```

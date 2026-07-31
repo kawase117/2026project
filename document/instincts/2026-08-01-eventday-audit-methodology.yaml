@@ -1,0 +1,136 @@
+---
+id: 2026-08-01-residual-conclusion-needs-period-split-and-two-methods
+trigger: "DD別・機種別・セクション別の残差を計算して『このDDが強い』『この機種が強い』と結論したくなったとき。全期間平均で効果量を出したとき。棚卸しやスキャンの結果をtheory文書に書こうとしているとき"
+confidence: 0.9
+domain: methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+---
+
+# 残差の結論を出す前に「期間分割」と「手法二重化」を必ず通す
+
+## Core claim
+全期間平均の残差ランキングは、直近のレジーム変化を消し、かつ集計手法を変えると再現しない。結論を書く前に (1) 四半期などで期間分割する (2) 基準点の異なる2手法で計算する、の2つを必ず通す。
+
+## Evidence
+- n_observations: 2026-08-01の1セッション中に同じ失敗が3回発生（9ホール×全DD×カテゴリのスキャン、楽園ネオアイムジャグラーEX、蒲田1のDD1）
+- data scope: 全9ホール
+- metric scope: 機械割残差pp / 差枚baseline比
+- result summary:
+  1. **期間分割**: 楽園ネオアイムジャグラーEXを全期間平均すると delta≈0（不支持）だったが、月次に割ると 202602 +11.0 → 202607 +178.9 の単調上昇だった。蒲田1のDD1はAT一般で2025年 +3.5〜+5.0pp → 2026年 -2.78〜-3.83pp と符号反転しており、全期間平均では打ち消し合って上位にも下位にも現れなかった（ユーザーの実地観察「蒲田1のイベント日が1に偏りつつある」が起点で発覚）
+  2. **手法二重化**: 蒲田7のDD残差を機種内残差法（基準=各機種の全期間平均）で出すと JUG上位 {1,31,30,14} / AT上位 {6,30,8,16} だったが、カテゴリ平均残差法（基準=同期間の同カテゴリ平均）で前後半に分けると JUG {1,7,11,17,21,27,30,31} / AT {7,8,11,16,17,27,30} となり再現しなかった。前者に基づいて「現行のHALL_EVENT_DIGITSは半分以上マイナス」と9ホール分のtheory文書に書いた後、後者で覆った
+
+## Interpretation
+- 機種内残差法は機種入替の交絡を除ける反面、在籍の短い機種でDD別セルが薄くノイズを拾う。蒲田7は期間中に72%の台が機種変更されており影響が大きい。カテゴリ平均残差法はその逆。どちらが正しいかは一般には決まらない
+- したがって「片方の手法で出た順位」は結論ではなく候補。両手法で生き残ったものだけが候補として扱える
+- 期間分割については、ユーザーの方針は「両期間共通を重視するより直近トレンドを重視」。安定性より鮮度を優先する。ただし直近だけを見ると小標本になるため、四半期の推移として符号と大きさの動きを見るのが実務的
+- これは `feedback-short-lived-regularities-have-value`（短期法則にも価値がある、判定に期間を付す）の実装面での帰結でもある
+
+## Action
+1. 残差ランキングを出したら、結論を書く前に必ず四半期（または半期）別に割り直して推移を見る。単調に増えている/減っているものと、平均だけ高いものを区別する
+2. 基準点の異なる2手法（機種内残差 / カテゴリ平均残差）で計算し、両方で生存したものだけを候補にする
+3. theory文書やinstinctに書くときは「どの手法・どの期間の集計か」を必ず明記する。手法名を書かずに数値だけ書かない
+4. ユーザーから実地の観察（「最近○○に偏っている」等）が出たら、全期間平均では見えない可能性が高いので、必ず期間分割で追試する
+
+## Relation
+- related:
+  - feedback-short-lived-regularities-have-value
+  - 2026-07-31-k7-rakuen-model-highsetting-bias-verification
+  - 2026-07-31-scan-first-then-refute
+
+## Status
+- status: active
+
+---
+id: 2026-08-01-do-not-use-briefing-common-is-event-dd
+trigger: "eda/briefing_common.py の load_hall_frame を使ってイベント日別の集計をするとき。is_event_dd 列を使おうとしたとき。HALL_EVENT_DIGITS を参照するとき。イベント日 vs 非イベント日の比較をするとき"
+confidence: 0.95
+domain: data-pipeline
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+---
+
+# イベント日定義は3箇所に分裂しており、briefing_common の is_event_dd は劣化版
+
+## Core claim
+`eda/briefing_common.py` の `is_event_dd` 列はDDリストしか見ておらず、月末と強ゾロ目を落とす。さらに参照元の `HALL_EVENT_DIGITS` 自体がみとや・楽園で欠落がある。イベント日別の集計にこの列を使ってはならない。
+
+## Evidence
+- n_observations: 楽園1ホールで誤った結論が1件発生、9ホール分の集計が影響を受けうる
+- data scope: 全9ホール（`briefing_common.load_hall_frame` を使う全分析）
+- metric scope: イベント日 vs 非イベント日の hit104率・差枚
+- result summary: 定義の所在が3箇所に分裂している。
+  1. `eda/core.py` の `is_x_day` = DDリスト OR 月末 OR 強ゾロ目（3条件OR、暦を見た動的な月末判定）
+  2. `eda/section_lateral_expansion.py` の `HALL_CONFIGS[*].event_dds` + `strong_zorome`（4ホールのみ収録）
+  3. `eda/briefing_common.py:175` の `is_event_dd = df["dd"].isin(event_digits)` ← **DDリストのみ。月末も強ゾロ目も落ちる**
+
+  加えて `HALL_EVENT_DIGITS` 自体の欠落: みとやは `{4,7,14,17,24,27}` で運用定義の `1,30` が欠落、楽園は `{11,22}` で確定定義の `10,30` と強ゾロ目が欠落。
+  この結果、楽園でDD10・DD30・強ゾロ目・月末がすべて非イベント日側に混入し、「楽園はイベント日にJUG/HANA/AT一般の全カテゴリで9〜13pp弱い」という**誤った結論**が出た。正しい定義で再計算すると全カテゴリ +2.0〜+2.8pp のプラスに反転した
+
+## Interpretation
+- 楽園のDD30は最強イベント日（技術介入+2.50・AT一般+2.41で1位）なので、これが非イベント日側に入ると非イベント日の水準が押し上がり、差が逆符号に見える
+- `eda/core.py` の `is_x_day` は3条件ORで正しく作られているのに、`briefing_common` がそれを使わず独自に劣化版を作っていた。正しい実装が存在しても、それを使わない経路が並存すると意味がない
+- ただし `is_x_day` の「月末・強ゾロ目を全ホール一律にORする」設計も実測では支持されない。両軸の残差はほぼゼロ（±1pp）のホール×カテゴリが大半で、一律加算はむしろ対比を薄める。効くのは みとやOKI（月末+6.04/強ゾロ目+5.57）・ザシティAT一般（月末+3.70）等の一部セルのみ。**一律統合も一律除外も誤りで、ホール×カテゴリ別に取捨選択すべき**
+- 2026-06-19の `kamata7-event-day-complete-definition` で同種の不完全定義が既に指摘・修正されているが、別経路（briefing_common）で同じ問題が再発した
+
+## Action
+1. イベント日別の集計をするときは `briefing_common` の `is_event_dd` 列を使わない。`date` 列から自前で判定し直すか、`eda/section_lateral_expansion.py` の `HALL_CONFIGS` から判定する
+2. 月末は必ず `calendar.monthrange` で暦を見て判定する。30/31のハードコードはしない（2月・4月・6月・9月・11月で外れる）
+3. 月末・強ゾロ目をイベント日に含めるかは、ホール×カテゴリごとに残差を見て決める。一律にORしない
+4. 過去の分析結果でイベント日を扱っているものは、どの経路で判定していたかを確認してから信用する
+
+## Relation
+- related:
+  - kamata7-event-day-complete-definition
+  - 2026-07-31-scan-first-then-refute
+
+## Status
+- status: active
+
+---
+id: 2026-08-01-event-calendar-structure-is-hall-dependent
+trigger: "ホールのイベント日を実測から導出するとき。個別DDの残差ランキング上位を見てイベント日を決めたくなったとき。カテゴリ別（ジャグ/AT等）にイベント日を分けるべきか判断するとき"
+confidence: 0.8
+domain: hall-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+---
+
+# イベント日は個別DDより先に店の告知体系で当てる。カテゴリ別カレンダーの成否はホール依存
+
+## Core claim
+イベント日の実測は、個別DDの残差ランキングを上から取るのではなく、店の告知体系（7のつく日・1のつく日・ゾロ目・強ゾロ目・月末）という既知の枠組みに乗るかを先に確認する。またカテゴリ別に別カレンダーを持つかどうかはホールによって異なり、一般化できない。
+
+## Evidence
+- n_observations: 蒲田7・蒲田1・楽園の3ホール、四半期別（2025Q3〜2026Q3）
+- data scope: single-hall × 3、ホール横断のプールはしていない
+- metric scope: 機械割 − 同四半期同カテゴリ平均（pp）
+- result summary:
+  - **蒲田7**: AT一般で7系{7,17,27}が全5四半期プラス（+1.08〜+2.84）、1系{1,11,21,31}はほぼゼロ〜マイナス。店名どおり7のつく日が主軸で、**カテゴリ別カレンダーは成立しない**（JUG・AT一般とも7系が優位）。個別DD残差の上位として拾った DD8・DD16 は告知体系に乗らず、機種入替周期などのノイズの可能性が高い
+  - **蒲田1**: JUGで7系が単調減衰（2025Q3 +2.07 → 2026Q3 +1.20）する一方、1系が上昇（+0.68 → 2026Q1 +2.07 → 2026Q3 +1.62）して2026年に逆転。店名「メガシティ2000-蒲田1」のブランドに沿った1のつく日への移行と読める。ATはまだ判定不能
+  - **楽園**: `rakuen_theory.md`§3.1a のとおり**カテゴリ別カレンダーが成立する**（ジャグ{22,5,11,25,15} / AT一般{30,22,11,10} / ハナハナ{7,17,27}）。特にDD{5,15,25}は「ジャグのみ+5.56pp、他4カテゴリはマイナス、回転数も増えない=客に気づかれていない」という独立した型
+
+## Interpretation
+- 店名・ブランドが手がかりになる（蒲田7→7のつく日、蒲田1→1のつく日）。個別DDを残差順に上から取ると、体系に乗らないDDを拾ってノイズを候補にしてしまう
+- 「カテゴリ別カレンダー」は楽園で確立された構造だが、蒲田7では成立しなかった。ホール別戦略が前提という原則（`feedback-no-cross-hall-pooling`）どおりで、楽園の構造を他ホールに持ち込まない
+- 蒲田7の告知体系には既存instinct `kamata7-event-day-complete-definition` のとおり1のつく日も含まれるが、**実測の効果量では7のつく日のほうが明確に強い**。告知されていることと効果があることは別で、体系を出発点にしつつ効果量で重み付けする
+- イベント日は時間とともに動く（蒲田1が実例）。定期的に四半期別で組み直す前提で扱う
+
+## Action
+1. 新しいホールのイベント日を導出するときは、まず7系/1系/ゾロ目/強ゾロ目/月末という体系ごとにまとめて残差を出す。個別DDのランキングはその後
+2. 店名・ブランドから体系の当たりをつける
+3. カテゴリ別に分けるべきかは、ホールごとに検証してから決める。楽園で成立したから他でも、とはしない
+4. 体系に乗らないDDが上位に出たら、機種入替周期・特定機種の在籍期間などの交絡を疑う
+5. 蒲田1の1のつく日移行は事前登録済み（`backtest/prereg/k1_jug_dd1kei_rbz_top3.json`、freeze_hash=5c176bc76465f438、対照は `k1_jug_plain_rbz_top3.json`）。判定はフォワードのみ
+
+## Relation
+- related:
+  - kamata7-event-day-complete-definition
+  - feedback-no-cross-hall-pooling
+  - 2026-08-01-residual-conclusion-needs-period-split-and-two-methods
+
+## Status
+- status: active

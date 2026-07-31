@@ -1,0 +1,238 @@
+---
+id: split-half-consistency-is-not-holdout
+trigger: "候補（DD・末尾・section等）を全期間から抽出したあとに、時系列前半/後半へ分割して『holdout検証した』と主張しようとするとき"
+confidence: 0.95
+domain: statistical-methodology
+source: session-observation
+project_id: pachinko-analyzer
+project_name: 2026project
+
+# 候補抽出に後半データが使われている以上、前後半分割は holdout ではなく split-half consistency check
+
+## 背景
+`eda/rakuen_theory_revalidation.py` はジャグ・ハナハナ・技術介入・AT一般のカテゴリ別DD候補を
+中央値日（2025-10-14）で前後半に割り、後半でBH補正付き permutation 検定を行い、通過分に
+`holdout_supported` という列名を与えた。しかし候補DD `{5,11,15,22,25}` 等は 2026-07-29 時点、
+すなわち**後半を含む全期間**から抽出されている。後半は仮説生成に使われたデータであり、
+定義上 out-of-sample ではない。
+
+この誤ラベルは実害がある。`holdout_supported` は「再利用してよい候補」のゲートとして
+report.md の判定セクションに使われており、読者（未来の自分を含む）は前向き検証済みと誤読する。
+真の holdout は候補確定日以降に新規到着したデータ（このケースでは 2026-07-29 以降）しかない。
+
+なお検定そのものの実装は正しい。独立単位を日次平均に取って permutation を回しており
+（`eda/rakuen_theory_revalidation.py:134`）、台行レベルの擬似反復による p 値インフレを回避している。
+ジャグで31DD中1本しか通らない（p値分布がほぼ一様）のは較正が効いている証拠。
+問題は検定ではなくラベルと結論の書き方。
+
+## アクション
+- 分割検証の列名・見出しは `split_half_consistent` / `前後半で方向一致` とする。`holdout` の語は
+  候補確定日より後に到着したデータにのみ使う。
+- 前後半一致は「候補が期間内で安定していた」証拠であって、「将来も効く」証拠ではない。
+  運用投入の可否は `backtest/prereg.py` の事前登録＋`backtest/forward/` のフォワードで決める。
+- 中央値分割は仮説ではなくデータ量で決めた恣意的な線であることを明記する。改定時期を主張したい
+  なら change-point 検定を別途行う。
+
+## 例
+誤: 「時系列holdoutのBH補正を通過したのはジャグDD5のみ。他は再利用不可」
+正: 「前後半で方向一致かつ後半BH補正通過はジャグDD5のみ。ただし候補自体が全期間由来なので
+    これは期間内安定性の確認であり、前向き妥当性は未検証」
+
+---
+id: single-survivor-summary-hides-calendar-shift
+trigger: "複数候補DDを前後半で再検定し、『N個中1個だけ残った』と要約しようとするとき"
+confidence: 0.85
+domain: hall-strategy
+source: session-observation
+project_id: pachinko-analyzer
+project_name: 2026project
+
+# 「1つだけ生存」の要約は、候補間の順位入れ替わり（カレンダー改定）を消してしまう
+
+## 背景
+楽園ジャグのカテゴリ別DD候補を p56（設定5-6事後確率）で前後半比較すると、
+`eda/results/rakuen_theory_revalidation/category_dd_temporal_validation.csv` は次を示す。
+
+| DD | 前半effect | 後半effect |
+|---|---|---|
+| 5 | +0.010 | +0.044 |
+| 11 | +0.009 | +0.030 |
+| 22 | +0.051 | +0.016 |
+| 25 | +0.051 | +0.021 |
+
+前半で最強だった DD22/25 が後半で 1/3 に減衰し、前半で最弱だった DD5 が 4 倍に増えている。
+BH補正を通ったのは DD5 のみなので「DD5だけ生存、他は未確定」と要約できてしまうが、
+この要約は**入れ替わりが系統的である**という最も情報量の多い構造を捨てている。
+運用上「DD5を狙う」と「DD22/25はもう死んでいる」は別の主張であり、後者は
+旧セオリーに基づく台選びを止める根拠になる。
+
+## アクション
+- 候補群の前後半比較では、生存/非生存の二値ではなく effect の**順位変化**を必ず表で出す。
+- 順位入れ替わりが見えたら中央値分割で止めず、change-point 検定でカレンダー改定時期を推定する。
+- ホール側のイベントカレンダーは改定されうるものとして扱う。「シグナルが消えた」と
+  「シグナルが移動した」を区別しないと、移動先を取り逃す。
+- 改装・店長交代など既知の変化点はユーザーに聞いて期間分割する
+  （関連: `2026-07-27-hall-regime-external-event-calendar-methodology.yaml`,
+  `2026-07-23-regime-nonstationarity-and-changepoint-insights.yaml`）。
+
+## 例
+`document/rakuen_theory.md` の旧イベント日定義 `{10,11,22,30}` が無効化された経緯も同型。
+定義が「間違っていた」のか「途中で変わった」のかで、過去データの扱い（全捨て vs 期間分割）が変わる。
+
+---
+id: omnibus-null-vs-walkforward-topk-positive
+trigger: "section・軸・区画の主効果が omnibus 検定で非有意だったことを根拠に『構造なし』と結論しようとするとき"
+confidence: 0.9
+domain: statistical-methodology
+source: session-observation
+project_id: pachinko-analyzer
+project_name: 2026project
+
+# omnibus 非有意と walk-forward top-k 有効は矛盾しない。検定設計が違うだけ
+
+## 背景
+`rakuen_theory.md` §2.1c は「section主効果・section×DD交互作用は構造なし」と結論している。
+一方、同じデータで直近90日を訓練窓とする walk-forward（当日games足切りなし・工事前・
+ジャグp56）を回すと、top3 section の excess は通常日100日で **+0.047 [+0.040, +0.053]** と
+明確に正だった（`eda/results/rakuen_theory_revalidation/juggler_section_walkforward_p56.csv`
+の daily 行から算出）。
+
+これは矛盾ではない。omnibus は「全section が等しい」という強い帰無仮説を全section同時に
+検定するため、上位数区画にだけ効果があり残りが平坦な場合には検出力を失う。対して
+top-k walk-forward は「直近実績上位の区画を選ぶ」という**逐次的な意思決定手順**そのものを
+評価しており、平坦な下位区画は選択されないので希釈されない。運用が知りたいのは後者。
+
+## アクション
+- 「構造なし」と書く前に、その主張が omnibus 検定由来かどうかを確認する。omnibus 由来なら
+  「一括検定では検出できない」と書き、top-k walk-forward の結果を併記する。
+- 逆に walk-forward が正でも、それが**機種構成の偏り**で説明できないか必ず潰す。p56 は
+  family 別スペックで計算されている（`eda/dd_setting_posterior_rank.py:96`）が、section 間の
+  機種構成が偏っていれば事後分布の鋭さと平均回転数の差だけで持続的な section 差が出る。
+  `p56` を (date × family) 内で残差化して同じ walk-forward を回し、効果がどれだけ残るかを見る。
+- セオリー文書の該当節は「構造なし」→「一括検定では検出不可、top-k逐次選択では+Xpp」に書き換える。
+
+## 例
+誤: 「§2.1c で section 効果は否定済みなので section ベースの推薦は作らない」
+正: 「omnibus は非有意だが top3 walk-forward は +4.7pp。family残差化後も残れば採用候補」
+
+---
+id: report-without-paired-ci-invites-misreading
+trigger: "モデルA と モデルB の比較結果を『Aは Bを上回らなかった』と報告する、または他エージェント（Codex等）からそう報告されたとき"
+confidence: 0.9
+domain: analysis-workflow
+source: session-observation
+project_id: pachinko-analyzer
+project_name: 2026project
+
+# 「上回らなかった」は「劣る」と「差が検出できない」の両方を意味しうる。対応差CIがなければ判定不能
+
+## 背景
+Codex が生成した `eda/results/rakuen_theory_revalidation/report.md` は section walk-forward の
+比較を点推定のみで示し、「category_calendar_split は all_history を上回らなかった」と結論した。
+CSV の daily 行から**対応差**（同一日で両モデルを引き算）のCIを自分で計算すると:
+
+- ordinary top3: 対応差 +0.0028 [-0.0009, +0.0064]
+- event top3:    対応差 +0.0016 [-0.0079, +0.0112]
+- ordinary top5: 対応差 -0.0018 [-0.0056, +0.0019]
+- event top5:    対応差 -0.0009 [-0.0107, +0.0088]
+
+4セルすべて0を跨ぎ、かつ幅は±0.01と効果量+0.047に比べて十分狭い。つまり実態は
+「splitが劣る」ではなく**実質同等**。採択する結論（単純な all_history を使う）は同じでも、
+理由が「splitが負けた」か「差を検出できないので単純な方を採る」かで、将来 split を
+再検討する余地の有無が変わる。
+
+## アクション
+- モデル比較は必ず**同一日で対応を取った差**のCIを出す。独立2群のCIの重なりで判断しない。
+- 他エージェントの分析成果物を受け取ったら、report.md の文章ではなく**元CSVから自分で
+  再計算**する。特にCIが省略されている箇所は、結論が反転しうる場所として優先的に検算する。
+- CIが0を跨ぎ、かつ幅が効果量に比べて十分狭いなら「差なし」ではなく「実質同等（equivalence）」
+  と書く。サンプル不足で幅が広い場合は「判定不能」と書き分ける。
+- 関連: `2026-07-27-predict-scorecheck-cycle-methodology.yaml`（CI幅の併記は必須要件）。
+
+## 例
+このセッションでは report.md に埋もれていた **section top3 の excess +4.7pp [+4.0, +5.3]** が
+CSV 再計算で初めて可視化された。比較の勝敗にばかり紙面が割かれ、両モデル共通の
+「section ランキング自体が効いている」という最大の発見が報告されていなかった。
+
+---
+id: layout-mapping-precedes-reanalysis
+trigger: "改装・レイアウト変更後のホールで、旧section名を含む分析を再実行しようとするとき"
+confidence: 0.9
+domain: hall-strategy
+source: session-observation
+project_id: pachinko-analyzer
+project_name: 2026project
+
+# 物理マッピングが未確定なら、再集計しても出てくるのは工事前の遺物
+
+## 背景
+楽園蒲田は 2026-07-06 に改装。`legacy_section_status.csv` は旧7区画
+（1106-1115 / 1130-1134 / 1209-1216 / 3113-3116 / 3117-3120 / 2141-2162 / 1057-1059）すべてが
+`requires physical mapping / re-estimation` であることを示した。うち2区画は工事前の行数も0で、
+そもそもラベルが現存しない。
+
+この状態で §6/§8/§9 を「完全再実行」しても、出力されるのは工事前レイアウト上の推定値であり、
+現行の台選びには使えない。工事後の観測日数は20日しかなく、clean列の端効果も
+`insufficient-post-period` 判定で、独立に再推定するにも足りない。作業順序は
+**物理マッピング確定 → 再集計**であって逆ではない。
+
+## アクション
+- 改装後は、旧ラベルを使うすべての運用ルール（`rakuen_theory.md` §12 のハード回避・狙い目リスト）を
+  まず全面凍結する。再実行の優先度はマッピング確定より必ず後。
+- マッピングは台番号の連続性ではなく `Heatmap/*_floor_coordinates_*.csv` と
+  `machine_layout_history` の突合で物理的に確認する。
+- 工事後データが60日に満たない間は、工事前の推定値を現行レイアウトへ移植しない。
+  移植ではなく「工事前の知見を仮説として、工事後データで事前登録フォワード」の形にする。
+- セオリー文書の冒頭に「運用フローは未再計算のため暫定」を明記し、注意書きだけ読む人と
+  §12の台選びフローだけ読む人が逆の行動を取る事態を防ぐ。
+
+## 例
+`rakuen_theory.md` は §3.1c/§2.2b で旧定義の無効化を追記済みだが、§12 の実運用フローは
+旧イベント日 `{10,11,22,30}` と旧section名のまま残っており、`min_games=2500` の足切りも
+§6.1 自身が撤回した後に残置されていた。訂正の追記だけでは運用節は直らない。
+
+---
+id: machine-rate-metric-not-comparable-to-p56
+trigger: "ジャグ以外のカテゴリ（ハナハナ・技術介入・AT一般）のDD効果を機械割ベースの rate で検定し、ジャグのp56結果と同じ表に並べようとするとき"
+confidence: 0.8
+domain: statistical-methodology
+source: session-observation
+project_id: pachinko-analyzer
+project_name: 2026project
+
+# 機械割ベースの rate は設定検出ではなくホールの月次収支リズムを拾いうる。p56 と同列に置かない
+
+## 背景
+`category_dd_temporal_validation.csv` の BH補正通過数はカテゴリで大きく偏る。
+
+| category | metric | 31DD中の通過数 |
+|---|---|---|
+| ジャグ | p56 | 1 |
+| ハナハナ | rate | 7 |
+| 技術介入 | rate | 3 |
+| AT一般 | rate | 0 |
+
+ハナハナで7/31が通り、しかもそのうちDD13/19は有意な**マイナス**効果。設定投入日が
+月に7日以上あり、かつ特定日に有意な低設定日があるという解釈より、
+`rate`（機械割）が設定ではなくホールの月次収支サイクルと打ち手の技術介入度を
+拾っていると考えるほうが自然。機械割 = 100 + diff/(3*games)*100 であり、
+分母の games は客の集合的判断を含むエンドジェナスな量
+（関連: `2026-07-29-rakuen-event-day-category-decomposition-insights.yaml`）。
+
+ジャグの p56 だけが BB/RB 回数の二項尤度による**設定の直接推定**であり、
+他カテゴリの rate とは情報の質が違う。同じ表に並べると読者は同じ信頼度で受け取る。
+
+## アクション
+- カテゴリ横断の DD 表を作るときは metric 列を必ず併記し、p56 由来と rate 由来を
+  別セクションに分ける。少なくとも rate 由来には `exploratory` タグを付ける。
+- ハナハナは一撃スペック表から BB/RB 確率を引けるので、p56 相当の尤度指標を作れる。
+  それを作るまでハナハナDD7/17/27は `watching` 固定とし、台選びの根拠にしない。
+- 技術介入・AT一般は打ち手の技術差が機械割に直接乗るため、尤度指標を作れない。
+  これらのカテゴリでは日レベルのDD主張自体を控える。
+
+## 例
+誤: 「ハナハナはDD7/17/27が再現、技術介入はDD11/22/30が残った」と一覧表で提示
+正: 「設定尤度で検証できたのはジャグDD5のみ。ハナハナ・技術介入は機械割ベースの
+    探索的所見で、回転数選択と設定を分離していない」
+
+---

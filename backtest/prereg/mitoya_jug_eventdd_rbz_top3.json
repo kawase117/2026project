@@ -1,0 +1,17 @@
+{
+  "rule_id": "mitoya_jug_eventdd_rbz_top3",
+  "hall": "みとや大森町店",
+  "hypothesis": "mitoya_jug_eventdd_rb_top3 の仕様欠陥修正版。RB確率の生値は機種ごとにベースが違うため機種横断ランキングは機種差を拾う。機種内で標準化してから順位付ければ、イベント日DD{1,4,7,14,17,24,27,30}の高設定台を捉えられる。",
+  "source_instinct": "juggler-104pct-threshold-meaning-by-model / juggler-series-bonus-probability-spec / mitoya-event-definition-confirmed",
+  "eval_start": "20251001",
+  "eval_end": "20260720",
+  "success_criterion": "【重要】このルールは既存ルールの失敗を見た後に作られた変種であり、バックテストの数値を採否根拠にしてはならない。判定はフォワードテストのみで行う。フォワード20エントリー日を経過した時点で edge 平均が +200枚/台 以上かつ 95%CI 下限 > 0 であること。満たさなければ破棄。またRB確率系のバリアントはこの1本で打ち止めとし、これ以上の派生を作らない。",
+  "universe": { "jug_flag": 1 },
+  "eligibility": { "jug_flag": 1 },
+  "entry_days": { "dd": [1, 4, 7, 14, 17, 24, 27, 30] },
+  "score": "hist_mean_rb_prob_model_z",
+  "lookback_days": 30,
+  "min_history_days": 10,
+  "top_n": 3,
+  "min_games": 1000
+}

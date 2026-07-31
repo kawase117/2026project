@@ -1,0 +1,64 @@
+{
+  "rule_id": "mitoya_at_eventdd_histdiff_top3",
+  "hall": "みとや大森町店",
+  "freeze_hash": "e99d60338347d27e",
+  "target_date": "20260730",
+  "data_asof": "20260729",
+  "lookback_window": [
+    "2026-06-30",
+    "2026-07-30"
+  ],
+  "score": "hist_mean_diff",
+  "success_criterion": "【重要】AT一般×イベントDD という組み合わせは 2026-07-27 に同じデータを見て発見したものであり、バックテストは in-sample である。数値を採否根拠にしてはならない。判定はフォワードのみ。フォワード20エントリー日を経過した時点で edge 平均が +200枚/台 以上かつ 95%CI 下限 > 0 であること。満たさなければ破棄し、みとやのAT系スコアの派生はこの1本で打ち止めとする。なお 2026-05 の店長交代以降のイベントDD日は実測21日しかなく、レジーム再変化の可能性は常に残る。",
+  "is_dry_run": false,
+  "picks": [
+    {
+      "machine_number": 570,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 1973.85,
+      "history_days": 20
+    },
+    {
+      "machine_number": 590,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 1934.941176,
+      "history_days": 17
+    },
+    {
+      "machine_number": 504,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1748.692308,
+      "history_days": 26
+    }
+  ],
+  "result": {
+    "scored_with_hash": "e99d60338347d27e",
+    "day_baseline": -87.4,
+    "universe_size": 158,
+    "picks_realized": [
+      {
+        "machine_number": 504,
+        "games": 2129.0,
+        "diff": -1708.0,
+        "edge": -1620.620253164557
+      },
+      {
+        "machine_number": 570,
+        "games": 2651.0,
+        "diff": 1408.0,
+        "edge": 1495.379746835443
+      },
+      {
+        "machine_number": 590,
+        "games": 1885.0,
+        "diff": -875.0,
+        "edge": -787.620253164557
+      }
+    ],
+    "mean_diff_per_pick": -391.7,
+    "mean_edge_per_pick": -304.3,
+    "missing_machines": [],
+    "rb_perspective": null
+  },
+  "plan_digest": "6c18754da3498677"
+}

@@ -1,0 +1,26 @@
+---
+id: forward-scoring-needs-rb-perspective-not-just-diff
+trigger: "RB確率(hist_mean_rb_prob / hist_mean_rb_prob_model_z / hist_hit104_rate)で台を選ぶジャグ・ハナハナ系フォワードテストの答え合わせをするとき"
+confidence: 0.85
+domain: prediction-evaluation
+source: session-observation
+project_id: pachinko-analyzer
+project_name: 2026project
+
+# フォワード採点はdiff(差枚)だけでなくRB発生率の順位も見る
+
+## 背景
+backtest/forward.py の score() は元々「diff(差枚) - 同日eligible平均」のedgeだけを答え合わせ指標にしていた。しかしRB確率ベースの選定ルールは「RBが多く出る台=高設定」という根拠で台を選んでおり、差枚は投資ペースやBB配分・短時間の出玉ムラにも左右されるため、diffだけでは「モデルの狙い(RB発生率)自体が当日当たったか」と「収支結果が伴ったか」を区別できない。
+
+2026-07-29 蒲田7の実例:
+- k7_jug_hit104_top3 の3332番(ネオアイムジャグラーEX): 当日rb_rate rank13/165(baseline比1.64倍、明確に高設定寄りの出方)にもかかわらず差枚は-800枚で「負け」判定。
+- 同日3303番(ハッピージャグラーVIII): rb_rate rank119/165(baseline比0.79倍、低め)にもかかわらず差枚+1300枚で「勝ち」判定。
+
+diffだけを見ると、どちらも表面的には「当たり/外れ」が入れ替わって見え、モデルの選定根拠自体の当否を見誤る。
+
+## アクション
+RBベースのスコアで選んだ台を答え合わせする際は、必ず result.rb_perspective (当日実測rb_rate・baseline比・同条件内での順位) を diff/edge と併記して確認する。「狙い(RB)が当たって差枚も伴った」「狙いは当たったが差枚が伴わなかった(BB配分やbet差の可能性)」「狙い自体が外れた」の3パターンを区別すること。AT系(hist_mean_diff)のルールにはrb_rateは意味を持たないため対象外(RB_BASED_SCORESに含めない)。単日の結果だけでモデルを棄却/確定しない方針(feedback-statistical-certainty-calibration)は従来通り維持する。
+
+## 例
+backtest/forward.py に RB_BASED_SCORES = {"hist_mean_rb_prob", "hist_mean_rb_prob_model_z", "hist_hit104_rate"} と _rb_perspective() を実装(2026-07-30)。score() の result に "rb_perspective": {"day_baseline_rb_rate": ..., "picks_rb": [{"machine_number":..., "rb_rate":..., "baseline_ratio":..., "rb_rank":..., "rb_universe_size":...}]} が自動付与される。plan_digest計算はresult列を除外して求めているため、後からresultにフィールドを追加しても改ざん検知(freeze_hash/plan_digest)は壊れない。
+---

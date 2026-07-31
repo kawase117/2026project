@@ -1,0 +1,3 @@
+{"key":"mitoya_jug_eventdd_rb_top3__20260724","status":"INVALIDATED","reason":"台入替混入バグを含むハーネスで生成。対象日未到来につき結果駆動の書き換えではない。修正版で再生成する。"}
+{"key":"mitoya_jug_eventdd_rb_top3__20260724","status":"INVALIDATED","reason":"RB確率列のNULLバグを含むスコアラで生成。rb_probability_decimal は rb_count==0 の行でNULLになり、pandas .mean() が RB0回の日を黙って除外していた（みとや該当11.7%）。回転数の少ない台ほど落ちる非ランダム脱落。対象日 20260724 は未到来で結果は一切見ていないため、結果駆動の書き換えではない。rb_count/games_normalized に修正したスコアラで再生成する。詳細: backtest/results/regime/FINDINGS.md 追試9。"}
+{"key":"mitoya_jug_eventdd_rbz_top3__20260724","status":"INVALIDATED","reason":"同上。hist_mean_rb_prob_model_z も同じ列を使っており、機種内zスコアの平均・標準偏差の両方が汚染されていた。対象日未到来につき結果駆動ではない。修正版で再生成する。"}

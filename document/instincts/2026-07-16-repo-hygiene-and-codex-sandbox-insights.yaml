@@ -1,0 +1,70 @@
+---
+id: mojibake-recovery-via-cp932-reencode-roundtrip
+trigger: "gitで追跡中の日本語ファイルが文字化けしている(繧・縺・繝ｻ等の記号列)ときに修復方法を判断する場面"
+confidence: 0.85
+domain: environment-setup
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# UTF-8→cp932誤解釈による文字化けは「UTF-8→cp932エンコード→UTF-8デコード」の再変換で復元できる
+
+## 背景
+CLAUDE.mdがセッション開始時に必ず参照される最重要ファイルであるにもかかわらず、日本語部分が「AI繧｢繧ｷ繧ｹ繧ｿ繝ｳ繝医∈」のような記号列に化けていた。git logで履歴を遡ると、7/10の一括コミット(b908bfb)時点で既に化けており、それより前(6/23時点)はクリーンなUTF-8だった。原因は「UTF-8で書かれたファイルをcp932(Shift-JIS系)として誤って読み込み、そのままUTF-8で再保存した」という典型的な二重誤変換。この場合、化けたバイト列を`line.encode("cp932").decode("utf-8")`で再変換すると、化ける前の正しい日本語がほぼ完全に復元できる(本セッションでは全70行中37行が「元から正しい」か「部分破損で再変換不可」でそのまま保持、残りは復元成功)。ただし一部の行はcp932に存在しない文字(半角カナの拡張領域や機種依存文字)を含み、エンコード時にUnicodeEncodeErrorで復元不可だった。
+
+## アクション
+1. 文字化けを発見したら、まずgit historyで「いつから化けているか」をコミット単位で特定する(`git show <commit>:<file> | grep -c "繧\|縺\|繝"`のようなマーカー文字カウントで機械的にスキャン可能)
+2. 化ける前の直近クリーンなコミットのファイルを土台にし、化けた期間中の意味のある差分(セクション追加等)だけを手動で再適用する方が、バイト単位の逆変換より確実で安全
+3. バイト単位の逆変換(`encode("cp932").decode("utf-8")`)を行毎に試す場合、UnicodeEncodeError/DecodeErrorが出た行は「そのまま復元」とみなし、人間が最終確認する
+4. .gitattributesやエディタの自動エンコーディング検出に頼らず、UTF-8 with BOMかどうかも含めて`open(path,"rb")`でバイト先頭を確認してから対処する
+
+## 例
+`git show 0f7d34f:CLAUDE.md`(6/23、クリーン版)を土台に、7/10以降に追加された「Python実行環境の固定」セクションと削除された「Intermind連携」セクションだけを手動反映し、CLAUDE.mdを復元した(07a0f4d)。
+
+---
+id: codex-rescue-runs-in-readonly-sandbox-cannot-write
+trigger: "codex:rescue(codex-companion.mjs task)経由でCodexにファイル修正・実装を委任する場面"
+confidence: 0.9
+domain: coding-agent-tooling
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# codex:rescue経由のCodexはread-onlyサンドボックスで動作し、ファイル書き込み・修正適用ができないことがある
+
+## 背景
+anasloスクレイパーの静的レビューをCodexに委任したところ、調査自体は正常に完走し高品質な指摘(5点の保守リスク)を返した。しかし続けて同じ指摘に基づく修正実装を依頼したところ、「read-only sandboxで書き込みがアクセス拒否される」というエラーで一切のファイル変更が適用できなかった。調査レポート自体をscratch/へ書き出す指示も同じ理由で失敗し、レポート本文はCodexの応答テキストとして受け取るしかなかった。`--write`フラグを付けても状況は変わらず、`--resume-last --write`で同一スレッドを継続しても同様だった。CLIバージョンやモデルgating([[codex-model-requires-newer-version-error-is-often-account-gating-not-cli-version]])とは別の制約。
+
+## アクション
+1. Codexへの委任は「調査・レビュー・診断」に限定し、結果はstdout経由のテキストとして受け取ってからClaude側でファイル化する(Write toolで代行)
+2. 修正の実装自体は、Codexが返した具体的な指摘(ファイル・行番号・修正方針)を踏まえてClaude側で直接実装する方が、サンドボックス制約に阻まれず確実
+3. 書き込みが必要な場面で最初から失敗するリスクを避けるため、大きな実装をCodexに一括委任する前に、軽量な書き込みテスト(例: 一行だけのファイル作成)で書き込み可否を先に確認するのも一案
+4. 恒久対応が必要なら、Codexデスクトップアプリ/CLI側のサンドボックス設定(~/.codex/config.tomlの[windows] sandbox項目やプラグインの実行モード)を見直す必要があるが、本セッションでは未解決のまま
+
+## 例
+`document/JUGGLER_SETTING_PREDICTION_FINAL_REPORT.md`相当の詳細調査はCodexが正常に返せたが、`scraper/anaslo_scraper_auto.py`の5点修正依頼は「実装はブロックされました。現在の環境が read-only で...」という応答のみで、実際のコード変更はClaudeが直接Edit toolで行った(7ab21de)。
+
+---
+id: semantic-commit-splitting-for-multiday-backlog
+trigger: "複数日分の未コミット変更(新規ファイル・修正ファイルが混在)を一度にコミットする場面"
+confidence: 0.8
+domain: git-workflow
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 5日分の滞留変更は「日付」でなく「意味的なまとまり」でコミットを分割する
+
+## 背景
+7/11から7/16まで5日分、19ファイルの修正+新規スキル4個+instinct約24本+最終レポート+日次予測記録が未コミットのまま滞留していた。これを1コミットにまとめると、後からgit blame/git logで特定の変更(例: win_rateのNaNバグ修正)を追跡できなくなる。実際には「スキル追加」「dashboardバグ修正」「新ホール設定追加」「EDAスクリプト群」「最終レポート」「セオリー文書更新」「instinct+振り返り」「予測記録」「gitignore整備」「スクレイパー刷新」という10種類の性質の異なる変更が混在していた。
+
+## アクション
+1. `git diff --stat`と`git status --porcelain`で全体像を把握した後、ファイルパスの種類・変更の意図でグルーピングする(日付ではなく「機能単位」)
+2. pre-commitフックがruff-formatで一部ファイルを自動整形する場合、コミットが一度失敗してstashされることがあるため、失敗後は再度`git add`して同じメッセージでコミットし直す
+3. 巨大な一括コミットの前に、ルート直下に紛れた事故ファイル(空ファイル・一時txt・error.log等)がないか`git status`の`??`行を確認し、gitignore対象なら`scratch/`等へ退避してからコミットする
+4. コミットメッセージは「何を変更したか」だけでなく、複数ファイルにまたがる場合は代表的な変更内容を箇条書きで残す(後から見て意図が分かるように)
+
+## 例
+本セッションでは以下の順でコミットを分割した: スキル追加(f990a22)→dashboardバグ修正(8593e79)→楽園設定追加(448f785)→EDA群(c40be83)→最終レポート(97d6060)→セオリー文書(2f4a76a)→instinct+roadmap(5a3af52)→予測記録(adbe0f9)→gitignore(66aaa84)→スクレイパー刷新(7ab21de)。合計11コミットで意図が追跡可能な状態にした。
+
+---

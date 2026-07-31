@@ -1,0 +1,24 @@
+{
+  "rule_id": "k7_jug_kakuban1_avoid",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "freeze_hash": "787b09fc12fad3e1",
+  "hypothesis": "通路角番1（rank_from_aisle=1）は全セグメントで残差マイナスの冷遇ポジションなので、そこを外すだけでジャグ全台平均を上回る。",
+  "source_instinct": "kakuban-section-residual-insights-20260617 / highsetting-rb-probability-kakuban-verification-20260716",
+  "success_criterion": "エッジの平均が +50枚/台 以上かつ 95%CI 下限 > 0。角1除外はほぼコストゼロの操作なので閾値は低めに置く。",
+  "eval_range": "20251001-20260720",
+  "n_eval_days": 289,
+  "n_days_skipped_no_history": 0,
+  "n_days_traded": 289,
+  "n_picks": 42120,
+  "mean_diff_per_pick": 202.1,
+  "mean_baseline": 188.4,
+  "mean_edge_per_pick": 13.7,
+  "edge_ci95": [
+    10.8,
+    17.3
+  ],
+  "edge_positive_day_rate": 0.689,
+  "win_rate_abs": 0.443,
+  "cumulative_diff": 57426.5,
+  "yen_per_day_at_20": 3974
+}

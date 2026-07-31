@@ -1,0 +1,17 @@
+{
+  "rule_id": "k7_at_histdiff_top3",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "hypothesis": "蒲田7のAT一般は『設定方針のレジーム』ではなく『ラインナップのレジーム』で動く。直近30日の平均差枚が高い台を選ぶスコアは実質『いま出ている機種の主力台を選ぶ』器として働き、同日AT一般平均に対して機械割で優位を取る。",
+  "source_instinct": "backtest/results/regime/FINDINGS.md 追試1（蒲田7 AT一般のみ非定常 ratio=1.99 p=0.007 / picks 機械割 104.84% vs 全体 100.59%, G数 3992 vs 3972 で回転数交絡なし, 370日 walk-forward）",
+  "eval_start": "20251001",
+  "eval_end": "20260720",
+  "success_criterion": "この主張は FINDINGS 追試1 で既に walk-forward 計測済みのため、バックテストは再現確認にすぎず採否根拠にしない。判定はフォワードのみ。フォワード30エントリー日を経過した時点で edge 平均が +300枚/台 以上かつ 95%CI 下限 > 0 であること。満たさなければ破棄し、AT系スコアの派生はこの1本で打ち止めとする。",
+  "universe": { "jug_flag": 0, "hana_flag": 0, "oki_flag": 0, "bt_flag": 0 },
+  "eligibility": { "jug_flag": 0, "hana_flag": 0, "oki_flag": 0, "bt_flag": 0 },
+  "entry_days": {},
+  "score": "hist_mean_diff",
+  "lookback_days": 30,
+  "min_history_days": 10,
+  "top_n": 3,
+  "min_games": 1000
+}

@@ -91,6 +91,10 @@ def main() -> None:
         if missing:
             raise SystemExit(f"machine_layout missing expected columns: {sorted(missing)}")
 
+        # Rebuild rather than upsert: the 2026-07-06 renumbering removed 2078/2079,
+        # and a plain INSERT OR REPLACE would leave those stale rows behind.
+        con.execute("DELETE FROM machine_layout WHERE hall_name = ?", (HALL_NAME,))
+
         con.executemany(
             """
             INSERT OR REPLACE INTO machine_layout

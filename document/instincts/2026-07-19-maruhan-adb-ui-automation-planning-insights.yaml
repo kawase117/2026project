@@ -1,0 +1,84 @@
+---
+id: play-integrity-bypass-via-genuine-device-ui-automation
+trigger: "Google Play Integrityでゲートされたアプリのデータを、root化・改変・API直叩きなしで取得したいとき"
+confidence: 0.85
+domain: mobile-scraping
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Play Integrityの壁はAPI直叩きを諦めUI自動操作に回れば迂回できる
+
+## 背景
+マルハンアプリの調査で、台データ系APIはGoogle Play Integrityアテステーションで守られており、
+root化/エミュ/再署名/Frida計装のいずれの環境でも認証トークンが発行されず恒久的に詰むことが
+確定した(play-integrity-attestation-defeats-repackaged-app-scraping参照)。
+ここでの本質的な洞察は「API直叩き」という発想自体が罠だったこと。Play Integrityは
+「アプリ・OS・通信層が無改変か」を検証する仕組みなので、無改変のアプリを無改変の実機
+(root化無し、Playストアから通常インストール)で動かし、ネットワーク層を一切触らず、
+ADBで画面をタップ操作して`uiautomator dump`で表示テキストを読み取る「UI自動化」に
+回れば、Play Integrity検証の対象そのものから外れる。
+つまり「認証を突破する」のではなく「認証が要らない経路(人間が見るのと同じUI)を使う」
+という発想の転換が鍵。エミュ上の検証で、対象アプリが標準Android View(WebView/Canvas
+独自描画ではない)でレンダリングしており`uiautomator dump`が日本語テキストを正しく
+抽出できることも実証済みで、この方針の技術的前提は成立している。
+
+## アクション
+- Play Integrity/SafetyNet/証明書ピンニング等でAPI経路が完全に詰んだと判断したら、
+  「アプリを無改変・無root環境で動かし、UI自動操作+画面テキスト読み取りに回れる
+  か」を必ず検討する。これは技術的な保護機構の回避ではなく、人間の閲覧を代行する
+  だけなので、法的・倫理的にもクリーンな部類に入る。
+- 前提条件の確認: 対象アプリがuiautomator dumpでテキスト抽出可能な標準Viewで
+  レンダリングされているか(WebView/Canvas独自描画だとテキスト抽出できずOCR
+  フォールバックが必要になる)を早期に確認する。
+- USBデバッグ(開発者オプション)有効化自体がPlay Integrity判定に影響するかは
+  断定できないため、UI自動化ルートに投資する前に実機で最初に確認すること。
+
+## 例
+```
+API直叩きルート: root化/エミュ/再署名 → Play Integrity不合格 → Auth-Key取得不可 → 詰み
+UI自動化ルート: 無改変実機+無改変アプリ → Play Integrity合格(通常利用のため)
+                → ADBでtap/swipe操作 → uiautomator dumpで画面テキスト読み取り
+                → ネットワーク層に一切触れないためIntegrity検証の対象外
+```
+
+---
+id: scraper-json-contract-reuse-for-new-data-source
+trigger: "同一プロジェクト内で新しいデータ取得手段(別サイト/別アプリ等)を追加するとき"
+confidence: 0.88
+domain: architecture
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 新規データ取得手段は「取得手段だけ差し替え、保存契約は完全共通化」で設計すると下流が無改修になる
+
+## 背景
+マルハンアプリ用ADBスクレイパーの設計時、既存`scraper/anaslo_scraper_auto.py`の
+出力JSON契約(`{"date","hall_name","all_data","last_digit_data","url"}`、行内は
+日本語キー`機種名`,`台番号`,`G数`,`差枚`,`BB`,`RB`)に完全一致させる方針にした。
+これにより`database/json_processor.py`(下流のSQLite投入ロジック)は一切変更不要
+になる。同様に`save_to_database`・`load_hall_config`等の既存関数もそのままimportして
+再利用し、重複実装を避けた。差分は「データの取得手段」だけに閉じ込め、「保存契約」
+は完全共通にする、という設計判断。
+
+## アクション
+- 新しいスクレイパー/データ取得手段を追加するときは、まず既存の出力契約(JSON
+  構造・キー名・保存先パス規則)を正確に把握し、そこに合わせて出力するよう新規
+  コードを設計する。下流の処理(DB投入・集計・ダッシュボード)を変更しないで済む
+  ことが最優先の設計目標。
+- 保存/設定読み込み等の共通ロジックは新規実装せず、既存モジュールからimportして
+  再利用する。
+- 収集手段特有のconfig(例: `app_source: {enabled, app_hall_id}`)は既存configの
+  構造に**追加フィールドとして**乗せ、既存フィールドは変更しない(後方互換維持)。
+  新機能はデフォルト無効(`enabled: false`)にし、検証が取れた対象から段階的に
+  有効化する。
+
+## 例
+```json
+{
+  "hall_name": "マルハンメガシティ2000-蒲田1",
+  "scraper_url": "https://ana-slo.com/...",
+  "app_source": { "enabled": false, "app_hall_id": "TBD" }
+}
+```

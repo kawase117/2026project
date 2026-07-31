@@ -1,0 +1,66 @@
+{
+  "rule_id": "mitoya_at_eventdd_histdiff_top3",
+  "hall": "みとや大森町店",
+  "freeze_hash": "e99d60338347d27e",
+  "data_fingerprint": {
+    "n_rows": 76342,
+    "sum_games": 261278610,
+    "sum_diff": 176823,
+    "max_date_in_db": "20260726"
+  },
+  "hypothesis": "みとやのイベントDD戦略の本体はジャグではなくAT一般である。2026-05の店長交代でジャグのイベントDDギャップは +0.75pp [+0.54,+0.96] → +0.20pp [-0.22,+0.58] とゼロを跨いで消滅したが、AT一般は +3.14pp [+2.57,+3.72] → +1.86pp [+0.44,+3.20] と減衰しつつ生存し、イベント日の絶対機械割は 101.31% を保っている。イベントDD{1,4,7,14,17,24,27,30}に限り、直近30日の平均差枚が高いAT一般台を選ぶ。",
+  "source_instinct": "feedback-hall-regime-needs-external-event-calendar（2026-07-27にユーザーから店長交代の情報を得て期間分割した結果） / mitoya-event-definition-confirmed の2026-07-27追記 / backtest/results/regime/FINDINGS.md 追試1（蒲田7 AT一般の hist_mean_diff がラインナップレジームの器として機能する）",
+  "success_criterion": "【重要】AT一般×イベントDD という組み合わせは 2026-07-27 に同じデータを見て発見したものであり、バックテストは in-sample である。数値を採否根拠にしてはならない。判定はフォワードのみ。フォワード20エントリー日を経過した時点で edge 平均が +200枚/台 以上かつ 95%CI 下限 > 0 であること。満たさなければ破棄し、みとやのAT系スコアの派生はこの1本で打ち止めとする。なお 2026-05 の店長交代以降のイベントDD日は実測21日しかなく、レジーム再変化の可能性は常に残る。",
+  "eval_range": "20251001-20260720",
+  "n_eval_days": 75,
+  "n_days_skipped_no_history": 0,
+  "n_days_traded": 75,
+  "n_picks": 225,
+  "mean_games_per_pick": 3886.1,
+  "pick_low_games_rate": 0.049,
+  "mean_diff_per_pick": 139.7,
+  "mean_baseline": 203.1,
+  "mean_edge_per_pick": -63.4,
+  "edge_ci95": [
+    -479.4,
+    380.5
+  ],
+  "edge_ci95_block7": [
+    -398.5,
+    301.3
+  ],
+  "mean_edge_vs_excluded": -64.8,
+  "edge_vs_excluded_ci95_block7": [
+    -406.7,
+    307.4
+  ],
+  "mean_pick_share": 0.02,
+  "edge_positive_day_rate": 0.453,
+  "win_rate_abs": 0.382,
+  "cumulative_diff": 10479.3,
+  "yen_per_day_at_20": 2794,
+  "period_split": {
+    "split_date": "20260501",
+    "caveat": "post-hoc 部分集団解析。採否根拠にしないこと。既知の外部変化点にのみ使う。",
+    "before": {
+      "n_days_traded": 55,
+      "n_picks": 165,
+      "mean_edge_per_pick": -48.2,
+      "edge_ci95_block7": [
+        -448.4,
+        421.4
+      ],
+      "edge_positive_day_rate": 0.436
+    },
+    "after": {
+      "n_days_traded": 20,
+      "n_picks": 60,
+      "mean_edge_per_pick": -105.2,
+      "edge_ci95_block7": [
+        -607.4,
+        464.6
+      ],
+      "edge_positive_day_rate": 0.5
+    }
+  }
+}

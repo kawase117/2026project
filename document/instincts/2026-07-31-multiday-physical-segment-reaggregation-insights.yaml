@@ -1,0 +1,106 @@
+---
+id: 2026-07-31-kamata7-3fl-segment-negative-excess
+trigger: "蒲田7で機種カテゴリ別・フロア別のホール比excessを見るとき。特に3F側のセグメントを台選びの根拠にするとき"
+confidence: 0.6
+domain: hall-specific
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+---
+
+# 蒲田7: 3F_L（2F/3F×L/R 4分割の3F左側）は29日平均で有意にマイナス
+
+## Core claim
+蒲田7を2F/3F×L/R（既存の`ml/analysis/kamata7_kakuban_rl_eda.py`のX座標L/R定義）で4物理セグメントに分けると、2026-07-01〜07-30の29日平均で3F_Lだけがホール平均比excess −102枚/台 [95%CI −195, −9]と有意にマイナス。他3セグメント（2F_L +50 / 2F_R +30 / 3F_R +53）はCIが0をまたぎ有意でない。
+
+## Evidence
+- n_observations: 29日 × 台入替を除いた現行台のみ（machine_number+machine_name一致で履歴を絞り込み）
+- data scope: hall=マルハンメガシティ2000-蒲田7、全カテゴリ横断
+- metric scope: diff_coins_normalized の同日ホール平均比excess、日をクラスタとした平均±1.96×SE
+- result summary: 3F_L −101.7 [-194.7, -8.7]（有意）。2F_L +49.9 [-24.7, 124.4]／2F_R +29.7 [-20.9, 80.2]／3F_R +52.9 [-55.1, 160.9]（いずれもns）。単日(0730)では逆に2F_Lが最弱・3F_Rが最強に見えたが、これは単日ノイズで29日平均では再現しない。
+
+## Interpretation
+- 3F_Lにはハナハナ全16台・ジャグ74台・AT一般119台が混在しており、単一機種の効果ではなく物理位置（フロア×左右）そのものの効果と考えられる。
+- ただしハナハナ16台は全て3F_Lにしか設置がなく、「3F_Lが弱い」と「機種固有の弱さ」を完全には分離できていない（confounder）。
+- 単日データの符号（0730は2F_L最弱）を鵜呑みにしないこと。物理セグメント軸は日次ノイズが大きく、複数日集計して初めて安定した符号が出る。
+
+## Action
+- 蒲田7で台選びの優先順位付けに物理セグメントを使う場合、3F_Lは他3セグメントより一段低く評価する。
+- ハナハナとの交絡を切り分けるため、3F_L内でハナハナを除いた場合の再集計をTODOとする（次回蒲田7セグメント分析時に実施）。
+- 単日のみでこのセグメント軸を根拠に台を選ばないこと。
+
+## Relation
+- related: []
+
+## Status
+- status: active
+---
+id: 2026-07-31-rakuen-jug-minor-model-negative
+trigger: "楽園蒲田のジャグ台選びで、ネオアイム/マイジャグ以外の少数台機種（ゴーゴー・ハッピー・ファンキー・ガールズ）を候補に入れるかどうか判断するとき"
+confidence: 0.6
+domain: hall-specific
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+---
+
+# 楽園蒲田: 工事後ジャグの少数台機種（<15台）は22日平均で有意にマイナス、メイン機種（アイム/マイジャグ）は非有意
+
+## Core claim
+楽園蒲田の工事後（2026-07-07〜07-30、22日）で、ジャグをメイン機種(ネオアイムEX 62台・マイジャグV 20台、計82台)と少数台機種(ゴーゴー3・ハッピー・ファンキー・ガールズ、計35台)に分けると、少数台側だけがホール平均比excess −157枚/台 [95%CI −228, −86]で有意にマイナス。メイン側は+49 [-54, +152]で非有意。
+
+## Evidence
+- n_observations: 22日、台入替を除いた現行台のみ
+- data scope: hall=楽園蒲田店、category=A_ジャグ
+- metric scope: diff_coins_normalized の同日ホール平均比excess、日クラスタCI
+- result summary: A_ジャグ|少数台(<15台) -157.1 [-228.2, -85.9]（有意）。A_ジャグ|メイン(>=15台) +49.3 [-53.5, 152.2]（ns）。カテゴリ単位（AT一般/ジャグ/ハナハナ/技術介入の4分類）や5フロア分類は22日平均でいずれも非有意で、この機種規模分割だけが唯一有意だった。
+
+## Interpretation
+- 「楽園のジャグはネオアイムに固定投入されている」という以前の見立て（RB確率スコアの機種偏重問題）とは独立の角度から、少数台ジャグが一貫して弱いことが裏付けられた。
+- ただし「メイン機種の中でどちらが良いか（アイム vs マイジャグ）」はこの分割では分からない。単日(0730)ではマイジャグの方がアイムよりrateが良かったが、22日平均では未検証。
+- 工事後のレジームに限定した集計（0706島配列工事後）。工事前や他ホールへの一般化はしない。
+
+## Action
+- 楽園のジャグ台選びでは少数台機種（ゴーゴー・ハッピー・ファンキー・ガールズ）を優先候補から外し、アイム/マイジャグの2機種に絞ることを支持する追加根拠とする。
+- `backtest/prereg/rakuen_jug_renovation_rb_top3` のuniverseをメイン2機種に絞る変更を検討する際の材料にする。
+- アイム vs マイジャグのどちらが良いかは、複数日のメイン機種内訳を別途集計してから判断する。
+
+## Relation
+- related: []
+
+## Status
+- status: active
+---
+id: 2026-07-31-single-day-category-floor-breakdown-unreliable
+trigger: "1日だけのデータでカテゴリ別・フロア別・機種規模別のexcessを比較して結論を出したくなったとき。当日の答え合わせから機種選択ルールを導きたくなったとき"
+confidence: 0.7
+domain: methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+---
+
+# 単日のカテゴリ/フロア/機種規模別excessは複数日集計でほぼ消える
+
+## Core claim
+蒲田7・楽園の単日(0730)データで見えたカテゴリ別・フロア別・機種規模別のexcess差は、29日・22日で日クラスタCIを付けて再集計すると大半が0をまたぎ、有意な差として残るのはごく一部（蒲田7の3F_L、楽園ジャグ少数台機種）だけだった。
+
+## Evidence
+- n_observations: 蒲田7 29日 / 楽園 22日
+- data scope: hall=蒲田7・楽園、全カテゴリ横断
+- metric scope: diff_coins_normalized excess、単日値 vs 日クラスタ平均±CI
+- result summary: 単日では蒲田7「2F_L最弱/3F_R最強」・楽園「ハナハナ+380/ジャグ-122」等の大きな差が見えたが、複数日平均ではいずれも符号が変わるか95%CIが0をまたいだ。有意に残ったのはごく一部の軸のみ（[[2026-07-31-kamata7-3fl-segment-negative-excess]] / [[2026-07-31-rakuen-jug-minor-model-negative]]）。
+
+## Interpretation
+- 単日データでの「今日はこのカテゴリ/フロアが強かった」という観察は、当日の答え合わせとしては正しいが、次回以降の台選びルールの根拠にはできない。
+- カテゴリ数・フロア数・機種規模区分が増えるほど多重比較になり、単日では偶然有意に見える軸が増える。
+
+## Action
+- カテゴリ/フロア/機種規模別のexcess比較を台選びルールの根拠にする前に、最低20日程度・日クラスタCIを付けて再集計する。
+- 単日の粒度分解は「当日の答え合わせ・告知内容の検証」に留め、翌日以降の運用ルールには昇格させない。
+
+## Relation
+- related: []
+
+## Status
+- status: active
