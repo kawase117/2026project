@@ -1,0 +1,69 @@
+---
+id: 2026-08-03-hiroki-jug-hitdd-kamata7-hana-hitmm-splithalf-confirmed
+trigger: "ヒロキ東口のJUGカテゴリで台選びをするとき、末尾一致(machine_number%10 == その日の日dd%10)を検討するとき。蒲田7のHANAカテゴリ（キングハナハナ-30・ニューキングハナハナVのハナハナ系）で台選びをするとき、末尾一致(machine_number%10 == その月mm%10)を検討するとき。蒲田7の『ハナビ』『新ハナビ』（categoryはBTでHANAではない）にこの効果を流用しそうになったとき。categoryのHANAとハナビ（機種名）を混同しそうになったとき。eda/lastdigit_mm_dd_category_scan.pyの結果を使う・拡張するとき"
+confidence: 0.55
+domain: hall-strategy
+source: empirical-measurement
+project_id: 2026project
+project_name: pachinko-analyzer
+---
+
+# ヒロキJUG×日末尾、蒲田7 HANA×月末尾はsplit-halfで再現した
+
+## Core claim
+2026-08-03-lastdigit-hypothesis-needs-category-decomposition の全9ホール135セル探索で
+有意だった4候補のうち、split-half検証（カテゴリ自身の営業日をソート順偶奇でA/B分割）で
+以下2セルが**両半分とも同符号かつ片方の半分では単独有意**という頑健なパターンを示した。
+
+- ヒロキ東口 JUG × hit_dd（末尾==その日の日dd%10）: A +0.875pp[+0.202,+1.549] n=231、
+  B +0.356pp[-0.277,+0.988] n=230
+- 蒲田7 HANA × hit_mm（末尾==その月mm%10）: A +0.530pp[-0.586,+1.646] n=193、
+  B +1.517pp[+0.459,+2.576] n=193
+
+同時に検証した蒲田7 OKI×both、ARROW HANA×bothの2セルは棄却された
+（前者はA/Bで大きさが3倍乖離・n=14/21の小標本、後者は両半分ともCIが0を跨ぐ）。
+
+## ⚠️ 「HANA」（カテゴリ）と「ハナビ」（機種名）は別物
+`category==HANA` は**ハナハナ系**（蒲田7ではキングハナハナ-30・ニューキングハナハナVの2機種）を指す。
+「ハナビ」「新ハナビ」という機種名は**category==BT**（技術介入機）であり、この claim の対象外。
+2026-08-03に蒲田7のBTカテゴリでスマスロハナビ(20台)・新ハナビ(17台)を機種別に同じ仮説で
+検定したが、hit_dd/hit_mm/bothいずれもCIが0を跨ぎ非有意だった
+（スマスロハナビ hit_dd +1.54pp[-0.81,+3.90] n=84、新ハナビ hit_dd +0.56pp[-0.58,+1.71] n=290 等）。
+このclaimを「ハナビ系全般」に拡大解釈しないこと。
+
+## Evidence
+- n_observations: ヒロキJUG 461日(A231/B230)、蒲田7 HANA 386日(A193/B193)
+- data scope: single-hall × 単一カテゴリ（ヒロキ全期間、蒲田7全期間・鉄台2026除外済み）
+- metric scope: 同日内 一致群−不一致群 の日次gap（games加重機械割の残差ベース）
+- result summary: 135セル探索で有意だった4セル中2セルがsplit-halfで頑健、2セルは棄却
+  （多重検定期待偽陽性 113セル×5%=5.65件に対し、探索段階の有意4件はこの期待値の範囲内
+  だったが、split-halfで方向性・大きさが両半分に分散していたのはこの2セルのみ）
+
+## Interpretation
+- これは**探索済み候補の頑健性確認**であり、独立ホールドアウト検証ではない
+  （母集団はフルサンプルの再分割で、未来データでの汎化は未検証）
+- 効果量はppオーダーで小さく（+0.36〜+1.5pp）、単独で台選びの主軸にするには弱い。
+  他の軸（機種エッジ・DD軸等）との併用材料として扱う
+- なぜヒロキはDD基準（日）で、蒲田7はMM基準（月）でJUG/HANAに効くのか、
+  メカニズムは未解明。ホールの配分オペレーションの違いを示唆するが、単なる偶然の
+  非対称という可能性も残る
+- 蒲田7 OKI×both、ARROW HANA×both が棄却されたのは、both仮説（月末尾=日末尾が
+  一致する日のみ発生）が母数の少なさゆえに不安定になりやすいことの実例
+  (feedback-statistical-certainty-calibration)
+
+## Action
+1. ヒロキ東口でJUGカテゴリを検討する日は、末尾が当日の日付(dd%10)と一致する台を
+   軽い加点材料として考慮してよい（プラス率56.6%、単独で選ぶ根拠にはしない）
+2. 蒲田7でHANAカテゴリを検討する日は、末尾が当月(mm%10)と一致する台を同様に加点材料にする
+3. 蒲田7 OKI×both、ARROW HANA×both は候補から外す。既に data-dredging で拾われた
+   偽陽性の可能性が高い
+4. 独立ホールドアウト（このデータ以降に新規収集される期間）での再確認を推奨。
+   2026年9月以降のデータで再テストすること
+
+## Relation
+- related:
+  - 2026-08-03-lastdigit-hypothesis-needs-category-decomposition
+  - feedback-statistical-certainty-calibration
+
+## Status
+- status: active

@@ -1,0 +1,23 @@
+---
+id: deathwatch-claims-vs-hypothesis-ledger-scope
+trigger: "フォワードテスト台選択ルール(backtest/prereg配下)の生死判定・失効基準をどこに記録するか迷ったとき。deathwatch/claims.jsonへの登録を検討したとき"
+confidence: 0.8
+domain: methodology
+source: session-observation
+project_id: pachinko-analyzer
+project_name: 2026project
+---
+
+# deathwatch/claims.json とHYPOTHESIS_LEDGER.mdは監視対象の種類が違う
+
+## 背景
+backtest/deathwatch.py + backtest/deathwatch/claims.json は「既知の位置/日付軸のホール理論(角番・端番・イベントDD等)が過去水準から乖離していないか」を baseline vs recent 窓の残差ベース(payout/rb_rate/bonus_rate)で継続監視する仕組み。claim の universe/target は台属性(jug_flag等)や日付(dd)の単純マスクであり、評価は同日×同機種残差または日次水準の baseline/recent 比較で行う。
+
+これに対し backtest/forward.py が回している「事前登録top-N台選択ルール(hist_mean_rb_prob等のscoreでtop_n台を選ぶ)」のフォワードテストは、評価軸が「当日の差枚edge(選んだ台 - 同日eligible平均)」の日次系列であり、deathwatchのuniverse/targetスキーマ(jug_flag/dd等の単純マスク)には載らない。2026-08-01、k7_jug_rb_top3(蒲田7ジャグのRB確率top3)が5戦全敗(平均edge -619, CI[-988,-250])になった際、失効基準をdeathwatch/claims.jsonに登録しようとしたが、スキーマも検定方法も別物でミスマッチだった。
+
+## アクション
+台選択フォワードテストルール(backtest/prereg/*.json)の生死判定・停止基準を記録するときは、document/registry/HYPOTHESIS_LEDGER.md に「ホール名（フォワードテスト監視）」の節を作って登録する。deathwatch/claims.jsonは位置/日付軸の理論claim専用のまま維持し、台選択ルールのentryを混ぜない。停止基準(例: n=Nで95%CI上限<0なら棄却)は、そのnに到達する前に固定して書くこと(事後変更は事前登録の原則違反)。
+
+## 例
+document/registry/HYPOTHESIS_LEDGER.md に「## マルハンメガシティ2000-蒲田7（フォワードテスト監視）」節を新設し、id=k7-fwd-jug-rb として「n=10到達時点でブロックブートストラップCI上限<0なら棄却へ判定を書き換え、以後hist_mean_rb_probを蒲田7ジャグの選択スコアに使わない」という停止規則をn=5時点(n=10到達前)で固定登録した(2026-08-01)。
+---

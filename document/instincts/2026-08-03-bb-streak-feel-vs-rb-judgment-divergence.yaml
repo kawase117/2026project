@@ -1,0 +1,55 @@
+---
+id: 2026-08-03-bb-streak-feel-vs-rb-judgment-divergence
+trigger: "『打っていて高設定っぽかった』という体感を設定推定の根拠にしようとしたとき。技術介入Aタイプ機の打感を評価するとき。BBが良く見える台をRB確率で裏取りせずに高設定と判断しそうになったとき"
+confidence: 0.55
+domain: methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+---
+
+# 「打感が高設定」はBIG連チャンの記憶に引っ張られる。判別はRBで裏取りする
+
+## Core claim
+ヒロキ東口 スマスロサンダーV(2278) 2026-08-02の実績: BB1/346(履歴中央値1/375より良い)、
+**RB1/900(自台履歴564日中の下位84%タイル、悪い側)**、差枚-1,330枚。ユーザーの「打感は高設定」
+という評価はBIGの引きの良さに基づいていたが、RBは自台履歴でも下位に沈んでおり、
+判別指標としてはむしろ低設定側を示していた。
+
+## Evidence
+- n_observations: 1台・1日（スマスロサンダーV 2278、ヒロキ東口、自台履歴564日と比較）
+- data scope: single-machine（他機種・他ホールでの一般性は未検証）
+- metric scope: bb_probability / rb_probability（自台の稼働履歴内での分位比較）
+- result summary:
+  - 8/2: BB13回/4,500G(1/346)、RB5回/4,500G(1/900)、合成1/250、差枚-1,330枚、機械割90.1%
+  - 自台564日の中央値: BB分母1/375前後、RB分母1/375、合成1/168
+  - 8/2のRB分母は自台履歴の下位84%タイル、合成分母は下位78%タイル（両方とも悪い側）
+  - 前日8/1は BB21/RB6(1/197・1/689) 機械割112.5%で、8/2よりBB/RBとも良好だった
+
+## Interpretation
+- Aタイプ技術介入機（BIG連チャンで出玉が伸びる機種）では、体感される「高設定っぽさ」は
+  BIGの連続性から来やすい。しかし設定差はREG確率側に乗ることが多く
+  （signal-ceiling-variance-decomposition の「diff法3倍過大・RB法が正」と同型の構図）、
+  BIGだけを見た体感と統計的な設定判別が乖離しうる
+- 今回はRB回数5回とサンプルが小さく、「設定1だった」と断定はできない。
+  「打感＝BIGの良さ」「判別＝RBの悪さ」が単日で食い違った、という記述に留める
+- 自台の稼働履歴に対する分位（パーセンタイル）で比較することで、機種間で確率が
+  大きく異なる問題を回避できる。機種横断のRB確率スペック表(rb-probability-juggler-hokuto-spec)
+  が無い機種でも、自台の履歴があれば同じ手法が使える
+
+## Action
+1. 技術介入Aタイプ機で「打感が良かった」という評価を設定推定に使う前に、
+   必ずBB/RBそれぞれを自台の履歴分位で確認する。BBだけで判断しない
+2. RB回数が一桁の日は誤差が大きいので、単日のRB分位だけで設定を断定しない。
+   複数日の合成値、または複数指標の一致を確認してから判断する
+3. 機種スペック表が無い機種の設定推定には、自台の稼働履歴に対する分位比較を
+   汎用手法として使える（本件で実証）
+
+## Relation
+- related:
+  - rb-probability-juggler-hokuto-spec
+  - signal-ceiling-variance-decomposition-20260706
+  - highsetting-rb-probability-kakuban-verification-20260716
+
+## Status
+- status: active
