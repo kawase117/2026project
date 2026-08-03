@@ -1,11 +1,11 @@
 # ACTIVE_INSTINCTS
 
-- generated_at: 2026-07-31T20:30:08+09:00
+- generated_at: 2026-08-03T14:50:06+09:00
 - compiler_version: 1.3.0
 - source_dir: `C:/Users/apto117/Documents/pachinko-analyzer/src/2026project/document/instincts`
-- total_records_scanned: 1485
+- total_records_scanned: 1496
 - active_records: 120
-- status_breakdown: unverified=1481, confirmed=1, refuted=0, superseded=2
+- status_breakdown: unverified=1492, confirmed=1, refuted=0, superseded=2
 - filters: `confidence >= 0.80` and `file_date within 21 days` (unless pinned by high confidence)
 
 ## Usage
@@ -17,358 +17,353 @@
 
 ## Active List
 
-### 1. `2026-07-31-scan-first-then-refute`
+### 1. `2026-08-01-do-not-use-briefing-common-is-event-dd`
+- confidence: `0.95` | status: `unverified` | date: `2026-08-01` | file: `2026-08-01-eventday-audit-methodology.yaml`
+- domain/source: `data-pipeline` / `session-observation`
+- trigger: eda/briefing_common.py の load_hall_frame を使ってイベント日別の集計をするとき。is_event_dd 列を使おうとしたとき。HALL_EVENT_DIGITS を参照するとき。イベント日 vs 非イベント日の比較をするとき
+
+### 2. `2026-08-01-residual-conclusion-needs-period-split-and-two-methods`
+- confidence: `0.90` | status: `unverified` | date: `2026-08-01` | file: `2026-08-01-eventday-audit-methodology.yaml`
+- domain/source: `methodology` / `session-observation`
+- trigger: DD別・機種別・セクション別の残差を計算して『このDDが強い』『この機種が強い』と結論したくなったとき。全期間平均で効果量を出したとき。棚卸しやスキャンの結果をtheory文書に書こうとしているとき
+
+### 3. `2026-08-01-answer-check-metric-hit104-over-mean-diff`
+- confidence: `0.80` | status: `unverified` | date: `2026-08-01` | file: `2026-08-01-answer-check-metric-hit104-over-mean-diff.yaml`
+- domain/source: `prediction-evaluation` / `empirical-measurement`
+- trigger: 予測の答え合わせで機種や台を採点するとき。平均差枚で『この機種が強かった』と結論しようとしたとき。大きくマイナスの台をどう扱うか迷ったとき。ユーザーの実現損益と『高設定が入っていたか』を同じ指標で測ろうとしたとき
+
+### 4. `deathwatch-claims-vs-hypothesis-ledger-scope`
+- confidence: `0.80` | status: `unverified` | date: `2026-08-01` | file: `2026-08-01-deathwatch-vs-hypothesis-ledger-scope.yaml`
+- domain/source: `methodology` / `session-observation`
+- trigger: フォワードテスト台選択ルール(backtest/prereg配下)の生死判定・失効基準をどこに記録するか迷ったとき。deathwatch/claims.jsonへの登録を検討したとき
+
+### 5. `2026-08-01-event-calendar-structure-is-hall-dependent`
+- confidence: `0.80` | status: `unverified` | date: `2026-08-01` | file: `2026-08-01-eventday-audit-methodology.yaml`
+- domain/source: `hall-strategy` / `session-observation`
+- trigger: ホールのイベント日を実測から導出するとき。個別DDの残差ランキング上位を見てイベント日を決めたくなったとき。カテゴリ別（ジャグ/AT等）にイベント日を分けるべきか判断するとき
+
+### 6. `2026-07-31-scan-first-then-refute`
 - confidence: `0.90` | status: `unverified` | date: `2026-07-31` | file: `2026-07-31-scan-first-then-refute.yaml`
 - domain/source: `methodology` / `session-observation`
 - trigger: ホール別・機種別の強さを調べるとき。ユーザーが『この機種が強いはず』と肌感を挙げてきたとき。機種エッジの新しい分析スクリプトを書こうとする前
 
-### 2. `2026-07-31-seat-vs-model-effect-paired-comparison-method`
+### 7. `2026-07-31-seat-vs-model-effect-paired-comparison-method`
 - confidence: `0.85` | status: `unverified` | date: `2026-07-31` | file: `2026-07-31-model-highsetting-bias-seat-vs-model-methodology.yaml`
 - domain/source: `methodology` / `session-observation`
 - trigger: 特定の機種が高設定配分されやすいという肌感・仮説を統計的に検証するとき。台番号が過去に複数の機種を演じている(機種入替)ホールで、機種効果と座席(位置)効果を切り分けたいとき
 
-### 3. `2026-07-31-hypothesis-ledger-judgment-taxonomy`
+### 8. `2026-07-31-hypothesis-ledger-judgment-taxonomy`
 - confidence: `0.85` | status: `unverified` | date: `2026-07-31` | file: `2026-07-31-hypothesis-ledger-judgment-taxonomy.yaml`
 - domain/source: `methodology` / `session-observation`
 - trigger: 検証結果を『使えない/効果なし』と一括りにしたくなったとき。仮説の判定を記録・再訪するとき。document/registry/HYPOTHESIS_LEDGER.md を書く・読むとき
 
-### 4. `2026-07-31-effect-attribution-needs-live-roster-check`
+### 9. `2026-07-31-effect-attribution-needs-live-roster-check`
 - confidence: `0.85` | status: `unverified` | date: `2026-07-31` | file: `2026-07-31-hypothesis-ledger-and-deathwatch-methodology-insights.yaml`
 - domain/source: `methodology` / `session-observation`
 - trigger: 位置系・カテゴリ系のセグメント効果を『特定フロア/区画由来』と帰属させたくなったとき。特に失効・変化の原因を切り分けているとき
 
-### 5. `2026-07-31-turnover-check-needs-identity-not-rate`
+### 10. `2026-07-31-turnover-check-needs-identity-not-rate`
 - confidence: `0.80` | status: `unverified` | date: `2026-07-31` | file: `2026-07-31-turnover-check-needs-identity-not-rate.yaml`
 - domain/source: `methodology` / `session-observation`
 - trigger: 機種入替・台の出入りが効果の変化を説明できないか確認するとき。『入替アーティファクトではない』と結論したくなったとき
 
-### 6. `forward-scoring-needs-rb-perspective-not-just-diff`
+### 11. `forward-scoring-needs-rb-perspective-not-just-diff`
 - confidence: `0.85` | status: `unverified` | date: `2026-07-30` | file: `2026-07-30-forward-scoring-rb-perspective-insights.yaml`
 - domain/source: `prediction-evaluation` / `session-observation`
 - trigger: RB確率(hist_mean_rb_prob / hist_mean_rb_prob_model_z / hist_hit104_rate)で台を選ぶジャグ・ハナハナ系フォワードテストの答え合わせをするとき
 - summary: backtest/forward.py の score() は元々「diff(差枚) - 同日eligible平均」のedgeだけを答え合わせ指標にしていた。しかしRB確率ベースの選定ルールは「RBが多く出る台=高設定」という根拠で台を選んでおり、差枚は投資ペースやBB配分・短時間の出玉ムラにも左右されるため、d...
 
-### 7. `split-half-consistency-is-not-holdout`
+### 12. `split-half-consistency-is-not-holdout`
 - confidence: `0.95` | status: `unverified` | date: `2026-07-29` | file: `2026-07-29-rakuen-theory-revalidation-audit-insights.yaml`
 - domain/source: `statistical-methodology` / `session-observation`
 - trigger: 候補（DD・末尾・section等）を全期間から抽出したあとに、時系列前半/後半へ分割して『holdout検証した』と主張しようとするとき
 - summary: `eda/rakuen_theory_revalidation.py` はジャグ・ハナハナ・技術介入・AT一般のカテゴリ別DD候補を 中央値日（2025-10-14）で前後半に割り、後半でBH補正付き permutation 検定を行い、通過分に `holdout_supported` という列名を与えた。しかし...
 
-### 8. `model-confinement-causes-residual-degeneracy`
+### 13. `model-confinement-causes-residual-degeneracy`
 - confidence: `0.90` | status: `unverified` | date: `2026-07-29` | file: `2026-07-29-rakuen-residual-methodology-and-section-retraction-insights.yaml`
 - domain/source: `statistical-methodology` / `session-observation`
 - trigger: 機種内残差（同日×同機種平均からの残差）で、フロア・棟・特定セクション群など「機種を横断する広い単位」を比較しようとするとき
 - summary: 楽園蒲田店で2回、同じ構造のバグ/罠に遭遇した。 (1) 「本館>新館」の建物単位勾配を機種内残差で測ろうとしたところ、ジャグ・ハナハナ・ 技術介入はカテゴリ内の全機種が本館↔新館のどちらか一方に完全に閉じ込められており （複数棟にまたがる機種が0件）、機種内残差では原理的に建物間の差を検出できなかった。 唯一A...
 
-### 9. `rakuen-section-dd-swing-fully-retracted`
+### 14. `rakuen-section-dd-swing-fully-retracted`
 - confidence: `0.90` | status: `unverified` | date: `2026-07-29` | file: `2026-07-29-rakuen-residual-methodology-and-section-retraction-insights.yaml`
 - domain/source: `pachinko-domain-analysis` / `session-observation`
 - trigger: 楽園蒲田店のセクション別DD狙い目/避け目（旧Type A/B、1130-1134・3117-3120・3113-3116・1209-1216等）を運用ルールとして参照しようとするとき
 - summary: document/rakuen_theory.md §8（2026-07-12作成）は avg_diff（回転数交絡未処理）と 旧43 section定義に基づき、1130-1134を「31日全てマイナスの恒常回避区画」、 3117-3120を「DD11・DD29・DD30favorable/DD25・DD31・...
 
-### 10. `hit104-and-diff-are-volume-confounded-not-setting-indicators`
+### 15. `hit104-and-diff-are-volume-confounded-not-setting-indicators`
 - confidence: `0.90` | status: `unverified` | date: `2026-07-29` | file: `2026-07-29-rakuen-event-day-category-decomposition-insights.yaml`
 - domain/source: `statistical-methodology` / `session-observation`
 - trigger: DD・曜日・イベント日などの日レベル軸を、差枚(diff)またはhit104率(P(機械割>104%))で判定しようとするとき
 - summary: 機械割 = 100 + diff/(3*games)*100 なので Var(機械割) ∝ 1/games。回転数十分位で 実測すると平均機械割そのものが82.7%→106.2%と単調に動き、hit104率(P(機械割>104%)超え確率) は16.1%→54.6%と3.4倍動く（`eda/rakuen_hit1...
 
-### 11. `omnibus-null-vs-walkforward-topk-positive`
+### 16. `omnibus-null-vs-walkforward-topk-positive`
 - confidence: `0.90` | status: `unverified` | date: `2026-07-29` | file: `2026-07-29-rakuen-theory-revalidation-audit-insights.yaml`
 - domain/source: `statistical-methodology` / `session-observation`
 - trigger: section・軸・区画の主効果が omnibus 検定で非有意だったことを根拠に『構造なし』と結論しようとするとき
 - summary: `rakuen_theory.md` §2.1c は「section主効果・section×DD交互作用は構造なし」と結論している。 一方、同じデータで直近90日を訓練窓とする walk-forward（当日games足切りなし・工事前・ ジャグp56）を回すと、top3 section の excess は通常...
 
-### 12. `report-without-paired-ci-invites-misreading`
+### 17. `report-without-paired-ci-invites-misreading`
 - confidence: `0.90` | status: `unverified` | date: `2026-07-29` | file: `2026-07-29-rakuen-theory-revalidation-audit-insights.yaml`
 - domain/source: `analysis-workflow` / `session-observation`
 - trigger: モデルA と モデルB の比較結果を『Aは Bを上回らなかった』と報告する、または他エージェント（Codex等）からそう報告されたとき
 - summary: Codex が生成した `eda/results/rakuen_theory_revalidation/report.md` は section walk-forward の 比較を点推定のみで示し、「category_calendar_split は all_history を上回らなかった」と結論した。 CS...
 
-### 13. `layout-mapping-precedes-reanalysis`
+### 18. `layout-mapping-precedes-reanalysis`
 - confidence: `0.90` | status: `unverified` | date: `2026-07-29` | file: `2026-07-29-rakuen-theory-revalidation-audit-insights.yaml`
 - domain/source: `hall-strategy` / `session-observation`
 - trigger: 改装・レイアウト変更後のホールで、旧section名を含む分析を再実行しようとするとき
 - summary: 楽園蒲田は 2026-07-06 に改装。`legacy_section_status.csv` は旧7区画 （1106-1115 / 1130-1134 / 1209-1216 / 3113-3116 / 3117-3120 / 2141-2162 / 1057-1059）すべてが `requires phys...
 
-### 14. `debut-date-must-be-per-slot-not-per-model`
+### 19. `debut-date-must-be-per-slot-not-per-model`
 - confidence: `0.85` | status: `unverified` | date: `2026-07-29` | file: `2026-07-29-rakuen-residual-methodology-and-section-retraction-insights.yaml`
 - domain/source: `statistical-methodology` / `session-observation`
 - trigger: 経過日数・設置からの日数・「新台」判定など、機種の設置起点(debut)を扱う分析をするとき
 - summary: `eda/core.py` の `compute_debut_features` は debut_date を `df.groupby("machine_name")["date"].min()` で計算していた——machine_name(機種名) 単位でホール全体での最古出現日。楽園蒲田店で実測したところ、5...
 
-### 15. `rakuen-event-day-not-single-calendar`
+### 20. `rakuen-event-day-not-single-calendar`
 - confidence: `0.85` | status: `unverified` | date: `2026-07-29` | file: `2026-07-29-rakuen-event-day-category-decomposition-insights.yaml`
 - domain/source: `pachinko-domain-analysis` / `session-observation`
 - trigger: ホール単位で単一のevent_dds（イベント日リスト）を定義・使用しようとするとき
 - summary: 楽園蒲田店を機種内機械割残差でカテゴリ別に割ると、DDごとに全く違う顔を見せる: | DD | ジャグ | 技術介入 | ハナハナ | AT一般 | |---|---|---|---|---| | 30 | +0.99 | +2.50(1位) | +4.56 | +2.41(1位) | | 22 | +2.19(...
 
-### 16. `single-survivor-summary-hides-calendar-shift`
+### 21. `single-survivor-summary-hides-calendar-shift`
 - confidence: `0.85` | status: `unverified` | date: `2026-07-29` | file: `2026-07-29-rakuen-theory-revalidation-audit-insights.yaml`
 - domain/source: `hall-strategy` / `session-observation`
 - trigger: 複数候補DDを前後半で再検定し、『N個中1個だけ残った』と要約しようとするとき
 - summary: 楽園ジャグのカテゴリ別DD候補を p56（設定5-6事後確率）で前後半比較すると、 `eda/results/rakuen_theory_revalidation/category_dd_temporal_validation.csv` は次を示す。 | DD | 前半effect | 後半effect | |-...
 
-### 17. `machine-rate-metric-not-comparable-to-p56`
+### 22. `machine-rate-metric-not-comparable-to-p56`
 - confidence: `0.80` | status: `unverified` | date: `2026-07-29` | file: `2026-07-29-rakuen-theory-revalidation-audit-insights.yaml`
 - domain/source: `statistical-methodology` / `session-observation`
 - trigger: ジャグ以外のカテゴリ（ハナハナ・技術介入・AT一般）のDD効果を機械割ベースの rate で検定し、ジャグのp56結果と同じ表に並べようとするとき
 - summary: `category_dd_temporal_validation.csv` の BH補正通過数はカテゴリで大きく偏る。 | category | metric | 31DD中の通過数 | |---|---|---| | ジャグ | p56 | 1 | | ハナハナ | rate | 7 | | 技術介入 | ra...
 
-### 18. `rakuen-section-column-not-island`
+### 23. `rakuen-section-column-not-island`
 - confidence: `0.95` | status: `unverified` | date: `2026-07-28` | file: `2026-07-28-rakuen-section-column-redefinition-and-edge-effect-insights.yaml`
 - domain/source: `section-analysis` / `session-observation`
 - trigger: 楽園のsectionをフロア座標・生成スクリプトから扱うとき
 - summary: `Heatmap/generate_rakuen_kamata_coordinates.py`が、1122-1134・1135-1151・2100-2110・ 3107-3116・3176-3187の5箇所で、通路(柱)で物理的に分断された1本の列を`section`という 1つのラベルにまとめていた。既存の`m...
 
-### 19. `pick-concentration-decomposition-before-trusting-score`
+### 24. `pick-concentration-decomposition-before-trusting-score`
 - confidence: `0.90` | status: `unverified` | date: `2026-07-28` | file: `2026-07-28-instincts.yaml`
 - domain/source: `methodology` / `session-observation`
 - trigger: 新規に発見・提案したスコアリングルールのwalk-forward edgeが良好な数値を示したとき（prereg化する前）
 - summary: 2026-07-28、蒲田7のk7_at_histdiff_top3ルール(rank1-3)を9ヶ月walk-forwardで 測ると+1,130枚/台(CI[+737,+1,619])と好成績だったが、選出頻度を見ると 台2026が227日中184日(81%)選ばれていた。台2026を除外すると+122.6枚...
 
-### 20. `mean-averaging-denominator-shrink-bias`
+### 25. `mean-averaging-denominator-shrink-bias`
 - confidence: `0.90` | status: `unverified` | date: `2026-07-28` | file: `2026-07-28-instincts.yaml`
 - domain/source: `methodology` / `session-observation`
 - trigger: walk-forwardで日次top-Nを選び、当日の実データと突き合わせてedgeを平均するとき（即席の分析スクリプトを書くとき）
 - summary: 2026-07-29、Codexへの独立監査依頼(codex:rescueではなく直接コピペ依頼)で 発覚。k7_at_histdiff_top3のedge検証で、私の即席walk-forwardスクリプトは `sel = day[day.machine_number.isin(top)]` として当日のgame...
 
-### 21. `whole-period-average-hides-regime-collapse`
+### 26. `whole-period-average-hides-regime-collapse`
 - confidence: `0.90` | status: `unverified` | date: `2026-07-28` | file: `2026-07-28-instincts.yaml`
 - domain/source: `methodology` / `session-observation`
 - trigger: ホールの店長交代・改装等の既知レジーム変化点があるルールについて、全期間プールのwalk-forward数値だけを見て判断しようとするとき
 - summary: 2026-07-28、みとやのジャグRB機種内zスコア(hist_mean_rb_prob_model_z)の 全日walk-forward(2025-10-28〜2026-07-27, n=267日)は+206.0枚/台 CI[+113.2,+324.6]・勝日率60%で「盤面最強」に見えた。しかし2026-0...
 
-### 22. `rakuen-clean-column-edge-effect-confirmed`
+### 27. `rakuen-clean-column-edge-effect-confirmed`
 - confidence: `0.90` | status: `unverified` | date: `2026-07-28` | file: `2026-07-28-rakuen-section-column-redefinition-and-edge-effect-insights.yaml`
 - domain/source: `hall-strategy` / `session-observation`
 - trigger: 楽園の設定投入の位置法則性を検証・報告するとき
 - summary: section定義を「2列facing pair islandの各列・通路breakなしの単列・S字」=clean(38列)、 「外周(frame, 22列)」「内部通路分断(interior_split, 6列)」「三角形・L字(special, 4列)」 に分類し、clean限定・同日×同機種残差・台単位クラ...
 
-### 23. `mediator-adjustment-trap-games-as-outcome-not-covariate`
+### 28. `mediator-adjustment-trap-games-as-outcome-not-covariate`
 - confidence: `0.90` | status: `unverified` | date: `2026-07-28` | file: `2026-07-28-rakuen-section-column-redefinition-and-edge-effect-insights.yaml`
 - domain/source: `methodology` / `session-observation`
 - trigger: パチスロの位置・区画効果を検証する際にgames(回転数)を統制変数として使いたくなったとき
 - summary: 楽園clean列の端番効果を検証中、「端の台はgamesが多い区分に偏っている」ことが分かり、 day×model内でgamesを線形統制(残差化)したところ、機械割ppだけでなくBB+RB(ボーナス確率、 遊技者の継続バイアスの影響を受けない指標)まで同じ大きさで符号反転した。ボーナス確率が 回転数統制で反転す...
 
-### 24. `iron-seat-exclusion-in-forward-test-attribution`
+### 29. `iron-seat-exclusion-in-forward-test-attribution`
 - confidence: `0.85` | status: `unverified` | date: `2026-07-28` | file: `2026-07-28-instincts.yaml`
 - domain/source: `methodology` / `session-observation`
 - trigger: 凍結済みprereg結果の実績を答え合わせするとき、鉄台（fixed-effect machine）が選択に含まれている場合
 - summary: 2026-07-27の答え合わせで、蒲田7の台2026(+4,100枚)を「本命が当たった」と評価したが、 台2026は briefing_common.IRON_MACHINES に登録済みの鉄台であり、機種が3回変わっても 優遇が続く座席固有の効果である。鉄台の的中は選定アルゴリズムの精度と無関係に 高確率で...
 
-### 25. `comovement-fails-for-single-hall-few-model-boundary-attribution`
+### 30. `comovement-fails-for-single-hall-few-model-boundary-attribution`
 - confidence: `0.85` | status: `unverified` | date: `2026-07-28` | file: `2026-07-28-rakuen-section-column-redefinition-and-edge-effect-insights.yaml`
 - domain/source: `methodology` / `session-observation`
 - trigger: 単一ホールで、隣接する2区画/列が同一の投入単位かどうかを日次残差の相関(連動性)で判定しようとするとき
 - summary: 楽園のfram/interior_splitセクションが「柱の分断を投入単位として扱っているか」を、 2列の日次残差(同日×同機種平均からの残差)の相関で判定しようとした。素朴な同日×同機種 残差は、同じ機種が比較対象の2列にしか設置されていない場合、残差のゼロ和制約により 片方が上がればもう片方が必ず下がるとい...
 
-### 26. `mitoya-manager-change-regime-confirmed-2026-05`
+### 31. `mitoya-manager-change-regime-confirmed-2026-05`
 - confidence: `0.90` | status: `unverified` | date: `2026-07-27` | file: `2026-07-27-mitoya-manager-change-regime-confirmed.yaml`
 - domain/source: `hall-strategy` / `session-observation`
 - trigger: みとや大森町の推薦・イベントDD分析・過去のバックテスト数値を参照するとき
 
-### 27. `hall-regime-external-event-calendar-methodology`
+### 32. `hall-regime-external-event-calendar-methodology`
 - confidence: `0.85` | status: `unverified` | date: `2026-07-27` | file: `2026-07-27-hall-regime-external-event-calendar-methodology.yaml`
 - domain/source: `methodology` / `session-observation`
 - trigger: ホール推薦を出す前、または既存の凍結バックテストルールの根拠が古くなっていないか確認するとき
 
-### 28. `single-day-answercheck-cannot-separate-signal-from-selection-failure`
+### 33. `single-day-answercheck-cannot-separate-signal-from-selection-failure`
 - confidence: `0.90` | status: `unverified` | date: `2026-07-26` | file: `2026-07-26-mitoya-dd24-answercheck-insights.yaml`
 - domain/source: `analysis-methodology` / `session-observation`
 - trigger: 1日分の推薦結果を答え合わせして「シグナルが効かなかった」と結論しそうになったとき
 - summary: 2026-07-24のみとや答え合わせで、推薦TOP7は明確に負けた(lift -1330)。 ここで「h_nonjug角1シグナルは効かない」と結論するのは誤り。 バスケット全体(候補となった8台全部)を見ると平均+402でホール平均+70を上回っており、 **信号自体は機能し、TOP-N絞り込みの銘柄選択だけ...
 
-### 29. `mitoya-dd24-recommend-tiebreak-selected-losing-half`
+### 34. `mitoya-dd24-recommend-tiebreak-selected-losing-half`
 - confidence: `0.85` | status: `unverified` | date: `2026-07-26` | file: `2026-07-26-mitoya-dd24-answercheck-insights.yaml`
 - domain/source: `pachinko-visit-strategy` / `session-observation`
 - trigger: みとや大森町 h_nonjug 角1バスケット(全8台同点)から台別履歴でtie-breakして推薦するとき
 - summary: 2026-07-24(DD24、X_DDS日)のみとや推薦で、h_nonjug角1の8台(全て800点で同点)を 直近X_DDS履歴でtie-breakし、574(東京喰種)・607(SAOⅡ)を最上位に置いた。 実績は574=-5,814(266台中264位)、607=-4,644(260位)で、266台中ワー...
 
-### 30. `rb-probability-decimal-null-on-zero-count`
+### 35. `rb-probability-decimal-null-on-zero-count`
 - confidence: `0.98` | status: `unverified` | date: `2026-07-24` | file: `2026-07-24-deathwatch-rb-null-bug-and-layout-history-insights.yaml`
 - domain/source: `data-quality` / `session-observation`
 - trigger: rb_probability_decimal または bb_probability_decimal / total_probability_decimal に notna() / IS NOT NULL / > 0 のフィルタをかけようとするとき
 - summary: `rb_probability_decimal` は `rb_count / games_normalized` から作られる派生列だが、 `rb_count == 0` の行では NULL になる（9ホール全てでNaN率とRB0回率が完全一致、 rb_count>0でNULLの行は0件）。`bb_probabi...
 
-### 31. `machine-layout-single-snapshot-breaks-across-renovation`
+### 36. `machine-layout-single-snapshot-breaks-across-renovation`
 - confidence: `0.97` | status: `unverified` | date: `2026-07-24` | file: `2026-07-24-deathwatch-rb-null-bug-and-layout-history-insights.yaml`
 - domain/source: `data-quality` / `session-observation`
 - trigger: machine_layoutを使って過去データに位置(section/rank_from_*)を結合するとき、または改装・島配列変更があったホールの位置分析を行うとき
 - summary: machine_layoutは日付次元を持たないため、改装で位置定義が変わると新しい位置が 過去データに遡って適用される。楽園蒲田の2026-07-06の改装でsection定義が 書き換わり(2223-2240→2225-2242等)、技術介入の端番効果が+1.127pp→+0.211pp(ns)に 変化した。...
 
-### 32. `uniform-physical-threshold-across-categories-produces-false-anomalies`
+### 37. `uniform-physical-threshold-across-categories-produces-false-anomalies`
 - confidence: `0.95` | status: `unverified` | date: `2026-07-24` | file: `2026-07-24-rakuen-column-merge-and-games-corruption-audit-insights.yaml`
 - domain/source: `data-quality` / `session-observation`
 - trigger: 確率・機械割等に「物理的にありえない」閾値を設定して、複数の機種カテゴリを横断して異常値/破損データを検出しようとするとき
 - summary: 本セッションで2回、同じ失敗パターンが起きた。(1) 機械割>200%かつdiff>1000で 「破損」を検出→14,554行のうち89%がAT機で、AT機のボーナス/AT当選確率(1/15〜150)は ジャグ/ハナ/沖スロ(1/300+)と2桁違うため単に正常な高分散日だった。(2) ボーナス確率 >1/20で...
 
-### 33. `diff-coins-confounds-setting-with-turnover`
+### 38. `diff-coins-confounds-setting-with-turnover`
 - confidence: `0.95` | status: `unverified` | date: `2026-07-24` | file: `2026-07-24-deathwatch-rb-null-bug-and-layout-history-insights.yaml`
 - domain/source: `statistical-methodology` / `session-observation`
 - trigger: 差枚(diff_coins_normalized)ベースで位置・人気度など回転数に影響しうる変数の効果を測るとき
 - summary: diff = 3 * G * (payout - 1) なので、機械割が同じでもG(回転数)が違えば差枚は動く。 蒲田7角番1の検証で、差枚ベースの-162枚のほぼ全部(-124枚が共分散差、-37枚がG数差、 機械割の寄与はわずか-0.5枚)が「角1は+624G多く回されている」という回転数差の 帰結だった。角...
 
-### 34. `games-filter-is-selection-on-setting`
+### 39. `games-filter-is-selection-on-setting`
 - confidence: `0.95` | status: `unverified` | date: `2026-07-24` | file: `2026-07-24-deathwatch-rb-null-bug-and-layout-history-insights.yaml`
 - domain/source: `statistical-methodology` / `session-observation`
 - trigger: games_normalized >= N / min_games フィルタを集計前にかけて、区画・軸・カテゴリの成績や設定シグナルを測るとき
 - summary: 「低設定→早く見切られる／高設定→長く回される」という基本法則により、games は 設定の下流にある（独立指標RBで確認: 台レベル相関 ハナ+0.94/ジャグ+0.69、 日レベルでジャグの稼働帯別RBz が -1.33→+0.97 と単調）。したがって `games >= N` のフィルタは低設定の日を選択...
 
-### 35. `mwu-cannot-detect-tail-only-edges`
+### 40. `mwu-cannot-detect-tail-only-edges`
 - confidence: `0.95` | status: `unverified` | date: `2026-07-24` | file: `2026-07-24-mwu-tail-edge-and-weight-desync-insights.yaml`
 - domain/source: `analysis-methodology` / `session-analysis`
 - trigger: 台×日の差枚でグループAとBを比較し、MWU/Kruskal-Wallisが非有意だったとき。特に平均差はあるのにp値が大きいとき
 - summary: 2026-07-24、みとや大森町の h_nonjug 角番1（X_DDS日）を post-regime で評価した際、 MWU が p=0.522 で非有意だったため「角番効果は消えた/解像できない」と一度結論した。 これは**誤りだった**。同じデータを分位点と裾確率で測り直すと明確な差が出た。 | X_DD...
 
-### 36. `deathwatch-tests-drift-from-baseline-not-zero-effect`
+### 41. `deathwatch-tests-drift-from-baseline-not-zero-effect`
 - confidence: `0.92` | status: `unverified` | date: `2026-07-24` | file: `2026-07-24-deathwatch-rb-null-bug-and-layout-history-insights.yaml`
 - domain/source: `statistical-methodology` / `session-observation`
 - trigger: 既に確認済みのセオリー(角番・端番等の位置効果、DD効果など)が今も有効か継続監視する仕組みを設計するとき
 - summary: みとやの角番1シグナルは16か月間+0.327z(RB確率z)で安定し、2026-04-27に一度きり 終わった(店長交代と一致)。これは「2-3ヶ月で入れ替わる循環レジーム」ではなく 「長く効く法則がある日死ぬ」という形。循環モデルなら常時レジーム推定が必要だが (60日窓でも検出まで時間がかかり、2-3ヶ月の...
 
-### 37. `verify-grouping-unit-via-leave-group-out-correlation`
+### 42. `verify-grouping-unit-via-leave-group-out-correlation`
 - confidence: `0.90` | status: `unverified` | date: `2026-07-24` | file: `2026-07-24-rakuen-column-merge-and-games-corruption-audit-insights.yaml`
 - domain/source: `statistical-methodology` / `session-observation`
 - trigger: 分析の集計単位（島・区画・カテゴリ等）を統合すべきか分割すべきか判断に迷うとき
 - summary: 楽園のsectionは背中合わせ2列を1つに統合していた欠陥が見つかり63列に分割したが、 「まとめることで物理配置ではない真の設定投入単位が見えるのでは」という対立仮説が 出た（ユーザー指摘）。これをleave-island-out残差の相関で検定した。単純な同日×同機種 残差は、その機種が島内を独占していると...
 
-### 38. `check-existing-per-machine-spec-validator-before-flagging-anomaly`
+### 43. `check-existing-per-machine-spec-validator-before-flagging-anomaly`
 - confidence: `0.90` | status: `unverified` | date: `2026-07-24` | file: `2026-07-24-rakuen-column-merge-and-games-corruption-audit-insights.yaml`
 - domain/source: `feedback-methodology` / `session-observation`
 - trigger: 特定機種のボーナス/AT確率が異常に高い/低いと感じ、独自にデータ品質問題や物理故障の調査を始めようとするとき
 - summary: ゴッドイーター リザレクションとスマスロ北斗の拳のボーナス確率がホール間で 食い違って見えたため、「台番号への物理的な結線ミス」という仮説を立てて 1ラウンド分の検証（台番号の連続日数・機種入替をまたぐ継続性の検定）を 丸ごと消費した。実際には eda/at_semantics_validator.py に両機種...
 
-### 39. `bb-rb-column-can-be-duplicate-not-just-mismatched`
+### 44. `bb-rb-column-can-be-duplicate-not-just-mismatched`
 - confidence: `0.90` | status: `unverified` | date: `2026-07-24` | file: `2026-07-24-rakuen-column-merge-and-games-corruption-audit-insights.yaml`
 - domain/source: `data-quality` / `session-observation`
 - trigger: bb_count/rb_countのどちらかがat_semantics_validatorでPASS、もう片方がfailと判定された機種で、ホールごとに観測確率が大きく食い違うとき
 - summary: ゴッドイーター リザレクションでbb+rb合算のボーナス確率がホール間で最大9倍 食い違い、「ホールごとに違う当選種別をbb/rbに記録している」という複雑な 仮説を立てた。実際にrb_countを単独で見ると全9ホールが1/334〜540とスペック 範囲にほぼ収まって一致し、bb_countだけが原因だった：5...
 
-### 40. `hit-rate-measures-volatility-not-setting`
+### 45. `hit-rate-measures-volatility-not-setting`
 - confidence: `0.90` | status: `unverified` | date: `2026-07-24` | file: `2026-07-24-deathwatch-rb-null-bug-and-layout-history-insights.yaml`
 - domain/source: `statistical-methodology` / `session-observation`
 - trigger: hit率・勝率（P(差枚>0)や104%率）で区画・機種・軸の設定の良さを比較しようとするとき
 - summary: hit率 = P(差枚>0) は平均だけでなく分布の歪みに依存する。AT機は「多くの日は小さく 負け、稀に大きく勝つ」右歪み分布なので、同じ期待値でも P(差枚>0) が低く出る。 ジャグ・ハナハナは対称に近く高く出る。楽園§1のHot/Coldを63列で測り直すと hit差 vs 差枚SD = -0.490、h...
 
-### 41. `scoring-weights-must-have-single-source-of-truth`
+### 46. `scoring-weights-must-have-single-source-of-truth`
 - confidence: `0.90` | status: `unverified` | date: `2026-07-24` | file: `2026-07-24-mwu-tail-edge-and-weight-desync-insights.yaml`
 - domain/source: `implementation` / `session-analysis`
 - trigger: 推薦スコアラとそのバックテストが別ファイルにあるとき。重みや係数を変更しようとしたとき
 - summary: `eda/mitoya_recommend.py` の `_score_machine`（if分岐で逐次加算）と `eda/mitoya_recommend_backtest.py` の `CURRENT_WEIGHTS`（特徴量ベクトル×重みの内積）に **同じ数値が別々にハードコード**されていた。 実害が2...
 
-### 42. `known-duplicate-fix-does-not-rule-out-a-third-copy`
+### 47. `known-duplicate-fix-does-not-rule-out-a-third-copy`
 - confidence: `0.85` | status: `unverified` | date: `2026-07-24` | file: `2026-07-24-mwu-tail-edge-and-weight-desync-insights.yaml`
 - domain/source: `implementation` / `session-analysis`
 - trigger: 同じ値/ロジックが2箇所に重複していたバグを直したあと。特に「重み一本化」「single source of truth化」を完了したと思ったとき
 - summary: `_score_machine`(recommend.py) と `CURRENT_WEIGHTS`(backtest.py) の重み二重定義を 一本化し、実データ218行×DD5パターンでスコア一致を自分で数値検証して0件不一致を確認した。 「直った」と判断してCodexに read-only レビューを依頼し...
 
-### 43. `metric-choice-decides-what-signal-is-visible`
+### 48. `metric-choice-decides-what-signal-is-visible`
 - confidence: `0.95` | status: `unverified` | date: `2026-07-23` | file: `2026-07-23-regime-nonstationarity-and-changepoint-insights.yaml`
 - domain/source: `analysis-methodology` / `session-analysis`
 - trigger: 台×日のシグナルを検定・比較するとき。差枚(diff_coins_normalized)を指標に選ぼうとしたとき
 - summary: 2026-07-23、非定常性検定を全9ホールで回した際、系列を全て差枚ベースのエッジで作っていた。差枚 = G数 × 3 × (機械割 - 1) なので、当日どれだけ回ったかという設定と無関係な分散が丸ごと混入する。スロットは6段階設定であり、見るべきは設定差。 同一の選択ルールに対し指標だけを差枚 / 機械割...
 
-### 44. `null-hypothesis-must-preserve-serial-correlation`
+### 49. `null-hypothesis-must-preserve-serial-correlation`
 - confidence: `0.95` | status: `unverified` | date: `2026-07-23` | file: `2026-07-23-regime-nonstationarity-and-changepoint-insights.yaml`
 - domain/source: `analysis-methodology` / `session-implementation`
 - trigger: 時系列の非定常性・変化点・レジームを検定するとき。帰無分布をシャッフルで作ろうとしたとき
 - summary: 台選択ルールの日次エッジには正の系列相関がある（同じ台が連日選ばれ続けるため）。この相関だけでローリング窓平均は勝手に振れる。帰無分布をiidシャッフルで作ると相関が消えて分布が狭くなりすぎ、**ただの自己相関がレジーム変化として有意に出る**。 検定したいのは「窓平均の振れがノイズを超えるか」なので、帰無仮説側...
 
-### 45. `null-result-requires-power-measurement`
+### 50. `null-result-requires-power-measurement`
 - confidence: `0.95` | status: `unverified` | date: `2026-07-23` | file: `2026-07-23-regime-nonstationarity-and-changepoint-insights.yaml`
 - domain/source: `analysis-methodology` / `session-analysis`
 - trigger: 検定が帰無を棄却しなかったとき。『効果なし』『レジームなし』と結論したくなったとき
 - summary: 「棄却できない」は「効果が無い」ではなく「あっても見えない」かもしれない。区別するには検出力が要る。実データの日次系列（＝本物のノイズ）に振幅±A・周期75日の矩形波を人工的に注入し、p<0.05 になる最小振幅を測ればよい。 2026-07-23の検証では、この測定で判定が分かれた。蒲田7・雑色は±150枚以上...
 
-### 46. `preregistration-breaks-in-sample-self-reference`
+### 51. `preregistration-breaks-in-sample-self-reference`
 - confidence: `0.95` | status: `unverified` | date: `2026-07-23` | file: `2026-07-23-prereg-backtest-harness-and-signal-ceiling-insights.yaml`
 - domain/source: `ml-methodology` / `session-implementation`
 - trigger: instinct/仮説を検証したいとき。バックテストの結果を『確証』として扱いたくなったとき
 - summary: document/instincts/ が1400本近くありながら confirmed=0 だった原因は、「過去データを見て見つけたルールを同じ過去データで確認する」自己参照ループから一度も抜けていなかったこと。バックテストは「未来データに効かないルールを実弾の前に落とすフィルタ」としてのみ価値があり、それ自体は...
 
-### 47. `signal-existence-does-not-imply-predictability`
+### 52. `signal-existence-does-not-imply-predictability`
 - confidence: `0.95` | status: `unverified` | date: `2026-07-23` | file: `2026-07-23-prereg-backtest-harness-and-signal-ceiling-insights.yaml`
 - domain/source: `ml-methodology` / `session-analysis`
 - trigger: 分散分解や台×日シグナルの大きさを見て『予測できるはず』と判断しそうになったとき
 - summary: eda/variance_decomposition.py の分散分解で、蒲田7は9ホール中最大の台×日シグナル(2.89pp≈400枚/日相当)を持つのに、その蒲田7で組んだ複数の履歴ベース事前登録ルール(RB確率上位・hit104率上位)はすべて負エッジ(-17.9〜-58.6枚/台、289日・867選択)だ...
 
-### 48. `pooled-null-does-not-imply-segment-null`
+### 53. `pooled-null-does-not-imply-segment-null`
 - confidence: `0.90` | status: `unverified` | date: `2026-07-23` | file: `2026-07-23-regime-nonstationarity-and-changepoint-insights.yaml`
 - domain/source: `analysis-methodology` / `session-mistake`
 - trigger: 全期間・全セグメントをプールした平均で効果が出ず、『この軸は効かない』と結論しそうになったとき
 - summary: 2026-07-23、蒲田1のセクション端効果が全カテゴリで null だったことから「蒲田1は位置軸そのものが効かない」と書いたが、これは誤りだった。測ったのは全期間・全セクション・全日をプールした平均に過ぎない。セグメントで符号が逆なら（例: イベント日プラス、通常日マイナス）プール平均はゼロになる。 これは...
 
-### 49. `within-model-residual-controls-lineup-confound`
+### 54. `within-model-residual-controls-lineup-confound`
 - confidence: `0.90` | status: `unverified` | date: `2026-07-23` | file: `2026-07-23-regime-nonstationarity-and-changepoint-insights.yaml`
 - domain/source: `analysis-methodology` / `session-implementation`
 - trigger: 位置効果・末尾効果などを機種が不均質なカテゴリ（AT一般など）で測るとき
 - summary: AT一般は機種構成が不均質（蒲田7で58機種、楽園で134機種）。同日・同カテゴリ平均からの残差では「角に置かれている機種がそもそも機械割の低い機種だった」という交絡を除去できない。同日**かつ同機種**の平均を引けば機種差が消える。 また差枚だとカテゴリ間で分散スケールが5倍近く違い（蒲田7: AT一般 SD=...
 
-### 50. `machine-layout-is-undated-snapshot`
+### 55. `machine-layout-is-undated-snapshot`
 - confidence: `0.90` | status: `unverified` | date: `2026-07-23` | file: `2026-07-23-regime-nonstationarity-and-changepoint-insights.yaml`
 - domain/source: `data-quality` / `session-analysis`
 - trigger: machine_layout の位置データ（section / rank_from_*）を使った分析をするとき。ホールの工事・リニューアルを把握したとき
 - summary: machine_layout の列は machine_number / hall_name / x / y / display_y / section / section_min / section_max / rank_from_min / rank_from_max / rank_from_aisle で、*...
 
-### 51. `cross-model-raw-value-ranking-conflates-spec-and-setting`
+### 56. `cross-model-raw-value-ranking-conflates-spec-and-setting`
 - confidence: `0.90` | status: `unverified` | date: `2026-07-23` | file: `2026-07-23-prereg-backtest-harness-and-signal-ceiling-insights.yaml`
 - domain/source: `ml-feature-engineering` / `session-bug-discovery`
 - trigger: ジャグラーシリーズなど複数機種にまたがるRB確率/BB確率の生値でランキング・スコアリングするとき
 - summary: mitoya_jug_eventdd_rb_top3(生値でRB確率上位3台を選ぶルール)をバックテストするとedge+63.3枚(CI [-95.1,+219.3])止まりだったが、同一機種内で標準化してから順位付ける版(hist_mean_rb_prob_model_z)に直すとedge+212.5枚(CI...
 
-### 52. `baseline-including-picks-shrinks-observed-edge`
+### 57. `baseline-including-picks-shrinks-observed-edge`
 - confidence: `0.90` | status: `unverified` | date: `2026-07-23` | file: `2026-07-23-prereg-backtest-harness-and-signal-ceiling-insights.yaml`
 - domain/source: `ml-methodology` / `session-bug-discovery`
 - trigger: 選択台の実績を同一母集団の平均と比較してエッジを測るとき。特に選択比率(pick_share)が母集団の大半を占めるルールで
 - summary: 角番1回避ルール(k7_jug_kakuban1_avoid、universeの93%を選ぶほぼ全選択)で、baseline(universe平均)に対するedgeは+10.8枚(事前基準+50未達で破棄)だったが、pickされなかった台(角1のみ)との対比であるedge_vs_excludedを計算すると+15...
 
-### 53. `codex-rescue-cannot-execute-arbitrary-inline-instructions`
+### 58. `codex-rescue-cannot-execute-arbitrary-inline-instructions`
 - confidence: `0.90` | status: `unverified` | date: `2026-07-23` | file: `2026-07-23-prereg-backtest-harness-and-signal-ceiling-insights.yaml`
 - domain/source: `tooling-environment` / `session-observation`
 - trigger: codex:codex-rescue subagent に読み取り専用レビュー以外の柔軟な指示(『今すぐ自分で読んで』等)を送ろうとするとき
 - summary: Codexエージェントがバックグラウンドタスクの完了を待つだけで最初の応答を終えたため、SendMessageで「今すぐ自分でファイルを読んでレビューしろ」と再指示したが、「自分はCodex task呼び出し1回に限定されたラッパーであり、リポジトリファイルを直接読むことも自分でレビューすることも指示では変更でき...
 
-### 54. `position-policy-is-hall-and-category-specific`
+### 59. `position-policy-is-hall-and-category-specific`
 - confidence: `0.85` | status: `unverified` | date: `2026-07-23` | file: `2026-07-23-regime-nonstationarity-and-changepoint-insights.yaml`
 - domain/source: `hall-strategy` / `session-analysis`
 - trigger: 「機種が変わっても共通する法則があるはず」と考えたとき。位置ポリシーをホール横断で仮定したくなったとき
 - summary: 「店側が日々変化する機種に合わせて毎回設定を考えるのは労力が大きすぎる。だから機種が変わっても共通する法則があるはず」という労力コスト論を検証した。この論拠が支持するのは機種個別のスコアリングではなく**機種を問わない配置ポリシー**なので、位置効果をカテゴリ横断で測れば直接検証できる。 結果はホールで分かれた。...
 
-### 55. `regime-breaks-come-from-hall-events-not-cycles`
+### 60. `regime-breaks-come-from-hall-events-not-cycles`
 - confidence: `0.85` | status: `unverified` | date: `2026-07-23` | file: `2026-07-23-regime-nonstationarity-and-changepoint-insights.yaml`
 - domain/source: `hall-strategy` / `session-analysis`
 - trigger: 「ホールが2〜3ヶ月周期で法則を入れ替えている」と仮定したとき。レジーム追随の仕組みを作ろうとしたとき
 - summary: 当初の仮説は「ホールは2〜3ヶ月の短いスパンで法則を入れ替えている」だった。実際に観測されたのは違う形だった。 みとやジャグの角番1優位は **2025-01 から 2026-04 まで16か月間 +0.327z [+0.296, +0.360] で安定**し、2026-04-27 に消失した（後期 +0.013...
-
-### 56. `hall-data-coverage-must-be-checked-before-comparison`
-- confidence: `0.85` | status: `unverified` | date: `2026-07-23` | file: `2026-07-23-regime-nonstationarity-and-changepoint-insights.yaml`
-- domain/source: `data-quality` / `session-mistake`
-- trigger: 複数ホールの結果を並べて比較するとき。分析期間を --start で指定するとき
-- summary: 2026-07-23の検証で --start 20240101 を指定していたが、実際のデータは全ホール2025年以降だった。特に**蒲田7は2025-07-07開始で375日しかなく**、他ホール（550日前後）より検出力が約3割低い条件で測っていた。結論は変わらなかったが、蒲田7の null は他ホールの n...
-
-### 57. `bootstrap-ci-must-block-for-repeated-machine-selection`
-- confidence: `0.85` | status: `unverified` | date: `2026-07-23` | file: `2026-07-23-prereg-backtest-harness-and-signal-ceiling-insights.yaml`
-- domain/source: `ml-methodology` / `session-bug-discovery`
-- trigger: 同一台/同一エンティティが複数日にまたがって繰り返し選ばれるバックテストの信頼区間を計算するとき
-- summary: Codexレビュー(セカンドオピニオン)で指摘。scoreベースのルールでは、履歴が良い台は複数日連続で選ばれやすく、日次エッジの系列には正の相関がある。iidな日単位bootstrapはこの相関を無視して有効サンプル数を過大評価し、CIが実際より狭くなる。7日moving block bootstrapに変更し...
-
-### 58. `forward-test-plan-needs-append-only-ledger-not-just-hash`
-- confidence: `0.85` | status: `unverified` | date: `2026-07-23` | file: `2026-07-23-prereg-backtest-harness-and-signal-ceiling-insights.yaml`
-- domain/source: `development-workflow` / `session-bug-discovery`
-- trigger: 未来日の選択を事前に確定させ、後から改ざんされていないことを保証したいとき
-- summary: Codexレビューで指摘(HIGH)。PreRegistration.freeze_hash()はルール定義(hypothesis, score, top_n等のパラメータ)の同一性しか保証しない。plan(実際に選ばれた台番号のリスト)を結果を見た後に書き換えても、参照している事前登録ファイル自体が変わっていな...
-
-### 59. `machine-number-history-must-be-restricted-to-current-machine-name`
-- confidence: `0.85` | status: `unverified` | date: `2026-07-23` | file: `2026-07-23-prereg-backtest-harness-and-signal-ceiling-insights.yaml`
-- domain/source: `data-engineering` / `session-bug-discovery`
-- trigger: 台番号(machine_number)を集計キーにして履歴のスコアを計算するとき。長期lookback窓を使うほど注意
-- summary: Codexレビューで指摘。実データで検証したところ、みとや大森町店で直近30日窓に2機種以上入った台番号が266台中39台、蒲田7で715台中104台存在した。さらにジャグ機同士(スコアリング対象の同一フラグ内)の入替に絞っても、みとや58件・蒲田7 110件(台×窓の延べ数)が確認された。台番号のみのgroup...
-
-### 60. `mitoya-kakuban1-signal-died-20260427`
-- confidence: `0.80` | status: `unverified` | date: `2026-07-23` | file: `2026-07-23-regime-nonstationarity-and-changepoint-insights.yaml`
-- domain/source: `hall-strategy` / `session-analysis`
-- trigger: みとや大森町店のジャグ角番セオリーを使おうとしたとき。みとやの推奨台を出すとき
-- summary: みとやジャグの角番1（rank_from_aisle=1、実運用上は横列2台のセオリー）は、選択ルールと無関係に台そのものの残差で見ても長期に安定していた。 前期 2025-01〜2026-04（485日）: RB z残差 +0.327z [+0.296, +0.360] / 機械割残差 +2.261pp [+2...
 
 ### 61. `codex-desktop-agmsg-monitor-requires-cli-shim-not-desktop-app`
 - confidence: `0.98` | status: `unverified` | date: `2026-07-09` | file: `2026-07-09-codex-desktop-agmsg-monitor-limitations.yaml`
