@@ -159,10 +159,14 @@ def test_event_bucket_summary_groups_calendar_families():
 
 
 def test_real_kamata7_event_kind_summary_keeps_2026_dd17_counts():
+    # 期待値は 2026-01-01〜2026-06-30 の実データに固定されている。
+    # end_date を閉じないと新しい17日が投入されるたびに days/machine_count/total_diff が
+    # 増えてこのテストが壊れる（実際に 2026-07-17 の投入で days が 6→7 になった）。
     db_path = next(Path(r"C:\Users\apto117\Documents\pachinko-analyzer\src\2026project\db").glob("*蒲田7.db"))
     frame = theory.filter_theory_frame(
         theory.load_theory_frame(db_path),
         start_date=pd.Timestamp("2026-01-01"),
+        end_date=pd.Timestamp("2026-06-30"),
         min_games=1000,
     )
 
