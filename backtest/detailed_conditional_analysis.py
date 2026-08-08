@@ -1,6 +1,7 @@
 """詳細条件付き分析 - 高勝率vs低勝率の再現性比較"""
 
 import sys
+
 sys.stdout.reconfigure(encoding='utf-8')
 
 import pandas as pd
@@ -8,7 +9,9 @@ from pathlib import Path
 from loader import load_machine_data
 
 
-def analyze_hypothesis_by_condition(df_train: pd.DataFrame, df_test: pd.DataFrame, condition_type: str, condition_value) -> dict:
+def analyze_hypothesis_by_condition(
+    df_train: pd.DataFrame, df_test: pd.DataFrame, condition_type: str, condition_value
+) -> dict:
     """
     高勝率パターン vs 低勝率パターンの再現性を比較
 
@@ -26,9 +29,11 @@ def analyze_hypothesis_by_condition(df_train: pd.DataFrame, df_test: pd.DataFram
 
     for attr in ['machine_number', 'machine_name', 'last_digit']:
         # 学習期間でこの属性別の勝率を計算
-        train_grouped = train_filtered.groupby(attr).agg({
-            'diff_coins_normalized': ['count', lambda x: (x > 0).sum()]
-        }).reset_index()
+        train_grouped = (
+            train_filtered.groupby(attr)
+            .agg({'diff_coins_normalized': ['count', lambda x: (x > 0).sum()]})
+            .reset_index()
+        )
         train_grouped.columns = [attr, 'train_count', 'train_wins']
         train_grouped['train_win_rate'] = train_grouped['train_wins'] / train_grouped['train_count']
 
@@ -41,9 +46,9 @@ def analyze_hypothesis_by_condition(df_train: pd.DataFrame, df_test: pd.DataFram
         low_wr = train_grouped[train_grouped['train_win_rate'] < median_wr]
 
         # テスト期間での集計
-        test_grouped = test_filtered.groupby(attr).agg({
-            'diff_coins_normalized': ['count', lambda x: (x > 0).sum()]
-        }).reset_index()
+        test_grouped = (
+            test_filtered.groupby(attr).agg({'diff_coins_normalized': ['count', lambda x: (x > 0).sum()]}).reset_index()
+        )
         test_grouped.columns = [attr, 'test_count', 'test_wins']
         test_grouped['test_win_rate'] = test_grouped['test_wins'] / test_grouped['test_count']
 
@@ -77,9 +82,9 @@ def analyze_hypothesis_by_condition(df_train: pd.DataFrame, df_test: pd.DataFram
 def run_detailed_analysis(db_path: str, output_file=None):
     """全DD/曜日での高低勝率比較分析"""
 
+    old_stdout = None
     if output_file:
         output_file = open(output_file, 'a', encoding='utf-8')
-        import sys
         old_stdout = sys.stdout
         sys.stdout = output_file
 
@@ -109,7 +114,9 @@ def run_detailed_analysis(db_path: str, output_file=None):
                 high_rate = r['high_rate'] * 100
                 low_rate = r['low_rate'] * 100
                 diff = high_rate - low_rate
-                print(f"D{dd:<3} {attr:<10} {r['median_wr']*100:>6.1f}% {high_rate:>6.1f}% ({r['high_reproduced']}/{r['high_count']}) {low_rate:>6.1f}% ({r['low_reproduced']}/{r['low_count']}) {diff:>6.1f}%")
+                print(
+                    f"D{dd:<3} {attr:<10} {r['median_wr'] * 100:>6.1f}% {high_rate:>6.1f}% ({r['high_reproduced']}/{r['high_count']}) {low_rate:>6.1f}% ({r['low_reproduced']}/{r['low_count']}) {diff:>6.1f}%"
+                )
                 dd_summary[attr].append({'dd': dd, 'high': high_rate, 'low': low_rate, 'diff': diff})
 
     # DD別統計
@@ -120,7 +127,9 @@ def run_detailed_analysis(db_path: str, output_file=None):
             avg_low = sum(r['low'] for r in dd_summary[attr]) / len(dd_summary[attr])
             avg_diff = avg_high - avg_low
             hypothesis = "仮説A有利（高勝率が再現）" if avg_diff > 0 else "仮説B有利（低勝率が再現）"
-            print(f"  {attr}: 高勝率平均 {avg_high:.1f}%, 低勝率平均 {avg_low:.1f}% → {hypothesis} (差: {avg_diff:.1f}%)")
+            print(
+                f"  {attr}: 高勝率平均 {avg_high:.1f}%, 低勝率平均 {avg_low:.1f}% → {hypothesis} (差: {avg_diff:.1f}%)"
+            )
 
     # ========== 曜日別分析 ==========
     print("\n" + "=" * 90)
@@ -144,7 +153,9 @@ def run_detailed_analysis(db_path: str, output_file=None):
                 high_rate = r['high_rate'] * 100
                 low_rate = r['low_rate'] * 100
                 diff = high_rate - low_rate
-                print(f"{jp}曜<  {attr:<10} {r['median_wr']*100:>6.1f}% {high_rate:>6.1f}% ({r['high_reproduced']}/{r['high_count']}) {low_rate:>6.1f}% ({r['low_reproduced']}/{r['low_count']}) {diff:>6.1f}%")
+                print(
+                    f"{jp}曜<  {attr:<10} {r['median_wr'] * 100:>6.1f}% {high_rate:>6.1f}% ({r['high_reproduced']}/{r['high_count']}) {low_rate:>6.1f}% ({r['low_reproduced']}/{r['low_count']}) {diff:>6.1f}%"
+                )
                 weekday_summary[attr].append({'weekday': weekday, 'high': high_rate, 'low': low_rate, 'diff': diff})
 
     # 曜日別統計
@@ -155,14 +166,17 @@ def run_detailed_analysis(db_path: str, output_file=None):
             avg_low = sum(r['low'] for r in weekday_summary[attr]) / len(weekday_summary[attr])
             avg_diff = avg_high - avg_low
             hypothesis = "仮説A有利（高勝率が再現）" if avg_diff > 0 else "仮説B有利（低勝率が再現）"
-            print(f"  {attr}: 高勝率平均 {avg_high:.1f}%, 低勝率平均 {avg_low:.1f}% → {hypothesis} (差: {avg_diff:.1f}%)")
+            print(
+                f"  {attr}: 高勝率平均 {avg_high:.1f}%, 低勝率平均 {avg_low:.1f}% → {hypothesis} (差: {avg_diff:.1f}%)"
+            )
+
+    if old_stdout is not None:
+        sys.stdout = old_stdout
+        output_file.close()
 
 
 if __name__ == "__main__":
-    halls = [
-        "マルハンメガシティ2000-蒲田1.db",
-        "マルハンメガシティ2000-蒲田7.db"
-    ]
+    halls = ["マルハンメガシティ2000-蒲田1.db", "マルハンメガシティ2000-蒲田7.db"]
 
     for hall in halls:
         db_path = f"../db/{hall}"
@@ -172,7 +186,3 @@ if __name__ == "__main__":
     print("\n" + "=" * 90)
     print("詳細分析完了")
     print("=" * 90)
-
-    if output_file:
-        sys.stdout = old_stdout
-        output_file.close()
