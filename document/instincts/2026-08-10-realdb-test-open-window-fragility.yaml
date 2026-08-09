@@ -1,0 +1,44 @@
+---
+id: 2026-08-10-realdb-test-open-window-fragility
+trigger: "実データDB(machine_detailed_results等)を直接読んで集計値(件数・合計・平均)をassertするテストを書くとき。start_dateのみ指定してend_dateを省略しているテストをレビューするとき。既存の実DBテストが理由不明で落ちたとき"
+confidence: 0.9
+domain: methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+---
+
+# 実DB集計値テストはstart_dateだけでなくend_dateも固定しないと将来のデータ投入で壊れる
+
+## Core claim
+本番DBを直接読んで件数/合計/平均をハードコードして検証するテストは、
+開始日だけ固定して終了日を開けたままにすると、新しい該当日のデータが
+DBに追加されるたびに値がズレて失敗する。テスト自体は正しいまま、
+DBの成長が原因で壊れる。
+
+## Evidence
+- n_observations: 1（`test_kamata7_theory_dashboard.py::test_real_kamata7_event_kind_summary_keeps_2026_dd17_counts`）
+- data scope: 単一ホール（蒲田7）、DD17（毎月17日）の集計
+- metric scope: days / machine_count / total_diff
+- result summary: `start_date=2026-01-01` のみでend_date未指定 → 2026-07-17分の投入でdays=6→7、
+  machine_count=4232→4931、total_diff=723300→830600に変化し失敗。
+  `end_date=2026-06-30`を追加すると元の期待値3つ全てが完全一致で再現した。
+
+## Interpretation
+- これはコードのバグではなく、テストの集計窓（時間範囲）の設計ミス
+- 「最近テストが落ちた」ときにコード側の退行を疑う前に、実DB由来のテストで
+  end_dateが開いていないか確認する価値がある
+- 合成データ（DataFrameを直接組み立てるテスト）には無関係。実DBファイルを
+  `load_theory_frame`等で直読みするテストにのみ該当
+
+## Action
+- 実DBに対する集計値ハードコードテストを新規に書く/レビューするときは、
+  start_dateとend_dateの両方を明示し、期待値の根拠期間をコメントで残す
+- 既存の実DBテストで理由不明の失敗が出たら、まずend_date未指定を疑う
+- 可能なら固定スナップショットDB/フィクスチャへの切り替えも検討対象（今回は未実施）
+
+## Relation
+- related: []
+
+## Status
+- status: active
