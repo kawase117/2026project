@@ -1,0 +1,37 @@
+{
+  "rule_id": "k7_at_histdiff_top3",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "freeze_hash": "71526fa786ee4e6e",
+  "target_date": "20260812",
+  "data_asof": "20260810",
+  "lookback_window": [
+    "2026-07-13",
+    "2026-08-12"
+  ],
+  "score": "hist_mean_diff",
+  "selection_unit": "machine",
+  "success_criterion": "この主張は FINDINGS 追試1 で既に walk-forward 計測済みのため、バックテストは再現確認にすぎず採否根拠にしない。判定はフォワードのみ。フォワード30エントリー日を経過した時点で edge 平均が +300枚/台 以上かつ 95%CI 下限 > 0 であること。満たさなければ破棄し、AT系スコアの派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "picks": [
+    {
+      "machine_number": 2026,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 4585.714286,
+      "history_days": 28
+    },
+    {
+      "machine_number": 2097,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 1885.0,
+      "history_days": 20
+    },
+    {
+      "machine_number": 3240,
+      "machine_name": "東京喰種",
+      "score": 1852.0,
+      "history_days": 25
+    }
+  ],
+  "result": null,
+  "plan_digest": "0043b7459e44193e"
+}

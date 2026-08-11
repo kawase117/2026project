@@ -1,0 +1,37 @@
+{
+  "rule_id": "rakuen_jug_renovation_rb_top3",
+  "hall": "楽園蒲田店",
+  "freeze_hash": "2c84cf17dfa96448",
+  "target_date": "20260812",
+  "data_asof": "20260810",
+  "lookback_window": [
+    "2026-07-13",
+    "2026-08-12"
+  ],
+  "score": "hist_mean_rb_prob",
+  "selection_unit": "machine",
+  "success_criterion": "【重要】この主張は2026-07-28に工事後データを直接見て発見したものであり、バックテストは in-sample である。数値を採否根拠にしてはならない。判定はフォワードのみ。フォワード20エントリー日を経過した時点で edge 平均が +200枚/台 以上かつ 95%CI 下限 > 0 であること。満たさなければ破棄し、楽園のジャグ系スコアの派生はこの1本で打ち止めとする。なお工事後n=19時点の新台特需（設定不問の高回転）が混入している可能性は未検証で、フォワード期間が進むにつれて減衰する場合はレジームではなく特需だったと判断する。",
+  "is_dry_run": false,
+  "picks": [
+    {
+      "machine_number": 1114,
+      "machine_name": "ネオアイムジャグラーEX",
+      "score": 0.003222,
+      "history_days": 22
+    },
+    {
+      "machine_number": 1133,
+      "machine_name": "ネオアイムジャグラーEX",
+      "score": 0.0032,
+      "history_days": 16
+    },
+    {
+      "machine_number": 1178,
+      "machine_name": "ネオアイムジャグラーEX",
+      "score": 0.003188,
+      "history_days": 26
+    }
+  ],
+  "result": null,
+  "plan_digest": "eaccca028ad26892"
+}

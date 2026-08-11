@@ -1,0 +1,43 @@
+{
+  "rule_id": "rakuen_block2247_position_follow",
+  "hall": "楽園蒲田店",
+  "freeze_hash": "4c1fc604baa51551",
+  "target_date": "20260812",
+  "data_asof": "20260810",
+  "lookback_window": [
+    "2026-07-13",
+    "2026-08-12"
+  ],
+  "score": "hist_mean_diff",
+  "selection_unit": "machine",
+  "success_criterion": "本ルールは 20260706-20260808 のデータから発見したものであり、同期間のバックテストは in-sample の自己参照なので採否根拠にしない。判定はフォワードのみ。フォワード30エントリー日を経過した時点で mean_edge_per_pick の平均が +300枚/台 以上、かつ 95%CI 下限 > 0 であること。満たさなければ破棄し、位置ブロック追走ルールの派生はこの1本で打ち止めとする。機種入替が起きてもセクション2247-2250を追い続ける(機種を追わないことが位置仮説の核心であり、ここを機種追走に変えたら別ルールとして新規登録する)。入替当日は新機種の履歴が無く plan が失敗するため、その日はエントリー無しとして30日に数えない。",
+  "is_dry_run": false,
+  "picks": [
+    {
+      "machine_number": 2247,
+      "machine_name": "バンドリ！",
+      "score": 2143.142857,
+      "history_days": 7
+    },
+    {
+      "machine_number": 2248,
+      "machine_name": "バンドリ！",
+      "score": 1401.714286,
+      "history_days": 7
+    },
+    {
+      "machine_number": 2249,
+      "machine_name": "バンドリ！",
+      "score": 627.333333,
+      "history_days": 6
+    },
+    {
+      "machine_number": 2250,
+      "machine_name": "バンドリ！",
+      "score": -122.0,
+      "history_days": 7
+    }
+  ],
+  "result": null,
+  "plan_digest": "4b1de37f639b0957"
+}
