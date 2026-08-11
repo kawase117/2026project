@@ -1,0 +1,201 @@
+{
+  "announce_id": "rakuen__20260810__kawasakislot",
+  "hall": "楽園蒲田店",
+  "target_date": "20260810",
+  "source": {
+    "account": "kawasakislot",
+    "url": "https://x.com/kawasakislot/status/2086403957531029765",
+    "posted_at": "2026-08-09T19:47:21+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "8/10 明日の楽園蒲田は！\nメガ1の周年🎂対抗でバチバチに！毎月やってる和尚大激怒取材入も入っていて、6/10+15万枚、7/10+13万枚と平均差枚で2ヶ月連続蒲田駅前No.1👑\n\n取材内容はアンケートで出てて下記全部発動！\n・東京喰種がニブイチ⑤⑥\n・末尾0がニブイチ⑤⑥\n・3台並び⑤⑥×10か所以上\n・5台並び⑤⑥×2か所以上\n・10台並び⑤⑥\n・全⑥あり（毎日仕掛けで全⑤⑥機種も別途あり）\n\n86番以内なら素直に東京喰種か末尾0へ\n東京喰種は31台、末尾0は東京喰種と稼働停止の鏡除いて55台\n抽選抜け番とかもあるから100番くらいは機種選ばなきゃ取れそう🤔\n\n次点で3台～10台&まるごと並び探しでｗ\n当然だけど、末尾0が絡む並びが8割方だと思うので狙い機種の中でも末尾0に近い台を狙うべし\n1️⃣増台機種➔エウレカ/北斗\n2️⃣恒例機種➔転生/モンキー/Lカバネリ/化物語/マギレコ/シャーマン/炎炎\n3️⃣日付まつわる➔バイオでバイオシリーズ（メダルのバイオRE:2、新館2Fバイオバラ4台も）など...\n8/10=バット（北斗）など、OCでも色々連想してくれてた方いて感謝🙏\n4️⃣演者寄せ➔アクロスやBT機、ノーマル系？\n\nオススメ機種は明日切り替わりなので朝イチ確認を..!\n\n抽選は9:40\n明日は打ち切り必至！\n悪☆味さん @dropout_777 来店も！",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "baserate_before_target": {
+    "window_days": 90,
+    "n_days": 87,
+    "candidate_models_per_day": 60.5,
+    "models_over_1800_mean": 3.22,
+    "models_over_1800_median": 3.0,
+    "p_at_least_2": 0.701,
+    "p_at_least_3": 0.517,
+    "note": "zentaikei_count(n_models=2) は無条件でも70%の日に成立する。この claim の的中は情報量ほぼゼロ。予告の価値は東京喰種・末尾0の名指しにある。"
+  },
+  "claims": [
+    {
+      "type": "zentaikei_count",
+      "n_models": 2,
+      "note": "「全⑥あり」＋「毎日仕掛けで全⑤⑥機種も別途あり」で最低2機種。取材内容の一部。"
+    },
+    {
+      "type": "model_named_ratio",
+      "machine_name": "東京喰種",
+      "ratio": 2,
+      "note": "取材内容「東京喰種がニブイチ⑤⑥」。8/8時点で31台設置＝投稿の台数と一致。"
+    },
+    {
+      "type": "position_rule",
+      "field": "last_digit",
+      "values": [
+        "0"
+      ],
+      "note": "取材内容「末尾0がニブイチ⑤⑥」。取材側は機種を限定していないので segment 未指定（プール判定）。ただし2026-08-07に末尾効果はセグメントで符号が反転した実績があるため、by_segment を必ず併読すること。"
+    }
+  ],
+  "unscored_claims": [
+    {
+      "text": "3台並び⑤⑥×10か所以上 / 5台並び⑤⑥×2か所以上 / 10台並び⑤⑥",
+      "reason": "隣接台の連続ブロックを判定する claim type が announce.py に無い。台番号の連続性判定を実装するまで採点不能。"
+    },
+    {
+      "text": "1️⃣増台機種➔エウレカ/北斗 2️⃣恒例機種➔転生/モンキー/Lカバネリ/化物語/マギレコ/シャーマン/炎炎 3️⃣日付まつわる➔バイオ系/北斗 4️⃣演者寄せ➔アクロス・BT機",
+      "reason": "取材内容ではなく投稿者の推測（狙い目候補）。取材の的中率と混ぜると発信者の評価が壊れる。ホールが名指ししたのは東京喰種と末尾0のみ。"
+    }
+  ],
+  "result": {
+    "scored_at_data_max": "20260810",
+    "hall_baseline_mean_diff": 82.7,
+    "hall_n_machines": 587,
+    "new_machine_days": 30,
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 2,
+          "note": "「全⑥あり」＋「毎日仕掛けで全⑤⑥機種も別途あり」で最低2機種。取材内容の一部。"
+        },
+        "observed_n_models": 5,
+        "candidate_models": 56,
+        "models": [
+          {
+            "machine_name": "化物語",
+            "score": 5542.0,
+            "n_machines": 9,
+            "mean_diff": 3132.7,
+            "age_days": 245
+          },
+          {
+            "machine_name": "押忍!番長ZERO",
+            "score": 5432.5,
+            "n_machines": 3,
+            "mean_diff": 3095.7,
+            "age_days": 586
+          },
+          {
+            "machine_name": "スーパーリオエース2",
+            "score": 2987.1,
+            "n_machines": 4,
+            "mean_diff": 2298.0,
+            "age_days": 90
+          },
+          {
+            "machine_name": "からくりサーカス2",
+            "score": 2821.8,
+            "n_machines": 7,
+            "mean_diff": 2143.3,
+            "age_days": 35
+          },
+          {
+            "machine_name": "花の慶次～佐渡攻めの章～",
+            "score": 2145.9,
+            "n_machines": 3,
+            "mean_diff": 3032.0,
+            "age_days": 35
+          }
+        ],
+        "n_new_machines_over": 0,
+        "hit": true
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "東京喰種",
+          "ratio": 2,
+          "note": "取材内容「東京喰種がニブイチ⑤⑥」。8/8時点で31台設置＝投稿の台数と一致。"
+        },
+        "n_machines": 31,
+        "ratio": 2,
+        "top_k": 16,
+        "model_top_k_mean_diff": 3461.7,
+        "hall_top_quantile_mean_diff": 1778.6,
+        "excess_vs_hall_quantile": 1683.1,
+        "model_mean_diff": 361.4,
+        "n_over_hall_quantile": 14,
+        "hit": true,
+        "model_named_score": 519.0,
+        "model_named_rank": 16
+      },
+      {
+        "type": "position_rule",
+        "claim": {
+          "type": "position_rule",
+          "field": "last_digit",
+          "values": [
+            "0"
+          ],
+          "note": "取材内容「末尾0がニブイチ⑤⑥」。取材側は機種を限定していないので segment 未指定（プール判定）。ただし2026-08-07に末尾効果はセグメントで符号が反転した実績があるため、by_segment を必ず併読すること。"
+        },
+        "by_segment": [
+          {
+            "segment": "HANA",
+            "n_machines": 16,
+            "n_target": 2,
+            "n_other": 14,
+            "effect_resid_diff": 2207.9,
+            "target_payout": 1.0865,
+            "other_payout": 0.9951
+          },
+          {
+            "segment": "OKI",
+            "n_machines": 13,
+            "n_target": 1,
+            "n_other": 12,
+            "effect_resid_diff": 989.3,
+            "target_payout": 1.0546,
+            "other_payout": 0.894
+          },
+          {
+            "segment": "JUG",
+            "n_machines": 117,
+            "n_target": 12,
+            "n_other": 105,
+            "effect_resid_diff": 909.8,
+            "target_payout": 1.0411,
+            "other_payout": 1.0087
+          },
+          {
+            "segment": "AT",
+            "n_machines": 350,
+            "n_target": 39,
+            "n_other": 311,
+            "effect_resid_diff": 222.5,
+            "target_payout": 1.0067,
+            "other_payout": 1.0064
+          },
+          {
+            "segment": "BT",
+            "n_machines": 91,
+            "n_target": 6,
+            "n_other": 85,
+            "effect_resid_diff": 197.4,
+            "target_payout": 0.9927,
+            "other_payout": 0.9899
+          }
+        ],
+        "judged_segment": "ALL(pooled)",
+        "n_target": 60,
+        "n_other": 527,
+        "effect_resid_diff": 434.2,
+        "target_payout": 1.0173,
+        "other_payout": 1.0035,
+        "hit": true
+      }
+    ]
+  },
+  "announce_digest": "f6e9df57b77bec98"
+}

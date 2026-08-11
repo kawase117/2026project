@@ -1,0 +1,163 @@
+{
+  "announce_id": "rakuen__20260807__kawasakislot",
+  "hall": "楽園蒲田店",
+  "target_date": "20260807",
+  "source": {
+    "account": "kawasakislot",
+    "url": "https://x.com/kawasakislot/status/2085318479310463449",
+    "posted_at": "2026-08-06T19:54:03+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "8/7 楽園蒲田\n明日は末尾7の1/2⑤⑥、転生・エウレカの先バレもあるブラックホール取材入り！\nマルハンの特日対抗で、7/7+16万枚、7/17+15万枚、7/27+24万枚と7月は3回ともﾊﾞｯﾁﾊﾞﾁに出玉も出し切ってスロ専日本1の座を確固たるモノに\n\nアンケート内容は前回の7つくと一緒で\n・末尾7が1/2⑤⑥\n・北斗転生&エウレカが1/3\n・全⑤⑥複数 ※1機種は7台以上機種から\n・7台並び×2箇所以上\n・3台並び×7箇所以上\n・ジャグ20%⑤⑥\n\n早番なら好きな台の末尾⑦へ（全59台）、次点で1/3の転生（20台）＆エウレカ（25台）\n合計約100台あるので早番引いた時はここへｗ\n末尾⑦は前回バラからも56確やこぜ台あってかなり良きでしたね\n\nジャグ20％⑤⑥もあるのでネオアイム・マイジャグ中心にジャグ好きはココ狙っても良し＆遅番でも狙える本館1F！\n\n3台並びや7台並びはジャグに加えて\n定番機種の東京喰種・ニューキング・化物語・東リベ・リオ2\n天膳・シャーマン・炎炎・モンキー・バンドリ・北斗・花の慶次\n\n8/7➔ハナハナ、ハナビ、花の慶次などは特に仕掛けありそうな\nあとは末尾⑦絡みの並びが多いので探すのは末尾⑥や⑧からドリルするのがおすすめ！\n\n抽選は9:40\n300-350人くらい予想！",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "zentaikei_count",
+      "n_models": 2,
+      "note": "「全⑤⑥複数 ※1機種は7台以上機種から」。「複数」を2機種以上と解釈。min_machines=3 は README のベースレート校正条件に合わせてあり、予告の『7台以上』条件より緩い。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "北斗の拳 転生の章2",
+      "note": "「北斗転生&エウレカが1/3」。DB 20260805 時点のロスターで20台、予告の『転生（20台）』と一致。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "交響詩篇エウレカセブン HI-EVOLUTION ZERO TYPE‐ART",
+      "note": "「北斗転生&エウレカが1/3」。DB 20260805 時点のロスターで25台、予告の『エウレカ（25台）』と一致。"
+    },
+    {
+      "type": "position_rule",
+      "field": "last_digit",
+      "values": [
+        "7"
+      ],
+      "note": "「末尾7が1/2⑤⑥」。DB 20260805 時点で末尾7は59台、予告の『全59台』と一致。判定は同機種内残差の差が正かどうかであり、1/2という比率そのものは検定していない。"
+    },
+    {
+      "type": "category_share",
+      "category": "jug_flag",
+      "min_share": 0.2,
+      "note": "「ジャグ20%⑤⑥」。定義が予告と異なる点に注意。予告はジャグ設置台のうち20%が⑤⑥という主張だが、本モジュールの category_share は『閾値超え機種のうち何割がジャグか』である。忠実な検定ではなく代理指標として登録する。"
+    }
+  ],
+  "result": {
+    "scored_at_data_max": "20260807",
+    "hall_baseline_mean_diff": 220.1,
+    "hall_n_machines": 587,
+    "new_machine_days": 30,
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 2,
+          "note": "「全⑤⑥複数 ※1機種は7台以上機種から」。「複数」を2機種以上と解釈。min_machines=3 は README のベースレート校正条件に合わせてあり、予告の『7台以上』条件より緩い。"
+        },
+        "observed_n_models": 4,
+        "candidate_models": 56,
+        "models": [
+          {
+            "machine_name": "バンドリ！",
+            "score": 2953.9,
+            "n_machines": 4,
+            "mean_diff": 2143.5,
+            "age_days": 583
+          },
+          {
+            "machine_name": "花の慶次～佐渡攻めの章～",
+            "score": 2867.9,
+            "n_machines": 3,
+            "mean_diff": 2191.0,
+            "age_days": 32
+          },
+          {
+            "machine_name": "戦国コレクション6",
+            "score": 2790.1,
+            "n_machines": 6,
+            "mean_diff": 1556.0,
+            "age_days": 32
+          },
+          {
+            "machine_name": "キングハナハナ-30",
+            "score": 2690.7,
+            "n_machines": 8,
+            "mean_diff": 1399.4,
+            "age_days": 583
+          }
+        ],
+        "n_new_machines_over": 0,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "北斗の拳 転生の章2",
+          "note": "「北斗転生&エウレカが1/3」。DB 20260805 時点のロスターで20台、予告の『転生（20台）』と一致。"
+        },
+        "score": 1481.1,
+        "mean_diff": 1402.8,
+        "gratio": 1.056,
+        "n_machines": 20,
+        "rank": 6,
+        "candidate_models": 56,
+        "age_days": 214,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "交響詩篇エウレカセブン HI-EVOLUTION ZERO TYPE‐ART",
+          "note": "「北斗転生&エウレカが1/3」。DB 20260805 時点のロスターで25台、予告の『エウレカ（25台）』と一致。"
+        },
+        "score": 622.0,
+        "mean_diff": 463.1,
+        "gratio": 1.343,
+        "n_machines": 25,
+        "rank": 12,
+        "candidate_models": 56,
+        "age_days": 583,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "position_rule",
+        "claim": {
+          "type": "position_rule",
+          "field": "last_digit",
+          "values": [
+            "7"
+          ],
+          "note": "「末尾7が1/2⑤⑥」。DB 20260805 時点で末尾7は59台、予告の『全59台』と一致。判定は同機種内残差の差が正かどうかであり、1/2という比率そのものは検定していない。"
+        },
+        "n_target": 59,
+        "n_other": 528,
+        "effect_resid_diff": -35.1,
+        "hit": false
+      },
+      {
+        "type": "category_share",
+        "claim": {
+          "type": "category_share",
+          "category": "jug_flag",
+          "min_share": 0.2,
+          "note": "「ジャグ20%⑤⑥」。定義が予告と異なる点に注意。予告はジャグ設置台のうち20%が⑤⑥という主張だが、本モジュールの category_share は『閾値超え機種のうち何割がジャグか』である。忠実な検定ではなく代理指標として登録する。"
+        },
+        "observed_share": 0.0,
+        "in_category": 0,
+        "n_over": 4,
+        "hit": false
+      }
+    ]
+  },
+  "announce_digest": "ca5931079ff62aa5"
+}

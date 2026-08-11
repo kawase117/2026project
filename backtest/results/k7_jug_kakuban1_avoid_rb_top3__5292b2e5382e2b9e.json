@@ -1,0 +1,43 @@
+{
+  "rule_id": "k7_jug_kakuban1_avoid_rb_top3",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "selection_unit": "machine",
+  "freeze_hash": "5292b2e5382e2b9e",
+  "data_fingerprint": {
+    "n_rows": 220935,
+    "sum_games": 896569646,
+    "sum_diff": 27285600,
+    "max_date_in_db": "20260810"
+  },
+  "hypothesis": "セクション最小番号側の端（rank_from_min=1、いわゆる角番1）は蒲田7で恒常的に低設定が置かれる冷遇ポジションである。したがってジャグ全台から角番1を除外したうえで直近30日の平均RB確率上位3台を選べば、角番1を除外しない同一スコアのルール k7_jug_rb_top3 より高いエッジを得る。これは k7_jug_kakuban1_avoid（score:'none' でフォワード不能だった）の再登録版であり、score で3台に絞ることで forward.py::plan が選択台を確定できる形にした。",
+  "source_instinct": "kakuban-corner-low-setting-structural-bias（2026-06-17 セクション残差: 蒲田7 3F A 角1 −140.7 q=1.4e-29 ほか全5セグメントでマイナス）/ highsetting-rb-probability-kakuban-verification-20260716（差枚と独立なRB確率で角1最弱を再現、蒲田7 p=5.0e-13〜3.7e-37）。⚠️ 角番の概念に注意: 上記2件はいずれも rank_from_min / rank_from_max ベース（eda/kakuban_rb_probability_verification.py::assign_kakuban_bucket）である。旧ルール k7_jug_kakuban1_avoid は rank_from_aisle を使っており、証拠と概念が食い違っていた。一方 2026-06-13 の null 結果（kakuban-physical-position-null-result-multi-method）は rank_from_aisle＝入口からの距離ベースであり、本ルールが主張する min/max 側の効果を否定するものではない。本ルールは証拠と同じ rank_from_min を使う。",
+  "success_criterion": "フォワードで30エントリー日を経過した時点で、(1) エッジ（同日ジャグ全台平均との差枚差）の平均が +150枚/台 以上かつ 7日ブロックブートストラップ 95%CI 下限 > 0、かつ (2) 同期間の k7_jug_rb_top3 のエッジを上回ること。(2) を課すのは、本ルールの主張が『RB確率スコアが効く』ではなく『角番1を外すと上乗せがある』だからである。(1) だけ満たして (2) を満たさない場合、角番1除外に効果は無く RB確率スコアだけが効いていたと結論し、本ルールは破棄する。バックテストは in-sample のため採否根拠にしない。",
+  "eval_range": "20251001-20260810",
+  "n_eval_days": 309,
+  "n_days_skipped_no_history": 0,
+  "n_days_traded": 309,
+  "n_picks": 927,
+  "mean_games_per_pick": 4208.5,
+  "pick_low_games_rate": 0.115,
+  "mean_diff_per_pick": 121.7,
+  "mean_baseline": 148.8,
+  "mean_edge_per_pick": -27.1,
+  "edge_ci95": [
+    -105.5,
+    51.3
+  ],
+  "edge_ci95_block7": [
+    -106.7,
+    41.8
+  ],
+  "mean_edge_vs_excluded": -27.6,
+  "edge_vs_excluded_ci95_block7": [
+    -108.6,
+    42.6
+  ],
+  "mean_pick_share": 0.018,
+  "edge_positive_day_rate": 0.388,
+  "win_rate_abs": 0.394,
+  "cumulative_diff": 37600.0,
+  "yen_per_day_at_20": 2434
+}

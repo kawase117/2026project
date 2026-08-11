@@ -1,0 +1,67 @@
+---
+id: 2026-08-11-rakuen-lastdigit-announce-segment-split
+trigger: "楽園蒲田で取材/予告が末尾Dを名指ししたとき。予告末尾の当日実績を採点するとき。announce.py の position_rule に last_digit を登録するとき。「予告末尾の±1が本命」という話を検討するとき"
+confidence: 0.5
+domain: hall-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+---
+
+# 楽園蒲田の予告末尾はジャグでドンピシャ・ATで+1にずれる（n=2、要フォワード）
+
+## Core claim
+楽園蒲田で取材が末尾Dを名指ししたとき、当日の末尾効果はセグメントで挙動が逆になる。
+
+- **JUG**: 予告末尾Dそのものが10末尾中1位。±1隣接は中位で効かない。
+- **AT**: 予告末尾Dは死んでおり、**D+1** が1位。D−1は中位。
+
+したがって「予告末尾の±1が本命」は、正しくは
+**「ATセグメントに限って D+1 が本命、JUGはDのまま」** である。
+プールで測るとAT350台がJUG117台を飲み込むため、この構造は完全に消える。
+
+## Evidence
+- n_observations: 2日（announce に予告末尾が記録されている全日。事後に足していない）
+- data scope: 楽園蒲田店、2026-08-07（予告末尾7）/ 2026-08-10（予告末尾0）
+- metric scope: 残差効果（台の差枚 − 同日同機種平均）の当該末尾 vs それ以外。
+  中央値・プラス率も併記して上振れ2発でないことを確認済み。
+- result summary:
+
+  | 日 | seg | 予告末尾Dの順位 | D+1の順位 | D−1の順位 |
+  |---|---|---|---|---|
+  | 08-07 | JUG | **1位** (+1,314 / 中央値+1,810 / プラス率81.8%) | 4位 | 5位 |
+  | 08-10 | JUG | **1位** (+910 / 中央値+929 / プラス率83.3%) | 6位 | 5位 |
+  | 08-07 | AT | **10位（最下位）** (−571 / 中央値−1,571 / プラス率20.0%) | **1位** (+624) | 3位 |
+  | 08-10 | AT | 5位 (+223) | **1位** (+1,039) | 6位 |
+
+  BTは両日とも予告末尾が中位以下で無関係。HANA(16台)/OKI(13台)は末尾あたり1〜2台で判断不能。
+- 機構の検定（90日、予告の有無と無関係）: 「並びで置くから隣にこぼれる」説は支持されない。
+  末尾レベルの環状ラグ1自己相関は全セグメントで帰無と区別できず（JUG z=+1.24 が最大）。
+  台番号レベルの隣接相関は機種内シャッフルを帰無にすると全セグメントでわずかに正
+  （JUG z=+2.12, AT z=+1.65, BT z=+1.62, 全体 z=+1.62）だが効果量は相関+0.02〜0.03と微小。
+- スクリプト: `eda/rakuen_lastdigit_neighbor_segment.py`
+
+## Interpretation
+- ブロック配置のこぼれではなく **意図的なずらし** と読むほうが整合する
+  （AT の予告末尾は 08-07 にプラス率20%まで沈んでおり、こぼれでは説明できない）。
+  [[fake-lastdigit-decoy]] の具体形。ジャグは素直に入れ、AT機だけデコイにしている。
+- ⚠️ **n=2。しかも5セグメント中ATを事後に選んでいる。** 「±1」という枠自体は
+  ユーザーが実データを見る前に述べた事前仮説なので偶然確率は4%相当だが、
+  セグメントの事後選択がある以上これは有意性ではない。示唆であって確証ではない。
+- 対称の「±1」ではなく **+1 に偏っている** 点は、次のフォワードで分離できる。
+
+## Action
+- 楽園の予告末尾Dを announce に登録するとき、position_rule を**2本**凍結する:
+  `{field:"last_digit", values:[D], segment:"JUG"}` と
+  `{field:"last_digit", values:[D+1], segment:"AT"}`。
+  対照として `values:[D-1], segment:"AT"` も入れると +1 偏りを検定できる。
+- segment 未指定のプール判定だけを見て予告末尾を棄却しない
+  （[[feedback-lastdigit-kakuban-segment-split]]）。
+- 予告末尾は `eda/rakuen_lastdigit_neighbor_segment.py` の `ANNOUNCED` に
+  **対象日より前に**追記する。事後に足すと選択バイアスになる。
+
+## Relation
+- related: [feedback-lastdigit-kakuban-segment-split, fake-lastdigit-decoy]
+
+## Status
+- status: watching

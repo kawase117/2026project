@@ -1,0 +1,154 @@
+{
+  "announce_id": "mitoya__20260808__kawasakislot",
+  "hall": "みとや大森町店",
+  "target_date": "20260808",
+  "source": {
+    "account": "kawasakislot",
+    "url": "https://x.com/kawasakislot/status/2085659176638845384",
+    "posted_at": "2026-08-07T20:00:00+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "8/8 みとや9店舗合同！\n→月ゾロ、天草超絶ホール応援団\n※水道橋はちゅんげー玉調査隊も同時開催\n\n月ゾロ恒例のみとや合同！\n仕掛けはアンケート曰く\n①分岐以上\n②合同全てっぺん機種あり\n③東京喰種・Lカバネリにニブイチ仕掛け\n④ニブイチ×5機種以上あり\n※朝イチor15時or5000Gでカスタム仕掛け\n\n全店舗にある機種は以下の8機種なので合同仕掛けはこの中から探していきたい\n👉ネオアイム・マイジャグ・ゴージャグ・Lカバネリ・喰種・転生・モンキー・GOD\n\nこの中でも喰種とLカバネリはニブイチ仕掛けもどちらかにあるので優先👈\n店舗LINEやXで合同ヒントもあると思うので18時頃の投稿には要注目！\n\n8/8で山佐の日なので何かしら仕掛けに絡めててくるかなと！\n\n6月・7月の仕掛け内容は抜群の内容なのでご参考に🔥\n7/7のLカバネリ合同結果\n・大森町(平均+4,622枚) ほか8店舗すべて平均+2,500〜+5,500枚\n6/6のLカバネリ合同結果\n・大森町(平均+4,444枚) ほか神田西口(-677枚)を除く7店舗が平均+2,400〜+5,100枚",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "zentaikei_count",
+      "n_models": 1,
+      "note": "「②合同全てっぺん機種あり」。9店舗共通で1機種を全台系にする主張と解釈し n_models=1 とした。当店(大森町)単独の観測なので、他8店舗での同時成立は検証できない。"
+    },
+    {
+      "type": "model_named_ratio",
+      "machine_name": "東京喰種",
+      "ratio": 2,
+      "note": "「③東京喰種・Lカバネリにニブイチ仕掛け」。DB 20260807 時点で当店9台。原文は『どちらかにある』とも書いており、2機種同時成立は主張されていない点に注意。"
+    },
+    {
+      "type": "model_named_ratio",
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "ratio": 2,
+      "note": "「③東京喰種・Lカバネリにニブイチ仕掛け」。DB 20260807 時点で当店17台。同上、東京喰種との二者択一の可能性がある。"
+    }
+  ],
+  "notes": [
+    "posted_at は概算（8/7夜）。ツイートIDから正確な時刻を取得していない。",
+    "①分岐以上・④ニブイチ×5機種以上 は claim 型に対応が無いため未登録。①はホール全体機械割>=100%、④は『ratio型の機種が5機種以上』という数え上げで、いずれも現行 announce.py の採点器に無い。",
+    "『全店舗にある8機種』のリスト（ネオアイム・マイジャグ・ゴージャグ・Lカバネリ・喰種・転生・モンキー・GOD）は投稿者の推論であってホール発の情報ではない。アンケート由来と明記されているのは①〜④のみ。なお当店に『転生したらスライムだった件』は設置が無い。",
+    "『8/8で山佐の日』も投稿者の推測。"
+  ],
+  "result": {
+    "scored_at_data_max": "20260808",
+    "hall_baseline_mean_diff": 882.3,
+    "hall_n_machines": 277,
+    "new_machine_days": 30,
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 1,
+          "note": "「②合同全てっぺん機種あり」。9店舗共通で1機種を全台系にする主張と解釈し n_models=1 とした。当店(大森町)単独の観測なので、他8店舗での同時成立は検証できない。"
+        },
+        "observed_n_models": 7,
+        "candidate_models": 36,
+        "models": [
+          {
+            "machine_name": "ソードアート・オンラインII",
+            "score": 4856.6,
+            "n_machines": 4,
+            "mean_diff": 2850.0,
+            "age_days": 61
+          },
+          {
+            "machine_name": "モンキーターンV",
+            "score": 4359.5,
+            "n_machines": 7,
+            "mean_diff": 4907.0,
+            "age_days": 584
+          },
+          {
+            "machine_name": "ファンキージャグラー2",
+            "score": 3583.5,
+            "n_machines": 6,
+            "mean_diff": 2285.8,
+            "age_days": 584
+          },
+          {
+            "machine_name": "いざ！番長",
+            "score": 3243.9,
+            "n_machines": 3,
+            "mean_diff": 4637.0,
+            "age_days": 427
+          },
+          {
+            "machine_name": "東京喰種",
+            "score": 2896.0,
+            "n_machines": 9,
+            "mean_diff": 3147.9,
+            "age_days": 551
+          },
+          {
+            "machine_name": "攻殻機動隊",
+            "score": 2505.4,
+            "n_machines": 5,
+            "mean_diff": 3401.2,
+            "age_days": 187
+          },
+          {
+            "machine_name": "とある魔術の禁書目録2",
+            "score": 2113.7,
+            "n_machines": 5,
+            "mean_diff": 2107.4,
+            "age_days": 5
+          }
+        ],
+        "n_new_machines_over": 1,
+        "hit": true
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "東京喰種",
+          "ratio": 2,
+          "note": "「③東京喰種・Lカバネリにニブイチ仕掛け」。DB 20260807 時点で当店9台。原文は『どちらかにある』とも書いており、2機種同時成立は主張されていない点に注意。"
+        },
+        "n_machines": 9,
+        "ratio": 2,
+        "top_k": 5,
+        "model_top_k_mean_diff": 7031.8,
+        "hall_top_quantile_mean_diff": 3011.5,
+        "excess_vs_hall_quantile": 4020.3,
+        "model_mean_diff": 3147.9,
+        "n_over_hall_quantile": 6,
+        "hit": true,
+        "model_named_score": 2896.0,
+        "model_named_rank": 5
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+          "ratio": 2,
+          "note": "「③東京喰種・Lカバネリにニブイチ仕掛け」。DB 20260807 時点で当店17台。同上、東京喰種との二者択一の可能性がある。"
+        },
+        "n_machines": 17,
+        "ratio": 2,
+        "top_k": 9,
+        "model_top_k_mean_diff": 2815.7,
+        "hall_top_quantile_mean_diff": 3202.8,
+        "excess_vs_hall_quantile": -387.1,
+        "model_mean_diff": 815.0,
+        "n_over_hall_quantile": 9,
+        "hit": false,
+        "model_named_score": 678.0,
+        "model_named_rank": 21
+      }
+    ]
+  },
+  "announce_digest": "80a03d0cc3687497"
+}

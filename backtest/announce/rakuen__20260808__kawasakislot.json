@@ -1,0 +1,102 @@
+{
+  "announce_id": "rakuen__20260808__kawasakislot",
+  "hall": "楽園蒲田店",
+  "target_date": "20260808",
+  "source": {
+    "account": "kawasakislot",
+    "url": "https://x.com/kawasakislot/status/2085679474725785779",
+    "posted_at": "2026-08-07T21:00:00+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "今月もやってきました強特定日の8/8月ゾロ×楽園蒲田！\n7月は月間総差枚+140万枚と7/7の月ゾロからは特にギア上がっていて、No取材日でも毎日仕掛け中心に単品もあって薄利営業継続中！\n\n明日は毎日仕掛けの3台設置以上から全56×2機種以上は確実に、全台系増量したり、高配分、並び、単品と色々やってくるかと🤔\n\n優先したいのは日頃から扱いの良い機種！\n定番機種の東京喰種・化物語・天膳・シャーマン・炎炎・モンキー・バンドリ・北斗\n\n迷ったらバラ含め新館2Fの機種からがおすすめ！\n本館のメダル機やバラにもほぼほぼ間違いなく仕掛けあると思うのと、\n令和8年8月8日▶超山佐プレミアムDayで山佐機種も若干意識\n\n抽選はいつも通り500人打ち切り\n⚠️打ち切り後、すぐに抽選開始です\n\n20スロ587台なので抽選受ければ確実に座れるし、抜け番とか考えたらケツでも100台分くらい選べるし一般でも何かしらは座れるのも良いよねｗ\n遅番対策で埋まり遅めのジャグやハナ、バラとかも確実に仕掛けあるかと🙆‍♂️\n\n打ち切り時間は読みづらいけど...個人的には7時半くらいじゃないかなとｗ",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "zentaikei_count",
+      "n_models": 2,
+      "note": "「毎日仕掛けの3台設置以上から全56×2機種以上は確実に」。3台設置以上という原文の条件は min_machines=3 と一致する。「増量したり」は不確定なので下限の2で登録する。"
+    }
+  ],
+  "notes": [
+    "posted_at は概算（8/7夜）。ツイートIDから正確な時刻を取得していない。",
+    "『定番機種の東京喰種・化物語・天膳・シャーマン・炎炎・モンキー・バンドリ・北斗』は投稿者の優先順位であってホール発の名指しではない。8/7の予告（アンケート内容）と違い、今回の投稿にホール由来の機種名は含まれない。したがって model_named では登録しない。",
+    "『令和8年8月8日▶超山佐プレミアムDay』は店の企画名としてホール発の可能性が高いが、対象機種の名指しが無く claim 化できない。",
+    "『新館2F』『本館のメダル機』は section 指定だが、楽園の section マスタと館フロアの対応が未確認のため position_rule では登録しない。"
+  ],
+  "result": {
+    "scored_at_data_max": "20260808",
+    "hall_baseline_mean_diff": 119.7,
+    "hall_n_machines": 587,
+    "new_machine_days": 30,
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 2,
+          "note": "「毎日仕掛けの3台設置以上から全56×2機種以上は確実に」。3台設置以上という原文の条件は min_machines=3 と一致する。「増量したり」は不確定なので下限の2で登録する。"
+        },
+        "observed_n_models": 7,
+        "candidate_models": 56,
+        "models": [
+          {
+            "machine_name": "ファンキージャグラー2",
+            "score": 3352.0,
+            "n_machines": 8,
+            "mean_diff": 2440.9,
+            "age_days": 584
+          },
+          {
+            "machine_name": "モンキーターンV",
+            "score": 2296.5,
+            "n_machines": 12,
+            "mean_diff": 1976.6,
+            "age_days": 584
+          },
+          {
+            "machine_name": "革命機ヴァルヴレイヴ2",
+            "score": 2233.9,
+            "n_machines": 6,
+            "mean_diff": 1889.5,
+            "age_days": 277
+          },
+          {
+            "machine_name": "ワールドダイスター",
+            "score": 2213.1,
+            "n_machines": 6,
+            "mean_diff": 1643.3,
+            "age_days": 4
+          },
+          {
+            "machine_name": "シャーマンキング",
+            "score": 2175.7,
+            "n_machines": 5,
+            "mean_diff": 2324.2,
+            "age_days": 550
+          },
+          {
+            "machine_name": "バンドリ！",
+            "score": 2063.5,
+            "n_machines": 4,
+            "mean_diff": 1821.5,
+            "age_days": 584
+          },
+          {
+            "machine_name": "ソードアート・オンライン",
+            "score": 1988.4,
+            "n_machines": 4,
+            "mean_diff": 1774.2,
+            "age_days": 584
+          }
+        ],
+        "n_new_machines_over": 1,
+        "hit": true
+      }
+    ]
+  },
+  "announce_digest": "c95873bbb2151ef4"
+}

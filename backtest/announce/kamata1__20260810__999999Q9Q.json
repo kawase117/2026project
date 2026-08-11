@@ -1,0 +1,120 @@
+{
+  "announce_id": "kamata1__20260810__999999Q9Q",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "target_date": "20260810",
+  "source": {
+    "account": "999999Q9Q",
+    "url": "https://x.com/999999Q9Q/status/2086457976509108278",
+    "posted_at": "2026-08-09T23:22:00+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "🎂🍫ファンキーサトウの周年予想🍫🎂\n\n8月10日は、メガいちの前身となる蒲田駅東店からの周年日。こと明日に関しては、7や1の付く日と同様に全域強化を意識すべきと言われている。メガいちのやり方的に、全🍫機種・大量の単品、そして場合によってはメイン機種のニブイチ以上仕掛けをやりそうな気配。\n\n念の為、月曜の曜日仕掛けでもあるニブイチ列仕掛けも意識しておくべし。直近の毎月10日間は月イチの気配を感じさせずに牙を隠していたが、明日は周年にふさわしい内容に仕上げてくるかどうか。まずは抽選を受けるために月曜朝からカマタへ向かうべし😇\n\n#マルハンメガシティ2000蒲田1",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "baserate_before_target": {
+    "window_days": 90,
+    "n_days": 87,
+    "candidate_models_per_day": 46.8,
+    "models_over_1800_mean": 2.56,
+    "models_over_1800_median": 2.0,
+    "p_at_least_2": 0.655,
+    "p_at_least_3": 0.391,
+    "note": "n_models=3 のベースレートは39%。的中しても『周年だから』とは言えず、平常日比で1.5倍以上の機種数（>=5, ベースレート要再計算）が出て初めて周年効果の証拠になる。"
+  },
+  "claims": [
+    {
+      "type": "zentaikei_count",
+      "n_models": 3,
+      "note": "「全🍫機種」（＝全台系が複数）の主張。同発信者の2026-08-08投稿では全台系を3機種名指しして3/3的中だったため（RETROACTIVE_NOTES.md）、周年で『全域強化』を謳う本日はその水準3機種を下限として凍結する。機種の名指しが無いぶん claim 単独の情報量は低く、baserate の models_over_threshold_per_day と必ず比較すること。"
+    }
+  ],
+  "unscored_claims": [
+    {
+      "text": "大量の単品（1台設置機種）",
+      "reason": "zentaikei.min_machines=3 のため1台設置機種は候補に入らない。加えて2026-08-08の事後検証では同発信者の『1台設置機種ニブイチ』は平均−31枚・プラス率38%で外れており、この軸は現時点で支持されていない（RETROACTIVE_NOTES.md）。"
+    },
+    {
+      "text": "メイン機種のニブイチ以上仕掛け",
+      "reason": "機種が名指しされていないため model_named_ratio に落とせない。『メイン機種』を事後に選ぶと当たった機種を拾う選択バイアスになる。"
+    },
+    {
+      "text": "月曜の曜日仕掛け＝ニブイチ列仕掛け",
+      "reason": "『列』を判定する claim type が無い（section は島単位で列と一致しない）。隣接ブロック判定の実装待ち。"
+    }
+  ],
+  "result": {
+    "scored_at_data_max": "20260810",
+    "hall_baseline_mean_diff": 500.5,
+    "hall_n_machines": 365,
+    "new_machine_days": 30,
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 3,
+          "note": "「全🍫機種」（＝全台系が複数）の主張。同発信者の2026-08-08投稿では全台系を3機種名指しして3/3的中だったため（RETROACTIVE_NOTES.md）、周年で『全域強化』を謳う本日はその水準3機種を下限として凍結する。機種の名指しが無いぶん claim 単独の情報量は低く、baserate の models_over_threshold_per_day と必ず比較すること。"
+        },
+        "observed_n_models": 7,
+        "candidate_models": 48,
+        "models": [
+          {
+            "machine_name": "革命機ヴァルヴレイヴ2",
+            "score": 3976.7,
+            "n_machines": 6,
+            "mean_diff": 3283.3,
+            "age_days": 279
+          },
+          {
+            "machine_name": "スマスロ北斗の拳",
+            "score": 3910.6,
+            "n_machines": 7,
+            "mean_diff": 3442.9,
+            "age_days": 586
+          },
+          {
+            "machine_name": "とある魔術の禁書目録2",
+            "score": 3007.6,
+            "n_machines": 5,
+            "mean_diff": 3200.0,
+            "age_days": 7
+          },
+          {
+            "machine_name": "攻殻機動隊",
+            "score": 2914.6,
+            "n_machines": 3,
+            "mean_diff": 3566.7,
+            "age_days": 189
+          },
+          {
+            "machine_name": "チバリヨ2プラス",
+            "score": 2606.3,
+            "n_machines": 3,
+            "mean_diff": 3733.3,
+            "age_days": 569
+          },
+          {
+            "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+            "score": 1925.6,
+            "n_machines": 5,
+            "mean_diff": 2940.0,
+            "age_days": 489
+          },
+          {
+            "machine_name": "ToLOVEるダークネス TRANCE ver.8.7",
+            "score": 1819.3,
+            "n_machines": 3,
+            "mean_diff": 1766.7,
+            "age_days": 448
+          }
+        ],
+        "n_new_machines_over": 1,
+        "hit": true
+      }
+    ]
+  },
+  "announce_digest": "1735c4230ff55c27"
+}

@@ -1,0 +1,19 @@
+{
+  "rule_id": "k7_monday_model_gratio_top2",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "hypothesis": "蒲田7の月曜は『一列まるごと』の曜日仕掛け日であり、その列は (a) 多台数機種の設置台がまるごと1列 か (b) 大規模機種の中の連番ブロック のどちらかとして現れる。(a) は列=機種なので機種粒度で捉えられる。よって直近30日の機種粒度スコア（G比×平均差枚）上位2機種の設置台を全部買えば、月曜に限り当日ホール平均を上回る。(b) は現行の分解能では捉えられないことを 2026-08-10 に確認済みであり、本ルールは意図的に (a) だけを狙う。",
+  "source_instinct": "kamata7-weekday-event-pattern（月曜=一列まるごと。Twitter 答え合わせから確定）+ backtest/announce/RESULT_LABELS.md 2026-08-10（GALAXYウスイが名指しした3件のうち、ファンキージャグラー2=全台系24台 と 化物語=9台の列 は当日の機種粒度スコアで rank1 / rank6 に出ていた。カバネリ42台中12台の列だけが取り逃がし）。⚠️ この rank1/rank6 は *当日実績* のスコアであり後知恵である。本ルールが使う hist_model_gratio_mean_diff は *過去30日の履歴* から当日の機種を当てにいく別問題で、前者が良かったことは後者の根拠にならない。だからフォワードで測る。",
+  "eval_start": "20251001",
+  "eval_end": "20260810",
+  "success_criterion": "フォワードで月曜20エントリー日を経過した時点で、picks の平均差枚が同日ホール平均に対して +300枚/台 以上、かつ 95%CI 下限 > 0 であること。満たさなければ破棄し、蒲田7の曜日仕掛けを機種粒度で狙う路線はこの1本で打ち止めとする。バックテストの結果は採否根拠にしない（in-sample。曜日の指定は instinct 由来で事後発見ではないが、score と top_n の組み合わせは今回初めて決めたので in-sample 評価は甘い方向に歪む）。",
+  "universe": {},
+  "eligibility": {},
+  "entry_days": { "weekday": [0] },
+  "score": "hist_model_gratio_mean_diff",
+  "lookback_days": 30,
+  "min_history_days": 10,
+  "top_n": 2,
+  "min_games": 1000,
+  "selection_unit": "machine_model",
+  "min_machines_per_model": 3
+}
