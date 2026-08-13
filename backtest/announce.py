@@ -79,6 +79,7 @@ db_max ガードは「登録者が結果を知っていること」を防げな�
     venv\\Scripts\\python.exe -m backtest.announce baserate 楽園蒲田店 --before 20260807
     venv\\Scripts\\python.exe -m backtest.announce register backtest/announce/xxx.json
     venv\\Scripts\\python.exe -m backtest.announce score backtest/announce/xxx.json
+    venv\\Scripts\\python.exe -m backtest.announce audit-censoring 楽園蒲田店
 
 announce JSON の形:
     {
@@ -119,6 +120,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from backtest.censoring import bounds_for, censoring_summary, max_understatement_hi, warning_text
 from backtest.run_backtest import load_frame
 
 ANNOUNCE_DIR = Path(__file__).resolve().parent / "announce"
@@ -324,6 +326,12 @@ def model_scores(
         検証はまだ無い。gratio_mean_diff と同じ予告に対して両方走らせて
         比較すること。
 
+    打ち切り（censoring）:
+        `n_censored_hi` / `n_censored_lo` 列を必ず返す。`n_censored_hi > 0` の機種は
+        差枚が元サイト側の表示上限に張り付いた台を含むため、mean_diff も score も
+        **真値の下界** である。閾値未満を「外れ」と断定してはいけない
+        （楽園蒲田店のみ該当。詳細は backtest/censoring.py）。
+
     Args:
         first_seen: machine_name -> DB初出日(datetime) の対応。渡すと `age_days`
             列（導入からの経過日数）が付く。新台はG比が構造的に膨らむため
@@ -348,6 +356,14 @@ def model_scores(
             "sum_games": g["games_normalized"].sum(),
         }
     )
+
+    # 打ち切り台数。`load_frame` 経由なら必ず列がある。手組みフレームで
+    # 呼ばれた場合（テスト・アドホック分析）は 0 として扱う。
+    # n_censored_hi > 0 の機種は mean_diff も score も **真値の下界** であり、
+    # 閾値未満でも「外れ」と断定してはいけない（censoring.py 参照）。
+    for col in ("censored_hi", "censored_lo"):
+        name = f"n_{col}"
+        out[name] = g[col].sum().reindex(out.index, fill_value=0).astype(int) if col in day.columns else 0
 
     if metric == "gratio_mean_diff":
         out["score"] = out["gratio"] * out["mean_diff"]
@@ -420,11 +436,106 @@ def baserate(
     }
 
 
+def audit_censoring(hall: str) -> list[dict]:
+    """既に採点済みの予告を、現在の打ち切り知識で再点検する（読み取り専用）。
+
+    採点結果ファイルは一切書き換えない（`score()` の「作り直し禁止」を尊重）。
+    この関数がやるのは、hit=False の `model_named` claim のうち「打ち切りが
+    無ければ閾値に届いていた可能性があるもの」を洗い出すことだけである。
+    的中率を集計するときにこの一覧を見て、対象を『判定不能』として扱うかどうかは
+    呼び出し側（人間）が決める。
+
+    古い採点結果 JSON は censoring 情報を持たない（この機能の実装前に採点された
+    ため）。よって当時の score を再現するのではなく、現在の DB を `model_scores`
+    で読み直して「その機種がその日に打ち切られていたか」だけを見る。
+    採点結果に記録された score・hit 自体はそのまま参照する。
+    """
+    df = load_frame(hall)
+    out: list[dict] = []
+    # ファイル名の接頭辞（announce_id）はホール名のローマ字略称で、"hall" フィールドの
+    # 日本語表記とは一致しない（例: rakuen__... の hall は "楽園蒲田店"）。
+    # よってファイル名ではなく中身の "hall" で絞る。
+    for path in sorted(ANNOUNCE_DIR.glob("*.json")):
+        obj = json.loads(path.read_text(encoding="utf-8"))
+        if obj.get("hall") != hall or obj.get("result") is None:
+            continue
+        target = obj["target_date"]
+        day = df[df["date"] == target]
+        if day.empty:
+            continue
+        min_machines = int(obj["zentaikei"]["min_machines"])
+        thr = float(obj["zentaikei"]["threshold"])
+        metric = obj["zentaikei"].get("metric", "gratio_mean_diff")
+        ms = model_scores(day, min_machines, metric=metric)
+        for c in obj["result"]["claims"]:
+            if c["type"] != "model_named" or c.get("hit") is not False:
+                continue
+            name = c["claim"]["machine_name"]
+            if name not in ms.index:
+                continue
+            note = _censoring_note(ms.loc[name], hall)
+            cap = note.get("max_score_understatement")
+            if cap is None:
+                continue
+            deficit = round(thr - float(c["score"]), 1)
+            out.append(
+                {
+                    "announce_id": obj["announce_id"],
+                    "target_date": target,
+                    "machine_name": name,
+                    "recorded_score": c["score"],
+                    "threshold": thr,
+                    "deficit": deficit,
+                    "max_score_understatement": cap,
+                    "reclassify_as_indeterminate": cap >= deficit,
+                }
+            )
+    return out
+
+
 def _age_bucket(age_days: int) -> str:
     """新台/既存台の層。ベースレートが違うので的中率を混ぜて集計しない。"""
     if age_days < 0:
         return "unknown"
     return "new" if age_days < NEW_MACHINE_DAYS else "established"
+
+
+def _censoring_note(row: pd.Series, hall: str) -> dict:
+    """機種1行分の打ち切り注記。打ち切りが無ければ空 dict（JSON を汚さない）。
+
+    `hit` は **書き換えない**。閾値は登録時に凍結されており、採点式を後から
+    動かすのは台帳の設計思想に反する。代わりに「その hit がどちら向きに
+    信用できないか」を残す:
+
+        censoring_bias="lower_bound" … 右打ち切りあり。score は真値の下界。
+            hit=True はそのまま正しい（下界が閾値を超えているなら真値も超える）。
+            hit=False は **判定不能に近い**。集計時に外れとして数える前に、
+            打ち切りが無ければ超えていた可能性を検討すること。
+        censoring_bias="upper_bound" … 左打ち切りあり。score は真値の上界。
+            hit=False はそのまま正しい。hit=True は過大評価の疑いがある。
+        censoring_bias="both" … 両方混在。向きが決まらない。
+
+    右打ち切りには規制上限（`REGULATORY_MAX_DIFF`）による見誤りの最大幅がある。
+    `max_score_understatement` は「打ち切られた台が全部ちょうど規制上限だったら
+    score はどこまで伸びたか」の最悪ケース。閾値との差がこれより小さければ、
+    打ち切りが無かった場合に届いていた可能性を捨ててはいけない。
+    """
+    hi = int(row.get("n_censored_hi", 0) or 0)
+    lo = int(row.get("n_censored_lo", 0) or 0)
+    if not hi and not lo:
+        return {}
+    bias = "both" if hi and lo else ("lower_bound" if hi else "upper_bound")
+    out = {"n_censored_hi": hi, "n_censored_lo": lo, "censoring_bias": bias}
+    if hi:
+        cap = max_understatement_hi(hall)
+        n_machines = int(row.get("n_machines", 0) or 0)
+        gratio = float(row.get("gratio", 0.0) or 0.0)
+        if cap is not None and n_machines:
+            # 打ち切られた hi 台が全部 REGULATORY_MAX_DIFF だったと仮定した場合の
+            # mean_diff の伸び幅。他の台は動かさない最悪ケース。
+            max_mean_diff_gain = hi * cap / n_machines
+            out["max_score_understatement"] = round(gratio * max_mean_diff_gain, 1)
+    return out
 
 
 def _judge_claims(obj: dict, day: pd.DataFrame, first_seen: pd.Series | None = None) -> list[dict]:
@@ -459,6 +570,7 @@ def _judge_claims(obj: dict, day: pd.DataFrame, first_seen: pd.Series | None = N
                     "score": round(float(v["score"]), 1),
                     "n_machines": int(v["n_machines"]),
                     "mean_diff": round(float(v["mean_diff"]), 1),
+                    **_censoring_note(v, obj["hall"]),
                     **({"age_days": int(v["age_days"])} if has_age else {}),
                 }
                 for k, v in over.iterrows()
@@ -480,6 +592,7 @@ def _judge_claims(obj: dict, day: pd.DataFrame, first_seen: pd.Series | None = N
                 entry["n_machines"] = int(row["n_machines"])
                 entry["rank"] = int((ms["score"] > row["score"]).sum()) + 1
                 entry["candidate_models"] = int(len(ms))
+                entry.update(_censoring_note(row, obj["hall"]))
                 if has_age:
                     age = int(row["age_days"])
                     bucket = _age_bucket(age)
@@ -655,11 +768,23 @@ def score(obj: dict) -> dict:
     # 機種のDB初出日。対象日以前のデータだけで決まるのでリークしない。
     first_seen = df[df["date"] <= target].groupby("machine_name")["dt"].min()
 
+    # 差枚の打ち切りは機種平均を歪める。楽園蒲田店は両側で打ち切られており、
+    # 右打ち切りを含む機種のスコアは真値の下界になる（censoring.py 参照）。
+    # 採点結果に残し、CLI では stderr にも出す。黙って集計しない。
+    cens = censoring_summary(day)
+    b = bounds_for(obj["hall"])
+    if b is not None:
+        cens["bounds"] = list(b)
+    msg = warning_text(cens, obj["hall"], context=f"{target}")
+    if msg:
+        print(msg, file=sys.stderr)
+
     obj["result"] = {
         "scored_at_data_max": str(df["date"].max()),
         "hall_baseline_mean_diff": round(float(day["diff_coins_normalized"].mean()), 1),
         "hall_n_machines": int(day["machine_number"].nunique()),
         "new_machine_days": NEW_MACHINE_DAYS,
+        "censoring": cens,
         "claims": _judge_claims(obj, day, first_seen),
     }
     return obj
@@ -751,11 +876,22 @@ def main(argv: list[str] | None = None) -> int:
     p_br.add_argument("--pct", type=float, default=0.95, help="閾値の分位点（既定 0.95）")
     p_br.add_argument("--metric", default="gratio_mean_diff", choices=sorted(ALLOWED_METRICS))
 
+    p_ac = sub.add_parser(
+        "audit-censoring",
+        help="採点済み予告を打ち切り情報で再点検する（読み取り専用、台帳・結果ファイルは書き換えない）",
+    )
+    p_ac.add_argument("hall")
+
     args = p.parse_args(argv)
     ANNOUNCE_DIR.mkdir(parents=True, exist_ok=True)
 
     if args.cmd == "baserate":
         res = baserate(args.hall, args.before, args.days, args.min_machines, args.pct, args.metric)
+        print(json.dumps(res, ensure_ascii=False, indent=2))
+        return 0
+
+    if args.cmd == "audit-censoring":
+        res = audit_censoring(args.hall)
         print(json.dumps(res, ensure_ascii=False, indent=2))
         return 0
 
