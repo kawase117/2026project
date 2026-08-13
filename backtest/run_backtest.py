@@ -130,7 +130,23 @@ def restrict_to_current_machine(hist: pd.DataFrame, today: pd.DataFrame) -> pd.D
 
 
 def score_history(hist: pd.DataFrame, score: str) -> pd.Series:
-    """lookback 窓の履歴から台ごとのスコアを返す。大きいほど良い向きに揃える。"""
+    """lookback 窓の履歴から台ごとのスコアを返す。大きいほど良い向きに揃える。
+
+    score="hist_model_gratio_mean_diff" のみ例外的に機種（machine_name）ごとの
+    スコアを返す（selection_unit="machine_model" 用）。呼び出し側は
+    usable_models() で先に機種を絞ってから渡すこと。
+    """
+    if score == "hist_model_gratio_mean_diff":
+        # G比（機種平均回転数/プール平均回転数）×平均差枚。
+        # backtest/announce.py::model_scores の gratio_mean_diff（1日単位）を
+        # lookback 窓全体（複数日プール）に一般化したもので、同じ定義。
+        pool_mean_games = hist["games_normalized"].mean()
+        if not pool_mean_games or pd.isna(pool_mean_games):
+            return pd.Series(dtype=float)
+        gm = hist.groupby("machine_name")
+        gratio = gm["games_normalized"].mean() / pool_mean_games
+        mean_diff = gm["diff_coins_normalized"].mean()
+        return gratio * mean_diff
     g = hist.groupby("machine_number")
     if score == "hist_mean_diff":
         return g["diff_coins_normalized"].mean()
@@ -153,6 +169,23 @@ def score_history(hist: pd.DataFrame, score: str) -> pd.Series:
         h["z"] = (h["rb_rate"] - h["mean"]) / h["std"]
         return h.groupby("machine_number")["z"].mean()
     raise ValueError(f"scoring 不可の score: {score!r}")
+
+
+def usable_models(hist: pd.DataFrame, reg: PreRegistration) -> list[str]:
+    """selection_unit="machine_model" 用: lookback 窓内で使える機種名の一覧を返す。
+
+    machine_number 粒度の「counts >= min_history_days」絞り込み（forward.plan()
+    の非 machine_model 分岐）を機種粒度に一般化したもの。
+
+    - min_history_days: 機種の lookback 窓内の履歴行数がこれ未満なら除外。
+    - min_machines_per_model: 機種の窓内ユニーク設置台数がこれ未満なら除外
+      （少数台の機種が偶然跳ねただけで選ばれるのを防ぐ）。
+    """
+    per_model_rows = hist.groupby("machine_name").size()
+    per_model_machines = hist.groupby("machine_name")["machine_number"].nunique()
+    ok_rows = set(per_model_rows[per_model_rows >= reg.min_history_days].index)
+    ok_machines = set(per_model_machines[per_model_machines >= reg.min_machines_per_model].index)
+    return sorted(ok_rows & ok_machines)
 
 
 def select_eval_days(eligible_all: pd.DataFrame, reg: PreRegistration) -> list[str]:

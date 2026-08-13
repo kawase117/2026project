@@ -42,8 +42,14 @@ ALLOWED_SCORES = {
     "hist_hit104_rate",  # lookback 期間の機械割104%超え率
     "hist_mean_rb_prob",  # lookback 期間の平均RB確率（生値。機種横断だと機種差を拾う）
     "hist_mean_rb_prob_model_z",  # 同上を機種内標準化してから平均（機種差を除去）
+    "hist_model_gratio_mean_diff",  # 機種粒度: G比（機種平均回転数/プール平均回転数）×平均差枚
     "none",  # スコアリングせず eligible 全体（＝フィルタのみの効果を見る）
 }
+
+# selection_unit の許容値。"machine_number"（既定）は台単位で選ぶ通常のルール。
+# "machine_model" は機種単位でスコアし、該当機種の設置台を全部買うルール
+# （例: k7_monday_model_gratio_top2）。
+ALLOWED_SELECTION_UNITS = {"machine_number", "machine_model"}
 
 
 @dataclass
@@ -73,6 +79,10 @@ class PreRegistration:
             0 以外にするのは、その歪みを承知で感度を見るときだけ。
         eval_start / eval_end: 評価期間（YYYYMMDD）。
         success_criterion: 何をもって成功とするか。事前に書く。後から変えない。
+        selection_unit: "machine_number"（既定）は台単位で選ぶ。"machine_model" は
+            機種単位でスコアし、該当機種の設置台を全部買う。
+        min_machines_per_model: selection_unit="machine_model" のとき、この台数
+            未満しか設置されていない機種は候補から除外する。
     """
 
     rule_id: str
@@ -91,10 +101,18 @@ class PreRegistration:
     top_n: int = 3
     min_games: int = 1000
     min_games_today: int = 0
+    selection_unit: str = "machine_number"
+    min_machines_per_model: int = 1
 
     def validate(self) -> None:
         if self.score not in ALLOWED_SCORES:
             raise ValueError(f"unknown score: {self.score!r} (allowed: {sorted(ALLOWED_SCORES)})")
+        if self.selection_unit not in ALLOWED_SELECTION_UNITS:
+            raise ValueError(
+                f"unknown selection_unit: {self.selection_unit!r} (allowed: {sorted(ALLOWED_SELECTION_UNITS)})"
+            )
+        if self.min_machines_per_model < 1:
+            raise ValueError("min_machines_per_model は 1 以上")
         bad = set(self.eligibility) - ALLOWED_FILTER_FIELDS
         if bad:
             raise ValueError(f"eligibility に未許可のフィールド: {sorted(bad)}")
