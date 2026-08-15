@@ -39,3 +39,20 @@ scraper\site777\run_site777_complete.cmd -Sequential
 ```
 
 結果は`output/site777_mobile_report.html`です。
+
+## Reports
+
+- 機種別 `site777_analysis_report_filtered.md` — 末尾に「高設定期待と出玉候補」を掲載します。
+- 一台機種 `site777_single_machine_report_filtered.md`
+- 末尾別 `site777_last_digit_report_filtered.md`
+- 列端位置 `site777_corner_report_filtered.md` — プロジェクトの「角番」とは別概念です。
+- 3台並び `site777_three_machine_report_filtered.md`
+
+勝率ランキングは有効差枚3台以上に限定します。BB/RB/合成確率のランキングは、ボーナス確率に設定差が
+あるノーマル機（`jug`/`hana`/`oki`/`bt`）だけを対象にします。
+
+## Notes
+
+収集と分析の判断根拠は[INSTINCTS.md](INSTINCTS.md)にまとめています。CodexとClaudeで同時実行しない
+でください。ブラウザプロファイル・出力JSON・レートリミッターを共有するため、二重アクセスとデータ
+破損の原因になります。

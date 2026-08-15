@@ -7,6 +7,7 @@ import re
 import sqlite3
 import unicodedata
 from collections import defaultdict
+from contextlib import closing
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -80,7 +81,8 @@ def load_reference_context(
     alias_path: Path | None = DEFAULT_ALIAS_FILE,
 ) -> dict[str, Any]:
     """Load only layout and machine-master rows; never open the DB for writing."""
-    with _read_only_connection(db_path) as connection:
+    # `with sqlite3.connect(...)` はトランザクション境界でしかなく接続を閉じないため closing で包む。
+    with closing(_read_only_connection(db_path)) as connection:
         layout = _load_layout(connection, business_date)
         master_rows = connection.execute(
             """
@@ -111,12 +113,15 @@ def load_reference_context(
                 key_candidates[key].add(canonical)
 
     alias_index = {key: next(iter(values)) for key, values in key_candidates.items() if len(values) == 1}
+    # 同じ正規化キーに複数の機種が当たる場合は自動対応を諦めるが、握り潰さず内容を返す。
+    ambiguous_aliases = {key: sorted(values) for key, values in key_candidates.items() if len(values) > 1}
     return {
         "db_path": str(db_path.expanduser().resolve()),
         "business_date": business_date,
         "layout_by_number": {int(row["machine_number"]): row for row in layout},
         "master": master,
         "alias_index": alias_index,
+        "ambiguous_aliases": ambiguous_aliases,
         "mdc_overrides": _load_alias_overrides(alias_path),
     }
 
@@ -143,6 +148,8 @@ def enrich_machines(machines: list[dict[str, Any]], context: dict[str, Any]) -> 
     layout_matches = 0
     master_matches = 0
     override_matches = 0
+    unmatched_models: dict[str, dict[str, Any]] = {}
+    unmatched_layout_numbers: list[int] = []
 
     for machine in machines:
         number = int(machine["machine_number"])
@@ -162,6 +169,8 @@ def enrich_machines(machines: list[dict[str, Any]], context: dict[str, Any]) -> 
         ):
             machine[column] = layout.get(column) if layout else None
         layout_matches += layout is not None
+        if layout is None:
+            unmatched_layout_numbers.append(number)
 
         canonical = overrides.get(str(machine["mdc"]))
         mapping_method = "mdc_override" if canonical else "normalized_alias"
@@ -177,7 +186,20 @@ def enrich_machines(machines: list[dict[str, Any]], context: dict[str, Any]) -> 
         for flag in ("jug_flag", "hana_flag", "oki_flag", "bt_flag"):
             machine[flag] = master_item[flag] if master_item else None
         master_matches += master_item is not None
+        if master_item is None:
+            # config/machine_aliases.json を埋められるように、落ちた機種を mdc 単位で控える。
+            entry = unmatched_models.setdefault(
+                str(machine["mdc"]),
+                {
+                    "mdc": str(machine["mdc"]),
+                    "model_name": machine["model_name"],
+                    "normalized_key": normalize_machine_key(machine["model_name"]),
+                    "machine_count": 0,
+                },
+            )
+            entry["machine_count"] += 1
 
+    ambiguous_aliases = context.get("ambiguous_aliases", {})
     return {
         "enabled": True,
         "db_path": context["db_path"],
@@ -185,9 +207,16 @@ def enrich_machines(machines: list[dict[str, Any]], context: dict[str, Any]) -> 
         "layout_rows": len(layout_by_number),
         "layout_matches": layout_matches,
         "layout_unmatched": len(machines) - layout_matches,
+        "layout_unmatched_numbers": sorted(unmatched_layout_numbers),
         "master_rows": len(master),
         "master_matches": master_matches,
         "master_unmatched": len(machines) - master_matches,
+        "master_unmatched_models": sorted(
+            unmatched_models.values(), key=lambda item: (-item["machine_count"], item["mdc"])
+        ),
+        "master_unmatched_model_count": len(unmatched_models),
+        "ambiguous_alias_count": len(ambiguous_aliases),
+        "ambiguous_aliases": ambiguous_aliases,
         "mdc_override_matches": override_matches,
     }
 
@@ -224,7 +253,9 @@ def build_physical_lanes(
             for index, machine in enumerate(ordered):
                 machine["physical_lane_key"] = lane_key
                 machine["physical_lane_size"] = lane_size
-                machine["physical_corner_rank"] = min(index + 1, lane_size - index)
+                # 列の端からの距離。プロジェクトの「角番」(rank_from_aisle / rank_from_min-max)
+                # とは別概念なので、角番とは呼ばない。
+                machine["lane_edge_rank"] = min(index + 1, lane_size - index)
             lanes.append(
                 {
                     "key": lane_key,

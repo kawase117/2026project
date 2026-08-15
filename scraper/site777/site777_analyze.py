@@ -58,8 +58,26 @@ def numeric_rows(pages: Iterable[dict[str, Any]]) -> list[list[str]]:
     return result
 
 
-def rank_rows(rows: Iterable[dict[str, Any]], key: str, *, reverse: bool) -> list[dict[str, Any]]:
-    valid = [row for row in rows if row.get(key) is not None]
+# 勝率のような率指標は母数が小さいと 100% が並ぶだけになるため、最低台数を課す。
+MIN_RANKED_DIFF_MACHINES = 3
+# ボーナス確率から設定を読めるのはノーマル機（ジャグ・ハナハナ・沖ドキ・A タイプ）だけ。
+# 擬似ボーナスの AT 機は BB/RB 回数が仕様値なので、同じ表に混ぜない。
+NORMAL_MACHINE_CATEGORIES = ("jug", "hana", "oki", "bt")
+
+
+def rank_rows(
+    rows: Iterable[dict[str, Any]],
+    key: str,
+    *,
+    reverse: bool,
+    min_count_key: str | None = None,
+    min_count: int = 0,
+) -> list[dict[str, Any]]:
+    valid = [
+        row
+        for row in rows
+        if row.get(key) is not None and (min_count_key is None or (row.get(min_count_key) or 0) >= min_count)
+    ]
     ordered = sorted(valid, key=lambda row: row[key], reverse=reverse)
     return [{"rank": index, **row} for index, row in enumerate(ordered, 1)]
 
@@ -71,15 +89,30 @@ def source_time_label(row: dict[str, Any]) -> str:
     return f"大当り {jackpot} / 最高出玉 {highest} / グラフ {graph}"
 
 
-def model_rankings(models: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
+def normal_machine_models(models: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [model for model in models if model.get("machine_category") in NORMAL_MACHINE_CATEGORIES]
+
+
+def model_rankings(
+    models: list[dict[str, Any]],
+    probability_models: list[dict[str, Any]] | None = None,
+) -> dict[str, list[dict[str, Any]]]:
+    """Rank models. BB/RB/合成確率だけは probability_models（既定は全機種）で集計する。"""
+    probability_rows = models if probability_models is None else probability_models
     return {
         "average_games": rank_rows(models, "average_games", reverse=True),
-        "bb_probability": rank_rows(models, "bb_probability", reverse=False),
-        "rb_probability": rank_rows(models, "rb_probability", reverse=False),
-        "combined_probability": rank_rows(models, "combined_probability", reverse=False),
+        "bb_probability": rank_rows(probability_rows, "bb_probability", reverse=False),
+        "rb_probability": rank_rows(probability_rows, "rb_probability", reverse=False),
+        "combined_probability": rank_rows(probability_rows, "combined_probability", reverse=False),
         "average_highest_payout": rank_rows(models, "average_highest_payout", reverse=True),
         "average_diff": rank_rows(models, "average_diff", reverse=True),
-        "win_rate": rank_rows(models, "win_rate", reverse=True),
+        "win_rate": rank_rows(
+            models,
+            "win_rate",
+            reverse=True,
+            min_count_key="diff_valid_count",
+            min_count=MIN_RANKED_DIFF_MACHINES,
+        ),
     }
 
 
@@ -98,12 +131,19 @@ def site_time(value: Any) -> datetime | None:
         return None
 
 
-def graph_age_minutes(jackpot_time: Any, graph_time: Any) -> int | None:
+def graph_time_skew_minutes(jackpot_time: Any, graph_time: Any) -> int | None:
+    """一覧とグラフの取得時刻差（符号付き・分）。正ならグラフが古い、負ならグラフが新しい。"""
     jackpot = site_time(jackpot_time)
     graph = site_time(graph_time)
     if not jackpot or not graph:
         return None
-    return max(0, int((jackpot - graph).total_seconds() // 60))
+    return int((jackpot - graph).total_seconds() // 60)
+
+
+def graph_age_minutes(jackpot_time: Any, graph_time: Any) -> int | None:
+    """時刻差の大きさ（分）。並行収集ではグラフが新しい側にもズレるので符号を落とさず絶対値を取る。"""
+    skew = graph_time_skew_minutes(jackpot_time, graph_time)
+    return None if skew is None else abs(skew)
 
 
 def build_three_machine_runs(
@@ -334,14 +374,15 @@ def build_physical_positive_blocks(runs: list[dict[str, Any]], machines: list[di
     return blocks
 
 
-def build_corner_summaries(
+def build_lane_edge_summaries(
     machines: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
+    """列の端からの位置で集計する。プロジェクトの「角番」とは別概念なので角番とは呼ばない。"""
     groups: dict[int, list[dict[str, Any]]] = defaultdict(list)
     for machine in machines:
-        corner_rank = machine.get("physical_corner_rank")
-        if isinstance(corner_rank, int) and corner_rank > 0:
-            groups[corner_rank].append(machine)
+        edge_rank = machine.get("lane_edge_rank")
+        if isinstance(edge_rank, int) and edge_rank > 0:
+            groups[edge_rank].append(machine)
 
     corners: list[dict[str, Any]] = []
     for corner_rank in sorted(groups):
@@ -357,8 +398,8 @@ def build_corner_summaries(
         total_rb = sum(machine["rb_count"] for machine in group)
         corners.append(
             {
-                "corner_rank": corner_rank,
-                "corner_label": f"角{corner_rank}",
+                "lane_edge_rank": corner_rank,
+                "lane_edge_label": f"列端{corner_rank}",
                 "machine_count": len(group),
                 "graph_eligible_count": sum(machine["graph_eligible"] for machine in group),
                 "diff_valid_count": len(valid_diffs),
@@ -373,6 +414,64 @@ def build_corner_summaries(
             }
         )
     return corners
+
+
+def classify_candidates(
+    machines: list[dict[str, Any]],
+    models: list[dict[str, Any]],
+    graph_min_games: int,
+) -> None:
+    """「高設定期待」と「出玉候補」を台ごとに切り分けて machine に書き込む。
+
+    判定は累計G・累計BB・累計RBだけを使う。直近区間の不振は、固定設定を仮定する限り
+    累計成績と独立した根拠にはならないため、マイナス材料として二重計上しない。
+    ノーマル機はRB確率を主軸に機種平均と比べ、BBだけが機種平均より良い台は
+    「出玉候補（BB偏重）」として高設定期待とは分けて表示する。
+    AT機・マスター未対応機は差枚から設定を断定できないため出玉候補に留める。
+    """
+    model_by_mdc = {model["mdc"]: model for model in models}
+    for machine in machines:
+        model = model_by_mdc.get(machine["mdc"], {})
+        category = machine.get("machine_category")
+        track = "setting" if category in NORMAL_MACHINE_CATEGORIES else "payout"
+        machine["evaluation_track"] = track
+
+        # 確率は分母表記なので、値が小さいほど良い。正なら台のほうが機種平均より良い。
+        model_rb = model.get("rb_probability")
+        model_bb = model.get("bb_probability")
+        rb_vs_model = (
+            model_rb - machine["rb_probability"]
+            if model_rb is not None and machine["rb_probability"] is not None
+            else None
+        )
+        bb_vs_model = (
+            model_bb - machine["bb_probability"]
+            if model_bb is not None and machine["bb_probability"] is not None
+            else None
+        )
+        machine["rb_vs_model"] = rb_vs_model
+        machine["bb_vs_model"] = bb_vs_model
+
+        eligible = track == "setting" and machine["games"] >= graph_min_games and rb_vs_model is not None
+        machine["setting_eval_eligible"] = eligible
+        bb_heavy = bool(
+            eligible and bb_vs_model is not None and bb_vs_model > 0 and rb_vs_model is not None and rb_vs_model < 0
+        )
+        machine["bb_heavy"] = bb_heavy
+        machine["setting_candidate"] = bool(eligible and rb_vs_model is not None and rb_vs_model > 0)
+        machine["payout_candidate"] = bool(machine["latest_diff"] is not None and machine["latest_diff"] > 0)
+
+        if machine["setting_candidate"]:
+            label = "高設定期待(RB)"
+        elif bb_heavy:
+            label = "出玉候補(BB偏重)"
+        elif track == "payout" and machine["payout_candidate"]:
+            label = "出玉候補(設定判定外)"
+        elif machine["payout_candidate"]:
+            label = "出玉候補"
+        else:
+            label = "--"
+        machine["candidate_label"] = label
 
 
 def analyze(
@@ -431,6 +530,9 @@ def analyze(
                 "highest_update_time": model["highest"].get("updateTime"),
                 "graph_update_time": graph.get("updateTime") if graph else None,
             }
+            machine["graph_time_skew_minutes"] = graph_time_skew_minutes(
+                machine["jackpot_update_time"], machine["graph_update_time"]
+            )
             machine["graph_age_minutes"] = graph_age_minutes(
                 machine["jackpot_update_time"], machine["graph_update_time"]
             )
@@ -541,25 +643,45 @@ def analyze(
             }
         )
 
+    classify_candidates(machines, models, graph_min_games)
+
     main_models = [model for model in models if model["machine_count"] > 1]
     single_models = [model for model in models if model["machine_count"] == 1]
-    corners = build_corner_summaries(machines)
+    normal_main_models = normal_machine_models(main_models)
+    normal_single_models = normal_machine_models(single_models)
+    # マスター未対応でカテゴリが取れないときだけ全機種にフォールバックし、その事実を記録する。
+    probability_scope = "normal_only" if normal_main_models or normal_single_models else "all_models"
+    corners = build_lane_edge_summaries(machines)
     three_machine_runs = build_three_machine_runs(machines, physical_lanes)
     positive_blocks = build_positive_blocks([run for run in three_machine_runs if run["diff_complete"]], machines)
     for run in three_machine_runs:
         for internal_key in ("_adjacency_key", "_adjacency_start", "_lane_numbers"):
             run.pop(internal_key, None)
     rankings = {
-        "main_models": model_rankings(main_models),
-        "single_models": model_rankings(single_models),
+        "main_models": model_rankings(main_models, normal_main_models if probability_scope == "normal_only" else None),
+        "single_models": model_rankings(
+            single_models, normal_single_models if probability_scope == "normal_only" else None
+        ),
         "tails": {
-            "win_rate": rank_rows(tails, "win_rate", reverse=True),
+            "win_rate": rank_rows(
+                tails,
+                "win_rate",
+                reverse=True,
+                min_count_key="diff_valid_count",
+                min_count=MIN_RANKED_DIFF_MACHINES,
+            ),
             "average_diff": rank_rows(tails, "average_diff", reverse=True),
             "average_highest_payout": rank_rows(tails, "average_highest_payout", reverse=True),
         },
         "corners": {
             "average_diff": rank_rows(corners, "average_diff", reverse=True),
-            "win_rate": rank_rows(corners, "win_rate", reverse=True),
+            "win_rate": rank_rows(
+                corners,
+                "win_rate",
+                reverse=True,
+                min_count_key="diff_valid_count",
+                min_count=MIN_RANKED_DIFF_MACHINES,
+            ),
             "average_games": rank_rows(corners, "average_games", reverse=True),
             "average_highest_payout": rank_rows(corners, "average_highest_payout", reverse=True),
         },
@@ -588,6 +710,13 @@ def analyze(
         "graph_min_games": graph_min_games,
         "machine_rate_status": "保留（推定差枚から算出する前提条件を別途確定する）",
         "win_definition": "推定最新差枚が0枚より大きい台を勝ち台とする",
+        "min_ranked_diff_machines": MIN_RANKED_DIFF_MACHINES,
+        "probability_ranking_scope": probability_scope,
+        "normal_machine_categories": list(NORMAL_MACHINE_CATEGORIES),
+        "setting_candidate_count": sum(machine["setting_candidate"] for machine in machines),
+        "payout_candidate_count": sum(machine["payout_candidate"] for machine in machines),
+        "bb_heavy_count": sum(machine["bb_heavy"] for machine in machines),
+        "setting_eval_eligible_count": sum(machine["setting_eval_eligible"] for machine in machines),
         "model_count": len(models),
         "main_model_count": len(main_models),
         "single_model_count": len(single_models),
@@ -665,14 +794,15 @@ def model_table(
     lines = [
         f"## {title}",
         "",
-        f"| 順位 | 機種 | 台数 | 差枚対象台 | 平均差枚 | 平均G | 勝率{value_header} | データ時刻 |",
-        f"|---:|---|---:|---:|---:|---:|---:{separator}|---|",
+        f"| 順位 | 機種 | 区分 | 台数 | 差枚対象台 | 有効差枚台 | 平均差枚 | 平均G | 勝率{value_header} | データ時刻 |",
+        f"|---:|---|---|---:|---:|---:|---:|---:|---:{separator}|---|",
     ]
     for row in rows:
         ranking_value = f" | {formatter(row[value_key])}" if show_ranking_value else ""
+        category = row.get("machine_category") or "未対応"
         lines.append(
-            f"| {row['rank']} | {row['model_name']} | {row['machine_count']} | "
-            f"{row['graph_eligible_count']} | "
+            f"| {row['rank']} | {row['model_name']} | {category} | {row['machine_count']} | "
+            f"{row['graph_eligible_count']} | {row['diff_valid_count']} | "
             f"{fmt_number(row['average_diff'])} | {fmt_number(row['average_games'])} | "
             f"{fmt_percent(row['win_rate'])}{ranking_value} | {row['update_time']} |"
         )
@@ -696,7 +826,14 @@ MODEL_SECTIONS = [
 ]
 
 
-def build_model_report(result: dict[str, Any], ranking_key: str, title: str, scope_note: str) -> str:
+def build_model_report(
+    result: dict[str, Any],
+    ranking_key: str,
+    title: str,
+    scope_note: str,
+    *,
+    include_candidates: bool = False,
+) -> str:
     lines = [
         f"# {title}",
         "",
@@ -706,13 +843,91 @@ def build_model_report(result: dict[str, Any], ranking_key: str, title: str, sco
         "",
         f"勝率定義: {result['win_definition']}。差枚は出玉推移グラフ終点からの推定値です。",
         "",
+        f"勝率ランキングは有効差枚台が{result['min_ranked_diff_machines']}台以上の機種だけを掲載します"
+        "（1〜2台の100%を上位に並べないため）。",
+        "",
+        probability_scope_note(result),
+        "",
         result["source_time_status"]["note"],
         "",
     ]
     rankings = result["rankings"][ranking_key]
     for section_title, key, label, formatter in MODEL_SECTIONS:
         lines.extend(model_table(section_title, rankings[key], key, label, formatter))
+    if include_candidates:
+        lines.extend(candidate_section(result))
     return "\n".join(lines)
+
+
+def probability_scope_note(result: dict[str, Any]) -> str:
+    categories = "/".join(result.get("normal_machine_categories", []))
+    if result.get("probability_ranking_scope") == "normal_only":
+        return (
+            f"BB確率・RB確率・合成確率のランキングは、ボーナス確率に設定差があるノーマル機（区分 {categories}）"
+            "だけを対象にしています。擬似ボーナスのAT機はBB/RB回数が仕様値のため、同じ表に混ぜていません。"
+        )
+    return (
+        "警告: 機種マスターの区分が1件も取得できなかったため、BB/RB/合成確率のランキングに"
+        "AT機を含む全機種が混在しています。設定推定には使えません。"
+    )
+
+
+def candidate_section(result: dict[str, Any]) -> list[str]:
+    """高設定期待（ノーマル機のRB）と出玉候補（AT機・BB偏重）を分けて掲載する。"""
+    machines = [
+        machine
+        for machine in result.get("machines", [])
+        if machine.get("setting_candidate") or machine.get("bb_heavy") or machine.get("payout_candidate")
+    ]
+    setting_rows = sorted(
+        (machine for machine in machines if machine.get("setting_candidate")),
+        key=lambda machine: machine["rb_probability"],
+    )
+    payout_rows = sorted(
+        (machine for machine in machines if not machine.get("setting_candidate") and machine.get("payout_candidate")),
+        key=lambda machine: -(machine["latest_diff"] or 0),
+    )
+    lines = [
+        "## 高設定期待と出玉候補",
+        "",
+        "判定は累計G・累計BB・累計RBだけを使います。固定設定を仮定する限り、直近区間の不振は"
+        "累計成績と独立した根拠にならないため、マイナス材料として二重計上しません。",
+        "",
+        f"高設定期待は、ノーマル機のうち累計{result['graph_min_games']:,}G以上でRB確率が機種平均より良い台です。"
+        "AT機・マスター未対応機は差枚から設定を断定できないため、出玉候補にとどめます。",
+        "",
+        f"### 高設定期待（RB確率が機種平均超え） {len(setting_rows)}台",
+        "",
+        "| 台番 | 機種 | 区分 | 累計G | BB | RB | RB確率 | 機種RB確率 | 差枚 | 判定 |",
+        "|---:|---|---|---:|---:|---:|---:|---:|---:|---|",
+    ]
+    for machine in setting_rows:
+        lines.append(_candidate_row(machine))
+    lines.extend(
+        [
+            "",
+            f"### 出玉候補（設定は断定しない） {len(payout_rows)}台",
+            "",
+            "| 台番 | 機種 | 区分 | 累計G | BB | RB | RB確率 | 機種RB確率 | 差枚 | 判定 |",
+            "|---:|---|---|---:|---:|---:|---:|---:|---:|---|",
+        ]
+    )
+    for machine in payout_rows:
+        lines.append(_candidate_row(machine))
+    lines.append("")
+    return lines
+
+
+def _candidate_row(machine: dict[str, Any]) -> str:
+    model_rb = machine["rb_probability"] + machine["rb_vs_model"] if machine.get("rb_vs_model") is not None else None
+    diff = "--" if machine["latest_diff"] is None else f"{machine['latest_diff']:+,}"
+    return (
+        f"| {machine['machine_number']} | {machine['model_name']} | "
+        f"{machine.get('machine_category') or '未対応'} | {machine['games']:,} | "
+        f"{machine['bb_count']} | {machine['rb_count']} | "
+        f"{fmt_probability(machine['rb_probability'])} | {fmt_probability(model_rb)} | "
+        f"{diff} | {machine['candidate_label']} |"
+    )
 
 
 def tail_table(
@@ -750,6 +965,8 @@ def build_tail_report(result: dict[str, Any]) -> str:
         "",
         f"勝率定義: {result['win_definition']}。差枚は出玉推移グラフ終点からの推定値です。",
         "",
+        f"勝率ランキングは有効差枚台が{result['min_ranked_diff_machines']}台以上の末尾だけを掲載します。",
+        "",
         result["source_time_status"]["note"],
         "",
     ]
@@ -780,12 +997,12 @@ def corner_table(title: str, rows: list[dict[str, Any]]) -> list[str]:
     lines = [
         f"## {title}",
         "",
-        "| 順位 | 角番号 | 全台 | 差枚対象 | 有効差枚 | 勝ち台 | 平均差枚 | 平均G | 勝率 | 平均最高出玉 |",
+        "| 順位 | 列端位置 | 全台 | 差枚対象 | 有効差枚 | 勝ち台 | 平均差枚 | 平均G | 勝率 | 平均最高出玉 |",
         "|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for row in rows:
         lines.append(
-            f"| {row['rank']} | {row['corner_label']} | {row['machine_count']} | "
+            f"| {row['rank']} | {row['lane_edge_label']} | {row['machine_count']} | "
             f"{row['graph_eligible_count']} | {row['diff_valid_count']} | "
             f"{row['win_count']} | {fmt_number(row['average_diff'])} | "
             f"{fmt_number(row['average_games'])} | {fmt_percent(row['win_rate'])} | "
@@ -797,24 +1014,28 @@ def corner_table(title: str, rows: list[dict[str, Any]]) -> list[str]:
 
 def build_corner_report(result: dict[str, Any]) -> str:
     lines = [
-        "# サイトセブン角番号別ランキング",
+        "# サイトセブン列端位置別ランキング",
         "",
-        "角番号はmachine_layoutの座標から島内の列を復元し、各列の両端を角1、その内側を角2…として計算しています。",
+        "列端位置はmachine_layoutの座標から島内の列を復元し、各列の両端を列端1、その内側を列端2…として計算しています。",
         "",
-        "2列島も列ごとに両端を判定するため、台番号順のrank_from_min/rank_from_maxは使用していません。",
+        "注意: これはプロジェクトの「角番」ではありません。角番はrank_from_aisle（通路角番）または"
+        "rank_from_min/rank_from_max（台番号順）で定義されますが、楽園蒲田店のmachine_layoutでは"
+        "rank_from_aisleが全台NULLのため、通路角番は算出できません。既存の角番分析と直接比較しないでください。",
         "",
         f"差枚・勝率は{result['graph_min_games']:,}G以上の台だけを対象にしています。平均Gと平均最高出玉は全台集計です。",
+        "",
+        f"勝率ランキングは有効差枚台が{result['min_ranked_diff_machines']}台以上の位置だけを掲載します。",
         "",
         result["source_time_status"]["note"],
         "",
     ]
     rankings = result["rankings"]["corners"]
-    lines.extend(corner_table("角番号別平均差枚ランキング", rankings["average_diff"]))
-    lines.extend(corner_table("角番号別勝率ランキング", rankings["win_rate"]))
-    lines.extend(corner_table("角番号別平均Gランキング", rankings["average_games"]))
+    lines.extend(corner_table("列端位置別平均差枚ランキング", rankings["average_diff"]))
+    lines.extend(corner_table("列端位置別勝率ランキング", rankings["win_rate"]))
+    lines.extend(corner_table("列端位置別平均Gランキング", rankings["average_games"]))
     lines.extend(
         corner_table(
-            "角番号別平均最高出玉ランキング",
+            "列端位置別平均最高出玉ランキング",
             rankings["average_highest_payout"],
         )
     )
@@ -978,6 +1199,7 @@ def main() -> None:
             "main_models",
             "サイトセブン機種別ランキング",
             f"対象: 2台以上設置の{result['main_model_count']}機種。一台機種は別レポートです。",
+            include_candidates=True,
         ),
         encoding="utf-8",
     )
@@ -1012,6 +1234,17 @@ def main() -> None:
                 "three_machine_report_output": str(args.three_machine_report_output),
                 "corner_count": result["corner_count"],
                 "corner_report_output": str(args.corner_report_output),
+                "probability_ranking_scope": result["probability_ranking_scope"],
+                "setting_candidate_count": result["setting_candidate_count"],
+                "payout_candidate_count": result["payout_candidate_count"],
+                "master_unmatched": result["reference"].get("master_unmatched"),
+                "master_unmatched_model_count": result["reference"].get("master_unmatched_model_count"),
+                # config/machine_aliases.json を埋める判断ができるよう、落ちた機種名を必ず出す。
+                "master_unmatched_models": [
+                    f"{item['mdc']}:{item['model_name']}({item['machine_count']}台)"
+                    for item in result["reference"].get("master_unmatched_models", [])
+                ],
+                "ambiguous_aliases": result["reference"].get("ambiguous_aliases", {}),
             },
             ensure_ascii=False,
         )

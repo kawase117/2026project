@@ -9,7 +9,7 @@ from scraper.site777.reference import (
     load_reference_context,
 )
 from scraper.site777.site777_analyze import (
-    build_corner_summaries,
+    build_lane_edge_summaries,
     build_positive_blocks,
     build_three_machine_runs,
 )
@@ -89,7 +89,7 @@ def test_three_machine_run_uses_physical_order_not_number_sequence(tmp_path: Pat
     enrich_machines(machines, context)
 
     lanes = build_physical_lanes(machines)
-    assert [machine["physical_corner_rank"] for machine in lanes[0]["machines"]] == [
+    assert [machine["lane_edge_rank"] for machine in lanes[0]["machines"]] == [
         1,
         2,
         1,
@@ -104,8 +104,8 @@ def test_three_machine_run_uses_physical_order_not_number_sequence(tmp_path: Pat
     assert len(blocks) == 1
     assert blocks[0]["machine_numbers"] == ["101", "203", "305"]
 
-    corners = build_corner_summaries(machines)
-    assert [row["corner_label"] for row in corners] == ["角1", "角2"]
+    corners = build_lane_edge_summaries(machines)
+    assert [row["lane_edge_label"] for row in corners] == ["列端1", "列端2"]
     assert corners[0]["machine_count"] == 2
     assert corners[1]["machine_count"] == 1
 

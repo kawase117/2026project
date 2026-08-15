@@ -166,6 +166,12 @@ if ($LASTEXITCODE -ne 0) { throw "Analysis failed: $LASTEXITCODE" }
 if ($LASTEXITCODE -ne 0) { throw "Mobile report failed: $LASTEXITCODE" }
 $stages.analysisAndReportMinutes = [math]::Round(([DateTime]::UtcNow - $stageStart).TotalMinutes, 2)
 
+# Fail with a clear message instead of an exception right after a successful run.
+foreach ($required in @($fullData, $graphMetrics, $analysisJson)) {
+    if (-not (Test-Path -LiteralPath $required)) {
+        throw "Run summary input is missing: $required"
+    }
+}
 $source = Get-Content -LiteralPath $fullData -Raw -Encoding UTF8 | ConvertFrom-Json
 $metrics = Get-Content -LiteralPath $graphMetrics -Raw -Encoding UTF8 | ConvertFrom-Json
 $analysis = Get-Content -LiteralPath $analysisJson -Raw -Encoding UTF8 | ConvertFrom-Json

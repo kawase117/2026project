@@ -102,7 +102,7 @@ def build_html(result: dict[str, Any]) -> str:
       <button class="tab active" data-scope="main">機種</button>
       <button class="tab" data-scope="single">一台機種</button>
       <button class="tab" data-scope="tail">末尾</button>
-      <button class="tab" data-scope="corner">角</button>
+      <button class="tab" data-scope="corner">列端</button>
       <button class="tab" data-scope="three">3台並び</button>
     </div>
     <div class="filters">
@@ -180,7 +180,7 @@ def build_html(result: dict[str, Any]) -> str:
       <div class="detail"><div class="detail-grid"><div class="metric"><span>平均G</span><strong>${{fmt('average_games',row.average_games)}}</strong></div><div class="metric"><span>平均最高出玉</span><strong>${{fmt('average_highest_payout',row.average_highest_payout)}}</strong></div><div class="metric"><span>勝ち台</span><strong>${{row.win_count}}台</strong></div><div class="metric"><span>差枚有効台</span><strong>${{row.diff_valid_count}}台</strong></div></div><div class="time">グラフ ${{esc(row.graph_update_time || '不明')}}</div></div></details>`;
   }}
   function cornerCard(row, rank) {{
-    return `<details class="card"><summary><div class="topline"><span class="rank">${{rank}}</span><span class="name">${{esc(row.corner_label)}}</span><span class="primary ${{diffClass(metric,row[metric])}}">${{fmt(metric,row[metric])}}</span></div>
+    return `<details class="card"><summary><div class="topline"><span class="rank">${{rank}}</span><span class="name">${{esc(row.lane_edge_label)}}</span><span class="primary ${{diffClass(metric,row[metric])}}">${{fmt(metric,row[metric])}}</span></div>
       <div class="chips"><span class="chip">平均差枚 ${{fmt('average_diff',row.average_diff)}}</span><span class="chip">平均G ${{fmt('average_games',row.average_games)}}</span><span class="chip">勝率 ${{fmt('win_rate',row.win_rate)}}</span><span class="chip">差枚対象 ${{row.graph_eligible_count}}台</span></div></summary>
       <div class="detail"><div class="detail-grid"><div class="metric"><span>全台数</span><strong>${{row.machine_count}}台</strong></div><div class="metric"><span>有効差枚台</span><strong>${{row.diff_valid_count}}台</strong></div><div class="metric"><span>勝ち台</span><strong>${{row.win_count}}台</strong></div><div class="metric"><span>平均最高出玉</span><strong>${{fmt('average_highest_payout',row.average_highest_payout)}}</strong></div><div class="metric"><span>BB確率</span><strong>${{fmt('bb_probability',row.bb_probability)}}</strong></div><div class="metric"><span>RB確率</span><strong>${{fmt('rb_probability',row.rb_probability)}}</strong></div></div></div></details>`;
   }}
@@ -195,7 +195,7 @@ def build_html(result: dict[str, Any]) -> str:
   }}
   function render() {{
     const all = rows(), shown = showAll ? all : all.slice(0,10);
-    el('heading').textContent = scope === 'main' ? '機種ランキング' : scope === 'single' ? '一台機種ランキング' : scope === 'tail' ? '末尾ランキング' : scope === 'corner' ? '角番号ランキング' : metric === 'block_score' ? '連続好調ブロック' : '3台並びランキング';
+    el('heading').textContent = scope === 'main' ? '機種ランキング' : scope === 'single' ? '一台機種ランキング' : scope === 'tail' ? '末尾ランキング' : scope === 'corner' ? '列端位置ランキング（角番ではない）' : metric === 'block_score' ? '連続好調ブロック' : '3台並びランキング';
     el('count').textContent = `${{shown.length}} / ${{all.length}}件`;
     el('search').style.display = ['tail','corner'].includes(scope) ? 'none' : 'block';
     el('search').placeholder = scope === 'three' ? '台番号・機種名を検索' : '機種名を検索';
