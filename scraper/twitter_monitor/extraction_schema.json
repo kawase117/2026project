@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["hall_hint", "date_hint", "entries"],
+  "properties": {
+    "hall_hint": {
+      "type": ["string", "null"],
+      "description": "画像内に見えるホール名の生表記。無ければnull"
+    },
+    "date_hint": {
+      "type": ["string", "null"],
+      "description": "画像が対象とする営業日。年が読めればYYYY-MM-DD、月日だけならM/D、日付が無ければnull"
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["machine_name", "machine_numbers", "note"],
+        "properties": {
+          "machine_name": {
+            "type": "string",
+            "description": "機種名"
+          },
+          "machine_numbers": {
+            "type": "array",
+            "description": "台番号文字列の配列。先頭ゼロがあり得るため数値にしない",
+            "items": {"type": "string"}
+          },
+          "note": {
+            "type": ["string", "null"],
+            "description": "全台系や高設定示唆などの補足。無ければnull"
+          }
+        }
+      }
+    }
+  }
+}

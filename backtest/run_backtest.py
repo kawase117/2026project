@@ -25,6 +25,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from backtest.censoring import add_censor_flags
 from backtest.prereg import PreRegistration
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -87,6 +88,9 @@ def load_frame(hall: str) -> pd.DataFrame:
         (df["games_normalized"] * 3 + df["diff_coins_normalized"]) / (df["games_normalized"] * 3),
         np.nan,
     )
+    # 差枚が元サイト側で打ち切られている行に印を付ける（楽園蒲田店のみ該当）。
+    # 値そのものは書き換えない。理由と帰結は backtest/censoring.py の docstring。
+    add_censor_flags(df, hall)
     return df
 
 
@@ -171,21 +175,19 @@ def score_history(hist: pd.DataFrame, score: str) -> pd.Series:
     raise ValueError(f"scoring 不可の score: {score!r}")
 
 
-def usable_models(hist: pd.DataFrame, reg: PreRegistration) -> list[str]:
-    """selection_unit="machine_model" 用: lookback 窓内で使える機種名の一覧を返す。
+def usable_models(hist: pd.DataFrame, reg: PreRegistration) -> pd.Index:
+    """機種粒度のスコアリングに十分な履歴を持つ機種名の集合。
 
-    machine_number 粒度の「counts >= min_history_days」絞り込み（forward.plan()
-    の非 machine_model 分岐）を機種粒度に一般化したもの。
-
-    - min_history_days: 機種の lookback 窓内の履歴行数がこれ未満なら除外。
-    - min_machines_per_model: 機種の窓内ユニーク設置台数がこれ未満なら除外
-      （少数台の機種が偶然跳ねただけで選ばれるのを防ぐ）。
+    min_history_days は行数（台×日）、min_machines_per_model は同一機種の
+    異なる台番号が lookback 窓に何台分あったかで判定する。どちらも過去データ
+    だけで決まるので、当日の候補集合を絞ることにはならない（当日プールの
+    足切りに min_machines_per_model を使ってはいけない、という
+    2026-08-01 の教訓とは別の使い方）。
     """
-    per_model_rows = hist.groupby("machine_name").size()
-    per_model_machines = hist.groupby("machine_name")["machine_number"].nunique()
-    ok_rows = set(per_model_rows[per_model_rows >= reg.min_history_days].index)
-    ok_machines = set(per_model_machines[per_model_machines >= reg.min_machines_per_model].index)
-    return sorted(ok_rows & ok_machines)
+    row_counts = hist.groupby("machine_name").size()
+    machine_counts = hist.groupby("machine_name")["machine_number"].nunique()
+    ok = (row_counts >= reg.min_history_days) & (machine_counts >= reg.min_machines_per_model)
+    return row_counts[ok].index
 
 
 def select_eval_days(eligible_all: pd.DataFrame, reg: PreRegistration) -> list[str]:
@@ -260,16 +262,26 @@ def run(reg: PreRegistration) -> tuple[pd.DataFrame, dict]:
                 skipped_no_history += 1
                 continue
 
-            counts = hist.groupby("machine_number").size()
-            usable = counts[counts >= reg.min_history_days].index
-            scores = score_history(hist[hist["machine_number"].isin(usable)], reg.score)
-            scores = scores[scores.index.isin(today["machine_number"])].dropna()
-            if scores.empty:
-                skipped_no_history += 1
-                continue
+            if reg.selection_unit == "machine_model":
+                usable = usable_models(hist, reg)
+                scores = score_history(hist[hist["machine_name"].isin(usable)], reg.score)
+                scores = scores[scores.index.isin(today["machine_name"])].dropna()
+                if scores.empty:
+                    skipped_no_history += 1
+                    continue
+                top_models = scores.sort_values(ascending=False).head(reg.top_n).index
+                picked = today[today["machine_name"].isin(top_models)]
+            else:
+                counts = hist.groupby("machine_number").size()
+                usable = counts[counts >= reg.min_history_days].index
+                scores = score_history(hist[hist["machine_number"].isin(usable)], reg.score)
+                scores = scores[scores.index.isin(today["machine_number"])].dropna()
+                if scores.empty:
+                    skipped_no_history += 1
+                    continue
 
-            top = scores.sort_values(ascending=False).head(reg.top_n).index
-            picked = today[today["machine_number"].isin(top)]
+                top = scores.sort_values(ascending=False).head(reg.top_n).index
+                picked = today[today["machine_number"].isin(top)]
 
         # picks を除いた母集団の平均。edge（vs universe）は picks 自身を
         # baseline に含むため、選択比率が高いルールでは効果が縮んで見える。
@@ -381,6 +393,7 @@ def summarize(
     base = {
         "rule_id": reg.rule_id,
         "hall": reg.hall,
+        "selection_unit": reg.selection_unit,
         "freeze_hash": reg.freeze_hash(),
         # freeze_hash はルール定義のみのハッシュ。データの版は下記の指紋で見る。
         "data_fingerprint": fingerprint,
