@@ -89,6 +89,11 @@
 - **検出ロジックを変えたら `inputSignature` のバージョンを上げる。** `site777_graph_analyze.py` は `v6:<lastWriteTimeUtc>:<length>` で解析結果をキャッシュする。バージョンを据え置くとコードを直しても既存画像に再適用されず、`processedThisRun=0` で何も変わらない。再スクレイピングは不要で、バージョンを上げて再解析すればよい。
 - **「RBが全台0」を母数を見ずに構造的欠如と断定しない。** 実測（8/17 13:55）で、本当にRB契機がないエウレカTYPE-ARTは43,499G/RB0だったのに対し、誤検出された4機種（ピンクパンサーSP・キングパルサー・ハイパーラッシュ・沖ドキ!DUO）は93〜696Gで単に引いていないだけだった。累計3,000G以上を条件にする。
 - **午後の速報では設定推定はほとんど効かない。** 8/17 13:55時点でスペック表対象117台のG中央値は824Gで、2,000G以上は9台のみ、しかも全台が信用度「低」だった。設定推定を使うなら夕方以降に取得する。
-- **`.ps1` に日本語コメントを書かない。** BOMなしUTF-8のPS1をWindows PowerShellはcp932として読むため、日本語コメントを1行足しただけで数行先の `}` が `UnexpectedToken` になる。文字列リテラル内の日本語（`'db\楽園蒲田店.db'` など）は既存のまま動くが、コメントは英語で書く。構文確認は
-  `[System.Management.Automation.Language.Parser]::ParseFile($path,[ref]$null,[ref]$errs)` で行う。
+- **`.ps1` に日本語を一切書かない。コメントも文字列リテラルも。** BOMなしUTF-8のPS1をWindows PowerShell 5.1はANSIコードページ(cp932)として読む。`pwsh.exe`(PowerShell 7)なら正しく読むが、この環境に`pwsh`は入っておらず `run_site777_complete.cmd` は常に `powershell.exe` へフォールバックする。
+  - 日本語**コメント**を1行足すと、数行先の `}` が `UnexpectedToken` になる。
+  - 日本語**文字列リテラル**は構文エラーにならず、**黙って別の文字列に化ける**ぶん危険。実測（2026-08-17）で `--reference-db (Join-Path $projectRoot 'db\楽園蒲田店.db')` が `db\楽園蒲田庁Edb` に化け、収集26分＋グラフ364台が全部済んだ最後の解析段階で `FileNotFoundError` になった。`db/` に0バイトの `楽園転田店.db` が残っており、同じ事故は過去にも起きている。
+  - 対策はパスをPS1に書かないこと。`reference.py` の `DEFAULT_REFERENCE_DB` がPython側で同じパスを解決するので `--reference-db` は渡さない。
+  - 点検は `LC_ALL=C grep -an '[^ -~\t]' *.ps1` で非ASCII行を全滅させる。構文確認の
+    `[System.Management.Automation.Language.Parser]::ParseFile($path,[ref]$null,[ref]$errs)` は
+    **構文が通っても文字列の化けを検出できない**ので、非ASCIIチェックのほうが本質。
 - **`machine_master` 側に表記ゆれの重複がある。** 正規化キー衝突として、先頭空白違い（`" サンダーマンボマンボ"` と `"サンダーマンボマンボ"`、`" ULTRAMAN"` と `"ULTRAMAN"`）と、感嘆符の全角/半角違い（`"押忍!番長"` と `"押忍！番長"`、`"喰え!ハーレムエース"` と `"喰えっ！ハーレムエース"`）が検出された。衝突したキーは自動対応を諦めるため、マスター側の整理が必要。

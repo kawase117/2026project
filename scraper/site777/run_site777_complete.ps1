@@ -161,8 +161,11 @@ $stageStart = [DateTime]::UtcNow
     --tail-report-output $tailReport `
     --three-machine-report-output $threeMachineReport `
     --corner-report-output $cornerReport `
-    --setting-report-output $settingReport `
-    --reference-db (Join-Path $projectRoot 'db\楽園蒲田店.db')
+    --setting-report-output $settingReport
+# Do not pass --reference-db here. Windows PowerShell 5.1 reads a BOM-less UTF-8 .ps1
+# as the ANSI code page, so a Japanese path literal is silently mangled and the analyzer
+# dies with FileNotFoundError. reference.py resolves the same default path from Python,
+# where the encoding is unambiguous. Keep every .ps1 in this directory pure ASCII.
 if ($LASTEXITCODE -ne 0) { throw "Analysis failed: $LASTEXITCODE" }
 & $python $mobileBuilder --input $analysisJson --output $mobileReport
 if ($LASTEXITCODE -ne 0) { throw "Mobile report failed: $LASTEXITCODE" }
