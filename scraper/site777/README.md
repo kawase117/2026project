@@ -47,6 +47,9 @@ scraper\site777\run_site777_complete.cmd -Sequential
 - 末尾別 `site777_last_digit_report_filtered.md`
 - 列端位置 `site777_corner_report_filtered.md` — プロジェクトの「角番」とは別概念です。
 - 3台並び `site777_three_machine_report_filtered.md`
+- 設定推定 `site777_setting_report_filtered.md` — スペック表のあるジャグラー系のみ。順位付けは
+  `max L(設定5,6) / max L(設定1〜4)` の高低尤度比で、事前分布を仮定しないため確率ではありません。
+  スペック値は `ml/experiments/jug_rb_setting_prediction/config.py` の `JUGGLER_FAMILY_SPECS` を参照します。
 
 勝率ランキングは有効差枚3台以上に限定します。BB/RB/合成確率のランキングは、ボーナス確率に設定差が
 あるノーマル機（`jug`/`hana`/`oki`/`bt`）だけを対象にします。
