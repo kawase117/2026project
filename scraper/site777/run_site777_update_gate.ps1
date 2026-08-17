@@ -42,6 +42,12 @@ $cachedCli = Get-ChildItem -Path "$env:LOCALAPPDATA\npm-cache\_npx" -Recurse -Fi
     Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1
 if ($null -eq $cachedCli) { throw 'Cached playwright-cli.cmd was not found.' }
 
+# PowerShell decodes native command output with the console code page (cp932 here),
+# which silently corrupts Japanese model names and can break the captured JSON.
+# The other collectors already pin this; the update gate was the one that did not.
+[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+$OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+
 try {
     & $cachedCli.FullName "-s=$session" open about:blank --browser chrome --headed --persistent --profile $profile | Out-Null
     if ($LASTEXITCODE -ne 0) { throw "Update-gate browser open failed: $LASTEXITCODE" }
