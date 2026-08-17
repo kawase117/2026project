@@ -93,6 +93,21 @@ def normal_machine_models(models: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return [model for model in models if model.get("machine_category") in NORMAL_MACHINE_CATEGORIES]
 
 
+def rb_absent_models(models: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """ノーマル機とされているのにRBが全台0回の機種。マスターの区分誤りを疑う。"""
+    return [model for model in normal_machine_models(models) if not (model.get("total_rb") or 0)]
+
+
+def probability_ranking_models(models: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """ボーナス確率で設定を読める機種だけを返す。
+
+    ノーマル機の区分に加えて、RBが全台0回の機種を落とす。RB契機のない機種は
+    マスターの bt_flag が誤っていてもここで除外される（擬似ボーナスのAT機など）。
+    """
+    absent = {model["mdc"] for model in rb_absent_models(models)}
+    return [model for model in normal_machine_models(models) if model["mdc"] not in absent]
+
+
 def model_rankings(
     models: list[dict[str, Any]],
     probability_models: list[dict[str, Any]] | None = None,
@@ -647,8 +662,9 @@ def analyze(
 
     main_models = [model for model in models if model["machine_count"] > 1]
     single_models = [model for model in models if model["machine_count"] == 1]
-    normal_main_models = normal_machine_models(main_models)
-    normal_single_models = normal_machine_models(single_models)
+    normal_main_models = probability_ranking_models(main_models)
+    normal_single_models = probability_ranking_models(single_models)
+    rb_absent = rb_absent_models(models)
     # マスター未対応でカテゴリが取れないときだけ全機種にフォールバックし、その事実を記録する。
     probability_scope = "normal_only" if normal_main_models or normal_single_models else "all_models"
     corners = build_lane_edge_summaries(machines)
@@ -713,6 +729,17 @@ def analyze(
         "min_ranked_diff_machines": MIN_RANKED_DIFF_MACHINES,
         "probability_ranking_scope": probability_scope,
         "normal_machine_categories": list(NORMAL_MACHINE_CATEGORIES),
+        "rb_absent_models": [
+            {
+                "mdc": model["mdc"],
+                "model_name": model["model_name"],
+                "machine_category": model.get("machine_category"),
+                "machine_count": model["machine_count"],
+                "total_games": model["total_games"],
+                "total_bb": model["total_bb"],
+            }
+            for model in rb_absent
+        ],
         "setting_candidate_count": sum(machine["setting_candidate"] for machine in machines),
         "payout_candidate_count": sum(machine["payout_candidate"] for machine in machines),
         "bb_heavy_count": sum(machine["bb_heavy"] for machine in machines),
@@ -861,15 +888,23 @@ def build_model_report(
 
 def probability_scope_note(result: dict[str, Any]) -> str:
     categories = "/".join(result.get("normal_machine_categories", []))
-    if result.get("probability_ranking_scope") == "normal_only":
+    if result.get("probability_ranking_scope") != "normal_only":
         return (
-            f"BB確率・RB確率・合成確率のランキングは、ボーナス確率に設定差があるノーマル機（区分 {categories}）"
-            "だけを対象にしています。擬似ボーナスのAT機はBB/RB回数が仕様値のため、同じ表に混ぜていません。"
+            "警告: 機種マスターの区分が1件も取得できなかったため、BB/RB/合成確率のランキングに"
+            "AT機を含む全機種が混在しています。設定推定には使えません。"
         )
-    return (
-        "警告: 機種マスターの区分が1件も取得できなかったため、BB/RB/合成確率のランキングに"
-        "AT機を含む全機種が混在しています。設定推定には使えません。"
+    note = (
+        f"BB確率・RB確率・合成確率のランキングは、ボーナス確率に設定差があるノーマル機（区分 {categories}）"
+        "だけを対象にしています。擬似ボーナスのAT機はBB/RB回数が仕様値のため、同じ表に混ぜていません。"
     )
+    absent = result.get("rb_absent_models", [])
+    if absent:
+        names = "、".join(f"{model['model_name']}（{model['machine_count']}台）" for model in absent)
+        note += (
+            f" また、区分上はノーマル機でもRBが全台0回の機種は除外しました: {names}。"
+            "RB契機がない機種なので、機種マスターの区分が誤っている可能性があります。"
+        )
+    return note
 
 
 def candidate_section(result: dict[str, Any]) -> list[str]:
@@ -1235,6 +1270,10 @@ def main() -> None:
                 "corner_count": result["corner_count"],
                 "corner_report_output": str(args.corner_report_output),
                 "probability_ranking_scope": result["probability_ranking_scope"],
+                "prefix_fallback_matches": result["reference"].get("prefix_fallback_matches"),
+                "rb_absent_models": [
+                    f"{item['model_name']}({item['machine_count']}台)" for item in result["rb_absent_models"]
+                ],
                 "setting_candidate_count": result["setting_candidate_count"],
                 "payout_candidate_count": result["payout_candidate_count"],
                 "master_unmatched": result["reference"].get("master_unmatched"),

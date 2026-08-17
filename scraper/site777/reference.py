@@ -16,6 +16,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_REFERENCE_DB = PROJECT_ROOT / "db" / "楽園蒲田店.db"
 DEFAULT_ALIAS_FILE = Path(__file__).resolve().parent / "config" / "machine_aliases.json"
 ALIAS_SPLIT_PATTERN = re.compile(r"[,\n\r|/；;、]+")
+# サイトセブンの機種名に付く表記接頭辞。機種マスターは付けない場合があるので照合前に落とす。
+TITLE_PREFIXES = ("lb", "スマスロ", "パチスロ", "スロット", "slot", "aslot", "回胴式遊技機", "l")
 
 
 def normalize_machine_key(value: Any) -> str:
@@ -23,6 +25,22 @@ def normalize_machine_key(value: Any) -> str:
     if text.startswith("l") and not text.startswith("lb"):
         text = text[1:]
     return re.sub(r"[^\w]+", "", text, flags=re.UNICODE)
+
+
+def strip_title_prefixes(key: str) -> str:
+    """正規化キーから表記接頭辞を繰り返し落とす。厳密キーが外れたときの保険にだけ使う。
+
+    このキー単独で索引を作ると「スマスロ ドルアーガの塔」と「SLOTドルアーガの塔」が
+    衝突して両方失われる。必ず厳密キーを先に引き、外れた場合のフォールバックとして使う。
+    """
+    changed = True
+    while changed:
+        changed = False
+        for prefix in TITLE_PREFIXES:
+            if key.startswith(prefix) and len(key) > len(prefix):
+                key = key[len(prefix) :]
+                changed = True
+    return key
 
 
 def _read_only_connection(path: Path) -> sqlite3.Connection:
@@ -94,6 +112,7 @@ def load_reference_context(
 
     master: dict[str, dict[str, Any]] = {}
     key_candidates: dict[str, set[str]] = defaultdict(set)
+    fallback_candidates: dict[str, set[str]] = defaultdict(set)
     for row in master_rows:
         item = {
             "machine_name_normalized": row[0],
@@ -111,16 +130,19 @@ def load_reference_context(
             key = normalize_machine_key(alias)
             if key:
                 key_candidates[key].add(canonical)
+                fallback_candidates[strip_title_prefixes(key)].add(canonical)
 
     alias_index = {key: next(iter(values)) for key, values in key_candidates.items() if len(values) == 1}
     # 同じ正規化キーに複数の機種が当たる場合は自動対応を諦めるが、握り潰さず内容を返す。
     ambiguous_aliases = {key: sorted(values) for key, values in key_candidates.items() if len(values) > 1}
+    fallback_alias_index = {key: next(iter(values)) for key, values in fallback_candidates.items() if len(values) == 1}
     return {
         "db_path": str(db_path.expanduser().resolve()),
         "business_date": business_date,
         "layout_by_number": {int(row["machine_number"]): row for row in layout},
         "master": master,
         "alias_index": alias_index,
+        "fallback_alias_index": fallback_alias_index,
         "ambiguous_aliases": ambiguous_aliases,
         "mdc_overrides": _load_alias_overrides(alias_path),
     }
@@ -144,10 +166,12 @@ def enrich_machines(machines: list[dict[str, Any]], context: dict[str, Any]) -> 
     layout_by_number = context["layout_by_number"]
     master = context["master"]
     alias_index = context["alias_index"]
+    fallback_alias_index = context.get("fallback_alias_index", {})
     overrides = context["mdc_overrides"]
     layout_matches = 0
     master_matches = 0
     override_matches = 0
+    fallback_matches = 0
     unmatched_models: dict[str, dict[str, Any]] = {}
     unmatched_layout_numbers: list[int] = []
 
@@ -177,7 +201,15 @@ def enrich_machines(machines: list[dict[str, Any]], context: dict[str, Any]) -> 
         if canonical:
             override_matches += 1
         else:
-            canonical = alias_index.get(normalize_machine_key(machine["model_name"]))
+            key = normalize_machine_key(machine["model_name"])
+            canonical = alias_index.get(key)
+            if canonical is None:
+                # 厳密キーが外れたときだけ接頭辞を落として引き直す。順序を逆にすると
+                # 「スマスロ ドルアーガの塔」と「SLOTドルアーガの塔」が衝突して両方失われる。
+                canonical = fallback_alias_index.get(strip_title_prefixes(key))
+                if canonical is not None:
+                    mapping_method = "prefix_fallback"
+                    fallback_matches += 1
         master_item = master.get(canonical) if canonical else None
         machine["master_matched"] = master_item is not None
         machine["master_mapping_method"] = mapping_method if master_item else None
@@ -218,6 +250,7 @@ def enrich_machines(machines: list[dict[str, Any]], context: dict[str, Any]) -> 
         "ambiguous_alias_count": len(ambiguous_aliases),
         "ambiguous_aliases": ambiguous_aliases,
         "mdc_override_matches": override_matches,
+        "prefix_fallback_matches": fallback_matches,
     }
 
 

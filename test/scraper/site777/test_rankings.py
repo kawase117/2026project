@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from scraper.site777.reference import normalize_machine_key, strip_title_prefixes
 from scraper.site777.site777_analyze import (
     MIN_RANKED_DIFF_MACHINES,
     classify_candidates,
@@ -8,17 +9,28 @@ from scraper.site777.site777_analyze import (
     model_rankings,
     normal_machine_models,
     probability,
+    probability_ranking_models,
     rank_rows,
+    rb_absent_models,
 )
 
 
-def _model(mdc: str, name: str, category: str | None, *, diff_valid: int, win_rate: float | None) -> dict:
+def _model(
+    mdc: str,
+    name: str,
+    category: str | None,
+    *,
+    diff_valid: int,
+    win_rate: float | None,
+    total_rb: int = 20,
+) -> dict:
     return {
         "mdc": mdc,
         "model_name": name,
         "machine_category": category,
         "machine_count": max(diff_valid, 1),
         "diff_valid_count": diff_valid,
+        "total_rb": total_rb,
         "win_rate": win_rate,
         "average_diff": 100.0,
         "average_games": 3000.0,
@@ -53,6 +65,46 @@ def test_probability_rankings_exclude_non_normal_machines() -> None:
     assert [row["model_name"] for row in rankings["rb_probability"]] == ["マイジャグラーV"]
     # 差枚・平均Gは全機種を対象に残す。
     assert len(rankings["average_diff"]) == 3
+
+
+def test_rb_absent_models_are_dropped_from_probability_rankings() -> None:
+    # 区分はbtだがRBが全台0回。擬似ボーナスのAT機にbt_flagが誤って立っている状態。
+    fake_normal = _model("9", "エウレカTYPE-ART", "bt", diff_valid=25, win_rate=0.4, total_rb=0)
+    real_normal = _model("1", "マイジャグラーV", "jug", diff_valid=20, win_rate=0.5)
+    models = [fake_normal, real_normal]
+
+    assert [m["model_name"] for m in rb_absent_models(models)] == ["エウレカTYPE-ART"]
+    assert [m["model_name"] for m in probability_ranking_models(models)] == ["マイジャグラーV"]
+    # normal_machine_models 自体は区分だけを見る。
+    assert len(normal_machine_models(models)) == 2
+
+    ranking = model_rankings(models, probability_ranking_models(models))["bb_probability"]
+    assert [row["model_name"] for row in ranking] == ["マイジャグラーV"]
+
+
+def test_prefix_fallback_matches_site_seven_title_prefixes() -> None:
+    pairs = [
+        ("LBサンダーV", "スマスロ サンダーV"),
+        ("LB SHAKE BONUS TRIGGER", "SHAKE BONUS TRIGGER"),
+        ("パチスロ戦国恋姫", "戦国†恋姫"),
+        ("パチスロ　ピンクパンサーＳＰ", "ピンクパンサーSP"),
+        ("ＳＬＯＴマッピー", "マッピー"),
+        ("A-SLOT+ ディスクアップ ULTRAREMIX", "ディスクアップ ULTRAREMIX"),
+        ("回胴式遊技機グランベルム", "グランベルム"),
+    ]
+    for site_name, master_name in pairs:
+        site_key = strip_title_prefixes(normalize_machine_key(site_name))
+        master_key = strip_title_prefixes(normalize_machine_key(master_name))
+        assert site_key == master_key, site_name
+
+
+def test_strict_key_is_unchanged_so_distinct_titles_do_not_collide() -> None:
+    # 厳密キーは接頭辞を残す。ここが潰れると2機種が衝突して両方失われる。
+    smart = normalize_machine_key("スマスロ ドルアーガの塔")
+    slot = normalize_machine_key("SLOTドルアーガの塔")
+
+    assert smart != slot
+    assert strip_title_prefixes(smart) == strip_title_prefixes(slot)
 
 
 def test_rank_rows_without_min_count_keeps_current_behaviour() -> None:
