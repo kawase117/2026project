@@ -930,4 +930,12 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
+    # Windows 既定の cp932 コンソールでは、raw_text の絵文字や ⑤⑥ などの全角記号を
+    # 含む JSON ダンプで UnicodeEncodeError になる。台帳追記は済んでいるのに
+    # コマンドが exit 1 で落ちるため、register が失敗したように見える。
+    # stderr も「凍結:」「⚠️ 対象日…」の出力先なので両方 reconfigure する。
+    # scripts/compile_instincts.py と同じ対処（commit f9ced01）。
+    # import してライブラリとして使う場合に影響しないよう __main__ に限定。
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
     raise SystemExit(main())

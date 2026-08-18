@@ -1,0 +1,107 @@
+{
+  "kind": "addendum",
+  "announce_id": "rakuen__20260816__kawasakislot",
+  "parent_announce_digest": "435ea0a80fcdeceb",
+  "frozen_at": "2026-08-16T08:25:23+09:00",
+  "target_date": "20260816",
+  "hall": "楽園蒲田店",
+  "installs_as_of": "20260815",
+  "why_separate_file": "親の prereg は 2026-08-16T08:10:59+09:00 に digest 435ea0a80fcdeceb で凍結済み。announce_digest() は result と announce_digest 以外の全キーをハッシュするため、prereg 本体にブロックを足すと _verify_ledger が『予告が登録後に書き換えられている』として採点を拒否する。よって別ファイルにする。result キーを持たないので audit_censoring の *.json グロブでは無視される（announce.py:460 の result is None スキップ）。LEDGER.jsonl には載せない（台帳は prereg 専用）。",
+  "claim_under_test": {
+    "text": "・1/2&1/3で⑤⑥機種複数 ・1/4＆1/5で⑤⑥機種 ・1/6で⑥入り機種",
+    "interpretation": "1/N は機種内で⑤⑥が入る台の割合。ユーザー仮説は『1/4・1/5・1/6 がそれぞれ整数台になる設置台数の機種に入る可能性が高い（おそらく4〜6にそれぞれ入る）』。この仮説に従い、N で割り切れる設置台数 4・5・6・8・10・12 の機種を対象日前日の設置構成で全列挙して凍結する。",
+    "note": "予告本文は対象機種を名指ししていないため存在主張であり、単独では反証不能（prereg の unscored_claims 参照）。このアデンダムは『どの機種が候補だったか』を事後に選び直せないよう固定するためのもので、それ自体が hit/miss を持つ claim ではない。"
+  },
+  "detectability_note": "⚠️ 採点前に必ず読むこと。4台・5台・6台の機種における 1/4・1/5・1/6 はいずれも『⑤⑥は1台だけ』を意味する。主指標 gratio_mean_diff（G比×平均差枚）は1台の突出を機種平均に薄めるため、この構成は原理的にほぼ検出できない。4台機種で1台が+5,000・残り3台が-500なら機種平均は+875、G比1.2でも score≈1,050 で閾値+1,800 に届かない。1台が+10,000級に跳ねて初めて超える。つまり 4/5/6台グループは『⑤⑥が実在しても hit=False』が既定値であり、hit=False を『高設定が入っていない』の証拠として使ってはならない（instinct: feedback-scoring-must-separate-setting-from-pnl）。さらにこの構成は『機種1』＝機種内1台だけ高設定で機種平均を持ち上げ全台系に偽装する撒き餌そのものであり、4台13機種・6台9機種を候補に並べると撒き餌を本命として拾う方向にバイアスがかかる（instinct: project-kishu-ichi-decoy）。検出可能性が実際にあるのは⑤⑥が2台以上になる 8台(1/4=2台)・12台(1/4=3台, 1/6=2台) と、台数の大きい名指し機種側（転生20台で1/4=5台・1/5=4台、GOD16台で1/4=4台、エウレカ25台で1/5=5台）。",
+  "groups": {
+    "4": {
+      "fractions": {"1/4": 1},
+      "n_models": 13,
+      "models": [
+        {"machine_name": "バンドリ！", "over_30d": "5/12", "avg_score": 1599, "max_score": 4284, "last_over": "20260813", "score_20260815": 356, "rank_20260815": 16},
+        {"machine_name": "モンスターハンターライズ", "over_30d": "3/30", "avg_score": 1984, "max_score": 55336, "last_over": "20260813", "score_20260815": 431, "rank_20260815": 15},
+        {"machine_name": "HEY！エリートサラリーマン鏡", "over_30d": "2/30", "avg_score": 206, "max_score": 3795, "last_over": "20260722", "score_20260815": 8, "rank_20260815": 24},
+        {"machine_name": "ソードアート・オンライン", "over_30d": "2/30", "avg_score": 172, "max_score": 3061, "last_over": "20260808", "score_20260815": -229, "rank_20260815": 37},
+        {"machine_name": "スーパーリオエース2", "over_30d": "2/30", "avg_score": 167, "max_score": 6543, "last_over": "20260810", "score_20260815": -835, "rank_20260815": 49, "announced_as": "リオ2(取材枠)"},
+        {"machine_name": "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION", "over_30d": "2/30", "avg_score": 151, "max_score": 4726, "last_over": "20260809", "score_20260815": 512, "rank_20260815": 14, "announced_as": "天膳(優遇)"},
+        {"machine_name": "東京リベンジャーズ", "over_30d": "2/30", "avg_score": -219, "max_score": 2254, "last_over": "20260729", "score_20260815": -81, "rank_20260815": 29, "announced_as": "東リベ(取材枠)"},
+        {"machine_name": "ジャグラーガールズ", "over_30d": "1/30", "avg_score": 253, "max_score": 3029, "last_over": "20260723", "score_20260815": 1167, "rank_20260815": 7},
+        {"machine_name": "バーサスリヴァイズ", "over_30d": "1/30", "avg_score": 124, "max_score": 1991, "last_over": "20260730", "score_20260815": 201, "rank_20260815": 18},
+        {"machine_name": "うみねこのなく頃に2", "over_30d": "1/30", "avg_score": 65, "max_score": 2868, "last_over": "20260720", "score_20260815": 548, "rank_20260815": 13},
+        {"machine_name": "痛いのは嫌なので防御力に極振りしたいと思います。", "over_30d": "1/30", "avg_score": 6, "max_score": 1858, "last_over": "20260727", "score_20260815": 622, "rank_20260815": 12},
+        {"machine_name": "とんでもスキルで異世界放浪メシ", "over_30d": "1/12", "avg_score": -609, "max_score": 4758, "last_over": "20260814", "score_20260815": 1294, "rank_20260815": 5},
+        {"machine_name": "ケロット5", "over_30d": "0/30", "avg_score": 17, "max_score": 1581, "last_over": null, "score_20260815": -392, "rank_20260815": 44}
+      ]
+    },
+    "5": {
+      "fractions": {"1/5": 1},
+      "n_models": 3,
+      "models": [
+        {"machine_name": "シャーマンキング", "over_30d": "6/30", "avg_score": 571, "max_score": 9514, "last_over": "20260812", "score_20260815": -2144, "rank_20260815": 51, "announced_as": "シャーマン(優遇)"},
+        {"machine_name": "真打 吉宗", "over_30d": "3/30", "avg_score": 286, "max_score": 11093, "last_over": "20260815", "score_20260815": 11093, "rank_20260815": 1, "note": "⚠️ 8/15 に当日1位。前日に全台系スコアを超えたことは翌日の予測に情報を持たない（機種自身の超え率で統制するとp=0.80で消える／instinct: feedback-prevday-exceed-carries-no-info）。連チャン期待で優先しないこと。"},
+        {"machine_name": "ToLOVEるダークネス", "over_30d": "0/30", "avg_score": 69, "max_score": 1632, "last_over": null, "score_20260815": 1632, "rank_20260815": 4}
+      ]
+    },
+    "6": {
+      "fractions": {"1/6": 1},
+      "n_models": 9,
+      "cross_reference": "予告の『全⑤⑥機種は日付まつわる台数の「6台」設置機種を優先』と同じ集合。ベースレートと否定的な事前予測は prereg の daisuu_rule_baseline を参照（閾値超えのうち台数一致は9.1%で、候補全体の10.7%を下回る）。",
+      "models": [
+        {"machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師", "over_30d": "3/30", "avg_score": 236, "max_score": 5631, "last_over": "20260814", "score_20260815": 1198, "rank_20260815": 6},
+        {"machine_name": "革命機ヴァルヴレイヴ2", "over_30d": "3/30", "avg_score": 69, "max_score": 3688, "last_over": "20260808", "score_20260815": -338, "rank_20260815": 43},
+        {"machine_name": "スマスロ炎炎ノ消防隊2", "over_30d": "3/30", "avg_score": 45, "max_score": 2292, "last_over": "20260725", "score_20260815": -572, "rank_20260815": 48, "announced_as": "炎炎(優遇)"},
+        {"machine_name": "戦国コレクション6", "over_30d": "2/30", "avg_score": -184, "max_score": 2790, "last_over": "20260807", "score_20260815": 1053, "rank_20260815": 8},
+        {"machine_name": "ワールドダイスター", "over_30d": "1/12", "avg_score": -548, "max_score": 2213, "last_over": "20260808", "score_20260815": -549, "rank_20260815": 46},
+        {"machine_name": "新ハナビ", "over_30d": "0/30", "avg_score": 197, "max_score": 1510, "last_over": null, "score_20260815": 169, "rank_20260815": 19},
+        {"machine_name": "スマスロ サンダーV", "over_30d": "0/30", "avg_score": 10, "max_score": 1167, "last_over": null, "score_20260815": -96, "rank_20260815": 32, "announced_as": "サンダー(取材枠)"},
+        {"machine_name": "ストリートファイター6", "over_30d": "0/13", "avg_score": -96, "max_score": 1368, "last_over": null, "score_20260815": -567, "rank_20260815": 47},
+        {"machine_name": "やじきた道中記参る！", "over_30d": "0/13", "avg_score": -2178, "max_score": 143, "last_over": null, "score_20260815": -3468, "rank_20260815": 54}
+      ]
+    },
+    "8": {
+      "fractions": {"1/4": 2},
+      "n_models": 6,
+      "models": [
+        {"machine_name": "キングハナハナ-30", "over_30d": "2/30", "avg_score": 506, "max_score": 2691, "last_over": "20260807", "score_20260815": 142, "rank_20260815": 20},
+        {"machine_name": "ニューキングハナハナV‐30", "over_30d": "1/30", "avg_score": 245, "max_score": 1947, "last_over": "20260804", "score_20260815": -53, "rank_20260815": 27},
+        {"machine_name": "ファンキージャグラー2", "over_30d": "1/30", "avg_score": 64, "max_score": 3352, "last_over": "20260808", "score_20260815": 49, "rank_20260815": 23},
+        {"machine_name": "邪神ちゃんドロップキック", "over_30d": "1/12", "avg_score": -617, "max_score": 5938, "last_over": "20260813", "score_20260815": -2090, "rank_20260815": 50},
+        {"machine_name": "とある魔術の禁書目録2", "over_30d": "1/12", "avg_score": -699, "max_score": 5169, "last_over": "20260811", "score_20260815": -2541, "rank_20260815": 53},
+        {"machine_name": "ディスクアップ ULTRAREMIX", "over_30d": "0/30", "avg_score": 110, "max_score": 976, "last_over": null, "score_20260815": -237, "rank_20260815": 38}
+      ]
+    },
+    "10": {
+      "fractions": {"1/5": 2},
+      "n_models": 0,
+      "models": [],
+      "note": "⭐ 楽園蒲田に10台設置の機種は存在しない（8/15時点）。よって『1/5で2台』の受け皿はゼロ。1/5 が整数になるのは 5台の3機種（各1台）・転生20台（4台）・エウレカ25台（5台）に限られる。"
+    },
+    "12": {
+      "fractions": {"1/4": 3, "1/6": 2},
+      "n_models": 2,
+      "models": [
+        {"machine_name": "モンキーターンV", "over_30d": "4/30", "avg_score": 707, "max_score": 9804, "last_over": "20260808", "score_20260815": -303, "rank_20260815": 41, "announced_as": "モンキー(優遇)", "note": "3125-3132 はユーザー申告で投資リスクが低いブロック。機種スコアが hit しなくても候補から落とさない（instinct: feedback-rakuen-low-investment-risk-blocks）。"},
+        {"machine_name": "ソードアート・オンラインII", "over_30d": "4/30", "avg_score": -638, "max_score": 2922, "last_over": "20260730", "score_20260815": -5059, "rank_20260815": 56}
+      ]
+    }
+  },
+  "named_models_outside_groups": [
+    {"machine_name": "交響詩篇エウレカセブン HI-EVOLUTION ZERO TYPE‐ART", "n_machines": 25, "integer_fractions": {"1/5": 5}, "announced_as": "エウレカ(取材枠)"},
+    {"machine_name": "ミリオンゴッド‐神々の軌跡‐", "n_machines": 16, "integer_fractions": {"1/2": 8, "1/4": 4}, "announced_as": "GOD(取材枠)"},
+    {"machine_name": "化物語", "n_machines": 9, "integer_fractions": {"1/3": 3}, "announced_as": "化物語(取材枠)"},
+    {"machine_name": "戦国乙女5 業火を穿つ宿焔の双刃", "n_machines": 22, "integer_fractions": {"1/2": 11}, "announced_as": "乙女5(優遇)"},
+    {"machine_name": "からくりサーカス2", "n_machines": 7, "integer_fractions": {}, "announced_as": "からくり2(オススメ)", "note": "7台は2〜6のどれでも割り切れない。予告の分数仕掛けの対象になり得ない唯一の名指し機種。"},
+    {"machine_name": "甲鉄城のカバネリ 海門(うなと)決戦", "n_machines": 18, "integer_fractions": {"1/2": 9, "1/3": 6, "1/6": 3}, "announced_as": "カバネリ(本命)", "note": "予告は1/3（6台）を明示。"},
+    {"machine_name": "北斗の拳 転生の章2", "n_machines": 20, "integer_fractions": {"1/2": 10, "1/4": 5, "1/5": 4}, "announced_as": "転生(本命)", "note": "予告は1/2（10台）を明示。frac_baseline では +1,500基準で221日中1日しか起きていない水準。"}
+  ],
+  "prior_prediction": {
+    "detectable_candidates_ranked": [
+      "北斗の拳 転生の章2 (20台, 1/4→5台 or 1/5→4台)",
+      "ミリオンゴッド‐神々の軌跡‐ (16台, 1/4→4台) ※ただし直近30日 0/30・avg -223",
+      "モンキーターンV (12台, 1/4→3台)",
+      "邪神ちゃんドロップキック (8台, 1/4→2台)",
+      "とある魔術の禁書目録2 (8台, 1/4→2台)"
+    ],
+    "note": "登録時点の予測を凍結する。⑤⑥が2台以上になる構成でのみ機種平均が実際に動くので、答え合わせで意味を持つのはこの5機種。4台・5台・6台グループ（計25機種）は⑤⑥が1台のみとなり hit=False が既定値なので、的中率の分母に入れないこと。分母に入れると『予告は外れた』という結論が構造的に出てしまう。"
+  }
+}
