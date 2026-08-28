@@ -1,0 +1,23 @@
+{
+  "kind": "withdrawal",
+  "announce_id": "rakuen__20260829__kawasakislot",
+  "parent_announce_digest": "715da9886537affc",
+  "withdrawn_at": "2026-08-28T11:45:00+09:00",
+  "target_date_as_registered": "20260829",
+  "correct_target_date": "20260828",
+  "hall": "楽園蒲田店",
+  "why_separate_file": "親のjsonはdigest 715da9886537affc でLEDGER.jsonlに凍結済み。announce.pyに取り下げサブコマンドは存在せず、rakuen__20260828__kawasakislot.withdrawn.json と同じ規約に従い、親を改変・削除せずこのファイルで打ち消す。result キーを持たないため audit-censoring のグロブでは無視される。LEDGER.jsonl には追記しない。",
+  "error": {
+    "field": "target_date と source.posted_at",
+    "what_was_wrong": "ツイート冒頭『8/28 楽園蒲田』を投稿日と誤読し、本文の『明日は…』から対象日を20260829・投稿を2026-08-28T20:00と登録した。正しくはヘッダ日付が対象日で、投稿は前日。すなわち target_date=20260828、posted_at=2026-08-27 が正しい。",
+    "evidence": "rakuen__20260828__kawasakislot.withdrawn.json が全く同じ誤りを記録しており『ヘッダ日付=target_date、投稿は前日』と明記している（同一アカウントの8/7・8/11・8/12・8/13・8/15登録が一貫してこの規約）。加えて登録実行時刻が 2026-08-28T08:52 であり、推定した posted_at=2026-08-28T20:00 は登録時点で未来という自己矛盾があった。",
+    "who_found_it": "ユーザーの『今日の予測を行ってください』を受けて現在日時(2026-08-28 11:39)を確認した際に、Claudeが withdrawn.json の規約と照合して発見。",
+    "root_cause": "パターンの手本として rakuen__20260828__kawasakislot.json を参照したが、これは同一の誤りで取り下げ済みのファイルだった。取り下げ済みファイルを規約の根拠に使ってしまった。今後 announce を登録する際は、親ファイルより先に同ディレクトリの *.withdrawn.json / *.correction.json を読むこと。"
+  },
+  "impact": {
+    "superseded_by": "rakuen__20260828__kawasakislot__v2.json（同一ツイート・同一分析を正しい target_date=20260828 で再登録）",
+    "analysis_affected": "baserate(--before 20260827)・named_machine_context(as_of 20260827)・prior_prediction の中身は対象日が1日ずれても計算根拠が変わらないため、そのまま再利用する。変更したのは日付フィールドと、前日=8/27がワロスさん来店回であることに依存する注記のみ。",
+    "scoring": "採点してはならない。20260829 の実績で採点すると別日の予告として不正な的中率に算入される。"
+  },
+  "action": "この announce_id は的中率・base_rate の集計から除外すること。当該ツイートの採点は rakuen__20260828__kawasakislot__v2.json のみを正とする。"
+}
