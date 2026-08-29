@@ -2,7 +2,7 @@
 
 なぜ差枚系スコア（announce.py の gratio_mean_diff）と別に要るか:
     2026-08-27/28 の楽園蒲田 ToLOVEるダークネスで、取材アカウント(Zeno)が両日とも
-    【全台】と発表し、8/28はユーザーの現場情報でも「全六」だったにも関わらず、
+    【全台】(8/27) / 【1/2】8台中4台(8/28) と発表しているにも関わらず、
     gratio_mean_diff は 8/27 が -306、8/28 が 915 で **2日とも閾値1800に届かなかった**。
 
     原因は指標の構造にある。score = G比 × 平均差枚 であり、平均差枚は
@@ -49,7 +49,7 @@ from scipy import stats
 
 from backtest.run_backtest import load_frame
 
-# ノーマル機はRB確率に設定差が出る。AT機は rb_count が常に0なのでBBを使う。
+# ノーマル機はRB確率に設定差が出る。AT機はbb/rbのどちらに入るかが機種依存なので合計する。
 NORMAL_FLAGS = ("jug_flag", "hana_flag", "oki_flag", "bt_flag")
 
 
