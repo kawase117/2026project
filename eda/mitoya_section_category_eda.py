@@ -19,9 +19,7 @@ from scipy.stats import mannwhitneyu, spearmanr
 from statsmodels.stats.multitest import multipletests
 
 DB_PATH = Path(__file__).resolve().parents[1] / "db" / "みとや大森町店.db"
-MACHINE_MASTER = (
-    Path(__file__).resolve().parents[1] / "document" / "machine_master_research" / "machine_list_for_research.csv"
-)
+MACHINE_MASTER = Path(__file__).resolve().parents[1] / "document" / "machine_master_research" / "machine_master.csv"
 X_DDS = {4, 7, 14, 17, 24, 27}
 A_GROUP = {"ノーマル", "Aタイプ", "A+AT", "A+ART"}
 AT_GROUP = {"AT", "ART", "スマスロ", "AT(擬似ノーマル)"}

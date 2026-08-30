@@ -43,7 +43,7 @@ from ml.analysis.kamata_weekday_event_axis_payoutrate_deepdive import (
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 OUTPUT_ROOT = PROJECT_ROOT / "tmp" / "kamata_section_axis_eda_deepdive"
-MASTER_CSV = PROJECT_ROOT / "document" / "machine_master_research" / "machine_list_for_research.csv"
+MASTER_CSV = PROJECT_ROOT / "document" / "machine_master_research" / "machine_master.csv"
 MIN_ENTITY_DATES_DEFAULT = 10
 CATEGORY_ORDER = ["A", "AT", "unclassified"]
 AXIS_SPECS = [
@@ -180,7 +180,9 @@ def _prepare_frame(spec: HallSpec, *, category_lookup: dict[str, str], min_entit
     frame["machine_category"] = frame["machine_name_key"].map(category_lookup).fillna("unclassified")
     frame["machine_type"] = frame["machine_category"]
     frame["matched_master"] = frame["machine_name_key"].isin(category_lookup)
-    frame["weekday"] = frame["date"].dt.dayofweek.map(lambda x: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][int(x)] if pd.notna(x) else None)
+    frame["weekday"] = frame["date"].dt.dayofweek.map(
+        lambda x: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][int(x)] if pd.notna(x) else None
+    )
     frame["dd"] = frame["date"].dt.day.astype("Int64").astype(str)
     frame["is_event_day"] = frame["date"].map(is_kamata_event_day).astype(int).astype(str)
     frame["payoutrate_pct"] = [
@@ -197,12 +199,23 @@ def _prepare_frame(spec: HallSpec, *, category_lookup: dict[str, str], min_entit
 
 def _section_category_coverage(frame: pd.DataFrame) -> pd.DataFrame:
     rows: list[dict[str, object]] = []
-    for (hall_slug, floor, section), group in frame.groupby(["hall_slug", "floor", "section"], dropna=False, sort=False):
+    for (hall_slug, floor, section), group in frame.groupby(
+        ["hall_slug", "floor", "section"], dropna=False, sort=False
+    ):
         machine_level = (
             group.groupby("machine_number", as_index=False)
             .agg(
                 machine_name=("machine_name", "first"),
-                machine_category=("machine_category", lambda s: s.dropna().mode().iloc[0] if not s.dropna().mode().empty else s.dropna().iloc[0] if not s.dropna().empty else "unclassified"),
+                machine_category=(
+                    "machine_category",
+                    lambda s: (
+                        s.dropna().mode().iloc[0]
+                        if not s.dropna().mode().empty
+                        else s.dropna().iloc[0]
+                        if not s.dropna().empty
+                        else "unclassified"
+                    ),
+                ),
                 entity_n_dates=("entity_n_dates", "max"),
             )
             .copy()
@@ -220,7 +233,10 @@ def _section_category_coverage(frame: pd.DataFrame) -> pd.DataFrame:
             "at_share": float(counts.get("AT", 0.0)),
             "unclassified_share": float(counts.get("unclassified", 0.0)),
         }
-        row["dominant_category"] = max({"A": row["a_share"], "AT": row["at_share"], "unclassified": row["unclassified_share"]}, key=lambda k: row[f"{k.lower()}_share"])
+        row["dominant_category"] = max(
+            {"A": row["a_share"], "AT": row["at_share"], "unclassified": row["unclassified_share"]},
+            key=lambda k: row[f"{k.lower()}_share"],
+        )
         row["dominant_share"] = float(max(row["a_share"], row["at_share"], row["unclassified_share"]))
         row["near_pure_90"] = bool(row["dominant_share"] >= 0.9)
         rows.append(row)
@@ -258,10 +274,17 @@ def _section_category_mixture_summary(coverage: pd.DataFrame) -> pd.DataFrame:
 
 def _global_kw(frame: pd.DataFrame, *, axis_col: str, metric_col: str) -> pd.DataFrame:
     rows: list[dict[str, object]] = []
-    for (hall_slug, floor, section), group in frame.groupby(["hall_slug", "floor", "section"], dropna=False, sort=False):
+    for (hall_slug, floor, section), group in frame.groupby(
+        ["hall_slug", "floor", "section"], dropna=False, sort=False
+    ):
         labels = [label for label in group[axis_col].dropna().astype(str).unique().tolist()]
         labels = sorted(labels, key=lambda value: _sort_key(pd.Series([value]), axis_col).iloc[0])
-        groups = [pd.to_numeric(group.loc[group[axis_col].astype(str).eq(label), metric_col], errors="coerce").dropna().astype(float) for label in labels]
+        groups = [
+            pd.to_numeric(group.loc[group[axis_col].astype(str).eq(label), metric_col], errors="coerce")
+            .dropna()
+            .astype(float)
+            for label in labels
+        ]
         groups = [g for g in groups if len(g) > 0]
         if len(groups) < 2:
             p_value = float("nan")
@@ -290,12 +313,22 @@ def _global_kw(frame: pd.DataFrame, *, axis_col: str, metric_col: str) -> pd.Dat
 
 def _cell_vs_rest(frame: pd.DataFrame, *, axis_col: str, metric_col: str) -> pd.DataFrame:
     rows: list[dict[str, object]] = []
-    for (hall_slug, floor, section), group in frame.groupby(["hall_slug", "floor", "section"], dropna=False, sort=False):
+    for (hall_slug, floor, section), group in frame.groupby(
+        ["hall_slug", "floor", "section"], dropna=False, sort=False
+    ):
         labels = [label for label in group[axis_col].dropna().astype(str).unique().tolist()]
         labels = sorted(labels, key=lambda value: _sort_key(pd.Series([value]), axis_col).iloc[0])
         for label in labels:
-            cell = pd.to_numeric(group.loc[group[axis_col].astype(str).eq(label), metric_col], errors="coerce").dropna().astype(float)
-            rest = pd.to_numeric(group.loc[~group[axis_col].astype(str).eq(label), metric_col], errors="coerce").dropna().astype(float)
+            cell = (
+                pd.to_numeric(group.loc[group[axis_col].astype(str).eq(label), metric_col], errors="coerce")
+                .dropna()
+                .astype(float)
+            )
+            rest = (
+                pd.to_numeric(group.loc[~group[axis_col].astype(str).eq(label), metric_col], errors="coerce")
+                .dropna()
+                .astype(float)
+            )
             p_value = _mwu(cell, rest)
             cell_mean = float(cell.mean()) if len(cell) else np.nan
             rest_mean = float(rest.mean()) if len(rest) else np.nan
@@ -303,7 +336,11 @@ def _cell_vs_rest(frame: pd.DataFrame, *, axis_col: str, metric_col: str) -> pd.
             rest_median = float(rest.median()) if len(rest) else np.nan
             delta = cell_mean - rest_mean if np.isfinite(cell_mean) and np.isfinite(rest_mean) else np.nan
             rest_std = float(rest.std(ddof=0)) if len(rest) else np.nan
-            zscore = delta / rest_std if np.isfinite(delta) and np.isfinite(rest_std) and not np.isclose(rest_std, 0.0) else np.nan
+            zscore = (
+                delta / rest_std
+                if np.isfinite(delta) and np.isfinite(rest_std) and not np.isclose(rest_std, 0.0)
+                else np.nan
+            )
             rows.append(
                 {
                     "hall_slug": hall_slug,
@@ -323,7 +360,11 @@ def _cell_vs_rest(frame: pd.DataFrame, *, axis_col: str, metric_col: str) -> pd.
                     "cell_n_dates": int(group.loc[group[axis_col].astype(str).eq(label), "date"].nunique()),
                     "rest_n_dates": int(group.loc[~group[axis_col].astype(str).eq(label), "date"].nunique()),
                     "p_value": p_value,
-                    "direction": "cell_higher" if np.isfinite(delta) and delta > 0 else "cell_lower" if np.isfinite(delta) and delta < 0 else "tie_or_nan",
+                    "direction": "cell_higher"
+                    if np.isfinite(delta) and delta > 0
+                    else "cell_lower"
+                    if np.isfinite(delta) and delta < 0
+                    else "tie_or_nan",
                 }
             )
     out = pd.DataFrame(rows)
@@ -359,7 +400,12 @@ def _split_half_compare(frame: pd.DataFrame, *, axis_col: str, metric_col: str) 
                 "direction": f"{prefix}_direction",
             }
         )
-        merged = merged.merge(half_table, on=["hall_slug", "floor", "section", "axis", "metric", "axis_value"], how="left", validate="one_to_one")
+        merged = merged.merge(
+            half_table,
+            on=["hall_slug", "floor", "section", "axis", "metric", "axis_value"],
+            how="left",
+            validate="one_to_one",
+        )
 
     def _sig(series: pd.Series | None) -> pd.Series:
         if series is None:
@@ -369,23 +415,45 @@ def _split_half_compare(frame: pd.DataFrame, *, axis_col: str, metric_col: str) 
     merged["full_sig"] = pd.to_numeric(merged["q_value"], errors="coerce").lt(0.05)
     merged["first_half_sig"] = _sig(merged.get("first_half_q_value"))
     merged["second_half_sig"] = _sig(merged.get("second_half_q_value"))
-    merged["same_direction"] = (
-        merged["direction"].astype(str).eq((merged.get("first_half_direction") if merged.get("first_half_direction") is not None else pd.Series(index=merged.index)).astype(str))
-        & merged["direction"].astype(str).eq((merged.get("second_half_direction") if merged.get("second_half_direction") is not None else pd.Series(index=merged.index)).astype(str))
+    merged["same_direction"] = merged["direction"].astype(str).eq(
+        (
+            merged.get("first_half_direction")
+            if merged.get("first_half_direction") is not None
+            else pd.Series(index=merged.index)
+        ).astype(str)
+    ) & merged["direction"].astype(str).eq(
+        (
+            merged.get("second_half_direction")
+            if merged.get("second_half_direction") is not None
+            else pd.Series(index=merged.index)
+        ).astype(str)
     )
-    merged["stable"] = merged["full_sig"] & merged["first_half_sig"] & merged["second_half_sig"] & merged["same_direction"]
+    merged["stable"] = (
+        merged["full_sig"] & merged["first_half_sig"] & merged["second_half_sig"] & merged["same_direction"]
+    )
     merged["split_half_cutoff"] = cutoff
     return merged
 
 
 def _cell_summary(frame: pd.DataFrame, *, axis_col: str) -> pd.DataFrame:
     rows: list[dict[str, object]] = []
-    for (hall_slug, floor, section, axis_value), group in frame.groupby(["hall_slug", "floor", "section", axis_col], dropna=False, sort=False):
+    for (hall_slug, floor, section, axis_value), group in frame.groupby(
+        ["hall_slug", "floor", "section", axis_col], dropna=False, sort=False
+    ):
         machine_level = (
             group.groupby("machine_number", as_index=False)
             .agg(
                 machine_name=("machine_name", "first"),
-                machine_category=("machine_category", lambda s: s.dropna().mode().iloc[0] if not s.dropna().mode().empty else s.dropna().iloc[0] if not s.dropna().empty else "unclassified"),
+                machine_category=(
+                    "machine_category",
+                    lambda s: (
+                        s.dropna().mode().iloc[0]
+                        if not s.dropna().mode().empty
+                        else s.dropna().iloc[0]
+                        if not s.dropna().empty
+                        else "unclassified"
+                    ),
+                ),
                 entity_n_dates=("entity_n_dates", "max"),
             )
             .copy()
@@ -404,9 +472,17 @@ def _cell_summary(frame: pd.DataFrame, *, axis_col: str) -> pd.DataFrame:
                 "entity_n_dates_min": int(entity_n_dates.min()) if entity_n_dates.notna().any() else np.nan,
                 "entity_n_dates_median": float(entity_n_dates.median()) if entity_n_dates.notna().any() else np.nan,
                 "entity_n_dates_max": int(entity_n_dates.max()) if entity_n_dates.notna().any() else np.nan,
-                "machine_category_a_share": float((machine_level["machine_category"] == "A").mean()) if len(machine_level) else np.nan,
-                "machine_category_at_share": float((machine_level["machine_category"] == "AT").mean()) if len(machine_level) else np.nan,
-                "machine_category_unclassified_share": float((machine_level["machine_category"] == "unclassified").mean()) if len(machine_level) else np.nan,
+                "machine_category_a_share": float((machine_level["machine_category"] == "A").mean())
+                if len(machine_level)
+                else np.nan,
+                "machine_category_at_share": float((machine_level["machine_category"] == "AT").mean())
+                if len(machine_level)
+                else np.nan,
+                "machine_category_unclassified_share": float(
+                    (machine_level["machine_category"] == "unclassified").mean()
+                )
+                if len(machine_level)
+                else np.nan,
                 "hit_104": float(group["hit_104"].mean()),
                 "diff_mean": float(pd.to_numeric(group["diff_coins_normalized"], errors="coerce").mean()),
                 "diff_median": float(pd.to_numeric(group["diff_coins_normalized"], errors="coerce").median()),
@@ -418,12 +494,18 @@ def _cell_summary(frame: pd.DataFrame, *, axis_col: str) -> pd.DataFrame:
     if out.empty:
         return out
     out[axis_col] = out["axis_value"]
-    out = out.sort_values(["hall_slug", "floor", "section", "axis", axis_col], key=lambda s: _sort_key(s, "section"), na_position="last").reset_index(drop=True)
+    out = out.sort_values(
+        ["hall_slug", "floor", "section", "axis", axis_col], key=lambda s: _sort_key(s, "section"), na_position="last"
+    ).reset_index(drop=True)
     return out
 
 
-def _machine_concentration_check(frame: pd.DataFrame, *, axis_col: str, axis_value: str, section: str, metric_col: str = "diff_coins_normalized") -> dict[str, object]:
-    cell = frame[(frame["section"].astype(str).eq(str(section))) & (frame[axis_col].astype(str).eq(str(axis_value)))].copy()
+def _machine_concentration_check(
+    frame: pd.DataFrame, *, axis_col: str, axis_value: str, section: str, metric_col: str = "diff_coins_normalized"
+) -> dict[str, object]:
+    cell = frame[
+        (frame["section"].astype(str).eq(str(section))) & (frame[axis_col].astype(str).eq(str(axis_value)))
+    ].copy()
     if cell.empty:
         return {
             "hall_slug": frame["hall_slug"].iloc[0] if len(frame) else "",
@@ -470,10 +552,16 @@ def _machine_concentration_check(frame: pd.DataFrame, *, axis_col: str, axis_val
     }
 
 
-def _recompute_without_machine(frame: pd.DataFrame, *, axis_col: str, axis_value: str, section: str, machine_number: int, metric_col: str) -> dict[str, object]:
-    cell = frame[(frame["section"].astype(str).eq(str(section))) & (frame[axis_col].astype(str).eq(str(axis_value)))].copy()
+def _recompute_without_machine(
+    frame: pd.DataFrame, *, axis_col: str, axis_value: str, section: str, machine_number: int, metric_col: str
+) -> dict[str, object]:
+    cell = frame[
+        (frame["section"].astype(str).eq(str(section))) & (frame[axis_col].astype(str).eq(str(axis_value)))
+    ].copy()
     cell = cell[cell["machine_number"].astype(int).ne(int(machine_number))].copy()
-    rest = frame[(frame["section"].astype(str).eq(str(section))) & (~frame[axis_col].astype(str).eq(str(axis_value)))].copy()
+    rest = frame[
+        (frame["section"].astype(str).eq(str(section))) & (~frame[axis_col].astype(str).eq(str(axis_value)))
+    ].copy()
     cell_series = pd.to_numeric(cell[metric_col], errors="coerce").dropna().astype(float)
     rest_series = pd.to_numeric(rest[metric_col], errors="coerce").dropna().astype(float)
     p_value = _mwu(cell_series, rest_series)
@@ -481,7 +569,9 @@ def _recompute_without_machine(frame: pd.DataFrame, *, axis_col: str, axis_value
     rest_mean = float(rest_series.mean()) if len(rest_series) else np.nan
     delta = cell_mean - rest_mean if np.isfinite(cell_mean) and np.isfinite(rest_mean) else np.nan
     rest_std = float(rest_series.std(ddof=0)) if len(rest_series) else np.nan
-    zscore = delta / rest_std if np.isfinite(delta) and np.isfinite(rest_std) and not np.isclose(rest_std, 0.0) else np.nan
+    zscore = (
+        delta / rest_std if np.isfinite(delta) and np.isfinite(rest_std) and not np.isclose(rest_std, 0.0) else np.nan
+    )
     return {
         "cell_rows_after_exclusion": int(len(cell_series)),
         "cell_mean_after_exclusion": cell_mean,
@@ -497,7 +587,9 @@ def _write_json(path: Path, payload: dict[str, object]) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
-def _run_hall(spec: HallSpec, *, category_lookup: dict[str, str], min_entity_dates: int, out_dir: Path) -> dict[str, pd.DataFrame]:
+def _run_hall(
+    spec: HallSpec, *, category_lookup: dict[str, str], min_entity_dates: int, out_dir: Path
+) -> dict[str, pd.DataFrame]:
     frame = _prepare_frame(spec, category_lookup=category_lookup, min_entity_dates=min_entity_dates)
     hall_dir = _ensure_dir(out_dir / f"{spec.hall_slug}_{spec.floor}")
 
@@ -541,7 +633,9 @@ def _run_hall(spec: HallSpec, *, category_lookup: dict[str, str], min_entity_dat
         # Concentration checks for diff-sensitive cells only.
         sig_cells = compare_diff[pd.to_numeric(compare_diff["q_value"], errors="coerce").lt(0.05)].copy()
         for _, row in sig_cells.iterrows():
-            check = _machine_concentration_check(axis_frame, axis_col=axis_col, axis_value=str(row["axis_value"]), section=str(row["section"]))
+            check = _machine_concentration_check(
+                axis_frame, axis_col=axis_col, axis_value=str(row["axis_value"]), section=str(row["section"])
+            )
             concentration_rows.append(check)
             if check["flagged"]:
                 recalc = _recompute_without_machine(
@@ -560,7 +654,11 @@ def _run_hall(spec: HallSpec, *, category_lookup: dict[str, str], min_entity_dat
                         "full_delta": float(row["delta"]) if pd.notna(row["delta"]) else np.nan,
                         "full_zscore": float(row["zscore"]) if pd.notna(row["zscore"]) else np.nan,
                         "full_direction": str(row["direction"]),
-                        "recomputed_sig": bool(pd.notna(recalc["p_value_after_exclusion"]) and pd.notna(row["q_value"]) and float(recalc["p_value_after_exclusion"]) < 0.05),
+                        "recomputed_sig": bool(
+                            pd.notna(recalc["p_value_after_exclusion"])
+                            and pd.notna(row["q_value"])
+                            and float(recalc["p_value_after_exclusion"]) < 0.05
+                        ),
                     }
                 )
 
@@ -596,7 +694,27 @@ def _run_hall(spec: HallSpec, *, category_lookup: dict[str, str], min_entity_dat
     report.append(_md_table(kw_summary.head(40)))
     report.append("")
     report.append("## Cell compare")
-    report.append(_md_table(compare[["hall_slug", "floor", "section", "axis", "axis_value", "metric_label", "cell_mean", "rest_mean", "delta", "zscore", "p_value", "q_value", "direction"]].head(40)))
+    report.append(
+        _md_table(
+            compare[
+                [
+                    "hall_slug",
+                    "floor",
+                    "section",
+                    "axis",
+                    "axis_value",
+                    "metric_label",
+                    "cell_mean",
+                    "rest_mean",
+                    "delta",
+                    "zscore",
+                    "p_value",
+                    "q_value",
+                    "direction",
+                ]
+            ].head(40)
+        )
+    )
     report.append("")
     report.append("## Split-half")
     if not split_half.empty:
@@ -647,10 +765,14 @@ def _run_hall(spec: HallSpec, *, category_lookup: dict[str, str], min_entity_dat
             "floor": spec.floor,
             "hall_label": spec.hall_name,
             "n_rows": int(len(frame)),
-            "n_sections": int(section_category_coverage["section"].nunique()) if not section_category_coverage.empty else 0,
+            "n_sections": int(section_category_coverage["section"].nunique())
+            if not section_category_coverage.empty
+            else 0,
             "n_mixed_sections": mixed,
             "n_near_pure_sections": near_pure,
-            "n_sig_cells": int(pd.to_numeric(compare["q_value"], errors="coerce").lt(0.05).sum()) if not compare.empty else 0,
+            "n_sig_cells": int(pd.to_numeric(compare["q_value"], errors="coerce").lt(0.05).sum())
+            if not compare.empty
+            else 0,
             "n_stable_cells": stable_sig,
         },
     )
@@ -681,7 +803,9 @@ def _build_overall_report(results: dict[str, dict[str, pd.DataFrame]]) -> str:
                 "sections": int(coverage["section"].nunique()) if not coverage.empty else 0,
                 "near_pure_90": int(coverage["near_pure_90"].sum()) if not coverage.empty else 0,
                 "mixed": int((~coverage["near_pure_90"]).sum()) if not coverage.empty else 0,
-                "sig_cells": int(pd.to_numeric(compare["q_value"], errors="coerce").lt(0.05).sum()) if not compare.empty else 0,
+                "sig_cells": int(pd.to_numeric(compare["q_value"], errors="coerce").lt(0.05).sum())
+                if not compare.empty
+                else 0,
                 "stable_cells": int(split_half["stable"].sum()) if not split_half.empty else 0,
             }
         )
@@ -692,7 +816,9 @@ def _build_overall_report(results: dict[str, dict[str, pd.DataFrame]]) -> str:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Kamata section-axis deep dive with category prereq checks and split-half stability")
+    parser = argparse.ArgumentParser(
+        description="Kamata section-axis deep dive with category prereq checks and split-half stability"
+    )
     parser.add_argument("--output-dir", type=Path, default=OUTPUT_ROOT)
     parser.add_argument("--master-csv", type=Path, default=MASTER_CSV)
     parser.add_argument("--min-entity-dates", type=int, default=MIN_ENTITY_DATES_DEFAULT)
@@ -707,7 +833,9 @@ def main() -> None:
     results: dict[str, dict[str, pd.DataFrame]] = {}
     for spec in specs:
         hall_key = f"{spec.hall_slug}_{spec.floor}"
-        results[hall_key] = _run_hall(spec, category_lookup=category_lookup, min_entity_dates=int(args.min_entity_dates), out_dir=out_dir)
+        results[hall_key] = _run_hall(
+            spec, category_lookup=category_lookup, min_entity_dates=int(args.min_entity_dates), out_dir=out_dir
+        )
 
     _write_text(out_dir / "report.md", _build_overall_report(results))
 

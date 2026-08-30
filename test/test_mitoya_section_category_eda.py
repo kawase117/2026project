@@ -11,7 +11,7 @@ from eda.mitoya_section_category_eda import (
     classify_category,
 )
 
-MASTER_CSV = Path("document/machine_master_research/machine_list_for_research.csv")
+MASTER_CSV = Path("document/machine_master_research/machine_master.csv")
 
 
 def _make_branch_df() -> pd.DataFrame:
@@ -90,10 +90,7 @@ def test_classify_category_known() -> None:
     )
     out = classify_category(frame, MASTER_CSV)
     assert out.loc[out["machine_name"].eq("アイムジャグラーEX-TP"), "category"].iloc[0] == "A群"
-    assert (
-        out.loc[out["machine_name"].eq("アナザーゴッドハーデス‐解き放たれし槍撃ver.‐"), "category"].iloc[0]
-        == "AT群"
-    )
+    assert out.loc[out["machine_name"].eq("アナザーゴッドハーデス‐解き放たれし槍撃ver.‐"), "category"].iloc[0] == "AT群"
 
 
 def test_branch_a_required_columns() -> None:

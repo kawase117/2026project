@@ -233,12 +233,16 @@ def prepare_layout_segments(layout: pd.DataFrame, hall_config: dict[str, Any] | 
     work["floor"] = work["machine_number"].map(lambda value: infer_floor(value, config))
     work["lr"] = infer_lr(work, config)
 
-    if {"section_min", "section_max"}.issubset(work.columns):
+    # セクション台数は必ず実台数で数える。section_max - section_min + 1 は
+    # 「section の台番号が連番」を前提にしており、蒲田1の 2026-08-03 以降のように
+    # 増設台が離れた番号(2416-2430)で既存の島に足されると桁違いの値になる。
+    # 連番の section では両者は一致するので、既存ホールの値は変わらない。
+    if "section" in work.columns:
+        work["section_size"] = work.groupby("section")["machine_number"].transform("nunique").astype("Int64")
+    elif {"section_min", "section_max"}.issubset(work.columns):
         section_min = pd.to_numeric(work["section_min"], errors="coerce")
         section_max = pd.to_numeric(work["section_max"], errors="coerce")
         work["section_size"] = (section_max - section_min + 1).astype("Int64")
-    elif "section" in work.columns:
-        work["section_size"] = work.groupby("section")["machine_number"].transform("nunique").astype("Int64")
     else:
         work["section_size"] = pd.NA
 
