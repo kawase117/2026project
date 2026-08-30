@@ -539,6 +539,513 @@
     ],
     "note": "登録時点の予測を凍結する。骨子は3点。(1) **7つく取材日はホール全体の投入量が実際に増えている**（閾値超えが7日とも4機種以上、平均5.71 vs 通常日3.41）。8/16 のタイガーダッシュ取材では投入増が見られなかったので、取材の種類で結論が違うことになる。(2) **末尾7の仕掛けはジャグに実在する**。差枚残差とRB確率という独立な2つの計器が、7つく取材日7日すべてで同じ向きを指している。ただし JUG に割る判断自体が 8/7 の結果を見た後の後ろ向き選択なので、8/17 が初の out-of-sample。(3) **予告の名指し機種リストは実運用と対応していない**。名指し13機種のうち7つく取材日に閾値超え実績があるのはマギレコ(4/7)・転生(1/7)・乙女5(1/7)だけで、エウレカ・GOD・沖ドキBLACK・ネオアイム・マイジャグ・ハナビ・喰種・化物語・カバネリは 0/7。名指し13機種を無作為に選んだ場合の期待超え数は 13×0.056≒0.7 機種なので、**2機種以上超えれば予告の機種指名に情報があった側に傾き、0〜1機種なら『機種名は装飾で、実体は末尾7と投入量』という読みが強まる**。"
   },
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20260817",
+    "hall_baseline_mean_diff": 272.9,
+    "hall_n_machines": 587,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 1,
+      "machines_hi": [],
+      "machines_lo": [
+        "喰霊‐零‐Re"
+      ],
+      "bounds": [
+        -5095,
+        15477
+      ]
+    },
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 2,
+          "note": "「全⑤⑥複数 ※1機種は7台以上機種から」。「複数」を2機種以上と解釈。8/7 の登録と同一条件。単独ではベースレート 0.747 で情報量が薄いが、7つく取材日は7日とも4機種以上だったので今回は『2機種』より『4機種以上か』を見る方が意味がある（採点時に observed_n_models を読むこと）。『1機種は7台以上機種から』の付帯条件は unscored_claims に凍結し、本 claim では課さない（min_machines=3 は README のベースレート校正条件）。"
+        },
+        "observed_n_models": 8,
+        "candidate_models": 55,
+        "models": [
+          {
+            "machine_name": "東京リベンジャーズ",
+            "score": 5457.7,
+            "n_machines": 4,
+            "mean_diff": 2774.5,
+            "age_days": 343
+          },
+          {
+            "machine_name": "モンキーターンV",
+            "score": 5173.5,
+            "n_machines": 12,
+            "mean_diff": 2520.2,
+            "age_days": 593
+          },
+          {
+            "machine_name": "真打 吉宗",
+            "score": 4299.1,
+            "n_machines": 5,
+            "mean_diff": 3638.6,
+            "age_days": 133
+          },
+          {
+            "machine_name": "革命機ヴァルヴレイヴ2",
+            "score": 4196.2,
+            "n_machines": 6,
+            "mean_diff": 3444.8,
+            "age_days": 286
+          },
+          {
+            "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+            "score": 3718.9,
+            "n_machines": 18,
+            "mean_diff": 2288.7,
+            "age_days": 168
+          },
+          {
+            "machine_name": "花の慶次～佐渡攻めの章～",
+            "score": 3225.0,
+            "n_machines": 3,
+            "mean_diff": 3444.7,
+            "age_days": 42
+          },
+          {
+            "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+            "score": 2407.1,
+            "n_machines": 12,
+            "mean_diff": 1694.9,
+            "age_days": 497
+          },
+          {
+            "machine_name": "北斗の拳 転生の章2",
+            "score": 2207.1,
+            "n_machines": 20,
+            "mean_diff": 1933.7,
+            "age_days": 224
+          }
+        ],
+        "n_new_machines_over": 0,
+        "hit": true
+      },
+      {
+        "type": "position_rule",
+        "claim": {
+          "type": "position_rule",
+          "field": "last_digit",
+          "values": [
+            "7"
+          ],
+          "segment": "JUG",
+          "note": "⭐⭐ 本予告の主役。「末尾7が1/2⑤⑥」をジャグ限定で判定する。7つく取材日7日すべてで残差が正（+320〜+1768）、通常日ベースレート p_positive=0.489。⚠️ JUG に割る判断は 8/7 の採点後に決めたもので、履歴7日は後ろ向き。8/17 が初の事前登録。判定は残差差が正かの二値で、1/2 という比率は gogo_rokuroku_baseline 側で手動採点する。"
+        },
+        "by_segment": [
+          {
+            "segment": "HANA",
+            "n_machines": 16,
+            "n_target": 2,
+            "n_other": 14,
+            "effect_resid_diff": 1336.6,
+            "target_payout": 1.0659,
+            "other_payout": 1.021
+          },
+          {
+            "segment": "BT",
+            "n_machines": 91,
+            "n_target": 10,
+            "n_other": 81,
+            "effect_resid_diff": 509.7,
+            "target_payout": 1.0317,
+            "other_payout": 1.005
+          },
+          {
+            "segment": "JUG",
+            "n_machines": 117,
+            "n_target": 11,
+            "n_other": 106,
+            "effect_resid_diff": 123.4,
+            "target_payout": 1.0096,
+            "other_payout": 1.0134
+          },
+          {
+            "segment": "AT",
+            "n_machines": 350,
+            "n_target": 35,
+            "n_other": 315,
+            "effect_resid_diff": -30.7,
+            "target_payout": 0.9991,
+            "other_payout": 1.0315
+          },
+          {
+            "segment": "OKI",
+            "n_machines": 13,
+            "n_target": 1,
+            "n_other": 12,
+            "effect_resid_diff": -1561.3,
+            "target_payout": 0.9012,
+            "other_payout": 0.9792
+          }
+        ],
+        "judged_segment": "JUG",
+        "n_target": 11,
+        "n_other": 106,
+        "effect_resid_diff": 123.4,
+        "target_payout": 1.0096,
+        "other_payout": 1.0134,
+        "hit": true
+      },
+      {
+        "type": "position_rule",
+        "claim": {
+          "type": "position_rule",
+          "field": "last_digit",
+          "values": [
+            "7"
+          ],
+          "note": "同じ「末尾7が1/2⑤⑥」をホール全機種プールで判定する。8/7 の登録と完全に同一形なので直接比較できる（8/7 は -35.1 で hit=false）。7つく取材日は 6/7 で正だが、唯一の負が直前の 8/7 である。プールは AT（末尾7が33〜36台と最大勢力）に支配されるため JUG 版と結論が割れることを想定している。割れた場合は JUG 版を採り、プール版の false を『末尾仕掛けが無かった』と読まないこと。"
+        },
+        "by_segment": [
+          {
+            "segment": "HANA",
+            "n_machines": 16,
+            "n_target": 2,
+            "n_other": 14,
+            "effect_resid_diff": 1336.6,
+            "target_payout": 1.0659,
+            "other_payout": 1.021
+          },
+          {
+            "segment": "BT",
+            "n_machines": 91,
+            "n_target": 10,
+            "n_other": 81,
+            "effect_resid_diff": 509.7,
+            "target_payout": 1.0317,
+            "other_payout": 1.005
+          },
+          {
+            "segment": "JUG",
+            "n_machines": 117,
+            "n_target": 11,
+            "n_other": 106,
+            "effect_resid_diff": 123.4,
+            "target_payout": 1.0096,
+            "other_payout": 1.0134
+          },
+          {
+            "segment": "AT",
+            "n_machines": 350,
+            "n_target": 35,
+            "n_other": 315,
+            "effect_resid_diff": -30.7,
+            "target_payout": 0.9991,
+            "other_payout": 1.0315
+          },
+          {
+            "segment": "OKI",
+            "n_machines": 13,
+            "n_target": 1,
+            "n_other": 12,
+            "effect_resid_diff": -1561.3,
+            "target_payout": 0.9012,
+            "other_payout": 0.9792
+          }
+        ],
+        "judged_segment": "ALL(pooled)",
+        "n_target": 59,
+        "n_other": 528,
+        "effect_resid_diff": 107.4,
+        "target_payout": 1.0078,
+        "other_payout": 1.0236,
+        "hit": true
+      },
+      {
+        "type": "category_share",
+        "claim": {
+          "type": "category_share",
+          "category": "jug_flag",
+          "min_share": 0.2,
+          "note": "「ジャグ20%⑤⑥」。⚠️ 定義が予告と食い違う。予告は『ジャグ設置台のうち20%が⑤⑥』だが、本モジュールの category_share は『閾値超え **機種** のうち何割がジャグか』である。ジャグは20〜62台の大台数機種ばかりで機種平均が+1800に届くことはまずなく、90日ベースレートは mean 0.022・p(>=0.2)=0.025（8/7 も 0/4 で false）。**ほぼ確実に false になる代理指標**であり、外れても予告の反証にはならない。忠実な検定は gogo_rokuroku_baseline（RB確率ベース、ベースレート 0.908）で手動採点する。8/7 との系列比較のために形だけ残す。"
+        },
+        "observed_share": 0.0,
+        "in_category": 0,
+        "n_over": 8,
+        "hit": false
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "北斗の拳 転生の章2",
+          "ratio": 3,
+          "note": "「北斗転生&エウレカが1/3」。設置20台（予告文の『転生（20台）』と一致）。⚠️ ベースレート（上位1/3台の平均がホール同分位を上回る率）は89日で 0.809 と高く、hit しても情報が薄い。読むべきは excess_vs_hall_quantile の大きさ。7つく取材日の excess は 6/7 -1589 / 6/17 +200 / 6/27 -668 / 7/7 +1381 / 7/17 +2705 / 7/27 +3386 / 8/7 +3019 で、直近4回が一貫して大きい。8/7 は model_named では rank6・score1481 で false だったが ratio 判定なら +3019 で hit しており、判定式を変えた効果がもっとも出る1件。"
+        },
+        "n_machines": 20,
+        "ratio": 3,
+        "top_k": 7,
+        "model_top_k_mean_diff": 6626.3,
+        "hall_top_quantile_mean_diff": 2735.7,
+        "excess_vs_hall_quantile": 3890.6,
+        "model_mean_diff": 1933.7,
+        "n_over_hall_quantile": 9,
+        "hit": true,
+        "model_named_score": 2207.1,
+        "model_named_rank": 8
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "交響詩篇エウレカセブン HI-EVOLUTION ZERO TYPE‐ART",
+          "ratio": 3,
+          "note": "「北斗転生&エウレカが1/3」。設置25台（予告文の『エウレカ（25台 ※2台稼働停止）』と一致。稼働停止2台は当日データに現れず実質23台になる可能性がある）。⚠️ **事前予測は否定的**。ベースレート hit_rate 0.191 と低く、7つく取材日でも 2/7（6/7 +800・7/17 +60 のみ、他5日は -262〜-1682）。転生と並べて名指しされ続けているのに実測が伴わない代表例で、8/16 の予告分析でも同じ結論だった。予告文と実測が正面から食い違う最重要の反証対象。"
+        },
+        "n_machines": 25,
+        "ratio": 3,
+        "top_k": 9,
+        "model_top_k_mean_diff": 1487.0,
+        "hall_top_quantile_mean_diff": 2988.6,
+        "excess_vs_hall_quantile": -1501.6,
+        "model_mean_diff": 97.4,
+        "n_over_hall_quantile": 7,
+        "hit": false,
+        "model_named_score": 122.5,
+        "model_named_rank": 26
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "北斗の拳 転生の章2",
+          "note": "8/7 と同一形の登録（8/7: score 1481.1・rank6・false）。直近30日 4/30回超え・平均651.8・最高3122.3・最終超え 20260816（score 3122.3・rank3）。前日に大きく出た直後である点に注意（instinct: 前日に全台系スコアを超えたことは翌日の予測に情報ゼロ）。7つく7日では 1/7 超え（7/27 の2162のみ）。20台の中規模は gratio_mean_diff にやや不利。"
+        },
+        "score": 2207.1,
+        "mean_diff": 1933.7,
+        "gratio": 1.141,
+        "n_machines": 20,
+        "rank": 8,
+        "candidate_models": 55,
+        "age_days": 224,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "交響詩篇エウレカセブン HI-EVOLUTION ZERO TYPE‐ART",
+          "note": "8/7 と同一形の登録（8/7: score 622.0・rank12・false）。⚠️ 直近30日 0/30回超え・平均131.7・最高1652.7 で一度も閾値に届いていない。7つく7日でも 0/7（最高は 6/7 の1153）。25台の大台数は gratio_mean_diff に構造的に不利で、かつ『1/3⑤⑥』なら残り2/3が低設定なので機種平均は原理的に届かない。false 予測だが、その false は『予告が外れた』ではなく『判定式が主張に対応していない』の証拠として読むこと。"
+        },
+        "score": 122.5,
+        "mean_diff": 97.4,
+        "gratio": 1.257,
+        "n_machines": 25,
+        "rank": 26,
+        "candidate_models": 55,
+        "age_days": 593,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+          "note": "⭐ 名指し機種のうち事前予測がもっとも肯定的な1件。予告は『明日増台するマギレコあたりから』と並び候補として挙げているだけだが、**7つく取材日の閾値超えが 4/7 と全名指し機種中で突出**（6/7 +1814・6/17 +3314・7/17 +3247・7/27 +2036、対して 6/27 -1224・7/7 +405・8/7 -528）。通常日ベースレートは直近30日 2/30=0.067 なので取材日 0.571 は大きく上回る。8/16 は score 1524.0・rank9 と直前も高い。⚠️ 明日増台があるため設置台数が9台から増える。台数が増えると gratio_mean_diff は薄まる方向に働くので、hit しなくても『増台で希釈された』可能性を残すこと。⚠️ n=7 の後ろ向き観察。"
+        },
+        "score": 2407.1,
+        "mean_diff": 1694.9,
+        "gratio": 1.42,
+        "n_machines": 12,
+        "rank": 7,
+        "candidate_models": 55,
+        "age_days": 497,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "からくりサーカス2",
+          "note": "『日付末尾の7台設置機種を優先』ルールの当日該当機種（7台設置、予告文の『からくり2/Lハナビが7台設置』と一致）。直近30日 4/30回超え・平均480.1・最高8071.7・最終超え 20260816（score 2039.3・rank5）で直前も好調。⚠️ ただし7つく取材日では 0/4（導入後に該当する4日すべて未超え、最高 8/7 の489）。『台数=日付末尾』ルール自体のベースレートは unscored_claims のとおり 0.267 で、7のつく日に限れば8日中3日（0.375）と通常と区別がつかない。前日に大きく出た直後である点も割り引くこと。"
+        },
+        "score": -2279.1,
+        "mean_diff": -2196.7,
+        "gratio": 1.038,
+        "n_machines": 7,
+        "rank": 54,
+        "candidate_models": 55,
+        "age_days": 42,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "スマスロ ハナビ",
+          "note": "『日付末尾の7台設置機種』のもう1機種（7台設置）。⚠️ 直近30日 0/30回超え・平均23.5・最高659.1、7つく7日も 0/7（最高 7/7 の468）で実績がほぼ無い。8/16 は score -206.2・rank37。『台数=日付末尾』ルールの反証力がもっとも高い1件で、これが超えるならルールを真面目に検討する価値が出る。なお予告は『明日入替えあるので変更あるかも』と留保しており、当日7台でなくなる可能性がある（その場合は台数一致ルールの対象外として扱う）。"
+        },
+        "score": -128.0,
+        "mean_diff": -169.6,
+        "gratio": 0.755,
+        "n_machines": 7,
+        "rank": 37,
+        "candidate_models": 55,
+        "age_days": 196,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+          "note": "『定番機種』枠。設置18台。直近30日 6/30回超えは名指し機種中で最多・平均847.3・最高6299.6・最終超え 20260816（score 1807.4・rank7＝ぎりぎり閾値超え）。⚠️ ただし7つく取材日は 0/7（最高 7/17 の1744）で、この機種が強いのはタイガーダッシュ取材（6のつく日）の方である（8/16 予告の tiger_dash_history 参照）。**取材の種類で機種の当たり外れが違う**という仮説の検証台。別機種『甲鉄城のカバネリ』（3台・旧筐体）が 7/7 に2495で超えているので名寄せを取り違えないこと。"
+        },
+        "score": 3718.9,
+        "mean_diff": 2288.7,
+        "gratio": 1.625,
+        "n_machines": 18,
+        "rank": 5,
+        "candidate_models": 55,
+        "age_days": 168,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "東京喰種",
+          "note": "『定番機種』枠の筆頭。設置31台でホール最大級。直近30日 3/30回超え・平均476.8・最高3337.9・最終超え 20260801。7つく7日は 0/7（うち4日はマイナス）。⚠️ 31台の大台数は gratio_mean_diff に構造的に不利なので、hit しないことを『仕掛けが無かった』と読まないこと。予告は並び候補として挙げており、実際 8/15 に 2058-2060 と 2072-2074 の2本、8/12 に 2075-2077 の並びが出ている。機種平均ではなく並びで見るべき機種の典型。"
+        },
+        "score": 349.5,
+        "mean_diff": 247.6,
+        "gratio": 1.411,
+        "n_machines": 31,
+        "rank": 15,
+        "candidate_models": 55,
+        "age_days": 559,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+          "note": "『定番機種』枠。設置22台。⚠️ 直近30日 0/30回超え・平均66.6・最高1678.6 で一度も閾値を超えていない。7つく7日は 1/7（6/27 の2739）。8/16 は score -1147.1・rank53。8/10・8/11・8/13 に 2229-2232 の並びブロックが実測されており『並びは実在するが機種平均は動かない』の典型例。8/15・8/16 の予告と同じ位置づけで再登録。"
+        },
+        "score": 1546.9,
+        "mean_diff": 1242.8,
+        "gratio": 1.245,
+        "n_machines": 22,
+        "rank": 9,
+        "candidate_models": 55,
+        "age_days": 70,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ミリオンゴッド‐神々の軌跡‐",
+          "note": "『定番機種』枠の『GOD』。設置16台。⚠️ 直近30日 0/30回超え・平均-271.7（マイナス）・最高1778.5。7つく7日は 0/7（最高 7/27 の1778.5 が惜しい）。8/16 は score -1122.9・rank51。8/16 予告でも同じ位置づけで反証対象に挙げており、2回連続の登録になる。"
+        },
+        "score": -1059.0,
+        "mean_diff": -1175.2,
+        "gratio": 0.901,
+        "n_machines": 16,
+        "rank": 49,
+        "candidate_models": 55,
+        "age_days": 119,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "沖ドキ!BLACK",
+          "note": "『定番機種』枠。設置11台。⚠️ 直近30日 0/30回超え・平均35.1・**最高468.8** と、名指し機種中でスコアの振れ幅がもっとも小さい。7つく7日も 0/7（-111〜+337）。全台系に使われた形跡が長期間なく、『予告の定番機種リストは実運用と無関係に使い回されている』という仮説のもっとも強い証拠になる1件。"
+        },
+        "score": -32.0,
+        "mean_diff": -81.8,
+        "gratio": 0.392,
+        "n_machines": 11,
+        "rank": 31,
+        "candidate_models": 55,
+        "age_days": 593,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "化物語",
+          "note": "『定番機種』枠。設置9台。直近30日 6/30回超えでカバネリと並ぶ最多・平均740.1・最高5542.0・最終超え 20260811。ただし7つく7日は 0/7（最高 7/7 の1531）で、7/26 のタイガーダッシュ取材では rank1 だった機種でもある（8/16 予告参照）。カバネリと同じく『6のつく日の機種』であって7つくの機種ではない、という読みの検証台。8/16 は score -373.0・rank42。"
+        },
+        "score": -1528.2,
+        "mean_diff": -1422.9,
+        "gratio": 1.074,
+        "n_machines": 9,
+        "rank": 51,
+        "candidate_models": 55,
+        "age_days": 252,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ネオアイムジャグラーEX",
+          "note": "『ジャグ20％⑤⑥もあるのでネオアイム・マイジャグ中心に』。設置62台でホール最大。⚠️ 直近30日 0/30回超え・平均61.6・**最高451.0**。7つく7日も 0/7（+107〜+720）。62台の機種平均が+1800に届くことは構造上まず無いので、この claim は **ほぼ確実に false になる**。false でも『ジャグに仕掛けが無かった』の証拠には一切ならない。ジャグの評価は gogo_rokuroku_baseline（RB確率）と JUG 末尾7 の position_rule で行うこと。登録するのは『大台数機種を model_named で測ると何が起きるか』を系列に残すため。"
+        },
+        "score": 272.9,
+        "mean_diff": 318.3,
+        "gratio": 0.857,
+        "n_machines": 62,
+        "rank": 17,
+        "candidate_models": 55,
+        "age_days": 322,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "マイジャグラーV",
+          "note": "『ネオアイム・マイジャグ中心に』。設置20台。⚠️ 直近30日 0/30回超え・平均20.1・最高1003.3、7つく7日 0/7（-341〜+542）。ネオアイムと同じ理由で false 予測。8/16 は score 68.3・rank24。ジャグ2機種を並べて登録するのは、RB確率ベースで⑤⑥が入ったと判定される日に model_named が同時に false になることを示すため（＝差枚ベースの機種平均はノーマル機の設定投入を検出できない、という主張の直接証拠になる）。"
+        },
+        "score": 392.3,
+        "mean_diff": 278.9,
+        "gratio": 1.407,
+        "n_machines": 20,
+        "rank": 14,
+        "candidate_models": 55,
+        "age_days": 593,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
   "announce_digest": "2fbc595c049c7cc0"
 }

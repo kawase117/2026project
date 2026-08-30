@@ -1,0 +1,78 @@
+{
+  "rule_id": "rakuen_block2247_position_follow",
+  "hall": "楽園蒲田店",
+  "freeze_hash": "4c1fc604baa51551",
+  "target_date": "20260810",
+  "data_asof": "20260808",
+  "lookback_window": [
+    "2026-07-11",
+    "2026-08-10"
+  ],
+  "score": "hist_mean_diff",
+  "selection_unit": "machine",
+  "success_criterion": "本ルールは 20260706-20260808 のデータから発見したものであり、同期間のバックテストは in-sample の自己参照なので採否根拠にしない。判定はフォワードのみ。フォワード30エントリー日を経過した時点で mean_edge_per_pick の平均が +300枚/台 以上、かつ 95%CI 下限 > 0 であること。満たさなければ破棄し、位置ブロック追走ルールの派生はこの1本で打ち止めとする。機種入替が起きてもセクション2247-2250を追い続ける(機種を追わないことが位置仮説の核心であり、ここを機種追走に変えたら別ルールとして新規登録する)。入替当日は新機種の履歴が無く plan が失敗するため、その日はエントリー無しとして30日に数えない。",
+  "is_dry_run": false,
+  "picks": [
+    {
+      "machine_number": 2248,
+      "machine_name": "バンドリ！",
+      "score": 1800.4,
+      "history_days": 5
+    },
+    {
+      "machine_number": 2247,
+      "machine_name": "バンドリ！",
+      "score": 1648.0,
+      "history_days": 5
+    },
+    {
+      "machine_number": 2249,
+      "machine_name": "バンドリ！",
+      "score": 1595.75,
+      "history_days": 4
+    },
+    {
+      "machine_number": 2250,
+      "machine_name": "バンドリ！",
+      "score": 219.4,
+      "history_days": 5
+    }
+  ],
+  "result": {
+    "scored_with_hash": "4c1fc604baa51551",
+    "day_baseline": 82.7,
+    "universe_size": 587,
+    "picks_realized": [
+      {
+        "machine_number": 2247,
+        "games": 4866.0,
+        "diff": -857.0,
+        "edge": -939.7086882453152
+      },
+      {
+        "machine_number": 2248,
+        "games": 6352.0,
+        "diff": 2048.0,
+        "edge": 1965.2913117546848
+      },
+      {
+        "machine_number": 2249,
+        "games": 5282.0,
+        "diff": -1238.0,
+        "edge": -1320.7086882453152
+      },
+      {
+        "machine_number": 2250,
+        "games": 5623.0,
+        "diff": -523.0,
+        "edge": -605.7086882453152
+      }
+    ],
+    "mean_diff_per_pick": -142.5,
+    "mean_edge_per_pick": -225.2,
+    "missing_machines": [],
+    "rb_perspective": null,
+    "model_perspective": null
+  },
+  "plan_digest": "f73351a354fb656b"
+}

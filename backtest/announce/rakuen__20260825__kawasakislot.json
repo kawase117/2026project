@@ -1,0 +1,589 @@
+{
+  "announce_id": "rakuen__20260825__kawasakislot",
+  "hall": "楽園蒲田店",
+  "target_date": "20260825",
+  "source": {
+    "account": "kawasakislot",
+    "url": "https://x.com/kawasakislot/status/2091828612177559826",
+    "posted_at": "2026-08-24T20:00:00+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "8/25 楽園蒲田\n\n連続取材&来店week2日目！明日は取材名の通り”連続攻撃”で畳み掛けるｗ\n\nアンケートは下記の通り\n・3台並び×22ヶ所\n・転生とカバネリには必ず3台並びあり\n・カスタム仕掛け多数あり\n\n+8月は毎日全⑤⑥×2機種\n+今週仕掛けは店舗公式からの発信的に1/2機種？\n\n基本は常連機種から3台並びと1/2機種探し！\n優先的に狙いたい機種は\n❶必ず3台並びある 転生/カバネリ\n❷5台設置機種 シャーマン/真打吉宗\n❸復活導入＆増台 かぐや様/ToLOVEる\n❹定番 東京喰種/化物語/炎炎/乙女5/モンキー\n❺5つくでジャグも\n\n先月は3台並びが必ずあるとアンケートで出てた東京喰種はなんと4か所、化物語も2か所とかなりの寄せあったね⭕️\n\nあとは普段から多少前後はあるものの、4,000〜6,000G/夕方頃の店長カスタムしている台が多いけど、わざわざアンケートでカスタム仕掛け公言してるのでいつもとは違ったカスタムも？🤔\n\n抽選9:40〜\n明日は150人くらい予想！",
+  "posted_at_note": "本文に投稿日時の明示が無いため posted_at は推定。ヘッダ『8/25 楽園蒲田』＋『抽選9:40〜』＋文末『明日は150人くらい予想』は8/16〜8/24の同型投稿と一致するパターン（target_date=ヘッダ日付、posted=前日20時台）に基づき 2026-08-24T20:00+09:00 とした。",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "series_note": "8/6以降の連続シリーズの継続（連続取材week2日目）。転生（北斗の拳 転生の章2）とカバネリ（甲鉄城のカバネリ 海門(うなと)決戦）を❶で名指し、8/24と同様に優先機種を❶〜❺の段階リストで提示。8/24は❶GOD含む9機種＋❷2機種、8/25は❶2機種＋❷2機種＋❸2機種＋❹5機種＋❺末尾ルールと構成が変化しており、名指し総数は前回よりやや多い(11機種+1位置ルール)。かぐや様は告らせたい は直近30日で10/30日出現（8/3以前は空白）に回復しており、『復活導入＆増台』の主張と整合する。",
+  "baserate_before_target": {
+    "window_days": 90,
+    "window": [
+      "20260526",
+      "20260824"
+    ],
+    "n_days": 87,
+    "candidate_models_per_day": 59.8,
+    "models_over_1800_mean": 3.37,
+    "models_over_1800_median": 3.0,
+    "models_over_1800_max": 9,
+    "p_at_least_1": 0.897,
+    "p_at_least_2": 0.736,
+    "p_at_least_3": 0.575,
+    "p_at_least_4": 0.391,
+    "p_at_least_10": 0.0,
+    "note": "backtest/announce.py baserate と同一手続き（min_machines=3、閾値は系列一貫の絶対値1800.0）。『8月は毎日全⑤⑥×2機種』のn_models=2は90日窓でp_at_least_2=0.736と大半の日で成立する弱い主張（median=3.0がむしろ標準）。"
+  },
+  "named_machine_context": {
+    "window_days": 30,
+    "as_of": "20260824",
+    "n_candidates_ge3machines": 54,
+    "hall_over_1800_rate_30d_approx": 0.13,
+    "models": [
+      {
+        "name": "北斗の拳 転生の章2",
+        "tweet_label": "転生",
+        "n_machines": 20,
+        "rank": 8,
+        "of": 54,
+        "over_1800_30d": 5,
+        "rate_30d": 0.167,
+        "mean_score_30d": 775.0
+      },
+      {
+        "name": "甲鉄城のカバネリ 海門(うなと)決戦",
+        "tweet_label": "カバネリ",
+        "n_machines": 18,
+        "rank": 53,
+        "of": 54,
+        "over_1800_30d": 6,
+        "rate_30d": 0.2,
+        "mean_score_30d": 921.7
+      },
+      {
+        "name": "シャーマンキング",
+        "tweet_label": "シャーマン",
+        "n_machines": 5,
+        "rank": 43,
+        "of": 54,
+        "over_1800_30d": 5,
+        "rate_30d": 0.167,
+        "mean_score_30d": 244.0
+      },
+      {
+        "name": "真打 吉宗",
+        "tweet_label": "真打吉宗",
+        "n_machines": 5,
+        "rank": 3,
+        "of": 54,
+        "over_1800_30d": 7,
+        "rate_30d": 0.233,
+        "mean_score_30d": 1199.9
+      },
+      {
+        "name": "かぐや様は告らせたい",
+        "tweet_label": "かぐや様",
+        "n_machines": 4,
+        "rank": 4,
+        "of": 54,
+        "n_days_present_30d": 10,
+        "over_1800_30d": 1,
+        "rate_30d": 0.1,
+        "mean_score_30d": 533.1,
+        "data_gap_note": "20260803以前はDB上で見えない期間があり、直近30日窓では8/15前後に再出現して以降の10日分のみで集計している。『復活導入＆増台』の主張と時期が整合する。"
+      },
+      {
+        "name": "ToLOVEるダークネス",
+        "tweet_label": "ToLOVEる",
+        "n_machines": 8,
+        "rank": 46,
+        "of": 54,
+        "over_1800_30d": 0,
+        "rate_30d": 0.0,
+        "mean_score_30d": 30.4
+      },
+      {
+        "name": "東京喰種",
+        "tweet_label": "東京喰種",
+        "n_machines": 31,
+        "rank": 27,
+        "of": 54,
+        "over_1800_30d": 1,
+        "rate_30d": 0.033,
+        "mean_score_30d": 304.0
+      },
+      {
+        "name": "化物語",
+        "tweet_label": "化物語",
+        "n_machines": 9,
+        "rank": 7,
+        "of": 54,
+        "over_1800_30d": 7,
+        "rate_30d": 0.233,
+        "mean_score_30d": 768.2
+      },
+      {
+        "name": "スマスロ炎炎ノ消防隊2",
+        "tweet_label": "炎炎",
+        "n_machines": 6,
+        "rank": 16,
+        "of": 54,
+        "over_1800_30d": 2,
+        "rate_30d": 0.067,
+        "mean_score_30d": -38.7
+      },
+      {
+        "name": "戦国乙女5 業火を穿つ宿焔の双刃",
+        "tweet_label": "乙女5",
+        "n_machines": 22,
+        "rank": 22,
+        "of": 54,
+        "over_1800_30d": 0,
+        "rate_30d": 0.0,
+        "mean_score_30d": 37.1
+      },
+      {
+        "name": "モンキーターンV",
+        "tweet_label": "モンキー",
+        "n_machines": 12,
+        "rank": 32,
+        "of": 54,
+        "over_1800_30d": 4,
+        "rate_30d": 0.133,
+        "mean_score_30d": 796.3
+      }
+    ],
+    "note": "❶〜❹の11機種を照合。真打吉宗・化物語(rank7-3, rate 23.3%)は直近30日到達率がホール平均約13%を大きく上回り強い候補。転生・シャーマン・カバネリ・モンキーも13〜20%台で平均超え。ToLOVEる・乙女5はゼロで対照群。かぐや様はデータ空白から回復直後で判定材料が薄い（10日分のみ）。東京喰種は31台と最大設置ながら到達率3.3%と低く、先月『4か所並び』の実績主張とは温度差がある。"
+  },
+  "claims": [
+    {
+      "type": "zentaikei_count",
+      "n_models": 2,
+      "note": "『8月は毎日全⑤⑥×2機種』。90日窓でp_at_least_2=0.736と大半の日で成立する弱い主張（median=3.0）。的中しても情報量は乏しいが、反証可能な主張として登録する。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "北斗の拳 転生の章2",
+      "note": "優先機種❶（『転生とカバネリには必ず3台並びあり』）。直近30日 5/30(16.7%)・rank8/54・平均score+775.0。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "note": "優先機種❶。直近30日 6/30(20.0%)・rank53/54・平均score+921.7。8/24登録時も候補視（同機種、8/24実績はhit=false）。rankが低いのはmin_machines>=3プール内の相対順位で、絶対scoreは高い（多数機種が僅差で並ぶ日だった）。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "シャーマンキング",
+      "note": "優先機種❷（5台設置機種）。直近30日 5/30(16.7%)・rank43/54・平均score+244.0。設置5台と少数。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "真打 吉宗",
+      "note": "優先機種❷（5台設置機種）。直近30日 7/30(23.3%)・rank3/54・平均score+1199.9。8/24登録時も候補視し的中(hit=true)だった継続候補。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "かぐや様は告らせたい",
+      "note": "優先機種❸（『復活導入＆増台』）。20260803以前の空白から回復し直近10日分のみで1/10(10.0%)・rank4/54・平均score+533.1。8/24登録時はデータ欠落で判定不能扱いだったが今回は再出現後のサンプルが取れている。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "ToLOVEるダークネス",
+      "note": "優先機種❸（『復活導入＆増台』）。直近30日 0/30(0.0%)・rank46/54・平均score+30.4。8/24時点でもゼロだった対照群。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "東京喰種",
+      "note": "優先機種❹（定番）。直近30日 1/30(3.3%)・rank27/54・平均score+304.0。31台と最大設置ながら到達率は低い。『先月は3台並びが必ずあるとアンケートで出てた東京喰種はなんと4か所』という自己申告の過去実績は根拠に引用しない（project-kawasakislot-selfreport-inflated）。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "化物語",
+      "note": "優先機種❹（定番）。直近30日 7/30(23.3%)・rank7/54・平均score+768.2。8/24登録時も候補視し的中(hit=true)だった継続候補。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "note": "優先機種❹（定番、炎炎）。直近30日 2/30(6.7%)・rank16/54・平均score-38.7。8/24時点でも弱い候補だった。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "note": "優先機種❹（定番、乙女5）。直近30日 0/30(0.0%)・rank22/54・平均score+37.1。8/24登録時のmost_likely_missesと同一機種で継続してゼロ。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "モンキーターンV",
+      "note": "優先機種❹（定番）。直近30日 4/30(13.3%)・rank32/54・平均score+796.3。narabi-block-slide-rule等、別枠の位置ルール観測がある機種（本claimはzentaikei閾値のみで判定し位置は含めない）。"
+    },
+    {
+      "type": "position_rule",
+      "field": "last_digit",
+      "values": [
+        "5"
+      ],
+      "segment": "JUG",
+      "note": "優先機種❺『5つくでジャグも』＝ジャグセグメント内で末尾5に仕掛け。feedback-lastdigit-kakuban-segment-splitの通りセグメント分割必須のためsegment=JUGを明示。position_ruleは対象日の実際の並び・台番号レンジを必要とせず末尾条件のみで判定できるため登録可能。"
+    }
+  ],
+  "unscored_claims": [
+    {
+      "text": "3台並び×22ヶ所／転生とカバネリには必ず3台並びあり",
+      "reason": "並び・列単位の位置claimは対象ブロックの具体的な島・台番号レンジが無いと判定できない。当日ロスター確定後でないと登録できず、事前登録の趣旨（結果を見る前に凍結）に反するため見送る（8/24と同様の扱い）。名指し自体は転生・カバネリのmodel_named claimに反映済み。"
+    },
+    {
+      "text": "カスタム仕掛け多数あり",
+      "reason": "反証可能な具体条件（機種・閾値・位置）が無い定性的主張。"
+    },
+    {
+      "text": "今週仕掛けは店舗公式からの発信的に1/2機種？",
+      "reason": "『？』付きの推測で対象機種が特定されておらず、model_named_ratio claimとして固定できない。"
+    },
+    {
+      "text": "先月は3台並びが必ずあるとアンケートで出てた東京喰種はなんと4か所、化物語も2か所",
+      "reason": "対象日は8/25でなく先月分の自己申告実績の引用。project-kawasakislot-selfreport-inflatedの通り自己申告の過去実績は水増しの疑いが強く根拠として引用しない。"
+    },
+    {
+      "text": "4,000〜6,000G/夕方頃の店長カスタムしている台が多い",
+      "reason": "具体的な機種・台番号・閾値が無い定性的傾向の言及。"
+    },
+    {
+      "text": "抽選9:40〜、明日は150人くらい予想",
+      "reason": "来場者数・抽選時間の言及で機種別・全台系の反証可能な主張を含まない。"
+    }
+  ],
+  "prior_prediction": {
+    "most_likely_hits": [
+      "真打 吉宗",
+      "化物語",
+      "北斗の拳 転生の章2",
+      "シャーマンキング",
+      "モンキーターンV"
+    ],
+    "most_likely_misses": [
+      "ToLOVEるダークネス",
+      "戦国乙女5 業火を穿つ宿焔の双刃",
+      "スマスロ炎炎ノ消防隊2",
+      "東京喰種"
+    ],
+    "note": "登録時点の分析者予測を凍結する。真打吉宗・化物語は直近30日到達率23.3%・rank3/7と最も強く、8/24でも的中した継続候補。転生・シャーマン・モンキーは16〜17%台でホール平均約13%をやや上回る。ToLOVEる・乙女5はゼロが続き対照群。東京喰種は31台と最大設置だが到達率3.3%と低く、『先月4か所並び』という自己申告実績とは温度差があるため見送り側に分類する。かぐや様は再出現直後でサンプル不足のため予測に含めず、継続出現の有無自体を観測対象とする。position_rule(末尾5×JUG)は今回初めて位置ルールとして登録する主張で、8/7の末尾7×JUGセグメント効果の再現例になるかを見る。"
+  },
+  "result": {
+    "scored_at_data_max": "20260825",
+    "hall_baseline_mean_diff": -22.2,
+    "hall_n_machines": 587,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 3,
+      "machines_hi": [],
+      "machines_lo": [
+        "スマスロ北斗の拳",
+        "ソードアート・オンラインII",
+        "東京喰種"
+      ],
+      "bounds": [
+        -5095,
+        15477
+      ]
+    },
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 2,
+          "note": "『8月は毎日全⑤⑥×2機種』。90日窓でp_at_least_2=0.736と大半の日で成立する弱い主張（median=3.0）。的中しても情報量は乏しいが、反証可能な主張として登録する。"
+        },
+        "observed_n_models": 2,
+        "candidate_models": 54,
+        "models": [
+          {
+            "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+            "score": 5397.0,
+            "n_machines": 18,
+            "mean_diff": 2013.6,
+            "age_days": 176
+          },
+          {
+            "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+            "score": 2902.6,
+            "n_machines": 12,
+            "mean_diff": 1302.0,
+            "age_days": 505
+          }
+        ],
+        "n_new_machines_over": 0,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "北斗の拳 転生の章2",
+          "note": "優先機種❶（『転生とカバネリには必ず3台並びあり』）。直近30日 5/30(16.7%)・rank8/54・平均score+775.0。"
+        },
+        "score": -78.5,
+        "mean_diff": -40.2,
+        "gratio": 1.952,
+        "n_machines": 20,
+        "rank": 23,
+        "candidate_models": 54,
+        "age_days": 232,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+          "note": "優先機種❶。直近30日 6/30(20.0%)・rank53/54・平均score+921.7。8/24登録時も候補視（同機種、8/24実績はhit=false）。rankが低いのはmin_machines>=3プール内の相対順位で、絶対scoreは高い（多数機種が僅差で並ぶ日だった）。"
+        },
+        "score": 5397.0,
+        "mean_diff": 2013.6,
+        "gratio": 2.68,
+        "n_machines": 18,
+        "rank": 1,
+        "candidate_models": 54,
+        "age_days": 176,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "シャーマンキング",
+          "note": "優先機種❷（5台設置機種）。直近30日 5/30(16.7%)・rank43/54・平均score+244.0。設置5台と少数。"
+        },
+        "score": -1166.4,
+        "mean_diff": -1209.2,
+        "gratio": 0.965,
+        "n_machines": 5,
+        "rank": 51,
+        "candidate_models": 54,
+        "age_days": 567,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "真打 吉宗",
+          "note": "優先機種❷（5台設置機種）。直近30日 7/30(23.3%)・rank3/54・平均score+1199.9。8/24登録時も候補視し的中(hit=true)だった継続候補。"
+        },
+        "score": -678.9,
+        "mean_diff": -771.0,
+        "gratio": 0.881,
+        "n_machines": 5,
+        "rank": 46,
+        "candidate_models": 54,
+        "age_days": 141,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "かぐや様は告らせたい",
+          "note": "優先機種❸（『復活導入＆増台』）。20260803以前の空白から回復し直近10日分のみで1/10(10.0%)・rank4/54・平均score+533.1。8/24登録時はデータ欠落で判定不能扱いだったが今回は再出現後のサンプルが取れている。"
+        },
+        "score": -481.5,
+        "mean_diff": -1225.5,
+        "gratio": 0.393,
+        "n_machines": 4,
+        "rank": 44,
+        "candidate_models": 54,
+        "age_days": 601,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ToLOVEるダークネス",
+          "note": "優先機種❸（『復活導入＆増台』）。直近30日 0/30(0.0%)・rank46/54・平均score+30.4。8/24時点でもゼロだった対照群。"
+        },
+        "score": -304.9,
+        "mean_diff": -404.2,
+        "gratio": 0.754,
+        "n_machines": 8,
+        "rank": 37,
+        "candidate_models": 54,
+        "age_days": 601,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "東京喰種",
+          "note": "優先機種❹（定番）。直近30日 1/30(3.3%)・rank27/54・平均score+304.0。31台と最大設置ながら到達率は低い。『先月は3台並びが必ずあるとアンケートで出てた東京喰種はなんと4か所』という自己申告の過去実績は根拠に引用しない（project-kawasakislot-selfreport-inflated）。"
+        },
+        "score": -1097.3,
+        "mean_diff": -1027.2,
+        "gratio": 1.068,
+        "n_machines": 31,
+        "rank": 50,
+        "candidate_models": 54,
+        "n_censored_hi": 0,
+        "n_censored_lo": 1,
+        "censoring_bias": "upper_bound",
+        "age_days": 567,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "化物語",
+          "note": "優先機種❹（定番）。直近30日 7/30(23.3%)・rank7/54・平均score+768.2。8/24登録時も候補視し的中(hit=true)だった継続候補。"
+        },
+        "score": -263.3,
+        "mean_diff": -385.7,
+        "gratio": 0.683,
+        "n_machines": 9,
+        "rank": 35,
+        "candidate_models": 54,
+        "age_days": 260,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "スマスロ炎炎ノ消防隊2",
+          "note": "優先機種❹（定番、炎炎）。直近30日 2/30(6.7%)・rank16/54・平均score-38.7。8/24時点でも弱い候補だった。"
+        },
+        "score": -1004.5,
+        "mean_diff": -1245.7,
+        "gratio": 0.806,
+        "n_machines": 6,
+        "rank": 49,
+        "candidate_models": 54,
+        "age_days": 203,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+          "note": "優先機種❹（定番、乙女5）。直近30日 0/30(0.0%)・rank22/54・平均score+37.1。8/24登録時のmost_likely_missesと同一機種で継続してゼロ。"
+        },
+        "score": 598.2,
+        "mean_diff": 513.4,
+        "gratio": 1.165,
+        "n_machines": 22,
+        "rank": 11,
+        "candidate_models": 54,
+        "age_days": 78,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "モンキーターンV",
+          "note": "優先機種❹（定番）。直近30日 4/30(13.3%)・rank32/54・平均score+796.3。narabi-block-slide-rule等、別枠の位置ルール観測がある機種（本claimはzentaikei閾値のみで判定し位置は含めない）。"
+        },
+        "score": -161.1,
+        "mean_diff": -313.2,
+        "gratio": 0.514,
+        "n_machines": 12,
+        "rank": 28,
+        "candidate_models": 54,
+        "age_days": 601,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "position_rule",
+        "claim": {
+          "type": "position_rule",
+          "field": "last_digit",
+          "values": [
+            "5"
+          ],
+          "segment": "JUG",
+          "note": "優先機種❺『5つくでジャグも』＝ジャグセグメント内で末尾5に仕掛け。feedback-lastdigit-kakuban-segment-splitの通りセグメント分割必須のためsegment=JUGを明示。position_ruleは対象日の実際の並び・台番号レンジを必要とせず末尾条件のみで判定できるため登録可能。"
+        },
+        "by_segment": [
+          {
+            "segment": "OKI",
+            "n_machines": 13,
+            "n_target": 2,
+            "n_other": 11,
+            "effect_resid_diff": 708.8,
+            "target_payout": 1.1356,
+            "other_payout": 1.0356
+          },
+          {
+            "segment": "BT",
+            "n_machines": 91,
+            "n_target": 10,
+            "n_other": 81,
+            "effect_resid_diff": 66.5,
+            "target_payout": 1.004,
+            "other_payout": 0.9865
+          },
+          {
+            "segment": "HANA",
+            "n_machines": 16,
+            "n_target": 1,
+            "n_other": 15,
+            "effect_resid_diff": -228.7,
+            "target_payout": 0.9216,
+            "other_payout": 1.0359
+          },
+          {
+            "segment": "JUG",
+            "n_machines": 117,
+            "n_target": 12,
+            "n_other": 105,
+            "effect_resid_diff": -347.3,
+            "target_payout": 1.0068,
+            "other_payout": 1.0385
+          },
+          {
+            "segment": "AT",
+            "n_machines": 350,
+            "n_target": 34,
+            "n_other": 316,
+            "effect_resid_diff": -780.5,
+            "target_payout": 0.9051,
+            "other_payout": 0.9903
+          }
+        ],
+        "judged_segment": "JUG",
+        "n_target": 12,
+        "n_other": 105,
+        "effect_resid_diff": -347.3,
+        "target_payout": 1.0068,
+        "other_payout": 1.0385,
+        "hit": false
+      }
+    ]
+  },
+  "announce_digest": "31fe37ca177844d6"
+}

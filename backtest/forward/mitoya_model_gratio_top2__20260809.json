@@ -1,0 +1,193 @@
+{
+  "rule_id": "mitoya_model_gratio_top2",
+  "hall": "みとや大森町店",
+  "freeze_hash": "a0f5b81a53a8e24b",
+  "target_date": "20260809",
+  "data_asof": "20260808",
+  "lookback_window": [
+    "2026-07-19",
+    "2026-08-09"
+  ],
+  "score": "hist_model_gratio_mean_diff",
+  "selection_unit": "machine_model",
+  "success_criterion": "フォワード20エントリー日を経過した時点で、指名機種全台の総和ベースedge（対ホール全体同日平均、diff_coins_normalized）の平均が正であり、95%CI(block7)下限が0を上回ること。満たさなければ破棄する。判定はフォワードテストのみで行い、バックテスト数値は採否根拠にしない。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "スマスロ北斗の拳",
+      "score": 1088.995261,
+      "history_rows": 35,
+      "machines": [
+        601,
+        602,
+        603,
+        604,
+        605,
+        606,
+        607
+      ]
+    },
+    {
+      "machine_name": "モンスターハンターライズ",
+      "score": 1046.531217,
+      "history_rows": 15,
+      "machines": [
+        615,
+        616,
+        617
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 601,
+      "machine_name": "スマスロ北斗の拳",
+      "score": 1088.995261,
+      "history_days": 35
+    },
+    {
+      "machine_number": 602,
+      "machine_name": "スマスロ北斗の拳",
+      "score": 1088.995261,
+      "history_days": 35
+    },
+    {
+      "machine_number": 603,
+      "machine_name": "スマスロ北斗の拳",
+      "score": 1088.995261,
+      "history_days": 35
+    },
+    {
+      "machine_number": 604,
+      "machine_name": "スマスロ北斗の拳",
+      "score": 1088.995261,
+      "history_days": 35
+    },
+    {
+      "machine_number": 605,
+      "machine_name": "スマスロ北斗の拳",
+      "score": 1088.995261,
+      "history_days": 35
+    },
+    {
+      "machine_number": 606,
+      "machine_name": "スマスロ北斗の拳",
+      "score": 1088.995261,
+      "history_days": 35
+    },
+    {
+      "machine_number": 607,
+      "machine_name": "スマスロ北斗の拳",
+      "score": 1088.995261,
+      "history_days": 35
+    },
+    {
+      "machine_number": 615,
+      "machine_name": "モンスターハンターライズ",
+      "score": 1046.531217,
+      "history_days": 15
+    },
+    {
+      "machine_number": 616,
+      "machine_name": "モンスターハンターライズ",
+      "score": 1046.531217,
+      "history_days": 15
+    },
+    {
+      "machine_number": 617,
+      "machine_name": "モンスターハンターライズ",
+      "score": 1046.531217,
+      "history_days": 15
+    }
+  ],
+  "result": {
+    "scored_with_hash": "a0f5b81a53a8e24b",
+    "day_baseline": 72.1,
+    "universe_size": 277,
+    "picks_realized": [
+      {
+        "machine_number": 601,
+        "games": 2104.0,
+        "diff": -1942.0,
+        "edge": -2014.1335740072202
+      },
+      {
+        "machine_number": 602,
+        "games": 2035.0,
+        "diff": -539.0,
+        "edge": -611.1335740072202
+      },
+      {
+        "machine_number": 603,
+        "games": 1674.0,
+        "diff": -1242.0,
+        "edge": -1314.1335740072202
+      },
+      {
+        "machine_number": 604,
+        "games": 1354.0,
+        "diff": -872.0,
+        "edge": -944.1335740072202
+      },
+      {
+        "machine_number": 605,
+        "games": 1528.0,
+        "diff": -417.0,
+        "edge": -489.1335740072202
+      },
+      {
+        "machine_number": 606,
+        "games": 2794.0,
+        "diff": -528.0,
+        "edge": -600.1335740072202
+      },
+      {
+        "machine_number": 607,
+        "games": 3264.0,
+        "diff": -1525.0,
+        "edge": -1597.1335740072202
+      },
+      {
+        "machine_number": 615,
+        "games": 3073.0,
+        "diff": 283.0,
+        "edge": 210.8664259927798
+      },
+      {
+        "machine_number": 616,
+        "games": 699.0,
+        "diff": 2056.0,
+        "edge": 1983.8664259927798
+      },
+      {
+        "machine_number": 617,
+        "games": 2105.0,
+        "diff": 692.0,
+        "edge": 619.8664259927798
+      }
+    ],
+    "mean_diff_per_pick": -403.4,
+    "mean_edge_per_pick": -475.5,
+    "missing_machines": [],
+    "rb_perspective": null,
+    "model_perspective": [
+      {
+        "machine_name": "スマスロ北斗の拳",
+        "n_machines": 7,
+        "n_realized": 7,
+        "sum_diff": -7065.0,
+        "sum_games": 14753.0,
+        "mean_diff": -1009.3
+      },
+      {
+        "machine_name": "モンスターハンターライズ",
+        "n_machines": 3,
+        "n_realized": 3,
+        "sum_diff": 3031.0,
+        "sum_games": 5877.0,
+        "mean_diff": 1010.3
+      }
+    ]
+  },
+  "plan_digest": "9219225eb959366b"
+}

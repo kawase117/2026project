@@ -155,6 +155,327 @@
     },
     "note": "『5箇所以上』のベースレートは 6/30 = 0.20 であり、zentaikei_count（0.727）と違って情報量がある主張。並びは 2000番台（AT島）に集中しており、3000番台は SAO II と アレックス ブライトのみ。"
   },
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20260817",
+    "hall_baseline_mean_diff": -136.7,
+    "hall_n_machines": 587,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 1,
+      "n_censored_lo": 6,
+      "machines_hi": [
+        "戦国乙女5 業火を穿つ宿焔の双刃"
+      ],
+      "machines_lo": [
+        "とある魔術の禁書目録2",
+        "やじきた道中記参る！",
+        "ソードアート・オンラインII",
+        "ミリオンゴッド‐神々の軌跡‐"
+      ],
+      "bounds": [
+        -5095,
+        15477
+      ]
+    },
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 2,
+          "note": "「8月は毎日全⑤⑥機種×2機種」。8/10以降と同型の最低ライン主張。baserate 0.727 で情報量が薄いことを承知の上で、シリーズ継続のため登録する。なお別途「全⑥機種」（設定6の全台系）を挙げているが、本モジュールは⑤と⑥を区別できないので分けて登録しない。"
+        },
+        "observed_n_models": 3,
+        "candidate_models": 56,
+        "models": [
+          {
+            "machine_name": "真打 吉宗",
+            "score": 11092.6,
+            "n_machines": 5,
+            "mean_diff": 5848.0,
+            "age_days": 131
+          },
+          {
+            "machine_name": "攻殻機動隊",
+            "score": 2691.6,
+            "n_machines": 3,
+            "mean_diff": 1587.7,
+            "age_days": 194
+          },
+          {
+            "machine_name": "甲鉄城のカバネリ",
+            "score": 1947.2,
+            "n_machines": 3,
+            "mean_diff": 2540.3,
+            "age_days": 591
+          }
+        ],
+        "n_new_machines_over": 0,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+          "note": "『優遇機種➔…/Lカバネリ/…』かつ『並びは昨日、おととい発表あったようなメインの多台数機種から』に該当（8/12に2119-2121、8/14に2121-2123で並び検出）。設置18台。直近30日 6/30回超え・平均score 950・最終超え 20260814（score 3,461・rank3）。ただし8/14の総和+32,956のうち top1(2123)が41%・top2で74%を占め、18台中8勝。全台系ではなく局所ブロック型である。本命だが『全台系スコア超え』としてのhitは並び狙いの実態より落ちる可能性がある。"
+        },
+        "score": 921.2,
+        "mean_diff": 548.1,
+        "gratio": 1.681,
+        "n_machines": 18,
+        "rank": 9,
+        "candidate_models": 56,
+        "age_days": 166,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+          "note": "『8/11.12.13と並び複数あった乙女5』。設置22台でホール最多級。並びブロックは実測で 8/10・8/11・8/13 に 2229-2232、8/14 は 2216-2217 へ移動。ツイートの『8/12』は本定義（3台連続かつ全台+1,500以上）では検出されず、ホール側の並び定義と我々の定義がずれている可能性がある。⚠️ 機種スコアは直近30日 0/30回超え・平均score 79・最高1,679 で一度も閾値を超えていない。22台の大台数は gratio_mean_diff に構造的に不利。『並びは実在するが機種平均は動かない』の典型例として、この予告の反証力がもっとも高い1件。"
+        },
+        "score": 77.0,
+        "mean_diff": 54.5,
+        "gratio": 1.412,
+        "n_machines": 22,
+        "rank": 22,
+        "candidate_models": 56,
+        "n_censored_hi": 1,
+        "n_censored_lo": 0,
+        "censoring_bias": "lower_bound",
+        "max_score_understatement": 226.2,
+        "age_days": 68,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "化物語",
+          "note": "『優遇機種』枠。設置9台。直近30日 6/30回超えでローテーション常連。最終超え 20260811（score 4,029、2236-2239で並び）。ただし 8/12・8/13・8/14 は連続で沈黙し、8/14 は score -343・rank43。なお 8/11 の 2237番台 +15,477 は打ち切り上限値であり、当日のscoreは真値の下界。"
+        },
+        "score": -219.8,
+        "mean_diff": -248.2,
+        "gratio": 0.885,
+        "n_machines": 9,
+        "rank": 36,
+        "candidate_models": 56,
+        "age_days": 250,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "シャーマンキング",
+          "note": "『優遇機種』枠かつ『15日＝5つくで5台設置』枠の二重該当。設置5台。直近30日 6/30回超え・平均score 672・最高9,514・最終超え 20260812（score 3,585）。8/14 は score 780・rank8 でくすぶり。設置5台と小規模で少台数バイアスにより score が膨らみやすい点は割り引く。"
+        },
+        "score": -2143.7,
+        "mean_diff": -2790.2,
+        "gratio": 0.768,
+        "n_machines": 5,
+        "rank": 51,
+        "candidate_models": 56,
+        "age_days": 557,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "からくりサーカス2",
+          "note": "『オススメ機種➔からくり2』。設置7台・導入40日。直近30日 3/30回超え・最終超え 20260812（score 8,072・当日1位）。8/14 は score 124・rank22。導入30日超で新台バイアス（NEW 10.5%）は抜けている。"
+        },
+        "score": -3603.0,
+        "mean_diff": -2700.3,
+        "gratio": 1.334,
+        "n_machines": 7,
+        "rank": 55,
+        "candidate_models": 56,
+        "age_days": 40,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+          "note": "『優遇機種』枠の『マギレコ』。設置9台。直近30日 3/30回超え・最終超え 20260812（score 2,706）。8/14 は score 263・rank18。"
+        },
+        "score": 756.7,
+        "mean_diff": 831.1,
+        "gratio": 0.911,
+        "n_machines": 9,
+        "rank": 11,
+        "candidate_models": 56,
+        "age_days": 495,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "東京喰種",
+          "note": "『優遇機種』枠。設置31台とホール最大級で gratio_mean_diff は構造的に不利。直近30日 3/30回超え・最終超え 20260801 で2週間冷えている。一方 8/11(2063-2065)・8/12(2075-2077) には並びブロックが出ており、『機種平均は動かないが並びは出る』側の候補。8/14 は score -227・rank36。"
+        },
+        "score": -310.6,
+        "mean_diff": -282.2,
+        "gratio": 1.1,
+        "n_machines": 31,
+        "rank": 42,
+        "candidate_models": 56,
+        "age_days": 557,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "モンキーターンV",
+          "note": "『優遇機種』枠の『モンキー』。設置12台。直近30日 4/30回超え・平均score 709・最高9,804・最終超え 20260808。8/14 は score -556・rank50 と最下位級に沈んだ直後。ユーザー申告で 3125-3132 は投資リスクが低いブロック。"
+        },
+        "score": -302.6,
+        "mean_diff": -293.2,
+        "gratio": 1.032,
+        "n_machines": 12,
+        "rank": 41,
+        "candidate_models": 56,
+        "age_days": 591,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "スマスロ炎炎ノ消防隊2",
+          "note": "『優遇機種』枠の『炎炎』。設置6台。直近30日 3/30回超えだが平均score 43 とほぼゼロ、最終超え 20260725 で3週間空いている。予告に名前が載り続けている割に実績が伴っていない反証材料として登録する（8/13登録時と同じ位置づけ）。"
+        },
+        "score": -572.3,
+        "mean_diff": -729.7,
+        "gratio": 0.784,
+        "n_machines": 6,
+        "rank": 48,
+        "candidate_models": 56,
+        "age_days": 193,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "真打 吉宗",
+          "note": "『15日＝5つくで5台設置』枠。設置5台・導入131日。直近30日 2/30回超え（7/27・8/2）・平均score -172 とマイナス。8/14 は score 800・rank7。同枠のシャーマンキング（6/30回）より実績は明確に劣る。"
+        },
+        "score": 11092.6,
+        "mean_diff": 5848.0,
+        "gratio": 1.897,
+        "n_machines": 5,
+        "rank": 1,
+        "candidate_models": 56,
+        "age_days": 131,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ToLOVEるダークネス",
+          "note": "『15日＝5つくで5台設置』枠。設置5台。直近30日 0/30回超え・平均score 8・最高1,251。名指し機種中もっとも実績が無い。『5台設置＝5つくの日に狙われる』という日付語呂合わせ仮説の反証材料として登録する。"
+        },
+        "score": 1632.0,
+        "mean_diff": 1371.8,
+        "gratio": 1.19,
+        "n_machines": 5,
+        "rank": 4,
+        "candidate_models": 56,
+        "age_days": 591,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ネオアイムジャグラーEX",
+          "note": "『5つくなのでネオアイムはじめ、ジャグラーシリーズも』。設置62台でホール最多。直近30日 0/30回超え・平均score 82・最高451。⚠️ 62台の大台数は gratio_mean_diff に構造的に不利であり、この機種の hit=False は『高設定が入っていない』の証明にならない。ノーマル機の設定判定はRB確率で行うべき（instinct: feedback-scoring-must-separate-setting-from-pnl）。それを承知の上で、予告のジャグ言及の追跡のために登録する。"
+        },
+        "score": 120.5,
+        "mean_diff": 110.3,
+        "gratio": 1.093,
+        "n_machines": 62,
+        "rank": 21,
+        "candidate_models": 56,
+        "age_days": 320,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "position_rule",
+        "claim": {
+          "type": "position_rule",
+          "field": "last_digit",
+          "values": [
+            5
+          ],
+          "segment": "JUG",
+          "note": "『5つくなのでネオアイムはじめ、ジャグラーシリーズも』を末尾5の仕掛けとして解釈した場合の検証。⚠️ 事前予測は否定的である。2026-04-01以降の5のつく日（5・15・25）で日×セグメント平均を引いた残差は JUG 末尾5 = -8枚（10末尾中5位、n=126）、通常日の末尾5 = -22枚で差は +14枚しかない。AT では末尾5 = -128枚で10末尾中最下位。唯一プラスは HANA の +533枚（10末尾中1位）だが n=23 で無力。『5のつく日は末尾5』は楽園蒲田では支持されない、というのが登録時点の予測。"
+        },
+        "by_segment": [
+          {
+            "segment": "AT",
+            "n_machines": 350,
+            "note": "対象/対象外のどちらかが空"
+          },
+          {
+            "segment": "BT",
+            "n_machines": 91,
+            "note": "対象/対象外のどちらかが空"
+          },
+          {
+            "segment": "HANA",
+            "n_machines": 16,
+            "note": "対象/対象外のどちらかが空"
+          },
+          {
+            "segment": "JUG",
+            "n_machines": 117,
+            "note": "対象/対象外のどちらかが空"
+          },
+          {
+            "segment": "OKI",
+            "n_machines": 13,
+            "note": "対象/対象外のどちらかが空"
+          }
+        ],
+        "judged_segment": "JUG",
+        "hit": null,
+        "note": "対象/対象外のどちらかが空で比較できない"
+      }
+    ]
+  },
   "announce_digest": "4aa5135f9c4b7b37"
 }

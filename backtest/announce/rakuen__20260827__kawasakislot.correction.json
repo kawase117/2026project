@@ -1,0 +1,19 @@
+{
+  "kind": "correction",
+  "announce_id": "rakuen__20260827__kawasakislot",
+  "parent_announce_digest": "0255773b555b5bfc",
+  "frozen_at": "2026-08-26T14:47:11+09:00",
+  "target_date": "20260827",
+  "hall": "楽園蒲田店",
+  "why_separate_file": "親のjsonはdigest 0255773b555b5bfcで凍結済み。誤りを本体に残したまま、この訂正ファイルで打ち消す。result キーを持たないためaudit-censoringのグロブでは無視される。LEDGER.jsonlには載せない。",
+  "error": {
+    "field": "series_note と claims[北斗の拳 転生の章2/甲鉄城のカバネリ 海門決戦].note と unscored_claims[⑤⑥系]",
+    "what_was_wrong": "ツイート本文の『転生が1/2⑤⑥』『Lカバネリが1/3⑤⑥』を『末尾5・6に1/2/1/3の頻度で仕掛け』(last_digit position_rule)と誤読して記録した。",
+    "who_found_it": "ユーザーが直接指摘。「⑤⑥」は末尾ではなく設定5・6を指す丸数字表記で、「1/2」「1/3」は末尾の出現頻度ではなく高設定(設定5・6)が投入される割合(投入比率)の自己申告である。"
+  },
+  "corrected_interpretation": {
+    "meaning": "転生(北斗の拳 転生の章2)は1/2の確率で設定5・6が投入される、カバネリ(甲鉄城のカバネリ 海門(うなと)決戦)は1/3の確率で設定5・6が投入される、というホール予告アカウントの自己申告的な投入割合の主張。",
+    "why_no_claim_change_needed": "実際の設定は観測不能で、DB側で検証できるのはスコア閾値超過(+1800)という代理指標のみ。これは既に登録済みのmodel_named claim（北斗の拳 転生の章2／甲鉄城のカバネリ 海門(うなと)決戦のスコア閾値判定）が測っている内容と本質的に同一であり、投入割合という数値自体を末尾位置ルールのように日次で判定する対象は存在しない。よって親ファイルのclaims配列・スコアリング方針への影響はゼロ。誤りは記述レベル（series_note・per-claim note・unscored_claimsの理由付け）に閉じている。",
+    "note": "project-kawasakislot-selfreport-inflated（本文の自己申告実績は水増しの疑いが強く根拠として引用しない）と同種の注意が必要：『1/2』『1/3』という具体的な割合の数字自体もホール予告アカウントの自己申告であり、当日の的中判定には使わず、機種の名指し(model_named)のみを判定材料とする方針は変わらない。"
+  }
+}

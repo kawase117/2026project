@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import asdict, dataclass, field
+from dataclasses import MISSING, asdict, dataclass, field, fields
 from pathlib import Path
 from typing import Any
 
@@ -42,7 +42,41 @@ ALLOWED_SCORES = {
     "hist_hit104_rate",  # lookback 期間の機械割104%超え率
     "hist_mean_rb_prob",  # lookback 期間の平均RB確率（生値。機種横断だと機種差を拾う）
     "hist_mean_rb_prob_model_z",  # 同上を機種内標準化してから平均（機種差を除去）
+    "hist_model_gratio_mean_diff",  # 機種粒度: G比×平均差枚（総和ベース）。2026-08-01 正解ラベル検証で主指標。
     "none",  # スコアリングせず eligible 全体（＝フィルタのみの効果を見る）
+}
+
+ALLOWED_SELECTION_UNITS = {
+    "machine",  # 台粒度。top_n は台数。
+    "machine_model",  # 機種粒度。top_n は機種数。指名機種の設置台を全部買う。
+}
+
+# selection_unit / min_machines_per_model を追加する前（〜2026-08-04）のフィールド集合。
+# freeze_hash は asdict(self) 全体のハッシュなので、フィールドを1つ足すだけで
+# 既存ルールの freeze_hash が変わり、backtest/forward/*.json に蓄積したフォワード
+# テスト証拠が全部「plan 作成後に書き換えられた」扱いで検証不能になる
+# （PreRegistration.freeze_hash / backtest/forward.py::_reg_from_plan 参照）。
+# 新フィールドが *デフォルト値のとき* は payload から除去し、v1 と同じハッシュに
+# 揃えることでこれを防ぐ。将来また同じ理由でフィールドを足すことになったら、
+# ここに追記するのではなく「vN 以降に追加されデフォルト値のキーを除去する」という
+# この関数の設計をそのまま踏襲すること（=このコメントとロジックを消さないこと）。
+_V1_FIELDS = {
+    "rule_id",
+    "hall",
+    "hypothesis",
+    "source_instinct",
+    "eval_start",
+    "eval_end",
+    "success_criterion",
+    "universe",
+    "eligibility",
+    "entry_days",
+    "score",
+    "lookback_days",
+    "min_history_days",
+    "top_n",
+    "min_games",
+    "min_games_today",
 }
 
 
@@ -73,6 +107,14 @@ class PreRegistration:
             0 以外にするのは、その歪みを承知で感度を見るときだけ。
         eval_start / eval_end: 評価期間（YYYYMMDD）。
         success_criterion: 何をもって成功とするか。事前に書く。後から変えない。
+        selection_unit: "machine"（台粒度、既定）または "machine_model"（機種粒度）。
+            機種粒度では top_n は「上位 n 機種」を意味し、指名機種の設置台を全部買う。
+            どちらが有効かはホールの属性で、流用してはいけない
+            （instinct: granularity-of-selection-is-hall-specific）。
+        min_machines_per_model: 機種粒度のとき、候補に入れる機種の最小設置台数。
+            大きくしすぎると小規模機種（全台系に多い）を当日の候補から
+            構造的に取り逃がす（2026-08-01 に n台>=9 足切りで実例確認）。
+            当日の候補集合を絞る目的では使わないこと。検定用途限定。
     """
 
     rule_id: str
@@ -91,10 +133,18 @@ class PreRegistration:
     top_n: int = 3
     min_games: int = 1000
     min_games_today: int = 0
+    selection_unit: str = "machine"
+    min_machines_per_model: int = 1
 
     def validate(self) -> None:
         if self.score not in ALLOWED_SCORES:
             raise ValueError(f"unknown score: {self.score!r} (allowed: {sorted(ALLOWED_SCORES)})")
+        if self.selection_unit not in ALLOWED_SELECTION_UNITS:
+            raise ValueError(
+                f"unknown selection_unit: {self.selection_unit!r} (allowed: {sorted(ALLOWED_SELECTION_UNITS)})"
+            )
+        if self.min_machines_per_model < 1:
+            raise ValueError("min_machines_per_model は 1 以上")
         bad = set(self.eligibility) - ALLOWED_FILTER_FIELDS
         if bad:
             raise ValueError(f"eligibility に未許可のフィールド: {sorted(bad)}")
@@ -124,8 +174,18 @@ class PreRegistration:
         hypothesis / success_criterion を含む全フィールドを対象にする。
         パラメータを1文字でも変えればハッシュが変わり、結果ファイルと
         突き合わせたときに「後から書き換えた」ことが検出できる。
+
+        v1 以降に追加されたフィールドは、現在の値が *そのフィールドのデフォルト値と
+        一致する場合* payload から除去する。これにより「新機能を使っていない既存
+        ルール」の freeze_hash は v1 時代と1ビットも変わらない（_V1_FIELDS 参照）。
+        デフォルト以外の値を入れた瞬間はハッシュに反映され、通常どおり凍結される。
         """
-        payload = json.dumps(asdict(self), sort_keys=True, ensure_ascii=False)
+        data = asdict(self)
+        defaults = {
+            f.name: (f.default_factory() if f.default_factory is not MISSING else f.default) for f in fields(self)
+        }
+        payload_dict = {k: v for k, v in data.items() if k in _V1_FIELDS or v != defaults.get(k)}
+        payload = json.dumps(payload_dict, sort_keys=True, ensure_ascii=False)
         return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
 
     @classmethod

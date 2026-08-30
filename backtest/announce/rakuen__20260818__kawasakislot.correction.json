@@ -1,0 +1,184 @@
+{
+  "kind": "correction",
+  "announce_id": "rakuen__20260818__kawasakislot",
+  "parent_announce_digest": "204649871ad9e8da",
+  "frozen_at": "2026-08-19T00:00:00+09:00",
+  "target_date": "20260818",
+  "hall": "楽園蒲田店",
+  "why_separate_file": "親の prereg は digest 204649871ad9e8da で凍結済み。announce_digest() は result と announce_digest 以外の全キーをハッシュするため、本体の monday_baseline を書き換えると _verify_ledger が改ざんとして採点を拒否する。誤りは本体に残したまま、この訂正ファイルで打ち消す。result キーを持たないので audit-censoring の *.json グロブでは無視される（announce.py:460 の result is None スキップ）。LEDGER.jsonl には載せない。",
+  "error": {
+    "field": "monday_baseline",
+    "what_was_wrong": "対象日 2026-08-18 を『月曜』として月曜ベースラインを凍結したが、2026-08-18 は **火曜日** である（datetime.date(2026,8,18).weekday() == 1）。曜日を計算せず思い込みで書いた分析者の誤り。",
+    "who_found_it": "外部の結果報告ツイート（@slokotae7）が『8月18日(火)』と明記していたことで発覚"
+  },
+  "corrected_baseline": {
+    "definition": "閾値+1800を超えた機種数(min_machines=3)の曜日比較。窓は親と同じ 20260520-20260817。",
+    "tuesday": {
+      "n_days": 12,
+      "mean": 3.58,
+      "median": 3.0,
+      "detail": [3, 2, 2, 3, 8, 9, 5, 1, 2, 2, 3, 3]
+    },
+    "other": {"n_days": 76, "mean": 3.42, "median": 3.0},
+    "mann_whitney_p_greater": 0.4055,
+    "note": "火曜に投入が増える証拠は無い（3.58 vs 3.42、p=0.41）。親ファイルが凍結した月曜の数字（4.38 vs 3.28、p=0.19）は対象日と無関係な集計だったので 8/18 の解釈には使えない。⭐ 結論への影響はゼロ。親の prior_prediction は『月曜効果は90日窓で有意でないので8/18の推奨根拠には使わない』と明記して既に除外していたため、推奨内容は変わらない。ただし誤った曜日ラベルのまま台帳に残すと後日の曜日分析で再利用されて汚染するので訂正する。"
+  },
+  "scoring_summary": {
+    "scored_at_data_max": "20260818",
+    "hall_n_machines": 587,
+    "hall_baseline_mean_diff": -136.3,
+    "candidate_models": 55,
+    "K_models_over_1800": 1,
+    "only_model_over_threshold": {
+      "machine_name": "甲鉄城のカバネリ",
+      "n_machines": 3,
+      "score": 2422.4,
+      "mean_diff": 1619.3,
+      "gratio": 1.5
+    },
+    "claims": {
+      "zentaikei_count(2)": false,
+      "model_named:キングハナハナ-30": {"hit": false, "rank": "14/55", "score": 49.3},
+      "model_named:ニューキングハナハナV-30": {"hit": false, "rank": "30/55", "score": -186.9},
+      "model_named:ファンキージャグラー2": {"hit": false, "rank": "38/55", "score": -274.7},
+      "model_named:邪神ちゃんドロップキック": {"hit": false, "rank": "52/55", "score": -730.4},
+      "position_rule:last_digit8(pooled)": {"hit": true, "effect_resid_diff": 200.8},
+      "position_rule:last_digit8(AT)": {
+        "hit": true,
+        "effect_resid_diff": 372.1,
+        "target_payout": 1.0135,
+        "other_payout": 0.9609,
+        "n_target": 35,
+        "n_other": 315
+      },
+      "position_rule:last_digit8(HANA)": {
+        "hit": false,
+        "effect_resid_diff": -585.1,
+        "n_target": 2,
+        "n_other": 14
+      }
+    },
+    "hypergeom_verdict": "当日 K=1、候補C=55、名指しN=4。名指し4機種の観測超え数は0で、条件つき期待値 4x1/55 = 0.073 すら下回る。予告の機種指名に情報は無かった。",
+    "note": "⭐ 予告の『8台設置機種＝全台系』は完全に外れた。名指し4機種の当日順位は 14 / 30 / 38 / 52 位（55機種中）で、邪神ちゃんは下から4番目。しかも8台設置機種のG比は 1.10〜1.35 と高め、つまり **回されているのに出ていない**。⚠️ 一方『末尾8』はATセグメントで +372.1（出率 1.0135 vs 0.9609）で hit したが、通年ベースライン mean=36.0 / sd≈307 に対して **1.09σ** にすぎず単日では偶然の範囲。hit=true を末尾8ルールの証拠として積み上げないこと。HANAセグメントでは -585.1 と逆符号で、予告が『まるごと機種はキンハナ/ニューキング』と言った側は二重に外れている。"
+  },
+  "rb_check_result": {
+    "definition": "親の rb_check_protocol（rb_rate >= 1/300, games_normalized >= 3000）の実行結果。",
+    "キングハナハナ-30": {"n_machines": 8, "eligible_games_ge_3000": 2, "rb_over": 0},
+    "ニューキングハナハナV-30": {"n_machines": 8, "eligible_games_ge_3000": 1, "rb_over": 0},
+    "ファンキージャグラー2": {
+      "n_machines": 8,
+      "eligible_games_ge_3000": 1,
+      "rb_over": 1,
+      "detail": [{"machine_number": 1141, "games": 3906, "rb": "1/260", "diff": -523}]
+    },
+    "note": "⚠️ RB法でも判定できなかった。理由は仕掛けの有無ではなく **稼働不足** で、8台設置3機種24台のうち games>=3000 に達したのはわずか4台。客が座っていないので設定推定の材料がそもそも無く、同時に『他プレイヤーの集合知シグナル』（滞在時間）もゼロだった。ファンキー2の1141番だけ RB 1/260（設定5相当以上の引き）だが差枚 -523 で、設定が入っていても当日差枚がマイナスになる例（feedback-scoring-must-separate-setting-from-pnl）と整合する。n=1では何も言えない。⭐ 教訓：RB法は『稼働があること』が前提条件で、予告が外れて客が付かなかった機種には適用できない。"
+  },
+  "external_report_crosscheck": {
+    "source": {
+      "account": "slokotae7",
+      "url": "https://x.com/slokotae7/status/2089852686812557376",
+      "text": "8月18日(火) 楽園蒲田店 / 8/587台 対象台平均+376枚 / 【全台系】モンハンライズ +2/4台 平均+773枚、東リべ +0/4台 平均-20枚 / 【その他】末尾8 単品pickup"
+    },
+    "comparison": [
+      {
+        "model": "モンスターハンターライズ",
+        "zeno": "全台系 +2/4台 平均+773",
+        "ours": "rank3/55 score+1094 平均差枚+810 G比1.35",
+        "over_1800": false,
+        "note": "平均差枚は我々の集計(+810)とZeno(+773)でほぼ一致。ただし閾値+1800には届かない。"
+      },
+      {
+        "model": "東京リベンジャーズ",
+        "zeno": "全台系 +0/4台 平均-20",
+        "ours": "rank18/55 score-5 平均差枚-24 G比0.22",
+        "over_1800": false,
+        "note": "プラス台0/4・平均-24。これを『全台系』として列挙するのは我々の基準では成立しない。G比0.22は稼働がほぼ無いことを示す。"
+      },
+      {
+        "model": "甲鉄城のカバネリ",
+        "zeno": "言及なし",
+        "ours": "rank1/55 score+2422 平均差枚+1619 G比1.50 (3台)",
+        "over_1800": true,
+        "note": "当日唯一の閾値超えだがZenoは挙げていない。3台設置なので『全台系』として目立たなかったと思われる。"
+      }
+    ],
+    "note": "⭐ Zeno の『末尾8 単品pickup』という評価は我々の測定と整合する。ATセグメントで末尾8に +372 の残差が出た一方、機種まるごと（キンハナ・ニューキング等）は外れた＝『末尾は効いたが機種は効かなかった』。⚠️ ただしZenoが『全台系』と呼ぶ基準は我々の+1800より大幅に緩く、モンハンライズ(平均+773)・東リべ(平均-24)を全台系に含めている。この2アカウントの『全台系』は同じ語だが別の量なので、的中率を混ぜて集計してはならない。"
+  },
+  "low_activity_context": {
+    "definition": "ユーザー指摘（2026-08-19）を受けた追加検証。名指し機種が外れた要因として『仕掛けが無かった』より先に『ホール全体が閑散日だった』を確認する。",
+    "hall_wide": {
+      "today_mean_games": 1878,
+      "baseline_mean_games_90d": 3144,
+      "today_percentile_rank": "下位15.9%（90日中15番目に低い）",
+      "active_ratio_ge3000g_today": 0.204,
+      "active_ratio_ge3000g_baseline": 0.437,
+      "active_ratio_rank": "下から7/88日"
+    },
+    "note": "⭐ ユーザー指摘は正しい。8/18はホール全体の稼働が90日窓で下位16%タイルの閑散日で、games>=3000到達率は平均43.7%に対し20.4%しかなかった。rb_check_result で『稼働不足でRB法が使えなかった』としたのは名指し3機種だけの特殊事情ではなく、ホール全体の傾向だった。⚠️ この事実は prior_prediction_outcome の解釈を修正する：名指し4機種が外れたのは『予告に情報が無かった』ことに加えて『そもそも客が来なかった』ことが重なっている。仕掛けの有無を差枚で判定する試み自体が、今日は分母（稼働）が薄くて検出力を欠いていた。次回同様の低稼働日では、閾値超え数Kも構造的に減ることを見込んで判定すること（K=1は『機種が絞られた』のではなく『分母が薄くて偶然にも超えた1機種しか出なかった』可能性を考慮する）。"
+  },
+  "magireco_hot_table_signal": {
+    "definition": "ユーザー指摘（2026-08-19）を受けた追加検証。マギアレコード（8/18時点12台、8/17に9台から増台）のうち8000G以上に達した2台の履歴的な意味を確認する。",
+    "installation_history": "新台ではない（初出2025-04-07、594日選手）。今週起きたのは増台（9台→12台、8/17に確認）で、新台G比バイアス（NEW_MACHINE_DAYS=30）の対象外。",
+    "today_roster": [
+      {"machine_number": 2133, "games": 8297, "diff": 2715},
+      {"machine_number": 2130, "games": 8178, "diff": -1190},
+      {"machine_number": 2138, "games": 6945, "diff": -285},
+      {"machine_number": 2137, "games": 6199, "diff": 1143},
+      {"machine_number": 2136, "games": 4298, "diff": 381},
+      {"machine_number": 2140, "games": 3799, "diff": 334},
+      {"machine_number": 2134, "games": 2015, "diff": 381},
+      {"machine_number": 2131, "games": 1185, "diff": -1476},
+      {"machine_number": 2132, "games": 741, "diff": 238},
+      {"machine_number": 2139, "games": 573, "diff": -523},
+      {"machine_number": 2129, "games": 465, "diff": -571},
+      {"machine_number": 2135, "games": 402, "diff": 96}
+    ],
+    "n_machines": 12,
+    "mean_diff": 104,
+    "table_2133_historical": {
+      "window": "20260101-20260817",
+      "n_days_observed": 145,
+      "days_ge_8000g": 12,
+      "rate_ge_8000g": 0.083,
+      "mean_diff_on_ge_8000g_days": 6187,
+      "mean_diff_on_other_days": 141,
+      "correlation_games_diff_r": 0.524
+    },
+    "table_2130_historical": {
+      "window": "20260101-20260817",
+      "n_days_observed": 144,
+      "days_ge_8000g": 7,
+      "rate_ge_8000g": 0.049,
+      "mean_diff_on_ge_8000g_days": 2844,
+      "mean_diff_on_other_days": -185,
+      "correlation_games_diff_r": 0.296
+    },
+    "hall_wide_baseline_for_comparison": {
+      "window_90d": "20260520-20260817",
+      "rate_ge_8000g": 0.0603,
+      "mean_diff_on_ge_8000g_days": 2292,
+      "mean_diff_on_other_days": -70,
+      "correlation_games_diff_r": 0.273
+    },
+    "note": "⭐ ユーザー指摘は台2133について実データで裏付けられる。この台は歴史的にホール平均（r=0.273）より強い G数×差枚相関（r=0.524）を持ち、8000G以上に達した日の平均差枚は+6,187（ホール平均+2,292の2.7倍）。8/18の+2,715はその歴史的平均を下回るが方向は一致しており、『客が高回転にしているのは設定示唆を感じ取っているからで、それ自体が集合知シグナルになる』という解釈（feedback-scoring-must-separate-setting-from-pnl の回転数ロジックと同型）は台2133に限って支持される。⚠️ 一方、台2130は同じく8000G超えながら差枚-1190と逆方向で、この台の歴史的相関はより弱い（r=0.296）。12台中2133だけが突出し機種平均は+104（閾値+1800に遠く届かない）というこの形は project-kishu-ichi-decoy（機種内1台だけ高設定を混ぜる撒き餌）のパターンと一致する。全台系スコア（機種平均）はこの種の単一台シグナルを検出できないため、増台直後の機種は台番号別の回転数分布も別途確認すべき。"
+  },
+  "prior_prediction_outcome": {
+    "most_likely_misses": {
+      "predicted": [
+        "キングハナハナ-30",
+        "ニューキングハナハナV-30",
+        "ファンキージャグラー2",
+        "邪神ちゃんドロップキック",
+        "ディスクアップ ULTRAREMIX",
+        "とある魔術の禁書目録2"
+      ],
+      "outcome": "4/4 的中（名指し機種は全て閾値未達）。8台設置6機種はいずれも閾値超えせず、ロスター全体としても外れた。"
+    },
+    "most_likely_hits": {
+      "predicted": ["モンキーターンV", "甲鉄城のカバネリ 海門(うなと)決戦"],
+      "outcome": "2/2 外れ。モンキーターンV rank6/55 score+335（平均差枚+500だがG比0.67で稼働が乗らず閾値未達）、甲鉄城のカバネリ海門 rank47/55 score-480 で明確に外れ。",
+      "note": "⚠️⚠️ 最も痛い誤り。親ファイルに『甲鉄城のカバネリ(3台・旧筐体)と甲鉄城のカバネリ海門決戦(18台)は別機種なので名寄せを取り違えないこと』と注記しておきながら、**当日1位になったのは注記した側の旧筐体3台（score+2422）で、私が選んだ海門18台は47位だった**。『台数が多い方が少台数バイアスが無く信頼できる』という選択基準そのものが、この日は逆に働いた。少台数バイアスは平均差枚を膨らませる方向のバイアスであって、少台数機種に高設定が入らない理由ではない。この2つを混同していた。"
+    },
+    "verdict": "反証側（予告は外れる）は当たったが、対抗予測（どれが当たるか）は全滅。⭐ 教訓は非対称性にある。『このルールには情報が無い』は90日の統計で言えるが、『今日どの機種が来るか』は同じ統計からは出てこない。当日の閾値超えが1機種しかない日（K=1、候補55機種）に特定機種を当てるのは事前確率 1/55 の賭けである。対抗予測を出すこと自体は良いが、予告批判の信頼度と対抗予測の信頼度を同じ強さで語ってはならない。"
+  }
+}

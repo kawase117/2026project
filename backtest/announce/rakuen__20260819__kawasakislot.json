@@ -1,0 +1,439 @@
+{
+  "announce_id": "rakuen__20260819__kawasakislot",
+  "hall": "楽園蒲田店",
+  "target_date": "20260819",
+  "source": {
+    "account": "kawasakislot",
+    "url": "https://x.com/kawasakislot/status/2089660553505677642",
+    "posted_at": "2026-08-18T20:00:00+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "8/19 楽園蒲田\n明日はグループ創業日前日！下記2点を軸にドリル！\n・8月は毎日”3台設置以上から2機種全⑤⑥”あり\n・今週からはポスターで示唆あった\"末尾寄せ\"も\n\n末尾探しはまずは日付の9️⃣\n機種は定番の東京喰種・乙女5・カバネリ・GOD・沖ドキブラック・化物語\n今週増台のマギレコあたりから！\n\nまるごと機種は法則性▶日付末尾の9台機種化物語や少数機種でよくやってる機種(画像参照)\n8/6➔サンダー/炎炎 どっちも6台\n8/7➔からくり2 7台\n8/8➔ファンキー/邪神ちゃん どっちも8台\n8/9➔化物語 9台\n8/10➔ー\n8/11➔沖ドキブラック 11台\n8/12➔ー\n8/13➔3台機種×3機種\n8/14➔バンドリ 4台\n8/15➔真打吉宗 5台\n8/16➔戦コレ6　6台\n8/17➔ー\n\n明日も一般や二の矢でも十分ドリルできると思います🙆‍♂️",
+  "posted_at_note": "本文に投稿日時の明示が無いため posted_at は推定。ヘッダ『8/19 楽園蒲田』＋本文『明日は…』は 8/16〜8/18 の同型投稿（いずれも target_date=ヘッダ日付、posted=前日20時台）と一致する。実績リストが 8/17➔ー で止まっており 8/18 の結果を含まないことも、8/18 夕方〜夜の投稿であることと整合する。よって 2026-08-18T20:00+09:00 とした。target_date=20260819、db_max=20260818、登録は 2026-08-19 の抽選前。",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "series_note": "8/6以降の連続シリーズの継続。今回の目玉は『日付末尾の9台設置機種＝化物語』で、これは実際に当日ロスター上も n=9 が確認できる（下記 n9_roster）。8/16の daisuu_rule（設置台数==DD）は90日窓で否定的（memory: rakuen-model-count-eq-dd-strong-zorome、8/17登録の daisuu_rule_august_verification でも観測12/期待10.83とほぼ帰無どおり）。ただし化物語個別は直近30日で 6/30(20.0%)・rank20/55・平均score+733 とホール平均（超え率5.8%相当）を上回っており、『台数ルール一般』は否定されたままでも『化物語個別』は候補として妥当性がある。この区別を保ったまま model_named として登録する。",
+  "baserate_before_target": {
+    "window_days": 90,
+    "window": [
+      "20260521",
+      "20260819"
+    ],
+    "n_days": 87,
+    "candidate_models_per_day": 60.3,
+    "models_over_1800_mean": 3.43,
+    "models_over_1800_median": 3.0,
+    "models_over_1800_max": 11,
+    "p_at_least_1": 0.908,
+    "p_at_least_2": 0.736,
+    "p_at_least_3": 0.575,
+    "p_at_least_4": 0.402,
+    "note": "backtest/announce.py baserate と同一手続きで、閾値のみ分位点(1978.7)ではなく系列一貫の絶対値1800.0を使用。8/17・8/18登録時とほぼ同水準で安定。"
+  },
+  "n9_roster": {
+    "definition": "target_date の日付末尾=9 に対応する『設置台数9台』の全ロスター（20260818時点、min_machines=1で抽出）と、直近30日（20260719-20260818）の全台系到達率。",
+    "as_of": "20260818",
+    "models": [
+      {
+        "name": "化物語",
+        "n_machines": 9,
+        "over_days": "6/30",
+        "rate": 0.2,
+        "mean_score": 733.1,
+        "rank_among_55": 20,
+        "named_by_tweet": true
+      },
+      {
+        "name": "ハッピージャグラーVIII",
+        "n_machines": 9,
+        "over_days": "0/30",
+        "rate": 0.0,
+        "mean_score": -84.8,
+        "rank_among_55": 44,
+        "named_by_tweet": false
+      }
+    ],
+    "note": "8台設置6機種（8/18登録）が直近30日で合計2.3%と最弱グループだったのに対し、9台設置は2機種中1機種（化物語）が20.0%とホール平均超え率（閾値超え約3.43機種÷候補60.3機種≒5.7%）の3.5倍と高い。8/9実測でも化物語は台数ルールに一致した唯一の的中日だった（series_note参照）。もう一方のハッピージャグラーVIII（ノーマル機）は直近30日ゼロで対照的。"
+  },
+  "lastdigit9_baseline": {
+    "definition": "台番号末尾9の台の、同日ホール平均（同機種内デミーン）からの差枚残差（games_normalized>=1000）。全履歴（590日）。",
+    "pooled": {
+      "n_days": 590,
+      "mean_resid": -9.0,
+      "se": 12.6
+    },
+    "by_segment": [
+      {
+        "segment": "AT",
+        "mean_resid_diff": 3.3,
+        "n_days": 590,
+        "mean_n_target": 21.5
+      },
+      {
+        "segment": "JUG",
+        "mean_resid_diff": -13.0,
+        "n_days": 590,
+        "mean_n_target": 7.6
+      },
+      {
+        "segment": "HANA",
+        "mean_resid_diff": -42.3,
+        "n_days": 526,
+        "mean_n_target": 2.1
+      },
+      {
+        "segment": "BT",
+        "mean_resid_diff": -45.4,
+        "n_days": 590,
+        "mean_n_target": 6.6
+      },
+      {
+        "segment": "OKI",
+        "mean_resid_diff": 423.5,
+        "n_days": 102,
+        "mean_n_target": 1.0
+      }
+    ],
+    "note": "プールも主要セグメント（AT/JUG）も実質ゼロ。OKIの+423.5は対象平均台数が常に1.0（沖ドキ系は末尾あたり1台しかいない）で単日ノイズを均せておらず、判断材料にしない。project-rakuen-lastdigit7-rb-only の通り、楽園蒲田の末尾仕掛けは差枚では検出できずRB確率側で見えるケースがある（末尾7・JUGで実証済み）ため、末尾9についてもJUGのRB側を別途確認する（下記 rb_check_9jug）。"
+  },
+  "rb_check_9jug": {
+    "definition": "末尾9・JUGセグメント・games_normalized>=3000の台個別RB確率（直近30日集計）。閾値 rb_rate<=1/300。",
+    "n_machines": 11,
+    "over_1_300_count": 3,
+    "over_1_300_rate": 0.273,
+    "note": "3/11(27.3%)がRB確率1/300以上。8/17登録時の末尾7・JUG（11台中7台）ほどの偏りは無く、末尾7で見えたRB側の仕掛けが末尾9にそのまま横滑りしている証拠は弱い。差枚（実質ゼロ）とRB（3/11）の両方が非対称ではあるが確信を持てる水準ではない。"
+  },
+  "claims": [
+    {
+      "type": "zentaikei_count",
+      "n_models": 2,
+      "note": "「8月は毎日\"3台設置以上から2機種全⑤⑥\"あり」。8/10以降と同型の最低ライン主張。baserate p_at_least_2 = 0.736 で4日に3日は自動的に当たる低情報claim。系列継続のため登録する。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "化物語",
+      "note": "「日付末尾の9台機種化物語」＋「機種は定番の…化物語」で二重に名指し。9台設置は事実確認済み。直近30日 6/30(20.0%)・rank20/55・平均score+733.1 と、8台設置グループ（8/18登録、2.3%）より明確に強い候補。ただし daisuu_rule一般は90日窓で帰無どおりなので過信しない（n9_roster note参照）。"
+    },
+    {
+      "type": "position_rule",
+      "field": "last_digit",
+      "values": [
+        "9"
+      ],
+      "note": "「末尾探しはまずは日付の9️⃣」。ホール全機種プールでの判定。lastdigit9_baseline の通り通年ベースラインは -9.0±12.6 で実質ゼロ。プールの符号だけで棄却しないため by_segment を必ず併記する。"
+    },
+    {
+      "type": "position_rule",
+      "field": "last_digit",
+      "values": [
+        "9"
+      ],
+      "segment": "AT",
+      "note": "予告が末尾9の探索先として挙げた機種（東京喰種・乙女5・カバネリ・GOD・沖ドキブラック・化物語）は化物語以外は全てAT/擬似ボーナス機なので、ATセグメント限定の判定を別立てで登録する。lastdigit9_baseline by_segment のAT行（+3.3、n≈21.5）は現時点でほぼゼロ。"
+    },
+    {
+      "type": "position_rule",
+      "field": "last_digit",
+      "values": [
+        "9"
+      ],
+      "segment": "JUG",
+      "note": "末尾9・JUGは差枚では-13.0とわずかにマイナス（lastdigit9_baseline）。ただしJUGは差枚だけでなくRB確率でも判定できるノーマル機セグメントなので、rb_check_9jug（3/11がRB確率1/300以上）と併記して判定する。単独の差枚pooled判定だけで『仕掛けなし』と断定しない。"
+    }
+  ],
+  "unscored_claims": [
+    {
+      "text": "末尾探しはまずは日付の9️⃣／機種は定番の東京喰種・乙女5・カバネリ・GOD・沖ドキブラック・化物語／今週増台のマギレコあたりから！",
+      "reason": "『末尾9を探す場所』の指定であって、これら機種そのものが全台系になるという断定ではない（化物語のみ台数ルールでも別途名指しされているため model_named に採る）。他5機種は position_rule のAT/末尾判定で代理測定する。"
+    },
+    {
+      "text": "今週からはポスターで示唆あった\"末尾寄せ\"も",
+      "reason": "ポスターの具体的内容が本文に無く、反証可能な数値主張になっていない。"
+    },
+    {
+      "text": "明日はグループ創業日前日！／明日も一般や二の矢でも十分ドリルできると思います",
+      "reason": "『創業日前日』というイベント文脈の言及のみで、投入量やターゲットに関する具体的な主張を含まない。8/18登録のmonday_baselineのような曜日効果もこのホールでは90日窓で非有意（p=0.19、凍結済み）であり、この文脈だけで投入量増を主張することはできない。"
+    }
+  ],
+  "prior_prediction": {
+    "most_likely_hits": [
+      "化物語"
+    ],
+    "most_likely_misses": [
+      "ハッピージャグラーVIII"
+    ],
+    "note": "登録時点の分析者予測を凍結する。名指し機種のうち化物語は台数ルール（9台）と機種名指定の二重の主張が一致し、直近30日到達率20.0%（rank20/55）とホール平均を上回るため most_likely_hits に採る。ただし daisuu_rule一般が90日窓で帰無どおりであることは変わらないので、化物語1機種の的中を『ルールが証明された』とは扱わない（n=1のフォワード観測にすぎない）。もう一方の9台機種ハッピージャグラーVIII（未名指し）は直近30日ゼロで対照群として残す。末尾9のposition_ruleはプール・AT・JUGいずれも通年ではほぼゼロで、確信のある予測を立てられない（RB側もJUGで3/11とやや弱い偏りに留まる）。"
+  },
+  "result": {
+    "scored_at_data_max": "20260819",
+    "hall_baseline_mean_diff": 114.6,
+    "hall_n_machines": 587,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": [],
+      "bounds": [
+        -5095,
+        15477
+      ]
+    },
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 2,
+          "note": "「8月は毎日\"3台設置以上から2機種全⑤⑥\"あり」。8/10以降と同型の最低ライン主張。baserate p_at_least_2 = 0.736 で4日に3日は自動的に当たる低情報claim。系列継続のため登録する。"
+        },
+        "observed_n_models": 3,
+        "candidate_models": 55,
+        "models": [
+          {
+            "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+            "score": 2677.7,
+            "n_machines": 12,
+            "mean_diff": 1325.7,
+            "age_days": 499
+          },
+          {
+            "machine_name": "戦国コレクション6",
+            "score": 2463.5,
+            "n_machines": 6,
+            "mean_diff": 1571.7,
+            "age_days": 44
+          },
+          {
+            "machine_name": "とある魔術の禁書目録2",
+            "score": 1835.6,
+            "n_machines": 8,
+            "mean_diff": 1410.9,
+            "age_days": 15
+          }
+        ],
+        "n_new_machines_over": 1,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "化物語",
+          "note": "「日付末尾の9台機種化物語」＋「機種は定番の…化物語」で二重に名指し。9台設置は事実確認済み。直近30日 6/30(20.0%)・rank20/55・平均score+733.1 と、8台設置グループ（8/18登録、2.3%）より明確に強い候補。ただし daisuu_rule一般は90日窓で帰無どおりなので過信しない（n9_roster note参照）。"
+        },
+        "score": -201.2,
+        "mean_diff": -227.3,
+        "gratio": 0.885,
+        "n_machines": 9,
+        "rank": 44,
+        "candidate_models": 55,
+        "age_days": 254,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "position_rule",
+        "claim": {
+          "type": "position_rule",
+          "field": "last_digit",
+          "values": [
+            "9"
+          ],
+          "note": "「末尾探しはまずは日付の9️⃣」。ホール全機種プールでの判定。lastdigit9_baseline の通り通年ベースラインは -9.0±12.6 で実質ゼロ。プールの符号だけで棄却しないため by_segment を必ず併記する。"
+        },
+        "by_segment": [
+          {
+            "segment": "JUG",
+            "n_machines": 117,
+            "n_target": 11,
+            "n_other": 106,
+            "effect_resid_diff": 748.9,
+            "target_payout": 1.042,
+            "other_payout": 0.9773
+          },
+          {
+            "segment": "AT",
+            "n_machines": 350,
+            "n_target": 35,
+            "n_other": 315,
+            "effect_resid_diff": 408.5,
+            "target_payout": 1.0726,
+            "other_payout": 1.0232
+          },
+          {
+            "segment": "BT",
+            "n_machines": 91,
+            "n_target": 7,
+            "n_other": 84,
+            "effect_resid_diff": 274.8,
+            "target_payout": 1.0509,
+            "other_payout": 1.0229
+          },
+          {
+            "segment": "HANA",
+            "n_machines": 16,
+            "n_target": 2,
+            "n_other": 14,
+            "effect_resid_diff": -57.9,
+            "target_payout": 0.9667,
+            "other_payout": 0.9173
+          },
+          {
+            "segment": "OKI",
+            "n_machines": 13,
+            "n_target": 1,
+            "n_other": 12,
+            "effect_resid_diff": -586.0,
+            "target_payout": 0.4722,
+            "other_payout": 1.1776
+          }
+        ],
+        "judged_segment": "ALL(pooled)",
+        "n_target": 56,
+        "n_other": 531,
+        "effect_resid_diff": 423.7,
+        "target_payout": 1.0577,
+        "other_payout": 1.0121,
+        "hit": true
+      },
+      {
+        "type": "position_rule",
+        "claim": {
+          "type": "position_rule",
+          "field": "last_digit",
+          "values": [
+            "9"
+          ],
+          "segment": "AT",
+          "note": "予告が末尾9の探索先として挙げた機種（東京喰種・乙女5・カバネリ・GOD・沖ドキブラック・化物語）は化物語以外は全てAT/擬似ボーナス機なので、ATセグメント限定の判定を別立てで登録する。lastdigit9_baseline by_segment のAT行（+3.3、n≈21.5）は現時点でほぼゼロ。"
+        },
+        "by_segment": [
+          {
+            "segment": "JUG",
+            "n_machines": 117,
+            "n_target": 11,
+            "n_other": 106,
+            "effect_resid_diff": 748.9,
+            "target_payout": 1.042,
+            "other_payout": 0.9773
+          },
+          {
+            "segment": "AT",
+            "n_machines": 350,
+            "n_target": 35,
+            "n_other": 315,
+            "effect_resid_diff": 408.5,
+            "target_payout": 1.0726,
+            "other_payout": 1.0232
+          },
+          {
+            "segment": "BT",
+            "n_machines": 91,
+            "n_target": 7,
+            "n_other": 84,
+            "effect_resid_diff": 274.8,
+            "target_payout": 1.0509,
+            "other_payout": 1.0229
+          },
+          {
+            "segment": "HANA",
+            "n_machines": 16,
+            "n_target": 2,
+            "n_other": 14,
+            "effect_resid_diff": -57.9,
+            "target_payout": 0.9667,
+            "other_payout": 0.9173
+          },
+          {
+            "segment": "OKI",
+            "n_machines": 13,
+            "n_target": 1,
+            "n_other": 12,
+            "effect_resid_diff": -586.0,
+            "target_payout": 0.4722,
+            "other_payout": 1.1776
+          }
+        ],
+        "judged_segment": "AT",
+        "n_target": 35,
+        "n_other": 315,
+        "effect_resid_diff": 408.5,
+        "target_payout": 1.0726,
+        "other_payout": 1.0232,
+        "hit": true
+      },
+      {
+        "type": "position_rule",
+        "claim": {
+          "type": "position_rule",
+          "field": "last_digit",
+          "values": [
+            "9"
+          ],
+          "segment": "JUG",
+          "note": "末尾9・JUGは差枚では-13.0とわずかにマイナス（lastdigit9_baseline）。ただしJUGは差枚だけでなくRB確率でも判定できるノーマル機セグメントなので、rb_check_9jug（3/11がRB確率1/300以上）と併記して判定する。単独の差枚pooled判定だけで『仕掛けなし』と断定しない。"
+        },
+        "by_segment": [
+          {
+            "segment": "JUG",
+            "n_machines": 117,
+            "n_target": 11,
+            "n_other": 106,
+            "effect_resid_diff": 748.9,
+            "target_payout": 1.042,
+            "other_payout": 0.9773
+          },
+          {
+            "segment": "AT",
+            "n_machines": 350,
+            "n_target": 35,
+            "n_other": 315,
+            "effect_resid_diff": 408.5,
+            "target_payout": 1.0726,
+            "other_payout": 1.0232
+          },
+          {
+            "segment": "BT",
+            "n_machines": 91,
+            "n_target": 7,
+            "n_other": 84,
+            "effect_resid_diff": 274.8,
+            "target_payout": 1.0509,
+            "other_payout": 1.0229
+          },
+          {
+            "segment": "HANA",
+            "n_machines": 16,
+            "n_target": 2,
+            "n_other": 14,
+            "effect_resid_diff": -57.9,
+            "target_payout": 0.9667,
+            "other_payout": 0.9173
+          },
+          {
+            "segment": "OKI",
+            "n_machines": 13,
+            "n_target": 1,
+            "n_other": 12,
+            "effect_resid_diff": -586.0,
+            "target_payout": 0.4722,
+            "other_payout": 1.1776
+          }
+        ],
+        "judged_segment": "JUG",
+        "n_target": 11,
+        "n_other": 106,
+        "effect_resid_diff": 748.9,
+        "target_payout": 1.042,
+        "other_payout": 0.9773,
+        "hit": true
+      }
+    ]
+  },
+  "announce_digest": "0387e771772e9738"
+}
