@@ -1,0 +1,93 @@
+---
+id: 2026-08-05-machine-detailed-results-games-zero-day-corruption
+trigger: "machine_detailed_results から直接 diff_coins_normalized / games_normalized を集計して機械割・平均差枚を出すとき。daily_hall_summary を経由しない台単位・機種単位の分析を書くとき。ある日だけホール全体の指標が急変したとき"
+confidence: 0.9
+domain: data-quality
+source: session-observation
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+---
+
+# ある日 games_normalized=0 なのに diff_coins_normalized だけ非ゼロ・全台同一値が入っている不良日がある
+
+## Core claim
+machine_detailed_results には、対象日の全台が games_normalized=0（かつ bb_count/rb_count=0）
+なのに diff_coins_normalized だけホール平均とみられる同一値が全行に書き込まれている
+「不良日」が存在し、games_normalized>0 でフィルタせず機械割・平均差枚を計算すると
+分子だけが汚染されて数値が実際より2〜3pp下振れする。
+
+## Evidence
+- n_observations: 1（楽園蒲田店 2026-07-06、587台全台が該当。ハナハナ16台は全台 diff=-6142 で一致）
+- data scope: single-hall（楽園蒲田のみ確認。全9ホールへの横展開は task_545089b8 で調査中・未完了）
+- metric scope: diff（machine_detailed_results 由来の機械割・平均差枚計算全般）
+- result summary: フィルタ前後で楽園ハナハナ3F(26日)の実績機械割が 98.42% → 101.24% に変化（+2.8pp）
+
+## Interpretation
+- 該当日は games=0 が「未計測」を意味し、diff の値は台単位の実測ではなく代入値の疑いが強い
+- daily_hall_summary 経由の集計（avg_diff_per_machine 等）が同じ汚染を受けているかは未確認
+- 1ホール1日でしか確認していないため、全ホール・全期間での発生頻度は不明（横展開タスク待ち）
+
+## Action
+- machine_detailed_results から直接 payout / diff を集計するコードは
+  `df[df.games_normalized > 0]` を先頭で必ず通す（eda/rakuen_hana_3f_verification.load() に実装済み）
+- 単日でホール全体の指標が急変した箇所を見たら、その日の games_normalized 分布を先に見る
+  （全台 games=0 かつ diff が全台同一値、は機械的に検出できる）
+- task_545089b8（全ホール横断のgames=0不良日洗い出し・briefing_common.py へのフィルタ追加・
+  スクレイパー側の保存前チェック）の結果が出たら、この instinct を more general な結論で更新する
+
+## Relation
+- related: []
+
+## Status
+- status: active
+
+---
+id: 2026-08-05-narrow-setting-differential-needs-aggregate-test-not-daily-threshold
+trigger: "ハナハナ系（ノーマルAタイプで設定差の小さい機種）の高設定投入有無を検証するとき。p_high>=0.8 のような日次・台単位の閾値判定だけで『高設定が入っていない』と結論しそうになったとき。噂・言説の真偽を統計的に検証するとき"
+confidence: 0.85
+domain: statistical-methodology
+source: session-observation
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+---
+
+# 設定差が小さい機種は日次二項尤度の閾値判定では検出力が無く、確定台が出ないことは「高設定なし」の証明にならない
+
+## Core claim
+ハナハナ系（King REG 設定1=1/489 vs 設定4=1/390 など）は1日 2000〜3000G 程度では
+p_high(=P(設定4以上)) が 0.8 に到達する確率が設定4本物でも5〜10%しかなく、
+「確定台(p_high>=0.8)が毎日は出ない」ことを根拠に「高設定が入っていない」と
+結論すると偽陰性になる。検出力を保ったまま検証するには、日内の台間過分散や
+並べ替え検定など集計レベルの統計量を使う必要がある。
+
+## Evidence
+- n_observations: 楽園蒲田ハナハナ16台×26日（2026-07-07〜08-03）
+- data scope: single-hall / single-machine-family
+- metric scope: rb_probability（二項尤度による設定事後分布 posterior_high）
+- result summary:
+  King設定6を8000G回しても p_high>=0.8 到達率46%止まり（設定4は14%）。
+  日次閾値では「確定台が出た日8/26」だが、これだけでは判定材料として弱く、
+  日内過分散検定（帰無=全台同一設定）で観測 chi2比0.843（p=0.989、H1帰無棄却域に近い）
+  まで見て初めて「毎日1台投入」説を統計的に否定できた。対照のアイムジャグラー62台では
+  同じ日内過分散検定で 1.12(p=4.5e-4) と明確に検出でき、検定自体は機能していることを確認済み。
+
+## Interpretation
+- 「日次閾値で確定判定が出ない」は検出力不足の結果でも起こるため、単独では反証にならない
+- 日内過分散・並べ替え検定（台間の相関/分散比）は閾値判定より弱い信号も拾える
+- それでも検出力には限界があり、26日規模では「弱い連動（数日規模）」は排除できない
+  （シミュレーションで N=4〜6日程度の連動は90%区間が1.0を跨ぐことを確認）
+
+## Action
+- 設定差の小さい機種（ハナハナ系等）の高設定有無を検証するときは、
+  日次/台単位の閾値判定だけで終わらせず、必ず (1) 全台同一設定を帰無としたモンテカルロ、
+  (2) 台間・日内の過分散検定、を併記する
+- 「連動があるか」を見るときは相関係数だけで判断せず、既知の効果量を植えた
+  シミュレーションで検出力を確認してから「連動なし」と結論する
+- サンプルが小さい（<50日程度）場合は、排除できる効果量の下限を明示する
+  （例: 「N=9〜13日規模の連動は排除できるが、N=4〜6日規模は判定不能」）
+
+## Relation
+- related: []
+
+## Status
+- status: active

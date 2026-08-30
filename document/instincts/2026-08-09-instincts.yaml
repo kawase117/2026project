@@ -1,0 +1,288 @@
+---
+id: rb-column-may-be-structurally-absent-for-at-machines
+trigger: "AT機・スマスロ機の設定推測にRB確率を使おうとするとき。rb_count/rb_probability_decimalが0またはNaNで『RBが弱い』『RB確率が悪い』と解釈しそうになったとき。BBとRBの両方から設定推測をしようとするとき"
+confidence: 0.7
+domain: methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 一部のAT機はRBという区分自体を持たない。rb_count=0を『RBが悪い』と読んではいけない
+
+## Core claim
+機種によってはRB（レギュラーボーナス）という区分自体が存在せず、`rb_count`が
+常に0・`rb_probability_decimal`が常にNaNになる。これは「RB確率が低い＝低設定寄り」
+という意味ではなく、単に「この機種にRBという概念が無い」という構造上の欠落である。
+BB/RBの両方から設定推測する前に、対象機種の全履歴でrb_countが一度でも非ゼロかを
+確認しなければならない。
+
+## Evidence
+- n_observations: 1機種・44行（楽園蒲田店 花の慶次～佐渡攻めの章～、全履歴）
+- data scope: single-hall・single-model（楽園蒲田店、花の慶次）
+- metric scope: rb_count, rb_probability_decimal
+- result summary: 全44行（台2010/2018/2019/2020、直近90日超）で`rb_count`が
+  1件残らず0、`rb_probability_decimal`は1件残らずNaN。同機種の公式スペック
+  （1geki.jp）にもBB確率（初当り確率）のみが掲載され、RB単独の確率表は存在しない
+  （「RB：BB：ATが均等に振り分け」という内部配分の記述のみで、ホール側の
+  掲示・ホールデータにはRBという独立イベントが現れない）
+
+## Interpretation
+- `bb_count`列は、この種の機種では実質的に「初当り総数」を記録しているとみなせる
+- RB確率が構造的に存在しない機種でこれを設定推測の材料に使おうとすると、
+  常にNaN/0比較になり誤った結論（あるいはクラッシュ）を招く
+- 逆に本当にRBを持つ機種（キングハナハナ-30・ニューキングハナハナV-30等の
+  ノーマルタイプ）ではBB・RB両方から通常どおり事後推測できる
+
+## Action
+- 新しい機種の設定推測を始める前に、対象機種の全履歴で
+  `(df["machine_name"]==機種名)["rb_count"].sum() > 0` を確認する
+- 0であれば、1geki.jp等の公式スペックでBB確率（初当り確率）単独の表を探し、
+  その確率だけで二項事後を計算する。RB列が無いことを断らずに結果だけ出さない
+- ノーマルタイプ機（ジャグラー・ハナハナ系）は通常BB/RB両方が存在するので、
+  この確認が必要になるのは主にAT/ART系・スマスロ系の機種
+
+## Relation
+- related:
+  - 2026-08-03-bb-streak-feel-vs-rb-judgment-divergence（RBが存在する機種での
+    BBとRBの乖離。本instinctはRBが存在しない機種の入口チェック）
+
+## Status
+- status: active
+
+---
+id: machine-number-identity-breaks-across-rakuen-renovation
+trigger: "楽園蒲田店で機種名を問わずmachine_numberだけで『通算』『いつも強い台』のような長期集計をしようとするとき。2026-07-06(島配列工事)をまたぐ期間で同一台番号の履歴を連結しようとするとき。台番号ベースの過去ランキングに工事前のデータを含めようとするとき"
+confidence: 0.75
+domain: pachinko-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 楽園蒲田はmachine_numberが工事前後で別の物理台を指す。台番号だけの長期集計は機種入替を誤って連結する
+
+## Core claim
+楽園蒲田店は2026-07-06の島配列工事で機種配置が大きく変わっており、同じ
+`machine_number`が工事前後で全く別の機種を指すことがある。`machine_name`で
+フィルタしていても、工事をまたいで台番号が使い回されているケースでは
+「この台番号は昔から強かった」という長期集計が、実際には別の物理台の実績を
+混ぜてしまう。
+
+## Evidence
+- n_observations: 1台（machine_number=1103）の全履歴確認
+- data scope: single-hall（楽園蒲田店）
+- metric scope: machine_name の時系列変化
+- result summary: 台1103は2026-07-28以前は「キングハナハナ-30」、
+  2026-07-28以降は「ネオアイムジャグラーEX」に完全に入れ替わっていた。
+  `hana_flag==1`でフィルタした「直近90日（2026-05-09〜08-06）」の台別出率
+  ランキングはこのフィルタのおかげで1103をキングハナハナ期間だけ正しく
+  集計していたが、2026-08-07時点でこの台はもうハナハナではなく、
+  結果として「いつも強いハナハナ上位3台」のリストに誤って含めてしまった
+  （実在しない比較対象を答えとして提示するところだった）
+- 追加確認: machine_number 3166〜3181（現在のハナハナ16台の設置場所）は
+  工事前は「コードギアス」「アクエリオン」等の無関係な機種群で、
+  ハナハナとしての履歴は工事後の31日分しか存在しない
+
+## Interpretation
+- `machine_number`は物理台の永続識別子ではない。工事・レイアウト変更のたびに
+  同じ番号が別モデルへ再利用されることがある
+- カテゴリフラグ（`hana_flag`等）でのフィルタは「そのカテゴリだった期間」を
+  正しく残すので集計自体は汚染されないが、**集計結果の解釈**（「この台番号は
+  今も強い」）が誤りうる。今その台番号に座っている機種が同じでなければ
+  意味を持たない
+- 既存のレイアウトエポック注意（HYPOTHESIS_LEDGER.mdヘッダの
+  「工事前/工事後を必ず確認」）は角番・セクション等の**位置効果**の文脈で
+  書かれているが、本件は**機種の同一性そのもの**が壊れるという別の失敗モードで、
+  区別して明記する必要がある
+
+## Action
+- 楽園蒲田で機種名によらない長期のmachine_number集計をする前に、対象期間内で
+  該当machine_numberのmachine_nameが変化していないかを必ず確認する
+  （`groupby(machine_number)["machine_name"].nunique() > 1` で機械的に検出できる）
+- 変化していれば、工事エポック（2026-07-06）またはmachine_name変化点で
+  期間を区切ってから集計する。工事後だけに限定した集計は、対象の台番号が
+  工事後にしか存在しないカテゴリなら自動的に安全になる
+- 「通算」を主張するときは、その台番号が主張する全期間で同一機種だったことを
+  先に確認してから使う
+
+## Relation
+- related:
+  - rk-clean-edge1-hana（楽園蒲田ハナハナは工事後に全16台が本館3Fへ移動した記録、
+    HYPOTHESIS_LEDGER.md）
+
+## Status
+- status: active
+
+---
+id: 2026-08-09-strong-zorome-lastdigit-match-fails-zorome-amplifies
+trigger: "強ゾロ目日(MM=DD)の予測を作るとき、末尾がその日のdd/mmと一致する台を狙おうとするとき。『強ゾロ目だから末尾◯が熱い』という予告・噂を採点するとき。2026-08-03-hiroki-jug-hitdd-kamata7-hana-hitmm-splithalf-confirmed を強ゾロ目日に適用しようとするとき。台番号末尾ゾロ目(下2桁同一)を強ゾロ目日に検討するとき"
+confidence: 0.6
+domain: pachinko-domain-analysis
+source: empirical-measurement
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 強ゾロ目日は「末尾一致」が効かず「台番号末尾ゾロ目」のほうが増幅する
+
+## Core claim
+強ゾロ目日(MM=DD)において、末尾がその日のdd(=mm)と一致する台を狙う戦略は
+9ホール中8ホールで通常日より**悪化**する。一方、台番号末尾ゾロ目(下2桁同一)は
+9ホール中7ホールで増幅する。方向が逆であり、混同してはならない。
+
+## Evidence
+- n_observations: 2025-01-01〜2026-08-08、9ホール、強ゾロ目 最大19日/ホール
+- data scope: all-hall（各ホール個別に測定、プールはしていない）
+- metric scope: 同日内 gap（対象群−非対象群の games加重機械割、pp）
+- result summary:
+  - **末尾一致**: 増幅(強ゾロ目gap−通常日gap)が正なのは2ホールのみ。
+    金時 −2.62pp[−5.16,−0.08]で有意に**マイナス**。ヒロキはプラス率25%(16日中4日)
+  - **末尾ゾロ目**: 7ホールで増幅が正。蒲田7 +3.49pp[−0.34,+7.32]が最大、
+    レイトギャップ +2.18pp[+0.11,+4.26]のみCIが0を跨がない。
+    ただし18セル検定で有意1件は偽陽性期待0.9件の範囲内
+  - **ホールドアウト 2026-08-08**: 末尾ゾロ目は8ホール中7でプラス、平均+2.96pp
+    (蒲田1 +14.56pp、ザシティ +12.38pp、金時のみ −13.12pp)。
+    末尾一致も8ホール中6でプラスだが平均+0.45ppと小さい
+- 実装: `eda/strong_zorome_lastdigit_scan.py`、`eda/strong_zorome_hall_level.py`
+
+## Interpretation
+- **末尾一致の否定のほうが証拠が強い**（方向が9ホール中8で一致、うち1件は有意）。
+  末尾ゾロ目の肯定は多重検定の範囲内で、根拠は符号の一貫性のみ
+- 2026-08-03 の hiroki-jug-hitdd / kamata7-hana-hitmm は**全日平均**での測定。
+  強ゾロ目日はその部分集合で符号が反転する。**元instinctの否定ではなく
+  境界条件の追加**であり、通常日での適用は生きている
+- セグメントで符号が変わる。2026-08-08 楽園は JUG で末尾ゾロ目 +1,524枚/台
+  (プラス率58%)だが BT は −375枚、AT は差なし。蒲田7は全セグメントで差なし。
+  蒲田1のみ AT +3,200枚・JUG +1,200枚と両方で成立した
+- 事前に測った増幅の順位は当日の実績と一致しなかった（蒲田7が事前1位→当日+1.22pp、
+  蒲田1が事前3位→当日+14.56pp）。過去平均でホールを選ぶより、当日ホール側が
+  何を名指ししているかのほうが情報量が上だった
+
+## Action
+1. 強ゾロ目日に「末尾==dd」を狙う根拠として使わない。特にヒロキ・金時では避ける
+2. 末尾ゾロ目は**加点材料まで**。主軸にしない。フォワード継続中(2026-08-08が1点目、
+   残り19エントリー日)
+3. どちらも必ず JUG/HANA/OKI/BT/AT に割ってから判断する。プールで結論しない
+4. 2026-09-09 が次の検証機会
+
+## Relation
+- related:
+  - 2026-08-03-hiroki-jug-hitdd-kamata7-hana-hitmm-splithalf-confirmed
+    （強ゾロ目日は適用外という境界条件を追加。invalidate ではない）
+  - 2026-08-03-lastdigit-hypothesis-needs-category-decomposition
+  - feedback-lastdigit-kakuban-segment-split
+
+## Status
+- status: active
+
+---
+id: 2026-08-09-best-of-k-claim-needs-pvalue-not-expected-rank
+trigger: "『候補がk個あってどれか1つでも当たれば的中』という緩い条件の予告・仮説を採点するとき。最良順位を期待順位(N+1)/(k+1)と比べて『期待より上だから効いている』と言おうとするとき。ホール予告の『◯◯にニブイチ以上』『1台設置機種に仕掛け』『機種台数=DDが全台系』を検証するとき。候補数が日によって変わる主張を複数日で集計するとき"
+confidence: 0.9
+domain: methodology
+source: empirical-measurement
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# k個の候補の「最良1つ」は期待順位と比べてはいけない。p値に変換する
+
+## Core claim
+k個の候補のうち最良のものの順位は右に歪んだ分布を持つため、期待順位
+`(N+1)/(k+1)` との比較は帰無仮説の下でも過半数が「期待より上」になる。
+必ず `p = 1 − C(N−r, k)/C(N, k)` に変換してから判定する。
+候補数kが日ごとに変わる主張では、これを怠ると必ず誤検出する。
+
+## Evidence
+- n_observations: 楽園蒲田 41日（2026-06-01〜2026-08-08）
+- data scope: single-hall（楽園蒲田店）
+- metric scope: 全台系スコア gratio_mean_diff の機種内順位
+- result summary: 「機種台数==DDの機種に全台系が1つ以上ある」という主張を検証。
+  - 「期待rankより上」で数えると 23日中17日で当たって見える
+  - p値に変換すると p_rank平均 **0.456**[0.378, 0.534]（帰無は0.5）で区別不能
+  - 閾値基準では41日中8日で、ランダム期待 **11.0日を下回る**（期待値割れ）
+  - 強ゾロ目3日(6/6, 7/7, 8/8)は3/3だが、各日の「1つ以上」確率が
+    0.509/0.445/0.609なので同時確率は **0.138**（約7回に1回）。
+    Fisher統合 p=0.160(rank基準) / 0.682(閾値基準)。いずれも非有意
+
+## Interpretation
+- k個の最小値は mean=(N+1)/(k+1) に対し median≈N(1−0.5^(1/k)) で **median < mean**。
+  k=6, N=120 なら mean 17.3 に対し median 13.1。帰無下でも約56%の日が
+  「期待より上」に落ちる
+- 噂・体感が生まれる構造もここにある。**候補数kが多い日ほど自動的に当たる**。
+  2026-08-01 の楽園は1台設置機種が119機種中46機種あり、全台系12機種のどれかが
+  1台設置機種に当たる確率は99.8%。「1台設置に仕掛け」は当たって当然だった
+- 同じ罠は閾値側にもある（quantile-threshold-count-claim-is-tautological）。
+  あちらは閾値を分位点で切ると恒等式になる話、本件は候補数側の同型の罠
+
+## Action
+1. 「どれか1つでも」型の主張は `p = 1 − C(N−r, k)/C(N, k)`（順位基準）または
+   `p = 1 − C(N−T, k)/C(N, k)`（T=当日の閾値超え機種数、閾値基準）で採点する
+2. 複数日はFisher統合 `X² = −2Σln(p)`, `df=2m` でまとめる
+3. 「k個中1個当たった」と報告するときは必ず**期待数 k×T/N を併記**する。
+   期待0.85に対して実際1なら、それは当たりではない
+4. 事前登録に載せるときも、判定式にkの補正を組み込んでから凍結する
+
+## Relation
+- related:
+  - quantile-threshold-count-claim-is-tautological（閾値側の同型の罠）
+  - 2026-08-04-prediction-vs-result-tweet-conflation
+
+## Status
+- status: active
+
+---
+id: 2026-08-09-group-edge-needs-median-and-topk-removal
+trigger: "メーカーの日・末尾・カテゴリ・セクション等でグループ集計して『ホール平均を上回ったので効いた』と結論しようとするとき。『8/8は山佐の日』のような煽り・予告をグループ平均差枚で採点するとき。機種の平均差枚が高いことを全台系・高設定投入の根拠にしようとするとき。自分の過去予測を答え合わせするとき"
+confidence: 0.85
+domain: prediction-evaluation
+source: empirical-measurement
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# グループ平均差枚は上位2台で作られる。中央値・プラス率・上位除去を必ず併記する
+
+## Core claim
+グループの平均差枚がホール平均を上回っていても、それが上位数台の上振れで
+作られている場合がある。高設定の面投入は分布の中心を動かすが、上振れ2発は
+動かさない。**中央値・プラス率・上位2台除去後の平均**を併記して初めて区別できる。
+
+## Evidence
+- n_observations: 2026-08-08 ヒロキ東口店 279台（うち山佐系29台）
+- data scope: single-hall・single-day
+- metric scope: 平均差枚 / 中央値 / プラス率
+- result summary:
+  - 山佐系29台 平均**+1,139枚** vs ホール279台 **−41枚** → 差+1,180枚。
+    「8/8は山佐の日、効いた」と読める
+  - 上位2台（ゴッドイーター2255 +17,258枚、鉄拳6 2087 +14,622枚）を除くと
+    山佐27台 **+42枚** vs ホール277台 **−156枚** で差は約200枚まで縮む
+  - **中央値は 山佐−694 / ホール−683 でほぼ同一**。プラス率 45% vs 35%
+  - 同日のゴッドイーター リザレクション5台は平均+2,726枚だが、2255を除く
+    4台は平均−907枚（4台ともマイナス）。機種平均だけを見て「全台系だった、
+    自分の予測は外れ」と誤って自己採点した
+  - 対照例: 同日の鉄拳6は2台とも プラス（+14,622 / +3,625）で、
+    こちらは1台の上振れではない
+
+## Interpretation
+- 平均だけが良く中央値とプラス率が対照群と同じなら、それは「上振れが出た」
+  のであって「効いた」ではない
+- feedback-scoring-must-separate-setting-from-pnl の系だが失敗モードが違う。
+  あちらは「台単位の高設定は結果指標では判定不能」、本件は
+  「グループ集計の頑健性」。両方適用する
+- **自分の予測の答え合わせで特に危ない**。「外れた」と早合点して、
+  正しかった判断を撤回しかける（実際にこのセッションで一度撤回しかけた）
+
+## Action
+1. グループ比較は **平均 / 中央値 / プラス率** の3点セットで出す。平均単独で書かない
+2. 上位2台を除いた感度分析を1行添える
+3. 中央値とプラス率が対照群と同水準なら、結論は「上振れが2発出た」と書く。
+   「効いた」「エッジがある」と書かない
+4. 自己採点にも同じ規律を適用する。機種平均が良かったからといって、
+   「避けろ」という自分の判断を撤回しない
+
+## Relation
+- related:
+  - 2026-08-01-answer-check-metric-hit104-over-mean-diff
+  - feedback-predict-scorecheck-cycle
+
+## Status
+- status: active
+
+---
