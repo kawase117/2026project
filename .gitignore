@@ -70,3 +70,12 @@ scraper/twitter_monitor/*.log
 scraper/.browser_profile/
 tmp_check_*.py
 variance_decomposition_results.json
+
+# Root-level throwaway query outputs (2026-08-30 cleanup)
+/out_*.txt
+/scratch_*.txt
+/error.log
+/godcheck_out.txt
+
+# Generated hall-analysis CSV outputs (regenerable from eda/ scripts)
+document/analysis/
