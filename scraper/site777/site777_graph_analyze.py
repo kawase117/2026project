@@ -72,7 +72,19 @@ def trace_masks(rgb: np.ndarray) -> dict[str, np.ndarray]:
 
     2026-08-17にサイトセブンが線色を青紫(103,99,245)系から橙(251,134,103)系へ変更した。
     橙は黄色マスクの (green - blue) >= 50 に僅差で外れ、検出0で全143台が
-    trace_unreadable になった。線色を1つに決め打ちしないこと。
+    trace_unreadable になった。
+
+    2026-08-19に橙から水色(実測コア色 (54,171,210)、アンチエイリアス端は
+    (172,211,223)等)へ再度変更され、既存の"blue"マスク((blue-green)>=60)には
+    僅差で外れて全15台が trace_unreadable になった。水色はgreenとblueが
+    近い(差45以内)点で"blue"(青紫寄り、差60以上)と区別する。線色を1つに
+    決め打ちしないこと。
+
+    2026-08-30に水色から緑(実測コア色 (105,177,99)、アンチエイリアス端は
+    (178,208,168)等)へ再度変更され、既存マスクのどれにも当たらず全100台が
+    trace_unreadable になった。緑はgreenがredとblueの双方を25以上上回る点で、
+    (green-blue)が負になる"cyan"と区別する。背景(245,236,231)は
+    (green-red)=-9、灰の軸(153,153,153)は差0なので拾わない。
     """
     red = rgb[:, :, 0].astype(np.int16)
     green = rgb[:, :, 1].astype(np.int16)
@@ -80,6 +92,7 @@ def trace_masks(rgb: np.ndarray) -> dict[str, np.ndarray]:
     return {
         "purple": (red >= 120) & (blue >= 150) & (green <= 180) & ((red - green) >= 25) & ((blue - green) >= 35),
         "blue": (blue >= 150) & ((blue - red) >= 60) & ((blue - green) >= 60),
+        "cyan": (blue >= 180) & ((blue - red) >= 40) & ((green - red) >= 25) & ((blue - green) <= 45),
         "yellow": (
             (red >= 150)
             & (green >= 80)
@@ -90,6 +103,7 @@ def trace_masks(rgb: np.ndarray) -> dict[str, np.ndarray]:
         ),
         # 背景(245,236,231)と灰の軸(153,153,153)は赤緑差が10未満なので拾わない。
         "orange": (red >= 150) & ((red - green) >= 60) & ((red - blue) >= 60),
+        "green": (green >= 130) & ((green - red) >= 25) & ((green - blue) >= 25),
     }
 
 
@@ -256,8 +270,9 @@ def main() -> int:
             metrics = {"status": "missing_input"}
         else:
             # 検出ロジックを変えたらこのバージョンを上げる。上げないと過去の解析結果が
-            # そのまま再利用され、修正が既存画像に適用されない。v6=橙の推移線に対応。
-            signature = f'v6:{ocr_item.get("lastWriteTimeUtc")}:{ocr_item.get("length")}'
+            # そのまま再利用され、修正が既存画像に適用されない。
+            # v6=橙、v7=水色、v8=緑(2026-08-30)の推移線に対応。
+            signature = f'v8:{ocr_item.get("lastWriteTimeUtc")}:{ocr_item.get("length")}'
             old = prior.get(key)
             if old and old.get("inputSignature") == signature:
                 results.append(

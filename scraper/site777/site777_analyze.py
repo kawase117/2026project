@@ -1010,6 +1010,156 @@ def tail_table(
     return lines
 
 
+def _segment_of(machine: dict[str, Any]) -> str:
+    """ノーマル機カテゴリ(jug/hana/oki/bt)以外はAT・その他としてまとめる。
+
+    backtest/announce.py の assign_segment と同じ切り方（末尾・角番の効果は
+    セグメントで符号が反転するため、プールした集計だけで判断してはいけない。
+    2026-08-07 楽園蒲田で実証済み）。
+    """
+    category = machine.get("machine_category")
+    return category if category in NORMAL_MACHINE_CATEGORIES else "AT"
+
+
+SEGMENT_LABELS = {
+    "jug": "ジャグ(jug)",
+    "hana": "ハナハナ(hana)",
+    "oki": "沖ドキ(oki)",
+    "bt": "BT(bt)",
+    "AT": "AT・その他",
+}
+
+
+def _tail_rows_for(machines: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """末尾0〜9・ゾロ目ごとの集計行を作る（build_tail_reportの本体集計と同じロジック）。"""
+    tail_groups: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for machine in machines:
+        tail_groups[str(machine["last_digit"])].append(machine)
+        if machine["is_zorome"]:
+            tail_groups["ゾロ目"].append(machine)
+
+    rows: list[dict[str, Any]] = []
+    for group_name in [str(number) for number in range(10)] + ["ゾロ目"]:
+        group = tail_groups.get(group_name, [])
+        valid_diffs = [
+            machine["latest_diff"]
+            for machine in group
+            if machine["graph_eligible"] and machine["latest_diff"] is not None
+        ]
+        wins = sum(value > 0 for value in valid_diffs)
+        rows.append(
+            {
+                "tail": group_name,
+                "machine_count": len(group),
+                "graph_eligible_count": sum(machine["graph_eligible"] for machine in group),
+                "diff_valid_count": len(valid_diffs),
+                "graph_reused_count": sum(machine["graph_eligible"] and machine["graph_reused"] for machine in group),
+                "win_count": wins,
+                "win_rate": wins / len(valid_diffs) if valid_diffs else None,
+                "average_diff": mean_or_none(valid_diffs),
+                "average_games": mean_or_none(machine["games"] for machine in group),
+                "average_highest_payout": mean_or_none(machine["highest_payout"] for machine in group),
+                "graph_update_time": ", ".join(
+                    sorted({machine["graph_update_time"] for machine in group if machine["graph_update_time"]})
+                ),
+            }
+        )
+    return rows
+
+
+def build_tail_segment_report(machines: list[dict[str, Any]]) -> str:
+    """末尾別ランキングをセグメント(jug/hana/oki/bt/AT)ごとに分割する。
+
+    全機種をプールした末尾ランキングは、ノーマル機とAT機で末尾効果の符号が
+    反転する場合に打ち消し合って見えなくなる（feedback-lastdigit-kakuban-segment-split）。
+    これを毎回スクラッチで確認していた作業をレポートに一本化する。
+    """
+    lines = [
+        "# サイトセブン末尾別×セグメント別ランキング",
+        "",
+        "末尾の設定投入効果はセグメント（ノーマル機のjug/hana/oki/bt、擬似ボーナスのAT機）で"
+        "符号が反転することがある。全機種プールの末尾別ランキング（site777_last_digit_report）"
+        "だけで『末尾に仕掛けが無い』と判断しないこと。",
+        "",
+        "差枚・勝率は2,000G以上の台だけを対象。平均Gは全台集計。勝率ランキングは有効差枚台が"
+        "3台以上の末尾だけを掲載する。",
+        "",
+    ]
+    for segment in ("jug", "hana", "oki", "bt", "AT"):
+        segment_machines = [machine for machine in machines if _segment_of(machine) == segment]
+        label = SEGMENT_LABELS[segment]
+        lines.append(f"## セグメント: {label}（{len(segment_machines)}台）")
+        lines.append("")
+        if not segment_machines:
+            lines.append("該当台なし。")
+            lines.append("")
+            continue
+        rows = _tail_rows_for(segment_machines)
+        ranked_diff = rank_rows(rows, "average_diff", reverse=True)
+        ranked_win = rank_rows(
+            rows, "win_rate", reverse=True, min_count_key="diff_valid_count", min_count=MIN_RANKED_DIFF_MACHINES
+        )
+        lines.extend(tail_table(f"{label} 末尾別平均差枚", ranked_diff, "average_diff", "平均差枚", fmt_number))
+        lines.extend(tail_table(f"{label} 末尾別勝率", ranked_win, "win_rate", "勝率", fmt_percent))
+    return "\n".join(lines)
+
+
+def build_machine_setting_summary(result: dict[str, Any]) -> list[str]:
+    """スペック表がある機種を machine_name 単位で集約し、高設定寄りの台数を見る。
+
+    site777_setting_report の台単位ランキングだけでは『どの機種に高設定が
+    多く投入されているか』が読めない。BT/ジャグ/ハナハナ等RB確率で設定差が
+    出る機種について、機種単位で高設定寄りの集中を確認できるようにする。
+    """
+    all_machines = result["machines"]
+    by_name: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for machine in all_machines:
+        if machine.get("setting_family_key"):
+            by_name[machine["model_name"]].append(machine)
+
+    rows = []
+    for name, group in by_name.items():
+        estimated = [machine for machine in group if machine.get("ml_setting") is not None]
+        high = [machine for machine in estimated if machine.get("setting_lean") == "高設定寄り"]
+        ratios = [machine["high_low_ratio"] for machine in estimated if machine.get("high_low_ratio") is not None]
+        if not estimated:
+            continue
+        rows.append(
+            {
+                "machine_name": name,
+                "n_total": len(group),
+                "n_estimated": len(estimated),
+                "n_high": len(high),
+                "high_rate": len(high) / len(estimated),
+                "mean_ratio": mean_or_none(ratios),
+            }
+        )
+    ranked = sorted(
+        rows,
+        key=lambda row: (
+            -row["high_rate"],
+            -(row["mean_ratio"] if row["mean_ratio"] is not None else -math.inf),
+        ),
+    )
+    lines = [
+        "## 機種別 高設定寄り集計",
+        "",
+        "台単位のランキングだけでは『どの機種に高設定が多く投入されているか』が読めないため、"
+        "スペック表がある機種を machine_name 単位で集約する。high_rateは推定成立台数のうち"
+        "高/低尤度比>1.0（高設定寄り）だった割合、mean_ratioはその平均。",
+        "",
+        "| 機種 | 対象台数 | 推定成立 | 高設定寄り | 高設定寄り率 | 平均高/低尤度比 |",
+        "|---|---:|---:|---:|---:|---:|",
+    ]
+    for row in ranked:
+        lines.append(
+            f"| {row['machine_name']} | {row['n_total']} | {row['n_estimated']} | {row['n_high']} | "
+            f"{fmt_percent(row['high_rate'])} | {fmt_number(row['mean_ratio'], 2)}倍 |"
+        )
+    lines.append("")
+    return lines
+
+
 def build_tail_report(result: dict[str, Any]) -> str:
     lines = [
         "# サイトセブン末尾別ランキング",
@@ -1045,6 +1195,8 @@ def build_tail_report(result: dict[str, Any]) -> str:
             fmt_number,
         )
     )
+    lines.append("")
+    lines.append(build_tail_segment_report(result["machines"]))
     return "\n".join(lines)
 
 
@@ -1184,6 +1336,7 @@ def build_setting_report(result: dict[str, Any]) -> str:
 
     reliable = [machine for machine in ranked if machine["setting_confidence"] in {"高", "中"}]
     lines.extend(setting_table(f"信用度 高・中 に限定 {len(reliable)}台", reliable))
+    lines.extend(build_machine_setting_summary(result))
     return "\n".join(lines)
 
 
@@ -1198,8 +1351,9 @@ def three_machine_table(title: str, rows: list[dict[str, Any]]) -> list[str]:
         machine_details = []
         for machine in row["machines"]:
             diff_text = "--" if machine["latest_diff"] is None else f"{machine['latest_diff']:+,}枚"
+            payout_text = "--" if machine["highest_payout"] is None else f"{machine['highest_payout']:,}枚"
             machine_details.append(
-                f"{machine['machine_number']}（{machine['games']:,}G / {machine['highest_payout']:,}枚 / {diff_text}）"
+                f"{machine['machine_number']}（{machine['games']:,}G / {payout_text} / {diff_text}）"
             )
         machine_detail = " / ".join(machine_details)
         total_diff = "--" if row["total_diff"] is None else f"{row['total_diff']:+,}"
