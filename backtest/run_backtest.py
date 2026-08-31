@@ -134,23 +134,7 @@ def restrict_to_current_machine(hist: pd.DataFrame, today: pd.DataFrame) -> pd.D
 
 
 def score_history(hist: pd.DataFrame, score: str) -> pd.Series:
-    """lookback 窓の履歴から台ごとのスコアを返す。大きいほど良い向きに揃える。
-
-    score="hist_model_gratio_mean_diff" のみ例外的に機種（machine_name）ごとの
-    スコアを返す（selection_unit="machine_model" 用）。呼び出し側は
-    usable_models() で先に機種を絞ってから渡すこと。
-    """
-    if score == "hist_model_gratio_mean_diff":
-        # G比（機種平均回転数/プール平均回転数）×平均差枚。
-        # backtest/announce.py::model_scores の gratio_mean_diff（1日単位）を
-        # lookback 窓全体（複数日プール）に一般化したもので、同じ定義。
-        pool_mean_games = hist["games_normalized"].mean()
-        if not pool_mean_games or pd.isna(pool_mean_games):
-            return pd.Series(dtype=float)
-        gm = hist.groupby("machine_name")
-        gratio = gm["games_normalized"].mean() / pool_mean_games
-        mean_diff = gm["diff_coins_normalized"].mean()
-        return gratio * mean_diff
+    """lookback 窓の履歴から台ごとのスコアを返す。大きいほど良い向きに揃える。"""
     g = hist.groupby("machine_number")
     if score == "hist_mean_diff":
         return g["diff_coins_normalized"].mean()
@@ -172,6 +156,21 @@ def score_history(hist: pd.DataFrame, score: str) -> pd.Series:
         h = h[h["std"] > 0]
         h["z"] = (h["rb_rate"] - h["mean"]) / h["std"]
         return h.groupby("machine_number")["z"].mean()
+    if score == "hist_model_gratio_mean_diff":
+        # 機種粒度（selection_unit="machine_model"）専用。台番号ではなく機種名で
+        # groupby する。2026-08-01 の正解ラベル6件検証で最上位だった指標:
+        # G比（モデル平均回転数 / プール平均回転数）× 平均差枚。
+        # ⚠️ 台ごとの平均差枚を単純平均してはいけない（低回転台が外れ値になり
+        # 系統的に下振れする、feedback-scoring-must-separate-setting-from-pnl）。
+        # groupby("machine_name").mean() は行（台×日）を等重みで扱う総和ベース
+        # 平均であり、台ごとの事前平均を平均する二重平均ではない。
+        pool_mean_games = hist["games_normalized"].mean()
+        if not pool_mean_games:
+            return pd.Series(dtype=float)
+        g = hist.groupby("machine_name")
+        gratio = g["games_normalized"].mean() / pool_mean_games
+        mean_diff = g["diff_coins_normalized"].mean()
+        return gratio * mean_diff
     raise ValueError(f"scoring 不可の score: {score!r}")
 
 
