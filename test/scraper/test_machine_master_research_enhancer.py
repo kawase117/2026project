@@ -87,8 +87,8 @@ def test_extract_note_updates_never_treats_fraction_as_rtp() -> None:
 def test_enhance_csv_writes_output_and_diff(tmp_path: Path) -> None:
     from machine_master_research_enhancer import enhance_csv
 
-    input_path = tmp_path / "machine_list_for_research.csv"
-    output_path = tmp_path / "machine_master_research_enhanced.csv"
+    input_path = tmp_path / "machine_master.csv"
+    output_path = tmp_path / "machine_master_output.csv"
     diff_path = tmp_path / "machine_master_research_diff.json"
 
     with input_path.open("w", encoding="utf-8", newline="") as f:
@@ -165,3 +165,12 @@ def test_enhance_csv_writes_output_and_diff(tmp_path: Path) -> None:
         diff = json.load(f)
     assert diff[0]["machine_name"] == "TEST"
     assert "rtp_setting1" in diff[0]["changes"]
+
+
+def test_default_paths_use_single_canonical_master() -> None:
+    from machine_master_research_enhancer import build_parser
+
+    args = build_parser().parse_args([])
+
+    assert args.input.name == "machine_master.csv"
+    assert args.output == args.input

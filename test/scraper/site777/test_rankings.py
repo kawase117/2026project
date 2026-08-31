@@ -23,6 +23,7 @@ def _model(
     diff_valid: int,
     win_rate: float | None,
     total_rb: int = 20,
+    total_games: int = 20000,
 ) -> dict:
     return {
         "mdc": mdc,
@@ -31,6 +32,7 @@ def _model(
         "machine_count": max(diff_valid, 1),
         "diff_valid_count": diff_valid,
         "total_rb": total_rb,
+        "total_games": total_games,
         "win_rate": win_rate,
         "average_diff": 100.0,
         "average_games": 3000.0,
@@ -80,6 +82,19 @@ def test_rb_absent_models_are_dropped_from_probability_rankings() -> None:
 
     ranking = model_rankings(models, probability_ranking_models(models))["bb_probability"]
     assert [row["model_name"] for row in ranking] == ["マイジャグラーV"]
+
+
+def test_rb_absent_needs_enough_games_before_blaming_the_master() -> None:
+    """開店直後や1台設置の機種が「まだRBを引いていない」だけで区分誤りと名指しされないこと。"""
+    structural = _model("9", "エウレカTYPE-ART", "bt", diff_valid=25, win_rate=0.4, total_rb=0, total_games=43499)
+    just_early = _model("8", "ハイパーラッシュ", "bt", diff_valid=1, win_rate=0.0, total_rb=0, total_games=350)
+    models = [structural, just_early, _model("1", "マイジャグラーV", "jug", diff_valid=20, win_rate=0.5)]
+
+    assert [m["model_name"] for m in rb_absent_models(models)] == ["エウレカTYPE-ART"]
+    # 母数不足の機種は除外リストに載せないが、確率ランキングには残す。
+    names = [m["model_name"] for m in probability_ranking_models(models)]
+    assert "ハイパーラッシュ" in names
+    assert "エウレカTYPE-ART" not in names
 
 
 def test_prefix_fallback_matches_site_seven_title_prefixes() -> None:

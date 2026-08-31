@@ -1,0 +1,659 @@
+{
+  "announce_id": "rakuen__20260818__kawasakislot",
+  "hall": "楽園蒲田店",
+  "target_date": "20260818",
+  "source": {
+    "account": "kawasakislot",
+    "url": "https://x.com/kawasakislot/status/2089305781175029863",
+    "posted_at": "2026-08-17T20:00:00+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "8/18 楽園蒲田\n明日は取材なしだけど毎日仕掛け継続！\n・8月毎日仕掛け ”3台設置以上から2機種全⑤⑥”\n・今週はポスターで示唆あった\"末尾寄せ\"も視野に\n\n末尾探しはまずは日付の⑧\n機種は定番の東京喰種・乙女5・カバネリ・GOD・沖ドキブラック・化物語\n今週増台のマギレコあたりから！\n\nまるごと機種は法則性▶日付末尾の8台設置機種を優先して狙いたいところ\n2機種中1機種はかなり高頻度でまつわる絡み\n明日は特にキンハナ/ニューキング/ファンキー/邪神ちゃんあたりから！\n8/6➔サンダー/炎炎 どっちも6台\n8/7➔からくり2 7台\n8/8➔ファンキー/邪神ちゃん どっちも8台\n8/9➔化物語 9台\n8/10➔ー\n8/11➔沖ドキブラック 11台\n8/12➔ー\n8/13➔3台機種×3機種\n8/14➔バンドリ 4台\n8/15➔真打吉宗 5台\n8/16➔戦コレ6　6台\n\n明日は一般や二の矢でも十分ドリルできると思います🙆‍♂️",
+  "posted_at_note": "本文に投稿日時の明示が無いため posted_at は推定。ヘッダ『8/18 楽園蒲田』＋本文『明日は…』は 8/16・8/17 の同型投稿と一致するため、対象日=ヘッダ日付、投稿=その前日夜と読む。系列の直近実績（8/15 posted 20:00 / 8/16 posted 20:00 / 8/17 posted 20:15）に合わせ 2026-08-17T20:00+09:00 とした。target_date=20260818、db_max=20260817、登録は 2026-08-18 の抽選前。",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "series_note": "8/7以降の rakuen シリーズと同一の閾値+1800で凍結（baserate の分位点0.95は 2017.8 だが、系列の比較可能性を優先して絶対値を据え置く）。この予告は 8/16 と同じ『日付末尾＝設置台数の機種が全台系』ルールの継続主張であり、8/16 登録時の daisuu_rule_baseline（90日窓で否定的）に対する追加サンプルになる。8/16 との違いは、投稿者が今回は 8/6〜8/16 の自己申告実績リストを明示したこと。そのリスト自体を採点できるので tweeter_selfreport_audit に記録した。",
+  "baserate_before_target": {
+    "window_days": 90,
+    "window": [
+      "20260520",
+      "20260817"
+    ],
+    "n_days": 88,
+    "candidate_models_per_day": 59.7,
+    "models_over_1800_mean": 3.44,
+    "models_over_1800_median": 3.0,
+    "models_over_1800_max": 11,
+    "p_at_least_1": 0.898,
+    "p_at_least_2": 0.739,
+    "p_at_least_3": 0.58,
+    "p_at_least_4": 0.409,
+    "note": "分位点0.95の閾値は 2017.8 だったが、系列一貫性のため 1800.0 を据え置いた。"
+  },
+  "tweeter_selfreport_audit": {
+    "definition": "予告本文が自己申告した 8/6〜8/16 の的中実績を、本モジュールの閾値+1800（gratio_mean_diff, min_machines=3）で採点し直したもの。rank は当日120機種中の平均差枚順位。",
+    "rows": [
+      {
+        "date": "20260806",
+        "claim": "スマスロ サンダーV",
+        "n": 6,
+        "mean_diff": 389,
+        "median_diff": 429,
+        "rank": "29/120",
+        "hit": false
+      },
+      {
+        "date": "20260806",
+        "claim": "スマスロ炎炎ノ消防隊2",
+        "n": 6,
+        "mean_diff": -714,
+        "median_diff": 429,
+        "rank": "90/120",
+        "hit": false
+      },
+      {
+        "date": "20260807",
+        "claim": "からくりサーカス2",
+        "n": 7,
+        "mean_diff": 517,
+        "median_diff": -142,
+        "rank": "32/120",
+        "hit": false
+      },
+      {
+        "date": "20260808",
+        "claim": "ファンキージャグラー2",
+        "n": 8,
+        "mean_diff": 2441,
+        "median_diff": 2667,
+        "rank": "9/120",
+        "hit": true
+      },
+      {
+        "date": "20260808",
+        "claim": "邪神ちゃんドロップキック",
+        "n": 8,
+        "mean_diff": 994,
+        "median_diff": 1334,
+        "rank": "23/120",
+        "hit": false
+      },
+      {
+        "date": "20260809",
+        "claim": "化物語",
+        "n": 9,
+        "mean_diff": 900,
+        "median_diff": -95,
+        "rank": "11/120",
+        "hit": false
+      },
+      {
+        "date": "20260811",
+        "claim": "沖ドキ!BLACK",
+        "n": 11,
+        "mean_diff": -8,
+        "median_diff": -48,
+        "rank": "51/120",
+        "hit": false
+      },
+      {
+        "date": "20260814",
+        "claim": "バンドリ！",
+        "n": 4,
+        "mean_diff": 215,
+        "median_diff": 858,
+        "rank": "37/120",
+        "hit": false
+      },
+      {
+        "date": "20260815",
+        "claim": "真打 吉宗",
+        "n": 5,
+        "mean_diff": 5848,
+        "median_diff": 5715,
+        "rank": "1/120",
+        "hit": true
+      },
+      {
+        "date": "20260816",
+        "claim": "戦国コレクション6",
+        "n": 6,
+        "mean_diff": 1112,
+        "median_diff": 1381,
+        "rank": "10/120",
+        "hit": false
+      }
+    ],
+    "hit_count": 2,
+    "claim_count": 10,
+    "note": "⚠️ 自己申告実績は水増しである。10件中、全台系閾値+1800を超えたのは 8/8 ファンキー2 と 8/15 真打吉宗 の2件のみ。8/11 沖ドキ!BLACK は 120機種中51位・平均-8枚で完全な外れなのに『当たり』として列挙されている。採点基準が『機種名を挙げて少しでもプラスなら当たり』になっている。さらに 8/10・8/12 を『ー』として自己申告から除外しているが、実測では 8/10 に6機種・8/12 に4機種が閾値を超えており、ルールに合わなかった日だけを落としている。⭐ DDの解釈も一貫していない：8/11 は『11台』なのに 8/13〜8/16 は『末尾桁』。どちらの解釈でも当たる側を事後に選んでいる。この予告シリーズの自己申告的中率をそのまま信用してはならない。"
+  },
+  "daisuu_rule_august_verification": {
+    "definition": "8/16登録の daisuu_rule_baseline（90日窓）を8月分で追試したもの。各日について『設置台数==日付末尾（投稿者の使い方に合わせ DD<=11 は台数==DD）』の機種を候補kとし、そのうち閾値+1800を超えた数を、当日の閾値超え数Tと候補数Nから超幾何で期待値と比べる。",
+    "window": [
+      "20260801",
+      "20260817"
+    ],
+    "n_days": 17,
+    "observed_matching_over": 12,
+    "expected_matching_over": 10.83,
+    "observed_excluding_20260801": 5,
+    "expected_excluding_20260801": 6.19,
+    "note": "⚠️ 事前予測は明確に否定的。8月17日間で 観測12 / 期待10.83 と、ほぼ完全に期待値どおり。しかも観測12のうち7件は 8/1 に集中しており、この日は日付末尾1に対し1台設置機種が119機種中46機種あった（k=46）ため当たって当然だった。8/1 を除くと 観測5 / 期待6.19 で **期待値割れ**。min_machines=3 の運用ではそもそも1〜2台機種は候補外なので、実運用上は8/1の水増しすら効かない。メモリ rakuen-model-count-eq-dd-strong-zorome の 6/1〜8/8・41日検証（p_rank平均 0.456 で期待値割れ）と完全に整合し、8月後半のデータを足しても否定は覆らなかった。⭐『8月から始まった新ルール』説はこれで潰れている。"
+  },
+  "eight_install_roster_20260817": {
+    "definition": "8/18ルールの候補となる『8台設置機種』の全ロスター（20260817時点）と、直近30日（20260719-20260817）の全台系到達率。",
+    "models": [
+      {
+        "name": "キングハナハナ-30",
+        "n": 8,
+        "over_days": "0/30",
+        "rate": 0.0,
+        "mean_score": 269,
+        "monday": "0/5",
+        "rank_among_68": 41,
+        "named_by_tweet": true
+      },
+      {
+        "name": "ニューキングハナハナV‐30",
+        "n": 8,
+        "over_days": "0/30",
+        "rate": 0.0,
+        "mean_score": 164,
+        "monday": "0/5",
+        "rank_among_68": 44,
+        "named_by_tweet": true
+      },
+      {
+        "name": "ディスクアップ ULTRAREMIX",
+        "n": 8,
+        "over_days": "0/30",
+        "rate": 0.0,
+        "mean_score": 88,
+        "monday": "0/5",
+        "rank_among_68": 46,
+        "named_by_tweet": false
+      },
+      {
+        "name": "ファンキージャグラー2",
+        "n": 8,
+        "over_days": "1/30",
+        "rate": 0.033,
+        "mean_score": 21,
+        "monday": "0/5",
+        "rank_among_68": 36,
+        "named_by_tweet": true
+      },
+      {
+        "name": "とある魔術の禁書目録2",
+        "n": 8,
+        "over_days": "1/14",
+        "rate": 0.071,
+        "mean_score": -230,
+        "monday": "0/2",
+        "rank_among_68": 19,
+        "named_by_tweet": false
+      },
+      {
+        "name": "邪神ちゃんドロップキック",
+        "n": 8,
+        "over_days": "1/14",
+        "rate": 0.071,
+        "mean_score": -385,
+        "monday": "0/2",
+        "rank_among_68": 21,
+        "named_by_tweet": true
+      }
+    ],
+    "note": "⭐ 8台設置6機種は直近30日で最弱グループである。到達実績は合計3機種日／132機種日 = 2.3% で、ホール平均（閾値超え約3.44機種 ÷ 候補59.7機種 = 5.8%）を下回る。投稿者が名指しした4機種（キンハナ／ニューキング／ファンキー／邪神ちゃん）は直近30日で全台系ゼロ回か1回。ノーマル機が3機種（キングハナハナ-30・ニューキングハナハナV‐30・ファンキージャグラー2）含まれる点は検証上むしろ好都合で、これらは RB確率で独立に判定できる（rb_check_protocol）。"
+  },
+  "named_models_hypergeom_criterion": {
+    "definition": "名指し機種の的中を、当日の閾値超え機種数Kで条件づけた超幾何で判定する手続き。無条件ベースレートで基準を作ると高投入日に予告を過大評価する（メモリ feedback-named-model-conditional-baserate、2026-08-17 に実害）。",
+    "procedure": "採点日に、C=当日の min_machines=3 を満たす機種数、K=当日の閾値超え機種数、N=名指し数(=4) を数え、scipy.stats.hypergeom.sf(observed-1, C, K, N) を計算する。この p が 0.05 を下回って初めて『予告の機種指名に情報あり』と数える。",
+    "illustrative_at_median": {
+      "C": 60,
+      "K": 3,
+      "N_named": 4,
+      "p_at_least_1": 0.247,
+      "p_at_least_2": 0.067,
+      "N_full_roster": 6,
+      "p_at_least_1_roster": 0.275,
+      "p_at_least_2_roster": 0.024
+    },
+    "note": "⚠️ 中央値K=3での例示にすぎず、判定は当日の実測Kで行うこと。要点は『名指し4機種のうち1機種が当たっても、それは4回に1回起きる偶然であって当たりに数えてはいけない』こと。2機種以上で初めて情報がある。"
+  },
+  "monday_baseline": {
+    "definition": "8/18は月曜。曜日で投入量が違うかを、閾値超え機種数(min_machines=3)で見たもの。",
+    "window_30d": {
+      "monday_mean": 5.2,
+      "monday_n_days": 5,
+      "other_mean": 2.52,
+      "other_n_days": 25
+    },
+    "window_90d": {
+      "monday_mean": 4.38,
+      "monday_median": 5.0,
+      "monday_n_days": 13,
+      "other_mean": 3.28,
+      "other_median": 3.0,
+      "other_n_days": 75,
+      "mann_whitney_p_greater": 0.1885
+    },
+    "note": "⚠️ 分析者側の自己訂正を記録する。直近30日だけ見ると 月曜5.20 vs 他曜2.52 で強く見えたが、90日窓に広げると 4.38 vs 3.28、Mann-Whitney p=0.1885 で **有意ではない**。n=5の上振れだった。投稿者の11日間観測を批判しながら同じ罠に落ちかけたので凍結しておく。向きは一貫してプラスなので watching は継続するが、8/18 の推奨根拠には使わない（メモリ feedback-statistical-certainty-calibration）。"
+  },
+  "lastdigit8_baseline": {
+    "definition": "台番号末尾8の台の、同日ホール平均からの差枚残差（games_normalized>=1000 の台のみ）。2026年通年。",
+    "date_lastdigit_8_days": {
+      "n_days": 21,
+      "mean_residual": 36.0,
+      "se": 67
+    },
+    "other_days": {
+      "n_days": 205,
+      "mean_residual": 12.3,
+      "se": 22
+    },
+    "note": "差は +24 ± 71 で実質ゼロ。日付末尾8の日に台番号末尾8が優遇される証拠は差枚には無い。⚠️ ただしこれを『仕掛けなし』の証拠にしてはならない。メモリ project-rakuen-lastdigit7-rb-only の通り、楽園蒲田の末尾仕掛けは **差枚では検出できず RB確率でしか見えない**（8/17に out-of-sample で実証：末尾7ジャグ11台中7台が rb>=1/300、一方で差枚残差は+123でほぼゼロ・出率はむしろ逆）。position_rule が false でも RB側を必ず確認すること。"
+  },
+  "rb_check_protocol": {
+    "definition": "本予告のノーマル機（キングハナハナ-30 / ニューキングハナハナV‐30 / ファンキージャグラー2）に対する、差枚とは独立の判定手順。",
+    "threshold": "rb_probability_decimal に対し rb_rate >= 1/300、対象は games_normalized >= 3000",
+    "note": "AT機・擬似ボーナス機には適用しない（メーカー公表スペックのBB/RB確率から設定を読む手法はノーマル機限定）。採点時、model_named が false でもこの3機種のRB側の結果を併記すること。"
+  },
+  "claims": [
+    {
+      "type": "zentaikei_count",
+      "n_models": 2,
+      "note": "「8月毎日仕掛け ”3台設置以上から2機種全⑤⑥”」。8/10以降と同型の最低ライン主張。baserate p_at_least_2 = 0.739 で情報量はほぼ無い（4日に3日は自動的に当たる）。系列継続のため登録する。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "キングハナハナ-30",
+      "note": "「明日は特にキンハナ…あたりから」＋「日付末尾の8台設置機種を優先」。8台設置で予告の台数ルールに合致。⚠️ 直近30日 0/30（到達率0.0%）・68機種中41位。事前予測は miss。ノーマル機なので rb_check_protocol を併用する。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "ニューキングハナハナV‐30",
+      "note": "「ニューキング」。8台設置。⚠️ 直近30日 0/30（到達率0.0%）・68機種中44位。事前予測は miss。ノーマル機なので rb_check_protocol を併用する。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "ファンキージャグラー2",
+      "note": "「ファンキー」。8台設置。8/8 に平均+2441・rank9 で閾値超えしており、投稿者の自己申告実績のうち数少ない本物の当たり。ただし直近30日では 1/30（3.3%）・68機種中36位。事前予測は miss。ノーマル機なので rb_check_protocol を併用する。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "邪神ちゃんドロップキック",
+      "note": "「邪神ちゃん」。8台設置。⚠️ 直近30日 1/14（7.1%）だが平均score -385 で、8/13 の 3096 が唯一の到達。68機種中21位。事前予測は miss。"
+    },
+    {
+      "type": "position_rule",
+      "field": "last_digit",
+      "values": [
+        "8"
+      ],
+      "note": "「末尾探しはまずは日付の⑧」。ホール全機種プールでの判定。lastdigit8_baseline の通り通年ベースラインは +36±67 でゼロ。⚠️ プールの数字だけで棄却してはならない（announce.py の SEGMENT_ORDER コメント参照）。by_segment を必ず併記する。"
+    },
+    {
+      "type": "position_rule",
+      "field": "last_digit",
+      "values": [
+        "8"
+      ],
+      "segment": "AT",
+      "note": "予告が末尾8の探索先として挙げた機種（東京喰種31台・戦国乙女5 22台・甲鉄城のカバネリ海門18台・ミリオンゴッド16台・沖ドキ!BLACK 11台・化物語9台・マギアレコード12台）は全てAT/擬似ボーナス機なので、AT セグメントに限定した判定を別立てで登録する。⚠️ AT機には rb_check_protocol が使えないため、このセグメントは差枚が唯一の計器になる。"
+    },
+    {
+      "type": "position_rule",
+      "field": "last_digit",
+      "values": [
+        "8"
+      ],
+      "segment": "HANA",
+      "note": "8台設置候補のうち2機種（キングハナハナ-30・ニューキングハナハナV‐30）がHANAセグメント。予告の『末尾寄せ』と『8台設置機種』が交差する箇所なので分離して測る。⚠️ 差枚 false でも rb_check_protocol の結果と必ず突き合わせること。"
+    }
+  ],
+  "unscored_claims": [
+    {
+      "text": "末尾探しはまずは日付の⑧／機種は定番の東京喰種・乙女5・カバネリ・GOD・沖ドキブラック・化物語／今週増台のマギレコあたりから！",
+      "reason": "これは『末尾8を探す場所』の指定であって、当該機種が全台系になるという断定ではない。主張の実体は（末尾8 ∧ これら7機種）という連言で、position_rule は機種の部分集合に限定した判定を表現できないため model_named には落とさない。機種名を model_named として登録すると予告が言っていない主張を採点することになり的中率が歪む。末尾8の効果自体は上の position_rule 3件で測る。"
+    },
+    {
+      "text": "2機種中1機種はかなり高頻度でまつわる絡み",
+      "reason": "『全⑤⑥2機種のうち1機種は台数ルールに合致する』という条件つき主張。分母が『当日の全⑤⑥2機種』であり、閾値超え数Kが2でない日には定義できない。zentaikei_count と model_named の採点結果から事後に導出できるので独立の claim にはしない。"
+    },
+    {
+      "text": "今週はポスターで示唆あった\"末尾寄せ\"も視野に／明日は一般や二の矢でも十分ドリルできると思います",
+      "reason": "反証可能な数値を含まない。ポスター示唆の内容は本文に無く、『二の矢』も対象が特定できない。"
+    }
+  ],
+  "prior_prediction": {
+    "most_likely_hits": [
+      "モンキーターンV",
+      "甲鉄城のカバネリ 海門(うなと)決戦"
+    ],
+    "most_likely_misses": [
+      "キングハナハナ-30",
+      "ニューキングハナハナV‐30",
+      "ファンキージャグラー2",
+      "邪神ちゃんドロップキック",
+      "ディスクアップ ULTRAREMIX",
+      "とある魔術の禁書目録2"
+    ],
+    "note": "⭐ 登録時点の分析者予測を凍結する。**予告の名指し4機種は全て miss と予測する。** 根拠は eight_install_roster_20260817 の通り、8台設置6機種の直近30日到達率が合計 3/132機種日 = 2.3% とホール平均 5.8% を下回ること。判定は named_models_hypergeom_criterion に従い、1機種の的中は偶然（K=3なら 24.7%）として当たりに数えない。2機種以上で予告に情報があった側に傾く。 対抗予測は台数が多く少台数バイアスの効かない2機種を挙げる。モンキーターンV（12台・直近30日 3/30=10%・平均score +503）と 甲鉄城のカバネリ海門決戦（18台・3/30=10%・平均+466）。3台機種の高い到達率（花の慶次 4/15=26.7% 等）は1台の大勝ちで平均が跳ねる構造アーティファクトなので対抗予測には採らない。モンキーターンV 3125-3132 は低投資リスクブロックでもある（メモリ feedback-rakuen-low-investment-risk-blocks）。 ⚠️ 分析者側の自己訂正2点を明記しておく。(a) 初回の口頭回答で『末尾8ルールは試す価値がある』と述べたが、実データを当てると逆で、8台設置機種は直近最弱グループだった。撤回する。(b) 『月曜は投入日』も30日窓の n=5 上振れで、90日窓では p=0.19。8/18の推奨根拠には使わない。 ⚠️ 採点時の注意：『甲鉄城のカバネリ』（3台・旧筐体）と『甲鉄城のカバネリ 海門(うなと)決戦』（18台）は別機種なので名寄せを取り違えないこと。楽園蒲田は差枚の打ち切りがあるホールなので、n_censored_hi > 0 の機種は閾値未満でも『外れ』と断定しない（backtest/censoring.py）。"
+  },
+  "result": {
+    "scored_at_data_max": "20260818",
+    "hall_baseline_mean_diff": -136.3,
+    "hall_n_machines": 587,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 1,
+      "machines_hi": [],
+      "machines_lo": [
+        "ワールドダイスター"
+      ],
+      "bounds": [
+        -5095,
+        15477
+      ]
+    },
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 2,
+          "note": "「8月毎日仕掛け ”3台設置以上から2機種全⑤⑥”」。8/10以降と同型の最低ライン主張。baserate p_at_least_2 = 0.739 で情報量はほぼ無い（4日に3日は自動的に当たる）。系列継続のため登録する。"
+        },
+        "observed_n_models": 1,
+        "candidate_models": 55,
+        "models": [
+          {
+            "machine_name": "甲鉄城のカバネリ",
+            "score": 2422.4,
+            "n_machines": 3,
+            "mean_diff": 1619.3,
+            "age_days": 594
+          }
+        ],
+        "n_new_machines_over": 0,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "キングハナハナ-30",
+          "note": "「明日は特にキンハナ…あたりから」＋「日付末尾の8台設置機種を優先」。8台設置で予告の台数ルールに合致。⚠️ 直近30日 0/30（到達率0.0%）・68機種中41位。事前予測は miss。ノーマル機なので rb_check_protocol を併用する。"
+        },
+        "score": 49.3,
+        "mean_diff": 42.0,
+        "gratio": 1.173,
+        "n_machines": 8,
+        "rank": 14,
+        "candidate_models": 55,
+        "age_days": 594,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ニューキングハナハナV‐30",
+          "note": "「ニューキング」。8台設置。⚠️ 直近30日 0/30（到達率0.0%）・68機種中44位。事前予測は miss。ノーマル機なので rb_check_protocol を併用する。"
+        },
+        "score": -186.9,
+        "mean_diff": -160.1,
+        "gratio": 1.167,
+        "n_machines": 8,
+        "rank": 30,
+        "candidate_models": 55,
+        "age_days": 225,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ファンキージャグラー2",
+          "note": "「ファンキー」。8台設置。8/8 に平均+2441・rank9 で閾値超えしており、投稿者の自己申告実績のうち数少ない本物の当たり。ただし直近30日では 1/30（3.3%）・68機種中36位。事前予測は miss。ノーマル機なので rb_check_protocol を併用する。"
+        },
+        "score": -274.7,
+        "mean_diff": -249.4,
+        "gratio": 1.102,
+        "n_machines": 8,
+        "rank": 38,
+        "candidate_models": 55,
+        "age_days": 594,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "邪神ちゃんドロップキック",
+          "note": "「邪神ちゃん」。8台設置。⚠️ 直近30日 1/14（7.1%）だが平均score -385 で、8/13 の 3096 が唯一の到達。68機種中21位。事前予測は miss。"
+        },
+        "score": -730.4,
+        "mean_diff": -541.2,
+        "gratio": 1.349,
+        "n_machines": 8,
+        "rank": 52,
+        "candidate_models": 55,
+        "age_days": 14,
+        "age_bucket": "new",
+        "base_rate": 0.105,
+        "hit": false
+      },
+      {
+        "type": "position_rule",
+        "claim": {
+          "type": "position_rule",
+          "field": "last_digit",
+          "values": [
+            "8"
+          ],
+          "note": "「末尾探しはまずは日付の⑧」。ホール全機種プールでの判定。lastdigit8_baseline の通り通年ベースラインは +36±67 でゼロ。⚠️ プールの数字だけで棄却してはならない（announce.py の SEGMENT_ORDER コメント参照）。by_segment を必ず併記する。"
+        },
+        "by_segment": [
+          {
+            "segment": "AT",
+            "n_machines": 350,
+            "n_target": 35,
+            "n_other": 315,
+            "effect_resid_diff": 372.1,
+            "target_payout": 1.0135,
+            "other_payout": 0.9609
+          },
+          {
+            "segment": "OKI",
+            "n_machines": 13,
+            "n_target": 1,
+            "n_other": 12,
+            "effect_resid_diff": 281.8,
+            "target_payout": 0.4974,
+            "other_payout": 0.7816
+          },
+          {
+            "segment": "JUG",
+            "n_machines": 117,
+            "n_target": 11,
+            "n_other": 106,
+            "effect_resid_diff": 149.8,
+            "target_payout": 0.9995,
+            "other_payout": 0.9768
+          },
+          {
+            "segment": "BT",
+            "n_machines": 91,
+            "n_target": 9,
+            "n_other": 82,
+            "effect_resid_diff": -241.1,
+            "target_payout": 0.9706,
+            "other_payout": 1.0141
+          },
+          {
+            "segment": "HANA",
+            "n_machines": 16,
+            "n_target": 2,
+            "n_other": 14,
+            "effect_resid_diff": -585.1,
+            "target_payout": 0.9104,
+            "other_payout": 1.0021
+          }
+        ],
+        "judged_segment": "ALL(pooled)",
+        "n_target": 58,
+        "n_other": 529,
+        "effect_resid_diff": 200.8,
+        "target_payout": 0.9997,
+        "other_payout": 0.9723,
+        "hit": true
+      },
+      {
+        "type": "position_rule",
+        "claim": {
+          "type": "position_rule",
+          "field": "last_digit",
+          "values": [
+            "8"
+          ],
+          "segment": "AT",
+          "note": "予告が末尾8の探索先として挙げた機種（東京喰種31台・戦国乙女5 22台・甲鉄城のカバネリ海門18台・ミリオンゴッド16台・沖ドキ!BLACK 11台・化物語9台・マギアレコード12台）は全てAT/擬似ボーナス機なので、AT セグメントに限定した判定を別立てで登録する。⚠️ AT機には rb_check_protocol が使えないため、このセグメントは差枚が唯一の計器になる。"
+        },
+        "by_segment": [
+          {
+            "segment": "AT",
+            "n_machines": 350,
+            "n_target": 35,
+            "n_other": 315,
+            "effect_resid_diff": 372.1,
+            "target_payout": 1.0135,
+            "other_payout": 0.9609
+          },
+          {
+            "segment": "OKI",
+            "n_machines": 13,
+            "n_target": 1,
+            "n_other": 12,
+            "effect_resid_diff": 281.8,
+            "target_payout": 0.4974,
+            "other_payout": 0.7816
+          },
+          {
+            "segment": "JUG",
+            "n_machines": 117,
+            "n_target": 11,
+            "n_other": 106,
+            "effect_resid_diff": 149.8,
+            "target_payout": 0.9995,
+            "other_payout": 0.9768
+          },
+          {
+            "segment": "BT",
+            "n_machines": 91,
+            "n_target": 9,
+            "n_other": 82,
+            "effect_resid_diff": -241.1,
+            "target_payout": 0.9706,
+            "other_payout": 1.0141
+          },
+          {
+            "segment": "HANA",
+            "n_machines": 16,
+            "n_target": 2,
+            "n_other": 14,
+            "effect_resid_diff": -585.1,
+            "target_payout": 0.9104,
+            "other_payout": 1.0021
+          }
+        ],
+        "judged_segment": "AT",
+        "n_target": 35,
+        "n_other": 315,
+        "effect_resid_diff": 372.1,
+        "target_payout": 1.0135,
+        "other_payout": 0.9609,
+        "hit": true
+      },
+      {
+        "type": "position_rule",
+        "claim": {
+          "type": "position_rule",
+          "field": "last_digit",
+          "values": [
+            "8"
+          ],
+          "segment": "HANA",
+          "note": "8台設置候補のうち2機種（キングハナハナ-30・ニューキングハナハナV‐30）がHANAセグメント。予告の『末尾寄せ』と『8台設置機種』が交差する箇所なので分離して測る。⚠️ 差枚 false でも rb_check_protocol の結果と必ず突き合わせること。"
+        },
+        "by_segment": [
+          {
+            "segment": "AT",
+            "n_machines": 350,
+            "n_target": 35,
+            "n_other": 315,
+            "effect_resid_diff": 372.1,
+            "target_payout": 1.0135,
+            "other_payout": 0.9609
+          },
+          {
+            "segment": "OKI",
+            "n_machines": 13,
+            "n_target": 1,
+            "n_other": 12,
+            "effect_resid_diff": 281.8,
+            "target_payout": 0.4974,
+            "other_payout": 0.7816
+          },
+          {
+            "segment": "JUG",
+            "n_machines": 117,
+            "n_target": 11,
+            "n_other": 106,
+            "effect_resid_diff": 149.8,
+            "target_payout": 0.9995,
+            "other_payout": 0.9768
+          },
+          {
+            "segment": "BT",
+            "n_machines": 91,
+            "n_target": 9,
+            "n_other": 82,
+            "effect_resid_diff": -241.1,
+            "target_payout": 0.9706,
+            "other_payout": 1.0141
+          },
+          {
+            "segment": "HANA",
+            "n_machines": 16,
+            "n_target": 2,
+            "n_other": 14,
+            "effect_resid_diff": -585.1,
+            "target_payout": 0.9104,
+            "other_payout": 1.0021
+          }
+        ],
+        "judged_segment": "HANA",
+        "n_target": 2,
+        "n_other": 14,
+        "effect_resid_diff": -585.1,
+        "target_payout": 0.9104,
+        "other_payout": 1.0021,
+        "hit": false
+      }
+    ]
+  },
+  "announce_digest": "204649871ad9e8da"
+}

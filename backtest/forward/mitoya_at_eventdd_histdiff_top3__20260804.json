@@ -1,0 +1,66 @@
+{
+  "rule_id": "mitoya_at_eventdd_histdiff_top3",
+  "hall": "みとや大森町店",
+  "freeze_hash": "e99d60338347d27e",
+  "target_date": "20260804",
+  "data_asof": "20260803",
+  "lookback_window": [
+    "2026-07-05",
+    "2026-08-04"
+  ],
+  "score": "hist_mean_diff",
+  "selection_unit": "machine",
+  "success_criterion": "【重要】AT一般×イベントDD という組み合わせは 2026-07-27 に同じデータを見て発見したものであり、バックテストは in-sample である。数値を採否根拠にしてはならない。判定はフォワードのみ。フォワード20エントリー日を経過した時点で edge 平均が +200枚/台 以上かつ 95%CI 下限 > 0 であること。満たさなければ破棄し、みとやのAT系スコアの派生はこの1本で打ち止めとする。なお 2026-05 の店長交代以降のイベントDD日は実測21日しかなく、レジーム再変化の可能性は常に残る。",
+  "is_dry_run": false,
+  "picks": [
+    {
+      "machine_number": 590,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 1555.809524,
+      "history_days": 21
+    },
+    {
+      "machine_number": 698,
+      "machine_name": "ローティス",
+      "score": 1190.95,
+      "history_days": 20
+    },
+    {
+      "machine_number": 518,
+      "machine_name": "真打 吉宗",
+      "score": 1177.708333,
+      "history_days": 24
+    }
+  ],
+  "result": {
+    "scored_with_hash": "e99d60338347d27e",
+    "day_baseline": -76.1,
+    "universe_size": 169,
+    "picks_realized": [
+      {
+        "machine_number": 590,
+        "games": 4308.0,
+        "diff": -3875.0,
+        "edge": -3798.8639053254437
+      },
+      {
+        "machine_number": 698,
+        "games": 1923.0,
+        "diff": -1908.0,
+        "edge": -1831.8639053254437
+      },
+      {
+        "machine_number": 518,
+        "games": 2240.0,
+        "diff": -1008.0,
+        "edge": -931.8639053254437
+      }
+    ],
+    "mean_diff_per_pick": -2263.7,
+    "mean_edge_per_pick": -2187.5,
+    "missing_machines": [],
+    "rb_perspective": null,
+    "model_perspective": null
+  },
+  "plan_digest": "1ec8ee9bb5bf3f39"
+}

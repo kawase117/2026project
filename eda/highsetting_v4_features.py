@@ -75,7 +75,7 @@ def load_layout(hall: str) -> pd.DataFrame:
     con = sqlite3.connect(HALLS[hall])
     try:
         df = pd.read_sql_query(
-            "select machine_number, x, y, section_min, section_max,"
+            "select machine_number, x, y, section, section_min, section_max,"
             " rank_from_min, rank_from_max, rank_from_aisle from machine_layout",
             con,
         )
@@ -122,7 +122,10 @@ def augment_v4(long: pd.DataFrame, hall: str) -> pd.DataFrame:
     layout = load_layout(hall)
     if len(layout):
         layout = layout.rename(columns={"x": "lx", "y": "ly"})
-        layout["layout_section_size"] = layout["section_max"] - layout["section_min"] + 1
+        # 実台数で数える。section_max - section_min + 1 は section の台番号が連番
+        # である前提で、蒲田1の 2026-08-03 以降（増設台 2416-2430 が離れた番号で
+        # 既存の島に付いた）では桁違いになる。連番の section では両者は一致する。
+        layout["layout_section_size"] = layout.groupby("section")["machine_number"].transform("nunique")
         layout["kaku_min"] = (layout["rank_from_min"] == 1).astype(int)
         layout["kaku_max"] = (layout["rank_from_max"] == 1).astype(int)
         long = long.merge(layout[["machine_number"] + LAYOUT_FEATURES], on="machine_number", how="left")

@@ -35,9 +35,16 @@
 | `machine_layout_history` | PK `(machine_number, valid_from)`。`valid_from`〜`valid_to`（TEXT `YYYYMMDD`、`valid_to` が NULL なら現在まで） | **過去に遡る分析すべて** |
 
 主な位置列は両テーブル共通: `section`(TEXT 例 `2223-2240`)、`section_min`/`section_max`、
-`rank_from_min`/`rank_from_max`（台番号順のセクション内順位）、`rank_from_aisle`（通路角番）。
+`rank_from_min`/`rank_from_max`（セクション内順位）、`rank_from_aisle`（通路角番）。
 `rank_from_aisle` が入っているのは蒲田7とみとやのみ。楽園・蒲田1は全NULL、雑色ほか5ホールは
 `machine_layout` 自体が空。
+
+🔴 **セクション台数を `section_max - section_min + 1` で出してはいけない。**
+これは「section の台番号が連番」を前提にしている。蒲田1の 20260803 エポックでは
+増設台 2416-2430 が離れた番号のまま既存の島に足されたため、島 `2043-2059` の
+`section_max` は 2422 になり、引き算では 18 台の島が 380 と出る。実台数は
+`eda.core.compute_section_size`（`groupby("section")["machine_number"].nunique()`）で数えること。
+`section` 名は**島の識別子**であって `f"{section_min}-{section_max}"` と一致する保証はない。
 
 🔴 **`rank_from_min`/`rank_from_max` は「台番号順の順位」であって物理的な島の端ではない。**
 背中合わせ2列の島では台番号が蛇行(U字)で振られるため、`rank==1` は**島の片方の端の2台だけ**を
@@ -79,6 +86,37 @@ LEFT JOIN machine_layout_history l
 
 構築・検証は `database/migrate_machine_layout_history.py`（`bootstrap` / `insert-era` / `verify`）。
 `verify` はエポックの重なり（重なると結合で行が増える）とカバレッジを検査する。
+
+**現在のエポック構成**:
+
+| ホール | エポック | 契機 |
+|---|---|---|
+| 楽園蒲田店 | `[20250101..20260705]` / `[20260706..∞]` | 2026-07-06 改装 |
+| 蒲田1 | `[20250101..20260802]` / `[20260803..∞]` | 2026-08-03 増台15台(2416-2430)＋再配置 |
+| 蒲田7・みとや | 単一エポック | 改装なし |
+
+蒲田1の 20260803 エポックは `database/migrate_kamata1_layout_20260803.py` が生成する。
+増設台はすべて既存の島の**端**に付き、12の島で片側の角番が新台に移った。さらに
+`2001-2020`(対角) と `2021-2031`(横列) が 2416-2420 で繋がって1島になっている。
+このエポックの `rank_from_min`/`rank_from_max` は**台番号順ではなく物理順**（新台は台番号が
+飛んでいても物理的な端に置かれる）。島の接続の読みを変えたい場合は同スクリプトの
+`ISLANDS_20260803` を書き換えて再実行する。
+
+**section 名は物理順の連番区間を "+" で連結した表示名**（例: `2032-2042+2421`、
+`2422+2043-2059`）。「min-max」の単純表記だと `2032-2042` のように見えて実は12台目
+(2421) が範囲外に存在する、という名前と中身が矛盾した状態になるため。
+
+**`prior_section` 列**（`machine_layout_history` のみ、`machine_layout` には無い）に、
+同じ台番号が**直前のエポックで所属していた section 名**が入る（新設台はNULL）。
+工事前後の位置効果（角番効果など）を比較するときは、これで新旧の対応セクションを
+機械的に辿れる:
+
+```sql
+-- ある島の工事前の対応セクションを引く
+SELECT DISTINCT prior_section FROM machine_layout_history
+WHERE hall_name = ? AND valid_from = '20260803' AND section = '2032-2042+2421';
+-- -> '2032-2042'。これで工事前エポックの同じ島だけを抽出して付き合わせられる。
+```
 
 ## モジュール構成
 

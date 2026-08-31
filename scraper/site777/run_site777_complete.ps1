@@ -36,6 +36,7 @@ $singleReport = Join-Path $outputDirectory 'site777_single_machine_report_filter
 $tailReport = Join-Path $outputDirectory 'site777_last_digit_report_filtered.md'
 $threeMachineReport = Join-Path $outputDirectory 'site777_three_machine_report_filtered.md'
 $cornerReport = Join-Path $outputDirectory 'site777_corner_report_filtered.md'
+$settingReport = Join-Path $outputDirectory 'site777_setting_report_filtered.md'
 $mobileReport = Join-Path $outputDirectory 'site777_mobile_report.html'
 $runReport = Join-Path $outputDirectory 'site777_complete_run_latest.json'
 
@@ -160,7 +161,11 @@ $stageStart = [DateTime]::UtcNow
     --tail-report-output $tailReport `
     --three-machine-report-output $threeMachineReport `
     --corner-report-output $cornerReport `
-    --reference-db (Join-Path $projectRoot 'db\楽園蒲田店.db')
+    --setting-report-output $settingReport
+# Do not pass --reference-db here. Windows PowerShell 5.1 reads a BOM-less UTF-8 .ps1
+# as the ANSI code page, so a Japanese path literal is silently mangled and the analyzer
+# dies with FileNotFoundError. reference.py resolves the same default path from Python,
+# where the encoding is unambiguous. Keep every .ps1 in this directory pure ASCII.
 if ($LASTEXITCODE -ne 0) { throw "Analysis failed: $LASTEXITCODE" }
 & $python $mobileBuilder --input $analysisJson --output $mobileReport
 if ($LASTEXITCODE -ne 0) { throw "Mobile report failed: $LASTEXITCODE" }
@@ -219,6 +224,7 @@ $document = [ordered]@{
         tailReport = $tailReport
         threeMachineReport = $threeMachineReport
         cornerReport = $cornerReport
+        settingReport = $settingReport
     }
 }
 $document | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $runReport -Encoding UTF8

@@ -135,6 +135,86 @@ JUGGLER_FAMILY_SPECS = {
             6: {"rb_probability": 1 / 237.4, "bb_probability": 1 / 237.4, "payout_rate": 107.3},
         },
     },
+    # ジャグラー系ではないが、BB/RBが設定で変わる非AT・ボーナストリガー機として同じ
+    # 尤度推定に載せる（site777_setting_estimator.py はこの辞書を machine_keyword で
+    # 汎用的に走査するため、JUGGLER_FAMILY_ORDER/MATCHERS には追加しない＝蒲田7/蒲田1
+    # 向けジャグラー専用パイプラインには影響しない）。
+    # 出典: document/machine_master_research/machine_master.csv
+    # （1geki.jp解析値）。設定3・4は元データ未掲載のため欠落させたまま扱う
+    # （estimate_setting は settings dict のキーだけを見るので部分欠損でも動く）。
+    "HANABI_SHIN": {
+        "family_name": "新ハナビ",
+        "machine_keyword": "新ハナビ",
+        "settings": {
+            1: {"rb_probability": 1 / 356.2, "bb_probability": 1 / 277.7, "payout_rate": 97.7},
+            2: {"rb_probability": 1 / 334.4, "bb_probability": 1 / 268.6, "payout_rate": 99.3},
+            5: {"rb_probability": 1 / 292.6, "bb_probability": 1 / 256.0, "payout_rate": 104.4},
+            6: {"rb_probability": 1 / 260.1, "bb_probability": 1 / 240.9, "payout_rate": 109.0},
+        },
+    },
+    # 型式名「LB／スマスロサンダーVHA」の通り、site777の「LBサンダーV」と
+    # machine_master の「スマスロ サンダーV」は同一機種（ユーザー提供の公式スペック表、
+    # 2026-08-25）。設定3・4は未公表のため欠落させたまま扱う。
+    "SANDER_V": {
+        "family_name": "サンダーV",
+        "machine_keyword": "サンダーV",
+        "settings": {
+            1: {"rb_probability": 1 / 434.0, "bb_probability": 1 / 277.7, "payout_rate": 98.5},
+            2: {"rb_probability": 1 / 394.8, "bb_probability": 1 / 275.4, "payout_rate": 100.0},
+            5: {"rb_probability": 1 / 344.9, "bb_probability": 1 / 270.8, "payout_rate": 102.9},
+            6: {"rb_probability": 1 / 313.6, "bb_probability": 1 / 264.3, "payout_rate": 106.0},
+        },
+    },
+    # 出典: document/machine_master_research/machine_master.csv
+    # （1geki.jp解析値）。設定3・4は元データ未掲載のため欠落させたまま扱う。
+    "VERSUS_REVISE": {
+        "family_name": "バーサスリヴァイズ",
+        "machine_keyword": "バーサスリヴァイズ",
+        "settings": {
+            1: {"rb_probability": 1 / 344.9, "bb_probability": 1 / 264.3, "payout_rate": 97.8},
+            2: {"rb_probability": 1 / 334.4, "bb_probability": 1 / 260.1, "payout_rate": 99.5},
+            5: {"rb_probability": 1 / 292.6, "bb_probability": 1 / 244.5, "payout_rate": 104.2},
+            6: {"rb_probability": 1 / 277.7, "bb_probability": 1 / 237.4, "payout_rate": 107.1},
+        },
+    },
+    # ユーザー提供の公式スペック表（2026-08-25）。設定1,2,5,6の4段階機。
+    "ALEX_BRIGHT": {
+        "family_name": "アレックス ブライト",
+        "machine_keyword": "アレックス ブライト",
+        "settings": {
+            1: {"rb_probability": 1 / 428.3, "bb_probability": 1 / 309.1, "payout_rate": 98.8},
+            2: {"rb_probability": 1 / 409.6, "bb_probability": 1 / 303.4, "payout_rate": 100.6},
+            5: {"rb_probability": 1 / 366.1, "bb_probability": 1 / 295.2, "payout_rate": 103.5},
+            6: {"rb_probability": 1 / 312.1, "bb_probability": 1 / 287.4, "payout_rate": 106.8},
+        },
+    },
+    # 型式名「LBケロット5ND05H」の通り、site777の「LBケロット5」と同一機種
+    # （ユーザー提供の公式スペック表、2026-08-25）。ケロット4とは別機種のため流用不可、
+    # 混同しないこと。設定1〜6フルスペックの機種。
+    "KEROTTO5": {
+        "family_name": "ケロット5",
+        "machine_keyword": "ケロット5",
+        "settings": {
+            1: {"rb_probability": 1 / 350.5, "bb_probability": 1 / 232.4, "payout_rate": 98.2},
+            2: {"rb_probability": 1 / 341.3, "bb_probability": 1 / 230.8, "payout_rate": 99.1},
+            3: {"rb_probability": 1 / 324.4, "bb_probability": 1 / 229.1, "payout_rate": 101.1},
+            4: {"rb_probability": 1 / 299.3, "bb_probability": 1 / 218.5, "payout_rate": 104.5},
+            5: {"rb_probability": 1 / 274.2, "bb_probability": 1 / 215.5, "payout_rate": 107.0},
+            6: {"rb_probability": 1 / 239.2, "bb_probability": 1 / 204.8, "payout_rate": 111.0},
+        },
+    },
+    # ユーザー提供の公式スペック表（2026-08-25）。設定1,2,5,6の4段階機。
+    # site777の表記は「スマスロ ハナビ」（新ハナビとは別機種）。
+    "HANABI_SUMASLO": {
+        "family_name": "スマスロ ハナビ",
+        "machine_keyword": "スマスロ ハナビ",
+        "settings": {
+            1: {"rb_probability": 1 / 394.8, "bb_probability": 1 / 297.9, "payout_rate": 98.6},
+            2: {"rb_probability": 1 / 358.1, "bb_probability": 1 / 292.6, "payout_rate": 100.4},
+            5: {"rb_probability": 1 / 313.6, "bb_probability": 1 / 284.9, "payout_rate": 103.0},
+            6: {"rb_probability": 1 / 282.5, "bb_probability": 1 / 273.1, "payout_rate": 106.4},
+        },
+    },
 }
 
 JUGGLER_FAMILY_ORDER = ("IMEX", "MYV", "GOGO3", "FUNKY2", "HAPPY8")

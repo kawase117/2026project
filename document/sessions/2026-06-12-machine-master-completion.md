@@ -16,7 +16,7 @@
 
 ### 1. 機械マスター CSV 完成
 
-**ファイル**: `document/machine_master_research/machine_list_for_research.csv`
+**ファイル**: `document/machine_master_research/machine_master.csv`
 
 | 属性 | 状態 | 備考 |
 |------|------|------|
@@ -150,7 +150,7 @@ Overall Readiness:      ✅ ML Feature Engineering Ready
 ## 次セッションへの引き継ぎ
 
 **保存済み成果物**:
-- ✅ `machine_list_for_research.csv` (299 行, 100% 完成)
+- ✅ `machine_master.csv` (299 行, 100% 完成)
 - ✅ `extract_and_batch_tables.py` (RTP/BB/RB 抽出用)
 - ✅ `fetch_rtp_via_llm.py` (設計のみ; API キー不要に変更)
 - ✅ SLUG_CACHE (30+ 機械マッピング)
@@ -167,4 +167,3 @@ Overall Readiness:      ✅ ML Feature Engineering Ready
 **記録者**: Claude Haiku 4.5  
 **実行環境**: Windows 11, Python 3.14, curl (1geki.jp scraping)  
 **キー成果**: **299 機械 × 3 主要属性 = 100% 完成** ✅
-

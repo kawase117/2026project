@@ -1,0 +1,100 @@
+---
+id: ordered-category-confidence-needs-group-ratio-not-rank-gap
+trigger: "尤度ベースで順序のある離散カテゴリ(パチスロ設定1〜6など)を推定し、信用度スコアを設計するとき。最尤カテゴリと2位の差(尤度差)を信用度に使おうとするとき。設定推定・段階推定・レベル推定で『どのくらい確からしいか』を出す実装をレビューするとき"
+confidence: 0.8
+domain: statistical-modeling
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 順序付きカテゴリの信用度は「1位と2位の差」ではなく「高群vs低群の比」で測る
+
+## 背景
+site777の設定推定(scraper/site777/setting_estimator.py)で、累計BB・RBの二項尤度から
+パチスロ設定1〜6を推定する際、最初は「最尤カテゴリと2位の尤度差」を信用度の指標にした。
+実データ78台で検証したところ、全78台が最低ランク「低」に潰れた。原因は、設定が
+順序付きカテゴリでスペック値が単調に変化するため、1位と2位は統計的にほぼ必ず隣接する
+設定になり、差が構造的に小さくなること。回転数をいくら増やしてもこの差は開かない
+(合成2万試行で確認: 8,000G回しても隣接設定同士の尤度差は小さいまま)。
+
+一方、「高設定側グループ(設定5,6)の最大尤度」対「低設定側グループ(設定1〜4)の最大尤度」
+の比に置き換えると、実データで 高5/中19/低53 のように意味のある分布に分かれた。
+判定できるのは「どちらの群に属するか」であって「どの設定か」ではない、という認識が
+指標選択の分かれ目になる。
+
+## アクション
+順序があり値が単調に変化するカテゴリ(パチスロ設定、成熟度レベル、リスク段階など)を
+尤度・事後確率で推定する実装をレビュー・設計するときは、信用度に
+「1位vs2位の差」を使っていないか確認する。使っていれば、意味のある小グループ
+(例: 高設定側 vs 低設定側)へまとめてから群間比を取る設計に直す。
+群分けの境界(この場合は設定4/5の間)は、スペック表上で実際に判別可能な位置に置く。
+単一のピンポイント推定値だけを出さず、「否定できない範囲」も併記する。
+
+## 例
+site777の実装(2026-08-17〜18時点):
+```python
+# 悪い例: 1位と2位の尤度差 -> 実データ78台が全て「低」に潰れた
+gap = scores[best] - scores[second]
+
+# 良い例: 高群と低群の最大尤度比
+high_low_log_ratio = max(scores[s] for s in (5,6)) - max(scores[s] for s in (1,2,3,4))
+```
+`ml/experiments/jug_rb_setting_prediction/stage2_daily_posterior.py` は全事後分布の
+エントロピーで信用度を出しており同じ罠を踏んでいないが、今後この種の指標を追加する
+実装(新規設定推定・段階推定機能)では上記を優先確認する。
+
+---
+id: ps1-must-not-contain-japanese-literals-or-comments
+trigger: "このプロジェクトで.ps1ファイルを新規作成・編集するとき。PowerShellスクリプトに日本語のコメントや文字列リテラル(ファイルパス・機種名など)を書こうとするとき。PowerShell経由の処理がFileNotFoundErrorやConvertFrom-Jsonの構文エラーで原因不明に落ちたとき"
+confidence: 0.85
+domain: windows-powershell-encoding
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# .ps1に日本語を書くと、構文エラーにならず黙って化けることがある
+
+## 背景
+2026-08-17のsite777ライブ実行で、run_site777_complete.ps1内の
+`--reference-db (Join-Path $projectRoot 'db\楽園蒲田店.db')` という文字列リテラルが
+`db\楽園蒲田庁Edb` に化け、収集26分・グラフ364台を全て終えた最後の解析段階で
+FileNotFoundErrorになった。翌日の再実行では、CLI(playwright-cli)の出力に含まれる
+機種名(パチスロ 新鬼武者2)が化けてJSON構造が壊れ、ConvertFrom-Jsonが失敗した。
+
+原因はWindows PowerShell 5.1がBOMなしUTF-8の.ps1をコンソールのANSIコードページ
+(cp932)として読むこと。pwsh.exe(PowerShell 7)なら正しく読むが、この環境には
+pwshが入っておらず、.cmd入口は常にpowershell.exeへフォールバックする。
+
+厄介なのは挙動の非対称性: 日本語**コメント**は数行先で`UnexpectedToken`という
+分かりやすい構文エラーになるが、日本語**文字列リテラル**は構文エラーにならず
+実行時に黙って別の文字列へ化ける。ネイティブCLIの標準出力も同じ理由で化けるため、
+`[Console]::OutputEncoding`と`$OutputEncoding`をUTF-8に固定する処置が要る。
+`db/`に残る0バイトの`楽園転田店.db`は、同種の事故が過去にも起きていた痕跡。
+
+## アクション
+このプロジェクトの.ps1に日本語を一切書かない。コメントは英語にする。
+日本語を含む値(ファイルパス、機種名など)はPS1にリテラルで埋め込まず、
+Python側の定数解決やJSON設定ファイル経由で渡す。
+ネイティブCLI(playwright-cli等)を呼ぶ.ps1では、呼び出し前に
+`[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)` と
+`$OutputEncoding = [System.Text.UTF8Encoding]::new($false)` を設定する。
+点検は構文チェックではなく非ASCII行の検出で行う:
+`LC_ALL=C grep -an '[^ -~\t]' *.ps1` (0件になるまで直す)。
+構文チェック(`[System.Management.Automation.Language.Parser]::ParseFile`)は
+文字列リテラルの化けを検出できないため、これだけでは不十分。
+
+## 例
+```powershell
+# 悪い例: 日本語文字列リテラルが黙って化ける
+--reference-db (Join-Path $projectRoot 'db\楽園蒲田店.db')
+
+# 良い例: パスを渡さず、Python側のデフォルト解決に任せる
+# (reference.py の DEFAULT_REFERENCE_DB が同じパスを解決する)
+--setting-report-output $settingReport
+```
+```powershell
+# CLI出力を受け取る.ps1では起動前に必須
+[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+$OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+```
+---

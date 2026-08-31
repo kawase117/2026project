@@ -1,0 +1,26 @@
+{
+  "rule_id": "k1_model_gratio_dd7kei_top2",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "hypothesis": "蒲田1の7のつく日は『全域強化＋機種イチ』型で、投入は台単位ではなく機種単位に見える。2026-08-07 実測で閾値+1,800超えが8機種あり、上位は戦国乙女4（4台・平均+6,100）・真打吉宗（4台・平均+4,100）だった。同日のホール予告アカウントが名指ししたのもこの2機種で、機種粒度の指名が当たりうることを示す。みとやで既に登録済みの機種粒度ルール（mitoya_model_gratio_top2）と同一設計を蒲田1の7系日に適用し、直近21日の総和ベースG比×平均差枚で上位2機種を指名してその設置台を全部買う運用を検証する。\n\n【設計上の断り】⚠️ このルールは 2026-08-07 の実績を見た後に登録している。緩和材料は2点。(a) score・lookback_days・top_n・min_history_days・min_games は既存の mitoya_model_gratio_top2 から一切変えておらず、8/07 の結果でパラメータを選んでいない。(b) min_machines_per_model は mitoya の 1 から 3 へ変更したが、根拠は『全台系』を検証する以上3台未満は全台系と呼べないという定義上の理由（backtest/announce/README.md のベースレート校正が min_machines=3 で行われている）であり、8/07 の結果ではない。8/07 自体は DB 取り込み済みで plan できないため、評価は 2026-08-17 以降のエントリーのみ。⚠️ 本ルールの追加でフォワード並走本数は11本になる。全部が無効でも少なくとも1本が合格する確率は約24%（1-0.975^11）なので、合格をもって手法発見と結論してはならない。",
+  "source_instinct": "2026-08-01-granularity-of-selection-is-hall-specific / mitoya_model_gratio_top2 の設計を蒲田1へ横展開（2026-08-08）",
+  "eval_start": "20260817",
+  "eval_end": "20270817",
+  "success_criterion": "フォワード20エントリー日を経過した時点で、指名機種全台の総和ベースedge（対ホール全体同日平均、diff_coins_normalized）の平均が正であり、7日ブロックブートストラップ95%CI下限が0を上回ること。満たさなければ破棄する。判定はフォワードテストのみで行い、バックテスト数値および2026-08-07の観測は採否根拠にしない。",
+  "universe": {},
+  "eligibility": {},
+  "entry_days": {
+    "dd": [
+      7,
+      17,
+      27
+    ]
+  },
+  "score": "hist_model_gratio_mean_diff",
+  "lookback_days": 21,
+  "min_history_days": 10,
+  "top_n": 2,
+  "min_games": 1000,
+  "min_games_today": 0,
+  "selection_unit": "machine_model",
+  "min_machines_per_model": 3
+}

@@ -257,12 +257,11 @@ def test_resolve_machine_url_falls_back_to_search_results_when_page_index_misses
     assert result["selected_url"] == "https://1geki.jp/slot/l_tokyoghoul/"
 
 
-def test_build_url_map_writes_json_and_csv(tmp_path: Path) -> None:
+def test_build_url_map_updates_master_and_optionally_writes_audit(tmp_path: Path) -> None:
     from machine_master_research_url_mapper import build_url_map
 
-    input_path = tmp_path / "machine_list_for_research.csv"
-    json_path = tmp_path / "machine_master_research_url_map.json"
-    csv_path = tmp_path / "machine_master_research_url_map.csv"
+    input_path = tmp_path / "machine_master.csv"
+    audit_path = tmp_path / "url_resolution_audit.json"
 
     with input_path.open("w", encoding="utf-8", newline="") as f:
         writer = csv.writer(f)
@@ -282,18 +281,23 @@ def test_build_url_map_writes_json_and_csv(tmp_path: Path) -> None:
 
     summary = build_url_map(
         input_path=input_path,
-        json_path=json_path,
-        csv_path=csv_path,
+        audit_path=audit_path,
         page_index=page_index,
         machine_master_alias_map={"1000ちゃんa": ["1000ちゃんA", "LBパチスロ1000ちゃんA"]},
     )
 
     assert summary["rows_total"] == 1
     assert summary["rows_selected"] == 1
-    assert json_path.exists()
-    assert csv_path.exists()
+    assert summary["master_rows_updated"] == 1
+    assert audit_path.exists()
 
-    with json_path.open("r", encoding="utf-8") as f:
+    with input_path.open("r", encoding="utf-8-sig", newline="") as f:
+        master_rows = list(csv.DictReader(f))
+    assert master_rows[0]["source_url"] == "https://1geki.jp/slot/lb_1000chan_a/"
+    assert master_rows[0]["source_status"] == "selected"
+    assert master_rows[0]["source_candidate_count"] == "2"
+
+    with audit_path.open("r", encoding="utf-8") as f:
         payload = json.load(f)
     assert payload[0]["selected_url"] == "https://1geki.jp/slot/lb_1000chan_a/"
 

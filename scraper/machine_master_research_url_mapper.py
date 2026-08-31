@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Build a 1geki URL normalization map for machine master research."""
+"""Resolve 1geki source URLs into the canonical machine master."""
 
 from __future__ import annotations
 
@@ -9,6 +9,7 @@ import csv
 import json
 import re
 import sqlite3
+import tempfile
 import unicodedata
 import urllib.parse
 import urllib.request
@@ -32,6 +33,14 @@ MACHINE_ALIAS_MAP = {
     "sisterquest": ["シスタークエスト", "sisterquest", "シスクエ"],
 }
 ALIAS_SPLIT_PATTERN = re.compile(r"[,\n\r|/；;、]+")
+SOURCE_COLUMNS = (
+    "source_url",
+    "source_status",
+    "source_confidence",
+    "source_query",
+    "source_candidate_count",
+    "source_reason",
+)
 
 
 @dataclass(frozen=True)
@@ -79,14 +88,10 @@ def load_machine_master_alias_map(db_dir: Path = DB_DIR) -> dict[str, list[str]]
         try:
             with sqlite3.connect(db_path) as conn:
                 cursor = conn.cursor()
-                cursor.execute(
-                    "SELECT name FROM sqlite_master WHERE type='table' AND name='machine_master'"
-                )
+                cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='machine_master'")
                 if cursor.fetchone() is None:
                     continue
-                cursor.execute(
-                    "SELECT machine_name_normalized, display_names, official_name FROM machine_master"
-                )
+                cursor.execute("SELECT machine_name_normalized, display_names, official_name FROM machine_master")
                 rows = cursor.fetchall()
         except sqlite3.Error:
             continue
@@ -497,7 +502,12 @@ def resolve_machine_url(
                 "confidence": round(min(best.score, 1.0), 3),
                 "query": machine_name,
                 "candidates": [
-                    {"title": candidate.title, "url": candidate.url, "score": candidate.score, "reason": candidate.reason}
+                    {
+                        "title": candidate.title,
+                        "url": candidate.url,
+                        "score": candidate.score,
+                        "reason": candidate.reason,
+                    }
                     for candidate in scored[:10]
                 ],
                 "reason": best.reason,
@@ -559,40 +569,99 @@ def _write_json(path: Path, payload: object) -> None:
         handle.write("\n")
 
 
-def _write_csv(path: Path, rows: Iterable[dict[str, object]]) -> None:
+def _write_master_atomic(path: Path, fieldnames: list[str], rows: list[dict[str, str]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    rows = list(rows)
-    fieldnames = [
-        "machine_name",
-        "status",
-        "selected_url",
-        "confidence",
-        "query",
-        "candidate_count",
-        "reason",
-    ]
-    with path.open("w", encoding="utf-8-sig", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+    with tempfile.NamedTemporaryFile(
+        mode="w",
+        encoding="utf-8-sig",
+        newline="",
+        delete=False,
+        dir=path.parent,
+        prefix=f"{path.stem}_",
+        suffix=".tmp",
+    ) as handle:
+        temp_path = Path(handle.name)
+        writer = csv.DictWriter(handle, fieldnames=fieldnames, extrasaction="ignore")
         writer.writeheader()
-        for row in rows:
-            writer.writerow(
-                {
-                    "machine_name": row["machine_name"],
-                    "status": row["status"],
-                    "selected_url": row["selected_url"],
-                    "confidence": row["confidence"],
-                    "query": row["query"],
-                    "candidate_count": len(row.get("candidates", [])),
-                    "reason": row["reason"],
-                }
-            )
+        writer.writerows(rows)
+    temp_path.replace(path)
+
+
+def _source_fields(entry: dict[str, object]) -> dict[str, str]:
+    confidence = entry.get("confidence")
+    candidate_count = entry.get("candidate_count")
+    if candidate_count is None:
+        candidate_count = len(entry.get("candidates", []))
+    return {
+        "source_url": str(entry.get("selected_url") or "").strip(),
+        "source_status": str(entry.get("status") or "").strip(),
+        "source_confidence": "" if confidence is None else str(confidence).strip(),
+        "source_query": str(entry.get("query") or "").strip(),
+        "source_candidate_count": "" if candidate_count is None else str(candidate_count).strip(),
+        "source_reason": str(entry.get("reason") or "").strip(),
+    }
+
+
+def apply_url_entries_to_master(
+    input_path: Path,
+    entries: Iterable[dict[str, object]],
+) -> dict[str, int]:
+    """Store selected URLs and their resolution evidence in the canonical master."""
+    with input_path.open("r", encoding="utf-8-sig", newline="") as handle:
+        reader = csv.DictReader(handle)
+        fieldnames = list(reader.fieldnames or [])
+        rows = list(reader)
+
+    if "machine_name" not in fieldnames:
+        raise ValueError("machine_master_missing_machine_name")
+    for column in SOURCE_COLUMNS:
+        if column not in fieldnames:
+            fieldnames.append(column)
+
+    entry_by_name = {
+        str(entry.get("machine_name") or "").strip(): entry
+        for entry in entries
+        if str(entry.get("machine_name") or "").strip()
+    }
+    updated = 0
+    for row in rows:
+        entry = entry_by_name.get(row.get("machine_name", "").strip())
+        if entry is None:
+            continue
+        fields = _source_fields(entry)
+        if any(row.get(column, "") != value for column, value in fields.items()):
+            updated += 1
+        row.update(fields)
+
+    _write_master_atomic(input_path, fieldnames, rows)
+    return {"rows_total": len(rows), "rows_updated": updated, "entries_applied": len(entry_by_name)}
+
+
+def load_legacy_url_map(path: Path) -> list[dict[str, object]]:
+    """Read the old flat URL map only for the one-time canonical-master migration."""
+    with path.open("r", encoding="utf-8-sig", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    entries: list[dict[str, object]] = []
+    for row in rows:
+        entries.append(
+            {
+                "machine_name": row.get("machine_name", ""),
+                "status": row.get("status", ""),
+                "selected_url": row.get("selected_url", ""),
+                "confidence": row.get("confidence", ""),
+                "query": row.get("query", ""),
+                "candidate_count": row.get("candidate_count", ""),
+                "candidates": [],
+                "reason": row.get("reason", ""),
+            }
+        )
+    return entries
 
 
 def build_url_map(
     *,
     input_path: Path,
-    json_path: Path,
-    csv_path: Path,
+    audit_path: Path | None = None,
     page_index: list[dict[str, str]] | None = None,
     page_index_path: Path | None = None,
     refresh_index: bool = False,
@@ -621,8 +690,9 @@ def build_url_map(
         )
         for machine_name in machine_names
     ]
-    _write_json(json_path, entries)
-    _write_csv(csv_path, entries)
+    master_summary = apply_url_entries_to_master(input_path, entries)
+    if audit_path is not None:
+        _write_json(audit_path, entries)
 
     selected = sum(1 for entry in entries if entry["status"] == "selected")
     review = sum(1 for entry in entries if entry["status"] == "needs_review")
@@ -633,27 +703,23 @@ def build_url_map(
         "rows_selected": selected,
         "rows_needing_review": review,
         "rows_not_found": not_found,
-        "json_path": str(json_path),
-        "csv_path": str(csv_path),
+        "master_path": str(input_path),
+        "master_rows_updated": master_summary["rows_updated"],
+        "audit_path": str(audit_path) if audit_path is not None else None,
     }
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Build 1geki URL map for machine master research")
+    parser = argparse.ArgumentParser(description="Resolve 1geki source URLs into machine_master.csv")
     parser.add_argument(
         "--input",
         type=Path,
-        default=MACHINE_MASTER_RESEARCH_DIR / "machine_list_for_research.csv",
+        default=MACHINE_MASTER_RESEARCH_DIR / "machine_master.csv",
     )
     parser.add_argument(
-        "--json",
+        "--audit-json",
         type=Path,
-        default=MACHINE_MASTER_RESEARCH_DIR / "machine_master_research_url_map.json",
-    )
-    parser.add_argument(
-        "--csv",
-        type=Path,
-        default=MACHINE_MASTER_RESEARCH_DIR / "machine_master_research_url_map.csv",
+        help="Optional detailed URL-resolution audit; not a runtime input",
     )
     parser.add_argument(
         "--page-index",
@@ -668,8 +734,7 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     summary = build_url_map(
         input_path=args.input,
-        json_path=args.json,
-        csv_path=args.csv,
+        audit_path=args.audit_json,
         page_index_path=args.page_index,
         refresh_index=args.refresh_index,
     )

@@ -1,0 +1,145 @@
+---
+id: rakuen-narabi-block-edge-must-be-checked-individually
+trigger: "楽園蒲田で機種をまたいだ連続台ブロック（並び）を『強い』と評価するとき。site777等でブロック中央の台がプラスなのを見てブロック全体を仕掛け対象と判断しそうになったとき"
+confidence: 0.6
+domain: hall-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+---
+
+# 並びブロックはブロック内で均一と仮定せず、端の台を必ず個別確認する
+
+## 背景
+2026-08-24 楽園蒲田、カバネリ(旧筐体)〜超電磁砲の物理的に連続する5台ブロック
+（3188-3192、3188-3190がカバネリ・3191がハイパーラッシュ・3192が超電磁砲）で、
+カバネリ3台とハイパーラッシュがsite777の途中経過で揃ってプラスだったのを見て
+「ブロック全体が強い」と読んだ。ハイパーラッシュを打って-300枚程度で撤退したのは
+結果的に正解の判断だったが、ブロック末端の超電磁砲(3192)があまり出ていない点への
+注目が不足していた。
+
+## Core claim
+機種をまたいだ物理的に連続するブロックが強く見えても、ブロックの端（最初と最後の台）
+まで同じ強さとは限らない。中央が強い＝全部強いという前提を置くと、端の台で読み違える。
+
+## Evidence
+- n_observations: 1（2026-08-24、カバネリ〜超電磁砲ブロック）
+- data scope: single-hall(楽園蒲田), single-day, single-block(5台)
+- metric scope: diff(site777速報値)
+- result summary: 3188-3191は プラス寄り(site777途中経過)、末端3192(超電磁砲)は
+  出玉が弱かった
+
+## Interpretation
+- narabi-block-slide-rule等、並びは前回位置からずれることもあり「ブロック内均一」を
+  前提にすると外側の台で誤読する
+- 単日1ブロックの観察であり一般化はできない。今後同様のブロックで再現するか確認が必要
+
+## Action
+- 連続ブロックを評価するときは、ブロックの最初と最後の台を必ず個別に確認する
+- 中央が強くても端が弱ければ「ブロック全部が仕掛け対象」と即断しない
+
+## Relation
+- related:
+  - project-narabi-block-slide-rule
+  - project-0812-rakuen-fieldobs
+
+## Status
+- status: active
+
+---
+id: rakuen-quiet-titles-often-zentaikei-despite-low-signal
+trigger: "楽園蒲田で攻殻機動隊・化物語・バンドリ！の当日の差枚や回転数が低く『今日は弱い』と判断しそうになったとき。この3機種を候補から早期に除外しようとするとき"
+confidence: 0.4
+domain: hall-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+---
+
+# 攻殻機動隊・化物語・バンドリ！は差枚・回転数が低くても全台系にされていることが多い
+
+## 背景
+2026-08-24、ユーザーが実地判断の振り返りで「攻殻機動隊、化物語、バンドリの3つは
+差枚と回転数が低くても全にしてあることが多い」と指摘した。これは楽園蒲田での
+経験則で、n数・観測期間は未記録。
+
+## Core claim
+この3機種（攻殻機動隊・化物語・バンドリ！）は、差枚や回転数といった表面的な
+シグナルが弱くても、実際には全台系として高設定が投入されていることが多い。
+他の候補機種のように「静かだから今日は対象外」という判断基準が通用しにくい。
+
+## Evidence
+- n_observations: 0（ユーザーの経験則としての申告。定量検証はまだ行っていない）
+- data scope: 未検証
+- metric scope: 未検証
+- result summary: なし（今後の観測で検証すること）
+
+## Interpretation
+- confidence を低く設定しているのは、この主張がまだ統計的に検証されていない
+  ユーザーの経験則であるため。次回以降、実際にこの3機種が低シグナルで全台系
+  だった日を記録し、頻度を確認する必要がある
+- feedback-statistical-certainty-calibrationと同様、否定も肯定もせず観測を継続する
+  対象として扱う
+
+## Action
+- 攻殻機動隊・化物語・バンドリ！の当日データが弱くても、候補リストから早期に
+  除外しない
+- この3機種が低シグナル（差枚・回転数とも低い）で全台系だった/なかった日を
+  今後記録し、経験則の妥当性を検証する
+
+## Relation
+- related:
+  - feedback-statistical-certainty-calibration
+
+## Status
+- status: active
+
+---
+id: site777-report-high-games-machines-regardless-of-diff
+trigger: "site777スクレイピング結果を分析するとき。機種平均スコアだけを見て個別台の回転数を確認せずに報告を終えようとするとき"
+confidence: 0.7
+domain: methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+---
+
+# site777分析ではホール平均比で回転数が突出した台を差枚の値に関わらず報告する
+
+## 背景
+2026-08-24、ユーザーが「差枚がついていなくても明確に回転数が多い場合は、なんらかの
+設定示唆が出ていて回っている場合がある」と指摘し、その後「差枚が横ばいが重要なのでは
+なく、回転数が突出して多いことが重要」と訂正した。実例: 台2003(かぐや様は告らせたい)
+G=5,123・diff+40（ホール平均G 1,998の2.6倍）、台1040(北斗の拳転生の章2)
+G=6,020・diff-160（平均の3倍）。
+
+## Core claim
+回転数(games)がホール平均を大きく上回っている台（目安: 平均の2倍以上）は、差枚が
+プラスでもマイナスでも横ばいでも構わず、設定示唆に気づいた客の滞在を示す間接シグナル
+として報告する。差枚の値でフィルタしてはいけない。
+
+## Evidence
+- n_observations: 2（2026-08-24 18:47時点、台2003・台1040）
+- data scope: single-hall(楽園蒲田), single-day
+- metric scope: games / diff
+- result summary: 両台ともホール平均Gの2.5〜3倍。差枚はほぼ横ばい〜微減だったが、
+  「差枚が横ばい」は結果的な共通点であって条件そのものではない
+
+## Interpretation
+- project-kishu-ichi-decoy（機種内1台だけ高設定で機種平均を持ち上げる撒き餌）とは
+  別軸。あちらは差枚が動くシグナル、こちらは客の滞在＝回転数そのものが動くシグナル
+  として区別する
+- まだ2事例のみ。今後site777分析のたびに機械的にチェックし、事例を蓄積する
+
+## Action
+- site777スクレイピング結果を分析するたびに、対象台(graph_eligible)をgames降順で
+  ソートし、ホール平均G数の2倍以上の台を機械的に抽出する
+- 抽出した台は差枚の値（プラス・マイナス・横ばいいずれも）に関わらず個別に報告する。
+  機種全体の評価が弱くても、この台だけは別枠で言及する
+
+## Relation
+- related:
+  - project-kishu-ichi-decoy
+
+## Status
+- status: active

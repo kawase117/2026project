@@ -22,7 +22,10 @@ PROMPT = """この画像はパチスロホールの予告・答え合わせ投�
 目的は「どの機種の、どの台番号に設定が入っていたか」を構造化して抽出することです。
 画像に根拠がある機種名と台番号だけを entries に入れてください。台番号は先頭ゼロを失わない文字列にしてください。
 
-hall_hint は画像内に見えるホール名の生表記です。画像に書かれている表記をそのまま入れ、勝手に正規化・言い換えしないでください。ホール名が見えなければ null にしてください。
+重要: 1枚の画像に複数店舗の表がまとめて載っていることが多くあります。どの台番号がどの店舗のものかを取り違えないでください。
+各 entry の hall_hint には、その機種が属する店舗名を必ず入れてください。店舗が1つしか無い画像なら全 entry に同じ店舗名を入れてください。
+トップレベルの hall_hint には画像全体の見出し（複数店舗が併記されていればそのまま）を入れてください。
+店舗名は画像に書かれている表記をそのまま入れ、勝手に正規化・言い換えしないでください。読み取れなければ null にしてください。
 表記ゆれの例:
 - マルハンメガシティ2000-蒲田1: 「マルハン蒲田1」「メガシティ蒲田1」「メガワン」「サトウ」（店長名呼び）
 - マルハンメガシティ2000-蒲田7: 「マルハン蒲田7」「メガシティ蒲田7」
@@ -126,6 +129,8 @@ def validate_extraction(parsed: object) -> dict:
     for entry in entries:
         if not isinstance(entry, dict) or not isinstance(entry.get("machine_name"), str):
             raise ValueError("each entry must contain a string machine_name")
+        if entry.get("hall_hint") is not None and not isinstance(entry.get("hall_hint"), str):
+            raise ValueError("each entry hall_hint must be a string or null")
         numbers = entry.get("machine_numbers")
         if not isinstance(numbers, list) or not all(isinstance(number, str) for number in numbers):
             raise ValueError("each machine_numbers value must be an array of strings")
@@ -288,7 +293,9 @@ def store_success(
                     image_path,
                     handle,
                     hall,
-                    hall_hint,
+                    # Per-entry hall: one image often stacks several stores, so the
+                    # image-level heading cannot say which store a number belongs to.
+                    entry.get("hall_hint") or hall_hint,
                     date_hint,
                     entry["machine_name"],
                     machine_number,

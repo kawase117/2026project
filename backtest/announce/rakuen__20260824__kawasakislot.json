@@ -1,0 +1,573 @@
+{
+  "announce_id": "rakuen__20260824__kawasakislot",
+  "hall": "楽園蒲田店",
+  "target_date": "20260824",
+  "source": {
+    "account": "kawasakislot",
+    "url": "https://x.com/kawasakislot/status/2091470236008792295",
+    "posted_at": "2026-08-23T20:00:00+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "8/24 楽園蒲田\n→スロトレ調査団 インフィニティ\n \n5月+10万枚、6月+15万枚、7月+12万枚と取材実績は十分⭕️\n明日から30日まで恒例の連続取材＆来店weekで8月後半も期待して良し！\n\nアンケート内容は20スロ全体で15％⑤⑥以上かつ\n・転生が1/2⑤⑥\n・全⑤⑥&1/2⑤⑥がそれぞれ8機種以上\n・5台並び⑤⑥複数\n・列全⑤⑥\n\n20番以内引ければもちろん転生へ！\n\nあとは仕掛け常連機種を意識しながらまるごとorニブイチ機種中心にドリル！\n優先的に狙いたい機種は\n1️⃣GOD/化物語/ネオアイム/転生/炎炎/乙女5/カバネリ/モンキー/真打吉宗\n2️⃣復活導入＆増台 かぐや様/ToLOVEる\nL北斗は3ヶ月連続でニブイチ以上やってるのも気になるところ\n先月結果👉https://x.com/datagasubete/status/2090936653431112013?s=20\n\n抽選は9:40〜\n前回と同じくらいの250人くらい予想\n全然二の矢でもドリルできますねｗ",
+  "posted_at_note": "本文に投稿日時の明示が無いため posted_at は推定。ヘッダ『8/24 楽園蒲田』＋『抽選は9:40〜』は8/16〜8/20の同型投稿と一致するパターン（target_date=ヘッダ日付、posted=前日20時台）に基づき 2026-08-23T20:00+09:00 とした。本文内『明日から30日まで恒例の連続取材＆来店week』は8/25〜8/30の別枠キャンペーン予告であり、target_date=20260824 の判定材料には使わない。先月結果リンクは project-kawasakislot-selfreport-inflated の通り自己申告で水増しの疑いがあるため根拠に引用しない。",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "series_note": "8/6以降の連続シリーズの継続。今回は転生（北斗の拳 転生の章2）を二重に名指しし、優先機種リストが1️⃣9機種＋2️⃣2機種＋L北斗と過去最多。『全⑤⑥&1/2⑤⑥がそれぞれ8機種以上』は8/20の『1/2⑤⑥が10機種以上』と同系統だがカテゴリを2分している点が新しい。この分割はzentaikei_countの単一集計（閾値超え機種数）では再現できないため、必要条件としての緩い読み（n_models=8）で登録する。",
+  "baserate_before_target": {
+    "window_days": 90,
+    "window": [
+      "20260526",
+      "20260824"
+    ],
+    "n_days": 88,
+    "candidate_models_per_day": 59.1,
+    "models_over_1800_mean": 3.33,
+    "models_over_1800_median": 3.0,
+    "models_over_1800_max": 9,
+    "p_at_least_1": 0.886,
+    "p_at_least_2": 0.727,
+    "p_at_least_3": 0.568,
+    "p_at_least_4": 0.386,
+    "p_at_least_10": 0.0,
+    "note": "backtest/announce.py baserate と同一手続き（min_machines=3、閾値は系列一貫の絶対値1800.0）。90日窓で n_models>=8 は最大でも9（1日だけ）に近い水準で、実質ほぼ観測されない領域。「それぞれ8機種以上」は緩い読み（合算n_models=8）でもかなり稀な主張。"
+  },
+  "named_machine_context": {
+    "window_days": 30,
+    "as_of": "20260823",
+    "n_candidates_ge3machines": 66,
+    "hall_over_1800_rate_30d_approx": 0.056,
+    "models": [
+      {
+        "name": "北斗の拳 転生の章2",
+        "tweet_label": "転生",
+        "n_machines": 20,
+        "rank": 6,
+        "of": 66,
+        "over_1800_30d": 6,
+        "rate_30d": 0.2,
+        "mean_score_30d": 787.4
+      },
+      {
+        "name": "甲鉄城のカバネリ 海門(うなと)決戦",
+        "tweet_label": "カバネリ",
+        "n_machines": 18,
+        "rank": 2,
+        "of": 66,
+        "over_1800_30d": 6,
+        "rate_30d": 0.2,
+        "mean_score_30d": 992.9
+      },
+      {
+        "name": "化物語",
+        "tweet_label": "化物語",
+        "n_machines": 9,
+        "rank": 7,
+        "of": 66,
+        "over_1800_30d": 7,
+        "rate_30d": 0.233,
+        "mean_score_30d": 778.6
+      },
+      {
+        "name": "真打 吉宗",
+        "tweet_label": "真打吉宗",
+        "n_machines": 5,
+        "rank": 4,
+        "of": 66,
+        "over_1800_30d": 6,
+        "rate_30d": 0.2,
+        "mean_score_30d": 880.1
+      },
+      {
+        "name": "モンキーターンV",
+        "tweet_label": "モンキー",
+        "n_machines": 12,
+        "rank": 5,
+        "of": 66,
+        "over_1800_30d": 4,
+        "rate_30d": 0.133,
+        "mean_score_30d": 835.8
+      },
+      {
+        "name": "スマスロ炎炎ノ消防隊2",
+        "tweet_label": "炎炎",
+        "n_machines": 6,
+        "rank": 38,
+        "of": 66,
+        "over_1800_30d": 3,
+        "rate_30d": 0.1,
+        "mean_score_30d": 26.5
+      },
+      {
+        "name": "スマスロ北斗の拳",
+        "tweet_label": "L北斗",
+        "n_machines": 13,
+        "rank": 22,
+        "of": 66,
+        "over_1800_30d": 1,
+        "rate_30d": 0.033,
+        "mean_score_30d": 185.5
+      },
+      {
+        "name": "ミリオンゴッド‐神々の軌跡‐",
+        "tweet_label": "GOD",
+        "n_machines": 16,
+        "rank": 57,
+        "of": 66,
+        "over_1800_30d": 0,
+        "rate_30d": 0.0,
+        "mean_score_30d": -299.5
+      },
+      {
+        "name": "ネオアイムジャグラーEX",
+        "tweet_label": "ネオアイム",
+        "n_machines": 62,
+        "rank": 35,
+        "of": 66,
+        "over_1800_30d": 0,
+        "rate_30d": 0.0,
+        "mean_score_30d": 45.8
+      },
+      {
+        "name": "戦国乙女5 業火を穿つ宿焔の双刃",
+        "tweet_label": "乙女5",
+        "n_machines": 22,
+        "rank": 45,
+        "of": 66,
+        "over_1800_30d": 0,
+        "rate_30d": 0.0,
+        "mean_score_30d": -17.3
+      },
+      {
+        "name": "ToLOVEるダークネス",
+        "tweet_label": "ToLOVEる",
+        "n_machines": 5,
+        "rank": 33,
+        "of": 66,
+        "over_1800_30d": 0,
+        "rate_30d": 0.0,
+        "mean_score_30d": 68.1
+      },
+      {
+        "name": "かぐや様は告らせたい",
+        "tweet_label": "かぐや様",
+        "n_machines": null,
+        "rank": null,
+        "of": 66,
+        "over_1800_30d": null,
+        "rate_30d": null,
+        "mean_score_30d": null,
+        "data_gap_note": "DB上で最終出現が20260803で、8/4以降23日間データが無い（撤去中に見える）。『復活導入＆増台』はこの空白の後の再投入を指すと考えられ、直近30日窓のスコアには反映できない。判定不能の候補として扱う。"
+      }
+    ],
+    "note": "優先機種1️⃣9機種＋2️⃣2機種＋L北斗の計12機種を照合。カバネリ・化物語・吉宗・モンキー・転生の5機種は直近30日到達率13〜23%とホール平均超え率5.6%（3.33÷59.1）の2.4〜4.2倍で強い候補群。GOD・ネオアイム・乙女5はゼロで対照群。L北斗は3.3%とホール平均以下で『3ヶ月連続ニブイチ』という定性的主張と直近30日の閾値超え実績が一致しない。かぐや様はデータ欠落のため判定不能。"
+  },
+  "claims": [
+    {
+      "type": "model_named_ratio",
+      "machine_name": "北斗の拳 転生の章2",
+      "ratio": 2,
+      "note": "「転生が1/2⑤⑥」＋「20番以内引ければもちろん転生へ」で二重に名指し。直近30日 6/20(20.0%)・rank6/66・平均score+787.4。ホール平均超え率5.6%の3.6倍。"
+    },
+    {
+      "type": "zentaikei_count",
+      "n_models": 8,
+      "note": "「全⑤⑥&1/2⑤⑥がそれぞれ8機種以上」の緩い読み（カテゴリ分割を無視し合算n_models>=8とする必要条件）。90日windowでmax=9なので、8以上は稀な領域（series_note参照）。的中しても『全⑤⑥』と『1/2⑤⑥』の内訳までは検証できないことに注意。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "note": "優先機種1️⃣の1つ。直近30日 6/18(20.0%)・rank2/66・平均score+992.9。8/20登録時も候補視（同機種、8/20実績はhit=false）。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "化物語",
+      "note": "優先機種1️⃣の1つ。直近30日 7/9(23.3%)・rank7/66・平均score+778.6。8/19・8/20と連続で候補視しており両日ともhit=falseだった継続候補。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "真打 吉宗",
+      "note": "優先機種1️⃣の1つ。直近30日 6/5(20.0%)・rank4/66・平均score+880.1。設置5台と少数だが到達率は上位。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "モンキーターンV",
+      "note": "優先機種1️⃣の1つ。直近30日 4/12(13.3%)・rank5/66・平均score+835.8。narabi-block-slide-rule等、過去に別枠の位置ルール観測がある機種（本claimはzentaikei閾値のみで判定し位置は含めない）。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "note": "優先機種1️⃣の1つ（炎炎）。直近30日 3/6(10.0%)・rank38/66・平均score+26.5。ホール平均前後で強い候補ではない。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "ミリオンゴッド‐神々の軌跡‐",
+      "note": "優先機種1️⃣の1つ（GOD）。直近30日 0/16(0.0%)・rank57/66・平均score-299.5。名指しの割に直近実績はゼロで対照群として残す。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "ネオアイムジャグラーEX",
+      "note": "優先機種1️⃣の1つ。直近30日 0/62(0.0%)・rank35/66・平均score+45.8。62台と大規模設置だが直近閾値超えは無い。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "note": "優先機種1️⃣の1つ（乙女5）。直近30日 0/22(0.0%)・rank45/66・平均score-17.3。8/20登録時のmost_likely_missesと同一機種で継続してゼロ。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "スマスロ北斗の拳",
+      "note": "優先機種2️⃣外・別枠言及（L北斗、『3ヶ月連続でニブイチ以上』）。直近30日 1/13(3.3%)・rank22/66・平均score+185.5とホール平均5.6%を下回る。定性的な継続言及と直近数値が一致しない例として登録する。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "ToLOVEるダークネス",
+      "note": "優先機種2️⃣の1つ（『復活導入＆増台』）。直近30日 0/5(0.0%)・rank33/66・平均score+68.1。TRANCE ver.8.7派生は8/23時点でDB非出現（本体に統合または撤去済みとみられる）。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "かぐや様は告らせたい",
+      "note": "優先機種2️⃣の1つ（『復活導入＆増台』）。DB上で最終出現が20260803で以降23日間の空白があり、直近30日スコアは判定不能。予告文どおり今回改めて投入されるなら再出現自体が観測価値を持つ。"
+    }
+  ],
+  "unscored_claims": [
+    {
+      "text": "20スロ全体で15％⑤⑥以上",
+      "reason": "ホール20台種全体の設定比率主張で、現行スキーマの機種別 gratio_mean_diff 閾値カウントでは検証できない（設定比率そのものを推定する指標が無い）。"
+    },
+    {
+      "text": "5台並び⑤⑥複数／列全⑤⑥",
+      "reason": "並び・列単位の位置claimは対象ブロックの具体的な島・台番号レンジが無いと判定できない（position_ruleはfield=rank_from_aisle等の具体値が必要）。当日ロスター確定後でないと登録できず、事前登録の趣旨（結果を見る前に凍結）に反するため見送る。"
+    },
+    {
+      "text": "明日から30日まで恒例の連続取材＆来店week",
+      "reason": "8/25〜8/30の別枠予告であり、target_date=20260824の判定対象外。該当期間の予告として別途登録する。"
+    },
+    {
+      "text": "先月結果リンク",
+      "reason": "project-kawasakislot-selfreport-inflated: 自己申告の過去的中実績は水増しの疑いが強く、根拠として引用しない。"
+    },
+    {
+      "text": "抽選は9:40〜、前回と同じくらいの250人くらい予想",
+      "reason": "来場者数の言及で機種別・全台系の反証可能な主張を含まない。"
+    }
+  ],
+  "prior_prediction": {
+    "most_likely_hits": [
+      "甲鉄城のカバネリ 海門(うなと)決戦",
+      "化物語",
+      "真打 吉宗",
+      "モンキーターンV",
+      "北斗の拳 転生の章2"
+    ],
+    "most_likely_misses": [
+      "ミリオンゴッド‐神々の軌跡‐",
+      "ネオアイムジャグラーEX",
+      "戦国乙女5 業火を穿つ宿焔の双刃",
+      "スマスロ北斗の拳"
+    ],
+    "note": "登録時点の分析者予測を凍結する。優先機種1️⃣9機種のうちカバネリ・化物語・吉宗・モンキー・転生の5機種は直近30日到達率13〜23%と明確に強い一方、GOD・ネオアイム・乙女5はゼロで名指しの強さと直近実績が乖離している。L北斗は『3ヶ月連続』という定性的主張にもかかわらず直近30日はホール平均以下で外れ候補に分類する。かぐや様はデータ欠落のため予測から除外し、再出現の有無自体を観測対象とする。zentaikei_count(n_models=8)は90日windowでほぼ観測されない領域（max=9）の主張で、的中すれば通常運用と明確に区別できる強いシグナルとみなす。"
+  },
+  "result": {
+    "scored_at_data_max": "20260824",
+    "hall_baseline_mean_diff": 138.7,
+    "hall_n_machines": 587,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": [],
+      "bounds": [
+        -5095,
+        15477
+      ]
+    },
+    "claims": [
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "北斗の拳 転生の章2",
+          "ratio": 2,
+          "note": "「転生が1/2⑤⑥」＋「20番以内引ければもちろん転生へ」で二重に名指し。直近30日 6/20(20.0%)・rank6/66・平均score+787.4。ホール平均超え率5.6%の3.6倍。"
+        },
+        "n_machines": 20,
+        "ratio": 2,
+        "top_k": 10,
+        "model_top_k_mean_diff": 3690.9,
+        "hall_top_quantile_mean_diff": 1359.2,
+        "excess_vs_hall_quantile": 2331.7,
+        "model_mean_diff": 750.3,
+        "n_over_hall_quantile": 8,
+        "hit": true,
+        "model_named_score": 1561.5,
+        "model_named_rank": 8
+      },
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 8,
+          "note": "「全⑤⑥&1/2⑤⑥がそれぞれ8機種以上」の緩い読み（カテゴリ分割を無視し合算n_models>=8とする必要条件）。90日windowでmax=9なので、8以上は稀な領域（series_note参照）。的中しても『全⑤⑥』と『1/2⑤⑥』の内訳までは検証できないことに注意。"
+        },
+        "observed_n_models": 7,
+        "candidate_models": 54,
+        "models": [
+          {
+            "machine_name": "甲鉄城のカバネリ",
+            "score": 11344.6,
+            "n_machines": 3,
+            "mean_diff": 4476.7,
+            "age_days": 600
+          },
+          {
+            "machine_name": "とんでもスキルで異世界放浪メシ",
+            "score": 10872.4,
+            "n_machines": 4,
+            "mean_diff": 4690.8,
+            "age_days": 20
+          },
+          {
+            "machine_name": "真打 吉宗",
+            "score": 8880.9,
+            "n_machines": 5,
+            "mean_diff": 3409.8,
+            "age_days": 140
+          },
+          {
+            "machine_name": "かぐや様は告らせたい",
+            "score": 6861.7,
+            "n_machines": 4,
+            "mean_diff": 2786.0,
+            "age_days": 600
+          },
+          {
+            "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+            "score": 3742.6,
+            "n_machines": 12,
+            "mean_diff": 1873.4,
+            "age_days": 504
+          },
+          {
+            "machine_name": "スーパーリオエース2",
+            "score": 2854.1,
+            "n_machines": 4,
+            "mean_diff": 1524.0,
+            "age_days": 104
+          },
+          {
+            "machine_name": "化物語",
+            "score": 2024.0,
+            "n_machines": 9,
+            "mean_diff": 1423.8,
+            "age_days": 259
+          }
+        ],
+        "n_new_machines_over": 1,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+          "note": "優先機種1️⃣の1つ。直近30日 6/18(20.0%)・rank2/66・平均score+992.9。8/20登録時も候補視（同機種、8/20実績はhit=false）。"
+        },
+        "score": -1207.1,
+        "mean_diff": -658.4,
+        "gratio": 1.833,
+        "n_machines": 18,
+        "rank": 53,
+        "candidate_models": 54,
+        "age_days": 175,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "化物語",
+          "note": "優先機種1️⃣の1つ。直近30日 7/9(23.3%)・rank7/66・平均score+778.6。8/19・8/20と連続で候補視しており両日ともhit=falseだった継続候補。"
+        },
+        "score": 2024.0,
+        "mean_diff": 1423.8,
+        "gratio": 1.422,
+        "n_machines": 9,
+        "rank": 7,
+        "candidate_models": 54,
+        "age_days": 259,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "真打 吉宗",
+          "note": "優先機種1️⃣の1つ。直近30日 6/5(20.0%)・rank4/66・平均score+880.1。設置5台と少数だが到達率は上位。"
+        },
+        "score": 8880.9,
+        "mean_diff": 3409.8,
+        "gratio": 2.605,
+        "n_machines": 5,
+        "rank": 3,
+        "candidate_models": 54,
+        "age_days": 140,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "モンキーターンV",
+          "note": "優先機種1️⃣の1つ。直近30日 4/12(13.3%)・rank5/66・平均score+835.8。narabi-block-slide-rule等、過去に別枠の位置ルール観測がある機種（本claimはzentaikei閾値のみで判定し位置は含めない）。"
+        },
+        "score": -92.1,
+        "mean_diff": -150.4,
+        "gratio": 0.612,
+        "n_machines": 12,
+        "rank": 32,
+        "candidate_models": 54,
+        "age_days": 600,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "スマスロ炎炎ノ消防隊2",
+          "note": "優先機種1️⃣の1つ（炎炎）。直近30日 3/6(10.0%)・rank38/66・平均score+26.5。ホール平均前後で強い候補ではない。"
+        },
+        "score": 334.3,
+        "mean_diff": 222.5,
+        "gratio": 1.502,
+        "n_machines": 6,
+        "rank": 16,
+        "candidate_models": 54,
+        "age_days": 202,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ミリオンゴッド‐神々の軌跡‐",
+          "note": "優先機種1️⃣の1つ（GOD）。直近30日 0/16(0.0%)・rank57/66・平均score-299.5。名指しの割に直近実績はゼロで対照群として残す。"
+        },
+        "score": -549.1,
+        "mean_diff": -672.2,
+        "gratio": 0.817,
+        "n_machines": 16,
+        "rank": 47,
+        "candidate_models": 54,
+        "age_days": 126,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ネオアイムジャグラーEX",
+          "note": "優先機種1️⃣の1つ。直近30日 0/62(0.0%)・rank35/66・平均score+45.8。62台と大規模設置だが直近閾値超えは無い。"
+        },
+        "score": 231.2,
+        "mean_diff": 263.0,
+        "gratio": 0.879,
+        "n_machines": 62,
+        "rank": 19,
+        "candidate_models": 54,
+        "age_days": 329,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+          "note": "優先機種1️⃣の1つ（乙女5）。直近30日 0/22(0.0%)・rank45/66・平均score-17.3。8/20登録時のmost_likely_missesと同一機種で継続してゼロ。"
+        },
+        "score": 109.7,
+        "mean_diff": 110.7,
+        "gratio": 0.991,
+        "n_machines": 22,
+        "rank": 22,
+        "candidate_models": 54,
+        "age_days": 77,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "スマスロ北斗の拳",
+          "note": "優先機種2️⃣外・別枠言及（L北斗、『3ヶ月連続でニブイチ以上』）。直近30日 1/13(3.3%)・rank22/66・平均score+185.5とホール平均5.6%を下回る。定性的な継続言及と直近数値が一致しない例として登録する。"
+        },
+        "score": -227.7,
+        "mean_diff": -519.8,
+        "gratio": 0.438,
+        "n_machines": 13,
+        "rank": 39,
+        "candidate_models": 54,
+        "age_days": 600,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ToLOVEるダークネス",
+          "note": "優先機種2️⃣の1つ（『復活導入＆増台』）。直近30日 0/5(0.0%)・rank33/66・平均score+68.1。TRANCE ver.8.7派生は8/23時点でDB非出現（本体に統合または撤去済みとみられる）。"
+        },
+        "score": -483.0,
+        "mean_diff": -344.9,
+        "gratio": 1.4,
+        "n_machines": 8,
+        "rank": 46,
+        "candidate_models": 54,
+        "age_days": 600,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "かぐや様は告らせたい",
+          "note": "優先機種2️⃣の1つ（『復活導入＆増台』）。DB上で最終出現が20260803で以降23日間の空白があり、直近30日スコアは判定不能。予告文どおり今回改めて投入されるなら再出現自体が観測価値を持つ。"
+        },
+        "score": 6861.7,
+        "mean_diff": 2786.0,
+        "gratio": 2.463,
+        "n_machines": 4,
+        "rank": 4,
+        "candidate_models": 54,
+        "age_days": 600,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": true
+      }
+    ]
+  },
+  "announce_digest": "99a8122db36debbc"
+}

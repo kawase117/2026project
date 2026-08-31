@@ -43,6 +43,12 @@ _FLAGS = [f for f, _ in _FLAG_TO_CATEGORY]
 # 蒲田7の7/7は全台設定6の特殊日。水準比較からは除外する（kamata7_0707_all_setting6）。
 SPECIAL_DAYS = {"蒲田7": {"0707"}}
 
+# 工事休業日（全台休止）。games_normalized=0 は正しいが、diff_coins_normalized に
+# ホール平均らしき値（daily_hall_summary.avg_diff_per_machine と一致）が全台同一で
+# 誤って書き込まれている。games=0 フィルタでは救えないため無条件で行ごと除外する。
+# 20260706 は工事休業と確認済み。20250421 は同じ症状（全台diff同一値）から休業と推定。
+HALL_CLOSED_DAYS = {"楽園": {"20250421", "20260706"}}
+
 # 蒲田7の鉄台。末尾・角番シグナルの検定では除外必須だが、台選びでは除外してはならない
 # （kamata7_theory.md §8.1）。ここでは注釈用にのみ保持する。
 IRON_MACHINES = {"蒲田7": {2026}}
@@ -180,6 +186,10 @@ def load_hall_frame(
         special = SPECIAL_DAYS.get(hall_short_name(hall), set())
         if special:
             df = df[~df["date"].str[4:8].isin(special)]
+
+    closed = HALL_CLOSED_DAYS.get(hall_short_name(hall), set())
+    if closed:
+        df = df[~df["date"].isin(closed)]
 
     return df.reset_index(drop=True)
 

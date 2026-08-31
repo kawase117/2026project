@@ -18,6 +18,10 @@ from bs4 import BeautifulSoup
 import urllib.parse
 
 
+BROWSER_PROFILE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".browser_profile")
+TAB_RECYCLE_INTERVAL = 25
+
+
 def extract_hall_name_from_url(url):
     """
     URL から hall_name を抽出
@@ -481,6 +485,7 @@ def generate_target_url(date_str, hall_name):
 async def save_to_database(extracted_data, db_path="pachinko_data.db"):
     """データベース保存"""
 
+    conn = None
     try:
         print(f"   💾 データベース保存開始...")
 
@@ -615,7 +620,6 @@ async def save_to_database(extracted_data, db_path="pachinko_data.db"):
         print(f"      - 全データ: {len(extracted_data['all_data'])}件")
         print(f"      - 末尾別データ: {len(extracted_data['last_digit_data'])}件")
 
-        conn.close()
         return True
 
     except Exception as e:
@@ -624,6 +628,9 @@ async def save_to_database(extracted_data, db_path="pachinko_data.db"):
 
         traceback.print_exc()
         return False
+    finally:
+        if conn:
+            conn.close()
 
 
 def optimize_memory(iteration, clear_interval=50):
@@ -727,7 +734,7 @@ def print_summary(success_dates, failed_dates, hall_name):
     print("=" * 70)
 
 
-async def date_range_scrape_hybrid(start_date_str, end_date_str, list_url, page=None):
+async def date_range_scrape_hybrid(start_date_str, end_date_str, list_url, page=None, browser=None):
     """ハイブリッド版スクレイピング（既存ページを使用可能）
 
     戻り値: (success_count, failed_count, page, detailed_log)
@@ -741,7 +748,6 @@ async def date_range_scrape_hybrid(start_date_str, end_date_str, list_url, page=
     }
     """
 
-    browser = None
     own_page = False
     detailed_log = {'hall_name': None, 'status': 'error', 'error_message': None, 'dates': []}
 
@@ -752,7 +758,7 @@ async def date_range_scrape_hybrid(start_date_str, end_date_str, list_url, page=
 
         # ページが渡されていない場合はブラウザを起動
         if page is None:
-            browser = await uc.start(headless=False)
+            browser = await uc.start(headless=False, user_data_dir=BROWSER_PROFILE_DIR)
             own_page = True
 
             # 一覧ページアクセス
@@ -903,6 +909,16 @@ async def date_range_scrape_hybrid(start_date_str, end_date_str, list_url, page=
                     await return_to_list_page_hybrid(page, list_url)
 
                 # メモリ最適化（50日ごと）
+                if i % TAB_RECYCLE_INTERVAL == 0 and i > 0 and browser is not None:
+                    new_page = await browser.get(list_url, new_tab=True)
+                    await asyncio.sleep(5)
+                    try:
+                        await page.close()
+                    except Exception as e:
+                        print(f"   [WARN] 古いタブのクローズに失敗: {e}")
+                    page = new_page
+                    print(f"   🔄 タブ再生成: {i}日処理済み")
+
                 optimize_memory(i, clear_interval=50)
 
             except Exception as e:
@@ -978,6 +994,8 @@ def load_hall_config(config_filename="hall_config.json"):
 async def main():
     """マルチホール版メイン処理 - ブラウザを共有"""
 
+    os.makedirs(BROWSER_PROFILE_DIR, exist_ok=True)
+
     # ログファイル初期化
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.dirname(script_dir)
@@ -1002,8 +1020,8 @@ async def main():
         return
 
     # ===== 日付範囲（ここで変更） =====
-    start_date = "20260801"
-    end_date = "20260802"
+    start_date = "20260829"
+    end_date = "20260829"
     # ===================================
 
     print(f"[DATE] 対象期間: {start_date} ～ {end_date}")
@@ -1037,7 +1055,7 @@ async def main():
             try:
                 # 最初のホールの場合はブラウザを起動
                 if i == 1:
-                    browser = await uc.start(headless=False)
+                    browser = await uc.start(headless=False, user_data_dir=BROWSER_PROFILE_DIR)
                     shared_page = await browser.get(scraper_url)
                     print("[WAIT] ページ読み込み待機（15秒）...")
                     await asyncio.sleep(15)
@@ -1059,7 +1077,7 @@ async def main():
 
                 # date_range_scrape_hybrid() を呼び出し（ページを渡す）
                 success_count, failed_count, shared_page, detailed_log = await date_range_scrape_hybrid(
-                    start_date, end_date, scraper_url, page=shared_page
+                    start_date, end_date, scraper_url, page=shared_page, browser=browser
                 )
 
                 # 統計を更新

@@ -1,0 +1,27 @@
+{
+  "rule_id": "k1_jug_dd7kei_rbz_top3",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "hypothesis": "蒲田1のDD分割を完成させる3本目。既存の k1_jug_dd1kei_rbz_top3（1系{1,11,21,31}）と k1_jug_plain_rbz_top3（平常日）はどちらも 7系{7,17,27} を entry_days から除外しており、蒲田1の主力イベント日が丸ごと未監視だった。7のつく日は『メガいち』として全域強化が告知されるホールで、2026-08-07 実測ではホール平均差枚 +463枚・閾値+1,800超え8機種という高水準だった。同一の score・同一の台数でジャグRB上位3台を選び、平常日ルールとのエッジ差で『7のつく日』という日の効果を分離する。\n\n【設計上の断り】ルール設計は既存2本の完全な鏡像であり、score・lookback_days・min_history_days・top_n・min_games はすべて据え置き、変更点は entry_days の DD 集合のみ。2026-08-07 の実績を見た後の登録だが、その日の結果でパラメータを選んではいない。8/07 自体は DB に取り込み済みなので plan できず（forward.py が target<=db_max を拒否する）、評価は 2026-08-17 以降のエントリーのみで行う。",
+  "source_instinct": "k1_jug_dd1kei_rbz_top3 / k1_jug_plain_rbz_top3 の欠けたDD区間を埋めるため新規登録（2026-08-08）",
+  "eval_start": "20260817",
+  "eval_end": "20270817",
+  "success_criterion": "フォワード20エントリー日を経過した時点で、選出3台のedge（対同日ジャグ全台平均、diff_coins_normalized）の平均が +200枚/台 以上、かつ7日ブロックブートストラップ95%CI下限が0を上回ること。満たさなければ棄却する。あわせて k1_jug_plain_rbz_top3 との差も報告し、本ルールのエッジが平常日ルールと同等以下であれば『7のつく日』という日の効果は存在せず、観測されたエッジはRB上位選択の効果に過ぎないと結論する。判定はフォワードテストのみで行う。",
+  "universe": {
+    "jug_flag": 1
+  },
+  "eligibility": {
+    "jug_flag": 1
+  },
+  "entry_days": {
+    "dd": [
+      7,
+      17,
+      27
+    ]
+  },
+  "score": "hist_mean_rb_prob_model_z",
+  "lookback_days": 30,
+  "min_history_days": 10,
+  "top_n": 3,
+  "min_games": 1000
+}

@@ -1,0 +1,423 @@
+{
+  "announce_id": "rakuen__20260813__kawasakislot",
+  "hall": "楽園蒲田店",
+  "target_date": "20260813",
+  "source": {
+    "account": "kawasakislot",
+    "url": "https://x.com/kawasakislot/status/2087502070211645818",
+    "posted_at": "2026-08-12T20:00:00+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "8/13 楽園蒲田\n明日も取材はないけど、8月＆今週仕掛けは継続🙆‍♂️\n・8月毎日仕掛け ”3台設置以上から2機種全⑤⑥”\n・今週毎日仕掛け ⑤⑥並び×複数\n\nまるごと＆並び探しは下記機種あたりから！\n・優遇機種➔東京喰種/モンキー/Lカバネリ/化物語/マギレコ/シャーマン/炎炎\n・増台＆再導入➔エウレカ/北斗/花の慶次/バンドリ\n・オススメ機種➔からくり2\n\n最近は日付台数の機種からまるごと機種やる傾向も！\nL北斗「13」台や比較的に判別しやすい「3」台設置機種も\n8/6➔サンダー/炎炎 どっちも6台\n8/7➔からくり2 7台\n8/8➔ファンキー/邪神ちゃん どっちも8台\n8/9➔化物語 9台\n8/10➔ー\n8/11➔沖ドキブラック11台\n\n明日も一般や二の矢でも十分ドリルできると思います",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "baserate_before_target": {
+    "window_days": 90,
+    "n_days": 87,
+    "candidate_models_per_day": 60.9,
+    "models_over_1800_mean": 3.37,
+    "models_over_1800_median": 3.0,
+    "p_at_least_1": 0.897,
+    "p_at_least_2": 0.736,
+    "p_at_least_3": 0.563,
+    "p_at_least_4": 0.391,
+    "note": "閾値+1800は8/7以降のrakuenシリーズと同一値で凍結（分位点0.95は1949.5だが、gratio_mean_diffの分位点閾値は閾値超え数が恒等的に候補数×(1-pct)になるため運用は絶対値を使う）。『3台設置以上から2機種全⑤⑥』は p_at_least_2=0.736 で単独では情報量が薄い。この予告の価値は名指し機種リストにある。"
+  },
+  "claims": [
+    {
+      "type": "zentaikei_count",
+      "n_models": 2,
+      "note": "「8月毎日仕掛け『3台設置以上から2機種全⑤⑥』」。8/10・8/11・8/12 と同型の最低ライン主張。baserate 0.736 で情報量が薄いことを承知の上で、シリーズ継続のため登録する。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "東京喰種",
+      "note": "『優遇機種➔東京喰種/モンキー/Lカバネリ/化物語/マギレコ/シャーマン/炎炎』。設置31台。直近30日 3/30回超え・平均score 429・最終超え 20260801。8/12は score 710・rank11 で未達。設置31台と最大級で gratio_mean_diff は大台数機種に構造的に不利。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "モンキーターンV",
+      "note": "『優遇機種』枠の『モンキー』。設置12台。直近30日 4/30回超え・平均score 752・最高9804・最終超え 20260808。8/12は score -299・rank46 と沈んだ直後。ユーザー申告で 3125-3132 は投資リスクが低いブロック。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "note": "『優遇機種』枠の『Lカバネリ』。設置18台。直近30日 5/30回超え・平均score 786・最終超え 20260806。8/12は score 1260・rank7 で閾値未達だが gratio 1.763 と回転だけは突出しており、投入直前の兆候として注視する。無印『甲鉄城のカバネリ』(3台) は 1/30回なので海門決戦の解釈を主とする。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "化物語",
+      "note": "『優遇機種』枠。設置9台。直近30日 6/30回超えでホール上位のローテーション常連。最終超え 20260811。8/12は score -167・rank40 で連投は途切れている。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "note": "『優遇機種』枠の『マギレコ』。設置9台。直近30日 3/30回超え・最終超え 20260812（score 2706・rank4）。前日に閾値を超えた直後で、同一機種の2日連続超えは直近30日で稀。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "シャーマンキング",
+      "note": "『優遇機種』枠の『シャーマン』。設置5台。直近30日 6/30回超え・平均score 666・最高9514・最終超え 20260812（score 3585・rank3）。前日超えの直後。設置5台と小規模で少台数バイアスにより score が膨らみやすい。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "note": "『優遇機種』枠の『炎炎』。設置6台。直近30日 3/30回超えだが平均score 36 とほぼゼロ、最終超え 20260725。予告に名前が載り続けている割に実績が伴っていない反証材料として登録する。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "交響詩篇エウレカセブン HI-EVOLUTION ZERO TYPE‐ART",
+      "note": "『増台＆再導入➔エウレカ/北斗/花の慶次/バンドリ』。設置25台。直近30日 0/30回超え・平均score 169・最高1653 で名指し機種中もっとも実績が無い。「増台＝優遇」という前提の反証材料。ユーザー申告で 3215-3229 は投資リスクが低いブロック。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "スマスロ北斗の拳",
+      "note": "『増台＆再導入』枠の『北斗』かつ『L北斗「13」台』枠（設置13台で 8/13 のDDと一致）。直近30日 1/30回超え・平均score 206・最終超え 20260727。DD一致の唯一の非曖昧な候補だが実績は弱い。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "北斗の拳 転生の章2",
+      "note": "『増台＆再導入』枠の『北斗』のもう一方の解釈。設置20台。直近30日 3/30回超え・平均score 632・最終超え 20260806。ただし『L北斗13台』の明示によりスマスロ北斗を指す可能性が高く、こちらは補助的な解釈。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "花の慶次～佐渡攻めの章～",
+      "note": "『増台＆再導入』枠。設置3台で『「3」台設置機種』枠にも該当。出現10日中 2回超え（8/7・8/10）・平均score 115。min_machines=3 ぎりぎりで少台数バイアスにより score が跳ねやすい。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "バンドリ！",
+      "note": "『増台＆再導入』枠。設置4台。出現9日中 4回超え（44%）・平均score 1596 で名指し機種中もっとも平均が高い。最終超え 20260812（score 4284・rank2）。前日超えの直後。少台数バイアスは割り引くべき。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "からくりサーカス2",
+      "note": "『オススメ機種➔からくり2』。設置7台。直近30日 3/30回超え・最終超え 20260812（score 8072・rank1 でホール最高）。前日に大きく吹いた直後であり、2日連続投入は直近30日で前例が乏しい。"
+    }
+  ],
+  "unscored_claims": [
+    {
+      "text": "今週毎日仕掛け ⑤⑥並び×複数",
+      "reason": "『並び』＝連番台の塊への投入という主張だが、announce.py の position_rule が扱えるのは rank_from_aisle / rank_from_min / rank_from_max / last_digit / section であり、連番ブロックを表す field が無い。投稿者も箇所・台番号を特定していないため、事前に凍結できる形の主張になっていない。連番claim typeを実装するまでは採点対象外とする。"
+    },
+    {
+      "text": "『比較的に判別しやすい「3」台設置機種も』。8/13時点の楽園蒲田の3台設置機種は次の7機種で凍結する: ヤバチバ / 押忍!番長ZERO / 少女☆歌劇 レヴュースタァライト ‐The SLOT‐ / 攻殻機動隊 / 花の慶次～佐渡攻めの章～ / アレックス ブライト / 甲鉄城のカバネリ",
+      "reason": "候補7機種は当日候補プール(約56-61機種)の12%前後を占め、これを個別 model_named として登録すると『どれか1つ当たれば的中』という散弾銃になり、model_named の的中率集計を汚す。名指しではなく群としての主張なので group_named claim type を実装するまでは採点対象外とする。ロスターをここで凍結してあるので事後の自由度は無く、後から遡って採点できる。なお花の慶次のみ『増台＆再導入』でも名指しされているため model_named として別途登録済み。参考: この7機種の直近30日の閾値超え回数は 攻殻機動隊 8回（ホール最多）・少女☆歌劇 4回・花の慶次 2回・アレックス ブライト 2回・押忍!番長ZERO 1回・甲鉄城のカバネリ 1回・ヤバチバ 0回。ただし3台機種は gratio_mean_diff の少台数バイアスで構造的に有利であり、超え回数の多さをそのまま優遇の証拠にしてはならない。"
+    },
+    {
+      "text": "8/6-8/11は日付台数の機種からまるごと機種をやる傾向（8/6サンダー・炎炎6台／8/7からくり2 7台／8/8ファンキー・邪神ちゃん8台／8/9化物語9台／8/10ー／8/11沖ドキブラック11台）",
+      "reason": "過去日の主張で 8/13 の当否判定には使えない。参考として本プロジェクトの閾値+1800で測ると、8/8ファンキージャグラー2(3352・rank1)のみ超えで、8/6サンダーV(497)・8/6炎炎(-2331)・8/7からくり2(489)・8/9化物語(1115)は未達。投稿者の『まるごと』判定基準は gratio_mean_diff +1800 とは別物である。",
+      "note_10th": "投稿者自身が 8/10 を『ー』としており、DD台数機種からの投入は毎日ではないと認めている。"
+    },
+    {
+      "text": "明日も取材はない／一般や二の矢でも十分ドリルできる",
+      "reason": "検証可能な機種・位置の主張を含まない。"
+    }
+  ],
+  "notes": {
+    "posted_at_is_estimated": "本文が『8/13 楽園蒲田』『明日も取材はないけど』で始まり target_date=20260813 を指すため投稿日は 2026-08-12 と確定できるが、時刻は未取得のため 20:00 を仮置きした。posted_at < target 00:00 の検証には影響しない。",
+    "dd_equals_machine_count_prior": "『DD＝設置台数の機種が狙い目』という主張を 20260701-20260811 の楽園蒲田で測ると、DD台数機種が存在した22日のうち1機種以上が閾値+1800を超えたのは3日のみで、偶然期待値を上回っていない（rakuen__20260812 の同項目を参照）。8/13 は DD=13 → スマスロ北斗の拳(13台) の1機種、DD末尾3 → 3台設置7機種 の2通りの読みがあり、後者は散弾銃なので unscored_claims 側に置いた。",
+    "named_list_track_record": "楽園蒲田の kawasakislot 予告シリーズにおける model_named の累積は 5/27（18.5%）で、1機種あたりの当日ベースレート 4.8%（閾値超え約3機種 / 候補56-61機種）の約3.9倍。ただし内訳は 8/7 0/2・8/11 1/11・8/12 4/14 で 8/12 の1日に偏っている。8/12 は閾値を超えた4機種（からくりサーカス2・バンドリ！・シャーマンキング・マギアレコード）が全て名指しリスト内という日だった。n が小さく、この倍率はまだ確定した推定値ではない。",
+    "same_list_as_previous_day": "優遇機種・増台＆再導入・オススメ機種のリストは 8/12 予告と完全に同一。名指しリストが日替わりで更新されていないため、リストは『今週の候補集合』であって『当日の指名』ではないと解釈すべきである。したがって当日の絞り込みは、名指しリストを候補集合として受け取った上で、前日に既に吹いた機種（8/12はからくりサーカス2・バンドリ！・シャーマンキング・マギアレコード）を落とす方向で行う。"
+  },
+  "result": {
+    "scored_at_data_max": "20260814",
+    "hall_baseline_mean_diff": 31.7,
+    "hall_n_machines": 587,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 1,
+      "machines_hi": [],
+      "machines_lo": [
+        "とある魔術の禁書目録2"
+      ],
+      "bounds": [
+        -5095,
+        15477
+      ]
+    },
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 2,
+          "note": "「8月毎日仕掛け『3台設置以上から2機種全⑤⑥』」。8/10・8/11・8/12 と同型の最低ライン主張。baserate 0.736 で情報量が薄いことを承知の上で、シリーズ継続のため登録する。"
+        },
+        "observed_n_models": 4,
+        "candidate_models": 56,
+        "models": [
+          {
+            "machine_name": "邪神ちゃんドロップキック",
+            "score": 5937.6,
+            "n_machines": 8,
+            "mean_diff": 3095.5,
+            "age_days": 9
+          },
+          {
+            "machine_name": "アレックス ブライト",
+            "score": 4760.0,
+            "n_machines": 3,
+            "mean_diff": 2254.3,
+            "age_days": 402
+          },
+          {
+            "machine_name": "バンドリ！",
+            "score": 3903.7,
+            "n_machines": 4,
+            "mean_diff": 2440.8,
+            "age_days": 589
+          },
+          {
+            "machine_name": "モンスターハンターライズ",
+            "score": 2306.5,
+            "n_machines": 4,
+            "mean_diff": 2226.8,
+            "age_days": 589
+          }
+        ],
+        "n_new_machines_over": 1,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "東京喰種",
+          "note": "『優遇機種➔東京喰種/モンキー/Lカバネリ/化物語/マギレコ/シャーマン/炎炎』。設置31台。直近30日 3/30回超え・平均score 429・最終超え 20260801。8/12は score 710・rank11 で未達。設置31台と最大級で gratio_mean_diff は大台数機種に構造的に不利。"
+        },
+        "score": 27.4,
+        "mean_diff": 35.6,
+        "gratio": 0.769,
+        "n_machines": 31,
+        "rank": 23,
+        "candidate_models": 56,
+        "age_days": 555,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "モンキーターンV",
+          "note": "『優遇機種』枠の『モンキー』。設置12台。直近30日 4/30回超え・平均score 752・最高9804・最終超え 20260808。8/12は score -299・rank46 と沈んだ直後。ユーザー申告で 3125-3132 は投資リスクが低いブロック。"
+        },
+        "score": 871.3,
+        "mean_diff": 746.4,
+        "gratio": 1.167,
+        "n_machines": 12,
+        "rank": 8,
+        "candidate_models": 56,
+        "age_days": 589,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+          "note": "『優遇機種』枠の『Lカバネリ』。設置18台。直近30日 5/30回超え・平均score 786・最終超え 20260806。8/12は score 1260・rank7 で閾値未達だが gratio 1.763 と回転だけは突出しており、投入直前の兆候として注視する。無印『甲鉄城のカバネリ』(3台) は 1/30回なので海門決戦の解釈を主とする。"
+        },
+        "score": -22.4,
+        "mean_diff": -20.8,
+        "gratio": 1.075,
+        "n_machines": 18,
+        "rank": 29,
+        "candidate_models": 56,
+        "age_days": 164,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "化物語",
+          "note": "『優遇機種』枠。設置9台。直近30日 6/30回超えでホール上位のローテーション常連。最終超え 20260811。8/12は score -167・rank40 で連投は途切れている。"
+        },
+        "score": 37.2,
+        "mean_diff": 69.3,
+        "gratio": 0.537,
+        "n_machines": 9,
+        "rank": 22,
+        "candidate_models": 56,
+        "age_days": 248,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+          "note": "『優遇機種』枠の『マギレコ』。設置9台。直近30日 3/30回超え・最終超え 20260812（score 2706・rank4）。前日に閾値を超えた直後で、同一機種の2日連続超えは直近30日で稀。"
+        },
+        "score": 693.1,
+        "mean_diff": 873.3,
+        "gratio": 0.794,
+        "n_machines": 9,
+        "rank": 10,
+        "candidate_models": 56,
+        "age_days": 493,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "シャーマンキング",
+          "note": "『優遇機種』枠の『シャーマン』。設置5台。直近30日 6/30回超え・平均score 666・最高9514・最終超え 20260812（score 3585・rank3）。前日超えの直後。設置5台と小規模で少台数バイアスにより score が膨らみやすい。"
+        },
+        "score": -319.0,
+        "mean_diff": -704.2,
+        "gratio": 0.453,
+        "n_machines": 5,
+        "rank": 39,
+        "candidate_models": 56,
+        "age_days": 555,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "スマスロ炎炎ノ消防隊2",
+          "note": "『優遇機種』枠の『炎炎』。設置6台。直近30日 3/30回超えだが平均score 36 とほぼゼロ、最終超え 20260725。予告に名前が載り続けている割に実績が伴っていない反証材料として登録する。"
+        },
+        "score": 105.5,
+        "mean_diff": 119.5,
+        "gratio": 0.883,
+        "n_machines": 6,
+        "rank": 20,
+        "candidate_models": 56,
+        "age_days": 191,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "交響詩篇エウレカセブン HI-EVOLUTION ZERO TYPE‐ART",
+          "note": "『増台＆再導入➔エウレカ/北斗/花の慶次/バンドリ』。設置25台。直近30日 0/30回超え・平均score 169・最高1653 で名指し機種中もっとも実績が無い。「増台＝優遇」という前提の反証材料。ユーザー申告で 3215-3229 は投資リスクが低いブロック。"
+        },
+        "score": -180.9,
+        "mean_diff": -222.6,
+        "gratio": 0.813,
+        "n_machines": 25,
+        "rank": 35,
+        "candidate_models": 56,
+        "age_days": 589,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "スマスロ北斗の拳",
+          "note": "『増台＆再導入』枠の『北斗』かつ『L北斗「13」台』枠（設置13台で 8/13 のDDと一致）。直近30日 1/30回超え・平均score 206・最終超え 20260727。DD一致の唯一の非曖昧な候補だが実績は弱い。"
+        },
+        "score": 295.5,
+        "mean_diff": 608.5,
+        "gratio": 0.486,
+        "n_machines": 13,
+        "rank": 16,
+        "candidate_models": 56,
+        "age_days": 589,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "北斗の拳 転生の章2",
+          "note": "『増台＆再導入』枠の『北斗』のもう一方の解釈。設置20台。直近30日 3/30回超え・平均score 632・最終超え 20260806。ただし『L北斗13台』の明示によりスマスロ北斗を指す可能性が高く、こちらは補助的な解釈。"
+        },
+        "score": 520.2,
+        "mean_diff": 562.3,
+        "gratio": 0.925,
+        "n_machines": 20,
+        "rank": 12,
+        "candidate_models": 56,
+        "age_days": 220,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "花の慶次～佐渡攻めの章～",
+          "note": "『増台＆再導入』枠。設置3台で『「3」台設置機種』枠にも該当。出現10日中 2回超え（8/7・8/10）・平均score 115。min_machines=3 ぎりぎりで少台数バイアスにより score が跳ねやすい。"
+        },
+        "score": -537.3,
+        "mean_diff": -841.0,
+        "gratio": 0.639,
+        "n_machines": 3,
+        "rank": 46,
+        "candidate_models": 56,
+        "age_days": 38,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "バンドリ！",
+          "note": "『増台＆再導入』枠。設置4台。出現9日中 4回超え（44%）・平均score 1596 で名指し機種中もっとも平均が高い。最終超え 20260812（score 4284・rank2）。前日超えの直後。少台数バイアスは割り引くべき。"
+        },
+        "score": 3903.7,
+        "mean_diff": 2440.8,
+        "gratio": 1.599,
+        "n_machines": 4,
+        "rank": 3,
+        "candidate_models": 56,
+        "age_days": 589,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "からくりサーカス2",
+          "note": "『オススメ機種➔からくり2』。設置7台。直近30日 3/30回超え・最終超え 20260812（score 8072・rank1 でホール最高）。前日に大きく吹いた直後であり、2日連続投入は直近30日で前例が乏しい。"
+        },
+        "score": 1292.0,
+        "mean_diff": 707.9,
+        "gratio": 1.825,
+        "n_machines": 7,
+        "rank": 5,
+        "candidate_models": 56,
+        "age_days": 38,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
+  "announce_digest": "2364a5268a51f001"
+}

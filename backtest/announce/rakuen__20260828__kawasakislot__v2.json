@@ -1,0 +1,513 @@
+{
+  "announce_id": "rakuen__20260828__kawasakislot__v2",
+  "hall": "楽園蒲田店",
+  "target_date": "20260828",
+  "source": {
+    "account": "kawasakislot",
+    "url": "https://x.com/kawasakislot/status/2092930369352065093",
+    "posted_at": "2026-08-27T20:00:00+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "8/28 楽園蒲田\n→全国最大のスロ専『夏の陣』来店取材\n\n連続取材weekも後半戦！明日は今月＆今週毎日仕掛けの\n全56×2機種とニブイチ機種×複数探しから！\n\n優先したい機種はここ半月で高頻度で対象になってる機種\n化物語/ToLOVEる/真打吉宗/乙女4/バンドリ/かぐや/東リベ/攻殻/Sカバネリあたり\n\n最近の傾向としては前日の対象が翌日も、という連続仕掛けパターンも！\n8/22▶8/23 天膳 全▶全\n8/23▶8/24 とんスキ 全▶1/2\n8/24▶8/25 アレックス・攻殻・Sカバネリ 全▶全など\n8/25▶8/26 ダイスター 1/2▶全、かぐや様 1/2▶1/2\n\n@slokotae7\n で発表ある機種や今日挙動良かった機種が優先して狙うのもかなりありかと🙆‍♂️\n\n抽選は9:40～\n先バレ機種とかはないので二の矢でも十分ドリルできるかと！",
+  "posted_at_note": "ヘッダ『8/28 楽園蒲田』が対象日、投稿は前日（2026-08-27夜）。この規約は rakuen__20260828__kawasakislot.withdrawn.json に明記されており、同一アカウントの 8/7・8/11・8/12・8/13・8/15 登録が一貫してヘッダ日付=target_dateである。時刻20:00は同型投稿からの推定で、本文に明示は無い。announce_id に __v2 を付すのは、rakuen__20260828__kawasakislot が別ツイート（実際は8/27対象）の誤登録として既にLEDGERを占有しているため。登録実行は 2026-08-28 11:45（対象日当日の開店後）で late_registration=true になるが、DB最大収録日は20260827で当日実績は未取得のため、結果を見てからの登録ではない。",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "series_note": "8/6以降の連続シリーズの継続で、前日8/27（SEVEN'S TV ワロスさん来店・DD27＝7のつく日）に続く『夏の陣』連続取材week後半戦の予告。名指しは『ここ半月で高頻度で対象になってる機種』という単一カテゴリ9機種のみで、8/27予告の15機種（演者寄せ/定番/高頻度/増台の4カテゴリ）より絞られている。8/28予告で名指しされた東京喰種・乙女5・カバネリ(海門)・マギレコ・転生・エウレカ・GOD・SAO2・ヴヴヴ2・からくり2は今回落ちており、代わりに化物語・乙女4が新規に入った。機種名照合: 『真打吉宗』→真打 吉宗、『乙女4』→戦国乙女4 戦乱に閃く炯眼の軍師（乙女5ではない。人間確認済み）、『Sカバネリ』→甲鉄城のカバネリ（3台。18台の甲鉄城のカバネリ 海門(うなと)決戦ではない。人間確認済み）。⚠️8/27対象の登録時に略称『カバネリ』を甲鉄城のカバネリ 海門(うなと)決戦に確定していたため、同一アカウントの略称対応が『カバネリ』と『Sカバネリ』で別機種を指す可能性がある。過去登録の遡及修正はしない（凍結原則）が、今後『カバネリ』単独表記が出た場合は再確認する。",
+  "baserate_before_target": {
+    "window_days": 90,
+    "window": [
+      "20260529",
+      "20260827"
+    ],
+    "n_days": 87,
+    "n_model_days": 5169,
+    "candidate_models_per_day": 59.4,
+    "models_over_1800_mean": 3.46,
+    "models_over_1800_median": 3.0,
+    "models_over_1800_max": 9,
+    "p_at_least_1": 0.908,
+    "p_at_least_2": 0.747,
+    "p_at_least_3": 0.575,
+    "p_at_least_4": 0.402,
+    "p_at_least_10": 0.0,
+    "note": "backtest/announce.py baserate と同一手続き（min_machines=3、閾値は系列一貫の絶対値1800.0、--before 20260827）。『全56×2機種』のn_models=2は90日窓でp_at_least_2=0.747と大半の日で成立する弱い主張（median=3.0がむしろ標準）。"
+  },
+  "named_machine_context": {
+    "window_days": 30,
+    "as_of": "20260827",
+    "n_candidates_ge3machines": 54,
+    "hall_over_1800_rate_30d_approx": 0.056,
+    "models": [
+      {
+        "name": "化物語",
+        "tweet_label": "化物語",
+        "n_machines": 9,
+        "rank": 47,
+        "of": 54,
+        "n_days_present_30d": 30,
+        "over_1800_30d": 6,
+        "rate_30d": 0.2,
+        "mean_score_30d": 626.6
+      },
+      {
+        "name": "ToLOVEるダークネス",
+        "tweet_label": "ToLOVEる",
+        "n_machines": 8,
+        "rank": 39,
+        "of": 54,
+        "n_days_present_30d": 30,
+        "over_1800_30d": 0,
+        "rate_30d": 0.0,
+        "mean_score_30d": -9.6
+      },
+      {
+        "name": "真打 吉宗",
+        "tweet_label": "真打吉宗",
+        "n_machines": 5,
+        "rank": 54,
+        "of": 54,
+        "n_days_present_30d": 30,
+        "over_1800_30d": 6,
+        "rate_30d": 0.2,
+        "mean_score_30d": 869.2
+      },
+      {
+        "name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+        "tweet_label": "乙女4",
+        "n_machines": 6,
+        "rank": 28,
+        "of": 54,
+        "n_days_present_30d": 30,
+        "over_1800_30d": 3,
+        "rate_30d": 0.1,
+        "mean_score_30d": 259.6
+      },
+      {
+        "name": "バンドリ！",
+        "tweet_label": "バンドリ",
+        "n_machines": 4,
+        "rank": 35,
+        "of": 54,
+        "n_days_present_30d": 24,
+        "over_1800_30d": 7,
+        "rate_30d": 0.292,
+        "mean_score_30d": 775.4
+      },
+      {
+        "name": "かぐや様は告らせたい",
+        "tweet_label": "かぐや",
+        "n_machines": 4,
+        "rank": 20,
+        "of": 54,
+        "n_days_present_30d": 10,
+        "over_1800_30d": 2,
+        "rate_30d": 0.2,
+        "mean_score_30d": 1347.6
+      },
+      {
+        "name": "東京リベンジャーズ",
+        "tweet_label": "東リベ",
+        "n_machines": 4,
+        "rank": 53,
+        "of": 54,
+        "n_days_present_30d": 30,
+        "over_1800_30d": 2,
+        "rate_30d": 0.067,
+        "mean_score_30d": 51.6
+      },
+      {
+        "name": "攻殻機動隊",
+        "tweet_label": "攻殻",
+        "n_machines": 3,
+        "rank": 4,
+        "of": 54,
+        "n_days_present_30d": 30,
+        "over_1800_30d": 4,
+        "rate_30d": 0.133,
+        "mean_score_30d": -1098.4
+      },
+      {
+        "name": "甲鉄城のカバネリ",
+        "tweet_label": "Sカバネリ",
+        "n_machines": 3,
+        "rank": 27,
+        "of": 54,
+        "n_days_present_30d": 30,
+        "over_1800_30d": 3,
+        "rate_30d": 0.1,
+        "mean_score_30d": 624.2
+      }
+    ],
+    "reference_only_models": [
+      {
+        "name": "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION",
+        "tweet_label": "天膳",
+        "n_machines": 4,
+        "over_1800_30d": 2,
+        "rate_30d": 0.067,
+        "mean_score_30d": 283.0,
+        "why": "8/22▶8/23の連続仕掛け実績として引用されただけで、8/29の名指しではない。claimには含めない。"
+      },
+      {
+        "name": "とんでもスキルで異世界放浪メシ",
+        "tweet_label": "とんスキ",
+        "n_machines": 4,
+        "over_1800_30d": 2,
+        "rate_30d": 0.083,
+        "mean_score_30d": 34.3,
+        "why": "8/23▶8/24の連続仕掛け実績としての引用。claimには含めない。"
+      },
+      {
+        "name": "アレックス ブライト",
+        "tweet_label": "アレックス",
+        "n_machines": 3,
+        "over_1800_30d": 3,
+        "rate_30d": 0.1,
+        "mean_score_30d": 115.8,
+        "why": "8/24▶8/25の連続仕掛け実績としての引用。claimには含めない。"
+      },
+      {
+        "name": "ワールドダイスター",
+        "tweet_label": "ダイスター",
+        "n_machines": 6,
+        "over_1800_30d": 2,
+        "rate_30d": 0.083,
+        "mean_score_30d": -466.7,
+        "why": "8/25▶8/26の連続仕掛け実績としての引用。claimには含めない。"
+      },
+      {
+        "name": "甲鉄城のカバネリ 海門(うなと)決戦",
+        "n_machines": 18,
+        "over_1800_30d": 6,
+        "rate_30d": 0.2,
+        "mean_score_30d": 988.7,
+        "why": "『Sカバネリ』の対抗候補として照合したが人間確認により不採用。8/28予告の『カバネリ』はこちらに確定していたため、対照として記録のみ残す。"
+      },
+      {
+        "name": "戦国乙女5 業火を穿つ宿焔の双刃",
+        "n_machines": 22,
+        "over_1800_30d": 0,
+        "rate_30d": 0.0,
+        "mean_score_30d": 59.1,
+        "why": "『乙女4』の対抗候補（従来予告は乙女5を名指ししていた）として照合したが人間確認により不採用。"
+      }
+    ],
+    "note": "9機種中、バンドリ！(rate29.2%・24日出現)が最高で、化物語・真打 吉宗・かぐや様(いずれも20.0%)が続く。ホール平均到達率5.6%（=閾値1800超え機種数3.46 / 候補59.4）に対し4機種が3〜5倍高い。攻殻機動隊はrank4/54と高順位だが、これはas_of 1日分のみのプール内順位であり、30日窓ではrate13.3%・mean_score -1098.4と最も悪い。skillの指示どおりrankではなくrate/mean_scoreを優先して解釈する。ToLOVEるダークネスは30日ゼロ・mean -9.6で対照群。東京リベンジャーズも6.7%と低い。かぐや様は出現10日分のみでrate分母が小さい点、バンドリ！・かぐや様・攻殻・甲鉄城のカバネリは3〜4台設置で分散が大きい点に注意。",
+    "命名注記": "rank列はas_of(20260827)1日分のみのプール内順位であり、30日窓の実力とは一致しない。解釈にはrate_30d/mean_score_30dを使うこと。"
+  },
+  "claims": [
+    {
+      "type": "zentaikei_count",
+      "n_models": 2,
+      "note": "『今月＆今週毎日仕掛けの全56×2機種』。90日窓でp_at_least_2=0.747と大半の日で成立する弱い主張（median=3.0が標準）。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "化物語",
+      "note": "『ここ半月で高頻度で対象になってる機種』の一つ。直近30日 6/30(20.0%)・9台設置・平均score +626.6。ホール平均5.6%の約3.6倍。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "ToLOVEるダークネス",
+      "note": "同上。直近30日 0/30(0.0%)・8台設置・平均score -9.6。8/27予告でも名指しされゼロが続く対照群。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "真打 吉宗",
+      "note": "同上。直近30日 6/30(20.0%)・5台設置・平均score +869.2。rank54/54だがこれはas_of1日分の順位で、30日窓では高水準（8/25・8/28予告でも継続候補）。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "note": "同上。直近30日 3/30(10.0%)・6台設置・平均score +259.6。本文は『乙女4』で、従来予告の乙女5(22台・30日ゼロ)とは別機種であることを人間確認済み。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "バンドリ！",
+      "note": "同上。直近30日 7/24(29.2%)・4台設置・平均score +775.4。名指し9機種中で最高到達率だが4台設置で分散が大きい。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "かぐや様は告らせたい",
+      "note": "同上。直近30日 2/10(20.0%、出現10日分のみ)・4台設置・平均score +1347.6。平均scoreは9機種中最高だが分母10日と小さい。8/25▶8/26で1/2▶1/2の連続仕掛け実績としても本文で引用されている。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "東京リベンジャーズ",
+      "note": "同上。直近30日 2/30(6.7%)・4台設置・平均score +51.6。ホール平均5.6%とほぼ同水準で名指しの情報量が乏しい。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "攻殻機動隊",
+      "note": "同上。直近30日 4/30(13.3%)・3台設置・平均score -1098.4で9機種中最悪。8/24▶8/25の全▶全連続仕掛け実績としても引用されているが、30日窓の平均は大きくマイナス。3台設置と最少で解釈に注意（feedback-0824-rakuen-narabi-edge-and-quiet-zentaikei: 攻殻は差枚・回転数が低くても全台系にされやすい機種）。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "甲鉄城のカバネリ",
+      "note": "同上。直近30日 3/30(10.0%)・3台設置・平均score +624.2。本文の『Sカバネリ』を人間確認により18台の海門(うなと)決戦ではなくこちら(3台)に確定。8/24▶8/25の全▶全連続仕掛け実績としても引用。"
+    }
+  ],
+  "unscored_claims": [
+    {
+      "text": "ニブイチ機種×複数",
+      "reason": "対象機種が特定されておらず、model_named_ratio claimとして固定できない。8/27予告と同じ理由で見送る。"
+    },
+    {
+      "text": "最近の傾向としては前日の対象が翌日も、という連続仕掛けパターン（8/22▶8/23 天膳 全▶全 等4例）",
+      "reason": "ルール自体は反証可能だが、その適用に必要な『前日8/27の対象機種』を予告本文が名指ししていないため、announcerのclaimとしては固定できない。ただし8/27の実績はDBに収録済み（dbmax=20260827）なので、分析者側は8/27の閾値超え機種を導出して独立に検証できる。それはannouncerの主張ではなく我々の派生指標として扱う。また引用されている4例は投稿者自身の事後申告であり、project-kawasakislot-selfreport-inflated の通り根拠に引用しない。8/28の実績がDBに入った後に、独立した仮説として document/registry/HYPOTHESIS_LEDGER.md 側で検証する。"
+    },
+    {
+      "text": "@slokotae7 で発表ある機種や今日挙動良かった機種が優先して狙うのもかなりありかと",
+      "reason": "対象日より後（当日）に判明する外部情報への委譲であり、事前登録時点で機種を特定できない。予告としての情報量はゼロ。"
+    },
+    {
+      "text": "全国最大のスロ専『夏の陣』来店取材／連続取材weekも後半戦",
+      "reason": "イベント名・来店の告知であり、機種・閾値・位置を特定できる反証可能な主張を含まない。"
+    },
+    {
+      "text": "抽選は9:40〜／先バレ機種とかはないので二の矢でも十分ドリルできるかと",
+      "reason": "抽選時間と立ち回り助言。機種別・全台系の反証可能な主張を含まない。"
+    }
+  ],
+  "prior_prediction": {
+    "most_likely_hits": [
+      "バンドリ！",
+      "化物語",
+      "真打 吉宗",
+      "かぐや様は告らせたい"
+    ],
+    "most_likely_misses": [
+      "ToLOVEるダークネス",
+      "東京リベンジャーズ",
+      "攻殻機動隊",
+      "戦国乙女4 戦乱に閃く炯眼の軍師"
+    ],
+    "note": "登録時点の分析者予測を凍結する。名指しが9機種と8/27（15機種）より絞られている分、1機種あたりの主張は強い。到達率でホール平均5.6%を明確に上回るのはバンドリ！(29.2%)・化物語(20.0%)・真打 吉宗(20.0%)・かぐや様(20.0%)の4機種で、これをhits側に置く。ただし『全56×2機種』の主張どおりなら閾値超えは2機種であり、4機種すべてが当たることは主張と整合しない（median=3.0なので3機種前後が期待値）。ToLOVEるは30日ゼロ・東リベは6.7%とホール平均並みで見送り側。攻殻はrank4/54に釣られやすいが30日平均score -1098.4と最悪で、feedback-0824の『攻殻は差枚が低くても全台系にされやすい』を踏まえても数値的根拠は薄いため見送り側に置く（この判断自体が0824 instinctと対立するので、答え合わせ時に必ず再確認する）。乙女4は10.0%で中間だが、従来予告が乙女5を名指ししてきた系列からの切替直後であり実績が薄いため見送り側。採点は機種平均だけで終わらせず、feedback-announce-scoring-depth の通り台番号別・並びブロック検出・外部報告突き合わせまで行うこと。"
+  },
+  "result": {
+    "scored_at_data_max": "20260828",
+    "hall_baseline_mean_diff": 29.5,
+    "hall_n_machines": 587,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": [],
+      "bounds": [
+        -5095,
+        15477
+      ]
+    },
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 2,
+          "note": "『今月＆今週毎日仕掛けの全56×2機種』。90日窓でp_at_least_2=0.747と大半の日で成立する弱い主張（median=3.0が標準）。"
+        },
+        "observed_n_models": 4,
+        "candidate_models": 54,
+        "models": [
+          {
+            "machine_name": "モンスターハンターライズ",
+            "score": 3700.2,
+            "n_machines": 4,
+            "mean_diff": 1333.8,
+            "age_days": 604
+          },
+          {
+            "machine_name": "うみねこのなく頃に2",
+            "score": 2466.3,
+            "n_machines": 4,
+            "mean_diff": 1714.5,
+            "age_days": 207
+          },
+          {
+            "machine_name": "とある魔術の禁書目録2",
+            "score": 2175.4,
+            "n_machines": 8,
+            "mean_diff": 934.9,
+            "age_days": 24
+          },
+          {
+            "machine_name": "攻殻機動隊",
+            "score": 1973.3,
+            "n_machines": 3,
+            "mean_diff": 651.3,
+            "age_days": 207
+          }
+        ],
+        "n_new_machines_over": 1,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "化物語",
+          "note": "『ここ半月で高頻度で対象になってる機種』の一つ。直近30日 6/30(20.0%)・9台設置・平均score +626.6。ホール平均5.6%の約3.6倍。"
+        },
+        "score": -578.1,
+        "mean_diff": -523.4,
+        "gratio": 1.104,
+        "n_machines": 9,
+        "rank": 47,
+        "candidate_models": 54,
+        "age_days": 263,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ToLOVEるダークネス",
+          "note": "同上。直近30日 0/30(0.0%)・8台設置・平均score -9.6。8/27予告でも名指しされゼロが続く対照群。"
+        },
+        "score": 915.5,
+        "mean_diff": 804.1,
+        "gratio": 1.138,
+        "n_machines": 8,
+        "rank": 10,
+        "candidate_models": 54,
+        "age_days": 604,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "真打 吉宗",
+          "note": "同上。直近30日 6/30(20.0%)・5台設置・平均score +869.2。rank54/54だがこれはas_of1日分の順位で、30日窓では高水準（8/25・8/28予告でも継続候補）。"
+        },
+        "score": -1381.7,
+        "mean_diff": -1237.8,
+        "gratio": 1.116,
+        "n_machines": 5,
+        "rank": 52,
+        "candidate_models": 54,
+        "age_days": 144,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+          "note": "同上。直近30日 3/30(10.0%)・6台設置・平均score +259.6。本文は『乙女4』で、従来予告の乙女5(22台・30日ゼロ)とは別機種であることを人間確認済み。"
+        },
+        "score": 13.0,
+        "mean_diff": 103.3,
+        "gratio": 0.125,
+        "n_machines": 6,
+        "rank": 24,
+        "candidate_models": 54,
+        "age_days": 604,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "バンドリ！",
+          "note": "同上。直近30日 7/24(29.2%)・4台設置・平均score +775.4。名指し9機種中で最高到達率だが4台設置で分散が大きい。"
+        },
+        "score": -134.5,
+        "mean_diff": -142.5,
+        "gratio": 0.944,
+        "n_machines": 4,
+        "rank": 38,
+        "candidate_models": 54,
+        "age_days": 604,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "かぐや様は告らせたい",
+          "note": "同上。直近30日 2/10(20.0%、出現10日分のみ)・4台設置・平均score +1347.6。平均scoreは9機種中最高だが分母10日と小さい。8/25▶8/26で1/2▶1/2の連続仕掛け実績としても本文で引用されている。"
+        },
+        "score": -185.4,
+        "mean_diff": -190.2,
+        "gratio": 0.974,
+        "n_machines": 4,
+        "rank": 40,
+        "candidate_models": 54,
+        "age_days": 604,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "東京リベンジャーズ",
+          "note": "同上。直近30日 2/30(6.7%)・4台設置・平均score +51.6。ホール平均5.6%とほぼ同水準で名指しの情報量が乏しい。"
+        },
+        "score": -51.5,
+        "mean_diff": -83.0,
+        "gratio": 0.621,
+        "n_machines": 4,
+        "rank": 33,
+        "candidate_models": 54,
+        "age_days": 354,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "攻殻機動隊",
+          "note": "同上。直近30日 4/30(13.3%)・3台設置・平均score -1098.4で9機種中最悪。8/24▶8/25の全▶全連続仕掛け実績としても引用されているが、30日窓の平均は大きくマイナス。3台設置と最少で解釈に注意（feedback-0824-rakuen-narabi-edge-and-quiet-zentaikei: 攻殻は差枚・回転数が低くても全台系にされやすい機種）。"
+        },
+        "score": 1973.3,
+        "mean_diff": 651.3,
+        "gratio": 3.03,
+        "n_machines": 3,
+        "rank": 4,
+        "candidate_models": 54,
+        "age_days": 207,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "甲鉄城のカバネリ",
+          "note": "同上。直近30日 3/30(10.0%)・3台設置・平均score +624.2。本文の『Sカバネリ』を人間確認により18台の海門(うなと)決戦ではなくこちら(3台)に確定。8/24▶8/25の全▶全連続仕掛け実績としても引用。"
+        },
+        "score": 347.7,
+        "mean_diff": 333.7,
+        "gratio": 1.042,
+        "n_machines": 3,
+        "rank": 16,
+        "candidate_models": 54,
+        "age_days": 604,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
+  "announce_digest": "9818a73d18ae5892"
+}

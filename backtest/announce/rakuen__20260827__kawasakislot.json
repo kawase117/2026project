@@ -1,0 +1,585 @@
+{
+  "announce_id": "rakuen__20260827__kawasakislot",
+  "hall": "楽園蒲田店",
+  "target_date": "20260827",
+  "source": {
+    "account": "kawasakislot",
+    "url": "https://x.com/kawasakislot/status/2092197684719518178",
+    "posted_at": "2026-08-26T20:00:00+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "8/26 楽園蒲田\n連続取材week3日目！明日は6つく恒例のヒロキ対抗で転生1/2、カバネリ1/3が先バレのタイガーダッシュ取材入り！\n\n明日の仕掛けはアンケートによると\n・転生が1/2⑤⑥\n・Lカバネリが1/3⑤⑥\n・全⑤⑥×2機種\n・1/2&1/3で⑤⑥機種複数\n・1/4＆1/5で⑤⑥機種\n・1/6で⑥入り機種\n\nもちろん最優先は転生>カバネリの2機種！カバネリ18台、転生20台で合計38台\n\n全⑤⑥機種は日付まつわる台数の「6台」設置機種を優先！\n8/6は6台設置の炎炎2＆サンダー、8/16は戦コレ6が対象になってるし、明日も1機種は6台設置でやってくるんじゃないかなとｗ\n朝イチは埋まらなそうな不人気機種＆機種名にも6がはいっているスト6（6台）とかも怪しいね🤔\n\n1/◯機種はお店の傾向に沿って下記機種から！\n1️⃣過去同じ取材でよく対象になっている　マギレコ・GOD・マギレコ・モンキー・炎炎2・サンダー・モンハン・東リベ\n2️⃣優遇機種＆増台＆再導入機種 化物語・乙女5・カバネリ・かぐや様・ToLOVEる\n\n抽選は9:40～\n明日は200人くらいかと！",
+  "posted_at_note": "本文に投稿日時の明示が無いため posted_at は推定。ヘッダ『8/26 楽園蒲田』＋『抽選は9:40～』＋文末『明日は200人くらいかと』は8/16〜8/25の同型投稿と一致するパターン（target_date=翌日、posted=当日20時台）に基づき 2026-08-26T20:00+09:00 とした。",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "series_note": "8/6以降の連続シリーズの継続（連続取材week3日目）。転生（北斗の拳 転生の章2、20台）とカバネリ（甲鉄城のカバネリ 海門(うなと)決戦、18台）を最優先2機種として名指し、8/24-8/25と同様に優先機種を段階リストで提示。今回は新要素として『⑤⑥（末尾5・6）』という具体的な末尾指定と、『日付にまつわる6台設置機種』という設置台数と過去実績（8/6=炎炎2/サンダー、8/16=戦コレ6）を根拠にした選定ロジックが加わっている。GODはmachine_masterに該当なし（このホールには未設置または表記ゆれで照合不能）。",
+  "baserate_before_target": {
+    "window_days": 90,
+    "window": [
+      "20260527",
+      "20260825"
+    ],
+    "n_days": 87,
+    "candidate_models_per_day": 59.6,
+    "models_over_1800_mean": 3.41,
+    "models_over_1800_median": 3.0,
+    "models_over_1800_max": 9,
+    "p_at_least_1": 0.897,
+    "p_at_least_2": 0.736,
+    "p_at_least_3": 0.575,
+    "p_at_least_4": 0.402,
+    "p_at_least_10": 0.0,
+    "note": "backtest/announce.py baserate と同一手続き（min_machines=3、閾値は系列一貫の絶対値1800.0）。『全⑤⑥×2機種』のn_models=2は90日窓でp_at_least_2=0.736と大半の日で成立する弱い主張（median=3.0がむしろ標準）。"
+  },
+  "named_machine_context": {
+    "window_days": 30,
+    "as_of": "20260825",
+    "n_candidates_ge3machines": 54,
+    "hall_over_1800_rate_30d_approx": 0.037,
+    "models": [
+      {
+        "name": "甲鉄城のカバネリ 海門(うなと)決戦",
+        "tweet_label": "カバネリ",
+        "n_machines": 18,
+        "rank": 1,
+        "of": 54,
+        "over_1800_30d": 7,
+        "rate_30d": 0.233,
+        "mean_score_30d": 1066.6
+      },
+      {
+        "name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+        "tweet_label": "マギレコ",
+        "n_machines": 12,
+        "rank": 2,
+        "of": 54,
+        "over_1800_30d": 8,
+        "rate_30d": 0.267,
+        "mean_score_30d": 944.1
+      },
+      {
+        "name": "北斗の拳 転生の章2",
+        "tweet_label": "転生",
+        "n_machines": 20,
+        "rank": 23,
+        "of": 54,
+        "over_1800_30d": 5,
+        "rate_30d": 0.167,
+        "mean_score_30d": 771.2
+      },
+      {
+        "name": "化物語",
+        "tweet_label": "化物語",
+        "n_machines": 9,
+        "rank": 35,
+        "of": 54,
+        "over_1800_30d": 6,
+        "rate_30d": 0.2,
+        "mean_score_30d": 646.4
+      },
+      {
+        "name": "モンキーターンV",
+        "tweet_label": "モンキー",
+        "n_machines": 12,
+        "rank": 28,
+        "of": 54,
+        "over_1800_30d": 4,
+        "rate_30d": 0.133,
+        "mean_score_30d": 784.5
+      },
+      {
+        "name": "モンスターハンターライズ",
+        "tweet_label": "モンハン",
+        "n_machines": 4,
+        "rank": 39,
+        "of": 54,
+        "over_1800_30d": 4,
+        "rate_30d": 0.133,
+        "mean_score_30d": 2244.2,
+        "note": "4台のみで日次スコアの分散が大きい。mean_scoreが突出しているのは少数日の大当たりに引っ張られている可能性があり、rate(13.3%)の方が信頼できる。"
+      },
+      {
+        "name": "戦国コレクション6",
+        "tweet_label": "戦コレ6（6台仮説の過去実績として本文言及、構造が同一）",
+        "n_machines": 6,
+        "rank": 43,
+        "of": 54,
+        "over_1800_30d": 4,
+        "rate_30d": 0.133,
+        "mean_score_30d": 48.9
+      },
+      {
+        "name": "かぐや様は告らせたい",
+        "tweet_label": "かぐや様",
+        "n_machines": 4,
+        "rank": 44,
+        "of": 54,
+        "n_days_present_30d": 10,
+        "over_1800_30d": 1,
+        "rate_30d": 0.1,
+        "mean_score_30d": 499.4
+      },
+      {
+        "name": "東京リベンジャーズ",
+        "tweet_label": "東リベ",
+        "n_machines": 4,
+        "rank": 5,
+        "of": 54,
+        "over_1800_30d": 2,
+        "rate_30d": 0.067,
+        "mean_score_30d": 48.9
+      },
+      {
+        "name": "スマスロ炎炎ノ消防隊2",
+        "tweet_label": "炎炎2",
+        "n_machines": 6,
+        "rank": 49,
+        "of": 54,
+        "over_1800_30d": 2,
+        "rate_30d": 0.067,
+        "mean_score_30d": -48.4
+      },
+      {
+        "name": "戦国乙女5 業火を穿つ宿焔の双刃",
+        "tweet_label": "乙女5",
+        "n_machines": 22,
+        "rank": 11,
+        "of": 54,
+        "over_1800_30d": 0,
+        "rate_30d": 0.0,
+        "mean_score_30d": 50.0
+      },
+      {
+        "name": "ToLOVEるダークネス",
+        "tweet_label": "ToLOVEる",
+        "n_machines": 8,
+        "rank": 37,
+        "of": 54,
+        "over_1800_30d": 0,
+        "rate_30d": 0.0,
+        "mean_score_30d": -1.2
+      },
+      {
+        "name": "スマスロ サンダーV",
+        "tweet_label": "サンダー",
+        "n_machines": 6,
+        "rank": 3,
+        "of": 54,
+        "over_1800_30d": 0,
+        "rate_30d": 0.0,
+        "mean_score_30d": 62.3
+      },
+      {
+        "name": "ストリートファイター6",
+        "tweet_label": "スト6",
+        "n_machines": 6,
+        "rank": 24,
+        "of": 54,
+        "n_days_present_30d": 23,
+        "over_1800_30d": 0,
+        "rate_30d": 0.0,
+        "mean_score_30d": -186.0
+      }
+    ],
+    "note": "6台設置機種はスマスロ炎炎ノ消防隊2・スマスロサンダーV・ストリートファイター6・戦国コレクション6の4機種が該当（全て正確に6台）。うち直近30日で閾値超えがあるのは戦国コレクション6(4/30)のみで、サンダーV・スト6・炎炎2は30日間ゼロ〜2回と弱い。『日付にまつわる6台設置機種』の選定ロジック自体の妥当性は3例(8/6,8/16)のみで検証不能。マギレコ・カバネリはrank1-2/54と直近30日で最も強い候補。GODはこのホールのmachine_masterに存在せず(表記ゆれの可能性はあるが対応候補が見つからず)照合断念。"
+  },
+  "claims": [
+    {
+      "type": "zentaikei_count",
+      "n_models": 2,
+      "note": "『全⑤⑥×2機種』。90日窓でp_at_least_2=0.736と大半の日で成立する弱い主張（median=3.0）。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "北斗の拳 転生の章2",
+      "note": "最優先機種（転生、20台）。直近30日 5/30(16.7%)・rank23/54・平均score+771.2。「1/2⑤⑥」＝末尾5・6に1/2の頻度で仕掛けとの主張(position_rule相当)は当日ロスター未確定のため今回はmodel_named判定のみ登録し、末尾条件は不採用。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "note": "最優先機種（カバネリ、18台）。直近30日 7/30(23.3%)・rank1/54・平均score+1066.6。8/25登録時に的中(hit=true)した継続候補。「1/3⑤⑥」の末尾条件も同様に今回は不採用。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "note": "優先グループ1️⃣（過去同取材でよく対象）。直近30日 8/30(26.7%)・rank2/54・平均score+944.1と全候補中トップクラス。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "モンキーターンV",
+      "note": "優先グループ1️⃣。直近30日 4/30(13.3%)・rank28/54・平均score+784.5。narabi-block-slide-ruleの並びずらし観測がある機種（本claimはzentaikei閾値のみで判定し位置は含めない）。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "note": "優先グループ1️⃣（炎炎2）。直近30日 2/30(6.7%)・rank49/54・平均score-48.4。8/6の6台設置仕掛け実績として本文で言及された機種でもあるが直近30日は弱い。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "スマスロ サンダーV",
+      "note": "優先グループ1️⃣（サンダー、6台）。直近30日 0/30(0.0%)・rank3/54・平均score+62.3。8/6の6台設置仕掛け実績として本文で言及された機種だが直近30日は閾値超えゼロ。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "モンスターハンターライズ",
+      "note": "優先グループ1️⃣（モンハン）。直近30日 4/30(13.3%)・rank39/54・平均score+2244.2。4台と少数設置で日次分散が大きい点に注意。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "東京リベンジャーズ",
+      "note": "優先グループ1️⃣（東リベ）。直近30日 2/30(6.7%)・rank5/54・平均score+48.9。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "化物語",
+      "note": "優先グループ2️⃣（優遇＆増台＆再導入）。直近30日 6/30(20.0%)・rank35/54・平均score+646.4。8/25登録時も候補視した継続候補。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "note": "優先グループ2️⃣（乙女5）。直近30日 0/30(0.0%)・rank11/54・平均score+50.0。8/24・8/25登録時も一貫してゼロだった対照群。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "かぐや様は告らせたい",
+      "note": "優先グループ2️⃣。20260803以前の空白から回復し直近10日分のみで1/10(10.0%)・rank44/54・平均score+499.4。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "ToLOVEるダークネス",
+      "note": "優先グループ2️⃣。直近30日 0/30(0.0%)・rank37/54・平均score-1.2。8/25登録時も対照群だった機種。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "ストリートファイター6",
+      "note": "『機種名にも6がはいっているスト6』として名指し。6台設置。直近30日 0/30(0.0%)・rank24/54・平均score-186.0と最弱。データが23日分のみ(新規/一時的欠測)。"
+    }
+  ],
+  "unscored_claims": [
+    {
+      "text": "転生が1/2⑤⑥／Lカバネリが1/3⑤⑥／1/2&1/3で⑤⑥機種複数／1/4＆1/5で⑤⑥機種／1/6で⑥入り機種",
+      "reason": "末尾5・6に対する仕掛け頻度(1/◯)の主張。対象日の実際の島・台番号・当日ロスターが確定しないと末尾条件の的中判定ができず、事前登録の趣旨（結果を見る前に凍結）に反するため見送る。名指し機種自体はmodel_named claimに反映済み。"
+    },
+    {
+      "text": "全⑤⑥機種は『6台』設置機種を優先（8/6=炎炎2＆サンダー、8/16=戦コレ6が過去実績）",
+      "reason": "『6台設置機種のどれか』という選定ロジックへの言及で特定の1機種を確定していない。6台機種(炎炎2・サンダーV・スト6・戦コレ6)は個別にmodel_named claimとして登録済みなので、この論理自体は反証可能な形にできず不採用。"
+    },
+    {
+      "text": "GOD",
+      "reason": "machine_masterに該当なし。楽園蒲田店に未設置、または本文の略称と正式表記が一致せず照合断念。"
+    },
+    {
+      "text": "抽選は9:40～、明日は200人くらいかと",
+      "reason": "来場者数・抽選時間の言及で機種別・全台系の反証可能な主張を含まない。"
+    }
+  ],
+  "prior_prediction": {
+    "most_likely_hits": [
+      "甲鉄城のカバネリ 海門(うなと)決戦",
+      "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "化物語",
+      "北斗の拳 転生の章2"
+    ],
+    "most_likely_misses": [
+      "戦国乙女5 業火を穿つ宿焔の双刃",
+      "ToLOVEるダークネス",
+      "スマスロ サンダーV",
+      "ストリートファイター6"
+    ],
+    "note": "登録時点の分析者予測を凍結する。カバネリ(rank1/54,23.3%)・マギレコ(rank2/54,26.7%)が直近30日で最も強く、両機種とも8/25以前から継続して高スコア帯にいる。転生・化物語は16〜20%台で中位。『6台設置機種を優先』という選定ロジックは3例のみの自己申告で検証不能なため、6台候補の中では戦国コレクション6(直近30日13.3%)がサンダーV/スト6/炎炎2よりわずかに強いが、いずれも弱い。乙女5・ToLOVEるはゼロが続く対照群として据え置く。"
+  },
+  "result": {
+    "scored_at_data_max": "20260827",
+    "hall_baseline_mean_diff": 25.5,
+    "hall_n_machines": 587,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 2,
+      "machines_hi": [],
+      "machines_lo": [
+        "ゴールデンカムイ",
+        "ソードアート・オンラインII"
+      ],
+      "bounds": [
+        -5095,
+        15477
+      ]
+    },
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 2,
+          "note": "『全⑤⑥×2機種』。90日窓でp_at_least_2=0.736と大半の日で成立する弱い主張（median=3.0）。"
+        },
+        "observed_n_models": 3,
+        "candidate_models": 54,
+        "models": [
+          {
+            "machine_name": "モンスターハンターライズ",
+            "score": 7843.7,
+            "n_machines": 4,
+            "mean_diff": 4226.8,
+            "age_days": 603
+          },
+          {
+            "machine_name": "からくりサーカス2",
+            "score": 6075.4,
+            "n_machines": 7,
+            "mean_diff": 3292.9,
+            "age_days": 52
+          },
+          {
+            "machine_name": "北斗の拳 転生の章2",
+            "score": 2626.5,
+            "n_machines": 20,
+            "mean_diff": 1881.4,
+            "age_days": 234
+          }
+        ],
+        "n_new_machines_over": 0,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "北斗の拳 転生の章2",
+          "note": "最優先機種（転生、20台）。直近30日 5/30(16.7%)・rank23/54・平均score+771.2。「1/2⑤⑥」＝末尾5・6に1/2の頻度で仕掛けとの主張(position_rule相当)は当日ロスター未確定のため今回はmodel_named判定のみ登録し、末尾条件は不採用。"
+        },
+        "score": 2626.5,
+        "mean_diff": 1881.4,
+        "gratio": 1.396,
+        "n_machines": 20,
+        "rank": 3,
+        "candidate_models": 54,
+        "age_days": 234,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+          "note": "最優先機種（カバネリ、18台）。直近30日 7/30(23.3%)・rank1/54・平均score+1066.6。8/25登録時に的中(hit=true)した継続候補。「1/3⑤⑥」の末尾条件も同様に今回は不採用。"
+        },
+        "score": -3.8,
+        "mean_diff": -2.3,
+        "gratio": 1.613,
+        "n_machines": 18,
+        "rank": 26,
+        "candidate_models": 54,
+        "age_days": 178,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+          "note": "優先グループ1️⃣（過去同取材でよく対象）。直近30日 8/30(26.7%)・rank2/54・平均score+944.1と全候補中トップクラス。"
+        },
+        "score": 309.5,
+        "mean_diff": 242.6,
+        "gratio": 1.276,
+        "n_machines": 12,
+        "rank": 15,
+        "candidate_models": 54,
+        "age_days": 507,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "モンキーターンV",
+          "note": "優先グループ1️⃣。直近30日 4/30(13.3%)・rank28/54・平均score+784.5。narabi-block-slide-ruleの並びずらし観測がある機種（本claimはzentaikei閾値のみで判定し位置は含めない）。"
+        },
+        "score": 1222.6,
+        "mean_diff": 912.9,
+        "gratio": 1.339,
+        "n_machines": 12,
+        "rank": 5,
+        "candidate_models": 54,
+        "age_days": 603,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "スマスロ炎炎ノ消防隊2",
+          "note": "優先グループ1️⃣（炎炎2）。直近30日 2/30(6.7%)・rank49/54・平均score-48.4。8/6の6台設置仕掛け実績として本文で言及された機種でもあるが直近30日は弱い。"
+        },
+        "score": -551.4,
+        "mean_diff": -483.8,
+        "gratio": 1.14,
+        "n_machines": 6,
+        "rank": 45,
+        "candidate_models": 54,
+        "age_days": 205,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "スマスロ サンダーV",
+          "note": "優先グループ1️⃣（サンダー、6台）。直近30日 0/30(0.0%)・rank3/54・平均score+62.3。8/6の6台設置仕掛け実績として本文で言及された機種だが直近30日は閾値超えゼロ。"
+        },
+        "score": -297.8,
+        "mean_diff": -491.8,
+        "gratio": 0.605,
+        "n_machines": 6,
+        "rank": 38,
+        "candidate_models": 54,
+        "age_days": 178,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "モンスターハンターライズ",
+          "note": "優先グループ1️⃣（モンハン）。直近30日 4/30(13.3%)・rank39/54・平均score+2244.2。4台と少数設置で日次分散が大きい点に注意。"
+        },
+        "score": 7843.7,
+        "mean_diff": 4226.8,
+        "gratio": 1.856,
+        "n_machines": 4,
+        "rank": 1,
+        "candidate_models": 54,
+        "age_days": 603,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "東京リベンジャーズ",
+          "note": "優先グループ1️⃣（東リベ）。直近30日 2/30(6.7%)・rank5/54・平均score+48.9。"
+        },
+        "score": -1231.3,
+        "mean_diff": -940.2,
+        "gratio": 1.31,
+        "n_machines": 4,
+        "rank": 53,
+        "candidate_models": 54,
+        "age_days": 353,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "化物語",
+          "note": "優先グループ2️⃣（優遇＆増台＆再導入）。直近30日 6/30(20.0%)・rank35/54・平均score+646.4。8/25登録時も候補視した継続候補。"
+        },
+        "score": -655.6,
+        "mean_diff": -1142.4,
+        "gratio": 0.574,
+        "n_machines": 9,
+        "rank": 47,
+        "candidate_models": 54,
+        "age_days": 262,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+          "note": "優先グループ2️⃣（乙女5）。直近30日 0/30(0.0%)・rank11/54・平均score+50.0。8/24・8/25登録時も一貫してゼロだった対照群。"
+        },
+        "score": -496.6,
+        "mean_diff": -358.9,
+        "gratio": 1.384,
+        "n_machines": 22,
+        "rank": 44,
+        "candidate_models": 54,
+        "age_days": 80,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "かぐや様は告らせたい",
+          "note": "優先グループ2️⃣。20260803以前の空白から回復し直近10日分のみで1/10(10.0%)・rank44/54・平均score+499.4。"
+        },
+        "score": 101.8,
+        "mean_diff": 179.0,
+        "gratio": 0.569,
+        "n_machines": 4,
+        "rank": 20,
+        "candidate_models": 54,
+        "age_days": 603,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ToLOVEるダークネス",
+          "note": "優先グループ2️⃣。直近30日 0/30(0.0%)・rank37/54・平均score-1.2。8/25登録時も対照群だった機種。"
+        },
+        "score": -306.0,
+        "mean_diff": -344.9,
+        "gratio": 0.887,
+        "n_machines": 8,
+        "rank": 39,
+        "candidate_models": 54,
+        "age_days": 603,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ストリートファイター6",
+          "note": "『機種名にも6がはいっているスト6』として名指し。6台設置。直近30日 0/30(0.0%)・rank24/54・平均score-186.0と最弱。データが23日分のみ(新規/一時的欠測)。"
+        },
+        "score": -589.5,
+        "mean_diff": -785.5,
+        "gratio": 0.75,
+        "n_machines": 6,
+        "rank": 46,
+        "candidate_models": 54,
+        "age_days": 24,
+        "age_bucket": "new",
+        "base_rate": 0.105,
+        "hit": false
+      }
+    ]
+  },
+  "announce_digest": "0255773b555b5bfc"
+}

@@ -1,0 +1,51 @@
+---
+id: 2026-08-06-hall-closure-fake-diff-contamination
+trigger: "machine_detailed_results から直接 diff_coins_normalized / games_normalized を集計して機械割・平均差枚を出すとき。ある日だけホール全体の指標が急変したとき。games_normalized=0 の行を扱うとき。工事休業日・全台休止日のデータを疑うとき。楽園蒲田店を分析するとき。eda/briefing_common.py の load_hall_frame を使うとき"
+confidence: 0.85
+domain: data-quality
+source: session-investigation
+project_id: 2026project
+project_name: pachinko-analyzer
+---
+
+# 工事休業日は games=0 だけでなく diff にもホール平均が誤って全台同一値で書き込まれる
+
+## 背景
+楽園蒲田店の `machine_detailed_results` で `20250421` と `20260706` の2日、
+全台（567/587台）が games_normalized=0 なのに diff_coins_normalized だけ
+非ゼロの単一値（-6142、両日とも同一）が全行に入っていた。20260706は工事による
+休業日と確認済み（20250421も同じ症状から休業日と推定）。この -6142 は
+`daily_hall_summary.avg_diff_per_machine` と完全一致しており、休業日でも
+派生集計の平均値が機械単位テーブルに逆流している可能性が高い（原因はscraper/
+json_processorの取込経路、未特定）。
+
+games=0 フィルタだけでは救えない（分子だけ汚染される）。実際 楽園ハナハナ3F
+検証で機械割が 101.24%→98.42% と2.8pp下振れした。
+
+## アクション
+1. 検出クエリ: `select date, count(*), count(distinct diff_coins_normalized)
+   from machine_detailed_results where games_normalized=0 and
+   diff_coins_normalized!=0 group by date` — 当日総台数と一致し distinct=1
+   なら休業日+平均値逆流を疑う
+2. 恒久対応は `eda/briefing_common.py` の `HALL_CLOSED_DAYS`
+   （ホール短縮名キー: `HALL_DBS` のキーを使うこと。フルネームだと静かに
+   空振りする）。`load_hall_frame` 内で drop_special_days に関わらず
+   無条件除外している（休業日は「特殊営業日」ではなく「営業していない日」
+   のため）
+3. `load_hall_frame` を経由しない生SQLでの直接集計（`eda/rakuen_*` 系の
+   一部）は個別に対処が必要。気づいた時点で日付を確認すること
+4. 現在登録済み: `HALL_CLOSED_DAYS = {"楽園": {"20250421", "20260706"}}`
+
+## 例
+```python
+from eda.briefing_common import load_hall_frame
+df = load_hall_frame("楽園", date_from="20250415", date_to="20250425")
+# 20250421 は自動的に0行（HALL_CLOSED_DAYS により除外）
+```
+
+## Relation
+- related:
+  - dd-sweep-multihhall-framework
+
+## Status
+- status: active

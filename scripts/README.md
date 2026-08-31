@@ -81,6 +81,14 @@ id を1行ずつ書く（`#` 以降はコメント）。
 - 出力先: `db/experiments/tail_ltr_split_rule_maintenance.*` など。
 - 用途: split-rule の保守チェックと品質確認を定型化する。
 
+### `safe_commit.py`
+
+- 役割: `git commit` を実行し、pre-commitのruff-check/ruff-formatがファイルを書き換えて失敗した場合、追跡済みファイルを再ステージして1回だけ再コミットする。
+- フックはスキップしない。書き換え分の再ステージのみを自動化する。
+- 実行例:
+  - `venv\Scripts\python.exe scripts/safe_commit.py "fix: ..."`
+- 事前に `git add` で対象ファイルをステージしておくこと(このスクリプトは無差別な `git add -A` は行わない)。
+
 ## 注意点
 
 - すべてリポジトリルートを基準に実行される前提。

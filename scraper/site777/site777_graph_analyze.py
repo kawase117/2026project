@@ -67,16 +67,55 @@ def fit_axis(points: list[tuple[float, float, str]], height: int) -> tuple[float
     return float(slope), float(intercept)
 
 
-def colored_trace(rgb: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+def trace_masks(rgb: np.ndarray) -> dict[str, np.ndarray]:
+    """推移線の色ごとのマスク。サイト側が線色を変えるので複数色を許容する。
+
+    2026-08-17にサイトセブンが線色を青紫(103,99,245)系から橙(251,134,103)系へ変更した。
+    橙は黄色マスクの (green - blue) >= 50 に僅差で外れ、検出0で全143台が
+    trace_unreadable になった。
+
+    2026-08-19に橙から水色(実測コア色 (54,171,210)、アンチエイリアス端は
+    (172,211,223)等)へ再度変更され、既存の"blue"マスク((blue-green)>=60)には
+    僅差で外れて全15台が trace_unreadable になった。水色はgreenとblueが
+    近い(差45以内)点で"blue"(青紫寄り、差60以上)と区別する。線色を1つに
+    決め打ちしないこと。
+
+    2026-08-30に水色から緑(実測コア色 (105,177,99)、アンチエイリアス端は
+    (178,208,168)等)へ再度変更され、既存マスクのどれにも当たらず全100台が
+    trace_unreadable になった。緑はgreenがredとblueの双方を25以上上回る点で、
+    (green-blue)が負になる"cyan"と区別する。背景(245,236,231)は
+    (green-red)=-9、灰の軸(153,153,153)は差0なので拾わない。
+    """
     red = rgb[:, :, 0].astype(np.int16)
     green = rgb[:, :, 1].astype(np.int16)
     blue = rgb[:, :, 2].astype(np.int16)
-    purple_mask = (red >= 120) & (blue >= 150) & (green <= 180) & ((red - green) >= 25) & ((blue - green) >= 35)
-    blue_mask = (blue >= 150) & ((blue - red) >= 60) & ((blue - green) >= 60)
-    yellow_mask = (
-        (red >= 150) & (green >= 80) & (green <= 220) & (blue <= 140) & ((red - blue) >= 70) & ((green - blue) >= 50)
-    )
-    return np.where(purple_mask | blue_mask | yellow_mask)
+    return {
+        "purple": (red >= 120) & (blue >= 150) & (green <= 180) & ((red - green) >= 25) & ((blue - green) >= 35),
+        "blue": (blue >= 150) & ((blue - red) >= 60) & ((blue - green) >= 60),
+        "cyan": (blue >= 180) & ((blue - red) >= 40) & ((green - red) >= 25) & ((blue - green) <= 45),
+        "yellow": (
+            (red >= 150)
+            & (green >= 80)
+            & (green <= 220)
+            & (blue <= 140)
+            & ((red - blue) >= 70)
+            & ((green - blue) >= 50)
+        ),
+        # 背景(245,236,231)と灰の軸(153,153,153)は赤緑差が10未満なので拾わない。
+        "orange": (red >= 150) & ((red - green) >= 60) & ((red - blue) >= 60),
+        "green": (green >= 130) & ((green - red) >= 25) & ((green - blue) >= 25),
+    }
+
+
+def trace_color_counts(rgb: np.ndarray) -> dict[str, int]:
+    return {name: int(mask.sum()) for name, mask in trace_masks(rgb).items()}
+
+
+def colored_trace(rgb: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    combined = np.zeros(rgb.shape[:2], dtype=bool)
+    for mask in trace_masks(rgb).values():
+        combined |= mask
+    return np.where(combined)
 
 
 def maximum_label(item: dict, width: int, height: int) -> int | None:
@@ -106,6 +145,8 @@ def analyze_image(image_path: Path, ocr_item: dict) -> dict:
         "axisLabels": [{"y": round(y, 2), "value": int(value), "text": text} for y, value, text in points],
         "purplePixels": int(xs.size),
         "tracePixels": int(xs.size),
+        # 線色が変わったときに tracePixels=0 だけを見て白紙と誤診しないための内訳。
+        "traceColorCounts": trace_color_counts(rgb),
     }
     if fit is None:
         return {**result, "status": "axis_unreadable"}
@@ -228,7 +269,10 @@ def main() -> int:
         if not image_path.exists() or not ocr_item or ocr_item.get("error"):
             metrics = {"status": "missing_input"}
         else:
-            signature = f'v5:{ocr_item.get("lastWriteTimeUtc")}:{ocr_item.get("length")}'
+            # 検出ロジックを変えたらこのバージョンを上げる。上げないと過去の解析結果が
+            # そのまま再利用され、修正が既存画像に適用されない。
+            # v6=橙、v7=水色、v8=緑(2026-08-30)の推移線に対応。
+            signature = f'v8:{ocr_item.get("lastWriteTimeUtc")}:{ocr_item.get("length")}'
             old = prior.get(key)
             if old and old.get("inputSignature") == signature:
                 results.append(

@@ -1,0 +1,180 @@
+{
+  "rule_id": "mitoya_model_gratio_top2",
+  "hall": "みとや大森町店",
+  "freeze_hash": "a0f5b81a53a8e24b",
+  "target_date": "20260807",
+  "data_asof": "20260805",
+  "lookback_window": [
+    "2026-07-17",
+    "2026-08-07"
+  ],
+  "score": "hist_model_gratio_mean_diff",
+  "selection_unit": "machine_model",
+  "success_criterion": "フォワード20エントリー日を経過した時点で、指名機種全台の総和ベースedge（対ホール全体同日平均、diff_coins_normalized）の平均が正であり、95%CI(block7)下限が0を上回ること。満たさなければ破棄する。判定はフォワードテストのみで行い、バックテスト数値は採否根拠にしない。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "とある魔術の禁書目録2",
+      "score": 1153.51647,
+      "history_rows": 15,
+      "machines": [
+        501,
+        502,
+        503,
+        504,
+        505
+      ]
+    },
+    {
+      "machine_name": "やじきた道中記参る！",
+      "score": 1145.69214,
+      "history_rows": 12,
+      "machines": [
+        549,
+        550,
+        551,
+        552
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 501,
+      "machine_name": "とある魔術の禁書目録2",
+      "score": 1153.51647,
+      "history_days": 15
+    },
+    {
+      "machine_number": 502,
+      "machine_name": "とある魔術の禁書目録2",
+      "score": 1153.51647,
+      "history_days": 15
+    },
+    {
+      "machine_number": 503,
+      "machine_name": "とある魔術の禁書目録2",
+      "score": 1153.51647,
+      "history_days": 15
+    },
+    {
+      "machine_number": 504,
+      "machine_name": "とある魔術の禁書目録2",
+      "score": 1153.51647,
+      "history_days": 15
+    },
+    {
+      "machine_number": 505,
+      "machine_name": "とある魔術の禁書目録2",
+      "score": 1153.51647,
+      "history_days": 15
+    },
+    {
+      "machine_number": 549,
+      "machine_name": "やじきた道中記参る！",
+      "score": 1145.69214,
+      "history_days": 12
+    },
+    {
+      "machine_number": 550,
+      "machine_name": "やじきた道中記参る！",
+      "score": 1145.69214,
+      "history_days": 12
+    },
+    {
+      "machine_number": 551,
+      "machine_name": "やじきた道中記参る！",
+      "score": 1145.69214,
+      "history_days": 12
+    },
+    {
+      "machine_number": 552,
+      "machine_name": "やじきた道中記参る！",
+      "score": 1145.69214,
+      "history_days": 12
+    }
+  ],
+  "result": {
+    "scored_with_hash": "a0f5b81a53a8e24b",
+    "day_baseline": -65.1,
+    "universe_size": 277,
+    "picks_realized": [
+      {
+        "machine_number": 501,
+        "games": 6049.0,
+        "diff": -6600.0,
+        "edge": -6534.902527075812
+      },
+      {
+        "machine_number": 502,
+        "games": 3835.0,
+        "diff": 4183.0,
+        "edge": 4248.097472924188
+      },
+      {
+        "machine_number": 503,
+        "games": 4623.0,
+        "diff": 4492.0,
+        "edge": 4557.097472924188
+      },
+      {
+        "machine_number": 504,
+        "games": 4032.0,
+        "diff": -3458.0,
+        "edge": -3392.9025270758125
+      },
+      {
+        "machine_number": 505,
+        "games": 4954.0,
+        "diff": -2764.0,
+        "edge": -2698.9025270758125
+      },
+      {
+        "machine_number": 549,
+        "games": 4122.0,
+        "diff": 2189.0,
+        "edge": 2254.0974729241875
+      },
+      {
+        "machine_number": 550,
+        "games": 4145.0,
+        "diff": -2011.0,
+        "edge": -1945.9025270758123
+      },
+      {
+        "machine_number": 551,
+        "games": 3989.0,
+        "diff": -2878.0,
+        "edge": -2812.9025270758125
+      },
+      {
+        "machine_number": 552,
+        "games": 5345.0,
+        "diff": 69.0,
+        "edge": 134.09747292418774
+      }
+    ],
+    "mean_diff_per_pick": -753.1,
+    "mean_edge_per_pick": -688.0,
+    "missing_machines": [],
+    "rb_perspective": null,
+    "model_perspective": [
+      {
+        "machine_name": "とある魔術の禁書目録2",
+        "n_machines": 5,
+        "n_realized": 5,
+        "sum_diff": -4147.0,
+        "sum_games": 23493.0,
+        "mean_diff": -829.4
+      },
+      {
+        "machine_name": "やじきた道中記参る！",
+        "n_machines": 4,
+        "n_realized": 4,
+        "sum_diff": -2631.0,
+        "sum_games": 17601.0,
+        "mean_diff": -657.8
+      }
+    ]
+  },
+  "plan_digest": "994b6e8b95fcf924"
+}

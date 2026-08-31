@@ -1,0 +1,37 @@
+{
+  "rule_id": "k1_jug_plain_rbz_top3",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "freeze_hash": "393b78a3e43883fd",
+  "target_date": "20260809",
+  "data_asof": "20260808",
+  "lookback_window": [
+    "2026-07-10",
+    "2026-08-09"
+  ],
+  "score": "hist_mean_rb_prob_model_z",
+  "selection_unit": "machine",
+  "success_criterion": "これは対照ルールであり、単独での採否判断には使わない。実践投入の候補にもしない。k1_jug_dd1kei_rbz_top3 とのエッジ差を測るためだけに集計する。したがって本ルール自体には合格基準を設けない。ただし本ルールのエッジが k1_jug_dd1kei_rbz_top3 と同等以上だった場合、『1のつく日』という日の効果は存在せず、観測されたエッジはRB上位選択の効果に過ぎないと結論すること。",
+  "is_dry_run": false,
+  "picks": [
+    {
+      "machine_number": 2291,
+      "machine_name": "ネオアイムジャグラーEX",
+      "score": 0.425109,
+      "history_days": 24
+    },
+    {
+      "machine_number": 2229,
+      "machine_name": "ハッピージャグラーVIII",
+      "score": 0.390142,
+      "history_days": 26
+    },
+    {
+      "machine_number": 2248,
+      "machine_name": "マイジャグラーV",
+      "score": 0.321254,
+      "history_days": 30
+    }
+  ],
+  "result": null,
+  "plan_digest": "d689db9d3ac69b94"
+}

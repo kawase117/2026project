@@ -1,0 +1,115 @@
+{
+  "rule_id": "mitoya_model_gratio_top2",
+  "hall": "みとや大森町店",
+  "freeze_hash": "a0f5b81a53a8e24b",
+  "target_date": "20260805",
+  "data_asof": "20260802",
+  "lookback_window": [
+    "2026-07-15",
+    "2026-08-05"
+  ],
+  "score": "hist_model_gratio_mean_diff",
+  "selection_unit": "machine_model",
+  "success_criterion": "フォワード20エントリー日を経過した時点で、指名機種全台の総和ベースedge（対ホール全体同日平均、diff_coins_normalized）の平均が正であり、95%CI(block7)下限が0を上回ること。満たさなければ破棄する。判定はフォワードテストのみで行い、バックテスト数値は採否根拠にしない。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "ディスクアップ ULTRAREMIX",
+      "score": 874.175456,
+      "history_rows": 18,
+      "machines": [
+        745
+      ]
+    },
+    {
+      "machine_name": "真打 吉宗",
+      "score": 578.753769,
+      "history_rows": 55,
+      "machines": [
+        517,
+        518,
+        519
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 745,
+      "machine_name": "ディスクアップ ULTRAREMIX",
+      "score": 874.175456,
+      "history_days": 18
+    },
+    {
+      "machine_number": 517,
+      "machine_name": "真打 吉宗",
+      "score": 578.753769,
+      "history_days": 55
+    },
+    {
+      "machine_number": 518,
+      "machine_name": "真打 吉宗",
+      "score": 578.753769,
+      "history_days": 55
+    },
+    {
+      "machine_number": 519,
+      "machine_name": "真打 吉宗",
+      "score": 578.753769,
+      "history_days": 55
+    }
+  ],
+  "result": {
+    "scored_with_hash": "a0f5b81a53a8e24b",
+    "day_baseline": 7.0,
+    "universe_size": 277,
+    "picks_realized": [
+      {
+        "machine_number": 517,
+        "games": 1058.0,
+        "diff": -808.0,
+        "edge": -815.0397111913358
+      },
+      {
+        "machine_number": 518,
+        "games": 915.0,
+        "diff": -761.0,
+        "edge": -768.0397111913358
+      },
+      {
+        "machine_number": 519,
+        "games": 2615.0,
+        "diff": -1508.0,
+        "edge": -1515.0397111913358
+      },
+      {
+        "machine_number": 745,
+        "games": 4885.0,
+        "diff": 742.0,
+        "edge": 734.9602888086642
+      }
+    ],
+    "mean_diff_per_pick": -583.8,
+    "mean_edge_per_pick": -590.8,
+    "missing_machines": [],
+    "rb_perspective": null,
+    "model_perspective": [
+      {
+        "machine_name": "ディスクアップ ULTRAREMIX",
+        "n_machines": 1,
+        "n_realized": 1,
+        "sum_diff": 742.0,
+        "sum_games": 4885.0,
+        "mean_diff": 742.0
+      },
+      {
+        "machine_name": "真打 吉宗",
+        "n_machines": 3,
+        "n_realized": 3,
+        "sum_diff": -3077.0,
+        "sum_games": 4588.0,
+        "mean_diff": -1025.7
+      }
+    ]
+  },
+  "plan_digest": "d0abc081eea54e61"
+}

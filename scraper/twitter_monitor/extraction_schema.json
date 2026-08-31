@@ -6,7 +6,7 @@
   "properties": {
     "hall_hint": {
       "type": ["string", "null"],
-      "description": "画像内に見えるホール名の生表記。無ければnull"
+      "description": "画像全体の見出しにあるホール名の生表記。複数店舗が併記されていればそのまま。無ければnull"
     },
     "date_hint": {
       "type": ["string", "null"],
@@ -17,8 +17,13 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["machine_name", "machine_numbers", "note"],
+        "required": ["hall_hint", "machine_name", "machine_numbers", "note"],
         "properties": {
+          "hall_hint": {
+            "type": ["string", "null"],
+            "description": "この機種が属する店舗名の生表記。1枚に複数店舗の表が載る場合は必ず各entryに対応する店舗を入れる。店舗が1つだけなら全entryに同じ値を入れる。判別できなければnull",
+            "$comment": "画像単位ではなくentry単位でホールを持たせることが必須。台番号がどの店舗のものか失われるため"
+          },
           "machine_name": {
             "type": "string",
             "description": "機種名"

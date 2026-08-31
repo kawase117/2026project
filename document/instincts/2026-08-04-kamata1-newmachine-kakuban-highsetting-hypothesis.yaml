@@ -1,0 +1,48 @@
+---
+id: 2026-08-04-kamata1-newmachine-kakuban-highsetting-hypothesis
+trigger: "蒲田1の角番効果を測定・比較するとき。2026-08-03以降の新設台(2416-2430)を含む島の高設定投入傾向を分析するとき。20260803エポックの角番シグナルが工事前と違って見えたとき"
+confidence: 0.2
+domain: hall-strategy
+source: user-hypothesis
+project_id: 2026project
+project_name: pachinko-analyzer
+---
+
+# 蒲田1新設台(2416-2430)はアピール目的で高設定投入されやすい可能性(未検証)
+
+## Core claim
+新台導入直後の台（特に角番に配置された新台）は集客アピールのため高設定投入頻度が
+通常より高くなる可能性がある。これが事実なら、2026-08-03以降の角番効果測定は
+「角番だから強い」ではなく「新台だから（一時的に）強い」を拾ってしまう。
+
+## Evidence
+- n_observations: 0（ユーザーの仮説。実測なし）
+- data scope: single-hall（蒲田1）
+- metric scope: 未検証
+- result summary: 2026-08-03の増台15台のうち11台が角番に配置された
+  （database/migrate_kamata1_layout_20260803.py 参照）。
+  この11台の新設角番と、既存の角番（変更のない19島）とで高設定投入率に差が出るかは未計測。
+
+## Interpretation
+- まだ仮説段階。導入直後の新台がアピールされやすいこと自体は一般的な業界通念だが、
+  この蒲田1のケースで実際に起きているかは別問題
+- もし真なら、`prior_section` がNULL（＝新設台）の角番と、`prior_section` が
+  非NULLの角番（＝元から角番だった台）を分けて効果測定する必要がある
+- 導入直後の一時的な効果なら、時間が経つと薄れる可能性がある（"newness" と
+  "kakuban" の交絡）
+
+## Action
+- 蒲田1の角番効果を測定する分析では、新設台由来の角番（2421,2422,2423,2424,
+  2425,2426,2427,2428,2429,2430）と既存角番を `prior_section IS NULL` で
+  分離して比較すること
+- 十分な日数（最低数週間〜1ヶ月）のデータが溜まってから検証する。2026-08-03
+  時点ではまだ検証不能
+- 2427(新鬼武者3)は8/3時点でデータエラー個体（27,671G/-79,900枚）。
+  この仮説を検証する際は当日除外を忘れないこと（恒久フラグは意図的に不使用）
+
+## Relation
+- related:
+  - kakuban-three-concepts-definition
+
+## Status
+- status: active

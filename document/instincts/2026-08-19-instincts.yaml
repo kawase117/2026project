@@ -1,0 +1,295 @@
+---
+id: 2026-08-19-low-activity-day-suppresses-detection-not-just-scores
+trigger: "予告や仕掛けの主張が全台系スコアで外れたと判定する前。ホールの稼働自体が低い日に『仕掛けが無かった』と結論しそうになったとき。RB確率での判定が games 不足で不成立になったとき"
+confidence: 0.75
+domain: hall-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+---
+
+# 稼働が低い日は「仕掛けなし」の判定材料が薄い、判定失敗の証拠として扱わない
+
+## 背景
+2026-08-18 楽園蒲田の予告採点で、名指し4機種が全て閾値+1800未達（rank14/30/38/52位、55機種中）だった。
+当初はこれを「予告に情報が無かった」とだけ解釈しかけたが、ホール全体の平均games_normalizedが
+1,878G（90日窓平均3,144Gの下位15.9%タイル）、games>=3000到達率が20.4%（90日平均43.7%、
+下から7/88日）という閑散日だった。RB確率による設定判定も、対象24台中games>=3000到達は
+わずか4台で不成立だった。
+
+## Core claim
+ホール全体の稼働（平均games_normalizedやgames>=3000到達率）が90日窓で下位20%程度まで
+落ちている日は、機種名指し・末尾・角番などの主張を「外れた」と判定する検出力そのものが
+構造的に低下している。差枚ベースでもRB確率ベースでも、客が座っていない台は判定材料が無い。
+
+## Evidence
+- n_observations: 1（2026-08-18、楽園蒲田）
+- data scope: single-hall, single-day
+- metric scope: diff / games_normalized / rb_probability
+- result summary: 平均games 1,878G（baseline 3,144G）、games>=3000到達率20.4%（baseline 43.7%）。
+  名指し4機種のうちRB判定可能だったのは1台のみ
+
+## Interpretation
+- 「機種名を挙げた主張が閾値未達だった」ことと「仕掛けが存在しなかった」ことは同じではない。
+  客が付かなかった日は後者を主張する材料が無い
+- 差枚が主指標として機能するのは、ある程度の稼働（客の集合知シグナル）が前提になっている
+  （feedback-scoring-must-separate-setting-from-pnl の回転数ロジックと同型の制約）
+- 単日1件の観察であり、閾値「下位20%」は暫定値。稼働低下と外れ率の系統的な相関は未検証
+
+## Action
+- 採点前にホール全体の平均games_normalizedを直近90日ベースラインと比較し、パーセンタイル
+  を記録する。下位20%程度の閑散日では「外れた」の結論に稼働低下の注記を必ず添える
+- RB確率での判定を試みる前に、対象機種の games>=3000 到達台数を先に数える。到達台数が
+  少なければ「判定不成立」として報告し、「否定」とは書かない
+- 閑散日は当日の閾値超え数K自体が構造的に減る（分母が薄い）。named_models_hypergeom_criterion
+  等でKを使う判定でも、K減少が『仕掛けが絞られた』ではなく『客が来なかった』結果である
+  可能性を割り引くこと
+
+## Relation
+- related:
+  - feedback-scoring-must-separate-setting-from-pnl
+  - feedback-named-model-conditional-baserate
+
+## Status
+- status: active
+
+---
+id: 2026-08-19-per-table-games-diff-correlation-detects-single-table-decoy
+trigger: "機種平均（全台系スコア）が閾値未達だが、その機種の一部の台だけ回転数が突出しているとき。増台直後の機種を評価するとき。project-kishu-ichi-decoyの撒き餌パターンを実データで検出したいとき"
+confidence: 0.6
+domain: methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+---
+
+# 機種平均ではなく台番号別のG数×差枚の歴史的相関で単一台シグナルを検出する
+
+## 背景
+2026-08-18 楽園蒲田、マギアレコード（増台直後、9台→12台）の12台中、8000G超は台2133
+（+2,715）と台2130（−1,190）の2台のみ。機種平均は+104枚で閾値+1800に遠く届かず
+「仕掛けなし」に見えた。しかし台2133単体の2026年通年履歴を見ると、8000G以上に達した
+日（12/145日、8.3%）の平均差枚は+6,187で、8000G未満の日（+141）やホール全体の
+8000G以上平均（+2,292）を大きく上回り、G数×差枚の相関係数もホール平均r=0.273に対し
+r=0.524と明確に強かった。台2130は同じ閾値超えでも歴史的相関がr=0.296と弱く、当日も
+逆方向（−1,190）だった。
+
+## Core claim
+機種平均が閾値未達でも、機種内の特定の台番号が「歴史的にG数×差枚相関が強い」場合、
+その台が当日8000G超などの高回転を記録したことは、機種平均より高精度な設定示唆の
+検出材料になりうる。この非対称性（機種内1台だけが強い相関を持つ）はkishu-ichi-decoy
+（機種内1台だけ高設定の撒き餌）が実データに残す痕跡と一致する。
+
+## Evidence
+- n_observations: 2台（2133・2130、各140日以上の履歴）
+- data scope: single-hall, single-machine, per-table
+- metric scope: games_normalized / diff / correlation
+- result summary: 台2133 r=0.524（ホール平均r=0.273の約1.9倍）、8000G以上日の平均差枚
+  +6,187（ホール平均+2,292の2.7倍）。台2130は r=0.296 でホール平均並み
+
+## Interpretation
+- 「機種全体は撒き餌に見えるが、特定の台番号だけは本命」という構図が、台単位の
+  G数×差枚相関という定量指標で識別できる可能性がある
+- ただし今回は1機種2台のみの観察。台の物理位置（角番・通路沿い等）や機種特性による
+  交絡は未統制。一般化する前に他機種・他ホールで同じ手法を試す必要がある
+- 増台直後（新台ではなく既存タイトルの台数増加）は、既存の台番号（2133等）と新規の
+  台番号が混在するため、履歴の長い台番号だけがこの分析の対象になる
+
+## Action
+- 機種平均が閾値未達でも当日高回転（目安8000G以上）の台があれば、その台番号の
+  過去90日〜通年のG数×差枚相関をホール全体のベースライン（本件ではr≈0.27）と比較する
+- 相関がホール平均を明確に上回る台番号は、機種平均のスコアに関わらず個別に記録する
+- この手法はまだ1事例のみ。運用の一次シグナルにはせず、機種平均スコアの補助情報として
+  扱うこと
+
+## Relation
+- related:
+  - project-kishu-ichi-decoy
+  - feedback-scoring-must-separate-setting-from-pnl
+
+## Status
+- status: active
+
+---
+id: 2026-08-19-counter-prediction-confidence-is-not-null-rejection-confidence
+trigger: "予告やルールを統計的に否定した後、対抗予測（どの機種が来るか）を提示するとき。台数の多さを『少台数バイアスが無いから信頼できる』根拠にして機種を選ぼうとするとき"
+confidence: 0.7
+domain: methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+---
+
+# 「ルールに情報が無い」の確信度と「今日どれが来るか」の確信度は別物
+
+## 背景
+2026-08-18 楽園蒲田で、予告の「8台設置機種＝全台系」ルールを90日統計で否定し
+（反証側は的中）、対抗として台数の多い機種（モンキーターンV 12台、甲鉄城のカバネリ
+海門決戦18台）を提示したが、対抗予測は2/2とも外れた。当日唯一の閾値超えは、対抗予測
+の対象から外していた同機種の旧筐体3台（甲鉄城のカバネリ、+2,422）だった。選定時、
+「台数が多い方が少台数バイアス（平均差枚が跳ねやすい）が無く信頼できる」という基準を
+使ったが、これは「少台数機種に高設定が入りにくい」ことを意味しない。両者を混同していた。
+
+## Core claim
+統計的反証（「このルールには当てにできる情報が無い」）は90日規模のデータで高い確信度を
+持てるが、「今日どの機種が来るか」という対抗予測は、その日の閾値超え数K（本件では1機種、
+候補55機種）に対する事前確率（1/55程度）でしか支えられず、同じ強さで語ってはならない。
+また「台数が多い＝スコアの信頼性が高い」は「台数が多い＝当たりやすい」とは別の主張である。
+
+## Evidence
+- n_observations: 1（2026-08-18、対抗予測2件中2件が外れ）
+- data scope: single-hall, single-day
+- metric scope: diff / rank
+- result summary: 対抗予測（モンキーターンV rank6/55、カバネリ海門 rank47/55）はいずれも
+  外れ、当日1位は対抗予測から除外した旧筐体3台だった
+
+## Interpretation
+- 少台数バイアス（少ない台数だと平均差枚が偶然跳ねやすい）は指標の測定誤差の話であって、
+  ホールの設定投入確率の話ではない。台数の多寡と「高設定が入る確率」に相関があるという
+  根拠は無い
+- 反証（棄却）と予測（的中）は別の統計的主張であり、前者の確信度をそのまま後者に流用しない
+
+## Action
+- 対抗予測を提示するときは、反証の確信度（90日統計に基づく）とは別に、対抗予測自体の
+  事前確率（候補数分の1程度）を明示する
+- 機種選定の根拠に「台数が多い」を使うときは、それが「スコアのノイズが少ない」ためなのか
+  「当たりやすい」ためなのかを区別して書く。後者は根拠にしない
+
+## Relation
+- related:
+  - feedback-named-model-conditional-baserate
+  - feedback-statistical-certainty-calibration
+
+## Status
+- status: active
+
+---
+id: 2026-08-19-site777-cmd-exe-silent-noop-use-powershell-file
+trigger: "site777スクレイピングパイプライン(run_site777_complete.cmd/.ps1)や同種の.cmdラッパーをClaude Code等の非対話ツール経由で起動するとき。cmd.exe /c 経由のコマンドがexit code 0で即完了し、標準出力がWindowsバナーだけのとき。バックグラウンドタスクが『completed』と報告されたのに出力ファイルの更新時刻が変わっていないとき"
+confidence: 0.85
+domain: automation-execution
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+---
+
+# cmd.exe /c 経由の起動はこの実行環境では実行されず、バナーだけ返してexit 0で終わる
+
+## 背景
+2026-08-19、site777の稼働テストで `cmd.exe /c "scraper\site777\run_site777_complete.cmd -MinGames 2000"` を
+2回実行し、いずれもexit code 0・所要数秒で「完了」と報告された。しかし出力先の
+`site777_full_run_latest.json`のstartedAtは前回(8/17)のままで、当日8/19付で更新された
+ファイルは1件もなかった。標準出力はcmd.exeの起動バナー（"Microsoft Windows [Version...]"）
+だけで、update gateやpythonの出力が一切無かった。最小再現として`cmd.exe /c "echo HELLO"`を
+実行しても同様にバナーのみでHELLOが出力されず、cmd.exe /c自体がコマンド文字列を実行して
+いないことを確認した。一方`powershell.exe -NoProfile -Command "echo HELLO"`は正常に動作し、
+`powershell.exe -NoProfile -ExecutionPolicy Bypass -File run_site777_complete.ps1 -MinGames 2000`
+で.cmdをバイパスして.ps1を直接呼び出すと、msedgeが実際に起動し119機種587台を19分で完走した。
+
+なお、この過程で「msedgeプロセスは起動しているがMainWindowTitleが空＝別ウィンドウ
+ステーションで見えない状態になっている」という診断を一度下したが、これは誤りだった。
+実際の原因はcmd.exe /cがコマンドを一切実行していないことであり、起動したように見えた
+msedgeプロセスは無関係な残留プロセスだった可能性が高い。
+
+## Core claim
+この環境（Claude CodeのBashツール、非対話的な起動経路）から`cmd.exe /c "<command>"`を
+実行すると、コマンド文字列が実行されずcmd.exeの起動バナーのみを返してexit code 0で
+終了する。`powershell.exe -NoProfile -ExecutionPolicy Bypass -File <script>.ps1 <args>`
+で.ps1を直接呼び出すと正常に実行される。
+
+## Evidence
+- n_observations: 3(cmd.exe /c失敗2回、echo単体テスト1回、powershell.exe -File成功1回)
+- data scope: 実行環境固有(Claude Code Bashツール on Windows)
+- metric scope: other(プロセス起動・ファイル更新時刻)
+- result summary: cmd.exe /cは`echo`すら出力しない。powershell.exe -Fileは119機種587台を
+  19分で完走し、site777_complete_run_latest.jsonのstartedAtが当日UTC時刻で更新された
+
+## Interpretation
+- exit code 0は「コマンドが実行された」ことを保証しない。この環境では特に、GUI/ブラウザ
+  自動化を伴う.cmdラッパー経由の呼び出しで顕著にサイレント失敗する
+- 「msedgeプロセスはあるがウィンドウが見えない＝ウィンドウステーション分離」という仮説は
+  今回は誤診断だった。プロセス存在だけで自動化が動いていると判断せず、出力ファイルの
+  実際の更新時刻(タイムスタンプ)で裏取りすること
+- 原因(cmd.exe /cのクォーティング処理がこのBashツールの呼び出し経路と噛み合わない等)は
+  未確定。ワークアラウンドの有効性のみ確認済み
+
+## Action
+- site777に限らず、このプロジェクトの.cmdラッパーをClaude Codeから実行するときは
+  `cmd.exe /c "<script>.cmd"`を使わず、内部で呼んでいる.ps1を
+  `powershell.exe -NoProfile -ExecutionPolicy Bypass -File "<full path>.ps1" <args>`で
+  直接起動する
+- バックグラウンドタスクが「completed / exit 0」と報告されても、site777の場合は
+  `site777_complete_run_latest.json`または`site777_full_run_latest.json`の`startedAt`
+  (UTC)が今回の実行時刻と一致するかを必ず確認してから「完走した」と報告する
+- 疑わしいときは`powershell.exe -NoProfile -Command "echo TEST"`のような最小コマンドで
+  実行経路そのものが機能しているかを先に確認する
+
+## Relation
+- related:
+  - 2026-08-19-low-activity-day-suppresses-detection-not-just-scores
+
+## Status
+- status: active
+
+---
+id: 2026-08-19-rakuen-announce-site777-integration-workflow
+trigger: "楽園蒲田で当日の実践稼働を始めるとき。予告ツイート・通年ベースライン・当日site777実測を統合して台選びをするとき。site777のレポートとannounceのclaims/prior_predictionをどちらの主張から優先して突き合わせるか迷ったとき"
+confidence: 0.6
+domain: hall-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+---
+
+# 楽園蒲田の当日運用は「announce凍結→15時台/17時台のsite777実行→ベースライン強い主張優先で突き合わせ」の順で行う
+
+## 背景
+2026-08-19、@kawasakislotの予告(化物語=9台設置・機種名指定の二重主張、末尾9のposition_rule)を
+`backtest/announce/rakuen__20260819__kawasakislot.json`に事前登録済みの状態で、site777の
+稼働テストを正午前(11:49〜12:08)に実行した。表データ(119機種587台)は完全取得できたが、
+グラフ(差枚)対象は0件だった。2,000G以上の台がまだ存在しない時間帯だったためで、
+`scraper/site777/INSTINCTS.md`の「午後の速報では設定推定はほとんど効かない」という
+既存知見と整合した。この日はannounce側の分析で化物語(直近30日20.0%・ホール平均5.7%相当の
+3.5倍)とハッピージャグラーVIII(0.0%)を対照群として名指し予測(prior_prediction)まで
+凍結済みだった一方、末尾9のposition_ruleは通年ベースラインがプール/AT/JUGいずれも
+ほぼゼロ(pooled -9.0±12.6)で、RB確率のみ弱い偏り(3/11)という状態だった。
+
+## Core claim
+楽園蒲田の当日運用フローは (1) 予告ツイートの分析をannounceとして即日中に凍結する、
+(2) site777は15時台・17時台以降の2回、`powershell.exe -File`で実行する(15時以前は
+グラフ対象0件になりうるため判断材料にしない)、(3) 3レポートとannounceのclaims/
+prior_predictionを突き合わせる際は、通年/90日ベースラインが強い主張(例: 化物語の
+20.0% vs ホール平均5.7%)を最優先で確認し、ベースラインがほぼゼロの主張(末尾
+position_ruleなど)は当日実測が明確に上振れない限り採用しない、という優先順位で
+進めると再現性のある判断ができる。
+
+## Evidence
+- n_observations: 1(2026-08-19の運用テストで手順を確立。的中率など結果の検証はまだ)
+- data scope: single-hall(楽園蒲田), single-day
+- metric scope: other(運用フロー・タイミング)
+- result summary: site777は正午前実行でグラフ対象0件(表データのみ完走)。手順自体は
+  実行可能と確認できたが、予測精度の実証はこの回では行っていない
+
+## Interpretation
+- これは判断精度の主張ではなく、再現可能な運用手順の確立である。次回以降、同じ手順を
+  繰り返して精度を検証する必要がある
+- 15時台・17時台という時間帯指定は`scraper/site777/INSTINCTS.md`の既存観測(8/17時点、
+  13:55でも2,000G以上9台のみ)を踏襲したもので、本日さらに0件という形で下限側が
+  再確認された
+
+## Action
+- 当日朝〜昼: announceの凍結状況とclaims/n9_roster等の事前分析を確認する
+- 15時台: site777を`powershell.exe -NoProfile -ExecutionPolicy Bypass -File
+  scraper\site777\run_site777_complete.ps1 -MinGames 2000`で実行し、3レポート
+  (analysis/last_digit/setting、いずれも`_filtered.md`)を読む
+- 17時台以降: 2回目を実行し、進捗(グラフ対象台数の増加)を比較する
+- 突き合わせはベースラインが強い主張から優先して確認し、ベースラインがほぼゼロの
+  主張は当日実測の明確な乖離が無ければ採用しない
+
+## Relation
+- related:
+  - 2026-08-19-site777-cmd-exe-silent-noop-use-powershell-file
+  - 2026-08-19-counter-prediction-confidence-is-not-null-rejection-confidence
+
+## Status
+- status: active

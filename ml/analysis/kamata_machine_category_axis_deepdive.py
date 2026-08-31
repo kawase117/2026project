@@ -14,7 +14,11 @@ import pandas as pd
 if __package__ is None or __package__ == "":
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from ml.analysis.kamata_machine_name_axis_deepdive import _axis_concentration, _section_generalization, _within_entity_concentration
+from ml.analysis.kamata_machine_name_axis_deepdive import (
+    _axis_concentration,
+    _section_generalization,
+    _within_entity_concentration,
+)
 from ml.analysis.kamata_weekday_event_axis_payoutrate_deepdive import (
     DEFAULT_COORDS_7_2F,
     DEFAULT_COORDS_7_3F,
@@ -187,11 +191,15 @@ def _prepare_frame() -> pd.DataFrame:
         frame["machine_name"] = frame["machine_name"].astype(str)
         frame["section"] = frame["section"].astype(str)
         frame["kakuban"] = pd.to_numeric(frame["kakuban"], errors="coerce").astype("Int64")
-        frame["weekday_label"] = frame["date"].dt.dayofweek.map(lambda x: WEEKDAY_ORDER[int(x)] if pd.notna(x) else None)
+        frame["weekday_label"] = frame["date"].dt.dayofweek.map(
+            lambda x: WEEKDAY_ORDER[int(x)] if pd.notna(x) else None
+        )
         frame["dd"] = frame["date"].dt.day.astype("Int64")
         frame["event_label"] = frame["date"].map(_event_label)
         frame["day_zorome_label"] = np.where(frame["date"].dt.day.isin([11, 22]), "zorome_day", "non_zorome_day")
-        frame["tail_label"] = np.where(frame["is_zorome"].eq(1), "zorome", (frame["machine_number"] % 10).astype(int).astype(str))
+        frame["tail_label"] = np.where(
+            frame["is_zorome"].eq(1), "zorome", (frame["machine_number"] % 10).astype(int).astype(str)
+        )
         frame["payoutrate_pct"] = [
             compute_payoutrate_pct(diff, games)
             for diff, games in zip(frame["diff_coins_normalized"], frame["games_normalized"], strict=False)
@@ -268,7 +276,9 @@ def _weekday_profile(daily: pd.DataFrame) -> pd.DataFrame:
                     "cell_p75_payoutrate_pct": float((cell + 100.0).quantile(0.75)) if len(cell) else np.nan,
                     "cell_p90_payoutrate_pct": float((cell + 100.0).quantile(0.90)) if len(cell) else np.nan,
                     "cell_p95_payoutrate_pct": float((cell + 100.0).quantile(0.95)) if len(cell) else np.nan,
-                    "cell_share_100_104": float((((cell + 100.0) >= 100.0) & ((cell + 100.0) < 104.0)).mean()) if len(cell) else np.nan,
+                    "cell_share_100_104": float((((cell + 100.0) >= 100.0) & ((cell + 100.0) < 104.0)).mean())
+                    if len(cell)
+                    else np.nan,
                     "cell_share_104_plus": float(((cell + 100.0) >= 104.0).mean()) if len(cell) else np.nan,
                     "rest_n_dates": int(len(rest)),
                     "rest_mean_excess_pct": float(rest.mean()) if len(rest) else np.nan,
@@ -278,7 +288,9 @@ def _weekday_profile(daily: pd.DataFrame) -> pd.DataFrame:
             )
     out = pd.DataFrame(rows)
     if not out.empty:
-        out = out.sort_values(["machine_category", "weekday_focus"], key=lambda s: _sort_key(s, "weekday_focus"), na_position="last").reset_index(drop=True)
+        out = out.sort_values(
+            ["machine_category", "weekday_focus"], key=lambda s: _sort_key(s, "weekday_focus"), na_position="last"
+        ).reset_index(drop=True)
     return out
 
 
@@ -321,7 +333,11 @@ def _weekday_tests(daily: pd.DataFrame, *, min_entity_dates: int = 20) -> tuple[
                     "share_100_104": float(((cell_payoutrate >= 100.0) & (cell_payoutrate < 104.0)).mean()),
                     "share_104_plus": float((cell_payoutrate >= 104.0).mean()),
                     "p_value": _mwu(cell, rest),
-                    "direction": "cell_higher" if cell.mean() > rest.mean() else "cell_lower" if cell.mean() < rest.mean() else "tie_or_nan",
+                    "direction": "cell_higher"
+                    if cell.mean() > rest.mean()
+                    else "cell_lower"
+                    if cell.mean() < rest.mean()
+                    else "tie_or_nan",
                 }
             )
         focus = cat_daily.groupby("weekday_focus", as_index=False).agg(
@@ -371,7 +387,11 @@ def _weekday_tests(daily: pd.DataFrame, *, min_entity_dates: int = 20) -> tuple[
                         f"{prefix}_cell_n_dates": int(len(cell)),
                         f"{prefix}_rest_n_dates": int(len(rest)),
                         f"{prefix}_p_value": p_value,
-                        f"{prefix}_direction": "cell_higher" if delta > 0 else "cell_lower" if delta < 0 else "tie_or_nan",
+                        f"{prefix}_direction": "cell_higher"
+                        if delta > 0
+                        else "cell_lower"
+                        if delta < 0
+                        else "tie_or_nan",
                     }
                 )
         half_df = pd.DataFrame(half_rows)
@@ -384,26 +404,41 @@ def _weekday_tests(daily: pd.DataFrame, *, min_entity_dates: int = 20) -> tuple[
             merged = merged.merge(extra, on=["machine_category", "weekday_label"], how="outer", validate="one_to_one")
         summary = summary.merge(merged, on=["machine_category", "weekday_label"], how="left", validate="one_to_one")
 
-    first_half_p = summary["first_half_p_value"] if "first_half_p_value" in summary.columns else pd.Series(np.nan, index=summary.index)
-    second_half_p = summary["second_half_p_value"] if "second_half_p_value" in summary.columns else pd.Series(np.nan, index=summary.index)
+    first_half_p = (
+        summary["first_half_p_value"]
+        if "first_half_p_value" in summary.columns
+        else pd.Series(np.nan, index=summary.index)
+    )
+    second_half_p = (
+        summary["second_half_p_value"]
+        if "second_half_p_value" in summary.columns
+        else pd.Series(np.nan, index=summary.index)
+    )
     first_half_direction = (
-        summary["first_half_direction"] if "first_half_direction" in summary.columns else pd.Series(np.nan, index=summary.index)
+        summary["first_half_direction"]
+        if "first_half_direction" in summary.columns
+        else pd.Series(np.nan, index=summary.index)
     )
     second_half_direction = (
-        summary["second_half_direction"] if "second_half_direction" in summary.columns else pd.Series(np.nan, index=summary.index)
+        summary["second_half_direction"]
+        if "second_half_direction" in summary.columns
+        else pd.Series(np.nan, index=summary.index)
     )
     summary["full_sig"] = pd.to_numeric(summary["q_value"], errors="coerce").lt(0.05)
     summary["first_half_sig"] = pd.to_numeric(first_half_p, errors="coerce").lt(0.05)
     summary["second_half_sig"] = pd.to_numeric(second_half_p, errors="coerce").lt(0.05)
-    summary["same_direction"] = (
-        summary["direction"].astype(str).eq(first_half_direction.astype(str))
-        & summary["direction"].astype(str).eq(second_half_direction.astype(str))
+    summary["same_direction"] = summary["direction"].astype(str).eq(first_half_direction.astype(str)) & summary[
+        "direction"
+    ].astype(str).eq(second_half_direction.astype(str))
+    summary["stable"] = (
+        summary["full_sig"] & summary["first_half_sig"] & summary["second_half_sig"] & summary["same_direction"]
     )
-    summary["stable"] = summary["full_sig"] & summary["first_half_sig"] & summary["second_half_sig"] & summary["same_direction"]
     summary["split_half_cutoff"] = cutoff
     focus_profile = pd.concat(focus_profile_rows, ignore_index=True) if focus_profile_rows else pd.DataFrame()
     if not focus_profile.empty:
-        focus_profile = focus_profile.sort_values(["machine_category", "weekday_focus"], key=lambda s: _sort_key(s, "weekday_focus"), na_position="last").reset_index(drop=True)
+        focus_profile = focus_profile.sort_values(
+            ["machine_category", "weekday_focus"], key=lambda s: _sort_key(s, "weekday_focus"), na_position="last"
+        ).reset_index(drop=True)
     return summary, focus_profile
 
 
@@ -453,8 +488,12 @@ def _entity_axis_summary(
         if axis_col == "event_label":
             entity_rows = entity_rows[entity_rows[axis_col].notna()].copy()
         for label in labels:
-            cell_daily = entity_daily[entity_daily[axis_col].astype(str).eq(label)]["mean_excess_pct"].dropna().astype(float)
-            rest_daily = entity_daily[~entity_daily[axis_col].astype(str).eq(label)]["mean_excess_pct"].dropna().astype(float)
+            cell_daily = (
+                entity_daily[entity_daily[axis_col].astype(str).eq(label)]["mean_excess_pct"].dropna().astype(float)
+            )
+            rest_daily = (
+                entity_daily[~entity_daily[axis_col].astype(str).eq(label)]["mean_excess_pct"].dropna().astype(float)
+            )
             if len(cell_daily) < 2 or len(rest_daily) < 2:
                 continue
             cell_rows = entity_rows[entity_rows[axis_col].astype(str).eq(label)].copy()
@@ -477,8 +516,12 @@ def _entity_axis_summary(
                     "n_rows": int(len(cell_rows)),
                     "n_machine_numbers": int(cell_rows["machine_number"].nunique()),
                     "n_sections": int(cell_rows["section"].nunique()),
-                    "cell_sample_mean_diff": float(pd.to_numeric(cell_rows["diff_coins_normalized"], errors="coerce").mean()),
-                    "cell_sample_mean_excess_pct": float(pd.to_numeric(cell_rows["excess_pct"], errors="coerce").mean()),
+                    "cell_sample_mean_diff": float(
+                        pd.to_numeric(cell_rows["diff_coins_normalized"], errors="coerce").mean()
+                    ),
+                    "cell_sample_mean_excess_pct": float(
+                        pd.to_numeric(cell_rows["excess_pct"], errors="coerce").mean()
+                    ),
                     "cell_sample_mean_payoutrate_pct": float(cell_payoutrate.mean()),
                     "cell_sample_median_payoutrate_pct": float(cell_payoutrate.median()),
                     "cell_sample_p10": float(cell_payoutrate.quantile(0.10)),
@@ -491,9 +534,13 @@ def _entity_axis_summary(
                     "cell_sample_share_104_plus": float((cell_payoutrate >= 104.0).mean()),
                     "p_value": _mwu(cell_daily, rest_daily),
                     "direction": "cell_higher"
-                    if np.isfinite(cell_daily.mean()) and np.isfinite(rest_daily.mean()) and cell_daily.mean() > rest_daily.mean()
+                    if np.isfinite(cell_daily.mean())
+                    and np.isfinite(rest_daily.mean())
+                    and cell_daily.mean() > rest_daily.mean()
                     else "cell_lower"
-                    if np.isfinite(cell_daily.mean()) and np.isfinite(rest_daily.mean()) and cell_daily.mean() < rest_daily.mean()
+                    if np.isfinite(cell_daily.mean())
+                    and np.isfinite(rest_daily.mean())
+                    and cell_daily.mean() < rest_daily.mean()
                     else "tie_or_nan",
                 }
             )
@@ -511,8 +558,14 @@ def _entity_axis_summary(
         half_rows: list[dict[str, object]] = []
         for entity_value, entity_daily in half.groupby(entity_col, sort=False):
             for label in labels:
-                cell = entity_daily[entity_daily[axis_col].astype(str).eq(label)]["mean_excess_pct"].dropna().astype(float)
-                rest = entity_daily[~entity_daily[axis_col].astype(str).eq(label)]["mean_excess_pct"].dropna().astype(float)
+                cell = (
+                    entity_daily[entity_daily[axis_col].astype(str).eq(label)]["mean_excess_pct"].dropna().astype(float)
+                )
+                rest = (
+                    entity_daily[~entity_daily[axis_col].astype(str).eq(label)]["mean_excess_pct"]
+                    .dropna()
+                    .astype(float)
+                )
                 if len(cell) < 2 or len(rest) < 2:
                     continue
                 delta = float(cell.mean() - rest.mean())
@@ -526,7 +579,11 @@ def _entity_axis_summary(
                         f"{prefix}_cell_n_dates": int(len(cell)),
                         f"{prefix}_rest_n_dates": int(len(rest)),
                         f"{prefix}_p_value": _mwu(cell, rest),
-                        f"{prefix}_direction": "cell_higher" if delta > 0 else "cell_lower" if delta < 0 else "tie_or_nan",
+                        f"{prefix}_direction": "cell_higher"
+                        if delta > 0
+                        else "cell_lower"
+                        if delta < 0
+                        else "tie_or_nan",
                     }
                 )
         half_df = pd.DataFrame(half_rows)
@@ -539,22 +596,35 @@ def _entity_axis_summary(
             merged = merged.merge(extra, on=[entity_col, axis_col], how="outer", validate="one_to_one")
         summary = summary.merge(merged, on=[entity_col, axis_col], how="left", validate="one_to_one")
 
-    first_half_p = summary["first_half_p_value"] if "first_half_p_value" in summary.columns else pd.Series(np.nan, index=summary.index)
-    second_half_p = summary["second_half_p_value"] if "second_half_p_value" in summary.columns else pd.Series(np.nan, index=summary.index)
+    first_half_p = (
+        summary["first_half_p_value"]
+        if "first_half_p_value" in summary.columns
+        else pd.Series(np.nan, index=summary.index)
+    )
+    second_half_p = (
+        summary["second_half_p_value"]
+        if "second_half_p_value" in summary.columns
+        else pd.Series(np.nan, index=summary.index)
+    )
     first_half_direction = (
-        summary["first_half_direction"] if "first_half_direction" in summary.columns else pd.Series(np.nan, index=summary.index)
+        summary["first_half_direction"]
+        if "first_half_direction" in summary.columns
+        else pd.Series(np.nan, index=summary.index)
     )
     second_half_direction = (
-        summary["second_half_direction"] if "second_half_direction" in summary.columns else pd.Series(np.nan, index=summary.index)
+        summary["second_half_direction"]
+        if "second_half_direction" in summary.columns
+        else pd.Series(np.nan, index=summary.index)
     )
     summary["full_sig"] = pd.to_numeric(summary["q_value"], errors="coerce").lt(0.05)
     summary["first_half_sig"] = pd.to_numeric(first_half_p, errors="coerce").lt(0.05)
     summary["second_half_sig"] = pd.to_numeric(second_half_p, errors="coerce").lt(0.05)
-    summary["same_direction"] = (
-        summary["direction"].astype(str).eq(first_half_direction.astype(str))
-        & summary["direction"].astype(str).eq(second_half_direction.astype(str))
+    summary["same_direction"] = summary["direction"].astype(str).eq(first_half_direction.astype(str)) & summary[
+        "direction"
+    ].astype(str).eq(second_half_direction.astype(str))
+    summary["stable"] = (
+        summary["full_sig"] & summary["first_half_sig"] & summary["second_half_sig"] & summary["same_direction"]
     )
-    summary["stable"] = summary["full_sig"] & summary["first_half_sig"] & summary["second_half_sig"] & summary["same_direction"]
     summary["split_half_cutoff"] = cutoff
     return summary, daily
 
@@ -581,7 +651,7 @@ def _write_root_docs(
         "- `branch_e/` weekday effect by machine category",
         "- `branch_f/` AT-group machine_name deep dive",
         "",
-        "The machine_type lookup comes from `document/machine_master_research/machine_list_for_research.csv` and uses normalized `machine_name` matching.",
+        "The machine_type lookup comes from `document/machine_master_research/machine_master.csv` and uses normalized `machine_name` matching.",
         "",
     ]
     _write_text(out_dir / "README.md", "\n".join(readme))
@@ -590,27 +660,39 @@ def _write_root_docs(
 
 def _branch_e(frame: pd.DataFrame, out_dir: Path) -> dict[str, object]:
     branch_dir = _ensure_dir(out_dir / "branch_e")
-    profile = _weekday_profile(frame.groupby(["date", "machine_category"], as_index=False).agg(
-        mean_excess_pct=("excess_pct", "mean"),
-        mean_payoutrate_pct=("payoutrate_pct", "mean"),
-        n_rows=("machine_number", "size"),
-        n_machine_numbers=("machine_number", "nunique"),
-        n_sections=("section", "nunique"),
-    ).assign(
-        date=lambda df: pd.to_datetime(df["date"], errors="coerce"),
-        weekday_label=lambda df: df["date"].dt.dayofweek.map(lambda x: WEEKDAY_ORDER[int(x)] if pd.notna(x) else None),
-    ))
+    profile = _weekday_profile(
+        frame.groupby(["date", "machine_category"], as_index=False)
+        .agg(
+            mean_excess_pct=("excess_pct", "mean"),
+            mean_payoutrate_pct=("payoutrate_pct", "mean"),
+            n_rows=("machine_number", "size"),
+            n_machine_numbers=("machine_number", "nunique"),
+            n_sections=("section", "nunique"),
+        )
+        .assign(
+            date=lambda df: pd.to_datetime(df["date"], errors="coerce"),
+            weekday_label=lambda df: df["date"].dt.dayofweek.map(
+                lambda x: WEEKDAY_ORDER[int(x)] if pd.notna(x) else None
+            ),
+        )
+    )
 
-    tests, focus_profile = _weekday_tests(frame.groupby(["date", "machine_category"], as_index=False).agg(
-        mean_excess_pct=("excess_pct", "mean"),
-        mean_payoutrate_pct=("payoutrate_pct", "mean"),
-        n_rows=("machine_number", "size"),
-        n_machine_numbers=("machine_number", "nunique"),
-        n_sections=("section", "nunique"),
-    ).assign(
-        date=lambda df: pd.to_datetime(df["date"], errors="coerce"),
-        weekday_label=lambda df: df["date"].dt.dayofweek.map(lambda x: WEEKDAY_ORDER[int(x)] if pd.notna(x) else None),
-    ))
+    tests, focus_profile = _weekday_tests(
+        frame.groupby(["date", "machine_category"], as_index=False)
+        .agg(
+            mean_excess_pct=("excess_pct", "mean"),
+            mean_payoutrate_pct=("payoutrate_pct", "mean"),
+            n_rows=("machine_number", "size"),
+            n_machine_numbers=("machine_number", "nunique"),
+            n_sections=("section", "nunique"),
+        )
+        .assign(
+            date=lambda df: pd.to_datetime(df["date"], errors="coerce"),
+            weekday_label=lambda df: df["date"].dt.dayofweek.map(
+                lambda x: WEEKDAY_ORDER[int(x)] if pd.notna(x) else None
+            ),
+        )
+    )
 
     _write_csv(profile, branch_dir / "weekday_profile.csv")
     _write_csv(focus_profile, branch_dir / "weekday_focus_profile.csv")
@@ -645,9 +727,19 @@ def _branch_e(frame: pd.DataFrame, out_dir: Path) -> dict[str, object]:
         sat_at = at_rows[at_rows["weekday_label"].eq("Sat")].head(1)
         thu_at = at_rows[at_rows["weekday_label"].eq("Thu")].head(1)
         if not sat_a.empty and not thu_a.empty and not sat_at.empty and not thu_at.empty:
-            if sat_a.iloc[0]["q_value"] < 0.05 and thu_a.iloc[0]["q_value"] < 0.05 and sat_at.iloc[0]["q_value"] >= 0.05 and thu_at.iloc[0]["q_value"] >= 0.05:
+            if (
+                sat_a.iloc[0]["q_value"] < 0.05
+                and thu_a.iloc[0]["q_value"] < 0.05
+                and sat_at.iloc[0]["q_value"] >= 0.05
+                and thu_at.iloc[0]["q_value"] >= 0.05
+            ):
                 conclusion = "A群にSaturday positive / Thursday negativeが寄っており、AT群では同効果が弱い"
-            elif sat_a.iloc[0]["q_value"] < 0.05 and thu_a.iloc[0]["q_value"] < 0.05 and sat_at.iloc[0]["q_value"] < 0.05 and thu_at.iloc[0]["q_value"] < 0.05:
+            elif (
+                sat_a.iloc[0]["q_value"] < 0.05
+                and thu_a.iloc[0]["q_value"] < 0.05
+                and sat_at.iloc[0]["q_value"] < 0.05
+                and thu_at.iloc[0]["q_value"] < 0.05
+            ):
                 conclusion = "A群とAT群の双方に曜日効果があり、ホール全体のレベルシフト寄り"
             elif sat_at.iloc[0]["q_value"] < 0.05 or thu_at.iloc[0]["q_value"] < 0.05:
                 conclusion = "AT群側にも曜日効果が残るため、A群特異ではない"
@@ -683,8 +775,14 @@ def _branch_f(frame: pd.DataFrame, out_dir: Path) -> dict[str, object]:
             label_kind=label_kind,
             min_entity_dates=10,
         )
-        best = summary.sort_values(["q_value", "p_value", "delta"], ascending=[True, True, False], na_position="last").groupby("machine_name", as_index=False).first()
-        best = best.sort_values(["q_value", "p_value", axis_col, "machine_name"], ascending=[True, True, True, True], na_position="last").reset_index(drop=True)
+        best = (
+            summary.sort_values(["q_value", "p_value", "delta"], ascending=[True, True, False], na_position="last")
+            .groupby("machine_name", as_index=False)
+            .first()
+        )
+        best = best.sort_values(
+            ["q_value", "p_value", axis_col, "machine_name"], ascending=[True, True, True, True], na_position="last"
+        ).reset_index(drop=True)
         concentration = _axis_concentration(summary, entity_col="machine_name", axis_col=axis_col)
         outputs[axis_col] = summary
         outputs[f"{axis_col}_best"] = best
@@ -697,14 +795,20 @@ def _branch_f(frame: pd.DataFrame, out_dir: Path) -> dict[str, object]:
 
     overall_best = pd.concat(best_tables, ignore_index=True) if best_tables else pd.DataFrame()
     if not overall_best.empty:
-        overall_best = overall_best.sort_values(["q_value", "p_value", "axis", "delta"], ascending=[True, True, True, False], na_position="last").reset_index(drop=True)
-    overall_concentration = pd.concat(concentration_tables, ignore_index=True) if concentration_tables else pd.DataFrame()
+        overall_best = overall_best.sort_values(
+            ["q_value", "p_value", "axis", "delta"], ascending=[True, True, True, False], na_position="last"
+        ).reset_index(drop=True)
+    overall_concentration = (
+        pd.concat(concentration_tables, ignore_index=True) if concentration_tables else pd.DataFrame()
+    )
 
     _write_csv(overall_best, branch_dir / "overall_best.csv")
     _write_csv(overall_concentration, branch_dir / "overall_concentration.csv")
 
     selected = (
-        overall_best[(overall_best["n_sections"] >= 2) & (pd.to_numeric(overall_best["q_value"], errors="coerce").lt(0.10))]
+        overall_best[
+            (overall_best["n_sections"] >= 2) & (pd.to_numeric(overall_best["q_value"], errors="coerce").lt(0.10))
+        ]
         .sort_values(["q_value", "delta"], ascending=[True, False], na_position="last")
         .head(4)
         .reset_index(drop=True)
@@ -718,9 +822,13 @@ def _branch_f(frame: pd.DataFrame, out_dir: Path) -> dict[str, object]:
         machine_name = str(row["machine_name"])
         axis_col = str(row["axis"])
         label_value = str(row[axis_col])
-        section_summary = _section_generalization(at_frame, machine_name=machine_name, axis_col=axis_col, label_value=label_value)
+        section_summary = _section_generalization(
+            at_frame, machine_name=machine_name, axis_col=axis_col, label_value=label_value
+        )
         section_tables.append(section_summary.assign(machine_name=machine_name, axis=axis_col, label=label_value))
-        _write_csv(section_summary, branch_dir / f"candidate_{idx+1:02d}_{axis_col}_{label_value}_section_generalization.csv")
+        _write_csv(
+            section_summary, branch_dir / f"candidate_{idx + 1:02d}_{axis_col}_{label_value}_section_generalization.csv"
+        )
 
         concentration = _within_entity_concentration(
             at_frame,
@@ -730,7 +838,10 @@ def _branch_f(frame: pd.DataFrame, out_dir: Path) -> dict[str, object]:
             label_value=label_value,
             label_kind=None,
         )
-        _write_csv(concentration, branch_dir / f"candidate_{idx+1:02d}_{axis_col}_{label_value}_machine_number_concentration.csv")
+        _write_csv(
+            concentration,
+            branch_dir / f"candidate_{idx + 1:02d}_{axis_col}_{label_value}_machine_number_concentration.csv",
+        )
 
         reports.extend(
             [
@@ -806,7 +917,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--db7", type=Path, default=DEFAULT_DB_7)
     parser.add_argument("--coords7-2f", dest="coords7_2f", type=Path, default=DEFAULT_COORDS_7_2F)
     parser.add_argument("--coords7-3f", dest="coords7_3f", type=Path, default=DEFAULT_COORDS_7_3F)
-    parser.add_argument("--master-csv", type=Path, default=PROJECT_ROOT / "document" / "machine_master_research" / "machine_list_for_research.csv")
+    parser.add_argument(
+        "--master-csv", type=Path, default=PROJECT_ROOT / "document" / "machine_master_research" / "machine_master.csv"
+    )
     parser.add_argument("--output-dir", type=Path, default=OUTPUT_ROOT)
     return parser
 

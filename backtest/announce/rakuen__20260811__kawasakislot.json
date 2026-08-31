@@ -1,0 +1,346 @@
+{
+  "announce_id": "rakuen__20260811__kawasakislot",
+  "hall": "楽園蒲田店",
+  "target_date": "20260811",
+  "source": {
+    "account": "kawasakislot",
+    "url": "https://x.com/kawasakislot/status/2086767775784255817",
+    "posted_at": "2026-08-10T19:53:02+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "8/11 楽園蒲田\n明日はゾロ目の特定日！先月11日は土曜で+10万枚超！\n\nヒロキ東口の本周年あったりメガ1＆7も特定日だったり、8月はアローやら雑色エリアも巻き込んで大田区バチバチにｗ\n\n最低限仕掛けは8月毎日やってる「全56×2機種以上」\n明日はまるごと機種の増量とかニブイチ～サブイチ機種、並びや機種イチなど幅広くあるかと🙆‍♂️\n\n積極的に狙いたい機種は\n・恒例機種➔東京喰種/モンキー/Lカバネリ/化物語/マギレコ/シャーマン/炎炎\n・増台・再導入➔エウレカ/北斗/花の慶次/バンドリ\n・オススメ機種➔からくり2\n上記が取れなくてもジャグやバラなど悪番対策も必ずあり！\n\nあと気になるのは昨日の告知でわざわざ”デジタルサイネージ設置”を告知してるし、明日以降も何か意味ある示唆があるんじゃないかなと🤔\n\n抽選は9:40～（500人打ち切り）\n明日は9時くらい打ち切り予想！（もっと早いかも...）\n\n20スロ587台なので抽選受ければ確実に座れるし、抜け番とか考えたらケツでも100台分くらい選べるｗ",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "baserate_before_target": {
+    "window_days": 90,
+    "n_days": 88,
+    "candidate_models_per_day": 61.0,
+    "models_over_1800_mean": 3.25,
+    "models_over_1800_median": 3.0,
+    "p_at_least_1": 0.864,
+    "p_at_least_2": 0.705,
+    "p_at_least_3": 0.534,
+    "note": "8/11はconfig event_digits=[11,22]に一致するゾロ目特定日。『全56×2機種以上』は8/10のrakuen__20260810登録時と同じ最低ライン主張で、p_at_least_2=0.705と情報量は依然弱い（8/10の同claimも『情報量ほぼゼロ』と明記済み）。今回の価値は積極的に狙いたい機種の名指しにある。"
+  },
+  "claims": [
+    {
+      "type": "zentaikei_count",
+      "n_models": 2,
+      "note": "「最低限仕掛けは8月毎日やってる『全56×2機種以上』」。8/10と同型の最低ライン主張で、baserate的中率0.705のため単独では情報量が薄いことは承知の上で登録する。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "東京喰種",
+      "note": "『積極的に狙いたい機種・恒例機種➔東京喰種/モンキー/Lカバネリ/化物語/マギレコ/シャーマン/炎炎』。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "モンキーターンV",
+      "note": "同上『恒例機種』枠。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "note": "同上『恒例機種』枠の『Lカバネリ』。表記ゆれで『甲鉄城のカバネリ』（無印）の可能性もあるため、採点時に両名の実績を確認すること。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "化物語",
+      "note": "同上『恒例機種』枠。8/10のrakuen__20260810でも観測n_models上位（score 5542, rank1）に入った実績あり。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "シャーマンキング",
+      "note": "同上『恒例機種』枠の『マギレコ/シャーマン/炎炎』のうち、シャーマンキングとして機種名一致を確認できたもの。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "note": "同上『恒例機種』枠の『炎炎』。旧作『炎炎ノ消防隊』との表記ゆれに注意。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "交響詩篇エウレカセブン HI-EVOLUTION ZERO TYPE‐ART",
+      "note": "『増台・再導入➔エウレカ/北斗/花の慶次/バンドリ』。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "スマスロ北斗の拳",
+      "note": "同上『増台・再導入』枠の『北斗』。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "花の慶次～佐渡攻めの章～",
+      "note": "同上『増台・再導入』枠。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "バンドリ！",
+      "note": "同上『増台・再導入』枠。2026-08-11のposition instinct（うみねこ2247-2250）と同時期に観測されている機種。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "からくりサーカス2",
+      "note": "『オススメ機種➔からくり2』。"
+    }
+  ],
+  "unscored_claims": [
+    {
+      "text": "先月11日は土曜で+10万枚超",
+      "reason": "過去実績の言及で今日の当否判定には使えない参考情報。"
+    },
+    {
+      "text": "ジャグやバラなど悪番対策も必ずあり",
+      "reason": "機種名の名指しが無く、announce.pyのclaim typeで表現できない一般論。"
+    },
+    {
+      "text": "デジタルサイネージ設置の告知（示唆の可能性）",
+      "reason": "投稿者自身の推測であり検証可能な主張ではない。"
+    }
+  ],
+  "result": {
+    "scored_at_data_max": "20260811",
+    "hall_baseline_mean_diff": 83.4,
+    "hall_n_machines": 587,
+    "new_machine_days": 30,
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 2,
+          "note": "「最低限仕掛けは8月毎日やってる『全56×2機種以上』」。8/10と同型の最低ライン主張で、baserate的中率0.705のため単独では情報量が薄いことは承知の上で登録する。"
+        },
+        "observed_n_models": 3,
+        "candidate_models": 56,
+        "models": [
+          {
+            "machine_name": "とある魔術の禁書目録2",
+            "score": 5169.0,
+            "n_machines": 8,
+            "mean_diff": 3071.8,
+            "age_days": 7
+          },
+          {
+            "machine_name": "化物語",
+            "score": 4029.1,
+            "n_machines": 9,
+            "mean_diff": 3064.0,
+            "age_days": 246
+          },
+          {
+            "machine_name": "攻殻機動隊",
+            "score": 3434.3,
+            "n_machines": 3,
+            "mean_diff": 2857.3,
+            "age_days": 190
+          }
+        ],
+        "n_new_machines_over": 1,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "東京喰種",
+          "note": "『積極的に狙いたい機種・恒例機種➔東京喰種/モンキー/Lカバネリ/化物語/マギレコ/シャーマン/炎炎』。"
+        },
+        "score": 1326.3,
+        "mean_diff": 1103.3,
+        "gratio": 1.202,
+        "n_machines": 31,
+        "rank": 7,
+        "candidate_models": 56,
+        "age_days": 553,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "モンキーターンV",
+          "note": "同上『恒例機種』枠。"
+        },
+        "score": -158.1,
+        "mean_diff": -130.7,
+        "gratio": 1.21,
+        "n_machines": 12,
+        "rank": 31,
+        "candidate_models": 56,
+        "age_days": 587,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+          "note": "同上『恒例機種』枠の『Lカバネリ』。表記ゆれで『甲鉄城のカバネリ』（無印）の可能性もあるため、採点時に両名の実績を確認すること。"
+        },
+        "score": -1158.7,
+        "mean_diff": -880.6,
+        "gratio": 1.316,
+        "n_machines": 18,
+        "rank": 49,
+        "candidate_models": 56,
+        "age_days": 162,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "化物語",
+          "note": "同上『恒例機種』枠。8/10のrakuen__20260810でも観測n_models上位（score 5542, rank1）に入った実績あり。"
+        },
+        "score": 4029.1,
+        "mean_diff": 3064.0,
+        "gratio": 1.315,
+        "n_machines": 9,
+        "rank": 2,
+        "candidate_models": 56,
+        "age_days": 246,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "シャーマンキング",
+          "note": "同上『恒例機種』枠の『マギレコ/シャーマン/炎炎』のうち、シャーマンキングとして機種名一致を確認できたもの。"
+        },
+        "score": -468.1,
+        "mean_diff": -571.2,
+        "gratio": 0.82,
+        "n_machines": 5,
+        "rank": 38,
+        "candidate_models": 56,
+        "age_days": 553,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "スマスロ炎炎ノ消防隊2",
+          "note": "同上『恒例機種』枠の『炎炎』。旧作『炎炎ノ消防隊』との表記ゆれに注意。"
+        },
+        "score": -2310.4,
+        "mean_diff": -1975.8,
+        "gratio": 1.169,
+        "n_machines": 6,
+        "rank": 54,
+        "candidate_models": 56,
+        "age_days": 189,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "交響詩篇エウレカセブン HI-EVOLUTION ZERO TYPE‐ART",
+          "note": "『増台・再導入➔エウレカ/北斗/花の慶次/バンドリ』。"
+        },
+        "score": -391.6,
+        "mean_diff": -479.6,
+        "gratio": 0.816,
+        "n_machines": 25,
+        "rank": 37,
+        "candidate_models": 56,
+        "age_days": 587,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "スマスロ北斗の拳",
+          "note": "同上『増台・再導入』枠の『北斗』。"
+        },
+        "score": -295.1,
+        "mean_diff": -600.5,
+        "gratio": 0.491,
+        "n_machines": 13,
+        "rank": 36,
+        "candidate_models": 56,
+        "age_days": 587,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "花の慶次～佐渡攻めの章～",
+          "note": "同上『増台・再導入』枠。"
+        },
+        "score": -23.8,
+        "mean_diff": -110.7,
+        "gratio": 0.215,
+        "n_machines": 3,
+        "rank": 28,
+        "candidate_models": 56,
+        "age_days": 36,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "バンドリ！",
+          "note": "同上『増台・再導入』枠。2026-08-11のposition instinct（うみねこ2247-2250）と同時期に観測されている機種。"
+        },
+        "score": -75.2,
+        "mean_diff": -47.0,
+        "gratio": 1.599,
+        "n_machines": 4,
+        "rank": 29,
+        "candidate_models": 56,
+        "age_days": 587,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "からくりサーカス2",
+          "note": "『オススメ機種➔からくり2』。"
+        },
+        "score": 1593.8,
+        "mean_diff": 1476.4,
+        "gratio": 1.08,
+        "n_machines": 7,
+        "rank": 6,
+        "candidate_models": 56,
+        "age_days": 36,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
+  "announce_digest": "a0d1a09da6d038b6"
+}

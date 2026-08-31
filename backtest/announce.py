@@ -381,7 +381,13 @@ def model_scores(
 
 
 def baserate(
-    hall: str, before: str, days: int, min_machines: int, pct: float, metric: str = "gratio_mean_diff"
+    hall: str,
+    before: str,
+    days: int,
+    min_machines: int,
+    pct: float,
+    metric: str = "gratio_mean_diff",
+    threshold: float | None = None,
 ) -> dict:
     """対象日より前のデータから、全台系の閾値とベースレートを出す。
 
@@ -397,6 +403,11 @@ def baserate(
     絶対値で固定する」参照）。そのため運用では gratio_mean_diff の閾値は
     ここではなく絶対値 +1,800 を使う。winrate_lb95_gratio は score の
     スケールが全く異なるため、この関数の分位点をそのまま初期値の参考にしてよい。
+
+    threshold: 指定すると、分位点閾値とは別に絶対値 `threshold` 基準の
+        `fixed_threshold` ブロック（p_at_least_N 込み）を追加で返す。
+        運用で使うのは基本的にこちら（gratio_mean_diff は +1,800 固定）。
+        未指定なら従来どおり分位点閾値のみを返す（後方互換）。
     """
     df = load_frame(hall)
     d0 = pd.Timestamp(before)
@@ -414,11 +425,11 @@ def baserate(
     if scores.empty:
         raise ValueError(f"min_machines={min_machines} を満たす機種が窓内に無い")
 
-    threshold = float(scores["score"].quantile(pct))
+    pct_threshold = float(scores["score"].quantile(pct))
     all_days = scores["date"].unique()
-    counts = scores[scores["score"] >= threshold].groupby("date").size().reindex(all_days, fill_value=0)
+    counts = scores[scores["score"] >= pct_threshold].groupby("date").size().reindex(all_days, fill_value=0)
 
-    return {
+    result = {
         "hall": hall,
         "metric": metric,
         "window": [str(lo.date()), str(d0.date())],
@@ -426,7 +437,7 @@ def baserate(
         "n_model_days": int(len(scores)),
         "min_machines": min_machines,
         "percentile": pct,
-        "threshold": round(threshold, 1),
+        "threshold": round(pct_threshold, 1),
         "models_over_threshold_per_day": {
             "mean": round(float(counts.mean()), 2),
             "median": float(counts.median()),
@@ -434,6 +445,137 @@ def baserate(
         },
         "candidate_models_per_day": round(float(scores.groupby("date").size().mean()), 1),
     }
+
+    if threshold is not None:
+        fixed_counts = scores[scores["score"] > threshold].groupby("date").size().reindex(all_days, fill_value=0)
+        result["fixed_threshold"] = {
+            "threshold": threshold,
+            "models_over_threshold_per_day": {
+                "mean": round(float(fixed_counts.mean()), 2),
+                "median": float(fixed_counts.median()),
+                "max": int(fixed_counts.max()),
+            },
+            **{f"p_at_least_{n}": round(float((fixed_counts >= n).mean()), 3) for n in (1, 2, 3, 4, 10)},
+        }
+
+    return result
+
+
+def named_context(
+    hall: str,
+    machines: list[str],
+    as_of: str,
+    days: int = 30,
+    min_machines: int = 3,
+    threshold: float = 1800.0,
+    metric: str = "gratio_mean_diff",
+) -> dict:
+    """予告本文で名指しされた機種群の、直近N日窓でのランキング・閾値超え率を出す。
+
+    予告登録のたびに named_machine_context をスクラッチスクリプトで計算していた
+    作業（match_machine_names/baserate を切り出した時と同じ動機）をここに一本化する。
+    machines は match-name で確定済みの正式表記（machine_master 側）を渡すこと。
+    あいまい照合はしない。
+
+    as_of を含む days 日分の窓（休業日等で実日数が days に満たない場合はある分だけ
+    使う）。rank は as_of 1日分のみで作った min_machines 以上のプールでの順位
+    （score 降順、1-indexed）で、名指し機種が min_machines 未満の少数台設置でも
+    窓内の出現自体は min_machines=1 で拾う（プール順位の算出とは別）。
+    """
+    df = load_frame(hall)
+    dates = sorted(df["date"].astype(str).unique())
+    if as_of not in dates:
+        raise ValueError(f"as_of={as_of} はDBに存在しない日付")
+    as_of_idx = dates.index(as_of)
+    window_dates = dates[max(0, as_of_idx - days + 1) : as_of_idx + 1]
+
+    as_of_day = df[df["date"] == as_of]
+    pool = model_scores(as_of_day, min_machines, metric=metric)
+    n_candidates = len(pool)
+
+    per_day_scores = []
+    for d in window_dates:
+        day = df[df["date"] == d]
+        if day.empty:
+            continue
+        per_day_scores.append(model_scores(day, 1, metric=metric))
+
+    models = []
+    for name in machines:
+        scores_list = []
+        n_machines_list = []
+        over = 0
+        for sc in per_day_scores:
+            if name in sc.index:
+                row = sc.loc[name]
+                scores_list.append(float(row["score"]))
+                n_machines_list.append(int(row["n_machines"]))
+                if row["score"] > threshold:
+                    over += 1
+        n_days_present = len(scores_list)
+        rank = int(pool.index.get_loc(name)) + 1 if name in pool.index else None
+        models.append(
+            {
+                "name": name,
+                "n_machines": n_machines_list[-1] if n_machines_list else None,
+                "rank": rank,
+                "of": n_candidates,
+                "n_days_present": n_days_present,
+                "over_threshold": over,
+                "rate": round(over / n_days_present, 3) if n_days_present else None,
+                "mean_score": round(sum(scores_list) / len(scores_list), 1) if scores_list else None,
+            }
+        )
+
+    hall_over_rate = round(float((pool["score"] > threshold).sum()) / n_candidates, 3) if n_candidates else None
+
+    return {
+        "as_of": as_of,
+        "window_days": days,
+        "n_candidates_ge3machines": n_candidates,
+        "hall_over_threshold_rate_approx": hall_over_rate,
+        "threshold": threshold,
+        "models": models,
+    }
+
+
+def db_max_date(hall: str) -> str:
+    """ホールのDB最終収録日を返す（登録前の下ごしらえ用）。
+
+    register 内部でも同じ判定をするが、baserate の --before に渡す値を
+    決めるには登録前に単独で知る必要がある。毎回 scratchpad に使い捨て
+    スクリプトを書いて確認していた作業（mirror_evidence_2026-08-25.md
+    セクション4-A）をこのサブコマンドに一本化する。
+    """
+    return str(load_frame(hall)["date"].max())
+
+
+def match_machine_names(hall: str, text: str, cutoff: float = 0.6) -> list[dict]:
+    """予告本文の自由文から、そのホールの実在機種名候補をあいまい照合する。
+
+    ツイート本文は機種名を略称・別表記で書くことが多く、model_named claim の
+    machine_name には machine_master 側の正式表記が必要になる。この照合を
+    毎回 scratchpad で書き直していた（mirror_evidence_2026-08-25.md
+    セクション4-A、独立した3セッションで同一パターンを確認）。
+
+    完全な部分文字列一致を最優先し、無ければ機種名とテキストの最長共通
+    部分列の長さで近似スコアを付ける。あくまで候補提示であり、最終的な
+    machine_name の採否は人間が判断すること（自動確定はしない）。
+    """
+    import difflib
+
+    names = sorted(load_frame(hall)["machine_name"].dropna().unique().tolist())
+    results = []
+    for name in names:
+        if name in text:
+            results.append({"machine_name": name, "match": "substring", "score": 1.0})
+            continue
+        match = difflib.SequenceMatcher(None, name, text).find_longest_match(0, len(name), 0, len(text))
+        if match.size >= max(3, len(name) * cutoff):
+            score = round(match.size / len(name), 3)
+            results.append({"machine_name": name, "match": "partial", "score": score})
+    results.sort(key=lambda r: -r["score"])
+    return results
 
 
 def audit_censoring(hall: str) -> list[dict]:
@@ -868,6 +1010,14 @@ def main(argv: list[str] | None = None) -> int:
     p_sc = sub.add_parser("score", help="凍結済み予告を実績で採点する")
     p_sc.add_argument("path")
 
+    p_dm = sub.add_parser("dbmax", help="ホールのDB最終収録日を表示する（baserateの--beforeに使う）")
+    p_dm.add_argument("hall")
+
+    p_mn = sub.add_parser("match-name", help="予告本文から実在機種名の候補をあいまい照合する（登録前の下ごしらえ用）")
+    p_mn.add_argument("hall")
+    p_mn.add_argument("text")
+    p_mn.add_argument("--cutoff", type=float, default=0.6)
+
     p_br = sub.add_parser("baserate", help="全台系の閾値とベースレートを出す（登録前に使う）")
     p_br.add_argument("hall")
     p_br.add_argument("--before", required=True, help="YYYYMMDD。この日より前のデータだけを使う")
@@ -875,6 +1025,27 @@ def main(argv: list[str] | None = None) -> int:
     p_br.add_argument("--min-machines", type=int, default=3)
     p_br.add_argument("--pct", type=float, default=0.95, help="閾値の分位点（既定 0.95）")
     p_br.add_argument("--metric", default="gratio_mean_diff", choices=sorted(ALLOWED_METRICS))
+    p_br.add_argument(
+        "--threshold",
+        type=float,
+        default=None,
+        help="絶対値閾値（例 1800.0）。指定すると fixed_threshold ブロック（p_at_least_N込み）を追加出力する",
+    )
+
+    p_nc = sub.add_parser(
+        "named-context", help="名指し機種の直近N日ランキング・閾値超え率を出す（登録前の下ごしらえ用）"
+    )
+    p_nc.add_argument("hall")
+    p_nc.add_argument(
+        "--machines", required=True, help="カンマ区切りの正式表記machine_name（match-nameで確定済み前提）"
+    )
+    p_nc.add_argument("--as-of", required=True, help="YYYYMMDD。この日を含めて過去に遡る")
+    p_nc.add_argument("--days", type=int, default=30)
+    p_nc.add_argument(
+        "--min-machines", type=int, default=3, help="ランキングプール算出用（窓内の出現集計には使わない）"
+    )
+    p_nc.add_argument("--threshold", type=float, default=1800.0)
+    p_nc.add_argument("--metric", default="gratio_mean_diff", choices=sorted(ALLOWED_METRICS))
 
     p_ac = sub.add_parser(
         "audit-censoring",
@@ -885,8 +1056,23 @@ def main(argv: list[str] | None = None) -> int:
     args = p.parse_args(argv)
     ANNOUNCE_DIR.mkdir(parents=True, exist_ok=True)
 
+    if args.cmd == "dbmax":
+        print(db_max_date(args.hall))
+        return 0
+
+    if args.cmd == "match-name":
+        res = match_machine_names(args.hall, args.text, args.cutoff)
+        print(json.dumps(res, ensure_ascii=False, indent=2))
+        return 0
+
     if args.cmd == "baserate":
-        res = baserate(args.hall, args.before, args.days, args.min_machines, args.pct, args.metric)
+        res = baserate(args.hall, args.before, args.days, args.min_machines, args.pct, args.metric, args.threshold)
+        print(json.dumps(res, ensure_ascii=False, indent=2))
+        return 0
+
+    if args.cmd == "named-context":
+        machines = [m.strip() for m in args.machines.split(",") if m.strip()]
+        res = named_context(args.hall, machines, args.as_of, args.days, args.min_machines, args.threshold, args.metric)
         print(json.dumps(res, ensure_ascii=False, indent=2))
         return 0
 
@@ -930,4 +1116,12 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
+    # Windows 既定の cp932 コンソールでは、raw_text の絵文字や ⑤⑥ などの全角記号を
+    # 含む JSON ダンプで UnicodeEncodeError になる。台帳追記は済んでいるのに
+    # コマンドが exit 1 で落ちるため、register が失敗したように見える。
+    # stderr も「凍結:」「⚠️ 対象日…」の出力先なので両方 reconfigure する。
+    # scripts/compile_instincts.py と同じ対処（commit f9ced01）。
+    # import してライブラリとして使う場合に影響しないよう __main__ に限定。
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
     raise SystemExit(main())

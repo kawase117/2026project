@@ -1,0 +1,297 @@
+{
+  "rule_id": "mitoya_model_gratio_top2",
+  "hall": "みとや大森町店",
+  "freeze_hash": "a0f5b81a53a8e24b",
+  "target_date": "20260804",
+  "data_asof": "20260803",
+  "lookback_window": [
+    "2026-07-14",
+    "2026-08-04"
+  ],
+  "score": "hist_model_gratio_mean_diff",
+  "selection_unit": "machine_model",
+  "success_criterion": "フォワード20エントリー日を経過した時点で、指名機種全台の総和ベースedge（対ホール全体同日平均、diff_coins_normalized）の平均が正であり、95%CI(block7)下限が0を上回ること。満たさなければ破棄する。判定はフォワードテストのみで行い、バックテスト数値は採否根拠にしない。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1159.274273,
+      "history_rows": 17,
+      "machines": [
+        624,
+        625,
+        626,
+        627,
+        628,
+        629,
+        630,
+        631,
+        632,
+        633,
+        634,
+        635,
+        636,
+        637,
+        638,
+        639,
+        640
+      ]
+    },
+    {
+      "machine_name": "ディスクアップ ULTRAREMIX",
+      "score": 504.711943,
+      "history_rows": 20,
+      "machines": [
+        745
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 624,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1159.274273,
+      "history_days": 17
+    },
+    {
+      "machine_number": 625,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1159.274273,
+      "history_days": 17
+    },
+    {
+      "machine_number": 626,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1159.274273,
+      "history_days": 17
+    },
+    {
+      "machine_number": 627,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1159.274273,
+      "history_days": 17
+    },
+    {
+      "machine_number": 628,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1159.274273,
+      "history_days": 17
+    },
+    {
+      "machine_number": 629,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1159.274273,
+      "history_days": 17
+    },
+    {
+      "machine_number": 630,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1159.274273,
+      "history_days": 17
+    },
+    {
+      "machine_number": 631,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1159.274273,
+      "history_days": 17
+    },
+    {
+      "machine_number": 632,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1159.274273,
+      "history_days": 17
+    },
+    {
+      "machine_number": 633,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1159.274273,
+      "history_days": 17
+    },
+    {
+      "machine_number": 634,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1159.274273,
+      "history_days": 17
+    },
+    {
+      "machine_number": 635,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1159.274273,
+      "history_days": 17
+    },
+    {
+      "machine_number": 636,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1159.274273,
+      "history_days": 17
+    },
+    {
+      "machine_number": 637,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1159.274273,
+      "history_days": 17
+    },
+    {
+      "machine_number": 638,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1159.274273,
+      "history_days": 17
+    },
+    {
+      "machine_number": 639,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1159.274273,
+      "history_days": 17
+    },
+    {
+      "machine_number": 640,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1159.274273,
+      "history_days": 17
+    },
+    {
+      "machine_number": 745,
+      "machine_name": "ディスクアップ ULTRAREMIX",
+      "score": 504.711943,
+      "history_days": 20
+    }
+  ],
+  "result": {
+    "scored_with_hash": "a0f5b81a53a8e24b",
+    "day_baseline": 36.5,
+    "universe_size": 277,
+    "picks_realized": [
+      {
+        "machine_number": 624,
+        "games": 4770.0,
+        "diff": 1542.0,
+        "edge": 1505.4729241877255
+      },
+      {
+        "machine_number": 625,
+        "games": 3764.0,
+        "diff": 4550.0,
+        "edge": 4513.472924187726
+      },
+      {
+        "machine_number": 626,
+        "games": 4333.0,
+        "diff": 2544.0,
+        "edge": 2507.4729241877258
+      },
+      {
+        "machine_number": 627,
+        "games": 5771.0,
+        "diff": -1192.0,
+        "edge": -1228.5270758122745
+      },
+      {
+        "machine_number": 628,
+        "games": 5406.0,
+        "diff": -150.0,
+        "edge": -186.52707581227438
+      },
+      {
+        "machine_number": 629,
+        "games": 3300.0,
+        "diff": 1292.0,
+        "edge": 1255.4729241877255
+      },
+      {
+        "machine_number": 630,
+        "games": 4627.0,
+        "diff": -2736.0,
+        "edge": -2772.5270758122742
+      },
+      {
+        "machine_number": 631,
+        "games": 6452.0,
+        "diff": -5542.0,
+        "edge": -5578.527075812274
+      },
+      {
+        "machine_number": 632,
+        "games": 4511.0,
+        "diff": 2767.0,
+        "edge": 2730.4729241877258
+      },
+      {
+        "machine_number": 633,
+        "games": 4195.0,
+        "diff": 7528.0,
+        "edge": 7491.472924187726
+      },
+      {
+        "machine_number": 634,
+        "games": 5556.0,
+        "diff": 608.0,
+        "edge": 571.4729241877257
+      },
+      {
+        "machine_number": 635,
+        "games": 3085.0,
+        "diff": 4050.0,
+        "edge": 4013.4729241877258
+      },
+      {
+        "machine_number": 636,
+        "games": 5563.0,
+        "diff": 8.0,
+        "edge": -28.52707581227437
+      },
+      {
+        "machine_number": 637,
+        "games": 5241.0,
+        "diff": -125.0,
+        "edge": -161.52707581227438
+      },
+      {
+        "machine_number": 638,
+        "games": 4975.0,
+        "diff": -1189.0,
+        "edge": -1225.5270758122745
+      },
+      {
+        "machine_number": 639,
+        "games": 2979.0,
+        "diff": -1608.0,
+        "edge": -1644.5270758122745
+      },
+      {
+        "machine_number": 640,
+        "games": 4480.0,
+        "diff": 9136.0,
+        "edge": 9099.472924187725
+      },
+      {
+        "machine_number": 745,
+        "games": 3788.0,
+        "diff": 2856.0,
+        "edge": 2819.4729241877258
+      }
+    ],
+    "mean_diff_per_pick": 1352.2,
+    "mean_edge_per_pick": 1315.6,
+    "missing_machines": [],
+    "rb_perspective": null,
+    "model_perspective": [
+      {
+        "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+        "n_machines": 17,
+        "n_realized": 17,
+        "sum_diff": 21483.0,
+        "sum_games": 79008.0,
+        "mean_diff": 1263.7
+      },
+      {
+        "machine_name": "ディスクアップ ULTRAREMIX",
+        "n_machines": 1,
+        "n_realized": 1,
+        "sum_diff": 2856.0,
+        "sum_games": 3788.0,
+        "mean_diff": 2856.0
+      }
+    ]
+  },
+  "plan_digest": "dcc9ed3e2dbf0745"
+}

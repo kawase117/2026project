@@ -1,0 +1,20 @@
+{
+  "rule_id": "mitoya_model_gratio_top2",
+  "hall": "みとや大森町店",
+  "hypothesis": "みとやは機種型ホール（instinct: granularity-of-selection-is-hall-specific, R2 k=2/3で+3.53pp[+2.10,+4.96]勝率73%）。直近21日の総和ベースG比×平均差枚で上位機種を指名し、その設置台を全部買う運用を初めてフォワード検証する。台粒度(R1)は同instinctで-1.85[-5.98,+2.27]と非有意で不採用。",
+  "source_instinct": "2026-08-01-granularity-of-selection-is-hall-specific / 2026-08-01-answer-check-metric-hit104-over-mean-diff",
+  "eval_start": "20260805",
+  "eval_end": "20270805",
+  "success_criterion": "フォワード20エントリー日を経過した時点で、指名機種全台の総和ベースedge（対ホール全体同日平均、diff_coins_normalized）の平均が正であり、95%CI(block7)下限が0を上回ること。満たさなければ破棄する。判定はフォワードテストのみで行い、バックテスト数値は採否根拠にしない。",
+  "universe": {},
+  "eligibility": {},
+  "entry_days": {},
+  "score": "hist_model_gratio_mean_diff",
+  "lookback_days": 21,
+  "min_history_days": 10,
+  "top_n": 2,
+  "min_games": 1000,
+  "min_games_today": 0,
+  "selection_unit": "machine_model",
+  "min_machines_per_model": 1
+}

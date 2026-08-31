@@ -1,6 +1,6 @@
 ---
 id: machine-list-csv-relocated-after-cleanup
-trigger: "machine_list_for_research.csv (or any previously-used file) suddenly returns FileNotFoundError despite pwd being correct"
+trigger: "machine_master.csv (or any previously-used file) suddenly returns FileNotFoundError despite pwd being correct"
 confidence: 0.9
 domain: file-management
 source: session-observation
@@ -10,8 +10,8 @@ project_name: 2026project
 # 機種リサーチCSVは repo cleanup でパス変更された
 
 ## 背景
-リポジトリルート直下にあった `machine_list_for_research.csv` は、2026-06-11のリポジトリ整理（document/plans/2026-06-11-repo-cleanup-prompt.md）で
-`document/machine_master_research/machine_list_for_research.csv` に移動された。
+リポジトリルート直下にあった旧 `machine_list_for_research.csv` は、2026-06-11のリポジトリ整理で移動され、
+2026-08-30に正本名を `document/machine_master_research/machine_master.csv` へ統一した。
 セッション圧縮を挟むと旧パスを記憶したまま処理を続けてしまい、FileNotFoundError が発生する。
 
 ## アクション
@@ -20,12 +20,12 @@ project_name: 2026project
 過去セッションのサマリに記載された絶対パスを鵜呑みにしない。
 
 ## 例
-`document/machine_master_research/machine_list_for_research.csv` — manufacturer/release_date/machine_type/rtp_setting1-6/bb_setting1-6/rb_setting1-6/notes の23列CSV（utf-8-sig）。
+`document/machine_master_research/machine_master.csv` — manufacturer/release_date/machine_type/rtp_setting1-6/bb_setting1-6/rb_setting1-6/notes に加え、`source_url` と解決根拠を持つ6列を含む29列CSV（utf-8-sig）。URLは別マップではなくこの正本から読む。
 read-modify-write は csv.reader/csv.writer で行い、`row[0]==machine_name` で完全一致検索する。
 
 ---
 id: pachislot-machine-research-batch-pattern
-trigger: "machine_list_for_research.csv の不人気台（低出現頻度）の RTP/スペック情報をリサーチして埋める"
+trigger: "machine_master.csv の不人気台（低出現頻度）の RTP/スペック情報をリサーチして埋める"
 confidence: 0.85
 domain: data-research
 source: session-observation

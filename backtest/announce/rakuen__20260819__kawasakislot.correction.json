@@ -1,0 +1,103 @@
+{
+  "kind": "correction",
+  "announce_id": "rakuen__20260819__kawasakislot",
+  "parent_announce_digest": "0387e771772e9738",
+  "frozen_at": "2026-08-20T00:00:00+09:00",
+  "target_date": "20260819",
+  "hall": "楽園蒲田店",
+  "why_separate_file": "親の prereg は score 実行後 digest 0387e771772e9738 で確定済み。announce_digest() は result と announce_digest 以外の全キーをハッシュするため、本体に追加分析を足すと _verify_ledger が改ざんとして採点を拒否する。result キーを持たないので audit-censoring の *.json グロブでは無視される（announce.py:460 の result is None スキップ）。LEDGER.jsonl には載せない。",
+  "scoring_summary": {
+    "scored_at_data_max": "20260819",
+    "hall_baseline_mean_diff": 114.6,
+    "candidate_models": 55,
+    "K_models_over_1800": 3,
+    "models_over_threshold": [
+      {"machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝", "n_machines": 12, "score": 2677.7, "mean_diff": 1325.7},
+      {"machine_name": "戦国コレクション6", "n_machines": 6, "score": 2463.5, "mean_diff": 1571.7},
+      {"machine_name": "とある魔術の禁書目録2", "n_machines": 8, "score": 1835.6, "mean_diff": 1410.9}
+    ],
+    "claims": {
+      "zentaikei_count(2)": {"hit": true, "observed_n_models": 3},
+      "model_named:化物語": {"hit": false, "rank": "44/55", "score": -201.2, "mean_diff": -227.3},
+      "position_rule:last_digit9(pooled)": {"hit": true, "effect_resid_diff": 423.7, "target_payout": 1.0577, "other_payout": 1.0121},
+      "position_rule:last_digit9(AT)": {"hit": true, "effect_resid_diff": 408.5, "target_payout": 1.0726, "other_payout": 1.0232},
+      "position_rule:last_digit9(JUG)": {"hit": true, "effect_resid_diff": 748.9, "target_payout": 1.042, "other_payout": 0.9773}
+    },
+    "note": "⭐ 8/18とは対照的な結果。全台系は3機種（K=3）で hit、末尾9は pooled/AT/JUG の3claimすべて hit した。特にJUGセグメントの残差+748.9は通年ベースライン(-13.0)から大きく外れており、末尾9は末尾8よりはるかに強い当日シグナルを見せた。⚠️ 一方で二重に名指しした化物語（『日付末尾の9台機種』＋『定番機種』）は rank44/55・score-201.2 で明確に外れた。prior_predictionでmost_likely_hitsに挙げた唯一の機種が外れている。"
+  },
+  "low_activity_context": {
+    "definition": "2026-08-19-low-activity-day-suppresses-detection-not-just-scores instinct の適用チェック。",
+    "hall_wide": {
+      "today_mean_games": 1967,
+      "baseline_mean_games_90d": 3129,
+      "today_percentile_rank": "下位19.1%",
+      "active_ratio_ge3000g_today": 0.235,
+      "active_ratio_ge3000g_baseline": 0.434
+    },
+    "note": "⚠️ 8/19も8/18に続き閑散日（90日窓下位19.1%タイル、games>=3000到達率23.5% vs 平均43.4%）。2日連続の低稼働。ただし今回は末尾9のposition_ruleが強く hit しており、稼働が低くても検出できる強さのシグナルがあったことを示す。稼働の低さは『検出できない』の言い訳にはなるが『何も無かった』の証拠にはならない、という instinct の趣旨どおり、今回は稼働が低くても末尾9は見えた。低稼働＝即座に無効というわけではない点も併記しておく。"
+  },
+  "rb_check_actual_vs_registered": {
+    "definition": "登録時に凍結した rb_check_9jug（30日集計、3/11=27.3%）と、8/19当日実測（単日、games>=3000フィルタ）の比較。ユーザー提供のsite777スクリーンショット『末尾9 pickup』の値と自前DBの値を突き合わせて検証した。",
+    "screenshot_vs_db_crosscheck": {
+      "note": "スクリーンショットの13台（BB/RB合算確率・差枚・G数）は自前DB（machine_detailed_results, 20260819）の値とほぼ完全一致した。例：台1109 スクリーンショット『BB17 RB12 合算1/114 +1,500枚 3,297G』に対し、DB側は G3297・差枚+1572・RB単独1/275・BB単独1/194（BB+RB=29/3297≈1/114で合算値も一致）。他12台も同様に一致し、スクリーンショットは当日データの信頼できる裏取りになった。"
+    },
+    "today_single_day_jug_lastdigit9": {
+      "eligible_games_ge_3000": 7,
+      "n_machines_total": 11,
+      "over_1_300_count": 5,
+      "over_1_300_rate_of_eligible": 0.714,
+      "detail": [
+        {"machine_number": 1109, "games": 3297, "rb": "1/275", "over": true},
+        {"machine_number": 1119, "games": 3402, "rb": "1/340", "over": false},
+        {"machine_number": 1159, "games": 8633, "rb": "1/298", "over": true},
+        {"machine_number": 1169, "games": 5798, "rb": "1/207", "over": true},
+        {"machine_number": 1179, "games": 6243, "rb": "1/260", "over": true},
+        {"machine_number": 1199, "games": 6956, "rb": "1/302", "over": false},
+        {"machine_number": 1209, "games": 7758, "rb": "1/259", "over": true}
+      ]
+    },
+    "comparison": "登録時ベースライン（30日集計）は3/11=27.3%だったのに対し、8/19単日実測は games>=3000 の7台中5台（71.4%）がRB確率1/300以上。単日値は分散が大きいため30日集計と直接比較すべきではないが、position_rule:JUG（差枚残差+748.9）と方向が一致しており、末尾9・JUGは差枚・RBの両計器で当日一致して強いシグナルを示した。",
+    "note": "⚠️ ただしn=1日の観測であり、末尾9JUGの効果が継続するかは次回以降の追加データで確認する必要がある。単日の71.4%を新しいベースレートとして凍結しない。"
+  },
+  "magireco_table_rotation_refinement": {
+    "definition": "2026-08-19-instincts.yaml の instinct id=2026-08-19-per-table-games-diff-correlation-detects-single-table-decoy に対する追加観測。マギアレコードが8/19も全台系1位（score+2677.7, G比2.02）となったが、8000G超の突出台が前日と入れ替わった。",
+    "today_hot_tables": [
+      {"machine_number": 2131, "games": 8843, "diff": 8619},
+      {"machine_number": 2129, "games": 8422, "diff": 7000}
+    ],
+    "yesterday_hot_table_20260818": {"machine_number": 2133, "games": 8297, "diff": 2715},
+    "today_table_2133": {"games": 1434, "diff": -1095, "note": "前日1位だった台2133は8/19は低稼働・マイナス"},
+    "historical_correlation_all_tables": {
+      "2133": {"n_days": 146, "rate_ge_8000g": 0.089, "correlation_r": 0.526, "mean_diff_ge_8000g": 5920},
+      "2131": {"n_days": 143, "rate_ge_8000g": 0.077, "correlation_r": 0.45, "mean_diff_ge_8000g": 4572},
+      "2130": {"n_days": 145, "rate_ge_8000g": 0.055, "correlation_r": 0.285, "mean_diff_ge_8000g": 2340},
+      "2129": {"n_days": 158, "rate_ge_8000g": 0.063, "correlation_r": 0.195, "mean_diff_ge_8000g": 2862}
+    },
+    "hall_baseline_correlation_r": 0.273,
+    "note": "⭐ instinct 2026-08-19-per-table-games-diff-correlation-detects-single-table-decoy を修正する重要な追加観測。『台2133が特別』という前日の解釈は誤りだった可能性が高い。8/19は台2133ではなく台2131・2129が突出しており、2133自身は低調（-1095）だった。歴史的相関を4台で比較すると 2133(r=0.526) > 2131(r=0.450) > 2130(r=0.285) > 2129(r=0.195、ホール平均0.273並み)。つまり**マギアレコードという機種の複数台（少なくとも2133・2131）がホール平均より高い相関を持つ**が、**どの台が『その日のホット台』になるかは日替わりで、台番号を固定した予測はできない**。機種全体（マギアレコード）が2日連続で全台系1位を取っている事実の方が、個々の台番号よりも安定した観測。次回instinct更新時、id=2026-08-19-per-table-games-diff-correlation-detects-single-table-decoy に対してこの知見を反映した改訂版を書くか検討すること（現時点ではsupersedesはまだ立てない。2日分の観測では機種内複数台のどれが日替わりで光るかの法則性を確定できないため）。"
+  },
+  "external_report_crosscheck": {
+    "source": {
+      "account": "slokotae7",
+      "url": "https://x.com/slokotae7/status/2090108061168095372",
+      "text": "8月19日(水) 楽園蒲田店 / 9/587台 対象台平均+448枚 / 【全台系】花の慶次+1/3台 平均+1,900枚、攻殻機動隊+1/3台 平均-217枚、甲鉄城のカバネリ+1/3 平均-340枚 / 【末尾仕掛け】末尾9寄せ"
+    },
+    "comparison": [
+      {"model": "花の慶次～佐渡攻めの章～", "zeno": "全台系 +1/3台 平均+1,900", "ours": "rank4/55 score+1521 平均差枚+1968 G比0.77", "over_1800": false, "note": "平均差枚はほぼ一致（+1968 vs +1900）。閾値+1800にはわずかに届かず（G比0.77で回転がやや薄い）"},
+      {"model": "攻殻機動隊", "zeno": "全台系 +1/3台 平均-217", "ours": "rank45/55 score-311 平均差枚-206 G比1.51", "over_1800": false, "note": "平均差枚ほぼ一致（-206 vs -217）。明確に外れ"},
+      {"model": "甲鉄城のカバネリ", "zeno": "全台系 +1/3 平均-340", "ours": "rank49/55 score-459 平均差枚-317 G比1.45", "over_1800": false, "note": "平均差枚ほぼ一致（-317 vs -340）。カバネリ海門(18台)ではなく旧筐体3台を指している点もZenoの表記と一致。明確に外れ"}
+    ],
+    "note": "⭐ Zenoの3機種はいずれも我々の閾値+1800には届かないが、平均差枚の実測値は3機種とも±30枚以内で高精度に一致しており、両アカウントの独立集計の信頼性が相互に裏付けられた。Zenoが『末尾仕掛け』として『末尾9寄せ』のみを挙げ、機種を挙げなかった点は、我々のposition_rule:last_digit9が3claim全てhitした結果と整合する（＝機種横断の末尾効果であって特定機種の効果ではない）。"
+  },
+  "prior_prediction_outcome": {
+    "most_likely_hits": {
+      "predicted": ["化物語"],
+      "outcome": "外れ。rank44/55・score-201.2・平均差枚-227.3。直近30日到達率20.0%・二重名指しという根拠だったが、当日は明確なマイナス。8/18に続き、事前に選んだ『最有力』な単一機種予測が2日連続で外れている。"
+    },
+    "most_likely_misses": {
+      "predicted": ["ハッピージャグラーVIII"],
+      "outcome": "的中（閾値未達で外れ側）。対照群として妥当だった。"
+    },
+    "verdict": "8/18に続き、対抗/本命の単一機種予測は外れ、末尾のposition_ruleは的中する、という同じパターンが繰り返された。2026-08-19-counter-prediction-confidence-is-not-null-rejection-confidence instinct の適用範囲は『対抗予測』だけでなく『二重名指しの本命予測（化物語）』にも及ぶことが分かった。二重の主張一致（台数ルール＋機種名指定）や30日到達率20%という根拠は、当日1機種を選ぶには依然として弱い（候補55機種中1/55の事前確率に対して20%は改善だが、それでも外れ得る）。"
+  }
+}

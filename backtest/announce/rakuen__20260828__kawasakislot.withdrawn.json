@@ -1,0 +1,22 @@
+{
+  "kind": "withdrawal",
+  "announce_id": "rakuen__20260828__kawasakislot",
+  "parent_announce_digest": "c35b60a8fbc7b593",
+  "withdrawn_at": "2026-08-28T00:00:00+09:00",
+  "target_date_as_registered": "20260828",
+  "correct_target_date": "20260827",
+  "hall": "楽園蒲田店",
+  "why_separate_file": "親のjsonはdigest c35b60a8fbc7b593でLEDGER.jsonlに凍結済み。announce.pyに取り下げサブコマンドは存在せず、rakuen__20260827__kawasakislot.correction.json と同じ規約に従い、親を改変・削除せずこのファイルで打ち消す。result キーを持たないため audit-censoring のグロブでは無視される。LEDGER.jsonl には追記しない（_ledger_entries() が announce_id をキーにした dict を作るため、同一キーの追記は親の digest 検証を壊す）。",
+  "error": {
+    "field": "target_date と source.posted_at",
+    "what_was_wrong": "ツイート冒頭『8/27 楽園蒲田』を投稿日と誤読し、本文の『明日はSEVEN'S TV ワロスさん来店』から対象日を20260828・投稿を2026-08-27T20:00と登録した。正しくはヘッダ日付が対象日で、投稿は前日。すなわち target_date=20260827、posted_at=2026-08-26 が正しい。",
+    "evidence": "同一アカウントの既存登録が一貫してヘッダ日付=target_dateである（8/7→20260807 posted 8/6、8/11→20260811 posted 8/10、8/12・8/13・8/15も同型）。加えてユーザーが『今日はセブンスTVかつ7のつく日』と述べ、来店日が8/27（DD27）であることを確認した。",
+    "who_found_it": "ユーザーの指摘（『今日はセブンスTVかつ7のつく日』）を受けてClaudeが既存ファイルの規約を照合し確定。"
+  },
+  "impact": {
+    "duplicate_of": "rakuen__20260827__kawasakislot.json（同一対象日20260827の別ツイート、URL .../2092197684719518178 で先に登録済み・採点済み）",
+    "analysis_affected": "この誤りにより『8/28はDD28で7のつく日ではないため、東京喰種×末尾7レバーの発火条件が欠けている』という予測時の結論が誤りだった。実際の対象日8/27はDD27＝7のつく日であり、発火条件は揃っていた。",
+    "scoring": "採点してはならない。target_date が誤っているため、20260828 の実績で採点すると別日の予告として不正な的中率に算入される。"
+  },
+  "action": "この announce_id は的中率・base_rate の集計から除外すること。8/27の採点は rakuen__20260827__kawasakislot.json のみを正とする。"
+}

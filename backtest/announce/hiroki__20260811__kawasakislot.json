@@ -1,0 +1,207 @@
+{
+  "announce_id": "hiroki__20260811__kawasakislot",
+  "hall": "ヒロキ東口店",
+  "target_date": "20260811",
+  "source": {
+    "account": "kawasakislot",
+    "url": "https://x.com/kawasakislot/status/2086782739852996881",
+    "posted_at": "2026-08-10T20:52:30+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "8/11 ヒロキ蒲田東口→れんじろう実践来店🟦@renjiro_sps、本周年🎂\n\n去年の周年は平均+500近く、メガ7できる前の一昨年も平均+500超えの結果出してて実績ある東口の本周年！\n\n蒲田合同イベ➔翌日スロパチ🟧で2日間連続でマイジャグ全6やってたのも記憶に新しいけど、明日はそれ超えらるのか...🤔\n\n仕掛けとしては\nスロット：6台並び7か所以上\nパチンコ：2BOX+2以上\nは最低限でも、平均+500枚クラスなら他にもフェイク並びや単品も🤔\n\nスロットは\n・マイジャグ再び全やる可能性もある...? 全じゃなくても1か所くらいは6台並びやってくれるでしょうｗ\n・東京喰種とL北斗は過去3回中2回並びあり\n・増台してメインBOXにきたLカバネリ\n・スロパチ🟧では複数個所対象あるジャグ以外のノーマル、バラ、メダル機➔Sカバネリやエウレカ、このすばが3台設置で残っていたり、BT機なども過去使われてる　※詳細は後ほどポストする過去対象台をご参考に！\n・オススメ機種➔乙女/モンキー/東京喰種\n\n7/26もだけど、公式では未発表機種から56確/6確出ててるのでバラなどは特にフェイク単品もあるかと🙆‍♂️\n\nパチンコは素直にオススメ機種含むSAOシリーズ+東京喰種BOXや扱い良いデカヘソ機種中心にチェック！\n\n抽選は777コンパス！\nまずは抽選突破が鬼門ではあるけど、2枠使う価値はある",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "baserate_before_target": {
+    "window_days": 90,
+    "n_days": 83,
+    "candidate_models_per_day": 43.1,
+    "models_over_1800_mean": 2.1,
+    "models_over_1800_median": 2.0,
+    "p_at_least_1": 0.855,
+    "p_at_least_2": 0.506,
+    "p_at_least_3": 0.301,
+    "note": "本周年（anniversary_date=0811とconfig一致）。『6台並び7か所以上は最低限』は台数の連続ブロック主張でありzentaikei_countとは別物。今回はn_models=3を弱い代理claimとして登録する（p=0.301なので90日中3割止まり＝一定の情報量はある）。真に検証したいのは並びブロック数だが、announce.pyに連続台ブロック判定のclaim typeが無い（instinct: 2026-08-11-announce-claim-layers-vs-implementability）。"
+  },
+  "claims": [
+    {
+      "type": "zentaikei_count",
+      "n_models": 3,
+      "note": "「6台並び7か所以上」を弱い代理として最低3機種が閾値超えすると仮定。本来の主張（連続ブロック数）は announce.py で表現不能なため unscored_claims に別記。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "マイジャグラーV",
+      "note": "『マイジャグ再び全やる可能性もある...?』『1か所くらいは6台並びやってくれるでしょう』。投稿者自身がヘッジしている推測だが、蒲田合同イベ翌日に2日連続全6実績があるため名指しとして登録。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "東京喰種",
+      "note": "『オススメ機種➔乙女/モンキー/東京喰種』。過去3回中2回、L北斗との並び実績あり。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "モンキーターンV",
+      "note": "『オススメ機種➔乙女/モンキー/東京喰種』。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "note": "『オススメ機種➔乙女/モンキー/東京喰種』の『乙女』。"
+    }
+  ],
+  "unscored_claims": [
+    {
+      "text": "スロット：6台並び7か所以上（最低限）",
+      "reason": "連続台ブロックの判定claim typeがannounce.pyに無い。台番号の物理連続性判定を実装するまで採点不能。zentaikei_countで弱く代理している。"
+    },
+    {
+      "text": "東京喰種とL北斗は過去3回中2回並びあり",
+      "reason": "今日時点の予告ではなく過去実績の統計。今日の当否判定には使えない参考情報。"
+    },
+    {
+      "text": "増台してメインBOXにきたLカバネリ",
+      "reason": "設置変更の事実情報であり、当否を判定する定量主張ではない。"
+    },
+    {
+      "text": "スロパチ🟧過去対象：Sカバネリ/エウレカ/このすば（3台設置）/BT機",
+      "reason": "『過去使われてる』という過去実績の言及で、今日の確約ではない投稿者の推測材料。"
+    },
+    {
+      "text": "パチンコ：2BOX+2以上、SAOシリーズ+東京喰種BOX、デカヘソ機種",
+      "reason": "本プロジェクトのDBはスロットのみを対象としており、パチンコ機の当否は判定基盤が無い。"
+    }
+  ],
+  "result": {
+    "scored_at_data_max": "20260811",
+    "hall_baseline_mean_diff": 422.8,
+    "hall_n_machines": 279,
+    "new_machine_days": 30,
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 3,
+          "note": "「6台並び7か所以上」を弱い代理として最低3機種が閾値超えすると仮定。本来の主張（連続ブロック数）は announce.py で表現不能なため unscored_claims に別記。"
+        },
+        "observed_n_models": 5,
+        "candidate_models": 40,
+        "models": [
+          {
+            "machine_name": "ソードアート・オンラインII",
+            "score": 8749.3,
+            "n_machines": 3,
+            "mean_diff": 5281.7,
+            "age_days": 64
+          },
+          {
+            "machine_name": "東京喰種",
+            "score": 3698.0,
+            "n_machines": 12,
+            "mean_diff": 3664.0,
+            "age_days": 554
+          },
+          {
+            "machine_name": "甲鉄城のカバネリ",
+            "score": 2719.8,
+            "n_machines": 3,
+            "mean_diff": 2764.0,
+            "age_days": 587
+          },
+          {
+            "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+            "score": 2479.6,
+            "n_machines": 12,
+            "mean_diff": 2554.0,
+            "age_days": 162
+          },
+          {
+            "machine_name": "攻殻機動隊",
+            "score": 2336.0,
+            "n_machines": 3,
+            "mean_diff": 2348.3,
+            "age_days": 190
+          }
+        ],
+        "n_new_machines_over": 0,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "マイジャグラーV",
+          "note": "『マイジャグ再び全やる可能性もある...?』『1か所くらいは6台並びやってくれるでしょう』。投稿者自身がヘッジしている推測だが、蒲田合同イベ翌日に2日連続全6実績があるため名指しとして登録。"
+        },
+        "score": 1744.1,
+        "mean_diff": 1191.0,
+        "gratio": 1.464,
+        "n_machines": 26,
+        "rank": 6,
+        "candidate_models": 40,
+        "age_days": 587,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "東京喰種",
+          "note": "『オススメ機種➔乙女/モンキー/東京喰種』。過去3回中2回、L北斗との並び実績あり。"
+        },
+        "score": 3698.0,
+        "mean_diff": 3664.0,
+        "gratio": 1.009,
+        "n_machines": 12,
+        "rank": 2,
+        "candidate_models": 40,
+        "age_days": 554,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "モンキーターンV",
+          "note": "『オススメ機種➔乙女/モンキー/東京喰種』。"
+        },
+        "score": 584.2,
+        "mean_diff": 673.7,
+        "gratio": 0.867,
+        "n_machines": 12,
+        "rank": 13,
+        "candidate_models": 40,
+        "age_days": 587,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+          "note": "『オススメ機種➔乙女/モンキー/東京喰種』の『乙女』。"
+        },
+        "score": -407.9,
+        "mean_diff": -469.9,
+        "gratio": 0.868,
+        "n_machines": 10,
+        "rank": 27,
+        "candidate_models": 40,
+        "age_days": 64,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
+  "announce_digest": "07b4f440d8f59fef"
+}

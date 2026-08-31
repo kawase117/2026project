@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Enhance machine_list_for_research.csv from existing notes.
+"""Enhance the canonical machine_master.csv from existing notes.
 
 Phase 0 of the revised workflow:
 - extract structured values from notes
@@ -46,6 +46,12 @@ CSV_COLUMNS = [
     "rb_setting5",
     "rb_setting6",
     "notes",
+    "source_url",
+    "source_status",
+    "source_confidence",
+    "source_query",
+    "source_candidate_count",
+    "source_reason",
 ]
 
 RTP_LABEL_PATTERN = r"(?:機械割|出玉率|RTP|完全攻略時出玉率)"
@@ -255,17 +261,17 @@ def enhance_csv(input_path: Path, output_path: Path, diff_path: Path) -> dict[st
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Enhance machine_list_for_research.csv from notes")
+    parser = argparse.ArgumentParser(description="Enhance machine_master.csv from notes")
     parser.add_argument(
         "--input",
         type=Path,
-        default=MACHINE_MASTER_RESEARCH_DIR / "machine_list_for_research.csv",
+        default=MACHINE_MASTER_RESEARCH_DIR / "machine_master.csv",
         help="Input CSV path",
     )
     parser.add_argument(
         "--output",
         type=Path,
-        default=MACHINE_MASTER_RESEARCH_DIR / "machine_master_research_enhanced.csv",
+        default=MACHINE_MASTER_RESEARCH_DIR / "machine_master.csv",
         help="Output CSV path",
     )
     parser.add_argument(

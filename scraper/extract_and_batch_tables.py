@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Optional
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-CSV_PATH = REPO_ROOT / "document" / "machine_master_research" / "machine_list_for_research.csv"
+CSV_PATH = REPO_ROOT / "document" / "machine_master_research" / "machine_master.csv"
 BATCH_OUTPUT_DIR = REPO_ROOT / "scratch" / "1geki_batches"
 BATCH_SIZE = 10
 
@@ -82,7 +82,10 @@ def curl_1geki_page(machine_name: str) -> Optional[str]:
     try:
         result = subprocess.run(
             ['curl', '-s', '-A', 'Mozilla/5.0', f'https://1geki.jp/slot/{slug}/'],
-            capture_output=True, text=True, timeout=10, encoding='utf-8'
+            capture_output=True,
+            text=True,
+            timeout=10,
+            encoding='utf-8',
         )
         if result.returncode == 0 and result.stdout:
             return result.stdout
@@ -113,13 +116,13 @@ def main():
 
     for item_idx, (row_idx, row) in enumerate(missing):
         machine_name = row[0].strip()
-        print(f"[{item_idx+1}/{len(missing)}] {machine_name}...", end=" ")
+        print(f"[{item_idx + 1}/{len(missing)}] {machine_name}...", end=" ")
 
         html = curl_1geki_page(machine_name)
         if html:
             tables = extract_tables(html)
             if tables:
-                batch_content.append(f"\n\n{'='*60}\n【{machine_name}】\n{'='*60}\n")
+                batch_content.append(f"\n\n{'=' * 60}\n【{machine_name}】\n{'=' * 60}\n")
                 batch_content.append('\n'.join(tables))
                 print("OK")
             else:
