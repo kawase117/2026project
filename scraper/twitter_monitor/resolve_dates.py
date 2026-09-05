@@ -31,10 +31,15 @@ ABSOLUTE_TOLERANCE = 200
 RELATIVE_TOLERANCE = 0.05
 # Posts made before this hour report the previous business day. All 36 images
 # whose date could be verified against hall data were posted between 01:00 and
-# 07:59 and all referred to the previous day, so the rule is applied only inside
-# that window. Later posts -- notably the 23:00 cluster, which plausibly reports
-# the day that just ended -- have never been verified and are left undated.
+# 07:59 and all referred to the previous day, so this half of the rule rests on
+# measurement.
 RULE_CUTOFF_HOUR = 8
+# Posts from this hour onward report the day that is ending: halls close around
+# 22:45, so a 23:00 post is the night's own result. This half rests on the
+# account owner's domain knowledge, not on matched figures -- none of the 21
+# such images carried the stated totals needed to verify them -- so it is
+# recorded under its own date_source value and can be revisited separately.
+SAME_DAY_FROM_HOUR = 23
 TOTAL_RE = re.compile(r"総差([+-]?[\d,]+)枚")
 MEAN_RE = re.compile(r"平均([+-]?[\d,]+)枚")
 
@@ -146,7 +151,7 @@ def main() -> int:
 
     halls = {}
     resolved = skipped = no_note = 0
-    by_rule = out_of_window = 0
+    by_rule = same_day = out_of_window = 0
     offsets = defaultdict(int)
     for image_path, info in images.items():
         hall, posted = info["hall"], info["posted"]
@@ -171,11 +176,14 @@ def main() -> int:
             resolved += 1
             offsets[offset] += 1
         elif info["hour"] is not None and info["hour"] < RULE_CUTOFF_HOUR:
-            # Inside the verified window only: never date the 23:00 posts, whose
-            # offset no measurement has pinned down yet.
             offset, error, source = 1, None, "rule"
             by_rule += 1
+        elif info["hour"] is not None and info["hour"] >= SAME_DAY_FROM_HOUR:
+            offset, error, source = 0, None, "rule_sameday"
+            same_day += 1
         else:
+            # Daytime posts sit between the two rules: neither the night's
+            # result nor the morning report, so they stay undated.
             out_of_window += 1
             continue
 
@@ -196,8 +204,9 @@ def main() -> int:
 
     print("ホール特定済み画像 %d 枚" % len(images))
     print("  照合で確定       %d 枚 (記載数値がホールDBと一致)" % resolved)
-    print("  規則で補完       %d 枚 (0-%d時の投稿=前日、実証済みの範囲)" % (by_rule, RULE_CUTOFF_HOUR - 1))
-    print("  未確定           %d 枚 (%d時以降の投稿。規則が未実証)" % (out_of_window, RULE_CUTOFF_HOUR))
+    print("  規則で補完(前日) %d 枚 (0-%d時の投稿。実証済み)" % (by_rule, RULE_CUTOFF_HOUR - 1))
+    print("  規則で補完(当日) %d 枚 (%d時以降の投稿。閉店直後の報告、未実証)" % (same_day, SAME_DAY_FROM_HOUR))
+    print("  未確定           %d 枚 (日中の投稿。どちらの規則にも当てはまらない)" % out_of_window)
     print("  ホール情報なし   %d 枚" % skipped)
     print("  (うち数値の記載なし %d 枚)" % no_note)
     print("\n=== 照合で確定した日数ずらし ===")
