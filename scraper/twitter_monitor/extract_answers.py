@@ -248,6 +248,10 @@ def select_pending_images(
         SELECT ti.tweet_id, ti.image_path, st.handle, st.posted_at_jst
         FROM tweet_images AS ti
         JOIN seen_tweets AS st ON st.tweet_id = ti.tweet_id
+        -- Candidates only: prefilter.py rejects 43% of images as photographic,
+        -- and Codex quota is scarce enough that spending it on those is waste.
+        JOIN image_features AS f
+          ON f.image_path = ti.image_path AND f.is_candidate = 1
         WHERE {' AND '.join(conditions)}
         ORDER BY {priority_order} st.posted_at_jst {direction}, ti.id {direction}
     """

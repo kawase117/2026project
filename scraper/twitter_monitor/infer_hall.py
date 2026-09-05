@@ -39,6 +39,21 @@ def normalize_number(value: str) -> str:
     return text or "0"
 
 
+def is_usable(number: str, name: str) -> bool:
+    """Reject rows where the model mistook the table layout for machine data.
+
+    A local 3B run on 2026-09-03 misread column boundaries and stored bonus
+    rates ("1/207") and coin deltas ("+1,915") as machine numbers while putting
+    the machine number into machine_name: 14.8% of its numbers were non-numeric
+    and 78.5% of its names were bare digits, against 0-1.1% and 0% for Codex
+    runs. Filtering at read time keeps such rows out of every downstream count
+    without depending on them having been deleted first.
+    """
+    if not re.fullmatch(r"\d{1,4}", str(number).strip()):
+        return False
+    return not re.fullmatch(r"\d{1,4}", str(name).strip())
+
+
 def load_hall_machines() -> dict[str, dict[str, set[str]]]:
     """Return {hall_name: {machine_number: {normalized machine names}}}."""
     halls: dict[str, dict[str, set[str]]] = {}
@@ -106,11 +121,17 @@ def main() -> int:
         connection.commit()
 
     images: dict[str, dict] = defaultdict(lambda: {"handle": None, "pairs": []})
+    rejected = 0
     for image_path, handle, number, name in connection.execute(
         "SELECT image_path, handle, machine_number, machine_name FROM extraction_entries"
     ):
+        if not is_usable(number, name):
+            rejected += 1
+            continue
         images[image_path]["handle"] = handle
         images[image_path]["pairs"].append((normalize_number(number), normalize_name(name)))
+    if rejected:
+        print(f"構造誤認として除外した行: {rejected}件")
 
     resolved: dict[str, int] = defaultdict(int)
     per_handle: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
