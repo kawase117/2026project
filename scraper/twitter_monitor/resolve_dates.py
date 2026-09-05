@@ -29,6 +29,12 @@ HALL_DB_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.pa
 MAX_OFFSET = 3
 ABSOLUTE_TOLERANCE = 200
 RELATIVE_TOLERANCE = 0.05
+# Posts made before this hour report the previous business day. All 36 images
+# whose date could be verified against hall data were posted between 01:00 and
+# 07:59 and all referred to the previous day, so the rule is applied only inside
+# that window. Later posts -- notably the 23:00 cluster, which plausibly reports
+# the day that just ended -- have never been verified and are left undated.
+RULE_CUTOFF_HOUR = 8
 TOTAL_RE = re.compile(r"総差([+-]?[\d,]+)枚")
 MEAN_RE = re.compile(r"平均([+-]?[\d,]+)枚")
 
@@ -66,7 +72,12 @@ def load_hall(hall_name):
 
 def add_columns(connection):
     existing = {row[1] for row in connection.execute("PRAGMA table_info(extraction_entries)")}
-    for column, kind in (("business_date", "TEXT"), ("date_offset", "INTEGER"), ("date_error", "REAL")):
+    for column, kind in (
+        ("business_date", "TEXT"),
+        ("date_offset", "INTEGER"),
+        ("date_error", "REAL"),
+        ("date_source", "TEXT"),
+    ):
         if column not in existing:
             connection.execute("ALTER TABLE extraction_entries ADD COLUMN %s %s" % (column, kind))
     connection.commit()
@@ -125,15 +136,17 @@ def main() -> int:
         """
     ).fetchall()
 
-    images = defaultdict(lambda: {"hall": None, "posted": None, "groups": defaultdict(set)})
+    images = defaultdict(lambda: {"hall": None, "posted": None, "hour": None, "groups": defaultdict(set)})
     for image_path, hall, posted, name, number, note in rows:
         info = images[image_path]
         info["hall"] = hall
         info["posted"] = posted[:10] if posted else None
+        info["hour"] = int(posted[11:13]) if posted and len(posted) >= 13 else None
         info["groups"][(name, note)].add(normalize_number(number))
 
     halls = {}
     resolved = skipped = no_note = 0
+    by_rule = out_of_window = 0
     offsets = defaultdict(int)
     for image_path, info in images.items():
         hall, posted = info["hall"], info["posted"]
@@ -143,27 +156,37 @@ def main() -> int:
         if hall not in halls:
             halls[hall] = load_hall(hall)
         table = halls[hall]
-        if not table:
-            skipped += 1
+        best = None
+        if table:
+            groups = [(numbers, note) for (name, note), numbers in info["groups"].items() if note]
+            if any(stated_total(note, len(numbers)) is not None for numbers, note in groups):
+                best = resolve_image(groups, table, date.fromisoformat(posted))
+                if best is not None and best[1] > args.max_error:
+                    best = None
+            else:
+                no_note += 1
+
+        if best is not None:
+            offset, error, source = best[0], best[1], "matched"
+            resolved += 1
+            offsets[offset] += 1
+        elif info["hour"] is not None and info["hour"] < RULE_CUTOFF_HOUR:
+            # Inside the verified window only: never date the 23:00 posts, whose
+            # offset no measurement has pinned down yet.
+            offset, error, source = 1, None, "rule"
+            by_rule += 1
+        else:
+            out_of_window += 1
             continue
-        groups = [(numbers, note) for (name, note), numbers in info["groups"].items() if note]
-        if not any(stated_total(note, len(numbers)) is not None for numbers, note in groups):
-            no_note += 1
-            continue
-        best = resolve_image(groups, table, date.fromisoformat(posted))
-        if best is None or best[1] > args.max_error:
-            skipped += 1
-            continue
-        offset, error = best
+
         business_date = (date.fromisoformat(posted) - timedelta(days=offset)).isoformat()
-        offsets[offset] += 1
-        resolved += 1
         if args.apply:
             # One image is one business day, so the resolved date covers every
             # row of that image, including groups whose note stated no figures.
             connection.execute(
-                "UPDATE extraction_entries SET business_date = ?, date_offset = ?, date_error = ? WHERE image_path = ?",
-                (business_date, offset, error, image_path),
+                "UPDATE extraction_entries SET business_date = ?, date_offset = ?, "
+                "date_error = ?, date_source = ? WHERE image_path = ?",
+                (business_date, offset, error, source, image_path),
             )
     if args.apply:
         connection.commit()
@@ -172,10 +195,12 @@ def main() -> int:
     connection.close()
 
     print("ホール特定済み画像 %d 枚" % len(images))
-    print("  営業日を確定   %d 枚" % resolved)
-    print("  数値の記載なし %d 枚" % no_note)
-    print("  照合できず     %d 枚" % skipped)
-    print("\n=== 確定した日数ずらし ===")
+    print("  照合で確定       %d 枚 (記載数値がホールDBと一致)" % resolved)
+    print("  規則で補完       %d 枚 (0-%d時の投稿=前日、実証済みの範囲)" % (by_rule, RULE_CUTOFF_HOUR - 1))
+    print("  未確定           %d 枚 (%d時以降の投稿。規則が未実証)" % (out_of_window, RULE_CUTOFF_HOUR))
+    print("  ホール情報なし   %d 枚" % skipped)
+    print("  (うち数値の記載なし %d 枚)" % no_note)
+    print("\n=== 照合で確定した日数ずらし ===")
     for offset in sorted(offsets):
         print("  %d日前: %d枚" % (offset, offsets[offset]))
     if args.apply:
