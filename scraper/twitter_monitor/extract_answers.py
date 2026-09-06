@@ -213,6 +213,7 @@ def select_pending_images(
     limit: int | None,
     newest_first: bool,
     redo_failed: bool,
+    text_keywords: list[str] | None = None,
 ) -> list[tuple[str, str, str, str]]:
     """Return tweet/image/handle/timestamp rows in the requested processing order."""
     selected_handles = set(handles)
@@ -235,6 +236,15 @@ def select_pending_images(
         placeholders = ", ".join("?" for _ in selected_handles)
         conditions.append(f"st.handle IN ({placeholders})")
         parameters.extend(sorted(selected_handles))
+
+    if text_keywords:
+        # Chain-wide accounts post one store per day, so most of their images
+        # are irrelevant: only 280 of sloneko222's 5,289 pending images mention
+        # a target hall. Taking the newest N instead of filtering meant none of
+        # the 231 target-hall images were ever reached, and the account looked
+        # like it covered 0% of our halls when it simply had not been sampled.
+        conditions.append("(" + " OR ".join("st.tweet_text LIKE ?" for _ in text_keywords) + ")")
+        parameters.extend("%%%s%%" % keyword for keyword in text_keywords)
 
     priority_handles = sorted(handle for handle, details in ACCOUNTS.items() if details["hall"] in priority_halls)
     if priority_handles:
@@ -351,6 +361,15 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Retry images that have failed records but no success record",
     )
+    parser.add_argument(
+        "--text-contains",
+        help=(
+            "Comma-separated keywords; only images whose tweet text mentions one "
+            "are processed. Chain-wide accounts post one store per day, so this "
+            "is what keeps quota on the halls we care about "
+            "(sloneko222: 280 relevant images out of 5,289 pending)"
+        ),
+    )
     return parser
 
 
@@ -384,6 +403,7 @@ def main(argv: list[str] | None = None) -> int:
             limit=args.limit,
             newest_first=args.newest_first,
             redo_failed=args.redo_failed,
+            text_keywords=parse_csv_option(args.text_contains),
         )
         try:
             for tweet_id, image_path, handle, posted_at_jst in rows:
