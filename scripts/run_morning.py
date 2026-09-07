@@ -136,7 +136,10 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--skip-anaslo", action="store_true", help="ana-slo の取得と取り込みを行わない")
     parser.add_argument("--skip-twitter", action="store_true", help="X監視パイプラインを回さない")
-    parser.add_argument("--days", type=int, default=1, help="何日前まで遡って取得するか (既定 1 = 前日のみ)")
+    # 取得済みの日はスクレイパー側でスキップされるので、窓を広く取っても
+    # 実際に開くのは欠けている日だけ。前日1日だけにすると、途中にできた穴
+    # （403で落ちた日、ana-slo が遅れて掲載した日）が永久に埋まらない。
+    parser.add_argument("--days", type=int, default=10, help="何日前まで遡って欠落を探すか (既定 10)")
     args = parser.parse_args()
 
     today = datetime.now(JST).date()

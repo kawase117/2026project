@@ -29,6 +29,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Cloudflareチャレンジが出た場合、画面上での手動解決を待つ",
     )
     parser.add_argument("--config", default="hall_config.json", help="設定ファイル名")
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="取得済みの日も取り直す（既定は JSON がある日を開かない）",
+    )
     return parser
 
 
@@ -40,6 +45,7 @@ async def scrape_one_hall(
     end_date: str | None,
     db_path: str,
     manual_challenge: bool = False,
+    force: bool = False,
 ) -> tuple[str, int, int]:
     list_url = hall.get("scraper_url") or hall.get("url") or base.DEFAULT_LIST_URL
     page = await browser.get(list_url)
@@ -69,6 +75,7 @@ async def scrape_one_hall(
 
     success_dates: list[str] = []
     failed_dates: list[str] = []
+    skipped_dates: list[str] = []
     consecutive_failures = 0
     max_consecutive_failures = 3
 
@@ -80,6 +87,15 @@ async def scrape_one_hall(
 
     for i, date_str in enumerate(date_list, 1):
         try:
+            # 取得済みの日は開かない。ana-slo は連続アクセスで 403 を返すので、
+            # 広い範囲を指定しても実際に取りに行くのは欠けている日だけにする。
+            # これが無いと、途中の穴を埋めるために全期間を再取得することになり
+            # 403 を踏む（2026-09-07 に 8日×10ホール=80ページで遮断された）。
+            existing = hall_save_dir / f"{date_str}_{hall_name}_data.json"
+            if not force and existing.exists():
+                skipped_dates.append(date_str)
+                continue
+
             if date_str not in date_links:
                 print(f"   [WARN] {date_str}: 一覧ページに日付リンクがありません")
                 failed_dates.append(date_str)
@@ -126,6 +142,8 @@ async def scrape_one_hall(
             except Exception:
                 pass
 
+    if skipped_dates:
+        print(f"   [SKIP] 取得済み {len(skipped_dates)}日: {skipped_dates[0]}〜{skipped_dates[-1]}")
     base.print_summary(success_dates, failed_dates, hall_name)
     return hall_name, len(success_dates), len(failed_dates)
 
@@ -158,6 +176,7 @@ async def main_async(argv: list[str] | None = None) -> int:
                     end_date=args.end_date,
                     db_path=args.db_path,
                     manual_challenge=args.manual_challenge,
+                    force=args.force,
                 )
             except Exception as error:
                 print(f"\n[ABORT] {label}: {error}")
