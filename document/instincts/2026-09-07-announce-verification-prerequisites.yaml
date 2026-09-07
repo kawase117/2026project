@@ -1,0 +1,76 @@
+---
+id: 2026-09-07-announce-verification-prerequisites
+trigger: "ホール予告の的中率を検証しようとしたとき。backtest/announce.py の register / score を回す前。画像抽出の完了を待って予告分析を始めようとしたとき。答え合わせの計画を立てるとき"
+confidence: 0.9
+domain: prediction-evaluation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+scope: methodology
+stability: structural
+
+# 予告の中身はテキストにある。採点の律速は画像抽出ではなく「ホールDBの鮮度」と「登録の順序」
+
+## Core claim
+予告検証を始める前に確認すべきは画像抽出の進捗ではなく、
+(1) 予告本文が完全に取れているか (2) 対象日のホールDBが存在するか
+(3) 登録と取込の順序 の3点である。この3つを外すと、抽出を何枚進めても
+採点は1件もできない。
+
+## Evidence
+- data scope: backtest/announce/、db/*.db、scraper/twitter_monitor/state.db
+- 2026-09-07 時点の実測
+
+1. **予告の主張はテキストにある**
+   kawasakislot の楽園蒲田予告は、仕掛けの列挙（末尾・並び・全⑤⑥・
+   1/2・1/3・ジャグ配分）を**すべて本文に書いている**。画像は
+   フロアマップと結果表であって、予告の主張そのものではない。
+   → 予告検証は Codex の抽出クォータに律速されない。
+   ただし本文は折り畳みで切れているので
+   `2026-09-07-social-collector-silent-truncation` の取り直しが前提。
+
+2. **ホールDBが9日分古かった**
+   `db/*.db` の `MAX(date)` は全ホール **20260829** で止まっており、
+   ana-slo の取込が9日分未実行だった。`announce score` は
+   `20260830 のデータが DB にまだ無い` で停止する。
+   台帳に登録済みの23件のうち、8/30分すら採点できない状態だった。
+
+3. **台帳が8/30で途切れていた**
+   `backtest/announce/LEDGER.jsonl` の最終登録は 20260830。
+   8/31〜9/7 の予告は未登録。スクレイパー構築中に日次登録が止まり、
+   止まったこと自体に気づく仕組みが無かった。
+
+## Interpretation
+`register` は `target_date > db_max` を要求する（事後登録の防止）。
+これは**取込と登録が順序で競合する**ことを意味する。
+
+- 正: 前日までを取り込む → 当日分を登録する → 翌日以降に採点する
+- 誤: 当日分まで取り込んでから登録しようとする → 拒否されて永久に登録できない
+
+したがって取込を溜めると、溜めた日数ぶんの予告が登録不能になる。
+9日分の遅れは、9日ぶんの予告を失うことと同義だった。
+
+事後登録の可否について: X のタイムスタンプは対象日より前であることの
+**外部証拠**にはなる。しかし守るべき性質は「予告が事前だったか」ではなく
+「**閾値を結果を見た後に選べないこと**」である。過去分を登録するなら、
+閾値は各対象日より前のデータだけから `baserate --before` で凍結し、
+事後登録である旨を JSON に明記すること。この区別を曖昧にしない。
+
+## Action
+1. 答え合わせを計画する前に `announce dbmax <hall>` で鮮度を確認する
+2. ana-slo 取込は**日次で回す**。溜めると予告の登録機会が失われる
+3. 予告の登録は当日中。`feedback-announce-register-same-day` の通り
+4. 抽出クォータは予告検証ではなく**結果報告の画像**（台番号ラベル）に使う。
+   役割が違う: 予告＝テキスト、結果ラベル＝画像
+5. 過去分を登録する場合は `late_registration` を立て、閾値の凍結窓を
+   `baserate_before_target` に明記する
+
+## Relation
+- related:
+  - feedback-announce-register-same-day
+  - 2026-08-30-frozen-forecast-scope-matrix-answercheck
+  - 2026-09-07-social-collector-silent-truncation
+  - feedback-named-model-conditional-baserate
+
+## Status
+- status: active

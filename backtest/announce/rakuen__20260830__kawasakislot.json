@@ -493,6 +493,498 @@
     },
     "note": "分析者予測を登録時点で凍結する。核心は『名指しの富化がゼロ』という点。前回8/29(1.7倍富化)からの明確な劣化であり、原因は選定基準が実績から設置台数へ移ったこと。答え合わせでは (a)並びブロックの目視検出、(b)名指し外の好調機種の全体スキャン、(c)『5機種に1台はてっぺん』を単体成立で的中と数えない、の3点を必ず行う。"
   },
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20260906",
+    "hall_baseline_mean_diff": 175.7,
+    "hall_n_machines": 587,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 6,
+      "machines_hi": [],
+      "machines_lo": [
+        "からくりサーカス2",
+        "とある魔術の禁書目録2",
+        "ソードアート・オンラインII",
+        "真打 吉宗",
+        "邪神ちゃんドロップキック"
+      ],
+      "bounds": [
+        -5095,
+        15477
+      ]
+    },
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 2,
+          "note": "予告(3)『3台以上機種に全台上2×2機種以上』。日曜条件付き(90日窓 n=12)で p>=2=0.667・p>=3=0.167。無条件90日は p>=2=0.759。日曜はほぼ成立する弱い主張だが、3機種以上へ伸びる確率は平日(0.375)の半分以下。"
+        },
+        "observed_n_models": 8,
+        "candidate_models": 54,
+        "models": [
+          {
+            "machine_name": "かぐや様は告らせたい",
+            "score": 10051.8,
+            "n_machines": 4,
+            "mean_diff": 7226.5,
+            "age_days": 606
+          },
+          {
+            "machine_name": "化物語",
+            "score": 3777.3,
+            "n_machines": 9,
+            "mean_diff": 2624.8,
+            "age_days": 265
+          },
+          {
+            "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+            "score": 3358.2,
+            "n_machines": 18,
+            "mean_diff": 2140.6,
+            "age_days": 181
+          },
+          {
+            "machine_name": "バーサスリヴァイズ",
+            "score": 2386.1,
+            "n_machines": 4,
+            "mean_diff": 2071.5,
+            "age_days": 606
+          },
+          {
+            "machine_name": "とんでもスキルで異世界放浪メシ",
+            "score": 2203.5,
+            "n_machines": 4,
+            "mean_diff": 1809.8,
+            "age_days": 26
+          },
+          {
+            "machine_name": "攻殻機動隊",
+            "score": 2153.9,
+            "n_machines": 3,
+            "mean_diff": 1476.7,
+            "age_days": 209
+          },
+          {
+            "machine_name": "スマスロ ハナビ",
+            "score": 1982.0,
+            "n_machines": 7,
+            "mean_diff": 1578.7,
+            "age_days": 209
+          },
+          {
+            "machine_name": "革命機ヴァルヴレイヴ2",
+            "score": 1805.2,
+            "n_machines": 6,
+            "mean_diff": 1595.7,
+            "age_days": 299
+          }
+        ],
+        "n_new_machines_over": 1,
+        "hit": true
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "東京喰種",
+          "ratio": 31,
+          "source_claim": "(1)5機種に必ず1台はてっぺんあり",
+          "note": "ratio=31(=設置台数)で『機種の最高台がホール上位1/31分位の水準を超えたか』を判定する。90日窓の代理指標(機種内最高台>=+1800)の成立率=0.955。単体ではほぼ自動成立し、5機種同時成立は81日中1.2%。30日超え率=0.033(ホール0.111)・30日mean_score=222.9・rank=49/54。"
+        },
+        "n_machines": 31,
+        "ratio": 31,
+        "top_k": 1,
+        "model_top_k_mean_diff": 9619.0,
+        "hall_top_quantile_mean_diff": 8264.9,
+        "excess_vs_hall_quantile": 1354.1,
+        "model_mean_diff": 770.0,
+        "n_over_hall_quantile": 4,
+        "hit": true,
+        "model_named_score": 879.3,
+        "model_named_rank": 13
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "モンキーターンV",
+          "ratio": 12,
+          "source_claim": "(1)5機種に必ず1台はてっぺんあり",
+          "note": "ratio=12(=設置台数)で『機種の最高台がホール上位1/12分位の水準を超えたか』を判定する。90日窓の代理指標(機種内最高台>=+1800)の成立率=0.693。単体ではほぼ自動成立し、5機種同時成立は81日中1.2%。30日超え率=0.133(ホール0.111)・30日mean_score=662.6・rank=25/54。"
+        },
+        "n_machines": 12,
+        "ratio": 12,
+        "top_k": 1,
+        "model_top_k_mean_diff": 5858.0,
+        "hall_top_quantile_mean_diff": 6557.9,
+        "excess_vs_hall_quantile": -699.9,
+        "model_mean_diff": -360.7,
+        "n_over_hall_quantile": 1,
+        "hit": false,
+        "model_named_score": -453.8,
+        "model_named_rank": 39
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+          "ratio": 22,
+          "source_claim": "(1)5機種に必ず1台はてっぺんあり",
+          "note": "ratio=22(=設置台数)で『機種の最高台がホール上位1/22分位の水準を超えたか』を判定する。90日窓の代理指標(機種内最高台>=+1800)の成立率=0.988。単体ではほぼ自動成立し、5機種同時成立は81日中1.2%。30日超え率=0.0(ホール0.111)・30日mean_score=173.3・rank=7/54。"
+        },
+        "n_machines": 22,
+        "ratio": 22,
+        "top_k": 1,
+        "model_top_k_mean_diff": 9000.0,
+        "hall_top_quantile_mean_diff": 7705.6,
+        "excess_vs_hall_quantile": 1294.4,
+        "model_mean_diff": 364.0,
+        "n_over_hall_quantile": 3,
+        "hit": true,
+        "model_named_score": 424.2,
+        "model_named_rank": 20
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+          "ratio": 18,
+          "source_claim": "(1)5機種に必ず1台はてっぺんあり",
+          "note": "ratio=18(=設置台数)で『機種の最高台がホール上位1/18分位の水準を超えたか』を判定する。90日窓の代理指標(機種内最高台>=+1800)の成立率=0.92。単体ではほぼ自動成立し、5機種同時成立は81日中1.2%。30日超え率=0.167(ホール0.111)・30日mean_score=732.4・rank=20/54。"
+        },
+        "n_machines": 18,
+        "ratio": 18,
+        "top_k": 1,
+        "model_top_k_mean_diff": 11858.0,
+        "hall_top_quantile_mean_diff": 7198.3,
+        "excess_vs_hall_quantile": 4659.7,
+        "model_mean_diff": 2140.6,
+        "n_over_hall_quantile": 3,
+        "hit": true,
+        "model_named_score": 3358.2,
+        "model_named_rank": 3
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "ミリオンゴッド‐神々の軌跡‐",
+          "ratio": 16,
+          "source_claim": "(1)5機種に必ず1台はてっぺんあり",
+          "note": "ratio=16(=設置台数)で『機種の最高台がホール上位1/16分位の水準を超えたか』を判定する。90日窓の代理指標(機種内最高台>=+1800)の成立率=0.875。単体ではほぼ自動成立し、5機種同時成立は81日中1.2%。30日超え率=0.0(ホール0.111)・30日mean_score=-440.2・rank=51/54。"
+        },
+        "n_machines": 16,
+        "ratio": 16,
+        "top_k": 1,
+        "model_top_k_mean_diff": 10096.0,
+        "hall_top_quantile_mean_diff": 6948.8,
+        "excess_vs_hall_quantile": 3147.2,
+        "model_mean_diff": 3.4,
+        "n_over_hall_quantile": 3,
+        "hit": true,
+        "model_named_score": 4.0,
+        "model_named_rank": 29
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "うみねこのなく頃に2",
+          "ratio": 4,
+          "source_claim": "(2)4台以上機種に必ず1台は上2つ／『堅くいくなら4台設置機種の各1以上狙い』",
+          "note": "設置4台。30日超え率=0.033・mean_score=53.9・rank=48/54。予告が名指しした12機種は全て8/29時点で実測4台で台数照合は完全一致。ただし選定基準が『設置台数=4』であり実績ベースではないため、12機種の30日超え率平均はホール平均を下回る。"
+        },
+        "n_machines": 4,
+        "ratio": 4,
+        "top_k": 1,
+        "model_top_k_mean_diff": 619.0,
+        "hall_top_quantile_mean_diff": 3766.8,
+        "excess_vs_hall_quantile": -3147.8,
+        "model_mean_diff": 178.8,
+        "n_over_hall_quantile": 0,
+        "hit": false,
+        "model_named_score": 203.3,
+        "model_named_rank": 26
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "ケロット5",
+          "ratio": 4,
+          "source_claim": "(2)4台以上機種に必ず1台は上2つ／『堅くいくなら4台設置機種の各1以上狙い』",
+          "note": "設置4台。30日超え率=0.0・mean_score=11.8・rank=30/54。予告が名指しした12機種は全て8/29時点で実測4台で台数照合は完全一致。ただし選定基準が『設置台数=4』であり実績ベースではないため、12機種の30日超え率平均はホール平均を下回る。"
+        },
+        "n_machines": 4,
+        "ratio": 4,
+        "top_k": 1,
+        "model_top_k_mean_diff": 572.0,
+        "hall_top_quantile_mean_diff": 3766.8,
+        "excess_vs_hall_quantile": -3194.8,
+        "model_mean_diff": -59.0,
+        "n_over_hall_quantile": 0,
+        "hit": false,
+        "model_named_score": -61.4,
+        "model_named_rank": 30
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "スーパーリオエース2",
+          "ratio": 4,
+          "source_claim": "(2)4台以上機種に必ず1台は上2つ／『堅くいくなら4台設置機種の各1以上狙い』",
+          "note": "設置4台。30日超え率=0.167・mean_score=411.6・rank=5/54。予告が名指しした12機種は全て8/29時点で実測4台で台数照合は完全一致。ただし選定基準が『設置台数=4』であり実績ベースではないため、12機種の30日超え率平均はホール平均を下回る。"
+        },
+        "n_machines": 4,
+        "ratio": 4,
+        "top_k": 1,
+        "model_top_k_mean_diff": 5143.0,
+        "hall_top_quantile_mean_diff": 3757.5,
+        "excess_vs_hall_quantile": 1385.5,
+        "model_mean_diff": -654.8,
+        "n_over_hall_quantile": 1,
+        "hit": true,
+        "model_named_score": -722.4,
+        "model_named_rank": 41
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "とんでもスキルで異世界放浪メシ",
+          "ratio": 4,
+          "source_claim": "(2)4台以上機種に必ず1台は上2つ／『堅くいくなら4台設置機種の各1以上狙い』",
+          "note": "設置4台。30日超え率=0.115・mean_score=99.2・rank=6/54。予告が名指しした12機種は全て8/29時点で実測4台で台数照合は完全一致。ただし選定基準が『設置台数=4』であり実績ベースではないため、12機種の30日超え率平均はホール平均を下回る。"
+        },
+        "n_machines": 4,
+        "ratio": 4,
+        "top_k": 1,
+        "model_top_k_mean_diff": 6143.0,
+        "hall_top_quantile_mean_diff": 3744.8,
+        "excess_vs_hall_quantile": 2398.2,
+        "model_mean_diff": 1809.8,
+        "n_over_hall_quantile": 2,
+        "hit": true,
+        "model_named_score": 2203.5,
+        "model_named_rank": 5
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "バンドリ！",
+          "ratio": 4,
+          "source_claim": "(2)4台以上機種に必ず1台は上2つ／『堅くいくなら4台設置機種の各1以上狙い』",
+          "note": "設置4台。30日超え率=0.269・mean_score=717.2・rank=17/54。予告が名指しした12機種は全て8/29時点で実測4台で台数照合は完全一致。ただし選定基準が『設置台数=4』であり実績ベースではないため、12機種の30日超え率平均はホール平均を下回る。"
+        },
+        "n_machines": 4,
+        "ratio": 4,
+        "top_k": 1,
+        "model_top_k_mean_diff": 286.0,
+        "hall_top_quantile_mean_diff": 3766.8,
+        "excess_vs_hall_quantile": -3480.8,
+        "model_mean_diff": -130.5,
+        "n_over_hall_quantile": 0,
+        "hit": false,
+        "model_named_score": -130.3,
+        "model_named_rank": 33
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "喰霊‐零‐Re",
+          "ratio": 4,
+          "source_claim": "(2)4台以上機種に必ず1台は上2つ／『堅くいくなら4台設置機種の各1以上狙い』",
+          "note": "設置4台。30日超え率=0.0・mean_score=-2124.3・rank=52/54。予告が名指しした12機種は全て8/29時点で実測4台で台数照合は完全一致。ただし選定基準が『設置台数=4』であり実績ベースではないため、12機種の30日超え率平均はホール平均を下回る。"
+        },
+        "n_machines": 4,
+        "ratio": 4,
+        "top_k": 1,
+        "model_top_k_mean_diff": 96.0,
+        "hall_top_quantile_mean_diff": 3766.8,
+        "excess_vs_hall_quantile": -3670.8,
+        "model_mean_diff": -1642.5,
+        "n_over_hall_quantile": 0,
+        "hit": false,
+        "model_named_score": -2209.3,
+        "model_named_rank": 52
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "ジャグラーガールズ",
+          "ratio": 4,
+          "source_claim": "(2)4台以上機種に必ず1台は上2つ／『堅くいくなら4台設置機種の各1以上狙い』",
+          "note": "設置4台。30日超え率=0.0・mean_score=148.9・rank=33/54。予告が名指しした12機種は全て8/29時点で実測4台で台数照合は完全一致。ただし選定基準が『設置台数=4』であり実績ベースではないため、12機種の30日超え率平均はホール平均を下回る。"
+        },
+        "n_machines": 4,
+        "ratio": 4,
+        "top_k": 1,
+        "model_top_k_mean_diff": 3619.0,
+        "hall_top_quantile_mean_diff": 3767.8,
+        "excess_vs_hall_quantile": -148.8,
+        "model_mean_diff": 893.0,
+        "n_over_hall_quantile": 1,
+        "hit": false,
+        "model_named_score": 1258.8,
+        "model_named_rank": 11
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "バーサスリヴァイズ",
+          "ratio": 4,
+          "source_claim": "(2)4台以上機種に必ず1台は上2つ／『堅くいくなら4台設置機種の各1以上狙い』",
+          "note": "設置4台。30日超え率=0.0・mean_score=42.8・rank=19/54。予告が名指しした12機種は全て8/29時点で実測4台で台数照合は完全一致。ただし選定基準が『設置台数=4』であり実績ベースではないため、12機種の30日超え率平均はホール平均を下回る。"
+        },
+        "n_machines": 4,
+        "ratio": 4,
+        "top_k": 1,
+        "model_top_k_mean_diff": 4286.0,
+        "hall_top_quantile_mean_diff": 3787.4,
+        "excess_vs_hall_quantile": 498.6,
+        "model_mean_diff": 2071.5,
+        "n_over_hall_quantile": 3,
+        "hit": true,
+        "model_named_score": 2386.1,
+        "model_named_rank": 4
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION",
+          "ratio": 4,
+          "source_claim": "(2)4台以上機種に必ず1台は上2つ／『堅くいくなら4台設置機種の各1以上狙い』",
+          "note": "設置4台。30日超え率=0.1・mean_score=378.3・rank=3/54。予告が名指しした12機種は全て8/29時点で実測4台で台数照合は完全一致。ただし選定基準が『設置台数=4』であり実績ベースではないため、12機種の30日超え率平均はホール平均を下回る。"
+        },
+        "n_machines": 4,
+        "ratio": 4,
+        "top_k": 1,
+        "model_top_k_mean_diff": 4048.0,
+        "hall_top_quantile_mean_diff": 3781.1,
+        "excess_vs_hall_quantile": 266.9,
+        "model_mean_diff": 559.8,
+        "n_over_hall_quantile": 2,
+        "hit": true,
+        "model_named_score": 601.8,
+        "model_named_rank": 16
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "モンスターハンターライズ",
+          "ratio": 4,
+          "source_claim": "(2)4台以上機種に必ず1台は上2つ／『堅くいくなら4台設置機種の各1以上狙い』",
+          "note": "設置4台。30日超え率=0.2・mean_score=2653.2・rank=14/54。予告が名指しした12機種は全て8/29時点で実測4台で台数照合は完全一致。ただし選定基準が『設置台数=4』であり実績ベースではないため、12機種の30日超え率平均はホール平均を下回る。"
+        },
+        "n_machines": 4,
+        "ratio": 4,
+        "top_k": 1,
+        "model_top_k_mean_diff": 524.0,
+        "hall_top_quantile_mean_diff": 3766.8,
+        "excess_vs_hall_quantile": -3242.8,
+        "model_mean_diff": -1499.8,
+        "n_over_hall_quantile": 0,
+        "hit": false,
+        "model_named_score": -1730.3,
+        "model_named_rank": 51
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "東京リベンジャーズ",
+          "ratio": 4,
+          "source_claim": "(2)4台以上機種に必ず1台は上2つ／『堅くいくなら4台設置機種の各1以上狙い』",
+          "note": "設置4台。30日超え率=0.067・mean_score=272.1・rank=1/54。予告が名指しした12機種は全て8/29時点で実測4台で台数照合は完全一致。ただし選定基準が『設置台数=4』であり実績ベースではないため、12機種の30日超え率平均はホール平均を下回る。"
+        },
+        "n_machines": 4,
+        "ratio": 4,
+        "top_k": 1,
+        "model_top_k_mean_diff": 2429.0,
+        "hall_top_quantile_mean_diff": 3775.8,
+        "excess_vs_hall_quantile": -1346.8,
+        "model_mean_diff": -952.0,
+        "n_over_hall_quantile": 1,
+        "hit": false,
+        "model_named_score": -1028.2,
+        "model_named_rank": 47
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "かぐや様は告らせたい",
+          "ratio": 4,
+          "source_claim": "(2)4台以上機種に必ず1台は上2つ／『堅くいくなら4台設置機種の各1以上狙い』",
+          "note": "設置4台。30日超え率=0.2・mean_score=1420.5・rank=42/54。予告が名指しした12機種は全て8/29時点で実測4台で台数照合は完全一致。ただし選定基準が『設置台数=4』であり実績ベースではないため、12機種の30日超え率平均はホール平均を下回る。"
+        },
+        "n_machines": 4,
+        "ratio": 4,
+        "top_k": 1,
+        "model_top_k_mean_diff": 12334.0,
+        "hall_top_quantile_mean_diff": 3637.6,
+        "excess_vs_hall_quantile": 8696.4,
+        "model_mean_diff": 7226.5,
+        "n_over_hall_quantile": 4,
+        "hit": true,
+        "model_named_score": 10051.8,
+        "model_named_rank": 1
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+          "ratio": 2,
+          "source_claim": "『個人的予想はカバネリ！…2ヶ月連続でニブイチになってるのがカバネリ』",
+          "note": "予告執筆者の名指しニブイチ本命。30日超え率0.167・mean_score732.4・rank20/54。ratio=設置台数版の主張とは別に、半数が上位という強い主張として独立に採点する。"
+        },
+        "n_machines": 18,
+        "ratio": 2,
+        "top_k": 9,
+        "model_top_k_mean_diff": 4952.7,
+        "hall_top_quantile_mean_diff": 1966.6,
+        "excess_vs_hall_quantile": 2986.1,
+        "model_mean_diff": 2140.6,
+        "n_over_hall_quantile": 13,
+        "hit": true,
+        "model_named_score": 3358.2,
+        "model_named_rank": 3
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "北斗の拳 転生の章2",
+          "ratio": 2,
+          "source_claim": "『次点でオススメの転生が候補に』",
+          "note": "『転生』の機種名照合: 8/29時点の候補は 北斗の拳 転生の章2(20台)／転生したらスライムだった件(1台)／無職転生(1台)。ニブイチ候補として台数が要ることから20台の北斗転生2に確定。30日超え率0.2・mean_score948.5・rank16/54。"
+        },
+        "n_machines": 20,
+        "ratio": 2,
+        "top_k": 10,
+        "model_top_k_mean_diff": 909.9,
+        "hall_top_quantile_mean_diff": 2130.3,
+        "excess_vs_hall_quantile": -1220.4,
+        "model_mean_diff": -771.0,
+        "n_over_hall_quantile": 4,
+        "hit": false,
+        "model_named_score": -722.9,
+        "model_named_rank": 42
+      }
+    ]
+  },
   "announce_digest": "b36a264946378159"
 }
