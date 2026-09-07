@@ -135,7 +135,10 @@ def unregistered_announcements(connection, today):
         # 前夜の投稿は翌営業日が対象。当日昼の投稿も同じ日を指すことがあるが、
         # 前夜のパターンだけを見る（登録が間に合う唯一の窓なので）。
         target = posted + timedelta(days=1)
-        if target > today:
+        # 明日を対象とする予告こそ拾う。初版はここで `target > today` を除外して
+        # おり、**まだ register できる唯一の分**を落としていた。対象日を過ぎた分は
+        # 報告しても RETROACTIVE_NOTES 送りにしかならないので、優先度は逆である。
+        if target > today + timedelta(days=1):
             continue
         header = "\n".join(text.splitlines()[:2])
         n_halls = sum(1 for words in HALL_KEYWORDS.values() if any(word in text for word in words))
@@ -246,13 +249,21 @@ def main() -> int:
     with sqlite3.connect(DB_PATH, timeout=60) as connection:
         missing = unregistered_announcements(connection, today)
     print("\n予告があるのに台帳に無い対象日: %d 件" % len(missing))
-    for (hall, target), entry in missing:
-        posted_at, text, url = entry["best"]
-        marker = "  ← 今日中なら register できる" if target == today.strftime("%Y%m%d") else ""
-        others = "" if entry["count"] == 1 else " ほか%d件" % (entry["count"] - 1)
-        print("  %s %s (投稿 %s%s)%s" % (target, hall, posted_at[:16], others, marker))
-        print("    %s" % url)
-        print("    %s" % text[:70].replace("\n", " "))
+    today_key = today.strftime("%Y%m%d")
+    tomorrow_key = (today + timedelta(days=1)).strftime("%Y%m%d")
+    # register できるものを先に出す。過ぎた分をいくら並べても行動は変わらない。
+    actionable = [row for row in missing if row[0][1] in (today_key, tomorrow_key)]
+    stale = [row for row in missing if row[0][1] not in (today_key, tomorrow_key)]
+    for label, group in (("★ 今すぐ register できる", actionable), ("（対象日を過ぎた分）", stale)):
+        if not group:
+            continue
+        print("\n%s: %d 件" % (label, len(group)))
+        for (hall, target), entry in group:
+            posted_at, text, url = entry["best"]
+            others = "" if entry["count"] == 1 else " ほか%d件" % (entry["count"] - 1)
+            print("  %s %s (投稿 %s%s)" % (target, hall, posted_at[:16], others))
+            print("    %s" % url)
+            print("    %s" % text[:70].replace("\n", " "))
     if missing:
         print(
             "  ※ 対象日を過ぎた分は register できない（事後登録は拒否される）。\n"
