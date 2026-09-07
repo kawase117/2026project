@@ -11,6 +11,7 @@ goes through the date-window search instead, which is not subject to that limit.
 """
 
 import argparse
+import json
 import subprocess
 import sqlite3
 import sys
@@ -21,8 +22,20 @@ from zoneinfo import ZoneInfo
 from config import DB_PATH
 
 BASE_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = BASE_DIR.parents[1]
+LEDGER_PATH = PROJECT_ROOT / "backtest" / "announce" / "LEDGER.jsonl"
 PYTHON = sys.executable
 JST = ZoneInfo("Asia/Tokyo")
+# 予告の対象ホールを本文から拾うための語。表記ゆれを含める
+# （蒲田1は「メガ1」「メガいち」「サトウ」などとも書かれる）。
+HALL_KEYWORDS = {
+    "楽園蒲田店": ("楽園蒲田", "楽蒲"),
+    "マルハンメガシティ2000-蒲田1": ("メガシティ2000蒲田1", "メガ1", "メガいち", "蒲田1"),
+    "マルハンメガシティ2000-蒲田7": ("メガシティ2000蒲田7", "メガ7", "メガなな", "蒲田7"),
+}
+# 何日ぶん遡って登録漏れを探すか。これより古い分は register が拒否するので、
+# 気づいても RETROACTIVE_NOTES.md 送りになる。
+ANNOUNCE_LOOKBACK_DAYS = 10
 # One day of slack: yesterday's posts are still reachable by the normal crawl.
 GAP_TRIGGER_DAYS = 2
 # Re-collect from a day before the last known post so a partly-collected day is
@@ -37,6 +50,59 @@ def last_collected_date(connection):
     if not dates:
         return None
     return min(date.fromisoformat(value) for value in dates)
+
+
+def registered_targets():
+    """台帳にある (ホール, 対象日) の集合。台帳が無ければ空。"""
+    if not LEDGER_PATH.exists():
+        return set()
+    targets = set()
+    for line in LEDGER_PATH.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if row.get("hall") and row.get("target_date"):
+            targets.add((row["hall"], row["target_date"]))
+    return targets
+
+
+def unregistered_announcements(connection, today):
+    """予告が投稿されているのに台帳に無い (ホール, 対象日) を返す。
+
+    収集が正常でも、日次の登録作業が止まれば予告は静かに失われる。実際
+    2026-08-30 を最後に 9/7 まで台帳が空き、その間の6日分は register が
+    通る状態だったのに登録されなかった。収集の欠損検知だけでは捕まらない
+    ので、台帳側も併せて見る。
+
+    判定は粗い。前夜の投稿に「明日」とホール名が入っていれば予告とみなす。
+    見落とすより誤検知する方を選んでいる（誤検知は本文を読めば消える）。
+    """
+    registered = registered_targets()
+    since = (today - timedelta(days=ANNOUNCE_LOOKBACK_DAYS)).isoformat()
+    rows = connection.execute(
+        "SELECT posted_at_jst, COALESCE(full_text, tweet_text) FROM seen_tweets "
+        "WHERE posted_at_jst >= ? AND COALESCE(full_text, tweet_text) LIKE '%明日%'",
+        (since,),
+    ).fetchall()
+
+    missing = {}
+    for posted_at, text in rows:
+        posted = date.fromisoformat(posted_at[:10])
+        # 前夜の投稿は翌営業日が対象。当日昼の投稿も同じ日を指すことがあるが、
+        # 前夜のパターンだけを見る（登録が間に合う唯一の窓なので）。
+        target = posted + timedelta(days=1)
+        if target > today:
+            continue
+        for hall, keywords in HALL_KEYWORDS.items():
+            if not any(word in text for word in keywords):
+                continue
+            key = (hall, target.strftime("%Y%m%d"))
+            if key not in registered:
+                missing.setdefault(key, posted_at)
+    return sorted(missing.items())
 
 
 def run(script, *arguments):
@@ -111,6 +177,18 @@ def main() -> int:
     print("\n直近30日のうち投稿を取得できた日: %d 日" % gaps)
     if gaps < 25:
         print("  ※ 欠損が疑われます。backfill_search.py で期間を指定して補完してください。")
+
+    with sqlite3.connect(DB_PATH, timeout=60) as connection:
+        missing = unregistered_announcements(connection, today)
+    print("\n予告があるのに台帳に無い対象日: %d 件" % len(missing))
+    for (hall, target), posted_at in missing:
+        marker = "  ← 今日中なら register できる" if target == today.strftime("%Y%m%d") else ""
+        print("  %s %s (投稿 %s)%s" % (target, hall, posted_at[:16], marker))
+    if missing:
+        print(
+            "  ※ 対象日を過ぎた分は register できない（事後登録は拒否される）。\n"
+            "     backtest/announce/RETROACTIVE_NOTES.md に『登録を見送った予告』として記録すること。"
+        )
     return 0
 
 
