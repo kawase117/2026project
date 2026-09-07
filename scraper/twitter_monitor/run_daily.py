@@ -39,9 +39,14 @@ ANNOUNCE_LOOKBACK_DAYS = 10
 # 全文の取り直し範囲。タイムラインの article は長文を畳むので、収集しただけの
 # 本文は130〜180字で切れている。予告では仕掛けの列挙がまるごと落ちるため、
 # 収集の直後に個別ページから取り直す。
-# 全期間を対象にすると3800件を開きに行くので、新着ぶんだけに絞る。
-FULLTEXT_LOOKBACK_DAYS = 3
-FULLTEXT_LIMIT = 80
+#
+# 対象は監視ホールに触れている投稿だけに絞る。収集した本文のうち対象ホールに
+# 触れているのは 7〜9% しかなく（直近3日で237件中17件）、全件開くと1日80件・
+# 14分かかったうえ新着に追いつかなかった。絞れば1日あたり6件程度で済む。
+# 予告アカウントはホール名を見出しに置く（「9/7 楽園蒲田」「🪐GALAXYウスイの
+# メガなな予想🪐」）ので、折り畳まれた本文でもこの判定は効く。
+FULLTEXT_LOOKBACK_DAYS = 7
+FULLTEXT_LIMIT = 40
 # One day of slack: yesterday's posts are still reachable by the normal crawl.
 GAP_TRIGGER_DAYS = 2
 # Re-collect from a day before the last known post so a partly-collected day is
@@ -207,6 +212,8 @@ def main() -> int:
             "fetch_full_text.py",
             "--since",
             (today - timedelta(days=FULLTEXT_LOOKBACK_DAYS)).isoformat(),
+            "--any-of",
+            ",".join(word for words in HALL_KEYWORDS.values() for word in words),
             "--limit",
             str(FULLTEXT_LIMIT),
         )

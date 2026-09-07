@@ -62,6 +62,12 @@ def select_targets(connection: sqlite3.Connection, args) -> list[tuple[str, str,
     for needle in args.contains:
         conditions.append("tweet_text LIKE ?")
         parameters.append(f"%{needle}%")
+    if args.any_of:
+        # OR 条件。監視ホールのどれかに触れている投稿だけを開くのに使う。
+        # 収集した本文の 7〜9% しか対象ホールに触れておらず、全件を開くと
+        # 1日80件・14分かかるうえ新着に追いつかない。
+        conditions.append("(" + " OR ".join("tweet_text LIKE ?" for _ in args.any_of) + ")")
+        parameters.extend(f"%{needle}%" for needle in args.any_of)
     query = (
         "SELECT tweet_id, tweet_url, tweet_text FROM seen_tweets WHERE "
         + " AND ".join(conditions)
@@ -101,6 +107,12 @@ def main() -> int:
     parser.add_argument("--handles", type=lambda v: [s for s in v.split(",") if s], default=[])
     parser.add_argument("--since", help="この日以降の投稿だけ (YYYY-MM-DD)")
     parser.add_argument("--contains", action="append", default=[], help="本文に含まれる語で絞る（複数可、AND）")
+    parser.add_argument(
+        "--any-of",
+        type=lambda v: [s for s in v.split(",") if s],
+        default=[],
+        help="いずれかを含む投稿だけ（カンマ区切り、OR）。ホール名の表記ゆれを並べるのに使う",
+    )
     parser.add_argument("--limit", type=int, default=0)
     args = parser.parse_args()
 
