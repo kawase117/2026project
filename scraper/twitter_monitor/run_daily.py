@@ -36,6 +36,12 @@ HALL_KEYWORDS = {
 # 何日ぶん遡って登録漏れを探すか。これより古い分は register が拒否するので、
 # 気づいても RETROACTIVE_NOTES.md 送りになる。
 ANNOUNCE_LOOKBACK_DAYS = 10
+# 全文の取り直し範囲。タイムラインの article は長文を畳むので、収集しただけの
+# 本文は130〜180字で切れている。予告では仕掛けの列挙がまるごと落ちるため、
+# 収集の直後に個別ページから取り直す。
+# 全期間を対象にすると3800件を開きに行くので、新着ぶんだけに絞る。
+FULLTEXT_LOOKBACK_DAYS = 3
+FULLTEXT_LIMIT = 80
 # One day of slack: yesterday's posts are still reachable by the normal crawl.
 GAP_TRIGGER_DAYS = 2
 # Re-collect from a day before the last known post so a partly-collected day is
@@ -159,6 +165,7 @@ def main() -> int:
     parser.add_argument("--extract-limit", type=int, default=400, help="1回の抽出で処理する画像数の上限 (既定 400)")
     parser.add_argument("--extract-handles", default=None, help="抽出対象のアカウントを限定 (カンマ区切り)")
     parser.add_argument("--skip-extract", action="store_true", help="抽出を行わず、収集とラベル付けだけ実行します。")
+    parser.add_argument("--skip-fulltext", action="store_true", help="折り畳まれた本文の取り直しを行いません。")
     args = parser.parse_args()
 
     today = datetime.now(JST).date()
@@ -193,6 +200,17 @@ def main() -> int:
         print("空きは %d 日なので通常の巡回で足ります。" % gap_days)
 
     run("scrape_tweets.py")
+
+    if not args.skip_fulltext:
+        # 台帳ギャップ検知も予告の登録もこの全文を読むので、prefilter より前に置く。
+        run(
+            "fetch_full_text.py",
+            "--since",
+            (today - timedelta(days=FULLTEXT_LOOKBACK_DAYS)).isoformat(),
+            "--limit",
+            str(FULLTEXT_LIMIT),
+        )
+
     run("prefilter.py")
 
     if not args.skip_extract:
