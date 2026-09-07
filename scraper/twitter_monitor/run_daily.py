@@ -69,6 +69,26 @@ def registered_targets():
     return targets
 
 
+def mention_strength(text, header, keywords, n_halls_mentioned):
+    """その投稿がそのホール『についての』ものらしさ。0 なら言及なし。
+
+    3 = ハッシュタグでの言及。999999Q9Q は #マルハンメガシティ2000蒲田7 の形で
+        対象を明示するので、最も確実。
+    2 = 見出し（先頭2行）での言及、かつ投稿が1ホールしか挙げていない。
+        kawasakislot の「9/1 楽園蒲田」がこれ。
+    1 = 本文中だけの言及、または複数ホールを並べている投稿。
+        「西口の楽園蒲田🆚東口はメガ1🆚メガ7って構図でいいですかね」のような
+        比較・雑談は3ホールに当たるので、ここへ落ちる。予告は1ホールを名指しする。
+    """
+    if not any(word in text for word in keywords):
+        return 0
+    if any(("#" + word) in text for word in keywords):
+        return 3
+    if n_halls_mentioned == 1 and any(word in header for word in keywords):
+        return 2
+    return 1
+
+
 def unregistered_announcements(connection, today):
     """予告が投稿されているのに台帳に無い (ホール, 対象日) を返す。
 
@@ -79,29 +99,49 @@ def unregistered_announcements(connection, today):
 
     判定は粗い。前夜の投稿に「明日」とホール名が入っていれば予告とみなす。
     見落とすより誤検知する方を選んでいる（誤検知は本文を読めば消える）。
+
+    ホール名が本文にあるだけでは、その投稿がそのホール**についての**予告とは
+    限らない。kawasakislot の楽園蒲田予告は本文で「メガ1の新店長就任を明らかに
+    意識してる」と競合店に触れるので、素朴な部分一致だと楽園蒲田の予告が
+    蒲田1の予告として数えられる。そこで見出し（先頭2行）とハッシュタグでの
+    言及を本文中の言及より上に置き、根拠として出す投稿もその順で選ぶ。
+
+    根拠を1件だけ任意に選ぶと読み違えが起きる。実際に「西口の楽園蒲田🆚東口は
+    メガ1🆚メガ7って構図でいいですかね」という雑談が根拠として表示され、
+    正しい検知を誤検知と判断しかけた。同じ組に当たった件数も返す。
     """
     registered = registered_targets()
     since = (today - timedelta(days=ANNOUNCE_LOOKBACK_DAYS)).isoformat()
     rows = connection.execute(
-        "SELECT posted_at_jst, COALESCE(full_text, tweet_text) FROM seen_tweets "
+        "SELECT posted_at_jst, COALESCE(full_text, tweet_text), tweet_url FROM seen_tweets "
         "WHERE posted_at_jst >= ? AND COALESCE(full_text, tweet_text) LIKE '%明日%'",
         (since,),
     ).fetchall()
 
     missing = {}
-    for posted_at, text in rows:
+    for posted_at, text, url in rows:
         posted = date.fromisoformat(posted_at[:10])
         # 前夜の投稿は翌営業日が対象。当日昼の投稿も同じ日を指すことがあるが、
         # 前夜のパターンだけを見る（登録が間に合う唯一の窓なので）。
         target = posted + timedelta(days=1)
         if target > today:
             continue
+        header = "\n".join(text.splitlines()[:2])
+        n_halls = sum(1 for words in HALL_KEYWORDS.values() if any(word in text for word in words))
         for hall, keywords in HALL_KEYWORDS.items():
-            if not any(word in text for word in keywords):
+            strength = mention_strength(text, header, keywords, n_halls)
+            if not strength:
                 continue
             key = (hall, target.strftime("%Y%m%d"))
-            if key not in registered:
-                missing.setdefault(key, posted_at)
+            if key in registered:
+                continue
+            entry = missing.setdefault(key, {"count": 0, "best": None, "strength": 0})
+            entry["count"] += 1
+            # 見出し/ハッシュタグでの言及を優先し、同じ強さなら長い本文を採る。
+            current = (strength, len(text))
+            if entry["best"] is None or current > (entry["strength"], len(entry["best"][1])):
+                entry["best"] = (posted_at, text, url)
+                entry["strength"] = strength
     return sorted(missing.items())
 
 
@@ -181,9 +221,13 @@ def main() -> int:
     with sqlite3.connect(DB_PATH, timeout=60) as connection:
         missing = unregistered_announcements(connection, today)
     print("\n予告があるのに台帳に無い対象日: %d 件" % len(missing))
-    for (hall, target), posted_at in missing:
+    for (hall, target), entry in missing:
+        posted_at, text, url = entry["best"]
         marker = "  ← 今日中なら register できる" if target == today.strftime("%Y%m%d") else ""
-        print("  %s %s (投稿 %s)%s" % (target, hall, posted_at[:16], marker))
+        others = "" if entry["count"] == 1 else " ほか%d件" % (entry["count"] - 1)
+        print("  %s %s (投稿 %s%s)%s" % (target, hall, posted_at[:16], others, marker))
+        print("    %s" % url)
+        print("    %s" % text[:70].replace("\n", " "))
     if missing:
         print(
             "  ※ 対象日を過ぎた分は register できない（事後登録は拒否される）。\n"
