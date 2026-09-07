@@ -144,15 +144,26 @@ async def main_async(argv: list[str] | None = None) -> int:
         total_success = 0
         total_failed = 0
 
+        aborted: list[str] = []
         for hall in halls:
-            hall_name, success_count, failed_count = await scrape_one_hall(
-                browser,
-                hall,
-                start_date=args.start_date,
-                end_date=args.end_date,
-                db_path=args.db_path,
-                manual_challenge=args.manual_challenge,
-            )
+            label = hall.get("hall_name") or hall.get("name") or "unknown_hall"
+            # 1ホールの失敗で残りを捨てない。ana-slo は連続アクセスで 403 を返す
+            # ことがあり、以前はそこで例外が上がって未取得のホールが全部落ちた。
+            # ホール単位で握れば、後続ホールの取得と再試行対象の特定ができる。
+            try:
+                hall_name, success_count, failed_count = await scrape_one_hall(
+                    browser,
+                    hall,
+                    start_date=args.start_date,
+                    end_date=args.end_date,
+                    db_path=args.db_path,
+                    manual_challenge=args.manual_challenge,
+                )
+            except Exception as error:
+                print(f"\n[ABORT] {label}: {error}")
+                aborted.append(label)
+                log_lines.append(f"{label}: aborted ({error})")
+                continue
             total_success += success_count
             total_failed += failed_count
             log_lines.append(f"{hall_name}: success={success_count}, failed={failed_count}")
@@ -163,9 +174,13 @@ async def main_async(argv: list[str] | None = None) -> int:
 
         print("\n" + "=" * 80)
         print(f"[TOTAL] success={total_success}, failed={total_failed}")
+        if aborted:
+            print(f"[ABORT] 途中で諦めたホール {len(aborted)}件: {', '.join(aborted)}")
+            print("        時間を空けて同じ引数で再実行すること（取得済みの日はスキップされる）")
         print(f"[LOG  ] {log_path}")
         print("=" * 80)
-        return 0
+        # 全ホールが落ちたときだけ失敗として返す。一部成功は 0 のまま。
+        return 1 if aborted and total_success == 0 else 0
     finally:
         if browser:
             try:
