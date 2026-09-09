@@ -1,0 +1,231 @@
+{
+  "announce_id": "kamata1__20260908__999999Q9Q",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "target_date": "20260908",
+  "source": {
+    "account": "999999Q9Q",
+    "url": "https://x.com/999999Q9Q/status/2096935906200740145",
+    "posted_at": "2026-09-07T21:17:00+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "🏮新章メガいちよこやん予想🏮\n\n明日は新台初日のよこやんメガいち。曜日仕掛けがあったり無かったりとまだ確信が持てないので、明日はナシパターンの全系機種&オススメミリオンゴッド狙いと、アリパターンの角◯仕掛けを両方意識すべきとされている。\n\nよーく目を凝らしたら、ポストの一番最後に不自然な🌳♾️の絵文字が。しれっとココが明日の手掛かりにつながると信じて😇\n\n✅新章開幕→開幕→劇場→劇場ジャッジ\n→からくりサーカス2？\n\n✅パチスロ4機種導入→4まつわり\n→戦国乙女4？\n\n✅🌳→木→森→森羅\n→L炎炎2？\n\n✅♾️→無限大\n→マリエ覚醒→ヴヴヴ2？\n→無限高確率→防振り？\n\n#マルハンメガシティ2000蒲田1",
+  "posted_at_note": "投稿 2026-09-07T21:17（X実測）。ハッシュタグでホール確定。db_max=20260907 < target=20260908 のため事後登録ではない。登録は 9/8 08時台、抽選前・結果未確定。収集時118字→個別ページで306字。",
+  "regime_note": "⚠️ 店長交代（2026-08-25 サトウ→よこやん）後2週間。baserate の90日窓はサトウ時代を含む。project-kamata1-tencho-change-20260825 / feedback-hall-regime-needs-external-event-calendar。交代後の分布が固まるまで、本件の hit/miss を蒲田1の実力として一般化しない。",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "series_note": "この発信者の「店長のグルメ・告知投稿を暗号として解読して機種を名指しする」手法の3回目の登録。過去2回（9/2・9/3、いずれも事後採点）は **0/10 的中**（無情報期待0.83）で、RETROACTIVE_NOTES.md に記録済み。今回が**事前登録での初回**であり、事後採点をいくら積んでも証拠にならないので、ここからが本番の系列になる。\n\n名指し4機種の直近30日実績（as_of 20260907、候補48機種・ホール超え率0.083）:\n  からくりサーカス2 15台 rank43/48 超え0/30 rate0.000 score -133.6\n  戦国乙女4         4台 rank31/48 超え1/30 rate0.033 score  +98.5\n  スマスロ炎炎ノ消防隊2 5台 rank21/48 超え4/30 rate0.133 score +144.8\n  革命機ヴァルヴレイヴ2 6台 rank46/48 超え7/30 rate0.233 score +431.1\n  防御力に極振り     3台 rank25/48 超え2/30 rate0.067 score +205.8\n名指し5機種の平均超え率 0.093 に対しホール平均 0.083 で、富化は 1.12倍とほぼ無い。\n特に からくりサーカス2 は30日間で一度も閾値を超えていない。実績に基づく名指しではない。",
+  "baserate_before_target": {
+    "window_before": "20260907",
+    "days": 90,
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "percentile_threshold_for_reference": 2097.9,
+    "candidate_models_per_day": 47.1,
+    "models_over_threshold_per_day": {
+      "mean": 2.87
+    },
+    "p_at_least_1": 0.92,
+    "p_at_least_2": 0.667,
+    "p_at_least_3": 0.46,
+    "conditional_note": "feedback-named-model-conditional-baserate。名指し5機種・候補48機種なので、当日の閾値超え数を K とすると『5機種のどれかが当たる』無情報確率は K=3 で 1-C(43,5)/C(48,5)=0.30、K=2 で 0.20。個別機種の的中は K/48 ≈ 0.06/機種。"
+  },
+  "claims": [
+    {
+      "type": "zentaikei_count",
+      "n_models": 1,
+      "note": "『ナシパターンの全系機種』。台数を明示していないので最小の1。p_at_least_1=0.920 で無情報でもほぼ成立する弱い主張であり、hit=true を的中として数えない。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "ミリオンゴッド‐神々の軌跡‐",
+      "note": "『オススメミリオンゴッド狙い』。曜日仕掛けナシパターンでの本命指名。8台設置、直近30日 rank4/48・超え3/30(0.100)・mean_score -1.2。順位は高いがスコアはゼロ近辺で、上位は少台数機種に偏る既知バイアス（announce.py 冒頭）の影響を受けている可能性がある。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "からくりサーカス2",
+      "note": "グルメ暗号『新章開幕→開幕→劇場→劇場ジャッジ』。15台設置。⚠️ 直近30日で閾値超え0回・rank43/48 と実績は最下層。当たれば「我々の知らない情報源がある」ことの強い証拠になり、外れても事前情報と整合するだけ。機種名照合: 当日 からくりサーカス(2台) と からくりサーカス2(15台) が併存するが、予告の『2』表記どおり後者に確定。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "note": "グルメ暗号『パチスロ4機種導入→4まつわり』。4台設置、rank31/48・超え1/30。⚠️ 機種名照合に注意: 戦国乙女5(10台)も併存する。RETROACTIVE_NOTES の 2026-08-14 事例で乙女4/乙女5の取り違えが実際に起きているので、予告の『4』表記どおり4台設置版に確定した。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "note": "グルメ暗号『🌳→木→森→森羅』（森羅=炎炎ノ消防隊の登場人物）。5台設置、rank21/48・超え4/30(0.133)。名指し5機種の中では2番目に実績がある。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "革命機ヴァルヴレイヴ2",
+      "note": "グルメ暗号『♾️→無限大→マリエ覚醒』。6台設置、超え7/30(0.233)で名指し中最高の実績。⚠️ ただし rank46/48 と当日順位は低く、mean_score +431.1 と食い違う。超え率が高いのに平均順位が低いのは、当たる日と外す日の差が大きい高分散機種であることを示す。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "痛いのは嫌なので防御力に極振りしたいと思います。",
+      "note": "グルメ暗号『♾️→無限高確率→防振り』。3台設置で min_machines=3 ぎりぎり。少台数のため機種平均が動きやすく、既知バイアスで有利に出る点に注意。"
+    }
+  ],
+  "unscored_claims": [
+    {
+      "text": "アリパターンの角◯仕掛け",
+      "reason": "予告自身が『曜日仕掛けがあったり無かったりとまだ確信が持てない』と条件付きで述べており、角番も◯で伏せている。番号を先に固定して登録すると、ホールが別の番号を使った日に予告の外れとして記録してしまう。kamata7__20260908 と同じ採点手順を凍結する。⚠️ 蒲田1の速報は蒲田7と違い『AT機／ノーマル機』ではなく『全館共通の角◯を2つ』という書き方をした回がある（2026-06-09、2026-07-28、2026-08-05）。セグメント分割の形が蒲田7と異なる可能性があるため、両方の切り方で採点する。",
+      "frozen_scoring_procedure": {
+        "step1": "翌未明の 999999Q9Q メガいち速報から公表角番を書き写す。出なければ採点不能。",
+        "step2": "セグメント分割を (a) AT等/ノーマル (b) 全館共通2つ の両方で試し、どちらが実績に合うかを記録する。",
+        "step3": "各角番の残差平均順位と、機種内で上位半分に入る割合を出す。ベースラインは蒲田7で得た 59.8%（無作為50%）だが、蒲田1では未測定なので参考値に留める。"
+      }
+    },
+    {
+      "text": "新台初日",
+      "reason": "事実情報。⚠️ 新台は閾値超え率が既存台の2.2倍あるため、zentaikei_count の hit を新台が作った場合は内訳を明記する。"
+    }
+  ],
+  "result": {
+    "scored_at_data_max": "20260908",
+    "hall_baseline_mean_diff": -142.7,
+    "hall_n_machines": 365,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 1,
+          "note": "『ナシパターンの全系機種』。台数を明示していないので最小の1。p_at_least_1=0.920 で無情報でもほぼ成立する弱い主張であり、hit=true を的中として数えない。"
+        },
+        "observed_n_models": 1,
+        "candidate_models": 48,
+        "models": [
+          {
+            "machine_name": "ワールドダイスター",
+            "score": 2079.4,
+            "n_machines": 3,
+            "mean_diff": 1366.7,
+            "age_days": 36
+          }
+        ],
+        "n_new_machines_over": 0,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ミリオンゴッド‐神々の軌跡‐",
+          "note": "『オススメミリオンゴッド狙い』。曜日仕掛けナシパターンでの本命指名。8台設置、直近30日 rank4/48・超え3/30(0.100)・mean_score -1.2。順位は高いがスコアはゼロ近辺で、上位は少台数機種に偏る既知バイアス（announce.py 冒頭）の影響を受けている可能性がある。"
+        },
+        "score": 702.8,
+        "mean_diff": 600.0,
+        "gratio": 1.171,
+        "n_machines": 8,
+        "rank": 3,
+        "candidate_models": 48,
+        "age_days": 141,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "からくりサーカス2",
+          "note": "グルメ暗号『新章開幕→開幕→劇場→劇場ジャッジ』。15台設置。⚠️ 直近30日で閾値超え0回・rank43/48 と実績は最下層。当たれば「我々の知らない情報源がある」ことの強い証拠になり、外れても事前情報と整合するだけ。機種名照合: 当日 からくりサーカス(2台) と からくりサーカス2(15台) が併存するが、予告の『2』表記どおり後者に確定。"
+        },
+        "score": 41.8,
+        "mean_diff": 100.0,
+        "gratio": 0.418,
+        "n_machines": 5,
+        "rank": 17,
+        "candidate_models": 48,
+        "age_days": 64,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+          "note": "グルメ暗号『パチスロ4機種導入→4まつわり』。4台設置、rank31/48・超え1/30。⚠️ 機種名照合に注意: 戦国乙女5(10台)も併存する。RETROACTIVE_NOTES の 2026-08-14 事例で乙女4/乙女5の取り違えが実際に起きているので、予告の『4』表記どおり4台設置版に確定した。"
+        },
+        "score": -6.1,
+        "mean_diff": -125.0,
+        "gratio": 0.049,
+        "n_machines": 4,
+        "rank": 20,
+        "candidate_models": 48,
+        "age_days": 615,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "スマスロ炎炎ノ消防隊2",
+          "note": "グルメ暗号『🌳→木→森→森羅』（森羅=炎炎ノ消防隊の登場人物）。5台設置、rank21/48・超え4/30(0.133)。名指し5機種の中では2番目に実績がある。"
+        },
+        "score": 33.5,
+        "mean_diff": 40.0,
+        "gratio": 0.838,
+        "n_machines": 5,
+        "rank": 18,
+        "candidate_models": 48,
+        "age_days": 218,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "革命機ヴァルヴレイヴ2",
+          "note": "グルメ暗号『♾️→無限大→マリエ覚醒』。6台設置、超え7/30(0.233)で名指し中最高の実績。⚠️ ただし rank46/48 と当日順位は低く、mean_score +431.1 と食い違う。超え率が高いのに平均順位が低いのは、当たる日と外す日の差が大きい高分散機種であることを示す。"
+        },
+        "score": -304.8,
+        "mean_diff": -657.1,
+        "gratio": 0.464,
+        "n_machines": 7,
+        "rank": 31,
+        "candidate_models": 48,
+        "age_days": 308,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "痛いのは嫌なので防御力に極振りしたいと思います。",
+          "note": "グルメ暗号『♾️→無限高確率→防振り』。3台設置で min_machines=3 ぎりぎり。少台数のため機種平均が動きやすく、既知バイアスで有利に出る点に注意。"
+        },
+        "score": -708.0,
+        "mean_diff": -733.3,
+        "gratio": 0.965,
+        "n_machines": 3,
+        "rank": 41,
+        "candidate_models": 48,
+        "age_days": 615,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
+  "announce_digest": "48f4c5e843eed14b"
+}

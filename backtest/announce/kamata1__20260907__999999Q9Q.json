@@ -63,6 +63,61 @@
       "reason": "過去のレジームの説明であって明日の主張ではない。今日の当否判定には使わない。⚠️ ただし『交代前はこうだった』という外部証言として価値があるので、交代後の分布が固まった段階で、サトウ時代の実測とこの記述が一致するかを検証する材料に使う。"
     }
   ],
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20260907",
+    "hall_baseline_mean_diff": 126.0,
+    "hall_n_machines": 365,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 1,
+          "note": "⚠️ **これは予告の主張そのものではない。** 本文の『全系機種（基本複数）』は前任サトウ時代の**過去の説明**であって、明日の約束ではない。よこやんについて本文が述べているのは『強化されがちなのはメイン機種』という傾向だけである。\n\nそれでも最小限の骨格として n_models=1 を登録するのは、採点可能な claim がゼロだと系列比較の足場が無くなるためで、hit=true をこの発信者の的中として数えてはならない。p_at_least_1=0.897 で無情報でもほぼ成立する。"
+        },
+        "observed_n_models": 4,
+        "candidate_models": 48,
+        "models": [
+          {
+            "machine_name": "ミスタージャグラー",
+            "score": 5534.4,
+            "n_machines": 4,
+            "mean_diff": 2725.0,
+            "age_days": 614
+          },
+          {
+            "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+            "score": 5218.9,
+            "n_machines": 5,
+            "mean_diff": 4580.0,
+            "age_days": 517
+          },
+          {
+            "machine_name": "ウルトラミラクルジャグラー",
+            "score": 3108.2,
+            "n_machines": 4,
+            "mean_diff": 1400.0,
+            "age_days": 614
+          },
+          {
+            "machine_name": "ミリオンゴッド‐神々の軌跡‐",
+            "score": 3001.7,
+            "n_machines": 8,
+            "mean_diff": 2150.0,
+            "age_days": 140
+          }
+        ],
+        "n_new_machines_over": 0,
+        "hit": true
+      }
+    ]
+  },
   "announce_digest": "c3ecac11bf5fb4c8"
 }

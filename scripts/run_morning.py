@@ -136,6 +136,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--skip-anaslo", action="store_true", help="ana-slo の取得と取り込みを行わない")
     parser.add_argument("--skip-twitter", action="store_true", help="X監視パイプラインを回さない")
+    parser.add_argument("--skip-history", action="store_true", help="analysis_results.db への日次指標の蓄積を行わない")
     # 取得済みの日はスクレイパー側でスキップされるので、窓を広く取っても
     # 実際に開くのは欠けている日だけ。前日1日だけにすると、途中にできた穴
     # （403で落ちた日、ana-slo が遅れて掲載した日）が永久に埋まらない。
@@ -183,6 +184,15 @@ def main() -> int:
         if advanced == 0:
             print("\n  ※ どのホールも進みませんでした。ana-slo が未更新（不定期）か、")
             print("     403で遮断された可能性があります。翌日の実行で埋まります。")
+
+    if not args.skip_history:
+        # 角番ピークと並び箇所数を analysis_results.db に貯める。取込の直後に
+        # 置くのは、その日の raw データが入った状態でしか計算できないため。
+        # 既存日は同じ definition_id で上書きされるだけなので、窓が重なっても害はない。
+        run(
+            "database/build_analysis_history.py --since %s" % start,
+            [PYTHON, "-u", str(PROJECT_ROOT / "database" / "build_analysis_history.py"), "--since", start],
+        )
 
     print("\n" + "=" * 70)
     print("期日の来た予告の採点")

@@ -226,6 +226,267 @@
       "reason": "project-kawasakislot-selfreport-inflated: 自己申告の過去実績は水増しされる。本プロジェクトの採点では 8/7 の末尾7は hit=false であり、この主張と食い違う。今日の当否判定には使わない。"
     }
   ],
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20260907",
+    "hall_baseline_mean_diff": -5.0,
+    "hall_n_machines": 587,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 1,
+      "n_censored_lo": 2,
+      "machines_hi": [
+        "やじきた道中記参る！"
+      ],
+      "machines_lo": [
+        "ソードアート・オンラインII",
+        "青春ブタ野郎はバニーガール先輩の夢を見ない"
+      ],
+      "bounds": [
+        -5095,
+        15477
+      ]
+    },
+    "claims": [
+      {
+        "type": "position_rule",
+        "claim": {
+          "type": "position_rule",
+          "field": "last_digit",
+          "values": [
+            "7"
+          ],
+          "note": "⭐⭐ 本予告の主役。『末尾7が1/2⑤⑥』（本文で全59台と明示）をホール全機種プールで判定する。8/7・8/17 と完全に同一形なので直接比較できる（8/7 = -35.1 で hit=false、8/17 = +107.4 で hit=true）。判定は残差差が正かの二値であり、1/2 という比率そのものは採点していない。プールは AT（末尾7が最大勢力）に支配されるため JUG 版と結論が割れることを想定する。割れた場合は JUG 版を採り、プール版の false を『末尾仕掛けが無かった』と読まない。"
+        },
+        "by_segment": [
+          {
+            "segment": "JUG",
+            "n_machines": 117,
+            "n_target": 11,
+            "n_other": 106,
+            "effect_resid_diff": 896.6,
+            "target_payout": 1.0341,
+            "other_payout": 0.9849
+          },
+          {
+            "segment": "BT",
+            "n_machines": 92,
+            "n_target": 9,
+            "n_other": 83,
+            "effect_resid_diff": 826.8,
+            "target_payout": 1.05,
+            "other_payout": 1.0099
+          },
+          {
+            "segment": "AT",
+            "n_machines": 349,
+            "n_target": 36,
+            "n_other": 313,
+            "effect_resid_diff": 131.1,
+            "target_payout": 0.9917,
+            "other_payout": 0.9941
+          },
+          {
+            "segment": "OKI",
+            "n_machines": 13,
+            "n_target": 1,
+            "n_other": 12,
+            "effect_resid_diff": -309.0,
+            "target_payout": 1.0082,
+            "other_payout": 1.0863
+          },
+          {
+            "segment": "HANA",
+            "n_machines": 16,
+            "n_target": 2,
+            "n_other": 14,
+            "effect_resid_diff": -629.2,
+            "target_payout": 0.9939,
+            "other_payout": 1.0338
+          }
+        ],
+        "judged_segment": "ALL(pooled)",
+        "n_target": 59,
+        "n_other": 528,
+        "effect_resid_diff": 348.5,
+        "target_payout": 1.0096,
+        "other_payout": 0.9973,
+        "hit": true
+      },
+      {
+        "type": "position_rule",
+        "claim": {
+          "type": "position_rule",
+          "field": "last_digit",
+          "values": [
+            "7"
+          ],
+          "segment": "JUG",
+          "note": "同じ『末尾7が1/2⑤⑥』をジャグ限定で判定する。8/17 は +123.4 で hit=true だった。⚠️ JUG に割る判断は 8/7 の採点後に決めたもので、8/17 が初の事前登録、本件が2回目。project-rakuen-lastdigit7-rb-only の通り、楽園蒲田の末尾7仕掛けは差枚残差では+123程度しか出ず RB確率でしか見えない可能性がある。差枚の二値判定が false でも、答え合わせ時に必ず RB確率で裏取りすること。"
+        },
+        "by_segment": [
+          {
+            "segment": "JUG",
+            "n_machines": 117,
+            "n_target": 11,
+            "n_other": 106,
+            "effect_resid_diff": 896.6,
+            "target_payout": 1.0341,
+            "other_payout": 0.9849
+          },
+          {
+            "segment": "BT",
+            "n_machines": 92,
+            "n_target": 9,
+            "n_other": 83,
+            "effect_resid_diff": 826.8,
+            "target_payout": 1.05,
+            "other_payout": 1.0099
+          },
+          {
+            "segment": "AT",
+            "n_machines": 349,
+            "n_target": 36,
+            "n_other": 313,
+            "effect_resid_diff": 131.1,
+            "target_payout": 0.9917,
+            "other_payout": 0.9941
+          },
+          {
+            "segment": "OKI",
+            "n_machines": 13,
+            "n_target": 1,
+            "n_other": 12,
+            "effect_resid_diff": -309.0,
+            "target_payout": 1.0082,
+            "other_payout": 1.0863
+          },
+          {
+            "segment": "HANA",
+            "n_machines": 16,
+            "n_target": 2,
+            "n_other": 14,
+            "effect_resid_diff": -629.2,
+            "target_payout": 0.9939,
+            "other_payout": 1.0338
+          }
+        ],
+        "judged_segment": "JUG",
+        "n_target": 11,
+        "n_other": 106,
+        "effect_resid_diff": 896.6,
+        "target_payout": 1.0341,
+        "other_payout": 0.9849,
+        "hit": true
+      },
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 2,
+          "note": "『全⑤⑥複数 ※1機種は7台以上機種から』の『複数』を2機種以上と解釈。90日窓の無情報確率 p_at_least_2=0.782 で、予告に情報がゼロでもほぼ成立する弱い主張である。⚠️ 『1機種は7台以上機種から』という限定は本モジュールの zentaikei_count が扱えない（台数条件を持たない）。この限定こそが予告の情報量なので、答え合わせ時に閾値超え機種の n_machines を目視し、7台以上の機種が含まれていたかを手動で採点する。含まれていなければ、機械判定が hit=true でも予告の核心は外れている。"
+        },
+        "observed_n_models": 2,
+        "candidate_models": 57,
+        "models": [
+          {
+            "machine_name": "天晴!モグモグ風林火山 全国制覇版",
+            "score": 5105.4,
+            "n_machines": 4,
+            "mean_diff": 3238.5,
+            "age_days": 0
+          },
+          {
+            "machine_name": "やじきた道中記参る！",
+            "score": 2397.0,
+            "n_machines": 6,
+            "mean_diff": 2175.0,
+            "n_censored_hi": 1,
+            "n_censored_lo": 0,
+            "censoring_bias": "lower_bound",
+            "max_score_understatement": 647.1,
+            "age_days": 35
+          }
+        ],
+        "n_new_machines_over": 1,
+        "hit": true
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "北斗の拳 転生の章2",
+          "ratio": 3,
+          "source_claim": "『転生&L北斗&エウレカが1/3』",
+          "note": "『転生』の機種名照合: 9/6時点の候補は 北斗の拳 転生の章2(20台)／転生したらスライムだった件(1台)／無職転生(1台)。1/3の対象になるには台数が要るので20台の北斗転生2に確定。30日超え率0.167・mean_score 735.0・rank 15/53 で、名指し3機種の中では唯一実績がある。⚠️ 本文が『転生は恐らく減台』と述べており、9/7 の設置台数は20台より少ない可能性がある。"
+        },
+        "n_machines": 9,
+        "ratio": 3,
+        "top_k": 3,
+        "model_top_k_mean_diff": 3587.3,
+        "hall_top_quantile_mean_diff": 1906.8,
+        "excess_vs_hall_quantile": 1680.5,
+        "model_mean_diff": -132.1,
+        "n_over_hall_quantile": 3,
+        "hit": true,
+        "model_named_score": -218.6,
+        "model_named_rank": 40
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "スマスロ北斗の拳",
+          "ratio": 3,
+          "source_claim": "『転生&L北斗&エウレカが1/3』",
+          "note": "『L北斗』の機種名照合: 9/6時点で北斗系は 北斗の拳 転生の章2(20台)／スマスロ北斗の拳(13台)。『L』はスマスロ（6.5号機/スマート遊技機）の接頭辞として使われており、転生とは別に挙げられているので スマスロ北斗の拳 に確定。30日超え率 0.0（30日間で一度も+1800を超えていない）・mean_score 16.2・rank 19/53。⚠️ 本文が『本館に移動で8台に』と述べており、9/7 は13台→8台になる見込み。min_machines=3 は満たすが台数減は機種平均のばらつきを大きくする。"
+        },
+        "n_machines": 8,
+        "ratio": 3,
+        "top_k": 3,
+        "model_top_k_mean_diff": 4191.0,
+        "hall_top_quantile_mean_diff": 1904.2,
+        "excess_vs_hall_quantile": 2286.8,
+        "model_mean_diff": 1601.5,
+        "n_over_hall_quantile": 5,
+        "hit": true,
+        "model_named_score": 1653.4,
+        "model_named_rank": 3
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "交響詩篇エウレカセブン HI-EVOLUTION ZERO TYPE‐ART",
+          "ratio": 3,
+          "source_claim": "『転生&L北斗&エウレカが1/3』",
+          "note": "『エウレカ』の機種名照合: 9/6時点で該当は1機種のみ(25台)で一意に確定。30日超え率 0.0・mean_score 106.2・rank 14/53。⚠️ project-0812-rakuen-fieldobs でエウレカの『フェイク並び』疑惑（末尾偽装と同型）を記録済み。台番号別の分布を必ず確認し、機種平均だけで判定しない。本文は『増減台不明』としている。"
+        },
+        "n_machines": 25,
+        "ratio": 3,
+        "top_k": 9,
+        "model_top_k_mean_diff": 2471.4,
+        "hall_top_quantile_mean_diff": 1920.4,
+        "excess_vs_hall_quantile": 551.1,
+        "model_mean_diff": 541.4,
+        "n_over_hall_quantile": 11,
+        "hit": true,
+        "model_named_score": 773.9,
+        "model_named_rank": 9
+      },
+      {
+        "type": "category_share",
+        "claim": {
+          "type": "category_share",
+          "category": "jug_flag",
+          "min_share": 0.2,
+          "note": "『ジャグ20%⑤⑥』。⚠️ 8/17 の登録と同じく定義が予告と食い違う。予告は『ジャグ設置台のうち20%が⑤⑥』だが、本モジュールの category_share は『閾値超え機種のうち何割がジャグか』である。ジャグは14〜62台の大台数機種ばかりで機種平均が+1800に届くことはまずなく（実際30日間で超え0回）、ほぼ確実に false になる代理指標である。外れても予告の反証にはならない。8/7・8/17 との系列比較のために形だけ残す。忠実な検定は答え合わせ時に RB確率ベースで手動採点する（feedback-evaluate-beyond-diff）。"
+        },
+        "observed_share": 0.0,
+        "in_category": 0,
+        "n_over": 2,
+        "hit": false
+      }
+    ]
+  },
   "announce_digest": "e9a9343cb0358237"
 }

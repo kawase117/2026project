@@ -12,6 +12,7 @@ goes through the date-window search instead, which is not subject to that limit.
 
 import argparse
 import json
+import re
 import subprocess
 import sqlite3
 import sys
@@ -80,6 +81,47 @@ def registered_targets():
     return targets
 
 
+def is_forecast(text):
+    """予告か。結果報告・速報は除く。
+
+    初版は本文に「明日」があることを条件にしていたが、これは取りこぼす。
+    999999Q9Q の蒲田7予告は「火曜日のメガななは角◯仕掛け」と曜日で書き、
+    「明日」を使わない。実際 2026-09-08 の蒲田7予告（角番仕掛けという
+    具体的な主張つき）を検知が落とした。9/8ヘッダを持つ投稿10件が
+    「明日」を含まない。
+
+    かわりに、これらのアカウントが見出しで使い分けている語で判定する。
+    「予想」「予告」「明日」があれば予告、「速報」「結果」があれば報告。
+    報告の判定を先に置くのは、「明日も頼む」で終わる速報があるため。
+    """
+    if not text:
+        return False
+    head = "\n".join(text.splitlines()[:2])
+    if any(word in head for word in ("速報", "結果", "📈")):
+        return False
+    return any(word in text for word in ("明日", "予想", "予告"))
+
+
+def target_date_of(text, posted):
+    """予告が指す対象日。見出しに M/D があればそれ、無ければ翌日。
+
+    「9/7 楽園蒲田」のように見出しで対象日を宣言する書き方と、
+    「明日は…」しか書かない書き方の両方がある。前者を優先する。
+    """
+    match = re.match(r"^\s*(\d{1,2})/(\d{1,2})", text)
+    if match:
+        month, day = int(match.group(1)), int(match.group(2))
+        year = posted.year
+        # 12月末の投稿が1月を指す場合に年をまたぐ
+        if posted.month == 12 and month == 1:
+            year += 1
+        try:
+            return date(year, month, day)
+        except ValueError:
+            pass
+    return posted + timedelta(days=1)
+
+
 def mention_strength(text, header, keywords, n_halls_mentioned):
     """その投稿がそのホール『についての』ものらしさ。0 なら言及なし。
 
@@ -124,21 +166,22 @@ def unregistered_announcements(connection, today):
     registered = registered_targets()
     since = (today - timedelta(days=ANNOUNCE_LOOKBACK_DAYS)).isoformat()
     rows = connection.execute(
-        "SELECT posted_at_jst, COALESCE(full_text, tweet_text), tweet_url FROM seen_tweets "
-        "WHERE posted_at_jst >= ? AND COALESCE(full_text, tweet_text) LIKE '%明日%'",
+        "SELECT posted_at_jst, COALESCE(full_text, tweet_text), tweet_url FROM seen_tweets WHERE posted_at_jst >= ?",
         (since,),
     ).fetchall()
 
     missing = {}
     for posted_at, text, url in rows:
+        if not is_forecast(text):
+            continue
         posted = date.fromisoformat(posted_at[:10])
         # 前夜の投稿は翌営業日が対象。当日昼の投稿も同じ日を指すことがあるが、
         # 前夜のパターンだけを見る（登録が間に合う唯一の窓なので）。
-        target = posted + timedelta(days=1)
+        target = target_date_of(text, posted)
         # 明日を対象とする予告こそ拾う。初版はここで `target > today` を除外して
         # おり、**まだ register できる唯一の分**を落としていた。対象日を過ぎた分は
         # 報告しても RETROACTIVE_NOTES 送りにしかならないので、優先度は逆である。
-        if target > today + timedelta(days=1):
+        if target > today + timedelta(days=1) or target < today - timedelta(days=ANNOUNCE_LOOKBACK_DAYS):
             continue
         header = "\n".join(text.splitlines()[:2])
         n_halls = sum(1 for words in HALL_KEYWORDS.values() if any(word in text for word in words))

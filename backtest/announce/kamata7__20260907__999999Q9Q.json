@@ -58,6 +58,103 @@
       "reason": "立ち回りの助言であり定量主張ではない。⚠️ ただし新台は閾値超え率が既存台の2.2倍あるため、zentaikei_count の hit を新台が作った場合は内訳を明記すること。"
     }
   ],
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20260907",
+    "hall_baseline_mean_diff": 478.3,
+    "hall_n_machines": 715,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 1,
+          "note": "『恒例の全🪐機種』。本文は台数を明示していないので最小の1で登録する（『複数』とは書いていない。読み込んで2にするのは主張の水増しになる）。⚠️ p_at_least_1=1.00 なので反証不能。答え合わせでは hit の真偽より、超えた機種の内訳（台数・メイン/バラの別）を見て『メインからバラまで』という本文の記述と照合すること。"
+        },
+        "observed_n_models": 10,
+        "candidate_models": 65,
+        "models": [
+          {
+            "machine_name": "スマスロ炎炎ノ消防隊2",
+            "score": 7400.6,
+            "n_machines": 12,
+            "mean_diff": 4825.0,
+            "age_days": 217
+          },
+          {
+            "machine_name": "からくりサーカス",
+            "score": 5313.7,
+            "n_machines": 7,
+            "mean_diff": 4885.7,
+            "age_days": 427
+          },
+          {
+            "machine_name": "化物語",
+            "score": 4330.9,
+            "n_machines": 5,
+            "mean_diff": 4200.0,
+            "age_days": 272
+          },
+          {
+            "machine_name": "ToLOVEるダークネス TRANCE ver.8.7",
+            "score": 3615.6,
+            "n_machines": 7,
+            "mean_diff": 3100.0,
+            "age_days": 427
+          },
+          {
+            "machine_name": "戦国コレクション6",
+            "score": 3019.7,
+            "n_machines": 6,
+            "mean_diff": 3033.3,
+            "age_days": 63
+          },
+          {
+            "machine_name": "彼女、お借りします",
+            "score": 2799.4,
+            "n_machines": 4,
+            "mean_diff": 2175.0,
+            "age_days": 0
+          },
+          {
+            "machine_name": "モンスターハンターライズ",
+            "score": 2765.9,
+            "n_machines": 9,
+            "mean_diff": 3577.8,
+            "age_days": 427
+          },
+          {
+            "machine_name": "とある魔術の禁書目録2",
+            "score": 2519.6,
+            "n_machines": 6,
+            "mean_diff": 2600.0,
+            "age_days": 35
+          },
+          {
+            "machine_name": "モグモグ風林火山 大海戦の巻",
+            "score": 2491.0,
+            "n_machines": 4,
+            "mean_diff": 3000.0,
+            "age_days": 0
+          },
+          {
+            "machine_name": "からくりサーカス2",
+            "score": 2000.7,
+            "n_machines": 7,
+            "mean_diff": 2342.9,
+            "age_days": 63
+          }
+        ],
+        "n_new_machines_over": 2,
+        "hit": true
+      }
+    ]
+  },
   "announce_digest": "485cd9798b53c182"
 }
