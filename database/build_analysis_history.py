@@ -3,6 +3,11 @@
 再計算できる派生値なので、定義を変えたら version を上げて入れ直す。
 既存の行は書き換えない（過去の結論がどの定義で出たかを残すため）。
 
+⚠️ 位置は machine_layout_history から引く。machine_layout は現行エポックの
+スナップショットなので、過去日に当てると工事後の配置で工事前を測ることになる
+（楽園蒲田 2026-07-06 改装 / 蒲田1 2026-08-03 増台再配置）。v1 はこれを
+machine_layout で計算していた誤りなので破棄した。
+
 ⚠️ 角番ピークは「その日いちばん残差平均が高かった角番」であって、
 ホールが実際に仕掛けた角番ではない。速報が番号を公表した日だけが正解ラベルで、
 それは observed_facts 側に入る。両者を突き合わせて初めて的中率が出る。
@@ -29,6 +34,7 @@ KAKUBAN_PARAMS = {
     "residual": "同日同機種の平均差枚を引いた残差",
     "min_per_rank": 12,
     "rank_source": "MIN(rank_from_min, rank_from_max)",
+    "layout_table": "machine_layout_history（その日のエポックを引く）",
     "segments": ["AT等", "ノーマル", "全館", "2F全体", "3F全体", "AT@2F", "AT@3F"],
 }
 NARABI_PARAMS = {
@@ -36,6 +42,7 @@ NARABI_PARAMS = {
     "block_mean_threshold": 1800.0,
     "all_above": "ホール中央値",
     "same_section_required": True,
+    "layout_table": "machine_layout_history（その日のエポックを引く）",
     "overlap": "平均の高い方だけを採る",
     "frozen_in": "backtest/announce/rakuen__20260908__kawasakislot.json",
 }
@@ -49,7 +56,8 @@ def kakuban_rows(connection, date):
     rows = connection.execute(
         "SELECT m.machine_number, m.machine_name, MIN(l.rank_from_min, l.rank_from_max), "
         "m.diff_coins_normalized FROM machine_detailed_results m "
-        "JOIN machine_layout l ON l.machine_number = m.machine_number "
+        "JOIN machine_layout_history l ON l.machine_number = m.machine_number "
+        "  AND m.date >= l.valid_from AND (l.valid_to IS NULL OR m.date <= l.valid_to) "
         "WHERE m.date=? AND m.games_normalized>0 AND l.rank_from_min IS NOT NULL",
         (date,),
     ).fetchall()
@@ -127,12 +135,12 @@ def main():
     kaku_id = store.register_definition(
         st,
         "kakuban_residual",
-        "v1",
+        "v2",
         KAKUBAN_PARAMS,
         "角番別の残差平均とピーク。残差は同日同機種の平均差枚を引いたもの。",
     )
     narabi_id = store.register_definition(
-        st, "narabi_blocks", "v1", NARABI_PARAMS, "連番4台ブロックの成立数。閾値は 2026-09-08 の予告登録時に凍結。"
+        st, "narabi_blocks", "v2", NARABI_PARAMS, "連番4台ブロックの成立数。閾値は 2026-09-08 の予告登録時に凍結。"
     )
 
     halls = [h.strip() for h in args.halls.split(",") if h.strip()]

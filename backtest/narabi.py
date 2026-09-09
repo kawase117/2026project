@@ -13,6 +13,12 @@
 判定の定義（凍結時に固定、実績を見る前に決めた）:
     - 同一 section 内の連続する台番号 n, n+1, ..., n+k-1 を候補にする。
       section をまたぐ連番は物理的に隣接しないので除く。
+    - section は machine_layout_history から**その日のエポック**を引く。
+      machine_layout は現行エポックのスナップショットしか持たないので、過去日に
+      当てると工事後の配置で工事前を測ることになる。楽園蒲田は 2026-07-06 の改装で
+      section 定義が書き換わっており、実際にこの取り違えで端番効果が
+      +1.127pp → +0.211pp と「消えた」事故が起きている
+      （database/CLAUDE.md、backtest/results/regime/FINDINGS.md 追試10）。
     - 「成立」= ブロックの全台が当日ホール中央値を上回り、かつ
       ブロック平均差枚が +1800 以上。
     - 重なるブロックは平均の高い方だけを採り、重複計上しない。
@@ -49,7 +55,10 @@ def load_day(connection: sqlite3.Connection, date: str) -> list[dict]:
         SELECT m.machine_number, m.machine_name, m.diff_coins_normalized,
                m.games_normalized, l.section
         FROM machine_detailed_results AS m
-        LEFT JOIN machine_layout AS l ON l.machine_number = m.machine_number
+        LEFT JOIN machine_layout_history AS l
+               ON l.machine_number = m.machine_number
+              AND m.date >= l.valid_from
+              AND (l.valid_to IS NULL OR m.date <= l.valid_to)
         WHERE m.date = ? AND m.games_normalized > 0
         """,
         (date,),
