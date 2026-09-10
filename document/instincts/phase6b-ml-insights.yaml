@@ -1,0 +1,100 @@
+# Phase 6B ML Insights Export
+# Generated: 2026-05-08
+# Project: pachinko-analyzer
+# Session: Phase 6B実装完了セッション
+
+---
+id: tree-models-need-feature-engineering
+trigger: "when implementing tree-based ML models"
+confidence: 0.9
+domain: ml-feature-engineering
+source: session-observation
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# ツリーベースモデルは特徴量エンジニアリングで初めて力を発揮する
+
+## 背景
+XGBoostなどのツリーベースモデルは、ワンホットエンコーディングのような単純な二値特徴では線形モデル（ロジスティック回帰）と同等の性能にとどまる（Δ +0%）。
+
+## アクション
+相互作用特徴（interactions）や非線形関係を明示的に特徴量として追加することで、ツリーが効率的に分割でき、大幅な性能改善が実現される。
+
+Phase 6B実装では、複合特徴量（target encoding + interactions）により +5.9% AUC改善を達成。
+
+## 例
+- ❌ ワンホットのみ: XGBoost AUC = 0.4908（ロジスティック同等）
+- ✅ 複合特徴量: XGBoost AUC = 0.5494（+5.9%改善）
+
+---
+id: target-encoding-dimension-reduction
+trigger: "when dealing with high-cardinality categorical features"
+confidence: 0.85
+domain: ml-feature-engineering
+source: session-observation
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# ターゲットエンコーディングで次元を削減しながら信号を保持
+
+## 背景
+ワンホットエンコーディングは高カーディナリティ特徴（機種数など）で3000+次元に膨張し、計算コスト増加・過学習リスク上昇につながる。
+
+## アクション
+ターゲットエンコーディング（各カテゴリの目的変数平均）を使うことで：
+- 次元削減: 3100+ → 10 次元
+- 信号保持: 目的変数との関係を数値化
+- 相互作用生成: エンコード値の掛け算で交互作用特徴を作成
+
+Phase 6B実装では +5.6% AUC改善を達成。
+
+## 設計パラメータ
+- smoothing=1.0: グローバル平均への正則化強度
+
+---
+id: shallow-trees-prevent-overfitting
+trigger: "when training tree-based models on moderate-sized datasets"
+confidence: 0.8
+domain: ml-hyperparameter-tuning
+source: session-observation
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# 浅いツリー + 保守的な学習率で過学習防止
+
+## 背景
+XGBoostなどでデフォルトハイパーパラメータ（max_depth=6, learning_rate=0.3）を使うと、中程度のサイズ（4000-5000サンプル）のデータセットで過学習しやすい。
+
+## アクション
+Phase 6BではPCで以下を採用：
+- max_depth=3: ツリーの複雑さを制限
+- learning_rate=0.01: 保守的な更新（勾配をゆっくり適用）
+- early_stopping=10 rounds: 検証指標がプラトーしたら停止
+
+これにより汎化性能が向上し、テストセットでの一貫した性能改善を実現。
+
+---
+id: realistic-ml-improvement-targets
+trigger: "when setting AUC improvement goals for Phase 6"
+confidence: 0.75
+domain: ml-project-planning
+source: session-observation
+project_id: pachinko-analyzer
+project_name: pachinko-analyzer
+
+# 現実的なAUC改善目標: 0.56-0.58（0.65ではない）
+
+## 背景
+Phase 6の目標AUC 0.65は、外部特徴（曜日別統計、時系列集計）やメタラーナーなどの複雑な手法が必要で、Phase 6Bでは達成不可能。
+
+## アクション
+Phase 6B（ターゲットエンコーディング + XGBoost）の現実的なターゲット: **0.56-0.58**
+- Step 4実装で0.549～0.551程度達成予想
+- Phase 6C（外部特徴 + ホール別モデル）で0.56-0.58達成候補
+
+合成データでの実装実証: 0.549 AUC
+
+## 含意
+段階的改善が重要。無理な目標設定は方向性を誤らせる。
+
+---
