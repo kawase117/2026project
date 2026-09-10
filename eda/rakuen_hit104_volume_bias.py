@@ -47,11 +47,16 @@ import numpy as np
 import pandas as pd
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-DB_PATH = PROJECT_ROOT / "db" / "楽園蒲田店.db"
-OUT_DIR = Path(__file__).parent / "results" / "rakuen_hit104_volume_bias"
 
+# ホールと期間は引数で差し替えられる。既定は初出時（2026-07-28）の楽園の設定のままで、
+# 引数なしで実行すれば当時と同じ結果が再現する。
+DEFAULT_HALL = "楽園蒲田店"
+DEFAULT_SLUG = "rakuen"
 DATE_START = "20250101"
 DATE_END = "20260727"
+
+DB_PATH = PROJECT_ROOT / "db" / f"{DEFAULT_HALL}.db"
+OUT_DIR = Path(__file__).parent / "results" / f"{DEFAULT_SLUG}_hit104_volume_bias"
 
 # 反実仮想の z 分布を機種ごとに推定するのに必要な最小行数。少ないと経験分布が
 # ガタつくだけなので、行数の足りない機種は (2)(3) の集計から外す（(1) には使う）。
@@ -241,5 +246,23 @@ def main() -> None:
     print(f"\n出力: {OUT_DIR}")
 
 
+def _configure(hall: str, slug: str, start: str, end: str) -> None:
+    """ホール・期間を差し替える。モジュール定数を書き換えるだけの薄い層。"""
+    global DB_PATH, OUT_DIR, DATE_START, DATE_END
+    DB_PATH = PROJECT_ROOT / "db" / f"{hall}.db"
+    OUT_DIR = Path(__file__).parent / "results" / f"{slug}_hit104_volume_bias"
+    DATE_START, DATE_END = start, end
+
+
 if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--hall", default=DEFAULT_HALL)
+    parser.add_argument("--slug", default=DEFAULT_SLUG, help="出力ディレクトリ名の接頭辞")
+    parser.add_argument("--start", default=DATE_START)
+    parser.add_argument("--end", default=DATE_END)
+    args = parser.parse_args()
+    _configure(args.hall, args.slug, args.start, args.end)
+    print(f"対象: {args.hall}  {args.start}〜{args.end}")
     main()
