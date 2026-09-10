@@ -1,64 +1,63 @@
 ---
 name: agent-orchestration
-description: エージェント選択・並列実行・マルチパースペクティブ分析の手順ガイド。複雑な実装やレビュー時に使用。
+description: このプロジェクトで実際に起動できるサブエージェントとレビュー用スキルの一覧と選び方。「どのエージェントに投げるか」「並列に回すべきか」を判断するときに参照する。存在しないエージェント名を呼んで失敗するのを防ぐことが主目的。
 ---
 
 # Agent Orchestration
 
-## Available Agents
+> **2026-09-11 全面改訂**
+> 旧版は `everything-claude-code:planner` など汎用エージェント10種を掲載していたが、
+> **これらは起動できない**。プラグイン `everything-claude-code@2.0.0-rc.1` の
+> `.claude-plugin/plugin.json` は `skills` と `commands` しか宣言しておらず、
+> `agents/` 配下の48ファイルは登録されていない。旧版の表は全滅していた。
 
-### プロジェクト固有エージェント(`~/.claude/agents/`に実体あり)
+## 実在するサブエージェント
 
-| Agent | Purpose | When to Use |
-|-------|---------|-------------|
-| pachinko-domain-analyst | ホール行動・ゾロ目・曜日・DD・異常検知の解釈 | ドメイン固有の統計解釈が必要な時 |
-| pachinko-ml-strategist | 仮説設計→特徴量→訓練→評価→解釈の全サイクル | MLサイクル全体を回す時 |
-| simulator-calibration-agent | シミュレーターの設計・キャリブレーション・Layer構成 | シミュレーター設計時 |
+### プロジェクト固有（実体は `.claude/agents/` — ユーザーグローバルではない）
 
-### 汎用エージェント(`everything-claude-code`プラグイン提供、`everything-claude-code:<name>`形式で起動)
+| Agent | 用途 |
+|---|---|
+| `pachinko-domain-analyst` | ホール行動・ゾロ目・曜日・DD・異常検知のドメイン解釈 |
+| `pachinko-ml-strategist` | 仮説設計→特徴量→訓練→評価→解釈のMLサイクル統括 |
+| `simulator-calibration-agent` | シミュレーターの設計・キャリブレーション・Layer構成 |
 
-| Agent | Purpose | When to Use |
-|-------|---------|-------------|
-| everything-claude-code:planner | Implementation planning | Complex features, refactoring |
-| everything-claude-code:architect | System design | Architectural decisions |
-| everything-claude-code:tdd-guide | Test-driven development | New features, bug fixes |
-| everything-claude-code:code-reviewer | Code review | After writing code |
-| everything-claude-code:security-reviewer | Security analysis | Before commits |
-| everything-claude-code:build-error-resolver | Fix build errors | When build fails |
-| everything-claude-code:e2e-runner | E2E testing | Critical user flows |
-| everything-claude-code:refactor-cleaner | Dead code cleanup | Code maintenance |
-| everything-claude-code:doc-updater | Documentation | Updating docs |
-| everything-claude-code:rust-reviewer | Rust code review | Rust projects(本プロジェクトはPython中心のため出番は稀) |
+### 組み込み
 
-## Immediate Agent Usage
+| Agent | 用途 |
+|---|---|
+| `Explore` | 多数のファイル・命名規約を横断する読み取り専用の探索。結論だけ欲しいとき |
+| `Plan` | 実装方針の設計。手順・重要ファイル・トレードオフを返す |
+| `general-purpose` | 上記に当てはまらない多段タスク |
+| `claude-code-guide` | Claude Code / Agent SDK / Claude API 自体の使い方 |
+| `codex:codex-rescue` | Codexへの委任（**read-onlyサンドボックス**。調査・レビュー限定、書き込み不可） |
 
-No user prompt needed:
-1. Complex feature requests - Use **everything-claude-code:planner**
-2. Code just written/modified - Use **everything-claude-code:code-reviewer**
-3. Bug fix or new feature - Use **everything-claude-code:tdd-guide**
-4. Architectural decision - Use **everything-claude-code:architect**
-5. パチンコ分析ドメインの解釈が必要 - Use **pachinko-domain-analyst** / **pachinko-ml-strategist** / **simulator-calibration-agent**
+## レビューはエージェントでなくスキルで行う
 
-## Parallel Task Execution
+旧版が挙げていた `code-reviewer` / `security-reviewer` / `build-error-resolver` /
+`python-reviewer` は **いずれも存在しない**。代わりに以下を使う。
 
-ALWAYS use parallel Task execution for independent operations:
+| やりたいこと | 使うもの |
+|---|---|
+| 変更差分のレビュー | `/code-review`（level: low〜max、`ultra` はクラウド多エージェント） |
+| セキュリティレビュー | `/security-review` |
+| 重複・冗長の整理と適用 | `/simplify` |
 
-```markdown
-# GOOD: Parallel execution
-Launch 3 agents in parallel:
-1. Agent 1: Security analysis of auth module
-2. Agent 2: Performance review of cache system
-3. Agent 3: Type checking of utilities
+## 起動の判断
 
-# BAD: Sequential when unnecessary
-First agent 1, then agent 2, then agent 3
-```
+**サブエージェントは、ユーザー・CLAUDE.md・スキルのいずれかが求めたときにだけ起動する。**
+旧版の「プロンプト不要で常に planner を起動」「独立操作は常に並列Task」は現在の運用と衝突するので破棄した。
+各起動はコンテキストをゼロから作り直すため、こちらで持っている情報で足りる作業は自分で片付ける。
 
-## Multi-Perspective Analysis
+起動を検討してよい場面:
 
-For complex problems, use split role sub-agents:
-- Factual reviewer
-- Senior engineer
-- Security expert
-- Consistency reviewer
-- Redundancy checker
+- 探索範囲が広く、ファイル本文ではなく結論だけが要る → `Explore`
+- ドメイン解釈そのものが成果物 → `pachinko-domain-analyst`
+- 実装の丸投げ、または第二の診断が欲しい → `codex:codex-rescue`
+  （委任前に `codex-prompt-precision` スキルでプロンプトを自己チェックする）
+
+複数を同時に走らせるのは、互いに依存がなく、かつユーザーが並列を望んでいるときに限る。
+
+## 関連
+
+- `codex-prompt-precision` — Codex委任前のプロンプト自己チェック（必須）
+- `development-workflow`（グローバル）— リサーチ→計画→TDD→レビュー→コミットの流れ

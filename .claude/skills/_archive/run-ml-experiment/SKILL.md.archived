@@ -1,0 +1,181 @@
+---
+name: run-ml-experiment
+description: LTR実験(tail_ltr_split_rule_nextday_gpu.py)の起動前チェック・引数検証・バックグラウンド実行・監視・結果ロギングの標準手順。walk-forward実行前および長時間MLジョブの起動時に使用。
+merged_from:
+  - ltr-pipeline-guide
+  - ml-experiment-logger
+evolved_from:
+  - duplicate-background-process-detection
+  - catboost-walkforward-runtime-expectation
+  - window-name-vs-feature-name-confusion
+  - python-module-vs-script-execution
+  - is-top2-must-be-within-expert
+  - 2fa-exclusion-is-hardcoded-default-not-data-driven
+  - bottom3-does-not-require-new-model
+  - top3-output-already-implemented-per-expert
+  - ltr-replaces-binary-classifier-for-ranking
+  - cross-sectional-normalization-for-machine-ranking
+  - machine-type-f1-structural-limit
+  - exp-structured-run-json
+  - exp-html-fixed-sections
+  - exp-jsonl-index-search
+  - progress-reporting-required-in-all-loops
+confidence: 0.93
+---
+
+# run-ml-experiment
+
+LTR実験を安全に起動し、ログを標準形式で保存するまでの一連の手順。
+旧 `ltr-pipeline-guide`（引数・実行形式）と旧 `ml-experiment-logger`（ロギング標準）を統合したもの。
+
+> **状態: 休止中（2026-09-11）**
+> `ml/` は直近60日で3ファイル変更のみ。ML再開時に本スキルを `.claude/skills/` 直下へ戻す。
+> スクリプト実体は `ml/last_digit/tail_ltr_split_rule_nextday_gpu.py` に現存。
+
+## トリガー
+- `tail_ltr_split_rule_nextday_gpu.py` を実行しようとするとき
+- `--windows-wed` / `--windows-nonwed` を指定するとき
+- LTRのランクターゲット（is_top2等）を定義するとき
+- 長時間訓練ジョブをバックグラウンド実行するとき
+- 50件以上の実験結果を検索・フィルタリングするとき
+- GPUメモリ警告が出たとき
+
+---
+
+## Step 1: 重複プロセス検出（必須）
+
+```powershell
+Get-WmiObject Win32_Process |
+  Where-Object {$_.CommandLine -like "*tail_ltr*"} |
+  Select-Object ProcessId, CommandLine
+```
+
+重複が1件でもあれば実行を中止。最古のPIDを残して他をkill。
+
+```powershell
+Stop-Process -Id <pid1>, <pid2> -Force
+```
+
+`"less than 75% GPU memory available"` が出たら真っ先にここを疑う。
+
+## Step 2: 引数の事前検証
+
+### 2-1. 実行形式（最頻出の事故）
+
+```
+誤: python ml/last_digit/tail_ltr_split_rule_nextday_gpu.py
+正: python -m ml.last_digit.tail_ltr_split_rule_nextday_gpu
+```
+
+`ml/` はパッケージ（`__init__.py` あり）。直接実行では相対インポートが解決できず `ModuleNotFoundError`。
+なお本プロジェクトの `python` は Windows Store のダミーに解決されることがあるため
+`venv\Scripts\python.exe -m ...` を明示するのが安全。
+
+### 2-2. `--windows-*` に渡すのは「訓練期間名」であって特徴量名ではない
+
+```
+有効: full_2025 / recent_60d / recent_90d / opening_early / regime1_full
+無効: roll28, roll7 などの特徴量名 → 全候補が unavailable になる
+```
+
+### 2-3. ターゲット定義
+
+```
+is_top2 は必ず within-expert（エキスパート内上位2）で定義する。
+  → グローバルtop2ではなくセグメント内相対ランク
+  → 2F_N / 3F_A / 3F_N で独立して計算
+
+2F_A は訓練・テスト双方から除外（ハードコードされたデフォルト）。
+  → テスト出力に 2F_A が無いのは正常。データ由来の除外ではない。
+```
+
+### 2-4. 再実装しないもの
+
+```
+latest_test_top3.csv → 各エキスパートのTOP3推薦は実装済み
+BOTTOM3 → 新規モデル不要。スコア下位を逆順で取るだけ。
+machine_type の F1 <= 0.10 → 構造的な学習不可能性。
+  binary classifier を使い続けずLTRに切り替える。
+```
+
+### チェックリスト
+
+```
+[ ] python -m 形式か（venv の python.exe を明示したか）
+[ ] --windows-* が期間名か（特徴量名を入れていないか）
+[ ] is_top2 が within-expert か
+[ ] 重複プロセスがゼロか
+```
+
+## Step 3: 実行（バックグラウンド）
+
+```powershell
+Start-Process python `
+  -ArgumentList "-m ml.last_digit.tail_ltr_split_rule_nextday_gpu --windows-wed full_2025 --windows-nonwed recent_60d" `
+  -NoNewWindow -RedirectStandardOutput "logs\exp_$(Get-Date -Format 'yyyyMMdd_HHmmss').log"
+```
+
+ループ内には必ず進捗を出す。出さないと生死判定ができない。
+
+```python
+for i, eval_date in enumerate(eval_dates):
+    if i % 10 == 0:
+        print(f"[{i}/{len(eval_dates)}] Processing {eval_date} ...")
+```
+
+## Step 4: 監視（30分ごと）
+
+```powershell
+Get-Item "db\experiments\model_comparison\tail_ltr_catboost*" -ErrorAction SilentlyContinue
+Get-WmiObject Win32_Process | Where-Object {$_.CommandLine -like "*tail_ltr*"} | Measure-Object
+```
+
+**所要時間の目安**: testperiod 143日 × expert 3種（2F_N / 3F_A / 3F_N）≒ 430回の再学習。
+GPU独占状態で 2〜3時間。出力 `_testperiod_daily_*.csv` が生成されたら正常完了。
+
+## Step 5: 結果のロギング
+
+### 実験ごとのJSON
+
+```json
+{
+  "run_id": "catboost_v2_YYYYMMDD_HHMMSS",
+  "model": "CatBoostRanker",
+  "target": "is_top2_within_expert",
+  "features": ["roll7_total_diff", "lag7_digit_diff"],
+  "windows": {"wed": "full_2025", "nonwed": "recent_60d"},
+  "results": {"hit_at_1": 0.31, "hit_at_2": 0.58, "ndcg": 0.72, "lift_at_1": 2.2},
+  "runtime_hours": 2.4,
+  "timestamp": "YYYY-MM-DDTHH:MM:SS"
+}
+```
+
+### JSONLインデックス（50件以上の検索用）
+
+追記先は **`ml/experiments/results/index.jsonl`**。
+
+```bash
+venv/Scripts/python.exe -c "
+import json
+with open('ml/experiments/results/index.jsonl') as f:
+    for line in f:
+        r = json.loads(line)
+        if r['results']['hit_at_1'] > 0.3:
+            print(r['run_id'], r['results'])
+"
+```
+
+### HTMLレポートの固定セクション
+
+```
+1. 実験概要（モデル・ターゲット・特徴量リスト）
+2. 評価結果（hit@1, hit@2, NDCG, lift@1）
+3. エキスパート別ブレークダウン
+4. 前回実験との比較（差分表示）
+5. 次のアクション（改善候補）
+```
+
+## 関連
+
+- 評価設計・指標選択そのものは `pachinko-ml-evaluation` を参照（同じく休止中）
+- ハイパーパラメータは `ml-hyperparameter-guide`、特徴量は `pachinko-ml-feature-engineering`

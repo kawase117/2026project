@@ -1,6 +1,6 @@
 ---
 name: hall-eda-scaffold
-description: 既存ホールのEDAスクリプトを別ホール/別軸へ複製・改変する際の定型手順(共通ユーティリティの再利用・命名規約・重複確認)をガイドする。eda/配下に221本以上あるスクリプトを都度ゼロから書き直すのではなく、eda/core.py・eda/briefing_common.pyの既存関数を優先して呼び出す。
+description: 既存ホールのEDAスクリプトを別ホール/別軸へ複製・改変する際の定型手順(共通ユーティリティの再利用・命名規約・重複確認)をガイドする。eda/配下に222本あるスクリプトを都度ゼロから書き直すのではなく、eda/core.py・eda/briefing_common.pyの既存関数を優先して呼び出す。
 ---
 
 # Hall EDA Scaffold Skill
@@ -39,7 +39,7 @@ description: 既存ホールのEDAスクリプトを別ホール/別軸へ複製
        sys.stdout.reconfigure(encoding="utf-8")
    ```
 
-5. **命名規約**: `<ホール略称>_<分析軸>_<用途>.py`(例: `kamata7_kakuban_dd_precision_eda.py`)。ホール略称は既存スクリプトと揃える(mitoya, kamata1, kamata7, rakuen等)。
+5. **命名規約**: `<ホール略称>_<分析軸>_<用途>.py`(例: `kamata7_dow_kakuban_segment_analysis.py`)。ホール略称は既存スクリプトと揃える(mitoya, kamata1, kamata7, rakuen等)。
 
 ## やらないこと
 - ホール横断でのプール分析による「共通法則」の探索(`feedback-no-cross-hall-pooling`instinctにより非推奨)。横展開はあくまで「同じ手法を各ホール独立に適用する」ためであり、結果を合算して一般化しない。
