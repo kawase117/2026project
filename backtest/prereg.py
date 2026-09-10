@@ -35,6 +35,13 @@ ALLOWED_FILTER_FIELDS = {
     "rank_from_aisle",
     "rank_from_min",
     "rank_from_max",
+    # 特定の台を母集団から外すため（{"exclude": [..]}）。周知の鉄台が
+    # ルールの成績を作っていないかを確かめる用途。名指しの台を *選ぶ* ために
+    # 使うと、それは事前登録ではなく後知恵の1台指定になるので注意。
+    "machine_number",
+    # 直近の増台（既存機種の台数増、delta>=3）からの経過日数。0 は当日で、
+    # 前日時点では知り得ないので min:1 以上で使うこと。
+    "days_since_increase",
 }
 
 ALLOWED_SCORES = {
@@ -91,9 +98,18 @@ class PreRegistration:
         source_instinct: 根拠となった instinct の id（自己参照の出所を明示する）。
         universe: 比較の母集団。「このルールが無ければ選んでいたであろう台の集合」。
             例: ジャグ全台。baseline（同日平均）はこの集合から計算する。
-        eligibility: universe をさらに絞る条件。{field: value | [values] | {"min":..,"max":..}}
+        eligibility: universe をさらに絞る条件。{field: value | [values] | {"min":..,"max":..,"exclude":[..]}}
             universe と同一にすると baseline と一致しエッジが定義上ゼロになるので、
             必ず universe より狭く（または score で順位付けして）指定すること。
+            **履歴側にも適用される**ので、日によって値が変わる列（増台からの経過日数など）を
+            ここに置くと lookback 窓の行がほとんど消える。そういう条件は today_eligibility へ。
+        today_eligibility: **対象日の候補集合にだけ**適用する条件。既定は空。
+            eligibility との違いは履歴に適用されないこと。「直近7日に増台があった機種を買う」
+            のようなイベント窓ルールのために 2026-09-11 に追加した。増台の効果は
+            当日〜7日で消えるので、選択条件は対象日について評価しないと意味を持たない
+            （instinct: increase-not-new-and-only-seven-days）。
+            `days_since_increase` を使う場合、min は 1 以上でなければならない。
+            0 は「対象日に増台された」で、前日に凍結する時点では知り得ない。
         entry_days: エントリーする日の条件。dd / weekday を集合で指定。空なら全日。
         score: ALLOWED_SCORES のいずれか。
         lookback_days: score 計算に使う過去日数。対象日は必ず含めない。
@@ -126,6 +142,7 @@ class PreRegistration:
     success_criterion: str
     universe: dict[str, Any] = field(default_factory=dict)
     eligibility: dict[str, Any] = field(default_factory=dict)
+    today_eligibility: dict[str, Any] = field(default_factory=dict)
     entry_days: dict[str, list[int]] = field(default_factory=dict)
     score: str = "none"
     lookback_days: int = 30
@@ -151,6 +168,12 @@ class PreRegistration:
         bad_u = set(self.universe) - ALLOWED_FILTER_FIELDS
         if bad_u:
             raise ValueError(f"universe に未許可のフィールド: {sorted(bad_u)}")
+        bad_t = set(self.today_eligibility) - ALLOWED_FILTER_FIELDS
+        if bad_t:
+            raise ValueError(f"today_eligibility に未許可のフィールド: {sorted(bad_t)}")
+        if self.today_eligibility.get("days_since_increase", {}).get("min", 1) < 1:
+            # 0 は「対象日に増台された」で、前日時点では知り得ない。
+            raise ValueError("today_eligibility['days_since_increase'] の min は 1 以上であること（0 は当日で未知）")
         if self.score == "none" and self.eligibility == self.universe:
             raise ValueError(
                 "score='none' で eligibility == universe だとエッジが定義上ゼロになる。"

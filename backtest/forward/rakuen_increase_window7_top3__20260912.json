@@ -1,0 +1,287 @@
+{
+  "rule_id": "rakuen_increase_window7_top3",
+  "hall": "楽園蒲田店",
+  "freeze_hash": "667a255e6d533806",
+  "target_date": "20260912",
+  "data_asof": "20260909",
+  "lookback_window": [
+    "2026-08-13",
+    "2026-09-12"
+  ],
+  "score": "hist_model_gratio_mean_diff",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ（バックテストは in-sample なので採否根拠にしない）。フォワード30エントリー日を経過した時点で edge 平均が +150枚/台 以上、かつ 7日ブロックbootstrap の 95%CI 下限 > 0 であること。過去日の推定 +1.83pp は4,000G換算で約+220枚/日にあたるので、その7割は取れて然るべき。下回れば増台エッジは棄却し、朝のチートシート（backtest/morning.py）の【2】を落とす。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1551.498661,
+      "history_rows": 77,
+      "machines": [
+        1027,
+        1028,
+        1029,
+        1030,
+        1031,
+        1032,
+        1033,
+        1034,
+        1035,
+        1036,
+        1037,
+        1038,
+        1039,
+        1040,
+        1041,
+        1042,
+        1043,
+        1044,
+        1045,
+        1046,
+        3107,
+        3108,
+        3109,
+        3110,
+        3111,
+        3112
+      ]
+    },
+    {
+      "machine_name": "革命機ヴァルヴレイヴ2",
+      "score": 693.134718,
+      "history_rows": 29,
+      "machines": [
+        1047,
+        1048,
+        1049,
+        1050,
+        1051,
+        1052,
+        1053,
+        1054,
+        1055,
+        1056
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 1027,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1551.498661,
+      "history_days": 77
+    },
+    {
+      "machine_number": 1028,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1551.498661,
+      "history_days": 77
+    },
+    {
+      "machine_number": 1029,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1551.498661,
+      "history_days": 77
+    },
+    {
+      "machine_number": 1030,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1551.498661,
+      "history_days": 77
+    },
+    {
+      "machine_number": 1031,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1551.498661,
+      "history_days": 77
+    },
+    {
+      "machine_number": 1032,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1551.498661,
+      "history_days": 77
+    },
+    {
+      "machine_number": 1033,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1551.498661,
+      "history_days": 77
+    },
+    {
+      "machine_number": 1034,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1551.498661,
+      "history_days": 77
+    },
+    {
+      "machine_number": 1035,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1551.498661,
+      "history_days": 77
+    },
+    {
+      "machine_number": 1036,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1551.498661,
+      "history_days": 77
+    },
+    {
+      "machine_number": 1037,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1551.498661,
+      "history_days": 77
+    },
+    {
+      "machine_number": 1038,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1551.498661,
+      "history_days": 77
+    },
+    {
+      "machine_number": 1039,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1551.498661,
+      "history_days": 77
+    },
+    {
+      "machine_number": 1040,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1551.498661,
+      "history_days": 77
+    },
+    {
+      "machine_number": 1041,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1551.498661,
+      "history_days": 77
+    },
+    {
+      "machine_number": 1042,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1551.498661,
+      "history_days": 77
+    },
+    {
+      "machine_number": 1043,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1551.498661,
+      "history_days": 77
+    },
+    {
+      "machine_number": 1044,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1551.498661,
+      "history_days": 77
+    },
+    {
+      "machine_number": 1045,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1551.498661,
+      "history_days": 77
+    },
+    {
+      "machine_number": 1046,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1551.498661,
+      "history_days": 77
+    },
+    {
+      "machine_number": 3107,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1551.498661,
+      "history_days": 77
+    },
+    {
+      "machine_number": 3108,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1551.498661,
+      "history_days": 77
+    },
+    {
+      "machine_number": 3109,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1551.498661,
+      "history_days": 77
+    },
+    {
+      "machine_number": 3110,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1551.498661,
+      "history_days": 77
+    },
+    {
+      "machine_number": 3111,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1551.498661,
+      "history_days": 77
+    },
+    {
+      "machine_number": 3112,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1551.498661,
+      "history_days": 77
+    },
+    {
+      "machine_number": 1047,
+      "machine_name": "革命機ヴァルヴレイヴ2",
+      "score": 693.134718,
+      "history_days": 29
+    },
+    {
+      "machine_number": 1048,
+      "machine_name": "革命機ヴァルヴレイヴ2",
+      "score": 693.134718,
+      "history_days": 29
+    },
+    {
+      "machine_number": 1049,
+      "machine_name": "革命機ヴァルヴレイヴ2",
+      "score": 693.134718,
+      "history_days": 29
+    },
+    {
+      "machine_number": 1050,
+      "machine_name": "革命機ヴァルヴレイヴ2",
+      "score": 693.134718,
+      "history_days": 29
+    },
+    {
+      "machine_number": 1051,
+      "machine_name": "革命機ヴァルヴレイヴ2",
+      "score": 693.134718,
+      "history_days": 29
+    },
+    {
+      "machine_number": 1052,
+      "machine_name": "革命機ヴァルヴレイヴ2",
+      "score": 693.134718,
+      "history_days": 29
+    },
+    {
+      "machine_number": 1053,
+      "machine_name": "革命機ヴァルヴレイヴ2",
+      "score": 693.134718,
+      "history_days": 29
+    },
+    {
+      "machine_number": 1054,
+      "machine_name": "革命機ヴァルヴレイヴ2",
+      "score": 693.134718,
+      "history_days": 29
+    },
+    {
+      "machine_number": 1055,
+      "machine_name": "革命機ヴァルヴレイヴ2",
+      "score": 693.134718,
+      "history_days": 29
+    },
+    {
+      "machine_number": 1056,
+      "machine_name": "革命機ヴァルヴレイヴ2",
+      "score": 693.134718,
+      "history_days": 29
+    }
+  ],
+  "result": null,
+  "plan_digest": "97a018eb91fc3edf"
+}

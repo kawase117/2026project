@@ -1,0 +1,24 @@
+{
+  "rule_id": "rakuen_increase_window7_top3",
+  "hall": "楽園蒲田店",
+  "hypothesis": "既存機種の増台（delta>=3）があった機種は、増台から7日間だけ同日のホール平均に対して優位になる。新台導入には同じ効果が無い。したがって『直近7日に増台された機種を買う』は独立したエッジを持つ。",
+  "source_instinct": "increase-not-new-and-only-seven-days（2026-09-11）。同じ改装日に台数を触られていない機種を対照にしたイベントスタディ 10ホール n=160: 事前30日 +0.53pp / 当日〜7日 +2.45pp / 8〜30日 +0.41pp、差分の差 +1.90pp、改装日クラスタbootstrap 95% [+1.23,+2.64]。改装日そのものはホール全体では出す日ではない（全台平均 -0.10pp、9ホール中7が負）。日次1機種選択で過去日を回すと全体 +1.83pp(n=725,勝率56%)、当ホールは +1.32pp・勝率60%・n=231。",
+  "eval_start": "20260101",
+  "eval_end": "20260910",
+  "success_criterion": "判定はフォワードのみ（バックテストは in-sample なので採否根拠にしない）。フォワード30エントリー日を経過した時点で edge 平均が +150枚/台 以上、かつ 7日ブロックbootstrap の 95%CI 下限 > 0 であること。過去日の推定 +1.83pp は4,000G換算で約+220枚/日にあたるので、その7割は取れて然るべき。下回れば増台エッジは棄却し、朝のチートシート（backtest/morning.py）の【2】を落とす。",
+  "universe": {},
+  "eligibility": {},
+  "today_eligibility": {
+    "days_since_increase": {
+      "min": 1,
+      "max": 7
+    }
+  },
+  "entry_days": {},
+  "score": "hist_model_gratio_mean_diff",
+  "selection_unit": "machine_model",
+  "top_n": 3,
+  "lookback_days": 30,
+  "min_history_days": 5,
+  "min_games": 1000
+}

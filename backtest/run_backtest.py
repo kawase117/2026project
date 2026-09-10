@@ -30,6 +30,7 @@ from backtest.prereg import PreRegistration
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DB_DIR = REPO_ROOT / "db"
+ANALYSIS_DB = DB_DIR / "analysis_results.db"
 RESULT_DIR = Path(__file__).resolve().parent / "results"
 
 # 差枚→円。等価交換を既定とし、実際の交換率はレポート時のパラメータとして
@@ -91,29 +92,79 @@ def load_frame(hall: str) -> pd.DataFrame:
     # 差枚が元サイト側で打ち切られている行に印を付ける（楽園蒲田店のみ該当）。
     # 値そのものは書き換えない。理由と帰結は backtest/censoring.py の docstring。
     add_censor_flags(df, hall)
+    df["days_since_increase"] = _days_since_increase(hall, df)
     return df
+
+
+def _days_since_increase(hall: str, df: pd.DataFrame) -> pd.Series:
+    """その行の機種が、直近の「増台」から何日経っているか。
+
+    増台（既存機種の台数増）は当日〜7日だけ効き、8日目には消える。新台は別物で
+    効果がほぼ無い（2026-09-11 実測、10ホール n=160、対照は同じ改装日に
+    台数を触られていない機種）。この列はその窓をルールから参照できるようにする。
+
+    ⚠️ **0（当日）を含む。** 事前登録から使うときは必ず min:1 以上にすること。
+    対象日の台数増は前日時点では知り得ないので、0 を含めると選択時点で
+    知らない情報を使うことになる。
+    """
+    empty = pd.Series(np.nan, index=df.index)
+    if not ANALYSIS_DB.exists():
+        return empty
+    with sqlite3.connect(f"file:{ANALYSIS_DB}?mode=ro", uri=True) as conn:
+        has = conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='model_inventory'").fetchone()
+        if not has:
+            return empty
+        events = pd.read_sql(
+            "SELECT date, machine_name FROM model_inventory "
+            "WHERE hall_name = ? AND change_kind = 'increase' AND delta >= 3",
+            conn,
+            params=(hall,),
+        )
+    if events.empty:
+        return empty
+    events["event_dt"] = pd.to_datetime(events["date"], format="%Y%m%d")
+    events = events[["machine_name", "event_dt"]].sort_values("event_dt")
+    left = df[["machine_name", "dt"]].sort_values("dt")
+    # 各行について「その日以前で最も近い増台」を機種ごとに引く。
+    # merge_asof は左フレームの *行順* を保つが索引は振り直すので、元の索引を
+    # 位置で貼り直してから戻す。reindex で済ませると索引が別の行に付いて、
+    # 経過日数が無関係な台に紐付く（2026-09-11 に実際に踏んだ）。
+    merged = pd.merge_asof(left, events, left_on="dt", right_on="event_dt", by="machine_name", direction="backward")
+    days = (merged["dt"] - merged["event_dt"]).dt.days
+    days.index = left.index
+    return days.reindex(df.index)
 
 
 def apply_eligibility(df: pd.DataFrame, eligibility: dict) -> pd.DataFrame:
     """事前登録の eligibility を適用する。
 
     値の形は3通り: スカラー（一致）、リスト（いずれかに一致）、
-    {"min": a, "max": b}（範囲。片側のみでも可）。
+    {"min": a, "max": b, "exclude": [..]}（範囲と除外。いずれか1つ以上あればよい）。
+
+    `exclude` は 2026-09-11 に追加した。蒲田7の k7_at_histdiff_top3 が13プラン
+    全部で台2026（周知の鉄台）を選んでおり、+1,275枚/勝率73%という成績が
+    実際には「台2026を握り続けた成績」だった。この台を抜くと +231枚/55% に落ちる。
+    特定の台を母集団から外して**残りに効果があるか**を見るには除外指定が要る。
     """
     out = df
     for field, cond in eligibility.items():
         if isinstance(cond, dict):
             # 未知キーや空 dict を黙って no-op にすると、typo が
             # 「条件が緩いだけの別ルール」として静かに評価されてしまう。
-            unknown = set(cond) - {"min", "max"}
+            unknown = set(cond) - {"min", "max", "exclude"}
             if unknown or not cond:
                 raise ValueError(
-                    f"eligibility[{field!r}] の範囲指定が不正: {cond!r}（min / max の少なくとも一方が必要）"
+                    f"eligibility[{field!r}] の範囲指定が不正: {cond!r}（min / max / exclude の少なくとも一方が必要）"
                 )
             if "min" in cond:
                 out = out[out[field] >= cond["min"]]
             if "max" in cond:
                 out = out[out[field] <= cond["max"]]
+            if "exclude" in cond:
+                values = cond["exclude"]
+                if not isinstance(values, list) or not values:
+                    raise ValueError(f"eligibility[{field!r}] の exclude は非空のリストであること: {values!r}")
+                out = out[~out[field].isin(values)]
         elif isinstance(cond, list):
             out = out[out[field].isin(cond)]
         else:

@@ -95,6 +95,22 @@ def is_entry_day(reg: PreRegistration, target: str) -> bool:
     return True
 
 
+def _apply_today_eligibility(reg: PreRegistration, latest: pd.DataFrame, target_date: str, db_max: str) -> pd.DataFrame:
+    """対象日の候補集合にだけかかる条件を、直近営業日の行を代理として適用する。
+
+    `days_since_increase` は「その行の日付から見た経過日数」なので、代理として
+    使う db_max 行の値は対象日より (target_date - db_max) 日だけ古い。ずらさずに
+    使うと窓が手前へ1日以上ずれる（前日凍結なら常に1日ずれる）ので補正する。
+    """
+    if not reg.today_eligibility:
+        return latest
+    conditions = dict(reg.today_eligibility)
+    if "days_since_increase" in conditions:
+        gap = (pd.Timestamp(target_date) - pd.Timestamp(db_max)).days
+        latest = latest.assign(days_since_increase=latest["days_since_increase"] + gap)
+    return apply_eligibility(latest, conditions)
+
+
 def plan(reg: PreRegistration, target_date: str, allow_past: bool = False) -> dict:
     """target_date の選択を、それ以前のデータだけを使って確定させる。
 
@@ -126,6 +142,9 @@ def plan(reg: PreRegistration, target_date: str, allow_past: bool = False) -> di
     # 未来日なので当日の設置機種は分からない。直近の営業日の設置状況を
     # 代理として使い、台入替をまたいだ履歴を落とす。
     latest = universe_all[universe_all["date"] == db_max]
+    latest = _apply_today_eligibility(reg, latest, target_date, db_max)
+    if latest.empty:
+        raise OutsideEventWindow(f"{target_date} は today_eligibility を満たす台が無い（イベント窓の外）")
     hist = restrict_to_current_machine(hist, latest)
     if hist.empty:
         raise ValueError(f"lookback 窓 [{lo.date()}, {d0.date()}) に履歴がない")
@@ -525,6 +544,16 @@ def _run_record(
     return rec
 
 
+class OutsideEventWindow(ValueError):
+    """イベント窓ルールが、対象日に条件を満たす台を1つも持たなかった。
+
+    entry_days と同じく「今日は出番ではない」であって異常ではない。
+    ValueError の一種にしてあるのは、既存の想定内失敗の扱いから外れないため。
+    これを failed として数えると、増台の無い日が続くだけで日次ジョブが
+    毎回異常終了することになる。
+    """
+
+
 # plan() が想定内の理由（履歴不足・機種未設置など）で投げる例外。これ以外は
 # DB 障害・ディスク障害・実装バグのいずれかであり、「記録したから OK」で
 # 先へ進めてはいけない。
@@ -582,6 +611,10 @@ def plan_all(target_date: str, allow_past: bool = False, now: datetime | None = 
                 entry["status"] = "planned"
                 entry["data_asof"] = obj["data_asof"]
                 entry["picks"] = [p["machine_number"] for p in obj["picks"]]
+            except OutsideEventWindow as exc:
+                # 出番でない日。entry_days と同じ扱いで、異常ではない。
+                entry["status"] = "skipped_outside_event_window"
+                entry["reason"] = str(exc)
             except _EXPECTED_PLAN_FAILURES as exc:
                 # 想定内。1本の不成立で残りを止めない。
                 entry["status"] = "failed"
