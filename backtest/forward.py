@@ -618,6 +618,57 @@ def plan_all(target_date: str, allow_past: bool = False, now: datetime | None = 
     return rec
 
 
+def score_due(now: datetime | None = None) -> dict:
+    """採点できる状態になった plan をまとめて採点する。
+
+    なぜ一括版が要るか:
+        `score` は plan を1件ずつ受け取るので、日次の定時実行から呼びにくく、
+        結局「気づいた人が手で回す」になっていた。2026-08-13〜09-10 の29日間、
+        plan-all も score も一度も走らず、13件が未採点のまま残った。
+        採点は plan と違って情報リークを起こさない（対象日は既に終わっている）ので、
+        遅れて回しても証拠は痩せない。**回し忘れだけが証拠を痩せさせる。**
+
+    対象日の実績がまだ DB に無い plan は skipped として残し、翌日以降に自然に拾う。
+    """
+    now = _now_jst(now)
+    today = now.strftime("%Y%m%d")
+    results: list[dict] = []
+    for path in sorted(FORWARD_DIR.glob("*__*.json")):
+        try:
+            obj = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            results.append({"plan": path.name, "status": "corrupt"})
+            continue
+        if not isinstance(obj, dict) or "target_date" not in obj:
+            continue
+        if obj.get("result") is not None:
+            continue
+        if obj["target_date"] >= today:
+            # 対象日がまだ終わっていない。採点は明日以降。
+            results.append({"plan": path.name, "status": "not_due"})
+            continue
+        try:
+            scored = score(obj)
+        except ValueError as exc:
+            # 実績が未取込・履歴不足など、翌日に解消しうる理由。落とさない。
+            results.append({"plan": path.name, "status": "skipped", "reason": str(exc)})
+            continue
+        path.write_text(json.dumps(scored, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        results.append(
+            {
+                "plan": path.name,
+                "status": "scored",
+                "mean_diff_per_pick": scored["result"]["mean_diff_per_pick"],
+                "mean_edge_per_pick": scored["result"]["mean_edge_per_pick"],
+            }
+        )
+    return {
+        "as_of": now.isoformat(timespec="seconds"),
+        "counts": {s: sum(1 for r in results if r["status"] == s) for s in sorted({r["status"] for r in results})},
+        "plans": results,
+    }
+
+
 def _runs_by_date() -> tuple[dict[str, list[dict]], int]:
     """RUNS.jsonl を対象日ごとに読む。戻り値は (日付→記録リスト, 壊れた行数)。"""
     if not RUNS_LEDGER.exists():
@@ -713,6 +764,8 @@ def main(argv: list[str] | None = None) -> int:
     p_score = sub.add_parser("score", help="凍結済み plan を実績で採点する")
     p_score.add_argument("plan")
 
+    sub.add_parser("score-due", help="対象日が過ぎた未採点 plan をまとめて採点する")
+
     args = p.parse_args(argv)
     FORWARD_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -744,6 +797,13 @@ def main(argv: list[str] | None = None) -> int:
         print(f"\n-> {args.start}..{args.end}: {counts}", file=sys.stderr)
         clean = set(rep["counts"]) <= {"ok"} and not rep["corrupt_lines"]
         if not clean:
+            return 1
+    elif args.cmd == "score-due":
+        rep = score_due()
+        print(json.dumps(rep, ensure_ascii=False, indent=2))
+        counts = " / ".join(f"{k}={v}" for k, v in rep["counts"].items()) or "対象なし"
+        print(f"\n-> {counts}", file=sys.stderr)
+        if rep["counts"].get("corrupt"):
             return 1
     else:
         path = Path(args.plan)

@@ -2,11 +2,11 @@
   "rule_id": "rakuen_block2247_position_follow",
   "hall": "楽園蒲田店",
   "freeze_hash": "4c1fc604baa51551",
-  "target_date": "20260812",
-  "data_asof": "20260810",
+  "target_date": "20260912",
+  "data_asof": "20260909",
   "lookback_window": [
-    "2026-07-13",
-    "2026-08-12"
+    "2026-08-13",
+    "2026-09-12"
   ],
   "score": "hist_mean_diff",
   "selection_unit": "machine",
@@ -14,65 +14,30 @@
   "is_dry_run": false,
   "picks": [
     {
-      "machine_number": 2247,
+      "machine_number": 2249,
       "machine_name": "バンドリ！",
-      "score": 2143.142857,
-      "history_days": 7
+      "score": 1489.0,
+      "history_days": 19
     },
     {
       "machine_number": 2248,
       "machine_name": "バンドリ！",
-      "score": 1401.714286,
-      "history_days": 7
-    },
-    {
-      "machine_number": 2249,
-      "machine_name": "バンドリ！",
-      "score": 627.333333,
-      "history_days": 6
+      "score": 1303.578947,
+      "history_days": 19
     },
     {
       "machine_number": 2250,
       "machine_name": "バンドリ！",
-      "score": -122.0,
-      "history_days": 7
+      "score": 233.65,
+      "history_days": 20
+    },
+    {
+      "machine_number": 2247,
+      "machine_name": "バンドリ！",
+      "score": -763.478261,
+      "history_days": 23
     }
   ],
-  "result": {
-    "scored_with_hash": "4c1fc604baa51551",
-    "day_baseline": 161.2,
-    "universe_size": 587,
-    "picks_realized": [
-      {
-        "machine_number": 2247,
-        "games": 3638.0,
-        "diff": 1381.0,
-        "edge": 1219.7751277683135
-      },
-      {
-        "machine_number": 2248,
-        "games": 3502.0,
-        "diff": 2096.0,
-        "edge": 1934.7751277683135
-      },
-      {
-        "machine_number": 2249,
-        "games": 3174.0,
-        "diff": 3238.0,
-        "edge": 3076.7751277683133
-      },
-      {
-        "machine_number": 2250,
-        "games": 3530.0,
-        "diff": 5953.0,
-        "edge": 5791.775127768314
-      }
-    ],
-    "mean_diff_per_pick": 3167.0,
-    "mean_edge_per_pick": 3005.8,
-    "missing_machines": [],
-    "rb_perspective": null,
-    "model_perspective": null
-  },
-  "plan_digest": "4b1de37f639b0957"
+  "result": null,
+  "plan_digest": "2b5fadb21d0ca73c"
 }

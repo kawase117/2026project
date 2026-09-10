@@ -1,0 +1,140 @@
+{
+  "rule_id": "mitoya_model_gratio_top2",
+  "hall": "みとや大森町店",
+  "freeze_hash": "a0f5b81a53a8e24b",
+  "target_date": "20260912",
+  "data_asof": "20260909",
+  "lookback_window": [
+    "2026-08-22",
+    "2026-09-12"
+  ],
+  "score": "hist_model_gratio_mean_diff",
+  "selection_unit": "machine_model",
+  "success_criterion": "フォワード20エントリー日を経過した時点で、指名機種全台の総和ベースedge（対ホール全体同日平均、diff_coins_normalized）の平均が正であり、95%CI(block7)下限が0を上回ること。満たさなければ破棄する。判定はフォワードテストのみで行い、バックテスト数値は採否根拠にしない。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "リコリス・リコイル",
+      "score": 2848.597771,
+      "history_rows": 42,
+      "machines": [
+        574,
+        575,
+        576,
+        577,
+        578,
+        579,
+        580,
+        601,
+        602,
+        603,
+        604,
+        605,
+        606,
+        607
+      ]
+    },
+    {
+      "machine_name": "ディスクアップ ULTRAREMIX",
+      "score": 878.263309,
+      "history_rows": 19,
+      "machines": [
+        745
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 574,
+      "machine_name": "リコリス・リコイル",
+      "score": 2848.597771,
+      "history_days": 42
+    },
+    {
+      "machine_number": 575,
+      "machine_name": "リコリス・リコイル",
+      "score": 2848.597771,
+      "history_days": 42
+    },
+    {
+      "machine_number": 576,
+      "machine_name": "リコリス・リコイル",
+      "score": 2848.597771,
+      "history_days": 42
+    },
+    {
+      "machine_number": 577,
+      "machine_name": "リコリス・リコイル",
+      "score": 2848.597771,
+      "history_days": 42
+    },
+    {
+      "machine_number": 578,
+      "machine_name": "リコリス・リコイル",
+      "score": 2848.597771,
+      "history_days": 42
+    },
+    {
+      "machine_number": 579,
+      "machine_name": "リコリス・リコイル",
+      "score": 2848.597771,
+      "history_days": 42
+    },
+    {
+      "machine_number": 580,
+      "machine_name": "リコリス・リコイル",
+      "score": 2848.597771,
+      "history_days": 42
+    },
+    {
+      "machine_number": 601,
+      "machine_name": "リコリス・リコイル",
+      "score": 2848.597771,
+      "history_days": 42
+    },
+    {
+      "machine_number": 602,
+      "machine_name": "リコリス・リコイル",
+      "score": 2848.597771,
+      "history_days": 42
+    },
+    {
+      "machine_number": 603,
+      "machine_name": "リコリス・リコイル",
+      "score": 2848.597771,
+      "history_days": 42
+    },
+    {
+      "machine_number": 604,
+      "machine_name": "リコリス・リコイル",
+      "score": 2848.597771,
+      "history_days": 42
+    },
+    {
+      "machine_number": 605,
+      "machine_name": "リコリス・リコイル",
+      "score": 2848.597771,
+      "history_days": 42
+    },
+    {
+      "machine_number": 606,
+      "machine_name": "リコリス・リコイル",
+      "score": 2848.597771,
+      "history_days": 42
+    },
+    {
+      "machine_number": 607,
+      "machine_name": "リコリス・リコイル",
+      "score": 2848.597771,
+      "history_days": 42
+    },
+    {
+      "machine_number": 745,
+      "machine_name": "ディスクアップ ULTRAREMIX",
+      "score": 878.263309,
+      "history_days": 19
+    }
+  ],
+  "result": null,
+  "plan_digest": "95e6d1af6f604795"
+}

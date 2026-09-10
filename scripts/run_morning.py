@@ -137,6 +137,7 @@ def main() -> int:
     parser.add_argument("--skip-anaslo", action="store_true", help="ana-slo の取得と取り込みを行わない")
     parser.add_argument("--skip-twitter", action="store_true", help="X監視パイプラインを回さない")
     parser.add_argument("--skip-history", action="store_true", help="analysis_results.db への日次指標の蓄積を行わない")
+    parser.add_argument("--skip-forward", action="store_true", help="フォワードテストの採点と凍結を行わない")
     # 取得済みの日はスクレイパー側でスキップされるので、窓を広く取っても
     # 実際に開くのは欠けている日だけ。前日1日だけにすると、途中にできた穴
     # （403で落ちた日、ana-slo が遅れて掲載した日）が永久に埋まらない。
@@ -198,6 +199,24 @@ def main() -> int:
     print("期日の来た予告の採点")
     print("=" * 70)
     score_due_announcements()
+
+    if not args.skip_forward:
+        # フォワードテスト。ここに置いていなかったせいで 2026-08-13〜09-10 の
+        # 29日間、plan-all も score も一度も走らなかった（約270プラン日を失った）。
+        # 手で回す運用に戻さないこと。
+        #
+        # 採点を先に、凍結を後にする。採点は前日までの実績を使うので取り込みの
+        # 直後が最も早い。plan-all の既定は翌日で、ana-slo は翌朝公開なので
+        # 「今朝、明日ぶんを凍結する」と「今夜、明日ぶんを凍結する」は
+        # 使える情報が同じ。朝に寄せても証拠は痩せない。
+        run(
+            "backtest.forward score-due",
+            [PYTHON, "-u", "-X", "utf8", "-m", "backtest.forward", "score-due"],
+        )
+        run(
+            "backtest.forward plan-all（対象は翌日）",
+            [PYTHON, "-u", "-X", "utf8", "-m", "backtest.forward", "plan-all"],
+        )
 
     if not args.skip_twitter:
         run(
