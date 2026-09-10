@@ -214,6 +214,7 @@ def select_pending_images(
     newest_first: bool,
     redo_failed: bool,
     text_keywords: list[str] | None = None,
+    tweet_ids: list[str] | None = None,
 ) -> list[tuple[str, str, str, str]]:
     """Return tweet/image/handle/timestamp rows in the requested processing order."""
     selected_handles = set(handles)
@@ -236,6 +237,11 @@ def select_pending_images(
         placeholders = ", ".join("?" for _ in selected_handles)
         conditions.append(f"st.handle IN ({placeholders})")
         parameters.extend(sorted(selected_handles))
+
+    if tweet_ids:
+        placeholders = ", ".join("?" for _ in tweet_ids)
+        conditions.append(f"ti.tweet_id IN ({placeholders})")
+        parameters.extend(tweet_ids)
 
     if text_keywords:
         # Chain-wide accounts post one store per day, so most of their images
@@ -351,6 +357,15 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--limit", type=int, help="Maximum number of images to process")
     parser.add_argument(
+        "--tweet-ids",
+        help=(
+            "Comma-separated tweet ids; only these are processed. Used after "
+            "repair_tweet_images.py re-downloads mis-bound images, so the rerun "
+            "spends quota on the repaired posts instead of every pending image "
+            "the account still has (39 repaired vs 143 pending for slokotae7)."
+        ),
+    )
+    parser.add_argument(
         "--newest-first",
         action=argparse.BooleanOptionalAction,
         default=True,
@@ -404,6 +419,7 @@ def main(argv: list[str] | None = None) -> int:
             newest_first=args.newest_first,
             redo_failed=args.redo_failed,
             text_keywords=parse_csv_option(args.text_contains),
+            tweet_ids=parse_csv_option(args.tweet_ids),
         )
         try:
             for tweet_id, image_path, handle, posted_at_jst in rows:

@@ -211,6 +211,31 @@ def run(script, *arguments):
     return result.returncode
 
 
+def run_project(*arguments):
+    """プロジェクトルートで実行する。統合レイヤーは backtest/ 側にある。"""
+    command = [PYTHON, *arguments]
+    print("\n$ %s" % " ".join(arguments), flush=True)
+    result = subprocess.run(command, cwd=str(PROJECT_ROOT))
+    if result.returncode != 0:
+        print("  -> 終了コード %d" % result.returncode, flush=True)
+    return result.returncode
+
+
+def refresh_integrated_layer():
+    """収集の成果を、予告・結果発表・実績を束ねた層に反映する。
+
+    ここまでの工程は state.db を更新するだけで、分析側からは見えない。
+    `db/analysis_results.db` まで通して初めて `backtest.integrated.machine_frame`
+    が新しい日を返すようになるので、日次の最後に必ず流す。
+    """
+    run_project("backtest/result_corpus.py", "build")
+    run_project("backtest/result_corpus.py", "ingest-prose")
+    run_project("backtest/result_corpus.py", "link-machines")
+    run_project("-m", "backtest.integrated", "ingest-announce")
+    run_project("-m", "backtest.integrated", "ingest-retro")
+    run_project("-m", "backtest.integrated", "coverage")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="収集・欠損補完・抽出・ラベル付けを順に実行します。")
     parser.add_argument("--extract-limit", type=int, default=400, help="1回の抽出で処理する画像数の上限 (既定 400)")
@@ -274,6 +299,7 @@ def main() -> int:
 
     run("infer_hall.py", "--apply")
     run("resolve_dates.py", "--apply")
+    refresh_integrated_layer()
 
     with sqlite3.connect(DB_PATH, timeout=60) as connection:
         gaps = connection.execute(
@@ -310,7 +336,11 @@ def main() -> int:
     if missing:
         print(
             "  ※ 対象日を過ぎた分は register できない（事後登録は拒否される）。\n"
-            "     backtest/announce/RETROACTIVE_NOTES.md に『登録を見送った予告』として記録すること。"
+            "     backtest/announce/RETROACTIVE_NOTES.md に『登録を見送った予告』として記録すること。\n"
+            "     ただし失われるのは**的中率の証拠としての価値だけ**である。予告文と投稿時刻は\n"
+            "     外部タイムスタンプ付きの事実なので、`backtest.integrated ingest-retro` が\n"
+            "     遡及レーン（retroactive=1）に機械抽出で取り込み、統合フレームの\n"
+            "     `announced_model_retro` から引ける。的中率の分子分母には入れないこと。"
         )
     return 0
 

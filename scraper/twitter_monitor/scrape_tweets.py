@@ -174,7 +174,39 @@ def own_tweet_data(article, handle: str):
     return None
 
 
+def article_for_tweet(page, handle: str, tweet_id: str):
+    """Re-resolve a tweet's article by its own permalink rather than by list index.
+
+    `articles.nth(index)` is a lazy locator: it re-queries the DOM on every call.
+    X's timeline is virtualised and keeps inserting and removing articles, so the
+    article that answered `own_tweet_data` was not always the one that answered
+    `download_images`, and images were filed under a different tweet's id.
+    Measured on 2026-09-09: 42 of 220 slokotae7 posts carrying image extractions
+    (19%) shared no machine name at all with their own text, and one of them was
+    traced to the post it really belonged to.
+
+    Matching on `/{handle}/status/{id}` keeps a quoted post's link from selecting
+    the quoting article, because a quote links to somebody else's status path.
+    """
+    return page.locator(f'article[data-testid="tweet"]:has(a[href^="/{handle}/status/{tweet_id}"])').first
+
+
+def article_owns_tweet(article, handle: str, tweet_id: str) -> bool:
+    """Confirm the article really is this tweet before anything is saved from it."""
+    links = article.locator(f'a[href^="/{handle}/status/"]')
+    for index in range(links.count()):
+        match = STATUS_ID_RE.search(links.nth(index).get_attribute("href") or "")
+        if match and match.group(1) == tweet_id:
+            return True
+    return False
+
+
 def download_images(page, article, handle: str, tweet_id: str) -> list[str]:
+    # 記事とツイートIDの食い違いは黙って通さない。通すと別ホールの画像が
+    # このツイートのものとして保存され、あとからは見分けられなくなる。
+    if not article_owns_tweet(article, handle, tweet_id):
+        LOGGER.warning("%s: article does not own tweet %s; skipping images", handle, tweet_id)
+        return []
     image_nodes = article.locator('img[src*="pbs.twimg.com/media"]')
     saved_paths: list[str] = []
     target_dir = IMAGES_DIR / handle
@@ -344,7 +376,10 @@ def crawl_account(
                 if last_seen_id and int(tweet_id) <= int(last_seen_id):
                     continue
 
-            if store_tweet(connection, page, articles.nth(index), handle, data):
+            # 索引ではなくツイートIDで引き直す。ここで articles.nth(index) を渡すと、
+            # own_tweet_data を呼んでから今までの間に記事がずれていた場合、
+            # 別のツイートの画像を掴む（article_for_tweet の docstring 参照）。
+            if store_tweet(connection, page, article_for_tweet(page, handle, tweet_id), handle, data):
                 inserted += 1
 
         connection.commit()
