@@ -48,9 +48,12 @@ ROOT = os.path.dirname(HERE)
 DB_DIR = os.path.join(ROOT, "db")
 sys.path.insert(0, ROOT)
 
+from backtest.bonus_specs import find_spec, load_specs  # noqa: E402
 from backtest.date_conditions import CATEGORIES, CONDITIONS  # noqa: E402
 
 MIN_GAMES = 500
+MIN_GAMES_FOR_SETTING = 2000  # 設定を推定するのに要る回転数（bonus_specs と同じ）
+HIGH_SETTING = 5  # 設定5以上を「高設定」とする
 MIN_CELL_GAMES = 30_000  # 条件側がこれ未満のセルは測らない
 MIN_CELL_DAYS = 15  # 台日がこれ未満なら σ が出ても判断不能とする
 STRONG_Z = 2.0
@@ -91,16 +94,76 @@ def load(hall, category=None):
     sub["bonus"] = sub.bb_count + sub.rb_count
     sub["ts"] = pd.to_datetime(sub.date, format="%Y%m%d")
     sub["quarter"] = sub.ts.dt.to_period("Q")
+    sub["p_high"] = _high_setting_probability(sub, load_specs())
     return sub, installed
 
 
-def cell(sub, mask, min_games=MIN_CELL_GAMES):
-    """条件側 vs それ以外。(上振れ%, σ, 差枚差, 台日, 条件側回転数) か None。
+def _setting_table(name, specs):
+    """機種名 → (設定, BB確率, RB確率, 合算確率)。判定できない機種は None。"""
+    spec = find_spec(name, specs)
+    if spec is None or not spec.get("judgeable"):
+        return None
+    settings = sorted(spec["settings"])
 
-    ⚠️ **機種をまとめて割ってはいけない。** 機種ごとにボーナス確率の基準が違うので、
-    設置構成が入れ替わるだけで比が動く。機種ごとに「自分の非条件日の確率」から
-    期待値を出し、それを足し上げてから比べる。雑色のA+AT月末はこれを怠ると
-    +15.47% と出るが、直すと +4.02% になる（差は全部構成の変化）。
+    def col(key):
+        return np.array([spec["settings"][s].get(key) for s in settings], dtype=float)
+
+    bb, rb, combined = col("bb_probability"), col("rb_probability"), col("combined_probability")
+    if np.all(np.isnan(bb)) and np.all(np.isnan(combined)):
+        return None
+    return np.array(settings, float), bb, rb, combined
+
+
+def _high_setting_probability(frame, specs):
+    """台日ごとの「設定%d以上である確率」。判定できない行は NaN。
+
+    平均ボーナス確率だけを見ると『全台が少し上がった』と『一部だけ高設定になった』を
+    区別できない。実測では後者で、蒲田7の強ゾロ目は平均設定 +0.24 に対し
+    高設定率 17.9% → 26.9%（1.50倍）だった。分布が動いているので分布で見る。
+    """
+    out = pd.Series(np.nan, index=frame.index)
+    enough = frame.games >= MIN_GAMES_FOR_SETTING
+    for name, part in frame[enough].groupby("machine_name"):
+        table = _setting_table(name, specs)
+        if table is None:
+            continue
+        settings, p_bb, p_rb, p_combined = table
+        games = part.games.to_numpy(float)[:, None]
+        loglik = np.zeros((len(part), len(settings)))
+        used = False
+        for counts, probs in ((part.bb_count, p_bb), (part.rb_count, p_rb)):
+            if np.all(np.isnan(probs)):
+                continue
+            k = counts.to_numpy(float)[:, None]
+            prob = np.where(np.isnan(probs), 0.5, probs)[None, :]
+            loglik += k * np.log(prob) + (games - k) * np.log1p(-prob)
+            used = True
+        if not used:
+            k = (part.bb_count + part.rb_count).to_numpy(float)[:, None]
+            loglik = k * np.log(p_combined)[None, :] + (games - k) * np.log1p(-p_combined)[None, :]
+        loglik -= loglik.max(axis=1, keepdims=True)
+        weights = np.exp(loglik)
+        posterior = weights / weights.sum(axis=1, keepdims=True)
+        out.loc[part.index] = posterior[:, settings >= HIGH_SETTING].sum(axis=1)
+    return out
+
+
+def cell(sub, mask, min_games=MIN_CELL_GAMES):
+    """条件側 vs それ以外。指標の辞書か None。
+
+    返す指標を3つに分けてある。2026-09-11 に相対と絶対を混ぜて引き算し、
+    「ボーナスは増えているのに出玉に変換されていない」と誤った結論を出した。
+
+      lift      ボーナス確率の上振れ%。**設定が入ったか**を見る
+      abs_coins 絶対差枚の差。**行くかどうか**を決める数字。ホール平均を引かない
+      rel_coins 同日ホール平均との差の差。**台選びの巧拙**を見る。行くかの判断には使わない
+      high_rate 高設定と判定された台日の割合。**一部だけ上がったのか**を見る
+
+    条件日はホール全体も上がるので、rel_coins はその分が相殺されて小さく出る。
+    蒲田7の強ゾロ目は rel +56枚 に対し abs +302枚。後者が実際に取れる枚数。
+
+    ⚠️ 機種をまとめて割らない。機種ごとの自己基準から期待値を積む。
+    合算で割ると設置構成の入替だけで比が動く（雑色のA+AT月末が +15.47% → +4.02%）。
     """
     hit, rest = sub[mask], sub[~mask]
     g_hit, g_rest = hit.games.sum(), rest.games.sum()
@@ -119,9 +182,17 @@ def cell(sub, mask, min_games=MIN_CELL_GAMES):
     if expected <= 0 or games_used <= 0:
         return None
     base = expected / games_used
-    lift = 100 * (observed / games_used / base - 1)
-    z = (observed - expected) / np.sqrt(expected * (1 - base))
-    return lift, z, hit.edge.mean() - rest.edge.mean(), len(hit), int(games_used)
+    high_hit, high_rest = hit.p_high.dropna(), rest.p_high.dropna()
+    return {
+        "lift": 100 * (observed / games_used / base - 1),
+        "z": (observed - expected) / np.sqrt(expected * (1 - base)),
+        "abs_coins": hit["diff"].mean() - rest["diff"].mean(),
+        "rel_coins": hit.edge.mean() - rest.edge.mean(),
+        "high_rate": (high_hit > 0.5).mean() if len(high_hit) >= 30 else np.nan,
+        "high_base": (high_rest > 0.5).mean() if len(high_rest) >= 30 else np.nan,
+        "days": len(hit),
+        "games": int(games_used),
+    }
 
 
 def verdict(sub, mask, quarters):
@@ -131,13 +202,15 @@ def verdict(sub, mask, quarters):
     カレンダー基準にすると、台数が減って回転数が落ちた機種ほど確認セルが埋まらず、
     失効判定をすり抜ける。データが細っている機種こそ死にかけているので、
     そこを見逃すのがいちばんまずい（レヴュースタァライトの月末で実際に起きた）。
+
+    枚数の判定には **絶対差枚** を使う。相対差枚はホール全体の上昇が相殺されるので、
+    「行くかどうか」の判断に使うと効果を過小評価する。
     """
     whole = cell(sub, mask)
     if whole is None:
         return "判断不能", None, "回転数不足"
-    lift, z, coins, days, _ = whole
-    if days < MIN_CELL_DAYS:
-        return "判断不能", whole, "台日 %d" % days
+    if whole["days"] < MIN_CELL_DAYS:
+        return "判断不能", whole, "台日 %d" % whole["days"]
 
     measured = []
     for q in quarters:
@@ -146,25 +219,54 @@ def verdict(sub, mask, quarters):
             continue
         got = cell(part, mask.loc[part.index], min_games=10_000)
         if got:
-            measured.append((q, got[0]))
+            measured.append((q, got["lift"]))
     if len(measured) < RECENT_QUARTERS:
-        # 直近が生きているか確かめられない。全期間の数字だけで採用してはいけない。
         return "要確認", whole, "四半期で確認できるのが%d期だけ" % len(measured)
 
     recent = [v for _, v in measured[-RECENT_QUARTERS:]]
     stale = measured[-1][0] != quarters[-1]
-    if all(v < 0 for v in recent) and lift > 0:
+    if all(v < 0 for v in recent) and whole["lift"] > 0:
         return "失効", whole, "測れた直近%d期が反転" % RECENT_QUARTERS
-    if z <= -STRONG_Z and coins < 0:
+    if whole["z"] <= -STRONG_Z and whole["abs_coins"] < 0:
         return "回避", whole, ""
-    if z < STRONG_Z:
-        return "判断不能", whole, "%.1fσ" % z
-    if coins <= 0:
-        # ボーナスは増えているのに枚数が付いてこない。設定と勝ちは別。
-        return "要注意", whole, "ボーナス↑だが差枚 %+.0f枚" % coins
+    if whole["z"] < STRONG_Z:
+        return "判断不能", whole, "%.1fσ" % whole["z"]
+    if whole["abs_coins"] <= 0:
+        # ボーナスは増えているのに絶対差枚が付いてこない。ここは本当に例外。
+        return "要注意", whole, "ボーナス↑だが絶対差枚 %+.0f枚" % whole["abs_coins"]
     if stale:
         return "要確認", whole, "最後に測れたのが %s" % measured[-1][0]
     return "採用", whole, ""
+
+
+HEADER = "   %-10s%10s%7s%10s%10s%9s%7s%10s  %s" % (
+    "条件",
+    "上振れ",
+    "σ",
+    "絶対差枚",
+    "相対差枚",
+    "高設定率",
+    "台日",
+    "判定",
+    "補足",
+)
+
+
+def line(label, got, state, note):
+    if got is None:
+        return "   %-10s%10s%7s%10s%10s%9s%7s%10s  %s" % (label, "-", "-", "-", "-", "-", "-", state, note)
+    high = "-" if np.isnan(got["high_rate"]) else "%.0f→%.0f%%" % (100 * got["high_base"], 100 * got["high_rate"])
+    return "   %-10s%+9.2f%%%7.1f%+10.0f%+10.0f%9s%7d%10s  %s" % (
+        label,
+        got["lift"],
+        got["z"],
+        got["abs_coins"],
+        got["rel_coins"],
+        high,
+        got["days"],
+        state,
+        note,
+    )
 
 
 def report(hall, category=None, seats=False):
@@ -215,20 +317,14 @@ def report(hall, category=None, seats=False):
             cells = []
             for label, test in CONDITIONS.items():
                 got = cell(part, part.ts.map(test), min_games=10_000)
-                cells.append("%11s" % ("-" if got is None else "%+.1f%%" % got[0]))
+                cells.append("%11s" % ("-" if got is None else "%+.1f%%" % got["lift"]))
             print("   %-10s" % str(q) + "".join(cells) + "%9s" % ("%.2fM" % (part.games.sum() / 1e6)))
 
         # 3) カテゴリ全体の判定
-        print("\n   %-10s%12s%8s%10s%8s%12s%s" % ("条件", "上振れ", "σ", "差枚差", "台日", "判定", "  補足"))
+        print("\n" + HEADER)
         for label, test in CONDITIONS.items():
-            mask = sub.ts.map(test)
-            state, got, note = verdict(sub, mask, quarters)
-            if got is None:
-                print("   %-10s%12s%8s%10s%8s%12s  %s" % (label, "-", "-", "-", "-", state, note))
-                continue
-            lift, z, coins, days, _ = got
-            print("   %-10s%+11.2f%%%8.1f%+10.0f%8d%12s  %s" % (label, lift, z, coins, days, state, note))
-
+            state, got, note = verdict(sub, sub.ts.map(test), quarters)
+            print(line(label, got, state, note))
         # 4) 現存機種だけ、機種別に。撤去済みは載せない（座れないので判断に要らない）。
         live_models = [n for n, *_, now in rows if now != "撤去"]
         if live_models:
@@ -246,8 +342,8 @@ def report(hall, category=None, seats=False):
                 print("   ・%-28s （回転数不足で測れない）" % str(name)[:28])
                 continue
             print("   ・%s" % name)
-            for label, state, (lift, z, coins, days, _), note in hits:
-                print("       %-10s%+11.2f%%%8.1f%+10.0f%8d%12s  %s" % (label, lift, z, coins, days, state, note))
+            for label, state, got, note in hits:
+                print(" " + line(label, got, state, note))
 
         # 5) 台番号まで割る。割ると判断不能になることが多いので既定では出さない。
         if seats:
@@ -257,23 +353,29 @@ def report(hall, category=None, seats=False):
                 for mn, g in part.groupby("machine_number"):
                     if mn not in set(installed.machine_number):
                         continue
-                    line = []
+                    cells = []
                     for label, test in CONDITIONS.items():
                         got = cell(g, g.ts.map(test), min_games=10_000)
                         if got is None:
                             continue
-                        flag = "" if abs(got[1]) >= STRONG_Z and got[3] >= MIN_CELL_DAYS else "?"
-                        line.append("%s %+.1f%%(%.1fσ,%d日)%s" % (label, got[0], got[1], got[3], flag))
+                        flag = "" if abs(got["z"]) >= STRONG_Z and got["days"] >= MIN_CELL_DAYS else "?"
+                        cells.append("%s %+.1f%%(%.1fσ,%d日)%s" % (label, got["lift"], got["z"], got["days"], flag))
                     print("       台%-6d %-24s %s" % (mn, str(name)[:24], "  ".join(line) if line else "測れない"))
             print("       ? = σ<2 または台日<%d で判断不能。『悪い』ではない" % MIN_CELL_DAYS)
 
     print("\n" + "─" * 78)
-    print("  採用    測れた直近%d期が反転しておらず σ>=2 かつ差枚差プラス" % RECENT_QUARTERS)
+    print("  絶対差枚 ホール平均を引かない実際の枚数。**行くかどうかはこれで決める**")
+    print("  相対差枚 同日ホール平均との差。台選びの巧拙を見る。条件日はホール全体も")
+    print("           上がるので相殺され小さく出る（蒲田7の強ゾロ目は相対+56 / 絶対+302）")
+    print("  高設定率 設定%d以上と判定された台日の割合。通常日→条件日。" % HIGH_SETTING)
+    print("           平均ではなく分布が動く。蒲田7の強ゾロ目は 17.9%→26.9%（1.50倍）")
+    print("")
+    print("  採用    測れた直近%d期が反転しておらず σ>=2 かつ絶対差枚プラス" % RECENT_QUARTERS)
     print("  要確認  直近を確認できない（回転数が落ちて四半期のセルが埋まらない）。")
     print("          台数を削られた機種ほどここに落ちる。全期間の数字だけで採用しない")
     print("  失効    全期間はプラスだが直近%d四半期が反転。過去の遺物なので使わない" % RECENT_QUARTERS)
-    print("  回避    σ<=-2 かつ差枚差マイナス")
-    print("  要注意  ボーナスは増えているが差枚が付いてこない（設定と勝ちは別）")
+    print("  回避    σ<=-2 かつ絶対差枚マイナス")
+    print("  要注意  ボーナスは増えているが絶対差枚が付いてこない")
     print("  判断不能 回転数・台日が足りない。『効果なし』ではない")
 
 

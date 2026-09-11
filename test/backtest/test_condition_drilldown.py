@@ -39,6 +39,7 @@ def build(per_quarter, days_per_quarter=40, games=4000, base_bonus=40):
             rows.append((date, 100 + qi, "機種", games, bonus * 10, bonus, is_cond))
     frame = pd.DataFrame(rows, columns=["date", "machine_number", "machine_name", "games", "diff", "bonus", "cond"])
     frame["edge"] = frame["diff"] - frame["diff"].mean()
+    frame["p_high"] = np.nan
     frame["ts"] = pd.to_datetime(frame.date, format="%Y%m%d")
     frame["quarter"] = frame.ts.dt.to_period("Q")
     return frame
@@ -53,7 +54,7 @@ def test_steadily_positive_is_adopted():
     f = build({"2025Q1": 0.10, "2025Q2": 0.10, "2025Q3": 0.10, "2025Q4": 0.10})
     state, got, _ = run(f)
     assert state == "採用"
-    assert got[0] == pytest.approx(10, abs=2)
+    assert got["lift"] == pytest.approx(10, abs=2)
 
 
 def test_reversal_in_recent_quarters_is_expired_even_if_whole_period_is_strong():
@@ -61,7 +62,7 @@ def test_reversal_in_recent_quarters_is_expired_even_if_whole_period_is_strong()
     f = build({"2025Q1": 0.30, "2025Q2": 0.30, "2026Q1": -0.10, "2026Q2": -0.10})
     state, got, note = run(f)
     assert state == "失効"
-    assert got[0] > 0  # 全期間はプラスのまま
+    assert got["lift"] > 0  # 全期間はプラスのまま
     assert "反転" in note
 
 
@@ -97,20 +98,33 @@ def test_single_machine_is_not_rejected_for_being_single():
     assert state == "採用"
 
 
-def test_bonus_up_but_coins_down_is_flagged():
-    # 蒲田1のBT。ボーナスは増えているのに差枚が付いてこない。
+def test_bonus_up_but_absolute_coins_down_is_flagged():
+    # 判定は絶対差枚で行う。相対差枚はホール全体の上昇が相殺されるので使わない。
     f = build({"2025Q1": 0.10, "2025Q2": 0.10, "2025Q3": 0.10, "2025Q4": 0.10})
-    f.loc[f["cond"], "edge"] = -500.0
-    f.loc[~f["cond"], "edge"] = 0.0
+    f.loc[f["cond"], "diff"] = -500.0
+    f.loc[~f["cond"], "diff"] = 0.0
     state, _, note = run(f)
     assert state == "要注意"
-    assert "差枚" in note
+    assert "絶対差枚" in note
+
+
+def test_relative_coins_alone_do_not_trigger_the_warning():
+    # 相対がマイナスでも絶対がプラスなら採用でよい。ホール全体が上がっただけ。
+    # これを取り違えて「変換されていない」と誤った結論を出した（2026-09-11）。
+    f = build({"2025Q1": 0.10, "2025Q2": 0.10, "2025Q3": 0.10, "2025Q4": 0.10})
+    f.loc[f["cond"], "diff"] = 500.0
+    f.loc[~f["cond"], "diff"] = 0.0
+    f.loc[f["cond"], "edge"] = -50.0
+    f.loc[~f["cond"], "edge"] = 0.0
+    state, got, _ = run(f)
+    assert state == "採用"
+    assert got["abs_coins"] > 0 > got["rel_coins"]
 
 
 def test_clearly_negative_is_avoided():
     f = build({"2025Q1": -0.15, "2025Q2": -0.15, "2025Q3": -0.15, "2025Q4": -0.15})
-    f.loc[f["cond"], "edge"] = -800.0
-    f.loc[~f["cond"], "edge"] = 0.0
+    f.loc[f["cond"], "diff"] = -800.0
+    f.loc[~f["cond"], "diff"] = 0.0
     state, _, _ = run(f)
     assert state == "回避"
 
@@ -131,21 +145,21 @@ def test_cell_reports_the_lift_and_the_coin_difference():
     f = build({"2025Q1": 0.20, "2025Q2": 0.20})
     f.loc[f["cond"], "edge"] = 300.0
     f.loc[~f["cond"], "edge"] = 100.0
-    lift, z, coins, days, games = cd.cell(f, f["cond"])
-    assert lift == pytest.approx(20, abs=2)
-    assert coins == pytest.approx(200, abs=1)
-    assert z > 2
-    assert days == int(f["cond"].sum())
-    assert games == int(f.loc[f["cond"], "games"].sum())
+    got = cd.cell(f, f["cond"])
+    assert got["lift"] == pytest.approx(20, abs=2)
+    assert got["rel_coins"] == pytest.approx(200, abs=1)
+    assert got["z"] > 2
+    assert got["days"] == int(f["cond"].sum())
+    assert got["games"] == int(f.loc[f["cond"], "games"].sum())
 
 
 def test_sigma_grows_with_games_not_with_the_effect():
     small = build({"2025Q1": 0.10, "2025Q2": 0.10}, games=1000)
     large = build({"2025Q1": 0.10, "2025Q2": 0.10}, games=10000, base_bonus=400)
-    z_small = cd.cell(small, small["cond"])[1]
-    z_large = cd.cell(large, large["cond"])[1]
+    z_small = cd.cell(small, small["cond"])["z"]
+    z_large = cd.cell(large, large["cond"])["z"]
     assert z_large > z_small
-    assert np.isclose(cd.cell(small, small["cond"])[0], cd.cell(large, large["cond"])[0], atol=2)
+    assert np.isclose(cd.cell(small, small["cond"])["lift"], cd.cell(large, large["cond"])["lift"], atol=2)
 
 
 def test_composition_change_does_not_fake_a_lift():
@@ -165,6 +179,7 @@ def test_composition_change_does_not_fake_a_lift():
         rows.append((date, 2, "高ベース", games, 0, games // 50, is_cond))
     f = pd.DataFrame(rows, columns=["date", "machine_number", "machine_name", "games", "diff", "bonus", "cond"])
     f["edge"] = 0.0
+    f["p_high"] = np.nan
     f["ts"] = pd.to_datetime(f.date, format="%Y%m%d")
     f["quarter"] = f.ts.dt.to_period("Q")
 
@@ -174,5 +189,4 @@ def test_composition_change_does_not_fake_a_lift():
     )
     assert pooled > 10, "合算で割ると偽の上振れが出るはず（テストの前提）"
 
-    lift, _, _, _, _ = cd.cell(f, f["cond"])
-    assert lift == pytest.approx(0.0, abs=0.5)
+    assert cd.cell(f, f["cond"])["lift"] == pytest.approx(0.0, abs=0.5)
