@@ -28,6 +28,13 @@
   効き幅の目安: +2.45pp × 4,000G × 3枚 ≈ +294枚 ≈ +5,900円/日。ただしこれは
   機種平均であって、その機種の中のどの台に座るかは別問題。
 
+冒頭の日付条件 — ゾロ目・7のつく日・月末・土日などが、その店で本当に効くか。
+  判別可能機種（ノーマル/BT/A+AT）のボーナス確率で測る。差枚だと日数が減ったとき
+  運に埋もれる（強ゾロ目は20か月で20日しかない）。強ゾロ目は8ホール中7でプラスで、
+  雑色 +5.0% / 蒲田7 +4.5% / 蒲田1 +2.5%。設定1→6 で15〜25%上がるので、
+  +4%は1段階ぶんの目安。⚠️ **日を選ぶのには使えるが、機種を選ぶのには使えない**
+  （機種ごとの反応差は繰り返さず、ルールに足すと成績が下がる）。
+
 【3】この店で厚い機種 — 直近60日の「同日ホール平均との差枚差」で並べる。
   日単位ではこの持続性はゼロ（前日→当日の相関 0.03）だが、月単位では 0.20〜0.62 ある。
   過去日で回すと +115枚/台日。同じ機種でも店で扱いが逆になる（沖ドキDUOは蒲田1で
@@ -56,6 +63,7 @@ ROOT = os.path.dirname(HERE)
 sys.path.insert(0, ROOT)
 
 from backtest.integrated import ANALYSIS_DB, machine_frame  # noqa: E402,F401
+from backtest.date_conditions import day_verdict, today_conditions  # noqa: E402
 from backtest.model_standing import WINDOW_DAYS, standing  # noqa: E402
 
 WEEKDAYS = "月火水木金土日"
@@ -175,6 +183,17 @@ def sheet(hall, date, analysis_db=ANALYSIS_DB):
     print("=" * 72)
     print("  %s  %s（%s）" % (hall, date, weekday))
     print("=" * 72)
+
+    # 日付条件は「行くかどうか」の判断材料なので、機種の話より前に出す。
+    verdict = day_verdict(hall, date)
+    if verdict:
+        for name, lift, z, days in verdict:
+            mark = "強い日" if lift >= 1.0 and z >= 2.0 else ("弱い日" if lift <= -1.0 else "ふつう")
+            print("  今日は %s: ボーナス確率 %+.2f%%（%d日ぶんの実測）  %s" % (name, lift, days, mark))
+    elif today_conditions(date):
+        print("  今日は %s（この店では測れていない）" % " / ".join(today_conditions(date)))
+    else:
+        print("  日付条件に当てはまらない、ふつうの日")
 
     print("\n【1】今日の予告（事前登録済みのみ。遡及登録は出さない）")
     rows = announcements(analysis, hall, date)
