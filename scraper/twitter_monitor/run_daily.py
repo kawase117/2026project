@@ -22,6 +22,10 @@ from zoneinfo import ZoneInfo
 
 from config import DB_PATH
 
+# scripts/runlock.py を読むためのパス追加。twitter_monitor/ から直接起動される。
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
+from runlock import acquire_or_exit  # noqa: E402
+
 BASE_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = BASE_DIR.parents[1]
 LEDGER_PATH = PROJECT_ROOT / "backtest" / "announce" / "LEDGER.jsonl"
@@ -244,6 +248,17 @@ def main() -> int:
     parser.add_argument("--skip-fulltext", action="store_true", help="折り畳まれた本文の取り直しを行いません。")
     args = parser.parse_args()
 
+    # state.db と scraper/.browser_profile を単独で掴む。run_morning.py と
+    # run_daily_ingest.py の両方がこのスクリプトを子プロセスで呼ぶため、
+    # 2026-09-12 には 07:51 と 08:01 の2本が同時に走った。
+    lock = acquire_or_exit("twitter_monitor")
+    try:
+        return _run(args)
+    finally:
+        lock.release()
+
+
+def _run(args: argparse.Namespace) -> int:
     today = datetime.now(JST).date()
     with sqlite3.connect(DB_PATH, timeout=60) as connection:
         last = last_collected_date(connection)

@@ -11,10 +11,15 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import sys
 from pathlib import Path
 from typing import Any
 
 import anaslo_scraper_auto as base
+
+# scripts/runlock.py を読むためのパス追加。scraper/ から直接起動されるため。
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+from runlock import acquire_or_exit  # noqa: E402
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -29,6 +34,18 @@ def build_parser() -> argparse.ArgumentParser:
         help="Cloudflareチャレンジが出た場合、画面上での手動解決を待つ",
     )
     parser.add_argument("--config", default="hall_config.json", help="設定ファイル名")
+    parser.add_argument(
+        "--profile-dir",
+        default=None,
+        help="Chrome プロファイルの置き場（既定 scraper/.browser_profile）。"
+        "使い捨てにすると Cloudflare の通過クッキーが毎回捨てられ 403 を踏む",
+    )
+    parser.add_argument(
+        "--hall-interval",
+        type=float,
+        default=8.0,
+        help="ホール間の待機秒。0 にすると連続アクセスで 403 を誘発する",
+    )
     parser.add_argument(
         "--force",
         action="store_true",
@@ -157,14 +174,22 @@ async def main_async(argv: list[str] | None = None) -> int:
     browser = None
     log_lines: list[str] = []
     try:
-        browser = await base.launch_browser(headless=args.headless)
+        browser = await base.launch_browser(headless=args.headless, profile_dir=args.profile_dir)
 
         total_success = 0
         total_failed = 0
 
         aborted: list[str] = []
-        for hall in halls:
+        # 遮断されたまま残りのホールを続けて叩くと、ana-slo 側の判定が
+        # チャレンジ（回復可能）から 403 ブロック（本文1バイト）に格上げされる。
+        # 2026-09-12 は10ホールを 0.4 秒で舐めてこれを踏んだ。連続で遮断されたら
+        # その回は打ち切り、時間を空けて再実行する。
+        consecutive_blocks = 0
+        max_consecutive_blocks = 2
+        for index, hall in enumerate(halls):
             label = hall.get("hall_name") or hall.get("name") or "unknown_hall"
+            if index > 0 and args.hall_interval > 0:
+                await asyncio.sleep(args.hall_interval)
             # 1ホールの失敗で残りを捨てない。ana-slo は連続アクセスで 403 を返す
             # ことがあり、以前はそこで例外が上がって未取得のホールが全部落ちた。
             # ホール単位で握れば、後続ホールの取得と再試行対象の特定ができる。
@@ -182,7 +207,23 @@ async def main_async(argv: list[str] | None = None) -> int:
                 print(f"\n[ABORT] {label}: {error}")
                 aborted.append(label)
                 log_lines.append(f"{label}: aborted ({error})")
+                message = str(error)
+                if "state=blocked" in message or "state=challenge" in message:
+                    consecutive_blocks += 1
+                    if consecutive_blocks >= max_consecutive_blocks:
+                        remaining = [h.get("hall_name") or h.get("name") or "unknown_hall" for h in halls[index + 1 :]]
+                        print(
+                            f"\n[STOP] {consecutive_blocks}ホール連続で遮断されたため、この回は打ち切る。"
+                            "\n       叩き続けると 403 ブロックが長引く。時間を空けて同じ引数で再実行すること。"
+                        )
+                        if remaining:
+                            print(f"       未着手 {len(remaining)}件: {', '.join(remaining)}")
+                            aborted.extend(remaining)
+                        break
+                else:
+                    consecutive_blocks = 0
                 continue
+            consecutive_blocks = 0
             total_success += success_count
             total_failed += failed_count
             log_lines.append(f"{hall_name}: success={success_count}, failed={failed_count}")
@@ -209,7 +250,13 @@ async def main_async(argv: list[str] | None = None) -> int:
 
 
 def main() -> None:
-    asyncio.run(main_async())
+    # Chrome の永続プロファイル scraper/.browser_profile を単独で掴む。
+    # 二重起動するとプロファイルが壊れ、Cloudflare の通過クッキーごと失う。
+    lock = acquire_or_exit("anaslo_browser")
+    try:
+        asyncio.run(main_async())
+    finally:
+        lock.release()
 
 
 if __name__ == "__main__":

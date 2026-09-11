@@ -32,6 +32,8 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+from runlock import acquire_or_exit  # 同ディレクトリ
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 PYTHON = sys.executable
 JST = ZoneInfo("Asia/Tokyo")
@@ -144,6 +146,17 @@ def main() -> int:
     parser.add_argument("--days", type=int, default=10, help="何日前まで遡って欠落を探すか (既定 10)")
     args = parser.parse_args()
 
+    # 手で回している最中にスケジューラが発火しても、二重には走らせない。
+    # 2026-09-12 に run_daily.py が 07:51 と 08:01 の2本同時に走り、
+    # state.db と .browser_profile を奪い合った。
+    lock = acquire_or_exit("daily_pipeline")
+    try:
+        return _run(args)
+    finally:
+        lock.release()
+
+
+def _run(args: argparse.Namespace) -> int:
     today = datetime.now(JST).date()
     start = (today - timedelta(days=args.days)).strftime("%Y%m%d")
     end = (today - timedelta(days=1)).strftime("%Y%m%d")

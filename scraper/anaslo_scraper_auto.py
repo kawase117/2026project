@@ -27,6 +27,10 @@ from typing import Any
 from bs4 import BeautifulSoup
 import nodriver as uc
 
+# scripts/runlock.py を読むためのパス追加。scraper/ から直接起動されるため。
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+from runlock import acquire_or_exit  # noqa: E402
+
 
 DEFAULT_LIST_URL = "https://ana-slo.com/%E3%83%9B%E3%83%BC%E3%83%AB%E3%83%87%E3%83%BC%E3%82%BF/%E6%9D%B1%E4%BA%AC%E9%83%BD/%E6%A5%BD%E5%9C%92%E8%92%B2%E7%94%B0%E5%BA%97-%E3%83%87%E3%83%BC%E3%82%BF%E4%B8%80%E8%A6%A7/"
 DEFAULT_START_DATE = None
@@ -243,8 +247,32 @@ class NodriverBrowserAdapter:
         self._browser.stop()
 
 
-async def launch_browser(headless: bool):
-    browser = await uc.start(headless=headless, sandbox=False)
+DEFAULT_PROFILE_DIR = Path(__file__).resolve().parent / ".browser_profile"
+
+
+def resolve_profile_dir() -> Path:
+    """Chrome プロファイルの置き場。
+
+    既定では scraper/.browser_profile を使い回す。使い捨てプロファイルだと
+    Cloudflare の通過クッキー（cf_clearance）が毎回捨てられ、実行のたびに
+    チャレンジからやり直しになる。2026-09-12 に全10ホールが 403（本文1バイト）
+    で遮断されたのはこれが原因で、通常ブラウザでは同一IPから正常に見えていた。
+    ANASLO_PROFILE_DIR で差し替えられる。
+    """
+
+    env = os.environ.get("ANASLO_PROFILE_DIR")
+    path = Path(env) if env else DEFAULT_PROFILE_DIR
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+async def launch_browser(headless: bool, profile_dir: "str | Path | None" = None):
+    user_data_dir = Path(profile_dir) if profile_dir else resolve_profile_dir()
+    browser = await uc.start(
+        headless=headless,
+        sandbox=False,
+        user_data_dir=str(user_data_dir),
+    )
     return NodriverBrowserAdapter(browser)
 
 
@@ -897,7 +925,13 @@ def main() -> None:
             stream.reconfigure(errors="replace")
         except Exception:
             pass
-    asyncio.run(main_async())
+    # 単ホール版も multi と同じ scraper/.browser_profile を使うので、
+    # 同じロックで排他する。
+    lock = acquire_or_exit("anaslo_browser")
+    try:
+        asyncio.run(main_async())
+    finally:
+        lock.release()
 
 
 if __name__ == "__main__":
