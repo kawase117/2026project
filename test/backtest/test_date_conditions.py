@@ -117,3 +117,54 @@ def test_day_verdict_only_returns_matching_conditions(hall):
     names = [v[0] for v in dc.day_verdict(hall, "20260909")]
     assert "強ゾロ目" in names
     assert "月末" not in names
+
+
+@pytest.fixture
+def mixed_hall(tmp_path, monkeypatch):
+    """機種構成が途中で入れ替わる店。合算で割ると偽の効果が出る形を仕込む。"""
+    con = sqlite3.connect(str(tmp_path / "構成変化店.db"))
+    con.execute(
+        "CREATE TABLE machine_detailed_results (date TEXT, machine_name TEXT, "
+        "games_normalized INTEGER, bb_count INTEGER, rb_count INTEGER)"
+    )
+    con.execute(
+        "CREATE TABLE machine_master (machine_name_normalized TEXT, bonus_judgeable INTEGER, spec_category TEXT)"
+    )
+    con.executemany(
+        "INSERT INTO machine_master VALUES (?,?,?)",
+        [("低ベース", 1, "A+AT"), ("高ベース", 1, "A+AT"), ("ノーマル機", 1, "ノーマル")],
+    )
+    rows = []
+    for month in range(1, 13):
+        for day in range(1, 29):
+            date = "2026%02d%02d" % (month, day)
+            # 強ゾロ目の日だけ「高ベース」の台が多く回る＝設定は動いていないのに
+            # 合算のボーナス確率は上がる。per-model 基準ならゼロになるはず。
+            heavy = 8000 if month == day else 1000
+            rows.append((date, "低ベース", 4000, 10, 10))
+            rows.append((date, "高ベース", heavy, heavy // 100, heavy // 100))
+            rows.append((date, "ノーマル機", 4000, 15, 15))
+    con.executemany("INSERT INTO machine_detailed_results VALUES (?,?,?,?,?)", rows)
+    con.commit()
+    con.close()
+    monkeypatch.setattr(dc, "DB_DIR", str(tmp_path))
+    return "構成変化店"
+
+
+def test_composition_change_does_not_fake_an_effect(mixed_hall):
+    # 設定は1日も動かしていない。機種ごとの基準で測れば上振れはゼロ。
+    m = dc.measure(mixed_hall, category="A+AT")
+    row = m[m.condition == "強ゾロ目"].iloc[0]
+    assert row.lift == pytest.approx(0.0, abs=0.5)
+
+
+def test_category_filter_selects_only_that_category(mixed_hall):
+    normal = dc.measure(mixed_hall, category="ノーマル")
+    assert normal[normal.condition == "強ゾロ目"].iloc[0].models == 1
+    at = dc.measure(mixed_hall, category="A+AT")
+    assert at[at.condition == "強ゾロ目"].iloc[0].models == 2
+
+
+def test_unfiltered_measure_covers_every_judgeable_category(mixed_hall):
+    both = dc.measure(mixed_hall)
+    assert both[both.condition == "強ゾロ目"].iloc[0].models == 3

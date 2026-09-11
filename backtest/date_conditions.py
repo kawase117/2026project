@@ -84,17 +84,24 @@ def _zscore(k_cond, g_cond, k_other, g_other):
     return (k_cond - g_cond * p) / sd if sd > 0 else np.nan
 
 
-def measure(hall):
-    """1ホールぶん。条件ごとに lift(%) と σ と日数を返す。"""
+def measure(hall, category=None):
+    """1ホールぶん。条件ごとに lift(%) と σ と日数を返す。
+
+    category を指定すると spec_category（ノーマル / BT / A+AT）で絞る。
+    ホールはこの3つを別の役割で使っている（BTは10ホール中9で負、A+ATは
+    ホールによって符号が逆）ので、まとめて測ると打ち消し合うことがある。
+    """
     path = os.path.join(DB_DIR, hall + ".db")
     if not os.path.exists(path):
         return None
     with sqlite3.connect("file:%s?mode=ro" % path, uri=True) as conn:
+        query = "SELECT machine_name_normalized FROM machine_master WHERE bonus_judgeable = 1"
+        params = ()
+        if category is not None:
+            query += " AND spec_category = ?"
+            params = (category,)
         try:
-            judgeable = [
-                row[0]
-                for row in conn.execute("SELECT machine_name_normalized FROM machine_master WHERE bonus_judgeable = 1")
-            ]
+            judgeable = [row[0] for row in conn.execute(query, params)]
         except sqlite3.Error:
             return None
         if not judgeable:
@@ -117,28 +124,56 @@ def measure(hall):
         days = df.loc[flag, "date"].nunique()
         if days < MIN_DAYS:
             continue
-        agg = df.groupby(flag).agg(bonus=("bonus", "sum"), games=("games", "sum"))
-        if not {True, False} <= set(agg.index):
+        # 機種をまとめて割ってはいけない。機種ごとにボーナス確率の基準が違うので、
+        # 設置構成が入れ替わるだけで比が動く（機種数の少ない A+AT で実害が出た。
+        # 雑色の月末が +15% と出たが、これは設定ではなく構成の変化だった）。
+        # 機種ごとに「自分の非条件日の確率」から期待値を出し、それを足し上げて比べる。
+        per = df.groupby([df.machine_name, flag]).agg(bonus=("bonus", "sum"), games=("games", "sum")).unstack()
+        if ("games", True) not in per.columns or ("games", False) not in per.columns:
             continue
-        p_cond = agg.loc[True, "bonus"] / agg.loc[True, "games"]
-        p_other = agg.loc[False, "bonus"] / agg.loc[False, "games"]
+        per = per.dropna()
+        base_rate = per[("bonus", False)] / per[("games", False)]
+        expected = (per[("games", True)] * base_rate).sum()
+        observed = per[("bonus", True)].sum()
+        games_cond = per[("games", True)].sum()
+        if expected <= 0 or games_cond <= 0:
+            continue
+        p_cond = observed / games_cond
+        p_other = expected / games_cond
         rows.append(
             {
                 "hall": hall,
+                "category": category or "すべて",
                 "condition": label,
                 "days": int(days),
+                "models": int(len(per)),
+                "games": int(games_cond),
                 "lift": 100 * (p_cond / p_other - 1),
-                "z": _zscore(
-                    agg.loc[True, "bonus"], agg.loc[True, "games"], agg.loc[False, "bonus"], agg.loc[False, "games"]
-                ),
+                # 期待値は機種別の基準から積み上げたもの。分散も同じ期待値から取る。
+                "z": (observed - expected) / np.sqrt(expected * (1 - p_other)),
             }
         )
     return pd.DataFrame(rows) if rows else None
 
 
-def all_halls():
-    frames = [m for m in (measure(h) for h in hall_names()) if m is not None]
+CATEGORIES = ("ノーマル", "BT", "A+AT")
+MIN_CONDITION_GAMES = 50_000  # 条件日側の総回転数がこれ未満のセルは数字を出さない
+
+
+def all_halls(category=None):
+    frames = [m for m in (measure(h, category) for h in hall_names()) if m is not None]
     return pd.concat(frames, ignore_index=True) if frames else None
+
+
+def by_category():
+    """ノーマル / BT / A+AT に分けた一覧。回転数が足りないセルは NaN にする。"""
+    frames = [all_halls(c) for c in CATEGORIES]
+    frames = [f for f in frames if f is not None]
+    if not frames:
+        return None
+    a = pd.concat(frames, ignore_index=True)
+    a.loc[a.games < MIN_CONDITION_GAMES, "lift"] = np.nan
+    return a
 
 
 def today_conditions(date):
@@ -147,9 +182,9 @@ def today_conditions(date):
     return [label for label, test in CONDITIONS.items() if test(ts)]
 
 
-def day_verdict(hall, date):
+def day_verdict(hall, date, category=None):
     """今日がこの店にとってどういう日か。(条件名, lift, σ, 日数) の並び。"""
-    m = measure(hall)
+    m = measure(hall, category)
     if m is None:
         return []
     applies = set(today_conditions(date))
@@ -179,35 +214,90 @@ def print_table():
     print("   ⚠️ 日を選ぶのには使えるが、機種を選ぶのには使えない（機種別の差は繰り返さない）")
 
 
-def print_day(hall, date):
+def print_by_category():
+    """ノーマル / BT / A+AT に分けて出す。
+
+    ⚠️ 回転数が桁で違う。ノーマルは条件日あたり 1,200万〜5,400万G あるが、
+    BT は 18万〜380万G、A+AT は 12万〜1,500万G しかない。同じ「+4%」でも
+    ノーマルなら実在、BT なら雑音ということが普通に起きる。**必ず σ と一緒に読む。**
+    """
+    a = by_category()
+    if a is None:
+        print("   （spec_category 未整備）")
+        return
+    a["label"] = a.hall.map(short)
+    for category in CATEGORIES:
+        sub = a[a.category == category]
+        if sub.lift.notna().sum() == 0:
+            print("\n■ %s — 回転数が足りず測れない" % category)
+            continue
+        print("\n■ %s   上振れ%% （σ）" % category)
+        print("   %-14s" % "" + "".join("%14s" % c for c in CONDITIONS))
+        for label, g in sub.groupby("label"):
+            cells = []
+            for cond in CONDITIONS:
+                row = g[g.condition == cond]
+                if row.empty or pd.isna(row.lift.iloc[0]):
+                    cells.append("%14s" % "-")
+                else:
+                    cells.append("%14s" % ("%+.2f (%.1f)" % (row.lift.iloc[0], row.z.iloc[0])))
+            print("   %-14s" % label + "".join(cells))
+        games = int(sub.games.mean())
+        print("   条件日あたりの平均回転数 %s G" % f"{games:,}")
+
+    print("\n■ プラスだったホール数（σ>=2 のみ数える）")
+    print("   %-10s" % "" + "".join("%12s" % c for c in CONDITIONS))
+    for category in CATEGORIES:
+        sub = a[a.category == category]
+        cells = []
+        for cond in CONDITIONS:
+            g = sub[(sub.condition == cond) & sub.lift.notna()]
+            up = int(((g.lift > 0) & (g.z >= 2)).sum())
+            down = int(((g.lift < 0) & (g.z <= -2)).sum())
+            cells.append("%12s" % ("+%d / -%d / %d店" % (up, down, len(g))))
+        print("   %-10s" % category + "".join(cells))
+    print("\n   空欄は条件日の回転数が %s G 未満で測れないセル" % f"{MIN_CONDITION_GAMES:,}")
+    print("   σ は測定の精度。回転数の少ない BT / A+AT では大きな%%でも σ が小さい")
+
+
+def print_day(hall, date, split=False):
     applies = today_conditions(date)
     print("■ %s  %s" % (hall, date))
     if not applies:
         print("   当てはまる日付条件なし（ふつうの日）")
         return
     print("   当てはまる条件: %s" % " / ".join(applies))
-    verdict = day_verdict(hall, date)
-    if not verdict:
-        print("   （この店では測れていない）")
-        return
-    print("   %-12s%9s%8s%8s" % ("条件", "上振れ", "σ", "日数"))
-    for name, lift, z, days in verdict:
-        mark = "強い日" if lift >= STRONG_LIFT and z >= STRONG_Z else ("弱い日" if lift <= -STRONG_LIFT else "")
-        print("   %-12s%+8.2f%%%8.1f%8d  %s" % (name, lift, z, days, mark))
+    groups = [(None, "すべて")] + ([(c, c) for c in CATEGORIES] if split else [])
+    for category, label in groups:
+        verdict = day_verdict(hall, date, category)
+        if not verdict:
+            if split:
+                print("   %-8s （測れていない）" % label)
+            continue
+        if split:
+            print("   [%s]" % label)
+        print("   %-12s%9s%8s%8s" % ("条件", "上振れ", "σ", "日数"))
+        for name, lift, z, days in verdict:
+            mark = "強い日" if lift >= STRONG_LIFT and z >= STRONG_Z else ("弱い日" if lift <= -STRONG_LIFT else "")
+            print("   %-12s%+8.2f%%%8.1f%8d  %s" % (name, lift, z, days, mark))
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = parser.add_subparsers(dest="cmd", required=True)
     sub.add_parser("table", help="全ホール×全条件の一覧")
+    sub.add_parser("category", help="ノーマル / BT / A+AT に分けた一覧")
     p_day = sub.add_parser("day", help="その日がその店にとってどういう日か")
     p_day.add_argument("hall")
     p_day.add_argument("--date", required=True)
+    p_day.add_argument("--by-category", action="store_true", help="ノーマル/BT/A+AT に分けて出す")
     args = parser.parse_args()
     if args.cmd == "table":
         print_table()
+    elif args.cmd == "category":
+        print_by_category()
     else:
-        print_day(args.hall, args.date)
+        print_day(args.hall, args.date, args.by_category)
 
 
 if __name__ == "__main__":
