@@ -28,7 +28,13 @@
   効き幅の目安: +2.45pp × 4,000G × 3枚 ≈ +294枚 ≈ +5,900円/日。ただしこれは
   機種平均であって、その機種の中のどの台に座るかは別問題。
 
-【3】判別可能機種 — `spec_category` が ノーマル / BT / A+AT のもの。現行設置の
+【3】この店で厚い機種 — 直近60日の「同日ホール平均との差枚差」で並べる。
+  日単位ではこの持続性はゼロ（前日→当日の相関 0.03）だが、月単位では 0.20〜0.62 ある。
+  過去日で回すと +115枚/台日。同じ機種でも店で扱いが逆になる（沖ドキDUOは蒲田1で
+  上位91%・蒲田7で下位22%）ので、スペックではなく店ごとに見ること
+  （instinct: model-strength-persists-by-term-not-by-day）。
+
+【4】判別可能機種 — `spec_category` が ノーマル / BT / A+AT のもの。現行設置の
   約36%しかない。AT機はボーナス確率で設定を割れないので、やめどきの判断材料にならない。
 
 使い方
@@ -50,6 +56,7 @@ ROOT = os.path.dirname(HERE)
 sys.path.insert(0, ROOT)
 
 from backtest.integrated import ANALYSIS_DB, machine_frame  # noqa: E402,F401
+from backtest.model_standing import WINDOW_DAYS, standing  # noqa: E402
 
 WEEKDAYS = "月火水木金土日"
 INCREASE_WINDOW_DAYS = 7  # 効果が消える日数。事前30日と8〜30日はどちらもほぼゼロ
@@ -214,7 +221,24 @@ def sheet(hall, date, analysis_db=ANALYSIS_DB):
         for day, name, n_machines in fresh:
             print("      %-28s %2d台  %s" % (str(name)[:28], n_machines, day))
 
-    print("\n【3】打ちながら設定を絞れる機種（ノーマル / BT / A+AT）")
+    print("\n【3】この店で厚い機種（直近%d日）" % WINDOW_DAYS)
+    board = standing(hall, window=WINDOW_DAYS)
+    if board is None:
+        print("   （データが足りない）")
+    else:
+        for name, row in board.head(3).iterrows():
+            print(
+                "   %-28s %+5.0f枚  上位%2.0f%%  %2d台  回転数比 %.2f"
+                % (str(name)[:28], row.edge, 100 * row.pct, row.machines, row.games_ratio)
+            )
+        print("   ── 避ける側")
+        for name, row in board.tail(3).iloc[::-1].iterrows():
+            print("   %-28s %+5.0f枚  下位%2.0f%%  %2d台" % (str(name)[:28], row.edge, 100 * row.pct, row.machines))
+        print("   → 日次では読めないが月次では持続する（月→翌月の相関 0.20〜0.62）。")
+        print("      過去日の推定は +115枚/台日。同じ機種でも店で扱いが逆になるので店ごとに見る")
+        print("      一覧は backtest/model_standing.py の hall / model / spread")
+
+    print("\n【4】打ちながら設定を絞れる機種（ノーマル / BT / A+AT）")
     result = judgeable_models(hall, date, analysis_db)
     if result:
         last, models = result
