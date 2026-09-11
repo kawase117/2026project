@@ -50,6 +50,7 @@ ALLOWED_SCORES = {
     "hist_mean_rb_prob",  # lookback 期間の平均RB確率（生値。機種横断だと機種差を拾う）
     "hist_mean_rb_prob_model_z",  # 同上を機種内標準化してから平均（機種差を除去）
     "hist_model_gratio_mean_diff",  # 機種粒度: G比×平均差枚（総和ベース）。2026-08-01 正解ラベル検証で主指標。
+    "hist_model_mean_edge",  # 機種粒度: 同日ホール平均との差枚差の平均。「この店で恒常的に厚い機種」を選ぶ。
     "none",  # スコアリングせず eligible 全体（＝フィルタのみの効果を見る）
 }
 

@@ -122,6 +122,180 @@
   },
   "regime_note": "蒲田1で2026-09-01頃に よこやん が店長就任し（999999Q9Q『新章メガいち』）、本予告も『メガ1の月イチ周年対抗』を明示している。楽園蒲田の投入が近隣店の動きに連動する可能性があるが、本予告では検証しない。既存の project-kamata1-tencho-change-20260825 は 2026-08-25 を境界としていたので、後任の就任日を別途確定すること。",
   "series_note": "同日に蒲田1（999999Q9Q よこやん予想）と蒲田7（同 ウスイ予想）の予告も存在したが、登録を見送った。理由は RETROACTIVE_NOTES.md に記録。要約すると、蒲田1は名指しが全て『？』付きの書き手自身の推測でホール告知の転記ではなく、蒲田7は『全機種も当然ある』が p_at_least_1=1.000 で構成上必ず成立するため、反証可能で情報量のある主張が無い。",
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20260910",
+    "hall_baseline_mean_diff": 301.2,
+    "hall_n_machines": 587,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 2,
+      "n_censored_lo": 1,
+      "machines_hi": [
+        "東京リベンジャーズ",
+        "甲鉄城のカバネリ 海門(うなと)決戦"
+      ],
+      "machines_lo": [
+        "東京喰種"
+      ],
+      "bounds": [
+        -5095,
+        15477
+      ]
+    },
+    "claims": [
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "東京喰種",
+          "ratio": 2,
+          "note": "『東京喰種がニブイチ⑤⑥』。機種名照合は substring / score=1.0 で確定（31台設置、本文の『東京喰種は31台』と一致）。⚠️ named-context: 直近30日で閾値+1800超えは 0/30日（rate=0.0, mean_score=96.1, rank=13/57）。冷えている機種への名指しであり、当たれば予告の情報量は大きい。"
+        },
+        "n_machines": 31,
+        "ratio": 2,
+        "top_k": 16,
+        "model_top_k_mean_diff": 4357.4,
+        "hall_top_quantile_mean_diff": 1641.1,
+        "excess_vs_hall_quantile": 2716.3,
+        "model_mean_diff": 978.8,
+        "n_over_hall_quantile": 16,
+        "hit": true,
+        "model_named_score": 1910.4,
+        "model_named_rank": 6
+      },
+      {
+        "type": "position_rule",
+        "claim": {
+          "type": "position_rule",
+          "field": "last_digit",
+          "values": [
+            "0"
+          ],
+          "note": "『末尾0がニブイチ⑤⑥』。本文は『東京喰種除いて56台、合計87台』とし、GOD/北斗/ジャグラー/カバネリ/東京喰種のメイン機種の末尾0を優先としているが、主張自体はホール全域の末尾0なので segment は指定しない。⚠️ セグメントを跨いだ末尾効果は符号が反転しうる（2026-08-07 楽園蒲田で実証）ので、答え合わせではセグメント別の内訳も必ず出す。"
+        },
+        "by_segment": [
+          {
+            "segment": "JUG",
+            "n_machines": 117,
+            "n_target": 12,
+            "n_other": 105,
+            "effect_resid_diff": 1719.0,
+            "target_payout": 1.0604,
+            "other_payout": 0.9869
+          },
+          {
+            "segment": "OKI",
+            "n_machines": 13,
+            "n_target": 1,
+            "n_other": 12,
+            "effect_resid_diff": 1285.1,
+            "target_payout": 1.0778,
+            "other_payout": 0.9148
+          },
+          {
+            "segment": "AT",
+            "n_machines": 352,
+            "n_target": 38,
+            "n_other": 314,
+            "effect_resid_diff": 847.8,
+            "target_payout": 1.0567,
+            "other_payout": 1.0297
+          },
+          {
+            "segment": "HANA",
+            "n_machines": 16,
+            "n_target": 2,
+            "n_other": 14,
+            "effect_resid_diff": 771.9,
+            "target_payout": 1.0428,
+            "other_payout": 1.0234
+          },
+          {
+            "segment": "BT",
+            "n_machines": 89,
+            "n_target": 7,
+            "n_other": 82,
+            "effect_resid_diff": 20.5,
+            "target_payout": 1.0112,
+            "other_payout": 1.04
+          }
+        ],
+        "judged_segment": "ALL(pooled)",
+        "n_target": 60,
+        "n_other": 527,
+        "effect_resid_diff": 926.7,
+        "target_payout": 1.0535,
+        "other_payout": 1.0218,
+        "hit": true
+      },
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 1,
+          "note": "『全⑥あり』。台数の指定が無いので最小の1で登録する。⚠️ p_at_least_1=0.931 なので無情報でもほぼ成立する。hit=true を的中として数えないこと。答え合わせでは超えた機種が何だったかを記録するに留める。"
+        },
+        "observed_n_models": 6,
+        "candidate_models": 57,
+        "models": [
+          {
+            "machine_name": "東京リベンジャーズ",
+            "score": 18476.9,
+            "n_machines": 4,
+            "mean_diff": 7512.5,
+            "n_censored_hi": 1,
+            "n_censored_lo": 0,
+            "censoring_bias": "lower_bound",
+            "max_score_understatement": 2166.2,
+            "age_days": 367
+          },
+          {
+            "machine_name": "青春ブタ野郎はバニーガール先輩の夢を見ない",
+            "score": 4729.4,
+            "n_machines": 7,
+            "mean_diff": 2517.3,
+            "age_days": 3
+          },
+          {
+            "machine_name": "ToLOVEるダークネス",
+            "score": 3989.0,
+            "n_machines": 6,
+            "mean_diff": 2333.8,
+            "age_days": 617
+          },
+          {
+            "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+            "score": 3204.4,
+            "n_machines": 26,
+            "mean_diff": 1582.8,
+            "n_censored_hi": 1,
+            "n_censored_lo": 0,
+            "censoring_bias": "lower_bound",
+            "max_score_understatement": 274.3,
+            "age_days": 192
+          },
+          {
+            "machine_name": "ジャグラーガールズ",
+            "score": 2170.9,
+            "n_machines": 4,
+            "mean_diff": 1131.5,
+            "age_days": 617
+          },
+          {
+            "machine_name": "東京喰種",
+            "score": 1910.4,
+            "n_machines": 31,
+            "mean_diff": 978.8,
+            "n_censored_hi": 0,
+            "n_censored_lo": 1,
+            "censoring_bias": "upper_bound",
+            "age_days": 583
+          }
+        ],
+        "n_new_machines_over": 1,
+        "hit": true
+      }
+    ]
+  },
   "announce_digest": "bc75300af14fa438"
 }

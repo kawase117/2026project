@@ -1,0 +1,322 @@
+{
+  "rule_id": "mitoya_model_term60_top3",
+  "hall": "みとや大森町店",
+  "freeze_hash": "673d238a7e985850",
+  "target_date": "20260912",
+  "data_asof": "20260910",
+  "lookback_window": [
+    "2026-07-14",
+    "2026-09-12"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +120 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "リコリス・リコイル",
+      "score": 809.383438,
+      "history_rows": 56,
+      "machines": [
+        574,
+        575,
+        576,
+        577,
+        578,
+        579,
+        580,
+        601,
+        602,
+        603,
+        604,
+        605,
+        606,
+        607
+      ]
+    },
+    {
+      "machine_name": "東京喰種",
+      "score": 471.28802,
+      "history_rows": 342,
+      "machines": [
+        540,
+        541,
+        542,
+        543,
+        544,
+        545,
+        546,
+        547,
+        548
+      ]
+    },
+    {
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 408.173423,
+      "history_rows": 642,
+      "machines": [
+        624,
+        625,
+        626,
+        627,
+        628,
+        629,
+        630,
+        631,
+        632,
+        633,
+        634,
+        635,
+        636,
+        637,
+        638,
+        639,
+        640
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 574,
+      "machine_name": "リコリス・リコイル",
+      "score": 809.383438,
+      "history_days": 56
+    },
+    {
+      "machine_number": 575,
+      "machine_name": "リコリス・リコイル",
+      "score": 809.383438,
+      "history_days": 56
+    },
+    {
+      "machine_number": 576,
+      "machine_name": "リコリス・リコイル",
+      "score": 809.383438,
+      "history_days": 56
+    },
+    {
+      "machine_number": 577,
+      "machine_name": "リコリス・リコイル",
+      "score": 809.383438,
+      "history_days": 56
+    },
+    {
+      "machine_number": 578,
+      "machine_name": "リコリス・リコイル",
+      "score": 809.383438,
+      "history_days": 56
+    },
+    {
+      "machine_number": 579,
+      "machine_name": "リコリス・リコイル",
+      "score": 809.383438,
+      "history_days": 56
+    },
+    {
+      "machine_number": 580,
+      "machine_name": "リコリス・リコイル",
+      "score": 809.383438,
+      "history_days": 56
+    },
+    {
+      "machine_number": 601,
+      "machine_name": "リコリス・リコイル",
+      "score": 809.383438,
+      "history_days": 56
+    },
+    {
+      "machine_number": 602,
+      "machine_name": "リコリス・リコイル",
+      "score": 809.383438,
+      "history_days": 56
+    },
+    {
+      "machine_number": 603,
+      "machine_name": "リコリス・リコイル",
+      "score": 809.383438,
+      "history_days": 56
+    },
+    {
+      "machine_number": 604,
+      "machine_name": "リコリス・リコイル",
+      "score": 809.383438,
+      "history_days": 56
+    },
+    {
+      "machine_number": 605,
+      "machine_name": "リコリス・リコイル",
+      "score": 809.383438,
+      "history_days": 56
+    },
+    {
+      "machine_number": 606,
+      "machine_name": "リコリス・リコイル",
+      "score": 809.383438,
+      "history_days": 56
+    },
+    {
+      "machine_number": 607,
+      "machine_name": "リコリス・リコイル",
+      "score": 809.383438,
+      "history_days": 56
+    },
+    {
+      "machine_number": 540,
+      "machine_name": "東京喰種",
+      "score": 471.28802,
+      "history_days": 342
+    },
+    {
+      "machine_number": 541,
+      "machine_name": "東京喰種",
+      "score": 471.28802,
+      "history_days": 342
+    },
+    {
+      "machine_number": 542,
+      "machine_name": "東京喰種",
+      "score": 471.28802,
+      "history_days": 342
+    },
+    {
+      "machine_number": 543,
+      "machine_name": "東京喰種",
+      "score": 471.28802,
+      "history_days": 342
+    },
+    {
+      "machine_number": 544,
+      "machine_name": "東京喰種",
+      "score": 471.28802,
+      "history_days": 342
+    },
+    {
+      "machine_number": 545,
+      "machine_name": "東京喰種",
+      "score": 471.28802,
+      "history_days": 342
+    },
+    {
+      "machine_number": 546,
+      "machine_name": "東京喰種",
+      "score": 471.28802,
+      "history_days": 342
+    },
+    {
+      "machine_number": 547,
+      "machine_name": "東京喰種",
+      "score": 471.28802,
+      "history_days": 342
+    },
+    {
+      "machine_number": 548,
+      "machine_name": "東京喰種",
+      "score": 471.28802,
+      "history_days": 342
+    },
+    {
+      "machine_number": 624,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 408.173423,
+      "history_days": 642
+    },
+    {
+      "machine_number": 625,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 408.173423,
+      "history_days": 642
+    },
+    {
+      "machine_number": 626,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 408.173423,
+      "history_days": 642
+    },
+    {
+      "machine_number": 627,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 408.173423,
+      "history_days": 642
+    },
+    {
+      "machine_number": 628,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 408.173423,
+      "history_days": 642
+    },
+    {
+      "machine_number": 629,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 408.173423,
+      "history_days": 642
+    },
+    {
+      "machine_number": 630,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 408.173423,
+      "history_days": 642
+    },
+    {
+      "machine_number": 631,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 408.173423,
+      "history_days": 642
+    },
+    {
+      "machine_number": 632,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 408.173423,
+      "history_days": 642
+    },
+    {
+      "machine_number": 633,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 408.173423,
+      "history_days": 642
+    },
+    {
+      "machine_number": 634,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 408.173423,
+      "history_days": 642
+    },
+    {
+      "machine_number": 635,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 408.173423,
+      "history_days": 642
+    },
+    {
+      "machine_number": 636,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 408.173423,
+      "history_days": 642
+    },
+    {
+      "machine_number": 637,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 408.173423,
+      "history_days": 642
+    },
+    {
+      "machine_number": 638,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 408.173423,
+      "history_days": 642
+    },
+    {
+      "machine_number": 639,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 408.173423,
+      "history_days": 642
+    },
+    {
+      "machine_number": 640,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 408.173423,
+      "history_days": 642
+    }
+  ],
+  "result": null,
+  "plan_digest": "af1ba4dc051fef18"
+}

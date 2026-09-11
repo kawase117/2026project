@@ -222,6 +222,20 @@ def score_history(hist: pd.DataFrame, score: str) -> pd.Series:
         gratio = g["games_normalized"].mean() / pool_mean_games
         mean_diff = g["diff_coins_normalized"].mean()
         return gratio * mean_diff
+    if score == "hist_model_mean_edge":
+        # 機種粒度専用。その機種の「同日ホール平均との差枚差」を窓全体で平均する。
+        #
+        # なぜ gratio 版と別に要るか: gratio 版は「その日その機種に全台系が入ったか」を
+        # 当てるための指標で、回転数の高い機種を持ち上げる。こちらが答えるのは
+        # 「この機種はこの店で恒常的に厚いか」であり、回転数は関係しない。
+        # むしろ実測では選ばれる機種の回転数はホール平均の 0.8 倍前後で、
+        # 空いている機種が選ばれる（2026-09-11、6ホール112ホール月）。
+        #
+        # 日単位ではこの種の持続性はゼロだが（前日→当日の相関 0.03）、
+        # 月単位では 0.20〜0.62 ある。窓を長く取って日次のノイズを均すこと。
+        h = hist.copy()
+        h["edge"] = h["diff_coins_normalized"] - h.groupby("date")["diff_coins_normalized"].transform("mean")
+        return h.groupby("machine_name")["edge"].mean()
     raise ValueError(f"scoring 不可の score: {score!r}")
 
 
