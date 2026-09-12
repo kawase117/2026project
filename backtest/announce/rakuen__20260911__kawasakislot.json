@@ -51,6 +51,71 @@
       "reason": "9/9 の答え合わせであって 9/11 の主張ではない。result ラベルとして別途扱う。"
     }
   ],
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20260911",
+    "hall_baseline_mean_diff": 103.4,
+    "hall_n_machines": 587,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 1,
+      "machines_hi": [],
+      "machines_lo": [
+        "青春ブタ野郎はバニーガール先輩の夢を見ない"
+      ],
+      "bounds": [
+        -5095,
+        15477
+      ]
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+          "note": "『直近増台：Lカバネリ』。26台設置。機種名照合: 当日ロスターに『甲鉄城のカバネリ』(少数台) と『甲鉄城のカバネリ 海門(うなと)決戦』(26台) が併存し、『L』=スマスロ表記より26台版に確定。⚠️ named-context: 直近30日で閾値超えが 9/30 = 30%、rank 4/57、mean_score 1257 と平常から極めて熱い機種。無条件ベースレートで採点すると予告を過大評価する（feedback-named-model-conditional-baserate）。当たっても予告の情報量はほぼゼロとみなすこと。9/8・9/9・9/10 と3日連続で閾値超えしている。"
+        },
+        "score": 1822.7,
+        "mean_diff": 720.1,
+        "gratio": 2.531,
+        "n_machines": 26,
+        "rank": 2,
+        "candidate_models": 57,
+        "age_days": 193,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": true
+      },
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 1,
+          "note": "『全・並び・高配分・末尾寄せ・単品とあらゆる仕掛けを考慮』の『全』。台数の指定が無いので最小の1で登録する。⚠️ 楽園の p_at_least_1 は 0.93 で無情報でもほぼ成立するため、hit=true を的中として数えない。答え合わせでは超えた機種が何だったかを記録するに留める。"
+        },
+        "observed_n_models": 2,
+        "candidate_models": 57,
+        "models": [
+          {
+            "machine_name": "モンキーターンV",
+            "score": 5668.2,
+            "n_machines": 12,
+            "mean_diff": 2246.4,
+            "age_days": 618
+          },
+          {
+            "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+            "score": 1822.7,
+            "n_machines": 26,
+            "mean_diff": 720.1,
+            "age_days": 193
+          }
+        ],
+        "n_new_machines_over": 0,
+        "hit": true
+      }
+    ]
+  },
   "announce_digest": "889d14bbec6f4ee2"
 }

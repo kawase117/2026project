@@ -31,6 +31,61 @@
       "reason": "定性表現。強さの定義も指標も無く、事後にどの指標でも『強かった』と読めてしまう。"
     }
   ],
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20260911",
+    "hall_baseline_mean_diff": 271.2,
+    "hall_n_machines": 365,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 2,
+          "note": "『スロパチあかまる取材で分かりやすく強い日』からの最小限の読み。蒲田1の baserate はmodels_over_threshold_per_day mean 2.36 / median 2.00 なので、2 は平常の中央値そのもの。⚠️ p_at_least_2 はおよそ 0.5 で hit=true を的中として数えない。本予告に具体的な主張が無い以上、これ以上強い claim を立てるのは後知恵になる。"
+        },
+        "observed_n_models": 4,
+        "candidate_models": 48,
+        "models": [
+          {
+            "machine_name": "スマスロ炎炎ノ消防隊2",
+            "score": 10063.5,
+            "n_machines": 5,
+            "mean_diff": 5560.0,
+            "age_days": 221
+          },
+          {
+            "machine_name": "革命機ヴァルヴレイヴ2",
+            "score": 4900.9,
+            "n_machines": 7,
+            "mean_diff": 2642.9,
+            "age_days": 311
+          },
+          {
+            "machine_name": "青春ブタ野郎はバニーガール先輩の夢を見ない",
+            "score": 1953.6,
+            "n_machines": 3,
+            "mean_diff": 1400.0,
+            "age_days": 3
+          },
+          {
+            "machine_name": "ゴーゴージャグラー3",
+            "score": 1814.9,
+            "n_machines": 15,
+            "mean_diff": 1086.7,
+            "age_days": 618
+          }
+        ],
+        "n_new_machines_over": 1,
+        "hit": true
+      }
+    ]
+  },
   "announce_digest": "2d2ecc6ee4d799d9"
 }

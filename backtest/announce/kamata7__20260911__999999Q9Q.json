@@ -33,6 +33,47 @@
       "reason": "他ホールについての伝聞。蒲田1の登録ファイル側で扱う。"
     }
   ],
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20260911",
+    "hall_baseline_mean_diff": 35.7,
+    "hall_n_machines": 715,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 3,
+          "note": "『全機種の展開は大前提として』。台数・機種数の指定が無いので、蒲田7の平常値の中央値である3を採る。baserate は 84日窓で models_over_threshold_per_day mean 3.11 / median 3.00。⚠️ したがって p_at_least_3 はおよそ 0.5 で、hit=true はコイン投げと同じ。的中として数えない。『大前提』という語から中央値超えを期待する読みは可能だが、閾値を後から動かさないため登録時点の中央値で固定する。"
+        },
+        "observed_n_models": 2,
+        "candidate_models": 65,
+        "models": [
+          {
+            "machine_name": "邪神ちゃんドロップキック",
+            "score": 2790.3,
+            "n_machines": 4,
+            "mean_diff": 1875.0,
+            "age_days": 39
+          },
+          {
+            "machine_name": "モグモグ風林火山 大海戦の巻",
+            "score": 2477.6,
+            "n_machines": 4,
+            "mean_diff": 3000.0,
+            "age_days": 4
+          }
+        ],
+        "n_new_machines_over": 1,
+        "hit": false
+      }
+    ]
+  },
   "announce_digest": "662dd21f647375bf"
 }
