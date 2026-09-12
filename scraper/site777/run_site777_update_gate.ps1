@@ -59,6 +59,14 @@ try {
     [System.IO.File]::AppendAllText($historyPath, $historyLine + [Environment]::NewLine, [System.Text.UTF8Encoding]::new($false))
 }
 finally {
-    & $cachedCli.FullName "-s=$session" close *> $null
+    # playwright-cli prints an update banner on stderr. With
+    # $ErrorActionPreference='Stop', Windows PowerShell turns native stderr into a
+    # terminating NativeCommandError even under '*> $null', so this cleanup close
+    # kills the script regardless of whether the real work succeeded. On 2026-09-12
+    # this made the graph pipeline exit 1 right after a clean collect
+    # (graph_batch=1 collected=121/121 failures=0); because this finally block runs
+    # before the OCR and diff analysis steps, the images were kept but nothing was
+    # analysed. Swallow it: a failed close has no bearing on the collected data.
+    try { & $cachedCli.FullName "-s=$session" close *> $null } catch { }
 }
 Get-Content -LiteralPath $resultPath -Raw

@@ -125,11 +125,19 @@ if ($Sequential) {
             $failed = @($jobs | Where-Object State -eq 'Failed')
             if ($failed.Count -gt 0) {
                 $jobs | Where-Object State -in @('Running', 'NotStarted') | Stop-Job
-                $failedOutput = $failed | Receive-Job -Keep 2>&1 | Out-String
+                # Receive-Job re-emits the worker's stderr as error records. Under
+                # $ErrorActionPreference='Stop' that is itself terminating, so the real
+                # worker message is lost and the log shows only a bare NativeCommandError.
+                $failedOutput = $failed | Receive-Job -Keep -ErrorAction SilentlyContinue 2>&1 | Out-String
                 throw "Site777 pipeline worker failed.`n$failedOutput"
             }
         }
-        $pipelineOutput = $jobs | Receive-Job 2>&1
+        # Both workers succeeded here. playwright-cli prints an update banner on
+        # stderr, so collecting a worker's error records throws under
+        # $ErrorActionPreference='Stop' even on the success path. On 2026-09-12 this
+        # aborted the run after a clean collect (full 587 machines, graph 199/199,
+        # failures=0) and the analysis and report stages below never ran.
+        $pipelineOutput = $jobs | Receive-Job -ErrorAction SilentlyContinue 2>&1
         $pipelineOutput | ForEach-Object { Write-Output $_ }
         if (@($jobs | Where-Object State -ne 'Completed').Count -gt 0) {
             throw 'Site777 pipeline did not complete.'
