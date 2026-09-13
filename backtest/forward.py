@@ -7,15 +7,17 @@
     動かす資格を持つ。
 
 運用:
-    1. 前日夜に plan-all を実行 → 全ルールの台リストが JSON に凍結される
-       （result は null）。回すルールを人が選ばないのが要点。
+    1. 当日朝、前日分を取り込んだ直後に plan-all を実行 → 当日分の台リストが
+       前日までのデータで JSON に凍結される（result は null）。締め切りは当日16時 JST。
+       回すルールを人が選ばないのが要点。前日分が未取込なら古いデータのまま凍結し、
+       遅れを data_lag_days に残す。
     2. 当日は凍結された台にだけ座る。リストを見て選び直さない
     3. データ反映後に score を実行 → 同じファイルの result 欄が埋まる
        すでに result が入っているファイルは上書きしない（やり直しの禁止）
     4. 定期的に audit を実行し、実行記録が欠けた日が無いか確認する
 
 使い方:
-    # 日次（定時実行向け。--date 省略で翌日）
+    # 日次（定時実行向け。--date 省略で当日）
     venv\\Scripts\\python.exe -m backtest.forward plan-all
     # 実行記録の欠落・不整合の点検
     venv\\Scripts\\python.exe -m backtest.forward audit --from 20260801 --to 20260812
@@ -155,6 +157,7 @@ def plan(reg: PreRegistration, target_date: str, allow_past: bool = False) -> di
         "freeze_hash": reg.freeze_hash(),
         "target_date": target_date,
         "data_asof": db_max,
+        "data_lag_days": data_lag_days(target_date, db_max),
         "lookback_window": [str(lo.date()), str(d0.date())],
         "score": reg.score,
         "selection_unit": reg.selection_unit,
@@ -495,22 +498,41 @@ def _now_jst(now: datetime | None = None) -> datetime:
     return now.astimezone(JST)
 
 
+# 凍結の締め切り（対象日の JST 時刻）。これ以降の凍結は is_late_wallclock=True。
+FREEZE_DEADLINE_HOUR = 16
+
+
 def is_late_wallclock(target_date: str, now: datetime | None = None) -> bool:
-    """対象日が始まってからの凍結か。実時間（壁時計）で判定する。
+    """締め切り（対象日 16:00 JST）を過ぎてからの凍結か。実時間（壁時計）で判定する。
 
     plan は data_asof より後の情報を使えないので、遅れて生成しても
     情報リークは起きない（picks は決定論的に決まる）。汚れるのは
-    「対象日の経過後に生成した」という運用上の事実だけである。それでも
+    「締め切り後に生成した」という運用上の事実だけである。それでも
     証拠として厳密に扱う集計からは外せるよう、印を残す。
     backtest/forward/RETROACTIVE_NOTES.md を手で書いていた作業の自動化。
 
-    朝から座る運用なので、対象日の 0 時（JST）を過ぎた時点で「事前」ではない。
+    2026-09-13 までは対象日 0 時を境にしていた。そのため朝の定例は翌日分しか
+    凍結できず、ana-slo が 07:30 に前日分を公開していても当日分には使えず、
+    実際の選択は常に2日前のデータで作られていた（バックテストは前日までの
+    データを前提にしているので、運用だけが劣化版になっていた）。
+    実績が当日中に入る経路（リアルタイムスクレイピング）を持たない限り、
+    対象日の日中に凍結しても結果は知り得ないので、境界を 16 時に移した。
+
     announce.is_late_registration が翌日 0 時を境にしているのは、あちらが
     「登録者が結果を知っている可能性」を見ているためで、基準が異なる。
     """
     now = _now_jst(now)
     d = parse_date(target_date)
-    return now >= datetime(d.year, d.month, d.day, tzinfo=JST)
+    return now >= datetime(d.year, d.month, d.day, FREEZE_DEADLINE_HOUR, tzinfo=JST)
+
+
+def data_lag_days(target_date: str, data_asof: str) -> int:
+    """対象日とデータ最終日の差（日数）。1 が想定どおり（前日までのデータ）。
+
+    2 以上は ana-slo の公開遅れや取り込み失敗で古いデータのまま凍結したことを示す。
+    締め切り前なら凍結は許すが、どの鮮度で作った選択かを後から分けられるよう残す。
+    """
+    return (parse_date(target_date) - parse_date(data_asof)).days
 
 
 def _write_run_record(record: dict) -> dict:
@@ -531,6 +553,8 @@ def _run_record(
         "target_date": target_date,
         "generated_at": now.isoformat(timespec="seconds"),
         "is_late_wallclock": is_late_wallclock(target_date, now),
+        "freeze_deadline_hour": FREEZE_DEADLINE_HOUR,
+        "max_data_lag_days": max((d["data_lag_days"] for d in dispositions if "data_lag_days" in d), default=None),
         "is_dry_run": bool(allow_past),
         "run_status": run_status,
         "n_rules": len(dispositions),
@@ -610,6 +634,7 @@ def plan_all(target_date: str, allow_past: bool = False, now: datetime | None = 
                 _freeze_plan(obj)
                 entry["status"] = "planned"
                 entry["data_asof"] = obj["data_asof"]
+                entry["data_lag_days"] = data_lag_days(target_date, obj["data_asof"])
                 entry["picks"] = [p["machine_number"] for p in obj["picks"]]
             except OutsideEventWindow as exc:
                 # 出番でない日。entry_days と同じ扱いで、異常ではない。
@@ -787,7 +812,7 @@ def main(argv: list[str] | None = None) -> int:
 
     # ルールの部分指定オプションは意図的に用意しない（plan_all の docstring 参照）。
     p_all = sub.add_parser("plan-all", help="全ルールを対象日について機械的に凍結する")
-    p_all.add_argument("--date", help="YYYYMMDD。省略時は翌日")
+    p_all.add_argument("--date", help="YYYYMMDD。省略時は当日（締め切りは当日16時 JST）")
     p_all.add_argument("--allow-past", action="store_true", help="動作確認用。証拠には使わない")
 
     p_audit = sub.add_parser("audit", help="実行記録の欠落と不整合を洗い出す")
@@ -812,13 +837,22 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(obj, ensure_ascii=False, indent=2))
         print(f"\n-> 凍結: {out}", file=sys.stderr)
     elif args.cmd == "plan-all":
-        target = args.date or (datetime.now(JST) + timedelta(days=1)).strftime("%Y%m%d")
+        target = args.date or datetime.now(JST).strftime("%Y%m%d")
         rec = plan_all(target, allow_past=args.allow_past)
         print(json.dumps(rec, ensure_ascii=False, indent=2))
         counts = " / ".join(f"{k}={v}" for k, v in rec["counts"].items())
         print(f"\n-> {target}: {counts}", file=sys.stderr)
         if rec["is_late_wallclock"]:
-            print("警告: 対象日が既に始まっている。事前凍結として厳密に扱えない。", file=sys.stderr)
+            print(
+                f"警告: 締め切り（対象日 {FREEZE_DEADLINE_HOUR}時 JST）を過ぎている。事前凍結として厳密に扱えない。",
+                file=sys.stderr,
+            )
+        if (rec.get("max_data_lag_days") or 0) >= 2:
+            print(
+                f"注意: 前日分が未取込のまま凍結した（最大 {rec['max_data_lag_days']} 日遅れ）。"
+                "記録済みなので集計時に分けること。",
+                file=sys.stderr,
+            )
         if rec["run_status"] != "ok":
             # 凍結できなかった／台帳と食い違うルールがある。記録は残っているので
             # 欠測ではないが、放置すると静かに証拠が痩せるので異常終了させる。

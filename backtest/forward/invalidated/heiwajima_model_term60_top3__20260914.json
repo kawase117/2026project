@@ -1,0 +1,126 @@
+{
+  "rule_id": "heiwajima_model_term60_top3",
+  "hall": "レイトギャップ平和島",
+  "freeze_hash": "80fab02ec0c44816",
+  "target_date": "20260914",
+  "data_asof": "20260912",
+  "lookback_window": [
+    "2026-07-16",
+    "2026-09-14"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +81 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "化物語",
+      "score": 240.253588,
+      "history_rows": 198,
+      "machines": [
+        929,
+        930,
+        931,
+        932
+      ]
+    },
+    {
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 184.76667,
+      "history_rows": 217,
+      "machines": [
+        933,
+        934,
+        935,
+        936
+      ]
+    },
+    {
+      "machine_name": "ジャグラーガールズ",
+      "score": 165.279072,
+      "history_rows": 235,
+      "machines": [
+        715,
+        716,
+        717,
+        718
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 929,
+      "machine_name": "化物語",
+      "score": 240.253588,
+      "history_days": 198
+    },
+    {
+      "machine_number": 930,
+      "machine_name": "化物語",
+      "score": 240.253588,
+      "history_days": 198
+    },
+    {
+      "machine_number": 931,
+      "machine_name": "化物語",
+      "score": 240.253588,
+      "history_days": 198
+    },
+    {
+      "machine_number": 932,
+      "machine_name": "化物語",
+      "score": 240.253588,
+      "history_days": 198
+    },
+    {
+      "machine_number": 933,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 184.76667,
+      "history_days": 217
+    },
+    {
+      "machine_number": 934,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 184.76667,
+      "history_days": 217
+    },
+    {
+      "machine_number": 935,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 184.76667,
+      "history_days": 217
+    },
+    {
+      "machine_number": 936,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 184.76667,
+      "history_days": 217
+    },
+    {
+      "machine_number": 715,
+      "machine_name": "ジャグラーガールズ",
+      "score": 165.279072,
+      "history_days": 235
+    },
+    {
+      "machine_number": 716,
+      "machine_name": "ジャグラーガールズ",
+      "score": 165.279072,
+      "history_days": 235
+    },
+    {
+      "machine_number": 717,
+      "machine_name": "ジャグラーガールズ",
+      "score": 165.279072,
+      "history_days": 235
+    },
+    {
+      "machine_number": 718,
+      "machine_name": "ジャグラーガールズ",
+      "score": 165.279072,
+      "history_days": 235
+    }
+  ],
+  "result": null,
+  "plan_digest": "381b05738bc3ca3e"
+}

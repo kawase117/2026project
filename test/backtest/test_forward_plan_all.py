@@ -226,21 +226,39 @@ def test_late_wallclock_is_flagged(env, monkeypatch):
     monkeypatch.setattr(forward, "load_preregs", lambda: [_reg("ok_rule")])
     monkeypatch.setattr(forward, "plan", _stub_plan({"ok_rule"}))
 
-    forward.plan_all("20260812", now=datetime(2026, 8, 11, 23, 59, tzinfo=JST))
-    forward.plan_all("20260813", now=datetime(2026, 8, 13, 0, 1, tzinfo=JST))
+    # 当日朝の凍結は事前扱い（朝の定例が前日分を取り込んだ直後に当日分を凍結する）
+    forward.plan_all("20260812", now=datetime(2026, 8, 12, 7, 34, tzinfo=JST))
+    forward.plan_all("20260813", now=datetime(2026, 8, 13, 15, 59, tzinfo=JST))
+    forward.plan_all("20260814", now=datetime(2026, 8, 14, 16, 0, tzinfo=JST))
 
     recs = _runs(env)
     assert recs[0]["is_late_wallclock"] is False
-    assert recs[1]["is_late_wallclock"] is True, "対象日の0時を過ぎたら事前凍結ではない"
+    assert recs[1]["is_late_wallclock"] is False
+    assert recs[2]["is_late_wallclock"] is True, "対象日の16時を過ぎたら事前凍結ではない"
 
 
 def test_late_wallclock_uses_jst_regardless_of_host_timezone():
-    """ホストが UTC でも JST 0 時が境界であること。"""
+    """ホストが UTC でも JST 16 時が境界であること。"""
     utc = timezone.utc
-    # 2026-08-11 15:30 UTC = 2026-08-12 00:30 JST → 対象日 08-12 は既に始まっている
-    assert forward.is_late_wallclock("20260812", datetime(2026, 8, 11, 15, 30, tzinfo=utc)) is True
-    # 2026-08-11 14:30 UTC = 2026-08-11 23:30 JST → まだ前日
-    assert forward.is_late_wallclock("20260812", datetime(2026, 8, 11, 14, 30, tzinfo=utc)) is False
+    # 2026-08-12 07:30 UTC = 2026-08-12 16:30 JST → 締め切り後
+    assert forward.is_late_wallclock("20260812", datetime(2026, 8, 12, 7, 30, tzinfo=utc)) is True
+    # 2026-08-12 06:30 UTC = 2026-08-12 15:30 JST → 締め切り前
+    assert forward.is_late_wallclock("20260812", datetime(2026, 8, 12, 6, 30, tzinfo=utc)) is False
+
+
+def test_stale_data_is_frozen_but_lag_is_recorded(env, monkeypatch):
+    """前日分が未取込でも締め切り前なら凍結し、データの遅れを記録に残す。"""
+    monkeypatch.setattr(forward, "load_preregs", lambda: [_reg("ok_rule")])
+    monkeypatch.setattr(forward, "plan", _stub_plan({"ok_rule"}))  # data_asof=20260810
+
+    forward.plan_all("20260812", now=datetime(2026, 8, 12, 7, 34, tzinfo=JST))
+
+    (rec,) = _runs(env)
+    (entry,) = rec["dispositions"]
+    assert entry["status"] == "planned"
+    assert entry["data_lag_days"] == 2
+    assert rec["max_data_lag_days"] == 2
+    assert rec["freeze_deadline_hour"] == forward.FREEZE_DEADLINE_HOUR
 
 
 def test_naive_datetime_is_rejected():

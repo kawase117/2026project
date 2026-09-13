@@ -1,0 +1,350 @@
+{
+  "rule_id": "kamata7_model_term60_top3",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "freeze_hash": "b5bec81d02cedc0e",
+  "target_date": "20260914",
+  "data_asof": "20260912",
+  "lookback_window": [
+    "2026-07-16",
+    "2026-09-14"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +75 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 725.40735,
+      "history_rows": 71,
+      "machines": [
+        2269,
+        2270,
+        2271,
+        2272,
+        2273,
+        2274,
+        2275,
+        2276,
+        2277,
+        2278,
+        2279,
+        2280
+      ]
+    },
+    {
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 587.34335,
+      "history_rows": 1146,
+      "machines": [
+        2077,
+        2078,
+        2079,
+        2080,
+        2081,
+        2082,
+        2083,
+        2084,
+        2085,
+        2086,
+        2087,
+        2088,
+        2089,
+        2090,
+        2091,
+        2092,
+        2093,
+        2094,
+        2095,
+        2096,
+        2097,
+        2098,
+        2099,
+        2100,
+        2101
+      ]
+    },
+    {
+      "machine_name": "ToLOVEるダークネス TRANCE ver.8.7",
+      "score": 391.363747,
+      "history_rows": 92,
+      "machines": [
+        3081,
+        3082,
+        3083,
+        3084,
+        3085,
+        3086,
+        3087
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 2269,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 725.40735,
+      "history_days": 71
+    },
+    {
+      "machine_number": 2270,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 725.40735,
+      "history_days": 71
+    },
+    {
+      "machine_number": 2271,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 725.40735,
+      "history_days": 71
+    },
+    {
+      "machine_number": 2272,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 725.40735,
+      "history_days": 71
+    },
+    {
+      "machine_number": 2273,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 725.40735,
+      "history_days": 71
+    },
+    {
+      "machine_number": 2274,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 725.40735,
+      "history_days": 71
+    },
+    {
+      "machine_number": 2275,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 725.40735,
+      "history_days": 71
+    },
+    {
+      "machine_number": 2276,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 725.40735,
+      "history_days": 71
+    },
+    {
+      "machine_number": 2277,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 725.40735,
+      "history_days": 71
+    },
+    {
+      "machine_number": 2278,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 725.40735,
+      "history_days": 71
+    },
+    {
+      "machine_number": 2279,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 725.40735,
+      "history_days": 71
+    },
+    {
+      "machine_number": 2280,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 725.40735,
+      "history_days": 71
+    },
+    {
+      "machine_number": 2077,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 587.34335,
+      "history_days": 1146
+    },
+    {
+      "machine_number": 2078,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 587.34335,
+      "history_days": 1146
+    },
+    {
+      "machine_number": 2079,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 587.34335,
+      "history_days": 1146
+    },
+    {
+      "machine_number": 2080,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 587.34335,
+      "history_days": 1146
+    },
+    {
+      "machine_number": 2081,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 587.34335,
+      "history_days": 1146
+    },
+    {
+      "machine_number": 2082,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 587.34335,
+      "history_days": 1146
+    },
+    {
+      "machine_number": 2083,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 587.34335,
+      "history_days": 1146
+    },
+    {
+      "machine_number": 2084,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 587.34335,
+      "history_days": 1146
+    },
+    {
+      "machine_number": 2085,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 587.34335,
+      "history_days": 1146
+    },
+    {
+      "machine_number": 2086,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 587.34335,
+      "history_days": 1146
+    },
+    {
+      "machine_number": 2087,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 587.34335,
+      "history_days": 1146
+    },
+    {
+      "machine_number": 2088,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 587.34335,
+      "history_days": 1146
+    },
+    {
+      "machine_number": 2089,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 587.34335,
+      "history_days": 1146
+    },
+    {
+      "machine_number": 2090,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 587.34335,
+      "history_days": 1146
+    },
+    {
+      "machine_number": 2091,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 587.34335,
+      "history_days": 1146
+    },
+    {
+      "machine_number": 2092,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 587.34335,
+      "history_days": 1146
+    },
+    {
+      "machine_number": 2093,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 587.34335,
+      "history_days": 1146
+    },
+    {
+      "machine_number": 2094,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 587.34335,
+      "history_days": 1146
+    },
+    {
+      "machine_number": 2095,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 587.34335,
+      "history_days": 1146
+    },
+    {
+      "machine_number": 2096,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 587.34335,
+      "history_days": 1146
+    },
+    {
+      "machine_number": 2097,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 587.34335,
+      "history_days": 1146
+    },
+    {
+      "machine_number": 2098,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 587.34335,
+      "history_days": 1146
+    },
+    {
+      "machine_number": 2099,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 587.34335,
+      "history_days": 1146
+    },
+    {
+      "machine_number": 2100,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 587.34335,
+      "history_days": 1146
+    },
+    {
+      "machine_number": 2101,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 587.34335,
+      "history_days": 1146
+    },
+    {
+      "machine_number": 3081,
+      "machine_name": "ToLOVEるダークネス TRANCE ver.8.7",
+      "score": 391.363747,
+      "history_days": 92
+    },
+    {
+      "machine_number": 3082,
+      "machine_name": "ToLOVEるダークネス TRANCE ver.8.7",
+      "score": 391.363747,
+      "history_days": 92
+    },
+    {
+      "machine_number": 3083,
+      "machine_name": "ToLOVEるダークネス TRANCE ver.8.7",
+      "score": 391.363747,
+      "history_days": 92
+    },
+    {
+      "machine_number": 3084,
+      "machine_name": "ToLOVEるダークネス TRANCE ver.8.7",
+      "score": 391.363747,
+      "history_days": 92
+    },
+    {
+      "machine_number": 3085,
+      "machine_name": "ToLOVEるダークネス TRANCE ver.8.7",
+      "score": 391.363747,
+      "history_days": 92
+    },
+    {
+      "machine_number": 3086,
+      "machine_name": "ToLOVEるダークネス TRANCE ver.8.7",
+      "score": 391.363747,
+      "history_days": 92
+    },
+    {
+      "machine_number": 3087,
+      "machine_name": "ToLOVEるダークネス TRANCE ver.8.7",
+      "score": 391.363747,
+      "history_days": 92
+    }
+  ],
+  "result": null,
+  "plan_digest": "66cda4f13be87cb6"
+}

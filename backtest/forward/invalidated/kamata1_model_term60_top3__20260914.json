@@ -1,0 +1,203 @@
+{
+  "rule_id": "kamata1_model_term60_top3",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "freeze_hash": "bb185b622fae47b2",
+  "target_date": "20260914",
+  "data_asof": "20260912",
+  "lookback_window": [
+    "2026-07-16",
+    "2026-09-14"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +187 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 301.998717,
+      "history_rows": 850,
+      "machines": [
+        2044,
+        2045,
+        2046,
+        2047,
+        2048,
+        2049,
+        2050,
+        2051,
+        2052,
+        2053,
+        2054,
+        2055,
+        2056,
+        2057,
+        2058,
+        2059
+      ]
+    },
+    {
+      "machine_name": "沖ドキ!DUO アンコール",
+      "score": 250.84865,
+      "history_rows": 149,
+      "machines": [
+        2272,
+        2273,
+        2274
+      ]
+    },
+    {
+      "machine_name": "化物語",
+      "score": 247.225266,
+      "history_rows": 206,
+      "machines": [
+        2265,
+        2266,
+        2267,
+        2268
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 2044,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 301.998717,
+      "history_days": 850
+    },
+    {
+      "machine_number": 2045,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 301.998717,
+      "history_days": 850
+    },
+    {
+      "machine_number": 2046,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 301.998717,
+      "history_days": 850
+    },
+    {
+      "machine_number": 2047,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 301.998717,
+      "history_days": 850
+    },
+    {
+      "machine_number": 2048,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 301.998717,
+      "history_days": 850
+    },
+    {
+      "machine_number": 2049,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 301.998717,
+      "history_days": 850
+    },
+    {
+      "machine_number": 2050,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 301.998717,
+      "history_days": 850
+    },
+    {
+      "machine_number": 2051,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 301.998717,
+      "history_days": 850
+    },
+    {
+      "machine_number": 2052,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 301.998717,
+      "history_days": 850
+    },
+    {
+      "machine_number": 2053,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 301.998717,
+      "history_days": 850
+    },
+    {
+      "machine_number": 2054,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 301.998717,
+      "history_days": 850
+    },
+    {
+      "machine_number": 2055,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 301.998717,
+      "history_days": 850
+    },
+    {
+      "machine_number": 2056,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 301.998717,
+      "history_days": 850
+    },
+    {
+      "machine_number": 2057,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 301.998717,
+      "history_days": 850
+    },
+    {
+      "machine_number": 2058,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 301.998717,
+      "history_days": 850
+    },
+    {
+      "machine_number": 2059,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 301.998717,
+      "history_days": 850
+    },
+    {
+      "machine_number": 2272,
+      "machine_name": "沖ドキ!DUO アンコール",
+      "score": 250.84865,
+      "history_days": 149
+    },
+    {
+      "machine_number": 2273,
+      "machine_name": "沖ドキ!DUO アンコール",
+      "score": 250.84865,
+      "history_days": 149
+    },
+    {
+      "machine_number": 2274,
+      "machine_name": "沖ドキ!DUO アンコール",
+      "score": 250.84865,
+      "history_days": 149
+    },
+    {
+      "machine_number": 2265,
+      "machine_name": "化物語",
+      "score": 247.225266,
+      "history_days": 206
+    },
+    {
+      "machine_number": 2266,
+      "machine_name": "化物語",
+      "score": 247.225266,
+      "history_days": 206
+    },
+    {
+      "machine_number": 2267,
+      "machine_name": "化物語",
+      "score": 247.225266,
+      "history_days": 206
+    },
+    {
+      "machine_number": 2268,
+      "machine_name": "化物語",
+      "score": 247.225266,
+      "history_days": 206
+    }
+  ],
+  "result": null,
+  "plan_digest": "be3521d8e7a30b5d"
+}

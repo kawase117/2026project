@@ -1,0 +1,63 @@
+{
+  "rule_id": "mitoya_model_gratio_top2",
+  "hall": "みとや大森町店",
+  "freeze_hash": "a0f5b81a53a8e24b",
+  "target_date": "20260914",
+  "data_asof": "20260912",
+  "lookback_window": [
+    "2026-08-24",
+    "2026-09-14"
+  ],
+  "score": "hist_model_gratio_mean_diff",
+  "selection_unit": "machine_model",
+  "success_criterion": "フォワード20エントリー日を経過した時点で、指名機種全台の総和ベースedge（対ホール全体同日平均、diff_coins_normalized）の平均が正であり、95%CI(block7)下限が0を上回ること。満たさなければ破棄する。判定はフォワードテストのみで行い、バックテスト数値は採否根拠にしない。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "邪神ちゃんドロップキック",
+      "score": 1757.287625,
+      "history_rows": 20,
+      "machines": [
+        756
+      ]
+    },
+    {
+      "machine_name": "やじきた道中記参る！",
+      "score": 876.510263,
+      "history_rows": 15,
+      "machines": [
+        520,
+        521,
+        522
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 756,
+      "machine_name": "邪神ちゃんドロップキック",
+      "score": 1757.287625,
+      "history_days": 20
+    },
+    {
+      "machine_number": 520,
+      "machine_name": "やじきた道中記参る！",
+      "score": 876.510263,
+      "history_days": 15
+    },
+    {
+      "machine_number": 521,
+      "machine_name": "やじきた道中記参る！",
+      "score": 876.510263,
+      "history_days": 15
+    },
+    {
+      "machine_number": 522,
+      "machine_name": "やじきた道中記参る！",
+      "score": 876.510263,
+      "history_days": 15
+    }
+  ],
+  "result": null,
+  "plan_digest": "ffc2fe4ca9944e3b"
+}

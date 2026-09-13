@@ -1,0 +1,161 @@
+{
+  "rule_id": "zassiki_model_term60_top3",
+  "hall": "ザ-シティ-ベルシティ雑色店",
+  "freeze_hash": "c19f10b6e683a454",
+  "target_date": "20260914",
+  "data_asof": "20260912",
+  "lookback_window": [
+    "2026-07-16",
+    "2026-09-14"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +87 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 222.104157,
+      "history_rows": 321,
+      "machines": [
+        873,
+        874,
+        875,
+        876,
+        877,
+        878
+      ]
+    },
+    {
+      "machine_name": "リコリス・リコイル",
+      "score": 210.76998,
+      "history_rows": 30,
+      "machines": [
+        868,
+        869,
+        870,
+        871,
+        872
+      ]
+    },
+    {
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 115.80829,
+      "history_rows": 295,
+      "machines": [
+        879,
+        880,
+        881,
+        882,
+        883,
+        884
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 873,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 222.104157,
+      "history_days": 321
+    },
+    {
+      "machine_number": 874,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 222.104157,
+      "history_days": 321
+    },
+    {
+      "machine_number": 875,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 222.104157,
+      "history_days": 321
+    },
+    {
+      "machine_number": 876,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 222.104157,
+      "history_days": 321
+    },
+    {
+      "machine_number": 877,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 222.104157,
+      "history_days": 321
+    },
+    {
+      "machine_number": 878,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 222.104157,
+      "history_days": 321
+    },
+    {
+      "machine_number": 868,
+      "machine_name": "リコリス・リコイル",
+      "score": 210.76998,
+      "history_days": 30
+    },
+    {
+      "machine_number": 869,
+      "machine_name": "リコリス・リコイル",
+      "score": 210.76998,
+      "history_days": 30
+    },
+    {
+      "machine_number": 870,
+      "machine_name": "リコリス・リコイル",
+      "score": 210.76998,
+      "history_days": 30
+    },
+    {
+      "machine_number": 871,
+      "machine_name": "リコリス・リコイル",
+      "score": 210.76998,
+      "history_days": 30
+    },
+    {
+      "machine_number": 872,
+      "machine_name": "リコリス・リコイル",
+      "score": 210.76998,
+      "history_days": 30
+    },
+    {
+      "machine_number": 879,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 115.80829,
+      "history_days": 295
+    },
+    {
+      "machine_number": 880,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 115.80829,
+      "history_days": 295
+    },
+    {
+      "machine_number": 881,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 115.80829,
+      "history_days": 295
+    },
+    {
+      "machine_number": 882,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 115.80829,
+      "history_days": 295
+    },
+    {
+      "machine_number": 883,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 115.80829,
+      "history_days": 295
+    },
+    {
+      "machine_number": 884,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 115.80829,
+      "history_days": 295
+    }
+  ],
+  "result": null,
+  "plan_digest": "c1070d9fdf571951"
+}

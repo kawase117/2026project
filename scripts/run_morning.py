@@ -219,15 +219,20 @@ def _run(args: argparse.Namespace) -> int:
         # 手で回す運用に戻さないこと。
         #
         # 採点を先に、凍結を後にする。採点は前日までの実績を使うので取り込みの
-        # 直後が最も早い。plan-all の既定は翌日で、ana-slo は翌朝公開なので
-        # 「今朝、明日ぶんを凍結する」と「今夜、明日ぶんを凍結する」は
-        # 使える情報が同じ。朝に寄せても証拠は痩せない。
+        # 直後が最も早い。
+        #
+        # 凍結の対象は **当日**。取り込み直後なら前日分まで入っているので、
+        # 当日分を前日までのデータで凍結できる（締め切りは当日16時、
+        # forward.FREEZE_DEADLINE_HOUR）。2026-09-13 までは翌日分を凍結しており、
+        # 選択が常に2日前のデータで作られていた。
+        # ana-slo が未更新で前日分が無い日も凍結は行い、遅れは RUNS の
+        # data_lag_days に残す（2 以上なら古いデータでの凍結）。
         run(
             "backtest.forward score-due",
             [PYTHON, "-u", "-X", "utf8", "-m", "backtest.forward", "score-due"],
         )
         run(
-            "backtest.forward plan-all（対象は翌日）",
+            "backtest.forward plan-all（対象は当日）",
             [PYTHON, "-u", "-X", "utf8", "-m", "backtest.forward", "plan-all"],
         )
 

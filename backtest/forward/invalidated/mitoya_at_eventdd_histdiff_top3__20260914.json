@@ -1,0 +1,37 @@
+{
+  "rule_id": "mitoya_at_eventdd_histdiff_top3",
+  "hall": "みとや大森町店",
+  "freeze_hash": "e99d60338347d27e",
+  "target_date": "20260914",
+  "data_asof": "20260912",
+  "lookback_window": [
+    "2026-08-15",
+    "2026-09-14"
+  ],
+  "score": "hist_mean_diff",
+  "selection_unit": "machine",
+  "success_criterion": "【重要】AT一般×イベントDD という組み合わせは 2026-07-27 に同じデータを見て発見したものであり、バックテストは in-sample である。数値を採否根拠にしてはならない。判定はフォワードのみ。フォワード20エントリー日を経過した時点で edge 平均が +200枚/台 以上かつ 95%CI 下限 > 0 であること。満たさなければ破棄し、みとやのAT系スコアの派生はこの1本で打ち止めとする。なお 2026-05 の店長交代以降のイベントDD日は実測21日しかなく、レジーム再変化の可能性は常に残る。",
+  "is_dry_run": false,
+  "picks": [
+    {
+      "machine_number": 543,
+      "machine_name": "東京喰種",
+      "score": 1832.038462,
+      "history_days": 26
+    },
+    {
+      "machine_number": 546,
+      "machine_name": "東京喰種",
+      "score": 1387.846154,
+      "history_days": 26
+    },
+    {
+      "machine_number": 553,
+      "machine_name": "革命機ヴァルヴレイヴ2",
+      "score": 1378.954545,
+      "history_days": 22
+    }
+  ],
+  "result": null,
+  "plan_digest": "061c982228c7c9f6"
+}
