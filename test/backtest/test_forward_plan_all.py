@@ -319,6 +319,8 @@ def test_load_preregs_reads_all_real_rules():
     assert "k7_jug_rb_top3" in ids
     assert len(ids) == len(regs), "rule_id が重複している"
     on_disk = {p.stem for p in forward.PREREG_DIR.glob("*.json")}
+    # rule_id を持たない別スキーマの事前登録は backtest/hypothesis_prereg/ に置く。
+    # ここで除外を広げると rule_id の欠けた壊れたルールまで黙って見逃す。
     assert ids == on_disk - {"claims"}
 
 
