@@ -90,7 +90,32 @@ for h,d,n in c.execute('select handle,substr(created_at,1,10) d,count(*) from tw
 kawasakislot の実績リストを閾値+1800で採点し直すと **10件中2件**。
 合わない日は「ー」で消え、DDの解釈も日替わりで変わる。
 
-### 5. 日本語が化けたら
+### 5. 本文は130〜180字で切れている。読む前に必ず全文を取る
+
+タイムラインの article は長文を畳むので `tweet_text` は途中で切れ、予告では
+**仕掛けの列挙が始まる位置でちょうど落ちる**。日次の `fetch_full_text.py` は
+`run_daily.py` の `HALL_KEYWORDS` に載ったホールしか取り直さない。
+
+> 2026-09-14、`HALL_KEYWORDS` が楽園・蒲田1・蒲田7 の3ホールしか無く、kawasakislot の
+> 「9/14 レイトギャップ平和島」予告が「狙い目」の直前で切れたまま残った。
+> 朝の収集も 08:10 時点で全文取得の工程に届いておらず、ホール選びに間に合わなかった。
+> 取り直すと「設置上位7機種から最低1機種は必ずニブイチ」「列・末尾ニブイチ」が出てきた。
+
+**指示を待たずに、次を毎回やる。**
+
+1. `state.db` から投稿を読むときは `COALESCE(full_text, tweet_text)` と一緒に
+   `full_text IS NULL` と `length(tweet_text)` を出す。
+2. `full_text IS NULL` で `tweet_text` が120字以上、または末尾が列挙・見出しの途中で
+   終わっている投稿は、**分析や登録に使う前に** その場で取り直す:
+   ```bash
+   cd scraper/twitter_monitor
+   PYTHONUTF8=1 ../../venv/Scripts/python.exe fetch_full_text.py --tweet-ids <id1>,<id2>
+   ```
+   1件あたり6〜12秒待つので、対象は判断に使う投稿だけに絞る。
+3. 取り直しても `full_text` が `tweet_text` と同じ長さなら、切れていなかったと記録する。
+4. 新しいホールの DB を作ったら `HALL_KEYWORDS` にも足す（キーは announce の hall 表記）。
+
+### 6. 日本語が化けたら
 
 PowerShell の表示崩れを Python 側のバグと誤診しない。切り分けは `mojibake-debug` スキル。
 

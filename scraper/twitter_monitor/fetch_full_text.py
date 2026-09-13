@@ -52,6 +52,13 @@ def ensure_column(connection: sqlite3.Connection) -> None:
 def select_targets(connection: sqlite3.Connection, args) -> list[tuple[str, str, str]]:
     conditions = ["full_text IS NULL", "tweet_url IS NOT NULL"]
     parameters: list[str] = []
+    if args.tweet_ids:
+        # 分析中に本文が切れている投稿を見つけたら、その場で個別に取り直す。
+        # 日次の --any-of は監視ホール名でしか絞れず、朝の収集が遅れると
+        # 登録の判断に間に合わない（2026-09-14 は 08:10 時点で未実行だった）。
+        placeholders = ",".join("?" for _ in args.tweet_ids)
+        conditions.append(f"tweet_id IN ({placeholders})")
+        parameters.extend(args.tweet_ids)
     if args.handles:
         placeholders = ",".join("?" for _ in args.handles)
         conditions.append(f"handle IN ({placeholders})")
@@ -112,6 +119,12 @@ def main() -> int:
         type=lambda v: [s for s in v.split(",") if s],
         default=[],
         help="いずれかを含む投稿だけ（カンマ区切り、OR）。ホール名の表記ゆれを並べるのに使う",
+    )
+    parser.add_argument(
+        "--tweet-ids",
+        type=lambda v: [s for s in v.split(",") if s],
+        default=[],
+        help="この tweet_id だけを取り直す（カンマ区切り）。分析中に切れた本文を見つけたときに使う",
     )
     parser.add_argument("--limit", type=int, default=0)
     args = parser.parse_args()
