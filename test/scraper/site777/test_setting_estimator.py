@@ -2,10 +2,13 @@ from __future__ import annotations
 
 from scraper.site777.setting_estimator import (
     MIN_GAMES_FOR_SETTING,
+    ZENTAIKEI_MIN_MACHINES,
     annotate_setting_estimates,
     build_family_matcher,
     estimate_setting,
     indistinguishable_settings,
+    judge_model_zentaikei,
+    judge_zentaikei_by_model,
     load_family_specs,
     match_family,
 )
@@ -184,3 +187,89 @@ def test_annotate_marks_out_of_scope_machines_with_none() -> None:
     assert machines[1]["ml_setting"] is None
     assert machines[2]["setting_family_key"] is None
     assert machines[2]["ml_setting"] is None
+
+
+def _on_spec(setting: int, games: int, model_name: str = "合成ジャグラー") -> dict:
+    spec = SYNTHETIC["TEST"]["settings"][setting]
+    return {
+        "model_name": model_name,
+        "games": games,
+        "bb_count": round(games * spec["bb_probability"]),
+        "rb_count": round(games * spec["rb_probability"]),
+    }
+
+
+def test_zentaikei_all_setting6_is_judged_as_zentaikei() -> None:
+    settings = SYNTHETIC["TEST"]["settings"]
+    machines = [_on_spec(6, 4000) for _ in range(6)]
+
+    result = judge_model_zentaikei(machines, settings)
+
+    assert result["verdict"] == "全台系"
+    assert result["k_map"] == 6
+    assert result["all_high_vs_low_ratio"] >= 10.0
+    assert result["pooled_ml_setting"] == 6
+
+
+def test_zentaikei_single_hot_machine_does_not_pass_as_zentaikei() -> None:
+    """合算平均を1台が押し上げただけの機種イチは全台系と判定しない。"""
+    settings = SYNTHETIC["TEST"]["settings"]
+    machines = [_on_spec(1, 4000) for _ in range(5)] + [_on_spec(6, 8000)]
+
+    result = judge_model_zentaikei(machines, settings)
+
+    assert result["verdict"] != "全台系"
+    assert result["k_map"] <= 2
+    assert result["p_all_high"] < 0.05
+
+
+def test_zentaikei_pooling_includes_machines_below_setting_threshold() -> None:
+    """合算は回転数を稼ぐためなので、2,000G未満の台も含める。"""
+    settings = SYNTHETIC["TEST"]["settings"]
+    machines = [_on_spec(6, 1500) for _ in range(8)]
+
+    result = judge_model_zentaikei(machines, settings)
+
+    assert all(machine["games"] < MIN_GAMES_FOR_SETTING for machine in machines)
+    assert result["n_machines"] == 8
+    assert result["total_games"] == 12000
+
+
+def test_zentaikei_requires_minimum_machine_count() -> None:
+    settings = SYNTHETIC["TEST"]["settings"]
+    machines = [_on_spec(6, 4000) for _ in range(ZENTAIKEI_MIN_MACHINES - 1)]
+
+    assert judge_model_zentaikei(machines, settings) is None
+
+
+def test_zentaikei_by_model_groups_annotated_machines() -> None:
+    machines = [_on_spec(6, 4000) for _ in range(4)] + [
+        {"model_name": "スマスロ 北斗の拳 転生の章2", "games": 6000, "bb_count": 30, "rb_count": 0}
+    ]
+    annotate_setting_estimates(machines, SYNTHETIC)
+
+    rows = judge_zentaikei_by_model(machines, SYNTHETIC)
+
+    assert [row["model_name"] for row in rows] == ["合成ジャグラー"]
+    assert rows[0]["n_machines"] == 4
+
+
+def test_zentaikei_flat_posterior_is_reported_as_undecided() -> None:
+    """回転数が少なく高設定台数の事後分布がほぼ平らなら、最尤kが0でも『高設定なし』と言わない。"""
+    settings = SYNTHETIC["TEST"]["settings"]
+    machines = [_on_spec(3, 300) for _ in range(3)]
+
+    result = judge_model_zentaikei(machines, settings)
+
+    assert result["p_k_map"] < 2.0 / (result["n_machines"] + 1)
+    assert result["verdict"] == "判定保留（情報不足）"
+
+
+def test_zentaikei_all_setting6_has_concentrated_posterior() -> None:
+    settings = SYNTHETIC["TEST"]["settings"]
+    machines = [_on_spec(6, 4000) for _ in range(6)]
+
+    result = judge_model_zentaikei(machines, settings)
+
+    assert result["p_all_high"] >= 0.5
+    assert result["p_k_map"] == result["p_all_high"]

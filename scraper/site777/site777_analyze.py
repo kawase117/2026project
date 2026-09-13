@@ -17,7 +17,12 @@ try:
         enrich_machines,
         load_reference_context,
     )
-    from .setting_estimator import annotate_setting_estimates, load_family_specs
+    from .setting_estimator import (
+        ZENTAIKEI_MIN_MACHINES,
+        annotate_setting_estimates,
+        judge_zentaikei_by_model,
+        load_family_specs,
+    )
 except ImportError:
     from reference import (  # type: ignore[no-redef]
         DEFAULT_ALIAS_FILE,
@@ -27,7 +32,9 @@ except ImportError:
         load_reference_context,
     )
     from setting_estimator import (  # type: ignore[no-redef]
+        ZENTAIKEI_MIN_MACHINES,
         annotate_setting_estimates,
+        judge_zentaikei_by_model,
         load_family_specs,
     )
 
@@ -677,7 +684,9 @@ def analyze(
         )
 
     classify_candidates(machines, models, graph_min_games)
-    setting_summary = annotate_setting_estimates(machines, load_family_specs())
+    family_specs = load_family_specs()
+    setting_summary = annotate_setting_estimates(machines, family_specs)
+    model_zentaikei = judge_zentaikei_by_model(machines, family_specs)
 
     main_models = [model for model in models if model["machine_count"] > 1]
     single_models = [model for model in models if model["machine_count"] == 1]
@@ -760,6 +769,7 @@ def analyze(
             for model in rb_absent
         ],
         "setting_estimate": setting_summary,
+        "model_zentaikei": model_zentaikei,
         "setting_candidate_count": sum(machine["setting_candidate"] for machine in machines),
         "payout_candidate_count": sum(machine["payout_candidate"] for machine in machines),
         "bb_heavy_count": sum(machine["bb_heavy"] for machine in machines),
@@ -1337,7 +1347,54 @@ def build_setting_report(result: dict[str, Any]) -> str:
     reliable = [machine for machine in ranked if machine["setting_confidence"] in {"高", "中"}]
     lines.extend(setting_table(f"信用度 高・中 に限定 {len(reliable)}台", reliable))
     lines.extend(build_machine_setting_summary(result))
+    lines.extend(build_model_zentaikei_summary(result))
     return "\n".join(lines)
+
+
+def build_model_zentaikei_summary(result: dict[str, Any]) -> list[str]:
+    """機種の全台を合算した全台系判定。1台ずつでは絞れない回転数でも機種単位なら判定できる。"""
+    rows = result.get("model_zentaikei") or []
+    lines = [
+        "## 機種別 全台系判定（全台合算）",
+        "",
+        "1台ずつでは設定を絞れなくても、機種の全台を合算すれば判定できることがある。合算には2,000G未満の台も含める。",
+        "",
+        "ただし合算平均が高いだけでは「全台が高い」と「1〜2台だけが突出して高い（機種イチの撒き餌）」を"
+        "区別できない。そこで2つを併記する。",
+        "",
+        "- **全高vs全低**: 全台が同一設定と仮定した合算尤度で、設定5-6側と1-4側の比。10倍以上で合算平均は高設定側。",
+        "- **高設定台数**: 各台を高(5-6)/低(1-4)のどちらかとし、高設定の台数kを一様事前で推定した事後分布。"
+        "合算平均を1台が押し上げただけなら k は小さく出る。",
+        "",
+        "判定: **全台系** = 全高vs全低が10倍以上 かつ k=全台が最尤 かつ P(全台高)が50%以上 / "
+        "**判定保留（情報不足）** = 最尤kの事後確率が一様(1/(台数+1))の2倍未満で、事後分布がほぼ平ら / "
+        "**全台系寄り（未確定）** = k=全台が最尤だが上の条件に届かない / "
+        "**部分投入寄り** = 最尤kが1台以上・全台未満 / **高設定なし寄り** = 最尤k=0。",
+        "",
+    ]
+    if not rows:
+        lines.extend([f"判定できる機種なし（スペック表があり{ZENTAIKEI_MIN_MACHINES}台以上の機種が無い）。", ""])
+        return lines
+    lines.extend(
+        [
+            "| 機種 | 台数 | 合算G | 合算BB確率 | 合算RB確率 | 合算の最尤設定 | 全高vs全低 | 最尤の高設定台数 | P(全台高) | P(半数以上高) | P(0台) | 判定 |",
+            "|---|---:|---:|---:|---:|:--:|---:|---:|---:|---:|---:|:--:|",
+        ]
+    )
+    for row in rows:
+        games = row["total_games"]
+        bb = f"1/{games / row['total_bb']:,.1f}" if row["total_bb"] else "--"
+        rb = f"1/{games / row['total_rb']:,.1f}" if row["total_rb"] else "--"
+        ratio = row["all_high_vs_low_ratio"]
+        ratio_text = "<0.01倍" if ratio < 0.01 else (">1000倍" if ratio > 1000 else f"{ratio:,.2f}倍")
+        lines.append(
+            f"| {row['model_name']} | {row['n_machines']} | {games:,} | {bb} | {rb} | {row['pooled_ml_setting']} | "
+            f"{ratio_text} | {row['k_map']}/{row['n_machines']}（{fmt_percent(row['p_k_map'])}） | "
+            f"{fmt_percent(row['p_all_high'])} | "
+            f"{fmt_percent(row['p_half_or_more_high'])} | {fmt_percent(row['p_none_high'])} | {row['verdict']} |"
+        )
+    lines.append("")
+    return lines
 
 
 def three_machine_table(title: str, rows: list[dict[str, Any]]) -> list[str]:

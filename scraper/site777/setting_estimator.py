@@ -160,6 +160,154 @@ def estimate_setting(
     }
 
 
+# 機種別の全台系判定。1台ずつでは設定を絞れない回転数でも、機種の全台を合算すれば
+# 判定できることがある。ただし合算平均が高いだけでは「全台が高い」と「1〜2台だけが
+# 突出して高い（機種イチの撒き餌）」を区別できない。2026-09-13 の楽園蒲田では
+# ネオアイムジャグラーEX 62台の合算RBが設定1比 p<0.0001 だったが、全台高設定は
+# ほぼ否定され、最も尤もらしいのは62台中15台前後の部分投入だった。
+# そこで「全台同一設定」を仮定した合算尤度比に加えて、高設定の台数 k の事後分布を見る。
+ZENTAIKEI_MIN_MACHINES = 3
+LOG_ZENTAIKEI_DECISIVE = LOG_HIGH_LOW_DECISIVE
+ZENTAIKEI_FIELDS = (
+    "n_machines",
+    "total_games",
+    "total_bb",
+    "total_rb",
+    "pooled_ml_setting",
+    "all_high_vs_low_log_ratio",
+    "all_high_vs_low_ratio",
+    "k_map",
+    "p_k_map",
+    "p_all_high",
+    "p_half_or_more_high",
+    "p_none_high",
+    "verdict",
+)
+
+
+def _logsumexp(values: list[float]) -> float:
+    finite = [value for value in values if value != -math.inf]
+    if not finite:
+        return -math.inf
+    peak = max(finite)
+    return peak + math.log(sum(math.exp(value - peak) for value in finite))
+
+
+def _log_mean_likelihood(
+    games: int, bb: int, rb: int, settings: dict[int, dict[str, float]], members: list[int]
+) -> float:
+    """設定群の中で一様に平均した尤度（確率空間での平均）の対数。"""
+    return _logsumexp([_log_likelihood(games, bb, rb, settings[member]) for member in members]) - math.log(len(members))
+
+
+def judge_model_zentaikei(
+    machines: list[dict[str, Any]], settings: dict[int, dict[str, float]]
+) -> dict[str, Any] | None:
+    """同一機種の台を合算して、全台系かどうかを判定する。台数不足なら None。
+
+    2つの量を返す:
+    - all_high_vs_low_ratio: 全台が同一設定と仮定した合算尤度で、設定5-6側と1-4側の比。
+      ユーザーの「全台合算した機種平均が一定以上なら全」をそのまま尤度にしたもの。
+    - 高設定台数 k の事後分布: 各台を高(5-6の平均)/低(残りの平均)のいずれかとし、
+      k=0..n を一様事前にした事後確率。合算平均を1台が押し上げただけなら k は小さく出る。
+
+    合算には 2,000G 未満の台も含める。回転数を稼ぐための合算なので足切りしない。
+    """
+    usable = [
+        machine
+        for machine in machines
+        if (machine.get("games") or 0) > 0
+        and (machine.get("bb_count") or 0) >= 0
+        and (machine.get("rb_count") or 0) >= 0
+        and (machine.get("bb_count") or 0) + (machine.get("rb_count") or 0) <= machine["games"]
+    ]
+    n = len(usable)
+    high = [setting for setting in sorted(settings) if setting in HIGH_SETTINGS]
+    low = [setting for setting in sorted(settings) if setting not in HIGH_SETTINGS]
+    if n < ZENTAIKEI_MIN_MACHINES or not high or not low:
+        return None
+
+    total_games = sum(int(machine["games"]) for machine in usable)
+    total_bb = sum(int(machine.get("bb_count") or 0) for machine in usable)
+    total_rb = sum(int(machine.get("rb_count") or 0) for machine in usable)
+    pooled = {setting: _log_likelihood(total_games, total_bb, total_rb, settings[setting]) for setting in settings}
+    pooled_ml = max(pooled, key=lambda setting: pooled[setting])
+    log_ratio = (
+        _logsumexp([pooled[s] for s in high])
+        - math.log(len(high))
+        - (_logsumexp([pooled[s] for s in low]) - math.log(len(low)))
+    )
+
+    # dp[k] = k台が高設定である割り当て全体の尤度の和（対数）。
+    dp = [0.0] + [-math.inf] * n
+    for machine in usable:
+        games, bb, rb = int(machine["games"]), int(machine.get("bb_count") or 0), int(machine.get("rb_count") or 0)
+        log_high = _log_mean_likelihood(games, bb, rb, settings, high)
+        log_low = _log_mean_likelihood(games, bb, rb, settings, low)
+        nxt = [-math.inf] * (n + 1)
+        for k, value in enumerate(dp):
+            if value == -math.inf:
+                continue
+            nxt[k] = _logsumexp([nxt[k], value + log_low])
+            if k + 1 <= n:
+                nxt[k + 1] = _logsumexp([nxt[k + 1], value + log_high])
+        dp = nxt
+    # k の中では割り当てを等確率とし、k 自体を一様事前にする。
+    log_k = [dp[k] - math.log(math.comb(n, k)) for k in range(n + 1)]
+    norm = _logsumexp(log_k)
+    posterior = [math.exp(value - norm) for value in log_k]
+    k_map = max(range(n + 1), key=lambda k: posterior[k])
+    # 最尤の k でも事後確率が一様（1/(n+1)）の2倍に届かないなら、事後分布はほぼ平らで
+    # 何も言えていない。2026-09-13 の新ハナビ6台は最尤 k=0 だが P(k=0)=17%（一様14%）で、
+    # これを「高設定なし寄り」と表示すると誤解を招いた。
+    flat = posterior[k_map] < 2.0 / (n + 1)
+
+    if k_map == n and log_ratio >= LOG_ZENTAIKEI_DECISIVE and posterior[n] >= 0.5:
+        verdict = "全台系"
+    elif flat:
+        verdict = "判定保留（情報不足）"
+    elif k_map == n:
+        verdict = "全台系寄り（未確定）"
+    elif k_map == 0:
+        verdict = "高設定なし寄り"
+    else:
+        verdict = "部分投入寄り"
+
+    return {
+        "n_machines": n,
+        "total_games": total_games,
+        "total_bb": total_bb,
+        "total_rb": total_rb,
+        "pooled_ml_setting": pooled_ml,
+        "all_high_vs_low_log_ratio": round(log_ratio, 3),
+        # 大台数では対数が数百に達するので、表示用の倍率は上限を切る。
+        "all_high_vs_low_ratio": round(math.exp(max(min(log_ratio, 700.0), -700.0)), 4),
+        "k_map": k_map,
+        "p_k_map": round(posterior[k_map], 4),
+        "p_all_high": round(posterior[n], 4),
+        "p_half_or_more_high": round(sum(posterior[(n + 1) // 2 :]), 4),
+        "p_none_high": round(posterior[0], 4),
+        "verdict": verdict,
+    }
+
+
+def judge_zentaikei_by_model(machines: list[dict[str, Any]], family_specs: dict[str, Any]) -> list[dict[str, Any]]:
+    """annotate_setting_estimates 済みの台を機種名で束ね、機種ごとに全台系判定を付ける。"""
+    groups: dict[str, list[dict[str, Any]]] = {}
+    for machine in machines:
+        family_key = machine.get("setting_family_key")
+        if family_key and family_key in family_specs:
+            groups.setdefault(machine.get("model_name") or "", []).append(machine)
+    rows = []
+    for model_name, group in groups.items():
+        settings = family_specs[group[0]["setting_family_key"]]["settings"]
+        result = judge_model_zentaikei(group, settings)
+        if result is None:
+            continue
+        rows.append({"model_name": model_name, "setting_family_key": group[0]["setting_family_key"], **result})
+    return sorted(rows, key=lambda row: -row["all_high_vs_low_log_ratio"])
+
+
 SETTING_FIELDS = (
     "ml_setting",
     "setting_band_min",
