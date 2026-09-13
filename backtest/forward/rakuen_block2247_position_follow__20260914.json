@@ -2,11 +2,12 @@
   "rule_id": "rakuen_block2247_position_follow",
   "hall": "楽園蒲田店",
   "freeze_hash": "4c1fc604baa51551",
-  "target_date": "20260913",
-  "data_asof": "20260911",
+  "target_date": "20260914",
+  "data_asof": "20260913",
+  "data_lag_days": 1,
   "lookback_window": [
-    "2026-08-14",
-    "2026-09-13"
+    "2026-08-15",
+    "2026-09-14"
   ],
   "score": "hist_mean_diff",
   "selection_unit": "machine",
@@ -16,63 +17,28 @@
     {
       "machine_number": 2248,
       "machine_name": "バンドリ！",
-      "score": 1473.888889,
-      "history_days": 18
+      "score": 1501.764706,
+      "history_days": 17
     },
     {
       "machine_number": 2249,
       "machine_name": "バンドリ！",
-      "score": 666.947368,
-      "history_days": 19
+      "score": 664.277778,
+      "history_days": 18
     },
     {
       "machine_number": 2250,
       "machine_name": "バンドリ！",
-      "score": 562.666667,
+      "score": 576.285714,
       "history_days": 21
     },
     {
       "machine_number": 2247,
       "machine_name": "バンドリ！",
-      "score": -685.636364,
-      "history_days": 22
+      "score": -573.043478,
+      "history_days": 23
     }
   ],
-  "result": {
-    "scored_with_hash": "4c1fc604baa51551",
-    "day_baseline": 133.2,
-    "universe_size": 587,
-    "picks_realized": [
-      {
-        "machine_number": 2247,
-        "games": 1304.0,
-        "diff": 1762.0,
-        "edge": 1628.7666098807495
-      },
-      {
-        "machine_number": 2248,
-        "games": 205.0,
-        "diff": -95.0,
-        "edge": -228.23339011925043
-      },
-      {
-        "machine_number": 2249,
-        "games": 895.0,
-        "diff": -1000.0,
-        "edge": -1133.2333901192505
-      },
-      {
-        "machine_number": 2250,
-        "games": 858.0,
-        "diff": -381.0,
-        "edge": -514.2333901192504
-      }
-    ],
-    "mean_diff_per_pick": 71.5,
-    "mean_edge_per_pick": -61.7,
-    "missing_machines": [],
-    "rb_perspective": null,
-    "model_perspective": null
-  },
-  "plan_digest": "57c56838840b67e5"
+  "result": null,
+  "plan_digest": "382232c1d32b7cc6"
 }

@@ -85,6 +85,155 @@
       "frozen_scoring_procedure": "設置10台以上の機種について、超え台数/台数 をホール当日平均と比べて記録する。hit 判定はしない。"
     }
   ],
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20260913",
+    "hall_baseline_mean_diff": -258.6,
+    "hall_n_machines": 365,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 1,
+          "note": "『毎日ある全系機種』。p_at_least_1=0.943 なので hit=true はほぼ自明で、的中として数えない。記録のみ。"
+        },
+        "observed_n_models": 2,
+        "candidate_models": 48,
+        "models": [
+          {
+            "machine_name": "戦国コレクション6",
+            "score": 4338.4,
+            "n_machines": 3,
+            "mean_diff": 5333.3,
+            "age_days": 69
+          },
+          {
+            "machine_name": "攻殻機動隊",
+            "score": 2194.6,
+            "n_machines": 3,
+            "mean_diff": 2733.3,
+            "age_days": 223
+          }
+        ],
+        "n_new_machines_over": 0,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "東京喰種",
+          "note": "『オススメ機種の東京喰種』。全台系の主張ではなく推奨。直近30日の超え率 0.033（20台）。機種平均は閾値に届きにくい散らし型なので、採点時は台番号別の超え台数と並びも併記する。"
+        },
+        "score": 334.1,
+        "mean_diff": 315.0,
+        "gratio": 1.061,
+        "n_machines": 20,
+        "rank": 10,
+        "candidate_models": 48,
+        "age_days": 586,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "キングハナハナ-30",
+          "note": "謎かけ解読（ドコドコ→なるなる→ハナハナ）。アカウント側の推測で『？』付き。直近30日の超え率 0/30。"
+        },
+        "score": 38.6,
+        "mean_diff": 40.0,
+        "gratio": 0.965,
+        "n_machines": 10,
+        "rank": 13,
+        "candidate_models": 48,
+        "age_days": 620,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "スマート沖スロ ドラゴンハナハナ～閃光～",
+          "note": "謎かけ解読（Lドラゴンハナハナ？）。推測。4台、直近30日 2/30。"
+        },
+        "score": -502.9,
+        "mean_diff": -775.0,
+        "gratio": 0.649,
+        "n_machines": 4,
+        "rank": 29,
+        "candidate_models": 48,
+        "age_days": 377,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ファンキージャグラー2",
+          "note": "謎かけ解読（ミニチュアダックスフント→犬→ファンキー？）。推測。12台、直近30日 0/30。"
+        },
+        "score": -122.2,
+        "mean_diff": -133.3,
+        "gratio": 0.916,
+        "n_machines": 12,
+        "rank": 20,
+        "candidate_models": 48,
+        "age_days": 620,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "青春ブタ野郎はバニーガール先輩の夢を見ない",
+          "note": "謎かけ解読（J DREAM→夢→青ブタ？）。推測。3台・導入6日目で新台のG比上振れ交絡あり（project-new-machine-expected-value）。"
+        },
+        "score": 172.2,
+        "mean_diff": 133.3,
+        "gratio": 1.291,
+        "n_machines": 3,
+        "rank": 12,
+        "candidate_models": 48,
+        "age_days": 5,
+        "age_bucket": "new",
+        "base_rate": 0.105,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "からくりサーカス2",
+          "note": "謎かけ解読（夢はいつか必ず叶う→からくりサーカス2？）。推測。5台、直近30日 0/30。"
+        },
+        "score": -590.0,
+        "mean_diff": -780.0,
+        "gratio": 0.756,
+        "n_machines": 5,
+        "rank": 33,
+        "candidate_models": 48,
+        "age_days": 69,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
   "announce_digest": "c0b8659112e3c6e8"
 }

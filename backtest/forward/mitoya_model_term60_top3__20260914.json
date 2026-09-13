@@ -1,0 +1,260 @@
+{
+  "rule_id": "mitoya_model_term60_top3",
+  "hall": "みとや大森町店",
+  "freeze_hash": "673d238a7e985850",
+  "target_date": "20260914",
+  "data_asof": "20260913",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-07-16",
+    "2026-09-14"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +120 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "彼女、お借りします",
+      "score": 818.723016,
+      "history_rows": 35,
+      "machines": [
+        506,
+        507,
+        508,
+        509,
+        510
+      ]
+    },
+    {
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 425.464959,
+      "history_rows": 691,
+      "machines": [
+        624,
+        625,
+        626,
+        627,
+        628,
+        629,
+        630,
+        631,
+        632,
+        633,
+        634,
+        635,
+        636,
+        637,
+        638,
+        639,
+        640
+      ]
+    },
+    {
+      "machine_name": "東京喰種",
+      "score": 412.849793,
+      "history_rows": 369,
+      "machines": [
+        540,
+        541,
+        542,
+        543,
+        544,
+        545,
+        546,
+        547,
+        548
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 506,
+      "machine_name": "彼女、お借りします",
+      "score": 818.723016,
+      "history_days": 35
+    },
+    {
+      "machine_number": 507,
+      "machine_name": "彼女、お借りします",
+      "score": 818.723016,
+      "history_days": 35
+    },
+    {
+      "machine_number": 508,
+      "machine_name": "彼女、お借りします",
+      "score": 818.723016,
+      "history_days": 35
+    },
+    {
+      "machine_number": 509,
+      "machine_name": "彼女、お借りします",
+      "score": 818.723016,
+      "history_days": 35
+    },
+    {
+      "machine_number": 510,
+      "machine_name": "彼女、お借りします",
+      "score": 818.723016,
+      "history_days": 35
+    },
+    {
+      "machine_number": 624,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 425.464959,
+      "history_days": 691
+    },
+    {
+      "machine_number": 625,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 425.464959,
+      "history_days": 691
+    },
+    {
+      "machine_number": 626,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 425.464959,
+      "history_days": 691
+    },
+    {
+      "machine_number": 627,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 425.464959,
+      "history_days": 691
+    },
+    {
+      "machine_number": 628,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 425.464959,
+      "history_days": 691
+    },
+    {
+      "machine_number": 629,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 425.464959,
+      "history_days": 691
+    },
+    {
+      "machine_number": 630,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 425.464959,
+      "history_days": 691
+    },
+    {
+      "machine_number": 631,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 425.464959,
+      "history_days": 691
+    },
+    {
+      "machine_number": 632,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 425.464959,
+      "history_days": 691
+    },
+    {
+      "machine_number": 633,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 425.464959,
+      "history_days": 691
+    },
+    {
+      "machine_number": 634,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 425.464959,
+      "history_days": 691
+    },
+    {
+      "machine_number": 635,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 425.464959,
+      "history_days": 691
+    },
+    {
+      "machine_number": 636,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 425.464959,
+      "history_days": 691
+    },
+    {
+      "machine_number": 637,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 425.464959,
+      "history_days": 691
+    },
+    {
+      "machine_number": 638,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 425.464959,
+      "history_days": 691
+    },
+    {
+      "machine_number": 639,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 425.464959,
+      "history_days": 691
+    },
+    {
+      "machine_number": 640,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 425.464959,
+      "history_days": 691
+    },
+    {
+      "machine_number": 540,
+      "machine_name": "東京喰種",
+      "score": 412.849793,
+      "history_days": 369
+    },
+    {
+      "machine_number": 541,
+      "machine_name": "東京喰種",
+      "score": 412.849793,
+      "history_days": 369
+    },
+    {
+      "machine_number": 542,
+      "machine_name": "東京喰種",
+      "score": 412.849793,
+      "history_days": 369
+    },
+    {
+      "machine_number": 543,
+      "machine_name": "東京喰種",
+      "score": 412.849793,
+      "history_days": 369
+    },
+    {
+      "machine_number": 544,
+      "machine_name": "東京喰種",
+      "score": 412.849793,
+      "history_days": 369
+    },
+    {
+      "machine_number": 545,
+      "machine_name": "東京喰種",
+      "score": 412.849793,
+      "history_days": 369
+    },
+    {
+      "machine_number": 546,
+      "machine_name": "東京喰種",
+      "score": 412.849793,
+      "history_days": 369
+    },
+    {
+      "machine_number": 547,
+      "machine_name": "東京喰種",
+      "score": 412.849793,
+      "history_days": 369
+    },
+    {
+      "machine_number": 548,
+      "machine_name": "東京喰種",
+      "score": 412.849793,
+      "history_days": 369
+    }
+  ],
+  "result": null,
+  "plan_digest": "821933f6c92d5ac8"
+}

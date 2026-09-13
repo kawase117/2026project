@@ -54,6 +54,75 @@
       "frozen_scoring_procedure": "ジャグ系（機種名に『ジャグラー』を含む）機種のうち超え2台以上の割合を当日で算出する。事前検証で日曜は土曜より低い（0.506 vs 0.582、統制後p=0.053で逆方向）ため、日曜平常0.506を上回れば hit とする。差枚だけでなく、超え台のRB確率を機種の自己ベースラインと比べて設定の裏取りを残す（feedback-evaluate-beyond-diff）。"
     }
   ],
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20260913",
+    "hall_baseline_mean_diff": -76.5,
+    "hall_n_machines": 715,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 4,
+          "note": "本文『全機種もあると見て良し』『台数の多い機種で盛大に全』。平常中央値3を上回ることを主張とみなし n_models=4 で登録（p_at_least_4=0.452）。⚠️ ほぼコイン投げなので hit=true 単独を的中として数えない。台数の多い機種（k>=15）が含まれるかを別途記録する。"
+        },
+        "observed_n_models": 6,
+        "candidate_models": 65,
+        "models": [
+          {
+            "machine_name": "彼女、お借りします",
+            "score": 5512.5,
+            "n_machines": 4,
+            "mean_diff": 5000.0,
+            "age_days": 6
+          },
+          {
+            "machine_name": "邪神ちゃんドロップキック",
+            "score": 5218.9,
+            "n_machines": 4,
+            "mean_diff": 4125.0,
+            "age_days": 41
+          },
+          {
+            "machine_name": "革命機ヴァルヴレイヴ",
+            "score": 4624.6,
+            "n_machines": 7,
+            "mean_diff": 4500.0,
+            "age_days": 397
+          },
+          {
+            "machine_name": "南国育ち SPECIAL",
+            "score": 4531.6,
+            "n_machines": 3,
+            "mean_diff": 6066.7,
+            "age_days": 69
+          },
+          {
+            "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+            "score": 2946.9,
+            "n_machines": 6,
+            "mean_diff": 2966.7,
+            "age_days": 433
+          },
+          {
+            "machine_name": "シャーマンキング",
+            "score": 2240.9,
+            "n_machines": 4,
+            "mean_diff": 2850.0,
+            "age_days": 433
+          }
+        ],
+        "n_new_machines_over": 1,
+        "hit": true
+      }
+    ]
+  },
   "announce_digest": "c3abe5b2291be4af"
 }

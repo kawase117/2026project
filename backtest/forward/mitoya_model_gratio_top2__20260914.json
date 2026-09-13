@@ -1,0 +1,50 @@
+{
+  "rule_id": "mitoya_model_gratio_top2",
+  "hall": "みとや大森町店",
+  "freeze_hash": "a0f5b81a53a8e24b",
+  "target_date": "20260914",
+  "data_asof": "20260913",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-08-24",
+    "2026-09-14"
+  ],
+  "score": "hist_model_gratio_mean_diff",
+  "selection_unit": "machine_model",
+  "success_criterion": "フォワード20エントリー日を経過した時点で、指名機種全台の総和ベースedge（対ホール全体同日平均、diff_coins_normalized）の平均が正であり、95%CI(block7)下限が0を上回ること。満たさなければ破棄する。判定はフォワードテストのみで行い、バックテスト数値は採否根拠にしない。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "邪神ちゃんドロップキック",
+      "score": 1637.841113,
+      "history_rows": 21,
+      "machines": [
+        756
+      ]
+    },
+    {
+      "machine_name": "ディスクアップ ULTRAREMIX",
+      "score": 1045.293645,
+      "history_rows": 21,
+      "machines": [
+        745
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 756,
+      "machine_name": "邪神ちゃんドロップキック",
+      "score": 1637.841113,
+      "history_days": 21
+    },
+    {
+      "machine_number": 745,
+      "machine_name": "ディスクアップ ULTRAREMIX",
+      "score": 1045.293645,
+      "history_days": 21
+    }
+  ],
+  "result": null,
+  "plan_digest": "faf8d3ec56443b9d"
+}
