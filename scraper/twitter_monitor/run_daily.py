@@ -68,15 +68,116 @@ GAP_TRIGGER_DAYS = 2
 # Re-collect from a day before the last known post so a partly-collected day is
 # completed rather than half kept.
 GAP_OVERLAP_DAYS = 1
+# 空きの測り方（2026-09-14 改訂）。
+#
+# 初版は全アカウントの「最新投稿日」の最小値を空きとしていた。これだと投稿の
+# 少ないアカウントが1つあるだけで毎朝 backfill_search.py が走る。実際
+# kengyo_niki（最終投稿 08-11、巡回は「tweet articles unavailable」で失敗）に
+# 引きずられて 08-10 からの検索補完が毎日走り、朝の実行が40分を超えて
+# fetch_full_text.py が 08:14 になっても始まらず、当日登録すべき予告の本文が
+# 切れたまま残った。
+#
+# そこでアカウントごとに次の3つを見る。
+#   1. 自分の投稿間隔。10日おきに投稿する店長アカウントの9日の沈黙は欠損ではない。
+#   2. 検索補完での確認済み範囲。backfill_progress に done/empty で残った窓が
+#      最新投稿から途切れずつながっていれば、そこまでは「投稿が無いことを確認済み」。
+#   3. 休眠。最も新しいアカウントより DORMANT_DAYS 以上遅れているものは、収集の
+#      断絶ではなくアカウント側の事情（休眠・非公開・凍結・巡回失敗）とみなし、
+#      報告だけして補完の引き金にしない。基準を「今日」ではなく「最も新しい
+#      アカウント」に置くのは、本物の断絶では全アカウントが一緒に古くなり、
+#      主要アカウントが休眠扱いにならないようにするため。
+CADENCE_LOOKBACK_DAYS = 60
+# 投稿日の間隔の何分位までを「いつもの沈黙」とみなすか。
+CADENCE_QUANTILE = 0.9
+# 間隔を推定するのに最低限必要な間隔の数。足りなければ GAP_TRIGGER_DAYS を使う。
+CADENCE_MIN_INTERVALS = 3
+DORMANT_DAYS = 14
 
 
-def last_collected_date(connection):
-    """Return the earliest 'newest post' across accounts, i.e. the weakest link."""
-    rows = connection.execute("SELECT handle, MAX(posted_at_jst) FROM seen_tweets GROUP BY handle").fetchall()
-    dates = [row[1][:10] for row in rows if row[1]]
-    if not dates:
-        return None
-    return min(date.fromisoformat(value) for value in dates)
+def _posting_days(connection):
+    """アカウントごとの投稿日（重複なし・昇順）。"""
+    days = {}
+    rows = connection.execute(
+        "SELECT DISTINCT handle, substr(posted_at_jst, 1, 10) FROM seen_tweets "
+        "WHERE posted_at_jst IS NOT NULL ORDER BY 1, 2"
+    ).fetchall()
+    for handle, day in rows:
+        days.setdefault(handle, []).append(date.fromisoformat(day))
+    return days
+
+
+def _allowed_silence(days):
+    """そのアカウントにとって普通の沈黙日数。最新投稿の手前 CADENCE_LOOKBACK_DAYS 日で測る。"""
+    recent = [day for day in days if day > days[-1] - timedelta(days=CADENCE_LOOKBACK_DAYS)]
+    intervals = sorted((later - earlier).days for earlier, later in zip(recent, recent[1:]))
+    if len(intervals) < CADENCE_MIN_INTERVALS:
+        return GAP_TRIGGER_DAYS
+    quantile = intervals[min(len(intervals) - 1, int(len(intervals) * CADENCE_QUANTILE))]
+    return min(max(GAP_TRIGGER_DAYS, quantile), DORMANT_DAYS)
+
+
+def _search_confirmed_through(connection, handle, newest):
+    """検索補完で投稿の有無を確認済みの最終日。最新投稿日から途切れずつながる窓だけを数える。
+
+    窓は [window_start, window_end) で、完了時刻より先は確認できていない。
+    つながりを要求するのは、途中の窓が failed のまま後ろの窓だけ done だと、
+    その間の欠損を確認済みと取り違えるため。
+    """
+    if not connection.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='backfill_progress'").fetchone():
+        return newest
+    covered = newest
+    rows = connection.execute(
+        "SELECT window_start, window_end, completed_at_jst FROM backfill_progress "
+        "WHERE handle = ? AND status IN ('done', 'empty') ORDER BY window_start",
+        (handle,),
+    ).fetchall()
+    for start, end, completed in rows:
+        if date.fromisoformat(start) > covered:
+            break
+        through = date.fromisoformat(end) - timedelta(days=1)
+        if completed:
+            through = min(through, date.fromisoformat(completed[:10]))
+        covered = max(covered, through)
+    return covered
+
+
+def collection_gap(connection, today):
+    """収集の空きをアカウントごとに測る。
+
+    戻り値は dict:
+      last     … 補完の起点にする日。quiet・dormant を除いたアカウントの確認済み最終日の
+                 最小値。履歴が無ければ None。
+      gap_days … today - last
+      lagging  … 補完の引き金になったアカウント [(handle, 最新投稿日, 確認済み最終日, 許容沈黙日数)]
+      quiet    … 沈黙しているが自分の投稿間隔の範囲内なので対象外にしたアカウント
+      dormant  … 休眠・非公開・凍結・巡回失敗の疑いで対象外にしたアカウント
+                 [(handle, 最新投稿日, 確認済み最終日)]
+    """
+    days_by_handle = _posting_days(connection)
+    if not days_by_handle:
+        return {"last": None, "gap_days": None, "lagging": [], "quiet": [], "dormant": []}
+    freshest = max(days[-1] for days in days_by_handle.values())
+
+    lagging, quiet, dormant, counted = [], [], [], []
+    for handle, days in sorted(days_by_handle.items()):
+        newest = days[-1]
+        covered = _search_confirmed_through(connection, handle, newest)
+        if (freshest - newest).days >= DORMANT_DAYS:
+            dormant.append((handle, newest, covered))
+            continue
+        allowed = _allowed_silence(days)
+        # 検索で直近まで確認済みなら、沈黙の長さに関係なく遅れではない。
+        stalled = (today - covered).days >= GAP_TRIGGER_DAYS
+        if stalled and (today - newest).days <= allowed:
+            quiet.append((handle, newest, covered, allowed))
+            continue
+        counted.append(covered)
+        if stalled:
+            lagging.append((handle, newest, covered, allowed))
+
+    # 休眠の基準は最も新しいアカウントなので、そのアカウント自身は必ず counted に入る。
+    last = min(counted)
+    return {"last": last, "gap_days": (today - last).days, "lagging": lagging, "quiet": quiet, "dormant": dormant}
 
 
 def registered_targets():
@@ -272,14 +373,27 @@ def main() -> int:
 def _run(args: argparse.Namespace) -> int:
     today = datetime.now(JST).date()
     with sqlite3.connect(DB_PATH, timeout=60) as connection:
-        last = last_collected_date(connection)
+        gap = collection_gap(connection, today)
 
+    last = gap["last"]
     if last is None:
         print("収集履歴がありません。先に scrape_tweets.py を実行してください。")
         return 1
 
-    gap_days = (today - last).days
+    gap_days = gap["gap_days"]
     print("最終取得日 %s / 本日 %s (%d日の空き)" % (last, today, gap_days))
+    for handle, newest, covered, allowed in gap["lagging"]:
+        print("  遅れ: %s 最終投稿 %s / 確認済み %s (普段の沈黙 %d日まで)" % (handle, newest, covered, allowed))
+    for handle, newest, covered, allowed in gap["quiet"]:
+        print("  対象外(投稿間隔の範囲内): %s 最終投稿 %s (普段の沈黙 %d日まで)" % (handle, newest, allowed))
+    for handle, newest, covered in gap["dormant"]:
+        # 補完の引き金にはしないが、黙って落とすと巡回失敗に気づけないので必ず出す。
+        searched = "検索でも %s まで投稿なし" % covered if covered > newest else "検索での確認なし"
+        print(
+            "  ※ 休眠・非公開・凍結・巡回失敗の疑い: %s 最終投稿 %s（%s）。"
+            "scrape_tweets.py のログで「tweet articles unavailable」を確認し、"
+            "アカウントの状態を見て config.ACCOUNTS から外すか判断すること。" % (handle, newest, searched)
+        )
 
     if gap_days >= GAP_TRIGGER_DAYS:
         since = last - timedelta(days=GAP_OVERLAP_DAYS)
