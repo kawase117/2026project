@@ -157,7 +157,10 @@ def fetch_images(page, handle, tweet_id, expected_text):
         LOGGER.warning("%s: 本文が一致しないので触らない (取得=%r)", tweet_id, shown[:30])
         return None
 
-    nodes = article.locator('img[src*="pbs.twimg.com/media"]')
+    # 引用ツイートの画像は主記事の中に描画されるので、media 画像を全部拾うと引用元の
+    # 画像も取り直してしまう。自分の画像だけが /status/<自分のid>/photo/N に包まれる
+    # （2026-09-13 に個別ステータスページで確認。scrape_tweets.download_images と同じ条件）。
+    nodes = article.locator(f'a[href*="/status/{tweet_id}/photo/"] img[src*="pbs.twimg.com/media"]')
     blobs = []
     for index in range(nodes.count()):
         source = nodes.nth(index).get_attribute("src")

@@ -207,7 +207,13 @@ def download_images(page, article, handle: str, tweet_id: str) -> list[str]:
     if not article_owns_tweet(article, handle, tweet_id):
         LOGGER.warning("%s: article does not own tweet %s; skipping images", handle, tweet_id)
         return []
-    image_nodes = article.locator('img[src*="pbs.twimg.com/media"]')
+    # 引用ツイートの画像は同じ article の中に描画されるので、media 画像を全部拾うと
+    # 引用元の画像がこのツイートの画像として保存される。自分の画像は自分の status の
+    # /photo/N リンクに包まれ、引用元の画像は引用元の status の /photo/N に包まれている
+    # （2026-09-13 に実ページで確認）。tweet_id は一意なので handle は条件に入れない。
+    # 修正前は画像付き4569件中890件が X の上限4枚を超えており、5枚目以降の画像から
+    # 抽出された台番号だけで2979行が、引用した側のホール・営業日のラベルを負っていた。
+    image_nodes = article.locator(f'a[href*="/status/{tweet_id}/photo/"] img[src*="pbs.twimg.com/media"]')
     saved_paths: list[str] = []
     target_dir = IMAGES_DIR / handle
     target_dir.mkdir(parents=True, exist_ok=True)
