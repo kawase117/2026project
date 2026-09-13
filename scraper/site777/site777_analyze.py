@@ -17,7 +17,9 @@ try:
         enrich_machines,
         load_reference_context,
     )
+    from .graph_quality import AXIS_LIMIT, assess_graph_item, censor_bound
     from .setting_estimator import (
+        DUPLICATE_SUSPECT_CONFIDENCE,
         ZENTAIKEI_MIN_MACHINES,
         annotate_setting_estimates,
         judge_zentaikei_by_model,
@@ -31,7 +33,9 @@ except ImportError:
         enrich_machines,
         load_reference_context,
     )
+    from graph_quality import AXIS_LIMIT, assess_graph_item, censor_bound  # type: ignore[no-redef]
     from setting_estimator import (  # type: ignore[no-redef]
+        DUPLICATE_SUSPECT_CONFIDENCE,
         ZENTAIKEI_MIN_MACHINES,
         annotate_setting_estimates,
         judge_zentaikei_by_model,
@@ -60,6 +64,77 @@ def probability(games: int, bonus_count: int) -> float | None:
 def mean_or_none(values: Iterable[float | int | None]) -> float | None:
     valid = [float(value) for value in values if value is not None]
     return fmean(valid) if valid else None
+
+
+# 同一機種内で累計G・BB・RB・ARTが完全一致した台を重複疑いとする回転数の下限。
+# 低回転では偶然一致する（2026-09-13 19:25 のランで 0G/0/0 が5台、48G/0/0 が2台一致）。
+DUPLICATE_COUNTS_MIN_GAMES = 1000
+QUALITY_FLAG_KEYS = (
+    "diff_censored_high",
+    "diff_censored_low",
+    "axis_label_suspect",
+    "axis_label_corrected",
+    "diff_unreliable",
+    "counts_duplicate_suspect",
+)
+
+
+def mark_count_duplicates(machines: list[dict[str, Any]]) -> list[list[str]]:
+    """同一機種内で累計カウントが完全一致した台に counts_duplicate_suspect を付け、組を返す。
+
+    2026-09-13 のマイジャグラーV 1202 と 1215 は、大当り一覧でも台別グラフページのランプ表示でも
+    2,306G/BB6/RB5 と完全一致したが、現在G（206/468）・最高出玉（455/536）・推移線は別物だった。
+    別々に開いた2種類のページで同じ値なので、パーサの取り違えではなくサイト側のカウンタ重複で、
+    こちらでは正しい値を復元できない。どちらが本物か分からないので両方に印を付ける。
+    """
+    groups: dict[tuple[Any, ...], list[dict[str, Any]]] = defaultdict(list)
+    for machine in machines:
+        machine["counts_duplicate_suspect"] = False
+        machine["counts_duplicate_with"] = []
+        if (machine.get("games") or 0) >= DUPLICATE_COUNTS_MIN_GAMES:
+            key = (
+                machine.get("mdc"),
+                machine["games"],
+                machine["bb_count"],
+                machine["rb_count"],
+                machine.get("art_count"),
+            )
+            groups[key].append(machine)
+    duplicate_groups: list[list[str]] = []
+    for members in groups.values():
+        if len(members) < 2:
+            continue
+        numbers = [str(machine["machine_number"]) for machine in members]
+        for machine in members:
+            machine["counts_duplicate_suspect"] = True
+            machine["counts_duplicate_with"] = [
+                number for number in numbers if number != str(machine["machine_number"])
+            ]
+        duplicate_groups.append(numbers)
+    return duplicate_groups
+
+
+def _machine_quality_flags(machine: dict[str, Any]) -> dict[str, bool]:
+    return {key: bool(machine.get(key)) for key in QUALITY_FLAG_KEYS}
+
+
+def _diff_machines(machines: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [machine for machine in machines if machine["graph_eligible"] and machine["latest_diff"] is not None]
+
+
+def diff_quality_fields(group: list[dict[str, Any]]) -> dict[str, Any]:
+    """差枚を集計に使った台群について、打ち切り・読取不能の台数と集計値の境界の向きを返す。
+
+    勝敗は ±5,000 で打ち切られても符号が確定しているので、勝率は境界にならない。
+    """
+    high = sum(bool(machine.get("diff_censored_high")) for machine in group)
+    low = sum(bool(machine.get("diff_censored_low")) for machine in group)
+    return {
+        "diff_censored_high_count": high,
+        "diff_censored_low_count": low,
+        "diff_unreliable_count": sum(bool(machine.get("diff_unreliable")) for machine in group),
+        "diff_bound": censor_bound(high, low),
+    }
 
 
 def numeric_rows(pages: Iterable[dict[str, Any]]) -> list[list[str]]:
@@ -250,6 +325,7 @@ def build_three_machine_runs(
                 "average_diff": (mean_or_none(machine["latest_diff"] for machine in group) if diff_complete else None),
                 "win_count": (sum(machine["win"] is True for machine in group) if diff_complete else None),
                 "win_rate": (sum(machine["win"] is True for machine in group) / 3 if diff_complete else None),
+                **diff_quality_fields(group if diff_complete else []),
                 "average_highest_payout": mean_or_none(machine["highest_payout"] for machine in group),
                 "graph_reused_count": sum(machine["graph_reused"] for machine in group),
                 "low_confidence_count": sum(machine["diff_confidence"] == "low" for machine in group),
@@ -264,6 +340,7 @@ def build_three_machine_runs(
                         "highest_payout": machine["highest_payout"],
                         "latest_diff": machine["latest_diff"],
                         "win": machine["win"],
+                        **_machine_quality_flags(machine),
                     }
                     for machine in group
                 ],
@@ -319,6 +396,7 @@ def build_positive_blocks(runs: list[dict[str, Any]], machines: list[dict[str, A
                 "average_diff": mean_or_none(machine["latest_diff"] for machine in group),
                 "win_count": sum(machine["win"] is True for machine in group),
                 "win_rate": sum(machine["win"] is True for machine in group) / len(group),
+                **diff_quality_fields(group),
                 "graph_reused_count": sum(machine["graph_reused"] for machine in group),
                 "low_confidence_count": sum(value == "low" for value in confidences),
                 "medium_confidence_count": sum(value == "medium" for value in confidences),
@@ -331,6 +409,7 @@ def build_positive_blocks(runs: list[dict[str, Any]], machines: list[dict[str, A
                         "games": machine["games"],
                         "latest_diff": machine["latest_diff"],
                         "win": machine["win"],
+                        **_machine_quality_flags(machine),
                     }
                     for machine in group
                 ],
@@ -387,6 +466,7 @@ def build_physical_positive_blocks(runs: list[dict[str, Any]], machines: list[di
                     "average_diff": mean_or_none(machine["latest_diff"] for machine in group),
                     "win_count": sum(machine["win"] is True for machine in group),
                     "win_rate": sum(machine["win"] is True for machine in group) / len(group),
+                    **diff_quality_fields(group),
                     "graph_reused_count": sum(machine["graph_reused"] for machine in group),
                     "low_confidence_count": sum(value == "low" for value in confidences),
                     "medium_confidence_count": sum(value == "medium" for value in confidences),
@@ -399,6 +479,7 @@ def build_physical_positive_blocks(runs: list[dict[str, Any]], machines: list[di
                             "games": machine["games"],
                             "latest_diff": machine["latest_diff"],
                             "win": machine["win"],
+                            **_machine_quality_flags(machine),
                         }
                         for machine in group
                     ],
@@ -448,6 +529,7 @@ def build_lane_edge_summaries(
                 "average_diff": mean_or_none(valid_diffs),
                 "average_games": mean_or_none(machine["games"] for machine in group),
                 "average_highest_payout": mean_or_none(machine["highest_payout"] for machine in group),
+                **diff_quality_fields(_diff_machines(group)),
                 "bb_probability": probability(total_games, total_bb),
                 "rb_probability": probability(total_games, total_rb),
                 "combined_probability": probability(total_games, total_bb + total_rb),
@@ -511,6 +593,8 @@ def classify_candidates(
             label = "出玉候補"
         else:
             label = "--"
+        if machine.get("counts_duplicate_suspect"):
+            label += "（カウント重複疑い）"
         machine["candidate_label"] = label
 
 
@@ -524,6 +608,7 @@ def analyze(
     model_values = [item for item in source["models"].values() if item.get("complete")]
     machines: list[dict[str, Any]] = []
     models: list[dict[str, Any]] = []
+    duplicate_groups: list[list[str]] = []
 
     for model in model_values:
         jackpot_rows = numeric_rows(model["jackpot"]["pages"])
@@ -543,7 +628,9 @@ def analyze(
                 continue
 
             graph = graph_by_key.get(f"{model['mdc']}:{machine_number}")
-            latest_diff = graph.get("estimatedLatestDiff") if graph else None
+            # 保存済みの軸ラベルと終点から毎回判定し直す。フラグを持たない過去の metrics にも効く。
+            quality = assess_graph_item(graph)
+            latest_diff = quality["estimated_diff"] if graph else None
             graph_eligible = games >= graph_min_games
             machine = {
                 "mdc": model["mdc"],
@@ -562,6 +649,15 @@ def analyze(
                 "graph_eligible": graph_eligible,
                 "latest_diff": latest_diff,
                 "win": latest_diff > 0 if latest_diff is not None else None,
+                "latest_diff_raw": quality["raw_diff"],
+                "diff_censored_high": quality["diff_censored_high"],
+                "diff_censored_low": quality["diff_censored_low"],
+                "axis_label_suspect": quality["axis_label_suspect"],
+                "axis_label_corrected": quality["axis_label_corrected"],
+                "axis_label_issue": quality["axis_label_issue"],
+                "diff_unreliable": quality["diff_unreliable"],
+                "counts_duplicate_suspect": False,
+                "counts_duplicate_with": [],
                 "diff_confidence": graph.get("confidence") if graph else None,
                 "graph_reused": bool(graph.get("graphReused")) if graph else False,
                 "graph_captured_games": graph.get("capturedGames") if graph else None,
@@ -580,6 +676,8 @@ def analyze(
                 "warning"
                 if machine["graph_reused"]
                 or machine["diff_confidence"] == "low"
+                or machine["axis_label_suspect"]
+                or machine["diff_unreliable"]
                 or (machine["graph_age_minutes"] or 0) > 30
                 else "fresh"
             )
@@ -587,6 +685,7 @@ def analyze(
             model_machines.append(machine)
             machines.append(machine)
 
+        duplicate_groups.extend(mark_count_duplicates(model_machines))
         total_games = sum(machine["games"] for machine in model_machines)
         total_bb = sum(machine["bb_count"] for machine in model_machines)
         total_rb = sum(machine["rb_count"] for machine in model_machines)
@@ -630,6 +729,10 @@ def analyze(
             "average_highest_payout": mean_or_none(machine["highest_payout"] for machine in model_machines),
             "average_diff": mean_or_none(valid_diffs),
             "win_rate": wins / len(valid_diffs) if valid_diffs else None,
+            **diff_quality_fields(_diff_machines(model_machines)),
+            "counts_duplicate_suspect_count": sum(
+                bool(machine.get("counts_duplicate_suspect")) for machine in model_machines
+            ),
             "jackpot_update_time": model["jackpot"].get("updateTime"),
             "highest_update_time": model["highest"].get("updateTime"),
             "graph_update_time": ", ".join(graph_times),
@@ -650,38 +753,7 @@ def analyze(
             model["machine_category"] = mapped.get("machine_category")
             model["master_matched"] = bool(mapped.get("master_matched"))
 
-    tail_groups: dict[str, list[dict[str, Any]]] = defaultdict(list)
-    for machine in machines:
-        tail_groups[str(machine["last_digit"])].append(machine)
-        if machine["is_zorome"]:
-            tail_groups["ゾロ目"].append(machine)
-
-    tails: list[dict[str, Any]] = []
-    for group_name in [str(number) for number in range(10)] + ["ゾロ目"]:
-        group = tail_groups.get(group_name, [])
-        valid_diffs = [
-            machine["latest_diff"]
-            for machine in group
-            if machine["graph_eligible"] and machine["latest_diff"] is not None
-        ]
-        wins = sum(value > 0 for value in valid_diffs)
-        tails.append(
-            {
-                "tail": group_name,
-                "machine_count": len(group),
-                "graph_eligible_count": sum(machine["graph_eligible"] for machine in group),
-                "diff_valid_count": len(valid_diffs),
-                "graph_reused_count": sum(machine["graph_eligible"] and machine["graph_reused"] for machine in group),
-                "win_count": wins,
-                "win_rate": wins / len(valid_diffs) if valid_diffs else None,
-                "average_diff": mean_or_none(valid_diffs),
-                "average_games": mean_or_none(machine["games"] for machine in group),
-                "average_highest_payout": mean_or_none(machine["highest_payout"] for machine in group),
-                "graph_update_time": ", ".join(
-                    sorted({machine["graph_update_time"] for machine in group if machine["graph_update_time"]})
-                ),
-            }
-        )
+    tails = _tail_rows_for(machines)
 
     classify_candidates(machines, models, graph_min_games)
     family_specs = load_family_specs()
@@ -742,6 +814,14 @@ def analyze(
         "positive_blocks": rank_rows(positive_blocks, "block_score", reverse=True),
     }
 
+    diff_quality = {
+        "axis_limit": AXIS_LIMIT,
+        "diff_censored_high_machines": [m["machine_number"] for m in machines if m.get("diff_censored_high")],
+        "diff_censored_low_machines": [m["machine_number"] for m in machines if m.get("diff_censored_low")],
+        "axis_label_corrected_machines": [m["machine_number"] for m in machines if m.get("axis_label_corrected")],
+        "diff_unreliable_machines": [m["machine_number"] for m in machines if m.get("diff_unreliable")],
+        "counts_duplicate_suspect_groups": duplicate_groups,
+    }
     time_status = snapshot_time_status(source, graph_metrics)
     return {
         "generated_at": datetime.now().astimezone().isoformat(),
@@ -770,6 +850,7 @@ def analyze(
         ],
         "setting_estimate": setting_summary,
         "model_zentaikei": model_zentaikei,
+        "diff_quality": diff_quality,
         "setting_candidate_count": sum(machine["setting_candidate"] for machine in machines),
         "payout_candidate_count": sum(machine["payout_candidate"] for machine in machines),
         "bb_heavy_count": sum(machine["bb_heavy"] for machine in machines),
@@ -807,6 +888,75 @@ def fmt_probability(value: float | None) -> str:
 
 def fmt_percent(value: float | None) -> str:
     return "--" if value is None else f"{value * 100:.1f}%"
+
+
+def fmt_machine_diff(machine: dict[str, Any], unit: str = "") -> str:
+    """台の差枚。軸に張り付いた台は真の値が軸の外にあるので境界として表示する。"""
+    value = machine.get("latest_diff")
+    if value is None:
+        return "--"
+    if machine.get("diff_censored_high"):
+        text = f"≥+{AXIS_LIMIT:,}{unit}"
+    elif machine.get("diff_censored_low"):
+        text = f"≤-{AXIS_LIMIT:,}{unit}"
+    else:
+        text = f"{value:+,}{unit}"
+    if machine.get("diff_unreliable"):
+        text += "（軸読取不能）"
+    elif machine.get("axis_label_corrected"):
+        text += "（軸ラベル補正）"
+    return text
+
+
+def fmt_diff_aggregate(row: dict[str, Any], key: str, digits: int = 1, *, signed: bool = False) -> str:
+    """打ち切り台を含む合計・平均差枚。≥は下限、≤は上限。"""
+    value = row.get(key)
+    if value is None:
+        return "--"
+    text = f"{value:+,.{digits}f}" if signed else f"{value:,.{digits}f}"
+    bound = row.get("diff_bound")
+    if bound == "lower":
+        text = f"≥{text}"
+    elif bound == "upper":
+        text = f"≤{text}"
+    elif bound == "indeterminate":
+        text += "（上下打切り混在）"
+    if row.get("diff_unreliable_count"):
+        text += f"（軸読取不能{row['diff_unreliable_count']}台含む）"
+    return text
+
+
+def _machine_label(machine: dict[str, Any]) -> str:
+    suffix = "※重複疑い" if machine.get("counts_duplicate_suspect") else ""
+    return f"{machine['machine_number']}{suffix}"
+
+
+def diff_quality_note(result: dict[str, Any]) -> str:
+    quality = result.get("diff_quality") or {}
+    limit = quality.get("axis_limit", AXIS_LIMIT)
+
+    def listed(key: str) -> str:
+        numbers = quality.get(key) or []
+        return f"{len(numbers)}台" + (f"（{'、'.join(numbers)}）" if numbers else "")
+
+    note = (
+        f"差枚の読み方: 出玉推移グラフの縦軸は±{limit:,}枚で固定です。終点が上端・下端に張り付いた台は"
+        f"真の差枚が軸の外にあるため「≥+{limit:,}」「≤-{limit:,}」と表示し、集計には±{limit:,}を入れています。"
+        "こうした台を含む合計差枚・平均差枚は、「≥」付きなら下限、「≤」付きなら上限です"
+        "（上下両方を含む行は向きが決まりません）。勝敗は符号が確定しているので、勝率は打ち切りの影響を受けません。"
+        f"今回: 上端張り付き{listed('diff_censored_high_machines')}、"
+        f"下端張り付き{listed('diff_censored_low_machines')}、"
+        f"軸ラベル誤読を固定軸で補正{listed('axis_label_corrected_machines')}、"
+        f"軸読取不能（差枚は参考値）{listed('diff_unreliable_machines')}。"
+    )
+    groups = quality.get("counts_duplicate_suspect_groups") or []
+    if groups:
+        joined = "、".join("と".join(group) for group in groups)
+        note += (
+            f"累計G・BB・RBが同一機種内で完全一致した台（{joined}）は、サイト側のカウンタ重複を疑います"
+            "（少なくとも一方は実機と違う値です）。"
+        )
+    return note
 
 
 def snapshot_time_status(source: dict[str, Any], graph_metrics: dict[str, Any]) -> dict[str, Any]:
@@ -860,7 +1010,7 @@ def model_table(
         lines.append(
             f"| {row['rank']} | {row['model_name']} | {category} | {row['machine_count']} | "
             f"{row['graph_eligible_count']} | {row['diff_valid_count']} | "
-            f"{fmt_number(row['average_diff'])} | {fmt_number(row['average_games'])} | "
+            f"{fmt_diff_aggregate(row, 'average_diff')} | {fmt_number(row['average_games'])} | "
             f"{fmt_percent(row['win_rate'])}{ranking_value} | {row['update_time']} |"
         )
     lines.append("")
@@ -904,6 +1054,8 @@ def build_model_report(
         "（1〜2台の100%を上位に並べないため）。",
         "",
         probability_scope_note(result),
+        "",
+        diff_quality_note(result),
         "",
         result["source_time_status"]["note"],
         "",
@@ -985,9 +1137,9 @@ def candidate_section(result: dict[str, Any]) -> list[str]:
 
 def _candidate_row(machine: dict[str, Any]) -> str:
     model_rb = machine["rb_probability"] + machine["rb_vs_model"] if machine.get("rb_vs_model") is not None else None
-    diff = "--" if machine["latest_diff"] is None else f"{machine['latest_diff']:+,}"
+    diff = fmt_machine_diff(machine)
     return (
-        f"| {machine['machine_number']} | {machine['model_name']} | "
+        f"| {_machine_label(machine)} | {machine['model_name']} | "
         f"{machine.get('machine_category') or '未対応'} | {machine['games']:,} | "
         f"{machine['bb_count']} | {machine['rb_count']} | "
         f"{fmt_probability(machine['rb_probability'])} | {fmt_probability(model_rb)} | "
@@ -1012,7 +1164,7 @@ def tail_table(
         lines.append(
             f"| {row['rank']} | {row['tail']} | {row['machine_count']} | "
             f"{row['graph_eligible_count']} | {row['diff_valid_count']} | {row['win_count']} | "
-            f"{fmt_number(row['average_diff'])} | {fmt_number(row['average_games'])} | "
+            f"{fmt_diff_aggregate(row, 'average_diff')} | {fmt_number(row['average_games'])} | "
             f"{fmt_percent(row['win_rate'])} | {fmt_number(row['average_highest_payout'])} | "
             f"{row['graph_update_time']} |"
         )
@@ -1072,6 +1224,7 @@ def _tail_rows_for(machines: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 "graph_update_time": ", ".join(
                     sorted({machine["graph_update_time"] for machine in group if machine["graph_update_time"]})
                 ),
+                **diff_quality_fields(_diff_machines(group)),
             }
         )
     return rows
@@ -1184,6 +1337,8 @@ def build_tail_report(result: dict[str, Any]) -> str:
         "",
         result["source_time_status"]["note"],
         "",
+        diff_quality_note(result),
+        "",
     ]
     rankings = result["rankings"]["tails"]
     lines.extend(tail_table("末尾別勝率ランキング", rankings["win_rate"], "win_rate", "勝率", fmt_percent))
@@ -1221,7 +1376,7 @@ def corner_table(title: str, rows: list[dict[str, Any]]) -> list[str]:
         lines.append(
             f"| {row['rank']} | {row['lane_edge_label']} | {row['machine_count']} | "
             f"{row['graph_eligible_count']} | {row['diff_valid_count']} | "
-            f"{row['win_count']} | {fmt_number(row['average_diff'])} | "
+            f"{row['win_count']} | {fmt_diff_aggregate(row, 'average_diff')} | "
             f"{fmt_number(row['average_games'])} | {fmt_percent(row['win_rate'])} | "
             f"{fmt_number(row['average_highest_payout'])} |"
         )
@@ -1245,6 +1400,8 @@ def build_corner_report(result: dict[str, Any]) -> str:
         "",
         result["source_time_status"]["note"],
         "",
+        diff_quality_note(result),
+        "",
     ]
     rankings = result["rankings"]["corners"]
     lines.extend(corner_table("列端位置別平均差枚ランキング", rankings["average_diff"]))
@@ -1267,10 +1424,10 @@ def setting_table(title: str, rows: list[dict[str, Any]]) -> list[str]:
         "|---:|---:|---|---:|---:|---:|---:|---:|:--:|:--:|---:|:--:|:--:|---:|",
     ]
     for index, row in enumerate(rows, 1):
-        diff = "--" if row["latest_diff"] is None else f"{row['latest_diff']:+,}"
+        diff = fmt_machine_diff(row)
         ratio = "--" if row["high_low_ratio"] is None else f"{row['high_low_ratio']:,.2f}倍"
         lines.append(
-            f"| {index} | {row['machine_number']} | {row['model_name']} | {row['games']:,} | "
+            f"| {index} | {_machine_label(row)} | {row['model_name']} | {row['games']:,} | "
             f"{row['bb_count']} | {row['rb_count']} | "
             f"{fmt_probability(row['bb_probability'])} | {fmt_probability(row['rb_probability'])} | "
             f"{row['ml_setting']} | {row['setting_band_label']} | {ratio} | "
@@ -1311,6 +1468,20 @@ def build_setting_report(result: dict[str, Any]) -> str:
         "実際の高設定投入率は1/6よりずっと低いはずで、絶対値ではなく台どうしの相対比較に使ってください。",
         "",
     ]
+
+    duplicate_groups = (result.get("diff_quality") or {}).get("counts_duplicate_suspect_groups") or []
+    if duplicate_groups:
+        joined = "、".join("と".join(group) for group in duplicate_groups)
+        lines.extend(
+            [
+                f"**注意: 累計G・BB・RBが同一機種内で完全一致した台があります（{joined}）。** "
+                "サイト側で別の台のカウンタが重複表示されている疑いがあり、少なくとも一方の値は実機と違います。"
+                f"該当台は台番に「※重複疑い」を付け、信用度を「{DUPLICATE_SUSPECT_CONFIDENCE}」に落として"
+                "信用度 高・中 の表から外しています。機種別 全台系判定では、含めた判定と除外した判定を併記します。",
+                "",
+            ]
+        )
+    lines.extend([diff_quality_note(result), ""])
 
     false_rates = summary.get("false_high_rate_at_3000g", {})
     if false_rates:
@@ -1377,8 +1548,8 @@ def build_model_zentaikei_summary(result: dict[str, Any]) -> list[str]:
         return lines
     lines.extend(
         [
-            "| 機種 | 台数 | 合算G | 合算BB確率 | 合算RB確率 | 合算の最尤設定 | 全高vs全低 | 最尤の高設定台数 | P(全台高) | P(半数以上高) | P(0台) | 判定 |",
-            "|---|---:|---:|---:|---:|:--:|---:|---:|---:|---:|---:|:--:|",
+            "| 機種 | 台数 | 合算G | 合算BB確率 | 合算RB確率 | 合算の最尤設定 | 全高vs全低 | 最尤の高設定台数 | P(全台高) | P(半数以上高) | P(0台) | 判定 | カウント重複疑い |",
+            "|---|---:|---:|---:|---:|:--:|---:|---:|---:|---:|---:|:--:|---|",
         ]
     )
     for row in rows:
@@ -1387,11 +1558,17 @@ def build_model_zentaikei_summary(result: dict[str, Any]) -> list[str]:
         rb = f"1/{games / row['total_rb']:,.1f}" if row["total_rb"] else "--"
         ratio = row["all_high_vs_low_ratio"]
         ratio_text = "<0.01倍" if ratio < 0.01 else (">1000倍" if ratio > 1000 else f"{ratio:,.2f}倍")
+        suspects = row.get("counts_duplicate_suspect_machines") or []
+        suspect_text = (
+            f"{'、'.join(suspects)}を含む（除外時の判定: {row.get('verdict_excluding_duplicate_suspects')}）"
+            if suspects
+            else "--"
+        )
         lines.append(
             f"| {row['model_name']} | {row['n_machines']} | {games:,} | {bb} | {rb} | {row['pooled_ml_setting']} | "
             f"{ratio_text} | {row['k_map']}/{row['n_machines']}（{fmt_percent(row['p_k_map'])}） | "
             f"{fmt_percent(row['p_all_high'])} | "
-            f"{fmt_percent(row['p_half_or_more_high'])} | {fmt_percent(row['p_none_high'])} | {row['verdict']} |"
+            f"{fmt_percent(row['p_half_or_more_high'])} | {fmt_percent(row['p_none_high'])} | {row['verdict']} | {suspect_text} |"
         )
     lines.append("")
     return lines
@@ -1407,18 +1584,18 @@ def three_machine_table(title: str, rows: list[dict[str, Any]]) -> list[str]:
     for row in rows:
         machine_details = []
         for machine in row["machines"]:
-            diff_text = "--" if machine["latest_diff"] is None else f"{machine['latest_diff']:+,}枚"
+            diff_text = fmt_machine_diff(machine, "枚")
             payout_text = "--" if machine["highest_payout"] is None else f"{machine['highest_payout']:,}枚"
             machine_details.append(
                 f"{machine['machine_number']}（{machine['games']:,}G / {payout_text} / {diff_text}）"
             )
         machine_detail = " / ".join(machine_details)
-        total_diff = "--" if row["total_diff"] is None else f"{row['total_diff']:+,}"
+        total_diff = fmt_diff_aggregate(row, "total_diff", 0, signed=True)
         lines.append(
             f"| {row['rank']} | {row['start_machine']}～{row['end_machine']} | "
             f"{row.get('section') or '--'} | {row['model_label']} | {fmt_number(row['average_games'])} | "
             f"{row['total_games']:,} | {fmt_number(row['average_highest_payout'])} | "
-            f"{fmt_number(row['average_diff'])} | {total_diff} | {fmt_percent(row['win_rate'])} | "
+            f"{fmt_diff_aggregate(row, 'average_diff')} | {total_diff} | {fmt_percent(row['win_rate'])} | "
             f"{fmt_number(row['high_rotation_high_diff_score'])} | "
             f"{machine_detail} | {row['graph_update_time']} |"
         )
@@ -1441,7 +1618,7 @@ def positive_block_table(rows: list[dict[str, Any]]) -> list[str]:
         lines.append(
             f"| {row['rank']} | {row['start_machine']}～{row['end_machine']} | "
             f"{row.get('section') or '--'} | {row['machine_count']} | {row['model_label']} | {fmt_number(row['average_games'])} | "
-            f"{row['total_diff']:+,} | {fmt_number(row['average_diff'])} | "
+            f"{fmt_diff_aggregate(row, 'total_diff', 0, signed=True)} | {fmt_diff_aggregate(row, 'average_diff')} | "
             f"{fmt_percent(row['win_rate'])} | {fmt_number(row['block_score'])} | "
             f"{row['graph_reused_count']} | {quality} |"
         )
@@ -1467,6 +1644,8 @@ def build_three_machine_report(result: dict[str, Any]) -> str:
         "差枚は出玉推移グラフ終点からの推定値です。グラフ時刻が異なる場合は同じ行に併記します。",
         "",
         result["source_time_status"]["note"],
+        "",
+        diff_quality_note(result),
         "",
     ]
     rankings = result["rankings"]["three_machine_runs"]
@@ -1606,6 +1785,7 @@ def main() -> None:
                     f"{item['model_name']}({item['machine_count']}台)" for item in result["rb_absent_models"]
                 ],
                 "setting_candidate_count": result["setting_candidate_count"],
+                "diff_quality": result["diff_quality"],
                 "payout_candidate_count": result["payout_candidate_count"],
                 "master_unmatched": result["reference"].get("master_unmatched"),
                 "master_unmatched_model_count": result["reference"].get("master_unmatched_model_count"),

@@ -304,7 +304,17 @@ def judge_zentaikei_by_model(machines: list[dict[str, Any]], family_specs: dict[
         result = judge_model_zentaikei(group, settings)
         if result is None:
             continue
-        rows.append({"model_name": model_name, "setting_family_key": group[0]["setting_family_key"], **result})
+        row = {"model_name": model_name, "setting_family_key": group[0]["setting_family_key"], **result}
+        # カウント重複疑いの台は少なくとも一方の値が実機と違う。黙って合算せず、除外した判定も併記する。
+        suspects = [str(machine.get("machine_number")) for machine in group if machine.get("counts_duplicate_suspect")]
+        row["counts_duplicate_suspect_machines"] = suspects
+        row["verdict_excluding_duplicate_suspects"] = None
+        if suspects:
+            clean = judge_model_zentaikei(
+                [machine for machine in group if not machine.get("counts_duplicate_suspect")], settings
+            )
+            row["verdict_excluding_duplicate_suspects"] = clean["verdict"] if clean else "台数不足"
+        rows.append(row)
     return sorted(rows, key=lambda row: -row["all_high_vs_low_log_ratio"])
 
 
@@ -321,7 +331,12 @@ SETTING_FIELDS = (
     "setting_confidence",
     "p_high_setting_uniform_prior",
     "expected_setting_uniform_prior",
+    "setting_confidence_unchecked",
 )
+
+# 累計G・BB・RBが同一機種内で完全一致した台（サイト側のカウンタ重複疑い）に付ける信用度。
+# 「高」「中」に入れないので、信用度で絞った表から自動的に外れる。
+DUPLICATE_SUSPECT_CONFIDENCE = "要確認(カウント重複)"
 
 
 def annotate_setting_estimates(machines: list[dict[str, Any]], family_specs: dict[str, Any]) -> dict[str, Any]:
@@ -329,6 +344,7 @@ def annotate_setting_estimates(machines: list[dict[str, Any]], family_specs: dic
     matcher = build_family_matcher(family_specs)
     estimated = 0
     below_threshold = 0
+    duplicate_suspects = 0
     families: dict[str, int] = {}
 
     for machine in machines:
@@ -350,6 +366,10 @@ def annotate_setting_estimates(machines: list[dict[str, Any]], family_specs: dic
             below_threshold += 1
             continue
         machine.update(result)
+        if machine.get("counts_duplicate_suspect"):
+            machine["setting_confidence_unchecked"] = machine["setting_confidence"]
+            machine["setting_confidence"] = DUPLICATE_SUSPECT_CONFIDENCE
+            duplicate_suspects += 1
         estimated += 1
 
     return {
@@ -360,6 +380,7 @@ def annotate_setting_estimates(machines: list[dict[str, Any]], family_specs: dic
         "spec_covered_machines": sum(families.values()),
         "estimated_machines": estimated,
         "below_threshold_machines": below_threshold,
+        "counts_duplicate_suspect_estimated": duplicate_suspects,
         "false_high_rate_at_3000g": {key: rate for key, rate in FALSE_HIGH_RATE_AT_3000G.items() if key in families},
         "indistinguishable": {
             key: indistinguishable_settings(family_specs[key]["settings"])

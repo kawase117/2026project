@@ -10,6 +10,11 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
+try:
+    from .graph_quality import assess_graph_item
+except ImportError:
+    from graph_quality import assess_graph_item  # type: ignore[no-redef]
+
 
 MODULE_DIR = Path(__file__).resolve().parent
 OUTPUT_DIR = MODULE_DIR / "output"
@@ -188,6 +193,21 @@ def analyze_image(image_path: Path, ocr_item: dict) -> dict:
             "confidence": confidence,
         }
     )
+    # 縦軸は±5,000枚固定。軸ラベルの誤読を補正し、軸に張り付いた終点に打ち切りフラグを付ける。
+    quality = assess_graph_item(result)
+    result.update(
+        {
+            "rawLatestDiff": quality["raw_diff"],
+            "estimatedLatestDiff": quality["estimated_diff"],
+            "win": quality["estimated_diff"] > 0,
+            "diffCensoredHigh": quality["diff_censored_high"],
+            "diffCensoredLow": quality["diff_censored_low"],
+            "axisLabelSuspect": quality["axis_label_suspect"],
+            "axisLabelCorrected": quality["axis_label_corrected"],
+            "axisLabelIssue": quality["axis_label_issue"],
+            "diffUnreliable": quality["diff_unreliable"],
+        }
+    )
     return result
 
 
@@ -272,7 +292,8 @@ def main() -> int:
             # 検出ロジックを変えたらこのバージョンを上げる。上げないと過去の解析結果が
             # そのまま再利用され、修正が既存画像に適用されない。
             # v6=橙、v7=水色、v8=緑(2026-08-30)の推移線に対応。
-            signature = f'v8:{ocr_item.get("lastWriteTimeUtc")}:{ocr_item.get("length")}'
+            # v9=軸張り付きの打ち切りフラグと軸ラベル誤読の補正(2026-09-14)。
+            signature = f'v9:{ocr_item.get("lastWriteTimeUtc")}:{ocr_item.get("length")}'
             old = prior.get(key)
             if old and old.get("inputSignature") == signature:
                 results.append(
