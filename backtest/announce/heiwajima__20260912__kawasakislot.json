@@ -41,6 +41,65 @@
       "frozen_scoring_procedure": "実績を見る前に固定する。\n\n(1) 成立条件:『当日稼働台が2台以上ある機種で、差枚>=+1800 の台が2台以上かつ稼働台の40%以上』。閾値も比率も後から動かさない。\n\n(2) hit の判定は 10機種以上。ベースレートは159日中4日(3%)、土曜中央値5。\n\n(3) 差枚だけで判定しない。成立した機種について backtest/bonus_rate.py の当日 z と機種内均一p を併記する。均一p が小さい（機種内で割れている）ことがニブイチの本来の証拠であり、差枚の分散が大きいAT機で偶然割れた場合と区別する（9/11 楽園モンキーターンVで差枚が偽陽性を出した実例あり）。\n\n(4) 先バレ3機種は上の claims 側で gratio_mean_diff でも採点するが、2台設置のケロット5は1台の跳ねで閾値を超えるため、hit しても証拠力を持たせない。"
     }
   ],
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20260912",
+    "hall_baseline_mean_diff": -240.7,
+    "hall_n_machines": 423,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+          "note": "『先バレ機種 ■カバネリ（18台）』。⚠️ 機種名は登録時点の照合であり、当日ロスターに複数のカバネリ表記がある場合は台数18に近い方を採る。"
+        },
+        "score": 212.9,
+        "mean_diff": 140.4,
+        "gratio": 1.517,
+        "n_machines": 18,
+        "rank": 9,
+        "candidate_models": 45,
+        "age_days": 194,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "とある魔術の禁書目録2",
+          "note": "『先バレ機種 ■禁書目録2（6台）』。⚠️ 9/11 のニブイチ判定で既に成立している機種（3/6台）なので、直近から熱い分を差し引いて読むこと（feedback-named-model-conditional-baserate）。"
+        },
+        "score": 417.8,
+        "mean_diff": 280.8,
+        "gratio": 1.488,
+        "n_machines": 6,
+        "rank": 7,
+        "candidate_models": 45,
+        "age_days": 40,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ケロット5",
+          "note": "『先バレ機種 ■ケロット5（2台）』。⚠️ 2台設置のため、1台が跳ねるだけで機種平均が閾値を超える。差枚指標では原理的に弱い。"
+        },
+        "hit": null,
+        "note": "当日 ケロット5 が設置3台以上の候補に無い（撤去・台数不足・表記ゆれ）"
+      }
+    ]
+  },
   "announce_digest": "17413f45b743a415"
 }

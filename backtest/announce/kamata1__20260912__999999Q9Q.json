@@ -32,6 +32,40 @@
       "frozen_scoring_procedure": "実績を見る前に固定する。\n\n(1) narabi.py の定義（--size 3、閾値+1800、当日エポックの section、重なりは平均の高い方）。\n\n(2) 箇所数の絶対値では判定しない。20260401以降の土曜23日の分布（平均9.91 / 中央10 / 最大20）と比べる。\n\n(3) ⚠️ 本ホールでは土曜効果が稼働で説明されるため、稼働統制を必須にする。当日の平均G数とホール平均差枚を回帰に入れた予測値を上回って初めて hit とする。生の箇所数が多いだけでは的中と呼ばない。\n\n(4) 末尾は本文が『重要度は低め』としているため hit 判定の対象にしない。記録のみ残す。"
     }
   ],
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20260912",
+    "hall_baseline_mean_diff": -138.9,
+    "hall_n_machines": 365,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 2,
+          "note": "本文に全台系の主張は無い。機種単位の記録を残すため蒲田1の平常中央値2で登録する。⚠️ p_at_least_2 はおよそ0.5で hit=true を的中として数えない。"
+        },
+        "observed_n_models": 1,
+        "candidate_models": 48,
+        "models": [
+          {
+            "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+            "score": 2235.0,
+            "n_machines": 9,
+            "mean_diff": 2166.7,
+            "age_days": 96
+          }
+        ],
+        "n_new_machines_over": 0,
+        "hit": false
+      }
+    ]
+  },
   "announce_digest": "88c5833735721fe3"
 }

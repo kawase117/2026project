@@ -31,6 +31,54 @@
       "frozen_scoring_procedure": "実績を見る前に固定する。\n\n(1) backtest/narabi.py の定義をそのまま使う（--size 3、閾値+1800、machine_layout_history の当日エポックで section を引く、重なるブロックは平均の高い方だけ採る）。\n\n(2) 的中の判定は箇所数の絶対値ではしない。20260401以降の土曜22日の分布（平均25.18 / 中央24 / 最大35）に対し、20260912 がどこに来るかで判断する。土曜の中央値24を超えたら『土曜として平常以上』。\n\n(3) さらに稼働を統制する。当日の平均G数とホール平均差枚を上の回帰に入れて予測値を出し、実測がそれを上回るかを見る。稼働が伸びただけで並びが増えた日を的中と呼ばない。\n\n(4) 『共通の末尾』は、成立ブロックの構成台の末尾分布の最頻シェアで測る。土曜平常 0.146 を超えたときだけ末尾主張を hit とする。0.10（一様）との比較ではなく、平常との比較で判定する。"
     }
   ],
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20260912",
+    "hall_baseline_mean_diff": 28.8,
+    "hall_n_machines": 715,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 3,
+          "note": "本文に全台系の主張は無いが、機種単位の記録を残すために蒲田7の平常中央値3で登録する。⚠️ p_at_least_3 はおよそ0.5なので hit=true を的中として数えない。予告の評価には使わない。"
+        },
+        "observed_n_models": 3,
+        "candidate_models": 65,
+        "models": [
+          {
+            "machine_name": "少女☆歌劇 レヴュースタァライト ‐The SLOT‐",
+            "score": 8688.2,
+            "n_machines": 3,
+            "mean_diff": 5600.0,
+            "age_days": 432
+          },
+          {
+            "machine_name": "彼女、お借りします",
+            "score": 1881.9,
+            "n_machines": 4,
+            "mean_diff": 1550.0,
+            "age_days": 5
+          },
+          {
+            "machine_name": "シャーマンキング",
+            "score": 1812.2,
+            "n_machines": 4,
+            "mean_diff": 2800.0,
+            "age_days": 432
+          }
+        ],
+        "n_new_machines_over": 1,
+        "hit": true
+      }
+    ]
+  },
   "announce_digest": "cd153a6b8d01d415"
 }
