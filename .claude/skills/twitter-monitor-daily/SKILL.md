@@ -119,6 +119,27 @@ kawasakislot の実績リストを閾値+1800で採点し直すと **10件中2�
 
 PowerShell の表示崩れを Python 側のバグと誤診しない。切り分けは `mojibake-debug` スキル。
 
+## 監視対象外のアカウントを手法研究のために掘る
+
+`research_scrape.py` を使う。日次パイプライン（`run_daily.py`）には組み込まない。
+
+```bash
+venv\Scripts\python.exe scraper\twitter_monitor\research_scrape.py --handle <handle> --since 2026-03-01
+venv\Scripts\python.exe scraper\twitter_monitor\research_scrape.py --handle <handle> --skip-collect
+venv\Scripts\python.exe scraper\twitter_monitor\research_scrape.py --handle <handle> --redo-failed
+```
+
+- 収集先は `research.db`（`.gitignore` 済み）。`state.db` に混ぜないこと。
+  混ぜると prefilter → extract_answers → infer_hall が「ホールの答え合わせ投稿」として
+  扱い、他店の台番号が自店のラベルとして混入する。
+- プロフィールTLは使わず日付窓検索のみ。罠1の2週半沈黙を最初から回避する設計。
+- 出力 `research/<handle>.md` / `.jsonl` はコミット対象。
+  リモートセッションからは X への直アクセスが組織のネットワークポリシーで塞がれているため、
+  コーパスをコミットするのが受け渡し経路になる。
+- 取れるのは本人の非リプライ投稿のみ。リプライで補足するタイプのアカウントは
+  取りこぼす前提で読む。
+- 書き出しログの月別件数を必ず見る。途中の月が0や極端に少なければその窓が失敗している。
+
 ## 関連スキル
 
 - `announce-prep` — 予告の事前登録の下ごしらえ
