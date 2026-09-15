@@ -60,6 +60,51 @@
       "reason": "キャッチコピーで反証可能な内容が無い。"
     }
   ],
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20260914",
+    "hall_baseline_mean_diff": 24.5,
+    "hall_n_machines": 587,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": [],
+      "bounds": [
+        -5095,
+        15477
+      ]
+    },
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 1,
+          "note": "『全台系』。台数の指定が無いので最小の1で登録する。⚠️ baserate(90日, 閾値+1800): p_at_least_1=0.943、日次平均3.57機種。hit=true を的中として数えない。答え合わせでは超えた機種名と数を記録するに留める。"
+        },
+        "observed_n_models": 2,
+        "candidate_models": 57,
+        "models": [
+          {
+            "machine_name": "バンドリ！",
+            "score": 3045.9,
+            "n_machines": 4,
+            "mean_diff": 1012.2,
+            "age_days": 621
+          },
+          {
+            "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+            "score": 2091.9,
+            "n_machines": 26,
+            "mean_diff": 1009.6,
+            "age_days": 196
+          }
+        ],
+        "n_new_machines_over": 0,
+        "hit": true
+      }
+    ]
+  },
   "announce_digest": "255704618b02599e"
 }

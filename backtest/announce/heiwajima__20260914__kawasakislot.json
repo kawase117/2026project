@@ -47,6 +47,40 @@
       "reason": "過去実績の自己申告で、当方DBでは3件とも再現しない（weakness_note）。ルールの根拠に使わない。"
     }
   ],
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20260914",
+    "hall_baseline_mean_diff": -141.8,
+    "hall_n_machines": 423,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 1,
+          "note": "本文は全台系を明言していない。『いつも以上の仕掛け』を最小の反証可能形として1で登録する。⚠️ p_at_least_1=0.86 で無情報。hit を的中として数えない。主眼は下記 unscored_claims の凍結手順。"
+        },
+        "observed_n_models": 1,
+        "candidate_models": 45,
+        "models": [
+          {
+            "machine_name": "モンキーターンV",
+            "score": 2546.4,
+            "n_machines": 18,
+            "mean_diff": 1197.2,
+            "age_days": 543
+          }
+        ],
+        "n_new_machines_over": 0,
+        "hit": true
+      }
+    ]
+  },
   "announce_digest": "02010c0991bc7200"
 }
