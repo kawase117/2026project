@@ -17,6 +17,9 @@ ACCOUNTS = {
     # 蒲田1の一次資料としては使えない。過去分の参照用に残す。
     "j75gJ3j1539G": {"hall": "kamata7_kamata1", "role": "蒲田一店長(〜2026-08-23、以降は鷲宮店)"},
     "ngc2070r136a1": {"hall": "kamata7_kamata1", "role": "蒲田七店長"},
+    # 楽園蒲田の予告を出すもう1つの媒体。2026-09-14・15 の予告はここが一次資料
+    # だったが監視対象に入っておらず、backfill_search.py も対象外だった。
+    "minnade777judge": {"hall": "rakuen_kamata", "role": "予告+答え合わせ"},
     "kengyo_niki": {"hall": "hiroki", "role": "答え合わせ"},
     "sloneko222": {"hall": "arrow_ikegami_mitoya_omori", "role": "結果報告"},
 }

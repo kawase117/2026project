@@ -23,6 +23,11 @@ CHROME_USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
 )
 SCROLL_WAIT_SECONDS = (1.5, 3.5)
+# ビューポート高さ（800px）より小さく刻む。2_000px で送っていた 2026-09-16 以前は、
+# 画像付きの背の高い投稿が2回の読み取りの合間に画面を通り過ぎ、仮想リストから
+# 消えて一度も読まれないことがあった（kawasakislot 2099816258619506731、
+# 9/16 楽園蒲田の予告。前後 19:26・20:06 の投稿は取れていた）。
+SCROLL_STEP_PX = 700
 ACCOUNT_WAIT_SECONDS = (5.0, 15.0)
 BACKOFF_SECONDS = (60, 120, 240)
 MAX_STAGNANT_SCROLLS = 3
@@ -406,7 +411,7 @@ def crawl_account(
             stop_reason = f"記事増加なし{MAX_STAGNANT_SCROLLS}回"
             break
         if scroll_index + 1 < max_scrolls:
-            page.mouse.wheel(0, 2_000)
+            page.mouse.wheel(0, SCROLL_STEP_PX)
             page.wait_for_timeout(int(random.uniform(*SCROLL_WAIT_SECONDS) * 1_000))
 
     return inserted, oldest_date, target_reached, stop_reason
