@@ -1,11 +1,11 @@
 # ACTIVE_INSTINCTS
 
-- generated_at: 2026-09-16T08:18:10+09:00
+- generated_at: 2026-09-16T22:40:46+09:00
 - compiler_version: 1.3.0
 - source_dir: `C:/Users/apto117/Documents/pachinko-analyzer/src/2026project/document/instincts`
-- total_records_scanned: 1593
+- total_records_scanned: 1594
 - active_records: 120
-- status_breakdown: unverified=1585, confirmed=1, refuted=0, superseded=6
+- status_breakdown: unverified=1586, confirmed=1, refuted=0, superseded=6
 - filters: `confidence >= 0.80` and `file_date within 21 days` (unless pinned by high confidence)
 
 ## Usage
@@ -523,200 +523,200 @@
 - trigger: みとやの台番号末尾を台選びに使おうとするとき
 - summary: Phase 10b で h_jug の非イベント日末尾 KW が p=6.2e-7 と強有意だったが、Phase 10c の耐久性検証で machine_dependency が FAIL（d4 の top2_share=96.0%）。台674（658-674の角番1、マイジャグラーV）が d4 全体の avg_...
 
-### 88. `lookahead-detection-by-reimplementation`
+### 88. `mitoya-v-nonjug-avoid-segment`
+- confidence: `0.95` | status: `unverified` | date: `2026-06-27` | file: `2026-06-27-mitoya-segment-validation-insights.yaml`
+- domain/source: `hall-strategy` / `segment-validation`
+- trigger: みとやの台選び・推薦リストを作成するとき
+- summary: v_nonjug（692-700, 701-711, 745-755）はavg_diff=-119で全角番帯マイナス（corner1=-282, corner2-4=-107, corner5-9=-115, corner10+=-32）。バラエティ島で設定投入が薄い。5セグメント分割の交互作用検証でこのセグメン...
+
+### 89. `mitoya-shortlist-min-n-and-existence-check`
+- confidence: `0.95` | status: `unverified` | date: `2026-06-27` | file: `2026-06-27-mitoya-section-split-and-corner-effect-insights.yaml`
+- domain/source: `ml-methodology` / `session-debugging`
+- trigger: みとやのshortlist・バックテスト・機種選定を実装するとき
+- summary: Phase 7 shortlist バックテストで、学習窓の avg_diff 上位機種がテスト窓に存在しないケース（撤去済み機種）が大量発生。犬夜叉2（n=37, pre_existing, 撤去済み）が学習窓で1位を取りテスト窓で空振りし、591-623 で X_DDS=-1017 の壊滅的結果を出した。また...
+
+### 90. `hall-analysis-procedure-six-phases`
+- confidence: `0.95` | status: `unverified` | date: `2026-06-27` | file: `2026-06-27-hall-analysis-procedure-and-evolve-insights.yaml`
+- domain/source: `methodology` / `session-design`
+- trigger: 新しいホールの分析を開始するとき / 蒲田7以外のホールにMLモデルを適用するとき
+- summary: 2026-06-27 蒲田7で確立した分析手順を一般化し、document/plans/hall-analysis-procedure.mdとして手順書化。 蒲田7での地雷（Simpson's Paradox、角番定義誤り、イベント日流用、鉄台除外忘れ等）を回避する構造化されたフローを設計。 Phase 0(デー...
+
+### 91. `kakuban-is-model-backbone-not-auxiliary`
+- confidence: `0.95` | status: `unverified` | date: `2026-06-27` | file: `2026-06-27-kakuban-ablation-and-dd-boost-insights.yaml`
+- domain/source: `ml-feature-importance` / `walk-forward-ablation`
+- trigger: 角番特徴量の重要度を評価するとき、または角番を補助特徴量として扱おうとするとき
+- summary: 角番（kakuban）が「あると少し良くなる補助特徴量」か「モデルの根幹」かを判定するため、v12b_debut_multiplier_half から角番依存を完全に除去した v12b_no_kakuban との対称ablation実験を実施。c1/c2/c3/c4の全4コンポーネントから角番を除去。 角番を外す...
+
+### 92. `lookahead-detection-by-reimplementation`
 - confidence: `0.98` | status: `unverified` | date: `2026-06-26` | file: `2026-06-26-lookahead-and-pipeline-insights.yaml`
 - domain/source: `ml-evaluation` / `bug-fix`
 - trigger: walk-forward検証で有望な結果が出たとき / リランキングやフィルタの効果を検証するとき / scored DataFrameの列を後処理で使うとき
 - summary: 2026-06-26 Track D。seg_percentileリランキングの初回検証で+108枚/日（p=0.000003）という 高度に有意な結果が出た。しかしpool_n sweepで別実装を走らせたところ結果が再現せず、 原因を追ったらstrength_weightの計算に当日の `diff_coins...
 
-### 89. `v12-debut-multiplier-machine-name-not-number`
+### 93. `v12-debut-multiplier-machine-name-not-number`
 - confidence: `0.98` | status: `unverified` | date: `2026-06-26` | file: `2026-06-26-v12-debut-multiplier-walkforward-insights.yaml`
 - domain/source: `implementation` / `bug-fix`
 - trigger: debut_dateやpre_existingを計算するとき / 機種の初出日をgroupbyで算出するとき
 - summary: 2026-06-26 V12実装時のバグ。初回walk-forwardでV11/V12a/V12bの全指標が完全一致。 `train.groupby("machine_number")["date_dt"].min()` でdebut_dateを計算していた。 同じ台番号に異なる機種が入れ替わっても（新台入替）、...
 
-### 90. `debut-181plus-definition-caveat`
+### 94. `debut-181plus-definition-caveat`
 - confidence: `0.98` | status: `unverified` | date: `2026-06-26` | file: `2026-06-26-grouping-debut-event-insights.yaml`
 - domain/source: `data-definition` / `session-observation`
 - trigger: 181日+フェーズの分析結果を解釈するとき / 定番台の定義を確認するとき
 - summary: 2026-06-26 セッションで確認。debut_phase分析ではpre_existing=Trueの機種を除外している。 181日+ = DB開始日（蒲田7: 2025-07-07）以降に導入され、181日以上経過した機種 pre_existing（DB開始日に既に存在していた機種）は除外済み 蒲田7の場合...
 
-### 91. `model-vs-random-segment-divergence`
+### 95. `model-vs-random-segment-divergence`
 - confidence: `0.95` | status: `unverified` | date: `2026-06-26` | file: `2026-06-26-significance-test-design-insights.yaml`
 - domain/source: `ml-evaluation` / `session-analysis`
 - trigger: MLモデルのセグメント別実用性を評価するとき
 - summary: v6a/v9cの有意性検定で、モデル間比較（v6a vs v9c）よりも本質的な問いとして「そもそもモデルはランダムより良い台を選べているか」を検定した。結果、セグメントごとにモデルの実用性が劇的に異なることが判明。 モデル評価では必ず vs ランダム検定（H0: avg_diff_vs_other = 0）をセ...
 
-### 92. `insample-cv-overfitting-guard`
+### 96. `insample-cv-overfitting-guard`
 - confidence: `0.95` | status: `unverified` | date: `2026-06-26` | file: `2026-06-26-significance-test-design-insights.yaml`
 - domain/source: `ml-methodology` / `session-analysis`
 - trigger: 重み最適化やモデル改善をインサンプルで評価するとき
 - summary: セグメント別重みをインサンプルで検証したところ、2F_R_N非イベント日が+114(p=0.008)で「ADOPT」判定。しかし4-fold temporal CVでは-2に崩壊し、完全な過学習だった。3F_L_Nイベント日も+208(in-sample) → -38(CV)で同様。 重み最適化は必ず4-fold...
 
-### 93. `3fln-3frn-subtype-composition-divergence`
+### 97. `3fln-3frn-subtype-composition-divergence`
 - confidence: `0.95` | status: `unverified` | date: `2026-06-26` | file: `2026-06-26-significance-test-design-insights.yaml`
 - domain/source: `segment-structure` / `session-analysis`
 - trigger: 3F_L_Nまたは3F_R_Nのモデル性能を分析・改善するとき
 - summary: 3F_L_Nでモデルが機能しない原因を調査。3F_L_Nと3F_R_Nの機種構成を比較した結果、決定的な構造差が判明。 3F_L_Nでのモデル改善は、セグメント内の機種異質性を解消する方向で行うべき。選択肢: 1. 沖ドキ/GODをサブセグメントとして分離し、別ルールを適用 2. 機種サブタイプをスコアリング特徴...
 
-### 94. `infer-lr-must-use-x-coordinate`
+### 98. `v12b-near-random-performance-10day`
+- confidence: `0.95` | status: `unverified` | date: `2026-06-26` | file: `2026-06-26-predict-gated-10day-operational-test-insights.yaml`
+- domain/source: `ml-evaluation` / `session-observation`
+- trigger: predict_gated実運用評価・モデル性能議論時
+- summary: 2026-06-16〜06-25の10日間でpredict_gated(v12b_debut_multiplier_half)を実行し、 Top50推奨台の実績を検証した。hit@50 rate=8.2%（ランダム期待値≈8.5%）、 勝率=40.8%、平均percentile=53.1%と、統計的にランダム選択...
+
+### 99. `scored-pool-streaming-csv-fix`
+- confidence: `0.95` | status: `unverified` | date: `2026-06-26` | file: `2026-06-26-lookahead-and-pipeline-insights.yaml`
+- domain/source: `implementation` / `bug-fix`
+- trigger: walk-forward backtestを長時間実行するとき / メモリエラーが発生するとき
+- summary: 2026-06-26 修正。walk-forward backtestがscored_poolをリスト蓄積してメモリ枯渇していた問題を修正。 scored_poolの各DataFrameを scored_pool.csv に都度追記（mode="a"） メモリには直近10日分（scored_pool_tail）の...
+
+### 100. `predict-daily-pipeline-created`
+- confidence: `0.95` | status: `unverified` | date: `2026-06-26` | file: `2026-06-26-lookahead-and-pipeline-insights.yaml`
+- domain/source: `implementation` / `implementation`
+- trigger: 蒲田7の日次予測を実行するとき / predict_gated.pyを手動で実行するとき
+- summary: 2026-06-26 実装。3ステップの手動実行を1コマンドに統合。 python -m ml.experiments.walkforward_scoring.predict_daily --skip-scrape --skip-db python -m ml.experiments.walkforward_sc...
+
+### 101. `seg-percentile-reranking-verified`
+- confidence: `0.95` | status: `unverified` | date: `2026-06-26` | file: `2026-06-26-track-d-seg-percentile-reranking-insights.yaml`
+- domain/source: `ml-evaluation` / `full-walkforward-validation`
+- trigger: Top50選抜方法を検討するとき / リランキング戦略を比較するとき / predict_gated.pyの出力を改善するとき
+- summary: 2026-06-26 Track D。V12bのTop50選抜後にseg_percentileリランキングを適用する効果を検証。 strength_weightに `scored["diff_coins_normalized"]`（当日実績）を使用。 結果: +108枚/日, p=0.000003。**ルックアヘ...
+
+### 102. `walkforward-memory-limit-scored-pool-accumulation`
+- confidence: `0.95` | status: `unverified` | date: `2026-06-26` | file: `2026-06-26-track-b-a1-evaluation-insights.yaml`
+- domain/source: `implementation` / `bug-encounter`
+- trigger: walk-forward backtestがメモリエラーで落ちるとき / scored_poolのサイズが問題になるとき
+- summary: 2026-06-26 Track A1実行時。V11+V12b（2バリアント, window=90, 260日）のwalk-forwardが 100タスク目付近でMemoryError。scored_poolがDataFrameリストとして蓄積される。 1. scored_pool を都度CSVに追記し、メモリか...
+
+### 103. `payout-rate-weighted-avg-mandatory`
+- confidence: `0.95` | status: `unverified` | date: `2026-06-26` | file: `2026-06-26-track-b-a1-evaluation-insights.yaml`
+- domain/source: `ml-evaluation` / `implementation-fix`
+- trigger: payout_rateを計算するとき / walk-forward評価指標を追加・修正するとき / 台別meanで集計しようとするとき
+- summary: 2026-06-26 Track B実装。従来のpayout_rate計算は台別に `(games*3+diff)/(games*3)*100` を計算してから `.mean()` を取っていた。 これはgames=100の台（payout 200%）とgames=8000の台（payout 101%）を同じ重み...
+
+### 104. `grouping-hall-strategy-heterogeneity-confirmed`
+- confidence: `0.95` | status: `unverified` | date: `2026-06-26` | file: `2026-06-26-grouping-debut-event-insights.yaml`
+- domain/source: `hall-behavior` / `empirical-analysis`
+- trigger: 全ホール横断の汎化法則を探索しようとするとき / ホール間比較で共通パターンを前提とするとき
+- summary: 2026-06-26 全9ホール横断EDA（経過日数/設置台数/区間成績の3軸検証）。 経過日数が進むほどavg_diffが改善する単調パターンは全9ホールで再現 全ホールでKruskal-Wallis p<0.01 1. **プラス圏到達**: 好設定ホール（蒲田7/蒲田1/楽園/ARROW/みとや）は61-1...
+
+### 105. `single-day-dependency-leave-one-out-required`
+- confidence: `0.95` | status: `unverified` | date: `2026-06-23` | file: `2026-06-23-significance-test-design-insights.yaml`
+- domain/source: `ml-evaluation` / `session-analysis`
+- trigger: avg_diffやavg_diff_vs_otherの平均ベース検定を行うとき
+- summary: 2F_L_N std=3003はDD07の+12,920が、3F_L_NはDD28の+6,126が平均を正に見せている。 ブートストラップやt検定の平均ベース結論は、この1日に支配される。 Wilcoxon（中央値）や符号検定（勝敗0/1）は外れ値に頑健だが、 平均系の指標を使う場合はleave-one-day-...
+
+### 106. `infer-lr-must-use-x-coordinate`
 - confidence: `0.99` | status: `unverified` | date: `2026-06-22` | file: `2026-06-22-lr-reversal-bug-and-v7-revalidation-insights.yaml`
 - domain/source: `data-engineering` / `bug-discovery-and-fix`
 - trigger: LR分割ロジックを実装・修正・レビューするとき
 - summary: `_infer_lr()` は台番号の中央値でLRを分割していた（小さい方=L、大きい方=R）。 しかし蒲田7では島ごとに台番号の並び方向が反転する（奇数列は左→右、偶数列は右→左）。 結果として2Fの55.6%、3Fの57.7%のセクションで物理的な左右が逆転していた。 修正: X座標の中央値でLRを判定する。...
 
-### 95. `walkforward-scoring-is-rule-based-not-ml`
+### 107. `walkforward-scoring-is-rule-based-not-ml`
 - confidence: `0.99` | status: `unverified` | date: `2026-06-22` | file: `2026-06-22-classify-seg-db-flag-insights.yaml`
 - domain/source: `ml-methodology` / `session-discussion`
 - trigger: Walk-forward scoringモデルの位置づけを説明するとき
 - summary: v1-v6のWalk-forward scoringモデルは手動設計のコンポーネント（c1-c6, hist特徴量）を 手動設定のウェイトで線形結合するルールベースのスコアリングシステム。 学習アルゴリズム・損失関数・パラメータ最適化プロセスが存在しない。 Walk-forwardは評価フレームワークであり、学習...
 
-### 96. `hit100-equals-winrate-redundancy`
+### 108. `hit100-equals-winrate-redundancy`
 - confidence: `0.99` | status: `unverified` | date: `2026-06-22` | file: `2026-06-22-walkforward-v6-threshold-segment-insights.yaml`
 - domain/source: `ml-feature-engineering` / `mathematical-identity`
 - trigger: payout閾値100%を特徴量候補に含めるとき
 - summary: `payout >= 100%` は `(games*3 + diff) / (games*3) >= 1.0` すなわち `diff >= 0` と等価。 これは勝率（winrate = (diff > 0).mean()）と同一の指標であり、独立した情報を持たない。 Walk-forwardで hist_wi...
 
-### 97. `top50-is-delivery-format-not-target`
+### 109. `top50-is-delivery-format-not-target`
 - confidence: `0.97` | status: `unverified` | date: `2026-06-22` | file: `2026-06-22-multi-tier-recommendation-architecture-insights.yaml`
 - domain/source: `ml-target-design` / `three-way-discussion-claude-codex-user`
 - trigger: 予測モデルのターゲットを設計するとき
 - summary: Walk-forward scoringのTop50は元々朝一チートシート用の候補生成だった。 しかし「全台を差枚で一列に並べてTop50を切る」ことを学習ターゲットにしていたため、 ATの高ボラ台がAの高設定を飲み込み、セグメント間の公平な評価ができなかった。 3者（ユーザー・Claude・Codex）の議論で...
 
-### 98. `recommendation-powershell-encoding-required`
+### 110. `recommendation-powershell-encoding-required`
 - confidence: `0.99` | status: `unverified` | date: `2026-06-21` | file: `2026-06-21-recommendation-top50-workflow-insights.yaml`
 - domain/source: `development-workflow` / `session-observation`
 - trigger: 日本語を含むPythonスクリプトの出力をターミナルで確認するとき
 - summary: Bash toolで日本語を含むPythonスクリプトを実行すると、出力がmojibake（文字化け）になる。 PowerShellで `$env:PYTHONIOENCODING = "utf-8"` を設定してから実行すると正常に表示される。 日本語出力を含むPythonスクリプトは以下で実行: $env:P...
 
-### 99. `recommendation-machine-master-schema`
+### 111. `recommendation-machine-master-schema`
 - confidence: `0.99` | status: `unverified` | date: `2026-06-21` | file: `2026-06-21-recommendation-top50-workflow-insights.yaml`
 - domain/source: `data-pipeline` / `session-observation`
 - trigger: machine_masterテーブルからA機種フラグを取得するとき
 - summary: machine_masterテーブルのカラム構成: machine_name_normalized（キー） jug_flag, hana_flag, oki_flag, bt_flag display_names, official_name, created_at, updated_at machine_num...
 
-### 100. `recommendation-db-path-kamata7-actual`
+### 112. `recommendation-db-path-kamata7-actual`
 - confidence: `0.99` | status: `unverified` | date: `2026-06-21` | file: `2026-06-21-recommendation-top50-workflow-insights.yaml`
 - domain/source: `data-pipeline` / `session-observation`
 - trigger: 蒲田7のDBを読み込むとき
 - summary: db/kamata7.db は0Bの空ファイル。実データは db/マルハンメガシティ2000-蒲田7.db（55.73MB）に格納されている。 前回セッションでも同じミスが発生しており、kamata7.dbを開いてテーブルが見つからないエラーが出た。 蒲田7のデータを読む場合は必ず `db/マルハンメガシティ20...
 
-### 101. `kakuban-alternating-section-reversal-bug`
+### 113. `kakuban-alternating-section-reversal-bug`
 - confidence: `0.99` | status: `unverified` | date: `2026-06-20` | file: `2026-06-20-recommendation-scoring-insights.yaml`
 - domain/source: `data-pipeline` / `user-correction`
 - trigger: 蒲田7の角番（kakuban）を計算・使用するとき
 - summary: 蒲田7の島はメイン通路から見て順方向・逆方向が交互に並んでいる。 物理座標（generate_kamata7_coordinates.py）のstep_xで確認: step_x=+1の島: 台番号min側が通路側 → rank_from_min = 角番（正しい） step_x=-1の島: 台番号min側が奥側...
 
-### 102. `dd-band-priority-categorization`
+### 114. `dd-band-priority-categorization`
 - confidence: `0.98` | status: `unverified` | date: `2026-06-19` | file: `2026-06-19-kakuban-dd-band-analysis-findings.yaml`
 - domain/source: `data-categorization-design` / `session-implementation-requirement`
 - trigger: DD値が複数のカテゴリに該当するとき、優先順位で一意ラベル化
 - summary: dd_band 分類で event（1, 10, 20, 30）が他帯と重複。 集計キーの一意性のため、優先順位で単一ラベル化。 1. 優先順位の定義 Tier 1: event（dd in [1, 10, 20, 30]） Tier 2: early（dd in 1-10） Tier 3: mid（dd in...
 
-### 103. `normalize-segment-frame-essential-columns`
+### 115. `normalize-segment-frame-essential-columns`
 - confidence: `0.98` | status: `unverified` | date: `2026-06-19` | file: `2026-06-19-kakuban-section-lr-analysis-insights.yaml`
 - domain/source: `eda-implementation-pattern` / `session-debugging`
 - trigger: セグメント別フレームを作成時、必ず dd, rank_from_min, section_size_group を生成
 - summary: 蒲田7分析時、_build_segment_views() で返すフレームに `dd` カラムが存在せず、後続処理で KeyError が発生。 _normalize_segment_frame() を呼び出して、日付から dd を生成し、section_size から section_size_group を導...
 
-### 104. `kamata7-event-day-complete-definition`
+### 116. `kamata7-event-day-complete-definition`
 - confidence: `0.98` | status: `unverified` | date: `2026-06-19` | file: `2026-06-19-kamata7-theory-doc-and-eventday-fix-insights.yaml`
 - domain/source: `pachinko-data-engineering` / `user-correction`
 - trigger: 蒲田7または蒲田1のイベント日を定義・参照・計算するとき
 - summary: `eda/core.py` の `HALL_EVENT_DIGITS` にDD21が欠落、月末がハードコード(30,31)、 強ゾロ目(MM=DD)が `is_x_day` に未統合だった。ユーザーが複数回指摘しても 繰り返し不完全な定義が使われていた。2026-06-19に修正。 正しい定義: 7のつく日: D...
 
-### 105. `kakuban-strongest-structural-signal`
+### 117. `kakuban-strongest-structural-signal`
 - confidence: `0.97` | status: `unverified` | date: `2026-06-19` | file: `2026-06-19-durability-verification-insights.yaml`
 - domain/source: `kamata7-theory` / `session-eda-verification`
 - trigger: 蒲田7で最も信頼できる変数を選択するとき
 - summary: 台固有性定量化で角番中間台優位（C3）のtop1_machine_share=0.7%, top2_machine_share=1.4%であり、6法則中圧倒的に低い。特定台への依存がゼロに近い。かつ3テストすべてで堅牢。前半+130.1、後半+93.1で効果量は縮小しているが方向は一貫。 角番は蒲田7で最も信頼で...
 
-### 106. `daily-level-anova-for-group-size-bias-avoidance`
+### 118. `daily-level-anova-for-group-size-bias-avoidance`
 - confidence: `0.96` | status: `unverified` | date: `2026-06-19` | file: `2026-06-19-kakuban-dd-band-analysis-findings.yaml`
 - domain/source: `statistical-methodology` / `session-implementation-discipline`
 - trigger: 複数グループを比較する ANOVA を実施するとき、グループサイズバイアスが懸念される
 - summary: セクションサイズ × DD帯の ANOVA を machine 単位で実施するとバイアスが生じる。 Large島（~70台）が small島（~8台）を過剰に支配。 代わりに日別の pay_rate で実施して等価性を確保。 1. 集計粒度の選定 ×: machine 単位（不均衡） ○: 日別集計（等価） 2....
 
-### 107. `distinguish-actual-value-from-category`
+### 119. `distinguish-actual-value-from-category`
 - confidence: `0.96` | status: `unverified` | date: `2026-06-19` | file: `2026-06-19-kakuban-section-lr-analysis-insights.yaml`
 - domain/source: `code-quality-data-modeling` / `session-debugging`
 - trigger: 数値とカテゴリ変数が両立する場合、カラム名で明示的に区別
 - summary: section_size（島内の機械台数、数値） と section_size_group（small/medium/large、カテゴリ）が混在。 前回実装で section_size_group に対して section_size_order（カテゴリ）でフィルタしようとして型不一致エラー。 1. カラム名で...
 
-### 108. `x-kakuban-rank-must-be-per-machine-not-per-row`
+### 120. `x-kakuban-rank-must-be-per-machine-not-per-row`
 - confidence: `0.97` | status: `unverified` | date: `2026-06-18` | file: `2026-06-18-x-kakuban-eda-insights.yaml`
 - domain/source: `analysis-methodology` / `session-observation`
 - trigger: X角番（x_kakuban）をDataFrameに付与する実装を書くとき、またはGroupBy.rank()を使う類似の実装をするとき
 - summary: 2026-06-18: `kamata7_x_kakuban_eda.py` の初版で、1台×342日のフレームに直接 `groupby(["floor","X"])["Y"].rank(method="first")` をかけたことで、 同一台の342行が全て異なるx_kakuban値（1〜342）を持つバグが...
-
-### 109. `kakuban-colsize-eda-pending-rerun`
-- confidence: `0.99` | status: `unverified` | date: `2026-06-17` | file: `2026-06-17-kakuban-colsize-correction-insights.yaml`
-- domain/source: `analysis-methodology` / `session-observation`
-- trigger: 今日（2026-06-17）の colsize EDA 結果（short/medium/long のbin別kakubanパターン）を選台や特徴量設計に使おうとするとき
-- summary: 2026-06-17 午前: kamata7_kakuban_colsize_eda.py の column_size 計算が X座標集計ベースで定義されており、section 角番の colsize 分類としては軸がずれていた。 → 再実行を宣言（use-禁止ブロック）。 2026-06-17 同日: sect...
-
-### 110. `kakuban-colsize-pending-rerun-resolved`
-- confidence: `0.99` | status: `unverified` | date: `2026-06-17` | file: `2026-06-17-kakuban-colsize-newresults-insights.yaml`
-- domain/source: `analysis-methodology` / `session-observation`
-- trigger: 2026-06-17 の colsize EDA 再実行ブロック（kakuban-colsize-eda-pending-rerun）の状態を確認するとき
-- summary: 2026-06-17 午前: `kamata7_kakuban_colsize_eda.py` の column_size が **X軸集計ベース（誤り）** で定義されており、bin の境界も台集合も実態と異なっていた。 → `2026-06-17-kakuban-colsize-correction-insi...
-
-### 111. `mitmweb-exe-path`
-- confidence: `0.99` | status: `unverified` | date: `2026-06-17` | file: `2026-06-17-android-mitmproxy-scraping-insights.yaml`
-- domain/source: `mobile-scraping` / `session-observation`
-- trigger: python -m mitmweb でモジュールが見つからないエラーが出るとき
-- summary: `python -m mitmweb`は`No module named mitmweb`エラーになる。 mitmproxyのエントリーポイントは`Scripts/mitmweb.exe`として提供される。 C:\Users\<user>\AppData\Local\Python\pythoncore-3.14-...
-
-### 112. `arm64-apk-x86-emulator-incompatible`
-- confidence: `0.99` | status: `unverified` | date: `2026-06-17` | file: `2026-06-17-android-mitmproxy-scraping-insights.yaml`
-- domain/source: `mobile-scraping` / `session-observation`
-- trigger: x86_64エミュレーターにarm64ネイティブライブラリを使うアプリを動かそうとするとき
-- summary: `split_config.arm64_v8a.apk`をx86_64エミュレーターに含めると `INSTALL_FAILED_NO_MATCHING_ABIS`エラー。 除外すると`GifInfoHandle.<clinit>`でクラッシュ（ネイティブライブラリが見つからない）。 x86_64エミュレーターでは...
-
-### 113. `floor-column-size-definition-correction`
-- confidence: `0.98` | status: `unverified` | date: `2026-06-17` | file: `2026-06-17-kakuban-colsize-correction-insights.yaml`
-- domain/source: `analysis-methodology` / `session-observation`
-- trigger: 列の台数でグルーピングする分析を設計・実装するとき、または座標CSVからセクションサイズを計算するとき
-- summary: 2026-06-17: kamata7_kakuban_colsize_eda.py で column_size を 「同じX座標を持つ台数（coords.groupby("X").size()）」で定義していたが誤り。 例：X=1 に12台いても、2001-2010（10台）と別セクションの2台が 同じX位置に...
-
-### 114. `android-user-cert-app-trust`
-- confidence: `0.98` | status: `unverified` | date: `2026-06-17` | file: `2026-06-17-android-mitmproxy-scraping-insights.yaml`
-- domain/source: `mobile-scraping` / `session-observation`
-- trigger: Androidアプリのhttps通信をmitmproxyで傍受しようとするとき
-- summary: mitmproxyのCA証明書をAndroidにインストールしてもChromeブラウザの通信しか傍受できない。 Android 7以降、ネイティブアプリはユーザーインストールのCA証明書を無視する仕様になっている。 ブラウザ通信は傍受できるが、アプリは傍受できないと認識する 解決策は3択：(1)エミュレーターにシ...
-
-### 115. `kakuban-1-universal-avoidance-colsize-confirmed`
-- confidence: `0.97` | status: `unverified` | date: `2026-06-17` | file: `2026-06-17-kakuban-colsize-newresults-insights.yaml`
-- domain/source: `pachinko-visit-strategy` / `session-observation`
-- trigger: 蒲田7の台選びで列サイズ（short/medium/long）に関わらず角番1の評価をするとき
-- summary: 2026-06-17: `section_max - section_min + 1` ベースの正しい colsize 定義で `kamata7_kakuban_colsize_eda.py` を再実行した結果。 旧検証は **X角番の先行実験**（X座標列内の台数でビン分けする実装）として位置づけ直された。 s...
-
-### 116. `3f-short-single-section-analysis-invalid`
-- confidence: `0.97` | status: `unverified` | date: `2026-06-17` | file: `2026-06-17-kakuban-colsize-newresults-insights.yaml`
-- domain/source: `analysis-methodology` / `session-observation`
-- trigger: 蒲田7 3F short 列（9-10台）の角番分析結果を使おうとするとき
-- summary: 2026-06-17: `section_max - section_min + 1` ベースで確認。 3F の short 列（9台・10台）は 3F_short_N と 3F_short_A それぞれ **1セクションのみ**。 全 kakuban 行が support_sections=1 となり、構造シグ...
-
-### 117. `split-apk-install-multiple`
-- confidence: `0.97` | status: `unverified` | date: `2026-06-17` | file: `2026-06-17-android-mitmproxy-scraping-insights.yaml`
-- domain/source: `mobile-scraping` / `session-observation`
-- trigger: エミュレーターにAPKをインストールしてResources$NotFoundExceptionが出るとき
-- summary: APK Extractorアプリで抽出したbase.apkのみをインストールすると、 `Resources$NotFoundException: Unable to find resource ID #0x7f080161` でクラッシュする。 モダンなアプリはApp Bundleで複数のSplit APKに分割...
-
-### 118. `kakuban-dual-rank-correct-definition`
-- confidence: `0.97` | status: `unverified` | date: `2026-06-17` | file: `2026-06-17-kakuban-dual-rank-refactor-insights.yaml`
-- domain/source: `domain-definition` / `user-correction`
-- trigger: 角番（kakuban）の定義を実装・分析・プロンプトで扱うとき
-- summary: 2026-06-17 セッションでユーザーより訂正。 旧実装（KAKUBAN_RULES）は「メイン通路＝台番号小側」と仮定して rank_from_min のみを角番とした。 正しくは「どちら側がメイン通路かはランダム」であり、各台は両端から数えた2つの角番を同時に持つ。 例: section 2001-201...
-
-### 119. `sqlite-groupby-arbitrary-machine-name`
-- confidence: `0.97` | status: `unverified` | date: `2026-06-17` | file: `2026-06-17-screening-bugfix-insights.yaml`
-- domain/source: `sql-pitfall` / `session-observation`
-- trigger: SQLite で GROUP BY machine_number しながら machine_name を取得するクエリを書くとき
-- summary: mitoya_xdds_screening.py の `_load_latest_machine_names` で `GROUP BY machine_number HAVING COUNT(DISTINCT date) >= 5` を使っていた。 台番号608-614には過去に複数の機種が設置されており、 SQ...
-
-### 120. `kamata1-jag-hana-name-filter`
-- confidence: `0.97` | status: `unverified` | date: `2026-06-17` | file: `2026-06-17-kamata1-kakuban-position-analysis-insights.yaml`
-- domain/source: `data-processing` / `session-observation`
-- trigger: 蒲田1DBでジャグラー・ハナハナ台を機種名フィルタするとき
-- summary: 蒲田1DBには多数の機種が混在しており、ジャグラー系・ハナハナ系を分離して分析する場面が多い。 機種名に「ジャグラー」または「ハナハナ」を含む文字列で確実に捕捉できる。 def is_jag_hana(name): return 'ジャグラー' in name or 'ハナハナ' in name 2026/06/...
