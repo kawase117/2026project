@@ -34,6 +34,8 @@ import os
 import sqlite3
 import statistics as st
 import sys
+
+import numpy as np
 from collections import defaultdict
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -107,6 +109,75 @@ def daily_rb_pool(conn, db_name):
     return sorted(r[0] / r[1] for r in rows if r[1])
 
 
+AXES = (
+    ("機種", lambda r: r["name"]),
+    ("列", lambda r: r["sec"]),
+    ("末尾", lambda r: r["tail"]),
+    ("角番", lambda r: r["kaku"]),
+    ("フロア", lambda r: r["floor"]),
+    ("機種×列", lambda r: (r["name"][:10], r["sec"])),
+    ("機種×末尾", lambda r: (r["name"][:10], r["tail"])),
+    ("機種×角番", lambda r: (r["name"][:10], r["kaku"])),
+)
+SWEEP_ITERS = 400
+
+
+def axis_sweep(records, metric_name, valfn, within_model, min_n, rng, iters=SWEEP_ITERS):
+    """軸ごとに最も外れているグループを出し、並べ替え検定で偶然と比べる。
+
+    within_model=True は機種内でラベルを入れ替える帰無（機種効果の混入を防ぐ）。
+    機種軸そのものを測るときは within_model=False（ホール全体でシャッフル）。
+    最大統計量で検定しているので同一軸内の多重比較は補正済み。軸×指標をまたぐ補正は報告側で行う。
+    """
+    data = [r for r in records if valfn(r) is not None]
+    if len(data) < 20:
+        return metric_name, len(data), []
+    results = []
+    for label, keyfn in AXES:
+        if within_model and label == "機種":
+            continue
+        if not within_model and label.startswith("機種×"):
+            continue
+        groups = defaultdict(list)
+        for r in data:
+            groups[keyfn(r)].append(valfn(r))
+        cand = {k: v for k, v in groups.items() if len(v) >= min_n}
+        if len(cand) < 2:
+            continue
+        obs = {k: st.mean(v) for k, v in cand.items()}
+        best = max(obs, key=obs.get)
+        maxima = []
+        if within_model:
+            by_model = defaultdict(list)
+            for r in data:
+                by_model[r["name"]].append(r)
+            for _ in range(iters):
+                shuffled = defaultdict(list)
+                for _name, rs in by_model.items():
+                    labels = [keyfn(r) for r in rs]
+                    rng.shuffle(labels)
+                    for r, lab in zip(rs, labels):
+                        shuffled[lab].append(valfn(r))
+                means = [st.mean(v) for v in shuffled.values() if len(v) >= min_n]
+                maxima.append(max(means) if means else 0.0)
+        else:
+            labels = [keyfn(r) for r in data]
+            values = [valfn(r) for r in data]
+            for _ in range(iters):
+                shuffled_labels = list(labels)
+                rng.shuffle(shuffled_labels)
+                shuffled = defaultdict(list)
+                for lab, val in zip(shuffled_labels, values):
+                    shuffled[lab].append(val)
+                means = [st.mean(v) for v in shuffled.values() if len(v) >= min_n]
+                maxima.append(max(means) if means else 0.0)
+        pval = float(np.mean(np.asarray(maxima) >= obs[best]))
+        runner_up = sorted(obs.items(), key=lambda kv: -kv[1])[1:3]
+        results.append((pval, label, best, len(cand[best]), obs[best], len(cand), runner_up))
+    results.sort()
+    return metric_name, len(data), results
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--hall", default="楽園蒲田店")
@@ -128,10 +199,14 @@ def main():
         )
     }
     by_norm = {norm(k): (k, v) for k, v in spec_category.items()}
-    layout = {
-        int(n): sec
-        for n, sec in conn.execute("select machine_number, section from machine_layout_history where valid_to is null")
-    }
+    layout = {}
+    layout_full = {}
+    for n, sec, rank_min, rank_max, y in conn.execute(
+        "select machine_number, section, rank_from_min, rank_from_max, y "
+        "from machine_layout_history where valid_to is null"
+    ):
+        layout[int(n)] = sec
+        layout_full[int(n)] = (sec, rank_min, rank_max, y)
 
     update_time = machines[0].get("jackpot_update_time") if machines else ""
     diff_ok = [m for m in machines if m["latest_diff"] is not None]
@@ -392,6 +467,92 @@ def main():
             "月→翌月 r=0.111、前日→当日 r=-0.032、翌月の実効幅は上位25%で+54枚・下位25%で-34枚。"
             "列で狙うルールは作らない。**当日の機種×列の分解だけを席選びに使う**（当日は同じ機種でも列で逆になる）。"
         )
+        out.append("")
+
+    # 5.5) 軸スイープ（どの切り口に構造が出ているかを毎回探す）
+    out.append("## 軸スイープ（今日どの切り口に構造が出ているか）")
+    out.append("")
+    out.append(
+        "機種 / 列 / 末尾 / 角番 / フロア と、機種×列・機種×末尾・機種×角番 を総なめにして、"
+        "各軸で最も外れているグループを並べ替え検定（%d回）で評価する。"
+        "機種以外の軸は機種内でラベルを入れ替える帰無を使い、機種効果の混入を防ぐ。" % SWEEP_ITERS
+    )
+    out.append("")
+    out.append(
+        "⚠️ 指標4本 × 軸7本 = 28検定なので Bonferroni 基準は p<0.002。"
+        "★(p<0.05) は「見る価値あり」であって確定ではない。n=3〜4の★は1台の大勝ちで立つことがある。"
+    )
+    out.append("")
+    rng = np.random.default_rng(0)
+    records = []
+    for m in machines:
+        number = int(m["machine_number"])
+        loc = layout_full.get(number)
+        if not loc:
+            continue
+        sec, rank_min, rank_max, _y = loc
+        ent = by_norm.get(norm(m["model_name"]))
+        high = None
+        if ent and ent[1] in JUDGEABLE and m["games"] >= MIN_GAMES_UNIT and m["rb_count"]:
+            high = high_prob(rb_posterior(bs.find_spec(ent[0]), m["games"], m["rb_count"]))
+        records.append(
+            dict(
+                n=number,
+                name=m["model_name"],
+                d=m["latest_diff"],
+                g=m["games"],
+                sec=sec,
+                tail=number % 10,
+                kaku=min(rank_min or 99, rank_max or 99),
+                floor=str(number)[0] + "F",
+                hi=high,
+            )
+        )
+    model_diff = defaultdict(list)
+    model_games = defaultdict(list)
+    for r in records:
+        if r["d"] is not None:
+            model_diff[r["name"]].append(r["d"])
+        model_games[r["name"]].append(r["g"])
+    diff_mean = {k: st.mean(v) for k, v in model_diff.items()}
+    games_mean = {k: st.mean(v) for k, v in model_games.items()}
+    diffs_all = [r["d"] for r in records if r["d"] is not None]
+    median_diff = st.median(diffs_all) if diffs_all else 0.0
+    for r in records:
+        r["dres"] = None if r["d"] is None else r["d"] - diff_mean[r["name"]]
+        r["dhall"] = None if r["d"] is None else r["d"] - median_diff
+        r["gres"] = r["g"] - games_mean[r["name"]]
+    plans = (
+        ("差枚残差（機種効果を除去）", lambda r: r["dres"], True, 3),
+        ("差枚（ホール中央値比・機種軸用）", lambda r: r["dhall"], False, 3),
+        ("回転数残差（機種効果を除去・全台）", lambda r: r["gres"], True, 4),
+        ("RB設定5以上%（判別可能機種のみ）", lambda r: None if r["hi"] is None else 100 * r["hi"], True, 3),
+    )
+    for metric_name, valfn, within, min_n in plans:
+        name, n_used, results = axis_sweep(records, metric_name, valfn, within, min_n, rng)
+        out.append("### %s（%d台）" % (name, n_used))
+        out.append("")
+        if not results:
+            out.append("- 台数不足で検定できない")
+            out.append("")
+            continue
+        out.append("| | 軸 | 最も外れているグループ | n | 平均 | p | 候補数 | 2・3位 |")
+        out.append("|---|---|---|---:|---:|---:|---:|---|")
+        for pval, label, best, n_best, val, n_cand, runner in results:
+            mark = "★" if pval < 0.05 else ("◯" if pval < 0.15 else "")
+            out.append(
+                "| %s | %s | %s | %d | %+.1f | %.3f | %d | %s |"
+                % (
+                    mark,
+                    label,
+                    str(best),
+                    n_best,
+                    val,
+                    pval,
+                    n_cand,
+                    " / ".join("%s %+.0f" % (str(k), v) for k, v in runner),
+                )
+            )
         out.append("")
 
     # 6) 予告突合
