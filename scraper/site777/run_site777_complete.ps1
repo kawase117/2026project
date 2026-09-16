@@ -25,6 +25,7 @@ $graphPipelineRunner = Join-Path $moduleDirectory 'run_site777_graph_pipeline.ps
 $rateLimiter = Join-Path $moduleDirectory 'site777_rate_limiter.py'
 $analyzer = Join-Path $moduleDirectory 'site777_analyze.py'
 $mobileBuilder = Join-Path $moduleDirectory 'site777_mobile_report.py'
+$liveBriefBuilder = Join-Path $moduleDirectory 'site777_live_brief.py'
 New-Item -ItemType Directory -Path $outputDirectory -Force | Out-Null
 New-Item -ItemType Directory -Path $runtimeDirectory -Force | Out-Null
 $fullData = Join-Path $outputDirectory 'site777_full_data.json'
@@ -38,6 +39,7 @@ $threeMachineReport = Join-Path $outputDirectory 'site777_three_machine_report_f
 $cornerReport = Join-Path $outputDirectory 'site777_corner_report_filtered.md'
 $settingReport = Join-Path $outputDirectory 'site777_setting_report_filtered.md'
 $mobileReport = Join-Path $outputDirectory 'site777_mobile_report.html'
+$liveBrief = Join-Path $outputDirectory 'site777_live_brief.md'
 $runReport = Join-Path $outputDirectory 'site777_complete_run_latest.json'
 
 $startedAt = [DateTime]::UtcNow
@@ -177,6 +179,8 @@ $stageStart = [DateTime]::UtcNow
 if ($LASTEXITCODE -ne 0) { throw "Analysis failed: $LASTEXITCODE" }
 & $python $mobileBuilder --input $analysisJson --output $mobileReport
 if ($LASTEXITCODE -ne 0) { throw "Mobile report failed: $LASTEXITCODE" }
+& $python $liveBriefBuilder --input $analysisJson --output $liveBrief
+if ($LASTEXITCODE -ne 0) { Write-Warning "Live brief failed: $LASTEXITCODE (collection itself succeeded)" }
 $stages.analysisAndReportMinutes = [math]::Round(([DateTime]::UtcNow - $stageStart).TotalMinutes, 2)
 
 # Fail with a clear message instead of an exception right after a successful run.
