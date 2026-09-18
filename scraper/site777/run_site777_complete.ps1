@@ -231,7 +231,7 @@ $document = [ordered]@{
         requests = $source.requestSeq
         restrictions = @($source.restrictionEvents).Count
         failures = @($source.failures).Count
-        highestCollectedModels = @($source.models.PSObject.Properties.Value | Where-Object { -not $_.highest.reused }).Count
+        highestCollectedModels = @($source.models.PSObject.Properties.Value | Where-Object { -not $_.highest.reused -and -not $_.highest.skipped }).Count
         highestReusedModels = @($source.models.PSObject.Properties.Value | Where-Object { $_.highest.reused }).Count
     }
     graph = [ordered]@{

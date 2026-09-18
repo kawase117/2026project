@@ -37,7 +37,12 @@ scraper/site777/run_site777_complete.cmd -MinGames 2000 -Force
   Monitor では `iconv -f CP932 -t UTF-8`、Python では `open(p,'rb').read().decode('cp932')`。
 - Monitor の grep は成功系だけでなく失敗系も必ず含める:
   `full_batch=|graph_batch=|graph_complete|failures=[1-9]|restrictions=[1-9]|Traceback|rror|failed|elapsedMinutes|diff_ok|stopped_at=[a-z]`
-- 所要は Full 約26分 + Graph 約20分。合計45〜50分。
+- 所要は Full と Graph が並行して合計約25分（2026-09-18 実測25.7分。朝は差枚対象が少なく速い）。
+- **最高出玉は既定でスキップ**（2026-09-18 に一時オフ。速報の設定判定に効かず、1機種あたり1アクセスを食うため）。
+  必要なら `-WithHighest` を付ける。オフ中は `highest_payout` が全台 None になり、最高出玉の平均・順位は空になる。
+- **収集間隔は自動調整**。既定は2000msから始まり、制限（PNW）0件で完走するたび500msずつ1500msまで短縮、
+  制限が出たら500ms戻す（上限3000ms）。状態は `scraper/site777/runtime/site777_interval_state.json`。
+  手で決めたいときは `-GlobalIntervalMs` / `-GraphIntervalMs` を指定する。
 - フル収集だけ先に使いたいときは `site777_full_run_latest.json` の mtime を
   `until` ループで監視して1回だけ通知させる（Monitor ではなく Bash background）。
 
@@ -155,8 +160,15 @@ summary = se.annotate_setting_estimates(machines, FS)
 ブリーフを読まずに個別集計を書き直さないこと。
 
 **区分で指標を分ける（memory: feedback-rb-only-not-combined）**:
-- ノーマル / BT / A+AT … **RB確率単独**。合算(BB+RB)は使わない（BB差は7〜13%しかない）
+- ノーマル / BT / A+AT … **RB確率が主指標、BB確率を併記**（2026-09-18 にユーザーが「計算資源に余裕があればBBまで見る」と確定）。
+  合算(BB+RB)は使わない（BB差は7〜13%しかない）。判定はRBで行い、BBは補助として読む
 - AT … **G比×平均差枚**（全台系の閾値 +1800）。RBは補助（RB順位と差枚残差の相関は AT -0.088 / 判別可能 -0.292）
+- **どの確率にも総G・平均Gを併記する**（1/200を400G回したのと9000G回したのでは重みが違う）
+
+**区分 x 軸の必須マトリクス**（2026-09-18 にコードで強制）: ブリーフの「区分 x 軸の必須マトリクス」に、
+判別可能 と AT のそれぞれについて 機種・各台・末尾・角番・列 の10枚を必ず出す（`scraper/site777/site777_axis_matrix.py`）。
+1枚でも欠けるとブリーフ冒頭が「⚠️ 必須マトリクスが欠落」になり、`site777_live_brief.py` が終了コード2を返す。
+報告前にブリーフ冒頭が「✅ 必須マトリクス 10 枚」であることを確認し、10枚すべてを読んで報告する。
 
 
 1. **全体水準** — 差枚の平均/中央/勝率、平均G数、updateTime
