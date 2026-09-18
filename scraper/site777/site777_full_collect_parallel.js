@@ -7,6 +7,7 @@ async (page) => {
   const sharedIntervalMs = 3000;
   const pipelineBatchLimit = __SITE777_FULL_BATCH_LIMIT__;
   const rateLimiterUrl = __SITE777_RATE_LIMITER_URL__;
+  const skipHighest = __SITE777_SKIP_HIGHEST__;
   const recoveryDelaysMs = [0, 60000, 300000];
   const context = page.context();
   const trackedPages = new Set();
@@ -419,7 +420,9 @@ async (page) => {
       await closeTracked(jackpotPage);
       jackpotPage = null;
 
-      let highest = reusableHighest(model, jackpot);
+      let highest = skipHighest
+        ? { pages: [], updateTime: null, reused: false, skipped: true }
+        : reusableHighest(model, jackpot);
       if (!highest) {
         const highestLink = modelPage.getByRole("link", {
           name: "最高出玉",
@@ -480,7 +483,7 @@ async (page) => {
         (sum, model) => sum + model.machineCount,
         0,
       ),
-      highestCollectedModels: completed.filter((model) => !model.highest?.reused).length,
+      highestCollectedModels: completed.filter((model) => !model.highest?.reused && !model.highest?.skipped).length,
       highestReusedModels: completed.filter((model) => model.highest?.reused).length,
       restrictions: state.restrictionEvents.length,
       failures: state.failures.length,

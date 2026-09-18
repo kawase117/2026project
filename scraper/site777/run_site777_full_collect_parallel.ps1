@@ -3,7 +3,8 @@ param(
     [switch]$Pipeline,
     [ValidateRange(1, 120)]
     [int]$BatchModels = 24,
-    [string]$RateLimiterUrl = ''
+    [string]$RateLimiterUrl = '',
+    [switch]$SkipHighest
 )
 
 $ErrorActionPreference = 'Stop'
@@ -31,7 +32,8 @@ $collectorText = [System.IO.File]::ReadAllText($collectorTemplate, [System.Text.
 foreach ($placeholder in @(
     '__SITE777_PRIOR_SOURCE__',
     '__SITE777_FULL_BATCH_LIMIT__',
-    '__SITE777_RATE_LIMITER_URL__'
+    '__SITE777_RATE_LIMITER_URL__',
+    '__SITE777_SKIP_HIGHEST__'
 )) {
     if (-not $collectorText.Contains($placeholder)) {
         throw "Full collector template placeholder was not found: $placeholder"
@@ -42,6 +44,7 @@ $limiterJson = $RateLimiterUrl | ConvertTo-Json -Compress
 $collectorText = $collectorText.Replace('__SITE777_PRIOR_SOURCE__', $priorSourceText)
 $collectorText = $collectorText.Replace('__SITE777_FULL_BATCH_LIMIT__', [string]$batchLimit)
 $collectorText = $collectorText.Replace('__SITE777_RATE_LIMITER_URL__', $limiterJson)
+$collectorText = $collectorText.Replace('__SITE777_SKIP_HIGHEST__', $(if ($SkipHighest) { 'true' } else { 'false' }))
 [System.IO.File]::WriteAllText(
     $collector,
     $collectorText,

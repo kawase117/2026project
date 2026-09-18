@@ -42,7 +42,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, ROOT)
 
+sys.path.insert(0, HERE)
 from backtest import bonus_specs as bs  # noqa: E402
+import site777_axis_matrix as axis_matrix  # noqa: E402
 
 JUDGEABLE = ("ノーマル", "BT", "A+AT")
 ZENTAIKEI_THRESHOLD = 1800.0
@@ -264,8 +266,10 @@ def main():
     # 1) 判別可能機種: RB単独
     out.append("## 判別可能機種（ノーマル / BT / A+AT）｜RB単独")
     out.append("")
-    out.append("| 機種 | 区分 | 設置/稼働 | RB | 自己ベースライン | 設定5以上 | 平均差枚 |")
-    out.append("|---|---|---|---:|---:|---:|---:|")
+    out.append("RB確率が主指標、BB確率と総G・平均Gを併記（回転数が少ない確率は重みが小さい）。")
+    out.append("")
+    out.append("| 機種 | 区分 | 設置/稼働 | 総G | 平均G | RB | BB | 自己ベースライン | 設定5以上 | 平均差枚 |")
+    out.append("|---|---|---|---:|---:|---:|---:|---:|---:|---:|")
     judge_rows = []
     for name, units in cur_models.items():
         ent = by_norm.get(norm(name))
@@ -275,6 +279,7 @@ def main():
         live = [m for m in units if m["games"] >= MIN_GAMES_MODEL]
         games = sum(m["games"] for m in live)
         rb = sum(m["rb_count"] for m in live)
+        bb = sum(m["bb_count"] or 0 for m in live)
         if not rb:
             continue
         pool = daily_rb_pool(conn, db_name)
@@ -292,17 +297,22 @@ def main():
                 high_prob(post),
                 st.mean(diffs) if diffs else None,
                 len(pool),
+                games,
+                (games / bb) if bb else None,
             )
         )
-    for rank, name, category, n_all, n_live, rate, high, diff, n_pool in sorted(judge_rows):
+    for rank, name, category, n_all, n_live, rate, high, diff, n_pool, games, bb_rate in sorted(judge_rows):
         out.append(
-            "| %s | %s | %d/%d | 1/%.0f | %s | %s | %s |"
+            "| %s | %s | %d/%d | %d | %.0f | 1/%.0f | %s | %s | %s | %s |"
             % (
                 name,
                 category,
                 n_all,
                 n_live,
+                games,
+                games / max(n_live, 1),
                 rate,
+                ("1/%.0f" % bb_rate) if bb_rate else "-",
                 ("上位%.0f%%（%d日）" % (rank, n_pool)) if rank != 999.0 else "基準不足",
                 ("%.0f%%" % (100 * high)) if high is not None else "-",
                 ("%+.0f" % diff) if diff is not None else "-",
@@ -326,17 +336,18 @@ def main():
             unit_rows.append((high, m))
     out.append("## 高設定寄りの台（RB単独 %.0f%%以上）" % (100 * HIGH_CUT))
     out.append("")
-    out.append("| 台 | 機種 | G | RB | RB確率 | 設定5以上 | 差枚 | 列 |")
-    out.append("|---|---|---:|---:|---|---:|---:|---|")
+    out.append("| 台 | 機種 | G | RB | RB確率 | BB確率 | 設定5以上 | 差枚 | 列 |")
+    out.append("|---|---|---:|---:|---|---|---:|---:|---|")
     for high, m in sorted(unit_rows, key=lambda r: -r[0]):
         out.append(
-            "| %s | %s | %d | %d | 1/%.0f | %.0f%% | %s | %s |"
+            "| %s | %s | %d | %d | 1/%.0f | %s | %.0f%% | %s | %s |"
             % (
                 m["machine_number"],
                 m["model_name"],
                 m["games"],
                 m["rb_count"],
                 m["games"] / m["rb_count"],
+                ("1/%.0f" % (m["games"] / m["bb_count"])) if m.get("bb_count") else "-",
                 100 * high,
                 m["latest_diff"] if m["latest_diff"] is not None else "-",
                 layout.get(int(m["machine_number"]), "-"),
@@ -415,6 +426,15 @@ def main():
             )
         )
     out.append("")
+
+    # 4.5) 区分 x 軸の必須マトリクス（欠落はコードで検出して失敗にする）
+    matrix_lines, produced = axis_matrix.build(machines, layout, layout_full, by_norm, norm, hall_games)
+    absent = axis_matrix.missing(produced)
+    if absent:
+        checklist = "⚠️ 必須マトリクスが欠落: " + " / ".join("%s x %s" % pair for pair in absent)
+    else:
+        checklist = "✅ 必須マトリクス %d 枚（区分2 x 軸5）を出力済み" % len(axis_matrix.REQUIRED)
+    out.extend(matrix_lines)
 
     # 5) 列（section）別
     out.append("## 列（島）別")
@@ -631,9 +651,14 @@ def main():
             )
         out.append("")
 
+    out.insert(2, checklist)
+    out.insert(3, "")
     with open(args.output, "w", encoding="utf-8") as handle:
         handle.write("\n".join(out) + "\n")
     print("[OK] live brief -> %s (%d lines)" % (args.output, len(out)))
+    if absent:
+        print("[FAIL] " + checklist)
+        return 2
     return 0
 
 

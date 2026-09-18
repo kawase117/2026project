@@ -1,10 +1,11 @@
 param(
     [ValidateRange(0, 1000000)]
     [int]$MinGames = 2000,
-    [ValidateRange(1000, 60000)]
-    [int]$GraphIntervalMs = 2500,
-    [ValidateRange(1000, 60000)]
-    [int]$GlobalIntervalMs = 2500,
+    [ValidateRange(0, 60000)]
+    [int]$GraphIntervalMs = 0,
+    [ValidateRange(0, 60000)]
+    [int]$GlobalIntervalMs = 0,
+    [switch]$WithHighest,
     [ValidateRange(1, 120)]
     [int]$PipelineBatchModels = 24,
     [switch]$Sequential,
@@ -45,6 +46,21 @@ $runReport = Join-Path $outputDirectory 'site777_complete_run_latest.json'
 $startedAt = [DateTime]::UtcNow
 $stages = [ordered]@{}
 
+# Adaptive interval: 0 means auto. Start at 2000ms, step down 500ms per clean run
+# (floor 1500ms), step up 500ms after a run with restrictions (cap 3000ms).
+$intervalStatePath = Join-Path $runtimeDirectory 'site777_interval_state.json'
+$autoIntervalMs = 2000
+if (Test-Path -LiteralPath $intervalStatePath) {
+    try {
+        $intervalState = Get-Content -LiteralPath $intervalStatePath -Raw -Encoding UTF8 | ConvertFrom-Json
+        if ($intervalState.nextIntervalMs) { $autoIntervalMs = [int]$intervalState.nextIntervalMs }
+    } catch { }
+}
+if ($GlobalIntervalMs -le 0) { $GlobalIntervalMs = $autoIntervalMs }
+if ($GraphIntervalMs -le 0) { $GraphIntervalMs = $autoIntervalMs }
+$SkipHighest = -not $WithHighest
+Write-Output ("interval_ms={0} skip_highest={1}" -f $GlobalIntervalMs, $SkipHighest)
+
 if (-not $Force -and (Test-Path -LiteralPath $fullData)) {
     & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $updateGateRunner | Out-Null
     if ($LASTEXITCODE -ne 0) { throw "Update gate failed: $LASTEXITCODE" }
@@ -67,7 +83,9 @@ if (-not $Force -and (Test-Path -LiteralPath $fullData)) {
 
 if ($Sequential) {
     $stageStart = [DateTime]::UtcNow
-    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $fullRunner
+    $fullArgs = @()
+    if ($SkipHighest) { $fullArgs += '-SkipHighest' }
+    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $fullRunner @fullArgs
     if ($LASTEXITCODE -ne 0) { throw "Full collection failed: $LASTEXITCODE" }
     $stages.fullCollectionMinutes = [math]::Round(([DateTime]::UtcNow - $stageStart).TotalMinutes, 2)
 
@@ -104,9 +122,11 @@ if ($Sequential) {
         $limiterInfo = Get-Content -LiteralPath $readyFile -Raw -Encoding UTF8 | ConvertFrom-Json
         $limiterUrl = [string]$limiterInfo.url
 
-        $fullJob = Start-Job -ArgumentList @($fullRunner, $PipelineBatchModels, $limiterUrl) -ScriptBlock {
-            param($runner, $batchModels, $url)
-            & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $runner -Pipeline -BatchModels $batchModels -RateLimiterUrl $url
+        $fullJob = Start-Job -ArgumentList @($fullRunner, $PipelineBatchModels, $limiterUrl, [bool]$SkipHighest) -ScriptBlock {
+            param($runner, $batchModels, $url, $skipHighest)
+            $extra = @()
+            if ($skipHighest) { $extra += '-SkipHighest' }
+            & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $runner -Pipeline -BatchModels $batchModels -RateLimiterUrl $url @extra
             if ($LASTEXITCODE -ne 0) { throw "Full pipeline failed: $LASTEXITCODE" }
         }
         $graphJob = Start-Job -ArgumentList @(
@@ -239,5 +259,19 @@ $document = [ordered]@{
         settingReport = $settingReport
     }
 }
+$nextIntervalMs = $GlobalIntervalMs
+if (@($source.restrictionEvents).Count -gt 0) {
+    $nextIntervalMs = [math]::Min(3000, $GlobalIntervalMs + 500)
+} elseif ($source.complete -and $metrics.sourceComplete) {
+    $nextIntervalMs = [math]::Max(1500, $GlobalIntervalMs - 500)
+}
+[ordered]@{
+    nextIntervalMs = $nextIntervalMs
+    lastIntervalMs = $GlobalIntervalMs
+    lastRestrictions = @($source.restrictionEvents).Count
+    updatedAt = $endedAt.ToString('o')
+} | ConvertTo-Json | Set-Content -LiteralPath $intervalStatePath -Encoding UTF8
+$document.skipHighest = $SkipHighest
+$document.nextIntervalMs = $nextIntervalMs
 $document | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $runReport -Encoding UTF8
 Get-Content -LiteralPath $runReport -Raw
