@@ -1,0 +1,92 @@
+{
+  "rule_id": "k1_jug_plain_rbz_top3",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "freeze_hash": "393b78a3e43883fd",
+  "target_date": "20260915",
+  "data_asof": "20260914",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-08-16",
+    "2026-09-15"
+  ],
+  "score": "hist_mean_rb_prob_model_z",
+  "selection_unit": "machine",
+  "success_criterion": "これは対照ルールであり、単独での採否判断には使わない。実践投入の候補にもしない。k1_jug_dd1kei_rbz_top3 とのエッジ差を測るためだけに集計する。したがって本ルール自体には合格基準を設けない。ただし本ルールのエッジが k1_jug_dd1kei_rbz_top3 と同等以上だった場合、『1のつく日』という日の効果は存在せず、観測されたエッジはRB上位選択の効果に過ぎないと結論すること。",
+  "is_dry_run": false,
+  "picks": [
+    {
+      "machine_number": 2299,
+      "machine_name": "ネオアイムジャグラーEX",
+      "score": 0.395841,
+      "history_days": 29
+    },
+    {
+      "machine_number": 2154,
+      "machine_name": "マイジャグラーV",
+      "score": 0.340147,
+      "history_days": 29
+    },
+    {
+      "machine_number": 2311,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 0.315724,
+      "history_days": 22
+    }
+  ],
+  "result": {
+    "scored_with_hash": "393b78a3e43883fd",
+    "day_baseline": 202.1,
+    "universe_size": 95,
+    "picks_realized": [
+      {
+        "machine_number": 2154,
+        "games": 6502.0,
+        "diff": 900.0,
+        "edge": 697.8947368421052
+      },
+      {
+        "machine_number": 2299,
+        "games": 5683.0,
+        "diff": 1100.0,
+        "edge": 897.8947368421052
+      },
+      {
+        "machine_number": 2311,
+        "games": 2743.0,
+        "diff": 500.0,
+        "edge": 297.89473684210526
+      }
+    ],
+    "mean_diff_per_pick": 833.3,
+    "mean_edge_per_pick": 631.2,
+    "missing_machines": [],
+    "rb_perspective": {
+      "day_baseline_rb_rate": 0.00274,
+      "picks_rb": [
+        {
+          "machine_number": 2299,
+          "rb_rate": 0.00405,
+          "baseline_ratio": 1.48,
+          "rb_rank": 12,
+          "rb_universe_size": 95
+        },
+        {
+          "machine_number": 2154,
+          "rb_rate": 0.00323,
+          "baseline_ratio": 1.18,
+          "rb_rank": 34,
+          "rb_universe_size": 95
+        },
+        {
+          "machine_number": 2311,
+          "rb_rate": 0.00292,
+          "baseline_ratio": 1.06,
+          "rb_rank": 44,
+          "rb_universe_size": 95
+        }
+      ]
+    },
+    "model_perspective": null
+  },
+  "plan_digest": "2715f0b466a7f120"
+}

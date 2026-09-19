@@ -1,0 +1,248 @@
+{
+  "rule_id": "heiwajima_model_term60_top3",
+  "hall": "レイトギャップ平和島",
+  "freeze_hash": "80fab02ec0c44816",
+  "target_date": "20260917",
+  "data_asof": "20260916",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-07-19",
+    "2026-09-17"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +81 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "新鬼武者3",
+      "score": 538.434564,
+      "history_rows": 31,
+      "machines": [
+        898,
+        899,
+        900,
+        952
+      ]
+    },
+    {
+      "machine_name": "やじきた道中記参る！",
+      "score": 370.888386,
+      "history_rows": 46,
+      "machines": [
+        858,
+        859,
+        860,
+        861,
+        862
+      ]
+    },
+    {
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 209.407052,
+      "history_rows": 218,
+      "machines": [
+        933,
+        934,
+        935,
+        936
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 898,
+      "machine_name": "新鬼武者3",
+      "score": 538.434564,
+      "history_days": 31
+    },
+    {
+      "machine_number": 899,
+      "machine_name": "新鬼武者3",
+      "score": 538.434564,
+      "history_days": 31
+    },
+    {
+      "machine_number": 900,
+      "machine_name": "新鬼武者3",
+      "score": 538.434564,
+      "history_days": 31
+    },
+    {
+      "machine_number": 952,
+      "machine_name": "新鬼武者3",
+      "score": 538.434564,
+      "history_days": 31
+    },
+    {
+      "machine_number": 858,
+      "machine_name": "やじきた道中記参る！",
+      "score": 370.888386,
+      "history_days": 46
+    },
+    {
+      "machine_number": 859,
+      "machine_name": "やじきた道中記参る！",
+      "score": 370.888386,
+      "history_days": 46
+    },
+    {
+      "machine_number": 860,
+      "machine_name": "やじきた道中記参る！",
+      "score": 370.888386,
+      "history_days": 46
+    },
+    {
+      "machine_number": 861,
+      "machine_name": "やじきた道中記参る！",
+      "score": 370.888386,
+      "history_days": 46
+    },
+    {
+      "machine_number": 862,
+      "machine_name": "やじきた道中記参る！",
+      "score": 370.888386,
+      "history_days": 46
+    },
+    {
+      "machine_number": 933,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 209.407052,
+      "history_days": 218
+    },
+    {
+      "machine_number": 934,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 209.407052,
+      "history_days": 218
+    },
+    {
+      "machine_number": 935,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 209.407052,
+      "history_days": 218
+    },
+    {
+      "machine_number": 936,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 209.407052,
+      "history_days": 218
+    }
+  ],
+  "result": {
+    "scored_with_hash": "80fab02ec0c44816",
+    "day_baseline": 75.5,
+    "universe_size": 423,
+    "picks_realized": [
+      {
+        "machine_number": 858,
+        "games": 177.0,
+        "diff": -304.0,
+        "edge": -379.5342789598109
+      },
+      {
+        "machine_number": 859,
+        "games": 1526.0,
+        "diff": -1102.0,
+        "edge": -1177.5342789598108
+      },
+      {
+        "machine_number": 860,
+        "games": 1453.0,
+        "diff": -558.0,
+        "edge": -633.5342789598109
+      },
+      {
+        "machine_number": 861,
+        "games": 454.0,
+        "diff": -662.0,
+        "edge": -737.5342789598109
+      },
+      {
+        "machine_number": 862,
+        "games": 978.0,
+        "diff": 877.0,
+        "edge": 801.4657210401891
+      },
+      {
+        "machine_number": 933,
+        "games": 1808.0,
+        "diff": -2023.0,
+        "edge": -2098.5342789598108
+      },
+      {
+        "machine_number": 934,
+        "games": 188.0,
+        "diff": -271.0,
+        "edge": -346.5342789598109
+      },
+      {
+        "machine_number": 935,
+        "games": 0.0,
+        "diff": 0.0,
+        "edge": -75.53427895981088
+      },
+      {
+        "machine_number": 936,
+        "games": 2906.0,
+        "diff": -1521.0,
+        "edge": -1596.5342789598108
+      },
+      {
+        "machine_number": 898,
+        "games": 1457.0,
+        "diff": 370.0,
+        "edge": 294.4657210401891
+      },
+      {
+        "machine_number": 899,
+        "games": 3708.0,
+        "diff": 3024.0,
+        "edge": 2948.4657210401892
+      },
+      {
+        "machine_number": 900,
+        "games": 266.0,
+        "diff": -61.0,
+        "edge": -136.53427895981088
+      },
+      {
+        "machine_number": 952,
+        "games": 181.0,
+        "diff": -279.0,
+        "edge": -354.5342789598109
+      }
+    ],
+    "mean_diff_per_pick": -193.1,
+    "mean_edge_per_pick": -268.6,
+    "missing_machines": [],
+    "rb_perspective": null,
+    "model_perspective": [
+      {
+        "machine_name": "新鬼武者3",
+        "n_machines": 4,
+        "n_realized": 4,
+        "sum_diff": 3054.0,
+        "sum_games": 5612.0,
+        "mean_diff": 763.5
+      },
+      {
+        "machine_name": "やじきた道中記参る！",
+        "n_machines": 5,
+        "n_realized": 5,
+        "sum_diff": -1749.0,
+        "sum_games": 4588.0,
+        "mean_diff": -349.8
+      },
+      {
+        "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+        "n_machines": 4,
+        "n_realized": 4,
+        "sum_diff": -3815.0,
+        "sum_games": 4902.0,
+        "mean_diff": -953.8
+      }
+    ]
+  },
+  "plan_digest": "703573d4e1bd7b37"
+}

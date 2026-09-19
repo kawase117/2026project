@@ -1,0 +1,246 @@
+{
+  "rule_id": "k1_model_gratio_dd7kei_top2",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "freeze_hash": "a933efebb75c7036",
+  "target_date": "20260917",
+  "data_asof": "20260916",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-08-27",
+    "2026-09-17"
+  ],
+  "score": "hist_model_gratio_mean_diff",
+  "selection_unit": "machine_model",
+  "success_criterion": "フォワード20エントリー日を経過した時点で、指名機種全台の総和ベースedge（対ホール全体同日平均、diff_coins_normalized）の平均が正であり、7日ブロックブートストラップ95%CI下限が0を上回ること。満たさなければ破棄する。判定はフォワードテストのみで行い、バックテスト数値および2026-08-07の観測は採否根拠にしない。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 1099.803599,
+      "history_rows": 35,
+      "machines": [
+        2020,
+        2416,
+        2417,
+        2418,
+        2419
+      ]
+    },
+    {
+      "machine_name": "ハッピージャグラーVIII",
+      "score": 551.473751,
+      "history_rows": 182,
+      "machines": [
+        2223,
+        2224,
+        2225,
+        2226,
+        2227,
+        2228,
+        2229,
+        2230,
+        2231
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 2020,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 1099.803599,
+      "history_days": 35
+    },
+    {
+      "machine_number": 2416,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 1099.803599,
+      "history_days": 35
+    },
+    {
+      "machine_number": 2417,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 1099.803599,
+      "history_days": 35
+    },
+    {
+      "machine_number": 2418,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 1099.803599,
+      "history_days": 35
+    },
+    {
+      "machine_number": 2419,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 1099.803599,
+      "history_days": 35
+    },
+    {
+      "machine_number": 2223,
+      "machine_name": "ハッピージャグラーVIII",
+      "score": 551.473751,
+      "history_days": 182
+    },
+    {
+      "machine_number": 2224,
+      "machine_name": "ハッピージャグラーVIII",
+      "score": 551.473751,
+      "history_days": 182
+    },
+    {
+      "machine_number": 2225,
+      "machine_name": "ハッピージャグラーVIII",
+      "score": 551.473751,
+      "history_days": 182
+    },
+    {
+      "machine_number": 2226,
+      "machine_name": "ハッピージャグラーVIII",
+      "score": 551.473751,
+      "history_days": 182
+    },
+    {
+      "machine_number": 2227,
+      "machine_name": "ハッピージャグラーVIII",
+      "score": 551.473751,
+      "history_days": 182
+    },
+    {
+      "machine_number": 2228,
+      "machine_name": "ハッピージャグラーVIII",
+      "score": 551.473751,
+      "history_days": 182
+    },
+    {
+      "machine_number": 2229,
+      "machine_name": "ハッピージャグラーVIII",
+      "score": 551.473751,
+      "history_days": 182
+    },
+    {
+      "machine_number": 2230,
+      "machine_name": "ハッピージャグラーVIII",
+      "score": 551.473751,
+      "history_days": 182
+    },
+    {
+      "machine_number": 2231,
+      "machine_name": "ハッピージャグラーVIII",
+      "score": 551.473751,
+      "history_days": 182
+    }
+  ],
+  "result": {
+    "scored_with_hash": "a933efebb75c7036",
+    "day_baseline": 107.7,
+    "universe_size": 365,
+    "picks_realized": [
+      {
+        "machine_number": 2223,
+        "games": 2788.0,
+        "diff": -1700.0,
+        "edge": -1807.6712328767123
+      },
+      {
+        "machine_number": 2224,
+        "games": 4821.0,
+        "diff": 1100.0,
+        "edge": 992.3287671232877
+      },
+      {
+        "machine_number": 2225,
+        "games": 4048.0,
+        "diff": 100.0,
+        "edge": -7.671232876712324
+      },
+      {
+        "machine_number": 2226,
+        "games": 3527.0,
+        "diff": 0.0,
+        "edge": -107.67123287671232
+      },
+      {
+        "machine_number": 2227,
+        "games": 4966.0,
+        "diff": -800.0,
+        "edge": -907.6712328767123
+      },
+      {
+        "machine_number": 2228,
+        "games": 4033.0,
+        "diff": -600.0,
+        "edge": -707.6712328767123
+      },
+      {
+        "machine_number": 2229,
+        "games": 6865.0,
+        "diff": 1800.0,
+        "edge": 1692.3287671232877
+      },
+      {
+        "machine_number": 2230,
+        "games": 1382.0,
+        "diff": -900.0,
+        "edge": -1007.6712328767123
+      },
+      {
+        "machine_number": 2231,
+        "games": 3229.0,
+        "diff": -1700.0,
+        "edge": -1807.6712328767123
+      },
+      {
+        "machine_number": 2020,
+        "games": 3101.0,
+        "diff": 1600.0,
+        "edge": 1492.3287671232877
+      },
+      {
+        "machine_number": 2416,
+        "games": 2748.0,
+        "diff": 2100.0,
+        "edge": 1992.3287671232877
+      },
+      {
+        "machine_number": 2417,
+        "games": 4498.0,
+        "diff": 2500.0,
+        "edge": 2392.328767123288
+      },
+      {
+        "machine_number": 2418,
+        "games": 1429.0,
+        "diff": -400.0,
+        "edge": -507.67123287671234
+      },
+      {
+        "machine_number": 2419,
+        "games": 2410.0,
+        "diff": -300.0,
+        "edge": -407.67123287671234
+      }
+    ],
+    "mean_diff_per_pick": 200.0,
+    "mean_edge_per_pick": 92.3,
+    "missing_machines": [],
+    "rb_perspective": null,
+    "model_perspective": [
+      {
+        "machine_name": "スマスロ炎炎ノ消防隊2",
+        "n_machines": 5,
+        "n_realized": 5,
+        "sum_diff": 5500.0,
+        "sum_games": 14186.0,
+        "mean_diff": 1100.0
+      },
+      {
+        "machine_name": "ハッピージャグラーVIII",
+        "n_machines": 9,
+        "n_realized": 9,
+        "sum_diff": -2700.0,
+        "sum_games": 35659.0,
+        "mean_diff": -300.0
+      }
+    ]
+  },
+  "plan_digest": "12e14965fac04109"
+}

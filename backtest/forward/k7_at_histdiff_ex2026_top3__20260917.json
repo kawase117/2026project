@@ -1,0 +1,67 @@
+{
+  "rule_id": "k7_at_histdiff_ex2026_top3",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "freeze_hash": "c8c26c0fb1179bcb",
+  "target_date": "20260917",
+  "data_asof": "20260916",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-08-18",
+    "2026-09-17"
+  ],
+  "score": "hist_mean_diff",
+  "selection_unit": "machine",
+  "success_criterion": "判定はフォワードのみ。フォワード30エントリー日を経過した時点で edge 平均が +300枚/台 以上かつ 95%CI 下限 > 0 であること。満たさなければ『AT履歴差枚による台選択』は破棄し、AT系スコアの派生はこの1本で打ち止めとする（元ルールの success_criterion をそのまま引き継ぐ。除外以外は一切変えていない）。",
+  "is_dry_run": false,
+  "picks": [
+    {
+      "machine_number": 2099,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 3631.25,
+      "history_days": 16
+    },
+    {
+      "machine_number": 2310,
+      "machine_name": "彼女、お借りします",
+      "score": 2750.0,
+      "history_days": 10
+    },
+    {
+      "machine_number": 3112,
+      "machine_name": "からくりサーカス2",
+      "score": 2183.333333,
+      "history_days": 12
+    }
+  ],
+  "result": {
+    "scored_with_hash": "c8c26c0fb1179bcb",
+    "day_baseline": 53.2,
+    "universe_size": 479,
+    "picks_realized": [
+      {
+        "machine_number": 2099,
+        "games": 1076.0,
+        "diff": 100.0,
+        "edge": 46.76409185803758
+      },
+      {
+        "machine_number": 3112,
+        "games": 2611.0,
+        "diff": 1700.0,
+        "edge": 1646.7640918580375
+      },
+      {
+        "machine_number": 2310,
+        "games": 6651.0,
+        "diff": 1600.0,
+        "edge": 1546.7640918580375
+      }
+    ],
+    "mean_diff_per_pick": 1133.3,
+    "mean_edge_per_pick": 1080.1,
+    "missing_machines": [],
+    "rb_perspective": null,
+    "model_perspective": null
+  },
+  "plan_digest": "afd252b0bb99d94a"
+}

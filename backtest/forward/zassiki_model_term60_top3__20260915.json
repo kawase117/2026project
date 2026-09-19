@@ -1,0 +1,300 @@
+{
+  "rule_id": "zassiki_model_term60_top3",
+  "hall": "ザ-シティ-ベルシティ雑色店",
+  "freeze_hash": "c19f10b6e683a454",
+  "target_date": "20260915",
+  "data_asof": "20260914",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-07-17",
+    "2026-09-15"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +87 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 193.527657,
+      "history_rows": 327,
+      "machines": [
+        873,
+        874,
+        875,
+        876,
+        877,
+        878
+      ]
+    },
+    {
+      "machine_name": "リコリス・リコイル",
+      "score": 183.029783,
+      "history_rows": 40,
+      "machines": [
+        868,
+        869,
+        870,
+        871,
+        872
+      ]
+    },
+    {
+      "machine_name": "東京喰種",
+      "score": 116.033446,
+      "history_rows": 300,
+      "machines": [
+        862,
+        863,
+        864,
+        865,
+        866,
+        867
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 873,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 193.527657,
+      "history_days": 327
+    },
+    {
+      "machine_number": 874,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 193.527657,
+      "history_days": 327
+    },
+    {
+      "machine_number": 875,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 193.527657,
+      "history_days": 327
+    },
+    {
+      "machine_number": 876,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 193.527657,
+      "history_days": 327
+    },
+    {
+      "machine_number": 877,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 193.527657,
+      "history_days": 327
+    },
+    {
+      "machine_number": 878,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 193.527657,
+      "history_days": 327
+    },
+    {
+      "machine_number": 868,
+      "machine_name": "リコリス・リコイル",
+      "score": 183.029783,
+      "history_days": 40
+    },
+    {
+      "machine_number": 869,
+      "machine_name": "リコリス・リコイル",
+      "score": 183.029783,
+      "history_days": 40
+    },
+    {
+      "machine_number": 870,
+      "machine_name": "リコリス・リコイル",
+      "score": 183.029783,
+      "history_days": 40
+    },
+    {
+      "machine_number": 871,
+      "machine_name": "リコリス・リコイル",
+      "score": 183.029783,
+      "history_days": 40
+    },
+    {
+      "machine_number": 872,
+      "machine_name": "リコリス・リコイル",
+      "score": 183.029783,
+      "history_days": 40
+    },
+    {
+      "machine_number": 862,
+      "machine_name": "東京喰種",
+      "score": 116.033446,
+      "history_days": 300
+    },
+    {
+      "machine_number": 863,
+      "machine_name": "東京喰種",
+      "score": 116.033446,
+      "history_days": 300
+    },
+    {
+      "machine_number": 864,
+      "machine_name": "東京喰種",
+      "score": 116.033446,
+      "history_days": 300
+    },
+    {
+      "machine_number": 865,
+      "machine_name": "東京喰種",
+      "score": 116.033446,
+      "history_days": 300
+    },
+    {
+      "machine_number": 866,
+      "machine_name": "東京喰種",
+      "score": 116.033446,
+      "history_days": 300
+    },
+    {
+      "machine_number": 867,
+      "machine_name": "東京喰種",
+      "score": 116.033446,
+      "history_days": 300
+    }
+  ],
+  "result": {
+    "scored_with_hash": "c19f10b6e683a454",
+    "day_baseline": -22.7,
+    "universe_size": 128,
+    "picks_realized": [
+      {
+        "machine_number": 873,
+        "games": 6534.0,
+        "diff": 183.0,
+        "edge": 205.6796875
+      },
+      {
+        "machine_number": 874,
+        "games": 634.0,
+        "diff": -349.0,
+        "edge": -326.3203125
+      },
+      {
+        "machine_number": 875,
+        "games": 3079.0,
+        "diff": -1394.0,
+        "edge": -1371.3203125
+      },
+      {
+        "machine_number": 876,
+        "games": 420.0,
+        "diff": 45.0,
+        "edge": 67.6796875
+      },
+      {
+        "machine_number": 877,
+        "games": 407.0,
+        "diff": -123.0,
+        "edge": -100.3203125
+      },
+      {
+        "machine_number": 878,
+        "games": 3836.0,
+        "diff": 965.0,
+        "edge": 987.6796875
+      },
+      {
+        "machine_number": 862,
+        "games": 1710.0,
+        "diff": -955.0,
+        "edge": -932.3203125
+      },
+      {
+        "machine_number": 863,
+        "games": 314.0,
+        "diff": 257.0,
+        "edge": 279.6796875
+      },
+      {
+        "machine_number": 864,
+        "games": 1659.0,
+        "diff": -187.0,
+        "edge": -164.3203125
+      },
+      {
+        "machine_number": 865,
+        "games": 1048.0,
+        "diff": -820.0,
+        "edge": -797.3203125
+      },
+      {
+        "machine_number": 866,
+        "games": 1827.0,
+        "diff": -1580.0,
+        "edge": -1557.3203125
+      },
+      {
+        "machine_number": 867,
+        "games": 197.0,
+        "diff": -117.0,
+        "edge": -94.3203125
+      },
+      {
+        "machine_number": 868,
+        "games": 5370.0,
+        "diff": -2707.0,
+        "edge": -2684.3203125
+      },
+      {
+        "machine_number": 869,
+        "games": 4549.0,
+        "diff": -3252.0,
+        "edge": -3229.3203125
+      },
+      {
+        "machine_number": 870,
+        "games": 4023.0,
+        "diff": 14.0,
+        "edge": 36.6796875
+      },
+      {
+        "machine_number": 871,
+        "games": 3895.0,
+        "diff": 1730.0,
+        "edge": 1752.6796875
+      },
+      {
+        "machine_number": 872,
+        "games": 2086.0,
+        "diff": -749.0,
+        "edge": -726.3203125
+      }
+    ],
+    "mean_diff_per_pick": -531.7,
+    "mean_edge_per_pick": -509.0,
+    "missing_machines": [],
+    "rb_perspective": null,
+    "model_perspective": [
+      {
+        "machine_name": "北斗の拳 転生の章2",
+        "n_machines": 6,
+        "n_realized": 6,
+        "sum_diff": -673.0,
+        "sum_games": 14910.0,
+        "mean_diff": -112.2
+      },
+      {
+        "machine_name": "リコリス・リコイル",
+        "n_machines": 5,
+        "n_realized": 5,
+        "sum_diff": -4964.0,
+        "sum_games": 19923.0,
+        "mean_diff": -992.8
+      },
+      {
+        "machine_name": "東京喰種",
+        "n_machines": 6,
+        "n_realized": 6,
+        "sum_diff": -3402.0,
+        "sum_games": 6755.0,
+        "mean_diff": -567.0
+      }
+    ]
+  },
+  "plan_digest": "78839e935d8c3e65"
+}

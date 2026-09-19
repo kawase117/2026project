@@ -1,0 +1,67 @@
+{
+  "rule_id": "k7_at_histdiff_top3",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "freeze_hash": "71526fa786ee4e6e",
+  "target_date": "20260915",
+  "data_asof": "20260914",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-08-16",
+    "2026-09-15"
+  ],
+  "score": "hist_mean_diff",
+  "selection_unit": "machine",
+  "success_criterion": "この主張は FINDINGS 追試1 で既に walk-forward 計測済みのため、バックテストは再現確認にすぎず採否根拠にしない。判定はフォワードのみ。フォワード30エントリー日を経過した時点で edge 平均が +300枚/台 以上かつ 95%CI 下限 > 0 であること。満たさなければ破棄し、AT系スコアの派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "picks": [
+    {
+      "machine_number": 2099,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 3776.470588,
+      "history_days": 17
+    },
+    {
+      "machine_number": 2026,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 3373.076923,
+      "history_days": 26
+    },
+    {
+      "machine_number": 2098,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 2218.181818,
+      "history_days": 22
+    }
+  ],
+  "result": {
+    "scored_with_hash": "71526fa786ee4e6e",
+    "day_baseline": -100.2,
+    "universe_size": 479,
+    "picks_realized": [
+      {
+        "machine_number": 2026,
+        "games": 3416.0,
+        "diff": 12900.0,
+        "edge": 13000.208768267223
+      },
+      {
+        "machine_number": 2098,
+        "games": 2650.0,
+        "diff": 200.0,
+        "edge": 300.2087682672234
+      },
+      {
+        "machine_number": 2099,
+        "games": 727.0,
+        "diff": -700.0,
+        "edge": -599.7912317327766
+      }
+    ],
+    "mean_diff_per_pick": 4133.3,
+    "mean_edge_per_pick": 4233.5,
+    "missing_machines": [],
+    "rb_perspective": null,
+    "model_perspective": null
+  },
+  "plan_digest": "68b1f5532ba23fd2"
+}

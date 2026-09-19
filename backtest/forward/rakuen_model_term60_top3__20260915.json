@@ -1,0 +1,560 @@
+{
+  "rule_id": "rakuen_model_term60_top3",
+  "hall": "楽園蒲田店",
+  "freeze_hash": "8956697aae9be829",
+  "target_date": "20260915",
+  "data_asof": "20260914",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-07-17",
+    "2026-09-15"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +125 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1014.010662,
+      "history_rows": 208,
+      "machines": [
+        1027,
+        1028,
+        1029,
+        1030,
+        1031,
+        1032,
+        1033,
+        1034,
+        1035,
+        1036,
+        1037,
+        1038,
+        1039,
+        1040,
+        1041,
+        1042,
+        1043,
+        1044,
+        1045,
+        1046,
+        3107,
+        3108,
+        3109,
+        3110,
+        3111,
+        3112
+      ]
+    },
+    {
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 641.441369,
+      "history_rows": 356,
+      "machines": [
+        2129,
+        2130,
+        2131,
+        2132,
+        2133,
+        2134,
+        2135
+      ]
+    },
+    {
+      "machine_name": "バンドリ！",
+      "score": 525.299872,
+      "history_rows": 151,
+      "machines": [
+        2247,
+        2248,
+        2249,
+        2250
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 1027,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1014.010662,
+      "history_days": 208
+    },
+    {
+      "machine_number": 1028,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1014.010662,
+      "history_days": 208
+    },
+    {
+      "machine_number": 1029,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1014.010662,
+      "history_days": 208
+    },
+    {
+      "machine_number": 1030,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1014.010662,
+      "history_days": 208
+    },
+    {
+      "machine_number": 1031,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1014.010662,
+      "history_days": 208
+    },
+    {
+      "machine_number": 1032,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1014.010662,
+      "history_days": 208
+    },
+    {
+      "machine_number": 1033,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1014.010662,
+      "history_days": 208
+    },
+    {
+      "machine_number": 1034,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1014.010662,
+      "history_days": 208
+    },
+    {
+      "machine_number": 1035,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1014.010662,
+      "history_days": 208
+    },
+    {
+      "machine_number": 1036,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1014.010662,
+      "history_days": 208
+    },
+    {
+      "machine_number": 1037,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1014.010662,
+      "history_days": 208
+    },
+    {
+      "machine_number": 1038,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1014.010662,
+      "history_days": 208
+    },
+    {
+      "machine_number": 1039,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1014.010662,
+      "history_days": 208
+    },
+    {
+      "machine_number": 1040,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1014.010662,
+      "history_days": 208
+    },
+    {
+      "machine_number": 1041,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1014.010662,
+      "history_days": 208
+    },
+    {
+      "machine_number": 1042,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1014.010662,
+      "history_days": 208
+    },
+    {
+      "machine_number": 1043,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1014.010662,
+      "history_days": 208
+    },
+    {
+      "machine_number": 1044,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1014.010662,
+      "history_days": 208
+    },
+    {
+      "machine_number": 1045,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1014.010662,
+      "history_days": 208
+    },
+    {
+      "machine_number": 1046,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1014.010662,
+      "history_days": 208
+    },
+    {
+      "machine_number": 3107,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1014.010662,
+      "history_days": 208
+    },
+    {
+      "machine_number": 3108,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1014.010662,
+      "history_days": 208
+    },
+    {
+      "machine_number": 3109,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1014.010662,
+      "history_days": 208
+    },
+    {
+      "machine_number": 3110,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1014.010662,
+      "history_days": 208
+    },
+    {
+      "machine_number": 3111,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1014.010662,
+      "history_days": 208
+    },
+    {
+      "machine_number": 3112,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1014.010662,
+      "history_days": 208
+    },
+    {
+      "machine_number": 2129,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 641.441369,
+      "history_days": 356
+    },
+    {
+      "machine_number": 2130,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 641.441369,
+      "history_days": 356
+    },
+    {
+      "machine_number": 2131,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 641.441369,
+      "history_days": 356
+    },
+    {
+      "machine_number": 2132,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 641.441369,
+      "history_days": 356
+    },
+    {
+      "machine_number": 2133,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 641.441369,
+      "history_days": 356
+    },
+    {
+      "machine_number": 2134,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 641.441369,
+      "history_days": 356
+    },
+    {
+      "machine_number": 2135,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 641.441369,
+      "history_days": 356
+    },
+    {
+      "machine_number": 2247,
+      "machine_name": "バンドリ！",
+      "score": 525.299872,
+      "history_days": 151
+    },
+    {
+      "machine_number": 2248,
+      "machine_name": "バンドリ！",
+      "score": 525.299872,
+      "history_days": 151
+    },
+    {
+      "machine_number": 2249,
+      "machine_name": "バンドリ！",
+      "score": 525.299872,
+      "history_days": 151
+    },
+    {
+      "machine_number": 2250,
+      "machine_name": "バンドリ！",
+      "score": 525.299872,
+      "history_days": 151
+    }
+  ],
+  "result": {
+    "scored_with_hash": "8956697aae9be829",
+    "day_baseline": 196.4,
+    "universe_size": 587,
+    "picks_realized": [
+      {
+        "machine_number": 1027,
+        "games": 5874.0,
+        "diff": -2095.0,
+        "edge": -2291.4463373083477
+      },
+      {
+        "machine_number": 1028,
+        "games": 6478.0,
+        "diff": 1953.0,
+        "edge": 1756.5536626916526
+      },
+      {
+        "machine_number": 1029,
+        "games": 1786.0,
+        "diff": -1619.0,
+        "edge": -1815.4463373083474
+      },
+      {
+        "machine_number": 1030,
+        "games": 2895.0,
+        "diff": -48.0,
+        "edge": -244.44633730834752
+      },
+      {
+        "machine_number": 1031,
+        "games": 4360.0,
+        "diff": 429.0,
+        "edge": 232.55366269165248
+      },
+      {
+        "machine_number": 1032,
+        "games": 1178.0,
+        "diff": -904.0,
+        "edge": -1100.4463373083474
+      },
+      {
+        "machine_number": 1033,
+        "games": 7487.0,
+        "diff": -4238.0,
+        "edge": -4434.446337308347
+      },
+      {
+        "machine_number": 1034,
+        "games": 8458.0,
+        "diff": -714.0,
+        "edge": -910.4463373083476
+      },
+      {
+        "machine_number": 1035,
+        "games": 7209.0,
+        "diff": -1190.0,
+        "edge": -1386.4463373083474
+      },
+      {
+        "machine_number": 1036,
+        "games": 2538.0,
+        "diff": -238.0,
+        "edge": -434.44633730834755
+      },
+      {
+        "machine_number": 1037,
+        "games": 2545.0,
+        "diff": 810.0,
+        "edge": 613.5536626916524
+      },
+      {
+        "machine_number": 1038,
+        "games": 2823.0,
+        "diff": -2381.0,
+        "edge": -2577.4463373083477
+      },
+      {
+        "machine_number": 1039,
+        "games": 1620.0,
+        "diff": -381.0,
+        "edge": -577.4463373083476
+      },
+      {
+        "machine_number": 1040,
+        "games": 2806.0,
+        "diff": 3143.0,
+        "edge": 2946.5536626916523
+      },
+      {
+        "machine_number": 1041,
+        "games": 1894.0,
+        "diff": -904.0,
+        "edge": -1100.4463373083474
+      },
+      {
+        "machine_number": 1042,
+        "games": 8141.0,
+        "diff": 3572.0,
+        "edge": 3375.5536626916523
+      },
+      {
+        "machine_number": 1043,
+        "games": 7395.0,
+        "diff": 477.0,
+        "edge": 280.55366269165245
+      },
+      {
+        "machine_number": 1044,
+        "games": 9930.0,
+        "diff": 8858.0,
+        "edge": 8661.553662691653
+      },
+      {
+        "machine_number": 1045,
+        "games": 2842.0,
+        "diff": -666.0,
+        "edge": -862.4463373083476
+      },
+      {
+        "machine_number": 1046,
+        "games": 6365.0,
+        "diff": -3285.0,
+        "edge": -3481.4463373083477
+      },
+      {
+        "machine_number": 3107,
+        "games": 1755.0,
+        "diff": 143.0,
+        "edge": -53.44633730834752
+      },
+      {
+        "machine_number": 3108,
+        "games": 2963.0,
+        "diff": -1000.0,
+        "edge": -1196.4463373083474
+      },
+      {
+        "machine_number": 3109,
+        "games": 1755.0,
+        "diff": -2047.0,
+        "edge": -2243.4463373083477
+      },
+      {
+        "machine_number": 3110,
+        "games": 6022.0,
+        "diff": 2477.0,
+        "edge": 2280.5536626916523
+      },
+      {
+        "machine_number": 3111,
+        "games": 4194.0,
+        "diff": 2143.0,
+        "edge": 1946.5536626916526
+      },
+      {
+        "machine_number": 3112,
+        "games": 959.0,
+        "diff": -571.0,
+        "edge": -767.4463373083476
+      },
+      {
+        "machine_number": 2129,
+        "games": 2060.0,
+        "diff": -857.0,
+        "edge": -1053.4463373083474
+      },
+      {
+        "machine_number": 2130,
+        "games": 3439.0,
+        "diff": 2238.0,
+        "edge": 2041.5536626916526
+      },
+      {
+        "machine_number": 2131,
+        "games": 5884.0,
+        "diff": -1809.0,
+        "edge": -2005.4463373083474
+      },
+      {
+        "machine_number": 2132,
+        "games": 1310.0,
+        "diff": -95.0,
+        "edge": -291.44633730834755
+      },
+      {
+        "machine_number": 2133,
+        "games": 5042.0,
+        "diff": 619.0,
+        "edge": 422.55366269165245
+      },
+      {
+        "machine_number": 2134,
+        "games": 987.0,
+        "diff": 715.0,
+        "edge": 518.5536626916524
+      },
+      {
+        "machine_number": 2135,
+        "games": 1209.0,
+        "diff": 429.0,
+        "edge": 232.55366269165248
+      },
+      {
+        "machine_number": 2247,
+        "games": 744.0,
+        "diff": 334.0,
+        "edge": 137.55366269165248
+      },
+      {
+        "machine_number": 2248,
+        "games": 411.0,
+        "diff": -523.0,
+        "edge": -719.4463373083476
+      },
+      {
+        "machine_number": 2249,
+        "games": 103.0,
+        "diff": -142.0,
+        "edge": -338.44633730834755
+      },
+      {
+        "machine_number": 2250,
+        "games": 1760.0,
+        "diff": 143.0,
+        "edge": -53.44633730834752
+      }
+    ],
+    "mean_diff_per_pick": 75.0,
+    "mean_edge_per_pick": -121.4,
+    "missing_machines": [],
+    "rb_perspective": null,
+    "model_perspective": [
+      {
+        "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+        "n_machines": 26,
+        "n_realized": 26,
+        "sum_diff": 1724.0,
+        "sum_games": 112272.0,
+        "mean_diff": 66.3
+      },
+      {
+        "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+        "n_machines": 7,
+        "n_realized": 7,
+        "sum_diff": 1240.0,
+        "sum_games": 19931.0,
+        "mean_diff": 177.1
+      },
+      {
+        "machine_name": "バンドリ！",
+        "n_machines": 4,
+        "n_realized": 4,
+        "sum_diff": -188.0,
+        "sum_games": 3018.0,
+        "mean_diff": -47.0
+      }
+    ]
+  },
+  "plan_digest": "30d9ca7155772641"
+}
