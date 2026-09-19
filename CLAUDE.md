@@ -74,6 +74,13 @@ cd C:\Users\apto117\Documents\pachinko-analyzer\src\2026project
 streamlit run main_app.py
 ```
 
+## イベントカレンダー（2026-09-19 追加・重要）
+
+**イベント日（合同企画・収録来店・取材・周年・改装・版権など）は必ず `document/registry/EVENT_DAYS.jsonl` に残す。**
+その多くは予告ツイートで分かる。予告を扱うたびに `backtest/event_days.py`（`check`/`add`/`scan`）で登録する。
+ホールごとに登録し、同日開催は `--related-halls` で結ぶ。同日か別イベントかは本文とユーザー確認で決め、推測で他ホールに当てはめない。
+`eda/event_calendar.py` はDDルールの統計的カレンダーで別物。
+
 ## Python実行環境の固定（繰り返す迷子の解消）
 
 `python`/`python3`はWindows Storeのダミーエイリアスに解決されて失敗することがある。

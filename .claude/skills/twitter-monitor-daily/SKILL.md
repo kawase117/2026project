@@ -84,6 +84,13 @@ for h,d,n in c.execute('select handle,substr(created_at,1,10) d,count(*) from tw
 `register` は `target_date <= db_max` を拒否するため、翌日以降は事後登録になり登録不能。
 下ごしらえは **`announce-prep` スキル**、モジュールの地図は **`backtest-module-guide`** を参照。
 
+### 3.5 イベントは台帳に残す（2026-09-19 追加）
+
+予告ツイートに合同企画・収録来店・取材・周年・改装・版権などのイベントがあれば、収集のたびに
+`backtest/event_days.py` の台帳（`document/registry/EVENT_DAYS.jsonl`）へ登録する。
+日付で引ける形で残さないと、イベント日の比較が誤る（蒲田1のM1収録日を蒲田7の「カマタに集合」に混ぜた実例）。
+収集後に `python -m backtest.event_days scan --since <昨日> --hall 蒲田` で未登録の候補を出し、内容を読んで `add` する。
+
 ### 4. 予告アカウントの自己申告実績は水増し
 
 予告本文に載る「過去の的中実績リスト」をルールの根拠に引用しない。

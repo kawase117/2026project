@@ -53,6 +53,17 @@ G数が足りないだけなら時間を置くか閾値を下げる。
 
 ### 2. 収集の健全性チェック（分析前に必ず）
 
+**2026-09-19 追加: `.cmd` は失敗しても終了コード0・完了通知も「completed」になる。** この日、グラフ収集が
+「graph image was not found」で停止（285台中155台）、次は「Target page, context or browser has been closed」で
+26秒で停止したのに、どちらも完了通知は正常だった。ブリーフは古いデータ（前回の時刻）のまま更新されない。
+**完了通知を成功とみなさず、報告の前に必ず次を見る**:
+
+1. `site777_graph_summary_filtered.json` の `ok`/`complete` が true、`stoppedAt` が null、`failures` が0
+2. ログ（cp932）に `worker failed` / `stopped_at=model:` が無い
+3. ブリーフ冒頭の時刻が、今回の収集時刻に更新されている（前回のままなら失敗）
+
+失敗時は同じコマンドを再実行する（収集済み分は再利用される）。2回続けて失敗したら原因（画像なし・ブラウザ切断）を報告する。
+
 ```python
 # ※ 出力JSONはすべてBOM付き。encoding='utf-8' だと JSONDecodeError になる
 d = json.load(open('scraper/site777/output/site777_full_data.json', encoding='utf-8-sig'))
@@ -153,6 +164,8 @@ summary = se.annotate_setting_estimates(machines, FS)
 実測RB確率を直接比較しない。必ず自機種の設定1基準に対する位置で見る。
 
 ### 5. 分析メニュー（毎回この順で出す）
+
+**2026-09-19 追加（コードで強制）**: メニュー1〜5は `scraper/site777/site777_report_menu.py` がブリーフに固定順で出す。欠けるとブリーフ冒頭が「⚠️ 報告メニューが欠落」になり終了コード2。**ブリーフは全文を読む。`head`/`sed` での抜き読み禁止**（この日、6項目中2項目しか出さずカバネリを見落とした。memory: feedback-site777-report-full-menu）。
 
 **まず `scraper/site777/output/site777_live_brief.md` を読む。** 収集のたびに自動生成される当日ブリーフで、
 下記1〜6のうち「区分別のボーナス確率」「機種×列の分解」「当月の列別」「空き台候補」「予告突合」を既に含む。

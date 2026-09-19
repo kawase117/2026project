@@ -14,6 +14,16 @@ description: ホール予告(announce)を事前登録する前の下ごしらえ
 2026-08-25のmirror-review(`document/mirror_evidence_2026-08-25.md`セクション4-A)で、3つの独立したセッションバッチが同一パターンを発見した: announce登録前に(1) DB最大収録日の確認、(2) ツイート本文の機種略称をmachine_masterの正式表記へ照合、(3) 直近30〜90日のbaserate計算、という3手順を毎回scratchpadに使い捨てスクリプトとして書き直していた。(3)は既に`announce.py baserate`として存在していたが、(1)(2)は未整備だった。
 
 ## やること
+0. **予告本文にイベント（合同企画・収録来店・取材・周年・改装・版権など）があれば、必ずイベント日台帳に残す**（2026-09-19 追加）
+   イベント日の多くは予告ツイートで分かる。予告JSONの自由記述だけに書くと、後から日付で引けず、
+   過去の開催日を別ホールに取り違える（実例: 蒲田1のM1収録日を蒲田7の「カマタに集合」に混ぜた）。
+   ```bash
+   venv\Scripts\python.exe -m backtest.event_days check <target_date>          # 登録の有無
+   venv\Scripts\python.exe -m backtest.event_days add --hall "<hall>" --date <target_date> --name "<イベント名>"        --kind collab|recording|coverage|anniversary|renovation|ip|manager|other        --related-halls "<同日開催の他ホール>" --source-tweets <tweet_id,...> --note "<回次・別イベントとの関係>"
+   ```
+   - **同日開催かどうか、別イベントかどうかは本文とユーザー確認で決める**。ホールごとに別々に登録し、`--related-halls` で結ぶ
+   - 迷ったらユーザーに聞く。推測で同じ日を複数ホールに当てはめない
+   - 過去分の取りこぼしは `venv\Scripts\python.exe -m backtest.event_days scan --since YYYYMMDD --hall 蒲田` で候補を出す（自動登録はしない）
 1. **DB最大日を確認する**
    ```bash
    venv\Scripts\python.exe -m backtest.announce dbmax "<hall>"

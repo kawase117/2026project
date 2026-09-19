@@ -45,6 +45,7 @@ sys.path.insert(0, ROOT)
 sys.path.insert(0, HERE)
 from backtest import bonus_specs as bs  # noqa: E402
 import site777_axis_matrix as axis_matrix  # noqa: E402
+import site777_report_menu as report_menu  # noqa: E402
 
 JUDGEABLE = ("ノーマル", "BT", "A+AT")
 ZENTAIKEI_THRESHOLD = 1800.0
@@ -651,13 +652,24 @@ def main():
             )
         out.append("")
 
-    out.insert(2, checklist)
+    menu_lines, menu_done = report_menu.build(
+        machines, os.path.join(HERE, "output", "site777_setting_report_filtered.md"), update_time
+    )
+    menu_absent = report_menu.missing(menu_done)
+    menu_check = (
+        "⚠️ 報告メニューが欠落: " + " / ".join(menu_absent)
+        if menu_absent
+        else "✅ 報告メニュー 1〜5 を出力済み（6 予告突合は末尾）"
+    )
+    out.insert(2, checklist + "  " + menu_check)
     out.insert(3, "")
+    for i, line in enumerate(menu_lines):
+        out.insert(4 + i, line)
     with open(args.output, "w", encoding="utf-8") as handle:
         handle.write("\n".join(out) + "\n")
     print("[OK] live brief -> %s (%d lines)" % (args.output, len(out)))
-    if absent:
-        print("[FAIL] " + checklist)
+    if absent or menu_absent:
+        print("[FAIL] " + checklist + " / " + menu_check)
         return 2
     return 0
 
