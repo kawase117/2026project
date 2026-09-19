@@ -268,7 +268,7 @@ def main():
     out.append("")
     out.append("RB確率が主指標、BB確率と総G・平均Gを併記（回転数が少ない確率は重みが小さい）。")
     out.append("")
-    out.append("| 機種 | 区分 | 設置/稼働 | 総G | 平均G | RB | BB | 自己ベースライン | 設定5以上 | 平均差枚 |")
+    out.append("| 機種 | 区分 | 1000G以上/設置 | 総G | 平均G | RB | BB | 自己ベースライン | 設定5以上 | 平均差枚 |")
     out.append("|---|---|---|---:|---:|---:|---:|---:|---:|---:|")
     judge_rows = []
     for name, units in cur_models.items():
@@ -307,8 +307,8 @@ def main():
             % (
                 name,
                 category,
-                n_all,
                 n_live,
+                n_all,
                 games,
                 games / max(n_live, 1),
                 rate,
@@ -383,7 +383,7 @@ def main():
         "差枚を主指標にし、RBは補助。"
     )
     out.append("")
-    out.append("| 機種 | 設置/差枚台 | G比 | 平均差枚 | スコア | +1800超え | RB自己ベースライン |")
+    out.append("| 機種 | 差枚台/設置 | G比 | 平均差枚 | スコア | +1800超え | RB自己ベースライン |")
     out.append("|---|---|---:|---:|---:|---:|---:|")
     at_rows = []
     for name, units in cur_models.items():
@@ -416,8 +416,8 @@ def main():
             "| %s | %d/%d | %.2f | %+.0f | %+.0f | %d台 | %s |"
             % (
                 name,
-                n_all,
                 n_diff,
+                n_all,
                 gratio,
                 mean_diff,
                 score,
@@ -466,10 +466,10 @@ def main():
     rows.sort(reverse=True)
     out.append("### 当日（差枚が読めた3台以上の列）")
     out.append("")
-    out.append("| 列 | 台数/差枚台 | G比 | 平均差枚 | +1800超え | 機種 |")
+    out.append("| 列 | 差枚台/台数 | G比 | 平均差枚 | +1800超え | 機種 |")
     out.append("|---|---|---:|---:|---:|---|")
     for mean_diff, sec, n_all, n_diff, gratio, over, names in rows[:10] + rows[-5:]:
-        out.append("| %s | %d/%d | %.2f | %+.0f | %d台 | %s |" % (sec, n_all, n_diff, gratio, mean_diff, over, names))
+        out.append("| %s | %d/%d | %.2f | %+.0f | %d台 | %s |" % (sec, n_diff, n_all, gratio, mean_diff, over, names))
     out.append("")
 
     month = args.month or (update_time[:7].replace("/", "") if update_time else None)
