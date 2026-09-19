@@ -38,7 +38,8 @@ JST = timezone(timedelta(hours=9))
 
 KINDS = {
     "collab": "複数店合同・企画（カマタに集合、活性化プロジェクト等）",
-    "recording": "収録来店・演者来店（回胴エムワンバトル等）",
+    "recording": "収録来店（回胴エムワンバトル等、撮影を伴う来店）",
+    "visit": "演者来店（撮影を伴わない来店・イベント出演）",
     "coverage": "取材来店・取材日",
     "anniversary": "周年・記念日・特定日の企画",
     "renovation": "改装・入替・配置替え・リニューアル",
@@ -96,8 +97,20 @@ def load():
     return out
 
 
+def merged(records):
+    """同じ event_id の行を、後の行で上書きして1件にまとめる（amend の追記行を反映）。"""
+    out = {}
+    for r in records:
+        if r["event_id"] in out:
+            out[r["event_id"]].update({k: v for k, v in r.items() if k not in ("amend",)})
+        else:
+            out[r["event_id"]] = {k: v for k, v in r.items() if k != "amend"}
+    return list(out.values())
+
+
 def active(records):
-    """supersedes で閉じられたものを除く。"""
+    """同じ event_id をまとめ、supersedes で閉じられたものを除く。"""
+    records = merged(records)
     closed = {s for r in records for s in r.get("supersedes", [])}
     return [r for r in records if r["event_id"] not in closed]
 
@@ -107,19 +120,46 @@ def make_id(hall, date, name):
     return "%s_%s_%s" % (date, short, "".join(ch for ch in name if ch.isalnum())[:12])
 
 
-def add(rec):
+def add(rec, amend=False):
     records = load()
-    if rec["event_id"] in {r["event_id"] for r in records}:
+    exists = rec["event_id"] in {r["event_id"] for r in records}
+    if exists and not amend:
         return False
-    rec["registered_at"] = datetime.now(JST).isoformat(timespec="seconds")
+    if amend:
+        rec["amend"] = True
+        rec["amended_at"] = datetime.now(JST).isoformat(timespec="seconds")
+    if not amend:
+        rec["registered_at"] = datetime.now(JST).isoformat(timespec="seconds")
     os.makedirs(os.path.dirname(LEDGER), exist_ok=True)
     with open(LEDGER, "a", encoding="utf-8") as h:
         h.write(json.dumps(rec, ensure_ascii=False) + "\n")
     return True
 
 
+def parse_performers(text):
+    """'名前|@handle|メモ;名前2|@handle2|メモ2' を [{name,handle,note}] にする。"""
+    out = []
+    for chunk in [c for c in (text or "").split(";") if c.strip()]:
+        parts = [x.strip() for x in chunk.split("|")]
+        parts += [""] * (3 - len(parts))
+        out.append({"name": parts[0], "handle": parts[1].lstrip("@"), "note": parts[2]})
+    return out
+
+
 def build(
-    hall, date, name, kind, related_halls="", machines="", source_tweets="", basis="tweet", note="", supersedes=""
+    hall,
+    date,
+    name,
+    kind,
+    related_halls="",
+    machines="",
+    source_tweets="",
+    basis="tweet",
+    note="",
+    supersedes="",
+    performers="",
+    preferred_machines="",
+    participants="",
 ):
     rec = {
         "event_id": make_id(hall, date, name),
@@ -135,6 +175,12 @@ def build(
     }
     if supersedes:
         rec["supersedes"] = [x for x in supersedes.split(",") if x]
+    if performers:
+        rec["performers"] = parse_performers(performers)
+    if preferred_machines:
+        rec["preferred_machines"] = [x for x in preferred_machines.split(",") if x]
+    if participants:
+        rec["participants"] = [x for x in participants.split(",") if x]
     return rec
 
 
@@ -150,8 +196,33 @@ def cmd_add(a):
         a.basis,
         a.note or "",
         a.supersedes or "",
+        a.performers or "",
+        a.preferred_machines or "",
+        a.participants or "",
     )
     print(("registered " if add(rec) else "already exists ") + rec["event_id"])
+    return 0
+
+
+def cmd_amend(a):
+    """既存イベントに演者・好み・参加ホール・メモを追記する（元の行は消さず、後の行で上書きする）。"""
+    eid = make_id(a.hall, a.date, a.name)
+    base = next((r for r in merged(load()) if r["event_id"] == eid), None)
+    if base is None:
+        print("見つからない: " + eid)
+        return 1
+    rec = {"event_id": eid}
+    if a.performers:
+        rec["performers"] = parse_performers(a.performers)
+    if a.preferred_machines:
+        rec["preferred_machines"] = [x for x in a.preferred_machines.split(",") if x]
+    if a.participants:
+        rec["participants"] = [x for x in a.participants.split(",") if x]
+    if a.source_tweets:
+        rec["source_tweets"] = sorted(set(base.get("source_tweets", []) + [x for x in a.source_tweets.split(",") if x]))
+    if a.note:
+        rec["note"] = (base.get("note", "") + " / " + a.note).strip(" /")
+    print(("amended " if add(rec, amend=True) else "failed ") + eid)
     return 0
 
 
@@ -162,7 +233,12 @@ def cmd_list(a):
         if a.since and r["date"] < a.since:
             continue
         rel = ("  (関連: %s)" % ",".join(r["related_halls"])) if r.get("related_halls") else ""
-        print("%s %-26s [%s] %s%s" % (r["date"], r["hall"], r["kind"], r["event_name"], rel))
+        perf = (
+            ("  演者: %s" % ",".join(p["name"] or "@" + p["handle"] for p in r["performers"]))
+            if r.get("performers")
+            else ""
+        )
+        print("%s %-26s [%s] %s%s%s" % (r["date"], r["hall"], r["kind"], r["event_name"], rel, perf))
     return 0
 
 
@@ -248,7 +324,20 @@ def main(argv=None):
     s.add_argument("--basis", default="tweet", choices=["tweet", "user", "instinct"])
     s.add_argument("--note")
     s.add_argument("--supersedes")
+    s.add_argument("--performers")
+    s.add_argument("--preferred-machines")
+    s.add_argument("--participants")
     s.set_defaults(fn=cmd_add)
+    s = sub.add_parser("amend")
+    s.add_argument("--hall", required=True)
+    s.add_argument("--date", required=True)
+    s.add_argument("--name", required=True)
+    s.add_argument("--performers")
+    s.add_argument("--preferred-machines")
+    s.add_argument("--participants")
+    s.add_argument("--source-tweets")
+    s.add_argument("--note")
+    s.set_defaults(fn=cmd_amend)
     s = sub.add_parser("list")
     s.add_argument("--hall")
     s.add_argument("--since")

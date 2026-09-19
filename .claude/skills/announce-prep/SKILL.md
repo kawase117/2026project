@@ -21,6 +21,9 @@ description: ホール予告(announce)を事前登録する前の下ごしらえ
    venv\Scripts\python.exe -m backtest.event_days check <target_date>          # 登録の有無
    venv\Scripts\python.exe -m backtest.event_days add --hall "<hall>" --date <target_date> --name "<イベント名>"        --kind collab|recording|coverage|anniversary|renovation|ip|manager|other        --related-halls "<同日開催の他ホール>" --source-tweets <tweet_id,...> --note "<回次・別イベントとの関係>"
    ```
+   - **演者（来店・収録）がいれば、名前・@ID・好み/関連機種のメモも残す**（`--performers "名前|@handle|メモ;..."`、後から `amend`）。
+     演者の好みの台に設定が入ることがあるため、演者ごとの好み・関連機種を蓄積して後で突き合わせる。名前が本文に無ければ空欄にし、推測は『推測』と明記する
+   - **参加ホール・共演店（合同企画）も `--participants` で残す**。他店の投稿にだけ演者がいる場合、自店にも来たかは未確認と書く
    - **同日開催かどうか、別イベントかどうかは本文とユーザー確認で決める**。ホールごとに別々に登録し、`--related-halls` で結ぶ
    - 迷ったらユーザーに聞く。推測で同じ日を複数ホールに当てはめない
    - 過去分の取りこぼしは `venv\Scripts\python.exe -m backtest.event_days scan --since YYYYMMDD --hall 蒲田` で候補を出す（自動登録はしない）
