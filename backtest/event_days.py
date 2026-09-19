@@ -253,9 +253,18 @@ def cmd_check(a):
 
 
 def target_date(posted_at, text):
-    """投稿日時と本文から対象営業日を推定する。曖昧なら投稿の翌日（12時以降の投稿）。要確認。"""
+    """投稿日時と本文から対象営業日を推定する。要確認。
+
+    - 12時以降の投稿に『明日』があれば、見出しの日付にかかわらず投稿の翌日
+      （楽園の予告は『6/2 楽園蒲田 明日から3日間』のように、見出しが投稿日になる）
+    - 『明日』が無く見出しに日付があれば、その日付
+    - どちらも無ければ、12時以降の投稿は翌日、それ以前は投稿日
+    """
     posted = datetime.fromisoformat(posted_at)
-    m = re.search(r"(\d{1,2})月(\d{1,2})日|(\d{1,2})/(\d{1,2})", text)
+    evening = posted.hour >= 12
+    if evening and "明日" in text:
+        return (posted + timedelta(days=1)).strftime("%Y%m%d")
+    m = re.search(r"(\d{1,2})月(\d{1,2})日|(\d{1,2})/(\d{1,2})", text[:80])
     if m:
         mo = int(m.group(1) or m.group(3))
         d = int(m.group(2) or m.group(4))
@@ -263,7 +272,7 @@ def target_date(posted_at, text):
             return "%04d%02d%02d" % (posted.year, mo, d)
         except ValueError:
             pass
-    nxt = posted + timedelta(days=1 if posted.hour >= 12 else 0)
+    nxt = posted + timedelta(days=1 if evening else 0)
     return nxt.strftime("%Y%m%d")
 
 
