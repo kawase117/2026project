@@ -235,13 +235,28 @@ def _at_tables(out, units, layout_full, hall_games, limit):
                 )
             out.append("")
             continue
-        groups = defaultdict(list)
-        for m, res in residual:
+        model_keys = defaultdict(set)
+        for m, _res in residual:
             key = _axis_key(axis, m, layout_full)
             if key is not None:
-                groups[key].append((m, res))
+                model_keys[m["model_name"]].add(key)
+        groups = defaultdict(list)
+        excluded = 0
+        for m, res in residual:
+            key = _axis_key(axis, m, layout_full)
+            if key is None:
+                continue
+            if len(model_keys[m["model_name"]]) < 2:
+                excluded += 1
+                continue
+            groups[key].append((m, res))
         if not groups or sd is None or sd == 0:
             out.append("- 差枚が読めたAT機が不足（機種内2台以上が必要）")
+            if excluded:
+                out.append(
+                    "- 機種の差枚台がすべて同じ%sに収まっている %d台は、残差が構造的に0になるため除いた。"
+                    % (axis, excluded)
+                )
             out.append("")
             continue
         rows = []
@@ -259,6 +274,10 @@ def _at_tables(out, units, layout_full, hall_games, limit):
         rows.sort(key=lambda r: -r[0])
         shown = rows if axis == "末尾" else (rows[:limit] + [r for r in rows[-3:] if r not in rows[:limit]])
         out.append("差枚残差＝台の差枚から機種の平均差枚を引いた値。z は残差平均÷(全体SD÷√n)。")
+        if excluded:
+            out.append(
+                "機種の差枚台がすべて同じ%sに収まっている %d台は、残差が構造的に0になるため除いた。" % (axis, excluded)
+            )
         out.append("")
         out.append("| %s | 差枚台 | 総G | 平均G | 残差平均 | z | +1800超え |" % axis)
         out.append("|---|---:|---:|---:|---:|---:|---:|")

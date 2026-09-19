@@ -45,6 +45,20 @@ def test_missing_reports_dropped_pair():
     assert am.missing(produced) == [("AT", "末尾")]
 
 
+def test_at_column_table_excludes_models_confined_to_one_column():
+    machines, layout_full, by_norm = _fixture()
+    for i in range(6):
+        number = 300 + i
+        machines.append(_machine(number, "B", 3000, 5, 0, diff=-300 + 300 * i))
+        layout_full[number] = ("300-305", i + 1, 6 - i, 0)
+    by_norm["B"] = ("B", "AT")
+    out, _produced = am.build(machines, {}, layout_full, by_norm, lambda s: s, 3000.0)
+    text = "\n".join(out)
+    block = text.split(am.heading("AT", "列"))[1].split("###")[0]
+    assert "構造的に0" in block
+    assert "200-205" not in block and "300-305" not in block
+
+
 def test_bb_and_games_are_reported_for_judgeable_tail_table():
     machines, layout_full, by_norm = _fixture()
     out, _produced = am.build(machines, {}, layout_full, by_norm, lambda s: s, 3000.0)
