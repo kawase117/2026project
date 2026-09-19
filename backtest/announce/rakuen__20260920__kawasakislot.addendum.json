@@ -1,0 +1,12 @@
+{
+  "kind": "addendum",
+  "announce_id": "rakuen__20260920__kawasakislot",
+  "parent_announce_digest": "5310e4649278881f",
+  "frozen_at": "2026-09-20",
+  "frozen_data_max": "20260919",
+  "target_date": "20260920",
+  "hall": "楽園蒲田店",
+  "why_separate_file": "親は digest 5310e4649278881f で凍結済み。親の posted_at_note に事実の誤りがあったため、実績（9/20）を見る前にここで訂正する。親本体は変更しない（変更すると digest が変わる）。resultキーを持たないので LEDGER には載せない。",
+  "correction": "親の posted_at_note は『朝の収集と backfill_search でこの見出しだけが取りこぼされ、ブラウザで全文を取得して state.db に手動で挿入した』と書いたが正しくない。実際は、backfill_search.py（2026-09-20 08:22）がこの見出し（tweet_id 2101263077631271087、投稿19:52:11）を state.db に収集していた（tweet_text は142字で切れ、full_text は NULL）。朝07:08の自動収集では取りこぼされていた。私（Claude）が『DBに無い』と読んだのは、日時を20:40以降に絞った検索の誤りで、手動挿入はしていない。全文はブラウザで取得し、その後 state.db の full_text に反映した（このaddendum作成時）。親の raw_text は全文で、内容は変わらない。",
+  "lesson": "『DBに無い』の確認は、日時を絞らず tweet_id で行う（feedback: DBに無いことを予告が無いと読み替えない）。"
+}
