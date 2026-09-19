@@ -20,6 +20,10 @@ ACCOUNTS = {
     # 楽園蒲田の予告を出すもう1つの媒体。2026-09-14・15 の予告はここが一次資料
     # だったが監視対象に入っておらず、backfill_search.py も対象外だった。
     "minnade777judge": {"hall": "rakuen_kamata", "role": "予告+答え合わせ"},
+    # SEVEN-D（@datagasubete）。楽園蒲田の日別の結果を機種名の列挙（全台/1/2）で
+    # 後日まとめて投稿する（例: 「5月20日(水) 楽園蒲田《ハーフテン》」を6/19に投稿）。
+    # kawasakislot の予告が「過去結果」として引用する一次資料。2026-09-20 に追加。
+    "datagasubete": {"hall": "rakuen_kamata", "role": "結果報告(機種別の全台/1/2)"},
     "kengyo_niki": {"hall": "hiroki", "role": "答え合わせ"},
     "sloneko222": {"hall": "arrow_ikegami_mitoya_omori", "role": "結果報告"},
 }
