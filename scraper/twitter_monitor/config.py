@@ -28,3 +28,8 @@ BASE_DIR = Path(__file__).resolve().parent
 AUTH_STATE_PATH = BASE_DIR / ".auth" / "state.json"
 DB_PATH = BASE_DIR / "state.db"
 IMAGES_DIR = BASE_DIR / "images"
+
+# 手法研究用（監視対象ではないアカウントを一時的に掘るとき）。
+# 本番の state.db を汚さないよう、収集先DBを分けている。
+RESEARCH_DB_PATH = BASE_DIR / "research.db"
+RESEARCH_DIR = BASE_DIR / "research"
