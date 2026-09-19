@@ -95,6 +95,148 @@
       "reason": "過去実績の自己申告。当日の当否判定に使わない（project-kawasakislot-selfreport-inflated）。"
     }
   ],
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20260915",
+    "hall_baseline_mean_diff": -20.4,
+    "hall_n_machines": 715,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 1,
+          "note": "『ここに全機種が加わる』。台数の明示なしで最小の1で登録。⚠️ p_at_least_1=1.00 で反証不能なので hit を的中として数えない。超えた機種の台数分布とセグメント内訳を記録する。"
+        },
+        "observed_n_models": 1,
+        "candidate_models": 65,
+        "models": [
+          {
+            "machine_name": "タコスロ",
+            "score": 2754.0,
+            "n_machines": 4,
+            "mean_diff": 1550.0,
+            "age_days": 8
+          }
+        ],
+        "n_new_machines_over": 1,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ミリオンゴッド‐神々の軌跡‐",
+          "note": "謎かけ（神社→神→ミリオンゴッド？）。推測。25台、直近30日 1/30。"
+        },
+        "score": -220.0,
+        "mean_diff": -264.0,
+        "gratio": 0.833,
+        "n_machines": 25,
+        "rank": 43,
+        "candidate_models": 65,
+        "age_days": 148,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ゴッドイーター リザレクション",
+          "note": "謎かけ（神社→神→ゴッドイーター？）。推測。8台、直近30日 0/30。"
+        },
+        "score": -353.5,
+        "mean_diff": -762.5,
+        "gratio": 0.464,
+        "n_machines": 8,
+        "rank": 51,
+        "candidate_models": 65,
+        "age_days": 435,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+          "note": "謎かけ（巴紋→巴マミ→マギレコ？）。推測。25台、直近30日 4/30。60日で店内上位99%の厚い機種かつ forward の kamata7_model_term60_top3 と重複するので、的中しても予告固有の情報とは言えない。"
+        },
+        "score": -227.1,
+        "mean_diff": -412.0,
+        "gratio": 0.551,
+        "n_machines": 25,
+        "rank": 45,
+        "candidate_models": 65,
+        "age_days": 435,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "北斗の拳 転生の章2",
+          "note": "謎かけ（シャッター→北斗転生？）。推測。5台（2250-2254）、直近30日 2/30。"
+        },
+        "score": -127.9,
+        "mean_diff": -220.0,
+        "gratio": 0.581,
+        "n_machines": 5,
+        "rank": 40,
+        "candidate_models": 65,
+        "age_days": 253,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "スマスロ ハナビ",
+          "note": "謎かけ（かき氷→氷→スマスロハナビ？）。推測。3台、直近30日 1/30。"
+        },
+        "score": 414.4,
+        "mean_diff": 333.3,
+        "gratio": 1.243,
+        "n_machines": 3,
+        "rank": 13,
+        "candidate_models": 65,
+        "age_days": 225,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "やじきた道中記参る！",
+          "note": "謎かけ（例大祭→祭り→やじきた？）。推測。6台、直近30日 0/30、mean_score -88。"
+        },
+        "score": -406.0,
+        "mean_diff": -1050.0,
+        "gratio": 0.387,
+        "n_machines": 6,
+        "rank": 54,
+        "candidate_models": 65,
+        "age_days": 43,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
   "announce_digest": "7de7f33afe86f478"
 }

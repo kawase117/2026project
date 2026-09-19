@@ -111,6 +111,234 @@
       "frozen_scoring_procedure": "閾値+1800を超えた機種について、その機種の超え台がstep2で検出した末尾に偏っていないか（超え台に占める検出末尾の割合）を記録するだけ。hit 判定はしない。"
     }
   ],
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20260916",
+    "hall_baseline_mean_diff": 46.3,
+    "hall_n_machines": 715,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 1,
+          "note": "『末尾仕掛けと全』。台数の明示なしで最小の1で登録。⚠️ p_at_least_1=1.00 で反証不能なので hit を的中として数えない。超えた機種が末尾仕掛けと重ならないか（本文『末尾に絡まない台が温度感高ければ全』）を記録する。"
+        },
+        "observed_n_models": 3,
+        "candidate_models": 65,
+        "models": [
+          {
+            "machine_name": "キングハナハナ-30",
+            "score": 4537.1,
+            "n_machines": 16,
+            "mean_diff": 1581.2,
+            "age_days": 436
+          },
+          {
+            "machine_name": "スマスロ北斗の拳",
+            "score": 4144.4,
+            "n_machines": 9,
+            "mean_diff": 2388.9,
+            "age_days": 436
+          },
+          {
+            "machine_name": "スマスロ ハナビ",
+            "score": 2314.3,
+            "n_machines": 3,
+            "mean_diff": 1266.7,
+            "age_days": 226
+          }
+        ],
+        "n_new_machines_over": 0,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "東京喰種",
+          "note": "謎かけ（ハイビスカス→花→ヒガンバナ→東京喰種？）。推測。41台、直近30日 0/30。台数が多く機種平均は閾値に届きにくいので、台番号別の超え台数と末尾の偏りを併記する。"
+        },
+        "score": 585.8,
+        "mean_diff": 590.2,
+        "gratio": 0.992,
+        "n_machines": 41,
+        "rank": 6,
+        "candidate_models": 65,
+        "age_days": 436,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "リコリス・リコイル",
+          "note": "謎かけ（ヒガンバナ→リコリコ？）。推測。26台、直近30日は出現9日のみで 0/9。導入間もない機種で新台の高回転バイアスがある（project-new-machine-expected-value）。"
+        },
+        "score": -2418.4,
+        "mean_diff": -1050.0,
+        "gratio": 2.303,
+        "n_machines": 26,
+        "rank": 62,
+        "candidate_models": 65,
+        "age_days": 9,
+        "age_bucket": "new",
+        "base_rate": 0.105,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "キングハナハナ-30",
+          "note": "『今日（9/15）の全台合算がかなり良さそう、今日の仕掛けと繋がっている可能性』。9/16 の名指しとしては弱く、前日観測の据え置き仮説として登録する。16台、直近30日 0/30（mean 228）。採点時は差枚に加えて BB/RB 合算を機種の自己ベースライン（直近20日 合算1/150〜1/181）と比べる（feedback-evaluate-beyond-diff）。"
+        },
+        "score": 4537.1,
+        "mean_diff": 1581.2,
+        "gratio": 2.869,
+        "n_machines": 16,
+        "rank": 1,
+        "candidate_models": 65,
+        "age_days": 436,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ファンキージャグラー2",
+          "note": "謎かけ（蒲田一丁目→イチ→ワン→ファンキージャグラー？）。推測。24台、直近30日 0/30。"
+        },
+        "score": -104.8,
+        "mean_diff": -104.2,
+        "gratio": 1.006,
+        "n_machines": 24,
+        "rank": 41,
+        "candidate_models": 65,
+        "age_days": 436,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+          "note": "謎かけ（輪投げ→円環の理→マギレコ？）。推測。25台、直近30日 4/30（mean 806）。forward の k7_at_histdiff / kamata7_model_term60 と重複するので、的中しても予告固有の情報とは言えない。"
+        },
+        "score": 247.8,
+        "mean_diff": 464.0,
+        "gratio": 0.534,
+        "n_machines": 25,
+        "rank": 16,
+        "candidate_models": 65,
+        "age_days": 436,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "やじきた道中記参る！",
+          "note": "謎かけ（例大祭→祭→やじきた？）。9/15 に続き2日連続の名指し。6台、直近30日 0/30。"
+        },
+        "score": 290.5,
+        "mean_diff": 716.7,
+        "gratio": 0.405,
+        "n_machines": 6,
+        "rank": 13,
+        "candidate_models": 65,
+        "age_days": 44,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "革命機ヴァルヴレイヴ2",
+          "note": "謎かけ（キャラ誕→アードライ→ヴヴヴ2？）。推測。15台、直近30日 2/30。"
+        },
+        "score": 561.5,
+        "mean_diff": 793.3,
+        "gratio": 0.708,
+        "n_machines": 15,
+        "rank": 7,
+        "candidate_models": 65,
+        "age_days": 315,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "革命機ヴァルヴレイヴ",
+          "note": "謎かけ（キャラ誕→アードライ→ヴヴヴ？）。推測。7台、直近30日 8/30（mean 542）で超え率が店内でも高い機種。的中してもベースレートの寄与が大きい。"
+        },
+        "score": 0.0,
+        "mean_diff": 0.0,
+        "gratio": 0.691,
+        "n_machines": 7,
+        "rank": 34,
+        "candidate_models": 65,
+        "age_days": 400,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "スマスロ炎炎ノ消防隊2",
+          "note": "謎かけ（キャラ誕→茉希尾瀬→L炎炎2？）。推測。12台、直近30日 1/30。"
+        },
+        "score": 237.2,
+        "mean_diff": 333.3,
+        "gratio": 0.712,
+        "n_machines": 12,
+        "rank": 18,
+        "candidate_models": 65,
+        "age_days": 226,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "東京リベンジャーズ",
+          "note": "謎かけ（キャラ誕→羽宮一虎→東京リベンジャーズ？）。推測。5台、直近30日 3/30。"
+        },
+        "score": -829.4,
+        "mean_diff": -940.0,
+        "gratio": 0.882,
+        "n_machines": 5,
+        "rank": 55,
+        "candidate_models": 65,
+        "age_days": 373,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
   "announce_digest": "fb331dfa8a4d26ab"
 }

@@ -98,6 +98,55 @@
       "reason": "キャッチコピー。ホール全体の強さは取材の上乗せとして答え合わせ時に hall_context（出率・平均差枚・稼働残差）で記録するのみ。"
     }
   ],
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20260915",
+    "hall_baseline_mean_diff": 196.4,
+    "hall_n_machines": 587,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 1,
+      "n_censored_lo": 1,
+      "machines_hi": [
+        "いざ！番長"
+      ],
+      "machines_lo": [
+        "モグモグ風林火山 大海戦の巻"
+      ],
+      "bounds": [
+        -5095,
+        15477
+      ]
+    },
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 2,
+          "note": "『全台上2つ機種複数』。複数=2で登録。p_at_least_2=0.805 で hit を的中として数えない。超えた機種名・台数を記録するに留める。"
+        },
+        "observed_n_models": 2,
+        "candidate_models": 57,
+        "models": [
+          {
+            "machine_name": "スマスロ炎炎ノ消防隊2",
+            "score": 6186.6,
+            "n_machines": 6,
+            "mean_diff": 2563.8,
+            "age_days": 224
+          },
+          {
+            "machine_name": "革命機ヴァルヴレイヴ",
+            "score": 2504.2,
+            "n_machines": 3,
+            "mean_diff": 3222.7,
+            "age_days": 622
+          }
+        ],
+        "n_new_machines_over": 0,
+        "hit": true
+      }
+    ]
+  },
   "announce_digest": "cd4d94235bf5fd8c"
 }

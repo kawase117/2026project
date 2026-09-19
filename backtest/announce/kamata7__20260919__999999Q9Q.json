@@ -1,0 +1,59 @@
+{
+  "announce_id": "kamata7__20260919__999999Q9Q",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "target_date": "20260919",
+  "source": {
+    "account": "999999Q9Q",
+    "url": "https://x.com/999999Q9Q/status/2100939567612477715",
+    "posted_at": "2026-09-18T22:26:41+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "GALAXYウスイのカマタに集合！\n\n明日のメガななはカマタに集合！が4回目の開催。全仕掛けと大量の単品で全域強化に期待ができると言われている。前回は25台設置のマギレコが全仕様と多台数機種からの全仕掛けも当然のようにやってくる。\n\n明日も番号が良ければ積極的にメインから攻めて良し。全系じゃなくても大量の単品があるので判別は慎重に\n\n#マルハンメガシティ2000蒲田7",
+  "posted_at_note": "投稿 2026-09-18T22:26:41。full_textを2026-09-19 08:50に取り直し済み。db_max=20260918<target=20260919のため事後登録ではない。",
+  "weakness_note": "⚠️ 第三者の予想。機種名の示唆なし。『前回は25台設置のマギレコが全仕様』は自己申告。9/19は『カマタに集合！』（回胴エムワンバトル4店合同・収録来店、蒲田1・蒲田7両店開催）かつシルバーウィーク初日・9の付く日(BIG THANK YOU)。収録来店日は通常日と別レジームの可能性があり、通常日の的中率を外挿しない。",
+  "prior_check_note": "p_at_least_1=1.0、p_at_least_2=0.857で全系1〜2機種以上は自明。的中に数えない。",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "baserate_before_target": {
+    "window": [
+      "2026-06-20",
+      "2026-09-18"
+    ],
+    "n_days": 84,
+    "threshold": 1800.0,
+    "models_over_threshold_per_day": {
+      "mean": 3.73,
+      "median": 3.0,
+      "max": 11
+    },
+    "p_at_least_1": 1.0,
+    "p_at_least_2": 0.857,
+    "p_at_least_3": 0.655,
+    "p_at_least_4": 0.44,
+    "p_at_least_10": 0.036
+  },
+  "claims": [
+    {
+      "type": "zentaikei_count",
+      "n_models": 1,
+      "note": "『全仕掛けと大量の単品で全域強化』『多台数機種からの全仕掛け』。台数明示なし。p_at_least_1=1.0で自明、的中に数えない。"
+    }
+  ],
+  "unscored_claims": [
+    {
+      "text": "多台数機種（25台のマギレコ等）からの全仕掛け",
+      "reason": "機種名の名指しなし。",
+      "frozen_scoring_procedure": "設置15台以上の機種のうち閾値+1800を超えた機種を記録するのみ。"
+    },
+    {
+      "text": "大量の単品仕掛け",
+      "reason": "反証可能な主張ではない。",
+      "frozen_scoring_procedure": "9/19のホール平均差枚・勝率を9/1以降の日次分布の順位として記録するだけ。"
+    }
+  ],
+  "result": null,
+  "announce_digest": "f6843490bf8ca6c2"
+}

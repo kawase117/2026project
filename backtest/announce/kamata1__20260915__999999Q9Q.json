@@ -74,6 +74,101 @@
       "frozen_scoring_procedure": "設置10台以上の機種について 超え台数/台数 をホール当日平均と比べて記録する。hit 判定はしない。"
     }
   ],
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20260915",
+    "hall_baseline_mean_diff": -81.9,
+    "hall_n_machines": 365,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 1,
+          "note": "『前回の9/5は全系・ニブイチに加えて』を今回も続くとみなし最小の1で登録。p_at_least_1=0.943 で hit はほぼ自明、的中として数えない。"
+        },
+        "observed_n_models": 2,
+        "candidate_models": 48,
+        "models": [
+          {
+            "machine_name": "ミスタージャグラー",
+            "score": 5540.2,
+            "n_machines": 4,
+            "mean_diff": 1700.0,
+            "age_days": 622
+          },
+          {
+            "machine_name": "ハッピージャグラーVIII",
+            "score": 2363.3,
+            "n_machines": 9,
+            "mean_diff": 988.9,
+            "age_days": 622
+          }
+        ],
+        "n_new_machines_over": 0,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "やじきた道中記参る！",
+          "note": "謎かけ（力士→まげ→ちょんまげ→きたさん→やじきた？）。推測。3台（2140-2142）、直近30日 4/30。"
+        },
+        "score": -201.9,
+        "mean_diff": -300.0,
+        "gratio": 0.673,
+        "n_machines": 3,
+        "rank": 32,
+        "candidate_models": 48,
+        "age_days": 43,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "いざ！番長",
+          "note": "謎かけ（相撲→武道→空手→押忍→いざ番長？）。推測。3台（2088-2090）、直近30日 1/30。"
+        },
+        "score": 479.4,
+        "mean_diff": 900.0,
+        "gratio": 0.533,
+        "n_machines": 3,
+        "rank": 7,
+        "candidate_models": 48,
+        "age_days": 465,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "東京喰種",
+          "note": "謎かけ（土俵→円形→円形島→東京喰種？スロコーナー中央）。推測。20台、直近30日 1/30。機種平均は散らし型で閾値に届きにくいので、採点時は台番号別の超え台数と並び、特に『円形島（スロコーナー中央）』側の台に偏るかを併記する。"
+        },
+        "score": -363.3,
+        "mean_diff": -390.0,
+        "gratio": 0.932,
+        "n_machines": 20,
+        "rank": 36,
+        "candidate_models": 48,
+        "age_days": 588,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
   "announce_digest": "c2d9a61619bb98a2"
 }
