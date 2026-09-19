@@ -1,0 +1,295 @@
+{
+  "rule_id": "zassiki_model_term60_top3",
+  "hall": "ザ-シティ-ベルシティ雑色店",
+  "freeze_hash": "c19f10b6e683a454",
+  "target_date": "20260920",
+  "data_asof": "20260919",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-07-22",
+    "2026-09-20"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +87 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 196.118012,
+      "history_rows": 332,
+      "machines": [
+        873,
+        874,
+        875,
+        876,
+        877,
+        878
+      ]
+    },
+    {
+      "machine_name": "マイジャグラーV",
+      "score": 115.599151,
+      "history_rows": 882,
+      "machines": [
+        761,
+        762,
+        763,
+        764,
+        765,
+        781,
+        782,
+        783,
+        784,
+        785,
+        786,
+        787,
+        788,
+        789,
+        790
+      ]
+    },
+    {
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 108.097743,
+      "history_rows": 878,
+      "machines": [
+        766,
+        767,
+        768,
+        769,
+        770,
+        771,
+        772,
+        773,
+        774,
+        775,
+        776,
+        777,
+        778,
+        779,
+        780
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 873,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 196.118012,
+      "history_days": 332
+    },
+    {
+      "machine_number": 874,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 196.118012,
+      "history_days": 332
+    },
+    {
+      "machine_number": 875,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 196.118012,
+      "history_days": 332
+    },
+    {
+      "machine_number": 876,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 196.118012,
+      "history_days": 332
+    },
+    {
+      "machine_number": 877,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 196.118012,
+      "history_days": 332
+    },
+    {
+      "machine_number": 878,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 196.118012,
+      "history_days": 332
+    },
+    {
+      "machine_number": 761,
+      "machine_name": "マイジャグラーV",
+      "score": 115.599151,
+      "history_days": 882
+    },
+    {
+      "machine_number": 762,
+      "machine_name": "マイジャグラーV",
+      "score": 115.599151,
+      "history_days": 882
+    },
+    {
+      "machine_number": 763,
+      "machine_name": "マイジャグラーV",
+      "score": 115.599151,
+      "history_days": 882
+    },
+    {
+      "machine_number": 764,
+      "machine_name": "マイジャグラーV",
+      "score": 115.599151,
+      "history_days": 882
+    },
+    {
+      "machine_number": 765,
+      "machine_name": "マイジャグラーV",
+      "score": 115.599151,
+      "history_days": 882
+    },
+    {
+      "machine_number": 781,
+      "machine_name": "マイジャグラーV",
+      "score": 115.599151,
+      "history_days": 882
+    },
+    {
+      "machine_number": 782,
+      "machine_name": "マイジャグラーV",
+      "score": 115.599151,
+      "history_days": 882
+    },
+    {
+      "machine_number": 783,
+      "machine_name": "マイジャグラーV",
+      "score": 115.599151,
+      "history_days": 882
+    },
+    {
+      "machine_number": 784,
+      "machine_name": "マイジャグラーV",
+      "score": 115.599151,
+      "history_days": 882
+    },
+    {
+      "machine_number": 785,
+      "machine_name": "マイジャグラーV",
+      "score": 115.599151,
+      "history_days": 882
+    },
+    {
+      "machine_number": 786,
+      "machine_name": "マイジャグラーV",
+      "score": 115.599151,
+      "history_days": 882
+    },
+    {
+      "machine_number": 787,
+      "machine_name": "マイジャグラーV",
+      "score": 115.599151,
+      "history_days": 882
+    },
+    {
+      "machine_number": 788,
+      "machine_name": "マイジャグラーV",
+      "score": 115.599151,
+      "history_days": 882
+    },
+    {
+      "machine_number": 789,
+      "machine_name": "マイジャグラーV",
+      "score": 115.599151,
+      "history_days": 882
+    },
+    {
+      "machine_number": 790,
+      "machine_name": "マイジャグラーV",
+      "score": 115.599151,
+      "history_days": 882
+    },
+    {
+      "machine_number": 766,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 108.097743,
+      "history_days": 878
+    },
+    {
+      "machine_number": 767,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 108.097743,
+      "history_days": 878
+    },
+    {
+      "machine_number": 768,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 108.097743,
+      "history_days": 878
+    },
+    {
+      "machine_number": 769,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 108.097743,
+      "history_days": 878
+    },
+    {
+      "machine_number": 770,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 108.097743,
+      "history_days": 878
+    },
+    {
+      "machine_number": 771,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 108.097743,
+      "history_days": 878
+    },
+    {
+      "machine_number": 772,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 108.097743,
+      "history_days": 878
+    },
+    {
+      "machine_number": 773,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 108.097743,
+      "history_days": 878
+    },
+    {
+      "machine_number": 774,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 108.097743,
+      "history_days": 878
+    },
+    {
+      "machine_number": 775,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 108.097743,
+      "history_days": 878
+    },
+    {
+      "machine_number": 776,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 108.097743,
+      "history_days": 878
+    },
+    {
+      "machine_number": 777,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 108.097743,
+      "history_days": 878
+    },
+    {
+      "machine_number": 778,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 108.097743,
+      "history_days": 878
+    },
+    {
+      "machine_number": 779,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 108.097743,
+      "history_days": 878
+    },
+    {
+      "machine_number": 780,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 108.097743,
+      "history_days": 878
+    }
+  ],
+  "result": null,
+  "plan_digest": "4c724cbf1c4f5edb"
+}

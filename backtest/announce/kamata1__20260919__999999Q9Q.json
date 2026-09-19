@@ -74,6 +74,122 @@
       "frozen_scoring_procedure": "9/19の全域(ホール平均差枚・勝率)を新体制9/1以降の日次分布の中の順位として記録する。"
     }
   ],
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20260919",
+    "hall_baseline_mean_diff": 125.2,
+    "hall_n_machines": 365,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 1,
+          "note": "『全機種仕掛けを中心とした全域強化』『その中の1機種はジャグラーシリーズからやりがち』。台数明示なしで最小の1。p_at_least_1=0.955で自明、的中に数えない。"
+        },
+        "observed_n_models": 5,
+        "candidate_models": 48,
+        "models": [
+          {
+            "machine_name": "スマスロ炎炎ノ消防隊2",
+            "score": 9965.5,
+            "n_machines": 5,
+            "mean_diff": 6840.0,
+            "age_days": 229
+          },
+          {
+            "machine_name": "モンスターハンターライズ",
+            "score": 2755.1,
+            "n_machines": 8,
+            "mean_diff": 2625.0,
+            "age_days": 626
+          },
+          {
+            "machine_name": "革命機ヴァルヴレイヴ2",
+            "score": 2198.2,
+            "n_machines": 7,
+            "mean_diff": 1628.6,
+            "age_days": 319
+          },
+          {
+            "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+            "score": 1903.4,
+            "n_machines": 9,
+            "mean_diff": 1966.7,
+            "age_days": 103
+          },
+          {
+            "machine_name": "青春ブタ野郎はバニーガール先輩の夢を見ない",
+            "score": 1840.0,
+            "n_machines": 3,
+            "mean_diff": 1400.0,
+            "age_days": 11
+          }
+        ],
+        "n_new_machines_over": 1,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "からくりサーカス2",
+          "note": "謎かけ（ドラマ→劇→からくりサーカス2？）。推測。5台、直近30日 0/30・mean -142。"
+        },
+        "score": 505.0,
+        "mean_diff": 680.0,
+        "gratio": 0.743,
+        "n_machines": 5,
+        "rank": 13,
+        "candidate_models": 48,
+        "age_days": 75,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ワールドダイスター",
+          "note": "謎かけ（ドラマ→劇→ワールドダイスター？）。推測。3台、直近30日 4/30(rate0.133)・rank2/48・mean -98.6。9/18速報で全系に挙がった機種で、2日連続。"
+        },
+        "score": -650.5,
+        "mean_diff": -533.3,
+        "gratio": 1.22,
+        "n_machines": 3,
+        "rank": 35,
+        "candidate_models": 48,
+        "age_days": 47,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "リコリス・リコイル",
+          "note": "謎かけ（イルカ→たきな→リコリコ？）。推測。12台、直近30日出現11日のみの新台で 1/11・mean -1266。新台の高回転バイアスに注意。"
+        },
+        "score": -3168.3,
+        "mean_diff": -2066.7,
+        "gratio": 1.533,
+        "n_machines": 12,
+        "rank": 47,
+        "candidate_models": 48,
+        "age_days": 11,
+        "age_bucket": "new",
+        "base_rate": 0.105,
+        "hit": false
+      }
+    ]
+  },
   "announce_digest": "aa349966b1799c65"
 }

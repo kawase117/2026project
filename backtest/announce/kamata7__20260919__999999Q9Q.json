@@ -54,6 +54,89 @@
       "frozen_scoring_procedure": "9/19のホール平均差枚・勝率を9/1以降の日次分布の順位として記録するだけ。"
     }
   ],
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20260919",
+    "hall_baseline_mean_diff": 286.2,
+    "hall_n_machines": 715,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 1,
+          "note": "『全仕掛けと大量の単品で全域強化』『多台数機種からの全仕掛け』。台数明示なし。p_at_least_1=1.0で自明、的中に数えない。"
+        },
+        "observed_n_models": 8,
+        "candidate_models": 65,
+        "models": [
+          {
+            "machine_name": "ウルトラミラクルジャグラー",
+            "score": 6149.9,
+            "n_machines": 5,
+            "mean_diff": 3500.0,
+            "age_days": 439
+          },
+          {
+            "machine_name": "虚構推理",
+            "score": 6008.5,
+            "n_machines": 3,
+            "mean_diff": 4866.7,
+            "age_days": 166
+          },
+          {
+            "machine_name": "スーパーブラックジャック",
+            "score": 5153.1,
+            "n_machines": 4,
+            "mean_diff": 5500.0,
+            "age_days": 439
+          },
+          {
+            "machine_name": "攻殻機動隊",
+            "score": 4291.2,
+            "n_machines": 3,
+            "mean_diff": 5066.7,
+            "age_days": 229
+          },
+          {
+            "machine_name": "とある魔術の禁書目録2",
+            "score": 3449.4,
+            "n_machines": 6,
+            "mean_diff": 3383.3,
+            "age_days": 47
+          },
+          {
+            "machine_name": "彼女、お借りします",
+            "score": 3392.5,
+            "n_machines": 4,
+            "mean_diff": 3150.0,
+            "age_days": 12
+          },
+          {
+            "machine_name": "SHAKE BONUS TRIGGER",
+            "score": 3282.4,
+            "n_machines": 3,
+            "mean_diff": 2066.7,
+            "age_days": 334
+          },
+          {
+            "machine_name": "スーパーリオエース2",
+            "score": 1970.6,
+            "n_machines": 4,
+            "mean_diff": 1750.0,
+            "age_days": 131
+          }
+        ],
+        "n_new_machines_over": 1,
+        "hit": true
+      }
+    ]
+  },
   "announce_digest": "f6843490bf8ca6c2"
 }

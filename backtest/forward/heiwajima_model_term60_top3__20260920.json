@@ -1,0 +1,134 @@
+{
+  "rule_id": "heiwajima_model_term60_top3",
+  "hall": "レイトギャップ平和島",
+  "freeze_hash": "80fab02ec0c44816",
+  "target_date": "20260920",
+  "data_asof": "20260919",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-07-22",
+    "2026-09-20"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +81 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "やじきた道中記参る！",
+      "score": 450.883455,
+      "history_rows": 58,
+      "machines": [
+        858,
+        859,
+        860,
+        861,
+        862
+      ]
+    },
+    {
+      "machine_name": "新鬼武者3",
+      "score": 349.030762,
+      "history_rows": 41,
+      "machines": [
+        898,
+        899,
+        900,
+        952
+      ]
+    },
+    {
+      "machine_name": "化物語",
+      "score": 328.841338,
+      "history_rows": 196,
+      "machines": [
+        929,
+        930,
+        931,
+        932
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 858,
+      "machine_name": "やじきた道中記参る！",
+      "score": 450.883455,
+      "history_days": 58
+    },
+    {
+      "machine_number": 859,
+      "machine_name": "やじきた道中記参る！",
+      "score": 450.883455,
+      "history_days": 58
+    },
+    {
+      "machine_number": 860,
+      "machine_name": "やじきた道中記参る！",
+      "score": 450.883455,
+      "history_days": 58
+    },
+    {
+      "machine_number": 861,
+      "machine_name": "やじきた道中記参る！",
+      "score": 450.883455,
+      "history_days": 58
+    },
+    {
+      "machine_number": 862,
+      "machine_name": "やじきた道中記参る！",
+      "score": 450.883455,
+      "history_days": 58
+    },
+    {
+      "machine_number": 898,
+      "machine_name": "新鬼武者3",
+      "score": 349.030762,
+      "history_days": 41
+    },
+    {
+      "machine_number": 899,
+      "machine_name": "新鬼武者3",
+      "score": 349.030762,
+      "history_days": 41
+    },
+    {
+      "machine_number": 900,
+      "machine_name": "新鬼武者3",
+      "score": 349.030762,
+      "history_days": 41
+    },
+    {
+      "machine_number": 952,
+      "machine_name": "新鬼武者3",
+      "score": 349.030762,
+      "history_days": 41
+    },
+    {
+      "machine_number": 929,
+      "machine_name": "化物語",
+      "score": 328.841338,
+      "history_days": 196
+    },
+    {
+      "machine_number": 930,
+      "machine_name": "化物語",
+      "score": 328.841338,
+      "history_days": 196
+    },
+    {
+      "machine_number": 931,
+      "machine_name": "化物語",
+      "score": 328.841338,
+      "history_days": 196
+    },
+    {
+      "machine_number": 932,
+      "machine_name": "化物語",
+      "score": 328.841338,
+      "history_days": 196
+    }
+  ],
+  "result": null,
+  "plan_digest": "70540dd5562ec804"
+}

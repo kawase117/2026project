@@ -1,0 +1,162 @@
+{
+  "rule_id": "mitoya_model_gratio_top2",
+  "hall": "みとや大森町店",
+  "freeze_hash": "a0f5b81a53a8e24b",
+  "target_date": "20260920",
+  "data_asof": "20260919",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-08-30",
+    "2026-09-20"
+  ],
+  "score": "hist_model_gratio_mean_diff",
+  "selection_unit": "machine_model",
+  "success_criterion": "フォワード20エントリー日を経過した時点で、指名機種全台の総和ベースedge（対ホール全体同日平均、diff_coins_normalized）の平均が正であり、95%CI(block7)下限が0を上回ること。満たさなければ破棄する。判定はフォワードテストのみで行い、バックテスト数値は採否根拠にしない。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "ディスクアップ ULTRAREMIX",
+      "score": 645.568999,
+      "history_rows": 21,
+      "machines": [
+        745
+      ]
+    },
+    {
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 474.020299,
+      "history_rows": 303,
+      "machines": [
+        624,
+        625,
+        626,
+        627,
+        628,
+        629,
+        630,
+        631,
+        632,
+        633,
+        634,
+        635,
+        636,
+        637,
+        638,
+        639,
+        640
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 745,
+      "machine_name": "ディスクアップ ULTRAREMIX",
+      "score": 645.568999,
+      "history_days": 21
+    },
+    {
+      "machine_number": 624,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 474.020299,
+      "history_days": 303
+    },
+    {
+      "machine_number": 625,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 474.020299,
+      "history_days": 303
+    },
+    {
+      "machine_number": 626,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 474.020299,
+      "history_days": 303
+    },
+    {
+      "machine_number": 627,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 474.020299,
+      "history_days": 303
+    },
+    {
+      "machine_number": 628,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 474.020299,
+      "history_days": 303
+    },
+    {
+      "machine_number": 629,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 474.020299,
+      "history_days": 303
+    },
+    {
+      "machine_number": 630,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 474.020299,
+      "history_days": 303
+    },
+    {
+      "machine_number": 631,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 474.020299,
+      "history_days": 303
+    },
+    {
+      "machine_number": 632,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 474.020299,
+      "history_days": 303
+    },
+    {
+      "machine_number": 633,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 474.020299,
+      "history_days": 303
+    },
+    {
+      "machine_number": 634,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 474.020299,
+      "history_days": 303
+    },
+    {
+      "machine_number": 635,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 474.020299,
+      "history_days": 303
+    },
+    {
+      "machine_number": 636,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 474.020299,
+      "history_days": 303
+    },
+    {
+      "machine_number": 637,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 474.020299,
+      "history_days": 303
+    },
+    {
+      "machine_number": 638,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 474.020299,
+      "history_days": 303
+    },
+    {
+      "machine_number": 639,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 474.020299,
+      "history_days": 303
+    },
+    {
+      "machine_number": 640,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 474.020299,
+      "history_days": 303
+    }
+  ],
+  "result": null,
+  "plan_digest": "eabe397403326ea5"
+}
