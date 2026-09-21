@@ -142,14 +142,18 @@ JUGGLER_FAMILY_SPECS = {
     # 出典: document/machine_master_research/machine_master.csv
     # （1geki.jp解析値）。設定3・4は元データ未掲載のため欠落させたまま扱う
     # （estimate_setting は settings dict のキーだけを見るので部分欠損でも動く）。
+    # 2026-09-21 ユーザー指示で、BB/RBを一撃の新ハナビのページ（/slot/s_shinhanabi/、
+    # 設定判別 /0/ も同値）の現在値に合わせた。以前は取得時点の旧値（設定2・5・6のRBと設定6のBB）。
+    # 出玉率(payout_rate)は旧値のまま（ページは完全攻略時の102.0/104.0/106.5/109.0%を載せる）。
     "HANABI_SHIN": {
         "family_name": "新ハナビ",
         "machine_keyword": "新ハナビ",
+        "source": "一撃(2026-09-21)",
         "settings": {
             1: {"rb_probability": 1 / 356.2, "bb_probability": 1 / 277.7, "payout_rate": 97.7},
-            2: {"rb_probability": 1 / 334.4, "bb_probability": 1 / 268.6, "payout_rate": 99.3},
-            5: {"rb_probability": 1 / 292.6, "bb_probability": 1 / 256.0, "payout_rate": 104.4},
-            6: {"rb_probability": 1 / 260.1, "bb_probability": 1 / 240.9, "payout_rate": 109.0},
+            2: {"rb_probability": 1 / 331.0, "bb_probability": 1 / 268.6, "payout_rate": 99.3},
+            5: {"rb_probability": 1 / 306.2, "bb_probability": 1 / 256.0, "payout_rate": 104.4},
+            6: {"rb_probability": 1 / 280.1, "bb_probability": 1 / 248.2, "payout_rate": 109.0},
         },
     },
     # 型式名「LB／スマスロサンダーVHA」の通り、site777の「LBサンダーV」と
@@ -208,6 +212,7 @@ JUGGLER_FAMILY_SPECS = {
     "HANABI_SUMASLO": {
         "family_name": "スマスロ ハナビ",
         "machine_keyword": "スマスロ ハナビ",
+        "source": "公式スペック表(ユーザー提供 2026-08-25、一撃 /slot/l_hanabi/ と一致)",
         "settings": {
             1: {"rb_probability": 1 / 394.8, "bb_probability": 1 / 297.9, "payout_rate": 98.6},
             2: {"rb_probability": 1 / 358.1, "bb_probability": 1 / 292.6, "payout_rate": 100.4},

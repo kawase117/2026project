@@ -164,7 +164,7 @@ def load_specs(master_csv=MASTER_CSV):
             "game_type": previous.get("game_type"),
             "settings": settings,
             "judgeable": True,
-            "source": "実機解析値(2026-07-06)",
+            "source": entry.get("source", "実機解析値(2026-07-06)"),
         }
     return specs
 
