@@ -1,0 +1,39 @@
+---
+id: spec-lookup-none-is-name-mismatch-not-unregistered
+trigger: "site777のブリーフや推定器で、BT・A+AT・ノーマル機（LBクレアの秘宝伝ボーナストリガーver.、ＳＬＯＴマッピー、LBタコスロ、LBサンダーV、異世界かるてっと）の設定推定が出ないとき。『スペックが未登録』『推定対象外』と言おうとするとき。backtest.bonus_specs judge が『一撃マスターに無い』と返したとき"
+confidence: 0.9
+domain: operational-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# 設定推定が空のときは「未登録」と断定しない。機種名の表記ゆれと、推定器の対象範囲の違いを先に疑う
+
+## 背景
+2026-09-20 楽園蒲田で、LBタコスロの設定推定がブリーフに出なかった。
+`setting_estimator.annotate_setting_estimates` が None を返したので「スペック未登録」と書いたが誤りだった。
+実際は次の2点だった。
+1. `scraper/site777/setting_estimator.py` は**ジャグラー系の家族スペック（`JUGGLER_FAMILY_SPECS`）しか持たない**。BT・A+ATなどは対象外で、None は「未登録」ではなく「対象外」。
+2. 全機種のスペックは `backtest/bonus_specs.py`（一撃マスター由来、現行142機種中140件）にあり、タコスロも登録されている。
+   ただし機種名の照合は表記に敏感で、サイト表記との違いで引けないものがある。
+   - クレア：サイト「LBクレアの秘宝伝ボーナストリガーver.」／マスター「クレアの秘宝伝 ～はじまりの扉と太陽の石～ ボーナストリガーver.」。完全名では引けず、**「クレアの秘宝伝」で引ける**。
+   - マッピー：サイト「ＳＬＯＴマッピー」（全角）／マスター「マッピー」。
+   - 戦国恋姫（マスターは「戦国†恋姫」）とアニマルスロット ドッチは、AT機で判別不可なので判定の対象外。ダンまち2は一撃マスターに無い。
+2026-09-20 時点の全117機種の照合では、判別可能機種で漏れていたのはクレアとマッピーの2機種だけだった。
+クレア3209は、この漏れの後で設定5以上82%（最終93%、差枚+4,429）と判明し、その日の最強の1台だった。
+
+## アクション
+1. 設定推定が空・None のときは、まず `backtest.bonus_specs judge "<機種名の核となるキーワード>" --games G --bb BB --rb RB` で引く。完全名で失敗したら、接頭辞（LB・L・スマスロ）・全角・「ver.」・サブタイトルを外して再検索する。
+2. 「一撃マスターに無い」と言う前に、`find_spec` が完全一致→長い部分一致（4文字以上）の順であることを踏まえ、キーワードを変えて2回以上試す。
+3. 全機種を一括判定するときは、`load_specs` と `find_spec` を機種ごとに呼び、spec無しの機種を一覧して、判別可能なものが漏れていないかを確認する。
+4. 判別不可（AT）と、spec無しは区別して報告する。
+5. 新ハナビなど小役の設定差は `bonus_specs.py` に無い。小役込みの判定は `document/machine_master_research/shinhanabi_koyaku_setting_diff.md` の表で手で行う。
+
+## 例
+NG: 「タコスロはスペックが未登録なので推定できません」
+OK: 「site777の推定器はジャグ系のみ。タコスロはbonus_specsにあるので judge で引いた。3212は設定5以上50%」
+
+## Relation
+- related:
+  - site777-setting-estimation-and-powershell-encoding
+---
