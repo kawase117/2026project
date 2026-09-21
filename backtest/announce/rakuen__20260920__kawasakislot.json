@@ -84,6 +84,175 @@
       "frozen_scoring_procedure": "機種平均差枚が +1800 を超え、かつ稼働台の8割以上が +1000 を超える機種を『全台系』候補として記録するのみ。hit 判定はしない。"
     }
   ],
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20260920",
+    "hall_baseline_mean_diff": -40.2,
+    "hall_n_machines": 587,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 3,
+      "machines_hi": [],
+      "machines_lo": [
+        "ソードアート・オンラインII",
+        "沖ドキ!BLACK"
+      ],
+      "bounds": [
+        -5095,
+        15477
+      ]
+    },
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 1,
+          "note": "『全⑥への昇格機種あり』。台数の明示なしで最小の1。p_at_least_1=0.954 で hit はほぼ自明、的中として数えない。"
+        },
+        "observed_n_models": 5,
+        "candidate_models": 57,
+        "models": [
+          {
+            "machine_name": "バンドリ！",
+            "score": 5178.0,
+            "n_machines": 4,
+            "mean_diff": 4250.2,
+            "age_days": 627
+          },
+          {
+            "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+            "score": 4611.9,
+            "n_machines": 26,
+            "mean_diff": 2284.3,
+            "age_days": 202
+          },
+          {
+            "machine_name": "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION",
+            "score": 3032.4,
+            "n_machines": 4,
+            "mean_diff": 2060.0,
+            "age_days": 627
+          },
+          {
+            "machine_name": "青春ブタ野郎はバニーガール先輩の夢を見ない",
+            "score": 2835.1,
+            "n_machines": 7,
+            "mean_diff": 2088.9,
+            "age_days": 13
+          },
+          {
+            "machine_name": "うみねこのなく頃に2",
+            "score": 2544.6,
+            "n_machines": 4,
+            "mean_diff": 1833.8,
+            "age_days": 230
+          }
+        ],
+        "n_new_machines_over": 1,
+        "hit": true
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+          "ratio": 2,
+          "note": "『カバネリが1/2以上⑤⑥』（先バレ。26番以内の抽選番号なら迷わずカバネリ、新館20台・本館6台）。26台。直近30日の+1800超え率は0.333で、もともと超えやすい機種。過去のハーフテン4回の台内比率は基準以下で、1/2に届いていない（prior_check_note (2)）。"
+        },
+        "n_machines": 26,
+        "ratio": 2,
+        "top_k": 13,
+        "model_top_k_mean_diff": 5271.5,
+        "hall_top_quantile_mean_diff": 1286.8,
+        "excess_vs_hall_quantile": 3984.7,
+        "model_mean_diff": 2284.3,
+        "n_over_hall_quantile": 19,
+        "hit": true,
+        "model_named_score": 4611.9,
+        "model_named_rank": 2
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "化物語",
+          "ratio": 2,
+          "note": "『高頻度で1/2以上になってる機種』の列挙: 化物語（5/20・7/20・8/20）。当日の宣言ではなく過去頻度のヒント。差枚では、ニューキング・炎炎2・モンハンは過去のハーフテン日に基準を超え、化物語は基準並み（prior_check_note (2)）。"
+        },
+        "n_machines": 9,
+        "ratio": 2,
+        "top_k": 5,
+        "model_top_k_mean_diff": 2200.4,
+        "hall_top_quantile_mean_diff": 1492.7,
+        "excess_vs_hall_quantile": 707.7,
+        "model_mean_diff": 492.6,
+        "n_over_hall_quantile": 5,
+        "hit": true,
+        "model_named_score": 930.4,
+        "model_named_rank": 9
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "ニューキングハナハナV‐30",
+          "ratio": 2,
+          "note": "『高頻度で1/2以上になってる機種』の列挙: ニューキングハナハナ（5/20・7/20・8/20）。当日の宣言ではなく過去頻度のヒント。差枚では、ニューキング・炎炎2・モンハンは過去のハーフテン日に基準を超え、化物語は基準並み（prior_check_note (2)）。"
+        },
+        "n_machines": 8,
+        "ratio": 2,
+        "top_k": 4,
+        "model_top_k_mean_diff": 36.0,
+        "hall_top_quantile_mean_diff": 1510.5,
+        "excess_vs_hall_quantile": -1474.5,
+        "model_mean_diff": -707.9,
+        "n_over_hall_quantile": 2,
+        "hit": false,
+        "model_named_score": -825.6,
+        "model_named_rank": 47
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "スマスロ炎炎ノ消防隊2",
+          "ratio": 2,
+          "note": "『高頻度で1/2以上になってる機種』の列挙: 炎炎ノ消防隊2（6/20・7/20・8/20）。当日の宣言ではなく過去頻度のヒント。差枚では、ニューキング・炎炎2・モンハンは過去のハーフテン日に基準を超え、化物語は基準並み（prior_check_note (2)）。"
+        },
+        "n_machines": 6,
+        "ratio": 2,
+        "top_k": 3,
+        "model_top_k_mean_diff": 238.7,
+        "hall_top_quantile_mean_diff": 1501.3,
+        "excess_vs_hall_quantile": -1262.6,
+        "model_mean_diff": -1126.5,
+        "n_over_hall_quantile": 1,
+        "hit": false,
+        "model_named_score": -1108.8,
+        "model_named_rank": 50
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "モンスターハンターライズ",
+          "ratio": 2,
+          "note": "『高頻度で1/2以上になってる機種』の列挙: モンハンライズ（5/20・7/20・8/20）。当日の宣言ではなく過去頻度のヒント。差枚では、ニューキング・炎炎2・モンハンは過去のハーフテン日に基準を超え、化物語は基準並み（prior_check_note (2)）。"
+        },
+        "n_machines": 9,
+        "ratio": 2,
+        "top_k": 5,
+        "model_top_k_mean_diff": 2638.6,
+        "hall_top_quantile_mean_diff": 1485.2,
+        "excess_vs_hall_quantile": 1153.4,
+        "model_mean_diff": 556.0,
+        "n_over_hall_quantile": 5,
+        "hit": true,
+        "model_named_score": 902.6,
+        "model_named_rank": 10
+      }
+    ]
+  },
   "announce_digest": "5310e4649278881f"
 }
