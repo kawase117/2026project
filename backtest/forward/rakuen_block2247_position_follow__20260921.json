@@ -2,12 +2,12 @@
   "rule_id": "rakuen_block2247_position_follow",
   "hall": "楽園蒲田店",
   "freeze_hash": "4c1fc604baa51551",
-  "target_date": "20260920",
-  "data_asof": "20260919",
+  "target_date": "20260921",
+  "data_asof": "20260920",
   "data_lag_days": 1,
   "lookback_window": [
-    "2026-08-21",
-    "2026-09-20"
+    "2026-08-22",
+    "2026-09-21"
   ],
   "score": "hist_mean_diff",
   "selection_unit": "machine",
@@ -17,13 +17,13 @@
     {
       "machine_number": 2249,
       "machine_name": "バンドリ！",
-      "score": 1674.307692,
-      "history_days": 13
+      "score": 2299.642857,
+      "history_days": 14
     },
     {
       "machine_number": 2248,
       "machine_name": "バンドリ！",
-      "score": 1396.315789,
+      "score": 1749.684211,
       "history_days": 19
     },
     {
@@ -35,45 +35,10 @@
     {
       "machine_number": 2247,
       "machine_name": "バンドリ！",
-      "score": -357.857143,
-      "history_days": 21
+      "score": -391.363636,
+      "history_days": 22
     }
   ],
-  "result": {
-    "scored_with_hash": "4c1fc604baa51551",
-    "day_baseline": -40.2,
-    "universe_size": 587,
-    "picks_realized": [
-      {
-        "machine_number": 2247,
-        "games": 1157.0,
-        "diff": -1095.0,
-        "edge": -1054.8279386712095
-      },
-      {
-        "machine_number": 2248,
-        "games": 9080.0,
-        "diff": 8286.0,
-        "edge": 8326.17206132879
-      },
-      {
-        "machine_number": 2249,
-        "games": 8512.0,
-        "diff": 10429.0,
-        "edge": 10469.17206132879
-      },
-      {
-        "machine_number": 2250,
-        "games": 721.0,
-        "diff": -619.0,
-        "edge": -578.8279386712095
-      }
-    ],
-    "mean_diff_per_pick": 4250.2,
-    "mean_edge_per_pick": 4290.4,
-    "missing_machines": [],
-    "rb_perspective": null,
-    "model_perspective": null
-  },
-  "plan_digest": "57e05a83314666ef"
+  "result": null,
+  "plan_digest": "6817cee6e39d39e4"
 }

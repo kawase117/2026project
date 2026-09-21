@@ -2,12 +2,12 @@
   "rule_id": "zassiki_jug_fixed_top3",
   "hall": "ザ-シティ-ベルシティ雑色店",
   "freeze_hash": "a0b246e660ee0d4e",
-  "target_date": "20260920",
-  "data_asof": "20260919",
+  "target_date": "20260921",
+  "data_asof": "20260920",
   "data_lag_days": 1,
   "lookback_window": [
-    "2026-03-24",
-    "2026-09-20"
+    "2026-03-25",
+    "2026-09-21"
   ],
   "score": "hist_mean_diff",
   "selection_unit": "machine",
@@ -17,51 +17,22 @@
     {
       "machine_number": 780,
       "machine_name": "ゴーゴージャグラー3",
-      "score": 293.387597,
-      "history_days": 129
+      "score": 309.023077,
+      "history_days": 130
     },
     {
       "machine_number": 787,
       "machine_name": "マイジャグラーV",
-      "score": 238.03681,
-      "history_days": 163
+      "score": 231.975309,
+      "history_days": 162
     },
     {
       "machine_number": 772,
       "machine_name": "ゴーゴージャグラー3",
-      "score": 216.564103,
+      "score": 206.596154,
       "history_days": 156
     }
   ],
-  "result": {
-    "scored_with_hash": "a0b246e660ee0d4e",
-    "day_baseline": -58.2,
-    "universe_size": 47,
-    "picks_realized": [
-      {
-        "machine_number": 772,
-        "games": 6203.0,
-        "diff": -1122.0,
-        "edge": -1063.787234042553
-      },
-      {
-        "machine_number": 780,
-        "games": 7011.0,
-        "diff": 2326.0,
-        "edge": 2384.2127659574467
-      },
-      {
-        "machine_number": 787,
-        "games": 983.0,
-        "diff": -770.0,
-        "edge": -711.7872340425532
-      }
-    ],
-    "mean_diff_per_pick": 144.7,
-    "mean_edge_per_pick": 202.9,
-    "missing_machines": [],
-    "rb_perspective": null,
-    "model_perspective": null
-  },
-  "plan_digest": "7cbe9023e3ad7891"
+  "result": null,
+  "plan_digest": "c59dbfd4e45eba28"
 }

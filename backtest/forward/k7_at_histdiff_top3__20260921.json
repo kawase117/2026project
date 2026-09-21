@@ -2,12 +2,12 @@
   "rule_id": "k7_at_histdiff_top3",
   "hall": "マルハンメガシティ2000-蒲田7",
   "freeze_hash": "71526fa786ee4e6e",
-  "target_date": "20260920",
-  "data_asof": "20260919",
+  "target_date": "20260921",
+  "data_asof": "20260920",
   "data_lag_days": 1,
   "lookback_window": [
-    "2026-08-21",
-    "2026-09-20"
+    "2026-08-22",
+    "2026-09-21"
   ],
   "score": "hist_mean_diff",
   "selection_unit": "machine",
@@ -17,51 +17,22 @@
     {
       "machine_number": 2026,
       "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
-      "score": 3718.518519,
-      "history_days": 27
+      "score": 3592.857143,
+      "history_days": 28
     },
     {
       "machine_number": 2099,
       "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
-      "score": 3429.411765,
-      "history_days": 17
+      "score": 3483.333333,
+      "history_days": 18
     },
     {
       "machine_number": 3095,
       "machine_name": "革命機ヴァルヴレイヴ2",
-      "score": 3027.272727,
-      "history_days": 11
+      "score": 2575.0,
+      "history_days": 12
     }
   ],
-  "result": {
-    "scored_with_hash": "71526fa786ee4e6e",
-    "day_baseline": -112.3,
-    "universe_size": 479,
-    "picks_realized": [
-      {
-        "machine_number": 2026,
-        "games": 5815.0,
-        "diff": 200.0,
-        "edge": 312.3173277661796
-      },
-      {
-        "machine_number": 2099,
-        "games": 4166.0,
-        "diff": 4400.0,
-        "edge": 4512.31732776618
-      },
-      {
-        "machine_number": 3095,
-        "games": 3140.0,
-        "diff": -2400.0,
-        "edge": -2287.6826722338205
-      }
-    ],
-    "mean_diff_per_pick": 733.3,
-    "mean_edge_per_pick": 845.7,
-    "missing_machines": [],
-    "rb_perspective": null,
-    "model_perspective": null
-  },
-  "plan_digest": "74ede93c0b1af7c6"
+  "result": null,
+  "plan_digest": "a2e9ed550551eaaa"
 }

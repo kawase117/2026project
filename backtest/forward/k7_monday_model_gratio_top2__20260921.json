@@ -1,0 +1,295 @@
+{
+  "rule_id": "k7_monday_model_gratio_top2",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "freeze_hash": "678fec8decdec048",
+  "target_date": "20260921",
+  "data_asof": "20260920",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-08-22",
+    "2026-09-21"
+  ],
+  "score": "hist_model_gratio_mean_diff",
+  "selection_unit": "machine_model",
+  "success_criterion": "フォワードで月曜20エントリー日を経過した時点で、picks の平均差枚が同日ホール平均に対して +300枚/台 以上、かつ 95%CI 下限 > 0 であること。満たさなければ破棄し、蒲田7の曜日仕掛けを機種粒度で狙う路線はこの1本で打ち止めとする。バックテストの結果は採否根拠にしない（in-sample。曜日の指定は instinct 由来で事後発見ではないが、score と top_n の組み合わせは今回初めて決めたので in-sample 評価は甘い方向に歪む）。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 846.543142,
+      "history_rows": 591,
+      "machines": [
+        2077,
+        2078,
+        2079,
+        2080,
+        2081,
+        2082,
+        2083,
+        2084,
+        2085,
+        2086,
+        2087,
+        2088,
+        2089,
+        2090,
+        2091,
+        2092,
+        2093,
+        2094,
+        2095,
+        2096,
+        2097,
+        2098,
+        2099,
+        2100,
+        2101
+      ]
+    },
+    {
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 518.011237,
+      "history_rows": 144,
+      "machines": [
+        2269,
+        2270,
+        2271,
+        2272,
+        2273,
+        2274,
+        2275,
+        2276,
+        2277,
+        2278,
+        2279,
+        2280
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 2077,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 846.543142,
+      "history_days": 591
+    },
+    {
+      "machine_number": 2078,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 846.543142,
+      "history_days": 591
+    },
+    {
+      "machine_number": 2079,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 846.543142,
+      "history_days": 591
+    },
+    {
+      "machine_number": 2080,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 846.543142,
+      "history_days": 591
+    },
+    {
+      "machine_number": 2081,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 846.543142,
+      "history_days": 591
+    },
+    {
+      "machine_number": 2082,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 846.543142,
+      "history_days": 591
+    },
+    {
+      "machine_number": 2083,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 846.543142,
+      "history_days": 591
+    },
+    {
+      "machine_number": 2084,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 846.543142,
+      "history_days": 591
+    },
+    {
+      "machine_number": 2085,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 846.543142,
+      "history_days": 591
+    },
+    {
+      "machine_number": 2086,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 846.543142,
+      "history_days": 591
+    },
+    {
+      "machine_number": 2087,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 846.543142,
+      "history_days": 591
+    },
+    {
+      "machine_number": 2088,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 846.543142,
+      "history_days": 591
+    },
+    {
+      "machine_number": 2089,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 846.543142,
+      "history_days": 591
+    },
+    {
+      "machine_number": 2090,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 846.543142,
+      "history_days": 591
+    },
+    {
+      "machine_number": 2091,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 846.543142,
+      "history_days": 591
+    },
+    {
+      "machine_number": 2092,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 846.543142,
+      "history_days": 591
+    },
+    {
+      "machine_number": 2093,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 846.543142,
+      "history_days": 591
+    },
+    {
+      "machine_number": 2094,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 846.543142,
+      "history_days": 591
+    },
+    {
+      "machine_number": 2095,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 846.543142,
+      "history_days": 591
+    },
+    {
+      "machine_number": 2096,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 846.543142,
+      "history_days": 591
+    },
+    {
+      "machine_number": 2097,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 846.543142,
+      "history_days": 591
+    },
+    {
+      "machine_number": 2098,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 846.543142,
+      "history_days": 591
+    },
+    {
+      "machine_number": 2099,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 846.543142,
+      "history_days": 591
+    },
+    {
+      "machine_number": 2100,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 846.543142,
+      "history_days": 591
+    },
+    {
+      "machine_number": 2101,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 846.543142,
+      "history_days": 591
+    },
+    {
+      "machine_number": 2269,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 518.011237,
+      "history_days": 144
+    },
+    {
+      "machine_number": 2270,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 518.011237,
+      "history_days": 144
+    },
+    {
+      "machine_number": 2271,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 518.011237,
+      "history_days": 144
+    },
+    {
+      "machine_number": 2272,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 518.011237,
+      "history_days": 144
+    },
+    {
+      "machine_number": 2273,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 518.011237,
+      "history_days": 144
+    },
+    {
+      "machine_number": 2274,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 518.011237,
+      "history_days": 144
+    },
+    {
+      "machine_number": 2275,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 518.011237,
+      "history_days": 144
+    },
+    {
+      "machine_number": 2276,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 518.011237,
+      "history_days": 144
+    },
+    {
+      "machine_number": 2277,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 518.011237,
+      "history_days": 144
+    },
+    {
+      "machine_number": 2278,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 518.011237,
+      "history_days": 144
+    },
+    {
+      "machine_number": 2279,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 518.011237,
+      "history_days": 144
+    },
+    {
+      "machine_number": 2280,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 518.011237,
+      "history_days": 144
+    }
+  ],
+  "result": null,
+  "plan_digest": "3b39fddcf465c781"
+}

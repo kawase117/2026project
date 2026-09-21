@@ -1,0 +1,253 @@
+{
+  "rule_id": "kamata1_model_term60_top3",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "freeze_hash": "bb185b622fae47b2",
+  "target_date": "20260921",
+  "data_asof": "20260920",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-07-23",
+    "2026-09-21"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +187 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 1285.020136,
+      "history_rows": 60,
+      "machines": [
+        2020,
+        2416,
+        2417,
+        2418,
+        2419
+      ]
+    },
+    {
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 260.278113,
+      "history_rows": 876,
+      "machines": [
+        2044,
+        2045,
+        2046,
+        2047,
+        2048,
+        2049,
+        2050,
+        2051,
+        2052,
+        2053,
+        2054,
+        2055,
+        2056,
+        2057,
+        2058,
+        2059
+      ]
+    },
+    {
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "score": 202.258249,
+      "history_rows": 517,
+      "machines": [
+        2001,
+        2002,
+        2003,
+        2004,
+        2005,
+        2006,
+        2007,
+        2008,
+        2009
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 2020,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 1285.020136,
+      "history_days": 60
+    },
+    {
+      "machine_number": 2416,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 1285.020136,
+      "history_days": 60
+    },
+    {
+      "machine_number": 2417,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 1285.020136,
+      "history_days": 60
+    },
+    {
+      "machine_number": 2418,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 1285.020136,
+      "history_days": 60
+    },
+    {
+      "machine_number": 2419,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 1285.020136,
+      "history_days": 60
+    },
+    {
+      "machine_number": 2044,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 260.278113,
+      "history_days": 876
+    },
+    {
+      "machine_number": 2045,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 260.278113,
+      "history_days": 876
+    },
+    {
+      "machine_number": 2046,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 260.278113,
+      "history_days": 876
+    },
+    {
+      "machine_number": 2047,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 260.278113,
+      "history_days": 876
+    },
+    {
+      "machine_number": 2048,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 260.278113,
+      "history_days": 876
+    },
+    {
+      "machine_number": 2049,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 260.278113,
+      "history_days": 876
+    },
+    {
+      "machine_number": 2050,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 260.278113,
+      "history_days": 876
+    },
+    {
+      "machine_number": 2051,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 260.278113,
+      "history_days": 876
+    },
+    {
+      "machine_number": 2052,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 260.278113,
+      "history_days": 876
+    },
+    {
+      "machine_number": 2053,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 260.278113,
+      "history_days": 876
+    },
+    {
+      "machine_number": 2054,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 260.278113,
+      "history_days": 876
+    },
+    {
+      "machine_number": 2055,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 260.278113,
+      "history_days": 876
+    },
+    {
+      "machine_number": 2056,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 260.278113,
+      "history_days": 876
+    },
+    {
+      "machine_number": 2057,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 260.278113,
+      "history_days": 876
+    },
+    {
+      "machine_number": 2058,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 260.278113,
+      "history_days": 876
+    },
+    {
+      "machine_number": 2059,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 260.278113,
+      "history_days": 876
+    },
+    {
+      "machine_number": 2001,
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "score": 202.258249,
+      "history_days": 517
+    },
+    {
+      "machine_number": 2002,
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "score": 202.258249,
+      "history_days": 517
+    },
+    {
+      "machine_number": 2003,
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "score": 202.258249,
+      "history_days": 517
+    },
+    {
+      "machine_number": 2004,
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "score": 202.258249,
+      "history_days": 517
+    },
+    {
+      "machine_number": 2005,
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "score": 202.258249,
+      "history_days": 517
+    },
+    {
+      "machine_number": 2006,
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "score": 202.258249,
+      "history_days": 517
+    },
+    {
+      "machine_number": 2007,
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "score": 202.258249,
+      "history_days": 517
+    },
+    {
+      "machine_number": 2008,
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "score": 202.258249,
+      "history_days": 517
+    },
+    {
+      "machine_number": 2009,
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "score": 202.258249,
+      "history_days": 517
+    }
+  ],
+  "result": null,
+  "plan_digest": "d8fc0a1cae71f5fe"
+}
