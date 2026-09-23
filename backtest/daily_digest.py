@@ -29,12 +29,9 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-import pandas as pd
-
 BASE_DIR = Path(__file__).resolve().parents[1]
 MONITOR_DIR = BASE_DIR / "scraper" / "twitter_monitor"
 DB_DIR = BASE_DIR / "db"
-HEATMAP_DIR = BASE_DIR / "Heatmap"
 
 if str(MONITOR_DIR) not in sys.path:
     sys.path.insert(0, str(MONITOR_DIR))
@@ -73,30 +70,17 @@ NEW_MACHINE_MIN_DAYS = 7
 # 高稼働軸の層別に使う直近日数（当日を含む）
 TRAFFIC_LOOKBACK_DAYS = 30
 
-# 列軸: 台番号の連番（角番・並び）とは別に、座標の同一X値（floor単位）で束ねた
-# 「列」。X=1が複数のsectionをまたぐ（蒲田7 2F実測: 2001-2010/2115-2128/2129-2142の
-# 3セクションにまたがる）ことを2026-09-24に確認済み。蒲田7の曜日別知見
-# （火=角番/水=末尾/木=ニブイチ/金=列1台/土=3台並び/月=列全体/日=機種1台）の
-# 「列」はこの意味。
+# 列軸: machine_layout_history.section（"2001-2010"のような台番号-台番号形式の
+# 物理島の識別子）そのものを1単位として集計する。角番（section内の順位）・並び
+# （section内の連番サブブロック）とは異なり、島全体を1つの塊として見る軸。
+# 蒲田7の曜日別知見（火=角番/水=末尾/木=ニブイチ/金=列1台/土=3台並び/
+# 月=列全体/日=機種1台）の「列」はこの意味（2026-09-24 ユーザー訂正）。
 #
-# ⚠️ 蒲田1は対象外: database/CLAUDE.md に実測記録あり
-# 「蒲田1=x,yが台番号に沿った対角線状（座標重複0・30セクション中14が完全対角）で
-# 合成座標の疑いが濃厚。座標ベースの位置検証は不可（rank側を使うこと）」。
-# 座標を信用できないホールで列軸を出すと、実在しないパターンを報告しかねない。
-ROW_AXIS_COORD_FILES = {
-    "楽園蒲田店": (
-        "honkan1F_floor_coordinates_rakuen.csv",
-        "honkan2F_floor_coordinates_rakuen.csv",
-        "honkan3F_floor_coordinates_rakuen.csv",
-        "shinkan1F_floor_coordinates_rakuen.csv",
-        "shinkan2F_floor_coordinates_rakuen.csv",
-    ),
-    "マルハンメガシティ2000-蒲田7": (
-        "2F_floor_coordinates_kamata7.csv",
-        "3F_floor_coordinates_kamata7.csv",
-    ),
-}
-ROW_AXIS_MIN_COLUMN_SIZE = 2
+# 座標X値ベースの実装だった旧版は誤りだった（座標は蒲田1で合成の疑いがあり
+# 使えないうえ、そもそも「列」の定義がsectionではなかった）。section は
+# machine_layout_history から取得するため、座標の信頼性問題を回避でき、
+# 3ホール全てで使える。
+ROW_AXIS_MIN_SECTION_SIZE = 2
 ROW_AXIS_TOP_N = 10
 NORMAL_KEYWORDS = ("ジャグラー", "ハナハナ", "ハナビ")
 
@@ -538,61 +522,38 @@ def _rb_settings_axis(connection: sqlite3.Connection, target_date: str, excluded
     return {"coverage_pct": coverage_pct, "machines": out}
 
 
-def _row_axis(connection: sqlite3.Connection, hall: str, target_date: str, hall_avg_games: float | None) -> dict:
-    coord_files = ROW_AXIS_COORD_FILES.get(hall)
-    if not coord_files:
-        return {
-            "applicable": False,
-            "note": "座標データが信頼できないため対象外（蒲田1は座標が台番号に沿った対角線状で合成の疑いがある。database/CLAUDE.md参照）",
-        }
-
-    frames = []
-    for filename in coord_files:
-        path = HEATMAP_DIR / filename
-        if not path.exists():
-            continue
-        raw = pd.read_csv(path, dtype=str)
-        raw = raw[raw["hall_name"] == hall]
-        if raw.empty:
-            continue
-        frames.append(raw[["floor", "machine_number", "X", "Y"]])
-    if not frames:
-        return {"applicable": False, "note": "座標CSVが見つからない"}
-
-    coords = pd.concat(frames, ignore_index=True)
-    coords["machine_number"] = pd.to_numeric(coords["machine_number"], errors="coerce")
-    coords["X"] = pd.to_numeric(coords["X"], errors="coerce")
-    coords = coords.dropna(subset=["machine_number", "X"])
-    coords["machine_number"] = coords["machine_number"].astype(int)
-    coords["X"] = coords["X"].astype(int)
-
+def _row_axis(connection: sqlite3.Connection, target_date: str, hall_avg_games: float | None) -> dict:
     rows = connection.execute(
-        "SELECT machine_number, diff_coins_normalized, games_normalized FROM machine_detailed_results "
-        "WHERE date = ? AND games_normalized > 0",
+        "SELECT l.section, m.diff_coins_normalized, m.games_normalized "
+        "FROM machine_detailed_results m JOIN machine_layout_history l "
+        "  ON l.machine_number = m.machine_number "
+        " AND m.date >= l.valid_from AND (l.valid_to IS NULL OR m.date <= l.valid_to) "
+        "WHERE m.date = ? AND m.games_normalized > 0 AND l.section IS NOT NULL",
         (target_date,),
     ).fetchall()
     if not rows:
-        return {"applicable": False, "note": "対象日のデータが無い"}
-    day = pd.DataFrame(rows, columns=["machine_number", "diff", "games"])
-    merged = day.merge(coords, on="machine_number", how="inner")
-    if merged.empty:
-        return {"applicable": False, "note": "座標と当日データが一件も一致しなかった"}
+        return {"applicable": False, "note": "レイアウトデータ不足、または対象日に十分な台数が無い"}
+
+    groups: dict[str, list[tuple[float, float]]] = defaultdict(list)
+    for section, diff, games in rows:
+        groups[section].append((diff, games))
 
     out = []
-    for (floor, x), group in merged.groupby(["floor", "X"]):
-        if len(group) < ROW_AXIS_MIN_COLUMN_SIZE:
+    for section, values in groups.items():
+        if len(values) < ROW_AXIS_MIN_SECTION_SIZE:
             continue
-        mean_diff = float(group["diff"].mean())
-        mean_games = float(group["games"].mean())
-        top_diff = float(group["diff"].max())
+        diffs = [v[0] for v in values]
+        games_list = [v[1] for v in values]
+        mean_diff = sum(diffs) / len(diffs)
+        mean_games = sum(games_list) / len(games_list)
+        top_diff = max(diffs)
         out.append(
             {
-                "floor": str(floor),
-                "x": int(x),
-                "n": int(len(group)),
+                "section": section,
+                "n": len(values),
                 "mean_diff": round(mean_diff, 1),
                 "games_ratio": round(mean_games / hall_avg_games, 3) if hall_avg_games else None,
-                # 1に近いほど列全体が均等に高い（月=列全体型）、大きいほど1台だけが
+                # 1に近いほど列（島）全体が均等に高い（月=列全体型）、大きいほど1台だけが
                 # 突出している（金=列1台型）。mean_diff<=0の列は比率が意味を持たないので出さない。
                 "top_single_ratio": round(top_diff / mean_diff, 2) if mean_diff > 0 else None,
             }
@@ -602,9 +563,9 @@ def _row_axis(connection: sqlite3.Connection, hall: str, target_date: str, hall_
         "applicable": True,
         "columns": out[:ROW_AXIS_TOP_N],
         "note": (
-            "「列」は台番号の並びではなく座標X値（floor単位）で束ねた集合で、複数セクションを"
-            "またぐことがある。top_single_ratioが1に近いほど列全体型（蒲田7曜日知見の月）、"
-            "大きいほど列1台型（同・金）に近い。"
+            "「列」はmachine_layout_history.sectionの島単位。角番（島内の順位）・並び"
+            "（島内の連番サブブロック）とは異なり島全体を1塊として見る。top_single_ratioが"
+            "1に近いほど列全体型（蒲田7曜日知見の月）、大きいほど列1台型（同・金）に近い。"
         ),
     }
 
@@ -659,7 +620,7 @@ def build_hall_review(hall: str, target_date: str, generated_at: datetime | None
                 "machine": _machine_axis(hall, target_date, set(excluded_new_machines)),
                 "kakuban": _kakuban_axis(connection, hall, target_date, hall_avg_games),
                 "last_digit": _last_digit_axis(connection, target_date, hall_avg_games),
-                "row": _row_axis(connection, hall, target_date, hall_avg_games),
+                "row": _row_axis(connection, target_date, hall_avg_games),
                 "rb_settings": _rb_settings_axis(connection, target_date, set(excluded_new_machines)),
             },
         }
@@ -810,14 +771,14 @@ def render_hall_review_html(review: dict) -> str:
     row_axis = axes.get("row", {})
     if row_axis.get("applicable"):
         row_rows = "".join(
-            f"<tr><td>{_html_escape(c['floor'])} / X={c['x']}</td>"
+            f"<tr><td>{_html_escape(c['section'])}</td>"
             f"<td class='{_num_class(c['mean_diff'])}'>{_fmt_num(c['mean_diff'])}枚</td>"
             f"<td>{c['games_ratio']}</td><td>{c['n']}台</td>"
             f"<td>{c['top_single_ratio'] if c['top_single_ratio'] is not None else '-'}</td></tr>"
             for c in row_axis.get("columns", [])
         )
         row_html = (
-            f"<table><tr><th>列（フロア/X）</th><th>平均差枚</th><th>回転数比</th><th>台数</th>"
+            f"<table><tr><th>列（section）</th><th>平均差枚</th><th>回転数比</th><th>台数</th>"
             f"<th>突出比(1=列全体型/高いほど列1台型)</th></tr>{row_rows}</table>"
             f"<p class='note'>{_html_escape(row_axis.get('note'))}</p>"
         )
