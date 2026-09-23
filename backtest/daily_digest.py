@@ -18,12 +18,13 @@ import json
 import sqlite3
 import sys
 from collections import defaultdict
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 MONITOR_DIR = BASE_DIR / "scraper" / "twitter_monitor"
+DB_DIR = BASE_DIR / "db"
 
 if str(MONITOR_DIR) not in sys.path:
     sys.path.insert(0, str(MONITOR_DIR))
@@ -31,6 +32,11 @@ if str(MONITOR_DIR) not in sys.path:
 from run_daily import HALL_KEYWORDS, is_forecast, mention_strength, target_date_of  # noqa: E402
 
 from backtest.announce import db_max_date  # noqa: E402
+from backtest.bonus_specs import find_spec, load_specs, posterior, MIN_GAMES_FOR_JUDGEMENT  # noqa: E402
+from backtest.event_days import active as event_days_active, load as event_days_load  # noqa: E402
+from backtest.model_standing import standing  # noqa: E402
+from backtest.narabi import find_blocks, load_day  # noqa: E402
+from database import analysis_store  # noqa: E402
 
 
 JST = ZoneInfo("Asia/Tokyo")
@@ -38,6 +44,25 @@ STATE_DB = MONITOR_DIR / "state.db"
 LEDGER_PATH = BASE_DIR / "backtest" / "announce" / "LEDGER.jsonl"
 ANNOUNCE_DIR = BASE_DIR / "backtest" / "announce"
 WATCH_DIR = BASE_DIR / "backtest" / "daily_digest" / "watches"
+REVIEW_DIR = BASE_DIR / "backtest" / "daily_digest" / "reviews"
+
+# hall-review はフェーズ2として、machine_layout_history が整備されている
+# 3ホールに限定する（database/CLAUDE.md: 雑色ほか5ホールは machine_layout 自体が
+# 空。角番・並び軸がそもそも計算できない）。残り6ホールへの展開はフェーズ3。
+HALL_REVIEW_HALLS = (
+    "楽園蒲田店",
+    "マルハンメガシティ2000-蒲田1",
+    "マルハンメガシティ2000-蒲田7",
+)
+# 全台設定6の特殊日。この日は軸評価そのものが無意味なのでスキップする。
+ALL_SETTING6_DATES = {
+    "マルハンメガシティ2000-蒲田7": {"20260707"},
+}
+# 新台は設定不問で高回転するため、初出からこの日数未満は machine/rb_settings 軸から除外する
+NEW_MACHINE_MIN_DAYS = 7
+# 高稼働軸の層別に使う直近日数（当日を含む）
+TRAFFIC_LOOKBACK_DAYS = 30
+NORMAL_KEYWORDS = ("ジャグラー", "ハナハナ", "ハナビ")
 
 
 def _now_jst(now: datetime | None = None) -> datetime:
@@ -225,6 +250,306 @@ def build_digest(run_date: date, generated_at: datetime | None = None) -> dict:
     }
 
 
+def _shift(day_text: str, delta_days: int) -> str:
+    return (datetime.strptime(day_text, "%Y%m%d") + timedelta(days=delta_days)).strftime("%Y%m%d")
+
+
+def _ro_hall(hall: str) -> sqlite3.Connection:
+    path = DB_DIR / f"{hall}.db"
+    return sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+
+
+def _hall_avg_games(connection: sqlite3.Connection, target_date: str) -> float | None:
+    row = connection.execute(
+        "SELECT AVG(games_normalized) FROM machine_detailed_results WHERE date = ? AND games_normalized > 0",
+        (target_date,),
+    ).fetchone()
+    return row[0] if row and row[0] else None
+
+
+def _traffic_stratum(connection: sqlite3.Connection, target_date: str) -> str | None:
+    """直近 TRAFFIC_LOOKBACK_DAYS 日の avg_games_per_machine の中で target_date が
+    上位/中位/下位のどこに入るかで層別する。他の全軸の解釈はこれを前提にする
+    （層別なしで数値だけ出さない、という要件）。
+    """
+    since = _shift(target_date, -(TRAFFIC_LOOKBACK_DAYS - 1))
+    rows = connection.execute(
+        "SELECT date, avg_games_per_machine FROM daily_hall_summary "
+        " WHERE date BETWEEN ? AND ? AND avg_games_per_machine IS NOT NULL ORDER BY avg_games_per_machine",
+        (since, target_date),
+    ).fetchall()
+    if not rows:
+        return None
+    values = [r[1] for r in rows]
+    target_row = next((r for r in rows if r[0] == target_date), None)
+    if target_row is None:
+        return None
+    target_value = target_row[1]
+    rank = sum(1 for v in values if v <= target_value) / len(values)
+    if rank >= 2 / 3:
+        return "高稼働"
+    if rank <= 1 / 3:
+        return "低稼働"
+    return "中稼働"
+
+
+def _new_machine_names(connection: sqlite3.Connection, target_date: str) -> set[str]:
+    """target_date時点で初出からNEW_MACHINE_MIN_DAYS日未満の機種名。"""
+    names = [
+        r[0]
+        for r in connection.execute(
+            "SELECT DISTINCT machine_name FROM machine_detailed_results WHERE date = ?", (target_date,)
+        )
+    ]
+    if not names:
+        return set()
+    placeholders = ",".join("?" * len(names))
+    rows = connection.execute(
+        f"SELECT machine_name, MIN(date) FROM machine_detailed_results "
+        f"WHERE machine_name IN ({placeholders}) GROUP BY machine_name",
+        names,
+    ).fetchall()
+    target = datetime.strptime(target_date, "%Y%m%d")
+    excluded = set()
+    for name, min_date in rows:
+        if not min_date:
+            continue
+        age_days = (target - datetime.strptime(min_date, "%Y%m%d")).days
+        if age_days < NEW_MACHINE_MIN_DAYS:
+            excluded.add(name)
+    return excluded
+
+
+def _machine_axis(hall: str, target_date: str, excluded_names: set[str]) -> dict:
+    board = standing(hall, as_of=target_date)
+    if board is None:
+        return {"hot": [], "cold": [], "note": "データ不足（standing()がNoneを返した）"}
+    board = board[~board.index.isin(excluded_names)]
+    if board.empty:
+        return {"hot": [], "cold": [], "note": "新台除外後にデータが残らなかった"}
+    board = board.sort_values("edge", ascending=False)
+
+    def _rows(frame):
+        return [
+            {
+                "name": str(name),
+                "edge": round(float(row.edge), 1),
+                "pct": round(float(row.pct), 3),
+                "n_machines": int(row.machines),
+                "games_ratio": round(float(row.games_ratio), 3),
+            }
+            for name, row in frame.iterrows()
+        ]
+
+    return {"hot": _rows(board.head(5)), "cold": _rows(board.tail(5).iloc[::-1])}
+
+
+def _kakuban_axis(connection: sqlite3.Connection, hall: str, target_date: str, hall_avg_games: float | None) -> dict:
+    store_con = analysis_store.connect()
+    try:
+        rows = analysis_store.daily(store_con, "kakuban_residual", hall=hall, since=target_date)
+    finally:
+        store_con.close()
+    rows = [r for r in rows if r[0] == target_date]
+    if not rows:
+        return {"applicable": False, "note": "レイアウトデータ不足、または対象日に十分な台数が無い"}
+
+    # games_ratio は kakuban_residual に保存されていないため、全館ベースで別途計算する
+    # （セグメント別のgames_ratioは今回のフェーズでは未対応。全館の値を参考値として使う）
+    games_by_rank: dict[str, float] = {}
+    if hall_avg_games:
+        for rank, avg_games in connection.execute(
+            "SELECT MIN(l.rank_from_min, l.rank_from_max) AS rk, AVG(m.games_normalized) "
+            "FROM machine_detailed_results m JOIN machine_layout_history l "
+            "  ON l.machine_number = m.machine_number "
+            " AND m.date >= l.valid_from AND (l.valid_to IS NULL OR m.date <= l.valid_to) "
+            "WHERE m.date = ? AND m.games_normalized > 0 AND l.rank_from_min IS NOT NULL "
+            "GROUP BY rk",
+            (target_date,),
+        ):
+            if rank is not None and avg_games:
+                games_by_rank[str(int(rank))] = round(avg_games / hall_avg_games, 3)
+
+    segments: dict[str, dict] = {}
+    for _date, _hall, _version, segment, item, value_num, n in rows:
+        seg = segments.setdefault(segment, {"peak_rank": None, "rows": []})
+        if item == "peak":
+            seg["peak_rank"] = (value_num, n)  # 一時保持。下で角番表記に変換
+            continue
+        if item.startswith("角"):
+            rank = item[1:]
+            seg["rows"].append(
+                {
+                    "rank": rank,
+                    "residual": value_num,
+                    "games_ratio": games_by_rank.get(rank, "全館ベースの値が無い(参考値なし)"),
+                    "n": n,
+                }
+            )
+    for segment, seg in segments.items():
+        if seg["peak_rank"] is not None:
+            value_num, n = seg["peak_rank"]
+            match = next((r for r in seg["rows"] if r["residual"] == value_num), None)
+            seg["peak_rank"] = match["rank"] if match else None
+    return {"applicable": True, "games_ratio_basis": "全館ベース(セグメント別未対応)", "segments": segments}
+
+
+def _narabi_axis(hall: str, target_date: str, hall_avg_games: float | None) -> dict:
+    with _ro_hall(hall) as connection:
+        machines = load_day(connection, target_date)
+    blocks = find_blocks(machines)
+    out = []
+    for block in blocks:
+        block_games = [m["games"] for m in block["machines"] if m.get("games")]
+        games_ratio = (sum(block_games) / len(block_games) / hall_avg_games) if block_games and hall_avg_games else None
+        out.append(
+            {
+                "start": block["start"],
+                "section": block["section"],
+                "mean_diff": round(block["mean_diff"], 1),
+                "games_ratio": round(games_ratio, 3) if games_ratio is not None else None,
+                "segments": block["segments"],
+                "names": block["names"],
+            }
+        )
+    return {"blocks": out, "count": len(out)}
+
+
+def _last_digit_axis(connection: sqlite3.Connection, target_date: str, hall_avg_games: float | None) -> dict:
+    rows = connection.execute(
+        "SELECT last_digit, AVG(diff_coins_normalized), AVG(games_normalized), "
+        "       COUNT(DISTINCT machine_number), SUM(CASE WHEN is_zorome THEN 1 ELSE 0 END) "
+        "FROM machine_detailed_results WHERE date = ? AND games_normalized > 0 "
+        "GROUP BY last_digit ORDER BY last_digit",
+        (target_date,),
+    ).fetchall()
+    out = []
+    for digit, mean_diff, mean_games, n, n_zorome in rows:
+        games_ratio = round(mean_games / hall_avg_games, 3) if hall_avg_games and mean_games else None
+        out.append(
+            {
+                "digit": digit,
+                "mean_diff": round(mean_diff, 1) if mean_diff is not None else None,
+                "games_ratio": games_ratio,
+                "n": n,
+                "n_zorome": n_zorome,
+            }
+        )
+    return {
+        "rows": out,
+        "decoy_warning": (
+            "二値flag台数だけで順位付けしない。ホールは本命末尾を隠すため別末尾に"
+            "少数の高設定を混ぜる撒き餌のリスクがある（フェイク末尾）。"
+        ),
+    }
+
+
+def _rb_settings_axis(connection: sqlite3.Connection, target_date: str, excluded_names: set[str]) -> dict:
+    judgeable = {
+        r[0]
+        for r in connection.execute(
+            "SELECT machine_name_normalized FROM machine_master "
+            "WHERE spec_category IN ('ノーマル','BT','A+AT') AND bonus_judgeable = 1"
+        )
+    }
+    rows = connection.execute(
+        "SELECT machine_name, machine_number, games_normalized, bb_count, rb_count "
+        "FROM machine_detailed_results WHERE date = ? AND games_normalized > 0",
+        (target_date,),
+    ).fetchall()
+    total_machines = len({r[1] for r in rows})
+    specs = load_specs()
+    out = []
+    for name, number, games, bb, rb in rows:
+        if name not in judgeable or name in excluded_names:
+            continue
+        spec = find_spec(name, specs)
+        if spec is None or not spec.get("judgeable"):
+            continue
+        probs = posterior(spec, games, bb, rb)
+        out.append(
+            {
+                "name": name,
+                "number": number,
+                "category": spec["category"],
+                "games": games,
+                "bb": bb,
+                "rb": rb,
+                "posterior": {str(s): round(p, 4) for s, p in probs.items()},
+                "below_min_games": games < MIN_GAMES_FOR_JUDGEMENT,
+            }
+        )
+    coverage_pct = round(len(out) / total_machines, 3) if total_machines else None
+    return {"coverage_pct": coverage_pct, "machines": out}
+
+
+def _event_for(hall: str, target_date: str) -> dict | None:
+    for record in event_days_active(event_days_load()):
+        if record.get("hall") == hall and record.get("date") == target_date:
+            return record
+    return None
+
+
+def build_hall_review(hall: str, target_date: str, generated_at: datetime | None = None) -> dict:
+    generated = _now_jst(generated_at)
+
+    if hall not in HALL_REVIEW_HALLS:
+        raise ValueError(f"hall-review はフェーズ2として次の3ホールのみ対象: {HALL_REVIEW_HALLS}")
+
+    with _ro_hall(hall) as connection:
+        data_asof = connection.execute("SELECT MAX(date) FROM machine_detailed_results").fetchone()[0]
+        if not data_asof or target_date > data_asof:
+            return {
+                "hall": hall,
+                "target_date": target_date,
+                "generated_at": generated.isoformat(),
+                "data_asof": data_asof,
+                "skipped": True,
+                "note": "target_date のデータがまだ無い（ana-slo未公開、または取り込み未完了）",
+            }
+
+        if target_date in ALL_SETTING6_DATES.get(hall, set()):
+            return {
+                "hall": hall,
+                "target_date": target_date,
+                "generated_at": generated.isoformat(),
+                "data_asof": data_asof,
+                "note": "全台設定6の特殊日のため軸評価をスキップ",
+            }
+
+        traffic_stratum = _traffic_stratum(connection, target_date)
+        excluded_new_machines = sorted(_new_machine_names(connection, target_date))
+        hall_avg_games = _hall_avg_games(connection, target_date)
+
+        result = {
+            "hall": hall,
+            "target_date": target_date,
+            "generated_at": generated.isoformat(),
+            "data_asof": data_asof,
+            "data_lag_days": (datetime.strptime(target_date, "%Y%m%d") - datetime.strptime(data_asof, "%Y%m%d")).days,
+            "traffic_stratum": traffic_stratum,
+            "excluded_new_machines": excluded_new_machines,
+            "axes": {
+                "machine": _machine_axis(hall, target_date, set(excluded_new_machines)),
+                "kakuban": _kakuban_axis(connection, hall, target_date, hall_avg_games),
+                "last_digit": _last_digit_axis(connection, target_date, hall_avg_games),
+                "row": {"applicable": False, "note": "列軸はフェーズ3で設計予定。未実装"},
+                "rb_settings": _rb_settings_axis(connection, target_date, set(excluded_new_machines)),
+            },
+        }
+
+    result["axes"]["narabi"] = _narabi_axis(hall, target_date, hall_avg_games)
+
+    event = _event_for(hall, target_date)
+    result["is_event_day"] = event is not None
+    result["event"] = event
+    return result
+
+
+def _default_target_date() -> str:
+    return _shift(_now_jst().date().strftime("%Y%m%d"), -1)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -232,19 +557,43 @@ def main(argv: list[str] | None = None) -> int:
     watch = subparsers.add_parser("announce-watch", help="本日投稿された予告を過去実績と突き合わせる")
     watch.add_argument("--date", help="YYYYMMDD。省略時は実行時のJST日付")
 
+    review = subparsers.add_parser("hall-review", help="昨日のホール実績を軸別に振り返る（フェーズ2: 3ホール限定）")
+    review.add_argument("--hall", help="対象ホール名（HALL_REVIEW_HALLSのいずれか）")
+    review.add_argument("--all-halls", action="store_true", help="HALL_REVIEW_HALLS全件をループする")
+    review.add_argument("--date", help="YYYYMMDD（target_date）。省略時は実行時JSTの前日")
+
     args = parser.parse_args(argv)
 
-    run_date = _now_jst().date() if args.date is None else _parse_date(args.date)
+    if args.command == "announce-watch":
+        run_date = _now_jst().date() if args.date is None else _parse_date(args.date)
 
-    output = build_digest(run_date)
+        output = build_digest(run_date)
 
-    WATCH_DIR.mkdir(parents=True, exist_ok=True)
-    output_path = WATCH_DIR / f"{run_date:%Y%m%d}.json"
-    output_path.write_text(json.dumps(output, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        WATCH_DIR.mkdir(parents=True, exist_ok=True)
+        output_path = WATCH_DIR / f"{run_date:%Y%m%d}.json"
+        output_path.write_text(json.dumps(output, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
-    announce_count = sum(len(hall["announces"]) for hall in output["halls"])
-    print(f"wrote {output_path} ({announce_count} announces)")
-    return 0
+        announce_count = sum(len(hall["announces"]) for hall in output["halls"])
+        print(f"wrote {output_path} ({announce_count} announces)")
+        return 0
+
+    if args.command == "hall-review":
+        if not args.all_halls and not args.hall:
+            parser.error("--hall か --all-halls のどちらかを指定すること")
+        target_date = args.date if args.date else _default_target_date()
+        target_halls = list(HALL_REVIEW_HALLS) if args.all_halls else [args.hall]
+
+        REVIEW_DIR.mkdir(parents=True, exist_ok=True)
+        for hall in target_halls:
+            output = build_hall_review(hall, target_date)
+            output_path = REVIEW_DIR / f"{hall}__{target_date}.json"
+            output_path.write_text(json.dumps(output, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            note = output.get("note", "")
+            print(f"wrote {output_path}{'  (' + note + ')' if note else ''}")
+        return 0
+
+    parser.error(f"未知のコマンド: {args.command}")
+    return 2
 
 
 if __name__ == "__main__":
