@@ -375,6 +375,7 @@ def _machine_axis(hall: str, target_date: str, excluded_names: set[str]) -> dict
                 "edge": round(float(row.edge), 1),
                 "pct": round(float(row.pct), 3),
                 "n_machines": int(row.machines),
+                "mean_games": round(float(row.games), 1),
                 "games_ratio": round(float(row.games_ratio), 3),
             }
             for name, row in frame.iterrows()
@@ -393,9 +394,9 @@ def _kakuban_axis(connection: sqlite3.Connection, hall: str, target_date: str, h
     if not rows:
         return {"applicable": False, "note": "レイアウトデータ不足、または対象日に十分な台数が無い"}
 
-    # games_ratio は kakuban_residual に保存されていないため、全館ベースで別途計算する
-    # （セグメント別のgames_ratioは今回のフェーズでは未対応。全館の値を参考値として使う）
-    games_by_rank: dict[str, float] = {}
+    # games_ratio・mean_games は kakuban_residual に保存されていないため、全館ベースで
+    # 別途計算する（セグメント別の値は今回のフェーズでは未対応。全館の値を参考値として使う）
+    games_by_rank: dict[str, tuple[float, float]] = {}
     if hall_avg_games:
         for rank, avg_games in connection.execute(
             "SELECT MIN(l.rank_from_min, l.rank_from_max) AS rk, AVG(m.games_normalized) "
@@ -407,7 +408,7 @@ def _kakuban_axis(connection: sqlite3.Connection, hall: str, target_date: str, h
             (target_date,),
         ):
             if rank is not None and avg_games:
-                games_by_rank[str(int(rank))] = round(avg_games / hall_avg_games, 3)
+                games_by_rank[str(int(rank))] = (round(avg_games, 1), round(avg_games / hall_avg_games, 3))
 
     segments: dict[str, dict] = {}
     for _date, _hall, _version, segment, item, value_num, n in rows:
@@ -417,11 +418,13 @@ def _kakuban_axis(connection: sqlite3.Connection, hall: str, target_date: str, h
             continue
         if item.startswith("角"):
             rank = item[1:]
+            mean_games, games_ratio = games_by_rank.get(rank, (None, None))
             seg["rows"].append(
                 {
                     "rank": rank,
                     "residual": value_num,
-                    "games_ratio": games_by_rank.get(rank, "全館ベースの値が無い(参考値なし)"),
+                    "mean_games": mean_games if mean_games is not None else "全館ベースの値が無い(参考値なし)",
+                    "games_ratio": games_ratio if games_ratio is not None else "全館ベースの値が無い(参考値なし)",
                     "n": n,
                 }
             )
@@ -440,12 +443,14 @@ def _narabi_axis(hall: str, target_date: str, hall_avg_games: float | None) -> d
     out = []
     for block in blocks:
         block_games = [m["games"] for m in block["machines"] if m.get("games")]
-        games_ratio = (sum(block_games) / len(block_games) / hall_avg_games) if block_games and hall_avg_games else None
+        mean_games = (sum(block_games) / len(block_games)) if block_games else None
+        games_ratio = (mean_games / hall_avg_games) if mean_games is not None and hall_avg_games else None
         out.append(
             {
                 "start": block["start"],
                 "section": block["section"],
                 "mean_diff": round(block["mean_diff"], 1),
+                "mean_games": round(mean_games, 1) if mean_games is not None else None,
                 "games_ratio": round(games_ratio, 3) if games_ratio is not None else None,
                 "segments": block["segments"],
                 "names": block["names"],
@@ -469,6 +474,7 @@ def _last_digit_axis(connection: sqlite3.Connection, target_date: str, hall_avg_
             {
                 "digit": digit,
                 "mean_diff": round(mean_diff, 1) if mean_diff is not None else None,
+                "mean_games": round(mean_games, 1) if mean_games is not None else None,
                 "games_ratio": games_ratio,
                 "n": n,
                 "n_zorome": n_zorome,
@@ -552,6 +558,7 @@ def _row_axis(connection: sqlite3.Connection, target_date: str, hall_avg_games: 
                 "section": section,
                 "n": len(values),
                 "mean_diff": round(mean_diff, 1),
+                "mean_games": round(mean_games, 1),
                 "games_ratio": round(mean_games / hall_avg_games, 3) if hall_avg_games else None,
                 # 1に近いほど列（島）全体が均等に高い（月=列全体型）、大きいほど1台だけが
                 # 突出している（金=列1台型）。mean_diff<=0の列は比率が意味を持たないので出さない。
@@ -699,10 +706,10 @@ def render_hall_review_html(review: dict) -> str:
         body = "".join(
             f"<tr><td>{_html_escape(r['name'])}</td>"
             f"<td class='{_num_class(r['edge'])}'>{_fmt_num(r['edge'])}枚</td>"
-            f"<td>{r['n_machines']}台</td><td>{r['games_ratio']}</td></tr>"
+            f"<td>{r['n_machines']}台</td><td>{r['mean_games']}G</td><td>{r['games_ratio']}</td></tr>"
             for r in rows
         )
-        return f"<table><tr><th>機種</th><th>差枚</th><th>台数</th><th>回転数比</th></tr>{body}</table>"
+        return f"<table><tr><th>機種</th><th>差枚</th><th>台数</th><th>平均G数</th><th>回転数比</th></tr>{body}</table>"
 
     machine = axes.get("machine", {})
     machine_html = (
@@ -719,12 +726,12 @@ def render_hall_review_html(review: dict) -> str:
             rows = "".join(
                 f"<tr><td>角{_html_escape(r['rank'])}</td>"
                 f"<td class='{_num_class(r['residual'])}'>{_fmt_num(r['residual'])}枚</td>"
-                f"<td>{_html_escape(r['games_ratio'])}</td><td>{r['n']}台</td></tr>"
+                f"<td>{_html_escape(r['mean_games'])}</td><td>{_html_escape(r['games_ratio'])}</td><td>{r['n']}台</td></tr>"
                 for r in seg.get("rows", [])
             )
             seg_blocks.append(
                 f"<h3>{_html_escape(seg_name)}（ピーク: 角{_html_escape(seg.get('peak_rank'))}）</h3>"
-                f"<table><tr><th>角番</th><th>残差</th><th>回転数比</th><th>台数</th></tr>{rows}</table>"
+                f"<table><tr><th>角番</th><th>残差</th><th>平均G数</th><th>回転数比</th><th>台数</th></tr>{rows}</table>"
             )
         kakuban_html = "".join(seg_blocks) + f"<p class='note'>{_html_escape(kakuban.get('games_ratio_basis'))}</p>"
     else:
@@ -734,11 +741,11 @@ def render_hall_review_html(review: dict) -> str:
     ld_rows = "".join(
         f"<tr><td>末尾{_html_escape(r['digit'])}</td>"
         f"<td class='{_num_class(r['mean_diff'])}'>{_fmt_num(r['mean_diff'])}枚</td>"
-        f"<td>{r['games_ratio']}</td><td>{r['n']}台</td><td>{r['n_zorome']}</td></tr>"
+        f"<td>{r['mean_games']}G</td><td>{r['games_ratio']}</td><td>{r['n']}台</td><td>{r['n_zorome']}</td></tr>"
         for r in last_digit.get("rows", [])
     )
     last_digit_html = (
-        f"<table><tr><th>末尾</th><th>平均差枚</th><th>回転数比</th><th>台数</th><th>ゾロ目台数</th></tr>{ld_rows}</table>"
+        f"<table><tr><th>末尾</th><th>平均差枚</th><th>平均G数</th><th>回転数比</th><th>台数</th><th>ゾロ目台数</th></tr>{ld_rows}</table>"
         f"<p class='warn'>⚠️ {_html_escape(last_digit.get('decoy_warning'))}</p>"
     )
 
@@ -746,12 +753,12 @@ def render_hall_review_html(review: dict) -> str:
     narabi_rows = "".join(
         f"<tr><td>{b['start']}〜（{_html_escape(b['section'])}）</td>"
         f"<td class='{_num_class(b['mean_diff'])}'>{_fmt_num(b['mean_diff'])}枚</td>"
-        f"<td>{b['games_ratio']}</td><td>{_html_escape('/'.join(b['names']))}</td></tr>"
+        f"<td>{b['mean_games']}G</td><td>{b['games_ratio']}</td><td>{_html_escape('/'.join(b['names']))}</td></tr>"
         for b in narabi.get("blocks", [])
     )
     narabi_html = (
         f"<p class='meta'>成立 {narabi.get('count', 0)} 件</p>"
-        f"<table><tr><th>開始台</th><th>平均差枚</th><th>回転数比</th><th>機種</th></tr>{narabi_rows}</table>"
+        f"<table><tr><th>開始台</th><th>平均差枚</th><th>平均G数</th><th>回転数比</th><th>機種</th></tr>{narabi_rows}</table>"
         if narabi.get("blocks")
         else "<p class='note'>（成立ブロックなし）</p>"
     )
@@ -773,12 +780,12 @@ def render_hall_review_html(review: dict) -> str:
         row_rows = "".join(
             f"<tr><td>{_html_escape(c['section'])}</td>"
             f"<td class='{_num_class(c['mean_diff'])}'>{_fmt_num(c['mean_diff'])}枚</td>"
-            f"<td>{c['games_ratio']}</td><td>{c['n']}台</td>"
+            f"<td>{c['mean_games']}G</td><td>{c['games_ratio']}</td><td>{c['n']}台</td>"
             f"<td>{c['top_single_ratio'] if c['top_single_ratio'] is not None else '-'}</td></tr>"
             for c in row_axis.get("columns", [])
         )
         row_html = (
-            f"<table><tr><th>列（section）</th><th>平均差枚</th><th>回転数比</th><th>台数</th>"
+            f"<table><tr><th>列（section）</th><th>平均差枚</th><th>平均G数</th><th>回転数比</th><th>台数</th>"
             f"<th>突出比(1=列全体型/高いほど列1台型)</th></tr>{row_rows}</table>"
             f"<p class='note'>{_html_escape(row_axis.get('note'))}</p>"
         )
