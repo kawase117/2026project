@@ -530,7 +530,7 @@ def _rb_settings_axis(connection: sqlite3.Connection, target_date: str, excluded
 
 def _row_axis(connection: sqlite3.Connection, target_date: str, hall_avg_games: float | None) -> dict:
     rows = connection.execute(
-        "SELECT l.section, m.diff_coins_normalized, m.games_normalized "
+        "SELECT l.section, m.diff_coins_normalized, m.games_normalized, m.machine_number "
         "FROM machine_detailed_results m JOIN machine_layout_history l "
         "  ON l.machine_number = m.machine_number "
         " AND m.date >= l.valid_from AND (l.valid_to IS NULL OR m.date <= l.valid_to) "
@@ -540,9 +540,9 @@ def _row_axis(connection: sqlite3.Connection, target_date: str, hall_avg_games: 
     if not rows:
         return {"applicable": False, "note": "レイアウトデータ不足、または対象日に十分な台数が無い"}
 
-    groups: dict[str, list[tuple[float, float]]] = defaultdict(list)
-    for section, diff, games in rows:
-        groups[section].append((diff, games))
+    groups: dict[str, list[tuple[float, float, int]]] = defaultdict(list)
+    for section, diff, games, number in rows:
+        groups[section].append((diff, games, number))
 
     out = []
     for section, values in groups.items():
@@ -563,6 +563,7 @@ def _row_axis(connection: sqlite3.Connection, target_date: str, hall_avg_games: 
                 # 1に近いほど列（島）全体が均等に高い（月=列全体型）、大きいほど1台だけが
                 # 突出している（金=列1台型）。mean_diff<=0の列は比率が意味を持たないので出さない。
                 "top_single_ratio": round(top_diff / mean_diff, 2) if mean_diff > 0 else None,
+                "first_machine_number": min(v[2] for v in values),
             }
         )
     out.sort(key=lambda r: -r["mean_diff"])
@@ -690,13 +691,13 @@ def _detail_filename(hall: str, target_date: str) -> str:
     return f"{hall}__{target_date}_detail.html"
 
 
-def _detail_link(hall: str, target_date: str, query: str = "") -> str:
+def _detail_link(hall: str, target_date: str, anchor: str = "") -> str:
     filename = _detail_filename(hall, target_date)
-    if not query:
-        return filename
-    from urllib.parse import quote
+    return f"{filename}#{anchor}" if anchor else filename
 
-    return f"{filename}?q={quote(query)}"
+
+def _digit_anchor(digit) -> str:
+    return "last_digit_section10" if digit == "ゾロ目" else f"last_digit_section{digit}"
 
 
 def fetch_detail_rows(hall: str, target_date: str) -> list[dict]:
@@ -705,6 +706,12 @@ def fetch_detail_rows(hall: str, target_date: str) -> list[dict]:
     集計軸（機種/角番/末尾/並び/列）を経由しない生データなので、集計ロジックの
     検証にも使える。表示専用で、hall-reviewの軸計算はこの関数を経由しない
     （経由すると集計とは違うJOIN条件・除外条件が紛れ込むリスクがあるため）。
+
+    ⚠️ ART列は出さない: ana-sloはBB/RB/ARTを別々の列で表示するが、
+    machine_detailed_resultsにはbb_count/rb_countしか無く、ART単体の
+    カウントは元々収集していない（2026-09-24確認）。合成確率
+    （total_probability_fraction）はana-sloの値をそのまま保存しており、
+    ART込みの計算として正しいが、ART単体には分解できない。
     """
     with _ro_hall(hall) as connection:
         rows = connection.execute(
@@ -740,72 +747,212 @@ def fetch_detail_rows(hall: str, target_date: str) -> list[dict]:
     ]
 
 
+def build_machine_anchor_map(rows: list[dict]) -> dict[str, str]:
+    """機種名 -> 詳細ページの#sectionN アンカー。設置機種一覧の並び順（初出台番号の昇順）を基準にする。"""
+    first_seen: dict[str, int] = {}
+    for r in rows:
+        first_seen.setdefault(r["machine_name"], r["machine_number"])
+    ordered = sorted(first_seen, key=lambda name: first_seen[name])
+    return {name: f"section{i}" for i, name in enumerate(ordered)}
+
+
+def _prob_text(games: float, count: float) -> str:
+    if not count:
+        return "1/0.0"
+    return f"1/{games / count:.1f}"
+
+
 def render_hall_detail_html(hall: str, target_date: str, rows: list[dict]) -> str:
     hall_e = _html_escape(hall)
     target_date_e = _html_escape(target_date)
-    body_rows = "".join(
-        "<tr data-search='"
-        + _html_escape(f"{r['machine_number']} {r['machine_name']} {r['section'] or ''}".lower())
-        + "'>"
-        + f"<td>{r['machine_number']}</td><td>{_html_escape(r['machine_name'])}</td>"
-        + f"<td>{_html_escape(r['section'])}</td>"
-        + f"<td>{r['kakuban_rank'] if r['kakuban_rank'] is not None else '-'}</td>"
-        + f"<td>末尾{_html_escape(r['last_digit'])}{'・ゾロ目' if r['is_zorome'] else ''}</td>"
-        + f"<td>{r['games']}G</td>"
-        + f"<td class='{_num_class(r['diff'])}'>{_fmt_num(r['diff'])}枚</td>"
-        + f"<td>{r['bb']}</td><td>{r['rb']}</td>"
-        + f"<td>{_html_escape(r['total_prob'])}</td><td>{_html_escape(r['bb_prob'])}</td><td>{_html_escape(r['rb_prob'])}</td>"
-        + "</tr>"
-        for r in rows
+    summary_link = f"{hall}__{target_date}.html"
+
+    if not rows:
+        return (
+            f"<!doctype html><html><head><meta charset='utf-8'><title>{hall_e} {target_date_e} 詳細</title>"
+            f"{_HTML_STYLE}</head><body><h1>{hall_e}　{target_date_e}　詳細</h1>"
+            f"<p class='warn'>対象日のデータがありません。</p>"
+            f"<p class='meta'><a href='{summary_link}'>← 概略に戻る</a></p></body></html>"
+        )
+
+    total_diff = sum(r["diff"] for r in rows)
+    total_games = len(rows)
+    wins = sum(1 for r in rows if r["diff"] > 0)
+    mean_diff = total_diff / total_games
+    mean_games = sum(r["games"] for r in rows) / total_games
+
+    # 全体データ
+    overall_html = (
+        "<table><tr><th>総差枚</th><th>平均差枚</th><th>平均G数</th><th>勝率</th></tr>"
+        f"<tr><td>{_fmt_num(total_diff, 0)}</td><td>{_fmt_num(mean_diff, 0)}</td>"
+        f"<td>{mean_games:,.0f}</td><td>{wins / total_games * 100:.1f}%({wins}/{total_games})</td></tr></table>"
     )
-    script = """
-<script>
-function filterRows() {
-  var q = document.getElementById('search').value.toLowerCase();
-  document.querySelectorAll('#detail-table tbody tr').forEach(function (tr) {
-    tr.style.display = tr.dataset.search.indexOf(q) === -1 ? 'none' : '';
-  });
-  document.getElementById('count').textContent =
-    document.querySelectorAll("#detail-table tbody tr:not([style*='display: none'])").length;
-}
-window.addEventListener('DOMContentLoaded', function () {
-  var q = new URLSearchParams(location.search).get('q');
-  if (q) { document.getElementById('search').value = q; }
-  filterRows();
-});
-</script>
-"""
-    return f"""<!doctype html><html><head><meta charset="utf-8"><title>{hall_e} {target_date_e} 詳細</title>{_HTML_STYLE}
-<style>
-  input#search {{ width: 100%; box-sizing: border-box; padding: 8px; font-size: 1rem; margin-bottom: 12px;
-                  background: #1a1d24; color: #e6e6e6; border: 1px solid #2a2e37; border-radius: 4px; }}
-  #detail-table th {{ position: sticky; top: 0; background: #1a1d24; }}
-</style></head>
+
+    # 機種別グルーピング（設置機種一覧・機種別ピックアップ・機種別詳細の3か所で共用）
+    by_machine: dict[str, list[dict]] = defaultdict(list)
+    for r in rows:
+        by_machine[r["machine_name"]].append(r)
+    machine_anchor = build_machine_anchor_map(rows)
+    machine_order = sorted(by_machine, key=lambda name: machine_anchor[name])
+
+    def machine_stats(name: str) -> dict:
+        members = by_machine[name]
+        n = len(members)
+        total = sum(m["diff"] for m in members)
+        w = sum(1 for m in members if m["diff"] > 0)
+        return {
+            "name": name,
+            "total_diff": total,
+            "mean_diff": total / n,
+            "mean_games": sum(m["games"] for m in members) / n,
+            "win_rate": w / n,
+            "wins": w,
+            "n": n,
+        }
+
+    # 機種別データピックアップ（機種別差枚の上位20）
+    picks = sorted((machine_stats(name) for name in by_machine), key=lambda s: -s["total_diff"])[:20]
+    pick_rows = "".join(
+        f"<tr><td>{i + 1}位: <a href='#{machine_anchor[s['name']]}'>{_html_escape(s['name'])}</a></td>"
+        f"<td class='{_num_class(s['total_diff'])}'>{_fmt_num(s['total_diff'], 0)}</td>"
+        f"<td class='{_num_class(s['mean_diff'])}'>{_fmt_num(s['mean_diff'], 0)}</td>"
+        f"<td>{s['mean_games']:,.0f}</td>"
+        f"<td>{s['win_rate'] * 100:.1f}%({s['wins']}/{s['n']})</td></tr>"
+        for i, s in enumerate(picks)
+    )
+    picks_html = (
+        "<table><tr><th>順位</th><th>機種別差枚</th><th>平均差枚</th><th>平均G数</th><th>勝率</th></tr>"
+        f"{pick_rows}</table>"
+    )
+
+    # 末尾別データ
+    by_digit: dict[str, list[dict]] = defaultdict(list)
+    for r in rows:
+        by_digit[r["last_digit"]].append(r)
+        if r["is_zorome"]:
+            by_digit["ゾロ目"].append(r)
+    digit_order = [str(d) for d in range(10)] + ["ゾロ目"]
+    digit_rows = []
+    for digit in digit_order:
+        members = by_digit.get(digit)
+        if not members:
+            digit_rows.append(
+                f"<tr><td><a href='#{_digit_anchor(digit)}'>{_html_escape(digit)}</a></td>"
+                f"<td>-</td><td>-</td><td>{'-'}</td><td>-</td></tr>"
+            )
+            continue
+        n = len(members)
+        total = sum(m["diff"] for m in members)
+        w = sum(1 for m in members if m["diff"] > 0)
+        digit_rows.append(
+            f"<tr><td><a href='#{_digit_anchor(digit)}'>{_html_escape(digit)}</a></td>"
+            f"<td class='{_num_class(total)}'>{_fmt_num(total, 0)}</td>"
+            f"<td class='{_num_class(total / n)}'>{_fmt_num(total / n, 0)}</td>"
+            f"<td>{sum(m['games'] for m in members) / n:,.0f}</td>"
+            f"<td>{w / n * 100:.1f}%({w}/{n})</td></tr>"
+        )
+    digit_html = (
+        "<table id='last_digit_list'><tr><th>末尾</th><th>末尾別差枚</th><th>平均差枚</th>"
+        f"<th>平均G数</th><th>勝率</th></tr>{''.join(digit_rows)}</table>"
+    )
+
+    # 設置機種一覧
+    list_rows = "".join(
+        f"<tr><td><a href='#{machine_anchor[name]}'>{_html_escape(name)}</a></td></tr>" for name in machine_order
+    )
+    machine_list_html = f"<table id='machine_list'><tr><th>設置機種一覧</th></tr>{list_rows}</table>"
+
+    # 機種別詳細データ
+    def machine_row_html(r: dict) -> str:
+        return (
+            f"<tr><td>{r['machine_number']}</td><td>{r['games']:,}</td>"
+            f"<td class='{_num_class(r['diff'])}'>{_fmt_num(r['diff'], 0)}</td>"
+            f"<td>{r['bb']}</td><td>{r['rb']}</td>"
+            f"<td>{_html_escape(r['total_prob'])}</td><td>{_html_escape(r['bb_prob'])}</td>"
+            f"<td>{_html_escape(r['rb_prob'])}</td></tr>"
+        )
+
+    machine_sections = []
+    for name in machine_order:
+        members = sorted(by_machine[name], key=lambda r: r["machine_number"])
+        n = len(members)
+        avg_games = sum(m["games"] for m in members) / n
+        avg_diff = sum(m["diff"] for m in members) / n
+        avg_bb = sum(m["bb"] for m in members) / n
+        avg_rb = sum(m["rb"] for m in members) / n
+        avg_row = (
+            f"<tr><td>平均</td><td>{avg_games:,.0f}</td>"
+            f"<td class='{_num_class(avg_diff)}'>{_fmt_num(avg_diff, 0)}</td>"
+            f"<td>{avg_bb:.0f}</td><td>{avg_rb:.0f}</td>"
+            f"<td>{_prob_text(avg_games, avg_bb + avg_rb)}</td>"
+            f"<td>{_prob_text(avg_games, avg_bb)}</td><td>{_prob_text(avg_games, avg_rb)}</td></tr>"
+        )
+        body = "".join(machine_row_html(r) for r in members) + avg_row
+        machine_sections.append(
+            f"<h3 id='{machine_anchor[name]}'>{_html_escape(name)}</h3>"
+            "<table><tr><th>台番号</th><th>G数</th><th>差枚</th><th>BB</th><th>RB</th>"
+            f"<th>合成確率</th><th>BB確率</th><th>RB確率</th></tr>{body}</table>"
+            "<p class='meta'><a href='#machine_list'>設置機種一覧へ戻る</a></p>"
+        )
+    machine_sections_html = "".join(machine_sections)
+
+    # 末尾毎詳細データ
+    digit_sections = []
+    for digit in digit_order:
+        members = by_digit.get(digit)
+        if not members:
+            continue
+        members = sorted(members, key=lambda r: r["machine_number"])
+        body = "".join(
+            f"<tr><td>{_html_escape(r['machine_name'])}</td><td>{r['machine_number']}</td>"
+            f"<td>{r['games']:,}</td><td class='{_num_class(r['diff'])}'>{_fmt_num(r['diff'], 0)}</td>"
+            f"<td>{r['bb']}</td><td>{r['rb']}</td>"
+            f"<td>{_html_escape(r['total_prob'])}</td><td>{_html_escape(r['bb_prob'])}</td>"
+            f"<td>{_html_escape(r['rb_prob'])}</td></tr>"
+            for r in members
+        )
+        digit_sections.append(
+            f"<h3 id='{_digit_anchor(digit)}'>末尾{_html_escape(digit)}</h3>"
+            "<table><tr><th>機種名</th><th>台番号</th><th>G数</th><th>差枚</th><th>BB</th><th>RB</th>"
+            f"<th>合成確率</th><th>BB確率</th><th>RB確率</th></tr>{body}</table>"
+            "<p class='meta'><a href='#last_digit_list'>末尾別データ一覧へ戻る</a></p>"
+        )
+    digit_sections_html = "".join(digit_sections)
+
+    return f"""<!doctype html><html><head><meta charset="utf-8"><title>{hall_e} {target_date_e} 詳細</title>{_HTML_STYLE}</head>
 <body>
-<h1>{hall_e}　{target_date_e}　詳細（全{len(rows)}台）</h1>
-<p class="meta"><a href="{hall}__{target_date}.html">← 概略に戻る</a></p>
-<input id="search" type="text" placeholder="機種名・台番号・sectionで絞り込み" oninput="filterRows()">
-<p class="meta">表示中: <span id="count">{len(rows)}</span>件</p>
-<section>
-<table id="detail-table">
-<thead><tr><th>台番号</th><th>機種</th><th>section</th><th>角番</th><th>末尾</th><th>G数</th>
-<th>差枚</th><th>BB</th><th>RB</th><th>合成確率</th><th>BB確率</th><th>RB確率</th></tr></thead>
-<tbody>{body_rows}</tbody>
-</table>
-</section>
-{script}
+<h1>{hall_e}　{target_date_e}　詳細（全{total_games}台）</h1>
+<p class="meta"><a href="{summary_link}">← 概略に戻る</a></p>
+<p class="warn">⚠️ ART（AT機の疑似ボーナス）単体のカウントは未収集のため列を出していません。合成確率はART込みでana-sloの値をそのまま保存しているため正しい値です。</p>
+<section><h2>全体データ</h2>{overall_html}</section>
+<section><h2>機種別データピックアップ（上位20）</h2>{picks_html}</section>
+<section><h2>末尾別データ</h2>{digit_html}</section>
+<section><h2>設置機種一覧</h2>{machine_list_html}</section>
+<section><h2>機種別詳細データ</h2>{machine_sections_html}</section>
+<section><h2>末尾毎詳細データ</h2>{digit_sections_html}</section>
 </body></html>"""
 
 
-def render_hall_review_html(review: dict) -> str:
+def render_hall_review_html(review: dict, detail_rows: list[dict] | None = None) -> str:
     raw_hall = review.get("hall")
     raw_target_date = review.get("target_date")
     hall = _html_escape(raw_hall)
     target_date = _html_escape(raw_target_date)
     detail_href = _html_escape(_detail_filename(raw_hall, raw_target_date))
 
-    def detail_link(text: str, query: str) -> str:
-        return f"<a href='{_html_escape(_detail_link(raw_hall, raw_target_date, query))}'>{_html_escape(text)}</a>"
+    detail_rows = detail_rows or []
+    machine_anchor = build_machine_anchor_map(detail_rows) if detail_rows else {}
+    number_anchor = {r["machine_number"]: machine_anchor[r["machine_name"]] for r in detail_rows}
+
+    def detail_link(text: str, anchor: str) -> str:
+        href = _html_escape(_detail_link(raw_hall, raw_target_date, anchor)) if anchor else detail_href
+        return f"<a href='{href}'>{_html_escape(text)}</a>"
+
+    def machine_anchor_link(text: str, name: str) -> str:
+        return detail_link(text, machine_anchor.get(name, ""))
+
+    def number_anchor_link(text: str, number: int) -> str:
+        return detail_link(text, number_anchor.get(number, ""))
 
     if review.get("skipped") or (review.get("note") and "axes" not in review):
         return (
@@ -821,7 +968,7 @@ def render_hall_review_html(review: dict) -> str:
         if not rows:
             return "<p class='note'>（なし）</p>"
         body = "".join(
-            f"<tr><td>{detail_link(r['name'], r['name'])}</td>"
+            f"<tr><td>{machine_anchor_link(r['name'], r['name'])}</td>"
             f"<td class='{_num_class(r['edge'])}'>{_fmt_num(r['edge'])}枚</td>"
             f"<td>{r['n_machines']}台</td><td>{r['mean_games']}G</td><td>{r['games_ratio']}</td></tr>"
             for r in rows
@@ -868,7 +1015,7 @@ def render_hall_review_html(review: dict) -> str:
 
     narabi = axes.get("narabi", {})
     narabi_rows = "".join(
-        f"<tr><td>{b['start']}〜（{detail_link(b['section'], b['section'])}）</td>"
+        f"<tr><td>{number_anchor_link(str(b['start']) + '〜', b['start'])}（{_html_escape(b['section'])}）</td>"
         f"<td class='{_num_class(b['mean_diff'])}'>{_fmt_num(b['mean_diff'])}枚</td>"
         f"<td>{b['mean_games']}G</td><td>{b['games_ratio']}</td><td>{_html_escape('/'.join(b['names']))}</td></tr>"
         for b in narabi.get("blocks", [])
@@ -895,7 +1042,7 @@ def render_hall_review_html(review: dict) -> str:
     row_axis = axes.get("row", {})
     if row_axis.get("applicable"):
         row_rows = "".join(
-            f"<tr><td>{detail_link(c['section'], c['section'])}</td>"
+            f"<tr><td>{number_anchor_link(c['section'], c.get('first_machine_number'))}</td>"
             f"<td class='{_num_class(c['mean_diff'])}'>{_fmt_num(c['mean_diff'])}枚</td>"
             f"<td>{c['mean_games']}G</td><td>{c['games_ratio']}</td><td>{c['n']}台</td>"
             f"<td>{c['top_single_ratio'] if c['top_single_ratio'] is not None else '-'}</td></tr>"
@@ -1016,12 +1163,13 @@ def main(argv: list[str] | None = None) -> int:
             output = build_hall_review(hall, target_date)
             output_path = REVIEW_DIR / f"{hall}__{target_date}.json"
             output_path.write_text(json.dumps(output, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-            html_path = REVIEW_DIR / f"{hall}__{target_date}.html"
-            html_path.write_text(render_hall_review_html(output), encoding="utf-8")
 
             detail_rows = fetch_detail_rows(hall, target_date)
             detail_path = REVIEW_DIR / _detail_filename(hall, target_date)
             detail_path.write_text(render_hall_detail_html(hall, target_date, detail_rows), encoding="utf-8")
+
+            html_path = REVIEW_DIR / f"{hall}__{target_date}.html"
+            html_path.write_text(render_hall_review_html(output, detail_rows), encoding="utf-8")
 
             note = output.get("note", "")
             print(
