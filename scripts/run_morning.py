@@ -1,14 +1,29 @@
-"""朝の定例: ana-slo の前日分を取り込み、期日の来た予告を採点し、X監視を回す。
+"""朝の定例: ana-slo の前日分を取り込み、期日の来た予告を採点する（X監視は別スケジュール）。
+
+2026-09-23 以降のスケジュール（3タスクに分離）:
+    03:00  X監視のみ（scraper/twitter_monitor/run_daily.py を直接起動）。
+           ana-slo とは無関係なので同じロックを取らず独立して回す。
+    07:00  ana-slo 取得のみ（本スクリプトを --skip-history --skip-forward
+           --skip-announce-score --skip-twitter で起動）。ana-slo が早く
+           公開された日はここで完了する。
+    07:30  ana-slo 再取得（本スクリプトを --skip-twitter で起動）。スクレイパーは
+           取得済みの日をスキップするので、07:00 で成功していればほぼ無処理で
+           終わる。DB更新・履歴蓄積・予告採点・フォワード凍結はここで一度だけ行う。
 
 なぜ ana-slo を先に置くか:
     ana-slo はおおむね 07:30 に前日分を公開する（不定期で、出ない日もある）。
-    タスクは 08:00 なので、その直後を狙って前日分だけを取りに行く。
+    07:00 の一発目はその公開前に空振りすることが多い前提で、07:30 の
+    再取得を主とする。
 
     順序には意味がある。`announce register` は target_date > db_max を要求する
     ため、取り込みと登録は競合しうる。ただし取り込むのは**前日分**なので
     db_max は昨日までにしかならず、今日を対象日とする予告は登録できる。
     逆に取り込みを何日も溜めると、その日数ぶんの予告が登録不能になる
     （2026-08-30〜09-06 で実際に6日分を失った）。だから毎日取り込む。
+
+    フォワードテストの凍結（backtest.forward plan-all）は一度凍結すると
+    上書きしない仕様なので、07:00 の空振りが疑われる時間帯では走らせない
+    （--skip-forward --skip-announce-score）。07:30 の一度きりで確定させる。
 
 更新が無い日を失敗にしない:
     ana-slo が更新されない日は一覧に日付リンクが無く、ホールごとに警告が出て
@@ -140,6 +155,11 @@ def main() -> int:
     parser.add_argument("--skip-twitter", action="store_true", help="X監視パイプラインを回さない")
     parser.add_argument("--skip-history", action="store_true", help="analysis_results.db への日次指標の蓄積を行わない")
     parser.add_argument("--skip-forward", action="store_true", help="フォワードテストの採点と凍結を行わない")
+    parser.add_argument(
+        "--skip-announce-score",
+        action="store_true",
+        help="期日の来た予告の採点を行わない（ana-slo 公開前の早い試行でフォワード凍結を巻き込まないため）",
+    )
     # 取得済みの日はスクレイパー側でスキップされるので、窓を広く取っても
     # 実際に開くのは欠けている日だけ。前日1日だけにすると、途中にできた穴
     # （403で落ちた日、ana-slo が遅れて掲載した日）が永久に埋まらない。
@@ -208,10 +228,11 @@ def _run(args: argparse.Namespace) -> int:
             [PYTHON, "-u", str(PROJECT_ROOT / "database" / "build_analysis_history.py"), "--since", start],
         )
 
-    print("\n" + "=" * 70)
-    print("期日の来た予告の採点")
-    print("=" * 70)
-    score_due_announcements()
+    if not args.skip_announce_score:
+        print("\n" + "=" * 70)
+        print("期日の来た予告の採点")
+        print("=" * 70)
+        score_due_announcements()
 
     if not args.skip_forward:
         # フォワードテスト。ここに置いていなかったせいで 2026-08-13〜09-10 の
