@@ -4,6 +4,13 @@
 ------
     venv/Scripts/python.exe -X utf8 -m backtest.daily_digest announce-watch --date 20260924
 
+`--date` は「予告が対象とする日（target_date）」であって、投稿日ではない。
+前夜投稿・翌日対象の予告を拾うため、投稿日は [target_date-1, target_date] の窓で
+スキャンする（2026-09-24 に判明した設計ミスの修正。詳細は build_digest() 参照）。
+X監視(scraper/twitter_monitor/run_daily.py)は毎日03:00に実行されるので、
+--date を省略して当日JST日付のまま03:00直後に回せば、前夜投稿の予告を
+その日のうちに（朝の作業前に）拾える。
+
 引数なしなら実行時のJST日付を使う。出力は backtest/daily_digest/watches/{date}.json。
 
 再利用方針
@@ -182,9 +189,25 @@ def _register_note(registered: bool, blocked: bool) -> str:
     return "未登録。target_date > db_max なので当日中に announce.py register へ回せる"
 
 
-def build_digest(run_date: date, generated_at: datetime | None = None) -> dict:
-    run_date_text = run_date.strftime("%Y%m%d")
+# 予告は「前夜投稿・翌営業日が対象」か「当日投稿・当日が対象」のどちらかにしかならない
+# （run_daily.py の target_date_of() の仕様）。よって target_date の予告を漏らさず拾うには
+# target_date 当日だけでなく前日投稿分もスキャンする必要がある。
+ANNOUNCE_SCAN_LOOKBACK_DAYS = 1
+
+
+def build_digest(target_date: date, generated_at: datetime | None = None) -> dict:
+    """target_date を対象とする予告を集める。
+
+    2026-09-24 に判明した設計ミスの修正: 当初は「run_date に投稿されたツイート」を
+    検索してから対象日を計算していたため、03:00（Twitter収集直後）に前夜投稿・
+    翌日対象の予告を拾おうとすると、前夜分の posted_at_jst が「昨日」の日付になり
+    素通りしていた。target_date を軸にし、投稿日を [target_date-1, target_date] の
+    窓でスキャンしてから target_date_of() で対象日を計算し直し、一致するものだけ残す。
+    """
+    target_text = target_date.strftime("%Y%m%d")
     generated = _now_jst(generated_at)
+    scan_since = (target_date - timedelta(days=ANNOUNCE_SCAN_LOOKBACK_DAYS)).isoformat()
+    scan_until = target_date.isoformat()
 
     ledger_rows, registered_targets = _load_ledger()
     halls = [{"hall": hall, "announces": []} for hall in HALL_KEYWORDS]
@@ -200,10 +223,10 @@ def build_digest(run_date: date, generated_at: datetime | None = None) -> dict:
                 posted_at_jst,
                 COALESCE(full_text, tweet_text, '')
             FROM seen_tweets
-            WHERE substr(posted_at_jst, 1, 10) = ?
+            WHERE substr(posted_at_jst, 1, 10) BETWEEN ? AND ?
             ORDER BY posted_at_jst, tweet_id
             """,
-            (run_date.isoformat(),),
+            (scan_since, scan_until),
         ).fetchall()
 
     for account, tweet_url, posted_at_text, claim_raw_text in rows:
@@ -213,9 +236,12 @@ def build_digest(run_date: date, generated_at: datetime | None = None) -> dict:
         if not is_forecast(text):
             continue
 
+        computed_target = target_date_of(text, posted_at.date()).strftime("%Y%m%d")
+        if computed_target != target_text:
+            continue
+
         header = "\n".join(text.splitlines()[:2])
         n_halls_mentioned = sum(any(keyword in text for keyword in keywords) for keywords in HALL_KEYWORDS.values())
-        target_text = target_date_of(text, posted_at.date()).strftime("%Y%m%d")
 
         for hall, keywords in HALL_KEYWORDS.items():
             strength = mention_strength(text, header, keywords, n_halls_mentioned)
@@ -244,7 +270,7 @@ def build_digest(run_date: date, generated_at: datetime | None = None) -> dict:
             )
 
     return {
-        "date": run_date_text,
+        "target_date": target_text,
         "generated_at": generated.isoformat(),
         "halls": halls,
     }
@@ -555,7 +581,7 @@ def main(argv: list[str] | None = None) -> int:
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     watch = subparsers.add_parser("announce-watch", help="本日投稿された予告を過去実績と突き合わせる")
-    watch.add_argument("--date", help="YYYYMMDD。省略時は実行時のJST日付")
+    watch.add_argument("--date", help="YYYYMMDD（予告の対象日=target_date。投稿日ではない）。省略時は実行時のJST日付")
 
     review = subparsers.add_parser("hall-review", help="昨日のホール実績を軸別に振り返る（フェーズ2: 3ホール限定）")
     review.add_argument("--hall", help="対象ホール名（HALL_REVIEW_HALLSのいずれか）")
@@ -565,12 +591,12 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if args.command == "announce-watch":
-        run_date = _now_jst().date() if args.date is None else _parse_date(args.date)
+        target_date = _now_jst().date() if args.date is None else _parse_date(args.date)
 
-        output = build_digest(run_date)
+        output = build_digest(target_date)
 
         WATCH_DIR.mkdir(parents=True, exist_ok=True)
-        output_path = WATCH_DIR / f"{run_date:%Y%m%d}.json"
+        output_path = WATCH_DIR / f"{target_date:%Y%m%d}.json"
         output_path.write_text(json.dumps(output, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
         announce_count = sum(len(hall["announces"]) for hall in output["halls"])
