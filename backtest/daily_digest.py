@@ -686,9 +686,126 @@ def _num_class(value) -> str:
     return ""
 
 
+def _detail_filename(hall: str, target_date: str) -> str:
+    return f"{hall}__{target_date}_detail.html"
+
+
+def _detail_link(hall: str, target_date: str, query: str = "") -> str:
+    filename = _detail_filename(hall, target_date)
+    if not query:
+        return filename
+    from urllib.parse import quote
+
+    return f"{filename}?q={quote(query)}"
+
+
+def fetch_detail_rows(hall: str, target_date: str) -> list[dict]:
+    """ana-sloがその日に出す情報を台単位で全部並べるための生データ。
+
+    集計軸（機種/角番/末尾/並び/列）を経由しない生データなので、集計ロジックの
+    検証にも使える。表示専用で、hall-reviewの軸計算はこの関数を経由しない
+    （経由すると集計とは違うJOIN条件・除外条件が紛れ込むリスクがあるため）。
+    """
+    with _ro_hall(hall) as connection:
+        rows = connection.execute(
+            "SELECT m.machine_number, m.machine_name, m.last_digit, m.is_zorome, "
+            "       m.games_normalized, m.diff_coins_normalized, m.bb_count, m.rb_count, "
+            "       m.total_probability_fraction, m.bb_probability_fraction, m.rb_probability_fraction, "
+            "       l.section, MIN(l.rank_from_min, l.rank_from_max) AS kakuban_rank "
+            "FROM machine_detailed_results m "
+            "LEFT JOIN machine_layout_history l "
+            "  ON l.machine_number = m.machine_number "
+            " AND m.date >= l.valid_from AND (l.valid_to IS NULL OR m.date <= l.valid_to) "
+            "WHERE m.date = ? "
+            "ORDER BY m.machine_number",
+            (target_date,),
+        ).fetchall()
+    return [
+        {
+            "machine_number": r[0],
+            "machine_name": r[1],
+            "last_digit": r[2],
+            "is_zorome": bool(r[3]),
+            "games": r[4],
+            "diff": r[5],
+            "bb": r[6],
+            "rb": r[7],
+            "total_prob": r[8],
+            "bb_prob": r[9],
+            "rb_prob": r[10],
+            "section": r[11],
+            "kakuban_rank": r[12],
+        }
+        for r in rows
+    ]
+
+
+def render_hall_detail_html(hall: str, target_date: str, rows: list[dict]) -> str:
+    hall_e = _html_escape(hall)
+    target_date_e = _html_escape(target_date)
+    body_rows = "".join(
+        "<tr data-search='"
+        + _html_escape(f"{r['machine_number']} {r['machine_name']} {r['section'] or ''}".lower())
+        + "'>"
+        + f"<td>{r['machine_number']}</td><td>{_html_escape(r['machine_name'])}</td>"
+        + f"<td>{_html_escape(r['section'])}</td>"
+        + f"<td>{r['kakuban_rank'] if r['kakuban_rank'] is not None else '-'}</td>"
+        + f"<td>末尾{_html_escape(r['last_digit'])}{'・ゾロ目' if r['is_zorome'] else ''}</td>"
+        + f"<td>{r['games']}G</td>"
+        + f"<td class='{_num_class(r['diff'])}'>{_fmt_num(r['diff'])}枚</td>"
+        + f"<td>{r['bb']}</td><td>{r['rb']}</td>"
+        + f"<td>{_html_escape(r['total_prob'])}</td><td>{_html_escape(r['bb_prob'])}</td><td>{_html_escape(r['rb_prob'])}</td>"
+        + "</tr>"
+        for r in rows
+    )
+    script = """
+<script>
+function filterRows() {
+  var q = document.getElementById('search').value.toLowerCase();
+  document.querySelectorAll('#detail-table tbody tr').forEach(function (tr) {
+    tr.style.display = tr.dataset.search.indexOf(q) === -1 ? 'none' : '';
+  });
+  document.getElementById('count').textContent =
+    document.querySelectorAll("#detail-table tbody tr:not([style*='display: none'])").length;
+}
+window.addEventListener('DOMContentLoaded', function () {
+  var q = new URLSearchParams(location.search).get('q');
+  if (q) { document.getElementById('search').value = q; }
+  filterRows();
+});
+</script>
+"""
+    return f"""<!doctype html><html><head><meta charset="utf-8"><title>{hall_e} {target_date_e} 詳細</title>{_HTML_STYLE}
+<style>
+  input#search {{ width: 100%; box-sizing: border-box; padding: 8px; font-size: 1rem; margin-bottom: 12px;
+                  background: #1a1d24; color: #e6e6e6; border: 1px solid #2a2e37; border-radius: 4px; }}
+  #detail-table th {{ position: sticky; top: 0; background: #1a1d24; }}
+</style></head>
+<body>
+<h1>{hall_e}　{target_date_e}　詳細（全{len(rows)}台）</h1>
+<p class="meta"><a href="{hall}__{target_date}.html">← 概略に戻る</a></p>
+<input id="search" type="text" placeholder="機種名・台番号・sectionで絞り込み" oninput="filterRows()">
+<p class="meta">表示中: <span id="count">{len(rows)}</span>件</p>
+<section>
+<table id="detail-table">
+<thead><tr><th>台番号</th><th>機種</th><th>section</th><th>角番</th><th>末尾</th><th>G数</th>
+<th>差枚</th><th>BB</th><th>RB</th><th>合成確率</th><th>BB確率</th><th>RB確率</th></tr></thead>
+<tbody>{body_rows}</tbody>
+</table>
+</section>
+{script}
+</body></html>"""
+
+
 def render_hall_review_html(review: dict) -> str:
-    hall = _html_escape(review.get("hall"))
-    target_date = _html_escape(review.get("target_date"))
+    raw_hall = review.get("hall")
+    raw_target_date = review.get("target_date")
+    hall = _html_escape(raw_hall)
+    target_date = _html_escape(raw_target_date)
+    detail_href = _html_escape(_detail_filename(raw_hall, raw_target_date))
+
+    def detail_link(text: str, query: str) -> str:
+        return f"<a href='{_html_escape(_detail_link(raw_hall, raw_target_date, query))}'>{_html_escape(text)}</a>"
 
     if review.get("skipped") or (review.get("note") and "axes" not in review):
         return (
@@ -704,7 +821,7 @@ def render_hall_review_html(review: dict) -> str:
         if not rows:
             return "<p class='note'>（なし）</p>"
         body = "".join(
-            f"<tr><td>{_html_escape(r['name'])}</td>"
+            f"<tr><td>{detail_link(r['name'], r['name'])}</td>"
             f"<td class='{_num_class(r['edge'])}'>{_fmt_num(r['edge'])}枚</td>"
             f"<td>{r['n_machines']}台</td><td>{r['mean_games']}G</td><td>{r['games_ratio']}</td></tr>"
             for r in rows
@@ -751,7 +868,7 @@ def render_hall_review_html(review: dict) -> str:
 
     narabi = axes.get("narabi", {})
     narabi_rows = "".join(
-        f"<tr><td>{b['start']}〜（{_html_escape(b['section'])}）</td>"
+        f"<tr><td>{b['start']}〜（{detail_link(b['section'], b['section'])}）</td>"
         f"<td class='{_num_class(b['mean_diff'])}'>{_fmt_num(b['mean_diff'])}枚</td>"
         f"<td>{b['mean_games']}G</td><td>{b['games_ratio']}</td><td>{_html_escape('/'.join(b['names']))}</td></tr>"
         for b in narabi.get("blocks", [])
@@ -778,7 +895,7 @@ def render_hall_review_html(review: dict) -> str:
     row_axis = axes.get("row", {})
     if row_axis.get("applicable"):
         row_rows = "".join(
-            f"<tr><td>{_html_escape(c['section'])}</td>"
+            f"<tr><td>{detail_link(c['section'], c['section'])}</td>"
             f"<td class='{_num_class(c['mean_diff'])}'>{_fmt_num(c['mean_diff'])}枚</td>"
             f"<td>{c['mean_games']}G</td><td>{c['games_ratio']}</td><td>{c['n']}台</td>"
             f"<td>{c['top_single_ratio'] if c['top_single_ratio'] is not None else '-'}</td></tr>"
@@ -809,6 +926,7 @@ def render_hall_review_html(review: dict) -> str:
   data_asof: {_html_escape(review.get('data_asof'))} / lag: {review.get('data_lag_days')}日 /
   <span class="badge badge-info">{_html_escape(review.get('traffic_stratum'))}</span>
   {event_html}
+  ／ <a href="{detail_href}">全台の詳細データを見る →</a>
 </div>
 {excluded_html}
 <section><h2>機種（好調/不調）</h2>{machine_html}</section>
@@ -900,8 +1018,16 @@ def main(argv: list[str] | None = None) -> int:
             output_path.write_text(json.dumps(output, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
             html_path = REVIEW_DIR / f"{hall}__{target_date}.html"
             html_path.write_text(render_hall_review_html(output), encoding="utf-8")
+
+            detail_rows = fetch_detail_rows(hall, target_date)
+            detail_path = REVIEW_DIR / _detail_filename(hall, target_date)
+            detail_path.write_text(render_hall_detail_html(hall, target_date, detail_rows), encoding="utf-8")
+
             note = output.get("note", "")
-            print(f"wrote {output_path} / {html_path}{'  (' + note + ')' if note else ''}")
+            print(
+                f"wrote {output_path} / {html_path} / {detail_path} ({len(detail_rows)}台)"
+                f"{'  (' + note + ')' if note else ''}"
+            )
         return 0
 
     parser.error(f"未知のコマンド: {args.command}")
