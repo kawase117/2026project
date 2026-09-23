@@ -8,10 +8,14 @@ for /f %%I in ('powershell -NoProfile -Command "Get-Date -Format yyyyMMdd"') do 
 set "LOG_FILE=%LOG_DIR%\morning_0700_%RUN_DATE%.log"
 set "PYTHONIOENCODING=utf-8"
 pushd "%ROOT%"
-rem 07:00 slot: ana-slo first attempt only. ana-slo publishes around 07:30
-rem (irregularly), so this often comes up empty -- that is expected, not a
-rem failure. The 07:30 task (run_morning.bat) retries and does the rest
-rem (DB update / history / announce scoring / forward freeze) once.
-"%PYTHON%" -u scripts\run_morning.py --skip-history --skip-forward --skip-announce-score --skip-twitter >> "%LOG_FILE%" 2>&1
+rem 07:00 slot: ana-slo attempt, then --only-if-complete decides whether to
+rem keep going. ana-slo publishes around 07:30 (irregularly), so this often
+rem comes up short -- that is expected, not a failure. But when it DOES come
+rem up complete this early, there is no reason to wait 30 minutes for 07:30:
+rem run_morning.py checks every hall's max date and, if all reached
+rem yesterday, finishes history / announce scoring / forward freeze right
+rem here. If any hall is still short, it stops and leaves the rest to the
+rem 07:30 task (run_morning.bat), which always runs to completion regardless.
+"%PYTHON%" -u scripts\run_morning.py --skip-twitter --only-if-complete >> "%LOG_FILE%" 2>&1
 popd
 endlocal
