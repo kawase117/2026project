@@ -576,6 +576,205 @@ def _default_target_date() -> str:
     return _shift(_now_jst().date().strftime("%Y%m%d"), -1)
 
 
+_HTML_STYLE = """
+<style>
+  body { font-family: -apple-system, "Hiragino Sans", "Meiryo", sans-serif; margin: 0; padding: 24px;
+         background: #0f1115; color: #e6e6e6; }
+  h1 { font-size: 1.4rem; margin-bottom: 4px; }
+  .meta { color: #9aa0a6; font-size: 0.9rem; margin-bottom: 20px; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; margin-right: 6px; }
+  .badge-hot { background: #1e3a2f; color: #7ee0a8; }
+  .badge-warn { background: #3a2f1e; color: #e0b87e; }
+  .badge-info { background: #1e2a3a; color: #7eb8e0; }
+  section { background: #1a1d24; border-radius: 8px; padding: 16px 20px; margin-bottom: 16px; }
+  h2 { font-size: 1.05rem; margin: 0 0 10px; border-left: 4px solid #4a90d9; padding-left: 8px; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.88rem; margin-top: 6px; }
+  th, td { text-align: right; padding: 4px 8px; border-bottom: 1px solid #2a2e37; }
+  th:first-child, td:first-child { text-align: left; }
+  .pos { color: #7ee0a8; } .neg { color: #e07e7e; }
+  .note { color: #9aa0a6; font-size: 0.85rem; margin-top: 8px; }
+  .warn { color: #e0b87e; font-size: 0.85rem; }
+  a { color: #7eb8e0; }
+</style>
+"""
+
+
+def _html_escape(value) -> str:
+    if value is None:
+        return ""
+    text = str(value)
+    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
+
+
+def _fmt_num(value, digits: int = 1) -> str:
+    if value is None:
+        return "-"
+    return f"{value:+,.{digits}f}" if isinstance(value, (int, float)) else _html_escape(value)
+
+
+def _num_class(value) -> str:
+    if isinstance(value, (int, float)):
+        return "pos" if value >= 0 else "neg"
+    return ""
+
+
+def render_hall_review_html(review: dict) -> str:
+    hall = _html_escape(review.get("hall"))
+    target_date = _html_escape(review.get("target_date"))
+
+    if review.get("skipped") or (review.get("note") and "axes" not in review):
+        return (
+            f"<!doctype html><html><head><meta charset='utf-8'><title>{hall} {target_date}</title>"
+            f"{_HTML_STYLE}</head><body><h1>{hall}　{target_date}</h1>"
+            f"<section><p class='warn'>{_html_escape(review.get('note'))}</p>"
+            f"<p class='meta'>data_asof: {_html_escape(review.get('data_asof'))}</p></section></body></html>"
+        )
+
+    axes = review.get("axes", {})
+
+    def machine_table(rows, cls):
+        if not rows:
+            return "<p class='note'>（なし）</p>"
+        body = "".join(
+            f"<tr><td>{_html_escape(r['name'])}</td>"
+            f"<td class='{_num_class(r['edge'])}'>{_fmt_num(r['edge'])}枚</td>"
+            f"<td>{r['n_machines']}台</td><td>{r['games_ratio']}</td></tr>"
+            for r in rows
+        )
+        return f"<table><tr><th>機種</th><th>差枚</th><th>台数</th><th>回転数比</th></tr>{body}</table>"
+
+    machine = axes.get("machine", {})
+    machine_html = (
+        f"<h3>好調</h3>{machine_table(machine.get('hot'), 'pos')}"
+        f"<h3>不調</h3>{machine_table(machine.get('cold'), 'neg')}"
+        if "hot" in machine
+        else f"<p class='warn'>{_html_escape(machine.get('note'))}</p>"
+    )
+
+    kakuban = axes.get("kakuban", {})
+    if kakuban.get("applicable"):
+        seg_blocks = []
+        for seg_name, seg in kakuban.get("segments", {}).items():
+            rows = "".join(
+                f"<tr><td>角{_html_escape(r['rank'])}</td>"
+                f"<td class='{_num_class(r['residual'])}'>{_fmt_num(r['residual'])}枚</td>"
+                f"<td>{_html_escape(r['games_ratio'])}</td><td>{r['n']}台</td></tr>"
+                for r in seg.get("rows", [])
+            )
+            seg_blocks.append(
+                f"<h3>{_html_escape(seg_name)}（ピーク: 角{_html_escape(seg.get('peak_rank'))}）</h3>"
+                f"<table><tr><th>角番</th><th>残差</th><th>回転数比</th><th>台数</th></tr>{rows}</table>"
+            )
+        kakuban_html = "".join(seg_blocks) + f"<p class='note'>{_html_escape(kakuban.get('games_ratio_basis'))}</p>"
+    else:
+        kakuban_html = f"<p class='warn'>{_html_escape(kakuban.get('note'))}</p>"
+
+    last_digit = axes.get("last_digit", {})
+    ld_rows = "".join(
+        f"<tr><td>末尾{_html_escape(r['digit'])}</td>"
+        f"<td class='{_num_class(r['mean_diff'])}'>{_fmt_num(r['mean_diff'])}枚</td>"
+        f"<td>{r['games_ratio']}</td><td>{r['n']}台</td><td>{r['n_zorome']}</td></tr>"
+        for r in last_digit.get("rows", [])
+    )
+    last_digit_html = (
+        f"<table><tr><th>末尾</th><th>平均差枚</th><th>回転数比</th><th>台数</th><th>ゾロ目台数</th></tr>{ld_rows}</table>"
+        f"<p class='warn'>⚠️ {_html_escape(last_digit.get('decoy_warning'))}</p>"
+    )
+
+    narabi = axes.get("narabi", {})
+    narabi_rows = "".join(
+        f"<tr><td>{b['start']}〜（{_html_escape(b['section'])}）</td>"
+        f"<td class='{_num_class(b['mean_diff'])}'>{_fmt_num(b['mean_diff'])}枚</td>"
+        f"<td>{b['games_ratio']}</td><td>{_html_escape('/'.join(b['names']))}</td></tr>"
+        for b in narabi.get("blocks", [])
+    )
+    narabi_html = (
+        f"<p class='meta'>成立 {narabi.get('count', 0)} 件</p>"
+        f"<table><tr><th>開始台</th><th>平均差枚</th><th>回転数比</th><th>機種</th></tr>{narabi_rows}</table>"
+        if narabi.get("blocks")
+        else "<p class='note'>（成立ブロックなし）</p>"
+    )
+
+    rb = axes.get("rb_settings", {})
+    rb_rows = "".join(
+        f"<tr><td>{_html_escape(m['name'])} #{m['number']}</td><td>{_html_escape(m['category'])}</td>"
+        f"<td>{m['games']}G</td><td>BB{m['bb']}/RB{m['rb']}</td>"
+        f"<td>{_html_escape(', '.join(f'{s}:{p * 100:.0f}%' for s, p in m['posterior'].items()))}</td></tr>"
+        for m in rb.get("machines", [])[:20]
+    )
+    rb_html = (
+        f"<p class='meta'>判別可能率 {(rb.get('coverage_pct') or 0) * 100:.1f}%（上位20台まで表示）</p>"
+        f"<table><tr><th>機種/台番号</th><th>区分</th><th>G数</th><th>BB/RB</th><th>設定別事後確率</th></tr>{rb_rows}</table>"
+    )
+
+    row_axis = axes.get("row", {})
+
+    event = review.get("event")
+    event_html = (
+        f"<span class='badge badge-hot'>イベント: {_html_escape(event.get('event_name'))}（{_html_escape(event.get('kind'))}）</span>"
+        if review.get("is_event_day") and event
+        else "<span class='badge badge-info'>通常日</span>"
+    )
+
+    excluded = review.get("excluded_new_machines") or []
+    excluded_html = f"<p class='note'>新台除外: {_html_escape(', '.join(excluded))}</p>" if excluded else ""
+
+    return f"""<!doctype html><html><head><meta charset="utf-8"><title>{hall} {target_date}</title>{_HTML_STYLE}</head>
+<body>
+<h1>{hall}　{target_date}</h1>
+<div class="meta">
+  data_asof: {_html_escape(review.get('data_asof'))} / lag: {review.get('data_lag_days')}日 /
+  <span class="badge badge-info">{_html_escape(review.get('traffic_stratum'))}</span>
+  {event_html}
+</div>
+{excluded_html}
+<section><h2>機種（好調/不調）</h2>{machine_html}</section>
+<section><h2>角番</h2>{kakuban_html}</section>
+<section><h2>末尾</h2>{last_digit_html}</section>
+<section><h2>並び</h2>{narabi_html}</section>
+<section><h2>列</h2><p class="note">{_html_escape(row_axis.get('note'))}</p></section>
+<section><h2>RB設定判別</h2>{rb_html}</section>
+</body></html>"""
+
+
+def render_announce_watch_html(digest: dict) -> str:
+    target_date = _html_escape(digest.get("target_date"))
+    blocks = []
+    for hall in digest.get("halls", []):
+        if not hall["announces"]:
+            continue
+        rows = []
+        for a in hall["announces"]:
+            track = a.get("account_track_record")
+            if track is None:
+                track_text = "実績データなし"
+            else:
+                rate = track.get("hit_rate_known")
+                rate_text = f"{rate * 100:.0f}%" if rate is not None else "判定不能のみ"
+                track_text = (
+                    f"{track['n_hit']}的中/{track['n_miss']}外れ/{track['n_unknown']}判定不能（既知的中率 {rate_text}）"
+                )
+            reg_badge = (
+                "<span class='badge badge-hot'>登録済み</span>"
+                if a["registered"]
+                else "<span class='badge badge-warn'>未登録</span>"
+            )
+            rows.append(
+                f"<tr><td>{_html_escape(a['account'])}</td><td>{_html_escape(a['target_date'])}</td>"
+                f"<td>{a['mention_strength']}</td><td>{reg_badge}<br><span class='note'>{_html_escape(a['register_note'])}</span></td>"
+                f"<td>{_html_escape(track_text)}</td>"
+                f"<td><a href='{_html_escape(a['tweet_url'])}'>本文</a>: {_html_escape(a['claim_raw_text'][:60])}...</td></tr>"
+            )
+        blocks.append(
+            f"<section><h2>{_html_escape(hall['hall'])}</h2>"
+            f"<table><tr><th>アカウント</th><th>対象日</th><th>言及強度</th><th>登録状況</th><th>過去実績</th><th>本文</th></tr>"
+            f"{''.join(rows)}</table></section>"
+        )
+    body = "".join(blocks) if blocks else "<section><p class='note'>該当する予告はありません</p></section>"
+    return f"""<!doctype html><html><head><meta charset="utf-8"><title>予告ウォッチ {target_date}</title>{_HTML_STYLE}</head>
+<body><h1>予告ウォッチ　{target_date}</h1>{body}</body></html>"""
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -598,9 +797,11 @@ def main(argv: list[str] | None = None) -> int:
         WATCH_DIR.mkdir(parents=True, exist_ok=True)
         output_path = WATCH_DIR / f"{target_date:%Y%m%d}.json"
         output_path.write_text(json.dumps(output, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        html_path = WATCH_DIR / f"{target_date:%Y%m%d}.html"
+        html_path.write_text(render_announce_watch_html(output), encoding="utf-8")
 
         announce_count = sum(len(hall["announces"]) for hall in output["halls"])
-        print(f"wrote {output_path} ({announce_count} announces)")
+        print(f"wrote {output_path} / {html_path} ({announce_count} announces)")
         return 0
 
     if args.command == "hall-review":
@@ -614,8 +815,10 @@ def main(argv: list[str] | None = None) -> int:
             output = build_hall_review(hall, target_date)
             output_path = REVIEW_DIR / f"{hall}__{target_date}.json"
             output_path.write_text(json.dumps(output, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            html_path = REVIEW_DIR / f"{hall}__{target_date}.html"
+            html_path.write_text(render_hall_review_html(output), encoding="utf-8")
             note = output.get("note", "")
-            print(f"wrote {output_path}{'  (' + note + ')' if note else ''}")
+            print(f"wrote {output_path} / {html_path}{'  (' + note + ')' if note else ''}")
         return 0
 
     parser.error(f"未知のコマンド: {args.command}")
