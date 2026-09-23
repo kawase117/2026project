@@ -26,6 +26,10 @@ ACCOUNTS = {
     "datagasubete": {"hall": "rakuen_kamata", "role": "結果報告(機種別の全台/1/2)"},
     "kengyo_niki": {"hall": "hiroki", "role": "答え合わせ"},
     "sloneko222": {"hall": "arrow_ikegami_mitoya_omori", "role": "結果報告"},
+    # みとや大森町店の店舗公式アカウント（2026-09-24 ユーザー確認）。sloneko222は
+    # エリア横断の個人アカウントで、こちらは店舗自身の一次資料。投稿傾向（台番号を
+    # 含むか等）は未検証のため role は仮置き。抽出候補からは除外しない。
+    "mitoyaoomori": {"hall": "mitoya", "role": "店舗公式(投稿傾向未検証)"},
 }
 
 BASE_DIR = Path(__file__).resolve().parent

@@ -13,6 +13,15 @@ from zoneinfo import ZoneInfo
 
 from config import ACCOUNTS, DB_PATH
 
+# 店長系アカウントの投稿は台番号を含まない画像が大半で、Codex呼び出しがほぼ空振りに
+# なる（2026-09-24 実測、成功抽出したものだけで見た「台番号を含む率」）:
+#   fanta_tenchou(店長)      74件成功 →   0件( 0.0%)
+#   j75gJ3j1539G(蒲田一店長) 196件成功 →  2件( 1.0%)
+#   ngc2070r136a1(蒲田七店長) 113件成功 →  3件( 2.7%)
+# 対して 予告+答え合わせ/答え合わせ/結果報告 系は 32.9%〜100%。
+# role に「店長」を含むアカウントは、--handles で名指しされない限り候補から除外する。
+MANAGER_HANDLES = frozenset(handle for handle, details in ACCOUNTS.items() if "店長" in details.get("role", ""))
+
 
 BASE_DIR = Path(__file__).resolve().parent
 SCHEMA_PATH = BASE_DIR / "extraction_schema.json"
@@ -237,6 +246,14 @@ def select_pending_images(
         placeholders = ", ".join("?" for _ in selected_handles)
         conditions.append(f"st.handle IN ({placeholders})")
         parameters.extend(sorted(selected_handles))
+
+    # --handles で明示的に名指しされたアカウントは除外しない（利用者の意図を優先する）。
+    explicitly_requested = set(handles) if handles else set()
+    excluded_managers = MANAGER_HANDLES - explicitly_requested
+    if excluded_managers:
+        placeholders = ", ".join("?" for _ in excluded_managers)
+        conditions.append(f"st.handle NOT IN ({placeholders})")
+        parameters.extend(sorted(excluded_managers))
 
     if tweet_ids:
         placeholders = ", ".join("?" for _ in tweet_ids)
