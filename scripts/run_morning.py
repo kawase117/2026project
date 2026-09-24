@@ -160,6 +160,11 @@ def main() -> int:
     parser.add_argument("--skip-history", action="store_true", help="analysis_results.db への日次指標の蓄積を行わない")
     parser.add_argument("--skip-forward", action="store_true", help="フォワードテストの採点と凍結を行わない")
     parser.add_argument(
+        "--skip-hall-review",
+        action="store_true",
+        help="前日分のホールレビューHTML生成(backtest.daily_digest hall-review)を行わない",
+    )
+    parser.add_argument(
         "--skip-announce-score",
         action="store_true",
         help="期日の来た予告の採点を行わない（ana-slo 公開前の早い試行でフォワード凍結を巻き込まないため）",
@@ -251,6 +256,16 @@ def _run(args: argparse.Namespace) -> int:
         run(
             "database/build_analysis_history.py --since %s" % start,
             [PYTHON, "-u", str(PROJECT_ROOT / "database" / "build_analysis_history.py"), "--since", start],
+        )
+
+    if not args.skip_hall_review:
+        # 前日分のホールレビューHTML(機種/角番/末尾/並び/列/RB設定判別)。
+        # フェーズ2対象の3ホール限定(backtest.daily_digest.HALL_REVIEW_HALLS)。
+        # 対象日は取り込んだ前日分(end)。データが無ければ hall-review 側が
+        # skipped 扱いのレビューを書き、ここでは落とさない。
+        run(
+            "backtest.daily_digest hall-review --all-halls --date %s" % end,
+            [PYTHON, "-u", "-X", "utf8", "-m", "backtest.daily_digest", "hall-review", "--all-halls", "--date", end],
         )
 
     if not args.skip_announce_score:
