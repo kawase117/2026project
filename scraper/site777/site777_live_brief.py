@@ -265,7 +265,7 @@ def main():
         cur_models[m["model_name"]].append(m)
 
     # 1) 判別可能機種: RB単独
-    out.append("## 判別可能機種（ノーマル / BT / A+AT）｜RB単独")
+    out.append("## 6. 判別可能機種（ノーマル / BT / A+AT）｜RB単独")
     out.append("")
     out.append("RB確率が主指標、BB確率と総G・平均Gを併記（回転数が少ない確率は重みが小さい）。")
     out.append("")
@@ -377,7 +377,7 @@ def main():
     out.append("")
 
     # 4) AT機: G比×平均差枚
-    out.append("## AT機｜G比×平均差枚（全台系の閾値 %+.0f）" % ZENTAIKEI_THRESHOLD)
+    out.append("## 7. AT機｜G比×平均差枚（全台系の閾値 %+.0f）" % ZENTAIKEI_THRESHOLD)
     out.append("")
     out.append(
         "⚠️ AT機はRBの設定差が小さく、RB順位と差枚残差の相関は -0.088（判別可能機種は -0.292）。"
@@ -655,11 +655,17 @@ def main():
     menu_lines, menu_done = report_menu.build(
         machines, os.path.join(HERE, "output", "site777_setting_report_filtered.md"), update_time
     )
+    # 6・7はAT機の差枚指標に埋もれて後回しにされた事故があったため、独立メニューとして必須化する
+    # (memory: feedback-normal-machines-never-secondary)。judge_rows/at_rowsは上のブロックで定義済み。
+    if judge_rows:
+        menu_done.append("6. 判別可能機種（ノーマル/BT/A+AT）RB確率ランキング")
+    if at_rows:
+        menu_done.append("7. AT機G比×平均差枚")
     menu_absent = report_menu.missing(menu_done)
     menu_check = (
         "⚠️ 報告メニューが欠落: " + " / ".join(menu_absent)
         if menu_absent
-        else "✅ 報告メニュー 1〜5 を出力済み（6 予告突合は末尾）"
+        else "✅ 報告メニュー 1〜7 を出力済み（判別可能機種=6とAT機=7は同格。8 予告突合は末尾）"
     )
     out.insert(2, checklist + "  " + menu_check)
     out.insert(3, "")

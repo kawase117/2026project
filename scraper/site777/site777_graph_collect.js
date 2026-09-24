@@ -180,7 +180,7 @@ async (page) => {
   const openLinkInNewTab = async (parentPage, locator, stage) => {
     const waitedMs = await throttle();
     const [targetPage] = await Promise.all([
-      context.waitForEvent("page"),
+      context.waitForEvent("page", { timeout: 30000 }),
       locator.evaluate((element) => {
         element.target = "_blank";
         element.click();
