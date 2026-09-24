@@ -126,6 +126,18 @@ def purge(connection, tweet_id, paths):
     connection.execute("DELETE FROM tweet_images WHERE tweet_id = ?", (tweet_id,))
 
 
+def strip_emoji(value):
+    """絵文字（U+FFFF超のサロゲートペア文字）を落とす。
+
+    X は本文中の絵文字を画像（twemoji）として描画するため、Playwright の
+    `inner_text()` はそれを拾わない。一方 DB の `full_text` は生のテキストを
+    保持しているので絵文字が残る。両者をそのまま突き合わせると、絵文字で
+    始まる投稿（🫛🌈🌹等）が軒並み「本文が一致しない」と誤判定される
+    （2026-09-24、999999Q9Qの100件バッチで48%が誤スキップして発覚）。
+    """
+    return "".join(ch for ch in str(value or "") if ord(ch) <= 0xFFFF)
+
+
 def same_tweet_text(shown, expected):
     """開いた記事が目的の投稿かを本文で確かめる。
 
@@ -133,8 +145,8 @@ def same_tweet_text(shown, expected):
     ならない** ため、`a[href^="/handle/status/<id>"]` では記事を特定できない
     （2026-09-09 にこれで取り違え検知が空振りした）。本文の先頭を突き合わせる。
     """
-    left = PUNCT.sub("", str(shown or ""))[:20]
-    right = PUNCT.sub("", str(expected or ""))[:20]
+    left = PUNCT.sub("", strip_emoji(shown))[:20]
+    right = PUNCT.sub("", strip_emoji(expected))[:20]
     return bool(left) and bool(right) and (left == right or left in right or right in left)
 
 
