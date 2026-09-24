@@ -127,15 +127,56 @@ def purge(connection, tweet_id, paths):
 
 
 def strip_emoji(value):
-    """絵文字（U+FFFF超のサロゲートペア文字）を落とす。
+    """絵文字を落とす。U+FFFF超の文字に加え、異体字セレクタ(U+FE0F)が
+
+    続く文字（‼️⬇️等、BMP内でもXがtwemoji画像として描画する記号）も
+    セレクタごと落とす。
 
     X は本文中の絵文字を画像（twemoji）として描画するため、Playwright の
     `inner_text()` はそれを拾わない。一方 DB の `full_text` は生のテキストを
     保持しているので絵文字が残る。両者をそのまま突き合わせると、絵文字で
     始まる投稿（🫛🌈🌹等）が軒並み「本文が一致しない」と誤判定される
     （2026-09-24、999999Q9Qの100件バッチで48%が誤スキップして発覚）。
+    U+FE0F付きのBMP内記号（‼️⬇️等）も同じ理由で漏れていた
+    （2026-09-24、引用画像混入8件の再取得が全滅して発覚）。
+    さらにキーキャップ絵文字（7️⃣ = "7"+FE0F+U+20E3）や、絵文字直後に
+    孤立して残るFE0Fも、取り除いた文字に続く結合文字として一緒に落とす
+    （2026-09-24、同バッチのkawasakislot 2件でも再発）。
+    ✨のようにFE0Fを伴わない単体のBMP内絵文字記号（矢印・記号・絵文字用
+    Dingbats等、U+2190-U+2BFF近辺）も同じ理由で漏れていた
+    （2026-09-24、同バッチのsloneko222 1件でも再発）。
     """
-    return "".join(ch for ch in str(value or "") if ord(ch) <= 0xFFFF)
+    COMBINING = ("️", "⃣")
+    # Xがtwemoji画像として描画するBMP内の絵文字ブロック。囲み英数字(①②③)や
+    # 矢印(→)・数学記号など、地の文で使われうる記号は含めない
+    # （DB側だけ削って表示側(shown)と非対称になり誤スキップを増やすため）。
+    BMP_EMOJI_RANGES = (
+        (0x203C, 0x2049),  # ‼ ⁉
+        (0x2600, 0x27BF),  # Misc Symbols + Dingbats（☀✨❤➡️等）
+        (0x2B00, 0x2BFF),  # Misc Symbols and Arrows（⭐⬆⬇等）
+        (0x3030, 0x3030),
+        (0x303D, 0x303D),
+        (0x3297, 0x3299),
+    )
+
+    def in_bmp_emoji_range(codepoint: int) -> bool:
+        return any(low <= codepoint <= high for low, high in BMP_EMOJI_RANGES)
+
+    text = str(value or "")
+    out = []
+    i = 0
+    while i < len(text):
+        ch = text[i]
+        is_emoji_base = ord(ch) > 0xFFFF or in_bmp_emoji_range(ord(ch))
+        is_emoji_with_selector = i + 1 < len(text) and text[i + 1] in COMBINING
+        if not (is_emoji_base or is_emoji_with_selector):
+            out.append(ch)
+            i += 1
+            continue
+        i += 1
+        while i < len(text) and text[i] in COMBINING:
+            i += 1
+    return "".join(out)
 
 
 def same_tweet_text(shown, expected):
