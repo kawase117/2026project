@@ -20,6 +20,7 @@ description: backtest/ 配下39モジュールの役割分担と使い分けの�
 
 | やりたいこと | モジュール | サブコマンド |
 |---|---|---|
+| 予測3軸(同種/同名イベント実績・直近トレンド・カレンダー)を5次元で一括取得する | `prediction_axes.py` | `briefing` |
 | ホール予告を事前登録する | `announce.py` | `register` |
 | 予告の答え合わせをする | `announce.py` | `score` |
 | DBの最新日を確認する | `announce.py` | `dbmax` |

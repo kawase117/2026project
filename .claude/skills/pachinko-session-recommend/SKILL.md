@@ -37,6 +37,21 @@ inputs = {
 
 ## 実行ステップ
 
+### Step -1: 3軸ブリーフィングの取得【必須・全ホール共通】（2026-09-24 追加）
+
+推薦は3軸(①同種/同名イベントの過去実績 ②直近N日トレンド ③DD/曜日/イベント日カレンダー)を
+機種・角番・末尾・台数・個別台番号の5次元で埋めてから組み立てる。まずこれを実行する。
+
+```bash
+PYTHONUTF8=1 venv\Scripts\python.exe -m backtest.prediction_axes briefing "<hall>" <today> \
+  --promise-text "<当日の予告本文があれば>" --event-name "<企画名があれば>"
+```
+
+- `axis3_calendar`が曜日・イベント日ゾロ目・登録済みイベントの判定材料になる(inputsの`is_zorome_day`/`weekday`はここから取得できる)
+- `axis2_recent_trend.by_last_digit`/`by_kakuban`/`by_individual_number`はStep2以降のゾロ目補正・台選びの裏取りに使う
+- `axis1_similar_events`は当日に該当する予告があるときのみ埋まる(無ければ空でよい)
+- `matrix_gaps`に出た項目は、他の手段で埋めるか埋められない理由を最終報告に書く
+
 ### Step 0: 機種粒度エッジの確認【必須・全ホール共通】（2026-07-31 追加）
 
 **推薦・分析を始める前に、必ずこれを実行して読むこと。ユーザーの指示を待たない。**

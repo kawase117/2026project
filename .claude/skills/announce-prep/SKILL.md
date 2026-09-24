@@ -14,6 +14,19 @@ description: ホール予告(announce)を事前登録する前の下ごしらえ
 2026-08-25のmirror-review(`document/mirror_evidence_2026-08-25.md`セクション4-A)で、3つの独立したセッションバッチが同一パターンを発見した: announce登録前に(1) DB最大収録日の確認、(2) ツイート本文の機種略称をmachine_masterの正式表記へ照合、(3) 直近30〜90日のbaserate計算、という3手順を毎回scratchpadに使い捨てスクリプトとして書き直していた。(3)は既に`announce.py baserate`として存在していたが、(1)(2)は未整備だった。
 
 ## やること
+
+-1. **まず `prediction_axes.py briefing` で3軸を一括取得する**（2026-09-24 追加・必須）
+   予測は3軸(①同種/同名イベントの過去実績 ②直近N日トレンド ③DD/曜日/イベント日カレンダー)を
+   機種・角番・末尾・台数・個別台番号の5次元で埋める必要がある。手作業で毎回組み立てると抜けるため、
+   まずこのコマンドを実行してから以降の手順に進む。
+   ```bash
+   PYTHONUTF8=1 venv\Scripts\python.exe -m backtest.prediction_axes briefing "<hall>" <target_date> \
+     --promise-text "<予告本文全文>" --event-name "<企画名があれば>"
+   ```
+   出力の `matrix_gaps` に列挙された項目は、他の手段（手動クエリ等）で埋めるか、
+   埋められない理由を最終報告に明記すること。`axis1_similar_events.event_name_matches` /
+   `tag_matches` に過去回のhit/miss機種が出たら、必ずclaimsのnoteに反映する。
+
 0. **予告本文にイベント（合同企画・収録来店・取材・周年・改装・版権など）があれば、必ずイベント日台帳に残す**（2026-09-19 追加）
    イベント日の多くは予告ツイートで分かる。予告JSONの自由記述だけに書くと、後から日付で引けず、
    過去の開催日を別ホールに取り違える（実例: 蒲田1のM1収録日を蒲田7の「カマタに集合」に混ぜた）。
@@ -52,7 +65,16 @@ description: ホール予告(announce)を事前登録する前の下ごしらえ
    ```
    出力の`models`配列（`n_machines`/`rank`/`of`/`n_days_present`/`over_threshold`/`rate`/`mean_score`）を`named_machine_context.models`と`claims`のnoteにそのまま反映できる。`rank`はas_of 1日分のみのプール内順位（少数台設置機種は低く出ることがあり、絶対scoreと合わせて解釈する）。
 
-5. 上記4つの結果を踏まえてannounce JSONを作成し、`backtest.announce register`で凍結する(即日中に行うこと。`feedback-announce-register-same-day`instinct参照)。
+4.5. **同種/同名企画の過去実績を確認する**（2026-09-24 追加、`prediction_axes.py`に統合済み）
+   手順-1で`prediction_axes.py briefing`を実行済みなら、`axis1_similar_events`の
+   `event_name_matches`（同名企画）と`tag_matches`（並び数・全⑤⑥機種数などの定量公約が同じ過去回）に
+   既に過去のhit/miss機種が出ている。それをそのままclaimsのnoteに反映すればよい。
+   - 今回の名指し機種が過去回にも出ていたか、初出かを必ず確認する。初出の機種は「過去の実績で裏付けられる」という本文の主張が当てはまらない
+   - グループ全店の持ち回りイベント(周年巡業など)も同じ考え方で、日程表にある全日程を自店DBで横断検証する(`2026-09-24-group-anniversary-tour-analysis-method`instinct参照)
+   - `prediction_axes.py`が拾わない企画名の表記ゆれ(「連続攻撃」と「連続取材week」等)は`grep -rl "<企画名>" backtest/announce/`で追加確認する
+   - この横断照合をスキップして機種平均だけで判断しない。ユーザーからの明示的な指摘(2026-09-24)を受けて必須ステップ化した
+
+5. 上記4つ+4.5の結果を踏まえてannounce JSONを作成し、`backtest.announce register`で凍結する(即日中に行うこと。`feedback-announce-register-same-day`instinct参照)。ツイートが収集済み(`seen_tweets`)であることと登録済みであることは別工程なので、収集確認だけで手を止めない(`2026-09-24-tweet-collected-is-not-announce-registered`instinct参照)。
 
 ## 出力
 - `dbmax`: DB最終収録日(YYYYMMDD)
