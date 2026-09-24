@@ -2,12 +2,12 @@
   "rule_id": "k7_jug_rb_top3",
   "hall": "マルハンメガシティ2000-蒲田7",
   "freeze_hash": "9e914424a794c5e3",
-  "target_date": "20260921",
+  "target_date": "20260922",
   "data_asof": "20260920",
-  "data_lag_days": 1,
+  "data_lag_days": 2,
   "lookback_window": [
-    "2026-08-22",
-    "2026-09-21"
+    "2026-08-23",
+    "2026-09-22"
   ],
   "score": "hist_mean_rb_prob",
   "selection_unit": "machine",
@@ -35,58 +35,58 @@
   ],
   "result": {
     "scored_with_hash": "9e914424a794c5e3",
-    "day_baseline": 193.6,
+    "day_baseline": -93.0,
     "universe_size": 172,
     "picks_realized": [
       {
         "machine_number": 3184,
-        "games": 3312.0,
+        "games": 4926.0,
         "diff": -700.0,
-        "edge": -893.6046511627907
+        "edge": -606.9767441860465
       },
       {
         "machine_number": 3185,
-        "games": 770.0,
-        "diff": -400.0,
-        "edge": -593.6046511627907
+        "games": 8289.0,
+        "diff": 400.0,
+        "edge": 493.0232558139535
       },
       {
         "machine_number": 3187,
-        "games": 987.0,
-        "diff": 200.0,
-        "edge": 6.395348837209298
+        "games": 6009.0,
+        "diff": 900.0,
+        "edge": 993.0232558139535
       }
     ],
-    "mean_diff_per_pick": -300.0,
-    "mean_edge_per_pick": -493.6,
+    "mean_diff_per_pick": 200.0,
+    "mean_edge_per_pick": 293.0,
     "missing_machines": [],
     "rb_perspective": {
-      "day_baseline_rb_rate": 0.00248,
+      "day_baseline_rb_rate": 0.00257,
       "picks_rb": [
         {
           "machine_number": 3187,
-          "rb_rate": 0.00101,
-          "baseline_ratio": 0.41,
-          "rb_rank": 162,
+          "rb_rate": 0.00333,
+          "baseline_ratio": 1.3,
+          "rb_rank": 41,
           "rb_universe_size": 172
         },
         {
           "machine_number": 3184,
-          "rb_rate": 0.00242,
-          "baseline_ratio": 0.97,
-          "rb_rank": 80,
+          "rb_rate": 0.00284,
+          "baseline_ratio": 1.11,
+          "rb_rank": 67,
           "rb_universe_size": 172
         },
         {
           "machine_number": 3185,
-          "rb_rate": 0.0,
-          "baseline_ratio": 0.0,
-          "rb_rank": 171,
+          "rb_rate": 0.00302,
+          "baseline_ratio": 1.18,
+          "rb_rank": 57,
           "rb_universe_size": 172
         }
       ]
     },
     "model_perspective": null
   },
-  "plan_digest": "1b18bd615ac15108"
+  "plan_digest": "bd33c14d18c9a04d"
 }

@@ -2,12 +2,12 @@
   "rule_id": "k7_at_histdiff_top3",
   "hall": "マルハンメガシティ2000-蒲田7",
   "freeze_hash": "71526fa786ee4e6e",
-  "target_date": "20260921",
-  "data_asof": "20260920",
+  "target_date": "20260923",
+  "data_asof": "20260922",
   "data_lag_days": 1,
   "lookback_window": [
-    "2026-08-22",
-    "2026-09-21"
+    "2026-08-24",
+    "2026-09-23"
   ],
   "score": "hist_mean_diff",
   "selection_unit": "machine",
@@ -17,51 +17,51 @@
     {
       "machine_number": 2026,
       "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
-      "score": 3592.857143,
-      "history_days": 28
+      "score": 3956.666667,
+      "history_days": 30
     },
     {
       "machine_number": 2099,
       "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
-      "score": 3483.333333,
-      "history_days": 18
+      "score": 3135.0,
+      "history_days": 20
     },
     {
       "machine_number": 3095,
       "machine_name": "革命機ヴァルヴレイヴ2",
-      "score": 2575.0,
-      "history_days": 12
+      "score": 2742.857143,
+      "history_days": 14
     }
   ],
   "result": {
     "scored_with_hash": "71526fa786ee4e6e",
-    "day_baseline": -133.2,
+    "day_baseline": 347.4,
     "universe_size": 479,
     "picks_realized": [
       {
         "machine_number": 2026,
-        "games": 4161.0,
-        "diff": 11100.0,
-        "edge": 11233.194154488518
+        "games": 4141.0,
+        "diff": 8200.0,
+        "edge": 7852.609603340292
       },
       {
         "machine_number": 2099,
-        "games": 1580.0,
-        "diff": 600.0,
-        "edge": 733.1941544885177
+        "games": 1872.0,
+        "diff": -1800.0,
+        "edge": -2147.3903966597077
       },
       {
         "machine_number": 3095,
-        "games": 4635.0,
-        "diff": 200.0,
-        "edge": 333.1941544885177
+        "games": 6192.0,
+        "diff": 11200.0,
+        "edge": 10852.609603340292
       }
     ],
-    "mean_diff_per_pick": 3966.7,
-    "mean_edge_per_pick": 4099.9,
+    "mean_diff_per_pick": 5866.7,
+    "mean_edge_per_pick": 5519.3,
     "missing_machines": [],
     "rb_perspective": null,
     "model_perspective": null
   },
-  "plan_digest": "a2e9ed550551eaaa"
+  "plan_digest": "303e4f5a2329b385"
 }

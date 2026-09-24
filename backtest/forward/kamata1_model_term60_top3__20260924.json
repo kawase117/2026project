@@ -1,0 +1,162 @@
+{
+  "rule_id": "kamata1_model_term60_top3",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "freeze_hash": "bb185b622fae47b2",
+  "target_date": "20260924",
+  "data_asof": "20260923",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-07-26",
+    "2026-09-24"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +187 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 936.102912,
+      "history_rows": 75,
+      "machines": [
+        2020,
+        2416,
+        2417,
+        2418,
+        2419
+      ]
+    },
+    {
+      "machine_name": "青春ブタ野郎はバニーガール先輩の夢を見ない",
+      "score": 323.93542,
+      "history_rows": 48,
+      "machines": [
+        2256,
+        2257,
+        2258
+      ]
+    },
+    {
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "score": 239.956135,
+      "history_rows": 517,
+      "machines": [
+        2001,
+        2002,
+        2003,
+        2004,
+        2005,
+        2006,
+        2007,
+        2008,
+        2009
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 2020,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 936.102912,
+      "history_days": 75
+    },
+    {
+      "machine_number": 2416,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 936.102912,
+      "history_days": 75
+    },
+    {
+      "machine_number": 2417,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 936.102912,
+      "history_days": 75
+    },
+    {
+      "machine_number": 2418,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 936.102912,
+      "history_days": 75
+    },
+    {
+      "machine_number": 2419,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 936.102912,
+      "history_days": 75
+    },
+    {
+      "machine_number": 2256,
+      "machine_name": "青春ブタ野郎はバニーガール先輩の夢を見ない",
+      "score": 323.93542,
+      "history_days": 48
+    },
+    {
+      "machine_number": 2257,
+      "machine_name": "青春ブタ野郎はバニーガール先輩の夢を見ない",
+      "score": 323.93542,
+      "history_days": 48
+    },
+    {
+      "machine_number": 2258,
+      "machine_name": "青春ブタ野郎はバニーガール先輩の夢を見ない",
+      "score": 323.93542,
+      "history_days": 48
+    },
+    {
+      "machine_number": 2001,
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "score": 239.956135,
+      "history_days": 517
+    },
+    {
+      "machine_number": 2002,
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "score": 239.956135,
+      "history_days": 517
+    },
+    {
+      "machine_number": 2003,
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "score": 239.956135,
+      "history_days": 517
+    },
+    {
+      "machine_number": 2004,
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "score": 239.956135,
+      "history_days": 517
+    },
+    {
+      "machine_number": 2005,
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "score": 239.956135,
+      "history_days": 517
+    },
+    {
+      "machine_number": 2006,
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "score": 239.956135,
+      "history_days": 517
+    },
+    {
+      "machine_number": 2007,
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "score": 239.956135,
+      "history_days": 517
+    },
+    {
+      "machine_number": 2008,
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "score": 239.956135,
+      "history_days": 517
+    },
+    {
+      "machine_number": 2009,
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "score": 239.956135,
+      "history_days": 517
+    }
+  ],
+  "result": null,
+  "plan_digest": "b0f949488472aabe"
+}

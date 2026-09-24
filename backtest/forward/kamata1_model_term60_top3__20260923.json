@@ -1,0 +1,391 @@
+{
+  "rule_id": "kamata1_model_term60_top3",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "freeze_hash": "bb185b622fae47b2",
+  "target_date": "20260923",
+  "data_asof": "20260922",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-07-25",
+    "2026-09-23"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +187 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 1013.550972,
+      "history_rows": 70,
+      "machines": [
+        2020,
+        2416,
+        2417,
+        2418,
+        2419
+      ]
+    },
+    {
+      "machine_name": "青春ブタ野郎はバニーガール先輩の夢を見ない",
+      "score": 423.853555,
+      "history_rows": 45,
+      "machines": [
+        2256,
+        2257,
+        2258
+      ]
+    },
+    {
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 259.39965,
+      "history_rows": 886,
+      "machines": [
+        2044,
+        2045,
+        2046,
+        2047,
+        2048,
+        2049,
+        2050,
+        2051,
+        2052,
+        2053,
+        2054,
+        2055,
+        2056,
+        2057,
+        2058,
+        2059
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 2020,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 1013.550972,
+      "history_days": 70
+    },
+    {
+      "machine_number": 2416,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 1013.550972,
+      "history_days": 70
+    },
+    {
+      "machine_number": 2417,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 1013.550972,
+      "history_days": 70
+    },
+    {
+      "machine_number": 2418,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 1013.550972,
+      "history_days": 70
+    },
+    {
+      "machine_number": 2419,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 1013.550972,
+      "history_days": 70
+    },
+    {
+      "machine_number": 2256,
+      "machine_name": "青春ブタ野郎はバニーガール先輩の夢を見ない",
+      "score": 423.853555,
+      "history_days": 45
+    },
+    {
+      "machine_number": 2257,
+      "machine_name": "青春ブタ野郎はバニーガール先輩の夢を見ない",
+      "score": 423.853555,
+      "history_days": 45
+    },
+    {
+      "machine_number": 2258,
+      "machine_name": "青春ブタ野郎はバニーガール先輩の夢を見ない",
+      "score": 423.853555,
+      "history_days": 45
+    },
+    {
+      "machine_number": 2044,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 259.39965,
+      "history_days": 886
+    },
+    {
+      "machine_number": 2045,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 259.39965,
+      "history_days": 886
+    },
+    {
+      "machine_number": 2046,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 259.39965,
+      "history_days": 886
+    },
+    {
+      "machine_number": 2047,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 259.39965,
+      "history_days": 886
+    },
+    {
+      "machine_number": 2048,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 259.39965,
+      "history_days": 886
+    },
+    {
+      "machine_number": 2049,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 259.39965,
+      "history_days": 886
+    },
+    {
+      "machine_number": 2050,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 259.39965,
+      "history_days": 886
+    },
+    {
+      "machine_number": 2051,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 259.39965,
+      "history_days": 886
+    },
+    {
+      "machine_number": 2052,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 259.39965,
+      "history_days": 886
+    },
+    {
+      "machine_number": 2053,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 259.39965,
+      "history_days": 886
+    },
+    {
+      "machine_number": 2054,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 259.39965,
+      "history_days": 886
+    },
+    {
+      "machine_number": 2055,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 259.39965,
+      "history_days": 886
+    },
+    {
+      "machine_number": 2056,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 259.39965,
+      "history_days": 886
+    },
+    {
+      "machine_number": 2057,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 259.39965,
+      "history_days": 886
+    },
+    {
+      "machine_number": 2058,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 259.39965,
+      "history_days": 886
+    },
+    {
+      "machine_number": 2059,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 259.39965,
+      "history_days": 886
+    }
+  ],
+  "result": {
+    "scored_with_hash": "bb185b622fae47b2",
+    "day_baseline": -92.1,
+    "universe_size": 365,
+    "picks_realized": [
+      {
+        "machine_number": 2044,
+        "games": 3946.0,
+        "diff": 1000.0,
+        "edge": 1092.054794520548
+      },
+      {
+        "machine_number": 2045,
+        "games": 2114.0,
+        "diff": -2300.0,
+        "edge": -2207.945205479452
+      },
+      {
+        "machine_number": 2046,
+        "games": 1909.0,
+        "diff": -1100.0,
+        "edge": -1007.945205479452
+      },
+      {
+        "machine_number": 2047,
+        "games": 4230.0,
+        "diff": 2300.0,
+        "edge": 2392.054794520548
+      },
+      {
+        "machine_number": 2048,
+        "games": 1541.0,
+        "diff": -1500.0,
+        "edge": -1407.945205479452
+      },
+      {
+        "machine_number": 2049,
+        "games": 1689.0,
+        "diff": -1600.0,
+        "edge": -1507.945205479452
+      },
+      {
+        "machine_number": 2050,
+        "games": 3908.0,
+        "diff": -1200.0,
+        "edge": -1107.945205479452
+      },
+      {
+        "machine_number": 2051,
+        "games": 2593.0,
+        "diff": -1900.0,
+        "edge": -1807.945205479452
+      },
+      {
+        "machine_number": 2052,
+        "games": 1661.0,
+        "diff": -600.0,
+        "edge": -507.94520547945206
+      },
+      {
+        "machine_number": 2053,
+        "games": 3562.0,
+        "diff": -2800.0,
+        "edge": -2707.945205479452
+      },
+      {
+        "machine_number": 2054,
+        "games": 3295.0,
+        "diff": 400.0,
+        "edge": 492.05479452054794
+      },
+      {
+        "machine_number": 2055,
+        "games": 2242.0,
+        "diff": -1100.0,
+        "edge": -1007.945205479452
+      },
+      {
+        "machine_number": 2056,
+        "games": 2760.0,
+        "diff": -2900.0,
+        "edge": -2807.945205479452
+      },
+      {
+        "machine_number": 2057,
+        "games": 3166.0,
+        "diff": 2900.0,
+        "edge": 2992.054794520548
+      },
+      {
+        "machine_number": 2058,
+        "games": 2640.0,
+        "diff": -200.0,
+        "edge": -107.94520547945206
+      },
+      {
+        "machine_number": 2059,
+        "games": 4473.0,
+        "diff": -600.0,
+        "edge": -507.94520547945206
+      },
+      {
+        "machine_number": 2020,
+        "games": 4268.0,
+        "diff": 400.0,
+        "edge": 492.05479452054794
+      },
+      {
+        "machine_number": 2416,
+        "games": 1873.0,
+        "diff": -1000.0,
+        "edge": -907.945205479452
+      },
+      {
+        "machine_number": 2417,
+        "games": 2732.0,
+        "diff": -700.0,
+        "edge": -607.945205479452
+      },
+      {
+        "machine_number": 2418,
+        "games": 4263.0,
+        "diff": 1100.0,
+        "edge": 1192.054794520548
+      },
+      {
+        "machine_number": 2419,
+        "games": 1397.0,
+        "diff": -1000.0,
+        "edge": -907.945205479452
+      },
+      {
+        "machine_number": 2256,
+        "games": 4043.0,
+        "diff": -3200.0,
+        "edge": -3107.945205479452
+      },
+      {
+        "machine_number": 2257,
+        "games": 4914.0,
+        "diff": -200.0,
+        "edge": -107.94520547945206
+      },
+      {
+        "machine_number": 2258,
+        "games": 3633.0,
+        "diff": -400.0,
+        "edge": -307.94520547945206
+      }
+    ],
+    "mean_diff_per_pick": -675.0,
+    "mean_edge_per_pick": -582.9,
+    "missing_machines": [],
+    "rb_perspective": null,
+    "model_perspective": [
+      {
+        "machine_name": "スマスロ炎炎ノ消防隊2",
+        "n_machines": 5,
+        "n_realized": 5,
+        "sum_diff": -1200.0,
+        "sum_games": 14533.0,
+        "mean_diff": -240.0
+      },
+      {
+        "machine_name": "青春ブタ野郎はバニーガール先輩の夢を見ない",
+        "n_machines": 3,
+        "n_realized": 3,
+        "sum_diff": -3800.0,
+        "sum_games": 12590.0,
+        "mean_diff": -1266.7
+      },
+      {
+        "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+        "n_machines": 16,
+        "n_realized": 16,
+        "sum_diff": -11200.0,
+        "sum_games": 45729.0,
+        "mean_diff": -700.0
+      }
+    ]
+  },
+  "plan_digest": "9fa544e5da5805ec"
+}

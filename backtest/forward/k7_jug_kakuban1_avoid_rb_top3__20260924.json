@@ -1,0 +1,38 @@
+{
+  "rule_id": "k7_jug_kakuban1_avoid_rb_top3",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "freeze_hash": "5292b2e5382e2b9e",
+  "target_date": "20260924",
+  "data_asof": "20260923",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-08-25",
+    "2026-09-24"
+  ],
+  "score": "hist_mean_rb_prob",
+  "selection_unit": "machine",
+  "success_criterion": "フォワードで30エントリー日を経過した時点で、(1) エッジ（同日ジャグ全台平均との差枚差）の平均が +150枚/台 以上かつ 7日ブロックブートストラップ 95%CI 下限 > 0、かつ (2) 同期間の k7_jug_rb_top3 のエッジを上回ること。(2) を課すのは、本ルールの主張が『RB確率スコアが効く』ではなく『角番1を外すと上乗せがある』だからである。(1) だけ満たして (2) を満たさない場合、角番1除外に効果は無く RB確率スコアだけが効いていたと結論し、本ルールは破棄する。バックテストは in-sample のため採否根拠にしない。",
+  "is_dry_run": false,
+  "picks": [
+    {
+      "machine_number": 3187,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 0.003555,
+      "history_days": 19
+    },
+    {
+      "machine_number": 3185,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 0.003374,
+      "history_days": 24
+    },
+    {
+      "machine_number": 3184,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 0.003338,
+      "history_days": 22
+    }
+  ],
+  "result": null,
+  "plan_digest": "fd6380d3f5d11b39"
+}

@@ -2,12 +2,12 @@
   "rule_id": "rakuen_block2247_position_follow",
   "hall": "楽園蒲田店",
   "freeze_hash": "4c1fc604baa51551",
-  "target_date": "20260921",
-  "data_asof": "20260920",
+  "target_date": "20260924",
+  "data_asof": "20260923",
   "data_lag_days": 1,
   "lookback_window": [
-    "2026-08-22",
-    "2026-09-21"
+    "2026-08-25",
+    "2026-09-24"
   ],
   "score": "hist_mean_diff",
   "selection_unit": "machine",
@@ -17,63 +17,28 @@
     {
       "machine_number": 2249,
       "machine_name": "バンドリ！",
-      "score": 2299.642857,
-      "history_days": 14
+      "score": 2120.933333,
+      "history_days": 15
     },
     {
       "machine_number": 2248,
       "machine_name": "バンドリ！",
-      "score": 1749.684211,
-      "history_days": 19
+      "score": 1928.888889,
+      "history_days": 18
     },
     {
       "machine_number": 2250,
       "machine_name": "バンドリ！",
-      "score": 596.666667,
-      "history_days": 21
+      "score": 302.7,
+      "history_days": 20
     },
     {
       "machine_number": 2247,
       "machine_name": "バンドリ！",
-      "score": -391.363636,
-      "history_days": 22
+      "score": -183.826087,
+      "history_days": 23
     }
   ],
-  "result": {
-    "scored_with_hash": "4c1fc604baa51551",
-    "day_baseline": -98.2,
-    "universe_size": 587,
-    "picks_realized": [
-      {
-        "machine_number": 2247,
-        "games": 6221.0,
-        "diff": 4572.0,
-        "edge": 4670.1533219761495
-      },
-      {
-        "machine_number": 2248,
-        "games": 324.0,
-        "diff": -95.0,
-        "edge": 3.153321976149911
-      },
-      {
-        "machine_number": 2249,
-        "games": 240.0,
-        "diff": -238.0,
-        "edge": -139.84667802385007
-      },
-      {
-        "machine_number": 2250,
-        "games": 102.0,
-        "diff": -142.0,
-        "edge": -43.84667802385009
-      }
-    ],
-    "mean_diff_per_pick": 1024.2,
-    "mean_edge_per_pick": 1122.4,
-    "missing_machines": [],
-    "rb_perspective": null,
-    "model_perspective": null
-  },
-  "plan_digest": "6817cee6e39d39e4"
+  "result": null,
+  "plan_digest": "4007bbc5fecfe07b"
 }

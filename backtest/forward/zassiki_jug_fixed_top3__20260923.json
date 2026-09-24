@@ -2,12 +2,12 @@
   "rule_id": "zassiki_jug_fixed_top3",
   "hall": "ザ-シティ-ベルシティ雑色店",
   "freeze_hash": "a0b246e660ee0d4e",
-  "target_date": "20260921",
-  "data_asof": "20260920",
+  "target_date": "20260923",
+  "data_asof": "20260922",
   "data_lag_days": 1,
   "lookback_window": [
-    "2026-03-25",
-    "2026-09-21"
+    "2026-03-27",
+    "2026-09-23"
   ],
   "score": "hist_mean_diff",
   "selection_unit": "machine",
@@ -23,45 +23,45 @@
     {
       "machine_number": 787,
       "machine_name": "マイジャグラーV",
-      "score": 231.975309,
+      "score": 230.407407,
       "history_days": 162
     },
     {
-      "machine_number": 772,
-      "machine_name": "ゴーゴージャグラー3",
-      "score": 206.596154,
-      "history_days": 156
+      "machine_number": 805,
+      "machine_name": "ジャグラーガールズ",
+      "score": 229.557377,
+      "history_days": 61
     }
   ],
   "result": {
     "scored_with_hash": "a0b246e660ee0d4e",
-    "day_baseline": -118.7,
+    "day_baseline": 186.0,
     "universe_size": 47,
     "picks_realized": [
       {
-        "machine_number": 772,
-        "games": 6476.0,
-        "diff": 1191.0,
-        "edge": 1309.723404255319
-      },
-      {
         "machine_number": 780,
-        "games": 804.0,
-        "diff": -257.0,
-        "edge": -138.27659574468083
+        "games": 5396.0,
+        "diff": 239.0,
+        "edge": 53.04255319148936
       },
       {
         "machine_number": 787,
-        "games": 2260.0,
-        "diff": -428.0,
-        "edge": -309.27659574468083
+        "games": 4094.0,
+        "diff": 328.0,
+        "edge": 142.04255319148936
+      },
+      {
+        "machine_number": 805,
+        "games": 3561.0,
+        "diff": -25.0,
+        "edge": -210.95744680851064
       }
     ],
-    "mean_diff_per_pick": 168.7,
-    "mean_edge_per_pick": 287.4,
+    "mean_diff_per_pick": 180.7,
+    "mean_edge_per_pick": -5.3,
     "missing_machines": [],
     "rb_perspective": null,
     "model_perspective": null
   },
-  "plan_digest": "c59dbfd4e45eba28"
+  "plan_digest": "0025a7a5ba80e774"
 }

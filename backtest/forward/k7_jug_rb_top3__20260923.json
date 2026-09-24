@@ -2,12 +2,12 @@
   "rule_id": "k7_jug_rb_top3",
   "hall": "マルハンメガシティ2000-蒲田7",
   "freeze_hash": "9e914424a794c5e3",
-  "target_date": "20260921",
-  "data_asof": "20260920",
+  "target_date": "20260923",
+  "data_asof": "20260922",
   "data_lag_days": 1,
   "lookback_window": [
-    "2026-08-22",
-    "2026-09-21"
+    "2026-08-24",
+    "2026-09-23"
   ],
   "score": "hist_mean_rb_prob",
   "selection_unit": "machine",
@@ -17,76 +17,76 @@
     {
       "machine_number": 3187,
       "machine_name": "ゴーゴージャグラー3",
-      "score": 0.003587,
-      "history_days": 19
+      "score": 0.003574,
+      "history_days": 20
     },
     {
       "machine_number": 3184,
       "machine_name": "ゴーゴージャグラー3",
-      "score": 0.00342,
-      "history_days": 20
+      "score": 0.003348,
+      "history_days": 22
     },
     {
       "machine_number": 3185,
       "machine_name": "ゴーゴージャグラー3",
-      "score": 0.00335,
-      "history_days": 22
+      "score": 0.003336,
+      "history_days": 23
     }
   ],
   "result": {
     "scored_with_hash": "9e914424a794c5e3",
-    "day_baseline": 193.6,
+    "day_baseline": 0.6,
     "universe_size": 172,
     "picks_realized": [
       {
         "machine_number": 3184,
-        "games": 3312.0,
-        "diff": -700.0,
-        "edge": -893.6046511627907
+        "games": 1271.0,
+        "diff": -300.0,
+        "edge": -300.5813953488372
       },
       {
         "machine_number": 3185,
-        "games": 770.0,
-        "diff": -400.0,
-        "edge": -593.6046511627907
+        "games": 6341.0,
+        "diff": 300.0,
+        "edge": 299.4186046511628
       },
       {
         "machine_number": 3187,
-        "games": 987.0,
-        "diff": 200.0,
-        "edge": 6.395348837209298
+        "games": 740.0,
+        "diff": -400.0,
+        "edge": -400.5813953488372
       }
     ],
-    "mean_diff_per_pick": -300.0,
-    "mean_edge_per_pick": -493.6,
+    "mean_diff_per_pick": -133.3,
+    "mean_edge_per_pick": -133.9,
     "missing_machines": [],
     "rb_perspective": {
-      "day_baseline_rb_rate": 0.00248,
+      "day_baseline_rb_rate": 0.00244,
       "picks_rb": [
         {
           "machine_number": 3187,
-          "rb_rate": 0.00101,
-          "baseline_ratio": 0.41,
-          "rb_rank": 162,
+          "rb_rate": 0.0,
+          "baseline_ratio": 0.0,
+          "rb_rank": 171,
           "rb_universe_size": 172
         },
         {
           "machine_number": 3184,
-          "rb_rate": 0.00242,
-          "baseline_ratio": 0.97,
-          "rb_rank": 80,
+          "rb_rate": 0.00315,
+          "baseline_ratio": 1.29,
+          "rb_rank": 43,
           "rb_universe_size": 172
         },
         {
           "machine_number": 3185,
-          "rb_rate": 0.0,
-          "baseline_ratio": 0.0,
-          "rb_rank": 171,
+          "rb_rate": 0.00426,
+          "baseline_ratio": 1.74,
+          "rb_rank": 7,
           "rb_universe_size": 172
         }
       ]
     },
     "model_perspective": null
   },
-  "plan_digest": "1b18bd615ac15108"
+  "plan_digest": "3f6955577f38e5b8"
 }

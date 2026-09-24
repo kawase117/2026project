@@ -1,0 +1,38 @@
+{
+  "rule_id": "mitoya_at_eventdd_histdiff_top3",
+  "hall": "みとや大森町店",
+  "freeze_hash": "e99d60338347d27e",
+  "target_date": "20260924",
+  "data_asof": "20260923",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-08-25",
+    "2026-09-24"
+  ],
+  "score": "hist_mean_diff",
+  "selection_unit": "machine",
+  "success_criterion": "【重要】AT一般×イベントDD という組み合わせは 2026-07-27 に同じデータを見て発見したものであり、バックテストは in-sample である。数値を採否根拠にしてはならない。判定はフォワードのみ。フォワード20エントリー日を経過した時点で edge 平均が +200枚/台 以上かつ 95%CI 下限 > 0 であること。満たさなければ破棄し、みとやのAT系スコアの派生はこの1本で打ち止めとする。なお 2026-05 の店長交代以降のイベントDD日は実測21日しかなく、レジーム再変化の可能性は常に残る。",
+  "is_dry_run": false,
+  "picks": [
+    {
+      "machine_number": 507,
+      "machine_name": "彼女、お借りします",
+      "score": 1400.266667,
+      "history_days": 15
+    },
+    {
+      "machine_number": 578,
+      "machine_name": "リコリス・リコイル",
+      "score": 1183.705882,
+      "history_days": 17
+    },
+    {
+      "machine_number": 632,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 1177.956522,
+      "history_days": 23
+    }
+  ],
+  "result": null,
+  "plan_digest": "2975ffdadfde72b9"
+}

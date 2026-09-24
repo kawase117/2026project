@@ -2,12 +2,12 @@
   "rule_id": "k7_at_histdiff_ex2026_top3",
   "hall": "マルハンメガシティ2000-蒲田7",
   "freeze_hash": "c8c26c0fb1179bcb",
-  "target_date": "20260921",
+  "target_date": "20260922",
   "data_asof": "20260920",
-  "data_lag_days": 1,
+  "data_lag_days": 2,
   "lookback_window": [
-    "2026-08-22",
-    "2026-09-21"
+    "2026-08-23",
+    "2026-09-22"
   ],
   "score": "hist_mean_diff",
   "selection_unit": "machine",
@@ -35,33 +35,33 @@
   ],
   "result": {
     "scored_with_hash": "c8c26c0fb1179bcb",
-    "day_baseline": -133.2,
+    "day_baseline": -308.1,
     "universe_size": 479,
     "picks_realized": [
       {
         "machine_number": 2099,
-        "games": 1580.0,
-        "diff": 600.0,
-        "edge": 733.1941544885177
+        "games": 2670.0,
+        "diff": -600.0,
+        "edge": -291.8580375782881
       },
       {
         "machine_number": 3095,
-        "games": 4635.0,
-        "diff": 200.0,
-        "edge": 333.1941544885177
+        "games": 7111.0,
+        "diff": 7300.0,
+        "edge": 7608.141962421712
       },
       {
         "machine_number": 2310,
-        "games": 4495.0,
-        "diff": -4000.0,
-        "edge": -3866.8058455114824
+        "games": 5790.0,
+        "diff": -3800.0,
+        "edge": -3491.858037578288
       }
     ],
-    "mean_diff_per_pick": -1066.7,
-    "mean_edge_per_pick": -933.5,
+    "mean_diff_per_pick": 966.7,
+    "mean_edge_per_pick": 1274.8,
     "missing_machines": [],
     "rb_perspective": null,
     "model_perspective": null
   },
-  "plan_digest": "a563cd58eeb2af5d"
+  "plan_digest": "85b40b0a2c5f7dda"
 }

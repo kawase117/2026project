@@ -2,12 +2,12 @@
   "rule_id": "mitoya_model_gratio_top2",
   "hall": "みとや大森町店",
   "freeze_hash": "a0f5b81a53a8e24b",
-  "target_date": "20260921",
-  "data_asof": "20260920",
+  "target_date": "20260923",
+  "data_asof": "20260922",
   "data_lag_days": 1,
   "lookback_window": [
-    "2026-08-31",
-    "2026-09-21"
+    "2026-09-02",
+    "2026-09-23"
   ],
   "score": "hist_model_gratio_mean_diff",
   "selection_unit": "machine_model",
@@ -15,76 +15,76 @@
   "is_dry_run": false,
   "models": [
     {
-      "machine_name": "邪神ちゃんドロップキック",
-      "score": 862.823845,
-      "history_rows": 21,
-      "machines": [
-        756
-      ]
-    },
-    {
       "machine_name": "ディスクアップ ULTRAREMIX",
-      "score": 709.024067,
+      "score": 685.640243,
       "history_rows": 21,
       "machines": [
         745
+      ]
+    },
+    {
+      "machine_name": "邪神ちゃんドロップキック",
+      "score": 639.576519,
+      "history_rows": 21,
+      "machines": [
+        756
       ]
     }
   ],
   "picks": [
     {
-      "machine_number": 756,
-      "machine_name": "邪神ちゃんドロップキック",
-      "score": 862.823845,
+      "machine_number": 745,
+      "machine_name": "ディスクアップ ULTRAREMIX",
+      "score": 685.640243,
       "history_days": 21
     },
     {
-      "machine_number": 745,
-      "machine_name": "ディスクアップ ULTRAREMIX",
-      "score": 709.024067,
+      "machine_number": 756,
+      "machine_name": "邪神ちゃんドロップキック",
+      "score": 639.576519,
       "history_days": 21
     }
   ],
   "result": {
     "scored_with_hash": "a0f5b81a53a8e24b",
-    "day_baseline": -1.8,
+    "day_baseline": -105.1,
     "universe_size": 277,
     "picks_realized": [
       {
         "machine_number": 745,
-        "games": 7969.0,
-        "diff": 1292.0,
-        "edge": 1293.8014440433212
+        "games": 8338.0,
+        "diff": -2042.0,
+        "edge": -1936.8628158844765
       },
       {
         "machine_number": 756,
-        "games": 3385.0,
-        "diff": -3431.0,
-        "edge": -3429.198555956679
+        "games": 2837.0,
+        "diff": -1092.0,
+        "edge": -986.8628158844765
       }
     ],
-    "mean_diff_per_pick": -1069.5,
-    "mean_edge_per_pick": -1067.7,
+    "mean_diff_per_pick": -1567.0,
+    "mean_edge_per_pick": -1461.9,
     "missing_machines": [],
     "rb_perspective": null,
     "model_perspective": [
       {
-        "machine_name": "邪神ちゃんドロップキック",
-        "n_machines": 1,
-        "n_realized": 1,
-        "sum_diff": -3431.0,
-        "sum_games": 3385.0,
-        "mean_diff": -3431.0
-      },
-      {
         "machine_name": "ディスクアップ ULTRAREMIX",
         "n_machines": 1,
         "n_realized": 1,
-        "sum_diff": 1292.0,
-        "sum_games": 7969.0,
-        "mean_diff": 1292.0
+        "sum_diff": -2042.0,
+        "sum_games": 8338.0,
+        "mean_diff": -2042.0
+      },
+      {
+        "machine_name": "邪神ちゃんドロップキック",
+        "n_machines": 1,
+        "n_realized": 1,
+        "sum_diff": -1092.0,
+        "sum_games": 2837.0,
+        "mean_diff": -1092.0
       }
     ]
   },
-  "plan_digest": "afbc4f64bd592493"
+  "plan_digest": "6c610987689b75d3"
 }
