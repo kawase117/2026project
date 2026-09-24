@@ -53,7 +53,8 @@ trigger: "データを確認するとき"
 ## 古い instinct を訂正するとき
 
 **必ず `supersedes` / `invalidates` で対象を名指しする。** 書かないと古い主張は
-永久に生き続ける。`compile_instincts.py` が自動で対象を閉じる。
+永久に生き続ける。`compile_instincts.py --ttl-days 180` でも180日超の未確認記録は
+自動でACTIVEから外れるが、原因(data_bug等)を残すには`supersedes`を書くこと。
 
 ```yaml
 supersedes:
@@ -89,8 +90,12 @@ confidence で並べると訂正が埋もれる。
 書き出し後、注入チャンネルへ反映するには:
 
 ```bash
-venv\Scripts\python.exe scripts/compile_instincts.py --sync-homunculus --force
+venv\Scripts\python.exe scripts/compile_instincts.py --sync-homunculus --force --ttl-days 180
 ```
+
+`--ttl-days 180`は2026-09-25に有効化した(ユーザー決定)。`file_date`が180日超かつ
+`verification_status: confirmed`でない記録はACTIVE一覧・注入チャンネルから自動で外れる。
+長期間有効と確認済みの記録は`verification_status: confirmed`を付けて例外にすること。
 
 ## Files
 
