@@ -60,7 +60,7 @@
     "universe": {"jug_flag": 1},
     "target": {"rakuen_clean_edge1": true},
     "metrics": ["payout", "rb_rate", "bonus_rate"],
-    "note": "現行の端番定義。frame/interior_split/special を除いた clean 列の depth=1。工事前後の両エポックで成立とされているため期間は打ち切らない"
+    "note": "現行の端番定義。frame/interior_split/special を除いた clean 列の depth=1。工事前後の両エポックで成立とされているため期間は打ち切らない。⚠️ 2026-07-28に registry rk-clean-edge1-jug で失効判定済み（HYPOTHESIS_LEDGER.md、死亡日特定不能な緩やかな減衰）。運用中の推薦ルールでは既に使っていない。mitoya_jug_corner1と同じく、検知器がこの既知の失効を正しく出し続けられるかの陽性対照として維持する"
   },
   {
     "claim_id": "rakuen_clean_edge1_bt",
@@ -69,7 +69,7 @@
     "universe": {"jug_flag": 0, "hana_flag": 0, "bt_flag": 1},
     "target": {"rakuen_clean_edge1": true},
     "metrics": ["payout", "rb_rate", "bonus_rate"],
-    "note": "§2.1c は jug/hana を先に取る排他カテゴリで測っているので universe も同じ優先順で切る"
+    "note": "§2.1c は jug/hana を先に取る排他カテゴリで測っているので universe も同じ優先順で切る。⚠️ 2026-07-28に registry rk-clean-edge1-bt で失効判定済み（HYPOTHESIS_LEDGER.md、死亡: 2026年5〜6月に明確な崩壊）。運用中の推薦ルールでは既に使っていない。陽性対照として維持する"
   },
   {
     "claim_id": "rakuen_dd_jug",
