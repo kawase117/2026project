@@ -36,6 +36,51 @@
       "frozen_scoring_procedure": "評価しない。答え合わせでは narabi.py と nibuichi 指標を回して事実だけ記録する。"
     }
   ],
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20260922",
+    "hall_baseline_mean_diff": 179.9,
+    "hall_n_machines": 587,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 1,
+      "n_censored_lo": 4,
+      "machines_hi": [
+        "かぐや様は告らせたい"
+      ],
+      "machines_lo": [
+        "ソードアート・オンラインII",
+        "化物語",
+        "甲鉄城のカバネリ 海門(うなと)決戦",
+        "青春ブタ野郎はバニーガール先輩の夢を見ない"
+      ],
+      "bounds": [
+        -5095,
+        15477
+      ]
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+          "note": "『早番なら圧倒的注力機種カバネリor末尾ゾロ目』。直近30日の+1800超え率0.367で、もともと超えやすい機種。9月月間+32万枚は自称。"
+        },
+        "score": -337.6,
+        "mean_diff": -235.9,
+        "gratio": 1.431,
+        "n_machines": 26,
+        "rank": 41,
+        "candidate_models": 57,
+        "n_censored_hi": 0,
+        "n_censored_lo": 1,
+        "censoring_bias": "upper_bound",
+        "age_days": 204,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
   "announce_digest": "05fc50badbb143d1"
 }

@@ -49,6 +49,54 @@
       "frozen_scoring_procedure": "narabi.pyで差枚+1000以上の3連ブロック数を数える。店内(279台)の+1000以上の割合を出す。8/26の値と、通常日の値(日平均-28の日)を併記する。"
     }
   ],
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20260922",
+    "hall_baseline_mean_diff": 68.0,
+    "hall_n_machines": 279,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 2,
+          "note": "『機種まるごと優秀以上×2』を最低2機種が+1800超えで代理。p_at_least_2=0.452。"
+        },
+        "observed_n_models": 3,
+        "candidate_models": 40,
+        "models": [
+          {
+            "machine_name": "ソードアート・オンラインII",
+            "score": 6908.3,
+            "n_machines": 3,
+            "mean_diff": 3320.3,
+            "age_days": 106
+          },
+          {
+            "machine_name": "攻殻機動隊",
+            "score": 3546.0,
+            "n_machines": 3,
+            "mean_diff": 2482.7,
+            "age_days": 232
+          },
+          {
+            "machine_name": "無職転生 ～異世界行ったら本気だす～",
+            "score": 2120.4,
+            "n_machines": 3,
+            "mean_diff": 2337.0,
+            "age_days": 274
+          }
+        ],
+        "n_new_machines_over": 0,
+        "hit": true
+      }
+    ]
+  },
   "announce_digest": "07eca6183bdeb287"
 }

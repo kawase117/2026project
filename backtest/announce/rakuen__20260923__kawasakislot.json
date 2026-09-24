@@ -1,0 +1,148 @@
+{
+  "announce_id": "rakuen__20260923__kawasakislot",
+  "hall": "楽園蒲田店",
+  "target_date": "20260923",
+  "source": {
+    "account": "kawasakislot",
+    "url": "https://x.com/kawasakislot/status/2102325264713986128",
+    "posted_at": "2026-09-22T18:12:57+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "9/23 楽園蒲田\n→ワロスさん来店@warosu_t、スロトレ調査団 インフィニティ\n\n明日からは恒例の連続取材week！初日はワロスさん来店に加えて取材入り。何気にセブンズ来店時に取材も入ってるのは初では...\n5月+10万枚、6月+15万枚、7月+12万枚、8月+7万枚と取材実績も十分！\n\nアンケート内容は\n・ヴヴヴ2が1/2⑤⑥\n・全⑤⑥&1/2⑤⑥がそれぞれ8機種以上\n・5台並び⑤⑥複数\n・列全⑤⑥\n\n10番以内引ければもちろんヴヴヴ2へ！\n次点で超優遇機種のLカバネリ（本館6台、新館20台）\n\nあとは仕掛け常連機種を意識しながらまるごとorニブイチ機種中心にドリル！添付の過去結果画像見てもらえれば分かる通りまるごとは3～5台設置、1/2は4台～準メイン級機種からも\n\n機種的な傾向で言うとL北斗が過去4回連続で対象になってるｗというか、3～4台設置機種狙っておけばそこそこの確率で1/2以上には座れる\n\nあとは演者寄せで初代ヴヴヴやSAO2とかもやる可能性あり\n\n抽選は9:40〜\n明日は打ち切り濃厚か\n安全ラインは8:30とかな気がする...けど読めないな\n\n蒲田OCでリアルタイムで並び人数報告あるので是非参加を！",
+  "posted_at_note": "ユーザー貼付の詳細版本文。DB収録の同tweet_idは短縮版(『明日はヴヴヴ2が1/2先バレ ワロスさんも来ますね』、full_text取得済みだが伸びず=141字がXの表示上限)。db_max=20260922<target=20260923で事後登録ではない。",
+  "weakness_note": "自己申告の取材月間実績(5月+10万枚等)は水増し傾向(project-kawasakislot-selfreport-inflated)。『L北斗が過去4回連続で対象』も自己申告で未検証——named-context実測では直近30日+1800超え率0.0%・mean_score+69.9とほぼ無風で、主張と実績に大きなギャップがある。『まるごとorニブイチ中心にドリル』は非特異で反証不能。初代ヴヴヴ・SAO2は『やる可能性あり』程度の弱い言及で、実測もマイナス(初代ヴヴヴ mean_score-888.1 n_days_present=9、SAO2 mean_score-792.6 rate=0%)。",
+  "prior_check_note": "登録時にDBで確認: (1) 名指し機種の設置台番号(20260922時点) 革命機ヴァルヴレイヴ2=1047-1056(10台)、革命機ヴァルヴレイヴ(初代)=1057-1059(3台)、甲鉄城のカバネリ=1027-1046+3107-3112(26台、本館6台+新館20台でツイート記載と一致)、スマスロ北斗の拳=3113-3120(8台)、ソードアート・オンラインII=3240-3251(12台)。(2) named-context(as_of=20260922,30日窓,閾値1800): カバネリ mean_score=1309.8 rate=0.367(57機種中rank41、n_days_present=30)——予告の『次点で超優遇機種』と方向一致、Step0機種粒度エッジ(eda/model_edge_briefing.py)でも△要観察(edge_pp+3.90)で独立に裏付けあり。ヴヴヴ2(予告の第一候補) mean_score=418.8 rate=0.10——予告の推し順位ほど実績は強くない。L北斗 mean_score=69.9 rate=0.0——予告の『4回連続対象』主張と実績に不一致。(3) baserate(90日,閾値1800): p_at_least_1=0.955, p_at_least_2=0.82, p_at_least_3=0.573, p_at_least_4=0.393。(4) イベント日として『連続取材week初日・ワロスさん来店・取材入り』をdocument/registry/EVENT_DAYS.jsonlに登録済み(20260923_楽園蒲田店_連続取材week初日ワロ)。",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "note": "『次点で超優遇機種のLカバネリ（本館6台、新館20台）』。直近30日+1800超え率0.367・mean_score1309.8で、予告・named-context実測・Step0機種粒度エッジ(edge_pp+3.90)の3方向が一致する最有力候補。"
+    },
+    {
+      "type": "model_named_ratio",
+      "machine_name": "革命機ヴァルヴレイヴ2",
+      "ratio": 2,
+      "note": "『ヴヴヴ2が1/2⑤⑥』『10番以内引ければもちろんヴヴヴ2へ』＝本文上の最優先候補。ただし直近30日+1800超え率0.10・mean_score418.8で、カバネリより実績は弱い。自己申告の優先順位を過信しない。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "スマスロ北斗の拳",
+      "note": "『L北斗が過去4回連続で対象になってる』。直近30日+1800超え率0.0・mean_score69.9で実測はほぼ無風。自己申告実績と実データのギャップが大きい主張。"
+    }
+  ],
+  "unscored_claims": [
+    {
+      "text": "全⑤⑥&1/2⑤⑥がそれぞれ8機種以上",
+      "reason": "全台系・1/2系を分けた機種数主張で、CLAIM_TYPESのzentaikei_countは片方のみしか表現できず、二重の主張を1claimに落とせない。",
+      "frozen_scoring_procedure": "20260923のmodel_scores(gratio_mean_diff, min_machines=3)で、閾値1800超えの機種数と、後述の1/2ロジック(model単位でtop_half機種内thresholdの割合)をそれぞれ数え、8以上かどうかを確認する。"
+    },
+    {
+      "text": "5台並び⑤⑥複数 / 列全⑤⑥",
+      "reason": "具体的な台番号・列番号が本文に無い位置主張で、機種名指しでもないため事前にmachine_numberを固定できない。",
+      "frozen_scoring_procedure": "答え合わせでnarabi.pyを20260923に対して実行し、5台以上の連続ブロックが複数検出されるか、列全体(同一section内の全台)がプラスになっている箇所があるかを確認する。"
+    },
+    {
+      "text": "初代ヴヴヴやSAO2とかもやる可能性あり",
+      "reason": "『可能性あり』という弱い言及で、名指しclaimに含めるとhit/miss判定が主張の確信度を反映しない。",
+      "frozen_scoring_procedure": "答え合わせでmachine_name=革命機ヴァルヴレイヴ(初代)/ソードアート・オンラインIIのmean_diffを確認し、事実だけ記録する(弱い言及なのでhit/miss採点はしない)。"
+    },
+    {
+      "text": "抽選9:40〜、明日(9/24)は打ち切り濃厚、安全ラインは8:30",
+      "reason": "来店整理券の運用情報で、台選択に関する反証可能な主張ではない。",
+      "frozen_scoring_procedure": "評価しない。"
+    }
+  ],
+  "result": {
+    "scored_at_data_max": "20260923",
+    "hall_baseline_mean_diff": 169.7,
+    "hall_n_machines": 587,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 3,
+      "n_censored_lo": 5,
+      "machines_hi": [
+        "Re:ゼロから始める異世界生活 season2",
+        "リコリス・リコイル",
+        "革命機ヴァルヴレイヴ2"
+      ],
+      "machines_lo": [
+        "ソードアート・オンラインII",
+        "ワールドダイスター",
+        "戦国乙女5 業火を穿つ宿焔の双刃",
+        "甲鉄城のカバネリ 海門(うなと)決戦",
+        "青春ブタ野郎はバニーガール先輩の夢を見ない"
+      ],
+      "bounds": [
+        -5095,
+        15477
+      ]
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+          "note": "『次点で超優遇機種のLカバネリ（本館6台、新館20台）』。直近30日+1800超え率0.367・mean_score1309.8で、予告・named-context実測・Step0機種粒度エッジ(edge_pp+3.90)の3方向が一致する最有力候補。"
+        },
+        "score": -325.6,
+        "mean_diff": -243.3,
+        "gratio": 1.338,
+        "n_machines": 26,
+        "rank": 39,
+        "candidate_models": 57,
+        "n_censored_hi": 0,
+        "n_censored_lo": 1,
+        "censoring_bias": "upper_bound",
+        "age_days": 205,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "革命機ヴァルヴレイヴ2",
+          "ratio": 2,
+          "note": "『ヴヴヴ2が1/2⑤⑥』『10番以内引ければもちろんヴヴヴ2へ』＝本文上の最優先候補。ただし直近30日+1800超え率0.10・mean_score418.8で、カバネリより実績は弱い。自己申告の優先順位を過信しない。"
+        },
+        "n_machines": 10,
+        "ratio": 2,
+        "top_k": 5,
+        "model_top_k_mean_diff": 8686.0,
+        "hall_top_quantile_mean_diff": 2001.0,
+        "excess_vs_hall_quantile": 6685.0,
+        "model_mean_diff": 4643.2,
+        "n_over_hall_quantile": 8,
+        "hit": true,
+        "model_named_score": 5915.7,
+        "model_named_rank": 4
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "スマスロ北斗の拳",
+          "note": "『L北斗が過去4回連続で対象になってる』。直近30日+1800超え率0.0・mean_score69.9で実測はほぼ無風。自己申告実績と実データのギャップが大きい主張。"
+        },
+        "score": -416.5,
+        "mean_diff": -624.6,
+        "gratio": 0.667,
+        "n_machines": 8,
+        "rank": 43,
+        "candidate_models": 57,
+        "age_days": 630,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
+  "announce_digest": "e7dd092b77cc4537"
+}
