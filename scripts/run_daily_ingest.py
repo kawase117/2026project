@@ -45,6 +45,12 @@ PYTHON = str(ROOT / "venv" / "Scripts" / "python.exe")
 if not Path(PYTHON).exists():  # 非Windows・別配置でも動くように
     PYTHON = sys.executable
 
+for _stream in (sys.stdout, sys.stderr):
+    # タスクスケジューラ経由（PYTHONUTF8未設定）だと既定 cp932 で
+    # 絵文字 print が UnicodeEncodeError で落ちるため、自分自身の出力も強制する。
+    if hasattr(_stream, "reconfigure"):
+        _stream.reconfigure(encoding="utf-8")
+
 
 def env_utf8() -> dict[str, str]:
     """絵文字の print で ABORT しないよう UTF-8 を強制した環境を返す。"""
@@ -152,7 +158,7 @@ def main() -> int:
             stale.append(hall)
     if stale:
         print()
-        print(f"  ⚠️ {end_date} に届いていないホール {len(stale)}件: {', '.join(stale)}")
+        print(f"  [WARN] {end_date} に届いていないホール {len(stale)}件: {', '.join(stale)}")
         print("     ana-slo 側が未掲載（404）なのか、遮断されたのかを切り分けること。")
 
     day = today.strftime("%Y-%m-%d")
