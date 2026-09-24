@@ -1,0 +1,108 @@
+---
+id: 2026-09-24-999999q9q-posting-time-distinguishes-forecast-from-recap
+trigger: "999999Q9Qアカウント(蒲田7/蒲田1予告)のツイートを予告か結果速報か判定するとき。深夜0時〜2時台の投稿を当日の予告として扱おうとしたとき"
+confidence: 0.6
+domain: prediction-evaluation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+scope: methodology
+stability: provisional
+
+# 999999Q9Qは23時台に翌日の予想、日付が変わった0-2時台に前日の結果速報を投稿する
+
+## Core claim
+999999Q9Qアカウントの深夜0-2時台の投稿を機械的に「当日の予告」として扱うと、実際には前日の結果速報を誤読するリスクがある。本命の翌日予告は前日23時台(21-23時台)に投稿される。
+
+## Evidence
+- n_observations: 1（2026-09-23、楽園蒲田・蒲田7・蒲田1の予告確認セッション）
+- data scope: single-account (999999Q9Q)
+- result summary: 9/23 00:27・00:48の投稿は見出しが「〜速報」で内容も「ゾロ目の22日は」のように前日(ゾロ目=9/22)を指す結果速報だった。本命の9/23予告は前日23:51("GALAXYウスイのメガなな予想")と21:25("新章メガいちよこやん予想")の投稿で、見出しが「〜予想」だった。
+
+## Interpretation
+- 見出しの「予想」か「速報」かが最も強いシグナル。深夜帯というだけで予告と決め打ちしない
+- 本文中の日付言及（「ゾロ目の22日は」等）が過去日を指していないか必ず確認する
+- n=1セッションの観察であり、他の日・他アカウントでも同じ投稿リズムかは未検証
+
+## Action
+1. 999999Q9Qのツイートを予告として扱う前に、見出しが「予想」か「速報」かを確認する
+2. 本文中の日付言及が対象日（今日/明日）を指しているか、過去日（DD・曜日名等）を指していないか確認する
+3. 深夜0-2時台の投稿だけで判断せず、前日21-23時台の投稿も必ず遡って確認する
+
+## Relation
+- related: []
+
+## Status
+- status: active
+
+---
+id: 2026-09-24-l-prefix-not-always-lcd-type-in-forecasts
+trigger: "予告本文の機種略称(L+機種名、例:L北斗)を正式名称に照合するとき。同一ホールに類似名の機種が複数存在するとき"
+confidence: 0.5
+domain: prediction-evaluation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+scope: methodology
+stability: provisional
+
+# 予告本文の"L"略称は液晶タイプの意味とは限らない。同名機種が複数あれば決め打ちしない
+
+## Core claim
+予告文中の「L+機種名」という略称は必ずしも液晶ボーナス機を意味せず、アカウント・ホールごとの慣習で別の機種を指すことがある。同ホールに類似名の機種が複数存在する場合、略称だけで1つに決め打ちしてはいけない。
+
+## Evidence
+- n_observations: 1（2026-09-24、ユーザーからの訂正）
+- data scope: single-hall (楽園蒲田店)
+- result summary: 楽園蒲田9/23予告の「L北斗が過去4回連続で対象」を、当初「北斗の拳 転生の章2」の略称と誤読した。ユーザーから「L北斗は通常、スマスロ北斗の拳を指す」と訂正された。楽園蒲田にはスマスロ北斗の拳(3113-3120)と北斗の拳転生の章2(番台は時期により変動)が別機種として同時に存在する。
+
+## Interpretation
+- 予告の略称記法は汎用的な業界慣習だけでは確定できない。アカウント・地域の慣習が優先される
+- 誤読すると、答え合わせで別機種の実績を引用してしまう実害がある(実際に本セッションで発生した)
+
+## Action
+- 予告の機種略称照合で、同ホールに類似名の複数機種が存在する場合、1つに決め打ちせず、named-context等で全候補を並列に確認してからユーザーに確認する
+- 略称解釈に確信が持てない場合は、断定せずユーザーに聞く
+
+## Relation
+- related:
+  - 2026-09-24-rakuen-kamata-hokuto-machine-name-confusion
+
+## Status
+- status: active
+
+---
+id: 2026-09-24-rakuen-kamata-hokuto-machine-name-confusion
+trigger: "楽園蒲田または蒲田1で「北斗」関連機種を分析・予告照合するとき"
+confidence: 0.7
+domain: hall-strategy
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+scope: hall-specific
+stability: structural
+
+# 楽園蒲田・蒲田1には「北斗」系の類似機種名が複数同時に存在する。machine_nameの完全一致でも番台移動の混入に注意
+
+## Core claim
+楽園蒲田・蒲田1では「スマスロ北斗の拳」「北斗の拳 転生の章2」「北斗の拳 宿命」「スマスロ真・北斗無双」が別機種としてmachine_masterに存在する。machine_name完全一致検索でも、対象期間中に番台移動や機種入替があると意図しない機種の実績を拾う可能性がある。
+
+## Evidence
+- n_observations: 1（2026-09-23予告答え合わせセッション）
+- data scope: single-hall (楽園蒲田店)
+- result summary: 過去の「スロトレインフィニティ取材」(6/23,7/23,8/24)実績をmachine_name='スマスロ北斗の拳'で検索した際、該当番台(1011-1016)が当時本当にその機種名だったか、後の番台移動で「北斗の拳転生の章2」に変わっていた可能性が未検証のまま残った。9/23時点でこの番台は「北斗の拳転生の章2」だった。
+
+## Interpretation
+- machine_name完全一致は機種名の表記ゆれには強いが、同名機種が別の時期・別の番台に存在する場合の取り違えには無力
+- 楽園蒲田は改装・配置替えが多いホール（7/6改装・9/7配置替え・9/14入替の既往歴あり）で、この種の番台移動が起きやすい
+
+## Action
+- 楽園蒲田・蒲田1で「北斗」系機種を分析するときは、まずmachine_masterで正式名称の全候補（スマスロ北斗の拳／北斗の拳転生の章2／北斗の拳宿命／スマスロ真・北斗無双）を洗い出す
+- 過去日の実績を引用する際は、対象期間中にmachine_detailed_resultsのmachine_number×dateで機種名が変わっていないか確認してから解釈する
+
+## Relation
+- related:
+  - 2026-09-24-l-prefix-not-always-lcd-type-in-forecasts
+
+## Status
+- status: active

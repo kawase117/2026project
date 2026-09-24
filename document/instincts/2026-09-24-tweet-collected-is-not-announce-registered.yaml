@@ -1,0 +1,42 @@
+---
+id: 2026-09-24-tweet-collected-is-not-announce-registered
+trigger: "ユーザーから予告ツイートの本文が貼られたとき。ツイートが『収集できているか』と聞かれたとき。当日の推薦を作る前に、その日の予告が backtest/announce/ にあるか確認するとき"
+confidence: 0.85
+domain: prediction-evaluation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+scope: methodology
+stability: structural
+---
+
+# ツイート収集(seen_tweets)とannounce登録(backtest/announce/)は別工程。収集確認だけで満足しない
+
+## Core claim
+`scraper/twitter_monitor/state.db` の `seen_tweets` にツイートが入っていることは、
+`backtest/announce/` への正式登録が済んでいることを意味しない。前者は自動収集、
+後者はannounce-prepの手順(dbmax確認→機種名照合→baserate→named-context→register)を
+人手(Claude)が実行して初めて完了する。
+
+## Evidence
+- n_observations: 1(2026-09-24、楽園蒲田9/24の予告)
+- data scope: single-hall (楽園蒲田店)
+- result summary: ユーザーが貼った9/24予告ツイートについて「スクレイピングできていないのか」と聞かれた。確認するとseen_tweetsにはfull_text込みで9/24 00:46に収集済みだったが、backtest/announce/への登録処理(announce-prep手順)は未実施だった。ホール選びの分析を進める中で、announce登録という工程自体を素通りしていた。
+
+## Interpretation
+- 収集パイプライン(twitter_monitor)とannounce台帳(backtest/announce/)は独立した工程であり、片方が動いていることは他方が動いている根拠にならない
+- 当日の推薦・ホール選びの分析を始める前に、その日の予告が「収集済みか」だけでなく「announce登録済みか」を別に確認する必要がある
+- 予告本文の中に企画名(『連続攻撃』等)がある場合、同名企画の過去回を`grep`等で検索し、named-contextの機種平均だけでなく企画名一致の過去的中実績も突き合わせて評価に加える
+
+## Action
+1. ユーザーから予告ツイートが提示されたら、まず `seen_tweets` で収集有無を確認するのに加えて、`backtest/announce/` に該当ホール・該当日のJSONが既にあるかを必ず確認する
+2. 無ければ即座にannounce-prepスキルの手順(dbmax→match-name→baserate→named-context→register)を実行し、その場で登録を完了させる。「後で登録する」を残さない
+3. 予告本文に固有の企画名(取材シリーズ名など)が出てきたら、その名前でEVENT_DAYS.jsonlとbacktest/announce/を検索し、同名企画の過去実績(的中/外れの機種)をnoteに反映する
+
+## Relation
+- related:
+  - feedback-announce-register-same-day
+  - 2026-09-07-announce-verification-prerequisites
+
+## Status
+- status: active
