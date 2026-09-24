@@ -78,6 +78,33 @@ for h,d,n in c.execute('select handle,substr(created_at,1,10) d,count(*) from tw
 画像由来のデータは本文と突き合わせ、**画像単位で** 検証する。
 疑わしければ `repair_tweet_images.py` で個別ステータスページから取り直す。
 
+**引用ツイートの画像混入**（別原因、2026-09-13発覚）も同じ症状で出る。1投稿の画像が
+Xの上限4枚を超えていたら引用元の画像が紛れている疑いがある。件数の特定は
+`measure_quote_image_hashes.py`（読み取り専用、ハッシュ一致で特定）を使う。
+
+**`repair_tweet_images.py --apply` 後は必ず次の順で回す。どれか1つ飛ばすと
+「0件処理」のまま無言で終わる（EXIT=0）。**
+
+```bash
+cd scraper/twitter_monitor
+PYTHONUTF8=1 PYTHONIOENCODING=utf-8 ../../venv/Scripts/python.exe repair_tweet_images.py --handle <handle> --apply --tweet-id <id1> --tweet-id <id2>
+PYTHONUTF8=1 PYTHONIOENCODING=utf-8 ../../venv/Scripts/python.exe prefilter.py   # 新規DL画像はimage_featuresが無くJOIN除外される
+PYTHONUTF8=1 PYTHONIOENCODING=utf-8 ../../venv/Scripts/python.exe extract_answers.py --tweet-ids <id1>,<id2>
+```
+
+⚠️ **`strip_emoji`（本文突き合わせ用）は絵文字を取りこぼす**（2026-09-24発覚）。
+FE0F付きBMP内記号（‼️⬇️等）・キーキャップ絵文字（7️⃣）・FE0Fなし単体のBMP絵文字
+（✨等、Misc Symbols+Dingbats/Misc Symbols and Arrows帯）がDB本文に残ったまま
+ページ表示（絵文字は描画されないので`inner_text`に出ない）と突き合わされ、
+「本文が一致しないので触らない」と誤スキップする。11件中10件がこれで弾かれた実績がある。
+`repair_tweet_images.py` の対象が軒並み「本文が一致しない」で終わったら、まず対象ツイートの
+本文に絵文字（特にBMP内、FE0F付き）が含まれていないか疑う。修正済みだが同種の記号漏れは再発しうる。
+
+⚠️ **`run_daily.bat` 以外でこのディレクトリのスクリプトを直接実行するときは
+`PYTHONUTF8=1 PYTHONIOENCODING=utf-8` を付ける。** `run_daily.bat` だけがこれを設定しており、
+付けずに実行すると標準出力の日本語が文字化けする（Windows既定コードページの問題、
+`mojibake-debug` スキルと同根）。
+
 ### 3. 予告は即日登録しないと詰む
 
 収集した予告は当日中に `backtest/announce.py register` まで通す。
