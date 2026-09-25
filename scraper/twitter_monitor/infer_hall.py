@@ -19,13 +19,21 @@ import os
 import re
 import sqlite3
 from collections import defaultdict
+from datetime import date
 
 from config import DB_PATH
+from hall_aliases import plausible_halls
 
 HALL_DB_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "db")
 MIN_PAIRS = 3
 MIN_NUMBER_RATE = 0.8
 MIN_NAME_RATE = 0.5
+
+# 999999Q9Qは店舗名ではなく店長ニックネームでマルハン全域を横断的に語るアカウントで、
+# 対象外ホール（例: マルハン川口店）の投稿が、台番号+機種名の偶然の一致で追跡対象
+# ホールに誤って割り当てられることがある（2026-09-24発覚）。この種のアカウントだけ、
+# 本文にどの追跡対象ホールのエイリアスも現れない画像を「対象外」として除外する。
+CHAIN_WIDE_HANDLES = frozenset({"999999Q9Q"})
 
 
 def normalize_name(value: str) -> str:
@@ -119,16 +127,30 @@ def main() -> int:
     if "inferred_hall" not in columns:
         connection.execute("ALTER TABLE extraction_entries ADD COLUMN inferred_hall TEXT")
         connection.commit()
+    elif args.apply:
+        # 過去の実行で書き込んだ値は、ロジック変更で対象外になっても自動では消えない
+        # （UPDATEは今回一致した行にしか効かない）。毎回全リセットしてから書き直し、
+        # 古い判定が残留しないようにする（2026-09-24、ARROW池上店の誤判定19枚が
+        # フィルタ追加後も残っていたことで発覚）。
+        connection.execute("UPDATE extraction_entries SET inferred_hall = NULL")
+        connection.commit()
 
-    images: dict[str, dict] = defaultdict(lambda: {"handle": None, "pairs": []})
+    images: dict[str, dict] = defaultdict(lambda: {"handle": None, "pairs": [], "text": None, "posted": None})
     rejected = 0
-    for image_path, handle, number, name in connection.execute(
-        "SELECT image_path, handle, machine_number, machine_name FROM extraction_entries"
+    for image_path, handle, number, name, full_text, tweet_text, posted_at in connection.execute(
+        """
+        SELECT en.image_path, en.handle, en.machine_number, en.machine_name,
+               st.full_text, st.tweet_text, st.posted_at_jst
+        FROM extraction_entries en
+        JOIN seen_tweets st ON st.tweet_id = en.tweet_id
+        """
     ):
         if not is_usable(number, name):
             rejected += 1
             continue
         images[image_path]["handle"] = handle
+        images[image_path]["text"] = full_text or tweet_text
+        images[image_path]["posted"] = posted_at
         images[image_path]["pairs"].append((normalize_number(number), normalize_name(name)))
     if rejected:
         print(f"構造誤認として除外した行: {rejected}件")
@@ -136,12 +158,25 @@ def main() -> int:
     resolved: dict[str, int] = defaultdict(int)
     per_handle: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
     unresolved = 0
+    excluded_no_alias = 0
     for image_path, info in images.items():
         pairs = info["pairs"]
         if len(pairs) < MIN_PAIRS:
             unresolved += 1
             continue
-        hall_name, number_rate, name_rate = score_image(pairs, halls)
+        candidate_halls = halls
+        if info["handle"] in CHAIN_WIDE_HANDLES:
+            on_date = date.fromisoformat(info["posted"][:10]) if info["posted"] else None
+            plausible = plausible_halls(info["text"], on_date)
+            if not plausible:
+                excluded_no_alias += 1
+                unresolved += 1
+                continue
+            candidate_halls = {name: machines for name, machines in halls.items() if name in plausible}
+            if not candidate_halls:
+                unresolved += 1
+                continue
+        hall_name, number_rate, name_rate = score_image(pairs, candidate_halls)
         if hall_name and number_rate >= MIN_NUMBER_RATE and name_rate >= MIN_NAME_RATE:
             resolved[hall_name] += 1
             per_handle[info["handle"]][hall_name] += 1
@@ -159,6 +194,8 @@ def main() -> int:
     total = len(images)
     hit = sum(resolved.values())
     print(f"画像 {total} 枚  対象ホール特定 {hit} 枚 ({hit / total * 100:.1f}%)  対象外/不明 {unresolved} 枚")
+    if excluded_no_alias:
+        print(f"  うちチェーン横断アカウントで本文にどの対象ホールも言及なし: {excluded_no_alias}枚")
     print("\n=== 特定されたホール ===")
     for hall_name, count in sorted(resolved.items(), key=lambda item: -item[1]):
         print(f"  {hall_name}: {count}枚")

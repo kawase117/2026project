@@ -131,6 +131,15 @@ def main() -> int:
 
     connection = sqlite3.connect(DB_PATH, timeout=60)
     add_columns(connection)
+    if args.apply:
+        # infer_hall.py 側でinferred_hallがNULLに戻された行のbusiness_dateが残留
+        # しないよう、毎回全リセットしてから書き直す（infer_hall.pyと同じ理由、
+        # 2026-09-24発覚）。
+        connection.execute(
+            "UPDATE extraction_entries SET business_date = NULL, date_offset = NULL, "
+            "date_error = NULL, date_source = NULL"
+        )
+        connection.commit()
     rows = connection.execute(
         """
         SELECT en.image_path, en.inferred_hall, st.posted_at_jst,
