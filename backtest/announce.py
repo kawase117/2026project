@@ -811,11 +811,20 @@ def match_machine_names(hall: str, text: str, cutoff: float = 0.6) -> list[dict]
     """
     import difflib
 
+    from backtest.model_alias import find_in_text
+
     names = sorted(load_frame(hall)["machine_name"].dropna().unique().tolist())
     results = []
+    # 略称の対応表（document/registry/MODEL_ALIASES.csv、機種マスターの正式名に紐づく）で
+    # 「北斗転生」「Lカバネリ」「エウレカ」等を正式名に当てる。2026-09-28 まではここが
+    # 正式名の完全部分一致とあいまい照合だけで、略称の予告は機種を拾えなかった。
+    aliased = {x["machine_name"]: x for x in find_in_text(text, names) if x["match"] == "alias"}
     for name in names:
         if name in text:
             results.append({"machine_name": name, "match": "substring", "score": 1.0})
+            continue
+        if name in aliased:
+            results.append({"machine_name": name, "match": "alias", "score": 1.0, "via": aliased[name]["via"]})
             continue
         match = difflib.SequenceMatcher(None, name, text).find_longest_match(0, len(name), 0, len(text))
         if match.size >= max(3, len(name) * cutoff):

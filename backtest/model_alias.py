@@ -119,8 +119,22 @@ def resolve_part(part: str, names: list[str]) -> dict:
                 return {"status": "ok", "names": hits, "part": raw}
             if len(hits) > 1:
                 return {"status": "ambiguous", "names": hits, "part": raw}
-    # 3. 部分一致（略称が正式名に含まれる、またはその逆）
+    # 3a. 末尾が「…」で切れた名前は、その前までで始まる正式名が1つならそれ
+    if raw.rstrip().endswith(("…", "...")):
+        stem = norm(re.sub(r"(…|\.\.\.)\s*$", "", _SMART_PREFIX.sub("", raw, count=1) if smart else raw))
+        starts = [n for n, v in normed.items() if stem and v.startswith(stem)]
+        if len(starts) == 1:
+            return {"status": "ok", "names": starts, "part": raw}
+    # 3b. 部分一致（略称が正式名に含まれる、またはその逆）
     hits = [n for n, v in normed.items() if key and (key in v or v in key)]
+    # 本文が正式名を複数含むとき（「スマスロ北斗の拳 転生の章2」は『スマスロ北斗の拳』と
+    # 『北斗の拳 転生の章2』の両方を含む）は、いちばん長い＝具体的な正式名を採る。
+    contained = [n for n in hits if normed[n] in key]
+    if len(contained) > 1:
+        longest = max(len(normed[n]) for n in contained)
+        top = [n for n in contained if len(normed[n]) == longest]
+        if len(top) == 1:
+            return {"status": "ok", "names": top, "part": raw}
     if len(hits) > 1 and smart:
         smart_hits = [n for n in hits if "スマスロ" in n or n.startswith("L")]
         hits = smart_hits or hits
@@ -220,3 +234,37 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+
+
+def find_in_text(text: str, names: list[str]) -> list[dict]:
+    """自由文（予告ツイート本文など）から、その日・そのホールの機種を正式名で拾う。
+
+    正式名と対応表の略称の両方を探す。長い語から先に当て、当てた部分は消してから次を探す
+    （「北斗転生」を「北斗」＝スマスロ北斗の拳 と取り違えない、「新ハナビ」を「ハナビ」と
+    取り違えないため）。候補付きの略称（とある2 等）は、設置が1機種のときだけ当てる。
+
+    返り値: [{"machine_name": 正式名, "via": 本文中の語, "match": "official"|"alias"}]（本文の出現順）
+    """
+    body = norm(text)
+    present = {norm(n): n for n in names}
+    terms: list[tuple[str, str, str]] = []  # (正規化した語, 正式名, 種類)
+    for key, name in present.items():
+        terms.append((key, name, "official"))
+    for alias, targets in ALIASES.items():
+        hits = [present[norm(t)] for t in targets if norm(t) in present]
+        if len(hits) == 1 and len(norm(alias)) >= 2:
+            terms.append((norm(alias), hits[0], "alias"))
+    for alias, targets in ALIAS_CANDIDATES.items():
+        hits = [present[norm(t)] for t in targets if norm(t) in present]
+        if len(hits) == 1:
+            terms.append((norm(alias), hits[0], "alias"))
+    terms.sort(key=lambda x: -len(x[0]))
+    found: dict[str, dict] = {}
+    for term, name, kind in terms:
+        pos = body.find(term)
+        if pos < 0:
+            continue
+        body = body[:pos] + "\0" * len(term) + body[pos + len(term) :]
+        if name not in found:
+            found[name] = {"machine_name": name, "via": term, "match": kind, "pos": pos}
+    return [{k: v for k, v in x.items() if k != "pos"} for x in sorted(found.values(), key=lambda x: x["pos"])]

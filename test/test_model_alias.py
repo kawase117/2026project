@@ -73,3 +73,23 @@ def test_toaru2_is_decided_by_installed_models_and_numbers():
     assert resolve("とある2 2201-2202", both, numbers_by_name=numbers)["names"] == ["とある科学の超電磁砲2"]
     # 同じ結果発表の画像の台番号で決める
     assert resolve("とある2", both, numbers_by_name=numbers, hint_numbers={2102})["names"] == ["とある魔術の禁書目録2"]
+
+
+def test_longest_contained_name_and_truncated_names():
+    names = ["スマスロ北斗の拳", "北斗の拳 転生の章2", "甲鉄城のカバネリ", "甲鉄城のカバネリ 海門(うなと)決戦"]
+    # 本文が正式名を複数含むときは長い方（2026-09-28、旧判定は『スマスロ北斗の拳』に当てていた）
+    assert resolve("L スマスロ北斗の拳 転生の章2", names)["names"] == ["北斗の拳 転生の章2"]
+    assert resolve("L スマスロ北斗の拳 転生", names)["names"] == ["北斗の拳 転生の章2"]
+    assert resolve("L スマスロ北斗の拳", names)["names"] == ["スマスロ北斗の拳"]
+    # 「…」で切れた名前はその前までで始まる正式名
+    assert resolve("L 甲鉄城のカバネリ 海…", names)["names"] == ["甲鉄城のカバネリ 海門(うなと)決戦"]
+    # 読み仮名『うなと』を書かない
+    assert resolve("L 甲鉄城のカバネリ 海門決戦", names)["names"] == ["甲鉄城のカバネリ 海門(うなと)決戦"]
+
+
+def test_find_in_text_prefers_longer_terms():
+    from backtest.model_alias import find_in_text
+
+    names = ["北斗の拳 転生の章2", "スマスロ北斗の拳", "新ハナビ", "スマスロ ハナビ"]
+    got = [x["machine_name"] for x in find_in_text("北斗転生1/3、L北斗1/3、新ハナビ", names)]
+    assert got == ["北斗の拳 転生の章2", "スマスロ北斗の拳", "新ハナビ"]

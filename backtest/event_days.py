@@ -24,6 +24,7 @@
 from __future__ import annotations
 
 import argparse
+import functools
 import json
 import os
 import re
@@ -1066,9 +1067,42 @@ def _history_field_obs(hall, business_date, asof, path):
     return out
 
 
+@functools.lru_cache(maxsize=32)
+def _master_specs(hall):
+    """機種マスター（db/<ホール>.db の machine_master）の区分と、ボーナスで設定を判別できるか。
+
+    {正式名: (spec_category, bonus_judgeable)}。DB が無い・列が無いときは空（呼び出し側は
+    従来のフラグ判定に戻る）。
+    """
+    path = os.path.join(ROOT, "db", str(hall) + ".db")
+    if not os.path.exists(path) or os.path.getsize(path) == 0:
+        return {}
+    try:
+        with _ro_connect(path) as con:
+            rows = con.execute(
+                "select machine_name_normalized, spec_category, bonus_judgeable from machine_master"
+            ).fetchall()
+    except sqlite3.Error:
+        return {}
+    return {name: (spec, judge) for name, spec, judge in rows if spec is not None}
+
+
+def _segment_and_judgeable(hall, row):
+    """区分の表示と、RB比で見るか（判別可能機種）を決める。
+
+    2026-09-28 から機種マスターの spec_category / bonus_judgeable を優先する。フラグだけでは
+    スマスロハナビ（マスター上 A+AT・判別可）を BT としていた。判別可能機種（ノーマル/BT/
+    判別可の A+AT）は RB 確率単独、それ以外（AT 等）は機種単位の G比×平均差枚で見る。
+    """
+    spec = _master_specs(hall).get(row.get("machine_name"))
+    if spec:
+        return spec[0], bool(spec[1])
+    seg = str(assign_segment(pd.DataFrame([row])).iloc[0])
+    return seg, seg in {"JUG", "HANA", "OKI", "BT"}
+
+
 def _history_score(day, frame, row, event_date):
-    seg = row.get("segment")
-    if seg in {"JUG", "HANA", "OKI", "BT"}:
+    if row.get("judgeable", row.get("segment") in {"JUG", "HANA", "OKI", "BT"}):
         hist = frame[
             (frame["machine_number"] == row["machine_number"])
             & (frame["machine_name"] == row["machine_name"])
@@ -1268,11 +1302,12 @@ def _history_day(hall, business_date, event_rows, announces, frame, result, asof
             rows.append(item)
             continue
         r = actual.iloc[0].to_dict()
-        r["segment"] = str(assign_segment(pd.DataFrame([r])).iloc[0])
+        r["segment"], r["judgeable"] = _segment_and_judgeable(hall, r)
         item.update(
             {
                 "machine_name": r["machine_name"],
                 "segment": r["segment"],
+                "judgeable": r["judgeable"],
                 "diff": r.get("diff_coins_normalized"),
                 "games": r.get("games_normalized"),
                 "score": _history_score(day, frame, r, business_date),
@@ -1618,7 +1653,7 @@ def cmd_history(a):
 
 def _render_machine_row(m):
     score = m.get("score", {}) or {}
-    if m.get("segment") in {"JUG", "HANA", "OKI", "BT"}:
+    if m.get("judgeable", m.get("segment") in {"JUG", "HANA", "OKI", "BT"}):
         value = None if score.get("ratio") is None else "RB比%.2f" % score["ratio"]
     else:
         value = None if score.get("value") is None else "機種%+.0f" % score["value"]
@@ -1662,11 +1697,12 @@ def _render_at_group(name, ms):
     cls = defaultdict(int)
     for m in ms:
         cls[m.get("classification") or "-"] += 1
-    return "%s | %s（%d台%s） | AT | %s | %s | %s | - | %s | %s | " % (
+    return "%s | %s（%d台%s） | %s | %s | %s | %s | - | %s | %s | " % (
         rng,
         name,
         len(ms),
         "・うち%d台入替" % len(changed) if changed else "",
+        ms[0].get("segment") or "AT",
         "○" if any(m.get("announced") for m in ms) else "",
         ",".join(labels),
         "プラス%d/マイナス%d（%+.0f〜%+.0f）" % (plus, len(diffs) - plus, min(diffs), max(diffs)) if diffs else "-",
@@ -1721,7 +1757,7 @@ def render_history(result):
         # AT機は台単位で設定を判定できないので機種ごとに1行。ノーマル・BTは台ごとのRB比に意味があるので1台1行。
         at_groups = defaultdict(list)
         for m in h["machines"]:
-            if m.get("segment") == "AT" and not m.get("field_obs"):
+            if not m.get("judgeable", m.get("segment") != "AT") and not m.get("field_obs"):
                 at_groups[m.get("machine_name")].append(m)
                 continue
             print(_render_machine_row(m))

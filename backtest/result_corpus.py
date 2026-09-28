@@ -566,6 +566,26 @@ def propagate_granularity(analysis_db=ANALYSIS_DB):
     return counts
 
 
+def _name_agrees(extracted, real, day_names):
+    """画像から読んだ機種名が、その台番号に当日実在した機種と折り合うか（1/0）。
+
+    略称の対応表（backtest.model_alias）でその日の機種に当てられれば、それで判定する
+    （別の機種に当たれば不一致）。当てられないときだけ、以前の先頭4文字の比較に戻る。
+    2026-09-28 までは先頭4文字の比較だけで、「北斗転生」「Lカバネリ」のような略称は
+    正しくても不一致になっていた。
+    """
+    from backtest.model_alias import resolve
+
+    if not extracted or not real:
+        return 0
+    res = resolve(str(extracted), day_names)
+    if res["names"]:
+        return int(real in res["names"])
+    left = str(extracted).replace(" ", "").replace("　", "").lower()
+    right = str(real).replace(" ", "").replace("　", "").lower()
+    return int(bool(left and right and (left[:4] in right or right[:4] in left)))
+
+
 def link_machines(state_db=STATE_DB, analysis_db=ANALYSIS_DB):
     """投稿の画像から抽出済みの台番号を、本文由来のホール・日付に結び付ける。
 
@@ -641,11 +661,10 @@ def link_machines(state_db=STATE_DB, analysis_db=ANALYSIS_DB):
             if len(present) / len(entries) < MIN_EXIST_RATE:
                 dropped_images += 1
                 continue
+            day_names = sorted(set(actual.values()))
             for number, name in present:
                 real = actual[number]
-                left = str(name or "").replace(" ", "").replace("　", "").lower()
-                right = str(real or "").replace(" ", "").replace("　", "").lower()
-                agrees = int(bool(left and right and (left[:4] in right or right[:4] in left)))
+                agrees = _name_agrees(name, real, day_names)
                 # 列名を明示する。位置指定にすると、粒度の列を足したときに黙って壊れる
                 # （2026-09-10 に実際に壊した）。
                 target.execute(
