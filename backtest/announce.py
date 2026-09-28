@@ -1034,6 +1034,9 @@ def _judge_claims(obj: dict, day: pd.DataFrame, first_seen: pd.Series | None = N
                 # segment 未指定でも常に併記する。プールの符号だけを見て棄却すると
                 # セグメント限定の本物を取り逃がす（SEGMENT_ORDER のコメント参照）。
                 entry["by_segment"] = _position_by_segment(sub, field, values)
+                # ノーマル機の RB でも見る。差枚は AT 機の揺れと当日のホール全体の上下に埋もれ、
+                # 末尾の予告を外れに見せる（2026-09-29、楽園 8/7「末尾7」は差枚 -35 で miss、RB は z+2.9）。
+                entry["rb_normal"] = _position_rb_normal(sub, field, values)
 
                 scope = sub if segment is None else sub[sub["segment"] == segment]
                 entry["judged_segment"] = segment or "ALL(pooled)"
@@ -1071,6 +1074,41 @@ def _position_effect(sub: pd.DataFrame, field: str, values: list) -> dict | None
         "effect_resid_diff": round(float(tgt["resid"].mean() - oth["resid"].mean()), 1),
         "target_payout": _payout(tgt),
         "other_payout": _payout(oth),
+    }
+
+
+def _position_rb_normal(sub: pd.DataFrame, field: str, values: list) -> dict | None:
+    """ノーマル機（機種マスター bonus_judgeable=1）の RB で、対象位置が同じ機種の他の台より出ていたか。
+
+    機種ごとに当日の RB 確率 p（その機種の全台合算）を出し、対象位置の台について
+    z = Σ(RB − 回転数×p) / sqrt(Σ回転数×p) を返す。同じ日・同じ機種の台と比べるので、
+    機種構成とホール全体の上下が混ざらない。対象位置しか無い機種は比べる相手が無いので除く。
+    hit_rb は z > 0。設定を断定するものではない（台単位の結果は揺れる）。
+    """
+    if "bonus_judgeable" not in sub.columns or "rb_count" not in sub.columns:
+        return None
+    g = sub[(sub["bonus_judgeable"] == 1) & (sub["games_normalized"] > 0) & sub["rb_count"].notna()].copy()
+    if g.empty:
+        return None
+    g["is_target"] = g[field].isin(values)
+    mixed = g.groupby("machine_name")["is_target"].transform(lambda s: s.any() and not s.all())
+    g = g[mixed]
+    if g.empty:
+        return None
+    per_model = g.groupby("machine_name")[["rb_count", "games_normalized"]].transform("sum")
+    g["expected"] = g["games_normalized"] * per_model["rb_count"] / per_model["games_normalized"]
+    tgt = g[g["is_target"]]
+    exp = float(tgt["expected"].sum())
+    if exp <= 0:
+        return None
+    z = (float(tgt["rb_count"].sum()) - exp) / exp**0.5
+    return {
+        "n_target": int(len(tgt)),
+        "n_other": int((~g["is_target"]).sum()),
+        "rb_observed": int(tgt["rb_count"].sum()),
+        "rb_expected": round(exp, 1),
+        "rb_z": round(z, 2),
+        "hit_rb": bool(z > 0),
     }
 
 
