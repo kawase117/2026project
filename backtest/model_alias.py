@@ -54,12 +54,13 @@ ALIASES, ALIAS_CANDIDATES = load_aliases()
 ALIAS_AMBIGUOUS: set[str] = set()
 
 # 機種ではない行（仕掛けの種類・件数・コーナー名）
-_NOT_MODEL = re.compile(r"^【|箇所|か所|^\d+機種$|^\d+枚$|台設置|^バラエティ$|^バラ$|^その他$|末尾")
+# 「バラエティ」は少数台機種のコーナー、「2台設置BT機」は台数のくくりで、どれも機種名ではない（2026-09-28）。
+_NOT_MODEL = re.compile(r"^【|箇所|か所|^\d+機種$|^\d+枚$|台設置|台機種|少数台|小数台|^バラエティ|^バラ$|^その他|末尾")
 
 _NUM_RANGE = re.compile(r"(\d{3,4})\s*[-‐－~〜]\s*(\d{3,4})")
 # 頭の L/S/e はスマスロ等の記号。直後が日本語か、空白をはさむときだけ記号とみなす
 # （「SAO」の S を記号として剥がして 'AO' にしないため）。
-_SMART_PREFIX = re.compile(r"^(?:L|S|s|e)(?:\s+|(?=[^\x00-\x7f]))")
+_SMART_PREFIX = re.compile(r"^(?:LB|L|S|s|e)(?:\s+|(?=[^\x00-\x7f]))")
 
 
 def norm(text: str) -> str:
@@ -279,7 +280,7 @@ def clean_image_name(text: str) -> str:
     """
     t = unicodedata.normalize("NFKC", text or "").strip()
     t = re.sub(r"(…|\.\.\.)\s*$", "", t)
-    t = re.sub(r"^[LSse]\s*[/／]\s*", "", t)
+    t = re.sub(r"^(?:LB|[LSse])\s*[/／]\s*", "", t)
     # 「/」区切りなら、日本語を含むいちばん長い部分を機種名とみなす
     segs = [s.strip() for s in re.split(r"[/／]", t) if s.strip()]
     if len(segs) > 1:
@@ -287,5 +288,6 @@ def clean_image_name(text: str) -> str:
         t = max(jp or segs, key=len)
     t = _SMART_PREFIX.sub("", t, count=1)
     t = re.sub(r"^(パチスロ|スロット)\s*", "", t)
-    t = re.sub(r"\s*[A-Z]{1,3}\d?$", "", t) if re.search(r"[^\x00-\x7f]", t) else t
+    # 型式の記号は空白で区切られて複数付くことがある（「北斗の拳AD XR」「北斗の拳A D」）
+    t = re.sub(r"(\s*[A-Z]{1,3}\d?)+$", "", t) if re.search(r"[^\x00-\x7f]", t) else t
     return t.strip()

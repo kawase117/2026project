@@ -306,3 +306,35 @@ def test_prose_hall_prefers_headline_hall():
     # 1行目にホールが無ければ本文で最初に出てくるホール
     assert _prose_hall("速報\nメガいちは全台系3機種、メガななも", halls) == "マルハンメガシティ2000-蒲田1"
     assert _prose_hall("速報\n全台系3機種", halls) is None
+
+
+def test_sibling_hall_warning_flags_image_of_other_store(tmp_path):
+    """蒲田1の画像が蒲田7の結果として入ったら警告する（付け替えはしない）。2026-09-28。"""
+    import sqlite3
+
+    from backtest.result_corpus import _name_agrees, _sibling_hall_warning
+
+    k7, k1 = "マルハンメガシティ2000-蒲田7", "マルハンメガシティ2000-蒲田1"
+    k7_day = {
+        2035: "甲鉄城のカバネリ 海門(うなと)決戦",
+        2036: "甲鉄城のカバネリ 海門(うなと)決戦",
+        2037: "甲鉄城のカバネリ 海門(うなと)決戦",
+    }
+    k1_day = {
+        2035: "ミリオンゴッド‐神々の軌跡‐",
+        2036: "ミリオンゴッド‐神々の軌跡‐",
+        2037: "ミリオンゴッド‐神々の軌跡‐",
+    }
+    con = sqlite3.connect(tmp_path / (k1 + ".db"))
+    con.execute("create table machine_detailed_results (date text, machine_number integer, machine_name text)")
+    con.executemany("insert into machine_detailed_results values ('20260630', ?, ?)", list(k1_day.items()))
+    con.commit()
+    con.close()
+    present = [(n, "L/ミリオンゴッド/CX") for n in (2035, 2036, 2037)]
+    w = _sibling_hall_warning(k7, "20260630", present, k7_day, str(tmp_path), {})
+    assert w and w["other_hall"] == k1 and w["own_rate"] == 0 and w["other_rate"] == 1
+    # 自店に合っている画像は警告しない
+    assert _sibling_hall_warning(k1, "20260630", present, k1_day, str(tmp_path), {}) is None
+    # コーナー名は比べられない（None）
+    assert _name_agrees("バラエティ", "ペルソナ5", ["ペルソナ5"]) is None
+    assert _name_agrees("2台設置BT機", "翔べ！ハーレムエース", ["翔べ！ハーレムエース"]) is None

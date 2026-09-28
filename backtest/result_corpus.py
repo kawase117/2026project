@@ -604,6 +604,11 @@ def _name_agrees(extracted, real, day_names):
         return 0
     # 画像の機種名の飾り（頭の L/、パチスロ、型式の記号 FN/AD/SC2 等）を落としてから比べる。
     cleaned = clean_image_name(str(extracted))
+    # 「バラエティ」（少数台機種のコーナー）・「2台設置BT機」・「その他」などは機種名ではないので、
+    # 実在機種と比べられない。一致でも不一致でもなく None（NULL）を返す（2026-09-28 ユーザー指摘）。
+    probe = resolve(cleaned, [])
+    if not norm(cleaned) or (probe["parts"] and all(p["status"] == "not_model" for p in probe["parts"])):
+        return None
     # それが、その台番号に実在する機種名の一部（略した書き方）なら一致とみなし、DB の機種名を
     # 正とする（2026-09-28 ユーザー判断: 画像『甲鉄城のカバネリ』→実在『海門決戦』、
     # 『ソードアート・オンライン』→実在『II』は略しているだけ）。台番号はすでに DB で引いている。
@@ -613,6 +618,10 @@ def _name_agrees(extracted, real, day_names):
     res = resolve(cleaned, day_names)
     if not res["names"]:
         res = resolve(str(extracted), day_names)
+    # 候補付きの略称（とある2・ギアス3 等）で決め切れないとき、候補の中にその台番号の実在機種が
+    # あれば一致とする（台番号が決め手になる、2026-09-28 ユーザー判断）。
+    if not res["names"] and any(real in u["names"] for u in res["unresolved"]):
+        return 1
     if res["names"]:
         return int(real in res["names"])
     left = str(extracted).replace(" ", "").replace("　", "").lower()
@@ -658,7 +667,14 @@ def link_machines(state_db=STATE_DB, analysis_db=ANALYSIS_DB):
         return 0
 
     hall_dir = os.path.join(ROOT, "db")
-    kept = dropped_images = missing_day = 0
+    target.execute(
+        "CREATE TABLE IF NOT EXISTS external_result_image_warnings ("
+        " report_id TEXT NOT NULL, image_path TEXT NOT NULL, hall_name TEXT, business_date TEXT,"
+        " other_hall TEXT, own_rate REAL, other_rate REAL, n INTEGER, checked_at TEXT,"
+        " PRIMARY KEY (report_id, image_path))"
+    )
+    sibling_cache = {}
+    kept = dropped_images = missing_day = warned = 0
     for report_id, hall, date in reports:
         rows = source.execute(
             "SELECT image_path, machine_number, machine_name FROM extraction_entries WHERE tweet_id = ?", (report_id,)
@@ -686,6 +702,7 @@ def link_machines(state_db=STATE_DB, analysis_db=ANALYSIS_DB):
         # 捨てられるようになったときに、古い行が残らないようにする。粒度は直後の
         # propagate_granularity が埋め直す。
         target.execute("DELETE FROM external_result_machines WHERE report_id = ?", (report_id,))
+        target.execute("DELETE FROM external_result_image_warnings WHERE report_id = ?", (report_id,))
         by_image = {}
         for image_path, number, name in rows:
             text = str(number).strip()
@@ -701,6 +718,38 @@ def link_machines(state_db=STATE_DB, analysis_db=ANALYSIS_DB):
                 dropped_images += 1
                 continue
             day_names = sorted(set(actual.values()))
+            warning = _sibling_hall_warning(hall, date, present, actual, hall_dir, sibling_cache)
+            if warning:
+                warned += 1
+                target.execute(
+                    "INSERT OR REPLACE INTO external_result_image_warnings "
+                    "(report_id, image_path, hall_name, business_date, other_hall, own_rate, other_rate, n, checked_at) "
+                    "VALUES (?,?,?,?,?,?,?,?,?)",
+                    (
+                        report_id,
+                        image_path,
+                        hall,
+                        date,
+                        warning["other_hall"],
+                        warning["own_rate"],
+                        warning["other_rate"],
+                        warning["n"],
+                        datetime.now().astimezone().isoformat(timespec="seconds"),
+                    ),
+                )
+                print(
+                    "  [警告] %s %s の画像 %s は %s の方がよく合う（自店 %.0f%% / %s %.0f%%、%d台）"
+                    % (
+                        hall,
+                        date,
+                        os.path.basename(image_path),
+                        warning["other_hall"],
+                        100 * warning["own_rate"],
+                        warning["other_hall"],
+                        100 * warning["other_rate"],
+                        warning["n"],
+                    )
+                )
             for number, name in present:
                 real = actual[number]
                 agrees = _name_agrees(name, real, day_names)
@@ -717,12 +766,66 @@ def link_machines(state_db=STATE_DB, analysis_db=ANALYSIS_DB):
     target.commit()
     print("台単位ラベル: %d 行を確定" % kept)
     print("  ホール違いとして捨てた画像: %d" % dropped_images)
+    print("  もう一方の店の方がよく合う画像（警告のみ・付け替えない）: %d" % warned)
     print("  本文の営業日が実績DBに無い投稿: %d" % missing_day)
-    for hall, count, agree in target.execute(
-        "SELECT hall_name, COUNT(*), SUM(name_agrees) FROM external_result_machines GROUP BY hall_name ORDER BY 2 DESC"
+    # 一致率は比べられる行（name_agrees が NULL でない＝機種名が書かれている行）だけで出す。
+    for hall, count, comparable, agree in target.execute(
+        "SELECT hall_name, COUNT(*), COUNT(name_agrees), SUM(name_agrees) FROM external_result_machines "
+        "GROUP BY hall_name ORDER BY 2 DESC"
     ):
-        print("  %-24s %5d 行 (機種名も一致 %.0f%%)" % (hall, count, 100 * agree / count))
+        print(
+            "  %-24s %5d 行 (機種名も一致 %.0f%%、コーナー名等で比べられない %d 行)"
+            % (hall, count, 100 * (agree or 0) / comparable if comparable else 0, count - comparable)
+        )
     return kept
+
+
+# 同じ投稿者が両方を書くホールの組。画像がもう一方の店のものでないかを確かめる相手。
+SIBLING_HALLS = {
+    "マルハンメガシティ2000-蒲田7": "マルハンメガシティ2000-蒲田1",
+    "マルハンメガシティ2000-蒲田1": "マルハンメガシティ2000-蒲田7",
+}
+
+
+def _sibling_hall_warning(hall, date, present, actual, hall_dir, cache):
+    """画像の(台番号, 機種名)が、自店よりもう一方の店の実績によく合うなら警告を返す（付け替えはしない）。
+
+    2026-09-28 に、W来店コラボの日の蒲田1の画像が蒲田7の結果として取り込まれていた。
+    本文の見出しでホールを決めるよう直したが、本文にホールが書かれていない投稿や、画像と投稿の
+    紐付けのずれは本文では防げないので、画像単位でも確かめる。2店は台番号が一部重なるので、
+    自動で付け替えると逆に誤りうる。警告だけにする。
+    """
+    other = SIBLING_HALLS.get(hall)
+    if not other:
+        return None
+    key = (other, date)
+    if key not in cache:
+        path = os.path.join(hall_dir, other + ".db")
+        rows = {}
+        if os.path.exists(path) and os.path.getsize(path) > 0:
+            con = sqlite3.connect("file:%s?mode=ro" % path, uri=True)
+            rows = dict(
+                con.execute(
+                    "SELECT machine_number, machine_name FROM machine_detailed_results WHERE date = ?", (date,)
+                ).fetchall()
+            )
+            con.close()
+        cache[key] = rows
+    other_actual = cache[key]
+    if not other_actual:
+        return None
+    own_names = sorted(set(actual.values()))
+    other_names = sorted(set(other_actual.values()))
+    own = [_name_agrees(name, actual[n], own_names) for n, name in present]
+    oth = [_name_agrees(name, other_actual[n], other_names) for n, name in present if n in other_actual]
+    own = [x for x in own if x is not None]
+    oth = [x for x in oth if x is not None]
+    if len(own) < MIN_IMAGE_NUMBERS or len(oth) < MIN_IMAGE_NUMBERS:
+        return None
+    own_rate, other_rate = sum(own) / len(own), sum(oth) / len(oth)
+    if other_rate >= 0.8 and own_rate <= 0.5:
+        return {"other_hall": other, "own_rate": own_rate, "other_rate": other_rate, "n": len(own)}
+    return None
 
 
 def quantiles(values, points=(0.05, 0.10, 0.25, 0.50, 0.75, 0.90)):
