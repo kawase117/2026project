@@ -1,0 +1,61 @@
+{
+  "announce_id": "kamata1__20260928__999999Q9Q",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "target_date": "20260928",
+  "source": {
+    "account": "999999Q9Q",
+    "url": "https://x.com/999999Q9Q/status/2104199609992216744",
+    "posted_at": "2026-09-27T22:20:55+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "新章メガいちよこやん予想\n\n明日は8の付く日。よこやん采配の基本パターンである、全機種・メイン機種（スマスロ中心）の高配分・単品仕掛けの3コンボが予想される。\n\nよこやんが順調に蒲田NIGHTに染まっている気配があるが、ポストに狙い所の手がかりがあると信じて。「噛むたび」「神の河」なんて見せられたら、もうアソコに行くしかないでしょう\n\n噛むたびに→噛む→バイツ\n→東京喰種？\n\n「神の河」→神\n→ミリオンゴッド？\n→ゴッドイーター？\n\n生姜→ジンジャー→神社→おみくじ\n→Lカバネリ海門決戦？\n→Sカバネリ？\n\nコリッ→リコリッ\n→リコリコ？\n\n大葉→紫蘇→紫\n→絆2天膳？\n\n#マルハンメガシティ2000蒲田1",
+  "posted_at_note": "メガいち(蒲田1)の9/28予想。よこやん采配=全機種・メイン機種(スマスロ中心)高配分・単品の3コンボ予想と、語呂合わせ由来の候補機種(全て『？』付き、当方の解読)。蒲田1は9/1からノーマル/BTに投入を厚くした点に留意。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"マルハンメガシティ2000-蒲田1\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-06-29\", \"2026-09-27\"], \"n_days\": 90, \"n_model_days\": 4293, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2194.8, \"models_over_threshold_per_day\": {\"mean\": 2.39, \"median\": 2.0, \"max\": 12}, \"candidate_models_per_day\": 47.7, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.18, \"median\": 3.0, \"max\": 14}, \"p_at_least_1\": 0.967, \"p_at_least_2\": 0.733, \"p_at_least_3\": 0.511, \"p_at_least_4\": 0.389, \"p_at_least_10\": 0.011}} / named_context: {\"as_of\": \"20260927\", \"window_days\": 30, \"n_candidates_ge3machines\": 48, \"hall_over_threshold_rate_approx\": 0.146, \"threshold\": 1800.0, \"models\": [{\"name\": \"東京喰種\", \"n_machines\": 20, \"rank\": 16, \"of\": 48, \"n_days_present\": 30, \"over_threshold\": 3, \"rate\": 0.1, \"mean_score\": 411.8}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "東京喰種",
+      "note": "語呂『噛むたびに→バイツ』の解読(推測)。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "ミリオンゴッド‐神々の軌跡‐",
+      "note": "語呂『神の河→神』の解読候補(推測)。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "ゴッドイーター リザレクション",
+      "note": "同上の別候補(推測)。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "note": "語呂『生姜→…→Lカバネリ海門決戦？』の解読候補(推測)。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "リコリス・リコイル",
+      "note": "語呂『コリッ→リコリッ』の解読(推測)。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION",
+      "note": "語呂『大葉→紫蘇→紫→絆2天膳？』の解読候補(推測)。"
+    }
+  ],
+  "unscored_claims": [
+    {
+      "text": "全機種・メイン機種(スマスロ中心)の高配分・単品仕掛けの3コンボ",
+      "reason": "仕掛け型の一般論で機種名が無い。",
+      "frozen_scoring_procedure": "答え合わせ時に全台系スコア(G比×平均差枚)の閾値超え機種数と、単品(機種内1台のみ高設定)の有無を記録する。project-kishu-ichi-decoyに注意。"
+    }
+  ],
+  "result": null,
+  "announce_digest": "a74e8efbe6f60905"
+}

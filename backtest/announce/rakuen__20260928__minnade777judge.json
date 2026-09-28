@@ -1,0 +1,51 @@
+{
+  "announce_id": "rakuen__20260928__minnade777judge",
+  "hall": "楽園蒲田店",
+  "target_date": "20260928",
+  "source": {
+    "account": "minnade777judge",
+    "url": "https://x.com/minnade777judge/status/2104093439747035590",
+    "posted_at": "2026-09-27T15:19:02+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "9/28 楽園蒲田\n\n連日強化の楽園蒲田。\n\n過去傾向として\n・3台並び上2つが20箇所以上\n・5フロア各々に3台並び上2つが4箇所以上\n・全台上2つ機種複数\n・東京喰種、Lカバネリ、1台バラに3台並び\nなどがあります。\n\n過去傾向を徹底的に分析してみんなでジャッジ！",
+  "posted_at_note": "みんなでジャッジ(第三者)による楽園蒲田9/28の過去傾向まとめ。ホール本人の予告ではなく、kawasakislot投稿と同内容の派生。9/20に同アカウントの前例登録あり。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"楽園蒲田店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-06-29\", \"2026-09-27\"], \"n_days\": 89, \"n_model_days\": 5048, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2192.8, \"models_over_threshold_per_day\": {\"mean\": 2.84, \"median\": 2.0, \"max\": 12}, \"candidate_models_per_day\": 56.7, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.66, \"median\": 3.0, \"max\": 13}, \"p_at_least_1\": 0.955, \"p_at_least_2\": 0.843, \"p_at_least_3\": 0.596, \"p_at_least_4\": 0.416, \"p_at_least_10\": 0.011}} / named_context: {\"as_of\": \"20260927\", \"window_days\": 30, \"n_candidates_ge3machines\": 57, \"hall_over_threshold_rate_approx\": 0.07, \"threshold\": 1800.0, \"models\": [{\"name\": \"東京喰種\", \"n_machines\": 31, \"rank\": 22, \"of\": 57, \"n_days_present\": 30, \"over_threshold\": 1, \"rate\": 0.033, \"mean_score\": 220.0}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "東京喰種",
+      "note": "『東京喰種、Lカバネリ、1台バラに3台並び』の名指し。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "note": "『Lカバネリ』を海門決戦と解釈。"
+    },
+    {
+      "type": "zentaikei_count",
+      "n_models": 2,
+      "note": "『全台上2つ機種複数』。複数=最小の2で凍結。"
+    }
+  ],
+  "unscored_claims": [
+    {
+      "text": "3台並び上2つが20箇所以上",
+      "reason": "並び数の閾値主張。claim型なし。楽園は通常日でも3台並び候補が中央値18〜34か所で無情報に近い(project-media-narabi-count-is-loose)。",
+      "frozen_scoring_procedure": "答え合わせ時にmachine_number順で隣接3台以上の⑤⑥相当(RB確率/差枚で判定)ブロックを列挙し、名指し機種内外の別に個数を記録する。判定不能な機種は判定不能と書く。"
+    },
+    {
+      "text": "5フロア各々に3台並び上2つが4箇所以上",
+      "reason": "フロア別の並び数。claim型なし。",
+      "frozen_scoring_procedure": "答え合わせ時にmachine_number順で隣接3台以上の⑤⑥相当(RB確率/差枚で判定)ブロックを列挙し、名指し機種内外の別に個数を記録する。判定不能な機種は判定不能と書く。"
+    }
+  ],
+  "result": null,
+  "announce_digest": "974e8d39770a7b70"
+}

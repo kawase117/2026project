@@ -473,6 +473,16 @@ def _run(args: argparse.Namespace) -> int:
             print("  %s %s (投稿 %s%s)" % (target, hall, posted_at[:16], others))
             print("    %s" % url)
             print("    %s" % text[:70].replace("\n", " "))
+    if actionable:
+        # 警告だけでは毎回読み飛ばされ、収集だけして登録されない状態が続いた。
+        # register は人間確認が要る(自動実行しない)ので、下書きまでは必ず作っておく。
+        for key in (today_key, tomorrow_key):
+            run_project("-m", "backtest.announce_autodraft", "draft", "--date", key)
+        print(
+            "\n★★ 下書きを backtest/announce/*.json.draft に作成した。収集で終わらせず、\n"
+            "   claims を確定して `python -m backtest.announce register <json>` まで通すこと\n"
+            "   （announce-prep スキル。登録済みかは backtest/announce/LEDGER.jsonl で確認）。"
+        )
     if missing:
         print(
             "  ※ 対象日を過ぎた分は register できない（事後登録は拒否される）。\n"

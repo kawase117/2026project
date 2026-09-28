@@ -68,6 +68,12 @@ HALL_ALIASES: dict[str, list[tuple[str, date | None, date | None]]] = {
 }
 
 
+# 追跡外の同系列ホール名。ここに載る語は当該ホールの別名判定から除く。
+HALL_ALIAS_EXCLUSIONS: dict[str, tuple[str, ...]] = {
+    "楽園蒲田店": ("楽園池袋",),
+}
+
+
 def plausible_halls(text: str, on_date: date | None) -> set[str]:
     """本文と投稿日から、言及されている可能性のある追跡対象ホールの集合を返す。
 
@@ -77,8 +83,12 @@ def plausible_halls(text: str, on_date: date | None) -> set[str]:
     text = text or ""
     result: set[str] = set()
     for hall_name, aliases in HALL_ALIASES.items():
+        # 短い別名が別ホールの名前に含まれる場合(「楽園」⊂「楽園池袋」)は、その語を除いて判定する
+        scan = text
+        for other in HALL_ALIAS_EXCLUSIONS.get(hall_name, ()):
+            scan = scan.replace(other, "")
         for keyword, valid_from, valid_until in aliases:
-            if keyword not in text:
+            if keyword not in scan:
                 continue
             if valid_from is not None and on_date is not None and on_date < valid_from:
                 continue

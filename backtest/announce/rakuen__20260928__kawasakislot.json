@@ -1,0 +1,41 @@
+{
+  "announce_id": "rakuen__20260928__kawasakislot",
+  "hall": "楽園蒲田店",
+  "target_date": "20260928",
+  "source": {
+    "account": "kawasakislot",
+    "url": "https://x.com/kawasakislot/status/2104182909666242743",
+    "posted_at": "2026-09-27T21:14:34+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "9/28 楽園蒲田\n東京喰種、Lカバネリ、1台バラに3台並び⑤⑥必ず\n　\nフロアマップでまるわかり！\n過去2回（9/14.15）で対象だった台載せときます",
+  "posted_at_note": "楽園蒲田の9/28予告(画像はフロアマップ、過去9/14・15の対象台)。db_max=20260927<target=20260928で事前登録。画像の台番号は未転記のため機種名とテキスト主張のみ凍結。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"楽園蒲田店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-06-29\", \"2026-09-27\"], \"n_days\": 89, \"n_model_days\": 5048, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2192.8, \"models_over_threshold_per_day\": {\"mean\": 2.84, \"median\": 2.0, \"max\": 12}, \"candidate_models_per_day\": 56.7, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.66, \"median\": 3.0, \"max\": 13}, \"p_at_least_1\": 0.955, \"p_at_least_2\": 0.843, \"p_at_least_3\": 0.596, \"p_at_least_4\": 0.416, \"p_at_least_10\": 0.011}} / named_context: {\"as_of\": \"20260927\", \"window_days\": 30, \"n_candidates_ge3machines\": 57, \"hall_over_threshold_rate_approx\": 0.07, \"threshold\": 1800.0, \"models\": [{\"name\": \"東京喰種\", \"n_machines\": 31, \"rank\": 22, \"of\": 57, \"n_days_present\": 30, \"over_threshold\": 1, \"rate\": 0.033, \"mean_score\": 220.0}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "東京喰種",
+      "note": "本文で名指し(『東京喰種、Lカバネリ』)。9/26は毎日ゴリラ結果でメガシティ合同東京喰種全、9/27も2日連続全の報告あり(蒲田7側)。楽園の当機種は31台。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "note": "本文の『Lカバネリ』を海門決戦と解釈(楽園に26台。無印の甲鉄城のカバネリは1台のみ)。解釈自体は人間の推定。"
+    }
+  ],
+  "unscored_claims": [
+    {
+      "text": "1台バラに3台並び⑤⑥必ず",
+      "reason": "並びの主張に対応するclaim型が無い。画像(フロアマップ)の台番号を未転記のため対象台が特定できない。",
+      "frozen_scoring_procedure": "答え合わせ時にmachine_number順で隣接3台以上の⑤⑥相当(RB確率/差枚で判定)ブロックを列挙し、名指し機種内外の別に個数を記録する。判定不能な機種は判定不能と書く。"
+    }
+  ],
+  "result": null,
+  "announce_digest": "a6d2fda5208ec699"
+}

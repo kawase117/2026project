@@ -1,0 +1,59 @@
+{
+  "announce_id": "arrow__20260928__kawasakislot",
+  "hall": "ARROW池上店",
+  "target_date": "20260928",
+  "source": {
+    "account": "kawasakislot",
+    "url": "https://x.com/kawasakislot/status/2104167611240210512",
+    "posted_at": "2026-09-27T20:13:46+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "9/28 ARROW池上\n→半転全昇、フライング☆リサーチ、特定日\n\n明日は8つく特定日！関西では有名な8つく＝ドーパ煽りも8月から始まって以降8のつく日はずっとプラスかつ分岐営業と\n\n明日は先バレあって傾向も明確に\n・まるごと×2機種\n・ニブイチ⑤⑥×8機種以上\n　┗カバネリ/乙女5/モンキー5は先バレ1/2\n・バラ20％⑤⑥\n\n抽選30番以内なら迷わず先バレ3機種へ\nどの機種も人気だし、⑤でも十分ハイスペで勝率も高い機種なのがかなり好印象\n\n前回8/28\n全：乙女5/GOD/北斗\n1/2：戦コレ/ニューキング/転生/攻殻/ラブ嬢/マギレコ\n\n9:30抽選！\n抽選は150人予想",
+  "posted_at_note": "ARROW池上の9/28予告(8つく特定日+半転全昇取材、抽選150人予想)。先バレ3機種を1/2⑤⑥とする。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"ARROW池上店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-06-28\", \"2026-09-26\"], \"n_days\": 90, \"n_model_days\": 2714, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2058.6, \"models_over_threshold_per_day\": {\"mean\": 1.51, \"median\": 1.0, \"max\": 10}, \"candidate_models_per_day\": 30.2, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 1.94, \"median\": 1.0, \"max\": 10}, \"p_at_least_1\": 0.833, \"p_at_least_2\": 0.478, \"p_at_least_3\": 0.333, \"p_at_least_4\": 0.133, \"p_at_least_10\": 0.011}}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named_ratio",
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "ratio": 2,
+      "note": "先バレ。1/2⑤⑥。"
+    },
+    {
+      "type": "model_named_ratio",
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "ratio": 2,
+      "note": "先バレ(乙女5)。1/2⑤⑥。旧作の戦国乙女4は含めない。"
+    },
+    {
+      "type": "model_named_ratio",
+      "machine_name": "モンキーターンV",
+      "ratio": 2,
+      "note": "先バレ(モンキー5)。1/2⑤⑥。"
+    },
+    {
+      "type": "zentaikei_count",
+      "n_models": 2,
+      "note": "『まるごと×2機種』。"
+    }
+  ],
+  "unscored_claims": [
+    {
+      "text": "ニブイチ⑤⑥×8機種以上(先バレ3機種を含む)",
+      "reason": "機種数の閾値主張。8機種のうち先バレ3以外は特定できない。",
+      "frozen_scoring_procedure": "答え合わせ時に1/2以上の⑤⑥相当となった機種数を記録し、8以上かを判定する。"
+    },
+    {
+      "text": "バラ20%⑤⑥",
+      "reason": "バラ(機種外)の割合主張。claim型なし。",
+      "frozen_scoring_procedure": "答え合わせ時に名指し機種以外の台のRB確率/差枚から⑤⑥相当の割合を概算する。判定不能なら判定不能と書く。"
+    }
+  ],
+  "result": null,
+  "announce_digest": "977bfebe5cd1d1fc"
+}
