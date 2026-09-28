@@ -50,7 +50,7 @@ def load_frame(hall: str) -> pd.DataFrame:
             SELECT r.date, r.machine_name, r.machine_number, r.last_digit,
                    r.is_zorome, r.games_normalized, r.diff_coins_normalized,
                    r.rb_probability_decimal, r.rb_count, r.bb_count,
-                   m.jug_flag, m.hana_flag, m.oki_flag, m.bt_flag,
+                   m.jug_flag, m.hana_flag, m.oki_flag, m.bt_flag, m.bonus_judgeable,
                    l.section, l.rank_from_aisle, l.rank_from_min, l.rank_from_max
             FROM machine_detailed_results r
             LEFT JOIN machine_master m
@@ -236,7 +236,42 @@ def score_history(hist: pd.DataFrame, score: str) -> pd.Series:
         h = hist.copy()
         h["edge"] = h["diff_coins_normalized"] - h.groupby("date")["diff_coins_normalized"].transform("mean")
         return h.groupby("machine_name")["edge"].mean()
+    if score == "hist_tail_rb_due3":
+        return _tail_rb_due(hist, n_tails=3, recent_days=7)
     raise ValueError(f"scoring 不可の score: {score!r}")
+
+
+def _tail_rb_due(hist: pd.DataFrame, n_tails: int, recent_days: int) -> pd.Series:
+    """末尾単位で RB を均しているホール向け: 直近で RB が出ていない末尾の台を選ぶ。
+
+    2026-09-29 の分析（蒲田7 ノーマル機）: 直近7営業日に RB が多く出た末尾は翌日弱く、
+    同じ末尾の別機種の台で見ても別末尾（対照）より弱い（差 t=-4.3）。前半・後半とも再現。
+    1台単位の「出た台は下げる」とは別に、末尾単位で「この末尾はもう出した」と控えている。
+
+    手順:
+      1. 窓全体から機種ごとの RB 確率 p を出す（機種差を消すため）
+      2. 直近 recent_days 営業日について、日×末尾で Z = Σ(RB − 回転数×p) / sqrt(Σ回転数×p)、
+         その日の10末尾の平均を引く
+      3. 末尾ごとに合計し、小さい順に n_tails 個の末尾を「番が来た末尾」とする
+      4. その末尾の台だけにスコア（= −合計）を付け、他は NaN（選ばない）
+    """
+    h = hist[(hist["games_normalized"] > 0) & hist["rb_count"].notna()].copy()
+    if h.empty:
+        return pd.Series(dtype=float)
+    per_model = h.groupby("machine_name")[["rb_count", "games_normalized"]].sum()
+    p = (per_model["rb_count"] / per_model["games_normalized"]).where(per_model["rb_count"] > 0)
+    h["expected"] = h["games_normalized"] * h["machine_name"].map(p)
+    h = h[h["expected"] > 0]
+    h["tail"] = h["machine_number"].astype(int) % 10
+    recent = sorted(h["date"].unique())[-recent_days:]
+    r = h[h["date"].isin(recent)]
+    cell = r.groupby(["date", "tail"]).agg(obs=("rb_count", "sum"), exp=("expected", "sum"))
+    cell["z"] = (cell["obs"] - cell["exp"]) / np.sqrt(cell["exp"])
+    cell["z"] = cell["z"] - cell.groupby(level="date")["z"].transform("mean")
+    total = cell.groupby(level="tail")["z"].sum()
+    due = total.nsmallest(n_tails)
+    tails = h.drop_duplicates("machine_number").set_index("machine_number")["tail"]
+    return (-tails.map(due)).dropna()
 
 
 def usable_models(hist: pd.DataFrame, reg: PreRegistration) -> pd.Index:

@@ -292,7 +292,7 @@ def _verify_ledger(plan_obj: dict) -> None:
 # 差枚は投資ペースやBB配分にも左右されるため、「選んだ根拠（RB発生率）自体が
 # 当日当たっていたか」を差枚と切り離して見る必要がある（AT系の hist_mean_diff には
 # rb_rate は意味を持たないので対象外）。
-RB_BASED_SCORES = {"hist_mean_rb_prob", "hist_mean_rb_prob_model_z", "hist_hit104_rate"}
+RB_BASED_SCORES = {"hist_mean_rb_prob", "hist_mean_rb_prob_model_z", "hist_hit104_rate", "hist_tail_rb_due3"}
 
 
 def _rb_perspective(
