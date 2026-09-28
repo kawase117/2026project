@@ -33,14 +33,20 @@ import unicodedata
 from collections import defaultdict
 from datetime import date, datetime, timedelta, timezone
 
+import pandas as pd
+
 from scraper.twitter_monitor.hall_aliases import HALL_ALIAS_EXCLUSIONS, HALL_ALIASES
 from backtest.announce import extract_narabi_mentions, load_announce_bundles
+from backtest.announce import assign_segment, match_machine_names
+from backtest.run_backtest import load_frame
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LEDGER = os.path.join(ROOT, "document", "registry", "EVENT_DAYS.jsonl")
 STATE_DB = os.path.join(ROOT, "scraper", "twitter_monitor", "state.db")
 RESULT_DB = os.path.join(ROOT, "db", "analysis_results.db")
 RESULT_LINKS_LEDGER = os.path.join(ROOT, "document", "registry", "EVENT_RESULT_LINKS.jsonl")
+FIELD_OBS = os.path.join(ROOT, "backtest", "field_obs", "field_obs.jsonl")
+SERIES_LEDGER = os.path.join(ROOT, "document", "registry", "EVENT_SERIES.jsonl")
 JST = timezone(timedelta(hours=9))
 
 KINDS = {
@@ -821,6 +827,518 @@ def cmd_link_report(a):
     return 0
 
 
+# ---------------------------------------------------------------------------
+# history (部品3)
+
+
+def _asof_date(value):
+    return datetime.strptime(str(value), "%Y%m%d").date()
+
+
+def _posted_date(value):
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(str(value).replace("Z", "+00:00")).date()
+    except TypeError, ValueError:
+        return None
+
+
+def _before_asof(value, asof):
+    d = _posted_date(value)
+    return d is not None and d < _asof_date(asof)
+
+
+def _latest_series(path):
+    latest = {}
+    for row in _load_jsonl(path):
+        if row.get("series_id"):
+            latest[row["series_id"]] = row
+    return latest
+
+
+def _history_announces(hall, target_date, asof, announce_dir):
+    out = []
+    for bundle in load_announce_bundles(announce_dir).get("bundles", []):
+        if bundle.get("status") not in {"active", "retroactive"}:
+            continue
+        payload = bundle["payload"]
+        if _normalize_hall(payload.get("hall")) != hall:
+            continue
+        source = payload.get("source", {})
+        # 朝の再現では、予告自体もその朝までに見えていたものだけにする。
+        if not _before_asof(source.get("posted_at"), asof):
+            continue
+        out.append({"bundle": bundle, "payload": payload})
+    return out
+
+
+def _history_groups(hall, target_date, asof, series_ids, pledge_args, event_ledger, series_ledger, announce_dir):
+    events = [r for r in active(_load_jsonl(event_ledger)) if _normalize_hall(r.get("hall")) == hall]
+    target_events = [r for r in events if str(r.get("date")) == target_date]
+    announces = _history_announces(hall, target_date, asof, announce_dir)
+    target_keys = set(pledge_args or [])
+    for item in announces:
+        if str(item["payload"].get("target_date")) == target_date:
+            target_keys.update(pledge_keys(item["payload"]))
+
+    latest = _latest_series(series_ledger)
+    selected_name = []
+    target_event_ids = {r.get("event_id") for r in target_events}
+    for sid, row in latest.items():
+        if row.get("decision") != "same" or row.get("axis") != "name":
+            continue
+        if series_ids and sid not in series_ids:
+            continue
+        if not series_ids and not target_event_ids.intersection(row.get("event_ids", [])):
+            continue
+        selected_name.append((sid, row))
+
+    # name axis is ledger-defined; pledge axis intentionally comes from every
+    # same-hall announcement, including dates absent from EVENT_DAYS.
+    dates = {}
+    for sid, row in selected_name:
+        for event_id in row.get("event_ids", []):
+            event = next((e for e in events if e.get("event_id") == event_id), None)
+            if not event:
+                continue
+            d = str(event.get("date"))
+            if d < target_date and d < asof:
+                dates.setdefault(d, {"groups": set(), "event_ids": set()})["groups"].add(sid)
+                dates[d]["event_ids"].add(event_id)
+
+    if target_keys:
+        for item in announces:
+            payload = item["payload"]
+            d = str(payload.get("target_date", ""))
+            if d < target_date and d < asof and target_keys.intersection(pledge_keys(payload)):
+                entry = dates.setdefault(d, {"groups": set(), "event_ids": set()})
+                entry["groups"].update("pledge:" + k for k in target_keys.intersection(pledge_keys(payload)))
+                entry["event_ids"].update(e.get("event_id") for e in events if str(e.get("date")) == d)
+
+    return dates, events, announces, target_keys
+
+
+def _history_matches(hall, text, names):
+    if not text:
+        return []
+    exact = [n for n in names if n and n in text]
+    if exact:
+        return exact
+    normalized = unicodedata.normalize("NFKC", text).lower()
+    partial = [
+        n
+        for n in names
+        if unicodedata.normalize("NFKC", n).lower() in normalized
+        or normalized in unicodedata.normalize("NFKC", n).lower()
+    ]
+    if partial:
+        return partial
+    # Most result reports use a short model alias (e.g. カバネリ). Resolve
+    # those locally before falling back to match_machine_names, which loads
+    # the hall DB and is deliberately reserved for genuinely fuzzy cases.
+    tokens = re.findall(r"[A-Za-z0-9ぁ-んァ-ヶ一-龯]{3,}", normalized)
+    token_hits = [n for n in names if any(t in unicodedata.normalize("NFKC", n).lower() for t in tokens)]
+    if token_hits:
+        return token_hits
+    try:
+        return [x["machine_name"] for x in match_machine_names(hall, text) if x.get("score", 0) >= 0.6]
+    except FileNotFoundError, sqlite3.Error, ValueError:
+        return []
+
+
+def _history_table_columns(con, table):
+    return {r[1] for r in con.execute("pragma table_info(%s)" % table).fetchall()}
+
+
+def _history_result_data(hall, business_date, asof, links_path, analysis_db):
+    latest = _latest_link_rows(links_path).get((hall, business_date))
+    if not latest:
+        return {"status": "未結びつき", "delay_days": None, "reports": [], "machines": [], "models": []}
+    report_ids = set(latest.get("report_ids", []))
+    reports, machines, models = [], [], []
+    if not os.path.exists(analysis_db):
+        return {
+            "status": latest.get("status", "未発表"),
+            "delay_days": None,
+            "reports": [],
+            "machines": [],
+            "models": [],
+        }
+    with _ro_connect(analysis_db) as con:
+        tables = {r[0] for r in con.execute("select name from sqlite_master where type='table'")}
+        if "external_result_reports" not in tables:
+            return {
+                "status": latest.get("status", "未発表"),
+                "delay_days": latest.get("delay_days"),
+                "reports": [],
+                "machines": [],
+                "models": [],
+            }
+        report_rows = con.execute(
+            "select report_id,posted_at,tweet_url from external_result_reports where business_date=?",
+            (business_date,),
+        ).fetchall()
+        valid_reports = {
+            str(r[0]): r
+            for r in report_rows
+            if (not report_ids or str(r[0]) in report_ids) and _before_asof(r[1], asof)
+        }
+        reports = [{"report_id": k, "posted_at": v[1], "tweet_url": v[2]} for k, v in valid_reports.items()]
+        if not valid_reports:
+            return {"status": "未発表", "delay_days": None, "reports": [], "machines": [], "models": []}
+        mcols = (
+            _history_table_columns(con, "external_result_machines") if "external_result_machines" in tables else set()
+        )
+        if "external_result_machines" in tables:
+            fields = [
+                x
+                for x in ("report_id", "machine_number", "actual_name", "granularity", "granularity_source")
+                if x in mcols
+            ]
+            for row in con.execute(
+                "select %s from external_result_machines where business_date=?" % ",".join(fields), (business_date,)
+            ).fetchall():
+                d = dict(zip(fields, row))
+                if str(d.get("report_id")) in valid_reports and _normalize_hall(d.get("hall_name", hall)) == hall:
+                    machines.append(d)
+        if "external_result_models" in tables:
+            for row in con.execute(
+                "select report_id,granularity,model_name,n_target,n_total,number_from,number_to from external_result_models where report_id in (%s)"
+                % (",".join("?" * len(valid_reports)) or "NULL"),
+                tuple(valid_reports),
+            ).fetchall():
+                models.append(
+                    dict(
+                        zip(
+                            (
+                                "report_id",
+                                "granularity",
+                                "model_name",
+                                "n_target",
+                                "n_total",
+                                "number_from",
+                                "number_to",
+                            ),
+                            row,
+                        )
+                    )
+                )
+    business = _asof_date(business_date)
+    delays = [(_posted_date(r["posted_at"]) - business).days for r in reports if _posted_date(r["posted_at"])]
+    return {
+        "status": latest.get("status", "linked"),
+        "delay_days": min(delays) if delays else latest.get("delay_days"),
+        "reports": reports,
+        "machines": machines,
+        "models": models,
+    }
+
+
+def _history_field_obs(hall, business_date, asof, path):
+    out = []
+    if not os.path.exists(path):
+        return out
+    for row in _load_jsonl(path):
+        if _normalize_hall(row.get("hall")) != hall or str(row.get("business_date")) != business_date:
+            continue
+        if not _before_asof(row.get("registered_at"), asof):
+            continue
+        out.append(row)
+    return out
+
+
+def _history_score(day, frame, row, event_date):
+    seg = row.get("segment")
+    if seg in {"JUG", "HANA", "OKI", "BT"}:
+        hist = frame[
+            (frame["machine_number"] == row["machine_number"])
+            & (frame["machine_name"] == row["machine_name"])
+            & (frame["date"] < event_date)
+            & (frame["dt"] >= pd.Timestamp(event_date) - pd.Timedelta(days=30))
+        ]
+        baseline = hist["rb_rate"].mean() if not hist.empty else None
+        value = row.get("rb_rate")
+        return {
+            "value": None if pd.isna(value) else float(value),
+            "baseline": None if pd.isna(baseline) else float(baseline),
+            "ratio": None if baseline in (None, 0) or pd.isna(baseline) or pd.isna(value) else float(value / baseline),
+        }
+    model = day[day["machine_name"] == row["machine_name"]]
+    pool = day["games_normalized"].mean()
+    if model.empty or not pool:
+        return {"value": None}
+    gratio = model["games_normalized"].mean() / pool
+    return {
+        "value": float(gratio * model["diff_coins_normalized"].mean()),
+        "gratio": float(gratio),
+        "model_mean_diff": float(model["diff_coins_normalized"].mean()),
+    }
+
+
+def _is_precise_label(label):
+    """その台に設定が入ったと台単位で言えるラベルか。"""
+    if label.get("source") == "台":
+        return True
+    return str(label.get("granularity", "")).startswith("全")
+
+
+def _dedupe_labels(labels):
+    seen, out = set(), []
+    for x in labels:
+        key = (x.get("source"), x.get("granularity"))
+        if key not in seen:
+            seen.add(key)
+            out.append(x)
+    return out
+
+
+def _claim_summary(result):
+    """予告 JSON の result を、公約ごとの的中／外れの短い一覧にする。"""
+    out = []
+    for c in (result or {}).get("claims", []):
+        claim = c.get("claim", {})
+        what = (
+            claim.get("machine_name")
+            or ",".join(str(v) for v in claim.get("values", []) or [])
+            or claim.get("n_models")
+            or ""
+        )
+        hit = c.get("hit")
+        out.append("%s(%s)=%s" % (c.get("type"), what, {True: "的中", False: "外れ", None: "判定なし"}.get(hit, hit)))
+    return out
+
+
+def _history_day(hall, business_date, event_rows, announces, frame, result, asof, field_obs_path):
+    day = frame[frame["date"].astype(str) == business_date].copy()
+    current = (
+        frame[(frame["date"].astype(str) < asof)].sort_values("date").drop_duplicates("machine_number", keep="last")
+    )
+    current_map = current.set_index("machine_number").to_dict("index") if not current.empty else {}
+    names = sorted(day["machine_name"].dropna().unique().tolist())
+    payloads = [x["payload"] for x in announces if str(x["payload"].get("target_date")) == business_date]
+    claims = [c for p in payloads for c in p.get("claims", []) if c.get("type") in {"model_named", "model_named_ratio"}]
+    announced_names = set()
+    for claim in claims:
+        announced_names.update(_history_matches(hall, str(claim.get("machine_name", "")), names))
+    # Direct machine labels and model labels are kept separately so that a
+    # model-level 1/2 label cannot masquerade as a precise machine label.
+    labels = defaultdict(list)
+    missing = []
+    for m in result["machines"]:
+        n = m.get("machine_number")
+        labels[n].append({"granularity": m.get("granularity") or "台", "source": "台"})
+        if n not in set(day["machine_number"]):
+            missing.append(n)
+    for model in result["models"]:
+        matched = _history_matches(hall, str(model.get("model_name", "")), names)
+        for name in matched:
+            for n in day.loc[day["machine_name"] == name, "machine_number"]:
+                labels[n].append(
+                    {
+                        "granularity": model.get("granularity") or "機種",
+                        "source": "機種",
+                        "model_name": model.get("model_name"),
+                    }
+                )
+    numbers = set(labels) | set(day.loc[day["machine_name"].isin(announced_names), "machine_number"])
+    rows = []
+    for n in sorted(numbers, key=lambda x: str(x)):
+        actual = day[day["machine_number"] == n]
+        item = {
+            "machine_number": n,
+            "labels": labels.get(n, []),
+            "announced": bool(not actual.empty and actual.iloc[0]["machine_name"] in announced_names),
+            "current_machine_name": current_map.get(n, {}).get("machine_name"),
+        }
+        if actual.empty:
+            item["classification"] = "ラベルあり・実績DBに台が無い"
+            rows.append(item)
+            continue
+        r = actual.iloc[0].to_dict()
+        r["segment"] = str(assign_segment(pd.DataFrame([r])).iloc[0])
+        item.update(
+            {
+                "machine_name": r["machine_name"],
+                "segment": r["segment"],
+                "diff": r.get("diff_coins_normalized"),
+                "games": r.get("games_normalized"),
+                "score": _history_score(day, frame, r, business_date),
+                "machine_change": item["current_machine_name"] not in (None, r["machine_name"]),
+            }
+        )
+        # 台を特定できるラベルは「台単位の公表」と「機種単位の全台」だけ。機種単位の
+        # 1/2・1/3・3台並び等は、その機種のどの台かが分からない（2026-09-28、東京喰種の
+        # 「3台並び」を17台全部に付けて9台を不発台と誤判定したため修正）。
+        item["labels"] = _dedupe_labels(labels.get(n, []))
+        item["precise_label"] = any(_is_precise_label(x) for x in item["labels"])
+        if item["labels"] and not item["precise_label"]:
+            item["classification"] = "粒度不一致"
+        elif item["labels"]:
+            item["classification"] = (
+                "ラベルあり・差枚プラス"
+                if (r.get("diff_coins_normalized") or 0) > 0
+                else "ラベルあり・差枚マイナス（不発台）"
+            )
+        elif item["announced"] and (r.get("diff_coins_normalized") or 0) > 0:
+            item["classification"] = "ラベルなし・差枚プラス"
+        else:
+            item["classification"] = None
+        rows.append(item)
+    return {
+        "business_date": business_date,
+        "weekday": "月火水木金土日"[_asof_date(business_date).weekday()],
+        "event_names": sorted(
+            {r.get("event_name") for r in event_rows if str(r.get("date")) == business_date and r.get("event_name")}
+        ),
+        "announces": [
+            {"account": p.get("source", {}).get("account"), "announce_id": p.get("announce_id")} for p in payloads
+        ],
+        "pledge_keys": sorted(set().union(*(pledge_keys(p) for p in payloads))) if payloads else [],
+        "result": {k: result[k] for k in ("status", "delay_days", "reports")},
+        "machines": rows,
+        "field_obs": _history_field_obs(hall, business_date, asof, field_obs_path),
+        "summary": {
+            "labeled_count": sum(bool(x.get("precise_label")) for x in rows),
+            "partial_label_count": sum(x.get("classification") == "粒度不一致" for x in rows),
+            "negative_count": sum(x.get("classification") == "ラベルあり・差枚マイナス（不発台）" for x in rows),
+            "claims": [s for p in payloads for s in _claim_summary(p.get("result"))],
+        },
+    }
+
+
+def build_history(
+    hall,
+    target_date,
+    *,
+    series_ids=None,
+    pledge_args=None,
+    asof=None,
+    event_ledger=LEDGER,
+    series_ledger=SERIES_LEDGER,
+    announce_dir=None,
+    links_path=RESULT_LINKS_LEDGER,
+    analysis_db=RESULT_DB,
+    field_obs_path=FIELD_OBS,
+):
+    hall = _normalize_hall(hall)
+    asof = asof or target_date
+    announce_dir = announce_dir or os.path.join(ROOT, "backtest", "announce")
+    dates, events, announces, target_keys = _history_groups(
+        hall, target_date, asof, series_ids or [], pledge_args or [], event_ledger, series_ledger, announce_dir
+    )
+    frame = load_frame(hall)
+    frame["date"] = frame["date"].astype(str)
+    histories = []
+    for business_date in sorted(dates, reverse=True):
+        day_events = [e for e in events if str(e.get("date")) == business_date]
+        result = _history_result_data(hall, business_date, asof, links_path, analysis_db)
+        histories.append(_history_day(hall, business_date, day_events, announces, frame, result, asof, field_obs_path))
+    prior = frame[(frame["date"] < asof) & (frame["dt"] >= pd.Timestamp(_asof_date(asof)) - pd.Timedelta(days=30))]
+    trend = []
+    if not prior.empty and prior["games_normalized"].mean():
+        for name, g in prior.groupby("machine_name"):
+            trend.append(
+                {
+                    "machine_name": name,
+                    "score": float(
+                        g["games_normalized"].mean()
+                        / prior["games_normalized"].mean()
+                        * g["diff_coins_normalized"].mean()
+                    ),
+                    "gratio": float(g["games_normalized"].mean() / prior["games_normalized"].mean()),
+                    "mean_diff": float(g["diff_coins_normalized"].mean()),
+                }
+            )
+    trend.sort(key=lambda x: x["score"], reverse=True)
+    repeats = {"machine_name": defaultdict(int), "machine_number": defaultdict(int), "last_digit": defaultdict(int)}
+    n_results = sum(bool(h["result"].get("reports")) for h in histories)
+    # 「何回の開催で出たか」を数える。1回の中で同じ機種・台番号・末尾は1回とする。
+    for h in histories:
+        labeled = [m for m in h["machines"] if m.get("precise_label")]
+        for key, values in (
+            ("machine_name", {m.get("machine_name") for m in labeled}),
+            ("machine_number", {str(m.get("machine_number")) for m in labeled}),
+            ("last_digit", {str(m.get("machine_number"))[-1] for m in labeled}),
+        ):
+            for v in values:
+                repeats[key][v] += 1
+    repeated = {
+        k: [{"value": v, "count": c, "of": n_results} for v, c in d.items() if c >= 2] for k, d in repeats.items()
+    }
+    changes = [
+        r for r in events if str(r.get("date")) < target_date and str(r.get("kind")) in {"renovation", "manager"}
+    ]
+    return {
+        "hall": hall,
+        "target_date": target_date,
+        "asof": asof,
+        "target_pledge_keys": sorted(target_keys),
+        "histories": histories,
+        "trend_top10": trend[:10],
+        "repeated": repeated,
+        "result_days": n_results,
+        "changes": sorted(changes, key=lambda x: str(x.get("date"))),
+    }
+
+
+def cmd_history(a):
+    result = build_history(
+        a.hall,
+        a.target_date,
+        series_ids=a.series,
+        pledge_args=a.pledge,
+        asof=a.asof,
+        event_ledger=a.event_ledger,
+        series_ledger=a.series_ledger,
+        announce_dir=a.announce_dir,
+        links_path=a.links_ledger,
+        analysis_db=a.analysis_db,
+        field_obs_path=a.field_obs,
+    )
+    if a.json:
+        print(json.dumps(result, ensure_ascii=False, indent=2, default=str))
+        return 0
+    print(f"{result['hall']} history target={result['target_date']} asof={result['asof']}")
+    for h in result["histories"]:
+        r = h["result"]
+        print(
+            f"\n=== {h['business_date']} ({h['weekday']}) {'/'.join(h['event_names']) or '-'} | 先バレ={','.join(x['account'] or '-' for x in h['announces']) or '-'} | 公約={','.join(h['pledge_keys']) or '-'} | 結果={r['status']} 遅れ={r['delay_days'] if r['delay_days'] is not None else '-'}日 ==="
+        )
+        print("台番号 | 当時機種 | 今の機種 | 区分 | 指名 | ラベル | 差枚 | G | 判定値 | 分類 | 現場報告")
+        for m in h["machines"]:
+            score = m.get("score", {})
+            if m.get("segment") in {"JUG", "HANA", "OKI", "BT"}:
+                value = None if score.get("ratio") is None else "RB比%.2f" % score["ratio"]
+            else:
+                value = None if score.get("value") is None else "機種%+.0f" % score["value"]
+            obs = ";".join(
+                str(x.get("text", x.get("observation", "")))
+                for x in h["field_obs"]
+                if str(x.get("machine_number", "")) == str(m.get("machine_number"))
+                or x.get("machine_name") == m.get("machine_name")
+            )
+            label = ",".join(x.get("granularity", "") for x in m.get("labels", [])) or "なし"
+            print(
+                f"{m.get('machine_number')} | {m.get('machine_name', '-')} | {m.get('current_machine_name') or '-'}{' 入替' if m.get('machine_change') else ''} | {m.get('segment', '-')} | {'○' if m.get('announced') else ''} | {label} | {m.get('diff', '-')} | {m.get('games', '-')} | {value if value is not None else '-'} | {m.get('classification') or '-'} | {obs}"
+            )
+        s = h["summary"]
+        print(
+            f"集計: 台を特定できるラベル={s['labeled_count']}台（うち差枚マイナス={s['negative_count']}） 粒度不一致={s['partial_label_count']}台"
+        )
+        if s["claims"]:
+            print("予告の採点: " + " / ".join(s["claims"]))
+    print("\n直近30日 G比×平均差枚 上位10")
+    for x in result["trend_top10"]:
+        print(f"{x['machine_name']}\t{x['score']:.1f}\tG比={x['gratio']:.3f}\t平均差枚={x['mean_diff']:.1f}")
+    print("繰り返し:", json.dumps(result["repeated"], ensure_ascii=False))
+    if result["changes"]:
+        print("体制変化:", ", ".join(f"{x.get('date')} {x.get('event_name', '')}" for x in result["changes"]))
+    else:
+        print("体制変化の台帳なし")
+    return 0
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -894,6 +1412,20 @@ def main(argv=None):
     s = sub.add_parser("series-list")
     s.add_argument("--series-ledger", default=os.path.join(ROOT, "document", "registry", "EVENT_SERIES.jsonl"))
     s.set_defaults(fn=cmd_series_list)
+    s = sub.add_parser("history", help="同じイベントの過去回を答え合わせ表で表示する")
+    s.add_argument("hall")
+    s.add_argument("target_date")
+    s.add_argument("--series", action="append", default=[])
+    s.add_argument("--pledge", action="append", default=[])
+    s.add_argument("--asof", default=None)
+    s.add_argument("--json", action="store_true")
+    s.add_argument("--event-ledger", default=LEDGER)
+    s.add_argument("--series-ledger", default=SERIES_LEDGER)
+    s.add_argument("--announce-dir", default=os.path.join(ROOT, "backtest", "announce"))
+    s.add_argument("--links-ledger", default=RESULT_LINKS_LEDGER)
+    s.add_argument("--analysis-db", default=RESULT_DB)
+    s.add_argument("--field-obs", default=FIELD_OBS)
+    s.set_defaults(fn=cmd_history)
     a = p.parse_args(argv)
     return a.fn(a)
 
