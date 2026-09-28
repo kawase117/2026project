@@ -590,6 +590,58 @@ def propagate_granularity(analysis_db=ANALYSIS_DB):
     return counts
 
 
+PANEL_MAX_GAMES_GAP = 500
+PANEL_MAX_BB_GAP = 15
+PANEL_MAX_RB_GAP = 5
+
+
+def _panel_gap(panel, row):
+    """画像の数字（閉店前のスクリーンショット）と実績（閉店後に確定）の差。条件外なら None。
+
+    実績は画像以上になる（撮影後も打たれる）。2026-09-28 の 6/2 蒲田1 の画像で、18台中8台が完全一致、
+    9台は実績の方がわずかに多かった（例: 画像 BB84/RB21/5994G → 実績 BB89/RB22/6015G）。
+    """
+    games, bb, rb = row
+    if None in (panel["games"], panel["bb"], panel["rb"]) or games is None:
+        return None
+    dg, db, dr = int(games) - panel["games"], (bb or 0) - panel["bb"], (rb or 0) - panel["rb"]
+    if dg < 0 or db < 0 or dr < 0:
+        return None
+    if dg > PANEL_MAX_GAMES_GAP or db > PANEL_MAX_BB_GAP or dr > PANEL_MAX_RB_GAP:
+        return None
+    return dg / PANEL_MAX_GAMES_GAP + db / PANEL_MAX_BB_GAP + dr / PANEL_MAX_RB_GAP
+
+
+def _load_panels(source, image_path):
+    """state.db の extraction_panels から、その画像の各台の数字を読む（表が無ければ空）。"""
+    try:
+        rows = source.execute(
+            "SELECT machine_number, machine_name, bb, rb, games FROM extraction_panels WHERE image_path = ?",
+            (image_path,),
+        ).fetchall()
+    except sqlite3.OperationalError:
+        return []
+    return [dict(zip(("machine_number", "machine_name", "bb", "rb", "games"), r)) for r in rows]
+
+
+def _match_panel(panel, day_stats):
+    """台データ画面の1台を、その日の実績の台に当てる。
+
+    返り値 (台番号, 状態)。状態は
+      exact_number … 読み取った台番号の台が数字と合う（機種名の読み誤りは無視してよい）
+      corrected    … 読み取った台番号では合わず、別の台が数字で1台に決まった（台番号の読み誤り・隣とのずれ）
+      unverified   … 数字で決まらない（読めない・候補が複数）。読み取った台番号をそのまま使う
+    """
+    read = panel.get("machine_number")
+    read_n = int(read) if read and str(read).isdigit() else None
+    if read_n in day_stats and _panel_gap(panel, day_stats[read_n]) is not None:
+        return read_n, "exact_number"
+    scored = sorted((g, n) for n, row in day_stats.items() if (g := _panel_gap(panel, row)) is not None)
+    if scored and (len(scored) == 1 or scored[1][0] - scored[0][0] >= 0.2):
+        return scored[0][1], "corrected"
+    return read_n, "unverified"
+
+
 def _name_agrees(extracted, real, day_names):
     """画像から読んだ機種名が、その台番号に当日実在した機種と折り合うか（1/0）。
 
@@ -673,6 +725,9 @@ def link_machines(state_db=STATE_DB, analysis_db=ANALYSIS_DB):
         " other_hall TEXT, own_rate REAL, other_rate REAL, n INTEGER, checked_at TEXT,"
         " PRIMARY KEY (report_id, image_path))"
     )
+    # 台番号を数字で確かめたか（2026-09-28 追加。既存DBには ALTER で足す）
+    if "panel_check" not in {r[1] for r in target.execute("PRAGMA table_info(external_result_machines)")}:
+        target.execute("ALTER TABLE external_result_machines ADD COLUMN panel_check TEXT")
     sibling_cache = {}
     kept = dropped_images = missing_day = warned = 0
     for report_id, hall, date in reports:
@@ -690,6 +745,18 @@ def link_machines(state_db=STATE_DB, analysis_db=ANALYSIS_DB):
                 "SELECT machine_number, machine_name FROM machine_detailed_results WHERE date = ?", (date,)
             ).fetchall()
         )
+        # 台データ画面の数字（回転数・BB・RB）と照合するための実績
+        try:
+            day_stats = {
+                n: (g, bb, rb)
+                for n, g, bb, rb in connection.execute(
+                    "SELECT machine_number, games_normalized, bb_count, rb_count FROM machine_detailed_results "
+                    "WHERE date = ?",
+                    (date,),
+                ).fetchall()
+            }
+        except sqlite3.OperationalError:
+            day_stats = {}  # 回転数等の列が無いDB（テスト用の最小構成など）では数字の照合をしない
         connection.close()
         if not actual:
             # 本文は営業日を書いているのに実績DBにその日が無い。取り込みの穴なので
@@ -709,6 +776,23 @@ def link_machines(state_db=STATE_DB, analysis_db=ANALYSIS_DB):
             if not text.isdigit():
                 continue
             by_image.setdefault(image_path or "", []).append((int(text), name))
+
+        # 台データ画面の数字が読めている画像は、台番号を数字（回転数・BB・RB）で決め直す
+        # （2026-09-28 ユーザー提案: 画質が荒く機種名・台番号の読み誤りがあるが、数字で照合すれば当たる）。
+        panel_check = {}
+        for image_path in list(by_image):
+            panels = _load_panels(source, image_path)
+            if not panels:
+                continue
+            fixed = []
+            for panel in panels:
+                number, status = _match_panel(panel, day_stats)
+                if number is None:
+                    continue
+                fixed.append((number, panel.get("machine_name")))
+                panel_check[(image_path, number)] = status
+            if fixed:
+                by_image[image_path] = fixed
 
         for image_path, entries in by_image.items():
             if len(entries) < MIN_IMAGE_NUMBERS:
@@ -758,8 +842,18 @@ def link_machines(state_db=STATE_DB, analysis_db=ANALYSIS_DB):
                 target.execute(
                     "INSERT OR REPLACE INTO external_result_machines "
                     "(report_id, image_path, machine_number, hall_name, business_date, "
-                    " extracted_name, actual_name, name_agrees) VALUES (?,?,?,?,?,?,?,?)",
-                    (report_id, image_path, number, hall, date, name, real, agrees),
+                    " extracted_name, actual_name, name_agrees, panel_check) VALUES (?,?,?,?,?,?,?,?,?)",
+                    (
+                        report_id,
+                        image_path,
+                        number,
+                        hall,
+                        date,
+                        name,
+                        real,
+                        agrees,
+                        panel_check.get((image_path, number)),
+                    ),
                 )
                 kept += 1
 

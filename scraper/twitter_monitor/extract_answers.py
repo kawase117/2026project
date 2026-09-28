@@ -44,6 +44,12 @@ PROMPT = """この画像はパチスロホールの予告・答え合わせ投�
 date_hint は画像が対象とする営業日です。画像に年まで書かれていれば YYYY-MM-DD、月日だけなら画像の表記に基づく M/D を返してください。画像から年を読めない場合に年を推測・補完してはいけません。月日自体が読めなければ null にしてください。年の補完は Codex CLI ではなく Python 側がツイートの posted_at_jst を使って行います。
 
 note は「全台系」「高設定示唆」など機種単位の補足だけを入れ、なければ null にしてください。
+
+panels: 画像が台データ画面（1台ずつ赤い見出しの機種名・BB/RB回数・グラフ・下部に「○○番台」が並ぶスクリーンショット）なら、
+各台の欄ごとに1件ずつ machine_number（下部の番台の数字）, machine_name（赤い見出し）, bb, rb, games を入れてください。
+games は欄の中央に大きく表示された累計の回転数（例: 2636）で、右上の「スタート」（最終大当り後の回転数）ではありません。
+読めない値は null にし、推測で埋めないでください。見出しの上に出ているアプリの広告バナーは機種名ではありません。
+台データ画面でなければ panels は空配列にしてください。
 必ず指定されたスキーマに合う JSON オブジェクトだけを返してください。"""
 
 
@@ -98,7 +104,47 @@ def initialize_extractions_tables(connection: sqlite3.Connection) -> None:
         )
         """
     )
+    # 台データ画面の1台ごとの数字（2026-09-28 追加）。実績DBの回転数・BB・RB と照合して、
+    # 機種名の読み誤り・台番号の読み誤り・隣の台とのずれを見分けるために使う。
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS extraction_panels (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            tweet_id TEXT,
+            image_path TEXT,
+            machine_number TEXT,
+            machine_name TEXT,
+            bb INTEGER,
+            rb INTEGER,
+            games INTEGER,
+            extracted_at_jst TEXT
+        )
+        """
+    )
     connection.commit()
+
+
+def store_panels(connection: sqlite3.Connection, tweet_id: str, image_path: str, parsed: dict) -> int:
+    """台データ画面の各台を保存する。同じ画像の古い行は入れ替える。"""
+    panels = parsed.get("panels") or []
+    connection.execute("DELETE FROM extraction_panels WHERE image_path = ?", (image_path,))
+    extracted_at = now_jst()
+    for panel in panels:
+        connection.execute(
+            "INSERT INTO extraction_panels (tweet_id, image_path, machine_number, machine_name, bb, rb, games, extracted_at_jst)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                tweet_id,
+                image_path,
+                panel.get("machine_number"),
+                panel.get("machine_name"),
+                panel.get("bb"),
+                panel.get("rb"),
+                panel.get("games"),
+                extracted_at,
+            ),
+        )
+    return len(panels)
 
 
 def codex_command(image_path: str, output_path: str) -> list[str]:
@@ -145,6 +191,15 @@ def validate_extraction(parsed: object) -> dict:
             raise ValueError("each machine_numbers value must be an array of strings")
         if entry.get("note") is not None and not isinstance(entry.get("note"), str):
             raise ValueError("note must be a string or null")
+    panels = parsed.get("panels", [])
+    if not isinstance(panels, list):
+        raise ValueError("panels must be an array")
+    for panel in panels:
+        if not isinstance(panel, dict):
+            raise ValueError("each panel must be an object")
+        for key in ("bb", "rb", "games"):
+            if panel.get(key) is not None and not isinstance(panel.get(key), int):
+                raise ValueError(f"panel {key} must be an integer or null")
     return parsed
 
 
@@ -316,6 +371,7 @@ def store_success(
         """,
         (tweet_id, image_path, hall, raw_response, extracted_at, hall_hint, date_hint),
     )
+    store_panels(connection, tweet_id, image_path, parsed)
     for entry in parsed["entries"]:
         for machine_number in entry["machine_numbers"]:
             connection.execute(
@@ -361,6 +417,30 @@ def store_failure(
     )
 
 
+def reextract_panels(connection: sqlite3.Connection, list_path: Path) -> int:
+    """指定した画像を読み直し、panels だけを保存する（entries・extractions には触れない）。"""
+    paths = [line.strip() for line in list_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    done = failed = 0
+    for image_path in paths:
+        row = connection.execute("SELECT tweet_id FROM tweet_images WHERE image_path = ?", (image_path,)).fetchone()
+        if not row:
+            print(f"[skip] tweet_images に無い画像: {image_path}")
+            failed += 1
+            continue
+        try:
+            parsed, _ = extract_image(image_path)
+            n = store_panels(connection, row[0], image_path, parsed)
+            connection.commit()
+            done += 1
+            print(f"[ok] {Path(image_path).name}: {n} 台", flush=True)
+        except (OSError, RuntimeError, ValueError, KeyError, json.JSONDecodeError, subprocess.TimeoutExpired) as error:
+            connection.rollback()
+            failed += 1
+            print(f"[failed] {Path(image_path).name}: {str(error)[:200]}", flush=True)
+    print(f"panels 読み直し: 成功 {done} / 失敗 {failed} / 全 {len(paths)}")
+    return 0 if failed == 0 else 1
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--handles", help="Comma-separated account handles to process")
@@ -380,6 +460,14 @@ def build_parser() -> argparse.ArgumentParser:
             "repair_tweet_images.py re-downloads mis-bound images, so the rerun "
             "spends quota on the repaired posts instead of every pending image "
             "the account still has (39 repaired vs 143 pending for slokotae7)."
+        ),
+    )
+    parser.add_argument(
+        "--reextract-panels",
+        help=(
+            "読み取り済みの画像を読み直し、台データ画面の各台の数字（panels）だけを保存する。"
+            "画像パスを1行1件で書いたファイルを渡す。既存の entries は変えない（2026-09-28 追加。"
+            "実績DBの回転数・BB・RBと照合して、機種名・台番号の読み誤りを見分けるため）"
         ),
     )
     parser.add_argument(
@@ -427,6 +515,8 @@ def main(argv: list[str] | None = None) -> int:
 
     with sqlite3.connect(DB_PATH, timeout=60) as connection:
         initialize_extractions_tables(connection)
+        if args.reextract_panels:
+            return reextract_panels(connection, Path(args.reextract_panels))
         rows = select_pending_images(
             connection,
             handles=handles,
