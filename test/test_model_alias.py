@@ -57,5 +57,19 @@ def test_not_model_and_ambiguous_are_not_guessed():
     for text in ("【末尾3】", "21箇所", "8機種", "バラエティ"):
         r = resolve(text, NAMES)
         assert r["names"] == [] and r["unresolved"] == []
-    r = resolve("ガールズ", NAMES)
+    # ガールズは基本的にジャグラーガールズ（2026-09-28 ユーザー確認）
+    assert resolve("ガールズ", NAMES)["names"] == ["ジャグラーガールズ"]
+
+
+def test_toaru2_is_decided_by_installed_models_and_numbers():
+    both = ["とある魔術の禁書目録2", "とある科学の超電磁砲2"]
+    # 片方しか設置されていなければそちら
+    assert resolve("とある2", ["とある魔術の禁書目録2"])["names"] == ["とある魔術の禁書目録2"]
+    # 両方あれば名前だけでは決めない
+    r = resolve("とある2", both)
     assert r["names"] == [] and r["unresolved"][0]["status"] == "ambiguous"
+    numbers = {"とある魔術の禁書目録2": {2101, 2102, 2103}, "とある科学の超電磁砲2": {2201, 2202}}
+    # 機種欄の台番号の範囲で決める
+    assert resolve("とある2 2201-2202", both, numbers_by_name=numbers)["names"] == ["とある科学の超電磁砲2"]
+    # 同じ結果発表の画像の台番号で決める
+    assert resolve("とある2", both, numbers_by_name=numbers, hint_numbers={2102})["names"] == ["とある魔術の禁書目録2"]

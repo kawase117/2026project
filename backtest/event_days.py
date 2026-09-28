@@ -1209,9 +1209,17 @@ def _history_day(hall, business_date, event_rows, announces, frame, result, asof
             missing.append(n)
     unresolved_labels = []
     day_numbers = set(int(x) for x in day["machine_number"])
+    numbers_by_name = {k: set(int(x) for x in g["machine_number"]) for k, g in day.groupby("machine_name")}
+    # 同じ結果発表の画像から取れた台番号。「とある2」のような略称をどちらの機種か決める手がかりにする。
+    report_numbers = defaultdict(set)
+    for m in result["machines"]:
+        if m.get("machine_number") is not None:
+            report_numbers[str(m.get("report_id"))].add(int(m["machine_number"]))
     for model in result["models"]:
         text = str(model.get("model_name", ""))
-        res = _model_alias.resolve(text, names)
+        res = _model_alias.resolve(
+            text, names, numbers_by_name=numbers_by_name, hint_numbers=report_numbers.get(str(model.get("report_id")))
+        )
         granularity = model.get("granularity") or "機種"
         for part in res["unresolved"]:
             unresolved_labels.append({"text": part["part"], "status": part["status"], "granularity": granularity})

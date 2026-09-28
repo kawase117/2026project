@@ -114,10 +114,16 @@ ALIASES: dict[str, list[str]] = {
     "birdiewing": ["BIRDIE WING"],
 }
 
-# 決め切れない略称。推測で当てず ambiguous として返す（ユーザー確認待ち）。
-#   ガールズ … ジャグラーガールズ／ガールズ&パンツァー
-#   とある2  … 禁書目録2／超電磁砲2
-ALIAS_AMBIGUOUS: set[str] = {"ガールズ", "とある2"}
+ALIASES["ガールズ"] = ["ジャグラーガールズ"]  # 2026-09-28 ユーザー確認: 基本的にジャグラーガールズ
+
+# 名前だけでは決め切れない略称 → 候補。その日の設置状況と台番号で決める（resolve の numbers_by_name）。
+#   とある2 … 禁書目録2／超電磁砲2（2026-09-28 ユーザー: 言葉だけでは判別できないが、その日の台番号で判断できる）
+ALIAS_CANDIDATES: dict[str, list[str]] = {
+    "とある2": ["とある魔術の禁書目録2", "とある科学の超電磁砲2"],
+}
+
+# 候補も持たない、当てようのない略称（今は無し）。
+ALIAS_AMBIGUOUS: set[str] = set()
 
 # 機種ではない行（仕掛けの種類・件数・コーナー名）
 _NOT_MODEL = re.compile(r"^【|箇所|か所|^\d+機種$|^\d+枚$|台設置|^バラエティ$|^バラ$|^その他$|末尾")
@@ -160,6 +166,16 @@ def resolve_part(part: str, names: list[str]) -> dict:
         return {"status": "ambiguous", "names": [], "part": raw}
     normed = {n: norm(n) for n in names}
 
+    # 候補付きの略称: その日に設置されている候補が1つならそれ。複数なら ambiguous で候補を返し、
+    # 台番号で絞るのは resolve() に任せる。
+    for alias_key, targets in ALIAS_CANDIDATES.items():
+        if norm(alias_key) != key:
+            continue
+        present = [n for n, v in normed.items() if any(v.startswith(norm(t)) for t in targets)]
+        if len(present) == 1:
+            return {"status": "ok", "names": present, "part": raw}
+        return {"status": "ambiguous", "names": present, "part": raw}
+
     # 1. 完全一致
     exact = [n for n, v in normed.items() if v == key]
     if len(exact) == 1:
@@ -187,14 +203,31 @@ def resolve_part(part: str, names: list[str]) -> dict:
     return {"status": "unmatched", "names": [], "part": raw}
 
 
-def resolve(text: str, names: list[str]) -> dict:
+def resolve(
+    text: str,
+    names: list[str],
+    numbers_by_name: dict[str, set[int]] | None = None,
+    hint_numbers: set[int] | None = None,
+) -> dict:
     """機種欄1つを解決する。
+
+    numbers_by_name: その日の {正式名: 台番号の集合}。
+    hint_numbers: 同じ結果発表の画像などから分かっている対象台の台番号。
+    候補が複数の略称（とある2 等）は、機種欄の台番号の範囲と hint_numbers のどちらかに
+    台番号を持つ機種が1つだけなら、その機種に絞る。
 
     返り値: {"parts": [resolve_part の結果...], "names": 当たった正式名(重複なし),
              "ranges": [(from,to)...], "unresolved": 当たらなかった部品}
     """
     parts, ranges = split_parts(text)
     results = [resolve_part(p, names) for p in parts]
+    wanted = {n for lo, hi in ranges for n in range(min(lo, hi), max(lo, hi) + 1)} | set(hint_numbers or ())
+    if numbers_by_name and wanted:
+        for r in results:
+            if r["status"] == "ambiguous" and r["names"]:
+                hit = [n for n in r["names"] if numbers_by_name.get(n, set()) & wanted]
+                if len(hit) == 1:
+                    r["status"], r["names"] = "ok", hit
     matched = []
     for r in results:
         if r["status"] == "ok":
