@@ -346,10 +346,15 @@ def refresh_integrated_layer():
     """
     run_project("backtest/result_corpus.py", "build")
     run_project("backtest/result_corpus.py", "ingest-prose")
+    # SEVEN-D（楽園蒲田の全台/1/2 の結果発表）。result_corpus とは別モジュールで、
+    # 2026-09-28 まで日次に入っておらず、9/14・9/15 三大天の結果が未取り込みだった。
+    run_project("-m", "backtest.seven_d_results")
     run_project("backtest/result_corpus.py", "link-machines")
     run_project("-m", "backtest.integrated", "ingest-announce")
     run_project("-m", "backtest.integrated", "ingest-retro")
     run_project("-m", "backtest.integrated", "coverage")
+    # 結果発表の取り込みが済んだ後に、イベントの各回との結びつきを照合し直す（遅れて出た発表を拾う）。
+    run_project("-m", "backtest.event_days", "link")
 
 
 def main() -> int:
