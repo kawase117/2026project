@@ -113,6 +113,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -121,6 +122,7 @@ import numpy as np
 import pandas as pd
 
 from backtest.censoring import bounds_for, censoring_summary, max_understatement_hi, warning_text
+from backtest.narabi import find_blocks
 from backtest.run_backtest import load_frame
 
 ANNOUNCE_DIR = Path(__file__).resolve().parent / "announce"
@@ -221,6 +223,7 @@ CLAIM_TYPES = {
     "model_named_ratio",  # 特定機種を名指し（1/N⑤⑥＝一部の台だけ高設定）
     "category_share",  # 閾値超え機種のうち当該カテゴリが min_share 以上
     "position_rule",  # 特定位置（角番・末尾等）に仕掛けがある
+    "narabi",  # 同一 section 内の連番ブロック
 }
 
 CATEGORY_FIELDS = {"jug_flag", "hana_flag", "oki_flag", "bt_flag"}
@@ -372,6 +375,164 @@ def validate(obj: dict) -> None:
                     "未指定はホール全機種プールでの判定になるので、予告が機種タイプを"
                     "限定している場合（『ジャグ20%⑤⑥』等）は必ず指定すること。"
                 )
+        if t == "narabi":
+            n_adjacent = c.get("n_adjacent")
+            if isinstance(n_adjacent, bool) or not isinstance(n_adjacent, int) or n_adjacent < 2:
+                raise ValueError("narabi.n_adjacent は 2 以上の整数")
+            count = c.get("count")
+            if count is not None and (isinstance(count, bool) or not isinstance(count, int) or count < 1):
+                raise ValueError("narabi.count は null または 1 以上の整数")
+            if not c.get("scope"):
+                raise ValueError("narabi.scope が無い")
+
+
+_NARABI_COUNT_RE = re.compile(r"(?:×|が|は|に)?\s*(?P<count>\d+)\s*(?:箇所|か所)")
+_NARABI_N_RE = re.compile(r"(?P<n>\d+)\s*台\s*並び")
+
+
+def extract_narabi_mentions(raw_text: str) -> list[dict]:
+    """予告本文から「N台並び」と、直後に書かれたか所数を表示用に読む。
+
+    本文は凍結済み JSON に書き戻さない。複数の表記（⑤⑥、複数、各フロア）を
+    まとめて扱い、count が明示されない場合は None とする。
+    """
+    text = raw_text or ""
+    out = []
+    matches = list(_NARABI_N_RE.finditer(text))
+    for index, match in enumerate(matches):
+        next_start = matches[index + 1].start() if index + 1 < len(matches) else len(text)
+        span_end = min(next_start, match.end() + 32)
+        tail = text[match.end() : span_end]
+        count_match = _NARABI_COUNT_RE.search(tail)
+        # 「複数」は件数を意味しないため、数値だけを count にする。
+        out.append(
+            {
+                "n_adjacent": int(match.group("n")),
+                "count": int(count_match.group("count")) if count_match else None,
+                "text_span": text[match.start() : span_end],
+            }
+        )
+    # 台数を書かない並びの公約（「⑤⑥並び×複数」「全、並びやニブイチ」）も拾い、n_adjacent=None とする。
+    # 楽園蒲田の予告23件中6件がこの形だった（2026-09-28）。抽選の列の「並びたい」等は公約ではないので除く。
+    covered = [(m.start(), m.end()) for m in matches]
+    for match in _NARABI_BARE_RE.finditer(text):
+        if any(start <= match.start() < end for start, end in covered):
+            continue
+        tail = text[match.end() : match.end() + 32]
+        count_match = _NARABI_COUNT_RE.search(tail)
+        out.append(
+            {
+                "n_adjacent": None,
+                "count": int(count_match.group("count")) if count_match else None,
+                "text_span": text[max(0, match.start() - 8) : match.end() + 16],
+            }
+        )
+    return out
+
+
+# 「並び」単独。直後が「たい/ます/ました/に/順」（列に並ぶ意味）のものは除く。
+_NARABI_BARE_RE = re.compile(r"並び(?!たい|ます|ました|に|順)")
+
+
+def _narabi_blocks_from_frame(frame: pd.DataFrame, target: str, n_adjacent: int, scope: str) -> list[dict]:
+    """差枚ベースの並び。判定本体は backtest.narabi.find_blocks に委譲する。"""
+    day = frame[frame["date"].astype(str) == str(target)].copy()
+    day = day[day["games_normalized"].fillna(0) > 0]
+    rows = []
+    for _, row in day.iterrows():
+        rows.append(
+            {
+                "number": int(row["machine_number"]),
+                "name": row.get("machine_name"),
+                "diff": float(row["diff_coins_normalized"]),
+                "games": float(row["games_normalized"]),
+                "section": row.get("section"),
+                "segment": "AT",
+            }
+        )
+    blocks = find_blocks(rows, size=n_adjacent)
+    if scope not in ("hall", "ホール全体", ""):
+        blocks = [block for block in blocks if all(machine["name"] == scope for machine in block["machines"])]
+    return blocks
+
+
+def _narabi_games_blocks(frame: pd.DataFrame, target: str, n_adjacent: int, scope: str) -> list[dict]:
+    """回転数ベースの並び（当日ホール中央値の2倍かつ自台30日平均の1.5倍）。"""
+    day = frame[frame["date"].astype(str) == str(target)].copy()
+    hall_day = day
+    if scope not in ("hall", "ホール全体", ""):
+        day = day[day["machine_name"] == scope]
+    if day.empty:
+        return []
+    hall_median = float(hall_day["games_normalized"].median())
+    prior = frame[frame["date"].astype(str) < str(target)].copy()
+    prior = prior.sort_values("date").groupby("machine_number", sort=False).tail(30)
+    recent = prior.groupby("machine_number")["games_normalized"].mean()
+    by_number = {int(r.machine_number): r for r in day.itertuples()}
+    candidates = []
+    for start in sorted(by_number):
+        block = [by_number.get(start + offset) for offset in range(n_adjacent)]
+        if any(row is None or row.section is None for row in block):
+            continue
+        if len({row.section for row in block}) != 1:
+            continue
+        if any(float(row.games_normalized) < hall_median * 2 for row in block):
+            continue
+        if any(
+            int(row.machine_number) not in recent
+            or float(row.games_normalized) < float(recent[int(row.machine_number)]) * 1.5
+            for row in block
+        ):
+            continue
+        candidates.append(
+            {
+                "start": start,
+                "section": block[0].section,
+                "machines": [int(row.machine_number) for row in block],
+                "mean_games": sum(float(row.games_normalized) for row in block) / n_adjacent,
+            }
+        )
+    candidates.sort(key=lambda x: -x["mean_games"])
+    selected, used = [], set()
+    for block in candidates:
+        numbers = set(block["machines"])
+        if numbers & used:
+            continue
+        selected.append(block)
+        used |= numbers
+    return sorted(selected, key=lambda x: x["start"])
+
+
+def _judge_narabi(c: dict, day: pd.DataFrame, frame: pd.DataFrame, target: str) -> dict:
+    n = int(c["n_adjacent"])
+    scope = c.get("scope", "hall")
+    blocks = _narabi_blocks_from_frame(frame, target, n, scope)
+    games_blocks = _narabi_games_blocks(frame, target, n, scope)
+    baseline = []
+    for d in sorted(set(frame["date"].astype(str))):
+        if d >= str(target):
+            continue
+        baseline.append(len(_narabi_blocks_from_frame(frame, d, n, scope)))
+    detected = len(blocks)
+    percentile = None if not baseline else round(100.0 * sum(x <= detected for x in baseline) / len(baseline), 1)
+
+    def serial(block):
+        return {
+            "start": int(block["start"]),
+            "machines": [int(x["number"]) for x in block["machines"]]
+            if "machines" in block and block["machines"] and isinstance(block["machines"][0], dict)
+            else block.get("machines", []),
+            "section": block.get("section"),
+            "mean_diff": round(float(block.get("mean_diff", 0)), 1),
+        }
+
+    return {
+        "detected_count": detected,
+        "baseline_percentile": percentile,
+        "blocks": [serial(b) for b in blocks],
+        "games_blocks": games_blocks,
+        "hit": None,
+    }
 
 
 def _winrate_lb95(win_sum: pd.Series, n: pd.Series) -> pd.Series:
@@ -882,6 +1043,9 @@ def _judge_claims(obj: dict, day: pd.DataFrame, first_seen: pd.Series | None = N
         elif t == "model_named_ratio":
             entry.update(_judge_model_named_ratio(c, day, ms, min_machines))
 
+        elif t == "narabi":
+            entry.update(_judge_narabi(c, day, obj.get("_score_frame", day), obj["target_date"]))
+
         out.append(entry)
     return out
 
@@ -1010,6 +1174,8 @@ def score(obj: dict) -> dict:
     if msg:
         print(msg, file=sys.stderr)
 
+    # `_score_frame` は内部引数であり、digest・JSON出力には絶対に残さない。
+    obj["_score_frame"] = df
     obj["result"] = {
         "scored_at_data_max": str(df["date"].max()),
         "hall_baseline_mean_diff": round(float(day["diff_coins_normalized"].mean()), 1),
@@ -1018,6 +1184,7 @@ def score(obj: dict) -> dict:
         "censoring": cens,
         "claims": _judge_claims(obj, day, first_seen),
     }
+    obj.pop("_score_frame", None)
     return obj
 
 
@@ -1142,6 +1309,10 @@ def main(argv: list[str] | None = None) -> int:
     )
     p_ac.add_argument("hall")
 
+    p_nm = sub.add_parser("narabi-mentions", help="予告本文の並び言及を表示する（読み取り専用）")
+    p_nm.add_argument("hall")
+    p_nm.add_argument("--announce-dir", default=str(ANNOUNCE_DIR))
+
     args = p.parse_args(argv)
     ANNOUNCE_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -1168,6 +1339,28 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == "audit-censoring":
         res = audit_censoring(args.hall)
         print(json.dumps(res, ensure_ascii=False, indent=2))
+        return 0
+
+    if args.cmd == "narabi-mentions":
+        bundles = load_announce_bundles(args.announce_dir)["bundles"]
+        total = mentioned = 0
+        for bundle in bundles:
+            payload = bundle["payload"]
+            if bundle["status"] not in {"active", "retroactive"}:
+                continue
+            if payload.get("hall") != args.hall:
+                continue
+            total += 1
+            mentions = extract_narabi_mentions(payload.get("raw_text", ""))
+            if mentions:
+                mentioned += 1
+            print(
+                json.dumps(
+                    {"announce_id": bundle["announce_id"], "status": bundle["status"], "mentions": mentions},
+                    ensure_ascii=False,
+                )
+            )
+        print(f"並びに言及した予告 {mentioned} / 全 {total} 件")
         return 0
 
     path = Path(args.path)

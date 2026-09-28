@@ -29,9 +29,12 @@ import os
 import re
 import sqlite3
 import sys
+import unicodedata
+from collections import defaultdict
 from datetime import date, datetime, timedelta, timezone
 
 from scraper.twitter_monitor.hall_aliases import HALL_ALIAS_EXCLUSIONS, HALL_ALIASES
+from backtest.announce import extract_narabi_mentions, load_announce_bundles
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LEDGER = os.path.join(ROOT, "document", "registry", "EVENT_DAYS.jsonl")
@@ -320,6 +323,244 @@ def cmd_scan(a):
             )
         )
     print("候補 %d 件（自動登録はしない。内容を読んで add すること）" % n)
+    return 0
+
+
+def pledge_keys(announce_payload):
+    """予告の claims と本文から、イベント系列比較用の公約キーを作る。"""
+    keys = set()
+    for claim in announce_payload.get("claims", []) or []:
+        typ = claim.get("type")
+        if typ == "position_rule":
+            values = claim.get("values", [])
+            value = ",".join(map(str, values))
+            if claim.get("field") == "last_digit":
+                ratio = claim.get("ratio")
+                ratio_text = f"1/{ratio}" if ratio is not None else "?"
+                keys.add(f"末尾:{value}:{ratio_text}")
+            else:
+                keys.add(f"{claim.get('field')}:{value}")
+        elif typ == "model_named_ratio":
+            keys.add(f"機種指名:1/{claim.get('ratio')}")
+        elif typ == "model_named":
+            keys.add("機種指名:全")
+        elif typ == "zentaikei_count":
+            keys.add(f"全台系:{claim.get('n_models')}機種")
+        elif typ == "narabi":
+            keys.add(f"並び:{claim.get('n_adjacent')}台")
+    for mention in extract_narabi_mentions(announce_payload.get("raw_text", "")):
+        keys.add(f"並び:{mention['n_adjacent'] or '?'}台")
+    return keys
+
+
+def _series_name(name):
+    value = unicodedata.normalize("NFKC", name or "").lower()
+    value = re.sub(r"\d{1,4}年?\d{1,2}月?\d{1,2}日?|\d{1,2}/\d{1,2}", "", value)
+    value = re.sub(r"第\s*\d+\s*弾|\d+\s*日目", "", value)
+    value = re.sub(r"[初開催第\d０-９]+", "", value)
+    value = re.sub(r"[^\wぁ-んァ-ヶ一-龯]", "", value)
+    return value
+
+
+def _grams(value):
+    return {value[i : i + 2] for i in range(max(0, len(value) - 1))}
+
+
+def _name_similarity(left, right):
+    a, b = _grams(_series_name(left)), _grams(_series_name(right))
+    return 1.0 if not a and not b else (len(a & b) / len(a | b) if a | b else 0.0)
+
+
+def _announce_for_events(event_rows, announce_dir):
+    bundles = load_announce_bundles(announce_dir)["bundles"]
+    by_day = defaultdict(list)
+    for bundle in bundles:
+        payload = bundle["payload"]
+        by_day[(_normalize_hall(payload.get("hall")), str(payload.get("target_date")))].append((bundle, payload))
+    out = {}
+    for row in event_rows:
+        key = (_normalize_hall(row.get("hall")), str(row.get("date")))
+        matches = by_day.get(key, [])
+        out[row["event_id"]] = matches
+    return out
+
+
+def _source_handle(row, payloads, state_db=STATE_DB):
+    handles = {p.get("source", {}).get("account") for _, p in payloads if p.get("source", {}).get("account")}
+    if handles:
+        return sorted(handles)[0]
+    ids = row.get("source_tweets", [])
+    if not ids or not os.path.exists(state_db):
+        return None
+    with _ro_connect(state_db) as con:
+        q = "select distinct handle from seen_tweets where tweet_id in (%s)" % ",".join("?" * len(ids))
+        got = con.execute(q, tuple(ids)).fetchall()
+    return got[0][0] if got else None
+
+
+def _series_rows(event_ledger=LEDGER, announce_dir=None, state_db=STATE_DB):
+    rows = active(_load_jsonl(event_ledger))
+    announce_dir = announce_dir or os.path.join(ROOT, "backtest", "announce")
+    matched = _announce_for_events(rows, announce_dir)
+    out = []
+    for row in rows:
+        payloads = matched.get(row["event_id"], [])
+        keys = set().union(*(pledge_keys(p) for _, p in payloads)) if payloads else set()
+        out.append(
+            {
+                **row,
+                "pledge_keys": keys,
+                "announce_payloads": payloads,
+                "source_handle": _source_handle(row, payloads, state_db),
+            }
+        )
+    return out
+
+
+def _series_candidates(event_ledger=LEDGER, announce_dir=None, series_ledger=None, state_db=STATE_DB):
+    rows = _series_rows(event_ledger, announce_dir, state_db)
+    decided = []
+    if series_ledger and os.path.exists(series_ledger):
+        decided = _load_jsonl(series_ledger)
+    decided_events = {
+        e for row in decided if row.get("decision") in {"same", "different"} for e in row.get("event_ids", [])
+    }
+    result = []
+    for axis in ("name", "pledge"):
+        groups = []
+        if axis == "pledge":
+            buckets = defaultdict(list)
+            for row in rows:
+                for key in row["pledge_keys"]:
+                    buckets[(row["hall"], key)].append(row)
+            group_iter = [(label, values, label) for (hall, label), values in buckets.items() if len(values) >= 2]
+        else:
+            parent = list(range(len(rows)))
+
+            def root(index):
+                while parent[index] != index:
+                    parent[index] = parent[parent[index]]
+                    index = parent[index]
+                return index
+
+            def union(left, right):
+                left, right = root(left), root(right)
+                if left != right:
+                    parent[right] = left
+
+            for i, left in enumerate(rows):
+                for j, right in enumerate(rows[i + 1 :], i + 1):
+                    if left["hall"] != right["hall"] or _name_similarity(left["event_name"], right["event_name"]) < 0.5:
+                        continue
+                    if (
+                        left.get("source_handle")
+                        and right.get("source_handle")
+                        and left["source_handle"] != right["source_handle"]
+                    ):
+                        continue
+                    union(i, j)
+            buckets = defaultdict(list)
+            for index, row in enumerate(rows):
+                buckets[root(index)].append(row)
+            group_iter = [
+                (values[0]["event_name"], values, _series_name(values[0]["event_name"]))
+                for values in buckets.values()
+                if len(values) >= 2
+            ]
+        for label, values, reason in group_iter:
+            event_ids = sorted({v["event_id"] for v in values})
+            if decided_events.intersection(event_ids):
+                continue
+            score = 0.0
+            if axis == "name":
+                score = max(_name_similarity(values[0]["event_name"], v["event_name"]) for v in values[1:])
+                evidence = f"名称2-gram Jaccard={score:.3f}; source={values[0].get('source_handle') or '?'}"
+                series_label = _series_name(label) or "unnamed"
+            else:
+                score = 1.0
+                evidence = f"公約キー={reason}"
+                series_label = reason
+            hall_short = re.sub(r"[^0-9A-Za-zぁ-んァ-ヶ一-龯]+", "", values[0]["hall"])[-12:]
+            result.append(
+                {
+                    "series_id": f"{hall_short}__{axis}__{series_label}",
+                    "axis": axis,
+                    "hall": values[0]["hall"],
+                    "label": label,
+                    "event_ids": event_ids,
+                    "auto_score": round(score, 3),
+                    "evidence": evidence,
+                }
+            )
+    return result
+
+
+def cmd_series(a):
+    candidates = _series_candidates(a.event_ledger, a.announce_dir, a.series_ledger, a.state_db)
+    if getattr(a, "hall", None):
+        hall = _normalize_hall(a.hall)
+        candidates = [x for x in candidates if x["hall"] == hall]
+    print(
+        "候補数: name=%d pledge=%d"
+        % (sum(x["axis"] == "name" for x in candidates), sum(x["axis"] == "pledge" for x in candidates))
+    )
+    if getattr(a, "json", False):
+        print(json.dumps(candidates, ensure_ascii=False, indent=2))
+        return 0
+    # ユーザーが「同じ／違う」を判断しやすいよう、1候補1行（日付の並び・根拠）で出す。
+    for i, x in enumerate(candidates, 1):
+        # 同じ日に複数の event_id がある回は1回として数える
+        days = sorted({e[:8] for e in x["event_ids"]})
+        dates = ",".join(d[4:6].lstrip("0") + "/" + d[6:8].lstrip("0") for d in days)
+        print(
+            "%2d [%s] %s | %d回: %s | score=%s | %s"
+            % (i, x["axis"], x["label"], len(days), dates, x["auto_score"], x.get("evidence", ""))
+        )
+    return 0
+
+
+def cmd_series_list(a):
+    rows = _load_jsonl(a.series_ledger)
+    latest = {}
+    for row in rows:
+        latest[row.get("series_id")] = row
+    print(json.dumps(list(latest.values()), ensure_ascii=False, indent=2))
+    return 0
+
+
+def cmd_series_decide(a):
+    path = a.series_ledger
+    previous = _load_jsonl(path)
+    old = next((r for r in reversed(previous) if r.get("series_id") == a.series_id), None)
+    row = {
+        "row_id": "s-%04d" % (len(previous) + 1),
+        "series_id": a.series_id,
+        "axis": a.axis,
+        "hall": a.hall,
+        "label": a.label,
+        "pledge_key": a.pledge_key,
+        "event_ids": [x for x in a.event_ids.split(",") if x],
+        "decision": a.decision,
+        "decided_by": "user",
+        "auto_score": a.auto_score,
+        "auto_decision": "same" if (a.auto_score is not None and float(a.auto_score) >= 0.5) else "different",
+        "decided_at": datetime.now(JST).isoformat(timespec="seconds"),
+        "supersedes": old.get("row_id") if old else None,
+    }
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "a", encoding="utf-8") as handle:
+        handle.write(json.dumps(row, ensure_ascii=False) + "\n")
+    print(json.dumps(row, ensure_ascii=False))
+    return 0
+
+
+def cmd_series_accuracy(a):
+    rows = _load_jsonl(a.series_ledger)[-20:]
+    judged = [r for r in rows if r.get("decided_by") == "user" and r.get("auto_decision")]
+    matched = sum(r["decision"] == r["auto_decision"] for r in judged)
+    print("直近ユーザー判定: %d件中%d件一致" % (len(judged), matched))
+    if matched >= 19:
+        print("自動判定に切り替え可")
     return 0
 
 
@@ -628,6 +869,31 @@ def main(argv=None):
         if name == "link":
             s.add_argument("--dry-run", action="store_true")
         s.set_defaults(fn=fn)
+    s = sub.add_parser("series")
+    s.add_argument("--event-ledger", default=LEDGER)
+    s.add_argument("--announce-dir", default=os.path.join(ROOT, "backtest", "announce"))
+    s.add_argument("--series-ledger", default=os.path.join(ROOT, "document", "registry", "EVENT_SERIES.jsonl"))
+    s.add_argument("--state-db", default=STATE_DB)
+    s.add_argument("--hall", help="このホールの候補だけ出す（表記ゆれは吸収）")
+    s.add_argument("--json", action="store_true", help="全件を JSON で出す（既定は1候補1行の一覧）")
+    s.set_defaults(fn=cmd_series)
+    s = sub.add_parser("series-decide")
+    s.add_argument("--series-ledger", default=os.path.join(ROOT, "document", "registry", "EVENT_SERIES.jsonl"))
+    s.add_argument("--series-id", required=True)
+    s.add_argument("--axis", required=True, choices=["name", "pledge"])
+    s.add_argument("--hall", required=True)
+    s.add_argument("--label", required=True)
+    s.add_argument("--pledge-key", default=None)
+    s.add_argument("--event-ids", required=True)
+    s.add_argument("--decision", required=True, choices=["same", "different"])
+    s.add_argument("--auto-score", type=float, default=None)
+    s.set_defaults(fn=cmd_series_decide)
+    s = sub.add_parser("series-accuracy")
+    s.add_argument("--series-ledger", default=os.path.join(ROOT, "document", "registry", "EVENT_SERIES.jsonl"))
+    s.set_defaults(fn=cmd_series_accuracy)
+    s = sub.add_parser("series-list")
+    s.add_argument("--series-ledger", default=os.path.join(ROOT, "document", "registry", "EVENT_SERIES.jsonl"))
+    s.set_defaults(fn=cmd_series_list)
     a = p.parse_args(argv)
     return a.fn(a)
 
