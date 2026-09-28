@@ -865,13 +865,27 @@ def link_machines(state_db=STATE_DB, analysis_db=ANALYSIS_DB):
     print("  もう一方の店の方がよく合う画像（警告のみ・付け替えない）: %d" % warned)
     print("  本文の営業日が実績DBに無い投稿: %d" % missing_day)
     # 一致率は比べられる行（name_agrees が NULL でない＝機種名が書かれている行）だけで出す。
-    for hall, count, comparable, agree in target.execute(
-        "SELECT hall_name, COUNT(*), COUNT(name_agrees), SUM(name_agrees) FROM external_result_machines "
-        "GROUP BY hall_name ORDER BY 2 DESC"
+    # 台番号が回転数・BB・RB で確定した台は、機種名が違っても画像の名前の読み違いであり
+    # 台は正しい（2026-09-29 ユーザー判断）。要確認に数えるのは、名前が違い数字でも確かめられない台だけ。
+    for hall, count, comparable, agree, confirmed, misread, check in target.execute(
+        "SELECT hall_name, COUNT(*), COUNT(name_agrees), SUM(name_agrees), "
+        "SUM(panel_check IN ('exact_number','corrected')), "
+        "SUM(name_agrees = 0 AND panel_check IN ('exact_number','corrected')), "
+        "SUM(name_agrees = 0 AND COALESCE(panel_check, '') NOT IN ('exact_number','corrected')) "
+        "FROM external_result_machines GROUP BY hall_name ORDER BY 2 DESC"
     ):
         print(
-            "  %-24s %5d 行 (機種名も一致 %.0f%%、コーナー名等で比べられない %d 行)"
-            % (hall, count, 100 * (agree or 0) / comparable if comparable else 0, count - comparable)
+            "  %-24s %5d 行 (機種名も一致 %.0f%%、コーナー名等で比べられない %d 行、数字で台番号確定 %d 行"
+            "（うち機種名の読み違い %d）、要確認 %d 行)"
+            % (
+                hall,
+                count,
+                100 * (agree or 0) / comparable if comparable else 0,
+                count - comparable,
+                confirmed or 0,
+                misread or 0,
+                check or 0,
+            )
         )
     return kept
 
