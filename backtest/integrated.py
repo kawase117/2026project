@@ -37,6 +37,8 @@ import os
 import sqlite3
 from datetime import datetime, timedelta
 
+from backtest.announce import load_announce_bundles
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 ANALYSIS_DB = os.path.join(ROOT, "db", "analysis_results.db")
@@ -90,11 +92,10 @@ CREATE INDEX IF NOT EXISTS idx_ac_type
 
 
 def announce_files():
-    for path in sorted(glob.glob(os.path.join(ANNOUNCE_DIR, "*.json"))):
-        name = os.path.basename(path)
-        if any(marker in name for marker in EXCLUDED_MARKERS):
-            continue
-        yield path
+    data = load_announce_bundles(ANNOUNCE_DIR)
+    for bundle in data["bundles"]:
+        if bundle["status"] != "withdrawn":
+            yield str(bundle["path"])
 
 
 def ingest_announce(analysis_db=ANALYSIS_DB):
@@ -103,28 +104,37 @@ def ingest_announce(analysis_db=ANALYSIS_DB):
     connection.executescript(SCHEMA)
     now = datetime.now().astimezone().isoformat(timespec="seconds")
 
-    reports = claims = skipped = 0
-    for path in announce_files():
-        try:
-            with open(path, encoding="utf-8") as handle:
-                payload = json.load(handle)
-        except OSError, json.JSONDecodeError:
-            skipped += 1
+    reports = claims = skipped = retroactive_reports = 0
+    bundles_data = load_announce_bundles(ANNOUNCE_DIR)
+    skipped += bundles_data["unreadable"]
+    # 入れ直すのはファイル由来の行だけ。`ingest_retroactive_announces` が書く遡及レーン
+    # （file_path が "(tweet <id>)"）は state.db 由来で、ここでは作り直せない。
+    # announce_id の接頭辞では見分けない（.retro.json の stem が "retro__" で始まりうる）。
+    file_lane = "SELECT announce_id FROM announce_reports WHERE file_path NOT LIKE '(tweet %'"
+    connection.execute(f"DELETE FROM announce_claims WHERE announce_id IN ({file_lane})")
+    connection.execute("DELETE FROM announce_reports WHERE file_path NOT LIKE '(tweet %'")
+    for bundle in bundles_data["bundles"]:
+        if bundle["status"] == "withdrawn":
             continue
+        path = str(bundle["path"])
+        payload = dict(bundle["payload"])
         hall = payload.get("hall")
         target = payload.get("target_date")
         if not hall or not target:
             skipped += 1
             continue
-        announce_id = payload.get("announce_id") or os.path.splitext(os.path.basename(path))[0]
+        announce_id = bundle["announce_id"]
         source = payload.get("source") or {}
         zentaikei = payload.get("zentaikei") or {}
+        payload["_corrections"] = bundle["corrections"]
+        payload["_addenda"] = bundle["addenda"]
+        retroactive = 1 if bundle["status"] == "retroactive" else 0
 
         connection.execute(
             "INSERT OR REPLACE INTO announce_reports "
             "(announce_id, hall_name, target_date, account, posted_at, kind, metric, "
             " threshold, min_machines, file_path, announce_digest, payload_json, "
-            " ingested_at, retroactive) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,0)",
+            " ingested_at, retroactive) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 announce_id,
                 hall,
@@ -139,6 +149,7 @@ def ingest_announce(analysis_db=ANALYSIS_DB):
                 payload.get("announce_digest"),
                 json.dumps(payload, ensure_ascii=False),
                 now,
+                retroactive,
             ),
         )
         connection.execute("DELETE FROM announce_claims WHERE announce_id = ?", (announce_id,))
@@ -163,9 +174,13 @@ def ingest_announce(analysis_db=ANALYSIS_DB):
             )
             claims += 1
         reports += 1
+        retroactive_reports += retroactive
 
     connection.commit()
-    print("予告: %d 件 / claim %d 件 (読めずに飛ばした %d 件)" % (reports, claims, skipped))
+    print(
+        "予告: %d 件 / claim %d 件 (retroactive: 0=%d, 1=%d / 読めずに飛ばした %d 件)"
+        % (reports, claims, reports - retroactive_reports, retroactive_reports, skipped)
+    )
     return reports
 
 

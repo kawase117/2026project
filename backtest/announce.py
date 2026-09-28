@@ -126,6 +126,92 @@ from backtest.run_backtest import load_frame
 ANNOUNCE_DIR = Path(__file__).resolve().parent / "announce"
 LEDGER = ANNOUNCE_DIR / "LEDGER.jsonl"
 
+_ANNOUNCE_SUFFIXES = ("withdrawn", "invalidated", "correction", "addendum", "retro", "scoring")
+
+
+def load_announce_bundles(announce_dir=ANNOUNCE_DIR):
+    """予告ファイルを本体ID単位に束ねる。
+
+    戻り値は ``bundles``（本体束）、``orphans``（付け先不明の補助ファイル）と
+    ``unreadable``（読めなかったJSON件数）を持つ辞書。ファイルは読み取り専用で扱う。
+    """
+    announce_dir = Path(announce_dir)
+    bundles = {}
+    attachments = []
+    orphans = []
+    unreadable = 0
+
+    def is_auxiliary(name):
+        return any(f".{suffix}.json" in name for suffix in _ANNOUNCE_SUFFIXES)
+
+    def read(path):
+        nonlocal unreadable
+        try:
+            with path.open(encoding="utf-8") as handle:
+                payload = json.load(handle)
+            if not isinstance(payload, dict):
+                raise ValueError("payload is not an object")
+            return payload
+        except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
+            unreadable += 1
+            print(f"[WARN] announce JSONを読めません: {path.name}: {exc}", file=sys.stderr)
+            return None
+
+    for path in sorted(announce_dir.glob("*.json")):
+        payload = read(path)
+        if payload is None:
+            continue
+        name = path.name
+        if ".retro.json" in name:
+            announce_id = payload.get("announce_id") or name[: -len(".retro.json")]
+            bundles[announce_id] = {
+                "announce_id": announce_id,
+                "path": path,
+                "payload": payload,
+                "status": "retroactive",
+                "corrections": [],
+                "addenda": [],
+                "scoring": [],
+            }
+        elif is_auxiliary(name):
+            attachments.append((path, payload))
+        else:
+            announce_id = payload.get("announce_id") or path.stem
+            bundles[announce_id] = {
+                "announce_id": announce_id,
+                "path": path,
+                "payload": payload,
+                "status": "active",
+                "corrections": [],
+                "addenda": [],
+                "scoring": [],
+            }
+
+    for path, payload in attachments:
+        name = path.name
+        kind = payload.get("kind")
+        target_id = payload.get("announce_id") or payload.get("addendum_to")
+        if ".invalidated.json" in name:
+            orphans.append({"path": path, "payload": payload, "kind": "invalidated"})
+        elif kind == "withdrawal" or ".withdrawn.json" in name:
+            if target_id in bundles:
+                bundles[target_id]["status"] = "withdrawn"
+            else:
+                orphans.append({"path": path, "payload": payload, "kind": "withdrawal"})
+        elif target_id not in bundles:
+            orphans.append({"path": path, "payload": payload, "kind": kind})
+        elif kind == "correction" or ".correction.json" in name:
+            bundles[target_id]["corrections"].append(payload)
+        elif kind == "addendum" or ".addendum.json" in name:
+            bundles[target_id]["addenda"].append(payload)
+        elif kind == "scoring" or ".scoring.json" in name:
+            bundles[target_id]["scoring"].append(payload)
+        else:
+            orphans.append({"path": path, "payload": payload, "kind": kind})
+
+    return {"bundles": list(bundles.values()), "orphans": orphans, "unreadable": unreadable}
+
+
 # source.kind に許すのはこれだけ。結果報告・店長投稿を予告として登録させない。
 ALLOWED_KINDS = {"予告"}
 
@@ -597,8 +683,11 @@ def audit_censoring(hall: str) -> list[dict]:
     # ファイル名の接頭辞（announce_id）はホール名のローマ字略称で、"hall" フィールドの
     # 日本語表記とは一致しない（例: rakuen__... の hall は "楽園蒲田店"）。
     # よってファイル名ではなく中身の "hall" で絞る。
-    for path in sorted(ANNOUNCE_DIR.glob("*.json")):
-        obj = json.loads(path.read_text(encoding="utf-8"))
+    for bundle in load_announce_bundles(ANNOUNCE_DIR)["bundles"]:
+        if bundle["status"] != "active":
+            continue
+        path = bundle["path"]
+        obj = bundle["payload"]
         if obj.get("hall") != hall or obj.get("result") is None:
             continue
         target = obj["target_date"]

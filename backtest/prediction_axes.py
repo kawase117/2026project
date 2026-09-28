@@ -21,7 +21,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from backtest.announce import db_max_date, match_machine_names
+from backtest.announce import db_max_date, load_announce_bundles, match_machine_names
 from backtest.event_days import active, load
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -75,10 +75,13 @@ def _warn_skip(path: Path, reason: str) -> None:
 
 def _announce_records(hall: str, target: str) -> list[dict[str, Any]]:
     records = []
-    for path in sorted(ANNOUNCE_DIR.glob("*.json")):
+    bundles = load_announce_bundles(ANNOUNCE_DIR)
+    for bundle in bundles["bundles"]:
+        if bundle["status"] != "active":
+            continue
+        path = bundle["path"]
         try:
-            with path.open(encoding="utf-8") as handle:
-                record = json.load(handle)
+            record = bundle["payload"]
             if not isinstance(record, dict) or not record.get("announce_id"):
                 raise ValueError("missing announce_id")
             if not isinstance(record.get("raw_text"), str):
