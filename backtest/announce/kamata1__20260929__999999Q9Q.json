@@ -1,0 +1,63 @@
+{
+  "announce_id": "kamata1__20260929__999999Q9Q",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "target_date": "20260929",
+  "source": {
+    "account": "999999Q9Q",
+    "url": "",
+    "posted_at": "2026-09-28T22:25:35+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "新章メガいちよこやん予想\n\nよこやんのメガいちは毎日安心安定の仕掛け。全機種・ニブイチ機種・メイン機種（スマスロ中心）の単品強化、この三連単が明日も展開されると予想される。\n\nこの1ヶ月で色々見えてきたが、全機種は4台以下の機種でやりがち、オススメ東京喰種は毎日当たりありなどハッキリとした特徴もある。スロコーナーの外周をL字に囲うスマスロロング列も、強化されがちな機種が多数。\n\n金のミルク→ミルク→乳製品→牛\n→ウルトラミラクルジャグラー？\n\n濃い贅沢→濃い→恋\n→かぐや様？\n\n金のミルク→金→GOLDランク\n→ストリートファイター？\n\nひと粒→1粒→ワン\n→ファンキージャグラー？\n\nPREMIUM MILK CANDY→プレミアム→プレミアムゴッドゲーム\n→ミリオンゴッド？\n\n#マルハンメガシティ2000蒲田1",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"マルハンメガシティ2000-蒲田1\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-06-30\", \"2026-09-28\"], \"n_days\": 90, \"n_model_days\": 4297, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2217.0, \"models_over_threshold_per_day\": {\"mean\": 2.39, \"median\": 2.0, \"max\": 12}, \"candidate_models_per_day\": 47.7, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.24, \"median\": 3.0, \"max\": 14}, \"p_at_least_1\": 0.967, \"p_at_least_2\": 0.744, \"p_at_least_3\": 0.522, \"p_at_least_4\": 0.4, \"p_at_least_10\": 0.011}} / named_context: {\"as_of\": \"20260928\", \"window_days\": 30, \"n_candidates_ge3machines\": 48, \"hall_over_threshold_rate_approx\": 0.0, \"threshold\": 1800.0, \"models\": [{\"name\": \"かぐや様は告らせたい\", \"n_machines\": 2, \"rank\": null, \"of\": 48, \"n_days_present\": 30, \"over_threshold\": 3, \"rate\": 0.1, \"mean_score\": -91.9}, {\"name\": \"ウルトラミラクルジャグラー\", \"n_machines\": 4, \"rank\": 31, \"of\": 48, \"n_days_present\": 30, \"over_threshold\": 7, \"rate\": 0.233, \"mean_score\": 544.1}, {\"name\": \"ミリオンゴッド‐神々の軌跡‐\", \"n_machines\": 8, \"rank\": 45, \"of\": 48, \"n_days_present\": 30, \"over_threshold\": 1, \"rate\": 0.033, \"mean_score\": -295.3}, {\"name\": \"東京喰種\", \"n_machines\": 20, \"rank\": 47, \"of\": 48, \"n_days_present\": 30, \"over_threshold\": 3, \"rate\": 0.1, \"mean_score\": 387.5}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "かぐや様は告らせたい",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "ウルトラミラクルジャグラー",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "ミリオンゴッド‐神々の軌跡‐",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "東京喰種",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "ストリートファイター6",
+      "note": "語呂解読の推測(『？』付き)。match-nameのscore0.909を人間確認して採用。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "ファンキージャグラー2",
+      "note": "語呂解読の推測(『？』付き)。match-nameのscore0.909を人間確認して採用。"
+    }
+  ],
+  "unscored_claims": [
+    {
+      "text": "マイジャグラーV(部分一致score=0.625)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    }
+  ],
+  "needs_manual_review": false,
+  "no_confirmed_machines": false,
+  "result": null,
+  "announce_digest": "4ef0dcaf123cb136"
+}

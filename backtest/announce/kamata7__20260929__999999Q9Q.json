@@ -1,0 +1,52 @@
+{
+  "announce_id": "kamata7__20260929__999999Q9Q",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "target_date": "20260929",
+  "source": {
+    "account": "999999Q9Q",
+    "url": "",
+    "posted_at": "2026-09-28T23:59:46+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "GALAXYウスイのメガなな予想\n\n火曜日のメガななは角◯仕掛け。AT機・ノーマル機それぞれに1つずつ角◯仕掛けを用意し、各ニブイチ配分という布陣が続いている。看破までに時間がかかる可能性もあるが、朝イチの挙動は注視すべし\n\n角◯仕掛けに加えて、全機種もある前提で考えてOK。久々にウスイのさんポストがあったから、ひとつここから予想してみるとしよう。\n\n道→通り→ストリート\n→ストリートファイター？\n\n時計→時間\n→かぐや様？\n\nネコ\n→肉球→マイジャグラー？\n→ネコ→つばさキャット→化物語？\n→ネコ→アイルー→モンハンライズ？\n\n夜道→暗い→ダークネス\n→ToLOVEる？\n\n#マルハンメガシティ2000蒲田7",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"マルハンメガシティ2000-蒲田7\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-06-30\", \"2026-09-28\"], \"n_days\": 90, \"n_model_days\": 5680, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2153.4, \"models_over_threshold_per_day\": {\"mean\": 3.16, \"median\": 3.0, \"max\": 9}, \"candidate_models_per_day\": 63.1, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 4.01, \"median\": 3.0, \"max\": 11}, \"p_at_least_1\": 0.989, \"p_at_least_2\": 0.889, \"p_at_least_3\": 0.733, \"p_at_least_4\": 0.489, \"p_at_least_10\": 0.033}} / named_context: {\"as_of\": \"20260928\", \"window_days\": 30, \"n_candidates_ge3machines\": 65, \"hall_over_threshold_rate_approx\": 0.031, \"threshold\": 1800.0, \"models\": [{\"name\": \"かぐや様は告らせたい\", \"n_machines\": 9, \"rank\": 54, \"of\": 65, \"n_days_present\": 30, \"over_threshold\": 4, \"rate\": 0.133, \"mean_score\": 358.1}, {\"name\": \"マイジャグラーV\", \"n_machines\": 57, \"rank\": 9, \"of\": 65, \"n_days_present\": 30, \"over_threshold\": 0, \"rate\": 0.0, \"mean_score\": 222.3}, {\"name\": \"モンスターハンターライズ\", \"n_machines\": 9, \"rank\": 19, \"of\": 65, \"n_days_present\": 30, \"over_threshold\": 3, \"rate\": 0.1, \"mean_score\": 96.8}, {\"name\": \"化物語\", \"n_machines\": 5, \"rank\": 56, \"of\": 65, \"n_days_present\": 30, \"over_threshold\": 1, \"rate\": 0.033, \"mean_score\": 118.8}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "かぐや様は告らせたい",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "マイジャグラーV",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "モンスターハンターライズ",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "化物語",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "ストリートファイター6",
+      "note": "語呂解読の推測(『？』付き)。match-nameのscore0.909を人間確認して採用。"
+    }
+  ],
+  "unscored_claims": [],
+  "needs_manual_review": false,
+  "no_confirmed_machines": false,
+  "result": null,
+  "announce_digest": "be8e65495e8235f2"
+}
