@@ -543,7 +543,7 @@ def cmd_series_decide(a):
         "decision": a.decision,
         "decided_by": "user",
         "auto_score": a.auto_score,
-        "auto_decision": "same" if (a.auto_score is not None and float(a.auto_score) >= 0.5) else "different",
+        "auto_decision": None if a.auto_score is None else ("same" if float(a.auto_score) >= 0.5 else "different"),
         "decided_at": datetime.now(JST).isoformat(timespec="seconds"),
         "supersedes": old.get("row_id") if old else None,
     }
