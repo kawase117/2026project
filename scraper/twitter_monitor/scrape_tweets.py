@@ -33,6 +33,7 @@ BACKOFF_SECONDS = (60, 120, 240)
 MAX_STAGNANT_SCROLLS = 3
 STATUS_ID_RE = re.compile(r"/status/(\d+)")
 REPLY_MARKER_RE = re.compile(r"(?:Replying to|返信先|返信しています)", re.IGNORECASE)
+PINNED_MARKER_RE = re.compile(r"(?:固定|Pinned)", re.IGNORECASE)
 RATE_LIMIT_RE = re.compile(r"(?:Rate limit exceeded|レート制限|利用制限)", re.IGNORECASE)
 
 
@@ -155,8 +156,15 @@ def raise_if_logged_out(page) -> None:
 
 
 def own_tweet_data(article, handle: str):
-    """Return own-post metadata or None for reposts, replies, and unusable cards."""
-    if article.locator('[data-testid="socialContext"]').count() > 0:
+    """Return own-post metadata or None for reposts, replies, and unusable cards.
+
+    A pinned post also carries a socialContext ("固定" / "Pinned"), but it is the
+    account's own post. Treating every socialContext as a repost dropped it: on
+    2026-09-28 kawasakislot's 楽園蒲田 9/29 予告 (2104511801224544310) was pinned
+    at the 03:00 crawl and never stored.
+    """
+    social_context = article.locator('[data-testid="socialContext"]')
+    if social_context.count() > 0 and not PINNED_MARKER_RE.search(social_context.first.inner_text(timeout=3_000)):
         return None
     article_text = article.inner_text(timeout=3_000)
     if REPLY_MARKER_RE.search(article_text):
