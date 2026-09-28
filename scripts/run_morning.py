@@ -160,6 +160,11 @@ def main() -> int:
     parser.add_argument("--skip-history", action="store_true", help="analysis_results.db への日次指標の蓄積を行わない")
     parser.add_argument("--skip-forward", action="store_true", help="フォワードテストの採点と凍結を行わない")
     parser.add_argument(
+        "--skip-event-history",
+        action="store_true",
+        help="当日イベントのあるホールの答え合わせ表(backtest.event_days morning)を作らない",
+    )
+    parser.add_argument(
         "--skip-hall-review",
         action="store_true",
         help="前日分のホールレビューHTML生成(backtest.daily_digest hall-review)を行わない",
@@ -295,6 +300,15 @@ def _run(args: argparse.Namespace) -> int:
         run(
             "backtest.forward plan-all（対象は当日）",
             [PYTHON, "-u", "-X", "utf8", "-m", "backtest.forward", "plan-all"],
+        )
+
+    if not args.skip_event_history:
+        # 当日イベント・予告のあるホールについて、同じイベント・同じ公約の過去の回の
+        # 答え合わせ表を output/event_history/<当日>/ に書き出す（前日分の取り込み後に置く）。
+        # 設計: document/plans/2026-09-28-event-result-feedback-loop.md 段階5。
+        run(
+            "backtest.event_days morning（当日の答え合わせ表）",
+            [PYTHON, "-u", "-X", "utf8", "-m", "backtest.event_days", "morning"],
         )
 
     if not args.skip_twitter:

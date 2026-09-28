@@ -255,3 +255,70 @@ def test_history_label_granularity_repeats_and_name_series(monkeypatch, tmp_path
     assert "10" not in numbers
     names = {x["value"]: x["count"] for x in got["repeated"]["machine_name"]}
     assert names == {"JUG": 2, "喰種": 2}
+
+
+def test_history_field_obs_verdict_weights(monkeypatch, tmp_path):
+    """演出確認 > 主催者ラベル > 現地組 の順で判断し、下位との食い違いを残す。"""
+    from backtest import field_obs
+
+    monkeypatch.setattr(event_days, "load_frame", lambda hall: _frame_labels().copy())
+    events = tmp_path / "EVENT_DAYS.jsonl"
+    _write_jsonl(
+        events,
+        [
+            {"event_id": "e0920", "hall": "H", "date": "20260920", "event_name": "取材A"},
+            {"event_id": "e1010", "hall": "H", "date": "20261010", "event_name": "取材A"},
+        ],
+    )
+    series = tmp_path / "EVENT_SERIES.jsonl"
+    _write_jsonl(
+        series, [{"series_id": "S", "axis": "name", "hall": "H", "decision": "same", "event_ids": ["e0920", "e1010"]}]
+    )
+    obs = tmp_path / "field_obs.jsonl"
+    # 11番: 演出で5以上確定（差枚 -500、主催者ラベルなし）。喰種: 現地組が「全」。
+    field_obs.add(
+        "H",
+        "20260920",
+        "演出で設定5以上確定",
+        "effect_confirmed",
+        "打った人",
+        machine_number=11,
+        setting_text="5以上",
+        path=str(obs),
+        resolve=False,
+    )
+    field_obs.add("H", "20260920", "全", "field_group", "現地組", machine_name="喰種", path=str(obs), resolve=False)
+    got = event_days.build_history(
+        "H",
+        "20261010",
+        asof="20261010",
+        event_ledger=str(events),
+        series_ledger=str(series),
+        announce_dir=str(tmp_path / "no_announce"),
+        links_path=str(tmp_path / "none.jsonl"),
+        analysis_db=str(tmp_path / "none.db"),
+        field_obs_path=str(obs),
+    )
+    rows = {m["machine_number"]: m for m in got["histories"][0]["machines"]}
+    assert set(rows) == {10, 11, 12}  # 現場の報告がある台は表に入る
+    v11 = rows[11]["verdict"]
+    assert v11["basis"] == "演出確認 設定5以上"
+    assert v11["conflicts"] == ["差枚マイナス", "主催者ラベルなし"]
+    assert rows[10]["verdict"]["basis"] == "現地組の報告" and rows[10]["verdict"]["conflicts"] == ["主催者ラベルなし"]
+
+
+def test_field_obs_add_validates(tmp_path):
+    import pytest
+
+    from backtest import field_obs
+
+    with pytest.raises(SystemExit):
+        field_obs.add(
+            "H", "2026-09-20", "x", "effect_confirmed", "r", machine_number=1, path=str(tmp_path / "f"), resolve=False
+        )
+    with pytest.raises(SystemExit):
+        field_obs.add("H", "20260920", "x", "予告", "r", machine_number=1, path=str(tmp_path / "f"), resolve=False)
+    with pytest.raises(SystemExit):
+        field_obs.add("H", "20260920", "x", "field_group", "r", path=str(tmp_path / "f"), resolve=False)
+    row = field_obs.add("H", "20260920", "x", "sns", "r", machine_number=1, path=str(tmp_path / "f"), resolve=False)
+    assert row["obs_id"] == "fo-0001" and row["source_kind"] == "sns"

@@ -1098,6 +1098,33 @@ def _dedupe_labels(labels):
     return out
 
 
+def _setting_verdict(item, diff):
+    """その台に設定が入っていたかの判断と、その根拠・食い違いを返す。
+
+    情報の重み（2026-09-28 ユーザー決定）: 演出での設定確認 > 主催者ラベル > 現地組の報告 > 実績の数値。
+    上位の情報があればそれを採り、下位の情報と食い違ったことは conflicts に残す（消さない）。
+    例: 9/27 楽園エウレカ3227 は差枚-714 だが演出で設定5以上を確認 → 入っていた（差枚マイナスと食い違い）。
+    """
+    obs = item.get("field_obs", [])
+    confirmed = [o for o in obs if o.get("source_kind") == "effect_confirmed"]
+    group = [o for o in obs if o.get("source_kind") in ("field_group", "sns")]
+    conflicts = []
+    if confirmed:
+        o = confirmed[-1]
+        basis = "演出確認" + (" 設定%s" % o["setting_text"] if o.get("setting_text") else "")
+    elif item.get("precise_label"):
+        basis = "主催者ラベル"
+    elif group:
+        basis = "現地組の報告"
+    else:
+        return None
+    if diff is not None and diff <= 0:
+        conflicts.append("差枚マイナス")
+    if basis != "主催者ラベル" and item.get("labels") is not None and not item.get("precise_label"):
+        conflicts.append("主催者ラベルなし" if not item.get("labels") else "主催者ラベルは粒度不一致")
+    return {"value": "入っていた", "basis": basis, "conflicts": conflicts}
+
+
 def _claim_summary(result):
     """予告 JSON の result を、公約ごとの的中／外れの短い一覧にする。"""
     out = []
@@ -1146,7 +1173,20 @@ def _history_day(hall, business_date, event_rows, announces, frame, result, asof
                         "model_name": model.get("model_name"),
                     }
                 )
-    numbers = set(labels) | set(day.loc[day["machine_name"].isin(announced_names), "machine_number"])
+    # 現場の報告（演出での設定確認・現地組の報告）。台番号で書かれたものと、機種で書かれた
+    # もの（「モンハンライズ全」）がある。機種の報告はその日の設置台すべてに付ける。
+    field_obs = _history_field_obs(hall, business_date, asof, field_obs_path)
+    obs_by_number = defaultdict(list)
+    for obs in field_obs:
+        if obs.get("machine_number") not in (None, ""):
+            obs_by_number[int(obs["machine_number"])].append(obs)
+        elif obs.get("machine_name"):
+            for name in _history_matches(hall, str(obs["machine_name"]), names):
+                for n in day.loc[day["machine_name"] == name, "machine_number"]:
+                    obs_by_number[int(n)].append(obs)
+    numbers = (
+        set(labels) | set(day.loc[day["machine_name"].isin(announced_names), "machine_number"]) | set(obs_by_number)
+    )
     rows = []
     for n in sorted(numbers, key=lambda x: str(x)):
         actual = day[day["machine_number"] == n]
@@ -1189,6 +1229,8 @@ def _history_day(hall, business_date, event_rows, announces, frame, result, asof
             item["classification"] = "ラベルなし・差枚プラス"
         else:
             item["classification"] = None
+        item["field_obs"] = obs_by_number.get(int(n), [])
+        item["verdict"] = _setting_verdict(item, r.get("diff_coins_normalized"))
         rows.append(item)
     return {
         "business_date": business_date,
@@ -1202,7 +1244,7 @@ def _history_day(hall, business_date, event_rows, announces, frame, result, asof
         "pledge_keys": sorted(set().union(*(pledge_keys(p) for p in payloads))) if payloads else [],
         "result": {k: result[k] for k in ("status", "delay_days", "reports")},
         "machines": rows,
-        "field_obs": _history_field_obs(hall, business_date, asof, field_obs_path),
+        "field_obs": field_obs,
         "summary": {
             "labeled_count": sum(bool(x.get("precise_label")) for x in rows),
             "partial_label_count": sum(x.get("classification") == "粒度不一致" for x in rows),
@@ -1304,7 +1346,37 @@ def cmd_history(a):
     if a.json:
         print(json.dumps(result, ensure_ascii=False, indent=2, default=str))
         return 0
+    print(render_history(result))
+    return 0
+
+
+def render_history(result):
+    """build_history の結果を、ターミナル・テキストファイル向けの表にする。"""
+    out = []
+    print = out.append  # noqa: A001 — 下の表組みを print のまま流用するため
     print(f"{result['hall']} history target={result['target_date']} asof={result['asof']}")
+    if not result["histories"]:
+        print("（同じイベント・同じ公約の過去の回が見つからない）")
+    else:
+        # 回が多いと詳細が数千行になるので、先に1回1行の要約を出す。
+        print("\n--- 要約（新しい順。ラベル=台を特定できる主催者ラベルの台数） ---")
+        for h in result["histories"]:
+            s = h["summary"]
+            hits = sum("=的中" in c for c in s["claims"])
+            print(
+                "%s(%s) %s | 結果=%s | ラベル%d台(うちマイナス%d) | 現場報告%d件 | 予告の採点 %d/%d 的中"
+                % (
+                    h["business_date"],
+                    h["weekday"],
+                    "/".join(h["event_names"]) or "-",
+                    h["result"]["status"],
+                    s["labeled_count"],
+                    s["negative_count"],
+                    len(h["field_obs"]),
+                    hits,
+                    len(s["claims"]),
+                )
+            )
     for h in result["histories"]:
         r = h["result"]
         print(
@@ -1317,12 +1389,14 @@ def cmd_history(a):
                 value = None if score.get("ratio") is None else "RB比%.2f" % score["ratio"]
             else:
                 value = None if score.get("value") is None else "機種%+.0f" % score["value"]
-            obs = ";".join(
-                str(x.get("text", x.get("observation", "")))
-                for x in h["field_obs"]
-                if str(x.get("machine_number", "")) == str(m.get("machine_number"))
-                or x.get("machine_name") == m.get("machine_name")
-            )
+            v = m.get("verdict")
+            obs = ";".join(str(x.get("observation", x.get("text", ""))) for x in m.get("field_obs", []))
+            if v:
+                obs = (obs + " → " if obs else "") + "%s（%s%s）" % (
+                    v["value"],
+                    v["basis"],
+                    "・食い違い: " + "/".join(v["conflicts"]) if v["conflicts"] else "",
+                )
             label = ",".join(x.get("granularity", "") for x in m.get("labels", [])) or "なし"
             print(
                 f"{m.get('machine_number')} | {m.get('machine_name', '-')} | {m.get('current_machine_name') or '-'}{' 入替' if m.get('machine_change') else ''} | {m.get('segment', '-')} | {'○' if m.get('announced') else ''} | {label} | {m.get('diff', '-')} | {m.get('games', '-')} | {value if value is not None else '-'} | {m.get('classification') or '-'} | {obs}"
@@ -1336,12 +1410,57 @@ def cmd_history(a):
     print("\n直近30日 G比×平均差枚 上位10")
     for x in result["trend_top10"]:
         print(f"{x['machine_name']}\t{x['score']:.1f}\tG比={x['gratio']:.3f}\t平均差枚={x['mean_diff']:.1f}")
-    print("繰り返し:", json.dumps(result["repeated"], ensure_ascii=False))
+    print("\n過去の回で繰り返しラベルが付いたもの（結果発表のあった %d 回中）" % result["result_days"])
+    for key, title in (("machine_name", "機種"), ("machine_number", "台番号"), ("last_digit", "末尾")):
+        items = sorted(result["repeated"].get(key, []), key=lambda x: -x["count"])
+        print("  %s: %s" % (title, "、".join("%s %d回" % (x["value"], x["count"]) for x in items) or "なし"))
     if result["changes"]:
-        print("体制変化:", ", ".join(f"{x.get('date')} {x.get('event_name', '')}" for x in result["changes"]))
+        print("体制変化: " + ", ".join(f"{x.get('date')} {x.get('event_name', '')}" for x in result["changes"]))
     else:
         print("体制変化の台帳なし")
-    return 0
+    return "\n".join(str(x) for x in out)
+
+
+def morning_halls(business_date, event_ledger=LEDGER, announce_dir=None):
+    """その日にイベント（EVENT_DAYS）か予告（announce、active）があるホール。"""
+    announce_dir = announce_dir or os.path.join(ROOT, "backtest", "announce")
+    halls = {
+        _normalize_hall(r.get("hall")) for r in active(_load_jsonl(event_ledger)) if str(r.get("date")) == business_date
+    }
+    for bundle in load_announce_bundles(announce_dir).get("bundles", []):
+        p = bundle["payload"]
+        if bundle.get("status") == "active" and str(p.get("target_date")) == business_date:
+            halls.add(_normalize_hall(p.get("hall")))
+    return sorted(h for h in halls if h)
+
+
+def cmd_morning(a):
+    """朝の定例から呼ぶ。当日イベント・予告のあるホールごとに答え合わせ表を書き出す。
+
+    1ホールの失敗で他を止めない（朝の処理全体を落とさない）。表は毎日作り直せるので
+    output/event_history/ は git 管理外。
+    """
+    business_date = a.date or datetime.now(JST).strftime("%Y%m%d")
+    out_dir = os.path.join(a.out_dir, business_date)
+    halls = morning_halls(business_date, a.event_ledger, a.announce_dir)
+    print("答え合わせ表 %s: 対象 %d ホール %s" % (business_date, len(halls), " / ".join(halls) or "-"))
+    os.makedirs(out_dir, exist_ok=True)
+    failed = 0
+    for hall in halls:
+        path = os.path.join(out_dir, re.sub(r"[\\/:*?\"<>|]", "_", hall))
+        try:
+            result = build_history(hall, business_date, announce_dir=a.announce_dir, event_ledger=a.event_ledger)
+            text = render_history(result)
+            with open(path + ".txt", "w", encoding="utf-8") as f:
+                f.write(text + "\n")
+            with open(path + ".json", "w", encoding="utf-8") as f:
+                json.dump(result, f, ensure_ascii=False, indent=2, default=str)
+        except Exception as exc:  # noqa: BLE001 — 1ホールの失敗で朝の処理を止めない
+            failed += 1
+            print("  %s: 失敗 %s: %s" % (hall, type(exc).__name__, exc))
+            continue
+        print("  %s: 過去の回 %d → %s.txt" % (hall, len(result["histories"]), path))
+    return 1 if failed else 0
 
 
 def main(argv=None):
@@ -1431,6 +1550,12 @@ def main(argv=None):
     s.add_argument("--analysis-db", default=RESULT_DB)
     s.add_argument("--field-obs", default=FIELD_OBS)
     s.set_defaults(fn=cmd_history)
+    s = sub.add_parser("morning", help="当日イベント・予告のあるホールの答え合わせ表を書き出す（朝の定例用）")
+    s.add_argument("--date", default=None, help="YYYYMMDD。省略時は当日（JST）")
+    s.add_argument("--out-dir", default=os.path.join(ROOT, "output", "event_history"))
+    s.add_argument("--event-ledger", default=LEDGER)
+    s.add_argument("--announce-dir", default=os.path.join(ROOT, "backtest", "announce"))
+    s.set_defaults(fn=cmd_morning)
     a = p.parse_args(argv)
     return a.fn(a)
 
