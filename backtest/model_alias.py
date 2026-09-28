@@ -268,3 +268,24 @@ def find_in_text(text: str, names: list[str]) -> list[dict]:
         if name not in found:
             found[name] = {"machine_name": name, "via": term, "match": kind, "pos": pos}
     return [{k: v for k, v in x.items() if k != "pos"} for x in sorted(found.values(), key=lambda x: x["pos"])]
+
+
+def clean_image_name(text: str) -> str:
+    """画像（結果発表の台一覧の画像）から読んだ機種名の飾りを落とす。
+
+    画像の機種名には、頭の L/S（「L/」「L 」も）、「パチスロ」「スロット」、型式の記号
+    （「FN」「AD」「/SC2」「/A1」）、末尾の「…」が付く。2026-09-28 の照合で不一致の上位が
+    この形（『L 防振り FN』『パチスロ北斗の拳AD…』『L/ヨシムネS/SC2』）だった。
+    """
+    t = unicodedata.normalize("NFKC", text or "").strip()
+    t = re.sub(r"(…|\.\.\.)\s*$", "", t)
+    t = re.sub(r"^[LSse]\s*[/／]\s*", "", t)
+    # 「/」区切りなら、日本語を含むいちばん長い部分を機種名とみなす
+    segs = [s.strip() for s in re.split(r"[/／]", t) if s.strip()]
+    if len(segs) > 1:
+        jp = [s for s in segs if re.search(r"[^\x00-\x7f]", s)]
+        t = max(jp or segs, key=len)
+    t = _SMART_PREFIX.sub("", t, count=1)
+    t = re.sub(r"^(パチスロ|スロット)\s*", "", t)
+    t = re.sub(r"\s*[A-Z]{1,3}\d?$", "", t) if re.search(r"[^\x00-\x7f]", t) else t
+    return t.strip()

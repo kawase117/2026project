@@ -574,11 +574,21 @@ def _name_agrees(extracted, real, day_names):
     2026-09-28 までは先頭4文字の比較だけで、「北斗転生」「Lカバネリ」のような略称は
     正しくても不一致になっていた。
     """
-    from backtest.model_alias import resolve
+    from backtest.model_alias import clean_image_name, norm, resolve
 
     if not extracted or not real:
         return 0
-    res = resolve(str(extracted), day_names)
+    # 画像の機種名の飾り（頭の L/、パチスロ、型式の記号 FN/AD/SC2 等）を落としてから比べる。
+    cleaned = clean_image_name(str(extracted))
+    # それが、その台番号に実在する機種名の一部（略した書き方）なら一致とみなし、DB の機種名を
+    # 正とする（2026-09-28 ユーザー判断: 画像『甲鉄城のカバネリ』→実在『海門決戦』、
+    # 『ソードアート・オンライン』→実在『II』は略しているだけ）。台番号はすでに DB で引いている。
+    key = norm(cleaned)
+    if len(key) >= 3 and key in norm(real):
+        return 1
+    res = resolve(cleaned, day_names)
+    if not res["names"]:
+        res = resolve(str(extracted), day_names)
     if res["names"]:
         return int(real in res["names"])
     left = str(extracted).replace(" ", "").replace("　", "").lower()

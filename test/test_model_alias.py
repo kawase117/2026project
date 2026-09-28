@@ -93,3 +93,32 @@ def test_find_in_text_prefers_longer_terms():
     names = ["北斗の拳 転生の章2", "スマスロ北斗の拳", "新ハナビ", "スマスロ ハナビ"]
     got = [x["machine_name"] for x in find_in_text("北斗転生1/3、L北斗1/3、新ハナビ", names)]
     assert got == ["北斗の拳 転生の章2", "スマスロ北斗の拳", "新ハナビ"]
+
+
+def test_clean_image_name():
+    from backtest.model_alias import clean_image_name
+
+    assert clean_image_name("L 防振り FN") == "防振り"
+    assert clean_image_name("パチスロ北斗の拳AD…") == "北斗の拳"
+    assert clean_image_name("L/ヨシムネS/SC2") == "ヨシムネ"
+    assert clean_image_name("L/ソードアート・オンライン") == "ソードアート・オンライン"
+    assert clean_image_name("L/いざ番長/SB8") == "いざ番長"
+
+
+def test_image_name_abbreviation_agrees_with_db_name():
+    """画像の機種名が実在機種名を略した形なら一致（DBの機種名を正とする。2026-09-28 ユーザー判断）。"""
+    from backtest.result_corpus import _name_agrees
+
+    names = [
+        "甲鉄城のカバネリ",
+        "甲鉄城のカバネリ 海門(うなと)決戦",
+        "ソードアート・オンライン",
+        "ソードアート・オンラインII",
+        "スマスロ北斗の拳",
+        "北斗の拳 転生の章2",
+    ]
+    assert _name_agrees("L甲鉄城のカバネリ", "甲鉄城のカバネリ 海門(うなと)決戦", names) == 1
+    assert _name_agrees("L/ソードアート・オンライン", "ソードアート・オンラインII", names) == 1
+    assert _name_agrees("パチスロ北斗の拳AD…", "スマスロ北斗の拳", names) == 1
+    # 実在機種名に含まれない別機種は不一致のまま
+    assert _name_agrees("L スマスロ北斗の拳", "北斗の拳 転生の章2", names) == 0
