@@ -46,6 +46,91 @@
       "frozen_scoring_procedure": "答え合わせ時にmachine_number順で隣接3台以上の⑤⑥相当(RB確率/差枚で判定)ブロックを列挙し、名指し機種内外の別に個数を記録する。判定不能な機種は判定不能と書く。"
     }
   ],
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20260928",
+    "hall_baseline_mean_diff": 182.0,
+    "hall_n_machines": 587,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 3,
+      "machines_hi": [],
+      "machines_lo": [
+        "ソードアート・オンラインII",
+        "モンスターハンターライズ",
+        "真打 吉宗"
+      ],
+      "bounds": [
+        -5095,
+        15477
+      ]
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "東京喰種",
+          "note": "『東京喰種、Lカバネリ、1台バラに3台並び』の名指し。"
+        },
+        "score": 162.3,
+        "mean_diff": 129.4,
+        "gratio": 1.255,
+        "n_machines": 31,
+        "rank": 21,
+        "candidate_models": 57,
+        "age_days": 601,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+          "note": "『Lカバネリ』を海門決戦と解釈。"
+        },
+        "score": 873.1,
+        "mean_diff": 427.2,
+        "gratio": 2.044,
+        "n_machines": 26,
+        "rank": 8,
+        "candidate_models": 57,
+        "age_days": 210,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 2,
+          "note": "『全台上2つ機種複数』。複数=最小の2で凍結。"
+        },
+        "observed_n_models": 2,
+        "candidate_models": 57,
+        "models": [
+          {
+            "machine_name": "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION",
+            "score": 7596.1,
+            "n_machines": 4,
+            "mean_diff": 3072.0,
+            "age_days": 635
+          },
+          {
+            "machine_name": "バンドリ！",
+            "score": 6034.4,
+            "n_machines": 4,
+            "mean_diff": 3107.2,
+            "age_days": 635
+          }
+        ],
+        "n_new_machines_over": 0,
+        "hit": true
+      }
+    ]
+  },
   "announce_digest": "974e8d39770a7b70"
 }
