@@ -29,11 +29,15 @@ import os
 import re
 import sqlite3
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
+
+from scraper.twitter_monitor.hall_aliases import HALL_ALIAS_EXCLUSIONS, HALL_ALIASES
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LEDGER = os.path.join(ROOT, "document", "registry", "EVENT_DAYS.jsonl")
 STATE_DB = os.path.join(ROOT, "scraper", "twitter_monitor", "state.db")
+RESULT_DB = os.path.join(ROOT, "db", "analysis_results.db")
+RESULT_LINKS_LEDGER = os.path.join(ROOT, "document", "registry", "EVENT_RESULT_LINKS.jsonl")
 JST = timezone(timedelta(hours=9))
 
 KINDS = {
@@ -319,6 +323,263 @@ def cmd_scan(a):
     return 0
 
 
+def _normalize_hall(name):
+    """台帳・結果DB・monitorの内部名を実績DB名へ寄せる。"""
+    value = (name or "").strip()
+    if not value:
+        return value
+    canonical = set(HALL_ALIASES)
+    if value in canonical:
+        return value
+    aliases = {
+        "楽園": "楽園蒲田店",
+        "rakuen_kamata": "楽園蒲田店",
+        "蒲田1": "マルハンメガシティ2000-蒲田1",
+        "kamata1": "マルハンメガシティ2000-蒲田1",
+        "蒲田7": "マルハンメガシティ2000-蒲田7",
+        "kamata7": "マルハンメガシティ2000-蒲田7",
+        "kamata7_kamata1": "",
+        "みとや": "みとや大森町店",
+        "mitoya": "みとや大森町店",
+        "hiroki": "ヒロキ東口店",
+        "arrow_ikegami_mitoya_omori": "",
+    }
+    if value in aliases and aliases[value]:
+        return aliases[value]
+    for hall in canonical:
+        if value in hall or hall in value:
+            return hall
+    return value
+
+
+def _ro_connect(path):
+    return sqlite3.connect("file:" + os.path.abspath(path) + "?mode=ro", uri=True)
+
+
+def _load_jsonl(path):
+    if not os.path.exists(path):
+        return []
+    with open(path, encoding="utf-8") as f:
+        return [json.loads(line) for line in f if line.strip()]
+
+
+def _event_groups(path):
+    groups = {}
+    for rec in active(_load_jsonl(path)):
+        hall = _normalize_hall(rec.get("hall"))
+        business_date = str(rec.get("date", ""))
+        if not hall or len(business_date) != 8:
+            continue
+        key = (hall, business_date)
+        groups.setdefault(key, set()).add(rec["event_id"])
+    return groups
+
+
+def _date_from_posted(value):
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(str(value).replace("Z", "+00:00")).date()
+    except ValueError:
+        return None
+
+
+_DATE_TOKEN = re.compile(r"(?<!\d)(\d{1,2})(?:/|月)(\d{1,2})(?!\d)")
+
+
+def _candidate_text_has_date(text, business_date):
+    """本文で最初に現れる日付が営業日であるか。
+
+    結果発表は冒頭に営業日を書く。後の日付の予告が「過去2回（9/14.15）」のように
+    過去回へ言及するだけのものを拾わないよう、最初の日付だけを見る。
+    """
+    try:
+        d = datetime.strptime(business_date, "%Y%m%d").date()
+    except ValueError:
+        return False
+    m = _DATE_TOKEN.search(text or "")
+    return bool(m) and (int(m.group(1)), int(m.group(2))) == (d.month, d.day)
+
+
+# 候補探索ではチェーン名だけの別名を使わない。slokotae7 等は約89ホールを扱い、
+# 「楽園」は楽園柏店・楽園松戸店などにも一致する（2026-09-28 に楽園蒲田 9/14 の候補12件中10件が他ホールだった）。
+_CHAIN_ONLY_ALIASES = {"楽園"}
+
+
+def _candidate_mentions_hall(text, hall, on_date):
+    scan = text or ""
+    for other in HALL_ALIAS_EXCLUSIONS.get(hall, ()):
+        scan = scan.replace(other, "")
+    for keyword, valid_from, valid_until in HALL_ALIASES.get(hall, []):
+        if keyword in _CHAIN_ONLY_ALIASES or keyword not in scan:
+            continue
+        if valid_from is not None and on_date < valid_from:
+            continue
+        if valid_until is not None and on_date > valid_until:
+            continue
+        return True
+    return False
+
+
+def _result_data(analysis_db, state_db, hall, business_date):
+    reports = []
+    report_tweet_ids = set()
+    with _ro_connect(analysis_db) as con:
+        rows = con.execute(
+            "select report_id,tweet_url,posted_at,hall_name,business_date "
+            "from external_result_reports where business_date=?",
+            (business_date,),
+        ).fetchall()
+        machine_counts = dict(
+            con.execute("select report_id,count(*) from external_result_machines group by report_id").fetchall()
+        )
+    for report_id, tweet_url, posted_at, hall_name, report_date in rows:
+        if _normalize_hall(hall_name) != hall:
+            continue
+        reports.append(
+            {
+                "report_id": report_id,
+                "tweet_url": tweet_url,
+                "posted_at": posted_at,
+                "machine_count": machine_counts.get(report_id, 0),
+            }
+        )
+        report_tweet_ids.add(str(report_id))
+        if tweet_url:
+            report_tweet_ids.add(str(tweet_url).rsplit("/", 1)[-1].split("?", 1)[0])
+    reports.sort(key=lambda r: (r["posted_at"] or "", str(r["report_id"])))
+
+    candidates = []
+    start = datetime.strptime(business_date, "%Y%m%d").date()
+    end = start + timedelta(days=45)
+    with _ro_connect(state_db) as con:
+        accounts = con.execute("select handle,hall,role from accounts").fetchall()
+        allowed = {
+            handle
+            for handle, account_hall, role in accounts
+            if (
+                _normalize_hall(account_hall) == hall
+                or (
+                    account_hall == "kamata7_kamata1"
+                    and hall in {"マルハンメガシティ2000-蒲田1", "マルハンメガシティ2000-蒲田7"}
+                )
+            )
+            and ("答え合わせ" in (role or "") or "結果報告" in (role or ""))
+        }
+        if allowed:
+            tweets = con.execute(
+                "select tweet_id,handle,tweet_url,posted_at_jst,tweet_text,full_text "
+                "from seen_tweets order by posted_at_jst,tweet_id"
+            ).fetchall()
+            for tweet_id, handle, tweet_url, posted_at, tweet_text, full_text in tweets:
+                if handle not in allowed or str(tweet_id) in report_tweet_ids:
+                    continue
+                posted_date = _date_from_posted(posted_at)
+                if posted_date is None or not (start <= posted_date <= end):
+                    continue
+                text = full_text or tweet_text or ""
+                if not _candidate_text_has_date(text, business_date):
+                    continue
+                if not _candidate_mentions_hall(text, hall, posted_date):
+                    continue
+                candidates.append(
+                    {"tweet_id": str(tweet_id), "handle": handle, "posted_at_jst": posted_at, "tweet_url": tweet_url}
+                )
+    return reports, candidates
+
+
+def _link_row(hall, business_date, event_ids, reports, candidates, previous, checked_at, row_id):
+    if reports:
+        primary = max(reports, key=lambda r: (r["machine_count"], -(reports.index(r))))
+        first_date = _date_from_posted(reports[0]["posted_at"])
+        business = datetime.strptime(business_date, "%Y%m%d").date()
+        delay = (first_date - business).days if first_date else None
+        status = "linked"
+        report_ids = [r["report_id"] for r in reports]
+        primary_id = primary["report_id"]
+    else:
+        status = "multiple_candidates" if len(candidates) >= 2 else "waiting"
+        # not_found は45日以内に結果発表が無かったという意味であり、設定が入らなかった意味ではない。
+        # 候補ツイートがある回は45日を過ぎても not_found にしない（過去分の遡及探索で拾うため）。
+        expired = datetime.now(JST).date() > datetime.strptime(business_date, "%Y%m%d").date() + timedelta(days=45)
+        if expired and not candidates:
+            status = "not_found"
+        report_ids, primary_id, delay = [], None, None
+    return {
+        "row_id": row_id,
+        "hall": hall,
+        "business_date": business_date,
+        "event_ids": sorted(event_ids),
+        "status": status,
+        "report_ids": report_ids,
+        "primary_report_id": primary_id,
+        "candidate_tweets": [{k: c[k] for k in ("tweet_id", "handle", "posted_at_jst")} for c in candidates],
+        "delay_days": delay,
+        "checked_at": checked_at,
+        "method": "hall_date_report_or_state_tweet",
+        "supersedes": previous.get("row_id") if previous else None,
+    }
+
+
+def _same_link_state(left, right):
+    return all(left.get(k) == right.get(k) for k in ("status", "report_ids", "candidate_tweets"))
+
+
+def _latest_link_rows(path):
+    latest = {}
+    for row in _load_jsonl(path):
+        latest[(row.get("hall"), row.get("business_date"))] = row
+    return latest
+
+
+def cmd_link(a):
+    groups = _event_groups(a.event_ledger)
+    latest = _latest_link_rows(a.links_ledger)
+    checked_at = datetime.now(JST).isoformat(timespec="seconds")
+    pending, counts = [], {s: 0 for s in ("linked", "multiple_candidates", "waiting", "not_found")}
+    for (hall, business_date), event_ids in sorted(groups.items()):
+        reports, candidates = _result_data(a.analysis_db, a.state_db, hall, business_date)
+        previous = latest.get((hall, business_date))
+        probe = _link_row(hall, business_date, event_ids, reports, candidates, previous, checked_at, "")
+        if previous and _same_link_state(previous, probe):
+            row = previous
+        else:
+            row_id = "erl-%s-%s-%06d" % (
+                re.sub(r"[^0-9A-Za-z]+", "-", hall).strip("-"),
+                business_date,
+                len(_load_jsonl(a.links_ledger)) + len(pending) + 1,
+            )
+            row = _link_row(hall, business_date, event_ids, reports, candidates, previous, checked_at, row_id)
+            pending.append(row)
+        counts[row["status"]] += 1
+        if a.dry_run:
+            print(json.dumps(row, ensure_ascii=False))
+    if not a.dry_run and pending:
+        os.makedirs(os.path.dirname(a.links_ledger), exist_ok=True)
+        with open(a.links_ledger, "a", encoding="utf-8") as f:
+            for row in pending:
+                f.write(json.dumps(row, ensure_ascii=False) + "\n")
+    print("追記: %d 行%s" % (len(pending), "（dry-run）" if a.dry_run else ""))
+    print("status: " + " ".join("%s=%d" % (key, counts[key]) for key in counts))
+    return 0
+
+
+def cmd_link_report(a):
+    latest = _latest_link_rows(a.links_ledger)
+    rows = [r for r in latest.values() if r.get("status") != "linked"]
+    rows.sort(key=lambda r: (r.get("business_date", ""), r.get("hall", "")))
+    for row in rows:
+        urls = []
+        with _ro_connect(a.state_db) as con:
+            for tweet_id in [c["tweet_id"] for c in row.get("candidate_tweets", [])]:
+                got = con.execute("select tweet_url from seen_tweets where tweet_id=?", (tweet_id,)).fetchone()
+                if got and got[0]:
+                    urls.append(got[0])
+        print("%s %s %s %s" % (row["hall"], row["business_date"], row["status"], " ".join(urls) or "-"))
+    print("未linked: %d 件" % len(rows))
+    return 0
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -358,6 +619,15 @@ def main(argv=None):
     s = sub.add_parser("check")
     s.add_argument("date")
     s.set_defaults(fn=cmd_check)
+    for name, fn in (("link", cmd_link), ("link-report", cmd_link_report)):
+        s = sub.add_parser(name)
+        s.add_argument("--event-ledger", default=LEDGER)
+        s.add_argument("--analysis-db", default=RESULT_DB)
+        s.add_argument("--state-db", default=STATE_DB)
+        s.add_argument("--links-ledger", default=RESULT_LINKS_LEDGER)
+        if name == "link":
+            s.add_argument("--dry-run", action="store_true")
+        s.set_defaults(fn=fn)
     a = p.parse_args(argv)
     return a.fn(a)
 
