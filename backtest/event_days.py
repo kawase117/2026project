@@ -954,7 +954,9 @@ def _history_table_columns(con, table):
 def _history_result_data(hall, business_date, asof, links_path, analysis_db):
     latest = _latest_link_rows(links_path).get((hall, business_date))
     if not latest:
-        return {"status": "未結びつき", "delay_days": None, "reports": [], "machines": [], "models": []}
+        # EVENT_DAYS に無い日（公約のまとまりで入る楽園の7のつく日など）は結びつき台帳にも行が無い。
+        # その場合もホール名×営業日で結果発表を直接引く（下でホール名を絞る）。
+        latest = {"status": "台帳外"}
     report_ids = set(latest.get("report_ids", []))
     reports, machines, models = [], [], []
     if not os.path.exists(analysis_db):
@@ -975,14 +977,17 @@ def _history_result_data(hall, business_date, asof, links_path, analysis_db):
                 "machines": [],
                 "models": [],
             }
+        has_hall = "hall_name" in _history_table_columns(con, "external_result_reports")
         report_rows = con.execute(
-            "select report_id,posted_at,tweet_url from external_result_reports where business_date=?",
+            "select report_id,posted_at,tweet_url,%s from external_result_reports where business_date=?"
+            % ("hall_name" if has_hall else "NULL"),
             (business_date,),
         ).fetchall()
         valid_reports = {
             str(r[0]): r
             for r in report_rows
-            if (not report_ids or str(r[0]) in report_ids) and _before_asof(r[1], asof)
+            if (str(r[0]) in report_ids if report_ids else (not has_hall or _normalize_hall(r[3]) == hall))
+            and _before_asof(r[1], asof)
         }
         reports = [{"report_id": k, "posted_at": v[1], "tweet_url": v[2]} for k, v in valid_reports.items()]
         if not valid_reports:
