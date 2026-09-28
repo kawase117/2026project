@@ -35,6 +35,7 @@ from datetime import date, datetime, timedelta, timezone
 
 import pandas as pd
 
+from backtest import model_alias as _model_alias
 from scraper.twitter_monitor.hall_aliases import HALL_ALIAS_EXCLUSIONS, HALL_ALIASES
 from backtest.announce import extract_narabi_mentions, load_announce_bundles
 from backtest.announce import assign_segment, match_machine_names
@@ -920,6 +921,18 @@ def _history_groups(hall, target_date, asof, series_ids, pledge_args, event_ledg
 
 
 def _history_matches(hall, text, names):
+    """機種欄（略称・台番号範囲・複数機種の連結を含む）をその日の正式名に当てる。
+
+    2026-09-28 に backtest.model_alias へ置き換えた。旧実装は略称の半数に当たらず
+    （Lハナビ→新ハナビ の誤当たりを含む）、当たらないたびに実績DBを読み直す
+    match_machine_names に落ちて遅かった。
+    """
+    if not text:
+        return []
+    return _model_alias.resolve(str(text), names)["names"]
+
+
+def _history_matches_legacy(hall, text, names):
     if not text:
         return []
     exact = [n for n in names if n and n in text]
@@ -1088,6 +1101,38 @@ def _is_precise_label(label):
     return str(label.get("granularity", "")).startswith("全")
 
 
+def _label_category(granularity):
+    g = str(granularity or "")
+    if g.startswith("全"):
+        return "全台"
+    if "並び" in g:
+        return "並び"
+    if "/" in g:
+        return "1/N"
+    return "種類なし"
+
+
+def _label_breakdown(rows):
+    """ラベルの種類ごとの台数。「対象台103台」を全台と読み違えないよう分けて出す（2026-09-28）。
+
+    台を特定できるラベル（precise）と、機種単位でどの台か分からないもの（粒度不一致）を別に数える。
+    """
+    out = {"全台": 0, "1/N": 0, "並び": 0, "種類なし": 0, "粒度不一致": 0}
+    for r in rows:
+        labels = r.get("labels") or []
+        if not labels:
+            continue
+        precise = [x for x in labels if _is_precise_label(x)]
+        if precise:
+            cats = [_label_category(x.get("granularity")) for x in precise]
+            # 同じ台に複数付いたら、種類の分かるものを優先する
+            cat = next((c for c in ("全台", "並び", "1/N") if c in cats), "種類なし")
+            out[cat] += 1
+        else:
+            out["粒度不一致"] += 1
+    return out
+
+
 def _dedupe_labels(labels):
     seen, out = set(), []
     for x in labels:
@@ -1162,17 +1207,31 @@ def _history_day(hall, business_date, event_rows, announces, frame, result, asof
         labels[n].append({"granularity": m.get("granularity") or "台", "source": "台"})
         if n not in set(day["machine_number"]):
             missing.append(n)
+    unresolved_labels = []
+    day_numbers = set(int(x) for x in day["machine_number"])
     for model in result["models"]:
-        matched = _history_matches(hall, str(model.get("model_name", "")), names)
-        for name in matched:
+        text = str(model.get("model_name", ""))
+        res = _model_alias.resolve(text, names)
+        granularity = model.get("granularity") or "機種"
+        for part in res["unresolved"]:
+            unresolved_labels.append({"text": part["part"], "status": part["status"], "granularity": granularity})
+        # 台番号の範囲が書かれていれば（列 number_from/number_to か機種欄の "2116-2118"）、
+        # その範囲の台だけに付ける。どの台かが分かるので台単位のラベルとして扱う。
+        ranges = list(res["ranges"])
+        if model.get("number_from") and model.get("number_to"):
+            ranges.append((int(model["number_from"]), int(model["number_to"])))
+        if ranges:
+            for lo, hi in ranges:
+                for n in range(min(lo, hi), max(lo, hi) + 1):
+                    if n not in day_numbers:
+                        continue
+                    if res["names"] and day.loc[day["machine_number"] == n, "machine_name"].iloc[0] not in res["names"]:
+                        continue
+                    labels[n].append({"granularity": granularity, "source": "台", "model_name": text})
+            continue
+        for name in res["names"]:
             for n in day.loc[day["machine_name"] == name, "machine_number"]:
-                labels[n].append(
-                    {
-                        "granularity": model.get("granularity") or "機種",
-                        "source": "機種",
-                        "model_name": model.get("model_name"),
-                    }
-                )
+                labels[n].append({"granularity": granularity, "source": "機種", "model_name": text})
     # 現場の報告（演出での設定確認・現地組の報告）。台番号で書かれたものと、機種で書かれた
     # もの（「モンハンライズ全」）がある。機種の報告はその日の設置台すべてに付ける。
     field_obs = _history_field_obs(hall, business_date, asof, field_obs_path)
@@ -1245,7 +1304,9 @@ def _history_day(hall, business_date, event_rows, announces, frame, result, asof
         "result": {k: result[k] for k in ("status", "delay_days", "reports")},
         "machines": rows,
         "field_obs": field_obs,
+        "unresolved_labels": unresolved_labels,
         "summary": {
+            "label_breakdown": _label_breakdown(rows),
             "labeled_count": sum(bool(x.get("precise_label")) for x in rows),
             "partial_label_count": sum(x.get("classification") == "粒度不一致" for x in rows),
             "negative_count": sum(x.get("classification") == "ラベルあり・差枚マイナス（不発台）" for x in rows),
@@ -1316,17 +1377,214 @@ def build_history(
     changes = [
         r for r in events if str(r.get("date")) < target_date and str(r.get("kind")) in {"renovation", "manager"}
     ]
+
+    # 広い公約（そのホールの予告の半分以上に付く「全台系あり」等）だけで入った回は、
+    # 詳細を出さず要約と集計にだけ使う（楽園 9/28 は29回・3,758行になった）。
+    key_counts = defaultdict(int)
+    for item in announces:
+        for k in pledge_keys(item["payload"]):
+            key_counts[k] += 1
+    n_ann = len(announces)
+    generic_keys = sorted(k for k, c in key_counts.items() if n_ann >= 4 and c / n_ann >= 0.5)
+    hall_mean = frame.groupby("date")["diff_coins_normalized"].mean().to_dict()
+    for h in histories:
+        groups = sorted(dates[h["business_date"]]["groups"])
+        h["groups"] = groups
+        h["detail"] = any(not g.startswith("pledge:") or g[len("pledge:") :] not in generic_keys for g in groups)
+        h["hall_mean_diff"] = hall_mean.get(h["business_date"])
+
     return {
         "hall": hall,
         "target_date": target_date,
         "asof": asof,
         "target_pledge_keys": sorted(target_keys),
+        "generic_pledge_keys": generic_keys,
         "histories": histories,
         "trend_top10": trend[:10],
         "repeated": repeated,
         "result_days": n_results,
+        # 全台に選ばれた機種と、予告あり/なしの比較は、表に載った回だけでなくホールの
+        # 結果発表のある全ての日で数える（表の回は公約で集めているので全部「予告あり」になる）。
+        "zentai_overview": _hall_zentai_overview(hall, asof, analysis_db, frame, announces),
+        "tail_share": _tail_share(histories, frame),
         "changes": sorted(changes, key=lambda x: str(x.get("date"))),
     }
+
+
+def _hall_zentai_overview(hall, asof, analysis_db, frame, announces):
+    """ホールの結果発表のある全ての日について、全台に選ばれた機種と、全台系の予告の有無を集計する。
+
+    - 全台 = 主催者ラベルの粒度が「全」で始まるもの（機種単位・台単位の両方）。
+    - 予告あり = その日の予告（active/retroactive）に 全台系:N機種 か 機種指名:全 がある日。
+      予告なし = 予告が無い日と、予告に全台系の公約が無い日。
+    - asof より後に投稿された結果発表は使わない。平均だけを出し、検定はしない。
+    """
+    if not os.path.exists(analysis_db):
+        return {}
+    ann_by_date = defaultdict(list)
+    for item in announces:
+        ann_by_date[str(item["payload"].get("target_date"))].append(item["payload"])
+    with _ro_connect(analysis_db) as con:
+        tables = {r[0] for r in con.execute("select name from sqlite_master where type='table'")}
+        needed = {"external_result_reports", "external_result_models", "external_result_machines"}
+        if not needed <= tables or "hall_name" not in _history_table_columns(con, "external_result_reports"):
+            return {}
+        reports = con.execute(
+            "select report_id, business_date, posted_at, hall_name from external_result_reports where business_date < ?",
+            (asof,),
+        ).fetchall()
+        reports = [r for r in reports if _normalize_hall(r[3]) == hall and _before_asof(r[2], asof)]
+        by_date = defaultdict(list)
+        for rid, d, _, _ in reports:
+            by_date[str(d)].append(str(rid))
+        models = defaultdict(list)
+        machines = defaultdict(list)
+        for d, rids in by_date.items():
+            q = ",".join("?" * len(rids))
+            models[d] = con.execute(
+                "select granularity, model_name from external_result_models where report_id in (%s)" % q, rids
+            ).fetchall()
+            machines[d] = con.execute(
+                "select granularity, machine_number from external_result_machines where report_id in (%s)" % q, rids
+            ).fetchall()
+    names_by_date = {d: sorted(g["machine_name"].dropna().unique()) for d, g in frame.groupby("date")}
+    name_by_num = {d: dict(zip(g["machine_number"], g["machine_name"])) for d, g in frame.groupby("date")}
+    hall_mean = frame.groupby("date")["diff_coins_normalized"].mean().to_dict()
+    days = []
+    for d in sorted(by_date):
+        names = names_by_date.get(d, [])
+        zentai = set()
+        for g, text in models[d]:
+            if str(g or "").startswith("全"):
+                zentai.update(_model_alias.resolve(str(text), names)["names"])
+        for g, n in machines[d]:
+            if str(g or "").startswith("全") and n in name_by_num.get(d, {}):
+                zentai.add(name_by_num[d][n])
+        declared = any(
+            k.startswith("全台系:") or k == "機種指名:全" for p in ann_by_date.get(d, []) for k in pledge_keys(p)
+        )
+        days.append(
+            {
+                "date": d,
+                "declared": declared,
+                "has_announce": bool(ann_by_date.get(d)),
+                "zentai": sorted(zentai),
+                "hall_mean_diff": hall_mean.get(d),
+            }
+        )
+    counts = defaultdict(lambda: {"declared": 0, "not_declared": 0})
+    for x in days:
+        for name in x["zentai"]:
+            counts[name]["declared" if x["declared"] else "not_declared"] += 1
+    model_rows = sorted(
+        ({"machine_name": k, **v, "total": v["declared"] + v["not_declared"]} for k, v in counts.items()),
+        key=lambda r: (-r["total"], r["machine_name"]),
+    )
+    groups = {}
+    for key, pick in (("declared", True), ("not_declared", False)):
+        xs = [x for x in days if x["declared"] == pick]
+        diffs = [x["hall_mean_diff"] for x in xs if x["hall_mean_diff"] is not None]
+        groups[key] = {
+            "n": len(xs),
+            "with_announce": sum(x["has_announce"] for x in xs),
+            "zentai_models_mean": (sum(len(x["zentai"]) for x in xs) / len(xs)) if xs else None,
+            "days_with_zentai": sum(bool(x["zentai"]) for x in xs),
+            "hall_mean_diff_mean": (sum(diffs) / len(diffs)) if diffs else None,
+        }
+    return {"n_days": len(days), "models": model_rows, "groups": groups}
+
+
+def _declared_zentai(h):
+    """その回の予告が全台系を約束していたか（全台系:N機種 か 機種指名:全）。"""
+    return any(k.startswith("全台系:") or k == "機種指名:全" for k in h.get("pledge_keys", []))
+
+
+def _zentai_model_names(h):
+    """その回に全台ラベルが付いた機種（台を特定できる全台ラベルの台がある機種）。"""
+    out = set()
+    for m in h["machines"]:
+        if any(_label_category(x.get("granularity")) == "全台" and _is_precise_label(x) for x in m.get("labels", [])):
+            if m.get("machine_name"):
+                out.add(m["machine_name"])
+    return out
+
+
+def _zentai_models(histories):
+    """全台に選ばれた機種の回数。予告が全台系を約束した回としなかった回に分けて数える。
+
+    分母は結果発表がある回だけ（発表の無い回は全台が無かったとは言えない）。
+    """
+    with_result = [h for h in histories if h["result"].get("reports")]
+    declared = [h for h in with_result if _declared_zentai(h)]
+    counts = defaultdict(lambda: {"declared": 0, "not_declared": 0})
+    for h in with_result:
+        for name in _zentai_model_names(h):
+            counts[name]["declared" if _declared_zentai(h) else "not_declared"] += 1
+    rows = [
+        {
+            "machine_name": k,
+            "declared": v["declared"],
+            "not_declared": v["not_declared"],
+            "total": v["declared"] + v["not_declared"],
+        }
+        for k, v in counts.items()
+    ]
+    rows.sort(key=lambda x: (-x["total"], x["machine_name"]))
+    return {"n_result_days": len(with_result), "n_declared": len(declared), "models": rows}
+
+
+def _declared_vs_not(histories):
+    """全台系を約束した回としなかった回の違い（結果発表のある回だけ）。平均だけで検定はしない。"""
+    out = {}
+    for label, pick in (("declared", True), ("not_declared", False)):
+        hs = [h for h in histories if h["result"].get("reports") and _declared_zentai(h) == pick]
+        if not hs:
+            out[label] = {"n": 0}
+            continue
+        out[label] = {
+            "n": len(hs),
+            "zentai_models_mean": sum(len(_zentai_model_names(h)) for h in hs) / len(hs),
+            "labeled_machines_mean": sum(h["summary"]["labeled_count"] for h in hs) / len(hs),
+            "hall_mean_diff_mean": sum((h.get("hall_mean_diff") or 0) for h in hs) / len(hs),
+            "dates": [h["business_date"] for h in hs],
+        }
+    return out
+
+
+def _tail_share(histories, frame):
+    """末尾ごとに「ラベル台に占める割合」と「その日の全台に占める割合」を比べる。
+
+    ラベル台が数十〜百台ある回では、どの末尾にも毎回ラベル台が入るので回数は情報にならない
+    （楽園 9/28 で末尾8が19回中19回）。割合の比（>1 なら偏り）で見る。
+    """
+    labeled = defaultdict(int)
+    total = defaultdict(int)
+    for h in histories:
+        if not h["result"].get("reports"):
+            continue
+        day = frame[frame["date"] == h["business_date"]]
+        for n in day["machine_number"]:
+            total[str(int(n))[-1]] += 1
+        for m in h["machines"]:
+            if m.get("precise_label"):
+                labeled[str(m["machine_number"])[-1]] += 1
+    n_lab, n_tot = sum(labeled.values()), sum(total.values())
+    if not n_lab or not n_tot:
+        return []
+    rows = []
+    for d in sorted(total):
+        share_lab, share_tot = labeled[d] / n_lab, total[d] / n_tot
+        rows.append(
+            {
+                "digit": d,
+                "labeled": labeled[d],
+                "labeled_share": share_lab,
+                "hall_share": share_tot,
+                "ratio": share_lab / share_tot if share_tot else None,
+            }
+        )
+    rows.sort(key=lambda x: -(x["ratio"] or 0))
+    return rows
 
 
 def cmd_history(a):
@@ -1350,6 +1608,65 @@ def cmd_history(a):
     return 0
 
 
+def _render_machine_row(m):
+    score = m.get("score", {}) or {}
+    if m.get("segment") in {"JUG", "HANA", "OKI", "BT"}:
+        value = None if score.get("ratio") is None else "RB比%.2f" % score["ratio"]
+    else:
+        value = None if score.get("value") is None else "機種%+.0f" % score["value"]
+    v = m.get("verdict")
+    obs = ";".join(str(x.get("observation", x.get("text", ""))) for x in m.get("field_obs", []))
+    if v:
+        obs = (obs + " → " if obs else "") + "%s（%s%s）" % (
+            v["value"],
+            v["basis"],
+            "・食い違い: " + "/".join(v["conflicts"]) if v["conflicts"] else "",
+        )
+    label = ",".join(x.get("granularity", "") for x in m.get("labels", [])) or "なし"
+    name = m.get("machine_name", "-")
+    if m.get("machine_change"):
+        name += "（今は%s）" % m.get("current_machine_name")
+    diff = m.get("diff")
+    games = m.get("games")
+    return "%s | %s | %s | %s | %s | %s | %s | %s | %s | %s" % (
+        m.get("machine_number"),
+        name,
+        m.get("segment", "-"),
+        "○" if m.get("announced") else "",
+        label,
+        "-" if diff is None else "%+.0f" % diff,
+        "-" if games is None else "%.0f" % games,
+        value if value is not None else "-",
+        m.get("classification") or "-",
+        obs,
+    )
+
+
+def _render_at_group(name, ms):
+    """AT機を機種ごとに1行にまとめる。"""
+    labels = sorted({x.get("granularity", "") for m in ms for x in m.get("labels", [])}) or ["なし"]
+    diffs = [m.get("diff") for m in ms if m.get("diff") is not None]
+    plus = sum(1 for d in diffs if d > 0)
+    value = (ms[0].get("score") or {}).get("value")
+    changed = [m for m in ms if m.get("machine_change")]
+    nums = sorted(int(m["machine_number"]) for m in ms)
+    rng = "%d〜%d" % (nums[0], nums[-1]) if len(nums) > 1 else str(nums[0])
+    cls = defaultdict(int)
+    for m in ms:
+        cls[m.get("classification") or "-"] += 1
+    return "%s | %s（%d台%s） | AT | %s | %s | %s | - | %s | %s | " % (
+        rng,
+        name,
+        len(ms),
+        "・うち%d台入替" % len(changed) if changed else "",
+        "○" if any(m.get("announced") for m in ms) else "",
+        ",".join(labels),
+        "プラス%d/マイナス%d（%+.0f〜%+.0f）" % (plus, len(diffs) - plus, min(diffs), max(diffs)) if diffs else "-",
+        "-" if value is None else "機種%+.0f" % value,
+        "、".join("%s%d" % (k, v) for k, v in cls.items()),
+    )
+
+
 def render_history(result):
     """build_history の結果を、ターミナル・テキストファイル向けの表にする。"""
     out = []
@@ -1359,13 +1676,16 @@ def render_history(result):
         print("（同じイベント・同じ公約の過去の回が見つからない）")
     else:
         # 回が多いと詳細が数千行になるので、先に1回1行の要約を出す。
-        print("\n--- 要約（新しい順。ラベル=台を特定できる主催者ラベルの台数） ---")
+        print(
+            "\n--- 要約（新しい順。[詳]=下に詳細あり [要]=広い公約だけで一致したので要約のみ。ラベル=台を特定できる主催者ラベルの台数） ---"
+        )
         for h in result["histories"]:
             s = h["summary"]
             hits = sum("=的中" in c for c in s["claims"])
             print(
-                "%s(%s) %s | 結果=%s | ラベル%d台(うちマイナス%d) | 現場報告%d件 | 予告の採点 %d/%d 的中"
+                "%s %s(%s) %s | 結果=%s | ラベル%d台(うちマイナス%d) | 現場報告%d件 | 予告の採点 %d/%d 的中"
                 % (
+                    "[詳]" if h.get("detail", True) else "[要]",
                     h["business_date"],
                     h["weekday"],
                     "/".join(h["event_names"]) or "-",
@@ -1377,43 +1697,94 @@ def render_history(result):
                     len(s["claims"]),
                 )
             )
+    if result.get("generic_pledge_keys"):
+        print(
+            "\n※ 広い公約（このホールの予告の半分以上に付く）: %s。これだけで一致した回は要約と集計のみ。"
+            % "、".join(result["generic_pledge_keys"])
+        )
     for h in result["histories"]:
+        if not h.get("detail", True):
+            continue
         r = h["result"]
         print(
             f"\n=== {h['business_date']} ({h['weekday']}) {'/'.join(h['event_names']) or '-'} | 先バレ={','.join(x['account'] or '-' for x in h['announces']) or '-'} | 公約={','.join(h['pledge_keys']) or '-'} | 結果={r['status']} 遅れ={r['delay_days'] if r['delay_days'] is not None else '-'}日 ==="
         )
-        print("台番号 | 当時機種 | 今の機種 | 区分 | 指名 | ラベル | 差枚 | G | 判定値 | 分類 | 現場報告")
+        print("台番号 | 機種（入替） | 区分 | 指名 | ラベル | 差枚 | G | 判定値 | 分類 | 現場報告")
+        # AT機は台単位で設定を判定できないので機種ごとに1行。ノーマル・BTは台ごとのRB比に意味があるので1台1行。
+        at_groups = defaultdict(list)
         for m in h["machines"]:
-            score = m.get("score", {})
-            if m.get("segment") in {"JUG", "HANA", "OKI", "BT"}:
-                value = None if score.get("ratio") is None else "RB比%.2f" % score["ratio"]
-            else:
-                value = None if score.get("value") is None else "機種%+.0f" % score["value"]
-            v = m.get("verdict")
-            obs = ";".join(str(x.get("observation", x.get("text", ""))) for x in m.get("field_obs", []))
-            if v:
-                obs = (obs + " → " if obs else "") + "%s（%s%s）" % (
-                    v["value"],
-                    v["basis"],
-                    "・食い違い: " + "/".join(v["conflicts"]) if v["conflicts"] else "",
-                )
-            label = ",".join(x.get("granularity", "") for x in m.get("labels", [])) or "なし"
-            print(
-                f"{m.get('machine_number')} | {m.get('machine_name', '-')} | {m.get('current_machine_name') or '-'}{' 入替' if m.get('machine_change') else ''} | {m.get('segment', '-')} | {'○' if m.get('announced') else ''} | {label} | {m.get('diff', '-')} | {m.get('games', '-')} | {value if value is not None else '-'} | {m.get('classification') or '-'} | {obs}"
-            )
+            if m.get("segment") == "AT" and not m.get("field_obs"):
+                at_groups[m.get("machine_name")].append(m)
+                continue
+            print(_render_machine_row(m))
+        for name, ms in at_groups.items():
+            print(_render_at_group(name, ms))
         s = h["summary"]
+        b = s.get("label_breakdown", {})
         print(
-            f"集計: 台を特定できるラベル={s['labeled_count']}台（うち差枚マイナス={s['negative_count']}） 粒度不一致={s['partial_label_count']}台"
+            "集計: 全台%d台 / 並び%d台 / 1/N%d台 / 種類なし%d台（台を特定できる計%d台、うち差枚マイナス%d）/ どの台か分からない%d台"
+            % (
+                b.get("全台", 0),
+                b.get("並び", 0),
+                b.get("1/N", 0),
+                b.get("種類なし", 0),
+                s["labeled_count"],
+                s["negative_count"],
+                b.get("粒度不一致", 0),
+            )
         )
+        if h.get("unresolved_labels"):
+            print(
+                "照合できなかった発表: "
+                + "、".join(
+                    "%s(%s・%s)"
+                    % (u["text"], u["granularity"], "判断不能" if u["status"] == "ambiguous" else "該当なし")
+                    for u in h["unresolved_labels"]
+                )
+            )
         if s["claims"]:
             print("予告の採点: " + " / ".join(s["claims"]))
     print("\n直近30日 G比×平均差枚 上位10")
     for x in result["trend_top10"]:
         print(f"{x['machine_name']}\t{x['score']:.1f}\tG比={x['gratio']:.3f}\t平均差枚={x['mean_diff']:.1f}")
+    z = result.get("zentai_overview") or {}
+    if z.get("n_days"):
+        g = z["groups"]
+        print(
+            "\n全台に選ばれた機種（このホールで結果発表のある全%d日。全台系を予告した日%d・しなかった日%d）"
+            % (z["n_days"], g["declared"]["n"], g["not_declared"]["n"])
+        )
+        for x in z["models"][:15]:
+            print(
+                "  %s: %d日（予告あり%d・なし%d）" % (x["machine_name"], x["total"], x["declared"], x["not_declared"])
+            )
+        print("\n全台系を予告した日としなかった日（平均。日数が少ないので参考値、検定はしていない）")
+        for key, title in (("declared", "予告あり"), ("not_declared", "予告なし")):
+            x = g.get(key, {})
+            if not x.get("n"):
+                print("  %s: 0日" % title)
+                continue
+            print(
+                "  %s: %d日（うち予告が出ていた日%d）| 全台があった日 %d | 全台の機種数 %.1f | ホール平均差枚 %s"
+                % (
+                    title,
+                    x["n"],
+                    x["with_announce"],
+                    x["days_with_zentai"],
+                    x["zentai_models_mean"],
+                    "-" if x["hall_mean_diff_mean"] is None else "%+.0f" % x["hall_mean_diff_mean"],
+                )
+            )
     print("\n過去の回で繰り返しラベルが付いたもの（結果発表のあった %d 回中）" % result["result_days"])
-    for key, title in (("machine_name", "機種"), ("machine_number", "台番号"), ("last_digit", "末尾")):
-        items = sorted(result["repeated"].get(key, []), key=lambda x: -x["count"])
+    for key, title in (("machine_name", "機種"), ("machine_number", "台番号")):
+        items = sorted(result["repeated"].get(key, []), key=lambda x: -x["count"])[:15]
         print("  %s: %s" % (title, "、".join("%s %d回" % (x["value"], x["count"]) for x in items) or "なし"))
+    tails = result.get("tail_share") or []
+    if tails:
+        print(
+            "  末尾（ラベル台に占める割合 ÷ 全台に占める割合。1より大きいほど偏り）: "
+            + "、".join("%s:%.2f(%d台)" % (x["digit"], x["ratio"], x["labeled"]) for x in tails)
+        )
     if result["changes"]:
         print("体制変化: " + ", ".join(f"{x.get('date')} {x.get('event_name', '')}" for x in result["changes"]))
     else:
