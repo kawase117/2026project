@@ -105,6 +105,27 @@ def test_machine_number_range_carries_over_from_the_name_line():
     assert rows[0]["mean_diff"] == 7547
 
 
+def test_machine_number_range_without_closed_brackets_is_read():
+    """括弧なし（"バラエティ 2155-2161"）・閉じ括弧の欠け（"(1178-1180"）も範囲として読む。"""
+    for written in ("L戦国乙女5 2220-2222", "L戦国乙女5 (2220-2222"):
+        _, rows = result_corpus.parse_report(WITH_NUMBERS.replace("L戦国乙女5 (2220-2222)", written), POSTED)
+        assert rows[0]["model_name"] == "L戦国乙女5"
+        assert (rows[0]["number_from"], rows[0]["number_to"]) == (2220, 2222)
+
+
+def test_panel_numbers_confirm_or_correct_the_machine_number():
+    """台データ画面の数字（回転数・BB・RB）で台番号を確かめ、合わなければ数字の合う台に直す。"""
+    day = {2006: (3000, 10, 5), 2008: (6015, 89, 22), 2010: (8000, 30, 30)}
+    panel = {"machine_number": "2008", "bb": 84, "rb": 21, "games": 5994}
+    assert result_corpus._match_panel(panel, day) == (2008, "exact_number")
+    misread = dict(panel, machine_number="2006")
+    assert result_corpus._match_panel(misread, day) == (2008, "corrected")
+    # 実績が画像より少ない（撮影後に減ることはない）台は候補にしない
+    assert result_corpus._panel_gap({"bb": 90, "rb": 22, "games": 6015}, day[2008]) is None
+    unreadable = dict(panel, games=None)
+    assert result_corpus._match_panel(unreadable, day) == (2008, "unverified")
+
+
 def test_zero_width_characters_do_not_leak_into_model_names():
     text = WITH_NUMBERS.replace("L戦国乙女5", "​L戦国乙女5")
     _, rows = result_corpus.parse_report(text, POSTED)
