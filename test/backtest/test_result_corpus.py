@@ -293,3 +293,16 @@ def test_a_tweet_whose_entries_disagree_on_the_date_is_skipped(tmp_path, monkeyp
 
     connection = sqlite3.connect(analysis)
     assert connection.execute("SELECT COUNT(*) FROM external_result_reports").fetchone()[0] == 0
+
+
+def test_prose_hall_prefers_headline_hall():
+    """W来店コラボの日の『メガいち速報 … メガいち&メガなな同時来店』は蒲田1（2026-09-28）。"""
+    from backtest.result_corpus import PROSE_ACCOUNTS, _prose_hall
+
+    halls = PROSE_ACCOUNTS["999999Q9Q"]["halls"]
+    text = "ファンキーサトウのメガいち速報\n\n新企画のメガいち&メガなな同時来店コラボ"
+    assert _prose_hall(text, halls) == "マルハンメガシティ2000-蒲田1"
+    assert _prose_hall("GALAXYウスイのメガなな速報\nメガいちとの合同", halls) == "マルハンメガシティ2000-蒲田7"
+    # 1行目にホールが無ければ本文で最初に出てくるホール
+    assert _prose_hall("速報\nメガいちは全台系3機種、メガななも", halls) == "マルハンメガシティ2000-蒲田1"
+    assert _prose_hall("速報\n全台系3機種", halls) is None

@@ -388,6 +388,30 @@ def build(state_db=STATE_DB, analysis_db=ANALYSIS_DB):
     return reports
 
 
+def _prose_hall(text, halls):
+    """散文の速報がどのホールの結果かを本文から決める。
+
+    1行目（「ファンキーサトウのメガいち速報」のような見出し）に書かれたホールを最優先し、
+    1行目で決まらなければ本文で最初に出てくるホールを採る。
+
+    2026-09-28 までは別名を halls の並び順（蒲田7が先）に探して最初に見つかったホールを
+    採っていたため、W来店コラボの日の「メガいち速報 … メガいち&メガなな同時来店コラボ」が
+    本文中の『メガなな』で蒲田7にされ、蒲田1の画像のラベルが蒲田7の別の台に付いていた
+    （6/30・7/30）。
+    """
+    stripped = (text or "").strip()
+    first = stripped.splitlines()[0] if stripped else ""
+    for scope in (first, stripped):
+        best = None
+        for aliases, name in halls:
+            positions = [scope.find(a) for a in aliases if a in scope]
+            if positions and (best is None or min(positions) < best[0]):
+                best = (min(positions), name)
+        if best:
+            return best[1]
+    return None
+
+
 def ingest_prose_reports(state_db=STATE_DB, analysis_db=ANALYSIS_DB):
     """散文アカウントの結果速報を、ホールと営業日だけの報告として登録する。
 
@@ -425,7 +449,7 @@ def ingest_prose_reports(state_db=STATE_DB, analysis_db=ANALYSIS_DB):
             if spec["result_marker"] not in text:
                 skipped_kind += 1
                 continue
-            hall = next((name for aliases, name in spec["halls"] if any(alias in text for alias in aliases)), None)
+            hall = _prose_hall(text, spec["halls"])
             if hall is None or hall not in tracked:
                 skipped_hall += 1
                 continue
@@ -657,6 +681,11 @@ def link_machines(state_db=STATE_DB, analysis_db=ANALYSIS_DB):
             missing_day += 1
             continue
 
+        # この報告の台単位ラベルは毎回作り直す。主キーにホールを含まないので、報告のホールを
+        # 付け替えたとき（2026-09-28、メガいち速報を蒲田7から蒲田1へ）や、画像が後から
+        # 捨てられるようになったときに、古い行が残らないようにする。粒度は直後の
+        # propagate_granularity が埋め直す。
+        target.execute("DELETE FROM external_result_machines WHERE report_id = ?", (report_id,))
         by_image = {}
         for image_path, number, name in rows:
             text = str(number).strip()
