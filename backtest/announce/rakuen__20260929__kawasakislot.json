@@ -1,0 +1,98 @@
+{
+  "announce_id": "rakuen__20260929__kawasakislot",
+  "hall": "楽園蒲田店",
+  "target_date": "20260929",
+  "source": {
+    "account": "kawasakislot",
+    "url": "",
+    "posted_at": "2026-09-28T23:59:00+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "9/29 楽園蒲田\n→スロトレ調査団 三大天\n\n明日も3台並び中心の三大天取材入り\n今日も抽選100ちょいだし、⑤⑥並び20か所と平日にもかかわらずかなりの強仕掛け\n\nアンケートの内容は\n・全⑤⑥機種×複数\n・3台並び⑤⑥×20ヶ所以上\n ┗5フロア各々に4ヶ所以上\n ┗東京喰種、Lカバネリ、1台バラに3台並び必ず\nと、明日も\"上2つ\"の記載あり\n\n早番なら圧倒的優遇機種のLカバネリへ！9月は昨日までに約+39万枚（台平均+620枚超）\n【新館1F】カバネリ、真打吉宗・GOD・ヴヴヴ2 ※初代ヴヴヴは再導入機種\n【新館2F】東京喰種(2087らへんの壁島真ん中優先)・炎炎2・1台バラ、まるごと機種の可能性 ※モンハンは再導入機種\n【本館1F】ネオアイム\n【本館2F】化物語・バンドリ\n【本館3F】エウレカ・1台メダルバラ・ハナハナシリーズどちらかに1か所、SAO2は今週オススメ機種\n抽選は9:40～",
+  "posted_at_note": "投稿時刻は不明(ユーザー貼付)。9/28夜と推定し23:59を仮置き。収集DB未収録。抽選9:40前に凍結。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): p_at_least_3=0.596 p_at_least_4=0.427(minnade777judge登録分と同一ホール・同一窓)。named_context as_of20260928 30日: 各claimのnote参照",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "note": "Lカバネリ。本文で『圧倒的優遇機種』『3台並び必ず』と最優先。26台設置。30日超え10/30日(33%)、平均+1258、rank8/57。※先に登録したminnade777judge分の『甲鉄城のカバネリ』は1台設置の別機種で誤り"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "東京喰種",
+      "note": "3台並び必ず対象。新館2F。31台。30日超え1/30日(3%)、平均+253と機種全体は弱く台別偏り(2060/2061/2067/2085)"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "バンドリ！",
+      "note": "本館2F。4台。30日超え8/30日(27%)、平均+1081、rank2/57"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "革命機ヴァルヴレイヴ2",
+      "note": "新館1F。10台。30日超え5/30日(17%)、平均+616"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "化物語",
+      "note": "本館2F。9台。30日超え3/30日(10%)、平均+575"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "真打 吉宗",
+      "note": "新館1F。5台。30日超え2/30日、平均-267"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "ミリオンゴッド‐神々の軌跡‐",
+      "note": "新館1F(GOD)。16台。30日超え0、平均-70"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "note": "新館2F。6台。30日超え2/30日、平均+129"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "モンスターハンターライズ",
+      "note": "新館2F(再導入機種)。9台。30日超え4/30日、平均+197"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "ネオアイムジャグラーEX",
+      "note": "本館1F。66台。30日超え0、平均+7。多台数なので全は困難"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "交響詩篇エウレカセブン HI-EVOLUTION ZERO TYPE‐ART",
+      "note": "本館3F。25台。30日超え0、平均+221"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "ソードアート・オンラインII",
+      "note": "本館3F(今週オススメ機種)。12台。30日超え0、平均-877"
+    }
+  ],
+  "unscored_claims": [
+    {
+      "text": "ハナハナシリーズ(本館3F、どちらかに1か所)",
+      "reason": "機種名が特定できず(キングハナハナ/ニューキングハナハナV)",
+      "frozen_scoring_procedure": ""
+    },
+    {
+      "text": "3台並び⑤⑥×20ヶ所以上(5フロア各4ヶ所以上)",
+      "reason": "並び定量公約。採点は並びブロック検出側で行う",
+      "frozen_scoring_procedure": ""
+    }
+  ],
+  "needs_manual_review": false,
+  "no_confirmed_machines": false,
+  "result": null,
+  "announce_digest": "7aec6c39ea4bb0bb"
+}
