@@ -17,110 +17,38 @@
 - 決め切れない略称（ALIAS_AMBIGUOUS）は推測で当てない。status='ambiguous' で返す。
 - 機種でないもの（【末尾3】・21箇所・8機種・バラエティ等）は status='not_model'。
 
-対応表を足すときは、その日の実績DBに実在する正式名で書くこと（部分一致で使う）。
+対応表は document/registry/MODEL_ALIASES.csv（機種マスターの正式名で書く）。
 """
 
 from __future__ import annotations
 
+import csv
+import os
 import re
+import sys
 import unicodedata
 
-# 略称（正規化後）→ 正式名に含まれる文字列（正規化前の表記でよい）。上から順に試す。
-ALIASES: dict[str, list[str]] = {
-    "北斗転生": ["北斗の拳 転生の章2"],
-    "北斗転生2": ["北斗の拳 転生の章2"],
-    "北斗": ["スマスロ北斗の拳"],
-    "北斗の拳": ["スマスロ北斗の拳"],
-    "カバネリ": ["甲鉄城のカバネリ"],
-    "カバネリ海門": ["甲鉄城のカバネリ 海門"],
-    "エウレカart": ["交響詩篇エウレカセブン HI-EVOLUTION ZERO TYPE‐ART"],
-    "エウレカ": ["交響詩篇エウレカセブン HI-EVOLUTION ZERO TYPE‐ART"],
-    "沖ドキblack": ["沖ドキ!BLACK"],
-    "マギレコ": ["マギアレコード"],
-    "マギアレコード": ["マギアレコード"],
-    "モンハンライズ": ["モンスターハンターライズ"],
-    "モンハン": ["モンスターハンターライズ"],
-    "東リベ": ["東京リベンジャーズ"],
-    "キンハナ": ["キングハナハナ-30"],
-    "キングハナハナ": ["キングハナハナ-30"],
-    "ニューキンハナ": ["ニューキングハナハナV‐30"],
-    "真打吉宗": ["真打 吉宗"],
-    "戦国乙女5": ["戦国乙女5"],
-    "乙女5": ["戦国乙女5"],
-    "ハナビ": ["スマスロ ハナビ"],
-    "ヴヴヴ2": ["革命機ヴァルヴレイヴ2"],
-    "ヴァルヴレイヴ2": ["革命機ヴァルヴレイヴ2"],
-    "ヴヴヴ": ["革命機ヴァルヴレイヴ"],
-    "戦コレ6": ["戦国コレクション6"],
-    "ミリオンゴッド": ["ミリオンゴッド‐神々の軌跡‐"],
-    "ジャグガ": ["ジャグラーガールズ"],
-    "からくり2": ["からくりサーカス2"],
-    "からくり": ["からくりサーカス"],
-    "ワルダイ": ["ワールドダイスター"],
-    "sao": ["ソードアート・オンライン"],
-    "sao2": ["ソードアート・オンラインII"],
-    "鏡": ["HEY！エリートサラリーマン鏡"],
-    "バジ絆2天膳": ["バジリスク～甲賀忍法帖～絆2 天膳"],
-    "絆2天膳": ["バジリスク～甲賀忍法帖～絆2 天膳"],
-    "バジリスク絆2天膳": ["バジリスク～甲賀忍法帖～絆2 天膳"],
-    "サンダーv": ["スマスロ サンダーV"],
-    "マイジャグv": ["マイジャグラーV"],
-    "マイジャグ": ["マイジャグラーV"],
-    "ゴージャグ3": ["ゴーゴージャグラー3"],
-    "ハピジャグ": ["ハッピージャグラーVIII"],
-    "ファンキー2": ["ファンキージャグラー2"],
-    "ネオアイム": ["ネオアイムジャグラーEX"],
-    "アイム": ["ネオアイムジャグラーEX"],
-    "花の慶次": ["花の慶次～佐渡攻めの章～"],
-    "慶次佐渡": ["花の慶次～佐渡攻めの章～"],
-    "慶次": ["花の慶次～佐渡攻めの章～"],
-    "とんスキ": ["とんでもスキルで異世界放浪メシ"],
-    "とんでもスキル": ["とんでもスキルで異世界放浪メシ"],
-    "炎炎2": ["スマスロ炎炎ノ消防隊2"],
-    "炎炎": ["スマスロ炎炎ノ消防隊"],
-    "バイオre3": ["バイオハザード RE:3"],
-    "バイオ5": ["バイオハザード5"],
-    "防振り": ["痛いのは嫌なので防御力に極振り"],
-    "クラクレ": ["クランキークレスト"],
-    "いざ番長": ["いざ！番長"],
-    "バーディーウィング": ["BIRDIE WING"],
-    "アズレン": ["アズールレーン"],
-    "シェイク": ["SHAKE BONUS TRIGGER"],
-    "邪神ちゃん": ["邪神ちゃんドロップキック"],
-    "アレックス": ["アレックス ブライト"],
-    "ダンまち2": ["ダンジョンに出会いを求めるのは間違っているだろうか2"],
-    "かぐや様": ["かぐや様は告らせたい"],
-    "このすば": ["この素晴らしい世界に祝福を！"],
-    "reゼロ2": ["Re:ゼロから始める異世界生活 season2"],
-    "スタァライト": ["少女☆歌劇 レヴュースタァライト"],
-    "スト6": ["ストリートファイター6"],
-    "やじきた参": ["やじきた道中記参る"],
-    "やじきた": ["やじきた道中記参る"],
-    "かのかり": ["彼女、お借りします"],
-    "god": ["ミリオンゴッド‐神々の軌跡‐"],
-    "化物語": ["化物語"],
-    "モンキーv": ["モンキーターンV"],
-    "モンキー": ["モンキーターンV"],
-    "東京喰種": ["東京喰種"],
-    "喰種": ["東京喰種"],
-    "リゼロ2": ["Re:ゼロから始める異世界生活 season2"],
-    "青ブタ": ["青春ブタ野郎"],
-    "ゾンサガ": ["ゾンビランドサガ"],
-    "東リべ": ["東京リベンジャーズ"],  # ひらがなの「べ」で書かれることがある
-    "ハッピーviii": ["ハッピージャグラーVIII"],
-    "ハッピーv": ["ハッピージャグラーVIII"],
-    "ゴジエヴァ": ["ゴジラ対エヴァンゲリオン"],
-    "サラ金": ["サラリーマン金太郎"],
-    "birdiewing": ["BIRDIE WING"],
-}
+# 対応表の正本は document/registry/MODEL_ALIASES.csv（alias, official_name, kind, confirmed_by）。
+# official_name は機種マスター（各ホールDBの machine_master.machine_name_normalized）の正式名で書く。
+# kind=alias は1対1、kind=candidate は同じ略称に複数の候補（その日の設置状況と台番号で決める）。
+# 足したら `python -m backtest.model_alias check` で機種マスターに無い名前が無いか確かめること。
+ALIASES_CSV = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "document", "registry", "MODEL_ALIASES.csv"
+)
 
-ALIASES["ガールズ"] = ["ジャグラーガールズ"]  # 2026-09-28 ユーザー確認: 基本的にジャグラーガールズ
 
-# 名前だけでは決め切れない略称 → 候補。その日の設置状況と台番号で決める（resolve の numbers_by_name）。
-#   とある2 … 禁書目録2／超電磁砲2（2026-09-28 ユーザー: 言葉だけでは判別できないが、その日の台番号で判断できる）
-ALIAS_CANDIDATES: dict[str, list[str]] = {
-    "とある2": ["とある魔術の禁書目録2", "とある科学の超電磁砲2"],
-}
+def load_aliases(path: str = ALIASES_CSV) -> tuple[dict[str, list[str]], dict[str, list[str]]]:
+    """対応表を読む。戻り値は (ALIASES, ALIAS_CANDIDATES)。"""
+    aliases: dict[str, list[str]] = {}
+    candidates: dict[str, list[str]] = {}
+    with open(path, encoding="utf-8", newline="") as f:
+        for row in csv.DictReader(f):
+            target = candidates if row.get("kind") == "candidate" else aliases
+            target.setdefault(row["alias"], []).append(row["official_name"])
+    return aliases, candidates
+
+
+ALIASES, ALIAS_CANDIDATES = load_aliases()
 
 # 候補も持たない、当てようのない略称（今は無し）。
 ALIAS_AMBIGUOUS: set[str] = set()
@@ -240,3 +168,55 @@ def resolve(
         "ranges": ranges,
         "unresolved": [r for r in results if r["status"] in ("ambiguous", "unmatched")],
     }
+
+
+def master_names(db_dir: str | None = None) -> set[str]:
+    """全ホールDBの machine_master にある正式名（0バイトのダミーDBと analysis_results は除く）。"""
+    import glob
+    import sqlite3
+
+    db_dir = db_dir or os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "db")
+    names: set[str] = set()
+    for path in glob.glob(os.path.join(db_dir, "*.db")):
+        if os.path.getsize(path) == 0 or "analysis_results" in path:
+            continue
+        try:
+            con = sqlite3.connect("file:%s?mode=ro" % path, uri=True)
+            names.update(r[0] for r in con.execute("select machine_name_normalized from machine_master"))
+        except sqlite3.Error:
+            continue
+    return names
+
+
+def check_master(path: str = ALIASES_CSV, db_dir: str | None = None) -> list[str]:
+    """対応表の正式名のうち、どのホールの機種マスターにも無いものを返す。"""
+    master = master_names(db_dir)
+    aliases, candidates = load_aliases(path)
+    return sorted({n for d in (aliases, candidates) for ns in d.values() for n in ns if n not in master})
+
+
+def main(argv: list[str] | None = None) -> int:
+    import argparse
+
+    p = argparse.ArgumentParser(description="機種略称の対応表（document/registry/MODEL_ALIASES.csv）の点検と試し引き")
+    sub = p.add_subparsers(dest="cmd", required=True)
+    sub.add_parser("check", help="対応表の正式名が機種マスターにあるか確かめる")
+    s = sub.add_parser("resolve", help="略称を機種マスターの正式名に当ててみる")
+    s.add_argument("text")
+    a = p.parse_args(argv)
+    if a.cmd == "check":
+        missing = check_master()
+        n = sum(len(v) for d in load_aliases() for v in d.values())
+        print("対応表 %d 行 / 機種マスターに無い正式名 %d 件" % (n, len(missing)))
+        for name in missing:
+            print("  " + name)
+        return 1 if missing else 0
+    r = resolve(a.text, sorted(master_names()))
+    print("%s -> %s" % (a.text, r["names"] or "（当たらず）"))
+    for u in r["unresolved"]:
+        print("  %s: %s %s" % (u["status"], u["part"], u["names"]))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
