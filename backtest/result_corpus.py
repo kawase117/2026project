@@ -915,7 +915,12 @@ def link_machines(state_db=STATE_DB, analysis_db=ANALYSIS_DB):
         panel_check = {}
         for image_path in list(by_image):
             first = by_image[image_path]
-            panels = _load_panels(source, image_path)
+            # 数字（回転数・BB・RB）が1つも読めていない欄は台データ画面の読み取りになっていない。使わない
+            # （2026-09-29、9/7 蒲田1: 左右2機種の画面を「ミスタージャグラー 2011〜2015・数字なし」と読み、
+            # 最初の読み取りの正しい9台を置き換えていた）。
+            panels = [
+                p for p in _load_panels(source, image_path) if any(p.get(k) is not None for k in ("games", "bb", "rb"))
+            ]
             if not panels:
                 continue
             allowed = _image_number_rule([n for n, _ in first])
@@ -947,6 +952,11 @@ def link_machines(state_db=STATE_DB, analysis_db=ANALYSIS_DB):
                 fixed.append((number, panel.get("machine_name")))
                 panel_check[(image_path, number)] = status
             if fixed:
+                # 台データ画面に載っていない台（同じ画像の別の表など）は、最初の読み取りのまま残す。
+                # 欄の数が最初の読み取りより少ないときだけ（同数なら全台が画面に載っている）。
+                if len(panels) < len(first):
+                    covered = {n for n, _ in fixed}
+                    fixed += [(n, name) for n, name in first if n not in covered]
                 by_image[image_path] = fixed
 
         # 並び（連番）から外れた番号を、1桁違いで並びに収まる番号に直す候補
