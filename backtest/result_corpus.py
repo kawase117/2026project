@@ -898,6 +898,7 @@ def link_machines(state_db=STATE_DB, analysis_db=ANALYSIS_DB):
             # 黙って捨てず数える。
             missing_day += 1
             continue
+        day_names = sorted(set(actual.values()))
 
         # この報告の台単位ラベルは毎回作り直す。主キーにホールを含まないので、報告のホールを
         # 付け替えたとき（2026-09-28、メガいち速報を蒲田7から蒲田1へ）や、画像が後から
@@ -916,13 +917,19 @@ def link_machines(state_db=STATE_DB, analysis_db=ANALYSIS_DB):
             ordered.setdefault(image_path or "", {})[int(text)] = name
         by_image = {image_path: list(numbers.items()) for image_path, numbers in ordered.items()}
 
-        def propose(image_path, current, proposed, kind, detail):
+        def propose(image_path, current, proposed, kind, detail, name=None):
+            # 人が確かめ済みの台と、今の番号で画像の機種名が合っている台は聞かない（今の番号が正しい）
+            if (os.path.basename(image_path), current) in fixes:
+                return 0
+            if name is not None and current in actual and _name_agrees(name, actual[current], day_names) == 1:
+                return 0
             target.execute(
                 "INSERT OR REPLACE INTO external_result_number_proposals "
                 "(report_id, image_path, hall_name, business_date, current_number, proposed_number, kind, detail) "
                 "VALUES (?,?,?,?,?,?,?,?)",
                 (report_id, image_path, hall, date, current, proposed, kind, detail),
             )
+            return 1
 
         # 台データ画面の数字が読めている画像は、台番号を数字（回転数・BB・RB）で決め直す
         # （2026-09-28 ユーザー提案: 画質が荒く機種名・台番号の読み誤りがあるが、数字で照合すれば当たる）。
@@ -980,14 +987,14 @@ def link_machines(state_db=STATE_DB, analysis_db=ANALYSIS_DB):
                 if number is None:
                     continue
                 if candidate is not None and candidate != number:
-                    propose(
+                    proposals += propose(
                         image_path,
                         number,
                         candidate,
                         "数字は合うが決め手が足りない（許容幅に他の台がある、または番号・機種名とも離れている）",
                         "画像 %sG/BB%s/RB%s" % (panel.get("games"), panel.get("bb"), panel.get("rb")),
+                        panel.get("machine_name"),
                     )
-                    proposals += 1
                 fixed.append((number, panel.get("machine_name")))
                 panel_check[(image_path, number)] = status
             if fixed:
@@ -1007,8 +1014,7 @@ def link_machines(state_db=STATE_DB, analysis_db=ANALYSIS_DB):
         # 並び（連番）から外れた番号を、1桁違いで並びに収まる番号に直す候補
         for image_path, entries in by_image.items():
             for current, proposed, detail in _narabi_gap_proposals_named(entries, actual):
-                propose(image_path, current, proposed, "並びの連番から外れている（1桁違い）", detail)
-                proposals += 1
+                proposals += propose(image_path, current, proposed, "並びの連番から外れている（1桁違い）", detail)
 
         # 人が確かめた直しを当てる
         for image_path in list(by_image):
