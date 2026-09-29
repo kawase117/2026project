@@ -18,7 +18,11 @@ from config import ACCOUNTS, AUTH_STATE_PATH, DB_PATH, IMAGES_DIR
 
 LOGGER = logging.getLogger(__name__)
 JST = ZoneInfo("Asia/Tokyo")
-MAX_SCROLLS_PER_ACCOUNT = 20
+# last_seen_tweet_id に届けば途中で止まるので、上限を上げても通常日の負荷は増えない。
+# 20回だった 2026-09-28 以前は、kawasakislot など1日40件前後投稿する
+# アカウントが毎回上限で打ち切られ、前回収集分との間の投稿（夕方の予告群）が
+# 恒久的に欠けた（last_seen は最新まで進むため次回以降も拾われない）。
+MAX_SCROLLS_PER_ACCOUNT = 80
 CHROME_USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
 )
@@ -422,6 +426,12 @@ def crawl_account(
             page.mouse.wheel(0, SCROLL_STEP_PX)
             page.wait_for_timeout(int(random.uniform(*SCROLL_WAIT_SECONDS) * 1_000))
 
+    if not backfill and stop_reason == "スクロール上限到達":
+        LOGGER.warning(
+            "%s: last_seen_tweet_id に届かず上限(%d)で終了。前回収集との間に取りこぼしがある可能性",
+            handle,
+            max_scrolls,
+        )
     return inserted, oldest_date, target_reached, stop_reason
 
 
