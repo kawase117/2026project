@@ -987,7 +987,13 @@ def link_machines(state_db=STATE_DB, analysis_db=ANALYSIS_DB):
                 # 台データ画面に載っていない台（同じ画像の別の表など）は、最初の読み取りのまま残す。
                 # 欄の数が最初の読み取りより少ないときだけ（同数なら全台が画面に載っている）。
                 if len(panels) < len(first):
-                    covered = {n for n, _ in fixed}
+                    # 画面の欄が読んだ番号（直す前の番号も含む）は画面に載っている台なので、足し直さない
+                    # （7/16 蒲田7: 2298 を 2289 に直したのに、最初の読み取りの 2298 を足し直していた）
+                    covered = {n for n, _ in fixed} | {
+                        int(p["machine_number"])
+                        for p in panels
+                        if p.get("machine_number") and str(p["machine_number"]).isdigit()
+                    }
                     fixed += [(n, name) for n, name in first if n not in covered]
                 by_image[image_path] = fixed
 
