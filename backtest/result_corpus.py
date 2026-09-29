@@ -635,9 +635,11 @@ def _panel_gap(panel, row):
     9台は実績の方がわずかに多かった（例: 画像 BB84/RB21/5994G → 実績 BB89/RB22/6015G）。
     """
     games, bb, rb = row
-    if None in (panel["games"], panel["bb"], panel["rb"]) or games is None:
+    if None in (panel["games"], panel["rb"]) or games is None:
         return None
-    dg, db, dr = int(games) - panel["games"], (bb or 0) - panel["bb"], (rb or 0) - panel["rb"]
+    # BB が読めていない画面（ボーナスの数字が1つしか出ない形式。2026-09-29、8/9 蒲田1）は回転数と RB だけで見る
+    db = 0 if panel["bb"] is None else (bb or 0) - panel["bb"]
+    dg, dr = int(games) - panel["games"], (rb or 0) - panel["rb"]
     if dg < 0 or db < 0 or dr < 0:
         return None
     if dg > PANEL_MAX_GAMES_GAP or db > PANEL_MAX_BB_GAP or dr > PANEL_MAX_RB_GAP:
@@ -932,6 +934,13 @@ def link_machines(state_db=STATE_DB, analysis_db=ANALYSIS_DB):
             ]
             if not panels:
                 continue
+            # ボーナスの数字が1つしか出ない画面（2026-09-29、8/9 蒲田1）。読み取りはその数字を BB 欄に入れ、
+            # RB 欄を全部 0 にしていた。中身は RB の回数（GOD 2038: 画像 51 / 実績 RB51）。片方の欄が全部 0 なら
+            # 読めていない欄とみなし、残った1つを RB として回転数と一緒に照合する。
+            if all(not p.get("rb") for p in panels) and any(p.get("bb") for p in panels):
+                panels = [dict(p, rb=p.get("bb"), bb=None) for p in panels]
+            elif all(not p.get("bb") for p in panels):
+                panels = [dict(p, bb=None) for p in panels]
             allowed = _image_number_rule([n for n, _ in first])
             # 数字の読み直しは台番号を連番に置き換えることがある（2026-09-29、6/6 蒲田7 の末尾ゾロ目の画像）。
             # 数字で決まらない台は、枚数がそろっていれば最初の読み取りの同じ位置の番号を使う。
