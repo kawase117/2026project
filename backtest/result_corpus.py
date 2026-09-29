@@ -94,8 +94,17 @@ def load_number_fixes(path=NUMBER_FIXES):
             if not line or line.startswith("#"):
                 continue
             row = json.loads(line)
-            fixes[(row["image"], int(row["from"]))] = int(row["to"])
+            # to が null の行は「この番号の台は外す（画像に無い・どの台か決められない）」
+            fixes[(row["image"], int(row["from"]))] = None if row["to"] is None else int(row["to"])
     return fixes
+
+
+def _near_number(a, b):
+    """読んだ番号と直した番号が近いか（±2 以内、または同じ桁数で1桁だけ違う）。"""
+    if abs(a - b) <= 2:
+        return True
+    sa, sb = str(a), str(b)
+    return len(sa) == len(sb) and sum(x != y for x, y in zip(sa, sb)) == 1
 
 
 # 定型の表形式で結果を書くアカウント。本文から機種×日のラベルが取れる。
@@ -929,6 +938,20 @@ def link_machines(state_db=STATE_DB, analysis_db=ANALYSIS_DB):
             # 並ぶ順番がそろっているかは、数字で確定した台で確かめる（6/13 蒲田1 は順番が違い、
             # 位置で当てると隣の台にずれた）。確定した台の8割以上が同じ位置の番号と一致するときだけ使う。
             matched = [_match_panel(panel, day_stats, allowed) for panel in panels]
+            # 数字だけで遠くの台に直すのは危ない。台番号が飛び飛びの画像（機種一など）では、数字の読み違いが
+            # 別の台の数字にたまたま合う（2026-09-29、8/9 蒲田1: ウルトラミラクルジャグラーを 2222 邪神ちゃんへ）。
+            # 機種名も合うか、読んだ番号の近く（1桁違い・±2）のときだけ直し、それ以外は候補として人に聞く。
+            day_names = sorted(set(actual.values()))
+            for index, (number, status, candidate) in enumerate(matched):
+                read = panels[index].get("machine_number")
+                read_n = int(read) if read and str(read).isdigit() else None
+                if status != "corrected" or read_n is None:
+                    continue
+                if _near_number(read_n, number):
+                    continue
+                if _name_agrees(panels[index].get("machine_name"), actual.get(number), day_names) == 1:
+                    continue
+                matched[index] = (read_n, "exact_candidate", number)
             same_order = False
             if len(panels) == len(first):
                 sure = [(i, m[0]) for i, m in enumerate(matched) if m[1] in ("exact_number", "corrected")]
@@ -945,7 +968,7 @@ def link_machines(state_db=STATE_DB, analysis_db=ANALYSIS_DB):
                         image_path,
                         number,
                         candidate,
-                        "数字が完全一致（許容幅の中に他の台もある）",
+                        "数字は合うが決め手が足りない（許容幅に他の台がある、または番号・機種名とも離れている）",
                         "画像 %sG/BB%s/RB%s" % (panel.get("games"), panel.get("bb"), panel.get("rb")),
                     )
                     proposals += 1
@@ -970,8 +993,10 @@ def link_machines(state_db=STATE_DB, analysis_db=ANALYSIS_DB):
             base = os.path.basename(image_path)
             changed = []
             for number, name in by_image[image_path]:
-                to = fixes.get((base, number))
-                if to is not None:
+                if (base, number) in fixes:
+                    to = fixes[(base, number)]
+                    if to is None:
+                        continue  # 人が「この台は画像に無い・決められない」と確かめた。ラベルを付けない
                     panel_check[(image_path, to)] = "user_confirmed"
                     number = to
                 changed.append((number, name))
