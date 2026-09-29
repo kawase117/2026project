@@ -1,0 +1,42 @@
+---
+id: 2026-09-29-site777-midday-high-rb-regresses
+trigger: "サイトセブンの途中データ（昼〜夕方、1,000〜3,000G）で『設定5以上55%以上』の高設定寄り台を報告・推薦するとき。楽園蒲田のジャグラー・ハナハナ・ノーマル機のRB確率で台を選ぶとき"
+confidence: 0.6
+domain: setting-estimation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+---
+
+# 途中の高RB台（設定5以上55〜68%）は、最終で平均に回帰した
+
+## Core claim
+サイトセブンの途中（14:55/16:55）で「設定5以上55〜68%」と出た台は、最終RB確率が平均側へ戻り、差枚も±0付近だった（暫定。1日・5台）。
+
+## Evidence
+- n_observations: 5台（1日）
+- data scope: 楽園蒲田 2026-09-29 のジャグ・ノーマル系
+- metric scope: rb_probability
+- result summary（途中→最終）:
+  - 2251 ディスクアップ 1/265 → 1/362（3,981G）
+  - 1190 ネオアイム 1/150 → 1/249（5,977G）、1195 1/166 → 1/287、1180 1/212 → 1/367
+  - 1213 マイジャグV 1/228 → 1/346（6,920G）
+  - 唯一 1211 マイジャグV（1/237）と 3172 キングハナハナ（1/237、+4,858）は高めで残った
+
+## Interpretation
+- 1,000〜3,000Gの確率は分散が大きい。閾値で拾うと「たまたま良かった台」が選ばれる選択効果が入る。
+- 逆向きの誤りにも注意（`feedback-midday-rb-cannot-veto-narabi`）。途中の低RBで並びを否定してはいけない。9/29は東京喰種2085-2087を途中で弱いと評価して誤り、最終は3台並び+8,239。
+- 1日の観察のため、回帰の大きさは未確定。
+
+## Action
+- 途中の「設定5以上◯%」は「未判定」と報告し、推薦の主根拠にしない。推すなら5,000G以上まで回った時点で再収集して確認。
+- 途中の高RBと低RB、どちらでも並び・機種を確定させない。並び・名指しは最終の差枚とG比で見る。
+- 再現したら confidence を上げる（次回以降のサイトセブン収集で、途中→最終の対応を追記）。
+
+## Relation
+- related:
+  - feedback-midday-rb-cannot-veto-narabi
+  - feedback-midday-high-rb-regresses-20260929
+
+## Status
+- status: active
