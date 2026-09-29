@@ -906,12 +906,15 @@ def link_machines(state_db=STATE_DB, analysis_db=ANALYSIS_DB):
         target.execute("DELETE FROM external_result_machines WHERE report_id = ?", (report_id,))
         target.execute("DELETE FROM external_result_image_warnings WHERE report_id = ?", (report_id,))
         target.execute("DELETE FROM external_result_number_proposals WHERE report_id = ?", (report_id,))
-        by_image = {}
+        # 同じ画像を2回読み取った記録が重なっていることがある（6/20 蒲田1: 30台×2）。同じ番号は1回だけにし、
+        # 並び順は最初に出た位置、機種名は後の読み取り（新しい方）を使う
+        ordered = {}
         for image_path, number, name in rows:
             text = str(number).strip()
             if not text.isdigit():
                 continue
-            by_image.setdefault(image_path or "", []).append((int(text), name))
+            ordered.setdefault(image_path or "", {})[int(text)] = name
+        by_image = {image_path: list(numbers.items()) for image_path, numbers in ordered.items()}
 
         def propose(image_path, current, proposed, kind, detail):
             target.execute(
@@ -970,6 +973,10 @@ def link_machines(state_db=STATE_DB, analysis_db=ANALYSIS_DB):
                 number, status, candidate = matched[index]
                 if status in ("exact_candidate", "unverified") and same_order:
                     number = first[index][0]
+                    # 数字が完全一致した台が、最初の読み取りの同じ位置の番号と同じなら、別々の根拠が
+                    # 一致しているので確定する（2026-09-29、7/10 蒲田7 2008・2139・2167）
+                    if status == "exact_candidate" and candidate == number:
+                        status, candidate = "exact_number", None
                 if number is None:
                     continue
                 if candidate is not None and candidate != number:
