@@ -417,6 +417,28 @@ def store_failure(
     )
 
 
+def _panels_with_numbers(parsed: dict) -> int:
+    """回転数・BB・RB のどれかが読めている台データ画面の欄の数。"""
+    return sum(1 for p in parsed.get("panels") or [] if any(p.get(k) is not None for k in ("games", "bb", "rb")))
+
+
+def extract_image_with_panel_retry(image_path: str, min_entries: int = 5) -> tuple[dict, str]:
+    """読み取り、台番号が並んでいるのに台データ画面の数字が1つも取れなかったら1回だけ読み直す。
+
+    2026-09-29: 数字の読み直しで0台だった171枚を読み直すと、64枚で数字が取れた（9/7 楽園 0→31台など）。
+    読み取りがたまたま空の panels を返すことがある。表だけの画像は2回とも0台になるので、そのまま保存する。
+    読み直しで数字が取れたら、その panels だけを差し替える（entries は1回目のまま）。
+    """
+    parsed, raw = extract_image(image_path)
+    numbers = sum(len(e.get("machine_numbers") or []) for e in parsed.get("entries") or [])
+    if _panels_with_numbers(parsed) or numbers < min_entries:
+        return parsed, raw
+    retry, _ = extract_image(image_path)
+    if _panels_with_numbers(retry):
+        parsed = dict(parsed, panels=retry["panels"])
+    return parsed, raw
+
+
 def reextract_panels(connection: sqlite3.Connection, list_path: Path) -> int:
     """指定した画像を読み直し、panels だけを保存する（entries・extractions には触れない）。"""
     paths = [line.strip() for line in list_path.read_text(encoding="utf-8").splitlines() if line.strip()]
@@ -428,7 +450,7 @@ def reextract_panels(connection: sqlite3.Connection, list_path: Path) -> int:
             failed += 1
             continue
         try:
-            parsed, _ = extract_image(image_path)
+            parsed, _ = extract_image_with_panel_retry(image_path, min_entries=0)
             n = store_panels(connection, row[0], image_path, parsed)
             connection.commit()
             done += 1
@@ -531,7 +553,7 @@ def main(argv: list[str] | None = None) -> int:
         try:
             for tweet_id, image_path, handle, posted_at_jst in rows:
                 try:
-                    parsed, raw_response = extract_image(image_path)
+                    parsed, raw_response = extract_image_with_panel_retry(image_path)
                     store_success(
                         connection,
                         tweet_id,
