@@ -66,15 +66,37 @@ DBは検証にだけ使う。楽園蒲田で1,024台×26日の台単位ラベル
 """
 
 import argparse
+import json
 import os
 import re
 import sqlite3
+from collections import Counter
 from datetime import date, datetime
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 STATE_DB = os.path.join(ROOT, "scraper", "twitter_monitor", "state.db")
 ANALYSIS_DB = os.path.join(ROOT, "db", "analysis_results.db")
+# 人が確かめた台番号の直し（画像ファイル名・読んだ番号 → 正しい番号）。追記専用。
+# 自動で決めきれない候補（external_result_number_proposals）を人が確かめた結果をここに残し、
+# link-machines が毎回適用する（2026-09-29 ユーザー判断「完全に自動判定できるまでは聞いてよい」）。
+NUMBER_FIXES = os.path.join(ROOT, "document", "registry", "RESULT_NUMBER_FIXES.jsonl")
+
+
+def load_number_fixes(path=NUMBER_FIXES):
+    """{(画像ファイル名, 読んだ番号): 正しい番号}。ファイルが無ければ空。"""
+    fixes = {}
+    if not os.path.exists(path):
+        return fixes
+    with open(path, encoding="utf-8") as handle:
+        for line in handle:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            row = json.loads(line)
+            fixes[(row["image"], int(row["from"]))] = int(row["to"])
+    return fixes
+
 
 # 定型の表形式で結果を書くアカウント。本文から機種×日のラベルが取れる。
 RESULT_ACCOUNTS = ("slokotae7",)
@@ -618,7 +640,7 @@ def _load_panels(source, image_path):
     """state.db の extraction_panels から、その画像の各台の数字を読む（表が無ければ空）。"""
     try:
         rows = source.execute(
-            "SELECT machine_number, machine_name, bb, rb, games FROM extraction_panels WHERE image_path = ?",
+            "SELECT machine_number, machine_name, bb, rb, games FROM extraction_panels WHERE image_path = ? ORDER BY rowid",
             (image_path,),
         ).fetchall()
     except sqlite3.OperationalError:
@@ -626,22 +648,109 @@ def _load_panels(source, image_path):
     return [dict(zip(("machine_number", "machine_name", "bb", "rb", "games"), r)) for r in rows]
 
 
-def _match_panel(panel, day_stats):
+def _is_zorome(number):
+    """台番号の下2桁が同じ（11, 22, …, 99, 00）。"""
+    return number % 100 % 11 == 0
+
+
+def _image_number_rule(numbers):
+    """画像の台番号の並び方から、その画像に載りうる台の条件を返す（無ければ None）。
+
+    末尾ゾロ目・末尾○の発表の画像は、載っている台がすべてその条件を満たす。台番号の読み誤りを
+    数字で照合し直すとき、候補をこの条件の台に絞る（2026-09-29 ユーザー指摘: 6/6 蒲田7 の
+    末尾ゾロ目の画像で 2012・2314 と読んだ台は、ゾロ目の 2022・2344 だった）。
+    判定には最初の読み取りの番号を使う。数字の読み直しは台番号を連番に置き換えることがある。
+    """
+    nums = [n for n in numbers if n is not None]
+    if len(nums) < MIN_IMAGE_NUMBERS:
+        return None
+    if sum(_is_zorome(n) for n in nums) >= 0.8 * len(nums):
+        return _is_zorome
+    digit, count = Counter(n % 10 for n in nums).most_common(1)[0]
+    if count >= 0.8 * len(nums):
+        return lambda n, d=digit: n % 10 == d
+    return None
+
+
+def _match_panel(panel, day_stats, allowed=None):
     """台データ画面の1台を、その日の実績の台に当てる。
 
-    返り値 (台番号, 状態)。状態は
-      exact_number … 読み取った台番号の台が数字と合う（機種名の読み誤りは無視してよい）
-      corrected    … 読み取った台番号では合わず、別の台が数字で1台に決まった（台番号の読み誤り・隣とのずれ）
-      unverified   … 数字で決まらない（読めない・候補が複数）。読み取った台番号をそのまま使う
+    返り値 (台番号, 状態, 候補)。状態は
+      exact_number    … 読み取った台番号の台が数字と合う（機種名の読み誤りは無視してよい）
+      corrected       … 読み取った台番号では合わず、別の台が数字で1台に決まった（台番号の読み誤り・隣とのずれ）
+      exact_candidate … 数字が完全に一致する台はあるが、許容幅の中に他の台もある。自動では決めず、
+                        候補として人に確かめる（2026-09-29 ユーザー判断「完全に自動判定できるまでは聞いてよい」）
+      unverified      … 数字で決まらない（読めない・候補が複数）
+    候補は exact_candidate のときだけ、その台番号。台番号は読み取った番号（呼び出し側が差し替える）。
+    allowed は画像の条件（ゾロ目・末尾○）。条件に合わない台は候補にしない。
     """
     read = panel.get("machine_number")
     read_n = int(read) if read and str(read).isdigit() else None
-    if read_n in day_stats and _panel_gap(panel, day_stats[read_n]) is not None:
-        return read_n, "exact_number"
-    scored = sorted((g, n) for n, row in day_stats.items() if (g := _panel_gap(panel, row)) is not None)
+    ok = allowed or (lambda n: True)
+    if read_n in day_stats and ok(read_n) and _panel_gap(panel, day_stats[read_n]) is not None:
+        return read_n, "exact_number", None
+    scored = sorted((g, n) for n, row in day_stats.items() if ok(n) and (g := _panel_gap(panel, row)) is not None)
     if scored and (len(scored) == 1 or scored[1][0] - scored[0][0] >= 0.2):
-        return scored[0][1], "corrected"
-    return read_n, "unverified"
+        return scored[0][1], "corrected", None
+    if scored and scored[0][0] == 0 and (len(scored) == 1 or scored[1][0] > 0):
+        return read_n, "exact_candidate", scored[0][1]
+    return read_n, "unverified", None
+
+
+def _narabi_gap_proposals_named(entries, actual):
+    """_narabi_gap_proposals の候補を、画像の機種名で絞る。
+
+    候補が複数あるとき、画像の機種名がその候補の台の機種と合うものだけを残す。1つも合わなければ、
+    候補が1つのときだけ残す（決め手の無い候補を並べても人の確認の手間が増えるだけ）。
+    """
+    names = {}
+    for number, name in entries:
+        names.setdefault(number, name)
+    day_names = sorted(set(actual.values()))
+    by_number = {}
+    for n, m in _narabi_gap_proposals([n for n, _ in entries], actual):
+        by_number.setdefault(n, []).append(m)
+    out = []
+    for n, cands in by_number.items():
+        # 今の番号で機種名が合っていれば、離れていても正しい番号とみなす（機種の全台を載せた画像など）
+        if n in actual and _name_agrees(names.get(n), actual[n], day_names) == 1:
+            continue
+        agree = [m for m in cands if _name_agrees(names.get(n), actual[m], day_names) == 1]
+        if agree:
+            out += [(n, m, "画像の機種名が候補の台と合う") for m in agree]
+        elif len(cands) == 1:
+            out.append((n, cands[0], None))
+    return out
+
+
+def _narabi_gap_proposals(numbers, actual):
+    """連番のまとまり（並び）から外れた番号を、1桁違いで並びに収まる番号に直す候補。
+
+    2026-09-29 ユーザー指摘: 8/10 楽園の並び 2156〜2160 の中に 2180 と読んだ台があり、正しくは 2160。
+    並びの発表なら台番号は連番のはず。自動では直さず、候補として人に確かめる。
+    返り値 [(読んだ番号, 候補の番号)]。
+    """
+    present = sorted(set(numbers))
+    out = []
+    # 並びの画像（台番号の多くが連番）だけを見る。末尾○の画像のように飛び飛びの画像では、
+    # 1桁違いで近くに来る番号がいくらでもあり、候補が意味を持たない。
+    in_run = sum(1 for n in present if n - 1 in present or n + 1 in present)
+    if len(present) < 3 or in_run < 0.6 * len(present):
+        return out
+    for n in present:
+        if any(abs(n - m) <= 2 for m in present if m != n):
+            continue  # どこかのまとまりに属している
+        text = str(n)
+        for i in range(len(text)):
+            for digit in "0123456789":
+                if digit == text[i]:
+                    continue
+                m = int(text[:i] + digit + text[i + 1 :])
+                # 候補は連番のまとまりのすぐ隣（±1）で、そのまとまりが2台以上続いていること
+                touching = (m - 1 in present and m - 2 in present) or (m + 1 in present and m + 2 in present)
+                if m in actual and m not in present and touching:
+                    out.append((n, m))
+    return out
 
 
 def _name_agrees(extracted, real, day_names):
@@ -734,11 +843,20 @@ def link_machines(state_db=STATE_DB, analysis_db=ANALYSIS_DB):
     # 台番号を数字で確かめたか（2026-09-28 追加。既存DBには ALTER で足す）
     if "panel_check" not in {r[1] for r in target.execute("PRAGMA table_info(external_result_machines)")}:
         target.execute("ALTER TABLE external_result_machines ADD COLUMN panel_check TEXT")
+    # 自動では決めきれない台番号の直しの候補。人が確かめたら NUMBER_FIXES に書く。
+    target.execute(
+        "CREATE TABLE IF NOT EXISTS external_result_number_proposals ("
+        " report_id TEXT NOT NULL, image_path TEXT NOT NULL, hall_name TEXT, business_date TEXT,"
+        " current_number INTEGER NOT NULL, proposed_number INTEGER NOT NULL, kind TEXT NOT NULL, detail TEXT,"
+        " PRIMARY KEY (report_id, image_path, current_number, proposed_number))"
+    )
+    fixes = load_number_fixes()
     sibling_cache = {}
-    kept = dropped_images = missing_day = warned = 0
+    kept = dropped_images = missing_day = warned = proposals = 0
     for report_id, hall, date in reports:
         rows = source.execute(
-            "SELECT image_path, machine_number, machine_name FROM extraction_entries WHERE tweet_id = ?", (report_id,)
+            "SELECT image_path, machine_number, machine_name FROM extraction_entries WHERE tweet_id = ? ORDER BY rowid",
+            (report_id,),
         ).fetchall()
         if not rows:
             continue
@@ -776,6 +894,7 @@ def link_machines(state_db=STATE_DB, analysis_db=ANALYSIS_DB):
         # propagate_granularity が埋め直す。
         target.execute("DELETE FROM external_result_machines WHERE report_id = ?", (report_id,))
         target.execute("DELETE FROM external_result_image_warnings WHERE report_id = ?", (report_id,))
+        target.execute("DELETE FROM external_result_number_proposals WHERE report_id = ?", (report_id,))
         by_image = {}
         for image_path, number, name in rows:
             text = str(number).strip()
@@ -783,22 +902,70 @@ def link_machines(state_db=STATE_DB, analysis_db=ANALYSIS_DB):
                 continue
             by_image.setdefault(image_path or "", []).append((int(text), name))
 
+        def propose(image_path, current, proposed, kind, detail):
+            target.execute(
+                "INSERT OR REPLACE INTO external_result_number_proposals "
+                "(report_id, image_path, hall_name, business_date, current_number, proposed_number, kind, detail) "
+                "VALUES (?,?,?,?,?,?,?,?)",
+                (report_id, image_path, hall, date, current, proposed, kind, detail),
+            )
+
         # 台データ画面の数字が読めている画像は、台番号を数字（回転数・BB・RB）で決め直す
         # （2026-09-28 ユーザー提案: 画質が荒く機種名・台番号の読み誤りがあるが、数字で照合すれば当たる）。
         panel_check = {}
         for image_path in list(by_image):
+            first = by_image[image_path]
             panels = _load_panels(source, image_path)
             if not panels:
                 continue
+            allowed = _image_number_rule([n for n, _ in first])
+            # 数字の読み直しは台番号を連番に置き換えることがある（2026-09-29、6/6 蒲田7 の末尾ゾロ目の画像）。
+            # 数字で決まらない台は、枚数がそろっていれば最初の読み取りの同じ位置の番号を使う。
+            # 並ぶ順番がそろっているかは、数字で確定した台で確かめる（6/13 蒲田1 は順番が違い、
+            # 位置で当てると隣の台にずれた）。確定した台の8割以上が同じ位置の番号と一致するときだけ使う。
+            matched = [_match_panel(panel, day_stats, allowed) for panel in panels]
+            same_order = False
+            if len(panels) == len(first):
+                sure = [(i, m[0]) for i, m in enumerate(matched) if m[1] in ("exact_number", "corrected")]
+                same_order = len(sure) >= 3 and sum(first[i][0] == n for i, n in sure) >= 0.8 * len(sure)
             fixed = []
-            for panel in panels:
-                number, status = _match_panel(panel, day_stats)
+            for index, panel in enumerate(panels):
+                number, status, candidate = matched[index]
+                if status in ("exact_candidate", "unverified") and same_order:
+                    number = first[index][0]
                 if number is None:
                     continue
+                if candidate is not None and candidate != number:
+                    propose(
+                        image_path,
+                        number,
+                        candidate,
+                        "数字が完全一致（許容幅の中に他の台もある）",
+                        "画像 %sG/BB%s/RB%s" % (panel.get("games"), panel.get("bb"), panel.get("rb")),
+                    )
+                    proposals += 1
                 fixed.append((number, panel.get("machine_name")))
                 panel_check[(image_path, number)] = status
             if fixed:
                 by_image[image_path] = fixed
+
+        # 並び（連番）から外れた番号を、1桁違いで並びに収まる番号に直す候補
+        for image_path, entries in by_image.items():
+            for current, proposed, detail in _narabi_gap_proposals_named(entries, actual):
+                propose(image_path, current, proposed, "並びの連番から外れている（1桁違い）", detail)
+                proposals += 1
+
+        # 人が確かめた直しを当てる
+        for image_path in list(by_image):
+            base = os.path.basename(image_path)
+            changed = []
+            for number, name in by_image[image_path]:
+                to = fixes.get((base, number))
+                if to is not None:
+                    panel_check[(image_path, to)] = "user_confirmed"
+                    number = to
+                changed.append((number, name))
+            by_image[image_path] = changed
 
         for image_path, entries in by_image.items():
             if len(entries) < MIN_IMAGE_NUMBERS:
@@ -868,14 +1035,15 @@ def link_machines(state_db=STATE_DB, analysis_db=ANALYSIS_DB):
     print("  ホール違いとして捨てた画像: %d" % dropped_images)
     print("  もう一方の店の方がよく合う画像（警告のみ・付け替えない）: %d" % warned)
     print("  本文の営業日が実績DBに無い投稿: %d" % missing_day)
+    print("  台番号の直しの候補（人が確かめる、number-proposals で一覧）: %d" % proposals)
     # 一致率は比べられる行（name_agrees が NULL でない＝機種名が書かれている行）だけで出す。
     # 台番号が回転数・BB・RB で確定した台は、機種名が違っても画像の名前の読み違いであり
     # 台は正しい（2026-09-29 ユーザー判断）。要確認に数えるのは、名前が違い数字でも確かめられない台だけ。
     for hall, count, comparable, agree, confirmed, misread, check in target.execute(
         "SELECT hall_name, COUNT(*), COUNT(name_agrees), SUM(name_agrees), "
-        "SUM(panel_check IN ('exact_number','corrected')), "
-        "SUM(name_agrees = 0 AND panel_check IN ('exact_number','corrected')), "
-        "SUM(name_agrees = 0 AND COALESCE(panel_check, '') NOT IN ('exact_number','corrected')) "
+        "SUM(panel_check IN ('exact_number','corrected','user_confirmed')), "
+        "SUM(name_agrees = 0 AND panel_check IN ('exact_number','corrected','user_confirmed')), "
+        "SUM(name_agrees = 0 AND COALESCE(panel_check, '') NOT IN ('exact_number','corrected','user_confirmed')) "
         "FROM external_result_machines GROUP BY hall_name ORDER BY 2 DESC"
     ):
         print(
@@ -992,6 +1160,25 @@ def stats(analysis_db=ANALYSIS_DB, threshold=1800.0):
         print("  %-10s %3d 投稿" % (granularity, count))
 
 
+def number_proposals(analysis_db=ANALYSIS_DB):
+    """人が確かめる台番号の直しの候補を、投稿URL・画像ごとに出す。"""
+    connection = sqlite3.connect(analysis_db)
+    rows = connection.execute(
+        "SELECT p.hall_name, p.business_date, r.tweet_url, p.image_path, p.current_number, p.proposed_number, "
+        "p.kind, p.detail FROM external_result_number_proposals p "
+        "JOIN external_result_reports r USING(report_id) ORDER BY p.hall_name, p.business_date, p.image_path"
+    ).fetchall()
+    last = None
+    for hall, day, url, image, current, proposed, kind, detail in rows:
+        if (url, image) != last:
+            print("\n%s %s %s  %s" % (day, hall, url, os.path.basename(image)))
+            last = (url, image)
+        print("  %s → %s  %s%s" % (current, proposed, kind, "  " + detail if detail else ""))
+    print("\n候補 %d 件。確かめたら %s に" % (len(rows), os.path.relpath(NUMBER_FIXES, ROOT)))
+    print('  {"image": "<画像ファイル名>", "from": <今の番号>, "to": <正しい番号>, "confirmed_by": "..."} を追記する')
+    return rows
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = parser.add_subparsers(dest="command", required=True)
@@ -999,6 +1186,7 @@ def main():
     sub.add_parser("ingest-prose", help="散文アカウントの速報をホール・営業日つきで登録する")
     sub.add_parser("link-machines", help="画像抽出の台番号を本文のホール・日付に結び付ける")
     sub.add_parser("propagate-granularity", help="台単位ラベルに仕掛けの粒度を付ける")
+    sub.add_parser("number-proposals", help="人が確かめる台番号の直しの候補を出す")
     stats_parser = sub.add_parser("stats", help="較正用の分布を表示する")
     stats_parser.add_argument("--threshold", type=float, default=1800.0)
     args = parser.parse_args()
@@ -1012,6 +1200,8 @@ def main():
         propagate_granularity()
     elif args.command == "propagate-granularity":
         propagate_granularity()
+    elif args.command == "number-proposals":
+        number_proposals()
     else:
         stats(threshold=args.threshold)
 

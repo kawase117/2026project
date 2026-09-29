@@ -117,13 +117,37 @@ def test_panel_numbers_confirm_or_correct_the_machine_number():
     """台データ画面の数字（回転数・BB・RB）で台番号を確かめ、合わなければ数字の合う台に直す。"""
     day = {2006: (3000, 10, 5), 2008: (6015, 89, 22), 2010: (8000, 30, 30)}
     panel = {"machine_number": "2008", "bb": 84, "rb": 21, "games": 5994}
-    assert result_corpus._match_panel(panel, day) == (2008, "exact_number")
+    assert result_corpus._match_panel(panel, day) == (2008, "exact_number", None)
     misread = dict(panel, machine_number="2006")
-    assert result_corpus._match_panel(misread, day) == (2008, "corrected")
+    assert result_corpus._match_panel(misread, day) == (2008, "corrected", None)
     # 実績が画像より少ない（撮影後に減ることはない）台は候補にしない
     assert result_corpus._panel_gap({"bb": 90, "rb": 22, "games": 6015}, day[2008]) is None
     unreadable = dict(panel, games=None)
-    assert result_corpus._match_panel(unreadable, day) == (2008, "unverified")
+    assert result_corpus._match_panel(unreadable, day) == (2008, "unverified", None)
+
+
+def test_exact_match_with_rivals_is_only_a_candidate():
+    """数字が完全一致しても、許容幅の中に他の台があれば自動では決めず候補にする（2026-09-29 ユーザー判断）。"""
+    day = {2012: (6592, 22, 15), 2022: (3385, 74, 18), 2031: (3400, 75, 18)}
+    panel = {"machine_number": "2012", "bb": 74, "rb": 18, "games": 3385}
+    assert result_corpus._match_panel(panel, day) == (2012, "exact_candidate", 2022)
+
+
+def test_zorome_image_restricts_candidates():
+    """末尾ゾロ目の画像なら、候補をゾロ目の台に絞る（6/6 蒲田7 で 2012 と読んだ台は 2022）。"""
+    first = [2011, 2022, 2033, 2044, 2055, 2066]
+    rule = result_corpus._image_number_rule(first)
+    assert rule(2022) and not rule(2031) and rule(2300)
+    day = {2012: (6592, 22, 15), 2022: (3385, 74, 18), 2031: (3400, 75, 18)}
+    panel = {"machine_number": "2012", "bb": 74, "rb": 18, "games": 3385}
+    assert result_corpus._match_panel(panel, day, rule) == (2022, "corrected", None)
+
+
+def test_number_outside_a_narabi_run_is_proposed():
+    """並び 2156〜2159 の中の 2180 は、1桁違いの 2160 を候補にする（8/10 楽園）。"""
+    actual = {n: "x" for n in range(2150, 2190)}
+    assert (2180, 2160) in result_corpus._narabi_gap_proposals([2156, 2157, 2158, 2159, 2180], actual)
+    assert result_corpus._narabi_gap_proposals([2156, 2157, 2158], actual) == []
 
 
 def test_zero_width_characters_do_not_leak_into_model_names():
