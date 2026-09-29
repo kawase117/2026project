@@ -654,8 +654,12 @@ def _name_agrees(extracted, real, day_names):
     """
     from backtest.model_alias import clean_image_name, norm, resolve
 
-    if not extracted or not real:
+    if not real:
         return 0
+    if not extracted or str(extracted).strip() in ("", "None"):
+        # 画像から機種名が読めなかった（台データ画面の見出しが潰れている等）。比べる材料が無いので
+        # 一致でも不一致でもない（2026-09-29 までは不一致に数え、要確認を約40台水増ししていた）。
+        return None
     # 画像の機種名の飾り（頭の L/、パチスロ、型式の記号 FN/AD/SC2 等）を落としてから比べる。
     cleaned = clean_image_name(str(extracted))
     # 「バラエティ」（少数台機種のコーナー）・「2台設置BT機」・「その他」などは機種名ではないので、
