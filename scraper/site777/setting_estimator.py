@@ -91,6 +91,9 @@ def _log_likelihood(games: int, bb: int, rb: int, probabilities: dict[str, float
     # 二項係数は設定に依存しないので省く。順位と尤度比だけが必要。
     total = 0.0
     for count, key in ((bb, "bb_probability"), (rb, "rb_probability")):
+        # BB欄の定義がスペックと合わない機種（不二子BT）は use_bb=False でBBを外す。
+        if key == "bb_probability" and probabilities.get("use_bb") is False:
+            continue
         p = float(probabilities[key])
         total += count * math.log(p) + (games - count) * math.log1p(-p)
     return total

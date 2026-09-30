@@ -31,9 +31,11 @@ import argparse
 import json
 import math
 import os
+import re
 import sqlite3
 import statistics as st
 import sys
+import unicodedata
 
 import numpy as np
 from collections import defaultdict
@@ -70,10 +72,54 @@ STRIP_WORDS = (
 )
 
 
+RE_SUBTITLE = re.compile(r"~[^~]*~")
+
+
 def norm(name):
+    # サイトの表記は全角（Ｌ不二子ＢＴ）、DBは半角（不二子BT）のことがあるので幅を揃える。
+    name = unicodedata.normalize("NFKC", name)
     for word in STRIP_WORDS:
         name = name.replace(word, "")
     return name
+
+
+class NormMap(dict):
+    """正規化名から (公式名, 区分) を引く辞書。完全一致が無いときは長い方の部分一致で引く。
+
+    サイトの表記はDBの公式名と少しずれる（ファンキージャグラー２ＫＴ/ファンキージャグラー2、
+    ジャグラーガールズSS/ジャグラーガールズ）。完全一致だけだと、こうした機種が判別可能機種・
+    AT機の表から黙って抜ける（2026-09-30 に楽園117機種中15機種、Lカバネリ26台を含む）。
+    bonus_specs.find_spec と同じく、4文字以上の名前が他方に含まれる場合の最長キーを採る。
+    """
+
+    def get(self, key, default=None):
+        if key in self:
+            return self[key]
+        best = None
+        for candidate in self:
+            if len(candidate) >= 4 and (candidate in key or key in candidate):
+                if best is None or len(candidate) > len(best):
+                    best = candidate
+        return self[best] if best is not None else default
+
+
+def build_by_norm(spec_category):
+    """{正規化名: (公式名, 区分)}。サイトがサブタイトル（～…～）を省く機種も引けるようにする。
+
+    サブタイトルを落とした別名キーは、他の機種名と衝突しない場合にだけ足す
+    （衝突するなら黙って別機種に割り当てるより引けない方がよい）。
+    """
+    by_norm = NormMap({norm(k): (k, v) for k, v in spec_category.items()})
+    aliases = {}
+    for k, v in spec_category.items():
+        stripped = RE_SUBTITLE.sub("", norm(k))
+        if stripped == norm(k) or stripped in by_norm:
+            continue
+        aliases.setdefault(stripped, []).append((k, v))
+    for key, entries in aliases.items():
+        if len(entries) == 1:
+            by_norm[key] = entries[0]
+    return by_norm
 
 
 def rb_posterior(spec, games, rb):
@@ -225,7 +271,7 @@ def main():
             "select official_name, spec_category from machine_master where spec_category is not null"
         )
     }
-    by_norm = {norm(k): (k, v) for k, v in spec_category.items()}
+    by_norm = build_by_norm(spec_category)
     layout = {}
     layout_full = {}
     for n, sec, rank_min, rank_max, y in conn.execute(

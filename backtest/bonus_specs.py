@@ -156,6 +156,8 @@ def load_specs(master_csv=MASTER_CSV):
                 "rb_probability": values.get("rb_probability"),
                 "combined_probability": None,
                 "payout_rate": values.get("payout_rate", float("nan")),
+                # BB欄の定義がスペックと合わない機種（不二子BT）はFalse。posterior() がBBを外す。
+                "use_bb": values.get("use_bb", True),
             }
         previous = specs.get(key, {})
         specs[key] = {
@@ -199,6 +201,8 @@ def posterior(spec, games, bb, rb):
     for setting, values in spec["settings"].items():
         total, used = 0.0, 0
         for count, key in ((bb, "bb_probability"), (rb, "rb_probability")):
+            if key == "bb_probability" and values.get("use_bb") is False:
+                continue
             term = _log_binomial(count, games, values.get(key))
             if term is not None:
                 total += term

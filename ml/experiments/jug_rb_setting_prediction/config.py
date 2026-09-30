@@ -220,6 +220,40 @@ JUGGLER_FAMILY_SPECS = {
             6: {"rb_probability": 1 / 282.5, "bb_probability": 1 / 273.1, "payout_rate": 106.4},
         },
     },
+    # ユーザー提供のスペック表（2026-09-30、一撃 /slot/lb_fj2/ と一致）。設定3は未掲載の5段階機。
+    # スペックのBIGは SUPER BIG+BIG の合算で、SUPER BIG 後のBT「不二子TIME」は約1/16で
+    # ボーナスに当選する。site777のBB欄がこれを数えている疑いがある（2026-09-30 楽園3142は
+    # 2288GでBB33=1/69。設定6の期待13回を大きく超え、どの設定でも説明できない）。
+    # そのため use_bb=False でBBを尤度から外し、RB(REG)だけで推定する。
+    # 過去実績でBB欄の定義が確認できたら見直す。payout_rate は下限値。
+    "FUJIKO_BT": {
+        "family_name": "不二子BT",
+        "machine_keyword": "不二子BT",
+        "source": "一撃 /slot/lb_fj2/ (ユーザー提供 2026-09-30)",
+        "settings": {
+            1: {"rb_probability": 1 / 321.3, "bb_probability": 1 / 252.1, "payout_rate": 97.6, "use_bb": False},
+            2: {"rb_probability": 1 / 304.8, "bb_probability": 1 / 239.2, "payout_rate": 99.4, "use_bb": False},
+            4: {"rb_probability": 1 / 278.9, "bb_probability": 1 / 219.2, "payout_rate": 102.9, "use_bb": False},
+            5: {"rb_probability": 1 / 252.1, "bb_probability": 1 / 205.4, "payout_rate": 105.4, "use_bb": False},
+            6: {"rb_probability": 1 / 227.6, "bb_probability": 1 / 172.5, "payout_rate": 107.4, "use_bb": False},
+        },
+    },
+    # ユーザー提供のスペック表（2026-09-30、一撃 /slot/s_kurea3/ と一致）。設定1〜6フルスペックの
+    # ボーナストリガー機。site777の表記は「LBクレアの秘宝伝ボーナストリガーver.」。
+    # BIG当選で必ずBTが発動する。payout_rate は下限値。
+    "CLAIRE_BT": {
+        "family_name": "クレアの秘宝伝BT",
+        "machine_keyword": "クレアの秘宝伝",
+        "source": "一撃 /slot/s_kurea3/ (ユーザー提供 2026-09-30)",
+        "settings": {
+            1: {"rb_probability": 1 / 383.3, "bb_probability": 1 / 299.3, "payout_rate": 98.1},
+            2: {"rb_probability": 1 / 376.6, "bb_probability": 1 / 293.9, "payout_rate": 99.2},
+            3: {"rb_probability": 1 / 358.1, "bb_probability": 1 / 284.9, "payout_rate": 101.2},
+            4: {"rb_probability": 1 / 334.4, "bb_probability": 1 / 274.2, "payout_rate": 103.7},
+            5: {"rb_probability": 1 / 299.3, "bb_probability": 1 / 262.1, "payout_rate": 106.6},
+            6: {"rb_probability": 1 / 247.3, "bb_probability": 1 / 240.1, "payout_rate": 112.3},
+        },
+    },
 }
 
 JUGGLER_FAMILY_ORDER = ("IMEX", "MYV", "GOGO3", "FUNKY2", "HAPPY8")
