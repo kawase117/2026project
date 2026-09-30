@@ -254,6 +254,21 @@ JUGGLER_FAMILY_SPECS = {
             6: {"rb_probability": 1 / 247.3, "bb_probability": 1 / 240.1, "payout_rate": 112.3},
         },
     },
+    # ユーザー提供のスペック表（2026-09-30）。設定1,2,5,6の4段階機。site777の表記は
+    # 「翔べ！ハーレムエース」（BT機）。2026-09-30 楽園3210は5836GでBB27（1/216）と設定6の
+    # 期待19回を上回るが、不二子BTほど極端ではなく3211は期待の範囲内なので、BBは尤度に入れる
+    # （use_bb は付けない）。RB（REG）が主指標なのは他のBT機と同じ。payout_rate は下限値。
+    "HAREM_ACE": {
+        "family_name": "翔べ！ハーレムエース",
+        "machine_keyword": "ハーレムエース",
+        "source": "ユーザー提供スペック表 (2026-09-30)",
+        "settings": {
+            1: {"rb_probability": 1 / 560.1, "bb_probability": 1 / 402.1, "payout_rate": 98.1},
+            2: {"rb_probability": 1 / 508.0, "bb_probability": 1 / 390.1, "payout_rate": 99.9},
+            5: {"rb_probability": 1 / 409.6, "bb_probability": 1 / 343.1, "payout_rate": 104.7},
+            6: {"rb_probability": 1 / 327.7, "bb_probability": 1 / 307.7, "payout_rate": 110.0},
+        },
+    },
 }
 
 JUGGLER_FAMILY_ORDER = ("IMEX", "MYV", "GOGO3", "FUNKY2", "HAPPY8")

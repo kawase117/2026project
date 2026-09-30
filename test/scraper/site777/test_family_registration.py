@@ -55,6 +55,23 @@ def test_claire_high_rb_leans_high_setting() -> None:
     assert math.isclose(result["p_high_setting_uniform_prior"], 0.83, abs_tol=0.01)
 
 
+def test_harem_ace_is_registered_and_uses_bb() -> None:
+    specs = load_family_specs()
+    matcher = build_family_matcher(specs)
+
+    assert match_family("翔べ！ハーレムエース", matcher) == "HAREM_ACE"
+    settings = specs["HAREM_ACE"]["settings"]
+    # 設定3・4なしの4段階機。不二子と違い、BBは尤度に入る
+    assert sorted(settings) == [1, 2, 5, 6]
+    assert estimate_setting(5836, 27, 18, settings) != estimate_setting(5836, 0, 18, settings)
+
+    result = estimate_setting(5836, 27, 18, settings)
+    assert result is not None
+    assert result["setting_lean"] == "高設定寄り"
+    # 手計算（BB+RB、一様事前）で3210は設定5以上が約98%
+    assert math.isclose(result["p_high_setting_uniform_prior"], 0.98, abs_tol=0.01)
+
+
 def test_norm_unifies_full_width_site_names() -> None:
     brief = _load_live_brief()
 
