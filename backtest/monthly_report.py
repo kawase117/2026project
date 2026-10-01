@@ -31,6 +31,8 @@ DEFAULT_HALL = "楽園蒲田店"
 DEFAULT_REGIME_START = "20260706"
 DEFAULT_SEED = 20261001
 NEW_MACHINE_DAYS = 6
+# 日単位ブロックブートストラップ(block=7)でCIを出せる最小日数。日数==ブロック長だと再標本化が回転にしかならず幅ゼロになるので2ブロック分
+MIN_CI_DAYS = 14
 MIN_MACHINES = 3
 MIN_LIVE_MACHINES = 3
 MIN_LIVE_GAMES = 1000
@@ -462,8 +464,8 @@ def build_segment_table(frame, window_dates, boundaries=("20260907", "20260914")
             notes = []
             if n_days == 0:
                 notes.append("この区間に出現なし（設置なし・入替の可能性）")
-            elif n_days < 7:
-                notes.append("日数<7のためCIなし")
+            elif n_days < MIN_CI_DAYS:
+                notes.append(f"日数<{MIN_CI_DAYS}のためCIなし")
             else:
                 ci = block_bootstrap_ratio_ci(by_date, scale=100, seed=DEFAULT_SEED)
             rb = float(current["rb_count"].sum())
@@ -601,7 +603,7 @@ def render_layer1_markdown(df):
         lines += [
             "## 窓の分割（配置替え・機種入替の前後）",
             "",
-            "窓内の 2026-09-07 配置替え・2026-09-14 機種入替の前後で、同じ機種の G・機械割・RB確率が変わっていないかを見る。区間ごとの日数が少ないので、CIは日数7以上のときだけ出す",
+            "窓内の 2026-09-07 配置替え・2026-09-14 機種入替の前後で、同じ機種の G・機械割・RB確率が変わっていないかを見る。区間ごとの日数が少ないので、CIは日数14以上（ブロック長7日の2倍。これ未満だと再標本化が同じ集合の回転にしかならずCIが成り立たない）のときだけ出す",
             "",
             md_table(segments[segments["n_machine_days"] > 0]),
             "",
@@ -665,11 +667,17 @@ def _parser():
     p2.add_argument("--perm", type=int, default=10000)
     p2.add_argument("--seed", type=int, default=DEFAULT_SEED)
     p2.add_argument("--format", choices=("md", "json"), default="md")
+    p2b = sub.add_parser("announce", help="層2b: 予告で事前に名指しされた機種 vs 同日の未名指し機種")
+    p2b.add_argument("--asof", required=True)
+    p2b.add_argument("--regime-start", default=DEFAULT_REGIME_START)
+    p2b.add_argument("--perm", type=int, default=10000)
+    p2b.add_argument("--seed", type=int, default=DEFAULT_SEED)
+    p2b.add_argument("--format", choices=("md", "json"), default="md")
     p3 = sub.add_parser("layer3")
     p3.add_argument("--asof", required=True)
     p3.add_argument("--target-month", required=True)
     p3.add_argument("--regime-start", default=DEFAULT_REGIME_START)
-    p3.add_argument("--k", type=float, default=10)
+    p3.add_argument("--k", type=float, default=30)
     p3.add_argument("--evaluate", action="store_true")
     p3.add_argument("--all-history", action="store_true")
     p3.add_argument("--seed", type=int, default=DEFAULT_SEED)
@@ -680,7 +688,7 @@ def _parser():
     p4.add_argument("--out", required=True)
     p4.add_argument("--regime-start", default=DEFAULT_REGIME_START)
     p4.add_argument("--seed", type=int, default=DEFAULT_SEED)
-    p4.add_argument("--k", type=float, default=10)
+    p4.add_argument("--k", type=float, default=30)
     p4.add_argument("--window-days", type=int, default=28)
     p4.add_argument("--baseline-days", type=int, default=90)
     p4.add_argument("--min-games", type=int, default=500)
@@ -697,6 +705,11 @@ def main(argv=None):
         from backtest import monthly_report_layer2 as layer2
 
         print(layer2.run(args))
+        return 0
+    if args.command == "announce":
+        from backtest import monthly_report_announce as announce_layer
+
+        print(announce_layer.run(args))
         return 0
     if args.command == "layer3":
         from backtest import monthly_report_layer3 as layer3
@@ -726,6 +739,17 @@ def main(argv=None):
             format="md",
         )
         l2 = layer2.run(l2_args)
+        from backtest import monthly_report_announce as announce_layer
+
+        l2 = (
+            l2
+            + "\n\n"
+            + announce_layer.run(
+                argparse.Namespace(
+                    asof=args.asof, regime_start=args.regime_start, perm=args.perm, seed=args.seed, format="md"
+                )
+            )
+        )
         l3 = layer3.render(
             layer3.build(args.asof, args.target_month, args.regime_start, args.k, True, False, args.seed)
         )

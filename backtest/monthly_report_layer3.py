@@ -25,6 +25,7 @@ from backtest.bonus_specs import JUDGEABLE_CATEGORIES, find_spec, load_specs
 from backtest.monthly_report import (
     DEFAULT_REGIME_START,
     DEFAULT_SEED,
+    MIN_CI_DAYS,
     block_bootstrap_ci,
     hall_db_path,
     load_machine_days,
@@ -34,6 +35,9 @@ from backtest.monthly_report import (
 )
 
 BOOTSTRAP_B = 2000
+# 収縮強度。k=3〜1000を8月・9月の2foldで比べ、MSE比が最良で最上位ビンの過大予測も小さい30を既定にした
+# （kの選択も同じ2foldで行っているので自己参照。差は小さく、断定しない）。10〜100なら大差ない
+DEFAULT_K = 30
 MIN_POOL_GAMES = 2000
 BLOCK = 7
 WEEKDAYS = ("月", "火", "水", "木", "金", "土", "日")
@@ -101,7 +105,7 @@ def _shrink(total, n, parent, k):
     return float((total + k * parent) / (n + k)) if n else float(parent)
 
 
-def fit_prior(labels, k=10):
+def fit_prior(labels, k=DEFAULT_K):
     """タイプ・(タイプ,曜日)・(タイプ,DD) の集計を持つモデル。機種名は使わない。"""
     model = {"k": k, "type": {}, "weekday": {}, "dd_stats": {}, "n_type": {}, "n_weekday": {}}
     if labels is None or labels.empty:
@@ -166,7 +170,7 @@ def _bootstrap_cells(labels, cells, k, seed, B=BOOTSTRAP_B, block=BLOCK):
     return out
 
 
-def predict_month(labels, weekdays, target_month, k=10, seed=DEFAULT_SEED):
+def predict_month(labels, weekdays, target_month, k=DEFAULT_K, seed=DEFAULT_SEED):
     model = fit_prior(labels, k)
     cats = sorted(model["type"])
     tm = str(target_month).replace("-", "")
@@ -214,11 +218,15 @@ def walk_forward(
     start_month,
     end_month,
     regime_start=DEFAULT_REGIME_START,
-    k=10,
+    k=DEFAULT_K,
     all_history=False,
     seed=DEFAULT_SEED,
+    drop=(),
 ):
-    """月 t までで学習し月 t+1 を評価する。各foldの学習は評価月の前月末まで（評価月のデータは入らない）。"""
+    """月 t までで学習し月 t+1 を評価する。各foldの学習は評価月の前月末まで（評価月のデータは入らない）。
+
+    drop: 比較用に外す項。"dd"=DDセルを使わない、"weekday"=曜日セルを使わない（どの項がシグナルかを見る）。
+    """
     start_month = str(start_month).replace("-", "")[:6]
     end_month = str(end_month).replace("-", "")[:6]
     months = pd.period_range(
@@ -234,6 +242,10 @@ def walk_forward(
         if train.empty or test.empty:
             continue
         model = fit_prior(train, k)
+        if "dd" in drop:
+            model["dd_stats"] = {}
+        if "weekday" in drop:
+            model["weekday"] = {}
         test = test.copy()
         test["pred"] = [predict_cell(model, c, wd, dd) for c, wd, dd in zip(test.category, test.weekday, test.dd)]
         test["fold"] = prefix
@@ -270,8 +282,65 @@ def walk_forward(
     return {"observations": obs, "folds": folds, "bins": pd.DataFrame(bins)}
 
 
+def segment_levels(labels, boundaries=("20260907", "20260914"), seed=DEFAULT_SEED):
+    """配置替え(9/7)・機種入替(9/14)の前後で、タイプ別のラベル水準が変わったかを見る。
+
+    区間は [前の境界, 次の境界)。日数が MIN_CI_DAYS(14) 未満の区間は、ブロック長7日の再標本化が回転にしかならずCIが成り立たないので出さない。
+    """
+    edges = ["00000000", *boundaries, "99999999"]
+    rows = []
+    for category, g in labels.groupby("category"):
+        for a, b in zip(edges[:-1], edges[1:]):
+            s = g[(g.date >= a) & (g.date < b)]
+            if s.empty:
+                continue
+            days = s.date.nunique()
+            lo, hi = float("nan"), float("nan")
+            if days >= MIN_CI_DAYS:
+                lo, hi = block_bootstrap_ci(
+                    {d: x.y.to_numpy() for d, x in s.groupby("date")}, block=BLOCK, B=BOOTSTRAP_B, seed=seed
+                )
+            rows.append(
+                {
+                    "タイプ": category,
+                    "区間": f"{s.date.min()}〜{s.date.max()}",
+                    "機種日数": len(s),
+                    "日数": days,
+                    "機種数": s.machine_name.nunique(),
+                    "y平均": float(s.y.mean()),
+                    "ci_lo": lo,
+                    "ci_hi": hi,
+                    "備考": "" if days >= MIN_CI_DAYS else f"日数<{MIN_CI_DAYS}のためCIなし",
+                }
+            )
+    return pd.DataFrame(rows)
+
+
+def ablation(labels, weekdays, start_month, end_month, regime_start=DEFAULT_REGIME_START, k=DEFAULT_K):
+    """タイプ平均のみ / 曜日のみ / DDのみ / 曜日+DD で、foldごとのMSE比を並べる（どの項が効いているか）。"""
+    variants = (
+        ("タイプ平均のみ", ("dd", "weekday")),
+        ("曜日のみ", ("dd",)),
+        ("DDのみ", ("weekday",)),
+        ("曜日+DD（本体）", ()),
+    )
+    rows = []
+    for name, drop in variants:
+        out = walk_forward(labels, weekdays, start_month, end_month, regime_start, k, False, DEFAULT_SEED, drop)
+        row = {"モデル": name}
+        row.update({f"MSE比 {f['fold']}": f["mse_ratio"] for f in out["folds"]})
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
 def build(
-    asof, target_month, regime_start=DEFAULT_REGIME_START, k=10, evaluate=False, all_history=False, seed=DEFAULT_SEED
+    asof,
+    target_month,
+    regime_start=DEFAULT_REGIME_START,
+    k=DEFAULT_K,
+    evaluate=False,
+    all_history=False,
+    seed=DEFAULT_SEED,
 ):
     db = hall_db_path()
     frame = load_machine_days(db, "20250101" if all_history else regime_start, asof)
@@ -287,6 +356,10 @@ def build(
         "labels": labels,
         "predictions": pred,
         "evaluation": evaluation,
+        "segments": segment_levels(labels[labels.date >= str(regime_start)], seed=seed),
+        "ablation": ablation(labels, weekdays, "202501", asof[:6], regime_start, k)
+        if (evaluate and not all_history)
+        else None,
         "excluded": labels.attrs.get("excluded", {}),
         "seed": seed,
         "regime_start": regime_start,
@@ -311,6 +384,12 @@ def render(built):
         "",
         md_table(p),
         "",
+        "### 配置替え(9/7)・機種入替(9/14)の前後でのラベル水準",
+        "",
+        "タイプ別の y（P(設定4以上)）の平均。区間をまたいで水準が動いていれば、レジーム内の変化として事前確率の解釈に注意する。",
+        "",
+        md_table(built["segments"]),
+        "",
     ]
     ev = built.get("evaluation")
     if ev is not None:
@@ -326,6 +405,15 @@ def render(built):
             "| --- | ---: | ---: | ---: |",
         ]
         lines += [f"| {r['fold']} | {r['train_n']} | {r['test_n']} | {r['mse_ratio']:.4f} |" for r in ev["folds"]]
+        if built.get("ablation") is not None:
+            lines += [
+                "",
+                "#### どの項が効いているか（項を外した比較。MSE比は定数予測=全体平均に対する比）",
+                "",
+                "曜日のみ・DDのみ・両方を比べる。k の選択も同じ2foldで行っているので、小さな差は断定しない。",
+                "",
+                md_table(built["ablation"]),
+            ]
         if built["all_history"]:
             lines += ["", "警告: レジーム境界を無視。方法の健全性確認のみ（楽園は2026-07-06に改装済み）。"]
     return "\n".join(lines)

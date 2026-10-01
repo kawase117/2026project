@@ -662,3 +662,139 @@ def test_main_forces_utf8_stdout_so_cp932_consoles_do_not_crash(monkeypatch, cap
     assert mr.main(["layer1", "--asof", "20260930"]) == 0
     fake.flush()
     assert "出率≈100%〜".encode("utf-8") in raw.getvalue()
+
+
+def test_l3_default_k_is_30_and_wired_to_the_cli():
+    assert l3.DEFAULT_K == 30
+    parser = mr._parser()
+    assert parser.parse_args(["layer3", "--asof", "20260930", "--target-month", "202610"]).k == 30
+    assert parser.parse_args(["report", "--asof", "20260930", "--target-month", "202610", "--out", "x.md"]).k == 30
+
+
+def test_l3_walk_forward_drop_removes_dd_and_weekday_terms():
+    rng = np.random.default_rng(2)
+    rows = []
+    for ds in _days("20260801", 61):
+        dd = int(ds[6:])
+        rows.append((ds, "C", WD[_to_date(ds).weekday()], dd, 0.7 if dd % 10 == 3 else 0.3))  # DDだけに信号がある
+    labels = _labels(rows)
+    full = l3.walk_forward(labels, {}, "202609", "202609", regime_start="20260801", k=3)
+    no_dd = l3.walk_forward(labels, {}, "202609", "202609", regime_start="20260801", k=3, drop=("dd",))
+    assert full["folds"][0]["mse_ratio"] < no_dd["folds"][0]["mse_ratio"]
+    only_type = l3.walk_forward(labels, {}, "202609", "202609", regime_start="20260801", k=3, drop=("dd", "weekday"))
+    assert only_type["folds"][0]["mse_ratio"] == pytest.approx(1.0, abs=0.05)
+
+
+def test_l3_ablation_lists_every_variant_with_a_fold_column():
+    labels = _month_labels()
+    out = l3.ablation(labels, {}, "202608", "202609", regime_start="20260801", k=5)
+    assert list(out["モデル"]) == ["タイプ平均のみ", "曜日のみ", "DDのみ", "曜日+DD（本体）"]
+    assert any(c.startswith("MSE比") for c in out.columns)
+
+
+def test_l3_segment_levels_split_at_the_boundaries_without_overlap_and_skip_ci_for_short_runs():
+    rows = []
+    rng = np.random.default_rng(4)
+    for ds in _days("20260901", 30):
+        rows.append(
+            (
+                ds,
+                "C",
+                WD[_to_date(ds).weekday()],
+                int(ds[6:]),
+                float(np.clip(rng.normal(0.2 if ds < "20260907" else 0.8, 0.05), 0, 1)),
+            )
+        )
+    out = l3.segment_levels(_labels(rows), boundaries=("20260907", "20260921"))
+    assert list(out["日数"]) == [6, 14, 10] and out["機種日数"].sum() == 30
+    assert list(out["区間"])[1].startswith("20260907") and list(out["区間"])[2].startswith("20260921")
+    # CIは14日以上の区間だけ。7日ちょうどの区間で幅ゼロのCIを出さない（ブロック長と同じ日数では回転にしかならない）
+    assert out.iloc[0]["備考"] != "" and np.isnan(out.iloc[0]["ci_lo"]) and out.iloc[2]["備考"] != ""
+    assert out.iloc[1]["備考"] == "" and out.iloc[1]["ci_hi"] > out.iloc[1]["ci_lo"]
+    assert out.iloc[0]["y平均"] == pytest.approx(0.2, abs=0.05) and out.iloc[2]["y平均"] == pytest.approx(0.8, abs=0.05)
+
+
+def test_exactly_one_block_of_days_never_yields_a_zero_width_ci():
+    by_date = {f"202609{d:02d}": (float(d), 100.0) for d in range(1, 8)}
+    lo, hi = mr.block_bootstrap_ratio_ci(by_date, block=7, B=200, seed=1)
+    assert lo == hi  # 7日=1ブロックでは幅ゼロ。だから MIN_CI_DAYS 未満ではCIを出さない
+    assert mr.MIN_CI_DAYS == 14 and mr.MIN_CI_DAYS >= 2 * 7
+
+
+# ---- 層2b（予告の名指し）----
+from backtest import monthly_report_announce as an  # noqa: E402
+
+
+def _bundle(status="active", hall="楽園蒲田店", date="20260910", claims=None):
+    return {"status": status, "payload": {"hall": hall, "target_date": date, "claims": claims or []}}
+
+
+def test_named_loader_uses_only_active_same_hall_in_range_named_claims():
+    named_claims = [
+        {"type": "model_named", "machine_name": "J"},
+        {"type": "model_named_ratio", "machine_name": "K"},
+        {"type": "zentaikei_count", "n_models": 2},
+        {"type": "position_rule"},
+    ]
+    bundles = [
+        _bundle(claims=named_claims),
+        _bundle(status="withdrawn", claims=[{"type": "model_named", "machine_name": "W"}]),
+        _bundle(status="retroactive", claims=[{"type": "model_named", "machine_name": "R"}]),
+        _bundle(hall="別ホール", claims=[{"type": "model_named", "machine_name": "X"}]),
+        _bundle(date="20260601", claims=[{"type": "model_named", "machine_name": "OLD"}]),
+        _bundle(date="20261005", claims=[{"type": "model_named", "machine_name": "FUTURE"}]),
+    ]
+    got = an.load_named("楽園蒲田店", "20260706", "20260930", bundles)
+    assert set(got) == {("20260910", "J"), ("20260910", "K")}
+    assert got[("20260910", "J")] == {"model_named"}
+
+
+def _an_frame(days=8):
+    rows = []
+    for i in range(days):
+        ds = f"2026092{i}"
+        for machine, diff in (("J", 3000.0), ("K", -500.0), ("L", -200.0)):
+            for number in (1, 2):
+                rows.append(
+                    {
+                        "ds": ds,
+                        "machine_name": machine,
+                        "machine_number": number,
+                        "games_normalized": 4500.0,
+                        "diff_coins_normalized": diff,
+                        "rb_count": 10,
+                        "bb_count": 0,
+                    }
+                )
+    return pd.DataFrame(rows)
+
+
+def test_machine_day_table_labels_named_machines_and_compares_within_each_day():
+    frame = _an_frame()
+    named = {(f"2026092{i}", "J"): {"model_named"} for i in range(8)}
+    normal = frame.assign(diff_coins_normalized=0.0)  # 通常日の差枚はすべて0 → 名指しJの分位は1.0
+    table = an.machine_day_table(frame, named, {}, normal)
+    assert table["named"].sum() == 8 and set(table[table.named].machine) == {"J"} and len(table) == 24
+    assert (table[table.named].q_g == 1.0).all() and (table[~table.named].q_g < 1.0).all()
+    out = an.compare(table, perm=500, seed=1)
+    row = out[out["指標"] == "機械割pp(G>=2000)"].iloc[0]
+    assert row["差(名指し−未名指し)"] > 0 and row["比較できた日数"] == 8 and row["名指し機種×日"] == 8
+
+
+def test_announce_compare_gives_no_effect_or_p_below_five_named_machine_days():
+    frame = _an_frame(4)
+    named = {(f"2026092{i}", "J"): {"model_named"} for i in range(4)}
+    table = an.machine_day_table(frame, named, {}, frame.assign(diff_coins_normalized=0.0))
+    out = an.compare(table, perm=100, seed=1)
+    # 5件未満なら効果量・pの列自体を作らない（出さない）
+    assert "差(名指し−未名指し)" not in out.columns and "p(並べ替え)" not in out.columns
+    assert out["備考"].str.contains("未満").all()
+
+
+def test_announce_layer_never_reads_result_announcements():
+    source = inspect.getsource(an)
+    assert (
+        "external_result" not in source
+        and "RESULT_DB" not in source
+        and "analysis_results" not in source.replace("analysis_results.db", "")
+    )
