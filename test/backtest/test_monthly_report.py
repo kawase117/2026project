@@ -469,3 +469,196 @@ def test_layer2_metrics_exclude_low_game_machine_days():
     assert m.attrs["excluded_below_min_games"] == 1 and m.loc["20260901", "n_md"] == 2
     assert m.loc["20260901", "payout_pp"] == pytest.approx(100 * 400 / (3 * 4000))
     assert m.loc["20260901", "rb_per_1000g"] == pytest.approx(1000 * 10 / 4000)
+
+
+def _ref_frame():
+    low = pd.DataFrame({"games_normalized": 1500.0, "diff_coins_normalized": np.linspace(-3000, 3000, 20)})
+    high = pd.DataFrame({"games_normalized": 5000.0, "diff_coins_normalized": np.linspace(0, 10000, 20)})
+    return pd.concat([low, high], ignore_index=True)
+
+
+def test_g_stratified_rank_compares_within_the_same_g_band():
+    ref = _ref_frame()
+    high_rep = pd.DataFrame({"games_normalized": [5000.0], "diff_coins_normalized": [3000.0]})
+    raw = float((ref.diff_coins_normalized <= 3000).mean())
+    banded = l2.g_stratified_ranks(high_rep, ref)[0]
+    assert banded < raw and banded == pytest.approx(0.35, abs=0.06)
+    low_rep = pd.DataFrame({"games_normalized": [1500.0], "diff_coins_normalized": [3000.0]})
+    assert l2.g_stratified_ranks(low_rep, ref)[0] == pytest.approx(1.0)
+
+
+def test_g_stratified_rank_is_nan_when_the_band_has_too_few_reference_days():
+    ref = _ref_frame()
+    mid = pd.DataFrame({"games_normalized": [3000.0], "diff_coins_normalized": [100.0]})
+    assert np.isnan(l2.g_stratified_ranks(mid, ref)[0])
+
+
+def test_mde_grows_with_noise_and_with_the_number_of_tests_and_shrinks_with_n():
+    base = l2._mde(1.0, 10, 30, 1)
+    assert l2._mde(2.0, 10, 30, 1) == pytest.approx(2 * base)
+    assert l2._mde(1.0, 10, 30, 6) > base
+    assert l2._mde(1.0, 40, 30, 1) < base
+    assert np.isnan(l2._mde(float("nan"), 10, 30, 1)) and np.isnan(l2._pooled_sd([np.array([1.0])]))
+
+
+def _announce_frame(days=6):
+    rows = []
+    for i in range(days):
+        ds = f"2026091{i}"
+        for machine, rb, bb in (("J", 14, 0), ("K", 6, 0), ("E", 0, 9)):
+            for number in (1, 2, 3):
+                rows.append(
+                    {
+                        "ds": ds,
+                        "machine_name": machine,
+                        "machine_number": number,
+                        "games_normalized": 3000.0,
+                        "rb_count": rb,
+                        "bb_count": bb,
+                        "diff_coins_normalized": 0.0,
+                    }
+                )
+    return pd.DataFrame(rows)
+
+
+def test_announced_rb_comparison_is_per_day_and_skips_rb_empty_machines():
+    spec = lambda name, hi: {
+        "family_name": name,
+        "category": "ノーマル",
+        "judgeable": True,  # noqa: E731
+        "settings": {1: {"rb_probability": 1 / 400}, 6: {"rb_probability": 1 / 220}},
+    }
+    specs = {"j": spec("J", 1), "k": spec("K", 1), "e": spec("E", 1)}
+    announced = {(f"2026091{i}", "J"): {1, 2} for i in range(6)}
+    out = l2.announced_rb_comparison(_announce_frame(), announced, specs, perm=500, seed=1)
+    assert out["n_announced"] == 6 and out["n_unannounced"] == 6 and out["n_dates"] == 6
+    assert out["effect"] > 0 and out["mean_announced"] > out["mean_unannounced"]
+    few = l2.announced_rb_comparison(
+        _announce_frame(3), {k: v for k, v in announced.items() if k[0] < "20260913"}, specs, perm=100, seed=1
+    )
+    assert "effect" not in few
+
+
+def test_g_band_summary_reports_each_band_with_counts():
+    md = pd.DataFrame(
+        {
+            "G": [1000.0, 1500.0, 3000.0, 5000.0],
+            "G帯": [0, 0, 1, 2],
+            "差枚": [500.0, -100.0, 200.0, 2000.0],
+            "q_素": [0.9, 0.4, 0.6, 0.95],
+            "q_G帯": [0.8, np.nan, 0.5, 0.7],
+        }
+    )
+    out = l2.g_band_summary(md)
+    assert list(out["回転数帯"]) == ["G<2000", "2000<=G<4000", "G>=4000"] and list(out["台日数"]) == [2, 1, 1]
+    assert out.iloc[0]["G帯分位が計算できた台日"] == 1
+
+
+def test_holm_adjust_matches_the_textbook_example_and_keeps_order():
+    adjusted = mr.holm_adjust([0.01, 0.04, 0.03, 0.005])
+    assert adjusted == pytest.approx([0.03, 0.06, 0.06, 0.02])
+    assert mr.holm_adjust([]).size == 0
+    assert mr.holm_adjust([0.4])[0] == pytest.approx(0.4)
+    assert (mr.holm_adjust([0.5, 0.9]) <= 1.0).all()
+
+
+def _segment_frame(days, machines=("J",), rb=2, bb=1, diff=300.0, games=1000.0):
+    rows = []
+    for ds in days:
+        for name in machines:
+            rows.append(
+                {
+                    "ds": ds,
+                    "machine_name": name,
+                    "machine_number": 1,
+                    "games_normalized": games,
+                    "diff_coins_normalized": diff,
+                    "bb_count": bb,
+                    "rb_count": rb,
+                }
+            )
+    return pd.DataFrame(rows)
+
+
+def test_segments_partition_the_window_without_overlap():
+    window = [(date(2026, 9, 1) + timedelta(days=i)).strftime("%Y%m%d") for i in range(14)]
+    out = mr.build_segment_table(_segment_frame(window), window, ["20260907", "20260910"], J_SPEC)
+    assert list(out["区間"]) == ["9/1〜9/6", "9/7〜9/9", "9/10〜9/14"]
+    assert list(out["区間日数"]) == [6, 3, 5]
+    assert sum(out["区間日数"]) == len(window)
+
+
+def test_segment_boundary_date_belongs_to_the_new_segment():
+    window = [f"2026090{i}" for i in range(1, 9)]
+    out = mr.build_segment_table(_segment_frame(window), window, ["20260907"], J_SPEC)
+    assert list(out["区間日数"]) == [6, 2]
+
+
+def test_machine_absent_in_a_segment_gets_an_explicit_row():
+    window = [f"2026090{i}" for i in range(1, 9)]
+    frame = pd.concat([_segment_frame(window[:6], ("J",)), _segment_frame(window[6:], ("K",))], ignore_index=True)
+    out = mr.build_segment_table(frame, window, ["20260907"], J_SPEC)
+    absent = out[(out.machine_name == "K") & (out["区間"] == "9/1〜9/6")].iloc[0]
+    assert absent.n_machine_days == 0 and "この区間に出現なし" in absent["備考"]
+
+
+def test_segment_pooled_payout_matches_the_formula():
+    window = [f"2026090{i}" for i in range(1, 9)]
+    row = mr.build_segment_table(_segment_frame(window, diff=300.0, games=1000.0), window, [], J_SPEC).iloc[0]
+    assert row["機械割pp"] == pytest.approx(10.0)
+
+
+def test_segment_ci_is_omitted_when_fewer_than_seven_days():
+    window = [f"2026090{i}" for i in range(1, 7)]
+    row = mr.build_segment_table(_segment_frame(window), window, [], J_SPEC).iloc[0]
+    assert np.isnan(row["機械割pp_ci_lo"]) and np.isnan(row["機械割pp_ci_hi"])
+
+
+def test_segment_rb_column_empty_machine_has_no_rb_rate():
+    window = [f"2026090{i}" for i in range(1, 8)]
+    row = mr.build_segment_table(_segment_frame(window, rb=0, bb=5), window, [], J_SPEC).iloc[0]
+    assert np.isnan(row["RB確率 1/x"]) and np.isnan(row["RB回数"]) and "RB列が空" in row["備考"]
+
+
+def test_layer1_output_unchanged_without_split_dates():
+    out = mr.build_layer1(
+        _frame(days=12), "20260831", window_days=7, baseline_days=5, regime_start="20260801", specs=J_SPEC
+    )
+    assert "## 窓の分割（配置替え・機種入替の前後）" not in mr.render_layer1_markdown(out)
+
+
+def test_layer1_holm_column_only_covers_machines_without_a_hold_reason():
+    frames = []
+    for name, rb in (("J", 3), ("K", 30)):
+        f = _frame(days=40, machines=4, seed=5).assign(machine_name=name, rb_count=rb)
+        frames.append(f)
+    specs = {n: {**J_SPEC["j"], "family_name": n} for n in ("j", "k")}
+    out = mr.build_layer1(
+        pd.concat(frames, ignore_index=True),
+        "20260928",
+        window_days=28,
+        baseline_days=10,
+        regime_start="20260801",
+        specs=specs,
+        first_seen={"J": "20250301", "K": "20250301"},
+        db_min_date="20250101",
+    )
+    assert "RB_p(Holm補正)" in out.columns
+    ok = out[out["判定保留理由"] == ""]
+    assert ok["RB_p(Holm補正)"].notna().all() and (ok["RB_p(Holm補正)"] >= ok["RB_p"]).all()
+
+
+def test_main_forces_utf8_stdout_so_cp932_consoles_do_not_crash(monkeypatch, capsys):
+    import io
+
+    class Cp932Stdout(io.TextIOWrapper):
+        pass
+
+    raw = io.BytesIO()
+    fake = Cp932Stdout(raw, encoding="cp932")
+    monkeypatch.setattr("sys.stdout", fake)
+    monkeypatch.setattr(mr, "run_layer1", lambda args: pd.DataFrame())
+    monkeypatch.setattr(mr, "render_layer1_markdown", lambda df: "出率≈100%〜")
+    assert mr.main(["layer1", "--asof", "20260930"]) == 0
+    fake.flush()
+    assert "出率≈100%〜".encode("utf-8") in raw.getvalue()

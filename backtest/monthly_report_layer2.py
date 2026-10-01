@@ -17,7 +17,9 @@ import sqlite3
 import numpy as np
 import pandas as pd
 
-from backtest.bonus_specs import JUDGEABLE_CATEGORIES, find_spec, load_specs
+from scipy import stats
+
+from backtest.bonus_specs import JUDGEABLE_CATEGORIES, MIN_GAMES_FOR_JUDGEMENT, find_spec, load_specs
 from backtest.event_days import RESULT_DB, RESULT_LINKS_LEDGER, _latest_link_rows
 from backtest.monthly_report import (
     DEFAULT_HALL,
@@ -27,11 +29,16 @@ from backtest.monthly_report import (
     load_machine_days,
     load_weekdays,
     md_table,
+    rb_posterior,
     wilson,
 )
 
 MIN_EVENT_DAYS = 5
 BOOTSTRAP_B = 2000
+# 回転数帯（G/台日）。大量の差枚でも回転数が少ない台日は、低設定のマグレの可能性が高いので帯を分けて見る
+G_BINS = (2000, 4000)
+G_BIN_LABELS = ("G<2000", "2000<=G<4000", "G>=4000")
+POWER_Z = 0.8416  # 検出力80%
 # (表示名, metricsの列名)。検定対象はこの3本。avg_games は交絡の併記のみで検定しない。
 TESTED_METRICS = (("台日勝率", "win_rate"), ("機械割pp", "payout_pp"), ("RB/1000G(判別可機種)", "rb_per_1000g"))
 COVARIATE = ("平均G/台日", "avg_games")
@@ -105,6 +112,22 @@ def stratified_effect_ci(strata, B=BOOTSTRAP_B, seed=20261001):
     return tuple(np.percentile(boot, [2.5, 97.5]))
 
 
+def _pooled_sd(groups):
+    """曜日内の通常日のばらつき（群内平方和をプールしたSD）。自由度が足りなければnan。"""
+    dof = sum(max(len(g) - 1, 0) for g in groups)
+    if dof <= 0:
+        return float("nan")
+    return float(np.sqrt(sum(float(np.var(g, ddof=1)) * (len(g) - 1) for g in groups if len(g) > 1) / dof))
+
+
+def _mde(sd, n_event, n_normal, m_tests):
+    """検出可能な最小差の目安（両側・Bonferroni補正α=0.05/m、検出力80%）。正規近似なので概算。"""
+    if not np.isfinite(sd) or n_event <= 0 or n_normal <= 0:
+        return float("nan")
+    z_alpha = float(stats.norm.ppf(1 - 0.05 / (2 * max(m_tests, 1))))
+    return float((z_alpha + POWER_Z) * sd * np.sqrt(1.0 / n_event + 1.0 / n_normal))
+
+
 def _group_by_kind(records):
     kinds = {}
     for r in records:
@@ -136,6 +159,10 @@ def analyse_events(metrics, weekdays, records, regime_start, asof, perm=10000, s
             if n_ev:
                 row["イベント日平均"] = sum(len(ev) * ev.mean() for ev, _ in strata) / n_ev
                 row["同曜日通常日平均"] = sum(len(ev) * nm.mean() for ev, nm in strata) / n_ev
+                if col != COVARIATE[1]:
+                    sd = _pooled_sd([nm for _, nm in strata])
+                    row["通常日SD(曜日内)"] = sd
+                    row["MDE(検出可能な最小差)"] = _mde(sd, n_ev, n_nm, m_tests)
             if (col != COVARIATE[1]) and len(dates) >= MIN_EVENT_DAYS and n_ev >= MIN_EVENT_DAYS:
                 t_obs, p = stratified_perm_test(strata, perm, seed + 100 * ki + mi)
                 lo, hi = stratified_effect_ci(strata, seed=seed + 100 * ki + mi)
@@ -186,23 +213,70 @@ def _result_rows(analysis_db, report_id, business_date):
     return report, machines
 
 
+def _g_band(games):
+    return np.digitize(np.asarray(games, float), G_BINS)
+
+
+def g_stratified_ranks(rep, ref, min_ref=10):
+    """発表対象の各台日が、同機種・同じ回転数帯の通常日の差枚分布のどの分位にあるか。
+
+    差枚の大きさは回転数に比例して散らばるので、回転数の少ない台日の大差枚は偶然で出やすい。
+    回転数帯を揃えて比べれば、「2000G以下の大量差枚=マグレ寄り」が分位に織り込まれる。
+    比較台日が min_ref 未満の帯は nan（足切りでなく「比べられない」と明示する）。
+    """
+    ref_band, ref_diff = _g_band(ref.games_normalized), ref.diff_coins_normalized.to_numpy(float)
+    out = []
+    for g, x in zip(_g_band(rep.games_normalized), rep.diff_coins_normalized.to_numpy(float)):
+        pool = ref_diff[ref_band == g]
+        out.append(float((pool <= x).mean()) if len(pool) >= min_ref else float("nan"))
+    return np.array(out)
+
+
+def g_band_summary(md_detail):
+    """発表対象の台日を回転数帯で分け、差枚の素の分位と、回転数帯を揃えた分位を並べる。"""
+    if md_detail.empty:
+        return pd.DataFrame()
+    rows = []
+    for band, g in md_detail.groupby("G帯", sort=True):
+        wins = int((g["差枚"] > 0).sum())
+        lo, hi = wilson(wins, len(g))
+        rows.append(
+            {
+                "回転数帯": G_BIN_LABELS[int(band)],
+                "台日数": len(g),
+                "勝率": wins / len(g),
+                "勝率_ci_lo": lo,
+                "勝率_ci_hi": hi,
+                "機械割pp": 100 * g["差枚"].sum() / (3 * g["G"].sum()),
+                "差枚中央値": float(g["差枚"].median()),
+                "素の通常日分位(中央値)": float(g["q_素"].median()),
+                "G帯を揃えた分位(中央値)": float(g["q_G帯"].median()) if g["q_G帯"].notna().any() else float("nan"),
+                "G帯分位が計算できた台日": int(g["q_G帯"].notna().sum()),
+            }
+        )
+    return pd.DataFrame(rows)
+
+
 def result_section(frame, records, regime_start, asof, analysis_db=RESULT_DB, links_path=RESULT_LINKS_LEDGER):
-    """linkedの結果発表について、名指し機種の当日実績を同機種の通常日分布と並べる（足切りしない）。"""
+    """linkedの結果発表について、名指し機種の当日実績を同機種の通常日分布と並べる（足切りしない）。
+
+    戻り値: (突き合わせ表, 未確認日の表, announced{(日付,機種):台番号の集合}, 発表対象の台日明細)
+    """
     latest = {k: v for k, v in _latest_link_rows(links_path).items() if k[0] == DEFAULT_HALL}
     event_dates = {str(r["date"]) for r in records}
     kind_by_date = {}
     for r in records:
         kind_by_date.setdefault(str(r["date"]), []).append(r.get("kind") or "(不明)")
     normal_frame = frame[(frame.ds >= regime_start) & (frame.ds <= asof) & (~frame.ds.isin(event_dates))]
-    rows, status_rows = [], []
+    rows, status_rows, announced, md_rows = [], [], {}, []
     for (_, bdate), link in sorted(latest.items(), key=lambda kv: kv[0][1]):
         status = link.get("status")
         if bdate < regime_start or bdate > asof:
             status_rows.append(
                 {
                     "date": bdate,
-                    "status": status,
-                    "kind": "/".join(kind_by_date.get(bdate, [])),
+                    "status": f"{status}（期間外）",
+                    "kind": " + ".join(kind_by_date.get(bdate, [])),
                     "備考": "レジーム前または期間外（比較対象外）",
                 }
             )
@@ -212,7 +286,7 @@ def result_section(frame, records, regime_start, asof, analysis_db=RESULT_DB, li
                 {
                     "date": bdate,
                     "status": status,
-                    "kind": "/".join(kind_by_date.get(bdate, [])),
+                    "kind": " + ".join(kind_by_date.get(bdate, [])),
                     "備考": "発表が未確認（「入っていなかった」ことは意味しない）",
                 }
             )
@@ -232,7 +306,7 @@ def result_section(frame, records, regime_start, asof, analysis_db=RESULT_DB, li
                 rows.append(
                     {
                         "date": bdate,
-                        "kind": "/".join(kind_by_date.get(bdate, [])),
+                        "kind": " + ".join(kind_by_date.get(bdate, [])),
                         "機種": name,
                         "発表台数": len(info["numbers"]),
                         "備考": "当日の台日データに該当なし",
@@ -240,10 +314,27 @@ def result_section(frame, records, regime_start, asof, analysis_db=RESULT_DB, li
                 )
                 continue
             diff, ref_diff = rep.diff_coins_normalized.to_numpy(float), ref.diff_coins_normalized.to_numpy(float)
+            announced[(bdate, name)] = set(info["numbers"])
+            q_g = g_stratified_ranks(rep, ref)
+            q_raw = (
+                np.array([float((ref_diff <= x).mean()) for x in diff]) if len(ref_diff) else np.full(len(diff), np.nan)
+            )
+            for g_val, d_val, qr, qg in zip(rep.games_normalized.to_numpy(float), diff, q_raw, q_g):
+                md_rows.append(
+                    {
+                        "date": bdate,
+                        "機種": name,
+                        "G": g_val,
+                        "G帯": int(_g_band([g_val])[0]),
+                        "差枚": d_val,
+                        "q_素": qr,
+                        "q_G帯": qg,
+                    }
+                )
             lo, hi = wilson(int((diff > 0).sum()), len(diff))
             row = {
                 "date": bdate,
-                "kind": "/".join(kind_by_date.get(bdate, [])),
+                "kind": " + ".join(kind_by_date.get(bdate, [])),
                 "機種": name,
                 "発表の粒度": "/".join(sorted(info["gran"])),
                 "発表台数": len(info["numbers"]),
@@ -256,6 +347,11 @@ def result_section(frame, records, regime_start, asof, analysis_db=RESULT_DB, li
                 "実績_勝率_ci_lo": lo,
                 "実績_勝率_ci_hi": hi,
                 "実績_機械割pp": 100 * rep.diff_coins_normalized.sum() / (3 * rep.games_normalized.sum()),
+                "実績_平均G/台": float(rep.games_normalized.mean()),
+                "G帯を揃えた分位(台日の中央値)": float(np.nanmedian(q_g)) if np.isfinite(q_g).any() else float("nan"),
+                "回転数注記": "平均G<2000: 大量差枚でも低設定のマグレの可能性"
+                if rep.games_normalized.mean() < 2000
+                else "",
             }
             if len(ref_diff):
                 row.update(
@@ -272,7 +368,53 @@ def result_section(frame, records, regime_start, asof, analysis_db=RESULT_DB, li
             else:
                 row["備考"] = "通常日の比較分布無し"
             rows.append(row)
-    return pd.DataFrame(rows), pd.DataFrame(status_rows)
+    return pd.DataFrame(rows), pd.DataFrame(status_rows), announced, pd.DataFrame(md_rows)
+
+
+def announced_rb_comparison(frame, announced, specs, perm=10000, seed=20261001):
+    """発表で名指しされた判別可能機種と、同日の未発表の判別可能機種を、RBの事後確率で比べる。
+
+    発表は結果を見て選ばれる（事後選択）。ノーマル/BT/A+ATはボーナス回数が出玉に直結するので、
+    差枚で選ばれた機種はRBも高く出る。この差は発表の選択の強さを強く含み、「店が設定を入れた」証拠にはならない
+    （選択を含んだ上限の目安）。
+    比較は日ごとに層別し、同じ日の中で発表/未発表ラベルを入れ替える並べ替え検定。
+    """
+    strata, rows = [], []
+    for ds in sorted({d for d, _ in announced}):
+        day = frame[frame.ds == ds]
+        ya, yb = [], []
+        for name, g in day.groupby("machine_name"):
+            spec = find_spec(name, specs)
+            if not (spec and spec.get("judgeable") and spec.get("category") in JUDGEABLE_CATEGORIES):
+                continue
+            is_announced = (ds, name) in announced
+            if is_announced:
+                g = g[g.machine_number.isin(announced[(ds, name)])]
+            games, rb = float(g.games_normalized.sum()), float(g.rb_count.sum())
+            if games < MIN_GAMES_FOR_JUDGEMENT or (rb == 0 and float(g.bb_count.sum()) > 0):
+                continue
+            post = rb_posterior(spec, games, rb)
+            if post:
+                (ya if is_announced else yb).append(sum(v for s, v in post.items() if s >= 4))
+        if ya and yb:
+            strata.append((np.array(ya), np.array(yb)))
+        rows.append({"date": ds, "発表機種数": len(ya), "未発表機種数": len(yb)})
+    n_a, n_b = sum(len(a) for a, _ in strata), sum(len(b) for _, b in strata)
+    out = {"n_announced": n_a, "n_unannounced": n_b, "n_dates": len(strata), "by_date": pd.DataFrame(rows)}
+    if n_a >= MIN_EVENT_DAYS:
+        effect, p = stratified_perm_test(strata, perm, seed)
+        lo, hi = stratified_effect_ci(strata, seed=seed)
+        out.update(
+            {
+                "mean_announced": sum(len(a) * a.mean() for a, _ in strata) / n_a,
+                "mean_unannounced": sum(len(a) * b.mean() for a, b in strata) / n_a,
+                "effect": effect,
+                "ci_lo": lo,
+                "ci_hi": hi,
+                "p": p,
+            }
+        )
+    return out
 
 
 def build(asof, regime_start, min_games=500, perm=10000, seed=20261001):
@@ -283,8 +425,37 @@ def build(asof, regime_start, min_games=500, perm=10000, seed=20261001):
     weekdays = load_weekdays(db)
     records = hall_event_records()
     analysis = analyse_events(metrics, weekdays, records, regime_start, asof, perm, seed)
-    results, unconfirmed = result_section(frame, records, regime_start, asof)
-    return {"analysis": analysis, "results": results, "unconfirmed": unconfirmed, "metrics": metrics}
+    results, unconfirmed, announced, md_detail = result_section(frame, records, regime_start, asof)
+    return {
+        "analysis": analysis,
+        "results": results,
+        "unconfirmed": unconfirmed,
+        "metrics": metrics,
+        "g_summary": g_band_summary(md_detail),
+        "rb_comparison": announced_rb_comparison(frame, announced, specs, perm, seed),
+    }
+
+
+def _render_rb_comparison(cmp):
+    lines = [
+        "### 発表された判別可能機種 vs 同日の未発表機種（RBの事後確率 P(設定4以上)）",
+        "",
+        "発表は結果を見て選ばれる（事後選択）。ノーマル/BT/A+ATはボーナス回数が出玉に直結するので、差枚で選ばれた機種はRBも高く出る。"
+        "したがってこの差は「発表の選択の強さ」を強く含み、「店が設定を入れた」証拠にはならない（選択を含んだ上限の目安）。"
+        "店の投入を測るには、発表前に決まっている情報（予告）との突き合わせが要る。"
+        "同じ日の中で発表/未発表ラベルを入れ替える並べ替え検定（日で層別）。",
+        "",
+        f"- 発表機種×日 n={cmp['n_announced']}、未発表機種×日 n={cmp['n_unannounced']}、比較できた日数={cmp['n_dates']}"
+        "（合計2000G未満、RB列が空の機種は除く）",
+    ]
+    if "effect" in cmp:
+        lines.append(
+            f"- P(設定4以上) 発表 {cmp['mean_announced']:.3f} / 未発表 {cmp['mean_unannounced']:.3f}、"
+            f"差 {cmp['effect']:+.3f} [95%CI {cmp['ci_lo']:+.3f}, {cmp['ci_hi']:+.3f}]、p(並べ替え)={cmp['p']:.3f}"
+        )
+    else:
+        lines.append(f"- 発表機種×日が{MIN_EVENT_DAYS}未満のため、差とpは出さない。")
+    return lines + [""]
 
 
 def render(built, asof, regime_start, min_games, perm, seed):
@@ -317,6 +488,19 @@ def render(built, asof, regime_start, min_games, perm, seed):
         "## 結果発表との突き合わせ（記述のみ・足切りしない）",
         "",
         "公表は店に都合のよい選択でもある。名指しされた機種の当日実績を、同機種の通常日(レジーム内)の分布と並べる。",
+        "",
+        "### 回転数帯で見る（大量差枚でも回転数が少なければ、低設定のマグレの可能性が高い）",
+        "",
+        "差枚の大きさは回転数に比例して散らばるので、素の分位は回転数の少ない台日の大差枚を過大評価する。"
+        "「G帯を揃えた分位」は同機種・同じ回転数帯の通常日と比べる（帯は G<2000 / 2000〜3999 / 4000以上）。"
+        "素の分位との差が、回転数の影響の大きさ。",
+        "",
+        md_table(built["g_summary"]),
+        "",
+        *_render_rb_comparison(built["rb_comparison"]),
+        "### 発表機種ごとの表",
+        "",
+        "kind の「A + B」は、同じ日に別種のイベントが重なっていることを示す（kind ではなく日付の属性）。",
         "",
         md_table(built["results"]),
         "",

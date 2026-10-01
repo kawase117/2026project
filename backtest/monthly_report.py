@@ -12,6 +12,7 @@ import argparse
 import json
 import math
 import sqlite3
+import sys
 from contextlib import closing
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -90,6 +91,20 @@ def block_bootstrap_ratio_ci(by_date, scale=1.0, block=7, B=2000, seed=DEFAULT_S
     idx = ((starts[:, :, None] + np.arange(block)[None, None, :]) % m).reshape(int(B), -1)[:, :m]
     stat = scale * num[idx].sum(axis=1) / den[idx].sum(axis=1)
     return tuple(np.percentile(stat, [2.5, 97.5]))
+
+
+def holm_adjust(pvalues):
+    """Holm 法の補正p（step-down）。入力の順序のまま返す。"""
+    p = np.asarray(pvalues, float)
+    if p.size == 0:
+        return p
+    order = np.argsort(p)
+    m = len(p)
+    adjusted = np.minimum(1.0, (m - np.arange(m)) * p[order])
+    adjusted = np.maximum.accumulate(adjusted)
+    out = np.empty(m)
+    out[order] = adjusted
+    return out
 
 
 def _ro_connect(db_path):
@@ -378,6 +393,14 @@ def build_layer1(
         row["備考"] = " / ".join(notes)
         rows.append(row)
     out = pd.DataFrame(rows)
+    if not out.empty:
+        # 多重検定: 判定保留でない機種どうしで Holm 補正（RB検定は判別可能機種、AT_bonus検定はゲート通過機種）
+        held = out["判定保留理由"].fillna("") != ""
+        for p_col, adj_col in (("RB_p", "RB_p(Holm補正)"), ("AT_bonus_p", "AT_bonus_p(Holm補正)")):
+            if p_col in out.columns:
+                eligible = out[p_col].notna() & ~held
+                out[adj_col] = np.nan
+                out.loc[eligible, adj_col] = holm_adjust(out.loc[eligible, p_col].to_numpy(float))
     out.attrs.update(
         {
             "excluded": excluded,
@@ -388,6 +411,89 @@ def build_layer1(
         }
     )
     return out
+
+
+def build_segment_table(frame, window_dates, boundaries=("20260907", "20260914"), specs=None):
+    """窓を境界日で分割し、機種×区間の集計を返す。"""
+    specs = load_specs() if specs is None else specs
+    window_dates = [str(d) for d in window_dates]
+    if not window_dates:
+        return pd.DataFrame()
+    window_set = set(window_dates)
+    dates = sorted(window_set)
+    starts = sorted({str(d) for d in boundaries if str(d) in window_set})
+    interval_starts = [dates[0], *starts]
+    intervals = []
+    for i, start in enumerate(interval_starts):
+        end = interval_starts[i + 1] if i + 1 < len(interval_starts) else dates[-1]
+        end_date = (
+            datetime.strptime(end, "%Y%m%d").date() - timedelta(days=1)
+            if end != dates[-1]
+            else datetime.strptime(end, "%Y%m%d").date()
+        )
+        start_date = datetime.strptime(start, "%Y%m%d").date()
+        if start_date > end_date:
+            continue
+        interval_dates = [d for d in dates if start <= d <= end_date.strftime("%Y%m%d")]
+        if interval_dates:
+            intervals.append((interval_dates, f"{start_date.month}/{start_date.day}〜{end_date.month}/{end_date.day}"))
+    d = frame.copy()
+    d["ds"] = d["ds"].astype(str) if "ds" in d.columns else d["date"].astype(str)
+    d = d[d["ds"].isin(window_set) & (pd.to_numeric(d["games_normalized"], errors="coerce") > 0)].copy()
+    for col in ("games_normalized", "diff_coins_normalized", "bb_count", "rb_count"):
+        d[col] = pd.to_numeric(d[col], errors="coerce").fillna(0)
+    names = sorted(d["machine_name"].dropna().astype(str).unique())
+    rows = []
+    for interval_dates, label in intervals:
+        part_dates = set(interval_dates)
+        for name in names:
+            current = d[(d["machine_name"].astype(str) == name) & d["ds"].isin(part_dates)]
+            spec = find_spec(name, specs)
+            category = spec["category"] if spec else "マスター無し"
+            present_days = sorted(current["ds"].unique())
+            total_g = float(current["games_normalized"].sum())
+            total_diff = float(current["diff_coins_normalized"].sum())
+            n_days = len(present_days)
+            by_date = {
+                ds: (float(g["diff_coins_normalized"].sum()), float(3 * g["games_normalized"].sum()))
+                for ds, g in current.groupby("ds")
+            }
+            ci = (float("nan"), float("nan"))
+            notes = []
+            if n_days == 0:
+                notes.append("この区間に出現なし（設置なし・入替の可能性）")
+            elif n_days < 7:
+                notes.append("日数<7のためCIなし")
+            else:
+                ci = block_bootstrap_ratio_ci(by_date, scale=100, seed=DEFAULT_SEED)
+            rb = float(current["rb_count"].sum())
+            bb = float(current["bb_count"].sum())
+            rb_empty = spec and spec.get("judgeable") and category in JUDGEABLE_CATEGORIES and rb == 0 and bb > 0
+            if rb_empty:
+                notes.append("RB列が空")
+            row = {
+                "machine_name": name,
+                "category": category,
+                "区間": label,
+                "区間日数": n_days,
+                "n_machines": int(current.groupby("ds")["machine_number"].nunique().max()) if n_days else 0,
+                "n_machine_days": int(len(current)),
+                "G合計": total_g if n_days else 0.0,
+                "平均G/台日": total_g / len(current) if len(current) else float("nan"),
+                "機械割pp": 100 * total_diff / (3 * total_g) if total_g > 0 else float("nan"),
+                "機械割pp_ci_lo": ci[0],
+                "機械割pp_ci_hi": ci[1],
+                "勝率": float((current["diff_coins_normalized"] > 0).mean()) if len(current) else float("nan"),
+                "RB確率 1/x": (total_g / rb if rb else float("nan"))
+                if spec and spec.get("judgeable") and category in JUDGEABLE_CATEGORIES and not rb_empty
+                else float("nan"),
+                "RB回数": rb
+                if spec and spec.get("judgeable") and category in JUDGEABLE_CATEGORIES and not rb_empty
+                else float("nan"),
+                "備考": " / ".join(notes),
+            }
+            rows.append(row)
+    return pd.DataFrame(rows)
 
 
 _DECIMALS = [
@@ -429,11 +535,18 @@ def _merge_ci(part):
         ("機械割pp", "機械割pp_ci_lo", "機械割pp_ci_hi"),
         ("差枚平均/台日", "差枚_ci_lo", "差枚_ci_hi"),
         ("勝率", "勝率_ci_lo", "勝率_ci_hi"),
+        ("機械割pp", "機械割pp_ci_lo", "機械割pp_ci_hi"),
         ("r", "r_ci_lo", "r_ci_hi"),
     ):
         if base in part.columns and lo in part.columns:
             part[base] = [
-                "" if pd.isna(v) else f"{_fmt(base, v)} [{_fmt(base, a)}, {_fmt(base, b)}]"
+                ""
+                if pd.isna(v)
+                else (
+                    _fmt(base, v)
+                    if base == "機械割pp" and pd.isna(a) and pd.isna(b)
+                    else f"{_fmt(base, v)} [{_fmt(base, a)}, {_fmt(base, b)}]"
+                )
                 for v, a, b in zip(part[base], part[lo], part[hi])
             ]
             part = part.drop(columns=[lo, hi])
@@ -483,6 +596,20 @@ def render_layer1_markdown(df):
     for category in ("ノーマル", "BT", "A+AT", "AT", "マスター無し"):
         lines += [f"## {category}", "", md_table(df[df.category == category]) if not df.empty else "該当なし", ""]
     lines += ["## excluded（黙って落とさない）", ""]
+    segments = df.attrs.get("segments")
+    if segments is not None:
+        lines += [
+            "## 窓の分割（配置替え・機種入替の前後）",
+            "",
+            "窓内の 2026-09-07 配置替え・2026-09-14 機種入替の前後で、同じ機種の G・機械割・RB確率が変わっていないかを見る。区間ごとの日数が少ないので、CIは日数7以上のときだけ出す",
+            "",
+            md_table(segments[segments["n_machine_days"] > 0]),
+            "",
+            "### 出現なしの区間",
+            "",
+            md_table(segments[segments["n_machine_days"] == 0]),
+            "",
+        ]
     if excluded:
         lines += ["| machine_name | reason | n |", "| --- | --- | --- |"]
         lines += [f"| {x.get('machine_name', '')} | {x.get('reason', '')} | {x.get('n', '')} |" for x in excluded]
@@ -498,7 +625,7 @@ def run_layer1(args):
     first_seen, db_min = load_first_seen(db_path)
     start = min(period_dates(args.asof, args.window_days, args.baseline_days, args.regime_start)[1] or [args.asof])
     frame = frame[(frame.ds >= start) & (frame.ds <= args.asof)]
-    return build_layer1(
+    result = build_layer1(
         frame,
         args.asof,
         args.window_days,
@@ -509,6 +636,11 @@ def run_layer1(args):
         first_seen=first_seen,
         db_min_date=db_min,
     )
+    split_dates = getattr(args, "split_dates", None)
+    if split_dates:
+        boundaries = [x.strip() for x in split_dates.split(",") if x.strip()]
+        result.attrs["segments"] = build_segment_table(frame, result.attrs["window_dates"], boundaries, load_specs())
+    return result
 
 
 def hall_event_dates_cached():
@@ -525,6 +657,7 @@ def _parser():
     p.add_argument("--regime-start", default=DEFAULT_REGIME_START)
     p.add_argument("--format", choices=("md", "json", "csv"), default="md")
     p.add_argument("--seed", type=int, default=DEFAULT_SEED)
+    p.add_argument("--split-dates", default=None)
     p2 = sub.add_parser("layer2")
     p2.add_argument("--asof", required=True)
     p2.add_argument("--regime-start", default=DEFAULT_REGIME_START)
@@ -556,6 +689,9 @@ def _parser():
 
 
 def main(argv=None):
+    # Windowsの既定コンソール(cp932)では「≈」「〜」などで落ちるので、標準出力はUTF-8に固定する
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
     args = _parser().parse_args(argv)
     if args.command == "layer2":
         from backtest import monthly_report_layer2 as layer2
@@ -577,6 +713,8 @@ def main(argv=None):
             baseline_days=args.baseline_days,
             regime_start=args.regime_start,
             seed=args.seed,
+            # 窓内の既知の変化点（9/7 配置替え・9/14 機種入替）で分けた再集計を、レポートでは既定で付ける
+            split_dates="20260907,20260914",
         )
         l1 = render_layer1_markdown(run_layer1(layer1_args))
         l2_args = argparse.Namespace(
@@ -622,7 +760,12 @@ def main(argv=None):
     if args.format == "json":
         print(
             json.dumps(
-                {"rows": result.to_dict("records"), "excluded": result.attrs["excluded"], "seed": args.seed},
+                {
+                    "rows": result.to_dict("records"),
+                    "segments": result.attrs.get("segments", pd.DataFrame()).to_dict("records"),
+                    "excluded": result.attrs["excluded"],
+                    "seed": args.seed,
+                },
                 ensure_ascii=False,
                 indent=2,
                 default=str,
