@@ -1,0 +1,25 @@
+---
+id: rb-column-empty-posterior-collapse
+trigger: "ノーマル・BT・A+AT機のRB確率から設定の事後確率を出すとき。RB確率が inf や極端に低い、P(設定4以上)が0.000に張り付く機種が出たとき。機種タイプ別の平均を作るとき"
+confidence: 0.85
+domain: setting-estimation
+source: monthly-report-layer1-layer3-review-20261002
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# RB列が空の機種ではRB単独の事後確率が0に張り付き、タイプ平均を歪める
+
+## 背景
+楽園蒲田の月次レポート（backtest/monthly_report.py）の試作で、交響詩篇エウレカセブン（A+AT・25台）や喰霊などが
+`RB確率 1/x = inf`、P(設定4以上)=0.000 になった。ボーナスが bb_count 側にだけ入る機種で、rb_count が常に0のため。
+RB単独の事後確率（bonus_specs.posterior に bb=None を渡す方式）は「設定1に確定」のように見え、誤読を招く。
+層3のラベルにも混ざり、A+AT全体の平均が約0.27→0.34に動いた（1193 機種×日が影響）。ノーマル機はRB、AT機はBB+RBという
+既存の扱いは、機種によって bb 側・rb 側のどちらに入るかが違う、という bonus_rate.py の注意と同じ根。
+
+## アクション
+- RB単独で事後確率を出す前に、その機種の rb_count 合計が0で bb_count 合計が正でないかを確認する。該当するなら事後確率を出さず「RB列が空」と明記する。
+- 機種タイプ別の平均・事前確率を作るときは、rb 側が空の機種を先に除外して、除外件数を出力に残す。
+- 「P=0.000」「inf」が出たら、設定が低いと読む前に列の入り方を疑う。
+
+## 例
+backtest/monthly_report.py の build_layer1（rb_column_empty）と monthly_report_layer3.py の make_labels（rb_empty）にガードがある。
