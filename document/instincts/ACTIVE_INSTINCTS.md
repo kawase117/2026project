@@ -1,6 +1,6 @@
 # ACTIVE_INSTINCTS
 
-- generated_at: 2026-10-02T07:50:30+09:00
+- generated_at: 2026-10-02T08:23:26+09:00
 - compiler_version: 1.3.0
 - source_dir: `C:/Users/apto117/Documents/pachinko-analyzer/src/2026project/document/instincts`
 - total_records_scanned: 1633

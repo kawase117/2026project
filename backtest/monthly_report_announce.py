@@ -139,7 +139,17 @@ def build(asof, regime_start, perm=10000, seed=20261001):
     unmatched = sorted(set(named) - present)
     overall = compare(table, perm, seed) if len(table) else pd.DataFrame()
     by_claim = {c: compare(table, perm, seed + 7, claim=c) for c in NAMED_TYPES} if len(table) else {}
-    return {"named": named, "table": table, "overall": overall, "by_claim": by_claim, "unmatched": unmatched}
+    from backtest import monthly_report_announce_content as content
+
+    content_md = content.run_content(frame, None, load_specs(), normal_frame, regime_start, asof, perm, seed)
+    return {
+        "named": named,
+        "table": table,
+        "overall": overall,
+        "by_claim": by_claim,
+        "unmatched": unmatched,
+        "content_md": content_md,
+    }
 
 
 def render(built, asof, regime_start, perm, seed):
@@ -171,6 +181,8 @@ def render(built, asof, regime_start, perm, seed):
     lines += ["## 名指し機種×日の明細（機種×日）", "", md_table(table[table["named"]].drop(columns=["named"])), ""]
     if built["unmatched"]:
         lines += ["### 当日のDBに該当しない名指し", "", "- " + "、".join(f"{d} {m}" for d, m in built["unmatched"])]
+    if built.get("content_md"):
+        lines += ["", built["content_md"]]
     return "\n".join(lines)
 
 

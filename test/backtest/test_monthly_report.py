@@ -798,3 +798,134 @@ def test_announce_layer_never_reads_result_announcements():
         and "RESULT_DB" not in source
         and "analysis_results" not in source.replace("analysis_results.db", "")
     )
+
+
+# ---- 層2b-内容（予告の中身）----
+from backtest import monthly_report_announce_content as ac  # noqa: E402
+
+
+def _content_bundle(claims, status="active", date="20260910", hall="楽園蒲田店", account="kawasakislot"):
+    return {
+        "status": status,
+        "payload": {"hall": hall, "target_date": date, "claims": claims, "source": {"account": account}},
+    }
+
+
+def test_position_claims_parse_digits_and_segments_and_skip_inactive_bundles():
+    claims = [
+        {"type": "position_rule", "field": "last_digit", "values": ["7", 5], "segment": "JUG"},
+        {"type": "position_rule", "field": "rank_from_min", "values": [1]},
+        {"type": "position_rule", "field": "last_digit", "values": []},
+        {"type": "model_named", "machine_name": "J"},
+    ]
+    bundles = [_content_bundle(claims), _content_bundle(claims, status="withdrawn"), _content_bundle(claims, hall="別")]
+    got = ac.load_position_claims("楽園蒲田店", "20260706", "20260930", bundles)
+    assert len(got) == 1 and got[0]["digits"] == {5, 7} and got[0]["segment"] == "JUG" and got[0]["date"] == "20260910"
+
+
+def test_inventory_counts_claim_types_dates_and_accounts():
+    bundles = [
+        _content_bundle([{"type": "model_named", "machine_name": "J"}, {"type": "zentaikei_count"}]),
+        _content_bundle([{"type": "model_named", "machine_name": "K"}], date="20260911", account="minnade777judge"),
+    ]
+    inv = ac.inventory("楽園蒲田店", "20260706", "20260930", bundles).set_index("請求の種類")
+    assert inv.loc["model_named", "件数"] == 2 and inv.loc["model_named", "日数"] == 2
+    assert "minnade777judge" in inv.loc["model_named", "アカウント"] and inv.loc["zentaikei_count", "件数"] == 1
+
+
+def _crowd_tai(real_effect=0.0, days=30, seed=0):
+    rng = np.random.default_rng(seed)
+    rows = []
+    for d in range(days):
+        ds = f"2026{(d // 28) + 8:02d}{(d % 28) + 1:02d}"
+        for number in range(20):
+            targeted = number % 10 == 7
+            # 回転数帯: 指定末尾の台は人が集まって高い帯(3)に偏る。その他の台は0〜3に散らばる（帯3にも数台いる）
+            band = 3 if targeted or number % 10 == 3 else int(rng.integers(0, 3))
+            rate = 2.0 + 0.5 * band + (real_effect if targeted else 0.0) + rng.normal(0, 0.05)
+            rows.append(
+                {
+                    "date": ds,
+                    "machine": "J",
+                    "number": number,
+                    "digit": number % 10,
+                    "q_g": 0.5,
+                    "y": np.nan,
+                    "games": 2000.0 * (band + 1),
+                    "gband": band,
+                    "rb_rate": rate,
+                }
+            )
+    return pd.DataFrame(rows)
+
+
+def _claims_for(tai):
+    return [{"claim_id": f"{d}#0", "date": d, "digits": {7}, "segment": None} for d in sorted(tai.date.unique())]
+
+
+def test_matching_on_games_band_removes_the_crowding_confound_and_keeps_a_real_effect():
+    tai = _crowd_tai()
+    claims = _claims_for(tai)
+    raw = ac.last_digit_test(tai, claims, {}, "rb_rate", "x", perm=300, draws=20)
+    matched = ac.last_digit_test(tai, claims, {}, "rb_rate", "x", perm=300, draws=20, by_gband=True)
+    assert raw["差"] > 0.3  # 回転数の偏りだけで見かけの差が出る
+    assert abs(matched["差"]) < 0.05  # 同じ回転数帯どうしでは消える
+    real = ac.last_digit_test(
+        _crowd_tai(real_effect=0.6), claims, {}, "rb_rate", "x", perm=500, draws=40, by_gband=True
+    )
+    assert (
+        real["差"] == pytest.approx(0.6, abs=0.1)
+        and real["p(並べ替え)"] < 0.01
+        and real["プラセボのうち|差|が同等以上"] < 0.05
+    )
+
+
+def test_crowding_reports_higher_games_for_targeted_machines():
+    tai = _crowd_tai()
+    out = ac.crowding(tai, _claims_for(tai), {})
+    assert out["targeted"] > out["others"] and out["n"] == 30 * 2
+
+
+def test_last_digit_test_below_five_targeted_machine_days_has_no_effect():
+    tai = _crowd_tai(days=2)
+    row = ac.last_digit_test(tai, _claims_for(tai), {}, "rb_rate", "x", perm=100, draws=10, by_gband=True)
+    assert "差" not in row and "未満" in row["備考"]
+
+
+def test_segment_claims_only_use_machines_in_the_segment():
+    claim = {"claim_id": "a", "date": "d", "digits": {7}, "segment": "JUG"}
+    flags = {"J": {"jug_flag": 1}, "H": {"jug_flag": 0}}
+    assert (
+        ac._eligible("J", claim, flags) and not ac._eligible("H", claim, flags) and not ac._eligible("X", claim, flags)
+    )
+    assert ac._eligible("H", {**claim, "segment": None}, flags)
+
+
+def test_ratio_dispersion_compares_within_the_day_and_needs_four_machines_per_group():
+    rng = np.random.default_rng(3)
+    rows = []
+    for d in range(10):
+        ds = f"2026090{d}" if d < 10 else ""
+        for machine, sd in (("A", 0.45), ("B", 0.2), ("C", 0.2)):
+            for number in range(6):
+                rows.append(
+                    {
+                        "date": ds,
+                        "machine": machine,
+                        "number": number,
+                        "digit": number,
+                        "q_g": float(np.clip(0.5 + rng.normal(0, sd), 0, 1)),
+                    }
+                )
+        rows.append({"date": ds, "machine": "tiny", "number": 1, "digit": 1, "q_g": 0.5})
+    tai = pd.DataFrame(rows)
+    out, table = ac.ratio_dispersion(tai, {(f"2026090{d}", "A"): 2 for d in range(10)}, perm=500, seed=1)
+    assert out["n_named"] == 10 and "tiny" not in set(table.machine) and out["effect"] > 0.1 and out["p"] < 0.05
+    few, _ = ac.ratio_dispersion(tai, {("20260900", "A"): 2}, perm=100, seed=1)
+    assert "effect" not in few
+
+
+def test_content_layer_never_reads_result_announcements():
+    source = inspect.getsource(ac)
+    assert "external_result" not in source and "RESULT_DB" not in source and "import sqlite3" in source
+    assert "machine_master" in source  # セグメント判定はmachine_master（台日DB）。結果コーパスは読まない
