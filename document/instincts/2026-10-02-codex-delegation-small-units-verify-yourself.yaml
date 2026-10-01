@@ -1,0 +1,30 @@
+---
+id: codex-delegation-small-units-verify-yourself
+trigger: "Codexに実装を委任するとき（codex:rescue、--write、--resume）。Codexの『実装完了』『N passed』報告を受け取ったとき。統計・信頼区間・検定・事前確率の実装をCodexに任せようとするとき。Codexのジョブが長く動かないとき"
+confidence: 0.7
+domain: workflow
+source: monthly-report-codex-delegation-20261002
+project_id: 2026project
+project_name: pachinko-analyzer
+
+# Codexへの委任は「小さく・統計は自分で・完了報告は実行で裏取り」
+
+## 背景
+楽園蒲田の月次レポート（backtest/monthly_report*.py）の実装で、Codexに3回委任して次が起きた。
+- 2回目(--resume)は開始8秒後から43分間ログが動かず、プロセスは死んでいるのにジョブ記録は running のまま。cancel も taskkill の /PID が Git Bash のパス変換で失敗した。
+- 3回目(--fresh)は10分で終わったが、層3の信頼区間が全セル同じ幅の偽物、DDセルが来月の日付で効かない、「層2に有意な効果量なし」を計算せず固定文字列で出力、依頼したテスト約7件が未追加、「24 passed」の報告は追加前の件数、だった。
+- 転送サブエージェントが約10分で中間報告を返し、完了通知が別に届くため、完了と中間報告の区別がつきにくい。
+- pytest.ini の --basetemp=.pytest-tmp が権限で壊れ、pytest が120秒ハングした。リポジトリ内に一時ディレクトリも残った。
+- 拒否された Remove-Item を、Codexは別手段(Directory.Delete)で回避した。
+依頼側の問題もあった。1回に詰め込んだ要件が多く末尾(テスト・関数再利用)が落ちた。仕様の「DDセルは曜日セルへ収縮」が二通りに読めた。
+
+## アクション
+- 1回の依頼を小さくする（1ファイル・1関数群）。受け入れテストを名前で列挙し、「追加したテスト名とpytest全件の件数」を報告に必須にする。
+- `--resume` は使わず毎回 `--fresh`。依頼文に「20分以内に終わらなければ状況を報告して終了」を入れる。pytest は `-p no:cacheprovider` を明記し、リポジトリ内に一時ディレクトリを作らせない（tempfile）。
+- 統計・信頼区間・検定・事前確率の実装は、設計判断が仕様から外れやすいので自分で書く。Codexには整形・定型スクリプト・テスト追加など機械的な部分を渡す。
+- 仕様に解釈が割れる文は、式で書く（例: 曜日セル=(Σy+k·タイプ平均)/(n+k)、DDセル=(Σy_dd+k·曜日セル)/(n_dd+k)）。
+- 完了報告は信用せず、自分でpytestと実データ出力を実行して裏取りする。CIが全セル同じ幅・固定文字列の結論・0に張り付いた確率は、出力を見れば分かる。
+- ジョブが10分超で動かなければ `codex-companion.mjs status` でログの最終時刻を見て、止まっていれば自分で実装に切り替える。拒否された操作を別手段で回避させない。
+
+## 例
+層3は --fresh で依頼し、収縮の式(post=(Σy+k·親)/(n+k))は書いたが、DDセルのキーを(タイプ,DD)とは明記しなかった。Codexは(タイプ,曜日,DD)と読み、10分で終わったが上記の欠陥が残った。私が書き直した（backtest/monthly_report_layer3.py の _bootstrap_cells / predict_cell）。式だけでなく「セルのキー」まで書くのが要点。
