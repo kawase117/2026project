@@ -46,7 +46,13 @@ description: ホールの動向を分析・報告する前に必ず回す6パス
 | 出率>=1.05 | 4000G以上回った台の40%が該当（生存バイアス） |
 | ボーナス確率（AT機） | 機種によっては観測値がベースとほぼ同値なのに出率は跳ねる（相関が弱い） |
 
-**AT機の台単位の高設定判定はできない。** 判定可能機種（ノーマル/BT/A+AT）に限る。
+**AT機は一括して判別不可にしない（2026-10-02、ユーザー指摘で訂正）。** 台単位の高設定判定は、
+判定可能機種（ノーマル/BT/A+AT）と、AT初当り確率の列を監査で特定できたAT機に限る。
+監査は `backtest/at_rb_audit.py`、結果は `document/registry/AT_RB_AUDIT.csv`（verdict=A が使える。
+`load_specs()` の `at_judgeable` / `at_column`。スマスロ北斗の拳は rb 列、マギアレコード・戦国乙女4は bb 列）。
+モンキーターンVなど verdict=B はAT初当りの列の意味が未確認なので使わない。
+AT機のRB確率は機械割と機械的に相関する（at-gate-r-is-mechanical）ので、相関では判別可否を決めない。
+事後確率は `posterior(..., prior=REALISTIC_PRIOR)` で現実的な事前（設定1=55%）にする（既定は一様のまま）。
 `document/registry/MDE_GATE.md`（`hall-analysis-checklist` とは別スキル配下）で軸・推定器・
 暦コストごとの検出力を確認できる場合は先に引く。日付軸(dd_event/strong_zorome/weekday)の
 gate列はそのまま使わない（楽観的、詳細はファイル内の警告参照）。

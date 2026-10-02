@@ -71,6 +71,18 @@ MIN_GAMES_FOR_JUDGEMENT = 2000
 # ボーナス確率で設定を判別できるカテゴリ
 JUDGEABLE_CATEGORIES = ("ノーマル", "BT", "A+AT")
 
+# 現実的な事前分布(設定1が約55%)。posterior(prior=REALISTIC_PRIOR)で使う。
+# 既定の事前は一様のまま(既存の出力を変えない)。設定4段階の機種(1,2,5,6)では、一様だと
+# 事前の設定5以上が50%になり、設定4以上の確率の絶対値が膨らむ。
+REALISTIC_PRIOR = {1: 0.55, 2: 0.15, 3: 0.12, 4: 0.08, 5: 0.05, 6: 0.05}
+
+# AT機のAT初当り確率が、DBのどの列に入っているかの監査結果(backtest/at_rb_audit.py が書く)。
+AT_AUDIT_CSV = os.path.join(ROOT, "document", "registry", "AT_RB_AUDIT.csv")
+# ユーザー提供のAT初当り確率(2026-06-10、instinct rb-probability-juggler-hokuto-spec)。設定3は公表なし。
+USER_AT_SPECS = {
+    "スマスロ北斗の拳": {1: 383.4, 2: 370.5, 4: 297.8, 5: 258.7, 6: 235.1},
+}
+
 RE_PREFIX = re.compile(r"^(LB|L|S|スマスロ|パチスロ)\s*")
 RE_SYMBOL = re.compile(r"[\s　・:：\-−ー！!／/（）\(\)‐～~。、]")
 RE_FRACTION = re.compile(r"1\s*/\s*([\d,.]+)")
@@ -111,6 +123,80 @@ def _legacy_specs():
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return dict(getattr(module, "JUGGLER_FAMILY_SPECS", {}))
+
+
+RE_AT_RANGE = re.compile(r"AT初当り[:：]\s*1/([0-9.]+)\s*[〜~～]\s*1/([0-9.]+)")
+AT_COLUMN_KEYS = {"bb": "bb_probability", "rb": "rb_probability", "bb+rb": "combined_probability"}
+
+
+def load_at_hit_specs(master_csv=MASTER_CSV):
+    """AT機の{正規化名: {name, per, rng}}。perは設定別のAT初当り確率、rngは(設定1側, 設定6側)の確率。"""
+    specs = {}
+    with open(master_csv, encoding="utf-8-sig", newline="") as handle:
+        for row in csv.DictReader(handle):
+            if row.get("game_type") != "AT":
+                continue
+            name = row.get("canonical_machine_name") or row.get("machine_name")
+            per = {s: parse_probability(row.get("at_initial_setting%d" % s)) for s in range(1, 7)}
+            per = {s: p for s, p in per.items() if p}
+            match = RE_AT_RANGE.search(row.get("notes") or "")
+            rng = (1 / float(match.group(1)), 1 / float(match.group(2))) if match else None
+            if per or rng:
+                specs[normalize(name)] = {"name": name, "per": per, "rng": rng}
+    return specs
+
+
+def _interpolate_range(rng):
+    """設定1側と設定6側の確率から、設定1〜6を確率で線形に補間する(設定間の値は公表が無いための仮定)。"""
+    low, high = min(rng), max(rng)
+    return {s: low + (high - low) * (s - 1) / 5 for s in range(1, 7)}
+
+
+def _apply_at_audit(specs, master_csv, audit_csv=None):
+    """監査(backtest/at_rb_audit.py)でAのAT機に、AT初当り確率の設定別表を入れる。
+
+    既存の judgeable は変えない。判別可能と決めた機種は at_judgeable=True、AT初当りが入るDB列は at_column。
+    既存の報告・morning・DB移行は judgeable とカテゴリで判定し、RB列だけを渡すので、BB列がAT初当りの
+    機種を誤って判定しないよう、別の印にしている。
+    """
+    path = audit_csv or AT_AUDIT_CSV
+    if not os.path.exists(path):
+        return
+    hit_specs = load_at_hit_specs(master_csv)
+    user = {normalize(k): {s: 1 / d for s, d in v.items()} for k, v in USER_AT_SPECS.items()}
+    with open(path, encoding="utf-8", newline="") as handle:
+        for row in csv.DictReader(handle):
+            if row.get("verdict") != "A" or row.get("column") not in AT_COLUMN_KEYS:
+                continue
+            key = normalize(row["machine"])
+            spec, entry = specs.get(key), hit_specs.get(key)
+            if spec is None or entry is None:
+                continue
+            if key in user:
+                table, basis = user[key], "ユーザー提供"
+            elif len(entry["per"]) >= 4:
+                table, basis = entry["per"], "一撃マスター設定別"
+            else:
+                # 設定別が両端だけ(設定1と6など)や、notesの範囲だけの機種は、両端から補間する
+                ends = list(entry["per"].values()) if len(entry["per"]) >= 2 else entry["rng"]
+                if not ends:
+                    continue
+                table, basis = _interpolate_range(ends), "一撃マスターの両端から補間"
+            column_key = AT_COLUMN_KEYS[row["column"]]
+            settings = {}
+            for setting, probability in sorted(table.items()):
+                values = {
+                    "bb_probability": None,
+                    "rb_probability": None,
+                    "combined_probability": None,
+                    "payout_rate": float("nan"),
+                }
+                values[column_key] = probability
+                settings[setting] = values
+            spec["settings"] = settings
+            spec["at_judgeable"] = True
+            spec["at_column"] = row["column"]
+            spec["source"] = "AT監査(%s、列=%s)" % (basis, row["column"])
 
 
 def load_specs(master_csv=MASTER_CSV):
@@ -174,6 +260,7 @@ def load_specs(master_csv=MASTER_CSV):
             "judgeable": True,
             "source": entry.get("source", "実機解析値(2026-07-06)"),
         }
+    _apply_at_audit(specs, master_csv)
     return specs
 
 
@@ -197,11 +284,12 @@ def _log_binomial(k, n, p):
     return k * math.log(p) + (n - k) * math.log1p(-p)
 
 
-def posterior(spec, games, bb, rb):
-    """設定ごとの事後確率。事前は一様。
+def posterior(spec, games, bb, rb, prior=None):
+    """設定ごとの事後確率。事前は既定で一様。prior={設定: 重み} を渡すとそれを掛けて正規化する。
 
     BB/RB が個別にあれば独立な二項として扱う（確率が小さいので多項との差は無視できる）。
     合算しか無い機種は BB+RB の合計を1つの二項として扱う。
+    priorに無い設定は、priorの最小の重みを使う。現実的な事前は REALISTIC_PRIOR。
     """
     scores = {}
     for setting, values in spec["settings"].items():
@@ -224,6 +312,9 @@ def posterior(spec, games, bb, rb):
         return {}
     top = max(scores.values())
     weights = {s: math.exp(v - top) for s, v in scores.items()}
+    if prior:
+        floor = min(prior.values())
+        weights = {s: w * prior.get(s, floor) for s, w in weights.items()}
     total = sum(weights.values())
     return {s: w / total for s, w in sorted(weights.items())}
 
