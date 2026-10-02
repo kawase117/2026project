@@ -1,11 +1,11 @@
 # ACTIVE_INSTINCTS
 
-- generated_at: 2026-10-02T22:30:59+09:00
+- generated_at: 2026-10-02T22:32:24+09:00
 - compiler_version: 1.3.0
 - source_dir: `C:/Users/apto117/Documents/pachinko-analyzer/src/2026project/document/instincts`
-- total_records_scanned: 1639
+- total_records_scanned: 1640
 - active_records: 120
-- status_breakdown: unverified=1630, confirmed=1, refuted=0, superseded=7
+- status_breakdown: unverified=1631, confirmed=1, refuted=0, superseded=7
 - filters: `confidence >= 0.80` and `file_date within 21 days` (unless pinned by high confidence)
 
 ## Usage
