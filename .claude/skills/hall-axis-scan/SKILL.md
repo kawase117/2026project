@@ -97,7 +97,18 @@ description: ホールの「どの軸・どの要素が強いか」を、指示�
 
 ## 実装の場所
 
-探索スクリプトの参照実装は `scripts/` に置いた(TEMPのpickleに依存し、整理前の探索コード)。再利用の前に、`backtest/` へのモジュール化(テストつき)を提案する。
+**位置軸×時間軸の総当たりは `backtest/axis_scan.py`(2026-10-03、テストつき)。** 実行:
+
+```
+venv\Scripts\python.exe -X utf8 -m backtest.axis_scan --hall 楽園蒲田店 --start 20260707 --end 20260930 --iters 2000
+```
+
+RB側はノーマル・BTと、監査でAのAT機(`at_judgeable`、`at_column`の列)、それ以外はOTHER側(機械割と回転数)。族とセルの表(BH補正つき)を返す。
+`run_scan(df, ...)` の `F`(族)と `C`(セル)を、報告の表にする。テストは `test/backtest/test_axis_scan.py`。
+AT機の列の監査は `backtest/at_rb_audit.py`(登録簿 `document/registry/AT_RB_AUDIT.csv`)。
+
+次の参照実装は、探索時の使い捨てスクリプトで、`axis_scan.py` に取り込めていないものだけが対象:
+(TEMPのpickleに依存し、整理前の探索コード)。再利用の前に、必要な部分を `backtest/` に取り込む。
 
 - `dd2.py`: ノーマル・BTのRBの日付軸(D、ゾロ目、強ゾロ目)と、期間のraw作成
 - `dd4.py`: ノーマル・BTのイベント・公約別(機種別)
