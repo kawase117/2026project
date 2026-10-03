@@ -110,6 +110,19 @@ def _weekday(ds):
     return dt.date(int(ds[:4]), int(ds[4:6]), int(ds[6:])).weekday()
 
 
+def is_new_machine(first_seen, ds, db_min, days=NEW_MACHINE_DAYS):
+    """新台(導入後 days 日以内)か。DBの最初の日に既にあった機種は、導入日が分からないので新台にしない。
+
+    新台は、設定と無関係に高回転になる(ユーザー指摘、新台期間は1週間)。
+    """
+    if first_seen <= db_min:
+        return False
+    delta = dt.date(int(ds[:4]), int(ds[4:6]), int(ds[6:])) - dt.date(
+        int(first_seen[:4]), int(first_seen[4:6]), int(first_seen[6:])
+    )
+    return delta.days < days
+
+
 def build_day_table(hall=mr.DEFAULT_HALL, start="20260707", end="20260930", specs=None):
     """台日表(区分 seg=RB/OTHER、当り回数 hit、期待 E / Ediff / Gexp、配置 ld / edge)を返す。"""
     db = mr.hall_db_path(hall)
@@ -140,15 +153,9 @@ def build_day_table(hall=mr.DEFAULT_HALL, start="20260707", end="20260930", spec
     empty = set(empty.index[(empty.rb == 0) & (empty.bb > 0)])  # RB列が空の機種(不二子BTなど)は事後確率を出せない
     raw = raw[~(raw.machine_name.isin(empty) & raw.cat.isin(["ノーマル", "BT"]))].copy()
     raw["seg"] = np.where(is_rb.reindex(raw.index).fillna(False), "RB", "OTHER")
-    first, _ = mr.load_first_seen(db)
-    since = [
-        (
-            dt.date(int(d[:4]), int(d[4:6]), int(d[6:]))
-            - dt.date(int(first[m][:4]), int(first[m][4:6]), int(first[m][6:]))
-        ).days
-        for d, m in zip(raw.ds, raw.machine_name)
-    ]
-    raw = raw[~((raw.seg == "OTHER") & (np.array(since) < NEW_MACHINE_DAYS))].copy()  # 新台は設定不問で高回転する
+    first, db_min = mr.load_first_seen(db)
+    new = [is_new_machine(first[m], d, db_min) for d, m in zip(raw.ds, raw.machine_name)]
+    raw = raw[~np.array(new)].copy()  # 新台(導入後7日以内)は、設定と無関係に高回転になるので、全区分から除く
     raw["wd"] = raw.ds.map(_weekday)
     raw["band"] = np.digitize(raw.games_normalized, BAND_EDGES)
     raw["G"] = raw.games_normalized

@@ -52,6 +52,15 @@ def test_permutation_scan_diff_mode_for_single_series():
     assert p_family < 0.05 and obs[0, 0] > 0
 
 
+def test_is_new_machine_covers_first_week_only_and_ignores_machines_present_at_db_start():
+    db_min = "20250101"
+    assert ax.is_new_machine("20260914", "20260914", db_min) is True  # 導入日
+    assert ax.is_new_machine("20260914", "20260920", db_min) is True  # 導入後6日
+    assert ax.is_new_machine("20260914", "20260921", db_min) is False  # 導入後7日からは新台にしない(1週間)
+    # DBの最初の日にあった機種は、導入日が分からないので、新台にしない(DBの先頭の1週間が全部消えるのを防ぐ)
+    assert ax.is_new_machine("20250101", "20250103", db_min) is False
+
+
 def test_bh_adjust_matches_hand_calculation():
     q = ax.bh_adjust([0.01, 0.04, 0.03, 0.2, np.nan])
     assert np.allclose(q[:4], [0.04, 0.05333333, 0.05333333, 0.2])
