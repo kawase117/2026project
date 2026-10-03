@@ -56,7 +56,8 @@ def test_load_at_hit_specs_reads_per_setting_and_range(tmp_path):
 def test_column_in_range_uses_margin():
     bounds = (1 / 400, 1 / 200)
     assert audit.column_in_range(1 / 300, bounds)
-    assert audit.column_in_range(1 / 450, bounds)  # 下側+15%以内
+    assert not audit.column_in_range(1 / 450, bounds)  # 既定の余裕(5%)では範囲外
+    assert audit.column_in_range(1 / 450, bounds, margin=0.15)
     assert not audit.column_in_range(1 / 600, bounds)
     assert not audit.column_in_range(1 / 100, bounds)
 
@@ -78,13 +79,51 @@ def test_audit_picks_single_column_in_range_and_flags_ambiguous():
     )
     result = audit.audit(days, specs)
     row = result.iloc[0]
-    assert row["verdict"] == "A" and row["column"] == "rb"
+    assert row["verdict"] == "A" and row["column"] == "rb" and row["hall"] == "h"
     # bbもrbも範囲内なら列を特定できないのでB
     both = days.assign(bb=[10] * 400)
     assert audit.audit(both, specs).iloc[0]["verdict"] == "B"
     # 台日が少なければAにしない
     few = days.head(100)
     assert audit.audit(few, specs).iloc[0]["verdict"] == "B"
+
+
+def test_audit_treats_bb_rb_sum_as_same_column_when_bb_is_always_zero():
+    specs = {bs.normalize("機種A"): {"name": "機種A", "per": {1: 1 / 400, 6: 1 / 250}, "rng": None}}
+    days = pd.DataFrame(
+        {
+            "machine_name": ["機種A"] * 400,
+            "g": [3000.0] * 400,
+            "bb": [0] * 400,
+            "rb": [9, 10, 8, 11] * 100,
+            "hall": ["h"] * 400,
+        }
+    )
+    row = audit.audit(days, specs).iloc[0]
+    assert row["verdict"] == "A" and row["column"] == "rb"  # bb+rbはrbと同じ値なので、列が2つ範囲に入った扱いにしない
+
+
+def test_audit_is_per_hall_and_flags_inconsistent_halls():
+    specs = {bs.normalize("機種A"): {"name": "機種A", "per": {1: 1 / 400, 6: 1 / 250}, "rng": None}}
+    frames = []
+    # 4ホールのうち3ホールはrbがスペック範囲内(約1/300)、1ホールは範囲外(約1/600)
+    for hall, rb in (("h1", 10), ("h2", 10), ("h3", 10), ("h4", 5)):
+        frames.append(
+            pd.DataFrame(
+                {
+                    "machine_name": ["機種A"] * 400,
+                    "g": [3000.0] * 400,
+                    "bb": [30] * 400,
+                    "rb": [rb] * 400,
+                    "hall": [hall] * 400,
+                }
+            )
+        )
+    result = audit.audit(pd.concat(frames, ignore_index=True), specs).set_index("hall")
+    assert result.loc["h1", "verdict"] == "A" and result.loc["h2", "verdict"] == "A"
+    assert result.loc["h4", "verdict"] == "X"  # このホールのrbは範囲外。全ホールの平均では範囲内に見えてしまう
+    # ホール間の最大÷最小(2倍)が大きいので、不整合の印が付く
+    assert bool(result.loc["h1", "across_inconsistent"]) is True and result.loc["h1", "across_ratio"] == 2.0
 
 
 def test_posterior_prior_shifts_weight_to_low_settings():
@@ -123,15 +162,47 @@ def test_apply_at_audit_sets_at_markers_without_touching_judgeable(tmp_path):
     )
     audit_csv = tmp_path / "audit.csv"
     with open(audit_csv, "w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=["machine", "verdict", "column"])
+        writer = csv.DictWriter(handle, fieldnames=["machine", "hall", "verdict", "column"])
         writer.writeheader()
-        writer.writerow({"machine": "機種A", "verdict": "A", "column": "bb"})
-        writer.writerow({"machine": "機種B", "verdict": "B", "column": "bb,rb"})
-    specs = {
+        writer.writerow({"machine": "機種A", "hall": "ホール1", "verdict": "A", "column": "bb"})
+        writer.writerow({"machine": "機種B", "hall": "ホール1", "verdict": "B", "column": "bb,rb"})
+        writer.writerow({"machine": "機種B", "hall": "ホール2", "verdict": "A", "column": "rb"})
+
+    def fresh():
+        return {
+            bs.normalize(n): {"family_name": n, "category": "AT", "settings": {}, "judgeable": False, "source": "1geki"}
+            for n in ("機種A", "機種B")
+        }
+
+    # ホール間のばらつきが大きい(across_inconsistent)機種は、Aでも使わない
+    skip_csv = tmp_path / "audit_skip.csv"
+    with open(skip_csv, "w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=["machine", "hall", "verdict", "column", "across_inconsistent"])
+        writer.writeheader()
+        writer.writerow(
+            {"machine": "機種A", "hall": "ホール1", "verdict": "A", "column": "bb", "across_inconsistent": "True"}
+        )
+        writer.writerow(
+            {"machine": "機種B", "hall": "ホール1", "verdict": "A", "column": "rb", "across_inconsistent": "False"}
+        )
+    skipped = {
         bs.normalize(n): {"family_name": n, "category": "AT", "settings": {}, "judgeable": False, "source": "1geki"}
         for n in ("機種A", "機種B")
     }
-    bs._apply_at_audit(specs, master, audit_csv)
+    bs._apply_at_audit(skipped, master, skip_csv, hall="ホール1")
+    assert (
+        "at_judgeable" not in skipped[bs.normalize("機種A")] and skipped[bs.normalize("機種B")]["at_judgeable"] is True
+    )
+    # ホール未指定なら、AT機の判別は有効にしない(bb/rbの意味はホールで違う)
+    none = fresh()
+    bs._apply_at_audit(none, master, audit_csv)
+    assert not any(s.get("at_judgeable") for s in none.values())
+    # 別ホールの行は使わない
+    other = fresh()
+    bs._apply_at_audit(other, master, audit_csv, hall="ホール2")
+    assert "at_judgeable" not in other[bs.normalize("機種A")] and other[bs.normalize("機種B")]["at_column"] == "rb"
+    specs = fresh()
+    bs._apply_at_audit(specs, master, audit_csv, hall="ホール1")
     a, b = specs[bs.normalize("機種A")], specs[bs.normalize("機種B")]
     assert a["at_judgeable"] is True and a["at_column"] == "bb"
     assert a["judgeable"] is False  # 既存の判定は変えない

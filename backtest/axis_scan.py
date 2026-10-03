@@ -113,7 +113,9 @@ def _weekday(ds):
 def build_day_table(hall=mr.DEFAULT_HALL, start="20260707", end="20260930", specs=None):
     """台日表(区分 seg=RB/OTHER、当り回数 hit、期待 E / Ediff / Gexp、配置 ld / edge)を返す。"""
     db = mr.hall_db_path(hall)
-    specs = specs or bs.load_specs()
+    specs = specs or bs.load_specs(
+        hall=hall
+    )  # bb/rbの意味はホールで違うので、そのホールの監査でAのAT機だけをRB側にする
     raw = mr.load_machine_days(db, start, end)
     spec_of = {n: bs.find_spec(n, specs) for n in raw.machine_name.unique()}
     cat = {n: (s or {}).get("category") for n, s in spec_of.items()}

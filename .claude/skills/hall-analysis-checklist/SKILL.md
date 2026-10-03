@@ -50,8 +50,9 @@ description: ホールの動向を分析・報告する前に必ず回す6パス
 
 **AT機は一括して判別不可にしない（2026-10-02、ユーザー指摘で訂正）。** 台単位の高設定判定は、
 判定可能機種（ノーマル/BT/A+AT）と、AT初当り確率の列を監査で特定できたAT機に限る。
-監査は `backtest/at_rb_audit.py`、結果は `document/registry/AT_RB_AUDIT.csv`（verdict=A が使える。
-`load_specs()` の `at_judgeable` / `at_column`。スマスロ北斗の拳は rb 列、マギアレコード・戦国乙女4は bb 列）。
+監査は `backtest/at_rb_audit.py`、結果は `document/registry/AT_RB_AUDIT.csv`（**ホール別**。bb/rbに入る意味は
+ホールで違うので、全ホールの平均では判定しない。そのホールで verdict=A が使える。
+`load_specs(hall=...)` の `at_judgeable` / `at_column`。楽園では、スマスロ北斗の拳は rb 列、戦国乙女4は bb 列）。
 モンキーターンVなど verdict=B はAT初当りの列の意味が未確認なので使わない。
 AT機のRB確率は機械割と機械的に相関する（at-gate-r-is-mechanical）ので、相関では判別可否を決めない。
 事後確率は既定の一様な事前のまま使う。`posterior(..., prior=REALISTIC_PRIOR)`（設定1=55%）は感度確認用。

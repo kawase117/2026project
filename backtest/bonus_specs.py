@@ -153,7 +153,7 @@ def _interpolate_range(rng):
     return {s: low + (high - low) * (s - 1) / 5 for s in range(1, 7)}
 
 
-def _apply_at_audit(specs, master_csv, audit_csv=None):
+def _apply_at_audit(specs, master_csv, audit_csv=None, hall=None):
     """監査(backtest/at_rb_audit.py)でAのAT機に、AT初当り確率の設定別表を入れる。
 
     既存の judgeable は変えない。判別可能と決めた機種は at_judgeable=True、AT初当りが入るDB列は at_column。
@@ -161,14 +161,16 @@ def _apply_at_audit(specs, master_csv, audit_csv=None):
     機種を誤って判定しないよう、別の印にしている。
     """
     path = audit_csv or AT_AUDIT_CSV
-    if not os.path.exists(path):
-        return
+    if hall is None or not os.path.exists(path):
+        return  # bb/rbの意味はホールで違うので、ホールを指定しないとAT機の判別は有効にしない
     hit_specs = load_at_hit_specs(master_csv)
     user = {normalize(k): {s: 1 / d for s, d in v.items()} for k, v in USER_AT_SPECS.items()}
     with open(path, encoding="utf-8", newline="") as handle:
         for row in csv.DictReader(handle):
-            if row.get("verdict") != "A" or row.get("column") not in AT_COLUMN_KEYS:
+            if row.get("hall") != hall or row.get("verdict") != "A" or row.get("column") not in AT_COLUMN_KEYS:
                 continue
+            if str(row.get("across_inconsistent")).lower() == "true":
+                continue  # ホール間のばらつきが大きい機種は、列の意味がホールで違う可能性があり、確認が取れるまで使わない
             key = normalize(row["machine"])
             spec, entry = specs.get(key), hit_specs.get(key)
             if spec is None or entry is None:
@@ -200,8 +202,12 @@ def _apply_at_audit(specs, master_csv, audit_csv=None):
             spec["source"] = "AT監査(%s、列=%s)" % (basis, row["column"])
 
 
-def load_specs(master_csv=MASTER_CSV):
-    """{正規化名: spec} を返す。一撃マスターが基盤、ジャグラーは既存値で上書き。"""
+def load_specs(master_csv=MASTER_CSV, hall=None):
+    """{正規化名: spec} を返す。一撃マスターが基盤、ジャグラーは既存値で上書き。
+
+    hall(DBのホール名、例 "楽園蒲田店")を渡すと、そのホールの監査(AT_RB_AUDIT.csv)でAのAT機に、
+    at_judgeable / at_column とAT初当りの設定別確率を入れる。未指定なら入れない。
+    """
     specs = {}
     with open(master_csv, encoding="utf-8-sig", newline="") as handle:
         for row in csv.DictReader(handle):
@@ -261,7 +267,7 @@ def load_specs(master_csv=MASTER_CSV):
             "judgeable": True,
             "source": entry.get("source", "実機解析値(2026-07-06)"),
         }
-    _apply_at_audit(specs, master_csv)
+    _apply_at_audit(specs, master_csv, hall=hall)
     return specs
 
 
