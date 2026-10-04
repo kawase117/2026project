@@ -13,6 +13,16 @@ description: ホール予告(announce)を事前登録する前の下ごしらえ
 ## 背景
 2026-08-25のmirror-review(`document/mirror_evidence_2026-08-25.md`セクション4-A)で、3つの独立したセッションバッチが同一パターンを発見した: announce登録前に(1) DB最大収録日の確認、(2) ツイート本文の機種略称をmachine_masterの正式表記へ照合、(3) 直近30〜90日のbaserate計算、という3手順を毎回scratchpadに使い捨てスクリプトとして書き直していた。(3)は既に`announce.py baserate`として存在していたが、(1)(2)は未整備だった。
 
+## 半自動下ごしらえ(2026-09-26 追加)
+`backtest/announce_autodraft.py`が上記1〜4.5(検出・dbmax・match-name・baserate・named-context・claims案作成)を自動実行し、`backtest/announce/<slug>__<date>__<account>.json.draft`を書き出す。
+```bash
+venv\Scripts\python.exe -m backtest.announce_autodraft draft --date <target_date YYYYMMDD>
+```
+- `scraper/twitter_monitor/state.db`の直近ツイートを`hall_aliases.plausible_halls`で追跡対象ホールに絞り込み、本文先頭の日付表記(無ければ投稿日+1)からtarget_dateを推定する。
+- **claimsはmatch_machine_namesのscore==1.0(完全部分一致)のみ自動確定する。** 略称・語呂合わせ(例:「栗→防振り？」)はscore<1.0になり`unscored_claims`に回るか、1件も無ければ`no_confirmed_machines: true`で丸ごと手動待ちにする。type は常に安全側の`model_named`固定(zentaikei_count/model_named_ratioへの型変更は人間が判断)。
+- **register は自動実行しない**(ユーザー方針: 2026-09-26に確認済み)。`.json.draft`の中身を人間が確認し、`claims`を必要なら修正した上で`.draft`拡張子を外して`backtest.announce register`に渡す。
+- 既に登録済み・既にdraft済みのhall×target_dateはスキップする(冪等)。同一予告を二重生成しない。
+
 ## やること
 
 -1. **まず `prediction_axes.py briefing` で3軸を一括取得する**（2026-09-24 追加・必須）
@@ -100,6 +110,18 @@ description: ホール予告(announce)を事前登録する前の下ごしらえ
    - 外部報告に載っている機種は自前のnamed-context/DB集計と数値を比較し、方向・水準が一致するか確認する（一致すれば自前の計算方法の健全性チェックにもなる）
    - 外部報告に**載っていない**好調機種がDB上に無いか、必ず全体スキャンで確認する。2026-08-27の実例では、Zenoの報告に無かったモンキーターンV(2並びブロック、6台合計+36,097)と東京喰種(1台+5096)がDB上で発見された。「外部報告に無い＝仕掛けが無かった」と判定してはならない（project-kawasakislot-selfreport-inflatedと同様、外部ソースの自己申告・選定基準を鵜呑みにしない）
 5. **実際にその場で打ったユーザー自身の観測（小役確率・体感など）は、台数の少ないサンプルのBB/RB確率計算より優先する**。統計的な尤度計算（設定1/2/5/6の事後確率など）はあくまで補助であり、隣接設定のスペック差が小さい機種（例: アレックスブライトの設定1/2/5）ではサンプルサイズ不足で統計的に絞り込めないことが多い。その場合は「統計では区別できないが、現場観測は◯◯を支持する」と両方を併記する
+6. **「答え合わせしてください」と言われたら、機種軸に加えて末尾・ゾロ目・角番(rank_from_aisle)・個別台のRB確率を必ず横断的に見て、`document/reviews/YYYY-MM-DD-<hall>-<event>-review.md`にレビュー文書を作成する**（2026-09-25 追加）。
+   予告が名指ししている機種だけを追うと、実際に効いていた軸(末尾・角番・後づけ発掘台)を
+   見落とす。過去に確立した角番・末尾パターンが今回も再現しているかを毎回チェックし、
+   崩れていたら`document/instincts/`に無効化のinstinctを書く。構成の型:
+   1. ホール全体(win_rate・平均差枚・過去同種イベントとの総差枚比較)
+   2. 機種軸の予測との対比
+   3. 末尾別・ゾロ目別・角番(rank_from_aisle)別の集計
+   4. 個別台の深掘り(RB確率が機種スペック上高いのに回転数が低い台=後づけ発掘の疑いがある台等)
+   5. 過去の確立済みパターン(角番・末尾等)が今回も成立しているかの検証
+   6. instinctの訂正・今後のアクション
+   このレビューはユーザーから「答え合わせして」と言われたら**都度必ず**作成する。1回だけの
+   対応で終わらせない。
 
 この節の内容が汎用化・再利用されるようなら、独立した`announce-score`スキルへの切り出しを検討する。
 
