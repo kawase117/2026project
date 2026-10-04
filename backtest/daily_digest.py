@@ -54,12 +54,14 @@ WATCH_DIR = BASE_DIR / "backtest" / "daily_digest" / "watches"
 REVIEW_DIR = BASE_DIR / "backtest" / "daily_digest" / "reviews"
 
 # hall-review はフェーズ2として、machine_layout_history が整備されている
-# 3ホールに限定する（database/CLAUDE.md: 雑色ほか5ホールは machine_layout 自体が
-# 空。角番・並び軸がそもそも計算できない）。残り6ホールへの展開はフェーズ3。
+# ホールに限定する（database/CLAUDE.md: 雑色ほか5ホールは machine_layout 自体が
+# 空。角番・並び軸がそもそも計算できない）。みとや大森町店も rank_from_aisle 込みで
+# 整備済み（単一エポック、266行、2026-09-25追加）。残り5ホールへの展開はフェーズ3。
 HALL_REVIEW_HALLS = (
     "楽園蒲田店",
     "マルハンメガシティ2000-蒲田1",
     "マルハンメガシティ2000-蒲田7",
+    "みとや大森町店",
 )
 # 全台設定6の特殊日。この日は軸評価そのものが無意味なのでスキップする。
 ALL_SETTING6_DATES = {

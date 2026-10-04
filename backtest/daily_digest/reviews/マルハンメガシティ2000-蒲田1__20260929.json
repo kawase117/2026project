@@ -1,7 +1,7 @@
 {
   "hall": "マルハンメガシティ2000-蒲田1",
   "target_date": "20260929",
-  "generated_at": "2026-09-30T07:09:02.620820+09:00",
+  "generated_at": "2026-09-30T07:32:12.931385+09:00",
   "data_asof": "20260929",
   "data_lag_days": 0,
   "traffic_stratum": "低稼働",
@@ -114,8 +114,307 @@
       ]
     },
     "kakuban": {
-      "applicable": false,
-      "note": "レイアウトデータ不足、または対象日に十分な台数が無い"
+      "applicable": true,
+      "games_ratio_basis": "全館ベース(セグメント別未対応)",
+      "segments": {
+        "2F全体": {
+          "peak_rank": "7",
+          "rows": [
+            {
+              "rank": "1",
+              "residual": 258.5,
+              "mean_games": 2117.4,
+              "games_ratio": 1.362,
+              "win_rate": 0.414,
+              "n": 52
+            },
+            {
+              "rank": "2",
+              "residual": -70.3,
+              "mean_games": 1444.0,
+              "games_ratio": 0.929,
+              "win_rate": 0.263,
+              "n": 52
+            },
+            {
+              "rank": "3",
+              "residual": -125.5,
+              "mean_games": 1577.9,
+              "games_ratio": 1.015,
+              "win_rate": 0.314,
+              "n": 49
+            },
+            {
+              "rank": "4",
+              "residual": -8.5,
+              "mean_games": 1403.6,
+              "games_ratio": 0.903,
+              "win_rate": 0.312,
+              "n": 45
+            },
+            {
+              "rank": "5",
+              "residual": -266.3,
+              "mean_games": 993.8,
+              "games_ratio": 0.639,
+              "win_rate": 0.146,
+              "n": 42
+            },
+            {
+              "rank": "6",
+              "residual": 135.3,
+              "mean_games": 1954.1,
+              "games_ratio": 1.257,
+              "win_rate": 0.368,
+              "n": 36
+            },
+            {
+              "rank": "7",
+              "residual": 401.7,
+              "mean_games": 1741.8,
+              "games_ratio": 1.12,
+              "win_rate": 0.421,
+              "n": 18
+            },
+            {
+              "rank": "8",
+              "residual": -360.9,
+              "mean_games": 2259.0,
+              "games_ratio": 1.453,
+              "win_rate": 0.231,
+              "n": 12
+            }
+          ]
+        },
+        "AT@2F": {
+          "peak_rank": "6",
+          "rows": [
+            {
+              "rank": "1",
+              "residual": 172.9,
+              "mean_games": 2117.4,
+              "games_ratio": 1.362,
+              "win_rate": 0.414,
+              "n": 36
+            },
+            {
+              "rank": "2",
+              "residual": 50.7,
+              "mean_games": 1444.0,
+              "games_ratio": 0.929,
+              "win_rate": 0.263,
+              "n": 36
+            },
+            {
+              "rank": "3",
+              "residual": -143.7,
+              "mean_games": 1577.9,
+              "games_ratio": 1.015,
+              "win_rate": 0.314,
+              "n": 35
+            },
+            {
+              "rank": "4",
+              "residual": 1.2,
+              "mean_games": 1403.6,
+              "games_ratio": 0.903,
+              "win_rate": 0.312,
+              "n": 31
+            },
+            {
+              "rank": "5",
+              "residual": -306.1,
+              "mean_games": 993.8,
+              "games_ratio": 0.639,
+              "win_rate": 0.146,
+              "n": 27
+            },
+            {
+              "rank": "6",
+              "residual": 197.7,
+              "mean_games": 1954.1,
+              "games_ratio": 1.257,
+              "win_rate": 0.368,
+              "n": 22
+            }
+          ]
+        },
+        "AT等": {
+          "peak_rank": "6",
+          "rows": [
+            {
+              "rank": "1",
+              "residual": 163.8,
+              "mean_games": 2117.4,
+              "games_ratio": 1.362,
+              "win_rate": 0.414,
+              "n": 38
+            },
+            {
+              "rank": "2",
+              "residual": 50.7,
+              "mean_games": 1444.0,
+              "games_ratio": 0.929,
+              "win_rate": 0.263,
+              "n": 36
+            },
+            {
+              "rank": "3",
+              "residual": -143.7,
+              "mean_games": 1577.9,
+              "games_ratio": 1.015,
+              "win_rate": 0.314,
+              "n": 35
+            },
+            {
+              "rank": "4",
+              "residual": 1.2,
+              "mean_games": 1403.6,
+              "games_ratio": 0.903,
+              "win_rate": 0.312,
+              "n": 31
+            },
+            {
+              "rank": "5",
+              "residual": -306.1,
+              "mean_games": 993.8,
+              "games_ratio": 0.639,
+              "win_rate": 0.146,
+              "n": 27
+            },
+            {
+              "rank": "6",
+              "residual": 197.7,
+              "mean_games": 1954.1,
+              "games_ratio": 1.257,
+              "win_rate": 0.368,
+              "n": 22
+            }
+          ]
+        },
+        "ノーマル": {
+          "peak_rank": "1",
+          "rows": [
+            {
+              "rank": "1",
+              "residual": 451.2,
+              "mean_games": 2117.4,
+              "games_ratio": 1.362,
+              "win_rate": 0.414,
+              "n": 16
+            },
+            {
+              "rank": "2",
+              "residual": -342.6,
+              "mean_games": 1444.0,
+              "games_ratio": 0.929,
+              "win_rate": 0.263,
+              "n": 16
+            },
+            {
+              "rank": "3",
+              "residual": -79.7,
+              "mean_games": 1577.9,
+              "games_ratio": 1.015,
+              "win_rate": 0.314,
+              "n": 14
+            },
+            {
+              "rank": "4",
+              "residual": -29.7,
+              "mean_games": 1403.6,
+              "games_ratio": 0.903,
+              "win_rate": 0.312,
+              "n": 14
+            },
+            {
+              "rank": "5",
+              "residual": -194.7,
+              "mean_games": 993.8,
+              "games_ratio": 0.639,
+              "win_rate": 0.146,
+              "n": 15
+            },
+            {
+              "rank": "6",
+              "residual": 37.1,
+              "mean_games": 1954.1,
+              "games_ratio": 1.257,
+              "win_rate": 0.368,
+              "n": 14
+            }
+          ]
+        },
+        "全館": {
+          "peak_rank": "7",
+          "rows": [
+            {
+              "rank": "1",
+              "residual": 249.0,
+              "mean_games": 2117.4,
+              "games_ratio": 1.362,
+              "win_rate": 0.414,
+              "n": 54
+            },
+            {
+              "rank": "2",
+              "residual": -70.3,
+              "mean_games": 1444.0,
+              "games_ratio": 0.929,
+              "win_rate": 0.263,
+              "n": 52
+            },
+            {
+              "rank": "3",
+              "residual": -125.5,
+              "mean_games": 1577.9,
+              "games_ratio": 1.015,
+              "win_rate": 0.314,
+              "n": 49
+            },
+            {
+              "rank": "4",
+              "residual": -8.5,
+              "mean_games": 1403.6,
+              "games_ratio": 0.903,
+              "win_rate": 0.312,
+              "n": 45
+            },
+            {
+              "rank": "5",
+              "residual": -266.3,
+              "mean_games": 993.8,
+              "games_ratio": 0.639,
+              "win_rate": 0.146,
+              "n": 42
+            },
+            {
+              "rank": "6",
+              "residual": 135.3,
+              "mean_games": 1954.1,
+              "games_ratio": 1.257,
+              "win_rate": 0.368,
+              "n": 36
+            },
+            {
+              "rank": "7",
+              "residual": 401.7,
+              "mean_games": 1741.8,
+              "games_ratio": 1.12,
+              "win_rate": 0.421,
+              "n": 18
+            },
+            {
+              "rank": "8",
+              "residual": -360.9,
+              "mean_games": 2259.0,
+              "games_ratio": 1.453,
+              "win_rate": 0.231,
+              "n": 12
+            }
+          ]
+        }
+      }
     },
     "last_digit": {
       "rows": [
