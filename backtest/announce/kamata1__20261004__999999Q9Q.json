@@ -1,0 +1,49 @@
+{
+  "announce_id": "kamata1__20261004__999999Q9Q",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "target_date": "20261004",
+  "source": {
+    "account": "999999Q9Q",
+    "url": "",
+    "posted_at": "2026-10-03T21:19:58+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "新章メガいちよこやん予想\n\n明日は4の付く日。日にちによる仕掛けはないものの、全・高配分・単品が店内の隅々にまで用意されており、相変わらず戦える日とされている。特にメイン機とオススメ機種は扱いが良いのもよこやん就任以降の特徴である。\n\nスロパチ取材の翌日ということでその仕掛けの残りがあることも密かに期待をしたい\n\n寿司→海鮮→海戦\n→アズールレーン？\n\nテンション上がる→アップ\n→ディスクアップウルリミ？\n\nガリ→ジンジャー→神社→おみくじ\n→Lカバネリ海門決戦？\n→Sカバネリ？\n\n海老→甲殻類\n→攻殻機動隊？\n\n#マルハンメガシティ2000蒲田1",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"マルハンメガシティ2000-蒲田1\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-05\", \"2026-10-03\"], \"n_days\": 90, \"n_model_days\": 4317, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2192.6, \"models_over_threshold_per_day\": {\"mean\": 2.4, \"median\": 2.0, \"max\": 12}, \"candidate_models_per_day\": 48.0, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.16, \"median\": 3.0, \"max\": 14}, \"p_at_least_1\": 0.967, \"p_at_least_2\": 0.744, \"p_at_least_3\": 0.522, \"p_at_least_4\": 0.378, \"p_at_least_10\": 0.011}} / named_context: {\"as_of\": \"20261003\", \"window_days\": 30, \"n_candidates_ge3machines\": 48, \"hall_over_threshold_rate_approx\": 0.083, \"threshold\": 1800.0, \"models\": [{\"name\": \"攻殻機動隊\", \"n_machines\": 3, \"rank\": 45, \"of\": 48, \"n_days_present\": 30, \"over_threshold\": 3, \"rate\": 0.1, \"mean_score\": 223.3}, {\"name\": \"甲鉄城のカバネリ\", \"n_machines\": 2, \"rank\": null, \"of\": 48, \"n_days_present\": 30, \"over_threshold\": 1, \"rate\": 0.033, \"mean_score\": 230.0}, {\"name\": \"甲鉄城のカバネリ 海門(うなと)決戦\", \"n_machines\": 16, \"rank\": 17, \"of\": 48, \"n_days_present\": 30, \"over_threshold\": 1, \"rate\": 0.033, \"mean_score\": 247.2}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "zentaikei_count",
+      "n_models": 1,
+      "note": "『全・高配分・単品が店内の隅々に。メイン機とオススメ機種は扱いが良い』。機種名・台数の明示なし(n_models=1は最低限の解釈)。4の付く日。ぱち馬鹿っ収録来店。前日スロパチ取材の残りも期待、と本文"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "アズールレーン THE ANIMATION",
+      "note": "999999Q9Q 10/3 21:19 予告。「？」付きの連想なので確度は低い(寿司→海鮮→海戦)"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "ディスクアップ ULTRAREMIX",
+      "note": "999999Q9Q 10/3 21:19 予告。「？」付きの連想なので確度は低い(テンション上がる→アップ)"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "note": "999999Q9Q 10/3 21:19 予告。「？」付きの連想なので確度は低い(ガリ→ジンジャー→神社→Lカバネリ)"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "攻殻機動隊",
+      "note": "999999Q9Q 10/3 21:19 予告。「？」付きの連想なので確度は低い(海老→甲殻類)"
+    }
+  ],
+  "unscored_claims": [],
+  "result": null,
+  "announce_digest": "e6c9bf3be2728c47"
+}

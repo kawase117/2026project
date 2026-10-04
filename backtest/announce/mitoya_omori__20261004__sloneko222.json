@@ -1,0 +1,39 @@
+{
+  "announce_id": "mitoya_omori__20261004__sloneko222",
+  "hall": "みとや大森町店",
+  "target_date": "20261004",
+  "source": {
+    "account": "sloneko222",
+    "url": "",
+    "posted_at": "2026-10-03T18:53:01+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "10/4\nみとや大森町\n「4の付く日」\n\n直近5日間のデータ\n合計 +245,000枚\n平均 +180枚\n勝率 38.8% (529/1363台)\n\n09/24 合計 +54,500枚  平均 +197枚(114/277台)\n09/14 合計 +44,000枚  平均 +159枚(103/277台)\n09/04 合計 +79,500枚  平均 +287枚(104/277台)\n08/24 合計 -31,000枚  平均 -117枚(88/266台)\n08/14 合計 +98,000枚  平均 +368枚(120/266台)\n\n 注目機種(直近5日間のデータ)\n◎ L東京喰種 平均 +1,239枚  勝率 60.0%(27/45台)\n〇 カバネリ海門決戦 平均 +1,042枚  勝率 49.4%(42/85台)\n△ とある禁書目録2 平均 +2,485枚  勝率 56.5%(13/23台)",
+  "weakness_note": "ホール側の予告ではなく外部アカウントの過去データ要約。4の付く日(X_DDS日)。",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"みとや大森町店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-05\", \"2026-10-03\"], \"n_days\": 90, \"n_model_days\": 3157, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2067.5, \"models_over_threshold_per_day\": {\"mean\": 1.76, \"median\": 2.0, \"max\": 7}, \"candidate_models_per_day\": 35.1, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 1.99, \"median\": 2.0, \"max\": 8}, \"p_at_least_1\": 0.822, \"p_at_least_2\": 0.567, \"p_at_least_3\": 0.333, \"p_at_least_4\": 0.133, \"p_at_least_10\": 0.0}} / named_context: {\"as_of\": \"20261003\", \"window_days\": 30, \"n_candidates_ge3machines\": 37, \"hall_over_threshold_rate_approx\": 0.027, \"threshold\": 1800.0, \"models\": [{\"name\": \"東京喰種\", \"n_machines\": 9, \"rank\": 32, \"of\": 37, \"n_days_present\": 30, \"over_threshold\": 4, \"rate\": 0.133, \"mean_score\": 245.8}, {\"name\": \"甲鉄城のカバネリ 海門(うなと)決戦\", \"n_machines\": 17, \"rank\": 6, \"of\": 37, \"n_days_present\": 30, \"over_threshold\": 2, \"rate\": 0.067, \"mean_score\": 380.3}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "東京喰種",
+      "note": "sloneko222 10/3 18:53。直近5日データから挙げた注目機種で、ホールの公約ではない(◎)"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "note": "sloneko222 10/3 18:53。直近5日データから挙げた注目機種で、ホールの公約ではない(〇)"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "とある魔術の禁書目録2",
+      "note": "sloneko222 10/3 18:53。直近5日データから挙げた注目機種で、ホールの公約ではない(△)"
+    }
+  ],
+  "unscored_claims": [],
+  "result": null,
+  "announce_digest": "e316222abe92d9fe"
+}
