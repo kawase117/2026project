@@ -32,6 +32,53 @@
   "unscored_claims": [],
   "needs_manual_review": false,
   "no_confirmed_machines": false,
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20260929",
+    "hall_baseline_mean_diff": -47.8,
+    "hall_n_machines": 587,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 2,
+      "machines_hi": [],
+      "machines_lo": [
+        "ソードアート・オンラインII"
+      ],
+      "bounds": [
+        -5095,
+        15477
+      ]
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "東京喰種",
+          "note": "本文の部分一致。過去傾向として『東京喰種』『Lカバネリ』『1台バラに3台並び』を挙げる(みんなでジャッジ=集計系)。カバネリは1台設置。"
+        },
+        "score": 632.7,
+        "mean_diff": 508.9,
+        "gratio": 1.243,
+        "n_machines": 31,
+        "rank": 6,
+        "candidate_models": 57,
+        "age_days": 602,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "甲鉄城のカバネリ",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "hit": null,
+        "note": "当日 甲鉄城のカバネリ が設置3台以上の候補に無い（撤去・台数不足・表記ゆれ）"
+      }
+    ]
+  },
   "announce_digest": "37e94b24bc592f86"
 }

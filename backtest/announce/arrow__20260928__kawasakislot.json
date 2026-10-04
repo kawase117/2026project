@@ -54,6 +54,121 @@
       "frozen_scoring_procedure": "答え合わせ時に名指し機種以外の台のRB確率/差枚から⑤⑥相当の割合を概算する。判定不能なら判定不能と書く。"
     }
   ],
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20260928",
+    "hall_baseline_mean_diff": 418.5,
+    "hall_n_machines": 320,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+          "ratio": 2,
+          "note": "先バレ。1/2⑤⑥。"
+        },
+        "n_machines": 12,
+        "ratio": 2,
+        "top_k": 6,
+        "model_top_k_mean_diff": 3405.7,
+        "hall_top_quantile_mean_diff": 2534.8,
+        "excess_vs_hall_quantile": 870.9,
+        "model_mean_diff": 1235.6,
+        "n_over_hall_quantile": 7,
+        "hit": true,
+        "model_named_score": 1674.9,
+        "model_named_rank": 5
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+          "ratio": 2,
+          "note": "先バレ(乙女5)。1/2⑤⑥。旧作の戦国乙女4は含めない。"
+        },
+        "n_machines": 10,
+        "ratio": 2,
+        "top_k": 5,
+        "model_top_k_mean_diff": 9899.0,
+        "hall_top_quantile_mean_diff": 2332.3,
+        "excess_vs_hall_quantile": 7566.7,
+        "model_mean_diff": 4631.3,
+        "n_over_hall_quantile": 8,
+        "hit": true,
+        "model_named_score": 6614.9,
+        "model_named_rank": 1
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "モンキーターンV",
+          "ratio": 2,
+          "note": "先バレ(モンキー5)。1/2⑤⑥。"
+        },
+        "n_machines": 8,
+        "ratio": 2,
+        "top_k": 4,
+        "model_top_k_mean_diff": 4668.0,
+        "hall_top_quantile_mean_diff": 2502.9,
+        "excess_vs_hall_quantile": 2165.1,
+        "model_mean_diff": 2938.4,
+        "n_over_hall_quantile": 8,
+        "hit": true,
+        "model_named_score": 4711.3,
+        "model_named_rank": 3
+      },
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 2,
+          "note": "『まるごと×2機種』。"
+        },
+        "observed_n_models": 4,
+        "candidate_models": 32,
+        "models": [
+          {
+            "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+            "score": 6614.9,
+            "n_machines": 10,
+            "mean_diff": 4631.3,
+            "age_days": 112
+          },
+          {
+            "machine_name": "青春ブタ野郎はバニーガール先輩の夢を見ない",
+            "score": 6590.2,
+            "n_machines": 4,
+            "mean_diff": 4670.0,
+            "age_days": 21
+          },
+          {
+            "machine_name": "モンキーターンV",
+            "score": 4711.3,
+            "n_machines": 8,
+            "mean_diff": 2938.4,
+            "age_days": 635
+          },
+          {
+            "machine_name": "彼女、お借りします",
+            "score": 3150.8,
+            "n_machines": 5,
+            "mean_diff": 4264.4,
+            "age_days": 21
+          }
+        ],
+        "n_new_machines_over": 2,
+        "hit": true
+      }
+    ]
+  },
   "announce_digest": "977bfebe5cd1d1fc"
 }

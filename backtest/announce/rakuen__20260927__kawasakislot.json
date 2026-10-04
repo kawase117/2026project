@@ -1,0 +1,196 @@
+{
+  "announce_id": "rakuen__20260927__kawasakislot",
+  "hall": "楽園蒲田店",
+  "target_date": "20260927",
+  "source": {
+    "account": "kawasakislot",
+    "url": "https://x.com/kawasakislot/status/2103791942186541247",
+    "posted_at": "2026-09-26T19:21:00+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "9/27 楽園蒲田\n先バレつきフロアマップ\n末尾7  1/2⑤⑥\nエウレカ・転生・北斗 1/3⑤⑥",
+  "posted_at_note": "画像4枚のフロアマップ付き投稿。db_max=20260926<target=20260927で事後登録ではない。9/27は蒲田1・蒲田7と同様『7のつく日』(月内で7の付く最終日)に該当するが、この投稿自体は7のつく日という言葉には触れておらず、末尾7・名指し3機種の比率のみを主張している。",
+  "weakness_note": "「エウレカ・転生・北斗 1/3⑤⑥」は3機種まとめて1/3なのか各機種individually1/3なのか本文からは一意に決まらない。ここでは同アカウントの過去の書式慣行に合わせ各機種個別に ratio=3 として登録する。また末尾7の主張は機種セグメント(JUG/HANA/OKI/AT)をプールした判定になるが、announce.py内のコメント(2026-08-07楽園蒲田の実例)で『末尾7はプールだと外れに見えるがJUG/HANA単体では効いている』ことが確認済みのため、機械採点のpool結果だけで『外れ』と判定せず、by_segment内訳を必ず確認すること。",
+  "prior_check_note": "named-context(as_of=20260926, 直近30日, 閾値1800): 北斗の拳 転生の章2は6台中rank12/57・閾値超え率0.033・平均score60.6(9/26のタイガーダッシュ先バレ枠としても既出の常連)。スマスロ北斗の拳は8台中rank45/57・閾値超え率0・平均score22.6と弱い。交響詩篇エウレカセブン HI-EVOLUTION ZERO TYPE‐ARTは25台中rank49/57・閾値超え率0・平均score179.9(絶対値はそこそこだが台数が多く閾値超え率としては低い)。prediction_axes briefingのby_last_digitでは末尾7の直近30日平均差枚+42.8で10末尾中5位、突出はしていない(最上位は末尾3の+144.1)。baserate(90日,閾値1800): models_over_threshold_per_dayのmean=3.64,median=3(候補56.8機種中)。",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "position_rule",
+      "field": "last_digit",
+      "values": [
+        "7"
+      ],
+      "note": "末尾7が1/2の割合で⑤⑥という主張。プール(全セグメント)での判定に加え、by_segment(JUG/HANA/OKI/AT)を必ず確認する(announce.py内の2026-08-07楽園蒲田の実例注記参照)。直近30日プール平均差枚は+42.8(10末尾中5位)で突出なし。"
+    },
+    {
+      "type": "model_named_ratio",
+      "machine_name": "北斗の拳 転生の章2",
+      "ratio": 3,
+      "note": "1/3が⑤⑥という主張。直近30日6台中rank12/57、閾値超え率0.033、平均score60.6。9/26のタイガーダッシュ先バレ枠としても指定されていた常連機種。"
+    },
+    {
+      "type": "model_named_ratio",
+      "machine_name": "スマスロ北斗の拳",
+      "ratio": 3,
+      "note": "1/3が⑤⑥という主張。直近30日8台中rank45/57、閾値超え率0、平均score22.6と弱い機種。"
+    },
+    {
+      "type": "model_named_ratio",
+      "machine_name": "交響詩篇エウレカセブン HI-EVOLUTION ZERO TYPE‐ART",
+      "ratio": 3,
+      "note": "1/3が⑤⑥という主張。直近30日25台中rank49/57、閾値超え率0、平均score179.9(台数が多いため閾値超え率としては低め)。"
+    }
+  ],
+  "result": {
+    "scored_at_data_max": "20260927",
+    "hall_baseline_mean_diff": 306.9,
+    "hall_n_machines": 587,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 3,
+      "machines_hi": [],
+      "machines_lo": [
+        "リコリス・リコイル",
+        "東京喰種",
+        "青春ブタ野郎はバニーガール先輩の夢を見ない"
+      ],
+      "bounds": [
+        -5095,
+        15477
+      ]
+    },
+    "claims": [
+      {
+        "type": "position_rule",
+        "claim": {
+          "type": "position_rule",
+          "field": "last_digit",
+          "values": [
+            "7"
+          ],
+          "note": "末尾7が1/2の割合で⑤⑥という主張。プール(全セグメント)での判定に加え、by_segment(JUG/HANA/OKI/AT)を必ず確認する(announce.py内の2026-08-07楽園蒲田の実例注記参照)。直近30日プール平均差枚は+42.8(10末尾中5位)で突出なし。"
+        },
+        "by_segment": [
+          {
+            "segment": "OKI",
+            "n_machines": 13,
+            "n_target": 1,
+            "n_other": 12,
+            "effect_resid_diff": 5449.8,
+            "target_payout": 1.3339,
+            "other_payout": 1.0558
+          },
+          {
+            "segment": "JUG",
+            "n_machines": 117,
+            "n_target": 11,
+            "n_other": 106,
+            "effect_resid_diff": 2151.9,
+            "target_payout": 1.0727,
+            "other_payout": 0.9826
+          },
+          {
+            "segment": "AT",
+            "n_machines": 356,
+            "n_target": 36,
+            "n_other": 320,
+            "effect_resid_diff": 1156.8,
+            "target_payout": 1.0982,
+            "other_payout": 1.0129
+          },
+          {
+            "segment": "BT",
+            "n_machines": 85,
+            "n_target": 9,
+            "n_other": 76,
+            "effect_resid_diff": 496.3,
+            "target_payout": 1.0536,
+            "other_payout": 1.0196
+          },
+          {
+            "segment": "HANA",
+            "n_machines": 16,
+            "n_target": 2,
+            "n_other": 14,
+            "effect_resid_diff": 184.1,
+            "target_payout": 1.0302,
+            "other_payout": 1.0357
+          }
+        ],
+        "judged_segment": "ALL(pooled)",
+        "n_target": 59,
+        "n_other": 528,
+        "effect_resid_diff": 1285.6,
+        "target_payout": 1.0866,
+        "other_payout": 1.009,
+        "hit": true
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "北斗の拳 転生の章2",
+          "ratio": 3,
+          "note": "1/3が⑤⑥という主張。直近30日6台中rank12/57、閾値超え率0.033、平均score60.6。9/26のタイガーダッシュ先バレ枠としても指定されていた常連機種。"
+        },
+        "n_machines": 6,
+        "ratio": 3,
+        "top_k": 2,
+        "model_top_k_mean_diff": 1548.0,
+        "hall_top_quantile_mean_diff": 3281.7,
+        "excess_vs_hall_quantile": -1733.7,
+        "model_mean_diff": -1539.3,
+        "n_over_hall_quantile": 2,
+        "hit": false,
+        "model_named_score": -1911.4,
+        "model_named_rank": 56
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "スマスロ北斗の拳",
+          "ratio": 3,
+          "note": "1/3が⑤⑥という主張。直近30日8台中rank45/57、閾値超え率0、平均score22.6と弱い機種。"
+        },
+        "n_machines": 8,
+        "ratio": 3,
+        "top_k": 3,
+        "model_top_k_mean_diff": 4809.7,
+        "hall_top_quantile_mean_diff": 3194.0,
+        "excess_vs_hall_quantile": 1615.6,
+        "model_mean_diff": 1446.8,
+        "n_over_hall_quantile": 5,
+        "hit": true,
+        "model_named_score": 1542.7,
+        "model_named_rank": 5
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "交響詩篇エウレカセブン HI-EVOLUTION ZERO TYPE‐ART",
+          "ratio": 3,
+          "note": "1/3が⑤⑥という主張。直近30日25台中rank49/57、閾値超え率0、平均score179.9(台数が多いため閾値超え率としては低め)。"
+        },
+        "n_machines": 25,
+        "ratio": 3,
+        "top_k": 9,
+        "model_top_k_mean_diff": 2704.2,
+        "hall_top_quantile_mean_diff": 3258.1,
+        "excess_vs_hall_quantile": -553.9,
+        "model_mean_diff": 712.8,
+        "n_over_hall_quantile": 12,
+        "hit": false,
+        "model_named_score": 838.9,
+        "model_named_rank": 8
+      }
+    ]
+  },
+  "announce_digest": "fa9a3b8bf84f4a66"
+}

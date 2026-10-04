@@ -58,6 +58,119 @@
   ],
   "needs_manual_review": false,
   "no_confirmed_machines": false,
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20260929",
+    "hall_baseline_mean_diff": 7.7,
+    "hall_n_machines": 365,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "かぐや様は告らせたい",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "hit": null,
+        "note": "当日 かぐや様は告らせたい が設置3台以上の候補に無い（撤去・台数不足・表記ゆれ）"
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ウルトラミラクルジャグラー",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 3248.1,
+        "mean_diff": 900.0,
+        "gratio": 3.609,
+        "n_machines": 4,
+        "rank": 1,
+        "candidate_models": 48,
+        "age_days": 636,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ミリオンゴッド‐神々の軌跡‐",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 1347.8,
+        "mean_diff": 1350.0,
+        "gratio": 0.998,
+        "n_machines": 8,
+        "rank": 3,
+        "candidate_models": 48,
+        "age_days": 162,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "東京喰種",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -662.6,
+        "mean_diff": -480.0,
+        "gratio": 1.38,
+        "n_machines": 20,
+        "rank": 43,
+        "candidate_models": 48,
+        "age_days": 602,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ストリートファイター6",
+          "note": "語呂解読の推測(『？』付き)。match-nameのscore0.909を人間確認して採用。"
+        },
+        "score": -302.9,
+        "mean_diff": -800.0,
+        "gratio": 0.379,
+        "n_machines": 3,
+        "rank": 38,
+        "candidate_models": 48,
+        "age_days": 57,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ファンキージャグラー2",
+          "note": "語呂解読の推測(『？』付き)。match-nameのscore0.909を人間確認して採用。"
+        },
+        "score": 92.7,
+        "mean_diff": 83.3,
+        "gratio": 1.113,
+        "n_machines": 12,
+        "rank": 21,
+        "candidate_models": 48,
+        "age_days": 636,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
   "announce_digest": "4ef0dcaf123cb136"
 }

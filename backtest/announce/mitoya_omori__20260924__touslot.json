@@ -54,6 +54,137 @@
       "note": "mitoya_jug_eventdd_rbz_top3で679番が候補。直近30日named-context実測はrate0.0%・mean_score-53.7で無風、モデルスコアと食い違う弱点候補。"
     }
   ],
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20260924",
+    "hall_baseline_mean_diff": 182.6,
+    "hall_n_machines": 277,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ガールズ&パンツァー 最終章",
+          "note": "2025-09-24(前年水道橋回・大森町参加日)に平均+7306で単独最大だった機種。mitoya_model_gratio_top2でも独立に最有力視(759番、score719.2)。直近30日named-context実測でもrate30.0%・mean_score904.1で名指し候補中最強。ただし1台のみ・観測期間10日と浅い。"
+        },
+        "hit": null,
+        "note": "当日 ガールズ&パンツァー 最終章 が設置3台以上の候補に無い（撤去・台数不足・表記ゆれ）"
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+          "note": "2025年度、大森町自身の周年日(7/10、平均+5356)と水道橋回参加日(9/24、平均+2099)の両方で強かった年度内唯一の機種。ツイート本文でも『2025年度マギレコが全店全台系』と記載。9/14に5台同時に大跳ね(通常営業日での機種単独全台系)。直近30日named-context実測はrate10.0%・mean_score353.9。角番は端寄り(rank_from_max1-5)で不利だが実績で補う。"
+        },
+        "score": -170.2,
+        "mean_diff": -171.0,
+        "gratio": 0.995,
+        "n_machines": 5,
+        "rank": 22,
+        "candidate_models": 37,
+        "age_days": 535,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+          "note": "mitoya_at_eventdd_histdiff_top3(632番)で独立に最有力視。17台と規模が大きく直近3週間も持続的に強い。ただし2025年度は『全店高ベース』の実績年ではなく(2023年度分)、旧設置場所(2025-07-10当時いざ！番長)はマイナスだった。直近30日named-context実測はrate6.7%・mean_score374.5。"
+        },
+        "score": 920.3,
+        "mean_diff": 868.8,
+        "gratio": 1.059,
+        "n_machines": 17,
+        "rank": 7,
+        "candidate_models": 37,
+        "age_days": 206,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "彼女、お借りします",
+          "note": "旧マギアレコード設置位置(507-512)と現在の設置位置(506-510)がほぼ完全に重なる場所継続性の候補。mitoya_at_eventdd_histdiff_top3でも507番が最高スコア(1400.3)。ただし直近3日は全てマイナスで実績が逆行。直近30日named-context実測はrate11.8%・mean_score65.9と弱め。"
+        },
+        "score": 636.5,
+        "mean_diff": 669.0,
+        "gratio": 0.951,
+        "n_machines": 5,
+        "rank": 10,
+        "candidate_models": 37,
+        "age_days": 17,
+        "age_bucket": "new",
+        "base_rate": 0.105,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "やじきた道中記参る！",
+          "note": "旧押忍！番長4の設置位置(519-522)と現在の設置位置(520-522)が重なる場所継続性の候補。9/23に521番が+7275の大跳ね。直近30日named-context実測はrate6.7%・mean_score46.3と絶対値は小さい。"
+        },
+        "score": 48.0,
+        "mean_diff": 49.0,
+        "gratio": 0.98,
+        "n_machines": 3,
+        "rank": 16,
+        "candidate_models": 37,
+        "age_days": 52,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "リコリス・リコイル",
+          "note": "mitoya_at_eventdd_histdiff_top3で578番が候補(score1183.7)。9/21に574-580島で複数台同時プラスの並び疑惑。直近30日named-context実測はrate11.8%・mean_score154.8で弱め。"
+        },
+        "score": -153.8,
+        "mean_diff": -90.9,
+        "gratio": 1.692,
+        "n_machines": 14,
+        "rank": 20,
+        "candidate_models": 37,
+        "age_days": 17,
+        "age_bucket": "new",
+        "base_rate": 0.105,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ネオアイムジャグラーEX",
+          "note": "mitoya_jug_eventdd_rbz_top3で679番が候補。直近30日named-context実測はrate0.0%・mean_score-53.7で無風、モデルスコアと食い違う弱点候補。"
+        },
+        "score": 487.8,
+        "mean_diff": 407.1,
+        "gratio": 1.198,
+        "n_machines": 17,
+        "rank": 11,
+        "candidate_models": 37,
+        "age_days": 388,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
   "announce_digest": "80599e29d9e20d2d"
 }

@@ -27,6 +27,54 @@
   "unscored_claims": [],
   "needs_manual_review": false,
   "no_confirmed_machines": false,
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20260930",
+    "hall_baseline_mean_diff": 75.9,
+    "hall_n_machines": 365,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 1,
+          "note": "『全機種・ニブイチ機種・メイン機種への単品強化』の3点セット。本文に機種名・台数の明示なし(n_models=1は最低限の解釈)。メガなな×メガいちコラボの月末30日"
+        },
+        "observed_n_models": 3,
+        "candidate_models": 48,
+        "models": [
+          {
+            "machine_name": "ジャグラーガールズ",
+            "score": 9701.2,
+            "n_machines": 4,
+            "mean_diff": 3500.0,
+            "age_days": 637
+          },
+          {
+            "machine_name": "ワールドダイスター",
+            "score": 8187.9,
+            "n_machines": 3,
+            "mean_diff": 3600.0,
+            "age_days": 58
+          },
+          {
+            "machine_name": "スーパーブラックジャック",
+            "score": 2334.6,
+            "n_machines": 4,
+            "mean_diff": 3250.0,
+            "age_days": 603
+          }
+        ],
+        "n_new_machines_over": 0,
+        "hit": true
+      }
+    ]
+  },
   "announce_digest": "694741029b37c199"
 }

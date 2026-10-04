@@ -27,6 +27,54 @@
   "unscored_claims": [],
   "needs_manual_review": false,
   "no_confirmed_machines": false,
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20260930",
+    "hall_baseline_mean_diff": 195.7,
+    "hall_n_machines": 715,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 1,
+          "note": "『全仕掛けと大量の単品仕掛け』(1や7の日同様)。機種名・台数の明示なし(n_models=1は最低限の解釈)。メガなな×メガいちコラボの月末30日"
+        },
+        "observed_n_models": 3,
+        "candidate_models": 65,
+        "models": [
+          {
+            "machine_name": "ファンキージャグラー2",
+            "score": 7731.2,
+            "n_machines": 24,
+            "mean_diff": 3691.7,
+            "age_days": 450
+          },
+          {
+            "machine_name": "ワールドダイスター",
+            "score": 6274.6,
+            "n_machines": 8,
+            "mean_diff": 3525.0,
+            "age_days": 58
+          },
+          {
+            "machine_name": "痛いのは嫌なので防御力に極振りしたいと思います。",
+            "score": 5323.1,
+            "n_machines": 8,
+            "mean_diff": 3287.5,
+            "age_days": 450
+          }
+        ],
+        "n_new_machines_over": 0,
+        "hit": true
+      }
+    ]
+  },
   "announce_digest": "ea092dc472a50524"
 }

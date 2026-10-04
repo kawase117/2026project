@@ -1,0 +1,103 @@
+{
+  "announce_id": "rakuen__20260926__kawasakislot",
+  "hall": "楽園蒲田店",
+  "target_date": "20260926",
+  "source": {
+    "account": "kawasakislot",
+    "url": "",
+    "posted_at": "2026-09-25T21:22:00+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "9/26 楽園蒲田\nタイガーダッシュ過去仕掛け機種一覧",
+  "posted_at_note": "本文は「過去仕掛け機種一覧」の提示のみで、今回の具体的な公約(全台系・並び台数等)は本文に含まれない。db_max=20260925<target=20260926で事後登録ではない。",
+  "weakness_note": "本文自体には今日の名指し機種の主張が無い。ユーザーが後日提示したタイガーダッシュ集計画像(6/26〜9/16の8回分)で、北斗の拳 転生の章2と甲鉄城のカバネリ 海門(うなと)決戦が『先バレ』(事前に対象と分かっている)枠として扱われていた点のみが具体的な検証材料。他の機種については画像内の過去8回の出現頻度から予測を提示したが、それはユーザー・当方の推測であり account 自身の主張ではないため claims に含めない。",
+  "prior_check_note": "登録時にDBで確認: (1) 甲鉄城のカバネリ海門決戦は直近30日で26台中rank9/57、+1800超え率0.333、平均score1196 — もともと超えやすい常連機種。(2) 北斗の拳 転生の章2は6台中rank21/57、+1800超え率0.067、平均score134.6 — カバネリと比べると弱い。(3) 過去のタイガーダッシュ8回のうち、カバネリは6/26・7/16・7/26・8/6・8/16・8/26・9/6・9/16の全8回で1/2〜1/3指定、転生の章2は6/26・7/16・8/6・8/16・8/26の5/8回で1/3〜1/2指定(7/26・9/6・9/16は指定なし)。",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "note": "タイガーダッシュの先バレ枠(過去8/8回で指定)。直近30日+1800超え率0.333、rank9/57ともともと強い常連機種。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "北斗の拳 転生の章2",
+      "note": "タイガーダッシュの先バレ枠(過去8回中5回で指定)。直近30日+1800超え率0.067、rank21/57と平均的な機種。"
+    }
+  ],
+  "unscored_claims": [
+    {
+      "text": "先バレ2機種以外の残り枠(過去頻度上位: モンキーターンV・マギアレコード・東京リベンジャーズ・炎炎ノ消防隊2・エウレカセブンHI-EVOLUTION等)",
+      "reason": "account自身が今回名指ししたものではなく、過去8回の集計画像からの当方推測のため型に入れない。",
+      "frozen_scoring_procedure": "答え合わせ時に、当日の全台系判定(model_edge_briefing/setting_estimator)でこれらの機種の当日スコアを個別に記録し、過去頻度との整合を確認する。"
+    }
+  ],
+  "result": {
+    "scored_at_data_max": "20260926",
+    "hall_baseline_mean_diff": -46.7,
+    "hall_n_machines": 587,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 1,
+      "n_censored_lo": 3,
+      "machines_hi": [
+        "からくりサーカス2"
+      ],
+      "machines_lo": [
+        "戦国乙女5 業火を穿つ宿焔の双刃",
+        "東京喰種",
+        "甲鉄城のカバネリ 海門(うなと)決戦"
+      ],
+      "bounds": [
+        -5095,
+        15477
+      ]
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+          "note": "タイガーダッシュの先バレ枠(過去8/8回で指定)。直近30日+1800超え率0.333、rank9/57ともともと強い常連機種。"
+        },
+        "score": -12.5,
+        "mean_diff": -7.0,
+        "gratio": 1.782,
+        "n_machines": 26,
+        "rank": 21,
+        "candidate_models": 57,
+        "n_censored_hi": 0,
+        "n_censored_lo": 1,
+        "censoring_bias": "upper_bound",
+        "age_days": 208,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "北斗の拳 転生の章2",
+          "note": "タイガーダッシュの先バレ枠(過去8回中5回で指定)。直近30日+1800超え率0.067、rank21/57と平均的な機種。"
+        },
+        "score": 406.3,
+        "mean_diff": 206.7,
+        "gratio": 1.966,
+        "n_machines": 6,
+        "rank": 12,
+        "candidate_models": 57,
+        "age_days": 264,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
+  "announce_digest": "7b5ca5c6e783b523"
+}

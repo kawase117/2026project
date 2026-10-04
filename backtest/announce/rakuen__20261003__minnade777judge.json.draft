@@ -1,0 +1,37 @@
+{
+  "announce_id": "rakuen__20261003__minnade777judge",
+  "hall": "楽園蒲田店",
+  "target_date": "20261003",
+  "source": {
+    "account": "minnade777judge",
+    "url": "",
+    "posted_at": "2026-10-02T13:36:53+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "10/3 楽園町田\n\n週末強化の楽園町田\n\n過去傾向的に\n・東京喰種にてっぺん入りの2台並び上2つ\n・Lカバネリにてっぺん入りの2台並び上2つ\n・その他にてっぺん入りの2台並び上2つ複数\nなどがあります。\n\n過去傾向を徹底的に分析してみんなでジャッジ！",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"楽園蒲田店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-04\", \"2026-10-02\"], \"n_days\": 89, \"n_model_days\": 5028, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2202.2, \"models_over_threshold_per_day\": {\"mean\": 2.83, \"median\": 2.0, \"max\": 12}, \"candidate_models_per_day\": 56.5, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.63, \"median\": 3.0, \"max\": 13}, \"p_at_least_1\": 0.955, \"p_at_least_2\": 0.843, \"p_at_least_3\": 0.596, \"p_at_least_4\": 0.416, \"p_at_least_10\": 0.011}} / named_context: {\"as_of\": \"20261002\", \"window_days\": 30, \"n_candidates_ge3machines\": 57, \"hall_over_threshold_rate_approx\": 0.088, \"threshold\": 1800.0, \"models\": [{\"name\": \"東京喰種\", \"n_machines\": 31, \"rank\": 9, \"of\": 57, \"n_days_present\": 30, \"over_threshold\": 1, \"rate\": 0.033, \"mean_score\": 247.4}, {\"name\": \"甲鉄城のカバネリ 海門(うなと)決戦\", \"n_machines\": 26, \"rank\": 15, \"of\": 57, \"n_days_present\": 30, \"over_threshold\": 8, \"rate\": 0.267, \"mean_score\": 1208.0}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "東京喰種",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    }
+  ],
+  "unscored_claims": [],
+  "needs_manual_review": true,
+  "no_confirmed_machines": false,
+  "result": null,
+  "announce_digest": null
+}

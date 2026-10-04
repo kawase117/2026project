@@ -47,6 +47,109 @@
   "unscored_claims": [],
   "needs_manual_review": false,
   "no_confirmed_machines": false,
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20260929",
+    "hall_baseline_mean_diff": -52.6,
+    "hall_n_machines": 715,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "かぐや様は告らせたい",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -230.2,
+        "mean_diff": -422.2,
+        "gratio": 0.545,
+        "n_machines": 9,
+        "rank": 43,
+        "candidate_models": 65,
+        "age_days": 449,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "マイジャグラーV",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -221.3,
+        "mean_diff": -150.9,
+        "gratio": 1.466,
+        "n_machines": 57,
+        "rank": 42,
+        "candidate_models": 65,
+        "age_days": 449,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "モンスターハンターライズ",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -570.7,
+        "mean_diff": -644.4,
+        "gratio": 0.886,
+        "n_machines": 9,
+        "rank": 53,
+        "candidate_models": 65,
+        "age_days": 449,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "化物語",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -174.7,
+        "mean_diff": -360.0,
+        "gratio": 0.485,
+        "n_machines": 5,
+        "rank": 38,
+        "candidate_models": 65,
+        "age_days": 294,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ストリートファイター6",
+          "note": "語呂解読の推測(『？』付き)。match-nameのscore0.909を人間確認して採用。"
+        },
+        "score": -125.7,
+        "mean_diff": -300.0,
+        "gratio": 0.419,
+        "n_machines": 4,
+        "rank": 34,
+        "candidate_models": 65,
+        "age_days": 57,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
   "announce_digest": "be8e65495e8235f2"
 }

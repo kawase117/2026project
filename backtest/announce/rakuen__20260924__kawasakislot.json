@@ -59,6 +59,173 @@
       "note": "❹復活導入&増台。差枚ベース(gratio)ではmean_score11.6・rate0.0%とほぼ無風だが、機械割ベース(edge_pp)ではeda/model_edge_briefingで◎安定(CI下限+0.41)。指標の食い違いに注意。"
     }
   ],
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20260924",
+    "hall_baseline_mean_diff": 171.8,
+    "hall_n_machines": 587,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 1,
+      "n_censored_lo": 0,
+      "machines_hi": [
+        "戦国乙女5 業火を穿つ宿焔の双刃"
+      ],
+      "machines_lo": [],
+      "bounds": [
+        -5095,
+        15477
+      ]
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+          "note": "❶最優先指定(必ず3台並びあり、新館両列+本館の3箇所想定)。直近30日rate36.7%・mean_score1339.2で名指し機種中最強。9/23単日は外れたが30日累積では最有力。加えて前回『連続攻撃』(8/25、同名企画)では11候補中カバネリのみがhit(score+5397.0/mean_diff+2013.6)で、企画名一致の実績としても最有力。"
+        },
+        "score": 1003.4,
+        "mean_diff": 441.7,
+        "gratio": 2.272,
+        "n_machines": 26,
+        "rank": 7,
+        "candidate_models": 57,
+        "age_days": 206,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "リコリス・リコイル",
+          "note": "❶最優先指定(両列から1箇所ずつの3台並び想定)。直近30日rate5.9%・mean_score-160.1とマイナス圏で自己申告と実データが食い違う弱点候補。過去2回の連続取材week(8/24・8/25)でも一度も名指しされておらず、企画名一致の実績による裏付けも無い今回初出の候補。"
+        },
+        "score": 1656.6,
+        "mean_diff": 586.9,
+        "gratio": 2.823,
+        "n_machines": 22,
+        "rank": 3,
+        "candidate_models": 57,
+        "age_days": 17,
+        "age_bucket": "new",
+        "base_rate": 0.105,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "東京喰種",
+          "note": "❷定番機種。直近30日rate3.3%・mean_score180.5で実測は弱め。"
+        },
+        "score": 141.9,
+        "mean_diff": 161.7,
+        "gratio": 0.878,
+        "n_machines": 31,
+        "rank": 25,
+        "candidate_models": 57,
+        "age_days": 597,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "化物語",
+          "note": "❷定番機種。直近30日rate10.0%・mean_score489.0。"
+        },
+        "score": 1544.5,
+        "mean_diff": 1248.9,
+        "gratio": 1.237,
+        "n_machines": 9,
+        "rank": 4,
+        "candidate_models": 57,
+        "age_days": 290,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+          "note": "❸オススメ機種。直近30日rate3.3%・mean_score303.1で実測はやや弱め。"
+        },
+        "score": 2746.7,
+        "mean_diff": 1413.1,
+        "gratio": 1.944,
+        "n_machines": 18,
+        "rank": 2,
+        "candidate_models": 57,
+        "n_censored_hi": 1,
+        "n_censored_lo": 0,
+        "censoring_bias": "lower_bound",
+        "max_score_understatement": 380.4,
+        "age_days": 108,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "モンスターハンターライズ",
+          "note": "❹復活導入&増台。直近30日rate16.7%・mean_score456.0。"
+        },
+        "score": 302.0,
+        "mean_diff": 212.0,
+        "gratio": 1.425,
+        "n_machines": 9,
+        "rank": 19,
+        "candidate_models": 57,
+        "age_days": 631,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "革命機ヴァルヴレイヴ2",
+          "note": "❹復活導入&増台。直近30日rate13.3%・mean_score600.0でrank4/57と全体でも上位。"
+        },
+        "score": -533.0,
+        "mean_diff": -937.7,
+        "gratio": 0.568,
+        "n_machines": 10,
+        "rank": 52,
+        "candidate_models": 57,
+        "age_days": 324,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ネオアイムジャグラーEX",
+          "note": "❹復活導入&増台。差枚ベース(gratio)ではmean_score11.6・rate0.0%とほぼ無風だが、機械割ベース(edge_pp)ではeda/model_edge_briefingで◎安定(CI下限+0.41)。指標の食い違いに注意。"
+        },
+        "score": -100.4,
+        "mean_diff": -138.1,
+        "gratio": 0.727,
+        "n_machines": 66,
+        "rank": 41,
+        "candidate_models": 57,
+        "age_days": 360,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
   "announce_digest": "4ba9e598bb8a2476"
 }
