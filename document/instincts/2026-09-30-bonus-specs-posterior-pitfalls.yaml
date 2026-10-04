@@ -1,0 +1,41 @@
+---
+id: bonus-specs-posterior-pitfalls
+trigger: "backtest/bonus_specs.pyのposterior()/judge()を新しい機種(特にBT/A+AT、combined_probabilityしか無い機種)に適用するとき。事後分布が『設定5以上90%超』のように極端な値を返したとき"
+confidence: 0.8
+domain: analysis-methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+---
+
+# bonus_specsのposterior判定は、機種によって検算なしで信じると誤る
+
+## Core claim
+一撃マスターのcombined_probability(BB/RB個別値が無い機種)しか持たない機種でposterior()判定を行うとき、(1) 実測の観測合算頻度がスペック上の設定6期待値を上回っていないか、(2) 設定3・4のデータが欠落しBB/RB確率が設定間で非単調でないか、の2点を検算しないと、判定結果を過信して誤った高設定判定を出す。
+
+## Evidence
+- n_observations: 3機種(蒲田7の少女☆歌劇レヴュースタァライト、みとやのSHAKE BONUS TRIGGER、タコスロ)
+- data scope: 蒲田7・みとや大森町のBT/A+AT機
+- metric scope: rb_probability, bb_probability, combined_probability(一撃マスター)
+- result summary:
+  - 蒲田7「少女☆歌劇レヴュースタァライト」: スペックのcombined_probability上限(設定6=1/160.6)に対し、直近1ヶ月の実測観測合算頻度が1/60〜1/97まで乖離。posterior()が全曜日で「設定6・100%」という非現実的な判定を返した。スペック値とDBのbb_count/rb_countの単位が食い違っている疑いが強く、この機種の判定は信頼できないと判断して分析対象から除外した
+  - みとや「SHAKE BONUS TRIGGER」: 一撃マスターに設定3・4のデータが無く(設定1,2,5,6のみ)、かつRB確率が非単調(設定5[1/409.6]が設定2[1/332.7]より悪い)。ユーザー指摘により発覚。「設定5」という最尤判定が出ても、実態は設定1とほぼ見分けがつかない可能性がある
+  - 「タコスロ」: 設定1→6のRB確率比が1.17倍(他機種は1.4〜2倍前後)と設定間差が小さく、判別力そのものが弱い
+
+## Interpretation
+- combined_probabilityしか無い機種は、BB/RB個別に判定できるノーマル機ほど検算が効きにくい。新規機種に適用する前に必ず`bs.find_spec()`でsettings辞書を出力し、(a)設定1→6でRB/BB確率が単調かどうか、(b)実測の観測合算(games/(bb+rb))がスペック上の設定6期待値の範囲内に収まっているかを確認する
+- 範囲外(実測が設定6期待値を大きく上回る)であれば、その機種のDBカラムとスペックの対応そのものを疑い、posterior判定を使わない
+- 非単調な機種(SHAKE等)は「設定5」等の中間ラベルを信用せず、「偶数(当たりやすいが1撃小)/奇数(当たりにくいが1撃大)のどちらの分布に近いか」で解釈する
+
+## Action
+- `backtest/bonus_specs.py`で新しい機種をカバレッジに追加・分析対象にする前に、上記2点の検算をワンステップとして必ず実行する
+- 検算をパスしない機種は「判定不能」として明記し、事後分布の数値をそのまま報告・記録しない
+- 機械割(payout_rate)は単調でもボーナス確率が非単調な機種があり得るため、差枚の検算(回転数×3枚×(機械割-100)/100 と実測差枚の比較)を併用すると、RB確率だけでは見えない設定差を補足できる(かるてっとで実例: RB確率ベースの判定と機械割ベースの検算が一致し、通常日でも設定1の理論値を上回る動きを確認できた)
+
+## Relation
+- related:
+  - feedback-rb-only-not-combined
+  - project-jug-rb-setting-prediction-pipeline-20260711
+
+## Status
+- status: active

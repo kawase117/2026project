@@ -1,0 +1,123 @@
+- id: 2026-09-30-setting-estimator-band-not-just-ratio
+  trigger: "site777のsetting_estimatorの出力(高低比・p_high_setting_uniform_prior・設定5以上%等)を報告するとき。『高設定寄り』『設定X以上YY%』と断定的に書きたくなったとき"
+  confidence: 0.85
+  domain: methodology
+  source: session-observation
+  project_id: 2026project
+  project_name: pachinko-analyzer
+
+  title: 高低比だけでなくsetting_band_label/narrowedを必ず確認・併記する
+
+  core_claim: |
+    setting_estimatorの高低比(high_low_ratio)やp_high_setting_uniform_priorが大きくても、
+    setting_band_narrowed=falseなら「設定を絞り込めていない(設定1でも否定できない)」ことを
+    意味する。この幅の情報を報告せず高低比だけを見せると、設定1でも起こりうる範囲の上振れを
+    「高設定濃厚」と誤解させる。
+
+  evidence:
+    n_observations: 1
+    data_scope: machine(楽園蒲田 アレックスブライト#3140)
+    metric_scope: rb_probability
+    result_summary: |
+      2026-09-26、楽園蒲田#3140(アレックスブライト)はG6202・RB23回(1/269.7)で
+      high_low_ratio=3.51・p_high_setting_uniform_prior=0.756となり、速報では
+      「設定5以上83%」と報告し続けた。しかし実際にestimate_settingを呼ぶと
+      setting_band_label="絞れず"(band 1-6)であり、設定1の期待RB回数(約14.5回)に対し
+      実測23回はz≈+2.24(片側1-2%程度)で「設定1でも起こりうる」範囲だった。
+      当日ユーザーが実際に打ち、結果は設定1だった。
+
+  interpretation:
+    - 高低比・一様事前確率は「相対的な尤度」であり「絞り込めたか」とは別軸
+    - setting_band_narrowed=falseの台は、どれだけ高低比が大きくても単独推しの根拠として弱い
+    - 特にRBの設定間格差が狭い機種(アレックスブライト等)では、この乖離が起きやすい
+    - site777-highsetting-scanスキルの既存警告(幅で絞れた台を優先する)を、実際の失敗事例として裏付けた
+
+  action:
+    - site777速報・レビューでsetting_estimatorの数値を報告する際は、high_low_ratio/p_high_settingと
+      並べてsetting_band_label(絞れず/範囲)を必ず一行で明記する
+    - band_narrowed=falseの台を「本日最有力」のように単独で強く推す表現を避け、
+      「高低比は高いが幅は絞れていない」と明示する
+
+  relation:
+    related:
+      - project-kishu-ichi-decoy
+
+  status: active
+
+- id: 2026-09-30-alex-bright-narrow-rb-spread
+  trigger: "site777やDB分析でアレックスブライト(ALEX_BRIGHT)のRB確率から設定を推定しようとするとき"
+  confidence: 0.8
+  domain: machine-spec
+  source: session-observation
+  project_id: 2026project
+  project_name: pachinko-analyzer
+
+  title: アレックスブライトはRB確率での設定判別力が極端に低い
+
+  core_claim: |
+    アレックスブライトは設定1→6でRB確率が1/428.3→1/312.1(2.4倍未満)、
+    設定1→2はわずか+4.6%しか差が無く、RB単独での設定判別力がジャグラー系より
+    大きく劣る。setting_estimator.pyのFALSE_HIGH_RATE_AT_3000G(ゴーゴージャグラー3=22.7%等)
+    に相当する較正値もこの機種には存在しない。
+
+  evidence:
+    n_observations: 1
+    data_scope: machine(ALEX_BRIGHTファミリー、スペック表)
+    metric_scope: rb_probability
+    result_summary: |
+      setting_estimator.pyのスペック表実測: 設定1=1/428.3, 設定2=1/409.6,
+      設定5=1/366.1, 設定6=1/312.1(RB確率)。2026-09-26に#3140でG6202・RB23回という
+      設定6相当を上回る実測値が出たが実際は設定1だった。
+
+  interpretation:
+    - この機種のRB単独推しは、他のジャグラー系機種より信頼度を大きく割り引く必要がある
+    - 少なくともゴーゴージャグラー3(既知の誤警報率22.7%)と同等以上に誤警報が起きやすいと想定すべき
+    - BB確率(設定1=0.00324→設定6=0.00348)も差が小さく、BB併用でも大幅な改善は期待しにくい
+
+  action:
+    - アレックスブライトを高設定寄り候補として報告する際は、他機種より一段階格下げした表現にする
+    - 可能ならこの機種のFALSE_HIGH_RATE_AT_3000Gをsetting_estimator.pyに追加計算する(未実施)
+
+  status: active
+
+- id: 2026-09-30-hall-level-pattern-must-be-cross-checked-per-hall
+  trigger: "複数ホールの当日予測を作成するとき。特定ホールの機種粒度エッジが弱いと判断して優先度を下げようとするとき"
+  confidence: 0.75
+  domain: methodology
+  source: session-observation
+  project_id: 2026project
+  project_name: pachinko-analyzer
+
+  title: ホール別予測では機種軸に加えてホール粒度の既知パターン(EVENT_DAYS.jsonl等)を必ず横断参照する
+
+  core_claim: |
+    機種粒度のエッジ(model_edge_briefing等)だけでホールの優先順位を決めると、
+    document/registry/EVENT_DAYS.jsonlのnoteに既に記録されているホール粒度の
+    曜日・企画別パターン(例: ヒロキ東口の「6のつく日」は年平均+84 vs 他日-60、p=0.006)
+    を見落とし、実際には最も強いホールを過小評価することがある。
+
+  evidence:
+    n_observations: 1
+    data_scope: hall(ヒロキ東口店)
+    metric_scope: diff
+    result_summary: |
+      2026-09-26朝の予測では、ヒロキ東口は「マイジャグラーVのみ◎安定」という
+      機種粒度の弱い評価のみで、既に登録済みの「6のつく日」ホール効果(+84 vs -60)を
+      言及しなかった。当日最終実績は平均+202.6・勝率39.8%(279台)で、
+      同日の楽園蒲田(平均-46.7)を明確に上回り、既知パターンをも上回る結果だった。
+
+  interpretation:
+    - 機種軸のエッジが弱い/少ないことは、ホール全体が弱いことを意味しない
+    - ホール固有の曜日・企画効果は機種軸のノイズに埋もれやすく、意識的に別軸として確認する必要がある
+
+  action:
+    - 複数ホールの当日予測を作る際、各ホールの節の冒頭で
+      EVENT_DAYS.jsonlに登録済みのそのホールの曜日・企画別パターンを一度は検索・言及する
+    - 機種粒度が弱いホールを自動的に優先度最下位に置かない
+
+  relation:
+    related:
+      - project-hiroki-higashiguchi-asurobo-hatenko
+      - feedback-hall-analysis-standard-passes
+
+  status: active

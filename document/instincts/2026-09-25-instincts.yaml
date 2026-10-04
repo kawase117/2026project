@@ -1,0 +1,96 @@
+---
+id: 2026-09-25-tail-corner-rb-spec-comparison-confidence-cap
+trigger: "末尾別・角番別のRB確率を機種スペック表(設定1〜6のRB確率)と対比して『設定X相当』と言おうとするとき。並びイベント後の答え合わせで高設定の絶対レベルを主張したくなったとき"
+confidence: 0.75
+domain: prediction-evaluation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+---
+
+# 末尾/角番別RB確率とスペック表の対比は「相対順位」までで、絶対的な設定レベルの断定はしない
+
+## Core claim
+末尾別・角番別のRB確率をマイジャグラーV/ネオアイム等のスペック表(設定別RB確率)と対比するとき、
+「どの末尾/角番が相対的に高いか」の主張はできるが、「設定X(例: 設定5)を入れている」という
+絶対レベルの主張は、複数機種・複数台の合算平均という集計方法自体が持つ2つの構造的な留保
+(下記Evidence)により、通常は確度不足で成立しない。
+
+## Evidence
+- n_observations: 1日(2026-09-24、楽園蒲田)
+- data scope: single-hall、末尾別・機種横断の合算平均
+- metric scope: rb_probability
+- result summary: 楽園蒲田9/24でノーマル機のみ末尾別RB確率を集計し、末尾6(0.00306)・末尾4(0.00271)が
+  高い一方、末尾1は差枚最高(+615.1)なのにRB確率は中位(0.00250)だった。マイジャグラーV/ネオアイム
+  のスペック表と対比すると末尾6・4は「設定3相当」の水準で、「設定5」と断定するには数値が不足していた
+
+## Interpretation
+- 末尾集計は複数機種・複数台の合算平均であり、個別の高設定台が低い台と平均化されて薄まる
+  (1つ目の留保)
+- サンダーV・ケロット5・アレックスブライトなど機種スペックが異なる台が同じ末尾集計に混在し、
+  単一機種のスペック表を当てはめる精度に限界がある(2つ目の留保)
+- この2つの留保は「相対順位(どちらが高いか)」の主張までは無効化しないが、
+  「設定Xそのもの」という絶対レベルの主張には常に強く働く
+- 加えて「並びイベント=必ず高設定が入る」という前提自体も確実性の高いものではなく、
+  末尾/角番への投入自体も仮説の域を出ないことが多い
+
+## Action
+- 末尾・角番のRB確率をスペック表と対比するときは、「相対順位(A>Bという主張)」と
+  「絶対レベル(設定X)」を明確に分けて書く
+- 絶対レベルを主張する場合は、機種を1種類に絞って集計し直すか、個別台単位で見て
+  合算平均の希薄化を回避したことを明記する。それをしない限り「設定X」の断定は記録に残さない
+- レビュー文書には「確度不足のため設定レベルの断定は保留」という一文を明示的に書く
+  (document/reviews/2026-09-24-rakuen-kamata-renzoku-kougeki-review.md 5.1節を型として使う)
+
+## Relation
+- related:
+  - feedback-scoring-must-separate-setting-from-pnl
+  - feedback-rb-only-not-combined
+
+## Status
+- status: active
+
+---
+id: 2026-09-25-narabi-outlier-check-games-vs-island-average
+trigger: "並びブロックの一部の台が差枚マイナスで『並びが崩れている/機種イチだった』と判定しそうになったとき"
+confidence: 0.7
+domain: prediction-evaluation
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+---
+
+# 並びブロックの外れ台は、島平均に対する回転数比を見てから「並び崩れ」と判定する
+
+## Core claim
+複数台の並びブロックのうち1台だけ差枚がマイナスでも、その台の回転数が島(同機種の設置範囲)平均を
+明確に上回っていれば、「並びが崩れていた」と即断せず「高設定だったが分散で負けた」可能性を残す。
+
+## Evidence
+- n_observations: 1日(2026-09-24、楽園蒲田)
+- data scope: single-hall、3台並び候補3組
+- metric scope: games / diff
+- result summary: 戦国乙女5島の2104(-3619)・2118(-3666)、化物語島の2238(-2238)は、3台並びの
+  「3台目」として差枚だけ見ると外れに見えたが、回転数はそれぞれ島平均の1.25倍・1.49倍・2.09倍
+  あった。差枚だけで3台目を並びから除外し「2台並び」と判定するのは早計だった
+
+## Interpretation
+- 既存instinct(feedback-narabi-detect-by-games-too)は「両隣が低回転なら並びの中心を支持する」
+  という中心台の判定基準だったが、今回は逆に「並びの外れ台自体の回転数」を見る視点が追加された
+- 回転数が高いことは「高設定だった証拠」ではなく「その可能性を否定しない」程度の弱い材料である。
+  過度な断定(2026-09-25-tail-corner-rb-spec-comparison-confidence-cap と同じ確度管理)は避ける
+
+## Action
+- 並びブロックの一部台が差枚マイナスで並び判定から外したくなったら、その台の回転数を同機種の
+  当日平均(島平均)と比較する
+- 島平均の1.2倍以上なら「差枚は外れたが打ち込まれていた」と記録し、並びブロックの範囲を
+  安易に狭めない
+- 断定はしない。「否定しない」という弱い形で記録する
+
+## Relation
+- related:
+  - feedback-narabi-detect-by-games-too
+  - feedback-midday-rb-cannot-veto-narabi
+
+## Status
+- status: active
