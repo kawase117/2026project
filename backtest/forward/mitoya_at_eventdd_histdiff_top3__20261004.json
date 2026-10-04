@@ -1,0 +1,38 @@
+{
+  "rule_id": "mitoya_at_eventdd_histdiff_top3",
+  "hall": "みとや大森町店",
+  "freeze_hash": "e99d60338347d27e",
+  "target_date": "20261004",
+  "data_asof": "20261003",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-09-04",
+    "2026-10-04"
+  ],
+  "score": "hist_mean_diff",
+  "selection_unit": "machine",
+  "success_criterion": "【重要】AT一般×イベントDD という組み合わせは 2026-07-27 に同じデータを見て発見したものであり、バックテストは in-sample である。数値を採否根拠にしてはならない。判定はフォワードのみ。フォワード20エントリー日を経過した時点で edge 平均が +200枚/台 以上かつ 95%CI 下限 > 0 であること。満たさなければ破棄し、みとやのAT系スコアの派生はこの1本で打ち止めとする。なお 2026-05 の店長交代以降のイベントDD日は実測21日しかなく、レジーム再変化の可能性は常に残る。",
+  "is_dry_run": false,
+  "picks": [
+    {
+      "machine_number": 589,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 1427.818182,
+      "history_days": 22
+    },
+    {
+      "machine_number": 503,
+      "machine_name": "青春ブタ野郎はバニーガール先輩の夢を見ない",
+      "score": 1205.230769,
+      "history_days": 26
+    },
+    {
+      "machine_number": 756,
+      "machine_name": "邪神ちゃんドロップキック",
+      "score": 1198.655172,
+      "history_days": 29
+    }
+  ],
+  "result": null,
+  "plan_digest": "c51c21674de74d72"
+}

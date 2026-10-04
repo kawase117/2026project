@@ -1,0 +1,456 @@
+{
+  "rule_id": "mitoya_model_term60_top3",
+  "hall": "みとや大森町店",
+  "freeze_hash": "673d238a7e985850",
+  "target_date": "20260926",
+  "data_asof": "20260925",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-07-28",
+    "2026-09-26"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +120 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "やじきた道中記参る！",
+      "score": 603.811399,
+      "history_rows": 54,
+      "machines": [
+        520,
+        521,
+        522
+      ]
+    },
+    {
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 432.070039,
+      "history_rows": 880,
+      "machines": [
+        624,
+        625,
+        626,
+        627,
+        628,
+        629,
+        630,
+        631,
+        632,
+        633,
+        634,
+        635,
+        636,
+        637,
+        638,
+        639,
+        640
+      ]
+    },
+    {
+      "machine_name": "東京喰種",
+      "score": 363.998911,
+      "history_rows": 475,
+      "machines": [
+        540,
+        541,
+        542,
+        543,
+        544,
+        545,
+        546,
+        547,
+        548
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 520,
+      "machine_name": "やじきた道中記参る！",
+      "score": 603.811399,
+      "history_days": 54
+    },
+    {
+      "machine_number": 521,
+      "machine_name": "やじきた道中記参る！",
+      "score": 603.811399,
+      "history_days": 54
+    },
+    {
+      "machine_number": 522,
+      "machine_name": "やじきた道中記参る！",
+      "score": 603.811399,
+      "history_days": 54
+    },
+    {
+      "machine_number": 624,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 432.070039,
+      "history_days": 880
+    },
+    {
+      "machine_number": 625,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 432.070039,
+      "history_days": 880
+    },
+    {
+      "machine_number": 626,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 432.070039,
+      "history_days": 880
+    },
+    {
+      "machine_number": 627,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 432.070039,
+      "history_days": 880
+    },
+    {
+      "machine_number": 628,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 432.070039,
+      "history_days": 880
+    },
+    {
+      "machine_number": 629,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 432.070039,
+      "history_days": 880
+    },
+    {
+      "machine_number": 630,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 432.070039,
+      "history_days": 880
+    },
+    {
+      "machine_number": 631,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 432.070039,
+      "history_days": 880
+    },
+    {
+      "machine_number": 632,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 432.070039,
+      "history_days": 880
+    },
+    {
+      "machine_number": 633,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 432.070039,
+      "history_days": 880
+    },
+    {
+      "machine_number": 634,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 432.070039,
+      "history_days": 880
+    },
+    {
+      "machine_number": 635,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 432.070039,
+      "history_days": 880
+    },
+    {
+      "machine_number": 636,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 432.070039,
+      "history_days": 880
+    },
+    {
+      "machine_number": 637,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 432.070039,
+      "history_days": 880
+    },
+    {
+      "machine_number": 638,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 432.070039,
+      "history_days": 880
+    },
+    {
+      "machine_number": 639,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 432.070039,
+      "history_days": 880
+    },
+    {
+      "machine_number": 640,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 432.070039,
+      "history_days": 880
+    },
+    {
+      "machine_number": 540,
+      "machine_name": "東京喰種",
+      "score": 363.998911,
+      "history_days": 475
+    },
+    {
+      "machine_number": 541,
+      "machine_name": "東京喰種",
+      "score": 363.998911,
+      "history_days": 475
+    },
+    {
+      "machine_number": 542,
+      "machine_name": "東京喰種",
+      "score": 363.998911,
+      "history_days": 475
+    },
+    {
+      "machine_number": 543,
+      "machine_name": "東京喰種",
+      "score": 363.998911,
+      "history_days": 475
+    },
+    {
+      "machine_number": 544,
+      "machine_name": "東京喰種",
+      "score": 363.998911,
+      "history_days": 475
+    },
+    {
+      "machine_number": 545,
+      "machine_name": "東京喰種",
+      "score": 363.998911,
+      "history_days": 475
+    },
+    {
+      "machine_number": 546,
+      "machine_name": "東京喰種",
+      "score": 363.998911,
+      "history_days": 475
+    },
+    {
+      "machine_number": 547,
+      "machine_name": "東京喰種",
+      "score": 363.998911,
+      "history_days": 475
+    },
+    {
+      "machine_number": 548,
+      "machine_name": "東京喰種",
+      "score": 363.998911,
+      "history_days": 475
+    }
+  ],
+  "result": {
+    "scored_with_hash": "673d238a7e985850",
+    "day_baseline": -52.6,
+    "universe_size": 277,
+    "picks_realized": [
+      {
+        "machine_number": 624,
+        "games": 4854.0,
+        "diff": -992.0,
+        "edge": -939.3790613718412
+      },
+      {
+        "machine_number": 625,
+        "games": 3156.0,
+        "diff": -3153.0,
+        "edge": -3100.379061371841
+      },
+      {
+        "machine_number": 626,
+        "games": 2370.0,
+        "diff": -2033.0,
+        "edge": -1980.379061371841
+      },
+      {
+        "machine_number": 627,
+        "games": 4635.0,
+        "diff": 4617.0,
+        "edge": 4669.620938628159
+      },
+      {
+        "machine_number": 628,
+        "games": 1125.0,
+        "diff": -750.0,
+        "edge": -697.3790613718412
+      },
+      {
+        "machine_number": 629,
+        "games": 4256.0,
+        "diff": -2300.0,
+        "edge": -2247.379061371841
+      },
+      {
+        "machine_number": 630,
+        "games": 4825.0,
+        "diff": -825.0,
+        "edge": -772.3790613718412
+      },
+      {
+        "machine_number": 631,
+        "games": 1350.0,
+        "diff": -294.0,
+        "edge": -241.37906137184115
+      },
+      {
+        "machine_number": 632,
+        "games": 2060.0,
+        "diff": -1025.0,
+        "edge": -972.3790613718412
+      },
+      {
+        "machine_number": 633,
+        "games": 0.0,
+        "diff": 0.0,
+        "edge": 52.62093862815885
+      },
+      {
+        "machine_number": 634,
+        "games": 4734.0,
+        "diff": -1125.0,
+        "edge": -1072.379061371841
+      },
+      {
+        "machine_number": 635,
+        "games": 3340.0,
+        "diff": 4842.0,
+        "edge": 4894.620938628159
+      },
+      {
+        "machine_number": 636,
+        "games": 2269.0,
+        "diff": 1042.0,
+        "edge": 1094.620938628159
+      },
+      {
+        "machine_number": 637,
+        "games": 1304.0,
+        "diff": -1158.0,
+        "edge": -1105.379061371841
+      },
+      {
+        "machine_number": 638,
+        "games": 3199.0,
+        "diff": -808.0,
+        "edge": -755.3790613718412
+      },
+      {
+        "machine_number": 639,
+        "games": 5206.0,
+        "diff": 225.0,
+        "edge": 277.62093862815885
+      },
+      {
+        "machine_number": 640,
+        "games": 2699.0,
+        "diff": -2903.0,
+        "edge": -2850.379061371841
+      },
+      {
+        "machine_number": 540,
+        "games": 4929.0,
+        "diff": 3514.0,
+        "edge": 3566.620938628159
+      },
+      {
+        "machine_number": 541,
+        "games": 3129.0,
+        "diff": -3042.0,
+        "edge": -2989.379061371841
+      },
+      {
+        "machine_number": 542,
+        "games": 3578.0,
+        "diff": -1411.0,
+        "edge": -1358.379061371841
+      },
+      {
+        "machine_number": 543,
+        "games": 5848.0,
+        "diff": -3083.0,
+        "edge": -3030.379061371841
+      },
+      {
+        "machine_number": 544,
+        "games": 3679.0,
+        "diff": -292.0,
+        "edge": -239.37906137184115
+      },
+      {
+        "machine_number": 545,
+        "games": 4896.0,
+        "diff": 4250.0,
+        "edge": 4302.620938628159
+      },
+      {
+        "machine_number": 546,
+        "games": 2789.0,
+        "diff": -2700.0,
+        "edge": -2647.379061371841
+      },
+      {
+        "machine_number": 547,
+        "games": 4124.0,
+        "diff": 2300.0,
+        "edge": 2352.620938628159
+      },
+      {
+        "machine_number": 548,
+        "games": 3034.0,
+        "diff": -308.0,
+        "edge": -255.37906137184115
+      },
+      {
+        "machine_number": 520,
+        "games": 1124.0,
+        "diff": -306.0,
+        "edge": -253.37906137184115
+      },
+      {
+        "machine_number": 521,
+        "games": 1831.0,
+        "diff": -1058.0,
+        "edge": -1005.3790613718412
+      },
+      {
+        "machine_number": 522,
+        "games": 2325.0,
+        "diff": 442.0,
+        "edge": 494.62093862815885
+      }
+    ],
+    "mean_diff_per_pick": -287.4,
+    "mean_edge_per_pick": -234.8,
+    "missing_machines": [],
+    "rb_perspective": null,
+    "model_perspective": [
+      {
+        "machine_name": "やじきた道中記参る！",
+        "n_machines": 3,
+        "n_realized": 3,
+        "sum_diff": -922.0,
+        "sum_games": 5280.0,
+        "mean_diff": -307.3
+      },
+      {
+        "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+        "n_machines": 17,
+        "n_realized": 17,
+        "sum_diff": -6640.0,
+        "sum_games": 51382.0,
+        "mean_diff": -390.6
+      },
+      {
+        "machine_name": "東京喰種",
+        "n_machines": 9,
+        "n_realized": 9,
+        "sum_diff": -772.0,
+        "sum_games": 36006.0,
+        "mean_diff": -85.8
+      }
+    ]
+  },
+  "plan_digest": "83a8cc2143166af5"
+}

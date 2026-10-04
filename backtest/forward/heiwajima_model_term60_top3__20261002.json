@@ -1,0 +1,612 @@
+{
+  "rule_id": "heiwajima_model_term60_top3",
+  "hall": "レイトギャップ平和島",
+  "freeze_hash": "80fab02ec0c44816",
+  "target_date": "20261002",
+  "data_asof": "20261001",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-08-03",
+    "2026-10-02"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +81 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "新鬼武者3",
+      "score": 494.38687,
+      "history_rows": 83,
+      "machines": [
+        898,
+        899,
+        900,
+        952
+      ]
+    },
+    {
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 328.144351,
+      "history_rows": 222,
+      "machines": [
+        933,
+        934,
+        935,
+        936
+      ]
+    },
+    {
+      "machine_name": "東京喰種",
+      "score": 253.068142,
+      "history_rows": 1821,
+      "machines": [
+        544,
+        545,
+        546,
+        547,
+        548,
+        549,
+        550,
+        551,
+        552,
+        553,
+        554,
+        555,
+        556,
+        557,
+        558,
+        559,
+        560,
+        561,
+        562,
+        563,
+        564,
+        565,
+        566,
+        567,
+        568,
+        569,
+        570,
+        571,
+        572,
+        573,
+        574,
+        575,
+        576
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 898,
+      "machine_name": "新鬼武者3",
+      "score": 494.38687,
+      "history_days": 83
+    },
+    {
+      "machine_number": 899,
+      "machine_name": "新鬼武者3",
+      "score": 494.38687,
+      "history_days": 83
+    },
+    {
+      "machine_number": 900,
+      "machine_name": "新鬼武者3",
+      "score": 494.38687,
+      "history_days": 83
+    },
+    {
+      "machine_number": 952,
+      "machine_name": "新鬼武者3",
+      "score": 494.38687,
+      "history_days": 83
+    },
+    {
+      "machine_number": 933,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 328.144351,
+      "history_days": 222
+    },
+    {
+      "machine_number": 934,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 328.144351,
+      "history_days": 222
+    },
+    {
+      "machine_number": 935,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 328.144351,
+      "history_days": 222
+    },
+    {
+      "machine_number": 936,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 328.144351,
+      "history_days": 222
+    },
+    {
+      "machine_number": 544,
+      "machine_name": "東京喰種",
+      "score": 253.068142,
+      "history_days": 1821
+    },
+    {
+      "machine_number": 545,
+      "machine_name": "東京喰種",
+      "score": 253.068142,
+      "history_days": 1821
+    },
+    {
+      "machine_number": 546,
+      "machine_name": "東京喰種",
+      "score": 253.068142,
+      "history_days": 1821
+    },
+    {
+      "machine_number": 547,
+      "machine_name": "東京喰種",
+      "score": 253.068142,
+      "history_days": 1821
+    },
+    {
+      "machine_number": 548,
+      "machine_name": "東京喰種",
+      "score": 253.068142,
+      "history_days": 1821
+    },
+    {
+      "machine_number": 549,
+      "machine_name": "東京喰種",
+      "score": 253.068142,
+      "history_days": 1821
+    },
+    {
+      "machine_number": 550,
+      "machine_name": "東京喰種",
+      "score": 253.068142,
+      "history_days": 1821
+    },
+    {
+      "machine_number": 551,
+      "machine_name": "東京喰種",
+      "score": 253.068142,
+      "history_days": 1821
+    },
+    {
+      "machine_number": 552,
+      "machine_name": "東京喰種",
+      "score": 253.068142,
+      "history_days": 1821
+    },
+    {
+      "machine_number": 553,
+      "machine_name": "東京喰種",
+      "score": 253.068142,
+      "history_days": 1821
+    },
+    {
+      "machine_number": 554,
+      "machine_name": "東京喰種",
+      "score": 253.068142,
+      "history_days": 1821
+    },
+    {
+      "machine_number": 555,
+      "machine_name": "東京喰種",
+      "score": 253.068142,
+      "history_days": 1821
+    },
+    {
+      "machine_number": 556,
+      "machine_name": "東京喰種",
+      "score": 253.068142,
+      "history_days": 1821
+    },
+    {
+      "machine_number": 557,
+      "machine_name": "東京喰種",
+      "score": 253.068142,
+      "history_days": 1821
+    },
+    {
+      "machine_number": 558,
+      "machine_name": "東京喰種",
+      "score": 253.068142,
+      "history_days": 1821
+    },
+    {
+      "machine_number": 559,
+      "machine_name": "東京喰種",
+      "score": 253.068142,
+      "history_days": 1821
+    },
+    {
+      "machine_number": 560,
+      "machine_name": "東京喰種",
+      "score": 253.068142,
+      "history_days": 1821
+    },
+    {
+      "machine_number": 561,
+      "machine_name": "東京喰種",
+      "score": 253.068142,
+      "history_days": 1821
+    },
+    {
+      "machine_number": 562,
+      "machine_name": "東京喰種",
+      "score": 253.068142,
+      "history_days": 1821
+    },
+    {
+      "machine_number": 563,
+      "machine_name": "東京喰種",
+      "score": 253.068142,
+      "history_days": 1821
+    },
+    {
+      "machine_number": 564,
+      "machine_name": "東京喰種",
+      "score": 253.068142,
+      "history_days": 1821
+    },
+    {
+      "machine_number": 565,
+      "machine_name": "東京喰種",
+      "score": 253.068142,
+      "history_days": 1821
+    },
+    {
+      "machine_number": 566,
+      "machine_name": "東京喰種",
+      "score": 253.068142,
+      "history_days": 1821
+    },
+    {
+      "machine_number": 567,
+      "machine_name": "東京喰種",
+      "score": 253.068142,
+      "history_days": 1821
+    },
+    {
+      "machine_number": 568,
+      "machine_name": "東京喰種",
+      "score": 253.068142,
+      "history_days": 1821
+    },
+    {
+      "machine_number": 569,
+      "machine_name": "東京喰種",
+      "score": 253.068142,
+      "history_days": 1821
+    },
+    {
+      "machine_number": 570,
+      "machine_name": "東京喰種",
+      "score": 253.068142,
+      "history_days": 1821
+    },
+    {
+      "machine_number": 571,
+      "machine_name": "東京喰種",
+      "score": 253.068142,
+      "history_days": 1821
+    },
+    {
+      "machine_number": 572,
+      "machine_name": "東京喰種",
+      "score": 253.068142,
+      "history_days": 1821
+    },
+    {
+      "machine_number": 573,
+      "machine_name": "東京喰種",
+      "score": 253.068142,
+      "history_days": 1821
+    },
+    {
+      "machine_number": 574,
+      "machine_name": "東京喰種",
+      "score": 253.068142,
+      "history_days": 1821
+    },
+    {
+      "machine_number": 575,
+      "machine_name": "東京喰種",
+      "score": 253.068142,
+      "history_days": 1821
+    },
+    {
+      "machine_number": 576,
+      "machine_name": "東京喰種",
+      "score": 253.068142,
+      "history_days": 1821
+    }
+  ],
+  "result": {
+    "scored_with_hash": "80fab02ec0c44816",
+    "day_baseline": -117.6,
+    "universe_size": 423,
+    "picks_realized": [
+      {
+        "machine_number": 544,
+        "games": 5337.0,
+        "diff": -2065.0,
+        "edge": -1947.3829787234042
+      },
+      {
+        "machine_number": 545,
+        "games": 4241.0,
+        "diff": -1905.0,
+        "edge": -1787.3829787234042
+      },
+      {
+        "machine_number": 546,
+        "games": 525.0,
+        "diff": -224.0,
+        "edge": -106.38297872340425
+      },
+      {
+        "machine_number": 547,
+        "games": 3604.0,
+        "diff": 746.0,
+        "edge": 863.6170212765958
+      },
+      {
+        "machine_number": 548,
+        "games": 4129.0,
+        "diff": 5720.0,
+        "edge": 5837.617021276596
+      },
+      {
+        "machine_number": 549,
+        "games": 2617.0,
+        "diff": 1573.0,
+        "edge": 1690.6170212765958
+      },
+      {
+        "machine_number": 550,
+        "games": 6362.0,
+        "diff": 2712.0,
+        "edge": 2829.6170212765956
+      },
+      {
+        "machine_number": 551,
+        "games": 264.0,
+        "diff": -122.0,
+        "edge": -4.38297872340425
+      },
+      {
+        "machine_number": 552,
+        "games": 3374.0,
+        "diff": 192.0,
+        "edge": 309.6170212765958
+      },
+      {
+        "machine_number": 553,
+        "games": 1554.0,
+        "diff": -1120.0,
+        "edge": -1002.3829787234042
+      },
+      {
+        "machine_number": 554,
+        "games": 1262.0,
+        "diff": -648.0,
+        "edge": -530.3829787234042
+      },
+      {
+        "machine_number": 555,
+        "games": 2807.0,
+        "diff": 2372.0,
+        "edge": 2489.6170212765956
+      },
+      {
+        "machine_number": 556,
+        "games": 3034.0,
+        "diff": -1699.0,
+        "edge": -1581.3829787234042
+      },
+      {
+        "machine_number": 557,
+        "games": 1457.0,
+        "diff": -84.0,
+        "edge": 33.61702127659575
+      },
+      {
+        "machine_number": 558,
+        "games": 6327.0,
+        "diff": 350.0,
+        "edge": 467.6170212765958
+      },
+      {
+        "machine_number": 559,
+        "games": 2181.0,
+        "diff": -2447.0,
+        "edge": -2329.3829787234044
+      },
+      {
+        "machine_number": 560,
+        "games": 8525.0,
+        "diff": 5739.0,
+        "edge": 5856.617021276596
+      },
+      {
+        "machine_number": 561,
+        "games": 1098.0,
+        "diff": -1180.0,
+        "edge": -1062.3829787234042
+      },
+      {
+        "machine_number": 562,
+        "games": 3738.0,
+        "diff": -54.0,
+        "edge": 63.61702127659575
+      },
+      {
+        "machine_number": 563,
+        "games": 1800.0,
+        "diff": -421.0,
+        "edge": -303.3829787234042
+      },
+      {
+        "machine_number": 564,
+        "games": 4073.0,
+        "diff": 4730.0,
+        "edge": 4847.617021276596
+      },
+      {
+        "machine_number": 565,
+        "games": 660.0,
+        "diff": 115.0,
+        "edge": 232.61702127659575
+      },
+      {
+        "machine_number": 566,
+        "games": 2243.0,
+        "diff": -2602.0,
+        "edge": -2484.3829787234044
+      },
+      {
+        "machine_number": 567,
+        "games": 1382.0,
+        "diff": -1145.0,
+        "edge": -1027.3829787234042
+      },
+      {
+        "machine_number": 568,
+        "games": 4658.0,
+        "diff": 3300.0,
+        "edge": 3417.6170212765956
+      },
+      {
+        "machine_number": 569,
+        "games": 8593.0,
+        "diff": 1411.0,
+        "edge": 1528.6170212765958
+      },
+      {
+        "machine_number": 570,
+        "games": 852.0,
+        "diff": -690.0,
+        "edge": -572.3829787234042
+      },
+      {
+        "machine_number": 571,
+        "games": 2534.0,
+        "diff": 1858.0,
+        "edge": 1975.6170212765958
+      },
+      {
+        "machine_number": 572,
+        "games": 1122.0,
+        "diff": -491.0,
+        "edge": -373.3829787234042
+      },
+      {
+        "machine_number": 573,
+        "games": 6125.0,
+        "diff": 740.0,
+        "edge": 857.6170212765958
+      },
+      {
+        "machine_number": 574,
+        "games": 3150.0,
+        "diff": 4086.0,
+        "edge": 4203.617021276596
+      },
+      {
+        "machine_number": 575,
+        "games": 2375.0,
+        "diff": 866.0,
+        "edge": 983.6170212765958
+      },
+      {
+        "machine_number": 576,
+        "games": 2646.0,
+        "diff": 2039.0,
+        "edge": 2156.6170212765956
+      },
+      {
+        "machine_number": 933,
+        "games": 716.0,
+        "diff": 174.0,
+        "edge": 291.6170212765958
+      },
+      {
+        "machine_number": 934,
+        "games": 2823.0,
+        "diff": -808.0,
+        "edge": -690.3829787234042
+      },
+      {
+        "machine_number": 935,
+        "games": 624.0,
+        "diff": -797.0,
+        "edge": -679.3829787234042
+      },
+      {
+        "machine_number": 936,
+        "games": 824.0,
+        "diff": -807.0,
+        "edge": -689.3829787234042
+      },
+      {
+        "machine_number": 898,
+        "games": 3845.0,
+        "diff": 393.0,
+        "edge": 510.6170212765958
+      },
+      {
+        "machine_number": 899,
+        "games": 759.0,
+        "diff": -40.0,
+        "edge": 77.61702127659575
+      },
+      {
+        "machine_number": 900,
+        "games": 2026.0,
+        "diff": -2595.0,
+        "edge": -2477.3829787234044
+      },
+      {
+        "machine_number": 952,
+        "games": 1759.0,
+        "diff": -1902.0,
+        "edge": -1784.3829787234042
+      }
+    ],
+    "mean_diff_per_pick": 372.4,
+    "mean_edge_per_pick": 490.1,
+    "missing_machines": [],
+    "rb_perspective": null,
+    "model_perspective": [
+      {
+        "machine_name": "新鬼武者3",
+        "n_machines": 4,
+        "n_realized": 4,
+        "sum_diff": -4144.0,
+        "sum_games": 8389.0,
+        "mean_diff": -1036.0
+      },
+      {
+        "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+        "n_machines": 4,
+        "n_realized": 4,
+        "sum_diff": -2238.0,
+        "sum_games": 4987.0,
+        "mean_diff": -559.5
+      },
+      {
+        "machine_name": "東京喰種",
+        "n_machines": 33,
+        "n_realized": 33,
+        "sum_diff": 21652.0,
+        "sum_games": 104649.0,
+        "mean_diff": 656.1
+      }
+    ]
+  },
+  "plan_digest": "ce9573822c589922"
+}

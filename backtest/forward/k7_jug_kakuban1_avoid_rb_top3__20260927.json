@@ -1,0 +1,92 @@
+{
+  "rule_id": "k7_jug_kakuban1_avoid_rb_top3",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "freeze_hash": "5292b2e5382e2b9e",
+  "target_date": "20260927",
+  "data_asof": "20260926",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-08-28",
+    "2026-09-27"
+  ],
+  "score": "hist_mean_rb_prob",
+  "selection_unit": "machine",
+  "success_criterion": "フォワードで30エントリー日を経過した時点で、(1) エッジ（同日ジャグ全台平均との差枚差）の平均が +150枚/台 以上かつ 7日ブロックブートストラップ 95%CI 下限 > 0、かつ (2) 同期間の k7_jug_rb_top3 のエッジを上回ること。(2) を課すのは、本ルールの主張が『RB確率スコアが効く』ではなく『角番1を外すと上乗せがある』だからである。(1) だけ満たして (2) を満たさない場合、角番1除外に効果は無く RB確率スコアだけが効いていたと結論し、本ルールは破棄する。バックテストは in-sample のため採否根拠にしない。",
+  "is_dry_run": false,
+  "picks": [
+    {
+      "machine_number": 3187,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 0.003657,
+      "history_days": 20
+    },
+    {
+      "machine_number": 3185,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 0.003344,
+      "history_days": 23
+    },
+    {
+      "machine_number": 3184,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 0.003279,
+      "history_days": 23
+    }
+  ],
+  "result": {
+    "scored_with_hash": "5292b2e5382e2b9e",
+    "day_baseline": 260.5,
+    "universe_size": 172,
+    "picks_realized": [
+      {
+        "machine_number": 3184,
+        "games": 2860.0,
+        "diff": -1400.0,
+        "edge": -1660.4651162790697
+      },
+      {
+        "machine_number": 3185,
+        "games": 5308.0,
+        "diff": -800.0,
+        "edge": -1060.4651162790697
+      },
+      {
+        "machine_number": 3187,
+        "games": 8248.0,
+        "diff": 2200.0,
+        "edge": 1939.5348837209303
+      }
+    ],
+    "mean_diff_per_pick": 0.0,
+    "mean_edge_per_pick": -260.5,
+    "missing_machines": [],
+    "rb_perspective": {
+      "day_baseline_rb_rate": 0.00289,
+      "picks_rb": [
+        {
+          "machine_number": 3187,
+          "rb_rate": 0.00412,
+          "baseline_ratio": 1.43,
+          "rb_rank": 4,
+          "rb_universe_size": 160
+        },
+        {
+          "machine_number": 3185,
+          "rb_rate": 0.00377,
+          "baseline_ratio": 1.31,
+          "rb_rank": 17,
+          "rb_universe_size": 160
+        },
+        {
+          "machine_number": 3184,
+          "rb_rate": 0.00105,
+          "baseline_ratio": 0.36,
+          "rb_rank": 159,
+          "rb_universe_size": 160
+        }
+      ]
+    },
+    "model_perspective": null
+  },
+  "plan_digest": "4df3dfca78315471"
+}

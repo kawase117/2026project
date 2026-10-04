@@ -1,0 +1,67 @@
+{
+  "rule_id": "mitoya_at_eventdd_histdiff_top3",
+  "hall": "みとや大森町店",
+  "freeze_hash": "e99d60338347d27e",
+  "target_date": "20261001",
+  "data_asof": "20260930",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-09-01",
+    "2026-10-01"
+  ],
+  "score": "hist_mean_diff",
+  "selection_unit": "machine",
+  "success_criterion": "【重要】AT一般×イベントDD という組み合わせは 2026-07-27 に同じデータを見て発見したものであり、バックテストは in-sample である。数値を採否根拠にしてはならない。判定はフォワードのみ。フォワード20エントリー日を経過した時点で edge 平均が +200枚/台 以上かつ 95%CI 下限 > 0 であること。満たさなければ破棄し、みとやのAT系スコアの派生はこの1本で打ち止めとする。なお 2026-05 の店長交代以降のイベントDD日は実測21日しかなく、レジーム再変化の可能性は常に残る。",
+  "is_dry_run": false,
+  "picks": [
+    {
+      "machine_number": 546,
+      "machine_name": "東京喰種",
+      "score": 1338.692308,
+      "history_days": 26
+    },
+    {
+      "machine_number": 589,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 1313.391304,
+      "history_days": 23
+    },
+    {
+      "machine_number": 503,
+      "machine_name": "青春ブタ野郎はバニーガール先輩の夢を見ない",
+      "score": 1167.583333,
+      "history_days": 24
+    }
+  ],
+  "result": {
+    "scored_with_hash": "e99d60338347d27e",
+    "day_baseline": -85.7,
+    "universe_size": 165,
+    "picks_realized": [
+      {
+        "machine_number": 546,
+        "games": 869.0,
+        "diff": 494.0,
+        "edge": 579.6727272727272
+      },
+      {
+        "machine_number": 589,
+        "games": 994.0,
+        "diff": -17.0,
+        "edge": 68.67272727272727
+      },
+      {
+        "machine_number": 503,
+        "games": 1920.0,
+        "diff": 3347.0,
+        "edge": 3432.672727272727
+      }
+    ],
+    "mean_diff_per_pick": 1274.7,
+    "mean_edge_per_pick": 1360.3,
+    "missing_machines": [],
+    "rb_perspective": null,
+    "model_perspective": null
+  },
+  "plan_digest": "cb5fbd636f7f8553"
+}

@@ -1,0 +1,168 @@
+{
+  "rule_id": "k1_model_gratio_dd7kei_top2",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "freeze_hash": "a933efebb75c7036",
+  "target_date": "20260927",
+  "data_asof": "20260926",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-09-06",
+    "2026-09-27"
+  ],
+  "score": "hist_model_gratio_mean_diff",
+  "selection_unit": "machine_model",
+  "success_criterion": "フォワード20エントリー日を経過した時点で、指名機種全台の総和ベースedge（対ホール全体同日平均、diff_coins_normalized）の平均が正であり、7日ブロックブートストラップ95%CI下限が0を上回ること。満たさなければ破棄する。判定はフォワードテストのみで行い、バックテスト数値および2026-08-07の観測は採否根拠にしない。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 949.07234,
+      "history_rows": 72,
+      "machines": [
+        2020,
+        2416,
+        2417,
+        2418,
+        2419
+      ]
+    },
+    {
+      "machine_name": "攻殻機動隊",
+      "score": 463.847178,
+      "history_rows": 50,
+      "machines": [
+        2206,
+        2207,
+        2208
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 2020,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 949.07234,
+      "history_days": 72
+    },
+    {
+      "machine_number": 2416,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 949.07234,
+      "history_days": 72
+    },
+    {
+      "machine_number": 2417,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 949.07234,
+      "history_days": 72
+    },
+    {
+      "machine_number": 2418,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 949.07234,
+      "history_days": 72
+    },
+    {
+      "machine_number": 2419,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 949.07234,
+      "history_days": 72
+    },
+    {
+      "machine_number": 2206,
+      "machine_name": "攻殻機動隊",
+      "score": 463.847178,
+      "history_days": 50
+    },
+    {
+      "machine_number": 2207,
+      "machine_name": "攻殻機動隊",
+      "score": 463.847178,
+      "history_days": 50
+    },
+    {
+      "machine_number": 2208,
+      "machine_name": "攻殻機動隊",
+      "score": 463.847178,
+      "history_days": 50
+    }
+  ],
+  "result": {
+    "scored_with_hash": "a933efebb75c7036",
+    "day_baseline": 26.8,
+    "universe_size": 365,
+    "picks_realized": [
+      {
+        "machine_number": 2020,
+        "games": 5968.0,
+        "diff": 4300.0,
+        "edge": 4273.1506849315065
+      },
+      {
+        "machine_number": 2416,
+        "games": 6948.0,
+        "diff": 500.0,
+        "edge": 473.1506849315069
+      },
+      {
+        "machine_number": 2417,
+        "games": 7087.0,
+        "diff": 4300.0,
+        "edge": 4273.1506849315065
+      },
+      {
+        "machine_number": 2418,
+        "games": 5685.0,
+        "diff": 5700.0,
+        "edge": 5673.1506849315065
+      },
+      {
+        "machine_number": 2419,
+        "games": 5314.0,
+        "diff": 700.0,
+        "edge": 673.1506849315068
+      },
+      {
+        "machine_number": 2206,
+        "games": 3126.0,
+        "diff": -700.0,
+        "edge": -726.8493150684932
+      },
+      {
+        "machine_number": 2207,
+        "games": 2473.0,
+        "diff": -1100.0,
+        "edge": -1126.849315068493
+      },
+      {
+        "machine_number": 2208,
+        "games": 4161.0,
+        "diff": 600.0,
+        "edge": 573.1506849315068
+      }
+    ],
+    "mean_diff_per_pick": 1787.5,
+    "mean_edge_per_pick": 1760.7,
+    "missing_machines": [],
+    "rb_perspective": null,
+    "model_perspective": [
+      {
+        "machine_name": "スマスロ炎炎ノ消防隊2",
+        "n_machines": 5,
+        "n_realized": 5,
+        "sum_diff": 15500.0,
+        "sum_games": 31002.0,
+        "mean_diff": 3100.0
+      },
+      {
+        "machine_name": "攻殻機動隊",
+        "n_machines": 3,
+        "n_realized": 3,
+        "sum_diff": -1200.0,
+        "sum_games": 9760.0,
+        "mean_diff": -400.0
+      }
+    ]
+  },
+  "plan_digest": "4cca485edf3c1a6f"
+}

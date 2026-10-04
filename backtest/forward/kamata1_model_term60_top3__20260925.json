@@ -1,0 +1,300 @@
+{
+  "rule_id": "kamata1_model_term60_top3",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "freeze_hash": "bb185b622fae47b2",
+  "target_date": "20260925",
+  "data_asof": "20260924",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-07-27",
+    "2026-09-25"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +187 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 917.610485,
+      "history_rows": 77,
+      "machines": [
+        2020,
+        2416,
+        2417,
+        2418,
+        2419
+      ]
+    },
+    {
+      "machine_name": "青春ブタ野郎はバニーガール先輩の夢を見ない",
+      "score": 266.104581,
+      "history_rows": 51,
+      "machines": [
+        2256,
+        2257,
+        2258
+      ]
+    },
+    {
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "score": 237.721737,
+      "history_rows": 514,
+      "machines": [
+        2001,
+        2002,
+        2003,
+        2004,
+        2005,
+        2006,
+        2007,
+        2008,
+        2009
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 2020,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 917.610485,
+      "history_days": 77
+    },
+    {
+      "machine_number": 2416,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 917.610485,
+      "history_days": 77
+    },
+    {
+      "machine_number": 2417,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 917.610485,
+      "history_days": 77
+    },
+    {
+      "machine_number": 2418,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 917.610485,
+      "history_days": 77
+    },
+    {
+      "machine_number": 2419,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 917.610485,
+      "history_days": 77
+    },
+    {
+      "machine_number": 2256,
+      "machine_name": "青春ブタ野郎はバニーガール先輩の夢を見ない",
+      "score": 266.104581,
+      "history_days": 51
+    },
+    {
+      "machine_number": 2257,
+      "machine_name": "青春ブタ野郎はバニーガール先輩の夢を見ない",
+      "score": 266.104581,
+      "history_days": 51
+    },
+    {
+      "machine_number": 2258,
+      "machine_name": "青春ブタ野郎はバニーガール先輩の夢を見ない",
+      "score": 266.104581,
+      "history_days": 51
+    },
+    {
+      "machine_number": 2001,
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "score": 237.721737,
+      "history_days": 514
+    },
+    {
+      "machine_number": 2002,
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "score": 237.721737,
+      "history_days": 514
+    },
+    {
+      "machine_number": 2003,
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "score": 237.721737,
+      "history_days": 514
+    },
+    {
+      "machine_number": 2004,
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "score": 237.721737,
+      "history_days": 514
+    },
+    {
+      "machine_number": 2005,
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "score": 237.721737,
+      "history_days": 514
+    },
+    {
+      "machine_number": 2006,
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "score": 237.721737,
+      "history_days": 514
+    },
+    {
+      "machine_number": 2007,
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "score": 237.721737,
+      "history_days": 514
+    },
+    {
+      "machine_number": 2008,
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "score": 237.721737,
+      "history_days": 514
+    },
+    {
+      "machine_number": 2009,
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "score": 237.721737,
+      "history_days": 514
+    }
+  ],
+  "result": {
+    "scored_with_hash": "bb185b622fae47b2",
+    "day_baseline": 80.8,
+    "universe_size": 365,
+    "picks_realized": [
+      {
+        "machine_number": 2001,
+        "games": 875.0,
+        "diff": -1100.0,
+        "edge": -1180.8219178082193
+      },
+      {
+        "machine_number": 2002,
+        "games": 809.0,
+        "diff": 800.0,
+        "edge": 719.1780821917808
+      },
+      {
+        "machine_number": 2003,
+        "games": 521.0,
+        "diff": -400.0,
+        "edge": -480.82191780821915
+      },
+      {
+        "machine_number": 2004,
+        "games": 1375.0,
+        "diff": 0.0,
+        "edge": -80.82191780821918
+      },
+      {
+        "machine_number": 2005,
+        "games": 915.0,
+        "diff": -800.0,
+        "edge": -880.8219178082192
+      },
+      {
+        "machine_number": 2006,
+        "games": 575.0,
+        "diff": 2900.0,
+        "edge": 2819.178082191781
+      },
+      {
+        "machine_number": 2007,
+        "games": 1356.0,
+        "diff": -1200.0,
+        "edge": -1280.8219178082193
+      },
+      {
+        "machine_number": 2008,
+        "games": 1336.0,
+        "diff": -1600.0,
+        "edge": -1680.8219178082193
+      },
+      {
+        "machine_number": 2009,
+        "games": 1901.0,
+        "diff": -2000.0,
+        "edge": -2080.821917808219
+      },
+      {
+        "machine_number": 2020,
+        "games": 708.0,
+        "diff": 600.0,
+        "edge": 519.1780821917808
+      },
+      {
+        "machine_number": 2416,
+        "games": 412.0,
+        "diff": -500.0,
+        "edge": -580.8219178082192
+      },
+      {
+        "machine_number": 2417,
+        "games": 1171.0,
+        "diff": -1000.0,
+        "edge": -1080.8219178082193
+      },
+      {
+        "machine_number": 2418,
+        "games": 1789.0,
+        "diff": 200.0,
+        "edge": 119.17808219178082
+      },
+      {
+        "machine_number": 2419,
+        "games": 324.0,
+        "diff": -300.0,
+        "edge": -380.82191780821915
+      },
+      {
+        "machine_number": 2256,
+        "games": 3231.0,
+        "diff": -400.0,
+        "edge": -480.82191780821915
+      },
+      {
+        "machine_number": 2257,
+        "games": 3194.0,
+        "diff": 1100.0,
+        "edge": 1019.1780821917808
+      },
+      {
+        "machine_number": 2258,
+        "games": 2401.0,
+        "diff": -1600.0,
+        "edge": -1680.8219178082193
+      }
+    ],
+    "mean_diff_per_pick": -311.8,
+    "mean_edge_per_pick": -392.6,
+    "missing_machines": [],
+    "rb_perspective": null,
+    "model_perspective": [
+      {
+        "machine_name": "スマスロ炎炎ノ消防隊2",
+        "n_machines": 5,
+        "n_realized": 5,
+        "sum_diff": -1000.0,
+        "sum_games": 4404.0,
+        "mean_diff": -200.0
+      },
+      {
+        "machine_name": "青春ブタ野郎はバニーガール先輩の夢を見ない",
+        "n_machines": 3,
+        "n_realized": 3,
+        "sum_diff": -900.0,
+        "sum_games": 8826.0,
+        "mean_diff": -300.0
+      },
+      {
+        "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+        "n_machines": 9,
+        "n_realized": 9,
+        "sum_diff": -3400.0,
+        "sum_games": 9663.0,
+        "mean_diff": -377.8
+      }
+    ]
+  },
+  "plan_digest": "816a98714eab8381"
+}

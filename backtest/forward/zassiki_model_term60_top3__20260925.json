@@ -1,0 +1,287 @@
+{
+  "rule_id": "zassiki_model_term60_top3",
+  "hall": "ザ-シティ-ベルシティ雑色店",
+  "freeze_hash": "c19f10b6e683a454",
+  "target_date": "20260925",
+  "data_asof": "20260924",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-07-27",
+    "2026-09-25"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +87 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 300.85484,
+      "history_rows": 334,
+      "machines": [
+        873,
+        874,
+        875,
+        876,
+        877,
+        878
+      ]
+    },
+    {
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 241.40545,
+      "history_rows": 52,
+      "machines": [
+        885,
+        886,
+        887,
+        888
+      ]
+    },
+    {
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 131.40079,
+      "history_rows": 299,
+      "machines": [
+        879,
+        880,
+        881,
+        882,
+        883,
+        884
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 873,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 300.85484,
+      "history_days": 334
+    },
+    {
+      "machine_number": 874,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 300.85484,
+      "history_days": 334
+    },
+    {
+      "machine_number": 875,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 300.85484,
+      "history_days": 334
+    },
+    {
+      "machine_number": 876,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 300.85484,
+      "history_days": 334
+    },
+    {
+      "machine_number": 877,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 300.85484,
+      "history_days": 334
+    },
+    {
+      "machine_number": 878,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 300.85484,
+      "history_days": 334
+    },
+    {
+      "machine_number": 885,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 241.40545,
+      "history_days": 52
+    },
+    {
+      "machine_number": 886,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 241.40545,
+      "history_days": 52
+    },
+    {
+      "machine_number": 887,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 241.40545,
+      "history_days": 52
+    },
+    {
+      "machine_number": 888,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 241.40545,
+      "history_days": 52
+    },
+    {
+      "machine_number": 879,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 131.40079,
+      "history_days": 299
+    },
+    {
+      "machine_number": 880,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 131.40079,
+      "history_days": 299
+    },
+    {
+      "machine_number": 881,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 131.40079,
+      "history_days": 299
+    },
+    {
+      "machine_number": 882,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 131.40079,
+      "history_days": 299
+    },
+    {
+      "machine_number": 883,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 131.40079,
+      "history_days": 299
+    },
+    {
+      "machine_number": 884,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 131.40079,
+      "history_days": 299
+    }
+  ],
+  "result": {
+    "scored_with_hash": "c19f10b6e683a454",
+    "day_baseline": -98.8,
+    "universe_size": 128,
+    "picks_realized": [
+      {
+        "machine_number": 873,
+        "games": 1706.0,
+        "diff": 1441.0,
+        "edge": 1539.84375
+      },
+      {
+        "machine_number": 874,
+        "games": 74.0,
+        "diff": 894.0,
+        "edge": 992.84375
+      },
+      {
+        "machine_number": 875,
+        "games": 792.0,
+        "diff": -184.0,
+        "edge": -85.15625
+      },
+      {
+        "machine_number": 876,
+        "games": 1587.0,
+        "diff": -310.0,
+        "edge": -211.15625
+      },
+      {
+        "machine_number": 877,
+        "games": 337.0,
+        "diff": -126.0,
+        "edge": -27.15625
+      },
+      {
+        "machine_number": 878,
+        "games": 3297.0,
+        "diff": 1291.0,
+        "edge": 1389.84375
+      },
+      {
+        "machine_number": 879,
+        "games": 807.0,
+        "diff": -509.0,
+        "edge": -410.15625
+      },
+      {
+        "machine_number": 880,
+        "games": 617.0,
+        "diff": 4355.0,
+        "edge": 4453.84375
+      },
+      {
+        "machine_number": 881,
+        "games": 0.0,
+        "diff": 0.0,
+        "edge": 98.84375
+      },
+      {
+        "machine_number": 882,
+        "games": 963.0,
+        "diff": -129.0,
+        "edge": -30.15625
+      },
+      {
+        "machine_number": 883,
+        "games": 1071.0,
+        "diff": -204.0,
+        "edge": -105.15625
+      },
+      {
+        "machine_number": 884,
+        "games": 1219.0,
+        "diff": -710.0,
+        "edge": -611.15625
+      },
+      {
+        "machine_number": 885,
+        "games": 2423.0,
+        "diff": -874.0,
+        "edge": -775.15625
+      },
+      {
+        "machine_number": 886,
+        "games": 3095.0,
+        "diff": -1874.0,
+        "edge": -1775.15625
+      },
+      {
+        "machine_number": 887,
+        "games": 807.0,
+        "diff": -1081.0,
+        "edge": -982.15625
+      },
+      {
+        "machine_number": 888,
+        "games": 3530.0,
+        "diff": -1413.0,
+        "edge": -1314.15625
+      }
+    ],
+    "mean_diff_per_pick": 35.4,
+    "mean_edge_per_pick": 134.3,
+    "missing_machines": [],
+    "rb_perspective": null,
+    "model_perspective": [
+      {
+        "machine_name": "北斗の拳 転生の章2",
+        "n_machines": 6,
+        "n_realized": 6,
+        "sum_diff": 3006.0,
+        "sum_games": 7793.0,
+        "mean_diff": 501.0
+      },
+      {
+        "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+        "n_machines": 4,
+        "n_realized": 4,
+        "sum_diff": -5242.0,
+        "sum_games": 9855.0,
+        "mean_diff": -1310.5
+      },
+      {
+        "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+        "n_machines": 6,
+        "n_realized": 6,
+        "sum_diff": 2803.0,
+        "sum_games": 4677.0,
+        "mean_diff": 467.2
+      }
+    ]
+  },
+  "plan_digest": "fc32ed9f087dd523"
+}

@@ -1,0 +1,443 @@
+{
+  "rule_id": "kamata1_model_term60_top3",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "freeze_hash": "bb185b622fae47b2",
+  "target_date": "20261002",
+  "data_asof": "20261001",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-08-03",
+    "2026-10-02"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +187 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 855.296491,
+      "history_rows": 104,
+      "machines": [
+        2020,
+        2416,
+        2417,
+        2418,
+        2419
+      ]
+    },
+    {
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 313.287871,
+      "history_rows": 921,
+      "machines": [
+        2044,
+        2045,
+        2046,
+        2047,
+        2048,
+        2049,
+        2050,
+        2051,
+        2052,
+        2053,
+        2054,
+        2055,
+        2056,
+        2057,
+        2058,
+        2059
+      ]
+    },
+    {
+      "machine_name": "革命機ヴァルヴレイヴ2",
+      "score": 309.302227,
+      "history_rows": 150,
+      "machines": [
+        2021,
+        2022,
+        2023,
+        2024,
+        2025,
+        2026,
+        2420
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 2020,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 855.296491,
+      "history_days": 104
+    },
+    {
+      "machine_number": 2416,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 855.296491,
+      "history_days": 104
+    },
+    {
+      "machine_number": 2417,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 855.296491,
+      "history_days": 104
+    },
+    {
+      "machine_number": 2418,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 855.296491,
+      "history_days": 104
+    },
+    {
+      "machine_number": 2419,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 855.296491,
+      "history_days": 104
+    },
+    {
+      "machine_number": 2044,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 313.287871,
+      "history_days": 921
+    },
+    {
+      "machine_number": 2045,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 313.287871,
+      "history_days": 921
+    },
+    {
+      "machine_number": 2046,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 313.287871,
+      "history_days": 921
+    },
+    {
+      "machine_number": 2047,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 313.287871,
+      "history_days": 921
+    },
+    {
+      "machine_number": 2048,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 313.287871,
+      "history_days": 921
+    },
+    {
+      "machine_number": 2049,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 313.287871,
+      "history_days": 921
+    },
+    {
+      "machine_number": 2050,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 313.287871,
+      "history_days": 921
+    },
+    {
+      "machine_number": 2051,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 313.287871,
+      "history_days": 921
+    },
+    {
+      "machine_number": 2052,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 313.287871,
+      "history_days": 921
+    },
+    {
+      "machine_number": 2053,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 313.287871,
+      "history_days": 921
+    },
+    {
+      "machine_number": 2054,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 313.287871,
+      "history_days": 921
+    },
+    {
+      "machine_number": 2055,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 313.287871,
+      "history_days": 921
+    },
+    {
+      "machine_number": 2056,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 313.287871,
+      "history_days": 921
+    },
+    {
+      "machine_number": 2057,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 313.287871,
+      "history_days": 921
+    },
+    {
+      "machine_number": 2058,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 313.287871,
+      "history_days": 921
+    },
+    {
+      "machine_number": 2059,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 313.287871,
+      "history_days": 921
+    },
+    {
+      "machine_number": 2021,
+      "machine_name": "革命機ヴァルヴレイヴ2",
+      "score": 309.302227,
+      "history_days": 150
+    },
+    {
+      "machine_number": 2022,
+      "machine_name": "革命機ヴァルヴレイヴ2",
+      "score": 309.302227,
+      "history_days": 150
+    },
+    {
+      "machine_number": 2023,
+      "machine_name": "革命機ヴァルヴレイヴ2",
+      "score": 309.302227,
+      "history_days": 150
+    },
+    {
+      "machine_number": 2024,
+      "machine_name": "革命機ヴァルヴレイヴ2",
+      "score": 309.302227,
+      "history_days": 150
+    },
+    {
+      "machine_number": 2025,
+      "machine_name": "革命機ヴァルヴレイヴ2",
+      "score": 309.302227,
+      "history_days": 150
+    },
+    {
+      "machine_number": 2026,
+      "machine_name": "革命機ヴァルヴレイヴ2",
+      "score": 309.302227,
+      "history_days": 150
+    },
+    {
+      "machine_number": 2420,
+      "machine_name": "革命機ヴァルヴレイヴ2",
+      "score": 309.302227,
+      "history_days": 150
+    }
+  ],
+  "result": {
+    "scored_with_hash": "bb185b622fae47b2",
+    "day_baseline": 2.7,
+    "universe_size": 365,
+    "picks_realized": [
+      {
+        "machine_number": 2044,
+        "games": 2911.0,
+        "diff": 2700.0,
+        "edge": 2697.2602739726026
+      },
+      {
+        "machine_number": 2045,
+        "games": 3377.0,
+        "diff": -900.0,
+        "edge": -902.7397260273973
+      },
+      {
+        "machine_number": 2046,
+        "games": 5574.0,
+        "diff": 800.0,
+        "edge": 797.2602739726027
+      },
+      {
+        "machine_number": 2047,
+        "games": 3244.0,
+        "diff": -3100.0,
+        "edge": -3102.7397260273974
+      },
+      {
+        "machine_number": 2048,
+        "games": 4558.0,
+        "diff": 1800.0,
+        "edge": 1797.2602739726028
+      },
+      {
+        "machine_number": 2049,
+        "games": 4621.0,
+        "diff": 5400.0,
+        "edge": 5397.260273972603
+      },
+      {
+        "machine_number": 2050,
+        "games": 1972.0,
+        "diff": -1700.0,
+        "edge": -1702.7397260273972
+      },
+      {
+        "machine_number": 2051,
+        "games": 4688.0,
+        "diff": -300.0,
+        "edge": -302.73972602739724
+      },
+      {
+        "machine_number": 2052,
+        "games": 3643.0,
+        "diff": -2000.0,
+        "edge": -2002.7397260273972
+      },
+      {
+        "machine_number": 2053,
+        "games": 4497.0,
+        "diff": 6600.0,
+        "edge": 6597.260273972603
+      },
+      {
+        "machine_number": 2054,
+        "games": 2573.0,
+        "diff": -1300.0,
+        "edge": -1302.7397260273972
+      },
+      {
+        "machine_number": 2055,
+        "games": 2161.0,
+        "diff": -600.0,
+        "edge": -602.7397260273973
+      },
+      {
+        "machine_number": 2056,
+        "games": 3139.0,
+        "diff": 1500.0,
+        "edge": 1497.2602739726028
+      },
+      {
+        "machine_number": 2057,
+        "games": 2980.0,
+        "diff": -1500.0,
+        "edge": -1502.7397260273972
+      },
+      {
+        "machine_number": 2058,
+        "games": 2722.0,
+        "diff": 1100.0,
+        "edge": 1097.2602739726028
+      },
+      {
+        "machine_number": 2059,
+        "games": 1846.0,
+        "diff": -1900.0,
+        "edge": -1902.7397260273972
+      },
+      {
+        "machine_number": 2021,
+        "games": 4069.0,
+        "diff": -3400.0,
+        "edge": -3402.7397260273974
+      },
+      {
+        "machine_number": 2022,
+        "games": 3306.0,
+        "diff": 1600.0,
+        "edge": 1597.2602739726028
+      },
+      {
+        "machine_number": 2023,
+        "games": 4111.0,
+        "diff": -800.0,
+        "edge": -802.7397260273973
+      },
+      {
+        "machine_number": 2024,
+        "games": 2995.0,
+        "diff": -1600.0,
+        "edge": -1602.7397260273972
+      },
+      {
+        "machine_number": 2025,
+        "games": 2006.0,
+        "diff": -1400.0,
+        "edge": -1402.7397260273972
+      },
+      {
+        "machine_number": 2026,
+        "games": 5433.0,
+        "diff": -1600.0,
+        "edge": -1602.7397260273972
+      },
+      {
+        "machine_number": 2420,
+        "games": 3060.0,
+        "diff": -3400.0,
+        "edge": -3402.7397260273974
+      },
+      {
+        "machine_number": 2020,
+        "games": 1613.0,
+        "diff": 4300.0,
+        "edge": 4297.260273972603
+      },
+      {
+        "machine_number": 2416,
+        "games": 163.0,
+        "diff": -100.0,
+        "edge": -102.73972602739725
+      },
+      {
+        "machine_number": 2417,
+        "games": 694.0,
+        "diff": 200.0,
+        "edge": 197.26027397260273
+      },
+      {
+        "machine_number": 2418,
+        "games": 4372.0,
+        "diff": 3700.0,
+        "edge": 3697.2602739726026
+      },
+      {
+        "machine_number": 2419,
+        "games": 853.0,
+        "diff": -800.0,
+        "edge": -802.7397260273973
+      }
+    ],
+    "mean_diff_per_pick": 117.9,
+    "mean_edge_per_pick": 115.1,
+    "missing_machines": [],
+    "rb_perspective": null,
+    "model_perspective": [
+      {
+        "machine_name": "スマスロ炎炎ノ消防隊2",
+        "n_machines": 5,
+        "n_realized": 5,
+        "sum_diff": 7300.0,
+        "sum_games": 7695.0,
+        "mean_diff": 1460.0
+      },
+      {
+        "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+        "n_machines": 16,
+        "n_realized": 16,
+        "sum_diff": 6600.0,
+        "sum_games": 54506.0,
+        "mean_diff": 412.5
+      },
+      {
+        "machine_name": "革命機ヴァルヴレイヴ2",
+        "n_machines": 7,
+        "n_realized": 7,
+        "sum_diff": -10600.0,
+        "sum_games": 24980.0,
+        "mean_diff": -1514.3
+      }
+    ]
+  },
+  "plan_digest": "c8069f71c1a90bc9"
+}

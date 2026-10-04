@@ -1,0 +1,92 @@
+{
+  "rule_id": "k7_jug_rb_top3",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "freeze_hash": "9e914424a794c5e3",
+  "target_date": "20260929",
+  "data_asof": "20260928",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-08-30",
+    "2026-09-29"
+  ],
+  "score": "hist_mean_rb_prob",
+  "selection_unit": "machine",
+  "success_criterion": "エッジ（同日ジャグ全台平均との差枚差）の平均が +150枚/台 以上、かつ 95%CI 下限が 0 を上回ること。下回れば実弾投入しない。",
+  "is_dry_run": false,
+  "picks": [
+    {
+      "machine_number": 3187,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 0.003485,
+      "history_days": 20
+    },
+    {
+      "machine_number": 3185,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 0.003332,
+      "history_days": 23
+    },
+    {
+      "machine_number": 3172,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 0.003257,
+      "history_days": 26
+    }
+  ],
+  "result": {
+    "scored_with_hash": "9e914424a794c5e3",
+    "day_baseline": 83.1,
+    "universe_size": 172,
+    "picks_realized": [
+      {
+        "machine_number": 3172,
+        "games": 1863.0,
+        "diff": 100.0,
+        "edge": 16.860465116279073
+      },
+      {
+        "machine_number": 3185,
+        "games": 682.0,
+        "diff": 100.0,
+        "edge": 16.860465116279073
+      },
+      {
+        "machine_number": 3187,
+        "games": 7404.0,
+        "diff": 1100.0,
+        "edge": 1016.8604651162791
+      }
+    ],
+    "mean_diff_per_pick": 433.3,
+    "mean_edge_per_pick": 350.2,
+    "missing_machines": [],
+    "rb_perspective": {
+      "day_baseline_rb_rate": 0.00245,
+      "picks_rb": [
+        {
+          "machine_number": 3187,
+          "rb_rate": 0.00297,
+          "baseline_ratio": 1.21,
+          "rb_rank": 64,
+          "rb_universe_size": 172
+        },
+        {
+          "machine_number": 3185,
+          "rb_rate": 0.0044,
+          "baseline_ratio": 1.8,
+          "rb_rank": 9,
+          "rb_universe_size": 172
+        },
+        {
+          "machine_number": 3172,
+          "rb_rate": 0.00215,
+          "baseline_ratio": 0.88,
+          "rb_rank": 111,
+          "rb_universe_size": 172
+        }
+      ]
+    },
+    "model_perspective": null
+  },
+  "plan_digest": "ee36bd490a1ceb4e"
+}

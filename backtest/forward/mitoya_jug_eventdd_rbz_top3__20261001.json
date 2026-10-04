@@ -1,0 +1,92 @@
+{
+  "rule_id": "mitoya_jug_eventdd_rbz_top3",
+  "hall": "みとや大森町店",
+  "freeze_hash": "ee07f55cce1c5154",
+  "target_date": "20261001",
+  "data_asof": "20260930",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-09-01",
+    "2026-10-01"
+  ],
+  "score": "hist_mean_rb_prob_model_z",
+  "selection_unit": "machine",
+  "success_criterion": "【重要】このルールは既存ルールの失敗を見た後に作られた変種であり、バックテストの数値を採否根拠にしてはならない。判定はフォワードテストのみで行う。フォワード20エントリー日を経過した時点で edge 平均が +200枚/台 以上かつ 95%CI 下限 > 0 であること。満たさなければ破棄。またRB確率系のバリアントはこの1本で打ち止めとし、これ以上の派生を作らない。",
+  "is_dry_run": false,
+  "picks": [
+    {
+      "machine_number": 713,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 0.375201,
+      "history_days": 30
+    },
+    {
+      "machine_number": 643,
+      "machine_name": "マイジャグラーV",
+      "score": 0.362338,
+      "history_days": 30
+    },
+    {
+      "machine_number": 659,
+      "machine_name": "マイジャグラーV",
+      "score": 0.306761,
+      "history_days": 30
+    }
+  ],
+  "result": {
+    "scored_with_hash": "ee07f55cce1c5154",
+    "day_baseline": 74.9,
+    "universe_size": 84,
+    "picks_realized": [
+      {
+        "machine_number": 643,
+        "games": 8024.0,
+        "diff": 750.0,
+        "edge": 675.1190476190476
+      },
+      {
+        "machine_number": 659,
+        "games": 4847.0,
+        "diff": 525.0,
+        "edge": 450.1190476190476
+      },
+      {
+        "machine_number": 713,
+        "games": 2526.0,
+        "diff": -417.0,
+        "edge": -491.8809523809524
+      }
+    ],
+    "mean_diff_per_pick": 286.0,
+    "mean_edge_per_pick": 211.1,
+    "missing_machines": [],
+    "rb_perspective": {
+      "day_baseline_rb_rate": 0.00245,
+      "picks_rb": [
+        {
+          "machine_number": 713,
+          "rb_rate": 0.00356,
+          "baseline_ratio": 1.45,
+          "rb_rank": 17,
+          "rb_universe_size": 83
+        },
+        {
+          "machine_number": 643,
+          "rb_rate": 0.00424,
+          "baseline_ratio": 1.73,
+          "rb_rank": 5,
+          "rb_universe_size": 83
+        },
+        {
+          "machine_number": 659,
+          "rb_rate": 0.00227,
+          "baseline_ratio": 0.93,
+          "rb_rank": 51,
+          "rb_universe_size": 83
+        }
+      ]
+    },
+    "model_perspective": null
+  },
+  "plan_digest": "aac9d055aed57162"
+}

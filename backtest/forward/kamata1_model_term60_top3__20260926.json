@@ -1,0 +1,391 @@
+{
+  "rule_id": "kamata1_model_term60_top3",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "freeze_hash": "bb185b622fae47b2",
+  "target_date": "20260926",
+  "data_asof": "20260925",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-07-28",
+    "2026-09-26"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +187 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 879.795535,
+      "history_rows": 80,
+      "machines": [
+        2020,
+        2416,
+        2417,
+        2418,
+        2419
+      ]
+    },
+    {
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 243.396514,
+      "history_rows": 907,
+      "machines": [
+        2044,
+        2045,
+        2046,
+        2047,
+        2048,
+        2049,
+        2050,
+        2051,
+        2052,
+        2053,
+        2054,
+        2055,
+        2056,
+        2057,
+        2058,
+        2059
+      ]
+    },
+    {
+      "machine_name": "ToLOVEるダークネス TRANCE ver.8.7",
+      "score": 235.919522,
+      "history_rows": 170,
+      "machines": [
+        2177,
+        2178,
+        2179
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 2020,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 879.795535,
+      "history_days": 80
+    },
+    {
+      "machine_number": 2416,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 879.795535,
+      "history_days": 80
+    },
+    {
+      "machine_number": 2417,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 879.795535,
+      "history_days": 80
+    },
+    {
+      "machine_number": 2418,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 879.795535,
+      "history_days": 80
+    },
+    {
+      "machine_number": 2419,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 879.795535,
+      "history_days": 80
+    },
+    {
+      "machine_number": 2044,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 243.396514,
+      "history_days": 907
+    },
+    {
+      "machine_number": 2045,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 243.396514,
+      "history_days": 907
+    },
+    {
+      "machine_number": 2046,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 243.396514,
+      "history_days": 907
+    },
+    {
+      "machine_number": 2047,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 243.396514,
+      "history_days": 907
+    },
+    {
+      "machine_number": 2048,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 243.396514,
+      "history_days": 907
+    },
+    {
+      "machine_number": 2049,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 243.396514,
+      "history_days": 907
+    },
+    {
+      "machine_number": 2050,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 243.396514,
+      "history_days": 907
+    },
+    {
+      "machine_number": 2051,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 243.396514,
+      "history_days": 907
+    },
+    {
+      "machine_number": 2052,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 243.396514,
+      "history_days": 907
+    },
+    {
+      "machine_number": 2053,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 243.396514,
+      "history_days": 907
+    },
+    {
+      "machine_number": 2054,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 243.396514,
+      "history_days": 907
+    },
+    {
+      "machine_number": 2055,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 243.396514,
+      "history_days": 907
+    },
+    {
+      "machine_number": 2056,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 243.396514,
+      "history_days": 907
+    },
+    {
+      "machine_number": 2057,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 243.396514,
+      "history_days": 907
+    },
+    {
+      "machine_number": 2058,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 243.396514,
+      "history_days": 907
+    },
+    {
+      "machine_number": 2059,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 243.396514,
+      "history_days": 907
+    },
+    {
+      "machine_number": 2177,
+      "machine_name": "ToLOVEるダークネス TRANCE ver.8.7",
+      "score": 235.919522,
+      "history_days": 170
+    },
+    {
+      "machine_number": 2178,
+      "machine_name": "ToLOVEるダークネス TRANCE ver.8.7",
+      "score": 235.919522,
+      "history_days": 170
+    },
+    {
+      "machine_number": 2179,
+      "machine_name": "ToLOVEるダークネス TRANCE ver.8.7",
+      "score": 235.919522,
+      "history_days": 170
+    }
+  ],
+  "result": {
+    "scored_with_hash": "bb185b622fae47b2",
+    "day_baseline": 441.9,
+    "universe_size": 365,
+    "picks_realized": [
+      {
+        "machine_number": 2044,
+        "games": 3270.0,
+        "diff": 3200.0,
+        "edge": 2758.082191780822
+      },
+      {
+        "machine_number": 2045,
+        "games": 4465.0,
+        "diff": 3500.0,
+        "edge": 3058.082191780822
+      },
+      {
+        "machine_number": 2046,
+        "games": 4743.0,
+        "diff": 7500.0,
+        "edge": 7058.082191780822
+      },
+      {
+        "machine_number": 2047,
+        "games": 3910.0,
+        "diff": 3400.0,
+        "edge": 2958.082191780822
+      },
+      {
+        "machine_number": 2048,
+        "games": 4247.0,
+        "diff": -3500.0,
+        "edge": -3941.917808219178
+      },
+      {
+        "machine_number": 2049,
+        "games": 4587.0,
+        "diff": 6700.0,
+        "edge": 6258.082191780822
+      },
+      {
+        "machine_number": 2050,
+        "games": 3285.0,
+        "diff": -2900.0,
+        "edge": -3341.917808219178
+      },
+      {
+        "machine_number": 2051,
+        "games": 5240.0,
+        "diff": 2200.0,
+        "edge": 1758.0821917808219
+      },
+      {
+        "machine_number": 2052,
+        "games": 3735.0,
+        "diff": -400.0,
+        "edge": -841.9178082191781
+      },
+      {
+        "machine_number": 2053,
+        "games": 5143.0,
+        "diff": -1900.0,
+        "edge": -2341.917808219178
+      },
+      {
+        "machine_number": 2054,
+        "games": 4550.0,
+        "diff": 4000.0,
+        "edge": 3558.082191780822
+      },
+      {
+        "machine_number": 2055,
+        "games": 5372.0,
+        "diff": 800.0,
+        "edge": 358.0821917808219
+      },
+      {
+        "machine_number": 2056,
+        "games": 4693.0,
+        "diff": 3000.0,
+        "edge": 2558.082191780822
+      },
+      {
+        "machine_number": 2057,
+        "games": 2828.0,
+        "diff": 3900.0,
+        "edge": 3458.082191780822
+      },
+      {
+        "machine_number": 2058,
+        "games": 4292.0,
+        "diff": 1500.0,
+        "edge": 1058.0821917808219
+      },
+      {
+        "machine_number": 2059,
+        "games": 4611.0,
+        "diff": 600.0,
+        "edge": 158.08219178082192
+      },
+      {
+        "machine_number": 2020,
+        "games": 4715.0,
+        "diff": -1300.0,
+        "edge": -1741.9178082191781
+      },
+      {
+        "machine_number": 2416,
+        "games": 5931.0,
+        "diff": 2100.0,
+        "edge": 1658.0821917808219
+      },
+      {
+        "machine_number": 2417,
+        "games": 3216.0,
+        "diff": -100.0,
+        "edge": -541.9178082191781
+      },
+      {
+        "machine_number": 2418,
+        "games": 4423.0,
+        "diff": -400.0,
+        "edge": -841.9178082191781
+      },
+      {
+        "machine_number": 2419,
+        "games": 3195.0,
+        "diff": 3000.0,
+        "edge": 2558.082191780822
+      },
+      {
+        "machine_number": 2177,
+        "games": 5506.0,
+        "diff": -300.0,
+        "edge": -741.9178082191781
+      },
+      {
+        "machine_number": 2178,
+        "games": 4698.0,
+        "diff": 200.0,
+        "edge": -241.91780821917808
+      },
+      {
+        "machine_number": 2179,
+        "games": 2385.0,
+        "diff": -1700.0,
+        "edge": -2141.917808219178
+      }
+    ],
+    "mean_diff_per_pick": 1379.2,
+    "mean_edge_per_pick": 937.2,
+    "missing_machines": [],
+    "rb_perspective": null,
+    "model_perspective": [
+      {
+        "machine_name": "スマスロ炎炎ノ消防隊2",
+        "n_machines": 5,
+        "n_realized": 5,
+        "sum_diff": 3300.0,
+        "sum_games": 21480.0,
+        "mean_diff": 660.0
+      },
+      {
+        "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+        "n_machines": 16,
+        "n_realized": 16,
+        "sum_diff": 31600.0,
+        "sum_games": 68971.0,
+        "mean_diff": 1975.0
+      },
+      {
+        "machine_name": "ToLOVEるダークネス TRANCE ver.8.7",
+        "n_machines": 3,
+        "n_realized": 3,
+        "sum_diff": -1800.0,
+        "sum_games": 12589.0,
+        "mean_diff": -600.0
+      }
+    ]
+  },
+  "plan_digest": "7d10ae8b202c0d22"
+}

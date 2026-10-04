@@ -1,0 +1,90 @@
+{
+  "rule_id": "mitoya_model_gratio_top2",
+  "hall": "みとや大森町店",
+  "freeze_hash": "a0f5b81a53a8e24b",
+  "target_date": "20261002",
+  "data_asof": "20261001",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-09-11",
+    "2026-10-02"
+  ],
+  "score": "hist_model_gratio_mean_diff",
+  "selection_unit": "machine_model",
+  "success_criterion": "フォワード20エントリー日を経過した時点で、指名機種全台の総和ベースedge（対ホール全体同日平均、diff_coins_normalized）の平均が正であり、95%CI(block7)下限が0を上回ること。満たさなければ破棄する。判定はフォワードテストのみで行い、バックテスト数値は採否根拠にしない。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "ディスクアップ ULTRAREMIX",
+      "score": 887.559912,
+      "history_rows": 21,
+      "machines": [
+        745
+      ]
+    },
+    {
+      "machine_name": "ガールズ&パンツァー 最終章",
+      "score": 594.511635,
+      "history_rows": 16,
+      "machines": [
+        759
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 745,
+      "machine_name": "ディスクアップ ULTRAREMIX",
+      "score": 887.559912,
+      "history_days": 21
+    },
+    {
+      "machine_number": 759,
+      "machine_name": "ガールズ&パンツァー 最終章",
+      "score": 594.511635,
+      "history_days": 16
+    }
+  ],
+  "result": {
+    "scored_with_hash": "a0f5b81a53a8e24b",
+    "day_baseline": 30.3,
+    "universe_size": 277,
+    "picks_realized": [
+      {
+        "machine_number": 745,
+        "games": 6068.0,
+        "diff": 1833.0,
+        "edge": 1802.7472924187725
+      },
+      {
+        "machine_number": 759,
+        "games": 682.0,
+        "diff": 475.0,
+        "edge": 444.7472924187726
+      }
+    ],
+    "mean_diff_per_pick": 1154.0,
+    "mean_edge_per_pick": 1123.7,
+    "missing_machines": [],
+    "rb_perspective": null,
+    "model_perspective": [
+      {
+        "machine_name": "ディスクアップ ULTRAREMIX",
+        "n_machines": 1,
+        "n_realized": 1,
+        "sum_diff": 1833.0,
+        "sum_games": 6068.0,
+        "mean_diff": 1833.0
+      },
+      {
+        "machine_name": "ガールズ&パンツァー 最終章",
+        "n_machines": 1,
+        "n_realized": 1,
+        "sum_diff": 475.0,
+        "sum_games": 682.0,
+        "mean_diff": 475.0
+      }
+    ]
+  },
+  "plan_digest": "a2891a7f99223602"
+}

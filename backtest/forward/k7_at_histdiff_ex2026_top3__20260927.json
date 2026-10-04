@@ -1,0 +1,67 @@
+{
+  "rule_id": "k7_at_histdiff_ex2026_top3",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "freeze_hash": "c8c26c0fb1179bcb",
+  "target_date": "20260927",
+  "data_asof": "20260926",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-08-28",
+    "2026-09-27"
+  ],
+  "score": "hist_mean_diff",
+  "selection_unit": "machine",
+  "success_criterion": "判定はフォワードのみ。フォワード30エントリー日を経過した時点で edge 平均が +300枚/台 以上かつ 95%CI 下限 > 0 であること。満たさなければ『AT履歴差枚による台選択』は破棄し、AT系スコアの派生はこの1本で打ち止めとする（元ルールの success_criterion をそのまま引き継ぐ。除外以外は一切変えていない）。",
+  "is_dry_run": false,
+  "picks": [
+    {
+      "machine_number": 3095,
+      "machine_name": "革命機ヴァルヴレイヴ2",
+      "score": 2811.764706,
+      "history_days": 17
+    },
+    {
+      "machine_number": 2099,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 2614.285714,
+      "history_days": 21
+    },
+    {
+      "machine_number": 3208,
+      "machine_name": "からくりサーカス",
+      "score": 2140.0,
+      "history_days": 15
+    }
+  ],
+  "result": {
+    "scored_with_hash": "c8c26c0fb1179bcb",
+    "day_baseline": -138.2,
+    "universe_size": 479,
+    "picks_realized": [
+      {
+        "machine_number": 2099,
+        "games": 2313.0,
+        "diff": 7200.0,
+        "edge": 7338.204592901879
+      },
+      {
+        "machine_number": 3095,
+        "games": 4929.0,
+        "diff": -1000.0,
+        "edge": -861.7954070981211
+      },
+      {
+        "machine_number": 3208,
+        "games": 5289.0,
+        "diff": 1600.0,
+        "edge": 1738.2045929018789
+      }
+    ],
+    "mean_diff_per_pick": 2600.0,
+    "mean_edge_per_pick": 2738.2,
+    "missing_machines": [],
+    "rb_perspective": null,
+    "model_perspective": null
+  },
+  "plan_digest": "14a846c1e614bc1b"
+}

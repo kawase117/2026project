@@ -1,0 +1,38 @@
+{
+  "rule_id": "mitoya_jug_eventdd_rbz_top3",
+  "hall": "みとや大森町店",
+  "freeze_hash": "ee07f55cce1c5154",
+  "target_date": "20261004",
+  "data_asof": "20261003",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-09-04",
+    "2026-10-04"
+  ],
+  "score": "hist_mean_rb_prob_model_z",
+  "selection_unit": "machine",
+  "success_criterion": "【重要】このルールは既存ルールの失敗を見た後に作られた変種であり、バックテストの数値を採否根拠にしてはならない。判定はフォワードテストのみで行う。フォワード20エントリー日を経過した時点で edge 平均が +200枚/台 以上かつ 95%CI 下限 > 0 であること。満たさなければ破棄。またRB確率系のバリアントはこの1本で打ち止めとし、これ以上の派生を作らない。",
+  "is_dry_run": false,
+  "picks": [
+    {
+      "machine_number": 643,
+      "machine_name": "マイジャグラーV",
+      "score": 0.382325,
+      "history_days": 30
+    },
+    {
+      "machine_number": 735,
+      "machine_name": "ウルトラミラクルジャグラー",
+      "score": 0.329117,
+      "history_days": 25
+    },
+    {
+      "machine_number": 661,
+      "machine_name": "マイジャグラーV",
+      "score": 0.326426,
+      "history_days": 30
+    }
+  ],
+  "result": null,
+  "plan_digest": "60e38182e6938168"
+}

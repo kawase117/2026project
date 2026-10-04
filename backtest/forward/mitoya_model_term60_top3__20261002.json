@@ -1,0 +1,404 @@
+{
+  "rule_id": "mitoya_model_term60_top3",
+  "hall": "みとや大森町店",
+  "freeze_hash": "673d238a7e985850",
+  "target_date": "20261002",
+  "data_asof": "20261001",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-08-03",
+    "2026-10-02"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +120 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "彼女、お借りします",
+      "score": 469.682378,
+      "history_rows": 125,
+      "machines": [
+        506,
+        507,
+        508,
+        509,
+        510
+      ]
+    },
+    {
+      "machine_name": "やじきた道中記参る！",
+      "score": 412.488689,
+      "history_rows": 67,
+      "machines": [
+        520,
+        521,
+        522
+      ]
+    },
+    {
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 391.059764,
+      "history_rows": 973,
+      "machines": [
+        624,
+        625,
+        626,
+        627,
+        628,
+        629,
+        630,
+        631,
+        632,
+        633,
+        634,
+        635,
+        636,
+        637,
+        638,
+        639,
+        640
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 506,
+      "machine_name": "彼女、お借りします",
+      "score": 469.682378,
+      "history_days": 125
+    },
+    {
+      "machine_number": 507,
+      "machine_name": "彼女、お借りします",
+      "score": 469.682378,
+      "history_days": 125
+    },
+    {
+      "machine_number": 508,
+      "machine_name": "彼女、お借りします",
+      "score": 469.682378,
+      "history_days": 125
+    },
+    {
+      "machine_number": 509,
+      "machine_name": "彼女、お借りします",
+      "score": 469.682378,
+      "history_days": 125
+    },
+    {
+      "machine_number": 510,
+      "machine_name": "彼女、お借りします",
+      "score": 469.682378,
+      "history_days": 125
+    },
+    {
+      "machine_number": 520,
+      "machine_name": "やじきた道中記参る！",
+      "score": 412.488689,
+      "history_days": 67
+    },
+    {
+      "machine_number": 521,
+      "machine_name": "やじきた道中記参る！",
+      "score": 412.488689,
+      "history_days": 67
+    },
+    {
+      "machine_number": 522,
+      "machine_name": "やじきた道中記参る！",
+      "score": 412.488689,
+      "history_days": 67
+    },
+    {
+      "machine_number": 624,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 391.059764,
+      "history_days": 973
+    },
+    {
+      "machine_number": 625,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 391.059764,
+      "history_days": 973
+    },
+    {
+      "machine_number": 626,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 391.059764,
+      "history_days": 973
+    },
+    {
+      "machine_number": 627,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 391.059764,
+      "history_days": 973
+    },
+    {
+      "machine_number": 628,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 391.059764,
+      "history_days": 973
+    },
+    {
+      "machine_number": 629,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 391.059764,
+      "history_days": 973
+    },
+    {
+      "machine_number": 630,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 391.059764,
+      "history_days": 973
+    },
+    {
+      "machine_number": 631,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 391.059764,
+      "history_days": 973
+    },
+    {
+      "machine_number": 632,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 391.059764,
+      "history_days": 973
+    },
+    {
+      "machine_number": 633,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 391.059764,
+      "history_days": 973
+    },
+    {
+      "machine_number": 634,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 391.059764,
+      "history_days": 973
+    },
+    {
+      "machine_number": 635,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 391.059764,
+      "history_days": 973
+    },
+    {
+      "machine_number": 636,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 391.059764,
+      "history_days": 973
+    },
+    {
+      "machine_number": 637,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 391.059764,
+      "history_days": 973
+    },
+    {
+      "machine_number": 638,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 391.059764,
+      "history_days": 973
+    },
+    {
+      "machine_number": 639,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 391.059764,
+      "history_days": 973
+    },
+    {
+      "machine_number": 640,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 391.059764,
+      "history_days": 973
+    }
+  ],
+  "result": {
+    "scored_with_hash": "673d238a7e985850",
+    "day_baseline": 30.3,
+    "universe_size": 277,
+    "picks_realized": [
+      {
+        "machine_number": 624,
+        "games": 4794.0,
+        "diff": 4117.0,
+        "edge": 4086.7472924187728
+      },
+      {
+        "machine_number": 625,
+        "games": 1235.0,
+        "diff": -1592.0,
+        "edge": -1622.2527075812275
+      },
+      {
+        "machine_number": 626,
+        "games": 1772.0,
+        "diff": 792.0,
+        "edge": 761.7472924187725
+      },
+      {
+        "machine_number": 627,
+        "games": 386.0,
+        "diff": -450.0,
+        "edge": -480.2527075812274
+      },
+      {
+        "machine_number": 628,
+        "games": 226.0,
+        "diff": -106.0,
+        "edge": -136.25270758122744
+      },
+      {
+        "machine_number": 629,
+        "games": 1181.0,
+        "diff": 194.0,
+        "edge": 163.74729241877256
+      },
+      {
+        "machine_number": 630,
+        "games": 5901.0,
+        "diff": -242.0,
+        "edge": -272.2527075812274
+      },
+      {
+        "machine_number": 631,
+        "games": 5567.0,
+        "diff": 25.0,
+        "edge": -5.252707581227437
+      },
+      {
+        "machine_number": 632,
+        "games": 2511.0,
+        "diff": 1458.0,
+        "edge": 1427.7472924187725
+      },
+      {
+        "machine_number": 633,
+        "games": 0.0,
+        "diff": 0.0,
+        "edge": -30.252707581227437
+      },
+      {
+        "machine_number": 634,
+        "games": 920.0,
+        "diff": -150.0,
+        "edge": -180.25270758122744
+      },
+      {
+        "machine_number": 635,
+        "games": 1391.0,
+        "diff": -239.0,
+        "edge": -269.2527075812274
+      },
+      {
+        "machine_number": 636,
+        "games": 130.0,
+        "diff": 606.0,
+        "edge": 575.7472924187725
+      },
+      {
+        "machine_number": 637,
+        "games": 5010.0,
+        "diff": 3514.0,
+        "edge": 3483.7472924187728
+      },
+      {
+        "machine_number": 638,
+        "games": 1540.0,
+        "diff": -1842.0,
+        "edge": -1872.2527075812275
+      },
+      {
+        "machine_number": 639,
+        "games": 1816.0,
+        "diff": 661.0,
+        "edge": 630.7472924187725
+      },
+      {
+        "machine_number": 640,
+        "games": 1205.0,
+        "diff": -1425.0,
+        "edge": -1455.2527075812275
+      },
+      {
+        "machine_number": 506,
+        "games": 3068.0,
+        "diff": -958.0,
+        "edge": -988.2527075812275
+      },
+      {
+        "machine_number": 507,
+        "games": 1460.0,
+        "diff": -1742.0,
+        "edge": -1772.2527075812275
+      },
+      {
+        "machine_number": 508,
+        "games": 1306.0,
+        "diff": 4950.0,
+        "edge": 4919.747292418772
+      },
+      {
+        "machine_number": 509,
+        "games": 1357.0,
+        "diff": 94.0,
+        "edge": 63.74729241877256
+      },
+      {
+        "machine_number": 510,
+        "games": 5293.0,
+        "diff": -608.0,
+        "edge": -638.2527075812275
+      },
+      {
+        "machine_number": 520,
+        "games": 1556.0,
+        "diff": 372.0,
+        "edge": 341.7472924187726
+      },
+      {
+        "machine_number": 521,
+        "games": 1420.0,
+        "diff": 475.0,
+        "edge": 444.7472924187726
+      },
+      {
+        "machine_number": 522,
+        "games": 1100.0,
+        "diff": -475.0,
+        "edge": -505.2527075812274
+      }
+    ],
+    "mean_diff_per_pick": 297.2,
+    "mean_edge_per_pick": 266.9,
+    "missing_machines": [],
+    "rb_perspective": null,
+    "model_perspective": [
+      {
+        "machine_name": "彼女、お借りします",
+        "n_machines": 5,
+        "n_realized": 5,
+        "sum_diff": 1736.0,
+        "sum_games": 12484.0,
+        "mean_diff": 347.2
+      },
+      {
+        "machine_name": "やじきた道中記参る！",
+        "n_machines": 3,
+        "n_realized": 3,
+        "sum_diff": 372.0,
+        "sum_games": 4076.0,
+        "mean_diff": 124.0
+      },
+      {
+        "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+        "n_machines": 17,
+        "n_realized": 17,
+        "sum_diff": 5321.0,
+        "sum_games": 35585.0,
+        "mean_diff": 313.0
+      }
+    ]
+  },
+  "plan_digest": "cced50b7ae52e5d9"
+}
