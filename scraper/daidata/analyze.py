@@ -40,6 +40,26 @@ def norm(value: str) -> str:
     return re.sub(r"[\s　‐\-‑–—ー]+", "", text)
 
 
+# ダイデータ側の機種名(切り詰め・半角カナ)→ machine_master の正式名。前方一致では一意に決まらないものだけ。
+DAIDATA_ALIASES = {
+    "LB異世界かるてっと": "A‐SLOT+ 異世界かるてっと",
+    "LBﾆｭｰｷﾝｸﾞﾊﾅﾊﾅV": "スマート沖スロ ニューキングハナハナV",
+    "Lからくりｻｰｶｽ2": "からくりサーカス2",
+    "L化物語": "化物語",
+    "L南国育ちSPECIAL": "南国育ち SPECIAL",
+    "L炎炎ﾉ消防隊2": "スマスロ炎炎ノ消防隊2",
+    "L革命機ｳﾞｧﾙｳﾞﾚｲｳﾞ2": "革命機ヴァルヴレイヴ2",
+    "Lｽﾏｽﾛ北斗": "スマスロ北斗の拳",
+    "Lｿｰﾄﾞｱｰﾄ･ｵﾝﾗｲﾝII": "ソードアート・オンラインII",
+    "Lﾊﾅﾋﾞ": "スマスロ ハナビ",
+    "Lﾊﾟﾁｽﾛ ﾗﾌﾞ嬢3 Wご指名": "ラブ嬢3～Wご指名はいかがですか?～",
+}
+
+
+def _alias_index() -> dict[str, str]:
+    return {norm(raw): target for raw, target in DAIDATA_ALIASES.items()}
+
+
 def _strip_prefix(key: str) -> str:
     for _ in range(2):
         key = re.sub(PREFIX, "", key)
@@ -65,6 +85,9 @@ def match_master(name: str, master: dict[str, dict]) -> dict | None:
     key = norm(name)
     if key in master:
         return master[key]
+    alias = _alias_index().get(key)
+    if alias and norm(alias) in master:
+        return master[norm(alias)]
     # 「スマスロ」「L」等の接頭語差と、ダイデータ側の機種名の切り詰めを許す。
     # 前方一致が唯一の機種に決まるときだけ採用し、曖昧なら未登録にする。
     stripped = _strip_prefix(key)
