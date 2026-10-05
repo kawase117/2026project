@@ -49,6 +49,130 @@
     }
   ],
   "unscored_claims": [],
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20261005",
+    "hall_baseline_mean_diff": 20.0,
+    "hall_n_machines": 365,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 1,
+          "note": "『全機種が毎日あるのは不変。全は3〜5台機種から、単品はそれ以上のメイン機種から。5の付く日はジャグラーコーナー全体の底上げが恒例』。機種名・台数の明示なし(n_models=1は最低限の解釈)。新台入替初日"
+        },
+        "observed_n_models": 1,
+        "candidate_models": 50,
+        "models": [
+          {
+            "machine_name": "青春ブタ野郎はバニーガール先輩の夢を見ない",
+            "score": 1955.2,
+            "n_machines": 3,
+            "mean_diff": 1566.7,
+            "age_days": 27
+          }
+        ],
+        "n_new_machines_over": 1,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "東京喰種",
+          "note": "999999Q9Q 10/4 22:20 予告。「？」付きの連想なので確度は低い(増台機種。毎日単品投入の対象、ニブイチまでは高確率と本文)"
+        },
+        "score": 36.3,
+        "mean_diff": 50.0,
+        "gratio": 0.725,
+        "n_machines": 20,
+        "rank": 17,
+        "candidate_models": 50,
+        "age_days": 608,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "真打 吉宗",
+          "note": "999999Q9Q 10/4 22:20 予告。「？」付きの連想なので確度は低い(大型新台入替→BIG→真BIG)"
+        },
+        "score": 132.0,
+        "mean_diff": 475.0,
+        "gratio": 0.278,
+        "n_machines": 4,
+        "rank": 13,
+        "candidate_models": 50,
+        "age_days": 182,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "化物語",
+          "note": "999999Q9Q 10/4 22:20 予告。「？」付きの連想なので確度は低い(獣王→ばけもの)"
+        },
+        "score": -394.8,
+        "mean_diff": -833.3,
+        "gratio": 0.474,
+        "n_machines": 3,
+        "rank": 41,
+        "candidate_models": 50,
+        "age_days": 301,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "モンスターハンターライズ",
+          "note": "999999Q9Q 10/4 22:20 予告。「？」付きの連想なので確度は低い(獣王→モンスター)"
+        },
+        "score": 123.8,
+        "mean_diff": 290.0,
+        "gratio": 0.427,
+        "n_machines": 10,
+        "rank": 15,
+        "candidate_models": 50,
+        "age_days": 642,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ソードアート・オンラインII",
+          "note": "999999Q9Q 10/4 22:20 予告。「？」付きの連想なので確度は低い(新台入替→スイッチ)"
+        },
+        "score": -1221.0,
+        "mean_diff": -1300.0,
+        "gratio": 0.939,
+        "n_machines": 6,
+        "rank": 48,
+        "candidate_models": 50,
+        "age_days": 119,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
   "announce_digest": "a46c6c35fd035139"
 }
