@@ -44,6 +44,118 @@
     }
   ],
   "unscored_claims": [],
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20261004",
+    "hall_baseline_mean_diff": -0.8,
+    "hall_n_machines": 365,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 1,
+          "note": "『全・高配分・単品が店内の隅々に。メイン機とオススメ機種は扱いが良い』。機種名・台数の明示なし(n_models=1は最低限の解釈)。4の付く日。ぱち馬鹿っ収録来店。前日スロパチ取材の残りも期待、と本文"
+        },
+        "observed_n_models": 3,
+        "candidate_models": 48,
+        "models": [
+          {
+            "machine_name": "ToLOVEるダークネス TRANCE ver.8.7",
+            "score": 9312.3,
+            "n_machines": 3,
+            "mean_diff": 6900.0,
+            "age_days": 503
+          },
+          {
+            "machine_name": "ソードアート・オンラインII",
+            "score": 6443.7,
+            "n_machines": 6,
+            "mean_diff": 3566.7,
+            "age_days": 118
+          },
+          {
+            "machine_name": "やじきた道中記参る！",
+            "score": 4641.5,
+            "n_machines": 3,
+            "mean_diff": 3766.7,
+            "age_days": 62
+          }
+        ],
+        "n_new_machines_over": 0,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "アズールレーン THE ANIMATION",
+          "note": "999999Q9Q 10/3 21:19 予告。「？」付きの連想なので確度は低い(寿司→海鮮→海戦)"
+        },
+        "score": -110.1,
+        "mean_diff": -133.3,
+        "gratio": 0.826,
+        "n_machines": 3,
+        "rank": 25,
+        "candidate_models": 48,
+        "age_days": 426,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ディスクアップ ULTRAREMIX",
+          "note": "999999Q9Q 10/3 21:19 予告。「？」付きの連想なので確度は低い(テンション上がる→アップ)"
+        },
+        "hit": null,
+        "note": "当日 ディスクアップ ULTRAREMIX が設置3台以上の候補に無い（撤去・台数不足・表記ゆれ）"
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+          "note": "999999Q9Q 10/3 21:19 予告。「？」付きの連想なので確度は低い(ガリ→ジンジャー→神社→Lカバネリ)"
+        },
+        "score": 474.5,
+        "mean_diff": 443.8,
+        "gratio": 1.069,
+        "n_machines": 16,
+        "rank": 11,
+        "candidate_models": 48,
+        "age_days": 216,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "攻殻機動隊",
+          "note": "999999Q9Q 10/3 21:19 予告。「？」付きの連想なので確度は低い(海老→甲殻類)"
+        },
+        "score": 829.7,
+        "mean_diff": 1033.3,
+        "gratio": 0.803,
+        "n_machines": 3,
+        "rank": 5,
+        "candidate_models": 48,
+        "age_days": 244,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
   "announce_digest": "e6c9bf3be2728c47"
 }

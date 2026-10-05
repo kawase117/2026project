@@ -34,6 +34,73 @@
     }
   ],
   "unscored_claims": [],
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20261004",
+    "hall_baseline_mean_diff": 85.1,
+    "hall_n_machines": 277,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "東京喰種",
+          "note": "sloneko222 10/3 18:53。直近5日データから挙げた注目機種で、ホールの公約ではない(◎)"
+        },
+        "score": 2196.5,
+        "mean_diff": 2500.6,
+        "gratio": 0.878,
+        "n_machines": 9,
+        "rank": 2,
+        "candidate_models": 37,
+        "age_days": 608,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+          "note": "sloneko222 10/3 18:53。直近5日データから挙げた注目機種で、ホールの公約ではない(〇)"
+        },
+        "score": 1139.3,
+        "mean_diff": 1395.8,
+        "gratio": 0.816,
+        "n_machines": 17,
+        "rank": 6,
+        "candidate_models": 37,
+        "age_days": 216,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "とある魔術の禁書目録2",
+          "note": "sloneko222 10/3 18:53。直近5日データから挙げた注目機種で、ホールの公約ではない(△)"
+        },
+        "score": -30.9,
+        "mean_diff": -34.0,
+        "gratio": 0.909,
+        "n_machines": 4,
+        "rank": 19,
+        "candidate_models": 37,
+        "age_days": 62,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
   "announce_digest": "e316222abe92d9fe"
 }
