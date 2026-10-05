@@ -1,0 +1,39 @@
+{
+  "announce_id": "kinji_keikyu__20261006__kawasakislot",
+  "hall": "金時京急蒲田店",
+  "target_date": "20261006",
+  "source": {
+    "account": "kawasakislot",
+    "url": "",
+    "posted_at": "2026-10-05T17:17:07+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "金時京急蒲田\n16時半頃\n\n取材傾向的には3台並びなので見えてそうなところPick\n\nLPの機種案内はモンキー\n全台の初当り確率 1/228とほぼ⑥の数値でワンチャン全まで見えるね\nそれ以外のスマスロは戦コレ6まわりが怪しいけど...\n\nジャグはハッピー～ガールズ、ミラクルあたりが並んで良さげ",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"金時京急蒲田店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-06\", \"2026-10-04\"], \"n_days\": 90, \"n_model_days\": 1523, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 1457.9, \"models_over_threshold_per_day\": {\"mean\": 0.86, \"median\": 1.0, \"max\": 5}, \"candidate_models_per_day\": 16.9, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 0.62, \"median\": 0.0, \"max\": 5}, \"p_at_least_1\": 0.389, \"p_at_least_2\": 0.122, \"p_at_least_3\": 0.056, \"p_at_least_4\": 0.044, \"p_at_least_10\": 0.0}} / named_context: {\"as_of\": \"20261004\", \"window_days\": 30, \"n_candidates_ge3machines\": 17, \"hall_over_threshold_rate_approx\": 0.0, \"threshold\": 1800.0, \"models\": [{\"name\": \"ジャグラーガールズ\", \"n_machines\": 3, \"rank\": 3, \"of\": 17, \"n_days_present\": 30, \"over_threshold\": 4, \"rate\": 0.133, \"mean_score\": 238.2}, {\"name\": \"モンキーターンV\", \"n_machines\": 6, \"rank\": 12, \"of\": 17, \"n_days_present\": 30, \"over_threshold\": 0, \"rate\": 0.0, \"mean_score\": -41.4}, {\"name\": \"戦国コレクション6\", \"n_machines\": 2, \"rank\": null, \"of\": 17, \"n_days_present\": 30, \"over_threshold\": 1, \"rate\": 0.033, \"mean_score\": 88.2}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "モンキーターンV",
+      "note": "kawasakislot 10/5 17:17 予告。LP機種案内はモンキー、全台の初当り1/228とほぼ⑥の数値でワンチャン全"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "戦国コレクション6",
+      "note": "kawasakislot 10/5 17:17 予告。スマスロで戦コレ6まわりが怪しい"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "ジャグラーガールズ",
+      "note": "kawasakislot 10/5 17:17 予告。ジャグはハッピー〜ガールズ、ミラクルあたりが並んで良さげ(ガールズ以外は名指しが範囲表現のため未採点)"
+    }
+  ],
+  "unscored_claims": [],
+  "result": null,
+  "announce_digest": "ee237aefd0637c85"
+}
