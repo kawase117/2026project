@@ -24,7 +24,10 @@ import pandas as pd
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(PROJECT_ROOT))
+from backtest import bonus_specs as bs  # noqa: E402
 from scraper.site777 import setting_estimator as se  # noqa: E402
+
+HALL_DB_NAME = "みとや大森町店"
 
 DB_PATH = PROJECT_ROOT / "db" / "みとや大森町店.db"
 OUTPUT_DIR = Path(__file__).resolve().parent / "output"
@@ -130,11 +133,27 @@ def fmt_prob(games: int, count: int) -> str:
     return f"1/{games / count:.0f}" if count else "-"
 
 
+def at_rb_specs() -> dict[str, dict]:
+    """AT機のうちRB列にAT初当りが入ると監査(AT_RB_AUDIT.csv)で確定した機種の {正規化名: spec}。
+
+    スマスロ北斗の拳など。DBの bonus_judgeable は変えず、この監査結果を判別可否の根拠にする。
+    """
+    return {
+        key: spec
+        for key, spec in bs.load_specs(hall=HALL_DB_NAME).items()
+        if spec.get("at_judgeable") and spec.get("at_column") == "rb"
+    }
+
+
 def enrich(df: pd.DataFrame, master, baselines) -> pd.DataFrame:
     df = df.copy()
     infos = [match_master(m, master) for m in df["Machine"]]
+    at_specs = at_rb_specs()
     df["category"] = [i["category"] if i else "未登録" for i in infos]
-    df["judgeable"] = [i["judgeable"] if i else None for i in infos]
+    df["judgeable"] = [
+        1 if i and bs.normalize(i["name"]) in at_specs else (i["judgeable"] if i else None) for i in infos
+    ]
+    df["at_rb_key"] = [bs.normalize(i["name"]) if i and bs.normalize(i["name"]) in at_specs else None for i in infos]
     df["machine_label"] = [unicodedata.normalize("NFKC", m) for m in df["Machine"]]
     df["last_digit"] = df["Unit"].astype(int) % 10
     df["games"] = df["CumulativeStart"].astype(int)
@@ -171,7 +190,7 @@ def section_hall(df: pd.DataFrame) -> str:
 
 def section_judgeable(df: pd.DataFrame) -> str:
     """RB判別可能機種の機種別集計と台別z値。"""
-    sub = df[(df["judgeable"] == 1) & (df["category"].isin(["ノーマル", "BT", "A+AT"]))]
+    sub = df[df["judgeable"] == 1]
     summary = []
     for label, g in sub.groupby("machine_label"):
         games, rb = int(g["games"].sum()), int(g["rb"].sum())
@@ -251,6 +270,31 @@ def section_jug_settings(df: pd.DataFrame) -> str:
                         label,
                         f"{r.games:,}",
                         r.bb,
+                        r.rb,
+                        fmt_prob(r.games, r.rb),
+                        est["setting_band_label"],
+                        est["setting_lean"],
+                        est["setting_confidence"],
+                        est["high_low_ratio"],
+                    ]
+                )
+    at_specs = at_rb_specs()
+    for label, g in df[df["at_rb_key"].notna()].groupby("machine_label"):
+        spec = at_specs[g["at_rb_key"].iloc[0]]
+        # AT初当りはRB列。BBはAT初当りではないので尤度から外す(use_bb=False)。
+        settings = {
+            s: {"bb_probability": 0.5, "rb_probability": v["rb_probability"], "use_bb": False}
+            for s, v in spec["settings"].items()
+        }
+        for r in g.itertuples():
+            est = se.estimate_setting(int(r.games), 0, int(r.rb), settings)
+            if est:
+                unit_rows.append(
+                    [
+                        r.Unit,
+                        f"{label}(AT・RB判別)",
+                        f"{r.games:,}",
+                        "-",
                         r.rb,
                         fmt_prob(r.games, r.rb),
                         est["setting_band_label"],
