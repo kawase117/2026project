@@ -169,16 +169,19 @@ JUGGLER_FAMILY_SPECS = {
             6: {"rb_probability": 1 / 313.6, "bb_probability": 1 / 264.3, "payout_rate": 106.0},
         },
     },
-    # 出典: document/machine_master_research/machine_master.csv
-    # （1geki.jp解析値）。設定3・4は元データ未掲載のため欠落させたまま扱う。
+    # 出典: 一撃 設定判別ページ https://1geki.jp/slot/s_versus_rexse/0/（2025-04-16更新、
+    # 2026-10-06 にユーザーが「一撃準拠でよし」と承認して差し替え）。設定1,2,5,6の4設定機で、
+    # 設定3・4は存在しない（補間しないこと）。機械割はスペックページ(/s_versus_rexse/)の値のまま。
+    # 旧値（マスターCSV＝スペックページ由来）は BB 1/264.3,260.1,244.5,237.4・
+    # RB 1/344.9,334.4,292.6,277.7 で、設定判別ページと約10%食い違う（どちらが実機に合うかは未確認）。
     "VERSUS_REVISE": {
         "family_name": "バーサスリヴァイズ",
         "machine_keyword": "バーサスリヴァイズ",
         "settings": {
-            1: {"rb_probability": 1 / 344.9, "bb_probability": 1 / 264.3, "payout_rate": 97.8},
-            2: {"rb_probability": 1 / 334.4, "bb_probability": 1 / 260.1, "payout_rate": 99.5},
-            5: {"rb_probability": 1 / 292.6, "bb_probability": 1 / 244.5, "payout_rate": 104.2},
-            6: {"rb_probability": 1 / 277.7, "bb_probability": 1 / 237.4, "payout_rate": 107.1},
+            1: {"rb_probability": 1 / 374.5, "bb_probability": 1 / 292.6, "payout_rate": 97.8},
+            2: {"rb_probability": 1 / 341.3, "bb_probability": 1 / 284.9, "payout_rate": 99.5},
+            5: {"rb_probability": 1 / 319.7, "bb_probability": 1 / 275.4, "payout_rate": 104.2},
+            6: {"rb_probability": 1 / 292.6, "bb_probability": 1 / 264.3, "payout_rate": 107.1},
         },
     },
     # ユーザー提供の公式スペック表（2026-08-25）。設定1,2,5,6の4段階機。
