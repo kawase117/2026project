@@ -25,9 +25,15 @@ from scraper.dmm_goraggio.parsing import (  # noqa: E402
 )
 from scraper.dmm_goraggio.report import build_analysis, build_html  # noqa: E402
 from backtest.model_alias import master_names, resolve_part  # noqa: E402
+from scraper.realtime.quick_filter import load_audit, load_master_flags, rb_eligible  # noqa: E402
 
 
 HALLS = {
+    "nishiguchi": {
+        "dmm_url": "https://p-town.dmm.com/shops/tokyo/292/jackpot",
+        "data_hall_name": "ヒロキ蒲田西口店",  # 暫定・未確認: 実サイトのデータ側ホーム名を要確認
+        "db_hall": None,  # db/ に西口のDBは現時点で存在しない
+    },
     "max": {
         "dmm_url": "https://p-town.dmm.com/shops/tokyo/265/jackpot",
         "data_hall_name": "ヒロキMAX蒲田店",
@@ -295,6 +301,25 @@ async def run(args: argparse.Namespace) -> dict:
                 else {}
             )
             requested_units = set(args.units or [])
+            if args.rb_quick_min_games is not None and args.mode == "quick":
+                audit = load_audit()
+                master_db = Path(__file__).resolve().parents[2] / "db" / f"{db_hall or 'ヒロキ東口店'}.db"
+                master_flags = load_master_flags(master_db)
+                eligible_units = set()
+                for machine in machines:
+                    number = machine["machine_number"]
+                    model = machine.get("machine_name_normalized")
+                    if not rb_eligible(args.snapshot_hall, model, audit, master_flags):
+                        continue
+                    old = prior_machines.get(number, {}) if prior_details else {}
+                    detail = prior_details.get(number, {})
+                    games = detail.get("games")
+                    changed = (
+                        any(machine.get(key) != old.get(key) for key in ("bb_count", "rb_count")) if old else False
+                    )
+                    if (games is not None and games >= args.rb_quick_min_games) or changed:
+                        eligible_units.add(number)
+                requested_units &= eligible_units
             known_units = {row["machine_number"] for row in machines}
             unknown_units = sorted(requested_units - known_units)
             if unknown_units:
@@ -316,9 +341,9 @@ async def run(args: argparse.Namespace) -> dict:
                         reused_detail_count += 1
                     else:
                         targets.append(machine)
-                elif number in requested_units:
+                elif number in requested_units or (args.rb_quick_min_games is not None and number in eligible_units):
                     targets.append(machine)
-                elif (
+                elif args.rb_quick_min_games is None and (
                     prior
                     and prior_details.get(number)
                     and (
@@ -385,6 +410,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--mode", choices=("quick", "full"), default="quick")
     parser.add_argument("--hall", choices=tuple(HALLS), default="max")
     parser.add_argument("--units", nargs="*", default=[])
+    parser.add_argument("--rb-quick-min-games", type=int)
+    parser.add_argument("--snapshot-hall", default="ヒロキMAX蒲田店")
     parser.add_argument("--workers", type=int, choices=range(1, 9), default=4)
     parser.add_argument("--request-interval-ms", type=int, default=2500)
     parser.add_argument("--force", action="store_true")

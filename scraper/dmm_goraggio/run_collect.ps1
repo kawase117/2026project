@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('max', 'higashiguchi')]
+    [ValidateSet('nishiguchi', 'max', 'higashiguchi')]
     [string]$Hall = 'max',
     [ValidateSet('Quick', 'Full')]
     [string]$Mode = 'Quick',
