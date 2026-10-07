@@ -101,14 +101,14 @@ def test_user_confirmed_aliases_2026_10_07():
     assert model_name("パチスロ戦国恋姫") == "戦国†恋姫"
 
 
-def test_undecided_machines_stay_unmatched():
-    # ユーザー未回答: A-SLOTのこのすばか同名機か／モンハンライズかサンブレイクか。推測で当てない。
-    assert model_name("スマスロ モンスターハンターライズ") is None
-    assert model_name("この素晴らしい世界に祝福") is None
-
-
 def test_five_setting_machine_has_no_setting_3():
     from backtest.bonus_specs import load_specs, normalize
 
     spec = load_specs()[normalize("キン肉マン～7人の悪魔超人編～")]
     assert 3 not in spec["settings"] or spec["settings"][3].get("payout_rate") is None
+
+
+def test_konosuba_and_mhr_aliases_confirmed():
+    assert model_name("L A このすば FX") == model_name("この素晴らしい世界に祝福")
+    assert "A" in model_name("この素晴らしい世界に祝福") and "SLOT" in model_name("この素晴らしい世界に祝福")
+    assert model_name("スマスロ モンスターハンターライズ") == "モンスターハンターライズ"
