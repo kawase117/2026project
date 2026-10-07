@@ -130,3 +130,49 @@ def test_combined_only_bt_machine_is_estimated_but_a_plus_at_is_not():
     isekai = estimate(_est_row("A‐SLOT+ 異世界かるてっと", 3000, 20, 10))
     assert isekai["p_high"] is not None and "合算" in " ".join(isekai["notes"])
     assert estimate(_est_row("ツインエンジェルPARTY", 3000, 20, 10))["p_high"] is None
+
+
+def test_top_up_keeps_first_pass_details_and_retries_failed_unit_once(tmp_path, monkeypatch):
+    path = tmp_path / "latest_quick.json"
+    first = {
+        "observed_at": "2026-10-07T15:00:00+09:00",
+        "complete": True,
+        "machines": [
+            _machine(1, "マイジャグラーV", 3, 2),
+            _machine(2, "マイジャグラーV", 4, 4),
+            _machine(3, "マイジャグラーV", 5, 5),
+        ],
+        "details": {"3": {"games": 3000, "bb_count": 5, "rb_count": 5}},
+        "failures": [],
+    }
+    path.write_text(json.dumps(first), encoding="utf-8")
+    old = path.stat().st_mtime_ns
+    os.utime(path, ns=(old, old - 10_000_000_000))
+    calls = []
+
+    def fake_run(command):
+        units = command[command.index("--units") + 1 :]
+        calls.append(units)
+        if len(calls) == 1:  # 追加取得: 2は45秒タイムアウトで失敗(非ゼロ終了)、1は成功
+            doc = dict(
+                first,
+                details={"1": {"games": 1500}},
+                failures=[{"machine_number": "2", "error": "Timeout"}],
+                complete=False,
+            )
+            code = 1
+        else:  # 再試行: 2が成功
+            doc = dict(first, details={"2": {"games": 2000}}, failures=[])
+            code = 0
+        path.write_text(json.dumps(doc), encoding="utf-8")
+        st = path.stat().st_mtime_ns
+        os.utime(path, ns=(st, st + len(calls) * 1_000_000_000))
+        return subprocess.CompletedProcess(command, code)
+
+    monkeypatch.setattr(run, "_run_command", fake_run)
+    base = ["py", "collector.py", "--rb-quick-min-games", "1000", "--snapshot-hall", HALL]
+    run._top_up(path, HALL, base, {}, {"マイジャグラーV": True}, subprocess.CompletedProcess(base, 0))
+    merged = json.loads(path.read_text(encoding="utf-8"))
+    assert calls == [["1", "2"], ["2"]]  # 失敗した台だけを1回再試行
+    assert set(merged["details"]) == {"1", "2", "3"}  # 失敗があっても1回目の詳細(3)は消えない
+    assert merged["failures"] == [] and merged["complete"] is True

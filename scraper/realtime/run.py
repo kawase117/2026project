@@ -58,29 +58,47 @@ def _without(command: list[str], *flags: str) -> list[str]:
     return result
 
 
+def _failed_units(document: dict) -> set[str]:
+    return {str(f["machine_number"]) for f in document.get("failures") or [] if f.get("machine_number")}
+
+
 def _top_up(path: Path, hall: str, base_command: list[str], audit, flags, process):
     """一覧で当たり(BB+RB>=1)があるRB判別可能機種のうち、詳細が無い台を取りこぼしなく取る。
 
     collectorのquickは今回の対象台の詳細しか出力に残さないので、1回目の詳細を統合して書き戻す。
+    台単位の失敗(45秒タイムアウトなど)があっても取得できた詳細は捨てず、失敗した台は1回だけ再試行する。
     """
     from .quick_filter import select_first_pass
 
+    first = json.loads(path.read_text(encoding="utf-8-sig"))
     missing = [r for r in dmm.adapt(path, hall) if r.games is None]
     units = select_first_pass(missing, audit, flags)
-    if not units:
+    if not units and not _failed_units(first):
         return process
-    first = json.loads(path.read_text(encoding="utf-8-sig"))
-    before = path.stat().st_mtime_ns
-    # 2回目は選別済みの台だけを取る。collector側の判定(--rb-quick-min-games)を外し、1回目と二重に取らない。
-    command = _without(base_command, "--rb-quick-min-games", "--snapshot-hall") + ["--units", *map(str, units)]
-    second = _run_command(command)
-    if second.returncode != 0 or path.stat().st_mtime_ns == before:
-        return second
-    document = json.loads(path.read_text(encoding="utf-8-sig"))
-    document["details"] = {**first.get("details", {}), **document.get("details", {})}
-    document["detail_count"] = len(document["details"])
+    # 追加取得は選別済みの台だけ。collector側の判定(--rb-quick-min-games)を外し、1回目と二重に取らない。
+    plain = _without(base_command, "--rb-quick-min-games", "--snapshot-hall")
+    details = dict(first.get("details", {}))
+    failures = list(first.get("failures") or [])
+    document = first
+    wanted = sorted(set(map(str, units)) | _failed_units(first))
+    for _ in range(2):  # 追加取得1回 + 失敗台の再試行1回
+        if not wanted:
+            break
+        before = path.stat().st_mtime_ns
+        process = _run_command(plain + ["--units", *wanted])
+        if path.stat().st_mtime_ns == before:
+            break  # 出力が更新されなかった
+        document = json.loads(path.read_text(encoding="utf-8-sig"))
+        details.update(document.get("details", {}))
+        failures += list(document.get("failures") or [])
+        failures = [f for f in failures if str(f.get("machine_number")) not in details]
+        wanted = sorted(_failed_units({"failures": failures}))
+    document["details"] = details
+    document["detail_count"] = len(details)
+    document["failures"] = failures
+    document["complete"] = not failures
     path.write_text(json.dumps(document, ensure_ascii=False), encoding="utf-8")
-    return second
+    return process
 
 
 @dataclass
@@ -189,7 +207,7 @@ def _dmm(keys: list[str], mode: str, quick_min_games: int) -> list[Result]:
             process = _run_command(command)
             if not path.exists() or path.stat().st_mtime_ns == before:
                 raise RuntimeError("DMM output was not refreshed")
-            if mode == "quick" and process.returncode == 0:
+            if mode == "quick":
                 process = _top_up(path, hall, base_command, audit, flags, process)
             document = json.loads(path.read_text(encoding="utf-8-sig"))
             rows = dmm.adapt(path, hall)
@@ -197,7 +215,7 @@ def _dmm(keys: list[str], mode: str, quick_min_games: int) -> list[Result]:
             item.count = len(rows)
             item.failures = len(document.get("failures") or [])
             item.data_time = max((r.source_updated_at for r in rows if r.source_updated_at), default="-")
-            item.status = "OK" if process.returncode == 0 and document.get("complete") else "INCOMPLETE"
+            item.status = "OK" if document.get("complete") else "INCOMPLETE"
         except (OSError, ValueError, KeyError, RuntimeError) as exc:
             item.error = first_line(exc)
         item.seconds = time.monotonic() - start
