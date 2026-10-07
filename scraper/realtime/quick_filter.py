@@ -50,6 +50,14 @@ def load_master_flags_any(db_dir: Path = ROOT / "db") -> dict[str, bool]:
             continue
         for name, flag in load_master_flags(path).items():
             merged[name] = merged.get(name, False) or flag
+    # ホールDBにまだ現れない、一撃CSV(正本)だけに登録した機種(CCエンジェル等)も判別可能機種の判定に含める。
+    from backtest.bonus_specs import MASTER_CSV, categorize
+
+    with open(MASTER_CSV, encoding="utf-8-sig", newline="") as stream:
+        for row in csv.DictReader(stream):
+            name = row.get("canonical_machine_name")
+            if name and categorize(row["game_type"], row["bt_flag"]) in {"ノーマル", "BT", "A+AT"}:
+                merged[name] = True
     return merged
 
 

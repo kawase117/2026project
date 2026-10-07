@@ -95,6 +95,36 @@ def format_ranking(data):
     return "\n".join(lines)
 
 
+def format_hall_report(hall, rows, top=8):
+    """1ホール分の即時報告。RB事後確率の高い順(判別可能機種のみ)。"""
+    data = build_ranking(rows, top=10000)
+    ranked = data["ranked"]
+    stamp = max((r.observed_at for r in rows), default="")[11:16]
+    estimable = sum(1 for r in ranked + data["uncertain"] if r["p_high"] is not None)
+    lines = [f"\n=== {hall} (観測{stamp} / 取得{len(rows)}台 / RBで推定できた台{estimable}) ==="]
+    if not ranked:
+        lines.append("  推定できる台がありません")
+    for r in ranked[:top]:
+        lines.append(
+            f'  {r["unit"]} {r["model"]} {r["games"]}G RB{r["rb"]} 設定5以上={r["p_high"]:.2f} (確度{r["confidence"]:.2f})'
+        )
+    return "\n".join(lines)
+
+
+def format_final(data):
+    """全ホール完了後の総合ランキング(設定5以上の確率が高い順)。"""
+    lines = [
+        "\n##### 総合ランキング(設定5以上の確率が高い順・RB判別可能機種) #####",
+        "順位 | ホール | 台 | 機種 | G | RB | 設定5以上 | 確度",
+    ]
+    for i, r in enumerate(data["ranked"], 1):
+        lines.append(
+            f'{i} | {r["hall"]} | {r["unit"]} | {r["model"]} | {r["games"]} | {r["rb"]} | {r["p_high"]:.2f} | {r["confidence"]:.2f}'
+        )
+    lines.append("※途中の高RBは最終で平均に回帰しうる。判別不能に近い機種・AT機・新台は含まない。")
+    return "\n".join(lines)
+
+
 def write_ranking(data, out_dir=OUTPUT, now=None):
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)

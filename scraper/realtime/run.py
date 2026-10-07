@@ -5,6 +5,7 @@ import json
 import os
 import subprocess
 import sys
+import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
@@ -25,6 +26,61 @@ HALLS = {
     "mitoya": ("みとや大森町店", "daidata", None),
     "rakuen": ("楽園蒲田店", "site777", None),
 }
+
+
+_PRINT_LOCK = threading.Lock()
+_ROWS: dict[str, list] = {}  # ホール名 -> 今回の収集で保存した行(最後の総合ランキング用)
+REPORT = {"each": True, "top": 8}
+
+
+def _publish(rows, hall: str, mode: str) -> None:
+    """スナップショットを保存し、そのホールの上位を即座に出す(全体の完了を待たない)。"""
+    write_snapshot(rows, HERE / "output", hall, mode, datetime.now(JST))
+    _ROWS[hall] = rows
+    if REPORT["each"]:
+        from .rank import format_hall_report
+
+        text = format_hall_report(hall, rows, top=REPORT["top"])
+        with _PRINT_LOCK:
+            print(text, flush=True)
+
+
+def _without(command: list[str], *flags: str) -> list[str]:
+    """コマンドから「--flag 値」の組を取り除く。"""
+    result, skip = [], False
+    for part in command:
+        if skip:
+            skip = False
+        elif part in flags:
+            skip = True
+        else:
+            result.append(part)
+    return result
+
+
+def _top_up(path: Path, hall: str, base_command: list[str], audit, flags, process):
+    """一覧で当たり(BB+RB>=1)があるRB判別可能機種のうち、詳細が無い台を取りこぼしなく取る。
+
+    collectorのquickは今回の対象台の詳細しか出力に残さないので、1回目の詳細を統合して書き戻す。
+    """
+    from .quick_filter import select_first_pass
+
+    missing = [r for r in dmm.adapt(path, hall) if r.games is None]
+    units = select_first_pass(missing, audit, flags)
+    if not units:
+        return process
+    first = json.loads(path.read_text(encoding="utf-8-sig"))
+    before = path.stat().st_mtime_ns
+    # 2回目は選別済みの台だけを取る。collector側の判定(--rb-quick-min-games)を外し、1回目と二重に取らない。
+    command = _without(base_command, "--rb-quick-min-games", "--snapshot-hall") + ["--units", *map(str, units)]
+    second = _run_command(command)
+    if second.returncode != 0 or path.stat().st_mtime_ns == before:
+        return second
+    document = json.loads(path.read_text(encoding="utf-8-sig"))
+    document["details"] = {**first.get("details", {}), **document.get("details", {})}
+    document["detail_count"] = len(document["details"])
+    path.write_text(json.dumps(document, ensure_ascii=False), encoding="utf-8")
+    return second
 
 
 @dataclass
@@ -109,15 +165,16 @@ def _dmm(keys: list[str], mode: str, quick_min_games: int) -> list[Result]:
         path = ROOT / "scraper/dmm_goraggio" / ("output" if code == "max" else f"output_{code}") / f"latest_{mode}.json"
         try:
             command = commands([key], mode, quick_min_games)["dmm"][0]
+            base_command = list(command)
+            audit = flags = None
             if mode == "quick":
-                # 既存collectorの変化台取得を維持。対象の追加指定は同日直前スナップショットから求める。
+                # 既存collectorの変化台取得を維持。前回のスナップショットにある台は強制で再取得する。
                 from .quick_filter import (
                     audit_for_hall,
                     load_audit,
                     load_master_flags,
                     load_master_flags_any,
                     load_previous,
-                    select_first_pass,
                     select_units,
                 )
 
@@ -132,14 +189,11 @@ def _dmm(keys: list[str], mode: str, quick_min_games: int) -> list[Result]:
             process = _run_command(command)
             if not path.exists() or path.stat().st_mtime_ns == before:
                 raise RuntimeError("DMM output was not refreshed")
-            if mode == "quick" and not any(r.games is not None for r in previous) and process.returncode == 0:
-                # 同日の前回に累計Gが無い(初回・詳細0台だった): 取得した一覧から対象を決め、詳細取得をもう一度行う(一覧取得は数秒)。
-                first_units = select_first_pass(dmm.adapt(path, hall), audit, flags)
-                if first_units:
-                    process = _run_command(command + ["--units", *map(str, first_units)])
+            if mode == "quick" and process.returncode == 0:
+                process = _top_up(path, hall, base_command, audit, flags, process)
             document = json.loads(path.read_text(encoding="utf-8-sig"))
             rows = dmm.adapt(path, hall)
-            write_snapshot(rows, HERE / "output", hall, mode, datetime.now(JST))
+            _publish(rows, hall, mode)
             item.count = len(rows)
             item.failures = len(document.get("failures") or [])
             item.data_time = max((r.source_updated_at for r in rows if r.source_updated_at), default="-")
@@ -186,7 +240,7 @@ def _site(keys: list[str], mode: str, quick_min_games: int) -> list[Result]:
             raise RuntimeError("site777 summary was not refreshed")
         summary = json.loads(summary_path.read_text(encoding="utf-8-sig"))
         rows = site777.adapt(output, hall, quick=mode == "quick")
-        write_snapshot(rows, HERE / "output", hall, mode, datetime.now(JST))
+        _publish(rows, hall, mode)
         item.count = len(rows)
         item.failures = int(summary.get("failures") or 0)
         item.data_time = max((r.source_updated_at for r in rows if r.source_updated_at), default="-")
@@ -211,7 +265,7 @@ def _daidata(keys: list[str], mode: str, quick_min_games: int) -> list[Result]:
         if not fresh:
             raise RuntimeError("daidata CSV was not refreshed")
         rows = daidata.adapt(max(fresh, key=lambda p: p.stat().st_mtime_ns), hall)
-        write_snapshot(rows, HERE / "output", hall, mode, datetime.now(JST))
+        _publish(rows, hall, mode)
         item.count = len(rows)
         item.data_time = max((r.observed_at for r in rows), default="-")
         item.status = "OK" if process.returncode == 0 else "INCOMPLETE"
@@ -227,6 +281,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--mode", choices=("full", "quick"), required=True)
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--quick-min-games", type=int, default=1000)
+    parser.add_argument("--no-report", action="store_true", help="ホールごとの即時報告と最後の総合ランキングを出さない")
+    parser.add_argument("--report-top", type=int, default=8, help="ホールごとの即時報告に出す台数")
+    parser.add_argument("--final-top", type=int, default=30, help="最後の総合ランキングに出す台数")
     args = parser.parse_args(argv)
     keys = list(HALLS) if args.halls == "all" else args.halls.split(",")
     if not keys or any(key not in HALLS for key in keys) or len(set(keys)) != len(keys):
@@ -245,6 +302,7 @@ def main(argv: list[str] | None = None) -> int:
             )
             print("site777: RB table only; graph skipped. daidata: prefetch filtering TODO")
         return 0
+    REPORT.update(each=not args.no_report, top=args.report_top)
     workers = {"dmm": _dmm, "site777": _site, "daidata": _daidata}
     with ThreadPoolExecutor(max_workers=3) as pool:
         futures = {
@@ -254,6 +312,12 @@ def main(argv: list[str] | None = None) -> int:
         }
         results = [item for future in futures.values() for item in future.result()]
     print(format_table(results))
+    if not args.no_report and _ROWS:
+        from .rank import build_ranking, format_final, write_ranking
+
+        data = build_ranking([r for rows in _ROWS.values() for r in rows], top=args.final_top)
+        print(format_final(data))
+        print(f"JSON: {write_ranking(data)}")
     for item in results:
         if item.error:
             print(f"{item.hall}: {item.error}", file=sys.stderr)
