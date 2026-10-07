@@ -52,6 +52,26 @@ def _none(reason):
     }
 
 
+@lru_cache(maxsize=1)
+def _versus_spec_page():
+    """マスターCSVのバーサスリヴァイズ(設定1,2,5,6)を、設定→RB/BB確率の辞書にする。"""
+    import csv
+
+    from scraper.realtime.adapters.common import MASTER_CSV
+
+    with MASTER_CSV.open(encoding="utf-8-sig", newline="") as stream:
+        row = next(r for r in csv.DictReader(stream) if r["machine_name"] == "バーサスリヴァイズ")
+    settings = {}
+    for number in range(1, 7):
+        rb, bb = row[f"rb_setting{number}"], row[f"bb_setting{number}"]
+        if rb and bb:
+            settings[number] = {
+                "rb_probability": 1 / float(rb.split("/")[1]),
+                "bb_probability": 1 / float(bb.split("/")[1]),
+            }
+    return settings
+
+
 @lru_cache(maxsize=32)
 def _hall_specs(hall):
     return load_specs(hall=hall)
@@ -72,8 +92,8 @@ def estimate(row: SnapshotRow, *, specs=None, audit=None, hall_prior=None, spec_
     if spec is None:
         return _none("設定別スペックがない")
     if spec_variant == "spec_page" and "バーサスリヴァイズ" in name:
-        # TODO: もう一方のスペックページ値が確定したら独立の出典表を追加する。
-        raise ValueError("バーサスリヴァイズのspec_page値は未登録")
+        # 既定は一撃の設定判別ページ(config.py)。こちらは一撃のスペックページ由来の値(マスターCSV)で、約10%違う。
+        spec = {**spec, "settings": _versus_spec_page()}
     if spec.get("category") == "AT":
         if at_context is None:
             return _none("ATのG比には同時刻ホール全台の観測が必要")
