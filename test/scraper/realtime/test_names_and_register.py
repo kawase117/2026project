@@ -84,3 +84,31 @@ def test_versus_spec_page_variant_uses_master_csv_and_has_four_settings():
     default, page = estimate(row), estimate(row, spec_variant="spec_page")
     assert default["p_high"] is not None and page["p_high"] is not None
     assert default["setting_probabilities"] != page["setting_probabilities"]
+
+
+def test_user_confirmed_aliases_2026_10_07():
+    expected = {
+        "L ﾊﾟﾁｽﾛ北斗の拳AD XR": "スマスロ北斗の拳",
+        "Lﾚﾝﾀﾙ彼女bK": "レンタル彼女",
+        "LﾊﾟﾁｽﾛD4DJKB": "D4DJ Pachi‐Slot Mix",
+        "Lﾊﾟﾁｽﾛｷﾝﾆｸﾏﾝ4SLDC": "キン肉マン～7人の悪魔超人編～",
+        "対魔導学園35試験小隊 H1": "対魔導学園35試験小隊",
+        "Angel Beats！ XF": "Angel Beats!",
+        "交響詩篇ｴｳﾚｶｾﾌﾞﾝTYPE-ART": "交響詩篇エウレカセブン HI-EVOLUTION ZERO TYPE‐ART",
+    }
+    for raw, official in expected.items():
+        assert model_name(raw) == official
+    assert model_name("パチスロ戦国恋姫") == "戦国†恋姫"
+
+
+def test_undecided_machines_stay_unmatched():
+    # ユーザー未回答: A-SLOTのこのすばか同名機か／モンハンライズかサンブレイクか。推測で当てない。
+    assert model_name("スマスロ モンスターハンターライズ") is None
+    assert model_name("この素晴らしい世界に祝福") is None
+
+
+def test_five_setting_machine_has_no_setting_3():
+    from backtest.bonus_specs import load_specs, normalize
+
+    spec = load_specs()[normalize("キン肉マン～7人の悪魔超人編～")]
+    assert 3 not in spec["settings"] or spec["settings"][3].get("payout_rate") is None
