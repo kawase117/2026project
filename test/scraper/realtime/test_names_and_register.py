@@ -63,27 +63,13 @@ def test_machine_without_rb_spec_is_not_estimated():
     assert result["p_high"] is None and result["kind"] == "none"
 
 
-def test_versus_spec_page_variant_uses_master_csv_and_has_four_settings():
-    from scraper.realtime.estimate import _versus_spec_page, estimate
-    from scraper.realtime.schema import SnapshotRow
+def test_versus_master_matches_user_confirmed_table_and_has_four_settings():
+    from backtest.bonus_specs import load_specs, normalize
 
-    assert set(_versus_spec_page()) == {1, 2, 5, 6}
-    row = SnapshotRow(
-        hall="ヒロキ東口店",
-        observed_at="2026-10-07T15:00:00+09:00",
-        source_updated_at=None,
-        unit=2288,
-        model="バーサスリヴァイズ",
-        model_raw="x",
-        games=2000,
-        bb=8,
-        rb=6,
-        diff=None,
-        source="dmm",
-    )
-    default, page = estimate(row), estimate(row, spec_variant="spec_page")
-    assert default["p_high"] is not None and page["p_high"] is not None
-    assert default["setting_probabilities"] != page["setting_probabilities"]
+    spec = load_specs()[normalize("バーサスリヴァイズ")]
+    assert set(spec["settings"]) == {1, 2, 5, 6}
+    assert round(1 / spec["settings"][1]["rb_probability"], 1) == 374.5
+    assert round(1 / spec["settings"][6]["bb_probability"], 1) == 264.3
 
 
 def test_user_confirmed_aliases_2026_10_07():
