@@ -6,6 +6,7 @@ from functools import lru_cache
 
 from backtest.model_alias import master_names, resolve_part
 
+_FLOOR = re.compile(r"^\d+F\s*")  # MAXの「1F L…」「2F L/…」の階数表記
 _PREFIX = re.compile(r"^(?:LB|L|S|s|e)\s*")
 # メーカー型式コード(例: KM, XR, L8)。版数の数字を巻き込まないよう英字1〜3字+数字1桁までに限る。
 _VENDOR_CODE = re.compile(r"\s*[A-Z]{1,3}\d?$")
@@ -17,7 +18,7 @@ def names() -> list[str]:
 
 
 def _variants(raw: str) -> list[str]:
-    text = unicodedata.normalize("NFKC", raw).replace("/", " ").strip()
+    text = _FLOOR.sub("", unicodedata.normalize("NFKC", raw).replace("/", " ").strip())
     body = _PREFIX.sub("", text)
     return list(dict.fromkeys(v for v in (raw, text, body, _VENDOR_CODE.sub("", body)) if v))
 
