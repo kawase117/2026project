@@ -3,9 +3,11 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
-import os
+import sqlite3
 import sys
 import time
+import unicodedata
+from contextlib import closing
 from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -22,10 +24,21 @@ from scraper.dmm_goraggio.parsing import (  # noqa: E402
     parse_machine_list,
 )
 from scraper.dmm_goraggio.report import build_analysis, build_html  # noqa: E402
+from backtest.model_alias import master_names, resolve_part  # noqa: E402
 
 
-DMM_URL = "https://p-town.dmm.com/shops/tokyo/265/jackpot"
-HALL_NAME = "ヒロキMAX蒲田店"
+HALLS = {
+    "max": {
+        "dmm_url": "https://p-town.dmm.com/shops/tokyo/265/jackpot",
+        "data_hall_name": "ヒロキMAX蒲田店",
+        "db_hall": None,
+    },
+    "higashiguchi": {
+        "dmm_url": "https://p-town.dmm.com/shops/tokyo/255/jackpot",
+        "data_hall_name": "ヒロキ東口店",
+        "db_hall": "ヒロキ東口店",
+    },
+}
 JST = ZoneInfo("Asia/Tokyo")
 IPHONE_UA = (
     "Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) "
@@ -39,6 +52,64 @@ class CollectionError(RuntimeError):
 
 class RateLimitError(CollectionError):
     pass
+
+
+def resolve_hall(hall: str, dmm_url: str | None = None, output_dir: Path | None = None) -> tuple[dict, str, Path]:
+    config = HALLS[hall]
+    default_dir = "output" if hall == "max" else f"output_{hall}"
+    return config, dmm_url or config["dmm_url"], output_dir or Path(__file__).resolve().parent / default_dir
+
+
+def check_hall_name(home_html: str, data_hall_name: str) -> None:
+    if data_hall_name not in home_html:
+        raise CollectionError("取得先ホール名が一致しません")
+
+
+def load_db_names(db_path: Path) -> tuple[dict[int, str], list[str]]:
+    """台番号ごとの最新の名称と、略称照合に使う同ホールの名称候補を読む。"""
+    if not db_path.is_file():
+        print(f"警告: 機種名DBがありません: {db_path}", file=sys.stderr)
+        return {}, []
+    try:
+        with closing(sqlite3.connect(db_path.resolve().as_uri() + "?mode=ro", uri=True)) as connection:
+            rows = connection.execute(
+                "SELECT machine_number, machine_name FROM machine_detailed_results ORDER BY machine_number, date DESC"
+            )
+            by_number: dict[int, str] = {}
+            names: set[str] = set()
+            for number, name in rows:
+                if name:
+                    by_number.setdefault(number, name)
+                    names.add(name)
+            return by_number, sorted(names)
+    except sqlite3.Error as exc:
+        print(f"警告: 機種名DBを読めません: {db_path}: {exc}", file=sys.stderr)
+        return {}, []
+
+
+def normalize_machine_name(machine: dict, by_number: dict[int, str], names: list[str]) -> str | None:
+    try:
+        number = int(machine["machine_number"])
+    except KeyError, TypeError, ValueError:
+        number = None
+    if number is not None and number in by_number:
+        return by_number[number]
+    raw = machine.get("machine_name")
+    if not raw or not names:
+        return None
+    match = resolve_part(unicodedata.normalize("NFKC", raw), names)
+    # model_alias の成功ステータスは 'ok'。候補が一つのときだけ採用する。
+    return match["names"][0] if match["status"] == "ok" and len(match["names"]) == 1 else None
+
+
+def save_snapshot(result: dict, output_dir: Path, hall: str, payload: str) -> Path:
+    observed = datetime.fromisoformat(result["observed_at"]).astimezone(JST)
+    snapshot_dir = output_dir / "snapshots"
+    snapshot_dir.mkdir(parents=True, exist_ok=True)
+    path = snapshot_dir / f"{hall}_{result['mode']}_{observed:%Y%m%d_%H%M%S}.json"
+    with path.open("x", encoding="utf-8") as destination:
+        destination.write(payload)
+    return path
 
 
 async def response_text(response, stage: str) -> str:
@@ -181,10 +252,13 @@ async def collect_details(
 
 async def run(args: argparse.Namespace) -> dict:
     output_dir: Path = args.output_dir
+    hall_config = HALLS[args.hall]
     graph_dir = output_dir / "graphs"
     output_dir.mkdir(parents=True, exist_ok=True)
     started_at = datetime.now(JST)
     prior = load_prior(output_dir, args.mode)
+    if prior and prior.get("hall_name") != hall_config["data_hall_name"]:
+        prior = None
     request_count = 0
 
     async with async_playwright() as playwright:
@@ -197,13 +271,20 @@ async def run(args: argparse.Namespace) -> dict:
             home_response = await request.get(data_root, timeout=30_000)
             request_count += 1
             home_html = await response_text(home_response, "data_home")
-            if HALL_NAME not in home_html:
-                raise CollectionError("取得先ホール名が一致しません")
+            check_hall_name(home_html, hall_config["data_hall_name"])
             list_url = f"{data_root}/all_list?ps=S"
             list_response = await request.get(list_url, timeout=45_000)
             request_count += 1
             list_html = await response_text(list_response, "slot_list")
             machines = parse_machine_list(list_html, data_root)
+            db_hall = hall_config["db_hall"]
+            by_number, names = (
+                load_db_names(Path(__file__).resolve().parents[2] / "db" / f"{db_hall}.db")
+                if db_hall
+                else ({}, sorted(name for name in master_names() if name))
+            )
+            for machine in machines:
+                machine["machine_name_normalized"] = normalize_machine_name(machine, by_number, names)
 
             business_date = started_at.date()
             prior_machines = {row["machine_number"]: row for row in (prior or {}).get("machines", [])}
@@ -229,6 +310,7 @@ async def run(args: argparse.Namespace) -> dict:
                     if can_reuse:
                         reused = dict(prior_detail)
                         reused["reused"] = True
+                        reused["machine_name_normalized"] = normalize_machine_name(reused, by_number, names)
                         details[number] = reused
                         reused_detail_count += 1
                     else:
@@ -255,6 +337,8 @@ async def run(args: argparse.Namespace) -> dict:
             )
             request_count += detail_requests
             details.update(fresh_details)
+            for detail in fresh_details.values():
+                detail["machine_name_normalized"] = normalize_machine_name(detail, by_number, names)
         finally:
             if context is not None:
                 await context.close()
@@ -271,7 +355,7 @@ async def run(args: argparse.Namespace) -> dict:
     result = {
         "version": 1,
         "mode": args.mode,
-        "hall_name": HALL_NAME,
+        "hall_name": hall_config["data_hall_name"],
         "dmm_url": args.dmm_url,
         "data_root": data_root,
         "business_date": business_date.isoformat(),
@@ -295,26 +379,34 @@ async def run(args: argparse.Namespace) -> dict:
     return result
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="DMM/Goraggioのスロット当日速報を手動取得する")
-    script_dir = Path(__file__).resolve().parent
     parser.add_argument("--mode", choices=("quick", "full"), default="quick")
+    parser.add_argument("--hall", choices=tuple(HALLS), default="max")
     parser.add_argument("--units", nargs="*", default=[])
     parser.add_argument("--workers", type=int, choices=range(1, 9), default=4)
     parser.add_argument("--request-interval-ms", type=int, default=2500)
     parser.add_argument("--force", action="store_true")
-    parser.add_argument("--dmm-url", default=DMM_URL)
-    parser.add_argument("--output-dir", type=Path, default=script_dir / "output")
-    return parser.parse_args()
+    parser.add_argument("--dmm-url")
+    parser.add_argument("--output-dir", type=Path)
+    args = parser.parse_args(argv)
+    _, args.dmm_url, args.output_dir = resolve_hall(args.hall, args.dmm_url, args.output_dir)
+    return args
 
 
 def main() -> int:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+    if hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(encoding="utf-8")
     args = parse_args()
     if args.request_interval_ms < 0:
         raise SystemExit("--request-interval-ms は0以上にしてください")
     result = asyncio.run(run(args))
     output_path = args.output_dir / f"latest_{args.mode}.json"
-    output_path.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+    payload = json.dumps(result, ensure_ascii=False, indent=2)
+    save_snapshot(result, args.output_dir, args.hall, payload)
+    output_path.write_text(payload, encoding="utf-8")
     analysis = build_analysis(result)
     analysis_path = args.output_dir / "latest_analysis.json"
     report_path = args.output_dir / "mobile_report.html"

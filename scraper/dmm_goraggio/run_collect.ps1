@@ -1,4 +1,6 @@
 param(
+    [ValidateSet('max', 'higashiguchi')]
+    [string]$Hall = 'max',
     [ValidateSet('Quick', 'Full')]
     [string]$Mode = 'Quick',
     [string[]]$Units = @(),
@@ -10,12 +12,14 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+$env:PYTHONUTF8 = '1'
 $moduleDirectory = $PSScriptRoot
 $projectRoot = Split-Path -Parent (Split-Path -Parent $moduleDirectory)
 $python = Join-Path $projectRoot 'venv\Scripts\python.exe'
 $collector = Join-Path $moduleDirectory 'collector.py'
 $arguments = @(
     $collector,
+    '--hall', $Hall,
     '--mode', $Mode.ToLowerInvariant(),
     '--workers', [string]$Workers,
     '--request-interval-ms', [string]$RequestIntervalMs
