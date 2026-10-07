@@ -42,6 +42,26 @@ def load_master_flags(db_path: Path) -> dict[str, bool]:
         return {}
 
 
+def load_master_flags_any(db_dir: Path = ROOT / "db") -> dict[str, bool]:
+    """ホールDBが無いホール用。機種の属性(ノーマル/BT/A+AT)は機種固有なので、全ホールDBを合算する(いずれかが真なら真)。"""
+    merged: dict[str, bool] = {}
+    for path in sorted(Path(db_dir).glob("*.db")):
+        if ".bak" in path.name:
+            continue
+        for name, flag in load_master_flags(path).items():
+            merged[name] = merged.get(name, False) or flag
+    return merged
+
+
+def audit_for_hall(audit: dict[tuple[str, str], str], hall: str) -> dict[tuple[str, str], str]:
+    """監査表に無いホールでは、他ホールで verdict X の機種を保守的に不可として引き継ぐ(A は引き継がない)。"""
+    result = dict(audit)
+    for (_, machine), verdict in audit.items():
+        if verdict == "X":
+            result.setdefault((hall, machine), "X")
+    return result
+
+
 def rb_eligible(hall: str, model: str | None, audit: dict[tuple[str, str], str], master_flags: dict[str, bool]) -> bool:
     if not model:
         return False
@@ -72,6 +92,20 @@ def select_units(
         for r in rows
         if rb_eligible(r.hall, r.model, audit, master_flags)
         and ((r.games is not None and r.games >= min_games) or changed(r, prev.get((r.hall, r.unit))))
+    )
+
+
+def select_first_pass(
+    rows: list[SnapshotRow],
+    audit: dict[tuple[str, str], str],
+    master_flags: dict[str, bool],
+) -> list[int]:
+    """同日の前回が無いときの対象。DMM一覧には累計Gが無いので、RB判別可能で BB+RB>=1 の台を詳細取得する。
+
+    model が照合できない台は推定できないので対象にしない。BB+RB は対象選びにだけ使い、推定には使わない。
+    """
+    return sorted(
+        r.unit for r in rows if rb_eligible(r.hall, r.model, audit, master_flags) and (r.bb or 0) + (r.rb or 0) >= 1
     )
 
 

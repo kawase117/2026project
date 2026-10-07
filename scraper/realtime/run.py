@@ -110,18 +110,32 @@ def _dmm(keys: list[str], mode: str, quick_min_games: int) -> list[Result]:
             command = commands([key], mode, quick_min_games)["dmm"][0]
             if mode == "quick":
                 # 既存collectorの変化台取得を維持。対象の追加指定は同日直前スナップショットから求める。
-                from .quick_filter import load_audit, load_master_flags, load_previous, select_units
+                from .quick_filter import (
+                    audit_for_hall,
+                    load_audit,
+                    load_master_flags,
+                    load_master_flags_any,
+                    load_previous,
+                    select_first_pass,
+                    select_units,
+                )
 
                 previous = load_previous(HERE / "output/snapshots", hall, datetime.now(JST))
-                flags = load_master_flags(ROOT / "db" / f"{hall}.db")
+                flags = load_master_flags(ROOT / "db" / f"{hall}.db") or load_master_flags_any(ROOT / "db")
+                audit = audit_for_hall(load_audit(), hall)
                 if previous:
-                    units = select_units(previous, [], load_audit(), flags, quick_min_games)
+                    units = select_units(previous, [], audit, flags, quick_min_games)
                     if units:
                         command += ["--units", *map(str, units)]
             before = path.stat().st_mtime_ns if path.exists() else -1
             process = _run_command(command)
             if not path.exists() or path.stat().st_mtime_ns == before:
                 raise RuntimeError("DMM output was not refreshed")
+            if mode == "quick" and not any(r.games is not None for r in previous) and process.returncode == 0:
+                # 同日の前回に累計Gが無い(初回・詳細0台だった): 取得した一覧から対象を決め、詳細取得をもう一度行う(一覧取得は数秒)。
+                first_units = select_first_pass(dmm.adapt(path, hall), audit, flags)
+                if first_units:
+                    process = _run_command(command + ["--units", *map(str, first_units)])
             document = json.loads(path.read_text(encoding="utf-8-sig"))
             rows = dmm.adapt(path, hall)
             write_snapshot(rows, HERE / "output", hall, mode, datetime.now(JST))

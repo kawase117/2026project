@@ -319,7 +319,7 @@ async def run(args: argparse.Namespace) -> dict:
                     )
                     if (games is not None and games >= args.rb_quick_min_games) or changed:
                         eligible_units.add(number)
-                requested_units &= eligible_units
+                # --units は呼び出し側(realtime.run)が判別可能機種で選別済みなので、ここで絞り直さない。
             known_units = {row["machine_number"] for row in machines}
             unknown_units = sorted(requested_units - known_units)
             if unknown_units:
