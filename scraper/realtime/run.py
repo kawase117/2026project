@@ -61,7 +61,7 @@ def commands(halls: list[str], mode: str, quick_min_games: int) -> dict[str, lis
             result[source].append(command)
         elif source == "site777":
             if mode == "quick":
-                # TODO: full data の一覧段階で対象台を絞る。現状はRB台表のみ取得しグラフを省略。
+                # RB台表のみ取得し、最高出玉とグラフは省く。機種の絞り込み(-ModelNamesFile)は _site が付け足す。
                 result[source].append(
                     [
                         "powershell.exe",
@@ -70,6 +70,7 @@ def commands(halls: list[str], mode: str, quick_min_games: int) -> dict[str, lis
                         "Bypass",
                         "-File",
                         str(ROOT / "scraper/site777/run_site777_full_collect_parallel.ps1"),
+                        "-SkipHighest",
                     ]
                 )
             else:
@@ -155,10 +156,32 @@ def _site(keys: list[str], mode: str, quick_min_games: int) -> list[Result]:
     item = Result(hall, "site777")
     start = time.monotonic()
     output = ROOT / "scraper/site777/output"
-    summary_path = output / ("site777_full_summary.json" if mode == "quick" else "site777_graph_summary_filtered.json")
+    summary_path = output / ("site777_quick_summary.json" if mode == "quick" else "site777_graph_summary_filtered.json")
     try:
         before = summary_path.stat().st_mtime_ns if summary_path.exists() else -1
-        _run_command(commands(keys, mode, quick_min_games)["site777"][0])
+        command = commands(keys, mode, quick_min_games)["site777"][0]
+        if mode == "quick":
+            from .adapters.common import model_name
+            from .quick_filter import (
+                audit_for_hall,
+                load_audit,
+                load_master_flags,
+                load_master_flags_any,
+                site_model_allowlist,
+            )
+
+            flags = load_master_flags(ROOT / "db" / f"{hall}.db") or load_master_flags_any(ROOT / "db")
+            allowed = site_model_allowlist(
+                output / "site777_full_data.json", hall, audit_for_hall(load_audit(), hall), flags, model_name
+            )
+            if allowed:  # 前回フル収集が無ければ絞らず全機種を取る
+                names_path = HERE / "output" / "site777_quick_models.json"
+                names_path.parent.mkdir(parents=True, exist_ok=True)
+                names_path.write_text(
+                    json.dumps(allowed), encoding="utf-8"
+                )  # ASCIIエスケープ(PowerShell 5の文字コード対策)
+                command += ["-ModelNamesFile", str(names_path)]
+        _run_command(command)
         if not summary_path.exists() or summary_path.stat().st_mtime_ns == before:
             raise RuntimeError("site777 summary was not refreshed")
         summary = json.loads(summary_path.read_text(encoding="utf-8-sig"))

@@ -109,6 +109,29 @@ def select_first_pass(
     )
 
 
+def site_model_allowlist(
+    full_data_path: Path,
+    hall: str,
+    audit: dict[tuple[str, str], str],
+    master_flags: dict[str, bool],
+    model_name,
+) -> list[str]:
+    """サイトセブンのフル収集データにある機種のうち、RB判別可能なもののサイト表記名を返す。
+
+    前回のフル収集データが無い、または判別可能機種が0件なら空リスト(=呼び出し側は絞り込まず全機種収集)。
+    """
+    path = Path(full_data_path)
+    if not path.exists():
+        return []
+    models = json.loads(path.read_text(encoding="utf-8-sig")).get("models", {})
+    names = {
+        m["name"]
+        for m in models.values()
+        if m.get("name") and rb_eligible(hall, model_name(m["name"]), audit, master_flags)
+    }
+    return sorted(names)
+
+
 def load_previous(directory: Path, hall: str, now: datetime) -> list[SnapshotRow]:
     """同ホール・同じJST暦日の最新スナップショットだけ読む。"""
     date = now.astimezone(ZoneInfo("Asia/Tokyo")).date()

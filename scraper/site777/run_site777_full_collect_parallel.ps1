@@ -4,7 +4,9 @@ param(
     [ValidateRange(1, 120)]
     [int]$BatchModels = 24,
     [string]$RateLimiterUrl = '',
-    [switch]$SkipHighest
+    [switch]$SkipHighest,
+    # JSON array file of site model names to collect. When set, output goes to site777_quick_* files (the full data is never overwritten).
+    [string]$ModelNamesFile = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -16,10 +18,11 @@ $collectorTemplate = Join-Path $moduleDirectory 'site777_full_collect_parallel.j
 $collector = Join-Path $runtimeDirectory 'site777_full_collect_parallel_runtime.js'
 $exporter = Join-Path $moduleDirectory 'site777_export_parallel_collect.js'
 $resetter = Join-Path $moduleDirectory 'site777_reset_parallel_collect.js'
-$summaryPath = Join-Path $outputDirectory 'site777_full_summary.json'
-$dataPath = Join-Path $outputDirectory 'site777_full_data.json'
-$partialDataPath = Join-Path $outputDirectory 'site777_full_data_partial.json'
-$runPath = Join-Path $outputDirectory 'site777_full_run_latest.json'
+$prefix = if ($ModelNamesFile) { 'site777_quick' } else { 'site777_full' }
+$summaryPath = Join-Path $outputDirectory "${prefix}_summary.json"
+$dataPath = Join-Path $outputDirectory "${prefix}_data.json"
+$partialDataPath = Join-Path $outputDirectory "${prefix}_data_partial.json"
+$runPath = Join-Path $outputDirectory "${prefix}_run_latest.json"
 $session = 'site777fullparallel'
 New-Item -ItemType Directory -Path $outputDirectory -Force | Out-Null
 New-Item -ItemType Directory -Path $runtimeDirectory -Force | Out-Null
@@ -33,7 +36,8 @@ foreach ($placeholder in @(
     '__SITE777_PRIOR_SOURCE__',
     '__SITE777_FULL_BATCH_LIMIT__',
     '__SITE777_RATE_LIMITER_URL__',
-    '__SITE777_SKIP_HIGHEST__'
+    '__SITE777_SKIP_HIGHEST__',
+    '__SITE777_ONLY_MODELS__'
 )) {
     if (-not $collectorText.Contains($placeholder)) {
         throw "Full collector template placeholder was not found: $placeholder"
@@ -44,6 +48,13 @@ $limiterJson = $RateLimiterUrl | ConvertTo-Json -Compress
 $collectorText = $collectorText.Replace('__SITE777_PRIOR_SOURCE__', $priorSourceText)
 $collectorText = $collectorText.Replace('__SITE777_FULL_BATCH_LIMIT__', [string]$batchLimit)
 $collectorText = $collectorText.Replace('__SITE777_RATE_LIMITER_URL__', $limiterJson)
+$onlyModelsJson = 'null'
+if ($ModelNamesFile) {
+    $names = [System.IO.File]::ReadAllText($ModelNamesFile, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
+    if ($null -eq $names -or @($names).Count -eq 0) { throw "ModelNamesFile is empty: $ModelNamesFile" }
+    $onlyModelsJson = ConvertTo-Json -InputObject @($names) -Compress
+}
+$collectorText = $collectorText.Replace('__SITE777_ONLY_MODELS__', $onlyModelsJson)
 $collectorText = $collectorText.Replace('__SITE777_SKIP_HIGHEST__', $(if ($SkipHighest) { 'true' } else { 'false' }))
 [System.IO.File]::WriteAllText(
     $collector,

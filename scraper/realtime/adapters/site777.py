@@ -22,7 +22,9 @@ def adapt(
     output_dir: Path, hall: str = "楽園蒲田店", observed_at: datetime | None = None, *, quick: bool = False
 ) -> list[SnapshotRow]:
     output_dir = Path(output_dir)
-    full = _read(output_dir / "site777_full_data.json")
+    quick_path = output_dir / "site777_quick_data.json"
+    # quick は機種を絞った別ファイルに出る。フル収集のデータとは混ぜない。
+    full = _read(quick_path if quick and quick_path.exists() else output_dir / "site777_full_data.json")
     graph = {} if quick else _read(output_dir / "site777_graph_metrics_filtered.json")
     summary = {} if quick else _read(output_dir / "site777_graph_summary_filtered.json")
     metrics = {item["key"]: item for item in graph.get("machines", [])}
@@ -33,6 +35,8 @@ def adapt(
         flags.append("graph_not_ok")
     if not quick and summary.get("stoppedAt"):
         flags.append("stopped")
+    if quick and quick_path.exists():
+        flags.append("rb_models_only")
     if full.get("failures") or (not quick and summary.get("failures")):
         flags.append("failures")
     observed = observed_at or full.get("completedAt") or full.get("updatedAt")

@@ -8,6 +8,7 @@ async (page) => {
   const pipelineBatchLimit = __SITE777_FULL_BATCH_LIMIT__;
   const rateLimiterUrl = __SITE777_RATE_LIMITER_URL__;
   const skipHighest = __SITE777_SKIP_HIGHEST__;
+  const onlyModels = __SITE777_ONLY_MODELS__; // null = all models; array = collect only these site model names (quick mode)
   const recoveryDelaysMs = [0, 60000, 300000];
   const context = page.context();
   const trackedPages = new Set();
@@ -483,6 +484,8 @@ async (page) => {
         (sum, model) => sum + model.machineCount,
         0,
       ),
+      filtered: Boolean(onlyModels),
+      siteModelCount: onlyModels ? onlyModels.length : null,
       highestCollectedModels: completed.filter((model) => !model.highest?.reused && !model.highest?.skipped).length,
       highestReusedModels: completed.filter((model) => model.highest?.reused).length,
       restrictions: state.restrictionEvents.length,
@@ -504,7 +507,10 @@ async (page) => {
       ) state = saved;
     }
 
-    const models = await discoverModels();
+    const discoveredModels = await discoverModels();
+    const models = onlyModels
+      ? discoveredModels.filter((model) => onlyModels.includes(model.name))
+      : discoveredModels;
     state.discoveredModels = models;
     state.expectedModelCount = models.length;
     state.expectedMachineCount = models.reduce(
