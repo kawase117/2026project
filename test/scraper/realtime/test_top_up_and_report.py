@@ -88,3 +88,45 @@ def test_csv_only_machines_count_as_rb_judgeable_in_quick_selection():
     flags = load_master_flags_any(ROOT / "db")
     assert flags.get("CCエンジェル") and flags.get("ガルフィー")  # ホールDBに無いがCSVに登録済み
     assert not flags.get("ミルキィホームズR 大収穫祭")  # AT機は判別可能に含めない
+
+
+def _est_row(model, games, bb, rb, source="dmm", hall="ヒロキ東口店"):
+    return SnapshotRow(
+        hall=hall,
+        observed_at="2026-10-07T15:00:00+09:00",
+        source_updated_at=None,
+        unit=1,
+        model=model,
+        model_raw=model,
+        games=games,
+        bb=bb,
+        rb=rb,
+        diff=None,
+        source=source,
+    )
+
+
+def test_bb_is_used_together_with_rb_for_machines_with_both_specs():
+    from scraper.realtime.estimate import estimate
+
+    low_bb = estimate(_est_row("アレックス ブライト", 3000, 6, 8))
+    high_bb = estimate(_est_row("アレックス ブライト", 3000, 14, 8))
+    assert "BBとRBを別々" in " ".join(low_bb["notes"])
+    assert high_bb["p_high"] > low_bb["p_high"]  # BBが多いほど高設定寄り(RBは同じ)
+
+
+def test_fujiko_bt_bb_column_is_total_only_for_site777():
+    from scraper.realtime.estimate import estimate
+
+    site = estimate(_est_row("不二子BT", 3000, 20, 8, source="site777", hall="楽園蒲田店"))
+    assert "BB−RB" in " ".join(site["notes"])
+    dmm = estimate(_est_row("不二子BT", 3000, 20, 8, source="dmm"))
+    assert "RBのみ" in " ".join(dmm["notes"])
+
+
+def test_combined_only_bt_machine_is_estimated_but_a_plus_at_is_not():
+    from scraper.realtime.estimate import estimate
+
+    isekai = estimate(_est_row("A‐SLOT+ 異世界かるてっと", 3000, 20, 10))
+    assert isekai["p_high"] is not None and "合算" in " ".join(isekai["notes"])
+    assert estimate(_est_row("ツインエンジェルPARTY", 3000, 20, 10))["p_high"] is None
