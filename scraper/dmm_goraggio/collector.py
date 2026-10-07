@@ -242,7 +242,8 @@ async def collect_details(
             try:
                 await fetch(target)
             except Exception as exc:  # keep partial evidence and continue other machines
-                failures.append({"machine_number": target["machine_number"], "error": str(exc)})
+                # 例外文にはリクエストヘッダ(クッキー)が含まれるため、1行目だけを記録する
+                failures.append({"machine_number": target["machine_number"], "error": str(exc).splitlines()[0]})
             finally:
                 queue.task_done()
 
