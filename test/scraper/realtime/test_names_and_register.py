@@ -60,4 +60,4 @@ def test_machine_without_rb_spec_is_not_estimated():
         source="dmm",
     )
     result = estimate(row)
-    assert result.p_high is None and result.kind == "none"
+    assert result["p_high"] is None and result["kind"] == "none"
