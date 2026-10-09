@@ -24,8 +24,6 @@ main{max-width:1000px;margin:0 auto;padding:20px 16px 48px}
 h1{font-size:20px;margin:0 0 4px}h2{font-size:16px;margin:28px 0 6px}
 .top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
 #theme{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:8px;padding:5px 12px;font:inherit;font-size:13px;cursor:pointer;white-space:nowrap}
-.dist{display:inline-flex;align-items:flex-end;gap:2px;height:22px;vertical-align:middle}
-.dist i{display:block;width:7px;background:var(--bar);border-radius:2px 2px 0 0;min-height:1px}
 .sub,.note{color:var(--mute);font-size:13px}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}
 .chips button{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:999px;padding:4px 12px;font:inherit;font-size:13px;cursor:pointer}
@@ -45,11 +43,8 @@ details{margin-top:24px}summary{cursor:pointer;font-weight:600}
 <button id="theme" type="button"></button></div>
 <div class="chips" id="chips" role="group" aria-label="ホール絞り込み"></div>
 <h2>設定5以上の確率(RBで判別できる機種)</h2>
-<div class="note">RB0の台は情報が無いので除外。最尤設定は事後確率が最大の設定、期待設定は事後確率で平均した設定値(どちらも近似)。確度が低い台は事前分布に近いだけ。途中の高RBは最終で平均に回帰しうる。低RBで台や並びを否定する根拠にもしない。</div>
+<div class="note">RB0の台は情報が無いので除外。AT機はスマスロ北斗のみRBで推定。最尤設定は事後確率が最大の設定、期待設定は事後確率で平均した設定値(どちらも近似)。確度が低い台は事前分布に近いだけ。途中の高RBは最終で平均に回帰しうる。低RBで台や並びを否定する根拠にもしない。</div>
 <div class="wrap"><table id="t1"></table></div>
-<h2>AT機(機種平均G比×平均差枚)</h2>
-<div class="note">設定の事後確率ではない。RBは設定の根拠に使っていない。</div>
-<div class="wrap"><table id="t2"></table></div>
 <details><summary id="s3"></summary><div class="wrap"><table id="t3"></table></div></details>
 <details><summary id="s4"></summary><div class="wrap"><table id="t4"></table></div></details>
 </main>
@@ -76,9 +71,8 @@ const sp=r=>Object.entries(r.setting_probabilities||{}).map(([s,p])=>[+s,p]).sor
 const mapS=r=>{const a=sp(r);return a.length?a.reduce((m,x)=>x[1]>m[1]?x:m):null};
 const expS=r=>{const a=sp(r);return a.length?a.reduce((t,x)=>t+x[0]*x[1],0):null};
 const setCols=[
-  {h:"最尤設定",f:r=>{const m=mapS(r);return m?`設定${m[0]} <span class="sub">(${Math.round(m[1]*100)}%)</span>`:"-"}},
-  {h:"期待設定",n:1,f:r=>{const e=expS(r);return e==null?"-":e.toFixed(1)}},
-  {h:"設定分布",f:r=>{const a=sp(r);return a.length?`<span class="dist" role="img" aria-label="設定別の事後確率">`+a.map(([s,p])=>`<i style="height:${Math.max(1,Math.round(p*22))}px" title="設定${s}: ${(p*100).toFixed(0)}%"></i>`).join("")+"</span>":"-"}}];
+  {h:"最尤設定",f:r=>{const m=mapS(r);if(!m)return "-";if(m[1]<1/sp(r).length+0.1)return `<span class="sub">情報不足</span>`;return `設定${m[0]} <span class="sub">(${Math.round(m[1]*100)}%)</span>`}},
+  {h:"期待設定",n:1,f:r=>{const e=expS(r);return e==null?"-":e.toFixed(1)}}];
 function draw(){
   document.getElementById("chips").innerHTML=[null,...halls].map(h=>`<button aria-pressed="${cur===h}" data-h="${h??""}">${h??"すべて"}</button>`).join("");
   const r1=pick(D.ranked).filter(r=>r.rb>0);
@@ -87,9 +81,7 @@ function draw(){
     ...setCols,
     {h:"設定5以上",f:r=>{const p=r.p_high;return `<span class="bar" style="width:${Math.round(p*90)}px"></span><span class="${p>=.7&&r.confidence>=.1?"hot":""}">${p.toFixed(2)}</span>`}},
     {h:"確度",n:1,f:r=>r.confidence.toFixed(2)}],50);
-  const r2=pick(D.at_scores).filter(r=>r.score!=null).sort((a,b)=>b.score-a.score);
-  document.getElementById("t2").innerHTML=rows(r2,[...base,{h:"スコア",n:1,f:r=>Math.round(r.score).toLocaleString()}],20);
-  const r3=pick(D.uncertain).filter(r=>r.rb>0);
+  const r3=pick(D.uncertain).filter(r=>r.rb>0&&r.p_high!=null);
   document.getElementById("s3").textContent=`判別困難に近い機種 ${r3.length}台(開く)`;
   document.getElementById("t3").innerHTML=rows(r3,[...base,{h:"設定5以上",n:1,f:r=>r.p_high==null?"-":r.p_high.toFixed(2)}],100);
   const r4=pick(D.new_machines);
@@ -98,7 +90,7 @@ function draw(){
 }
 document.getElementById("chips").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;cur=b.dataset.h||null;draw()});
 const t=Object.values(D).flat().map(r=>r.observed_at).filter(Boolean).sort();
-document.getElementById("meta").textContent=`観測 ${fmtT(t[0])}〜${fmtT(t[t.length-1])} / RB判別 ${D.ranked.filter(r=>r.rb>0).length}台(RB0は除外) / AT ${D.at_scores.length}台`;
+document.getElementById("meta").textContent=`観測 ${fmtT(t[0])}〜${fmtT(t[t.length-1])} / RB判別 ${D.ranked.filter(r=>r.rb>0).length}台(RB0は除外)`;
 draw();
 </script></body></html>
 """
@@ -119,7 +111,7 @@ def render(src: Path) -> Path:
         "observed_at",
     )
     slim = {}
-    for key in ("ranked", "at_scores", "uncertain", "new_machines"):
+    for key in ("ranked", "uncertain", "new_machines"):
         items = data.get(key, [])
         if key in ("ranked", "uncertain"):
             items = [r for r in items if r.get("rb")]  # RB0は情報なし

@@ -17,6 +17,7 @@ LOW_RB_RATIO = 1.25  # 高低間の最大RB確率比がこれ未満なら低判�
 NEW_MACHINE_DAYS = 7
 EARLY_GAMES = 3000
 SMALL_GAMES = 1000
+RB_JUDGEABLE_AT = {"スマスロ北斗の拳"}  # RBで設定を推定するAT機(完全一致)
 
 
 def _entropy(probs):
@@ -106,7 +107,9 @@ def estimate(row: SnapshotRow, *, specs=None, audit=None, hall_prior=None, spec_
     spec = find_spec(name, specs)
     if spec is None:
         return _none("設定別スペックがない")
-    if spec.get("category") == "AT":
+    # AT機のうちRB(AT初当り)で設定差を割り出すのはスマスロ北斗だけ(AT_RB_AUDITでA判定、2026-10-09指示)。
+    rb_at = name in RB_JUDGEABLE_AT and bool(spec.get("at_judgeable")) and spec.get("at_column") == "rb"
+    if spec.get("category") == "AT" and not rb_at:
         if at_context is None:
             return _none("ATのG比には同時刻ホール全台の観測が必要")
         if row.games is None or row.diff is None:
@@ -123,7 +126,7 @@ def estimate(row: SnapshotRow, *, specs=None, audit=None, hall_prior=None, spec_
             "setting_probabilities": None,
             "notes": ["機種平均G比×機種平均差枚。設定の事後確率ではない", "RBは設定証拠に使用しない"],
         }
-    if not spec.get("judgeable"):
+    if not spec.get("judgeable") and not rb_at:
         return _none("RBによる判別対象外")
     if row.games is None or row.rb is None:
         return _none("累計GまたはRBが欠損")
