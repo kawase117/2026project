@@ -1,11 +1,11 @@
 # ACTIVE_INSTINCTS
 
-- generated_at: 2026-10-07T13:14:26+09:00
+- generated_at: 2026-10-09T15:13:48+09:00
 - compiler_version: 1.3.0
 - source_dir: `C:/Users/apto117/Documents/pachinko-analyzer/src/2026project/document/instincts`
-- total_records_scanned: 1650
+- total_records_scanned: 1655
 - active_records: 120
-- status_breakdown: unverified=1641, confirmed=1, refuted=0, superseded=7
+- status_breakdown: unverified=1645, confirmed=1, refuted=0, superseded=8
 - filters: `confidence >= 0.80` and `file_date within 21 days` (unless pinned by high confidence)
 
 ## Usage
@@ -17,473 +17,470 @@
 
 ## Active List
 
-### 1. `2026-10-07-spec-source-mismatch-versus`
+### 1. `axis-tables-must-share-event-exclusion`
+- confidence: `0.85` | status: `unverified` | date: `2026-10-09` | file: `2026-10-09-axis-tables-must-share-event-exclusion.yaml`
+- domain/source: `methodology` / `session-observation`
+- trigger: 曜日別とDD別など、複数の軸の表を同じ分析で並べるとき。『イベント日を除いて』と言われたとき。イベントDD集合(1・4・7・14・17・24・27・30)だけで周年日や取材日を除いたつもりになるとき(みとや・楽園)
+
+### 2. `poisson-chi2-overstates-weekday-difference`
+- confidence: `0.80` | status: `unverified` | date: `2026-10-09` | file: `2026-10-09-poisson-chi2-overstates-weekday-difference.yaml`
+- domain/source: `methodology` / `session-observation`
+- trigger: 曜日別やDD別のRB確率の差を、総GとRB回数のPoissonカイ二乗で検定して『有意』と書きたくなったとき。日ごとに設定が動く機種(ディスクアップ等)の軸比較で、有意性を報告するとき
+
+### 3. `discup-diff-and-winrate-follow-games-not-setting`
+- confidence: `0.80` | status: `unverified` | date: `2026-10-09` | file: `2026-10-09-discup-diff-and-winrate-follow-games-not-setting.yaml`
+- domain/source: `methodology` / `session-observation`
+- trigger: ディスクアップ(A+AT。完全攻略の機械割が設定1でも100%超)の強い曜日・DD・台を探すとき。みとやや楽園のディスクアップで、差枚・勝率・出率が良い日を『設定が高い日』と書きたくなったとき
+
+### 4. `2026-10-07-spec-source-mismatch-versus`
 - confidence: `0.85` | status: `unverified` | date: `2026-10-07` | file: `2026-10-07-spec-source-mismatch-versus.yaml`
 - domain/source: `setting-estimation` / `user-confirmed-20261006`
 - trigger: バーサスリヴァイズなど、同じ機種のスペックが一撃の複数ページ(スペックページと設定判別ページ)や、プロジェクトのスペック(bonus_specs、config.py)と食い違うとき。ユニメモの設定推測と、当方の事後確率が合わないとき。4設定機(設定1・2・5・6)の設定近似...
 - summary: バーサスリヴァイズのBB・RBは、一撃のスペックページ(マスターCSV由来、旧スペック)と、設定判別ページ(/s_versus_rexse/0/)で約10%違う。 設定1→6のBBは、設定判別ページが1/292.6→1/264.3、旧スペックが1/264.3→1/237.4。RBは、1/374.5→1/292.6...
 
-### 2. `rb-column-empty-posterior-collapse`
+### 5. `rb-column-empty-posterior-collapse`
 - confidence: `0.85` | status: `unverified` | date: `2026-10-02` | file: `2026-10-02-rb-column-empty-posterior-collapse.yaml`
 - domain/source: `setting-estimation` / `monthly-report-layer1-layer3-review-20261002`
 - trigger: ノーマル・BT・A+AT機のRB確率から設定の事後確率を出すとき。RB確率が inf や極端に低い、P(設定4以上)が0.000に張り付く機種が出たとき。機種タイプ別の平均を作るとき
 - summary: 楽園蒲田の月次レポート（backtest/monthly_report.py）の試作で、交響詩篇エウレカセブン（A+AT・25台）や喰霊などが `RB確率 1/x = inf`、P(設定4以上)=0.000 になった。ボーナスが bb_count 側にだけ入る機種で、rb_count が常に0のため。 RB単独の...
 
-### 3. `spec-settings-absent-not-missing`
+### 6. `spec-settings-absent-not-missing`
 - confidence: `0.80` | status: `unverified` | date: `2026-10-02` | file: `2026-10-02-spec-settings-absent-not-missing.yaml`
 - domain/source: `setting-estimation` / `user-correction-20261002`
 - trigger: 機種のスペック表(bonus_specs、機種マスター)に設定3、4が無いとき。アレックス、サンダーV、新ハナビなど設定1、2、5、6の機種で、設定別の確率や相当設定を書くとき。スペックの欠損と書きたくなったとき
 - summary: アレックス ブライト、スマスロ サンダーV、新ハナビなどの一部の機種は、設定が1、2、5、6の4段階で、設定3、4がもともと存在しない。 スペック表が欠けているのではない。表現上の違いにすぎない(ユーザーの指摘、2026-10-02)。 楽園の曜日別RB分析で、「スペックに設定3、4がありません」と、データ欠損の...
 
-### 4. `rb-ratio-rises-with-games-selection`
+### 7. `rb-ratio-rises-with-games-selection`
 - confidence: `0.80` | status: `unverified` | date: `2026-10-02` | file: `2026-10-02-rb-ratio-rises-with-games-selection.yaml`
 - domain/source: `methodology` / `session-observation`
 - trigger: RB比やRB確率の『自己ベースライン』『設定1比』が1を超える台・機種が多いと感じたとき。G数の多い台ほどRBが良く見えるとき。稼働の多い日ほどRBが良いのは設定が入っているからだと説明したくなったとき
 
-### 5. `best-of-n-unit-looks-high-by-chance`
+### 8. `best-of-n-unit-looks-high-by-chance`
 - confidence: `0.80` | status: `unverified` | date: `2026-10-02` | file: `2026-10-02-best-of-n-unit-looks-high-by-chance.yaml`
 - domain/source: `methodology` / `session-observation`
 - trigger: 台数が少ない機種(4〜8台。ディスクアップ・BT機・ハナビ等)で『毎日1台は高設定が入っているのでは』と読みたくなったとき。毎日いちばんRBが良い台を拾って『設定5以上○%』『高設定濃厚』と書きたくなったとき
 
-### 6. `weekday-scan-confound-checklist`
+### 9. `weekday-scan-confound-checklist`
 - confidence: `0.85` | status: `unverified` | date: `2026-09-30` | file: `2026-09-30-weekday-scan-confound-checklist.yaml`
 - domain/source: `analysis-methodology` / `session-observation`
 - trigger: 直近1ヶ月程度の小サンプルで曜日別のRB確率/差枚パターンを報告する前。複数ホール(みとや・楽園・蒲田1・蒲田7等)でこの種の曜日スキャンを行うとき。『◯曜日が強い』という結論を出す前
 
-### 7. `bonus-specs-posterior-pitfalls`
+### 10. `bonus-specs-posterior-pitfalls`
 - confidence: `0.80` | status: `unverified` | date: `2026-09-30` | file: `2026-09-30-bonus-specs-posterior-pitfalls.yaml`
 - domain/source: `analysis-methodology` / `session-observation`
 - trigger: backtest/bonus_specs.pyのposterior()/judge()を新しい機種(特にBT/A+AT、combined_probabilityしか無い機種)に適用するとき。事後分布が『設定5以上90%超』のように極端な値を返したとき
 
-### 8. `2026-09-29-narabi-block-mean-threshold`
+### 11. `2026-09-29-narabi-block-mean-threshold`
 - confidence: `0.85` | status: `unverified` | date: `2026-09-29` | file: `2026-09-29-narabi-block-mean-threshold.yaml`
 - domain/source: `scoring` / `user-decision`
 - trigger: 予告の『3台並び◯か所』『並び⑤⑥』『4台並び上2つ』を差枚で答え合わせするとき。並びブロックを検出・採点するとき。楽園蒲田・蒲田7・蒲田1・みとや大森町の並び
 
-### 9. `2026-09-24-tweet-collected-is-not-announce-registered`
+### 12. `2026-09-24-tweet-collected-is-not-announce-registered`
 - confidence: `0.85` | status: `unverified` | date: `2026-09-24` | file: `2026-09-24-tweet-collected-is-not-announce-registered.yaml`
 - domain/source: `prediction-evaluation` / `session-observation`
 - trigger: ユーザーから予告ツイートの本文が貼られたとき。ツイートが『収集できているか』と聞かれたとき。当日の推薦を作る前に、その日の予告が backtest/announce/ にあるか確認するとき
 
-### 10. `spec-lookup-none-is-name-mismatch-not-unregistered`
+### 13. `spec-lookup-none-is-name-mismatch-not-unregistered`
 - confidence: `0.90` | status: `unverified` | date: `2026-09-21` | file: `2026-09-21-spec-lookup-none-is-name-mismatch-not-unregistered.yaml`
 - domain/source: `operational-strategy` / `session-observation`
 - trigger: site777のブリーフや推定器で、BT・A+AT・ノーマル機（LBクレアの秘宝伝ボーナストリガーver.、ＳＬＯＴマッピー、LBタコスロ、LBサンダーV、異世界かるてっと）の設定推定が出ないとき。『スペックが未登録』『推定対象外』と言おうとするとき。backtest.bo...
 - summary: 2026-09-20 楽園蒲田で、LBタコスロの設定推定がブリーフに出なかった。 `setting_estimator.annotate_setting_estimates` が None を返したので「スペック未登録」と書いたが誤りだった。 実際は次の2点だった。 1. `scraper/site777/set...
 
-### 11. `event-days-are-per-hall-never-borrowed`
+### 14. `event-days-are-per-hall-never-borrowed`
 - confidence: `0.90` | status: `unverified` | date: `2026-09-20` | file: `2026-09-20-event-days-are-per-hall-never-borrowed.yaml`
 - domain/source: `hall-strategy` / `user-correction`
 - trigger: 蒲田1と蒲田7のように近い店を並べて、合同企画・収録来店・周年・取材などのイベント日の効果を測ろうとするとき。『カマタに集合』『W来店コラボ』『回胴エムワンバトル』の開催日を別ホールに当てはめようとするとき。予告ツイートの日付をイベント日として使う前
 - summary: 2026-09-19 に蒲田1・蒲田7の「カマタに集合」の開催日平均差枚を比べたとき、過去の開催日を両店に同じ5日で当てはめた。 実際は、カマタに集合は両店同日（6/13・7/25・8/30・9/19）だが、蒲田1の回胴エムワンバトル収録（6/28・7/26）は別イベントで蒲田1のみだった。 収録日を蒲田7の開催...
 
-### 12. `single-event-dummy-se-collapses-use-permutation`
+### 15. `single-event-dummy-se-collapses-use-permutation`
 - confidence: `0.85` | status: `unverified` | date: `2026-09-20` | file: `2026-09-20-single-event-dummy-se-collapses-use-permutation.yaml`
 - domain/source: `methodology` / `empirical-measurement`
 - trigger: イベント日が1〜5日しかない日をダミー変数にして回帰し、『t値が大きい』『有意』と結論しようとするとき。周年・新台入替・カマタに集合・取材など、少数日のイベントの効果を測るとき
 - summary: 2026-09-20 に蒲田7のイベント日効果を、曜日・1/7の付く日・30日・ゾロ目を統制した回帰（HC標準誤差）で測った。 周年（7/7の1日）が t=+13.5、新台入替（7/6の1日）が t=-8.3 と出たが、1日だけのダミーは残差がほぼ0になり、標準誤差が構造的に小さくなる。 カマタに集合（4日）も勝...
 
-### 13. `same-day-snapshots-are-not-replications`
+### 16. `same-day-snapshots-are-not-replications`
 - confidence: `0.85` | status: `unverified` | date: `2026-09-19` | file: `2026-09-19-same-day-snapshots-are-not-replications.yaml`
 - domain/source: `prediction-evaluation` / `session-observation`
 - trigger: site777を同じ日に何度も再収集して、『5回連続で負』『時刻をまたいで同じ方向』『zが強まっている』と、角番・末尾・列・機種の偏りを『安定したシグナル』と言おうとするとき。AT角番1の冷遇などを収集回数で裏づけようとするとき
 - summary: 2026-09-19 楽園蒲田で site777 を13:55・14:55・15:55・18:55・21:56に5回収集した。 AT機の角番1の差枚残差は -1.5 → -2.2 → -2.7 → -2.8 → -2.4（z）と一貫して負だったため、 「5回連続で負。最も信頼できるシグナル」と報告した。 しかし各...
 
-### 14. `model-rank-hides-eligible-machine-count`
+### 17. `model-rank-hides-eligible-machine-count`
 - confidence: `0.85` | status: `unverified` | date: `2026-09-19` | file: `2026-09-19-model-rank-hides-eligible-machine-count.yaml`
 - domain/source: `prediction-evaluation` / `empirical-measurement`
 - trigger: site777のブリーフで機種を『自己ベースライン上位◯%』『平均差枚+◯』で推そうとするとき。設置台数が多いのに判定できる台が少ない機種（スマスロハナビ等）を機種として評価しようとするとき。『この機種は強い』と言う前
 - summary: 2026-09-18 楽園蒲田の site777 ブリーフ（19:25）で、スマスロハナビが判別可能機種の最上位に出た （自己ベースライン上位4%・設定5以上63%・平均差枚+1280）。これを「機種として強い」と報告したが、 ユーザーに「差枚が出ている台自体が少ないのでは」と指摘され、機種の中身を見ると次の通り...
 
-### 15. `axis-sweep-star-is-today-only`
-- confidence: `0.80` | status: `unverified` | date: `2026-09-17` | file: `2026-09-17-axis-sweep-star-is-today-only.yaml`
-- domain/source: `prediction-strategy` / `empirical-measurement`
-- trigger: 軸スイープ（site777_live_brief.md の『今日どの切り口に構造が出ているか』）で★が出たとき。『今日は末尾5が熱い』『この角番が来ている』を翌日の予測に使おうとしたとき。機種・列・末尾・角番のどれかで見つけた構造をルール化しようとしたとき
-- summary: 2026-09-17、楽園蒲田の88日（20260617〜20260915、1,000G以上、配置替えは日付ごとに machine_layout_history で解決）に対し、軸スイープ（機種/列/末尾/角番/フロア＋機種×各軸、 指標は差枚残差・差枚ホール比・回転数残差、最大統計量の並べ替え検定200回）を全...
-
-### 16. `kamata7-tuesday-kakuban-is-section-end-minmax`
-- confidence: `0.80` | status: `unverified` | date: `2026-09-16` | file: `2026-09-16-kamata7-kakuban-definition-and-midday-rb.yaml`
-- domain/source: `pachinko-domain-knowledge` / `empirical-measurement`
-- trigger: 蒲田7の火曜『角◯仕掛け』を採点・推定するとき。999999Q9Q メガなな速報の公表角番（AT角◯・ノーマル角◯）をDBと照合するとき。蒲田7で角番別の残差を集計するとき。rank_from_aisle（通路角番）で角番を採点しようとしたとき
-- summary: 999999Q9Q（GALAXYウスイのメガなな速報）が火曜の翌未明に公表する角番は、 2026-09-16 時点で5火曜分（7/14 AT4・ノーマル7 / 7/28 AT7・N3 / 8/4 AT8・N4 / 8/18 AT6・N3 / 8/25 AT5・N8）が残っている。 この10件を正解ラベルとして、台...
-
-### 17. `rb-probability-decimal-null-on-zero-count`
+### 18. `rb-probability-decimal-null-on-zero-count`
 - confidence: `0.98` | status: `unverified` | date: `2026-07-24` | file: `2026-07-24-deathwatch-rb-null-bug-and-layout-history-insights.yaml`
 - domain/source: `data-quality` / `session-observation`
 - trigger: rb_probability_decimal または bb_probability_decimal / total_probability_decimal に notna() / IS NOT NULL / > 0 のフィルタをかけようとするとき
 - summary: `rb_probability_decimal` は `rb_count / games_normalized` から作られる派生列だが、 `rb_count == 0` の行では NULL になる（9ホール全てでNaN率とRB0回率が完全一致、 rb_count>0でNULLの行は0件）。`bb_probabi...
 
-### 18. `machine-layout-single-snapshot-breaks-across-renovation`
+### 19. `machine-layout-single-snapshot-breaks-across-renovation`
 - confidence: `0.97` | status: `unverified` | date: `2026-07-24` | file: `2026-07-24-deathwatch-rb-null-bug-and-layout-history-insights.yaml`
 - domain/source: `data-quality` / `session-observation`
 - trigger: machine_layoutを使って過去データに位置(section/rank_from_*)を結合するとき、または改装・島配列変更があったホールの位置分析を行うとき
 - summary: machine_layoutは日付次元を持たないため、改装で位置定義が変わると新しい位置が 過去データに遡って適用される。楽園蒲田の2026-07-06の改装でsection定義が 書き換わり(2223-2240→2225-2242等)、技術介入の端番効果が+1.127pp→+0.211pp(ns)に 変化した。...
 
-### 19. `emulator-arm64-translation-requires-api34-plus`
+### 20. `emulator-arm64-translation-requires-api34-plus`
 - confidence: `0.97` | status: `unverified` | date: `2026-07-19` | file: `2026-07-19-maruhan-frida-arm64-translation-and-play-integrity-insights.yaml`
 - domain/source: `mobile-scraping` / `session-observation`
 - trigger: x86_64エミュレーターでarm64専用ネイティブライブラリを含む商用アプリを動かそうとするとき
 - summary: API 33 (r17) google_apis x86_64は abilist=x86_64のみ、native.bridge=0で、arm64専用アプリは INSTALL_FAILED_NO_MATCHING_ABIS で弾かれる。API 34 (r14) は abilist=x86_64,arm64-v8a、...
 
-### 20. `codex-desktop-agmsg-monitor-requires-cli-shim-not-desktop-app`
+### 21. `codex-desktop-agmsg-monitor-requires-cli-shim-not-desktop-app`
 - confidence: `0.98` | status: `unverified` | date: `2026-07-09` | file: `2026-07-09-codex-desktop-agmsg-monitor-limitations.yaml`
 - domain/source: `tooling-environment` / `session-observation`
 - trigger: when expecting agmsg monitor-mode real-time delivery inside the Codex desktop app
 - summary: Setting `agmsg` delivery mode to `monitor` for `codex` is not sufficient when the session is running inside the Codex desktop app. The monitor bridge only be...
 
-### 21. `codex-agmsg-must-use-git-bash-on-windows`
+### 22. `codex-agmsg-must-use-git-bash-on-windows`
 - confidence: `0.99` | status: `unverified` | date: `2026-07-08` | file: `2026-07-08-agmsg-kamata7-dashboard-insights.yaml`
 - domain/source: `tooling-environment` / `session-observation`
 - trigger: Codex Desktop on WindowsからagmsgでClaude Codeと連絡するとき
 - summary: Kamata7 dashboard計画でClaude Codeとagmsg連携した際、Codex側で `bash ...` をそのまま実行すると `C:\Users\apto117\AppData\Local\Microsoft\WindowsApps\bash.exe` 経由のWSL bashに流れ、`$HOM...
 
-### 22. `agmsg-on-windows-use-git-bash-not-windowsapps-bash`
+### 23. `agmsg-on-windows-use-git-bash-not-windowsapps-bash`
 - confidence: `0.98` | status: `unverified` | date: `2026-07-08` | file: `2026-07-08-instincts.yaml`
 - domain/source: `tooling-environment` / `session-observation`
 - trigger: when sending agmsg messages from Codex Desktop on Windows
 - summary: Using the WindowsApps `bash.exe` path can route the command into the wrong shell and produce empty or misleading agmsg sends. n_observations: 1 data scope: t...
 
-### 23. `kamata7-theory-dashboard-needs-japanese-tabs-and-fallbacks`
+### 24. `kamata7-theory-dashboard-needs-japanese-tabs-and-fallbacks`
 - confidence: `0.97` | status: `unverified` | date: `2026-07-08` | file: `2026-07-08-instincts.yaml`
 - domain/source: `dashboard-ui-patterns` / `session-observation`
 - trigger: when building or revising the Kamata7 theory dashboard
 - summary: The Kamata7 theory page is only useful when each tab explains its purpose in Japanese and falls back gracefully when a sample threshold removes all cells. n_...
 
-### 24. `cross-agent-dashboard-workflow-claude-design-codex-implementation`
+### 25. `cross-agent-dashboard-workflow-claude-design-codex-implementation`
 - confidence: `0.97` | status: `unverified` | date: `2026-07-08` | file: `2026-07-08-agmsg-kamata7-dashboard-insights.yaml`
 - domain/source: `agent-coordination` / `session-observation`
 - trigger: Claude CodeとCodexでdashboard機能を共同設計・実装するとき
 - summary: Kamata7 dashboard拡張では、初期状態でCodexからClaudeへの相談文が届いたか不明になり、 ユーザーが両画面を中継して状況確認した。通信経路をGit Bashに固定した後、 Claude側が「Claude=設計・仕様・テスト戦略、Codex=実装」と役割を明示し、 `document/pla...
 
-### 25. `v12b-composite-score-no-calibration`
+### 26. `v12b-composite-score-no-calibration`
 - confidence: `0.98` | status: `unverified` | date: `2026-06-29` | file: `2026-06-29-v12b-calibration-failure-insights.yaml`
 - domain/source: `ml-evaluation` / `walk-forward-calibration-60days`
 - trigger: スコアリングモデルの予測結果をTop-Nで絞り込むとき、またはcompositeスコアに基づく台選択推薦を行うとき
 - summary: v12b_debut_multiplier_halfのcompositeスコアと実際の104%超え確率の対応関係を、60日間のwalk-forward評価（42,840行）で検証した。 スコア十分位別の104%超え率はD0=32.9%からD9=32.8%まで実質フラットで、スコアの高低が的中確率をほぼ予測しない。...
 
-### 26. `mitoya-section-was-two-rows-merged`
+### 27. `mitoya-section-was-two-rows-merged`
 - confidence: `1.00` | status: `unverified` | date: `2026-06-27` | file: `2026-06-27-mitoya-section-split-and-corner-effect-insights.yaml`
 - domain/source: `data-infrastructure` / `session-discovery`
 - trigger: みとやのセクション定義・角番分析・rank_from_aisle を扱うとき
 - summary: Heatmap/mitoya_omorimachi_floor_coordinates.csv で 557-590 のような34台セクションが、実際には2つの物理列（y=29: 557-573, y=28: 574-590）を1セクションにまとめていた。これにより rank_from_aisle が列単位ではなく...
 
-### 27. `segment-determination-must-come-first`
+### 28. `segment-determination-must-come-first`
 - confidence: `0.98` | status: `unverified` | date: `2026-06-27` | file: `2026-06-27-hall-analysis-procedure-and-evolve-insights.yaml`
 - domain/source: `analysis-methodology` / `session-design`
 - trigger: 新ホールでEDAを開始するとき / セグメント未確定の状態で変数効果を分析しようとするとき
 - summary: 蒲田7で全体集計のA機Top3(d3/d4)とN機Top3(d6/d8)が逆相関(ρ=-0.418)になるSimpson's Paradoxが発生。 セグメント未分割の状態で「末尾Xが強い」と主張しても、フロア/機種タイプ/セクションサイズの交絡で無意味になる。 1. フロア分割（複数フロアなら必須） 2. A/...
 
-### 28. `kamata7-findings-not-transferable-procedure-is`
+### 29. `kamata7-findings-not-transferable-procedure-is`
 - confidence: `0.97` | status: `unverified` | date: `2026-06-27` | file: `2026-06-27-hall-analysis-procedure-and-evolve-insights.yaml`
 - domain/source: `methodology` / `session-design`
 - trigger: 蒲田7の知見を他ホールに適用しようとするとき / 他ホールで「末尾Xが強い」と主張するとき
 - summary: 蒲田7と蒲田1（同系列マルハン）で曜日効果が完全に逆転している実証例がある: 蒲田7: 水曜最強(+1.5pp) / 金曜最弱(-4.2pp) 蒲田1: 火曜最強(+3.4pp) / 水曜弱い(-2.0pp) 末尾、DD、イベント日の法則もすべてホール固有。 移植可能なもの: 分析手順（KW検定→耐久性検証→th...
 
-### 29. `lookahead-detection-by-reimplementation`
+### 30. `lookahead-detection-by-reimplementation`
 - confidence: `0.98` | status: `unverified` | date: `2026-06-26` | file: `2026-06-26-lookahead-and-pipeline-insights.yaml`
 - domain/source: `ml-evaluation` / `bug-fix`
 - trigger: walk-forward検証で有望な結果が出たとき / リランキングやフィルタの効果を検証するとき / scored DataFrameの列を後処理で使うとき
 - summary: 2026-06-26 Track D。seg_percentileリランキングの初回検証で+108枚/日（p=0.000003）という 高度に有意な結果が出た。しかしpool_n sweepで別実装を走らせたところ結果が再現せず、 原因を追ったらstrength_weightの計算に当日の `diff_coins...
 
-### 30. `v12-debut-multiplier-machine-name-not-number`
+### 31. `v12-debut-multiplier-machine-name-not-number`
 - confidence: `0.98` | status: `unverified` | date: `2026-06-26` | file: `2026-06-26-v12-debut-multiplier-walkforward-insights.yaml`
 - domain/source: `implementation` / `bug-fix`
 - trigger: debut_dateやpre_existingを計算するとき / 機種の初出日をgroupbyで算出するとき
 - summary: 2026-06-26 V12実装時のバグ。初回walk-forwardでV11/V12a/V12bの全指標が完全一致。 `train.groupby("machine_number")["date_dt"].min()` でdebut_dateを計算していた。 同じ台番号に異なる機種が入れ替わっても（新台入替）、...
 
-### 31. `debut-181plus-definition-caveat`
+### 32. `debut-181plus-definition-caveat`
 - confidence: `0.98` | status: `unverified` | date: `2026-06-26` | file: `2026-06-26-grouping-debut-event-insights.yaml`
 - domain/source: `data-definition` / `session-observation`
 - trigger: 181日+フェーズの分析結果を解釈するとき / 定番台の定義を確認するとき
 - summary: 2026-06-26 セッションで確認。debut_phase分析ではpre_existing=Trueの機種を除外している。 181日+ = DB開始日（蒲田7: 2025-07-07）以降に導入され、181日以上経過した機種 pre_existing（DB開始日に既に存在していた機種）は除外済み 蒲田7の場合...
 
-### 32. `infer-lr-must-use-x-coordinate`
+### 33. `infer-lr-must-use-x-coordinate`
 - confidence: `0.99` | status: `unverified` | date: `2026-06-22` | file: `2026-06-22-lr-reversal-bug-and-v7-revalidation-insights.yaml`
 - domain/source: `data-engineering` / `bug-discovery-and-fix`
 - trigger: LR分割ロジックを実装・修正・レビューするとき
 - summary: `_infer_lr()` は台番号の中央値でLRを分割していた（小さい方=L、大きい方=R）。 しかし蒲田7では島ごとに台番号の並び方向が反転する（奇数列は左→右、偶数列は右→左）。 結果として2Fの55.6%、3Fの57.7%のセクションで物理的な左右が逆転していた。 修正: X座標の中央値でLRを判定する。...
 
-### 33. `walkforward-scoring-is-rule-based-not-ml`
+### 34. `walkforward-scoring-is-rule-based-not-ml`
 - confidence: `0.99` | status: `unverified` | date: `2026-06-22` | file: `2026-06-22-classify-seg-db-flag-insights.yaml`
 - domain/source: `ml-methodology` / `session-discussion`
 - trigger: Walk-forward scoringモデルの位置づけを説明するとき
 - summary: v1-v6のWalk-forward scoringモデルは手動設計のコンポーネント（c1-c6, hist特徴量）を 手動設定のウェイトで線形結合するルールベースのスコアリングシステム。 学習アルゴリズム・損失関数・パラメータ最適化プロセスが存在しない。 Walk-forwardは評価フレームワークであり、学習...
 
-### 34. `hit100-equals-winrate-redundancy`
+### 35. `hit100-equals-winrate-redundancy`
 - confidence: `0.99` | status: `unverified` | date: `2026-06-22` | file: `2026-06-22-walkforward-v6-threshold-segment-insights.yaml`
 - domain/source: `ml-feature-engineering` / `mathematical-identity`
 - trigger: payout閾値100%を特徴量候補に含めるとき
 - summary: `payout >= 100%` は `(games*3 + diff) / (games*3) >= 1.0` すなわち `diff >= 0` と等価。 これは勝率（winrate = (diff > 0).mean()）と同一の指標であり、独立した情報を持たない。 Walk-forwardで hist_wi...
 
-### 35. `top50-is-delivery-format-not-target`
+### 36. `top50-is-delivery-format-not-target`
 - confidence: `0.97` | status: `unverified` | date: `2026-06-22` | file: `2026-06-22-multi-tier-recommendation-architecture-insights.yaml`
 - domain/source: `ml-target-design` / `three-way-discussion-claude-codex-user`
 - trigger: 予測モデルのターゲットを設計するとき
 - summary: Walk-forward scoringのTop50は元々朝一チートシート用の候補生成だった。 しかし「全台を差枚で一列に並べてTop50を切る」ことを学習ターゲットにしていたため、 ATの高ボラ台がAの高設定を飲み込み、セグメント間の公平な評価ができなかった。 3者（ユーザー・Claude・Codex）の議論で...
 
-### 36. `recommendation-powershell-encoding-required`
+### 37. `recommendation-powershell-encoding-required`
 - confidence: `0.99` | status: `unverified` | date: `2026-06-21` | file: `2026-06-21-recommendation-top50-workflow-insights.yaml`
 - domain/source: `development-workflow` / `session-observation`
 - trigger: 日本語を含むPythonスクリプトの出力をターミナルで確認するとき
 - summary: Bash toolで日本語を含むPythonスクリプトを実行すると、出力がmojibake（文字化け）になる。 PowerShellで `$env:PYTHONIOENCODING = "utf-8"` を設定してから実行すると正常に表示される。 日本語出力を含むPythonスクリプトは以下で実行: $env:P...
 
-### 37. `recommendation-machine-master-schema`
+### 38. `recommendation-machine-master-schema`
 - confidence: `0.99` | status: `unverified` | date: `2026-06-21` | file: `2026-06-21-recommendation-top50-workflow-insights.yaml`
 - domain/source: `data-pipeline` / `session-observation`
 - trigger: machine_masterテーブルからA機種フラグを取得するとき
 - summary: machine_masterテーブルのカラム構成: machine_name_normalized（キー） jug_flag, hana_flag, oki_flag, bt_flag display_names, official_name, created_at, updated_at machine_num...
 
-### 38. `recommendation-db-path-kamata7-actual`
+### 39. `recommendation-db-path-kamata7-actual`
 - confidence: `0.99` | status: `unverified` | date: `2026-06-21` | file: `2026-06-21-recommendation-top50-workflow-insights.yaml`
 - domain/source: `data-pipeline` / `session-observation`
 - trigger: 蒲田7のDBを読み込むとき
 - summary: db/kamata7.db は0Bの空ファイル。実データは db/マルハンメガシティ2000-蒲田7.db（55.73MB）に格納されている。 前回セッションでも同じミスが発生しており、kamata7.dbを開いてテーブルが見つからないエラーが出た。 蒲田7のデータを読む場合は必ず `db/マルハンメガシティ20...
 
-### 39. `kakuban-alternating-section-reversal-bug`
+### 40. `kakuban-alternating-section-reversal-bug`
 - confidence: `0.99` | status: `unverified` | date: `2026-06-20` | file: `2026-06-20-recommendation-scoring-insights.yaml`
 - domain/source: `data-pipeline` / `user-correction`
 - trigger: 蒲田7の角番（kakuban）を計算・使用するとき
 - summary: 蒲田7の島はメイン通路から見て順方向・逆方向が交互に並んでいる。 物理座標（generate_kamata7_coordinates.py）のstep_xで確認: step_x=+1の島: 台番号min側が通路側 → rank_from_min = 角番（正しい） step_x=-1の島: 台番号min側が奥側...
 
-### 40. `dd-band-priority-categorization`
+### 41. `dd-band-priority-categorization`
 - confidence: `0.98` | status: `unverified` | date: `2026-06-19` | file: `2026-06-19-kakuban-dd-band-analysis-findings.yaml`
 - domain/source: `data-categorization-design` / `session-implementation-requirement`
 - trigger: DD値が複数のカテゴリに該当するとき、優先順位で一意ラベル化
 - summary: dd_band 分類で event（1, 10, 20, 30）が他帯と重複。 集計キーの一意性のため、優先順位で単一ラベル化。 1. 優先順位の定義 Tier 1: event（dd in [1, 10, 20, 30]） Tier 2: early（dd in 1-10） Tier 3: mid（dd in...
 
-### 41. `normalize-segment-frame-essential-columns`
+### 42. `normalize-segment-frame-essential-columns`
 - confidence: `0.98` | status: `unverified` | date: `2026-06-19` | file: `2026-06-19-kakuban-section-lr-analysis-insights.yaml`
 - domain/source: `eda-implementation-pattern` / `session-debugging`
 - trigger: セグメント別フレームを作成時、必ず dd, rank_from_min, section_size_group を生成
 - summary: 蒲田7分析時、_build_segment_views() で返すフレームに `dd` カラムが存在せず、後続処理で KeyError が発生。 _normalize_segment_frame() を呼び出して、日付から dd を生成し、section_size から section_size_group を導...
 
-### 42. `kamata7-event-day-complete-definition`
+### 43. `kamata7-event-day-complete-definition`
 - confidence: `0.98` | status: `unverified` | date: `2026-06-19` | file: `2026-06-19-kamata7-theory-doc-and-eventday-fix-insights.yaml`
 - domain/source: `pachinko-data-engineering` / `user-correction`
 - trigger: 蒲田7または蒲田1のイベント日を定義・参照・計算するとき
 - summary: `eda/core.py` の `HALL_EVENT_DIGITS` にDD21が欠落、月末がハードコード(30,31)、 強ゾロ目(MM=DD)が `is_x_day` に未統合だった。ユーザーが複数回指摘しても 繰り返し不完全な定義が使われていた。2026-06-19に修正。 正しい定義: 7のつく日: D...
 
-### 43. `kakuban-strongest-structural-signal`
+### 44. `kakuban-strongest-structural-signal`
 - confidence: `0.97` | status: `unverified` | date: `2026-06-19` | file: `2026-06-19-durability-verification-insights.yaml`
 - domain/source: `kamata7-theory` / `session-eda-verification`
 - trigger: 蒲田7で最も信頼できる変数を選択するとき
 - summary: 台固有性定量化で角番中間台優位（C3）のtop1_machine_share=0.7%, top2_machine_share=1.4%であり、6法則中圧倒的に低い。特定台への依存がゼロに近い。かつ3テストすべてで堅牢。前半+130.1、後半+93.1で効果量は縮小しているが方向は一貫。 角番は蒲田7で最も信頼で...
 
-### 44. `x-kakuban-rank-must-be-per-machine-not-per-row`
+### 45. `x-kakuban-rank-must-be-per-machine-not-per-row`
 - confidence: `0.97` | status: `unverified` | date: `2026-06-18` | file: `2026-06-18-x-kakuban-eda-insights.yaml`
 - domain/source: `analysis-methodology` / `session-observation`
 - trigger: X角番（x_kakuban）をDataFrameに付与する実装を書くとき、またはGroupBy.rank()を使う類似の実装をするとき
 - summary: 2026-06-18: `kamata7_x_kakuban_eda.py` の初版で、1台×342日のフレームに直接 `groupby(["floor","X"])["Y"].rank(method="first")` をかけたことで、 同一台の342行が全て異なるx_kakuban値（1〜342）を持つバグが...
 
-### 45. `kakuban-colsize-eda-pending-rerun`
+### 46. `kakuban-colsize-eda-pending-rerun`
 - confidence: `0.99` | status: `unverified` | date: `2026-06-17` | file: `2026-06-17-kakuban-colsize-correction-insights.yaml`
 - domain/source: `analysis-methodology` / `session-observation`
 - trigger: 今日（2026-06-17）の colsize EDA 結果（short/medium/long のbin別kakubanパターン）を選台や特徴量設計に使おうとするとき
 - summary: 2026-06-17 午前: kamata7_kakuban_colsize_eda.py の column_size 計算が X座標集計ベースで定義されており、section 角番の colsize 分類としては軸がずれていた。 → 再実行を宣言（use-禁止ブロック）。 2026-06-17 同日: sect...
 
-### 46. `kakuban-colsize-pending-rerun-resolved`
+### 47. `kakuban-colsize-pending-rerun-resolved`
 - confidence: `0.99` | status: `unverified` | date: `2026-06-17` | file: `2026-06-17-kakuban-colsize-newresults-insights.yaml`
 - domain/source: `analysis-methodology` / `session-observation`
 - trigger: 2026-06-17 の colsize EDA 再実行ブロック（kakuban-colsize-eda-pending-rerun）の状態を確認するとき
 - summary: 2026-06-17 午前: `kamata7_kakuban_colsize_eda.py` の column_size が **X軸集計ベース（誤り）** で定義されており、bin の境界も台集合も実態と異なっていた。 → `2026-06-17-kakuban-colsize-correction-insi...
 
-### 47. `mitmweb-exe-path`
+### 48. `mitmweb-exe-path`
 - confidence: `0.99` | status: `unverified` | date: `2026-06-17` | file: `2026-06-17-android-mitmproxy-scraping-insights.yaml`
 - domain/source: `mobile-scraping` / `session-observation`
 - trigger: python -m mitmweb でモジュールが見つからないエラーが出るとき
 - summary: `python -m mitmweb`は`No module named mitmweb`エラーになる。 mitmproxyのエントリーポイントは`Scripts/mitmweb.exe`として提供される。 C:\Users\<user>\AppData\Local\Python\pythoncore-3.14-...
 
-### 48. `arm64-apk-x86-emulator-incompatible`
+### 49. `arm64-apk-x86-emulator-incompatible`
 - confidence: `0.99` | status: `unverified` | date: `2026-06-17` | file: `2026-06-17-android-mitmproxy-scraping-insights.yaml`
 - domain/source: `mobile-scraping` / `session-observation`
 - trigger: x86_64エミュレーターにarm64ネイティブライブラリを使うアプリを動かそうとするとき
 - summary: `split_config.arm64_v8a.apk`をx86_64エミュレーターに含めると `INSTALL_FAILED_NO_MATCHING_ABIS`エラー。 除外すると`GifInfoHandle.<clinit>`でクラッシュ（ネイティブライブラリが見つからない）。 x86_64エミュレーターでは...
 
-### 49. `floor-column-size-definition-correction`
+### 50. `floor-column-size-definition-correction`
 - confidence: `0.98` | status: `unverified` | date: `2026-06-17` | file: `2026-06-17-kakuban-colsize-correction-insights.yaml`
 - domain/source: `analysis-methodology` / `session-observation`
 - trigger: 列の台数でグルーピングする分析を設計・実装するとき、または座標CSVからセクションサイズを計算するとき
 - summary: 2026-06-17: kamata7_kakuban_colsize_eda.py で column_size を 「同じX座標を持つ台数（coords.groupby("X").size()）」で定義していたが誤り。 例：X=1 に12台いても、2001-2010（10台）と別セクションの2台が 同じX位置に...
 
-### 50. `android-user-cert-app-trust`
+### 51. `android-user-cert-app-trust`
 - confidence: `0.98` | status: `unverified` | date: `2026-06-17` | file: `2026-06-17-android-mitmproxy-scraping-insights.yaml`
 - domain/source: `mobile-scraping` / `session-observation`
 - trigger: Androidアプリのhttps通信をmitmproxyで傍受しようとするとき
 - summary: mitmproxyのCA証明書をAndroidにインストールしてもChromeブラウザの通信しか傍受できない。 Android 7以降、ネイティブアプリはユーザーインストールのCA証明書を無視する仕様になっている。 ブラウザ通信は傍受できるが、アプリは傍受できないと認識する 解決策は3択：(1)エミュレーターにシ...
 
-### 51. `kakuban-1-universal-avoidance-colsize-confirmed`
+### 52. `kakuban-1-universal-avoidance-colsize-confirmed`
 - confidence: `0.97` | status: `unverified` | date: `2026-06-17` | file: `2026-06-17-kakuban-colsize-newresults-insights.yaml`
 - domain/source: `pachinko-visit-strategy` / `session-observation`
 - trigger: 蒲田7の台選びで列サイズ（short/medium/long）に関わらず角番1の評価をするとき
 - summary: 2026-06-17: `section_max - section_min + 1` ベースの正しい colsize 定義で `kamata7_kakuban_colsize_eda.py` を再実行した結果。 旧検証は **X角番の先行実験**（X座標列内の台数でビン分けする実装）として位置づけ直された。 s...
 
-### 52. `3f-short-single-section-analysis-invalid`
+### 53. `3f-short-single-section-analysis-invalid`
 - confidence: `0.97` | status: `unverified` | date: `2026-06-17` | file: `2026-06-17-kakuban-colsize-newresults-insights.yaml`
 - domain/source: `analysis-methodology` / `session-observation`
 - trigger: 蒲田7 3F short 列（9-10台）の角番分析結果を使おうとするとき
 - summary: 2026-06-17: `section_max - section_min + 1` ベースで確認。 3F の short 列（9台・10台）は 3F_short_N と 3F_short_A それぞれ **1セクションのみ**。 全 kakuban 行が support_sections=1 となり、構造シグ...
 
-### 53. `split-apk-install-multiple`
+### 54. `split-apk-install-multiple`
 - confidence: `0.97` | status: `unverified` | date: `2026-06-17` | file: `2026-06-17-android-mitmproxy-scraping-insights.yaml`
 - domain/source: `mobile-scraping` / `session-observation`
 - trigger: エミュレーターにAPKをインストールしてResources$NotFoundExceptionが出るとき
 - summary: APK Extractorアプリで抽出したbase.apkのみをインストールすると、 `Resources$NotFoundException: Unable to find resource ID #0x7f080161` でクラッシュする。 モダンなアプリはApp Bundleで複数のSplit APKに分割...
 
-### 54. `kakuban-dual-rank-correct-definition`
+### 55. `kakuban-dual-rank-correct-definition`
 - confidence: `0.97` | status: `unverified` | date: `2026-06-17` | file: `2026-06-17-kakuban-dual-rank-refactor-insights.yaml`
 - domain/source: `domain-definition` / `user-correction`
 - trigger: 角番（kakuban）の定義を実装・分析・プロンプトで扱うとき
 - summary: 2026-06-17 セッションでユーザーより訂正。 旧実装（KAKUBAN_RULES）は「メイン通路＝台番号小側」と仮定して rank_from_min のみを角番とした。 正しくは「どちら側がメイン通路かはランダム」であり、各台は両端から数えた2つの角番を同時に持つ。 例: section 2001-201...
 
-### 55. `sqlite-groupby-arbitrary-machine-name`
+### 56. `sqlite-groupby-arbitrary-machine-name`
 - confidence: `0.97` | status: `unverified` | date: `2026-06-17` | file: `2026-06-17-screening-bugfix-insights.yaml`
 - domain/source: `sql-pitfall` / `session-observation`
 - trigger: SQLite で GROUP BY machine_number しながら machine_name を取得するクエリを書くとき
 - summary: mitoya_xdds_screening.py の `_load_latest_machine_names` で `GROUP BY machine_number HAVING COUNT(DISTINCT date) >= 5` を使っていた。 台番号608-614には過去に複数の機種が設置されており、 SQ...
 
-### 56. `kamata1-jag-hana-name-filter`
+### 57. `kamata1-jag-hana-name-filter`
 - confidence: `0.97` | status: `unverified` | date: `2026-06-17` | file: `2026-06-17-kamata1-kakuban-position-analysis-insights.yaml`
 - domain/source: `data-processing` / `session-observation`
 - trigger: 蒲田1DBでジャグラー・ハナハナ台を機種名フィルタするとき
 - summary: 蒲田1DBには多数の機種が混在しており、ジャグラー系・ハナハナ系を分離して分析する場面が多い。 機種名に「ジャグラー」または「ハナハナ」を含む文字列で確実に捕捉できる。 def is_jag_hana(name): return 'ジャグラー' in name or 'ハナハナ' in name 2026/06/...
 
-### 57. `goal-prompt-4000char-limit`
+### 58. `goal-prompt-4000char-limit`
 - confidence: `0.99` | status: `unverified` | date: `2026-06-16` | file: `2026-06-16-when-which-backtest-insights.yaml`
 - domain/source: `workflow-codex-handoff` / `user-instruction`
 - trigger: Codexへの/goalプロンプトを作成するとき
 - summary: 2026-06-16セッションでユーザーから明示的に指示。 初稿は不要な詳細（バリデーションリスト・例外ケース列挙）が多かった。 既存ファイルから流用する関数名を明示すれば実装詳細の記述を省略でき、 1500〜1800文字程度に圧縮しても Codex が迷わず実装できる。 既存流用関数名を明示して詳細記述を省く...
 
-### 58. `daily-hall-summary-date-features-null-bug`
+### 59. `daily-hall-summary-date-features-null-bug`
 - confidence: `1.00` | status: `unverified` | date: `2026-06-10` | file: `2026-06-10-eda-anomaly-techbias-insights.yaml`
 - domain/source: `eda` / `session-observation`
 - trigger: daily_hall_summary の day_of_week / last_digit / is_x_day を使った分析をするとき
 - summary: `date_info_calculator.py` は全日付で実行されておらず、`daily_hall_summary` の `day_of_week`, `last_digit`, `is_x_day` 等は443日中わずか3日分しか入っていない。 例：レイトギャップ 土曜 n=422（修正前）→ 24,850...
 
-### 59. `rb-probability-juggler-hokuto-spec`
+### 60. `rb-probability-juggler-hokuto-spec`
 - confidence: `1.00` | status: `unverified` | date: `2026-06-10` | file: `2026-06-10-rb-probability-analysis-insights.yaml`
 - domain/source: `machine-spec` / `user-provided`
 - trigger: スマスロ北斗の拳・モンキーターンV・ジャグラー各種のRB確率(rb_probability_decimal)から設定推定を行うとき
 - summary: 2026-06-10セッションでユーザーから提供された、ジャグラーシリーズ以外の RB確率ベース設定判別が可能な機種のスペック表。 以下のスペックをRB確率(1/X)から設定推定する際の基準値として使う。 | 設定 | AT初当り確率 | 出玉率 | |---|---|---| | L | ※下パネルが常に点滅...
 
-### 60. `kabaneri-s-and-l-version-distinction`
+### 61. `kabaneri-s-and-l-version-distinction`
 - confidence: `1.00` | status: `unverified` | date: `2026-06-10` | file: `2026-06-10-machine-hall-fixedeffect-and-banchou4-insights.yaml`
 - domain/source: `machine-naming` / `user-clarification`
 - trigger: カバネリ・甲鉄城のカバネリについて分析するとき / 「カバネリ海門」という呼称が出てきたとき
 - summary: 蒲田7では以下の2機種が両方とも現役（last_date=20260607）で稼働している: | machine_name | n(games>=1000) | baseline hit104 | |---|---|---| | 甲鉄城のカバネリ（無印・S版） | 1648 | 45.8% | | 甲鉄城のカバネ...
 
-### 61. `juggler-series-bonus-probability-spec`
+### 62. `juggler-series-bonus-probability-spec`
 - confidence: `1.00` | status: `unverified` | date: `2026-06-10` | file: `2026-06-10-juggler-spec-and-debut-curve-insights.yaml`
 - domain/source: `machine-spec` / `user-provided`
 - trigger: ジャグラーシリーズ機種の設定別出玉率・ボーナス確率を参照するとき / kaiwari近似値の精度を機種別に検証するとき
 - summary: 2026-06-10セッションでユーザーから提供されたジャグラーシリーズの公称スペック。 hit104%（機械割104%以上）の解釈や、機種ごとの設定推定の基礎データとして使う。 以下のスペック表を機種別の設定推定・閾値較正に使用する。 | 設定 | BIG | REG | 合算 | 出玉率 | |---|---...
 
-### 62. `weekday-digit-nth-single-dim-all-null`
+### 63. `weekday-digit-nth-single-dim-all-null`
 - confidence: `0.99` | status: `unverified` | date: `2026-06-10` | file: `2026-06-10-eda-anomaly-techbias-insights.yaml`
 - domain/source: `eda-pattern` / `empirical-scan`
 - trigger: 曜日・台番号末尾・第N曜日を単独次元でスキャンするとき
 - summary: daily_hall_summaryのJOINバグを修正した後、21次元 × 9ホールの全スキャンを実施。 以下の単独次元は全ホール・全パターンでTier A/B が1件も出なかった。 以下の単独次元に基づく台選択・設定投入予測は無効として扱う： `day_of_week`（曜日単独） `machine_digi...
 
-### 63. `rb-threshold-monkey-hokuto-confirmed`
+### 64. `rb-threshold-monkey-hokuto-confirmed`
 - confidence: `0.99` | status: `unverified` | date: `2026-06-10` | file: `2026-06-10-eda-anomaly-techbias-insights.yaml`
 - domain/source: `rb-signal` / `instinct-confirmed`
 - trigger: モンキーターンV・スマスロ北斗の拳のRBシグナルを使うとき
 - summary: 旧閾値 1/300=0.003333 ではモンキーターンV設定1（1/299=0.003344）が 閾値を突き抜けて全台シグナル扱いになり、発動率83.7%という汚染が発生した。 北斗の拳設定3（1/297=0.003367）も同様に捕捉されていた（設定3は低設定）。 設定4以上を識別する正しい閾値 = 1/25...
 
-### 64. `firstday-analysis-implementation`
+### 65. `firstday-analysis-implementation`
 - confidence: `0.99` | status: `unverified` | date: `2026-06-10` | file: `2026-06-10-new-machine-firstday-hall-insights.yaml`
 - domain/source: `eda-implementation` / `implementation`
 - trigger: 新台初日のホール別・機種別パフォーマンスを集計するスクリプトを書くとき / debut_dateを計算するとき
 - summary: `machine_detailed_results` に導入初日フラグは存在しないため、 「機種ごとの最古date = debut_date」として計算する。 pre_existing（DBスタート日に既に存在した機種）を除外する必要がある。 実装済みファイル: `eda/hall_firstday_analys...
 
-### 65. `pre-existing-machine-debut-detection`
+### 66. `pre-existing-machine-debut-detection`
 - confidence: `0.98` | status: `unverified` | date: `2026-06-10` | file: `2026-06-10-eda-anomaly-techbias-insights.yaml`
 - domain/source: `anomaly-detection` / `implementation`
 - trigger: days_since_debutを計算するとき / compute_debut_features を使うとき
 - summary: `compute_debut_features(df, db_start_grace_days=0)` で実装済み。 蒲田7の検証結果: DB期間: 2025-07-07 〜 2026-06-07 pre_existing 60機種: 全て debut_date == 2025-07-07（DB初日に集中） DB...
 
-### 66. `dd-individual-x-day-confirmation`
+### 67. `dd-individual-x-day-confirmation`
 - confidence: `0.98` | status: `unverified` | date: `2026-06-10` | file: `2026-06-10-eda-anomaly-techbias-insights.yaml`
 - domain/source: `eda-pattern` / `empirical-scan`
 - trigger: DD個別（1-31）スキャンの結果を解釈するとき
 - summary: DD個別（1-31）スキャン結果： みとや: DD4=+280, DD14=+234, DD24=+213（全Tier B）→ 4系x_dayと完全一致 蒲田7: DD7=+425 → 7系x_dayと一致 蒲田1: DD7=+194 → 7系の弱い反応 レイトギャップ: DD6=+219 → 6系x_dayと一...
 
-### 67. `anomaly-next-day-mean-reversion`
+### 68. `anomaly-next-day-mean-reversion`
 - confidence: `0.98` | status: `unverified` | date: `2026-06-10` | file: `2026-06-10-eda-anomaly-techbias-insights.yaml`
 - domain/source: `anomaly-detection` / `empirical-analysis`
 - trigger: ANOMALYを翌日の台選択シグナルとして使おうとするとき
 - summary: 全ホール合算・翌日1000G以上でのANOMATY後続検証: | 条件 | 翌日avg | 翌日plus率 | |------|---------|----------| | ANOMALY日（score≥2） | +43 | 39.8% | | 通常日（score<2） | +60 | 40.6% | ANOM...
 
-### 68. `new-machine-low-setting-start-confirmed`
+### 69. `new-machine-low-setting-start-confirmed`
 - confidence: `0.97` | status: `unverified` | date: `2026-06-10` | file: `2026-06-10-eda-anomaly-techbias-insights.yaml`
 - domain/source: `hall-behavior` / `empirical-analysis`
 - trigger: 新台導入後の設定投入パターンを分析するとき / days_since_debutを使うとき
 - summary: 全ホール合算 days_since_debut 別 avg_diff: 0-7日: avg=-152 (n=31,579) 8-14日: avg=-190 (n=31,087) ← 最低 15-30日: avg=-116 31-60日: avg=-23 61-90日: avg=+4 91-180日: avg=+3...
 
-### 69. `anomaly-early-debut-unreliable`
+### 70. `anomaly-early-debut-unreliable`
 - confidence: `0.97` | status: `unverified` | date: `2026-06-10` | file: `2026-06-10-eda-anomaly-techbias-insights.yaml`
 - domain/source: `anomaly-detection` / `empirical-analysis`
 - trigger: 導入後30日以内の機種のANOMALYを解釈するとき
 - summary: pre_existing=False の新規機種に限定した、導入後日数帯別ANOMALY翌日検証: | 日数帯 | 翌日avg | plus率 | n | |--------|---------|--------|---| | 0-7日 | -291 | 37.5% | 2017 | | 8-14日 | -396...
 
-### 70. `hall-firstday-kaiwari-ranking-arrow-mitoya-top`
+### 71. `hall-firstday-kaiwari-ranking-arrow-mitoya-top`
 - confidence: `0.97` | status: `unverified` | date: `2026-06-10` | file: `2026-06-10-new-machine-firstday-hall-insights.yaml`
 - domain/source: `hall-strategy` / `empirical-analysis`
 - trigger: 新台初日にどのホールを狙うべきか判断するとき / ホール別の新台設定投入傾向を調べるとき
 - summary: 全9ホール × DBスタート以降の新台 × 初日データ（games_normalized >= 200 フィルタ） を集計した結果（n=401〜558台×日）。 生平均機械割ランキング: 1. みとや 103.9%（avg差枚+243, plus率43.9%） 2. ARROW 102.9%（avg差枚+499,...
 
-### 71. `hall-firstday-104pct-threshold-ranking`
+### 72. `hall-firstday-104pct-threshold-ranking`
 - confidence: `0.97` | status: `unverified` | date: `2026-06-10` | file: `2026-06-10-new-machine-firstday-hall-insights.yaml`
 - domain/source: `hall-strategy` / `empirical-analysis`
 - trigger: 新台初日に高設定（機械割104%以上）に当たる確率をホール別に比較するとき
 - summary: 各台×初日データで「機械割 >= 104%」を判定した出現率: | ホール | 104%+ 出現率 | ヒット時avg機械割 | |--------------|------------|--------------| | ARROW | 38.5% | 123.6% | | みとや | 36.7% | 130....
 
-### 72. `mitoya-bari-island-nonexistent`
+### 73. `mitoya-bari-island-nonexistent`
 - confidence: `0.99` | status: `unverified` | date: `2026-06-09` | file: `2026-06-09-mitoya-lag-feature-island-section-insights.yaml`
 - domain/source: `data-model` / `session-observation`
 - trigger: みとや大森町店で assign_island() を使うとき / island カテゴリ数を確認するとき
 - summary: assign_island() の定義: machine_num >= 832 を 'bari' に分類。 みとや大森町店の machine_detailed_results における machine_number の実際の範囲: MIN=501, MAX=815, n=266台 → 815 < 832 のため、...
 
-### 73. `hall-specific-vs-universal-patterns-equal-value`
+### 74. `hall-specific-vs-universal-patterns-equal-value`
 - confidence: `0.97` | status: `unverified` | date: `2026-06-09` | file: `2026-06-09-eda-framework-design-and-discovery-insights.yaml`
 - domain/source: `methodology` / `design-decision`
 - trigger: クロスホール比較でパターンが一致しない（矛盾に見える）とき
 - summary: みとや固有のパターン（x_day末尾4が強い）と他ホールで確認できないパターンを 「矛盾」として扱うのは誤り。 各ホールは独自の設定投入戦略を持つ（CLAUDE.mdの実証済み事実）。 ホール固有パターンはそのホールを攻略するための固有知識として価値がある。 cross_hall_scan()の出力で unive...
 
-### 74. `catboost-windows-py314-bad-allocation-warmup`
+### 75. `catboost-windows-py314-bad-allocation-warmup`
 - confidence: `0.97` | status: `unverified` | date: `2026-06-09` | file: `2026-06-09-mitoya-lag-feature-island-section-insights.yaml`
 - domain/source: `ml-engineering` / `session-experiment`
 - trigger: CatBoostRegressor.fit() が Windows + Python 3.14 環境で初回呼び出し時に bad allocation で落ちるとき
 - summary: Windows + Python 3.14 環境において、CatBoostRegressor の最初の `.fit()` 呼び出しが `_catboost.CatBoostError: bad allocation` で必ず失敗する現象が発生した。 メモリ（9GB空き）・ディスク（177GB空き）・GPU使用率に...
 
-### 75. `python-windows-encoding-japanese-output`
+### 76. `python-windows-encoding-japanese-output`
 - confidence: `0.99` | status: `unverified` | date: `2026-06-07` | file: `2026-06-07-island-digit-stability-insights.yaml`
 - domain/source: `data-pipeline` / `empirical-validation`
 - trigger: WindowsのPython分析スクリプトで日本語を含む出力を行うとき、または機種名・ホール名を表示するスクリプトを書くとき
 - summary: Windows環境ではPythonのデフォルトstdoutエンコーディングがCP932（Shift-JIS）のため、 UTF-8で保存された日本語文字列をprintすると文字化けする。 分析スクリプトで機種名・ホール名が文字化けすると誤った名称を正しい名称と誤認し 分析結果の解釈を誤る危険がある。 実害の例： 機...
 
-### 76. `kakuban-not-rank-terminology`
+### 77. `kakuban-not-rank-terminology`
 - confidence: `0.99` | status: `unverified` | date: `2026-06-07` | file: `2026-06-07-mitoya-corner-aisle-eda-insights.yaml`
 - domain/source: `terminology` / `user-correction`
 - trigger: 台配置位置の順位を表現するとき
 - summary: ユーザーからの明示的な指摘: 「ランクだと成績順位と混同する。角番という言い方に統一してください」。 本プロジェクトでは: **角番**（kakuban）: メイン通路からの距離による位置順位（rank_from_aisle, rank_from_min） **ランク**: 機械ランキング（machine_ran...
 
-### 77. `machine-name-contamination-in-ml-training`
+### 78. `machine-name-contamination-in-ml-training`
 - confidence: `0.98` | status: `unverified` | date: `2026-06-07` | file: `2026-06-07-mitoya-ml-prediction-engineering-insights.yaml`
 - domain/source: `ml-feature-engineering` / `empirical-validation`
 - trigger: みとや（または他ホール）でCatBoostにmachine_nameをCAT_FEATUREとして使うとき
 - summary: みとや大森町店 266台中 **204台（76%）** で機種名が変わっていた（515日分データ）。 例: 台501-522は「ダンベル何キロ持てる？」→「バンドリ！」→「甲鉄城のカバネリ 海門(うなと)決戦」のように変遷。 CatBoostに`machine_name`をCAT_FEATUREとして使うとき、...
 
-### 78. `is-far-corner-reversed-section-bug`
+### 79. `is-far-corner-reversed-section-bug`
 - confidence: `0.97` | status: `unverified` | date: `2026-06-07` | file: `2026-06-07-mitoya-ml-prediction-engineering-insights.yaml`
 - domain/source: `ml-feature-engineering` / `user-ground-truth`
 - trigger: is_far_corner（壁側角番フラグ）をmachine_layoutから計算するとき
 - summary: みとや大森町店の台723-733島は `is_reversed_section=1`（台番号の昇順と通路側の向きが逆）。 この島では台723が壁側角番、台733が通路側角番（rank_from_aisle=1）。 `rank_from_max == 1` で is_far_corner を定義すると、 rever...
-
-### 79. `anaslo-l-prefix-first-day-behavior`
-- confidence: `0.97` | status: `unverified` | date: `2026-06-07` | file: `2026-06-07-island-digit-stability-insights.yaml`
-- domain/source: `data-pipeline` / `empirical-validation`
-- trigger: ana-slo.comスクレイピングで機種名が『L〇〇〇』という形式で出現したとき、またはjson_processor.pyで機種名正規化を実装するとき
-- summary: 機種入れ替えがあった日のみ、ana-slo.comのサイトが機種名の先頭に「L」を付けて掲載する。 翌日からは正式名称に戻る。これはスクレイピングエラーではなくサイト側の仕様。 確認例（JSON原本で検証済み）： 台509-512: 2025-03-03のみ「Lバイオハザード5」→翌日「バイオハザード5」 台55...
 
 ### 80. `mitoya-daily-hall-summary-null-flags`
 - confidence: `0.98` | status: `unverified` | date: `2026-06-06` | file: `2026-06-06-mitoya-corner-section-position-insights.yaml`
