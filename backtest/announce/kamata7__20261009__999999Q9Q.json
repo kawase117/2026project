@@ -42,12 +42,31 @@
       "type": "model_named",
       "machine_name": "東京喰種",
       "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "スーパーブラックジャック",
+      "note": "「おしぼり→絞り→ポーカー→SBJ？」の連想先。SBJ=スーパーブラックジャック"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "スーパーリオエース2",
+      "note": "「リオエース？」の連想先。DB上の機種名に補完"
     }
   ],
   "unscored_claims": [],
-  "needs_manual_review": true,
+  "needs_manual_review": false,
   "no_confirmed_machines": false,
   "result": null,
-  "announce_digest": "4dbdf707ca8e6284",
-  "provisional": true
+  "announce_digest": "7d299e113685e4b7",
+  "provisional": true,
+  "amendments": [
+    {
+      "at": "2026-10-09T11:41:40+09:00",
+      "prev_digest": "4dbdf707ca8e6284",
+      "reason": "連想ヒントの先（SBJ、リオエース）を補完。10/9の結果が出る前の修正",
+      "void": false,
+      "amended_after_target": false
+    }
+  ]
 }

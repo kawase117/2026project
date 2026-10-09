@@ -47,6 +47,11 @@
       "type": "model_named",
       "machine_name": "獣王",
       "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "スマスロ ハナビ",
+      "note": "「うどん→ドン→スマスロハナビ？」の連想先。機械抽出は新ハナビ(0.75)に誤照合したため"
     }
   ],
   "unscored_claims": [
@@ -66,9 +71,18 @@
       "frozen_scoring_procedure": ""
     }
   ],
-  "needs_manual_review": true,
+  "needs_manual_review": false,
   "no_confirmed_machines": false,
   "result": null,
-  "announce_digest": "916f5549580a3d38",
-  "provisional": true
+  "announce_digest": "cd614463a3fb6e49",
+  "provisional": true,
+  "amendments": [
+    {
+      "at": "2026-10-09T11:41:38+09:00",
+      "prev_digest": "916f5549580a3d38",
+      "reason": "連想ヒントの先（スマスロ ハナビ）を補完。10/9の結果が出る前の修正",
+      "void": false,
+      "amended_after_target": false
+    }
+  ]
 }

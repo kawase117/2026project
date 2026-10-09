@@ -20,6 +20,11 @@
   "claims": [
     {
       "type": "model_named",
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "note": "最注力機種（9月月間+43万枚）。機械抽出の甲鉄城のカバネリ（旧機種1台）は誤りで、海門に訂正"
+    },
+    {
+      "type": "model_named",
       "machine_name": "ネオアイムジャグラーEX",
       "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
     },
@@ -50,19 +55,35 @@
     },
     {
       "type": "model_named",
-      "machine_name": "甲鉄城のカバネリ",
+      "machine_name": "革命機ヴァルヴレイヴ2",
       "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
     },
     {
       "type": "model_named",
-      "machine_name": "革命機ヴァルヴレイヴ2",
-      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "note": "「乙女やバラもやってる」（本館2F）"
+    },
+    {
+      "type": "narabi",
+      "n_adjacent": 3,
+      "count": 3,
+      "scope": "hall",
+      "note": "毎日仕掛け「各フロアに3台並び⑤⑥3箇所以上」。フロア別は採点せず、ホール全体で3か所以上として判定（緩い解釈）"
     }
   ],
   "unscored_claims": [],
-  "needs_manual_review": true,
+  "needs_manual_review": false,
   "no_confirmed_machines": false,
   "result": null,
-  "announce_digest": "024ecf61e30d5485",
-  "provisional": true
+  "announce_digest": "82641f94f5e89a4f",
+  "provisional": true,
+  "amendments": [
+    {
+      "at": "2026-10-09T11:41:37+09:00",
+      "prev_digest": "024ecf61e30d5485",
+      "reason": "機種名の訂正（カバネリ海門）、乙女5と並びclaimを本文から補完。10/9の結果が出る前の修正",
+      "void": false,
+      "amended_after_target": false
+    }
+  ]
 }
