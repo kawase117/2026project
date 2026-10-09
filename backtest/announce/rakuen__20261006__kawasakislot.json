@@ -81,6 +81,264 @@
     }
   ],
   "unscored_claims": [],
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20261006",
+    "hall_baseline_mean_diff": 84.7,
+    "hall_n_machines": 587,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 1,
+      "n_censored_lo": 1,
+      "machines_hi": [
+        "ミリオンゴッド‐神々の軌跡‐"
+      ],
+      "machines_lo": [
+        "東京喰種"
+      ],
+      "bounds": [
+        -5095,
+        15477
+      ]
+    },
+    "claims": [
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "化物語",
+          "ratio": 2,
+          "note": "kawasakislot 10/5 20:17 予告。アンケート上の仕掛け「化物語が1/2⑤⑥」。最優先(化物語>カバネリ)。9台"
+        },
+        "n_machines": 9,
+        "ratio": 2,
+        "top_k": 5,
+        "model_top_k_mean_diff": 790.8,
+        "hall_top_quantile_mean_diff": 1144.7,
+        "excess_vs_hall_quantile": -353.9,
+        "model_mean_diff": -698.0,
+        "n_over_hall_quantile": 3,
+        "hit": false,
+        "model_named_score": -2402.9,
+        "model_named_rank": 58
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+          "ratio": 3,
+          "note": "kawasakislot 10/5 20:17 予告。「Lカバネリが1/3⑤⑥」。最優先2番手。30台(増台)。『カバネリは角が対象になりにくい』傾向と本文"
+        },
+        "n_machines": 30,
+        "ratio": 3,
+        "top_k": 10,
+        "model_top_k_mean_diff": 5386.2,
+        "hall_top_quantile_mean_diff": 1436.9,
+        "excess_vs_hall_quantile": 3949.3,
+        "model_mean_diff": 1656.0,
+        "n_over_hall_quantile": 20,
+        "hit": true,
+        "model_named_score": 4564.5,
+        "model_named_rank": 1
+      },
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 1,
+          "note": "kawasakislot 10/5 20:17 予告。「全⑤⑥機種」。『1/◯機種や全は傾向的にほぼ4台以上機種から』。機種名は明示なし(n_models=1は最低限の解釈)"
+        },
+        "observed_n_models": 2,
+        "candidate_models": 59,
+        "models": [
+          {
+            "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+            "score": 4564.5,
+            "n_machines": 30,
+            "mean_diff": 1656.0,
+            "age_days": 218
+          },
+          {
+            "machine_name": "バンドリ！",
+            "score": 2174.2,
+            "n_machines": 4,
+            "mean_diff": 2548.0,
+            "age_days": 643
+          }
+        ],
+        "n_new_machines_over": 0,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+          "note": "kawasakislot 10/5 20:17 予告。新館1F最注力(9月から、月間+43万枚)。取材=タイガーダッシュ"
+        },
+        "score": 4564.5,
+        "mean_diff": 1656.0,
+        "gratio": 2.756,
+        "n_machines": 30,
+        "rank": 1,
+        "candidate_models": 59,
+        "age_days": 218,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "真打 吉宗",
+          "note": "kawasakislot 10/5 20:17 予告。新館1F次点"
+        },
+        "score": 573.8,
+        "mean_diff": 524.0,
+        "gratio": 1.095,
+        "n_machines": 5,
+        "rank": 8,
+        "candidate_models": 59,
+        "age_days": 183,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ミリオンゴッド‐神々の軌跡‐",
+          "note": "kawasakislot 10/5 20:17 予告。新館1F次点(GOD)"
+        },
+        "score": 1710.7,
+        "mean_diff": 1473.0,
+        "gratio": 1.161,
+        "n_machines": 13,
+        "rank": 3,
+        "candidate_models": 59,
+        "n_censored_hi": 1,
+        "n_censored_lo": 0,
+        "censoring_bias": "lower_bound",
+        "max_score_understatement": 314.7,
+        "age_days": 169,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "東京喰種",
+          "note": "kawasakislot 10/5 20:17 予告。新館2F。最低でも並び1か所傾向"
+        },
+        "score": 563.1,
+        "mean_diff": 426.3,
+        "gratio": 1.321,
+        "n_machines": 18,
+        "rank": 9,
+        "candidate_models": 59,
+        "n_censored_hi": 0,
+        "n_censored_lo": 1,
+        "censoring_bias": "upper_bound",
+        "age_days": 609,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "革命機ヴァルヴレイヴ2",
+          "note": "kawasakislot 10/5 20:17 予告。新館2F。移動してきたヴヴヴ2も気になる"
+        },
+        "score": -249.2,
+        "mean_diff": -348.8,
+        "gratio": 0.714,
+        "n_machines": 9,
+        "rank": 43,
+        "candidate_models": 59,
+        "age_days": 336,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ネオアイムジャグラーEX",
+          "note": "kawasakislot 10/5 20:17 予告。本館1F。都内最大設置のネオアイムへ"
+        },
+        "score": -82.9,
+        "mean_diff": -93.5,
+        "gratio": 0.886,
+        "n_machines": 66,
+        "rank": 33,
+        "candidate_models": 59,
+        "age_days": 372,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "リコリス・リコイル",
+          "note": "kawasakislot 10/5 20:17 予告。本館2F。扱い良いリコリコ"
+        },
+        "score": -175.3,
+        "mean_diff": -136.0,
+        "gratio": 1.288,
+        "n_machines": 22,
+        "rank": 37,
+        "candidate_models": 59,
+        "age_days": 29,
+        "age_bucket": "new",
+        "base_rate": 0.105,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "交響詩篇エウレカセブン HI-EVOLUTION ZERO TYPE‐ART",
+          "note": "kawasakislot 10/5 20:17 予告。本館3F"
+        },
+        "score": 112.6,
+        "mean_diff": 137.4,
+        "gratio": 0.819,
+        "n_machines": 25,
+        "rank": 22,
+        "candidate_models": 59,
+        "age_days": 643,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ゴッドイーター リザレクション",
+          "note": "kawasakislot 10/5 20:17 予告。本館3F。増台"
+        },
+        "score": -422.5,
+        "mean_diff": -933.0,
+        "gratio": 0.453,
+        "n_machines": 5,
+        "rank": 48,
+        "candidate_models": 59,
+        "age_days": 643,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
   "announce_digest": "38cfcf546031732f"
 }

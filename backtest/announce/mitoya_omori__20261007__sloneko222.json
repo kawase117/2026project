@@ -1,0 +1,37 @@
+{
+  "announce_id": "mitoya_omori__20261007__sloneko222",
+  "hall": "みとや大森町店",
+  "target_date": "20261007",
+  "source": {
+    "account": "sloneko222",
+    "url": "",
+    "posted_at": "2026-10-06T19:00:02+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "明日のスロ猫チェック\n\n「7の付く日」\nアイランド秋葉原\nYASUDA7\nエクスアリーナ東京\nエスパス新宿歌舞伎町\nみとやジャックポット錦糸町\nエスパス新大久保\n\n「毎月7日」\nエスパス赤坂見附(月イチ周年日)\n\n-------------------------------------\n\nエスパス 新宿 歌舞伎 町\nエスパス上野新館",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"みとや大森町店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-07\", \"2026-10-05\"], \"n_days\": 90, \"n_model_days\": 3166, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2058.6, \"models_over_threshold_per_day\": {\"mean\": 1.77, \"median\": 2.0, \"max\": 7}, \"candidate_models_per_day\": 35.2, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 1.99, \"median\": 2.0, \"max\": 8}, \"p_at_least_1\": 0.822, \"p_at_least_2\": 0.567, \"p_at_least_3\": 0.333, \"p_at_least_4\": 0.133, \"p_at_least_10\": 0.0}}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [],
+  "unscored_claims": [],
+  "needs_manual_review": false,
+  "no_confirmed_machines": true,
+  "result": null,
+  "announce_digest": "5ebea633b3e009bf",
+  "provisional": true,
+  "amendments": [
+    {
+      "at": "2026-10-09T09:06:59+09:00",
+      "prev_digest": "7b39f26497a62f06",
+      "reason": "都内の7の日の店舗リストで、みとや大森町は載っていない",
+      "void": true,
+      "amended_after_target": true
+    }
+  ],
+  "voided": true
+}

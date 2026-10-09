@@ -479,14 +479,17 @@ def _run(args: argparse.Namespace) -> int:
             print("    %s" % url)
             print("    %s" % text[:70].replace("\n", " "))
     if actionable:
-        # 警告だけでは毎回読み飛ばされ、収集だけして登録されない状態が続いた。
-        # register は人間確認が要る(自動実行しない)ので、下書きまでは必ず作っておく。
+        # 警告だけでは毎回読み飛ばされ、収集だけして登録されない状態が続いた。人の確認を待つと
+        # 確認前にDBへ実績が入って登録できなくなる事故が起きた(2026-10-07/08分)ので、
+        # 下書きを作った直後に、検出できた全件を機械抽出のclaimsのまま仮登録して凍結する。
+        # claimsの補完・訂正は後から `announce amend` で台帳に残し、修正後を的中率に使う。
         for key in (today_key, tomorrow_key):
             run_project("-m", "backtest.announce_autodraft", "draft", "--date", key)
+        run_project("-m", "backtest.announce_autodraft", "register", "--date", today_key, "--date", tomorrow_key)
         print(
-            "\n★★ 下書きを backtest/announce/*.json.draft に作成した。収集で終わらせず、\n"
-            "   claims を確定して `python -m backtest.announce register <json>` まで通すこと\n"
-            "   （announce-prep スキル。登録済みかは backtest/announce/LEDGER.jsonl で確認）。"
+            "\n★★ 検出できた予告を仮登録した（機械抽出のclaims、claims空も含む）。\n"
+            "   claimsの補完・訂正と、予告ではないものの除外は `python -m backtest.announce amend\n"
+            "   <json> --reason ... [--void]` で台帳に残す（announce-prep スキル）。"
         )
     if missing:
         print(

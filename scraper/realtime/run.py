@@ -301,7 +301,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--quick-min-games", type=int, default=1000)
     parser.add_argument("--no-report", action="store_true", help="ホールごとの即時報告と最後の総合ランキングを出さない")
     parser.add_argument("--report-top", type=int, default=8, help="ホールごとの即時報告に出す台数")
-    parser.add_argument("--final-top", type=int, default=30, help="最後の総合ランキングに出す台数")
+    parser.add_argument("--final-top", type=int, default=50, help="最後の総合ランキングに出す台数")
     args = parser.parse_args(argv)
     keys = list(HALLS) if args.halls == "all" else args.halls.split(",")
     if not keys or any(key not in HALLS for key in keys) or len(set(keys)) != len(keys):

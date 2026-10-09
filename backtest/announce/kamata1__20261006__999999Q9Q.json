@@ -49,6 +49,135 @@
     }
   ],
   "unscored_claims": [],
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20261006",
+    "hall_baseline_mean_diff": 111.2,
+    "hall_n_machines": 365,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 1,
+          "note": "『全機種との重複も視野。並び以外の単品仕掛けも大量。6の付く日は6台並びを5箇所以上仕掛けるのが恒例、収録=全域強化の合図』。機種名・台数の明示なし(n_models=1は最低限の解釈)"
+        },
+        "observed_n_models": 4,
+        "candidate_models": 50,
+        "models": [
+          {
+            "machine_name": "ソードアート・オンラインII",
+            "score": 4942.5,
+            "n_machines": 6,
+            "mean_diff": 1750.0,
+            "age_days": 120
+          },
+          {
+            "machine_name": "獣王",
+            "score": 3431.6,
+            "n_machines": 3,
+            "mean_diff": 1800.0,
+            "age_days": 1
+          },
+          {
+            "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+            "score": 2438.3,
+            "n_machines": 9,
+            "mean_diff": 1411.1,
+            "age_days": 120
+          },
+          {
+            "machine_name": "東京喰種",
+            "score": 2050.1,
+            "n_machines": 20,
+            "mean_diff": 1285.0,
+            "age_days": 609
+          }
+        ],
+        "n_new_machines_over": 1,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+          "note": "999999Q9Q 10/5 23:34 予告。「？」付きの連想なので確度は低い。回胴の鉄人→鉄→Lカバネリ海門決戦"
+        },
+        "score": 1655.9,
+        "mean_diff": 1068.8,
+        "gratio": 1.549,
+        "n_machines": 16,
+        "rank": 6,
+        "candidate_models": 50,
+        "age_days": 218,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "甲鉄城のカバネリ",
+          "note": "999999Q9Q 10/5 23:34 予告。「？」付きの連想なので確度は低い。同→Sカバネリ"
+        },
+        "hit": null,
+        "note": "当日 甲鉄城のカバネリ が設置3台以上の候補に無い（撤去・台数不足・表記ゆれ）"
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "攻殻機動隊",
+          "note": "999999Q9Q 10/5 23:34 予告。「？」付きの連想なので確度は低い。収録→撮影→カメラ無き撮影"
+        },
+        "score": -274.5,
+        "mean_diff": -833.3,
+        "gratio": 0.329,
+        "n_machines": 3,
+        "rank": 39,
+        "candidate_models": 50,
+        "age_days": 246,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "A‐SLOT+ 異世界かるてっと",
+          "note": "999999Q9Q 10/5 23:34 予告。「？」付きの連想なので確度は低い。4人で収録→かるてっと→いせかる"
+        },
+        "hit": null,
+        "note": "当日 A‐SLOT+ 異世界かるてっと が設置3台以上の候補に無い（撤去・台数不足・表記ゆれ）"
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ワールドダイスター",
+          "note": "999999Q9Q 10/5 23:34 予告。「？」付きの連想なので確度は低い。よろしくお願い致します→星"
+        },
+        "score": -449.7,
+        "mean_diff": -533.3,
+        "gratio": 0.843,
+        "n_machines": 3,
+        "rank": 41,
+        "candidate_models": 50,
+        "age_days": 64,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
   "announce_digest": "9c022edb70ea418f"
 }

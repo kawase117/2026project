@@ -1,0 +1,48 @@
+{
+  "announce_id": "rakuen__20261008__sloneko222",
+  "hall": "楽園蒲田店",
+  "target_date": "20261008",
+  "source": {
+    "account": "sloneko222",
+    "url": "",
+    "posted_at": "2026-10-07T19:00:04+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "明日のスロ猫チェック\n\n「8の付く日」\nARROW池上\nアイランド秋葉原\nエスパス秋葉原\n大山オーシャン\nグランパ中野\nエスパス高田馬場\nエスパス新大久保\n\n---------------------------------\n\nエスパス 新宿 歌舞伎 町\nエスパス上野新館\nエスパス赤坂見附\nエスパス高田馬場\nエスパス新大久保\nエスパス渋谷新館\nエスパス上野本館\nエクスアリーナ東京\n大山オーシャンスロット専門館\nメガフェイス1180座間\n楽園相模原\nエクスアリーナ柏\nガイア西船橋\nゴードン西川口\nメガガーデン所沢スロット館\nピーアーク三田\nピーアーク相模大野\nマルハン昭島\nマルハンメガシティ東大和\nオーパス・ワン恵比寿\nパラッツォ三郷中央\nラカータ大宮駅前",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"楽園蒲田店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-08\", \"2026-10-06\"], \"n_days\": 90, \"n_model_days\": 5078, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2230.9, \"models_over_threshold_per_day\": {\"mean\": 2.82, \"median\": 2.5, \"max\": 11}, \"candidate_models_per_day\": 56.4, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.73, \"median\": 3.0, \"max\": 13}, \"p_at_least_1\": 0.956, \"p_at_least_2\": 0.856, \"p_at_least_3\": 0.622, \"p_at_least_4\": 0.444, \"p_at_least_10\": 0.011}}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [],
+  "unscored_claims": [
+    {
+      "text": "ケロット4(部分一致score=0.6)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    },
+    {
+      "text": "ケロット5(部分一致score=0.6)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    }
+  ],
+  "needs_manual_review": false,
+  "no_confirmed_machines": true,
+  "result": null,
+  "announce_digest": "028c111771b35ba0",
+  "provisional": true,
+  "amendments": [
+    {
+      "at": "2026-10-09T09:06:58+09:00",
+      "prev_digest": "9f1e99c1812e86a6",
+      "reason": "都内の8の日の店舗リストで、楽園蒲田は載っていない",
+      "void": true,
+      "amended_after_target": true
+    }
+  ],
+  "voided": true
+}

@@ -167,9 +167,12 @@ def estimate(row: SnapshotRow, *, specs=None, audit=None, hall_prior=None, spec_
         max(v[k] for s, v in settings.items() if s >= 5) / min(v[k] for s, v in settings.items() if s < 5) for k in keys
     )
     discriminatory = "low" if separation < LOW_RB_RATIO else "high"
-    # 観測が事前を上回る情報量。負方向のエントロピー変化は0に切る。
-    base = _entropy(prior.values())
-    confidence = max(0.0, min(1.0, (base - _entropy(probs.values())) / base)) if base else 0.0
+    # 観測が事前を上回る情報量。目的は「設定5以上か未満か」なので二択のエントロピーで測る
+    # (5と6の割れは確度を下げない。負方向のエントロピー変化は0に切る)。
+    prior_high = sum(p for s, p in prior.items() if s >= 5)
+    post_high = sum(p for s, p in probs.items() if s >= 5)
+    base = _entropy([prior_high, 1 - prior_high])
+    confidence = max(0.0, min(1.0, (base - _entropy([post_high, 1 - post_high])) / base)) if base else 0.0
     notes = list(evidence_notes)
     if row.games < SMALL_GAMES:
         notes.append("1000G未満: 尤度をG/1000乗して事前へ縮小")

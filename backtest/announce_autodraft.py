@@ -1,8 +1,14 @@
 """ホール予告の半自動下ごしらえ(検出→dbmax/match-name/baserate/named-context→claims案)。
 
 announce-prep スキルの手順 -1〜4.5 を自動実行し、`backtest/announce/<id>.json.draft` を
-書き出す。**register は実行しない**(ユーザー方針: 検出・下ごしらえ・claims案の作成までは
-自動、register の実行だけは都度人が確認する)。
+書き出す。
+
+方針の変更(2026-10-09、ユーザー指示): 当初は「register の実行だけは都度人が確認する」
+だったが、確認前にDBへ実績が入って登録できなくなる事故が起きた(10/7・10/8分)。
+そこで `register` サブコマンドで、検出できた全件を機械抽出のclaimsのまま仮登録して先に
+凍結する(provisional=True、claims空も含む)。claimsの補完・訂正は後から
+`backtest.announce amend` で行い、修正後のclaimsを的中率の集計に使う。修正の履歴は
+台帳の追記行(claims_detail)と予告JSONの amendments に残る。
 
 なぜ .draft 拡張子か:
     `register` はパスに書き戻すだけで、announce_id からファイル名を決めない
@@ -233,9 +239,40 @@ def draft_for_date(target_date: str, since_hours: int = 30, dry_run: bool = Fals
     return written
 
 
+def register_drafts(dates: list[str], post_hoc: bool = False) -> list[dict]:
+    """下書きを検出できた全件、機械抽出のclaimsのまま「仮登録」して凍結する。
+
+    人の確認を待つと、確認前にDBへ実績が入って登録できなくなる事故が起きた(2026-10-07/08)。
+    そこで凍結(予告文・投稿時刻・機械抽出のclaims)を先に済ませ、claimsの補完・訂正は
+    `announce amend` で後から台帳に残す。claims空の予告も仮登録する(provisional=True)。
+    修正後のclaimsは的中率の集計に使う。予告ではないもの(結果発表・別ホール・店舗リスト)は
+    amend --void で外す。
+    """
+    results = []
+    registered = ann._ledger_entries()
+    for draft in sorted(DRAFT_DIR.glob("*.json.draft")):
+        obj = json.loads(draft.read_text(encoding="utf-8"))
+        if obj.get("target_date") not in dates or obj.get("announce_id") in registered:
+            continue
+        obj["provisional"] = True
+        path = draft.with_suffix("")  # .json.draft -> .json
+        try:
+            ann.register_object(path, obj, post_hoc=post_hoc)
+        except (SystemExit, ValueError) as e:
+            results.append({"announce_id": obj["announce_id"], "ok": False, "error": str(e)})
+            continue
+        draft.unlink()
+        results.append({"announce_id": obj["announce_id"], "ok": True, "n_claims": len(obj["claims"])})
+    return results
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description="ホール予告の半自動下ごしらえ(検出→下ごしらえ→claims案)")
     sub = p.add_subparsers(dest="cmd", required=True)
+
+    p_reg = sub.add_parser("register", help="指定target_dateの下書きを全件、機械抽出claimsのまま仮登録する")
+    p_reg.add_argument("--date", action="append", required=True, help="target_date (YYYYMMDD)。複数指定可")
+    p_reg.add_argument("--post-hoc", action="store_true", help="対象日の実績がDBに入った後の事後登録(集計から除外)")
 
     p_draft = sub.add_parser("draft", help="指定target_dateの予告候補を検出しdraftを書き出す")
     p_draft.add_argument("--date", required=True, help="target_date (YYYYMMDD)")
@@ -244,6 +281,16 @@ def main(argv: list[str] | None = None) -> int:
 
     args = p.parse_args(argv)
 
+    if args.cmd == "register":
+        results = register_drafts(args.date, post_hoc=args.post_hoc)
+        if not results:
+            print(f"target_date={args.date}: 仮登録できる下書きは無し", file=sys.stderr)
+        for r in results:
+            if r["ok"]:
+                print(f"仮登録: {r['announce_id']} (claims={r['n_claims']}件)")
+            else:
+                print(f"失敗: {r['announce_id']}: {r['error']}", file=sys.stderr)
+        return 0 if all(r["ok"] for r in results) else 1
     if args.cmd == "draft":
         results = draft_for_date(args.date, since_hours=args.since_hours, dry_run=args.dry_run)
         if not results:

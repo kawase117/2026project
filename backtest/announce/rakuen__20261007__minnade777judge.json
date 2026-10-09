@@ -1,0 +1,48 @@
+{
+  "announce_id": "rakuen__20261007__minnade777judge",
+  "hall": "楽園蒲田店",
+  "target_date": "20261007",
+  "source": {
+    "account": "minnade777judge",
+    "url": "",
+    "posted_at": "2026-10-06T14:36:11+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "10/7 楽園溝の口\n\n7の日は特定日の楽園溝の口。\n\n過去傾向として\n・東京喰種、戦コレ6が1/2で上2つ\n・全台上2つ機種\n・3台並び上2つ多数\nなどがあり熱の入る一日となりそうです。\n\n過去傾向を徹底的に分析してみんなでジャッジ！",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"楽園蒲田店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-07\", \"2026-10-05\"], \"n_days\": 90, \"n_model_days\": 5077, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2227.6, \"models_over_threshold_per_day\": {\"mean\": 2.82, \"median\": 2.5, \"max\": 11}, \"candidate_models_per_day\": 56.4, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.73, \"median\": 3.0, \"max\": 13}, \"p_at_least_1\": 0.956, \"p_at_least_2\": 0.856, \"p_at_least_3\": 0.622, \"p_at_least_4\": 0.444, \"p_at_least_10\": 0.011}} / named_context: {\"as_of\": \"20261005\", \"window_days\": 30, \"n_candidates_ge3machines\": 59, \"hall_over_threshold_rate_approx\": 0.085, \"threshold\": 1800.0, \"models\": [{\"name\": \"戦国コレクション6\", \"n_machines\": 4, \"rank\": 3, \"of\": 59, \"n_days_present\": 30, \"over_threshold\": 1, \"rate\": 0.033, \"mean_score\": 133.7}, {\"name\": \"東京喰種\", \"n_machines\": 18, \"rank\": 9, \"of\": 59, \"n_days_present\": 30, \"over_threshold\": 1, \"rate\": 0.033, \"mean_score\": 275.2}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "戦国コレクション6",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "東京喰種",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。 ヒント: 1/2系の可能性(model_named_ratioならratio指定が必要)"
+    }
+  ],
+  "unscored_claims": [],
+  "needs_manual_review": false,
+  "no_confirmed_machines": false,
+  "result": null,
+  "announce_digest": "96e91853993ec4f3",
+  "provisional": true,
+  "amendments": [
+    {
+      "at": "2026-10-09T09:06:54+09:00",
+      "prev_digest": "382030983b9ec354",
+      "reason": "楽園溝の口の予告で、楽園蒲田ではない",
+      "void": true,
+      "amended_after_target": true
+    }
+  ],
+  "voided": true
+}

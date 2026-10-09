@@ -1,0 +1,53 @@
+{
+  "announce_id": "rakuen__20261006__slokotae7",
+  "hall": "楽園蒲田店",
+  "target_date": "20261006",
+  "source": {
+    "account": "slokotae7",
+    "url": "",
+    "posted_at": "2026-10-05T13:45:26+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "9月26日(土)\n楽園町田店\n\n月イチ\nアルティメットCG調査隊\n78/339台(23.0%)\n対象台平均+2374枚\n店舗総差枚+96828枚\n\n【全台】\n喰霊零\n2/3　平均+1370枚\nファンキー\n6/6　平均+913枚\nモグモグ\n2/3　平均+421枚\n\n【1/2】\n東京喰種　17台中9台\nゴージャグ　15台中8台\nミリオンゴッド　6台中3台\n青ブタ",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"楽園蒲田店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-06\", \"2026-10-04\"], \"n_days\": 89, \"n_model_days\": 5020, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2227.1, \"models_over_threshold_per_day\": {\"mean\": 2.82, \"median\": 2.0, \"max\": 11}, \"candidate_models_per_day\": 56.4, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.73, \"median\": 3.0, \"max\": 13}, \"p_at_least_1\": 0.955, \"p_at_least_2\": 0.854, \"p_at_least_3\": 0.618, \"p_at_least_4\": 0.438, \"p_at_least_10\": 0.011}} / named_context: {\"as_of\": \"20261004\", \"window_days\": 30, \"n_candidates_ge3machines\": 57, \"hall_over_threshold_rate_approx\": 0.07, \"threshold\": 1800.0, \"models\": [{\"name\": \"ミリオンゴッド‐神々の軌跡‐\", \"n_machines\": 16, \"rank\": 49, \"of\": 57, \"n_days_present\": 30, \"over_threshold\": 0, \"rate\": 0.0, \"mean_score\": -92.6}, {\"name\": \"東京喰種\", \"n_machines\": 31, \"rank\": 45, \"of\": 57, \"n_days_present\": 30, \"over_threshold\": 1, \"rate\": 0.033, \"mean_score\": 234.1}, {\"name\": \"青春ブタ野郎はバニーガール先輩の夢を見ない\", \"n_machines\": 7, \"rank\": 11, \"of\": 57, \"n_days_present\": 28, \"over_threshold\": 4, \"rate\": 0.143, \"mean_score\": -96.0}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "ミリオンゴッド‐神々の軌跡‐",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "東京喰種",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。 ヒント: 1/2系の可能性(model_named_ratioならratio指定が必要)"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "青春ブタ野郎はバニーガール先輩の夢を見ない",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    }
+  ],
+  "unscored_claims": [],
+  "needs_manual_review": false,
+  "no_confirmed_machines": false,
+  "result": null,
+  "announce_digest": "ef38a714d5eeadcb",
+  "provisional": true,
+  "amendments": [
+    {
+      "at": "2026-10-09T09:06:50+09:00",
+      "prev_digest": "471c9e3a4066721b",
+      "reason": "結果発表であって予告ではない（他店・過去日の発表）",
+      "void": true,
+      "amended_after_target": true
+    }
+  ],
+  "voided": true
+}

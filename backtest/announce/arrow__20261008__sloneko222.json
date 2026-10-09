@@ -1,0 +1,33 @@
+{
+  "announce_id": "arrow__20261008__sloneko222",
+  "hall": "ARROW池上店",
+  "target_date": "20261008",
+  "source": {
+    "account": "sloneko222",
+    "url": "",
+    "posted_at": "2026-10-07T18:59:02+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "10/8\nARROW池上\n「8の付く日」\n\n直近5日間のデータ\n合計 +502,000枚\n平均 +314枚\n勝率 43.0% (688/1600台)\n\n09/28 合計 +137,000枚  平均 +428枚(138/320台)\n09/18 合計 +64,000枚  平均 +200枚(126/320台)\n09/08 合計 +66,000枚  平均 +206枚(141/320台)\n08/28 合計 +72,000枚  平均 +225枚(132/320台)\n08/18 合計 +163,000枚  平均 +509枚(151/320台)\n\n 注目機種(直近5日間のデータ)\n◎ カバネリ海門決戦 平均 +1,493枚  勝率 55.0%(33/60台)\n〇 戦国コレ6 平均 +1,891枚  勝率 73.7%(28/38台)\n△ ラブ嬢3 平均 +1,127枚  勝率 66.7%(10/15台)",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"ARROW池上店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-07\", \"2026-10-05\"], \"n_days\": 90, \"n_model_days\": 2753, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2130.8, \"models_over_threshold_per_day\": {\"mean\": 1.53, \"median\": 1.0, \"max\": 10}, \"candidate_models_per_day\": 30.6, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 2.03, \"median\": 1.0, \"max\": 10}, \"p_at_least_1\": 0.811, \"p_at_least_2\": 0.489, \"p_at_least_3\": 0.356, \"p_at_least_4\": 0.156, \"p_at_least_10\": 0.011}} / named_context: {\"as_of\": \"20261005\", \"window_days\": 30, \"n_candidates_ge3machines\": 29, \"hall_over_threshold_rate_approx\": 0.034, \"threshold\": 1800.0, \"models\": [{\"name\": \"甲鉄城のカバネリ 海門(うなと)決戦\", \"n_machines\": 10, \"rank\": 7, \"of\": 29, \"n_days_present\": 30, \"over_threshold\": 1, \"rate\": 0.033, \"mean_score\": 69.9}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    }
+  ],
+  "unscored_claims": [],
+  "needs_manual_review": true,
+  "no_confirmed_machines": false,
+  "result": null,
+  "announce_digest": "b81a360b6395e0fc",
+  "provisional": true
+}

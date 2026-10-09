@@ -1,0 +1,53 @@
+{
+  "announce_id": "rakuen__20261009__slokotae7",
+  "hall": "楽園蒲田店",
+  "target_date": "20261009",
+  "source": {
+    "account": "slokotae7",
+    "url": "",
+    "posted_at": "2026-10-08T12:45:59+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "9月28日(月)\n楽園柏店\n\n四星　土星神\n18/489台\n対象台平均+901枚\n\n【高配分】\n戦国乙女5　20台中4台\nSAO2　13台中4台\n真打吉宗　10台中4台\n\nその他単品",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"楽園蒲田店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-09\", \"2026-10-07\"], \"n_days\": 90, \"n_model_days\": 5079, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2234.2, \"models_over_threshold_per_day\": {\"mean\": 2.82, \"median\": 2.0, \"max\": 11}, \"candidate_models_per_day\": 56.4, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.76, \"median\": 3.0, \"max\": 13}, \"p_at_least_1\": 0.967, \"p_at_least_2\": 0.867, \"p_at_least_3\": 0.622, \"p_at_least_4\": 0.444, \"p_at_least_10\": 0.011}} / named_context: {\"as_of\": \"20261007\", \"window_days\": 30, \"n_candidates_ge3machines\": 59, \"hall_over_threshold_rate_approx\": 0.119, \"threshold\": 1800.0, \"models\": [{\"name\": \"ソードアート・オンラインII\", \"n_machines\": 12, \"rank\": 29, \"of\": 59, \"n_days_present\": 30, \"over_threshold\": 2, \"rate\": 0.067, \"mean_score\": -196.8}, {\"name\": \"吉宗\", \"n_machines\": null, \"rank\": null, \"of\": 59, \"n_days_present\": 0, \"over_threshold\": 0, \"rate\": null, \"mean_score\": null}, {\"name\": \"戦国乙女5 業火を穿つ宿焔の双刃\", \"n_machines\": 18, \"rank\": 55, \"of\": 59, \"n_days_present\": 30, \"over_threshold\": 3, \"rate\": 0.1, \"mean_score\": 350.2}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "ソードアート・オンラインII",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "吉宗",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    }
+  ],
+  "unscored_claims": [],
+  "needs_manual_review": false,
+  "no_confirmed_machines": false,
+  "result": null,
+  "announce_digest": "8ac14d166a49301c",
+  "provisional": true,
+  "amendments": [
+    {
+      "at": "2026-10-09T09:06:53+09:00",
+      "prev_digest": "b4e7915402fda21e",
+      "reason": "結果発表であって予告ではない（他店・過去日の発表）",
+      "void": true,
+      "amended_after_target": false
+    }
+  ],
+  "voided": true
+}

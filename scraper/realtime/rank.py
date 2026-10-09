@@ -30,7 +30,7 @@ def read_snapshots(paths, latest_per_hall=True):
 
 
 def build_ranking(
-    rows, *, top=30, min_confidence=0.0, db_dir=ROOT / "db", hall_prior=None, specs_by_hall=None, audit=None
+    rows, *, top=50, min_confidence=0.0, db_dir=ROOT / "db", hall_prior=None, specs_by_hall=None, audit=None
 ):
     if top < 1 or not 0 <= min_confidence <= 1:
         raise ValueError("top and min_confidence out of range")
@@ -144,7 +144,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--snapshots", nargs="+", type=Path, required=True)
     parser.add_argument("--latest-per-hall", action="store_true")
-    parser.add_argument("--top", type=int, default=30)
+    parser.add_argument("--top", type=int, default=50)
     parser.add_argument("--min-confidence", type=float, default=0.0)
     args = parser.parse_args(argv)
     rows = read_snapshots(args.snapshots, latest_per_hall=True)

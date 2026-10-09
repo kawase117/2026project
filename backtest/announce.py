@@ -127,6 +127,8 @@ from backtest.run_backtest import load_frame
 
 ANNOUNCE_DIR = Path(__file__).resolve().parent / "announce"
 LEDGER = ANNOUNCE_DIR / "LEDGER.jsonl"
+# 開店前の投稿として予告に認める時刻（対象日の何時まで）。楽園の抽選開始は9:40。
+PRE_OPEN_HOUR = 9
 
 _ANNOUNCE_SUFFIXES = ("withdrawn", "invalidated", "correction", "addendum", "retro", "scoring")
 
@@ -325,11 +327,13 @@ def validate(obj: dict) -> None:
     if len(target) != 8 or not target.isdigit():
         raise ValueError("target_date は YYYYMMDD 形式")
 
-    # 予告は対象日より前に投稿されていなければならない。事後の投稿は予告ではない。
+    # 予告は開店前（対象日の PRE_OPEN_HOUR 時より前）に投稿されていなければならない。
+    # 事後の投稿は予告ではない。対象日0時〜開店前の深夜投稿は、結果が出る前なので予告として
+    # 受け付けるが、台帳に posted_after_midnight を残す（蒲田7・蒲田1の予告は0時過ぎが常態）。
     posted = datetime.fromisoformat(src["posted_at"])
-    if posted >= _target_midnight(target, posted):
+    if posted >= _target_midnight(target, posted) + timedelta(hours=PRE_OPEN_HOUR):
         raise ValueError(
-            f"posted_at={src['posted_at']} は target_date={target} の当日0時以降。"
+            f"posted_at={src['posted_at']} は target_date={target} の{PRE_OPEN_HOUR}時以降。"
             "これは予告ではなく実況・結果報告である。"
         )
 
@@ -341,7 +345,10 @@ def validate(obj: dict) -> None:
     if int(z.get("min_machines", 0)) < 1:
         raise ValueError("zentaikei.min_machines は 1 以上")
 
-    if not obj["claims"]:
+    # 自動仮登録（provisional）は、機種名が確定できなかった予告も台帳に残す（登録漏れで
+    # 凍結できなくなるより、claims空で先に凍結し、後から amend で補う）。claims が空のまま
+    # 採点すると主張0件の結果になるだけで、的中率の分母には入らない。
+    if not obj["claims"] and not obj.get("provisional"):
         raise ValueError("claims が空。反証可能な主張が1件も無い予告は登録しない")
     for c in obj["claims"]:
         t = c.get("type")
@@ -1199,6 +1206,8 @@ def score(obj: dict) -> dict:
     """凍結済み予告を当日実績で採点する。"""
     if obj.get("result") is not None:
         raise ValueError("この予告は既に採点済み。結果の作り直しは禁止。")
+    if obj.get("voided"):
+        raise ValueError("この予告は無効化されている（amend --void）。採点しない。")
     _verify_ledger(obj)
 
     df = load_frame(obj["hall"])
@@ -1269,8 +1278,17 @@ def is_late_registration(target_date: str, now: datetime | None = None) -> bool:
     return now >= next_day_midnight
 
 
-def _append_ledger(obj: dict) -> None:
+def _append_ledger(obj: dict, *, post_hoc: bool = False, amendment: dict | None = None) -> None:
+    """台帳へ追記する（追記のみ。同じ key の最後の行が現行版）。
+
+    post_hoc: 対象日の実績がDBに入った後の登録。late_registration を真にする（集計から除外）。
+    amendment: 仮登録後の手修正の記録（kind/prev_digest/amended_at/amended_after_target/reason）。
+        修正後の claims が現行版になり、的中率の集計に使う。修正前は旧行と obj["amendments"]
+        に残る。amended_after_target が真のものは、対象日が終わってからの修正（結果を見た後の
+        判断が入りうる）なので、別集計に分けられるよう印を残す。
+    """
     now = datetime.now().astimezone()
+    posted = datetime.fromisoformat(obj["source"]["posted_at"])
     rec = {
         "key": obj["announce_id"],
         "announce_digest": announce_digest(obj),
@@ -1280,15 +1298,95 @@ def _append_ledger(obj: dict) -> None:
         # posted_at は「発信者が対象日より前に投稿したか」の保証。
         # registered_at は「登録者が結果を知る前に登録したか」の記録。別物である。
         "posted_at": obj["source"]["posted_at"],
+        "posted_after_midnight": posted >= _target_midnight(obj["target_date"], posted),
         "registered_at": now.isoformat(timespec="seconds"),
         # True のものは的中率・base_rate の集計から除外すること。
-        "late_registration": is_late_registration(obj["target_date"], now),
+        "late_registration": post_hoc or is_late_registration(obj["target_date"], now),
+        "post_hoc": post_hoc,
+        "provisional": bool(obj.get("provisional")),
+        "voided": bool(obj.get("voided")),
         "threshold": obj["zentaikei"]["threshold"],
         "claims": [c["type"] for c in obj["claims"]],
+        # 修正で claims が書き換わっても、各時点の全文を旧行に残す（追記のみの台帳が証拠）。
+        "claims_detail": obj["claims"],
     }
+    if amendment is not None:
+        rec["kind"] = "amendment"
+        rec.update(amendment)
     ANNOUNCE_DIR.mkdir(parents=True, exist_ok=True)
     with LEDGER.open("a", encoding="utf-8") as fh:
         fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
+
+
+def register_object(path: Path, obj: dict, *, post_hoc: bool = False) -> dict:
+    """予告を検証して台帳に凍結する（CLI の register と自動仮登録の共通部）。
+
+    post_hoc=False: 対象日の実績がDBに入った後（target_date <= DB最終日）は拒否する。
+    post_hoc=True: 拒否せず、late_registration=true で記録する。的中率・base_rate の集計から
+        除外する（claims の切り出しに結果を知った後の判断が入りうるため）。
+    """
+    validate(obj)
+    db_max = str(load_frame(obj["hall"])["date"].max())
+    if obj["target_date"] <= db_max and not post_hoc:
+        raise SystemExit(
+            f"target_date={obj['target_date']} は DB 最終日 {db_max} 以下。実績が出た後の登録は事前登録にならない。"
+            "事後登録として台帳に残すなら --post-hoc（集計からは除外される）。"
+        )
+    if obj["announce_id"] in _ledger_entries():
+        raise SystemExit(f"既に登録済み: {obj['announce_id']}（登録し直しは禁止）")
+    obj["result"] = None
+    obj["announce_digest"] = announce_digest(obj)
+    path.write_text(json.dumps(obj, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    _append_ledger(obj, post_hoc=post_hoc)
+    return obj
+
+
+def amend_object(path: Path, obj: dict, *, reason: str, void: bool = False, rescore: bool = False) -> dict:
+    """登録済み予告の手修正（claims の補完・訂正、または無効化）を台帳に残す。
+
+    修正は禁止しない。仮登録は機械抽出のclaims（機種名の完全一致のみ・型は model_named 固定）
+    なので、人が型や機種を直すのが前提である。修正後の claims を的中率の集計に使う。
+    ただし修正の事実は消さない: 修正前の claims・digest・理由・時刻を obj["amendments"] と
+    台帳の追記行に残し、対象日が終わってからの修正は amended_after_target で印を付ける。
+    void=True は、予告ではないもの（結果発表・別ホールの予告・店舗リスト等）を集計から外す。
+    """
+    ledger = _ledger_entries()
+    prev_digest = ledger.get(obj["announce_id"])
+    if prev_digest is None:
+        raise SystemExit(f"台帳に {obj['announce_id']} が無い。先に register すること。")
+    if obj.get("result") is not None:
+        if not rescore:
+            raise SystemExit("採点済み。修正して採点し直すなら --rescore（旧結果は破棄される）。")
+        obj["result"] = None
+    # 修正前の claims は台帳の旧行（claims_detail）に全文が残る。台帳は追記のみ。
+    history = list(obj.get("amendments", []))
+    now = datetime.now().astimezone()
+    after_target = now >= _target_midnight(obj["target_date"], now) + timedelta(days=1)
+    entry = {
+        "at": now.isoformat(timespec="seconds"),
+        "prev_digest": prev_digest,
+        "reason": reason,
+        "void": void,
+        "amended_after_target": after_target,
+    }
+    history.append(entry)
+    obj["amendments"] = history
+    if void:
+        obj["voided"] = True
+    obj["needs_manual_review"] = False
+    validate(obj)
+    obj["announce_digest"] = announce_digest(obj)
+    path.write_text(json.dumps(obj, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    _append_ledger(
+        obj,
+        amendment={
+            "prev_digest": prev_digest,
+            "amended_at": entry["at"],
+            "amended_after_target": after_target,
+            "reason": reason,
+        },
+    )
+    return obj
 
 
 def _verify_ledger(obj: dict) -> None:
@@ -1309,6 +1407,17 @@ def main(argv: list[str] | None = None) -> int:
 
     p_reg = sub.add_parser("register", help="予告を検証して台帳に凍結する")
     p_reg.add_argument("path")
+    p_reg.add_argument(
+        "--post-hoc",
+        action="store_true",
+        help="対象日の実績がDBに入った後でも事後登録として受け付ける（late_registration=true、的中率から除外）",
+    )
+
+    p_am = sub.add_parser("amend", help="登録済み予告の手修正（claims補完・訂正、または無効化）を台帳に残す")
+    p_am.add_argument("path")
+    p_am.add_argument("--reason", required=True, help="修正の理由（台帳に残る）")
+    p_am.add_argument("--void", action="store_true", help="予告ではないものを無効化して集計から外す")
+    p_am.add_argument("--rescore", action="store_true", help="採点済みの予告を修正して採点し直す")
 
     p_sc = sub.add_parser("score", help="凍結済み予告を実績で採点する")
     p_sc.add_argument("path")
@@ -1413,20 +1522,13 @@ def main(argv: list[str] | None = None) -> int:
     path = Path(args.path)
     obj = json.loads(path.read_text(encoding="utf-8"))
 
-    if args.cmd == "register":
-        validate(obj)
-        db_max = str(load_frame(obj["hall"])["date"].max())
-        if obj["target_date"] <= db_max:
-            raise SystemExit(
-                f"target_date={obj['target_date']} は DB 最終日 {db_max} 以下。実績が出た後の登録は事前登録にならない。"
-            )
-        if obj["announce_id"] in _ledger_entries():
-            raise SystemExit(f"既に登録済み: {obj['announce_id']}（登録し直しは禁止）")
-        obj["result"] = None
-        obj["announce_digest"] = announce_digest(obj)
-        path.write_text(json.dumps(obj, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        _append_ledger(obj)
-        if is_late_registration(obj["target_date"]):
+    if args.cmd == "amend":
+        obj = amend_object(path, obj, reason=args.reason, void=args.void, rescore=args.rescore)
+        print(f"修正を記録: {obj['announce_id']}（無効化={bool(obj.get('voided'))}）", file=sys.stderr)
+        print(json.dumps(obj, ensure_ascii=False, indent=2))
+    elif args.cmd == "register":
+        obj = register_object(path, obj, post_hoc=args.post_hoc)
+        if is_late_registration(obj["target_date"]) or args.post_hoc:
             print(
                 f"⚠️ 対象日 {obj['target_date']} を過ぎてからの登録である。"
                 "DB 取込が遅れているため db_max ガードは通過したが、登録者が既に結果を"
