@@ -1,0 +1,43 @@
+{
+  "announce_id": "rakuen__20261003__kawasakislot",
+  "hall": "楽園蒲田店",
+  "target_date": "20261003",
+  "source": {
+    "account": "kawasakislot",
+    "url": "",
+    "posted_at": "2026-10-02T18:18:55+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "10/3　楽園上永谷\n→光華絢爛来店取材 初\n\n初開催の”光華絢爛”\n仕掛けは取材ネーミング的にジャグ中心になりそうな\n20スロ大改装後等価にも関わらずかなり薄利で頑張ってるし初なので期待して良し\n\n他の方のポストから予想される仕掛けは\n・ジャグラーシリーズから25%≒12台以上",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"楽園蒲田店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-04\", \"2026-10-02\"], \"n_days\": 89, \"n_model_days\": 5028, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2202.2, \"models_over_threshold_per_day\": {\"mean\": 2.83, \"median\": 2.0, \"max\": 12}, \"candidate_models_per_day\": 56.5, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.63, \"median\": 3.0, \"max\": 13}, \"p_at_least_1\": 0.955, \"p_at_least_2\": 0.843, \"p_at_least_3\": 0.596, \"p_at_least_4\": 0.416, \"p_at_least_10\": 0.011}}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [],
+  "unscored_claims": [
+    {
+      "text": "マイジャグラーV(部分一致score=0.625)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    }
+  ],
+  "needs_manual_review": false,
+  "no_confirmed_machines": true,
+  "result": null,
+  "announce_digest": "b70f185502f4179c",
+  "provisional": true,
+  "amendments": [
+    {
+      "at": "2026-10-09T09:10:44+09:00",
+      "prev_digest": "e2cc7a9d8ea6bb1e",
+      "reason": "楽園上永谷の予告で、楽園蒲田ではない",
+      "void": true,
+      "amended_after_target": true
+    }
+  ],
+  "voided": true
+}

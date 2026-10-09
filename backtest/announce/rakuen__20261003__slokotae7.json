@@ -1,0 +1,58 @@
+{
+  "announce_id": "rakuen__20261003__slokotae7",
+  "hall": "楽園蒲田店",
+  "target_date": "20261003",
+  "source": {
+    "account": "slokotae7",
+    "url": "",
+    "posted_at": "2026-10-02T12:12:04+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "9月23日(水)\n楽園町田店\n\n四星　水星神(2days:1日目)\n15/339台\n対象台平均+1158枚\n\n【3台並び】\n沖ドキGOLD　平均+2202枚\nLカバネリ　平均+1241枚\nリコリコ　平均+1126枚\nマイジャグ　平均+751枚\n東京喰種　平均+467枚",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"楽園蒲田店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-04\", \"2026-10-02\"], \"n_days\": 89, \"n_model_days\": 5028, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2202.2, \"models_over_threshold_per_day\": {\"mean\": 2.83, \"median\": 2.0, \"max\": 12}, \"candidate_models_per_day\": 56.5, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.63, \"median\": 3.0, \"max\": 13}, \"p_at_least_1\": 0.955, \"p_at_least_2\": 0.843, \"p_at_least_3\": 0.596, \"p_at_least_4\": 0.416, \"p_at_least_10\": 0.011}} / named_context: {\"as_of\": \"20261002\", \"window_days\": 30, \"n_candidates_ge3machines\": 57, \"hall_over_threshold_rate_approx\": 0.088, \"threshold\": 1800.0, \"models\": [{\"name\": \"マイジャグラーV\", \"n_machines\": 20, \"rank\": 22, \"of\": 57, \"n_days_present\": 30, \"over_threshold\": 0, \"rate\": 0.0, \"mean_score\": -54.0}, {\"name\": \"リコリス・リコイル\", \"n_machines\": 22, \"rank\": 57, \"of\": 57, \"n_days_present\": 26, \"over_threshold\": 3, \"rate\": 0.115, \"mean_score\": 201.0}, {\"name\": \"東京喰種\", \"n_machines\": 31, \"rank\": 9, \"of\": 57, \"n_days_present\": 30, \"over_threshold\": 1, \"rate\": 0.033, \"mean_score\": 247.4}, {\"name\": \"甲鉄城のカバネリ 海門(うなと)決戦\", \"n_machines\": 26, \"rank\": 15, \"of\": 57, \"n_days_present\": 30, \"over_threshold\": 8, \"rate\": 0.267, \"mean_score\": 1208.0}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "マイジャグラーV",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "リコリス・リコイル",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "東京喰種",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    }
+  ],
+  "unscored_claims": [],
+  "needs_manual_review": false,
+  "no_confirmed_machines": false,
+  "result": null,
+  "announce_digest": "b238368f89722352",
+  "provisional": true,
+  "amendments": [
+    {
+      "at": "2026-10-09T09:10:41+09:00",
+      "prev_digest": "a4c2d98face35429",
+      "reason": "楽園町田の結果発表であって予告ではない",
+      "void": true,
+      "amended_after_target": true
+    }
+  ],
+  "voided": true
+}

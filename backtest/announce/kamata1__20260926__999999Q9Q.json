@@ -1,0 +1,54 @@
+{
+  "announce_id": "kamata1__20260926__999999Q9Q",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "target_date": "20260926",
+  "source": {
+    "account": "999999Q9Q",
+    "url": "",
+    "posted_at": "2026-09-25T23:30:41+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "新章メガいちよこやん予想\n\n明日のメガいちはマルハンメガシティ合同取材。初物の取材がゆえに仕掛けは全くのパルプンテだが、マルハンプライドで中途半端な仕掛けにはして来ないはず\n\n告知の画像などはないが、6の付く日は6台並びを5箇所以上仕掛けてくる傾向あり。全を絡めた仕掛けや、機種またぎなども視野に入れておくべし。6台並び以外にも大量の単品があったりするので自分の両隣の挙動も見ておけば押し引きでかなり優位に立てるだろう。\n\n初取材→ワン\n→ファンキージャグラー？\n\nメガパーティ→パーティ→RPG\n→SAO2？\n→SAO？\n→防振り？\n\n好きを解放しよう→解放→穢れ解放\n→東京喰種？\n→Lカバネリ海門決戦？\n→マギレコ？\n\n合同取材→GO同取材\n→ゴーゴージャグラー？\n\n#マルハンメガシティ2000蒲田1",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"マルハンメガシティ2000-蒲田1\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-06-27\", \"2026-09-25\"], \"n_days\": 90, \"n_model_days\": 4285, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2192.0, \"models_over_threshold_per_day\": {\"mean\": 2.39, \"median\": 2.0, \"max\": 12}, \"candidate_models_per_day\": 47.6, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.14, \"median\": 3.0, \"max\": 14}, \"p_at_least_1\": 0.956, \"p_at_least_2\": 0.733, \"p_at_least_3\": 0.511, \"p_at_least_4\": 0.389, \"p_at_least_10\": 0.011}} / named_context: {\"as_of\": \"20260925\", \"window_days\": 30, \"n_candidates_ge3machines\": 48, \"hall_over_threshold_rate_approx\": 0.021, \"threshold\": 1800.0, \"models\": [{\"name\": \"東京喰種\", \"n_machines\": 20, \"rank\": 38, \"of\": 48, \"n_days_present\": 30, \"over_threshold\": 2, \"rate\": 0.067, \"mean_score\": 262.6}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "東京喰種",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    }
+  ],
+  "unscored_claims": [
+    {
+      "text": "ファンキージャグラー2(部分一致score=0.909)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    },
+    {
+      "text": "ミスタージャグラー(部分一致score=0.667)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    },
+    {
+      "text": "マイジャグラーV(部分一致score=0.625)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    },
+    {
+      "text": "ゴーゴージャグラー3(部分一致score=0.6)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    }
+  ],
+  "needs_manual_review": true,
+  "no_confirmed_machines": false,
+  "result": null,
+  "announce_digest": "8c959db20ecdbc0e",
+  "provisional": true
+}
