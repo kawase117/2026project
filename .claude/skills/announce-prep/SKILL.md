@@ -20,7 +20,11 @@ venv\Scripts\python.exe -m backtest.announce_autodraft draft --date <target_date
 ```
 - `scraper/twitter_monitor/state.db`の直近ツイートを`hall_aliases.plausible_halls`で追跡対象ホールに絞り込み、本文先頭の日付表記(無ければ投稿日+1)からtarget_dateを推定する。
 - **claimsはmatch_machine_namesのscore==1.0(完全部分一致)のみ自動確定する。** 略称・語呂合わせ(例:「栗→防振り？」)はscore<1.0になり`unscored_claims`に回るか、1件も無ければ`no_confirmed_machines: true`で丸ごと手動待ちにする。type は常に安全側の`model_named`固定(zentaikei_count/model_named_ratioへの型変更は人間が判断)。
-- **register は自動実行しない**(ユーザー方針: 2026-09-26に確認済み)。`.json.draft`の中身を人間が確認し、`claims`を必要なら修正した上で`.draft`拡張子を外して`backtest.announce register`に渡す。
+- **register は下書き作成の直後に自動で仮登録する**(ユーザー方針の変更: 2026-10-09)。2026-10-07・10-08分は、人の確認を待つ間にDBへ実績が入り、事前登録できなくなった。`scraper/twitter_monitor/run_daily.py` が下書きを作った直後に `backtest.announce_autodraft register --date <今日> --date <明日>` を実行し、検出できた全件を機械抽出のclaimsのまま凍結する(claims空も含む。`provisional=true`)。
+  - claimsの補完・訂正は、予告JSONを編集してから `backtest.announce amend <json> --reason "..."` で台帳に残す。**修正後のclaimsを的中率の集計に使う**。修正前の全文は台帳の旧行(`claims_detail`)に残り、対象日が終わってからの修正は `amended_after_target` で印が付く。
+  - 予告ではないもの(結果発表・別ホールの予告・店舗リスト・店長投稿)は `amend --void` で外す。仮登録は「全件」なので、毎朝この確認が要る。
+  - 対象日の実績がDBに入った後の登録は `backtest.announce register <json> --post-hoc`(または `announce_autodraft register --post-hoc`)。`late_registration=true` になり、的中率・base_rateの集計から除外する。
+  - 対象日の開店前(9時まで)の深夜投稿は予告として受理される(`posted_after_midnight`を記録)。
 - 既に登録済み・既にdraft済みのhall×target_dateはスキップする(冪等)。同一予告を二重生成しない。
 
 ## やること
