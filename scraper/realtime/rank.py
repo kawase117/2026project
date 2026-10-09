@@ -48,6 +48,7 @@ def build_ranking(
             "games": row.games,
             "rb": row.rb,
             "p_high": result["p_high"],
+            "setting_probabilities": {str(s): p for s, p in (result.get("setting_probabilities") or {}).items()},
             "confidence": result["confidence"],
             "discriminability": result["discriminability"],
             "kind": result["kind"],
@@ -98,7 +99,7 @@ def format_ranking(data):
 def format_hall_report(hall, rows, top=8):
     """1ホール分の即時報告。RB事後確率の高い順(判別可能機種のみ)。"""
     data = build_ranking(rows, top=10000)
-    ranked = data["ranked"]
+    ranked = [r for r in data["ranked"] if r["rb"]]  # RB0は情報なしなので表示しない
     stamp = max((r.observed_at for r in rows), default="")[11:16]
     estimable = sum(1 for r in ranked + data["uncertain"] if r["p_high"] is not None)
     lines = [f"\n=== {hall} (観測{stamp} / 取得{len(rows)}台 / RBで推定できた台{estimable}) ==="]
@@ -117,7 +118,7 @@ def format_final(data):
         "\n##### 総合ランキング(設定5以上の確率が高い順・RB判別可能機種) #####",
         "順位 | ホール | 台 | 機種 | G | RB | 設定5以上 | 確度",
     ]
-    for i, r in enumerate(data["ranked"], 1):
+    for i, r in enumerate((r for r in data["ranked"] if r["rb"]), 1):
         lines.append(
             f'{i} | {r["hall"]} | {r["unit"]} | {r["model"]} | {r["games"]} | {r["rb"]} | {r["p_high"]:.2f} | {r["confidence"]:.2f}'
         )
