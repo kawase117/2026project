@@ -37,7 +37,74 @@
   "unscored_claims": [],
   "needs_manual_review": true,
   "no_confirmed_machines": false,
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20261009",
+    "hall_baseline_mean_diff": 82.2,
+    "hall_n_machines": 365,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 1223.0,
+        "mean_diff": 1133.3,
+        "gratio": 1.079,
+        "n_machines": 9,
+        "rank": 7,
+        "candidate_models": 50,
+        "age_days": 121,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "東京喰種",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 1403.0,
+        "mean_diff": 1155.0,
+        "gratio": 1.215,
+        "n_machines": 20,
+        "rank": 5,
+        "candidate_models": 50,
+        "age_days": 610,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -270.1,
+        "mean_diff": -293.8,
+        "gratio": 0.919,
+        "n_machines": 16,
+        "rank": 35,
+        "candidate_models": 50,
+        "age_days": 219,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
   "announce_digest": "2af483405d7a5351",
   "provisional": true
 }

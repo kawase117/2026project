@@ -58,7 +58,120 @@
   ],
   "needs_manual_review": true,
   "no_confirmed_machines": false,
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20261009",
+    "hall_baseline_mean_diff": 158.9,
+    "hall_n_machines": 365,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "からくりサーカス",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "hit": null,
+        "note": "当日 からくりサーカス が設置3台以上の候補に無い（撤去・台数不足・表記ゆれ）"
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "からくりサーカス2",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -803.6,
+        "mean_diff": -980.0,
+        "gratio": 0.82,
+        "n_machines": 5,
+        "rank": 39,
+        "candidate_models": 48,
+        "age_days": 89,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ウルトラミラクルジャグラー",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 2863.9,
+        "mean_diff": 1725.0,
+        "gratio": 1.66,
+        "n_machines": 4,
+        "rank": 2,
+        "candidate_models": 48,
+        "age_days": 640,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "スマスロ炎炎ノ消防隊2",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -2200.1,
+        "mean_diff": -2040.0,
+        "gratio": 1.078,
+        "n_machines": 5,
+        "rank": 47,
+        "candidate_models": 48,
+        "age_days": 243,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ワールドダイスター",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 358.0,
+        "mean_diff": 333.3,
+        "gratio": 1.074,
+        "n_machines": 3,
+        "rank": 21,
+        "candidate_models": 48,
+        "age_days": 61,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "東京リベンジャーズ",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 1456.1,
+        "mean_diff": 900.0,
+        "gratio": 1.618,
+        "n_machines": 5,
+        "rank": 5,
+        "candidate_models": 48,
+        "age_days": 390,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
   "announce_digest": "77d3133e32b2599f",
   "provisional": true
 }

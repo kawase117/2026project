@@ -32,7 +32,64 @@
   "unscored_claims": [],
   "needs_manual_review": true,
   "no_confirmed_machines": false,
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20261009",
+    "hall_baseline_mean_diff": 84.7,
+    "hall_n_machines": 587,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 1,
+      "n_censored_lo": 1,
+      "machines_hi": [
+        "ミリオンゴッド‐神々の軌跡‐"
+      ],
+      "machines_lo": [
+        "東京喰種"
+      ],
+      "bounds": [
+        -5095,
+        15477
+      ]
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "化物語",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。 ヒント: 1/2系の可能性(model_named_ratioならratio指定が必要)"
+        },
+        "score": -2402.9,
+        "mean_diff": -698.0,
+        "gratio": 3.443,
+        "n_machines": 9,
+        "rank": 58,
+        "candidate_models": 59,
+        "age_days": 302,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 4564.5,
+        "mean_diff": 1656.0,
+        "gratio": 2.756,
+        "n_machines": 30,
+        "rank": 1,
+        "candidate_models": 59,
+        "age_days": 218,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": true
+      }
+    ]
+  },
   "announce_digest": "b664f9db5c0585b8",
   "provisional": true
 }

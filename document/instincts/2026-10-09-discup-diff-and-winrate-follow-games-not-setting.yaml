@@ -1,0 +1,41 @@
+---
+id: discup-diff-and-winrate-follow-games-not-setting
+trigger: "ディスクアップ(A+AT。完全攻略の機械割が設定1でも100%超)の強い曜日・DD・台を探すとき。みとやや楽園のディスクアップで、差枚・勝率・出率が良い日を『設定が高い日』と書きたくなったとき"
+confidence: 0.8
+domain: methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+---
+
+# ディスクアップの差枚と勝率は、回転数と攻略者で決まる。曜日・DDの強さはRB確率で判断する
+
+## Core claim
+ディスクアップは完全攻略の機械割が設定1でも100%を超える(ULTRAREMIX 設定1は99.3%、完全攻略で100%超)。攻略できる客が長く回した日は、設定が低くても差枚と勝率がプラスになる。差枚・勝率・出率は設定の指標にならない。強弱はRB確率で見る(設定別RB: 1/495・1/477・1/399・1/334)。
+
+## Evidence
+- n_observations: 1(みとや大森町 ディスクアップ ULTRAREMIX 745、2026-07-08〜10-07)
+- data scope: 745の1台、イベント日除外後66日。全体の平均差枚+683、勝率58%(全体でプラス)
+- metric scope: rb_count / games_normalized / diff_coins_normalized
+- 金曜は平均差枚+1,162・勝率100%・RB 1/402に見えたが、中央値5,790Gの高回転日で、周年日7/10(RB 1/222)を除くとRB 1/497(設定1〜2並み)だった
+- 回転数が3,003Gの木曜は差枚+150、5,780Gの土曜は+946と、差枚が回転数にほぼ連動
+- 金曜10/2は6,068GでRB 0回、差枚+1,833(RBが出ていないのに差枚が出た例)
+
+## Interpretation
+- 差枚は「設定×回転数×攻略度」の積で、設定だけを切り出せない
+- 勝率100%・差枚上位は、設定が高い日ではなく、攻略者が集まって回した日を指しうる
+- この機種はRBに設定差が出る(設定1と6で約1.5倍)ので、RBが主指標になる
+
+## Action
+- 曜日・DD・台番号を比べるときは、RB確率(総G÷RB回数)と95%区間を主指標にし、差枚と勝率は参考に添える
+- 「差枚+1,000超・勝率100%」を根拠に狙い目と書かない。必ず同じ日の総Gと並べる
+- 回転数が違う曜日どうしを比べるときは、総Gを併記し、可能なら5,000G以上の日だけで比べる
+- この機種のRB確率を設定に変換するときは、4設定機(1・2・5・6)に3・4を補間しない
+
+## Relation
+- related:
+  - 2026-10-02-best-of-n-unit-looks-high-by-chance
+  - 2026-10-02-low-games-big-diff-is-fluke-but-games-is-endogenous
+
+## Status
+- status: active

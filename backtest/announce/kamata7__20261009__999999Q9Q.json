@@ -57,7 +57,130 @@
   "unscored_claims": [],
   "needs_manual_review": false,
   "no_confirmed_machines": false,
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20261009",
+    "hall_baseline_mean_diff": 56.9,
+    "hall_n_machines": 715,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ウルトラミラクルジャグラー",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -50.9,
+        "mean_diff": -60.0,
+        "gratio": 0.849,
+        "n_machines": 5,
+        "rank": 35,
+        "candidate_models": 66,
+        "age_days": 459,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "スマスロ北斗の拳",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -508.4,
+        "mean_diff": -433.3,
+        "gratio": 1.173,
+        "n_machines": 9,
+        "rank": 55,
+        "candidate_models": 66,
+        "age_days": 459,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "リコリス・リコイル",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 136.5,
+        "mean_diff": 88.5,
+        "gratio": 1.543,
+        "n_machines": 26,
+        "rank": 22,
+        "candidate_models": 66,
+        "age_days": 32,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "北斗の拳 転生の章2",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -170.1,
+        "mean_diff": -260.0,
+        "gratio": 0.654,
+        "n_machines": 5,
+        "rank": 41,
+        "candidate_models": 66,
+        "age_days": 277,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "東京喰種",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 722.9,
+        "mean_diff": 792.7,
+        "gratio": 0.912,
+        "n_machines": 41,
+        "rank": 10,
+        "candidate_models": 66,
+        "age_days": 459,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "スーパーブラックジャック",
+          "note": "「おしぼり→絞り→ポーカー→SBJ？」の連想先。SBJ=スーパーブラックジャック"
+        },
+        "hit": null,
+        "note": "当日 スーパーブラックジャック が設置3台以上の候補に無い（撤去・台数不足・表記ゆれ）"
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "スーパーリオエース2",
+          "note": "「リオエース？」の連想先。DB上の機種名に補完"
+        },
+        "hit": null,
+        "note": "当日 スーパーリオエース2 が設置3台以上の候補に無い（撤去・台数不足・表記ゆれ）"
+      }
+    ]
+  },
   "announce_digest": "7d299e113685e4b7",
   "provisional": true,
   "amendments": [

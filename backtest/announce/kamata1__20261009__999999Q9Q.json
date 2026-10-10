@@ -73,7 +73,122 @@
   ],
   "needs_manual_review": false,
   "no_confirmed_machines": false,
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20261009",
+    "hall_baseline_mean_diff": -43.0,
+    "hall_n_machines": 365,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "シャーマンキング",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "hit": null,
+        "note": "当日 シャーマンキング が設置3台以上の候補に無い（撤去・台数不足・表記ゆれ）"
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "スーパーブラックジャック",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -7.0,
+        "mean_diff": -25.0,
+        "gratio": 0.28,
+        "n_machines": 4,
+        "rank": 23,
+        "candidate_models": 50,
+        "age_days": 612,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "hit": null,
+        "note": "当日 バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION が設置3台以上の候補に無い（撤去・台数不足・表記ゆれ）"
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ミスタージャグラー",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 88.6,
+        "mean_diff": 75.0,
+        "gratio": 1.181,
+        "n_machines": 4,
+        "rank": 12,
+        "candidate_models": 50,
+        "age_days": 646,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "モンキーターンV",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -25.4,
+        "mean_diff": -55.6,
+        "gratio": 0.458,
+        "n_machines": 9,
+        "rank": 24,
+        "candidate_models": 50,
+        "age_days": 646,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "獣王",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -501.2,
+        "mean_diff": -233.3,
+        "gratio": 2.148,
+        "n_machines": 3,
+        "rank": 41,
+        "candidate_models": 50,
+        "age_days": 4,
+        "age_bucket": "new",
+        "base_rate": 0.105,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "スマスロ ハナビ",
+          "note": "「うどん→ドン→スマスロハナビ？」の連想先。機械抽出は新ハナビ(0.75)に誤照合したため"
+        },
+        "hit": null,
+        "note": "当日 スマスロ ハナビ が設置3台以上の候補に無い（撤去・台数不足・表記ゆれ）"
+      }
+    ]
+  },
   "announce_digest": "cd614463a3fb6e49",
   "provisional": true,
   "amendments": [

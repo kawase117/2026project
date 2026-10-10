@@ -57,7 +57,138 @@
   "unscored_claims": [],
   "needs_manual_review": true,
   "no_confirmed_machines": false,
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20261008",
+    "hall_baseline_mean_diff": 671.3,
+    "hall_n_machines": 320,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ストリートファイター6",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -256.8,
+        "mean_diff": -460.2,
+        "gratio": 0.558,
+        "n_machines": 4,
+        "rank": 26,
+        "candidate_models": 32,
+        "age_days": 59,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "スマスロ炎炎ノ消防隊2",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 300.7,
+        "mean_diff": 232.5,
+        "gratio": 1.293,
+        "n_machines": 4,
+        "rank": 19,
+        "candidate_models": 32,
+        "age_days": 241,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "吉宗",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。 ヒント: 1/2系の可能性(model_named_ratioならratio指定が必要)"
+        },
+        "hit": null,
+        "note": "当日 吉宗 が設置3台以上の候補に無い（撤去・台数不足・表記ゆれ）"
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "彼女、お借りします",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 3922.4,
+        "mean_diff": 5264.6,
+        "gratio": 0.745,
+        "n_machines": 5,
+        "rank": 4,
+        "candidate_models": 32,
+        "age_days": 24,
+        "age_bucket": "new",
+        "base_rate": 0.105,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "戦国コレクション6",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 8375.3,
+        "mean_diff": 4968.2,
+        "gratio": 1.686,
+        "n_machines": 6,
+        "rank": 1,
+        "candidate_models": 32,
+        "age_days": 87,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "青春ブタ野郎はバニーガール先輩の夢を見ない",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 3529.2,
+        "mean_diff": 2959.2,
+        "gratio": 1.193,
+        "n_machines": 4,
+        "rank": 5,
+        "candidate_models": 32,
+        "age_days": 24,
+        "age_bucket": "new",
+        "base_rate": 0.105,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "革命機ヴァルヴレイヴ2",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 2534.2,
+        "mean_diff": 2521.2,
+        "gratio": 1.005,
+        "n_machines": 5,
+        "rank": 7,
+        "candidate_models": 32,
+        "age_days": 331,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": true
+      }
+    ]
+  },
   "announce_digest": "2a4c75d56a18dd42",
   "provisional": true
 }

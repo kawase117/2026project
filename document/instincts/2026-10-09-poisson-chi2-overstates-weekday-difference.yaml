@@ -1,0 +1,38 @@
+---
+id: poisson-chi2-overstates-weekday-difference
+trigger: "曜日別やDD別のRB確率の差を、総GとRB回数のPoissonカイ二乗で検定して『有意』と書きたくなったとき。日ごとに設定が動く機種(ディスクアップ等)の軸比較で、有意性を報告するとき"
+confidence: 0.8
+domain: methodology
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+---
+
+# 日ごとに設定が動く機種では、Poissonカイ二乗が有意性を過大に出す。日ラベルの並べ替え検定を使う
+
+## Core claim
+RB回数を総Gに比例するPoissonとして曜日間の一様性を検定すると、日ごとに設定が違うことによる過分散を無視するため、p値が小さく出すぎる。みとやのディスクアップ745では、Poissonカイ二乗でp=0.009(有意)だったのが、日ラベルを並べ替えた検定ではp=0.15(有意でない)だった。
+
+## Evidence
+- n_observations: 1(みとや大森町 ディスクアップ745、イベント日除外後66日)
+- data scope: 曜日7区分、各7〜12日分
+- metric scope: rb_count / games_normalized
+- Poissonカイ二乗(周年日除外後): p=0.009。日ラベルの並べ替え検定(5,000回): p=0.148
+- 私は最初のRB報告で「曜日全体のばらつきは有意(p=0.009)」と書き、後で並べ替え検定の値に訂正した
+
+## Interpretation
+- 日ごとの設定は、同じ日の中ではRBの相関を作る(1日の中で設定が固定)。日を単位にしないとサンプル数を水増しする
+- 実際に確かだったのは、火曜が各月とも一貫して悪いことだけで、曜日全体の差は偶然と区別できない
+
+## Action
+- 軸ごとの差の有意性は、行を日(台日)にして、軸のラベルを並べ替える検定で出す。Poissonカイ二乗は探索の目安として使い、有意と書かない
+- 「最良の曜日・DD」を選んだときは、最良値の並べ替え分布(最大/最小統計)と比べる
+- 報告に有意性を書くときは、どの検定かを一緒に書く
+
+## Relation
+- related:
+  - 2026-10-02-best-of-n-unit-looks-high-by-chance
+  - 2026-10-03-band-conditioned-oe-biased-on-traffic-axes
+
+## Status
+- status: active
