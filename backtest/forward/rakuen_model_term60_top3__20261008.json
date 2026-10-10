@@ -1,0 +1,560 @@
+{
+  "rule_id": "rakuen_model_term60_top3",
+  "hall": "楽園蒲田店",
+  "freeze_hash": "8956697aae9be829",
+  "target_date": "20261008",
+  "data_asof": "20261007",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-08-09",
+    "2026-10-08"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +125 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 659.161544,
+      "history_rows": 646,
+      "machines": [
+        1017,
+        1018,
+        1019,
+        1020,
+        1021,
+        1022,
+        1023,
+        1024,
+        1025,
+        1026,
+        1027,
+        1028,
+        1029,
+        1030,
+        1031,
+        1032,
+        1033,
+        1034,
+        1035,
+        1036,
+        1037,
+        1038,
+        1039,
+        1040,
+        1041,
+        1042,
+        1043,
+        1044,
+        1045,
+        1046
+      ]
+    },
+    {
+      "machine_name": "チバリヨ2",
+      "score": 591.577197,
+      "history_rows": 46,
+      "machines": [
+        3185,
+        3186,
+        3187
+      ]
+    },
+    {
+      "machine_name": "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION",
+      "score": 497.135167,
+      "history_rows": 189,
+      "machines": [
+        2021,
+        2022,
+        2023,
+        2024
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 1017,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 659.161544,
+      "history_days": 646
+    },
+    {
+      "machine_number": 1018,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 659.161544,
+      "history_days": 646
+    },
+    {
+      "machine_number": 1019,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 659.161544,
+      "history_days": 646
+    },
+    {
+      "machine_number": 1020,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 659.161544,
+      "history_days": 646
+    },
+    {
+      "machine_number": 1021,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 659.161544,
+      "history_days": 646
+    },
+    {
+      "machine_number": 1022,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 659.161544,
+      "history_days": 646
+    },
+    {
+      "machine_number": 1023,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 659.161544,
+      "history_days": 646
+    },
+    {
+      "machine_number": 1024,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 659.161544,
+      "history_days": 646
+    },
+    {
+      "machine_number": 1025,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 659.161544,
+      "history_days": 646
+    },
+    {
+      "machine_number": 1026,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 659.161544,
+      "history_days": 646
+    },
+    {
+      "machine_number": 1027,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 659.161544,
+      "history_days": 646
+    },
+    {
+      "machine_number": 1028,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 659.161544,
+      "history_days": 646
+    },
+    {
+      "machine_number": 1029,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 659.161544,
+      "history_days": 646
+    },
+    {
+      "machine_number": 1030,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 659.161544,
+      "history_days": 646
+    },
+    {
+      "machine_number": 1031,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 659.161544,
+      "history_days": 646
+    },
+    {
+      "machine_number": 1032,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 659.161544,
+      "history_days": 646
+    },
+    {
+      "machine_number": 1033,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 659.161544,
+      "history_days": 646
+    },
+    {
+      "machine_number": 1034,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 659.161544,
+      "history_days": 646
+    },
+    {
+      "machine_number": 1035,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 659.161544,
+      "history_days": 646
+    },
+    {
+      "machine_number": 1036,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 659.161544,
+      "history_days": 646
+    },
+    {
+      "machine_number": 1037,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 659.161544,
+      "history_days": 646
+    },
+    {
+      "machine_number": 1038,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 659.161544,
+      "history_days": 646
+    },
+    {
+      "machine_number": 1039,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 659.161544,
+      "history_days": 646
+    },
+    {
+      "machine_number": 1040,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 659.161544,
+      "history_days": 646
+    },
+    {
+      "machine_number": 1041,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 659.161544,
+      "history_days": 646
+    },
+    {
+      "machine_number": 1042,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 659.161544,
+      "history_days": 646
+    },
+    {
+      "machine_number": 1043,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 659.161544,
+      "history_days": 646
+    },
+    {
+      "machine_number": 1044,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 659.161544,
+      "history_days": 646
+    },
+    {
+      "machine_number": 1045,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 659.161544,
+      "history_days": 646
+    },
+    {
+      "machine_number": 1046,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 659.161544,
+      "history_days": 646
+    },
+    {
+      "machine_number": 3185,
+      "machine_name": "チバリヨ2",
+      "score": 591.577197,
+      "history_days": 46
+    },
+    {
+      "machine_number": 3186,
+      "machine_name": "チバリヨ2",
+      "score": 591.577197,
+      "history_days": 46
+    },
+    {
+      "machine_number": 3187,
+      "machine_name": "チバリヨ2",
+      "score": 591.577197,
+      "history_days": 46
+    },
+    {
+      "machine_number": 2021,
+      "machine_name": "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION",
+      "score": 497.135167,
+      "history_days": 189
+    },
+    {
+      "machine_number": 2022,
+      "machine_name": "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION",
+      "score": 497.135167,
+      "history_days": 189
+    },
+    {
+      "machine_number": 2023,
+      "machine_name": "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION",
+      "score": 497.135167,
+      "history_days": 189
+    },
+    {
+      "machine_number": 2024,
+      "machine_name": "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION",
+      "score": 497.135167,
+      "history_days": 189
+    }
+  ],
+  "result": {
+    "scored_with_hash": "8956697aae9be829",
+    "day_baseline": 60.9,
+    "universe_size": 587,
+    "picks_realized": [
+      {
+        "machine_number": 1017,
+        "games": 8044.0,
+        "diff": 2096.0,
+        "edge": 2035.1090289608178
+      },
+      {
+        "machine_number": 1018,
+        "games": 5888.0,
+        "diff": -428.0,
+        "edge": -488.89097103918226
+      },
+      {
+        "machine_number": 1019,
+        "games": 3096.0,
+        "diff": -1476.0,
+        "edge": -1536.8909710391822
+      },
+      {
+        "machine_number": 1020,
+        "games": 7809.0,
+        "diff": 1953.0,
+        "edge": 1892.1090289608178
+      },
+      {
+        "machine_number": 1021,
+        "games": 3832.0,
+        "diff": -666.0,
+        "edge": -726.8909710391823
+      },
+      {
+        "machine_number": 1022,
+        "games": 7725.0,
+        "diff": 5286.0,
+        "edge": 5225.109028960817
+      },
+      {
+        "machine_number": 1023,
+        "games": 8744.0,
+        "diff": 1143.0,
+        "edge": 1082.1090289608178
+      },
+      {
+        "machine_number": 1024,
+        "games": 2809.0,
+        "diff": -3047.0,
+        "edge": -3107.890971039182
+      },
+      {
+        "machine_number": 1025,
+        "games": 5234.0,
+        "diff": 286.0,
+        "edge": 225.1090289608177
+      },
+      {
+        "machine_number": 1026,
+        "games": 8140.0,
+        "diff": 905.0,
+        "edge": 844.1090289608177
+      },
+      {
+        "machine_number": 1027,
+        "games": 4702.0,
+        "diff": -333.0,
+        "edge": -393.89097103918226
+      },
+      {
+        "machine_number": 1028,
+        "games": 6566.0,
+        "diff": 1619.0,
+        "edge": 1558.1090289608178
+      },
+      {
+        "machine_number": 1029,
+        "games": 3326.0,
+        "diff": -1523.0,
+        "edge": -1583.8909710391822
+      },
+      {
+        "machine_number": 1030,
+        "games": 5912.0,
+        "diff": -1523.0,
+        "edge": -1583.8909710391822
+      },
+      {
+        "machine_number": 1031,
+        "games": 8182.0,
+        "diff": 572.0,
+        "edge": 511.10902896081774
+      },
+      {
+        "machine_number": 1032,
+        "games": 7827.0,
+        "diff": -1619.0,
+        "edge": -1679.8909710391822
+      },
+      {
+        "machine_number": 1033,
+        "games": 8173.0,
+        "diff": 4477.0,
+        "edge": 4416.109028960817
+      },
+      {
+        "machine_number": 1034,
+        "games": 4989.0,
+        "diff": -1285.0,
+        "edge": -1345.8909710391822
+      },
+      {
+        "machine_number": 1035,
+        "games": 7986.0,
+        "diff": 3858.0,
+        "edge": 3797.109028960818
+      },
+      {
+        "machine_number": 1036,
+        "games": 6434.0,
+        "diff": -190.0,
+        "edge": -250.8909710391823
+      },
+      {
+        "machine_number": 1037,
+        "games": 4621.0,
+        "diff": 334.0,
+        "edge": 273.10902896081774
+      },
+      {
+        "machine_number": 1038,
+        "games": 3225.0,
+        "diff": -2857.0,
+        "edge": -2917.890971039182
+      },
+      {
+        "machine_number": 1039,
+        "games": 5525.0,
+        "diff": -3095.0,
+        "edge": -3155.890971039182
+      },
+      {
+        "machine_number": 1040,
+        "games": 7890.0,
+        "diff": 5334.0,
+        "edge": 5273.109028960817
+      },
+      {
+        "machine_number": 1041,
+        "games": 9448.0,
+        "diff": 4096.0,
+        "edge": 4035.109028960818
+      },
+      {
+        "machine_number": 1042,
+        "games": 6366.0,
+        "diff": -2523.0,
+        "edge": -2583.890971039182
+      },
+      {
+        "machine_number": 1043,
+        "games": 2880.0,
+        "diff": -714.0,
+        "edge": -774.8909710391823
+      },
+      {
+        "machine_number": 1044,
+        "games": 6777.0,
+        "diff": -714.0,
+        "edge": -774.8909710391823
+      },
+      {
+        "machine_number": 1045,
+        "games": 2802.0,
+        "diff": -714.0,
+        "edge": -774.8909710391823
+      },
+      {
+        "machine_number": 1046,
+        "games": 2266.0,
+        "diff": 715.0,
+        "edge": 654.1090289608177
+      },
+      {
+        "machine_number": 2021,
+        "games": 1749.0,
+        "diff": 1048.0,
+        "edge": 987.1090289608177
+      },
+      {
+        "machine_number": 2022,
+        "games": 341.0,
+        "diff": -571.0,
+        "edge": -631.8909710391823
+      },
+      {
+        "machine_number": 2023,
+        "games": 332.0,
+        "diff": -238.0,
+        "edge": -298.89097103918226
+      },
+      {
+        "machine_number": 2024,
+        "games": 1360.0,
+        "diff": 1619.0,
+        "edge": 1558.1090289608178
+      },
+      {
+        "machine_number": 3185,
+        "games": 373.0,
+        "diff": -428.0,
+        "edge": -488.89097103918226
+      },
+      {
+        "machine_number": 3186,
+        "games": 252.0,
+        "diff": -285.0,
+        "edge": -345.89097103918226
+      },
+      {
+        "machine_number": 3187,
+        "games": 1503.0,
+        "diff": -2523.0,
+        "edge": -2583.890971039182
+      }
+    ],
+    "mean_diff_per_pick": 232.1,
+    "mean_edge_per_pick": 171.2,
+    "missing_machines": [],
+    "rb_perspective": null,
+    "model_perspective": [
+      {
+        "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+        "n_machines": 30,
+        "n_realized": 30,
+        "sum_diff": 9967.0,
+        "sum_games": 177218.0,
+        "mean_diff": 332.2
+      },
+      {
+        "machine_name": "チバリヨ2",
+        "n_machines": 3,
+        "n_realized": 3,
+        "sum_diff": -3236.0,
+        "sum_games": 2128.0,
+        "mean_diff": -1078.7
+      },
+      {
+        "machine_name": "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION",
+        "n_machines": 4,
+        "n_realized": 4,
+        "sum_diff": 1858.0,
+        "sum_games": 3782.0,
+        "mean_diff": 464.5
+      }
+    ]
+  },
+  "plan_digest": "8a18f8e7f9c6b413"
+}

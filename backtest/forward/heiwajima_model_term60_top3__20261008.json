@@ -1,0 +1,222 @@
+{
+  "rule_id": "heiwajima_model_term60_top3",
+  "hall": "レイトギャップ平和島",
+  "freeze_hash": "80fab02ec0c44816",
+  "target_date": "20261008",
+  "data_asof": "20261007",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-08-09",
+    "2026-10-08"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +81 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "新鬼武者3",
+      "score": 373.19944,
+      "history_rows": 80,
+      "machines": [
+        898,
+        899,
+        900
+      ]
+    },
+    {
+      "machine_name": "化物語",
+      "score": 290.637163,
+      "history_rows": 200,
+      "machines": [
+        929,
+        930,
+        931,
+        932
+      ]
+    },
+    {
+      "machine_name": "戦国コレクション6",
+      "score": 259.486631,
+      "history_rows": 221,
+      "machines": [
+        913,
+        914,
+        915,
+        916
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 898,
+      "machine_name": "新鬼武者3",
+      "score": 373.19944,
+      "history_days": 80
+    },
+    {
+      "machine_number": 899,
+      "machine_name": "新鬼武者3",
+      "score": 373.19944,
+      "history_days": 80
+    },
+    {
+      "machine_number": 900,
+      "machine_name": "新鬼武者3",
+      "score": 373.19944,
+      "history_days": 80
+    },
+    {
+      "machine_number": 929,
+      "machine_name": "化物語",
+      "score": 290.637163,
+      "history_days": 200
+    },
+    {
+      "machine_number": 930,
+      "machine_name": "化物語",
+      "score": 290.637163,
+      "history_days": 200
+    },
+    {
+      "machine_number": 931,
+      "machine_name": "化物語",
+      "score": 290.637163,
+      "history_days": 200
+    },
+    {
+      "machine_number": 932,
+      "machine_name": "化物語",
+      "score": 290.637163,
+      "history_days": 200
+    },
+    {
+      "machine_number": 913,
+      "machine_name": "戦国コレクション6",
+      "score": 259.486631,
+      "history_days": 221
+    },
+    {
+      "machine_number": 914,
+      "machine_name": "戦国コレクション6",
+      "score": 259.486631,
+      "history_days": 221
+    },
+    {
+      "machine_number": 915,
+      "machine_name": "戦国コレクション6",
+      "score": 259.486631,
+      "history_days": 221
+    },
+    {
+      "machine_number": 916,
+      "machine_name": "戦国コレクション6",
+      "score": 259.486631,
+      "history_days": 221
+    }
+  ],
+  "result": {
+    "scored_with_hash": "80fab02ec0c44816",
+    "day_baseline": 38.2,
+    "universe_size": 421,
+    "picks_realized": [
+      {
+        "machine_number": 929,
+        "games": 0.0,
+        "diff": 0.0,
+        "edge": -38.17577197149644
+      },
+      {
+        "machine_number": 930,
+        "games": 119.0,
+        "diff": -188.0,
+        "edge": -226.17577197149643
+      },
+      {
+        "machine_number": 931,
+        "games": 805.0,
+        "diff": 48.0,
+        "edge": 9.824228028503562
+      },
+      {
+        "machine_number": 932,
+        "games": 1213.0,
+        "diff": 1514.0,
+        "edge": 1475.8242280285035
+      },
+      {
+        "machine_number": 913,
+        "games": 0.0,
+        "diff": 0.0,
+        "edge": -38.17577197149644
+      },
+      {
+        "machine_number": 914,
+        "games": 0.0,
+        "diff": 0.0,
+        "edge": -38.17577197149644
+      },
+      {
+        "machine_number": 915,
+        "games": 6038.0,
+        "diff": 3191.0,
+        "edge": 3152.8242280285035
+      },
+      {
+        "machine_number": 916,
+        "games": 1393.0,
+        "diff": -1254.0,
+        "edge": -1292.1757719714965
+      },
+      {
+        "machine_number": 898,
+        "games": 3912.0,
+        "diff": 261.0,
+        "edge": 222.82422802850357
+      },
+      {
+        "machine_number": 899,
+        "games": 2645.0,
+        "diff": -323.0,
+        "edge": -361.17577197149643
+      },
+      {
+        "machine_number": 900,
+        "games": 0.0,
+        "diff": 0.0,
+        "edge": -38.17577197149644
+      }
+    ],
+    "mean_diff_per_pick": 295.4,
+    "mean_edge_per_pick": 257.2,
+    "missing_machines": [],
+    "rb_perspective": null,
+    "model_perspective": [
+      {
+        "machine_name": "新鬼武者3",
+        "n_machines": 3,
+        "n_realized": 3,
+        "sum_diff": -62.0,
+        "sum_games": 6557.0,
+        "mean_diff": -20.7
+      },
+      {
+        "machine_name": "化物語",
+        "n_machines": 4,
+        "n_realized": 4,
+        "sum_diff": 1374.0,
+        "sum_games": 2137.0,
+        "mean_diff": 343.5
+      },
+      {
+        "machine_name": "戦国コレクション6",
+        "n_machines": 4,
+        "n_realized": 4,
+        "sum_diff": 1937.0,
+        "sum_games": 7431.0,
+        "mean_diff": 484.2
+      }
+    ]
+  },
+  "plan_digest": "2593ced88f7387a1"
+}

@@ -1,0 +1,482 @@
+{
+  "rule_id": "kamata1_model_term60_top3",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "freeze_hash": "bb185b622fae47b2",
+  "target_date": "20261009",
+  "data_asof": "20261008",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-08-10",
+    "2026-10-09"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +187 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 631.813752,
+      "history_rows": 132,
+      "machines": [
+        2020,
+        2416,
+        2417,
+        2418,
+        2419
+      ]
+    },
+    {
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 316.992604,
+      "history_rows": 918,
+      "machines": [
+        2044,
+        2045,
+        2046,
+        2047,
+        2048,
+        2049,
+        2050,
+        2051,
+        2052,
+        2053,
+        2054,
+        2055,
+        2056,
+        2057,
+        2058,
+        2059
+      ]
+    },
+    {
+      "machine_name": "モンスターハンターライズ",
+      "score": 239.538039,
+      "history_rows": 87,
+      "machines": [
+        2117,
+        2118,
+        2119,
+        2120,
+        2143,
+        2144,
+        2145,
+        2146,
+        2427,
+        2429
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 2020,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 631.813752,
+      "history_days": 132
+    },
+    {
+      "machine_number": 2416,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 631.813752,
+      "history_days": 132
+    },
+    {
+      "machine_number": 2417,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 631.813752,
+      "history_days": 132
+    },
+    {
+      "machine_number": 2418,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 631.813752,
+      "history_days": 132
+    },
+    {
+      "machine_number": 2419,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 631.813752,
+      "history_days": 132
+    },
+    {
+      "machine_number": 2044,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 316.992604,
+      "history_days": 918
+    },
+    {
+      "machine_number": 2045,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 316.992604,
+      "history_days": 918
+    },
+    {
+      "machine_number": 2046,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 316.992604,
+      "history_days": 918
+    },
+    {
+      "machine_number": 2047,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 316.992604,
+      "history_days": 918
+    },
+    {
+      "machine_number": 2048,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 316.992604,
+      "history_days": 918
+    },
+    {
+      "machine_number": 2049,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 316.992604,
+      "history_days": 918
+    },
+    {
+      "machine_number": 2050,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 316.992604,
+      "history_days": 918
+    },
+    {
+      "machine_number": 2051,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 316.992604,
+      "history_days": 918
+    },
+    {
+      "machine_number": 2052,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 316.992604,
+      "history_days": 918
+    },
+    {
+      "machine_number": 2053,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 316.992604,
+      "history_days": 918
+    },
+    {
+      "machine_number": 2054,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 316.992604,
+      "history_days": 918
+    },
+    {
+      "machine_number": 2055,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 316.992604,
+      "history_days": 918
+    },
+    {
+      "machine_number": 2056,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 316.992604,
+      "history_days": 918
+    },
+    {
+      "machine_number": 2057,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 316.992604,
+      "history_days": 918
+    },
+    {
+      "machine_number": 2058,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 316.992604,
+      "history_days": 918
+    },
+    {
+      "machine_number": 2059,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 316.992604,
+      "history_days": 918
+    },
+    {
+      "machine_number": 2117,
+      "machine_name": "モンスターハンターライズ",
+      "score": 239.538039,
+      "history_days": 87
+    },
+    {
+      "machine_number": 2118,
+      "machine_name": "モンスターハンターライズ",
+      "score": 239.538039,
+      "history_days": 87
+    },
+    {
+      "machine_number": 2119,
+      "machine_name": "モンスターハンターライズ",
+      "score": 239.538039,
+      "history_days": 87
+    },
+    {
+      "machine_number": 2120,
+      "machine_name": "モンスターハンターライズ",
+      "score": 239.538039,
+      "history_days": 87
+    },
+    {
+      "machine_number": 2143,
+      "machine_name": "モンスターハンターライズ",
+      "score": 239.538039,
+      "history_days": 87
+    },
+    {
+      "machine_number": 2144,
+      "machine_name": "モンスターハンターライズ",
+      "score": 239.538039,
+      "history_days": 87
+    },
+    {
+      "machine_number": 2145,
+      "machine_name": "モンスターハンターライズ",
+      "score": 239.538039,
+      "history_days": 87
+    },
+    {
+      "machine_number": 2146,
+      "machine_name": "モンスターハンターライズ",
+      "score": 239.538039,
+      "history_days": 87
+    },
+    {
+      "machine_number": 2427,
+      "machine_name": "モンスターハンターライズ",
+      "score": 239.538039,
+      "history_days": 87
+    },
+    {
+      "machine_number": 2429,
+      "machine_name": "モンスターハンターライズ",
+      "score": 239.538039,
+      "history_days": 87
+    }
+  ],
+  "result": {
+    "scored_with_hash": "bb185b622fae47b2",
+    "day_baseline": -43.0,
+    "universe_size": 365,
+    "picks_realized": [
+      {
+        "machine_number": 2044,
+        "games": 264.0,
+        "diff": -100.0,
+        "edge": -56.986301369863014
+      },
+      {
+        "machine_number": 2045,
+        "games": 17.0,
+        "diff": 0.0,
+        "edge": 43.013698630136986
+      },
+      {
+        "machine_number": 2046,
+        "games": 497.0,
+        "diff": -500.0,
+        "edge": -456.986301369863
+      },
+      {
+        "machine_number": 2047,
+        "games": 302.0,
+        "diff": 0.0,
+        "edge": 43.013698630136986
+      },
+      {
+        "machine_number": 2048,
+        "games": 327.0,
+        "diff": -200.0,
+        "edge": -156.986301369863
+      },
+      {
+        "machine_number": 2049,
+        "games": 0.0,
+        "diff": 0.0,
+        "edge": 43.013698630136986
+      },
+      {
+        "machine_number": 2050,
+        "games": 1558.0,
+        "diff": 1400.0,
+        "edge": 1443.013698630137
+      },
+      {
+        "machine_number": 2051,
+        "games": 1345.0,
+        "diff": 900.0,
+        "edge": 943.013698630137
+      },
+      {
+        "machine_number": 2052,
+        "games": 0.0,
+        "diff": 0.0,
+        "edge": 43.013698630136986
+      },
+      {
+        "machine_number": 2053,
+        "games": 334.0,
+        "diff": -200.0,
+        "edge": -156.986301369863
+      },
+      {
+        "machine_number": 2054,
+        "games": 631.0,
+        "diff": -400.0,
+        "edge": -356.986301369863
+      },
+      {
+        "machine_number": 2055,
+        "games": 491.0,
+        "diff": -400.0,
+        "edge": -356.986301369863
+      },
+      {
+        "machine_number": 2056,
+        "games": 617.0,
+        "diff": -400.0,
+        "edge": -356.986301369863
+      },
+      {
+        "machine_number": 2057,
+        "games": 1478.0,
+        "diff": 0.0,
+        "edge": 43.013698630136986
+      },
+      {
+        "machine_number": 2058,
+        "games": 707.0,
+        "diff": -300.0,
+        "edge": -256.986301369863
+      },
+      {
+        "machine_number": 2059,
+        "games": 1159.0,
+        "diff": 200.0,
+        "edge": 243.013698630137
+      },
+      {
+        "machine_number": 2117,
+        "games": 39.0,
+        "diff": 700.0,
+        "edge": 743.013698630137
+      },
+      {
+        "machine_number": 2118,
+        "games": 0.0,
+        "diff": 0.0,
+        "edge": 43.013698630136986
+      },
+      {
+        "machine_number": 2119,
+        "games": 140.0,
+        "diff": 0.0,
+        "edge": 43.013698630136986
+      },
+      {
+        "machine_number": 2120,
+        "games": 2580.0,
+        "diff": -1900.0,
+        "edge": -1856.986301369863
+      },
+      {
+        "machine_number": 2143,
+        "games": 683.0,
+        "diff": -100.0,
+        "edge": -56.986301369863014
+      },
+      {
+        "machine_number": 2144,
+        "games": 1312.0,
+        "diff": -600.0,
+        "edge": -556.986301369863
+      },
+      {
+        "machine_number": 2145,
+        "games": 0.0,
+        "diff": 0.0,
+        "edge": 43.013698630136986
+      },
+      {
+        "machine_number": 2146,
+        "games": 185.0,
+        "diff": -100.0,
+        "edge": -56.986301369863014
+      },
+      {
+        "machine_number": 2427,
+        "games": 901.0,
+        "diff": -800.0,
+        "edge": -756.986301369863
+      },
+      {
+        "machine_number": 2429,
+        "games": 1667.0,
+        "diff": 8200.0,
+        "edge": 8243.013698630137
+      },
+      {
+        "machine_number": 2020,
+        "games": 1288.0,
+        "diff": 2200.0,
+        "edge": 2243.013698630137
+      },
+      {
+        "machine_number": 2416,
+        "games": 285.0,
+        "diff": 400.0,
+        "edge": 443.013698630137
+      },
+      {
+        "machine_number": 2417,
+        "games": 2070.0,
+        "diff": 600.0,
+        "edge": 643.013698630137
+      },
+      {
+        "machine_number": 2418,
+        "games": 311.0,
+        "diff": -300.0,
+        "edge": -256.986301369863
+      },
+      {
+        "machine_number": 2419,
+        "games": 484.0,
+        "diff": -300.0,
+        "edge": -256.986301369863
+      }
+    ],
+    "mean_diff_per_pick": 258.1,
+    "mean_edge_per_pick": 301.1,
+    "missing_machines": [],
+    "rb_perspective": null,
+    "model_perspective": [
+      {
+        "machine_name": "スマスロ炎炎ノ消防隊2",
+        "n_machines": 5,
+        "n_realized": 5,
+        "sum_diff": 2600.0,
+        "sum_games": 4438.0,
+        "mean_diff": 520.0
+      },
+      {
+        "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+        "n_machines": 16,
+        "n_realized": 16,
+        "sum_diff": 0.0,
+        "sum_games": 9727.0,
+        "mean_diff": 0.0
+      },
+      {
+        "machine_name": "モンスターハンターライズ",
+        "n_machines": 10,
+        "n_realized": 10,
+        "sum_diff": 5400.0,
+        "sum_games": 7507.0,
+        "mean_diff": 540.0
+      }
+    ]
+  },
+  "plan_digest": "8252579f68a4057f"
+}

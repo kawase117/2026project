@@ -1,0 +1,67 @@
+{
+  "rule_id": "k7_at_histdiff_top3",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "freeze_hash": "71526fa786ee4e6e",
+  "target_date": "20261009",
+  "data_asof": "20261008",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-09-09",
+    "2026-10-09"
+  ],
+  "score": "hist_mean_diff",
+  "selection_unit": "machine",
+  "success_criterion": "この主張は FINDINGS 追試1 で既に walk-forward 計測済みのため、バックテストは再現確認にすぎず採否根拠にしない。判定はフォワードのみ。フォワード30エントリー日を経過した時点で edge 平均が +300枚/台 以上かつ 95%CI 下限 > 0 であること。満たさなければ破棄し、AT系スコアの派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "picks": [
+    {
+      "machine_number": 2026,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 3953.333333,
+      "history_days": 30
+    },
+    {
+      "machine_number": 3209,
+      "machine_name": "東京喰種",
+      "score": 2427.272727,
+      "history_days": 11
+    },
+    {
+      "machine_number": 2318,
+      "machine_name": "いざ！番長",
+      "score": 2305.263158,
+      "history_days": 19
+    }
+  ],
+  "result": {
+    "scored_with_hash": "71526fa786ee4e6e",
+    "day_baseline": 46.2,
+    "universe_size": 483,
+    "picks_realized": [
+      {
+        "machine_number": 2026,
+        "games": 5449.0,
+        "diff": 3400.0,
+        "edge": 3353.8302277432713
+      },
+      {
+        "machine_number": 3209,
+        "games": 0.0,
+        "diff": 0.0,
+        "edge": -46.16977225672878
+      },
+      {
+        "machine_number": 2318,
+        "games": 2657.0,
+        "diff": -2900.0,
+        "edge": -2946.1697722567287
+      }
+    ],
+    "mean_diff_per_pick": 166.7,
+    "mean_edge_per_pick": 120.5,
+    "missing_machines": [],
+    "rb_perspective": null,
+    "model_perspective": null
+  },
+  "plan_digest": "36fd5639fb5b2d19"
+}

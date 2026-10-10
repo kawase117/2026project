@@ -1,0 +1,67 @@
+{
+  "rule_id": "k7_at_histdiff_ex2026_top3",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "freeze_hash": "c8c26c0fb1179bcb",
+  "target_date": "20261005",
+  "data_asof": "20261004",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-09-05",
+    "2026-10-05"
+  ],
+  "score": "hist_mean_diff",
+  "selection_unit": "machine",
+  "success_criterion": "判定はフォワードのみ。フォワード30エントリー日を経過した時点で edge 平均が +300枚/台 以上かつ 95%CI 下限 > 0 であること。満たさなければ『AT履歴差枚による台選択』は破棄し、AT系スコアの派生はこの1本で打ち止めとする（元ルールの success_criterion をそのまま引き継ぐ。除外以外は一切変えていない）。",
+  "is_dry_run": false,
+  "picks": [
+    {
+      "machine_number": 2318,
+      "machine_name": "いざ！番長",
+      "score": 2609.52381,
+      "history_days": 21
+    },
+    {
+      "machine_number": 2101,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 2014.285714,
+      "history_days": 21
+    },
+    {
+      "machine_number": 2075,
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "score": 1884.0,
+      "history_days": 25
+    }
+  ],
+  "result": {
+    "scored_with_hash": "c8c26c0fb1179bcb",
+    "day_baseline": 194.6,
+    "universe_size": 483,
+    "picks_realized": [
+      {
+        "machine_number": 2101,
+        "games": 832.0,
+        "diff": -1000.0,
+        "edge": -1194.6169772256728
+      },
+      {
+        "machine_number": 2075,
+        "games": 2513.0,
+        "diff": -300.0,
+        "edge": -494.6169772256729
+      },
+      {
+        "machine_number": 2318,
+        "games": 481.0,
+        "diff": -600.0,
+        "edge": -794.6169772256728
+      }
+    ],
+    "mean_diff_per_pick": -633.3,
+    "mean_edge_per_pick": -828.0,
+    "missing_machines": [],
+    "rb_perspective": null,
+    "model_perspective": null
+  },
+  "plan_digest": "54285cdbb0b0d336"
+}

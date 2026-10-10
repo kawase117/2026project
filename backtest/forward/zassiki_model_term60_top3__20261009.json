@@ -1,0 +1,404 @@
+{
+  "rule_id": "zassiki_model_term60_top3",
+  "hall": "ザ-シティ-ベルシティ雑色店",
+  "freeze_hash": "c19f10b6e683a454",
+  "target_date": "20261009",
+  "data_asof": "20261008",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-08-10",
+    "2026-10-09"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +87 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 339.2697,
+      "history_rows": 329,
+      "machines": [
+        873,
+        874,
+        875,
+        876,
+        877,
+        878
+      ]
+    },
+    {
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 258.258375,
+      "history_rows": 91,
+      "machines": [
+        885,
+        886,
+        887,
+        888
+      ]
+    },
+    {
+      "machine_name": "マイジャグラーV",
+      "score": 68.585358,
+      "history_rows": 896,
+      "machines": [
+        761,
+        762,
+        763,
+        764,
+        765,
+        781,
+        782,
+        783,
+        784,
+        785,
+        786,
+        787,
+        788,
+        789,
+        790
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 873,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 339.2697,
+      "history_days": 329
+    },
+    {
+      "machine_number": 874,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 339.2697,
+      "history_days": 329
+    },
+    {
+      "machine_number": 875,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 339.2697,
+      "history_days": 329
+    },
+    {
+      "machine_number": 876,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 339.2697,
+      "history_days": 329
+    },
+    {
+      "machine_number": 877,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 339.2697,
+      "history_days": 329
+    },
+    {
+      "machine_number": 878,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 339.2697,
+      "history_days": 329
+    },
+    {
+      "machine_number": 885,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 258.258375,
+      "history_days": 91
+    },
+    {
+      "machine_number": 886,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 258.258375,
+      "history_days": 91
+    },
+    {
+      "machine_number": 887,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 258.258375,
+      "history_days": 91
+    },
+    {
+      "machine_number": 888,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 258.258375,
+      "history_days": 91
+    },
+    {
+      "machine_number": 761,
+      "machine_name": "マイジャグラーV",
+      "score": 68.585358,
+      "history_days": 896
+    },
+    {
+      "machine_number": 762,
+      "machine_name": "マイジャグラーV",
+      "score": 68.585358,
+      "history_days": 896
+    },
+    {
+      "machine_number": 763,
+      "machine_name": "マイジャグラーV",
+      "score": 68.585358,
+      "history_days": 896
+    },
+    {
+      "machine_number": 764,
+      "machine_name": "マイジャグラーV",
+      "score": 68.585358,
+      "history_days": 896
+    },
+    {
+      "machine_number": 765,
+      "machine_name": "マイジャグラーV",
+      "score": 68.585358,
+      "history_days": 896
+    },
+    {
+      "machine_number": 781,
+      "machine_name": "マイジャグラーV",
+      "score": 68.585358,
+      "history_days": 896
+    },
+    {
+      "machine_number": 782,
+      "machine_name": "マイジャグラーV",
+      "score": 68.585358,
+      "history_days": 896
+    },
+    {
+      "machine_number": 783,
+      "machine_name": "マイジャグラーV",
+      "score": 68.585358,
+      "history_days": 896
+    },
+    {
+      "machine_number": 784,
+      "machine_name": "マイジャグラーV",
+      "score": 68.585358,
+      "history_days": 896
+    },
+    {
+      "machine_number": 785,
+      "machine_name": "マイジャグラーV",
+      "score": 68.585358,
+      "history_days": 896
+    },
+    {
+      "machine_number": 786,
+      "machine_name": "マイジャグラーV",
+      "score": 68.585358,
+      "history_days": 896
+    },
+    {
+      "machine_number": 787,
+      "machine_name": "マイジャグラーV",
+      "score": 68.585358,
+      "history_days": 896
+    },
+    {
+      "machine_number": 788,
+      "machine_name": "マイジャグラーV",
+      "score": 68.585358,
+      "history_days": 896
+    },
+    {
+      "machine_number": 789,
+      "machine_name": "マイジャグラーV",
+      "score": 68.585358,
+      "history_days": 896
+    },
+    {
+      "machine_number": 790,
+      "machine_name": "マイジャグラーV",
+      "score": 68.585358,
+      "history_days": 896
+    }
+  ],
+  "result": {
+    "scored_with_hash": "c19f10b6e683a454",
+    "day_baseline": -167.8,
+    "universe_size": 128,
+    "picks_realized": [
+      {
+        "machine_number": 761,
+        "games": 5527.0,
+        "diff": 2143.0,
+        "edge": 2310.8359375
+      },
+      {
+        "machine_number": 762,
+        "games": 2080.0,
+        "diff": -471.0,
+        "edge": -303.1640625
+      },
+      {
+        "machine_number": 763,
+        "games": 3509.0,
+        "diff": -674.0,
+        "edge": -506.1640625
+      },
+      {
+        "machine_number": 764,
+        "games": 433.0,
+        "diff": -57.0,
+        "edge": 110.8359375
+      },
+      {
+        "machine_number": 765,
+        "games": 2174.0,
+        "diff": -1591.0,
+        "edge": -1423.1640625
+      },
+      {
+        "machine_number": 781,
+        "games": 3398.0,
+        "diff": 977.0,
+        "edge": 1144.8359375
+      },
+      {
+        "machine_number": 782,
+        "games": 2715.0,
+        "diff": -886.0,
+        "edge": -718.1640625
+      },
+      {
+        "machine_number": 783,
+        "games": 1208.0,
+        "diff": -732.0,
+        "edge": -564.1640625
+      },
+      {
+        "machine_number": 784,
+        "games": 3236.0,
+        "diff": -425.0,
+        "edge": -257.1640625
+      },
+      {
+        "machine_number": 785,
+        "games": 4726.0,
+        "diff": -113.0,
+        "edge": 54.8359375
+      },
+      {
+        "machine_number": 786,
+        "games": 5148.0,
+        "diff": -188.0,
+        "edge": -20.1640625
+      },
+      {
+        "machine_number": 787,
+        "games": 1909.0,
+        "diff": -167.0,
+        "edge": 0.8359375
+      },
+      {
+        "machine_number": 788,
+        "games": 1267.0,
+        "diff": -700.0,
+        "edge": -532.1640625
+      },
+      {
+        "machine_number": 789,
+        "games": 1630.0,
+        "diff": 662.0,
+        "edge": 829.8359375
+      },
+      {
+        "machine_number": 790,
+        "games": 2131.0,
+        "diff": -1788.0,
+        "edge": -1620.1640625
+      },
+      {
+        "machine_number": 873,
+        "games": 1644.0,
+        "diff": 664.0,
+        "edge": 831.8359375
+      },
+      {
+        "machine_number": 874,
+        "games": 3542.0,
+        "diff": 188.0,
+        "edge": 355.8359375
+      },
+      {
+        "machine_number": 875,
+        "games": 180.0,
+        "diff": -297.0,
+        "edge": -129.1640625
+      },
+      {
+        "machine_number": 876,
+        "games": 1955.0,
+        "diff": 2717.0,
+        "edge": 2884.8359375
+      },
+      {
+        "machine_number": 877,
+        "games": 882.0,
+        "diff": -159.0,
+        "edge": 8.8359375
+      },
+      {
+        "machine_number": 878,
+        "games": 1558.0,
+        "diff": -355.0,
+        "edge": -187.1640625
+      },
+      {
+        "machine_number": 885,
+        "games": 0.0,
+        "diff": 0.0,
+        "edge": 167.8359375
+      },
+      {
+        "machine_number": 886,
+        "games": 1870.0,
+        "diff": -1939.0,
+        "edge": -1771.1640625
+      },
+      {
+        "machine_number": 887,
+        "games": 0.0,
+        "diff": 0.0,
+        "edge": 167.8359375
+      },
+      {
+        "machine_number": 888,
+        "games": 0.0,
+        "diff": 0.0,
+        "edge": 167.8359375
+      }
+    ],
+    "mean_diff_per_pick": -127.6,
+    "mean_edge_per_pick": 40.2,
+    "missing_machines": [],
+    "rb_perspective": null,
+    "model_perspective": [
+      {
+        "machine_name": "北斗の拳 転生の章2",
+        "n_machines": 6,
+        "n_realized": 6,
+        "sum_diff": 2758.0,
+        "sum_games": 9761.0,
+        "mean_diff": 459.7
+      },
+      {
+        "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+        "n_machines": 4,
+        "n_realized": 4,
+        "sum_diff": -1939.0,
+        "sum_games": 1870.0,
+        "mean_diff": -484.8
+      },
+      {
+        "machine_name": "マイジャグラーV",
+        "n_machines": 15,
+        "n_realized": 15,
+        "sum_diff": -4010.0,
+        "sum_games": 41091.0,
+        "mean_diff": -267.3
+      }
+    ]
+  },
+  "plan_digest": "44ced7a509cacb30"
+}

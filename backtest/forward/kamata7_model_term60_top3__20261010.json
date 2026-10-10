@@ -1,0 +1,295 @@
+{
+  "rule_id": "kamata7_model_term60_top3",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "freeze_hash": "b5bec81d02cedc0e",
+  "target_date": "20261010",
+  "data_asof": "20261009",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-08-11",
+    "2026-10-10"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +75 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 475.11805,
+      "history_rows": 1352,
+      "machines": [
+        2077,
+        2078,
+        2079,
+        2080,
+        2081,
+        2082,
+        2083,
+        2084,
+        2085,
+        2086,
+        2087,
+        2088,
+        2089,
+        2090,
+        2091,
+        2092,
+        2093,
+        2094,
+        2095,
+        2096,
+        2097,
+        2098,
+        2099,
+        2100,
+        2101
+      ]
+    },
+    {
+      "machine_name": "ヤバチバ",
+      "score": 416.516156,
+      "history_rows": 65,
+      "machines": [
+        3023,
+        3024,
+        3025,
+        3026
+      ]
+    },
+    {
+      "machine_name": "ワールドダイスター",
+      "score": 304.933895,
+      "history_rows": 35,
+      "machines": [
+        3110,
+        3111,
+        3112,
+        3113,
+        3114,
+        3115,
+        3116
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 2077,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 475.11805,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2078,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 475.11805,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2079,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 475.11805,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2080,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 475.11805,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2081,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 475.11805,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2082,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 475.11805,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2083,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 475.11805,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2084,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 475.11805,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2085,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 475.11805,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2086,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 475.11805,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2087,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 475.11805,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2088,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 475.11805,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2089,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 475.11805,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2090,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 475.11805,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2091,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 475.11805,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2092,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 475.11805,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2093,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 475.11805,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2094,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 475.11805,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2095,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 475.11805,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2096,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 475.11805,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2097,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 475.11805,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2098,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 475.11805,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2099,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 475.11805,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2100,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 475.11805,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2101,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 475.11805,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 3023,
+      "machine_name": "ヤバチバ",
+      "score": 416.516156,
+      "history_days": 65
+    },
+    {
+      "machine_number": 3024,
+      "machine_name": "ヤバチバ",
+      "score": 416.516156,
+      "history_days": 65
+    },
+    {
+      "machine_number": 3025,
+      "machine_name": "ヤバチバ",
+      "score": 416.516156,
+      "history_days": 65
+    },
+    {
+      "machine_number": 3026,
+      "machine_name": "ヤバチバ",
+      "score": 416.516156,
+      "history_days": 65
+    },
+    {
+      "machine_number": 3110,
+      "machine_name": "ワールドダイスター",
+      "score": 304.933895,
+      "history_days": 35
+    },
+    {
+      "machine_number": 3111,
+      "machine_name": "ワールドダイスター",
+      "score": 304.933895,
+      "history_days": 35
+    },
+    {
+      "machine_number": 3112,
+      "machine_name": "ワールドダイスター",
+      "score": 304.933895,
+      "history_days": 35
+    },
+    {
+      "machine_number": 3113,
+      "machine_name": "ワールドダイスター",
+      "score": 304.933895,
+      "history_days": 35
+    },
+    {
+      "machine_number": 3114,
+      "machine_name": "ワールドダイスター",
+      "score": 304.933895,
+      "history_days": 35
+    },
+    {
+      "machine_number": 3115,
+      "machine_name": "ワールドダイスター",
+      "score": 304.933895,
+      "history_days": 35
+    },
+    {
+      "machine_number": 3116,
+      "machine_name": "ワールドダイスター",
+      "score": 304.933895,
+      "history_days": 35
+    }
+  ],
+  "result": null,
+  "plan_digest": "e076a31ab324c2ae"
+}

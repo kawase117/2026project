@@ -1,0 +1,194 @@
+{
+  "rule_id": "k7_monday_model_gratio_top2",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "freeze_hash": "678fec8decdec048",
+  "target_date": "20261005",
+  "data_asof": "20261004",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-09-05",
+    "2026-10-05"
+  ],
+  "score": "hist_model_gratio_mean_diff",
+  "selection_unit": "machine_model",
+  "success_criterion": "フォワードで月曜20エントリー日を経過した時点で、picks の平均差枚が同日ホール平均に対して +300枚/台 以上、かつ 95%CI 下限 > 0 であること。満たさなければ破棄し、蒲田7の曜日仕掛けを機種粒度で狙う路線はこの1本で打ち止めとする。バックテストの結果は採否根拠にしない（in-sample。曜日の指定は instinct 由来で事後発見ではないが、score と top_n の組み合わせは今回初めて決めたので in-sample 評価は甘い方向に歪む）。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 637.240115,
+      "history_rows": 146,
+      "machines": [
+        2001,
+        2002,
+        2003,
+        2004,
+        2005,
+        2006
+      ]
+    },
+    {
+      "machine_name": "スーパーリオエース2",
+      "score": 459.781206,
+      "history_rows": 92,
+      "machines": [
+        2306,
+        2307,
+        2308,
+        2309
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 2001,
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 637.240115,
+      "history_days": 146
+    },
+    {
+      "machine_number": 2002,
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 637.240115,
+      "history_days": 146
+    },
+    {
+      "machine_number": 2003,
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 637.240115,
+      "history_days": 146
+    },
+    {
+      "machine_number": 2004,
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 637.240115,
+      "history_days": 146
+    },
+    {
+      "machine_number": 2005,
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 637.240115,
+      "history_days": 146
+    },
+    {
+      "machine_number": 2006,
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 637.240115,
+      "history_days": 146
+    },
+    {
+      "machine_number": 2306,
+      "machine_name": "スーパーリオエース2",
+      "score": 459.781206,
+      "history_days": 92
+    },
+    {
+      "machine_number": 2307,
+      "machine_name": "スーパーリオエース2",
+      "score": 459.781206,
+      "history_days": 92
+    },
+    {
+      "machine_number": 2308,
+      "machine_name": "スーパーリオエース2",
+      "score": 459.781206,
+      "history_days": 92
+    },
+    {
+      "machine_number": 2309,
+      "machine_name": "スーパーリオエース2",
+      "score": 459.781206,
+      "history_days": 92
+    }
+  ],
+  "result": {
+    "scored_with_hash": "678fec8decdec048",
+    "day_baseline": 167.1,
+    "universe_size": 715,
+    "picks_realized": [
+      {
+        "machine_number": 2001,
+        "games": 342.0,
+        "diff": 300.0,
+        "edge": 132.86713286713288
+      },
+      {
+        "machine_number": 2002,
+        "games": 1036.0,
+        "diff": -1200.0,
+        "edge": -1367.1328671328672
+      },
+      {
+        "machine_number": 2003,
+        "games": 1551.0,
+        "diff": -900.0,
+        "edge": -1067.1328671328672
+      },
+      {
+        "machine_number": 2004,
+        "games": 342.0,
+        "diff": -500.0,
+        "edge": -667.1328671328671
+      },
+      {
+        "machine_number": 2005,
+        "games": 1800.0,
+        "diff": -300.0,
+        "edge": -467.1328671328671
+      },
+      {
+        "machine_number": 2006,
+        "games": 782.0,
+        "diff": -1000.0,
+        "edge": -1167.1328671328672
+      },
+      {
+        "machine_number": 2306,
+        "games": 700.0,
+        "diff": -600.0,
+        "edge": -767.1328671328671
+      },
+      {
+        "machine_number": 2307,
+        "games": 0.0,
+        "diff": 0.0,
+        "edge": -167.13286713286712
+      },
+      {
+        "machine_number": 2308,
+        "games": 0.0,
+        "diff": 0.0,
+        "edge": -167.13286713286712
+      },
+      {
+        "machine_number": 2309,
+        "games": 0.0,
+        "diff": 0.0,
+        "edge": -167.13286713286712
+      }
+    ],
+    "mean_diff_per_pick": -420.0,
+    "mean_edge_per_pick": -587.1,
+    "missing_machines": [],
+    "rb_perspective": null,
+    "model_perspective": [
+      {
+        "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+        "n_machines": 6,
+        "n_realized": 6,
+        "sum_diff": -3600.0,
+        "sum_games": 5853.0,
+        "mean_diff": -600.0
+      },
+      {
+        "machine_name": "スーパーリオエース2",
+        "n_machines": 4,
+        "n_realized": 4,
+        "sum_diff": -600.0,
+        "sum_games": 700.0,
+        "mean_diff": -150.0
+      }
+    ]
+  },
+  "plan_digest": "4c332e9d1386a019"
+}

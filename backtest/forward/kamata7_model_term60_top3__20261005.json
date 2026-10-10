@@ -1,0 +1,534 @@
+{
+  "rule_id": "kamata7_model_term60_top3",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "freeze_hash": "b5bec81d02cedc0e",
+  "target_date": "20261005",
+  "data_asof": "20261004",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-08-06",
+    "2026-10-05"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +75 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 544.250359,
+      "history_rows": 1352,
+      "machines": [
+        2077,
+        2078,
+        2079,
+        2080,
+        2081,
+        2082,
+        2083,
+        2084,
+        2085,
+        2086,
+        2087,
+        2088,
+        2089,
+        2090,
+        2091,
+        2092,
+        2093,
+        2094,
+        2095,
+        2096,
+        2097,
+        2098,
+        2099,
+        2100,
+        2101
+      ]
+    },
+    {
+      "machine_name": "ソードアート・オンライン",
+      "score": 312.301593,
+      "history_rows": 184,
+      "machines": [
+        2102,
+        2103,
+        2104,
+        2105
+      ]
+    },
+    {
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 294.237596,
+      "history_rows": 307,
+      "machines": [
+        2001,
+        2002,
+        2003,
+        2004,
+        2005,
+        2006
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 2077,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 544.250359,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2078,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 544.250359,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2079,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 544.250359,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2080,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 544.250359,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2081,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 544.250359,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2082,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 544.250359,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2083,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 544.250359,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2084,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 544.250359,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2085,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 544.250359,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2086,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 544.250359,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2087,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 544.250359,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2088,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 544.250359,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2089,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 544.250359,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2090,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 544.250359,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2091,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 544.250359,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2092,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 544.250359,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2093,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 544.250359,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2094,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 544.250359,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2095,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 544.250359,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2096,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 544.250359,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2097,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 544.250359,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2098,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 544.250359,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2099,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 544.250359,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2100,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 544.250359,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2101,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 544.250359,
+      "history_days": 1352
+    },
+    {
+      "machine_number": 2102,
+      "machine_name": "ソードアート・オンライン",
+      "score": 312.301593,
+      "history_days": 184
+    },
+    {
+      "machine_number": 2103,
+      "machine_name": "ソードアート・オンライン",
+      "score": 312.301593,
+      "history_days": 184
+    },
+    {
+      "machine_number": 2104,
+      "machine_name": "ソードアート・オンライン",
+      "score": 312.301593,
+      "history_days": 184
+    },
+    {
+      "machine_number": 2105,
+      "machine_name": "ソードアート・オンライン",
+      "score": 312.301593,
+      "history_days": 184
+    },
+    {
+      "machine_number": 2001,
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 294.237596,
+      "history_days": 307
+    },
+    {
+      "machine_number": 2002,
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 294.237596,
+      "history_days": 307
+    },
+    {
+      "machine_number": 2003,
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 294.237596,
+      "history_days": 307
+    },
+    {
+      "machine_number": 2004,
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 294.237596,
+      "history_days": 307
+    },
+    {
+      "machine_number": 2005,
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 294.237596,
+      "history_days": 307
+    },
+    {
+      "machine_number": 2006,
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 294.237596,
+      "history_days": 307
+    }
+  ],
+  "result": {
+    "scored_with_hash": "b5bec81d02cedc0e",
+    "day_baseline": 167.1,
+    "universe_size": 715,
+    "picks_realized": [
+      {
+        "machine_number": 2077,
+        "games": 393.0,
+        "diff": -400.0,
+        "edge": -567.1328671328671
+      },
+      {
+        "machine_number": 2078,
+        "games": 2794.0,
+        "diff": 4000.0,
+        "edge": 3832.867132867133
+      },
+      {
+        "machine_number": 2079,
+        "games": 1450.0,
+        "diff": -900.0,
+        "edge": -1067.1328671328672
+      },
+      {
+        "machine_number": 2080,
+        "games": 640.0,
+        "diff": -200.0,
+        "edge": -367.1328671328671
+      },
+      {
+        "machine_number": 2081,
+        "games": 3234.0,
+        "diff": 1300.0,
+        "edge": 1132.8671328671328
+      },
+      {
+        "machine_number": 2082,
+        "games": 237.0,
+        "diff": 700.0,
+        "edge": 532.8671328671329
+      },
+      {
+        "machine_number": 2083,
+        "games": 0.0,
+        "diff": 0.0,
+        "edge": -167.13286713286712
+      },
+      {
+        "machine_number": 2084,
+        "games": 4329.0,
+        "diff": 2100.0,
+        "edge": 1932.8671328671328
+      },
+      {
+        "machine_number": 2085,
+        "games": 0.0,
+        "diff": 0.0,
+        "edge": -167.13286713286712
+      },
+      {
+        "machine_number": 2086,
+        "games": 609.0,
+        "diff": 100.0,
+        "edge": -67.13286713286712
+      },
+      {
+        "machine_number": 2087,
+        "games": 489.0,
+        "diff": -100.0,
+        "edge": -267.1328671328671
+      },
+      {
+        "machine_number": 2088,
+        "games": 1253.0,
+        "diff": -100.0,
+        "edge": -267.1328671328671
+      },
+      {
+        "machine_number": 2089,
+        "games": 1079.0,
+        "diff": -900.0,
+        "edge": -1067.1328671328672
+      },
+      {
+        "machine_number": 2090,
+        "games": 783.0,
+        "diff": -300.0,
+        "edge": -467.1328671328671
+      },
+      {
+        "machine_number": 2091,
+        "games": 1497.0,
+        "diff": 0.0,
+        "edge": -167.13286713286712
+      },
+      {
+        "machine_number": 2092,
+        "games": 547.0,
+        "diff": -700.0,
+        "edge": -867.1328671328671
+      },
+      {
+        "machine_number": 2093,
+        "games": 1591.0,
+        "diff": 400.0,
+        "edge": 232.86713286713288
+      },
+      {
+        "machine_number": 2094,
+        "games": 1055.0,
+        "diff": 100.0,
+        "edge": -67.13286713286712
+      },
+      {
+        "machine_number": 2095,
+        "games": 2380.0,
+        "diff": 700.0,
+        "edge": 532.8671328671329
+      },
+      {
+        "machine_number": 2096,
+        "games": 589.0,
+        "diff": -800.0,
+        "edge": -967.1328671328671
+      },
+      {
+        "machine_number": 2097,
+        "games": 639.0,
+        "diff": -800.0,
+        "edge": -967.1328671328671
+      },
+      {
+        "machine_number": 2098,
+        "games": 898.0,
+        "diff": -800.0,
+        "edge": -967.1328671328671
+      },
+      {
+        "machine_number": 2099,
+        "games": 387.0,
+        "diff": -500.0,
+        "edge": -667.1328671328671
+      },
+      {
+        "machine_number": 2100,
+        "games": 1907.0,
+        "diff": -1600.0,
+        "edge": -1767.1328671328672
+      },
+      {
+        "machine_number": 2101,
+        "games": 832.0,
+        "diff": -1000.0,
+        "edge": -1167.1328671328672
+      },
+      {
+        "machine_number": 2102,
+        "games": 6136.0,
+        "diff": -3100.0,
+        "edge": -3267.132867132867
+      },
+      {
+        "machine_number": 2103,
+        "games": 4530.0,
+        "diff": 3200.0,
+        "edge": 3032.867132867133
+      },
+      {
+        "machine_number": 2104,
+        "games": 3912.0,
+        "diff": 14900.0,
+        "edge": 14732.867132867133
+      },
+      {
+        "machine_number": 2105,
+        "games": 5130.0,
+        "diff": 2500.0,
+        "edge": 2332.867132867133
+      },
+      {
+        "machine_number": 2001,
+        "games": 342.0,
+        "diff": 300.0,
+        "edge": 132.86713286713288
+      },
+      {
+        "machine_number": 2002,
+        "games": 1036.0,
+        "diff": -1200.0,
+        "edge": -1367.1328671328672
+      },
+      {
+        "machine_number": 2003,
+        "games": 1551.0,
+        "diff": -900.0,
+        "edge": -1067.1328671328672
+      },
+      {
+        "machine_number": 2004,
+        "games": 342.0,
+        "diff": -500.0,
+        "edge": -667.1328671328671
+      },
+      {
+        "machine_number": 2005,
+        "games": 1800.0,
+        "diff": -300.0,
+        "edge": -467.1328671328671
+      },
+      {
+        "machine_number": 2006,
+        "games": 782.0,
+        "diff": -1000.0,
+        "edge": -1167.1328671328672
+      }
+    ],
+    "mean_diff_per_pick": 405.7,
+    "mean_edge_per_pick": 238.6,
+    "missing_machines": [],
+    "rb_perspective": null,
+    "model_perspective": [
+      {
+        "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+        "n_machines": 25,
+        "n_realized": 25,
+        "sum_diff": 300.0,
+        "sum_games": 29612.0,
+        "mean_diff": 12.0
+      },
+      {
+        "machine_name": "ソードアート・オンライン",
+        "n_machines": 4,
+        "n_realized": 4,
+        "sum_diff": 17500.0,
+        "sum_games": 19708.0,
+        "mean_diff": 4375.0
+      },
+      {
+        "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+        "n_machines": 6,
+        "n_realized": 6,
+        "sum_diff": -3600.0,
+        "sum_games": 5853.0,
+        "mean_diff": -600.0
+      }
+    ]
+  },
+  "plan_digest": "9a2abb221b9aeebe"
+}

@@ -1,0 +1,287 @@
+{
+  "rule_id": "zassiki_model_term60_top3",
+  "hall": "ザ-シティ-ベルシティ雑色店",
+  "freeze_hash": "c19f10b6e683a454",
+  "target_date": "20261006",
+  "data_asof": "20261005",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-08-07",
+    "2026-10-06"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +87 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 333.491452,
+      "history_rows": 331,
+      "machines": [
+        873,
+        874,
+        875,
+        876,
+        877,
+        878
+      ]
+    },
+    {
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 227.416305,
+      "history_rows": 84,
+      "machines": [
+        885,
+        886,
+        887,
+        888
+      ]
+    },
+    {
+      "machine_name": "東京喰種",
+      "score": 102.504334,
+      "history_rows": 283,
+      "machines": [
+        862,
+        863,
+        864,
+        865,
+        866,
+        867
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 873,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 333.491452,
+      "history_days": 331
+    },
+    {
+      "machine_number": 874,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 333.491452,
+      "history_days": 331
+    },
+    {
+      "machine_number": 875,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 333.491452,
+      "history_days": 331
+    },
+    {
+      "machine_number": 876,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 333.491452,
+      "history_days": 331
+    },
+    {
+      "machine_number": 877,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 333.491452,
+      "history_days": 331
+    },
+    {
+      "machine_number": 878,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 333.491452,
+      "history_days": 331
+    },
+    {
+      "machine_number": 885,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 227.416305,
+      "history_days": 84
+    },
+    {
+      "machine_number": 886,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 227.416305,
+      "history_days": 84
+    },
+    {
+      "machine_number": 887,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 227.416305,
+      "history_days": 84
+    },
+    {
+      "machine_number": 888,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 227.416305,
+      "history_days": 84
+    },
+    {
+      "machine_number": 862,
+      "machine_name": "東京喰種",
+      "score": 102.504334,
+      "history_days": 283
+    },
+    {
+      "machine_number": 863,
+      "machine_name": "東京喰種",
+      "score": 102.504334,
+      "history_days": 283
+    },
+    {
+      "machine_number": 864,
+      "machine_name": "東京喰種",
+      "score": 102.504334,
+      "history_days": 283
+    },
+    {
+      "machine_number": 865,
+      "machine_name": "東京喰種",
+      "score": 102.504334,
+      "history_days": 283
+    },
+    {
+      "machine_number": 866,
+      "machine_name": "東京喰種",
+      "score": 102.504334,
+      "history_days": 283
+    },
+    {
+      "machine_number": 867,
+      "machine_name": "東京喰種",
+      "score": 102.504334,
+      "history_days": 283
+    }
+  ],
+  "result": {
+    "scored_with_hash": "c19f10b6e683a454",
+    "day_baseline": -170.0,
+    "universe_size": 128,
+    "picks_realized": [
+      {
+        "machine_number": 873,
+        "games": 207.0,
+        "diff": 329.0,
+        "edge": 498.9921875
+      },
+      {
+        "machine_number": 874,
+        "games": 835.0,
+        "diff": -265.0,
+        "edge": -95.0078125
+      },
+      {
+        "machine_number": 875,
+        "games": 233.0,
+        "diff": 352.0,
+        "edge": 521.9921875
+      },
+      {
+        "machine_number": 876,
+        "games": 3174.0,
+        "diff": 6098.0,
+        "edge": 6267.9921875
+      },
+      {
+        "machine_number": 877,
+        "games": 313.0,
+        "diff": -396.0,
+        "edge": -226.0078125
+      },
+      {
+        "machine_number": 878,
+        "games": 1664.0,
+        "diff": -843.0,
+        "edge": -673.0078125
+      },
+      {
+        "machine_number": 862,
+        "games": 1474.0,
+        "diff": -832.0,
+        "edge": -662.0078125
+      },
+      {
+        "machine_number": 863,
+        "games": 764.0,
+        "diff": -413.0,
+        "edge": -243.0078125
+      },
+      {
+        "machine_number": 864,
+        "games": 0.0,
+        "diff": 0.0,
+        "edge": 169.9921875
+      },
+      {
+        "machine_number": 865,
+        "games": 747.0,
+        "diff": -193.0,
+        "edge": -23.0078125
+      },
+      {
+        "machine_number": 866,
+        "games": 3617.0,
+        "diff": -2483.0,
+        "edge": -2313.0078125
+      },
+      {
+        "machine_number": 867,
+        "games": 1377.0,
+        "diff": -1168.0,
+        "edge": -998.0078125
+      },
+      {
+        "machine_number": 885,
+        "games": 1613.0,
+        "diff": -1742.0,
+        "edge": -1572.0078125
+      },
+      {
+        "machine_number": 886,
+        "games": 381.0,
+        "diff": -567.0,
+        "edge": -397.0078125
+      },
+      {
+        "machine_number": 887,
+        "games": 2229.0,
+        "diff": -693.0,
+        "edge": -523.0078125
+      },
+      {
+        "machine_number": 888,
+        "games": 664.0,
+        "diff": -541.0,
+        "edge": -371.0078125
+      }
+    ],
+    "mean_diff_per_pick": -209.8,
+    "mean_edge_per_pick": -39.8,
+    "missing_machines": [],
+    "rb_perspective": null,
+    "model_perspective": [
+      {
+        "machine_name": "北斗の拳 転生の章2",
+        "n_machines": 6,
+        "n_realized": 6,
+        "sum_diff": 5275.0,
+        "sum_games": 6426.0,
+        "mean_diff": 879.2
+      },
+      {
+        "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+        "n_machines": 4,
+        "n_realized": 4,
+        "sum_diff": -3543.0,
+        "sum_games": 4887.0,
+        "mean_diff": -885.8
+      },
+      {
+        "machine_name": "東京喰種",
+        "n_machines": 6,
+        "n_realized": 6,
+        "sum_diff": -5089.0,
+        "sum_games": 7979.0,
+        "mean_diff": -848.2
+      }
+    ]
+  },
+  "plan_digest": "17ea0d5d11f47e56"
+}

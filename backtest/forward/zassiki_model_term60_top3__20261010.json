@@ -1,0 +1,218 @@
+{
+  "rule_id": "zassiki_model_term60_top3",
+  "hall": "ザ-シティ-ベルシティ雑色店",
+  "freeze_hash": "c19f10b6e683a454",
+  "target_date": "20261010",
+  "data_asof": "20261009",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-08-11",
+    "2026-10-10"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +87 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 306.151021,
+      "history_rows": 328,
+      "machines": [
+        873,
+        874,
+        875,
+        876,
+        877,
+        878
+      ]
+    },
+    {
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 237.990152,
+      "history_rows": 92,
+      "machines": [
+        885,
+        886,
+        887,
+        888
+      ]
+    },
+    {
+      "machine_name": "マイジャグラーV",
+      "score": 71.725545,
+      "history_rows": 895,
+      "machines": [
+        761,
+        762,
+        763,
+        764,
+        765,
+        781,
+        782,
+        783,
+        784,
+        785,
+        786,
+        787,
+        788,
+        789,
+        790
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 873,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 306.151021,
+      "history_days": 328
+    },
+    {
+      "machine_number": 874,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 306.151021,
+      "history_days": 328
+    },
+    {
+      "machine_number": 875,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 306.151021,
+      "history_days": 328
+    },
+    {
+      "machine_number": 876,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 306.151021,
+      "history_days": 328
+    },
+    {
+      "machine_number": 877,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 306.151021,
+      "history_days": 328
+    },
+    {
+      "machine_number": 878,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 306.151021,
+      "history_days": 328
+    },
+    {
+      "machine_number": 885,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 237.990152,
+      "history_days": 92
+    },
+    {
+      "machine_number": 886,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 237.990152,
+      "history_days": 92
+    },
+    {
+      "machine_number": 887,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 237.990152,
+      "history_days": 92
+    },
+    {
+      "machine_number": 888,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 237.990152,
+      "history_days": 92
+    },
+    {
+      "machine_number": 761,
+      "machine_name": "マイジャグラーV",
+      "score": 71.725545,
+      "history_days": 895
+    },
+    {
+      "machine_number": 762,
+      "machine_name": "マイジャグラーV",
+      "score": 71.725545,
+      "history_days": 895
+    },
+    {
+      "machine_number": 763,
+      "machine_name": "マイジャグラーV",
+      "score": 71.725545,
+      "history_days": 895
+    },
+    {
+      "machine_number": 764,
+      "machine_name": "マイジャグラーV",
+      "score": 71.725545,
+      "history_days": 895
+    },
+    {
+      "machine_number": 765,
+      "machine_name": "マイジャグラーV",
+      "score": 71.725545,
+      "history_days": 895
+    },
+    {
+      "machine_number": 781,
+      "machine_name": "マイジャグラーV",
+      "score": 71.725545,
+      "history_days": 895
+    },
+    {
+      "machine_number": 782,
+      "machine_name": "マイジャグラーV",
+      "score": 71.725545,
+      "history_days": 895
+    },
+    {
+      "machine_number": 783,
+      "machine_name": "マイジャグラーV",
+      "score": 71.725545,
+      "history_days": 895
+    },
+    {
+      "machine_number": 784,
+      "machine_name": "マイジャグラーV",
+      "score": 71.725545,
+      "history_days": 895
+    },
+    {
+      "machine_number": 785,
+      "machine_name": "マイジャグラーV",
+      "score": 71.725545,
+      "history_days": 895
+    },
+    {
+      "machine_number": 786,
+      "machine_name": "マイジャグラーV",
+      "score": 71.725545,
+      "history_days": 895
+    },
+    {
+      "machine_number": 787,
+      "machine_name": "マイジャグラーV",
+      "score": 71.725545,
+      "history_days": 895
+    },
+    {
+      "machine_number": 788,
+      "machine_name": "マイジャグラーV",
+      "score": 71.725545,
+      "history_days": 895
+    },
+    {
+      "machine_number": 789,
+      "machine_name": "マイジャグラーV",
+      "score": 71.725545,
+      "history_days": 895
+    },
+    {
+      "machine_number": 790,
+      "machine_name": "マイジャグラーV",
+      "score": 71.725545,
+      "history_days": 895
+    }
+  ],
+  "result": null,
+  "plan_digest": "d34779beaaed08ae"
+}

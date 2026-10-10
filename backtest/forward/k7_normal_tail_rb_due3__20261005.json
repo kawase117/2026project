@@ -1,0 +1,1370 @@
+{
+  "rule_id": "k7_normal_tail_rb_due3",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "freeze_hash": "e0230fe2167c5aa5",
+  "target_date": "20261005",
+  "data_asof": "20261004",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-08-06",
+    "2026-10-05"
+  ],
+  "score": "hist_tail_rb_due3",
+  "selection_unit": "machine",
+  "success_criterion": "フォワード20エントリー日を経過した時点で、選出台（番が来た3末尾のノーマル機）の RB の機種期待値からの超過を合算した z と、同日の選ばれなかったノーマル機の同じ z との差の日平均が正で、7日ブロックブートストラップ95%CI下限が0を上回ること。満たさなければ、2026-09-29 に観測した末尾単位の均しは後ろ向き探索のアーティファクト、またはすでに失効したと結論する。差枚（edge）は参考として併記するが採否には使わない（ノーマル機の上乗せは AT 機の揺れと当日のホール全体の上下に埋もれるため）。",
+  "is_dry_run": false,
+  "picks": [
+    {
+      "machine_number": 3122,
+      "machine_name": "マイジャグラーV",
+      "score": 6.901909,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3132,
+      "machine_name": "マイジャグラーV",
+      "score": 6.901909,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3332,
+      "machine_name": "ネオアイムジャグラーEX",
+      "score": 6.901909,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3292,
+      "machine_name": "マイジャグラーV",
+      "score": 6.901909,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3282,
+      "machine_name": "マイジャグラーV",
+      "score": 6.901909,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3272,
+      "machine_name": "マイジャグラーV",
+      "score": 6.901909,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3142,
+      "machine_name": "マイジャグラーV",
+      "score": 6.901909,
+      "history_days": 60
+    },
+    {
+      "machine_number": 2172,
+      "machine_name": "スマスロ サンダーV",
+      "score": 6.901909,
+      "history_days": 60
+    },
+    {
+      "machine_number": 2182,
+      "machine_name": "SHAKE BONUS TRIGGER",
+      "score": 6.901909,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3312,
+      "machine_name": "ミスタージャグラー",
+      "score": 6.901909,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3342,
+      "machine_name": "ネオアイムジャグラーEX",
+      "score": 6.901909,
+      "history_days": 28
+    },
+    {
+      "machine_number": 2342,
+      "machine_name": "うみねこのなく頃に2",
+      "score": 6.901909,
+      "history_days": 28
+    },
+    {
+      "machine_number": 3352,
+      "machine_name": "ネオアイムジャグラーEX",
+      "score": 6.901909,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3152,
+      "machine_name": "ファンキージャグラー2",
+      "score": 6.901909,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3362,
+      "machine_name": "ネオアイムジャグラーEX",
+      "score": 6.901909,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3172,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 6.901909,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3162,
+      "machine_name": "ファンキージャグラー2",
+      "score": 6.901909,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3182,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 6.901909,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3322,
+      "machine_name": "ジャグラーガールズ",
+      "score": 6.901909,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3302,
+      "machine_name": "ハッピージャグラーVIII",
+      "score": 6.901909,
+      "history_days": 60
+    },
+    {
+      "machine_number": 2162,
+      "machine_name": "ディスクアップ ULTRAREMIX",
+      "score": 6.901909,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3012,
+      "machine_name": "キングハナハナ-30",
+      "score": 6.901909,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3002,
+      "machine_name": "キングハナハナ-30",
+      "score": 6.901909,
+      "history_days": 60
+    },
+    {
+      "machine_number": 2152,
+      "machine_name": "新ハナビ",
+      "score": 6.901909,
+      "history_days": 28
+    },
+    {
+      "machine_number": 2183,
+      "machine_name": "SHAKE BONUS TRIGGER",
+      "score": 4.205803,
+      "history_days": 28
+    },
+    {
+      "machine_number": 2153,
+      "machine_name": "ディスクアップ2",
+      "score": 4.205803,
+      "history_days": 28
+    },
+    {
+      "machine_number": 3133,
+      "machine_name": "マイジャグラーV",
+      "score": 4.205803,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3123,
+      "machine_name": "マイジャグラーV",
+      "score": 4.205803,
+      "history_days": 60
+    },
+    {
+      "machine_number": 2343,
+      "machine_name": "うみねこのなく頃に2",
+      "score": 4.205803,
+      "history_days": 28
+    },
+    {
+      "machine_number": 3173,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 4.205803,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3353,
+      "machine_name": "ネオアイムジャグラーEX",
+      "score": 4.205803,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3183,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 4.205803,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3163,
+      "machine_name": "ファンキージャグラー2",
+      "score": 4.205803,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3153,
+      "machine_name": "ファンキージャグラー2",
+      "score": 4.205803,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3273,
+      "machine_name": "マイジャグラーV",
+      "score": 4.205803,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3333,
+      "machine_name": "ネオアイムジャグラーEX",
+      "score": 4.205803,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3293,
+      "machine_name": "マイジャグラーV",
+      "score": 4.205803,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3283,
+      "machine_name": "マイジャグラーV",
+      "score": 4.205803,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3143,
+      "machine_name": "マイジャグラーV",
+      "score": 4.205803,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3313,
+      "machine_name": "ミスタージャグラー",
+      "score": 4.205803,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3303,
+      "machine_name": "ハッピージャグラーVIII",
+      "score": 4.205803,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3013,
+      "machine_name": "キングハナハナ-30",
+      "score": 4.205803,
+      "history_days": 60
+    },
+    {
+      "machine_number": 2173,
+      "machine_name": "スマスロ サンダーV",
+      "score": 4.205803,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3323,
+      "machine_name": "ジャグラーガールズ",
+      "score": 4.205803,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3343,
+      "machine_name": "ネオアイムジャグラーEX",
+      "score": 4.205803,
+      "history_days": 28
+    },
+    {
+      "machine_number": 2163,
+      "machine_name": "ディスクアップ ULTRAREMIX",
+      "score": 4.205803,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3003,
+      "machine_name": "キングハナハナ-30",
+      "score": 4.205803,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3141,
+      "machine_name": "マイジャグラーV",
+      "score": 2.664544,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3131,
+      "machine_name": "マイジャグラーV",
+      "score": 2.664544,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3121,
+      "machine_name": "マイジャグラーV",
+      "score": 2.664544,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3271,
+      "machine_name": "マイジャグラーV",
+      "score": 2.664544,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3281,
+      "machine_name": "マイジャグラーV",
+      "score": 2.664544,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3291,
+      "machine_name": "マイジャグラーV",
+      "score": 2.664544,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3331,
+      "machine_name": "ネオアイムジャグラーEX",
+      "score": 2.664544,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3351,
+      "machine_name": "ネオアイムジャグラーEX",
+      "score": 2.664544,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3001,
+      "machine_name": "キングハナハナ-30",
+      "score": 2.664544,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3181,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 2.664544,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3171,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 2.664544,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3161,
+      "machine_name": "ファンキージャグラー2",
+      "score": 2.664544,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3151,
+      "machine_name": "ファンキージャグラー2",
+      "score": 2.664544,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3361,
+      "machine_name": "ネオアイムジャグラーEX",
+      "score": 2.664544,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3011,
+      "machine_name": "キングハナハナ-30",
+      "score": 2.664544,
+      "history_days": 60
+    },
+    {
+      "machine_number": 2161,
+      "machine_name": "ディスクアップ ULTRAREMIX",
+      "score": 2.664544,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3311,
+      "machine_name": "ミスタージャグラー",
+      "score": 2.664544,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3321,
+      "machine_name": "ジャグラーガールズ",
+      "score": 2.664544,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3301,
+      "machine_name": "ハッピージャグラーVIII",
+      "score": 2.664544,
+      "history_days": 60
+    },
+    {
+      "machine_number": 2171,
+      "machine_name": "スマスロ ハナビ",
+      "score": 2.664544,
+      "history_days": 60
+    },
+    {
+      "machine_number": 3341,
+      "machine_name": "ネオアイムジャグラーEX",
+      "score": 2.664544,
+      "history_days": 28
+    },
+    {
+      "machine_number": 2181,
+      "machine_name": "SHAKE BONUS TRIGGER",
+      "score": 2.664544,
+      "history_days": 60
+    },
+    {
+      "machine_number": 2341,
+      "machine_name": "少女☆歌劇 レヴュースタァライト ‐The SLOT‐",
+      "score": 2.664544,
+      "history_days": 60
+    },
+    {
+      "machine_number": 2151,
+      "machine_name": "新ハナビ",
+      "score": 2.664544,
+      "history_days": 28
+    }
+  ],
+  "result": {
+    "scored_with_hash": "e0230fe2167c5aa5",
+    "day_baseline": 130.6,
+    "universe_size": 229,
+    "picks_realized": [
+      {
+        "machine_number": 3121,
+        "games": 7384.0,
+        "diff": 1300.0,
+        "edge": 1169.4323144104803
+      },
+      {
+        "machine_number": 3122,
+        "games": 8619.0,
+        "diff": 3900.0,
+        "edge": 3769.4323144104806
+      },
+      {
+        "machine_number": 3123,
+        "games": 3061.0,
+        "diff": -400.0,
+        "edge": -530.5676855895197
+      },
+      {
+        "machine_number": 3141,
+        "games": 2250.0,
+        "diff": -600.0,
+        "edge": -730.5676855895197
+      },
+      {
+        "machine_number": 3142,
+        "games": 6327.0,
+        "diff": -800.0,
+        "edge": -930.5676855895197
+      },
+      {
+        "machine_number": 3143,
+        "games": 4776.0,
+        "diff": -800.0,
+        "edge": -930.5676855895197
+      },
+      {
+        "machine_number": 3271,
+        "games": 6498.0,
+        "diff": 600.0,
+        "edge": 469.43231441048033
+      },
+      {
+        "machine_number": 3272,
+        "games": 752.0,
+        "diff": -400.0,
+        "edge": -530.5676855895197
+      },
+      {
+        "machine_number": 3273,
+        "games": 9093.0,
+        "diff": 3400.0,
+        "edge": 3269.4323144104806
+      },
+      {
+        "machine_number": 3281,
+        "games": 2380.0,
+        "diff": -1100.0,
+        "edge": -1230.5676855895197
+      },
+      {
+        "machine_number": 3282,
+        "games": 8567.0,
+        "diff": 3000.0,
+        "edge": 2869.4323144104806
+      },
+      {
+        "machine_number": 3283,
+        "games": 2287.0,
+        "diff": -1300.0,
+        "edge": -1430.5676855895197
+      },
+      {
+        "machine_number": 3291,
+        "games": 8542.0,
+        "diff": 0.0,
+        "edge": -130.56768558951964
+      },
+      {
+        "machine_number": 3292,
+        "games": 1519.0,
+        "diff": -1100.0,
+        "edge": -1230.5676855895197
+      },
+      {
+        "machine_number": 3293,
+        "games": 3741.0,
+        "diff": -1100.0,
+        "edge": -1230.5676855895197
+      },
+      {
+        "machine_number": 3331,
+        "games": 2314.0,
+        "diff": -300.0,
+        "edge": -430.56768558951967
+      },
+      {
+        "machine_number": 3332,
+        "games": 5524.0,
+        "diff": 1200.0,
+        "edge": 1069.4323144104803
+      },
+      {
+        "machine_number": 3333,
+        "games": 1238.0,
+        "diff": -300.0,
+        "edge": -430.56768558951967
+      },
+      {
+        "machine_number": 3341,
+        "games": 2574.0,
+        "diff": -400.0,
+        "edge": -530.5676855895197
+      },
+      {
+        "machine_number": 3342,
+        "games": 3056.0,
+        "diff": 500.0,
+        "edge": 369.43231441048033
+      },
+      {
+        "machine_number": 3343,
+        "games": 2548.0,
+        "diff": -100.0,
+        "edge": -230.56768558951964
+      },
+      {
+        "machine_number": 3351,
+        "games": 6370.0,
+        "diff": 1600.0,
+        "edge": 1469.4323144104803
+      },
+      {
+        "machine_number": 3352,
+        "games": 1834.0,
+        "diff": -300.0,
+        "edge": -430.56768558951967
+      },
+      {
+        "machine_number": 3353,
+        "games": 2122.0,
+        "diff": 600.0,
+        "edge": 469.43231441048033
+      },
+      {
+        "machine_number": 3361,
+        "games": 1003.0,
+        "diff": -700.0,
+        "edge": -830.5676855895197
+      },
+      {
+        "machine_number": 3362,
+        "games": 2572.0,
+        "diff": -100.0,
+        "edge": -230.56768558951964
+      },
+      {
+        "machine_number": 3151,
+        "games": 1575.0,
+        "diff": -600.0,
+        "edge": -730.5676855895197
+      },
+      {
+        "machine_number": 3152,
+        "games": 1541.0,
+        "diff": -800.0,
+        "edge": -930.5676855895197
+      },
+      {
+        "machine_number": 3153,
+        "games": 3096.0,
+        "diff": -300.0,
+        "edge": -430.56768558951967
+      },
+      {
+        "machine_number": 3161,
+        "games": 6188.0,
+        "diff": 2000.0,
+        "edge": 1869.4323144104803
+      },
+      {
+        "machine_number": 3162,
+        "games": 949.0,
+        "diff": -200.0,
+        "edge": -330.56768558951967
+      },
+      {
+        "machine_number": 3163,
+        "games": 7762.0,
+        "diff": 1800.0,
+        "edge": 1669.4323144104803
+      },
+      {
+        "machine_number": 3171,
+        "games": 1537.0,
+        "diff": -1100.0,
+        "edge": -1230.5676855895197
+      },
+      {
+        "machine_number": 3172,
+        "games": 2092.0,
+        "diff": -100.0,
+        "edge": -230.56768558951964
+      },
+      {
+        "machine_number": 3173,
+        "games": 1045.0,
+        "diff": -200.0,
+        "edge": -330.56768558951967
+      },
+      {
+        "machine_number": 3181,
+        "games": 3614.0,
+        "diff": -100.0,
+        "edge": -230.56768558951964
+      },
+      {
+        "machine_number": 3182,
+        "games": 7028.0,
+        "diff": 800.0,
+        "edge": 669.4323144104803
+      },
+      {
+        "machine_number": 3183,
+        "games": 6916.0,
+        "diff": 2900.0,
+        "edge": 2769.4323144104806
+      },
+      {
+        "machine_number": 3001,
+        "games": 7539.0,
+        "diff": 2400.0,
+        "edge": 2269.4323144104806
+      },
+      {
+        "machine_number": 3002,
+        "games": 2744.0,
+        "diff": 600.0,
+        "edge": 469.43231441048033
+      },
+      {
+        "machine_number": 3003,
+        "games": 5724.0,
+        "diff": -1700.0,
+        "edge": -1830.5676855895197
+      },
+      {
+        "machine_number": 3011,
+        "games": 2226.0,
+        "diff": -100.0,
+        "edge": -230.56768558951964
+      },
+      {
+        "machine_number": 3012,
+        "games": 6609.0,
+        "diff": 2700.0,
+        "edge": 2569.4323144104806
+      },
+      {
+        "machine_number": 3013,
+        "games": 7697.0,
+        "diff": -700.0,
+        "edge": -830.5676855895197
+      },
+      {
+        "machine_number": 2161,
+        "games": 319.0,
+        "diff": -400.0,
+        "edge": -530.5676855895197
+      },
+      {
+        "machine_number": 2162,
+        "games": 3718.0,
+        "diff": -100.0,
+        "edge": -230.56768558951964
+      },
+      {
+        "machine_number": 2163,
+        "games": 2980.0,
+        "diff": -300.0,
+        "edge": -430.56768558951967
+      },
+      {
+        "machine_number": 3301,
+        "games": 4057.0,
+        "diff": -600.0,
+        "edge": -730.5676855895197
+      },
+      {
+        "machine_number": 3302,
+        "games": 1051.0,
+        "diff": -100.0,
+        "edge": -230.56768558951964
+      },
+      {
+        "machine_number": 3303,
+        "games": 584.0,
+        "diff": 0.0,
+        "edge": -130.56768558951964
+      },
+      {
+        "machine_number": 3321,
+        "games": 1601.0,
+        "diff": -100.0,
+        "edge": -230.56768558951964
+      },
+      {
+        "machine_number": 3322,
+        "games": 3470.0,
+        "diff": -800.0,
+        "edge": -930.5676855895197
+      },
+      {
+        "machine_number": 3323,
+        "games": 8179.0,
+        "diff": 4300.0,
+        "edge": 4169.43231441048
+      },
+      {
+        "machine_number": 3311,
+        "games": 3415.0,
+        "diff": 200.0,
+        "edge": 69.43231441048036
+      },
+      {
+        "machine_number": 3312,
+        "games": 2081.0,
+        "diff": 100.0,
+        "edge": -30.56768558951964
+      },
+      {
+        "machine_number": 3313,
+        "games": 7320.0,
+        "diff": 800.0,
+        "edge": 669.4323144104803
+      },
+      {
+        "machine_number": 2181,
+        "games": 522.0,
+        "diff": -400.0,
+        "edge": -530.5676855895197
+      },
+      {
+        "machine_number": 2182,
+        "games": 8185.0,
+        "diff": 2300.0,
+        "edge": 2169.4323144104806
+      },
+      {
+        "machine_number": 2183,
+        "games": 3425.0,
+        "diff": 200.0,
+        "edge": 69.43231441048036
+      },
+      {
+        "machine_number": 2172,
+        "games": 6062.0,
+        "diff": 2900.0,
+        "edge": 2769.4323144104806
+      },
+      {
+        "machine_number": 2173,
+        "games": 1233.0,
+        "diff": 300.0,
+        "edge": 169.43231441048036
+      },
+      {
+        "machine_number": 2171,
+        "games": 4272.0,
+        "diff": -800.0,
+        "edge": -930.5676855895197
+      },
+      {
+        "machine_number": 2341,
+        "games": 41.0,
+        "diff": 0.0,
+        "edge": -130.56768558951964
+      },
+      {
+        "machine_number": 2342,
+        "games": 3330.0,
+        "diff": 200.0,
+        "edge": 69.43231441048036
+      },
+      {
+        "machine_number": 2343,
+        "games": 2146.0,
+        "diff": -1600.0,
+        "edge": -1730.5676855895197
+      },
+      {
+        "machine_number": 2153,
+        "games": 5312.0,
+        "diff": 300.0,
+        "edge": 169.43231441048036
+      },
+      {
+        "machine_number": 2151,
+        "games": 3443.0,
+        "diff": -300.0,
+        "edge": -430.56768558951967
+      },
+      {
+        "machine_number": 2152,
+        "games": 2616.0,
+        "diff": 1100.0,
+        "edge": 969.4323144104803
+      }
+    ],
+    "mean_diff_per_pick": 305.9,
+    "mean_edge_per_pick": 175.3,
+    "missing_machines": [
+      3131,
+      3132,
+      3133
+    ],
+    "rb_perspective": {
+      "day_baseline_rb_rate": 0.00243,
+      "picks_rb": [
+        {
+          "machine_number": 3122,
+          "rb_rate": 0.0029,
+          "baseline_ratio": 1.19,
+          "rb_rank": 83,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3132,
+          "rb_rate": null,
+          "baseline_ratio": null,
+          "rb_rank": null,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3332,
+          "rb_rate": 0.00416,
+          "baseline_ratio": 1.72,
+          "rb_rank": 17,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3292,
+          "rb_rate": 0.00066,
+          "baseline_ratio": 0.27,
+          "rb_rank": 214,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3282,
+          "rb_rate": 0.00467,
+          "baseline_ratio": 1.92,
+          "rb_rank": 4,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3272,
+          "rb_rate": 0.0,
+          "baseline_ratio": 0.0,
+          "rb_rank": 219,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3142,
+          "rb_rate": 0.00174,
+          "baseline_ratio": 0.72,
+          "rb_rank": 176,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 2172,
+          "rb_rate": 0.00181,
+          "baseline_ratio": 0.75,
+          "rb_rank": 169,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 2182,
+          "rb_rate": 0.00257,
+          "baseline_ratio": 1.06,
+          "rb_rank": 105,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3312,
+          "rb_rate": 0.00288,
+          "baseline_ratio": 1.19,
+          "rb_rank": 84,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3342,
+          "rb_rate": 0.00196,
+          "baseline_ratio": 0.81,
+          "rb_rank": 154,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 2342,
+          "rb_rate": 0.0018,
+          "baseline_ratio": 0.74,
+          "rb_rank": 171,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3352,
+          "rb_rate": 0.00164,
+          "baseline_ratio": 0.67,
+          "rb_rank": 182,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3152,
+          "rb_rate": 0.00195,
+          "baseline_ratio": 0.8,
+          "rb_rank": 156,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3362,
+          "rb_rate": 0.00156,
+          "baseline_ratio": 0.64,
+          "rb_rank": 184,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3172,
+          "rb_rate": 0.00382,
+          "baseline_ratio": 1.58,
+          "rb_rank": 24,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3162,
+          "rb_rate": 0.00316,
+          "baseline_ratio": 1.3,
+          "rb_rank": 55,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3182,
+          "rb_rate": 0.00313,
+          "baseline_ratio": 1.29,
+          "rb_rank": 60,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3322,
+          "rb_rate": 0.00346,
+          "baseline_ratio": 1.42,
+          "rb_rank": 38,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3302,
+          "rb_rate": 0.0019,
+          "baseline_ratio": 0.78,
+          "rb_rank": 161,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 2162,
+          "rb_rate": 0.0035,
+          "baseline_ratio": 1.44,
+          "rb_rank": 37,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3012,
+          "rb_rate": 0.00272,
+          "baseline_ratio": 1.12,
+          "rb_rank": 92,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3002,
+          "rb_rate": 0.00255,
+          "baseline_ratio": 1.05,
+          "rb_rank": 106,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 2152,
+          "rb_rate": 0.00306,
+          "baseline_ratio": 1.26,
+          "rb_rank": 67,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 2183,
+          "rb_rate": 0.00292,
+          "baseline_ratio": 1.2,
+          "rb_rank": 80,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 2153,
+          "rb_rate": 0.00207,
+          "baseline_ratio": 0.85,
+          "rb_rank": 142,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3133,
+          "rb_rate": null,
+          "baseline_ratio": null,
+          "rb_rank": null,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3123,
+          "rb_rate": 0.00229,
+          "baseline_ratio": 0.94,
+          "rb_rank": 127,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 2343,
+          "rb_rate": 0.0014,
+          "baseline_ratio": 0.58,
+          "rb_rank": 187,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3173,
+          "rb_rate": 0.00191,
+          "baseline_ratio": 0.79,
+          "rb_rank": 159,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3353,
+          "rb_rate": 0.0033,
+          "baseline_ratio": 1.36,
+          "rb_rank": 46,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3183,
+          "rb_rate": 0.0039,
+          "baseline_ratio": 1.61,
+          "rb_rank": 19,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3163,
+          "rb_rate": 0.00425,
+          "baseline_ratio": 1.75,
+          "rb_rank": 15,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3153,
+          "rb_rate": 0.00323,
+          "baseline_ratio": 1.33,
+          "rb_rank": 50,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3273,
+          "rb_rate": 0.00352,
+          "baseline_ratio": 1.45,
+          "rb_rank": 35,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3333,
+          "rb_rate": 0.00323,
+          "baseline_ratio": 1.33,
+          "rb_rank": 49,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3293,
+          "rb_rate": 0.00214,
+          "baseline_ratio": 0.88,
+          "rb_rank": 136,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3283,
+          "rb_rate": 0.00219,
+          "baseline_ratio": 0.9,
+          "rb_rank": 135,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3143,
+          "rb_rate": 0.00335,
+          "baseline_ratio": 1.38,
+          "rb_rank": 44,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3313,
+          "rb_rate": 0.00383,
+          "baseline_ratio": 1.58,
+          "rb_rank": 23,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3303,
+          "rb_rate": 0.00171,
+          "baseline_ratio": 0.71,
+          "rb_rank": 177,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3013,
+          "rb_rate": 0.00182,
+          "baseline_ratio": 0.75,
+          "rb_rank": 168,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 2173,
+          "rb_rate": 0.00243,
+          "baseline_ratio": 1.0,
+          "rb_rank": 116,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3323,
+          "rb_rate": 0.0044,
+          "baseline_ratio": 1.81,
+          "rb_rank": 9,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3343,
+          "rb_rate": 0.00314,
+          "baseline_ratio": 1.29,
+          "rb_rank": 58,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 2163,
+          "rb_rate": 0.00101,
+          "baseline_ratio": 0.41,
+          "rb_rank": 203,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3003,
+          "rb_rate": 0.0028,
+          "baseline_ratio": 1.15,
+          "rb_rank": 89,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3141,
+          "rb_rate": 0.00267,
+          "baseline_ratio": 1.1,
+          "rb_rank": 96,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3131,
+          "rb_rate": null,
+          "baseline_ratio": null,
+          "rb_rank": null,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3121,
+          "rb_rate": 0.00352,
+          "baseline_ratio": 1.45,
+          "rb_rank": 34,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3271,
+          "rb_rate": 0.00339,
+          "baseline_ratio": 1.39,
+          "rb_rank": 42,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3281,
+          "rb_rate": 0.00168,
+          "baseline_ratio": 0.69,
+          "rb_rank": 180,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3291,
+          "rb_rate": 0.00351,
+          "baseline_ratio": 1.45,
+          "rb_rank": 36,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3331,
+          "rb_rate": 0.00346,
+          "baseline_ratio": 1.42,
+          "rb_rank": 39,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3351,
+          "rb_rate": 0.00314,
+          "baseline_ratio": 1.29,
+          "rb_rank": 57,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3001,
+          "rb_rate": 0.00292,
+          "baseline_ratio": 1.2,
+          "rb_rank": 81,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3181,
+          "rb_rate": 0.00166,
+          "baseline_ratio": 0.68,
+          "rb_rank": 181,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3171,
+          "rb_rate": 0.00195,
+          "baseline_ratio": 0.8,
+          "rb_rank": 155,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3161,
+          "rb_rate": 0.00242,
+          "baseline_ratio": 1.0,
+          "rb_rank": 117,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3151,
+          "rb_rate": 0.0019,
+          "baseline_ratio": 0.78,
+          "rb_rank": 160,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3361,
+          "rb_rate": 0.00199,
+          "baseline_ratio": 0.82,
+          "rb_rank": 151,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3011,
+          "rb_rate": 0.0009,
+          "baseline_ratio": 0.37,
+          "rb_rank": 207,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 2161,
+          "rb_rate": 0.0,
+          "baseline_ratio": 0.0,
+          "rb_rank": 222,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3311,
+          "rb_rate": 0.00234,
+          "baseline_ratio": 0.96,
+          "rb_rank": 121,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3321,
+          "rb_rate": 0.00312,
+          "baseline_ratio": 1.29,
+          "rb_rank": 61,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3301,
+          "rb_rate": 0.0032,
+          "baseline_ratio": 1.32,
+          "rb_rank": 53,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 2171,
+          "rb_rate": 0.00117,
+          "baseline_ratio": 0.48,
+          "rb_rank": 198,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 3341,
+          "rb_rate": 0.00194,
+          "baseline_ratio": 0.8,
+          "rb_rank": 157,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 2181,
+          "rb_rate": 0.00383,
+          "baseline_ratio": 1.58,
+          "rb_rank": 22,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 2341,
+          "rb_rate": 0.0,
+          "baseline_ratio": 0.0,
+          "rb_rank": 228,
+          "rb_universe_size": 229
+        },
+        {
+          "machine_number": 2151,
+          "rb_rate": 0.00203,
+          "baseline_ratio": 0.84,
+          "rb_rank": 144,
+          "rb_universe_size": 229
+        }
+      ]
+    },
+    "model_perspective": null
+  },
+  "plan_digest": "a970d8d419985efb"
+}

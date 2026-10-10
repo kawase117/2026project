@@ -1,0 +1,181 @@
+{
+  "rule_id": "k1_model_gratio_dd7kei_top2",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "freeze_hash": "a933efebb75c7036",
+  "target_date": "20261007",
+  "data_asof": "20261006",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-09-16",
+    "2026-10-07"
+  ],
+  "score": "hist_model_gratio_mean_diff",
+  "selection_unit": "machine_model",
+  "success_criterion": "フォワード20エントリー日を経過した時点で、指名機種全台の総和ベースedge（対ホール全体同日平均、diff_coins_normalized）の平均が正であり、7日ブロックブートストラップ95%CI下限が0を上回ること。満たさなければ破棄する。判定はフォワードテストのみで行い、バックテスト数値および2026-08-07の観測は採否根拠にしない。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 617.329782,
+      "history_rows": 73,
+      "machines": [
+        2020,
+        2416,
+        2417,
+        2418,
+        2419
+      ]
+    },
+    {
+      "machine_name": "ウルトラミラクルジャグラー",
+      "score": 481.066064,
+      "history_rows": 82,
+      "machines": [
+        2187,
+        2188,
+        2189,
+        2190
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 2020,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 617.329782,
+      "history_days": 73
+    },
+    {
+      "machine_number": 2416,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 617.329782,
+      "history_days": 73
+    },
+    {
+      "machine_number": 2417,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 617.329782,
+      "history_days": 73
+    },
+    {
+      "machine_number": 2418,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 617.329782,
+      "history_days": 73
+    },
+    {
+      "machine_number": 2419,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 617.329782,
+      "history_days": 73
+    },
+    {
+      "machine_number": 2187,
+      "machine_name": "ウルトラミラクルジャグラー",
+      "score": 481.066064,
+      "history_days": 82
+    },
+    {
+      "machine_number": 2188,
+      "machine_name": "ウルトラミラクルジャグラー",
+      "score": 481.066064,
+      "history_days": 82
+    },
+    {
+      "machine_number": 2189,
+      "machine_name": "ウルトラミラクルジャグラー",
+      "score": 481.066064,
+      "history_days": 82
+    },
+    {
+      "machine_number": 2190,
+      "machine_name": "ウルトラミラクルジャグラー",
+      "score": 481.066064,
+      "history_days": 82
+    }
+  ],
+  "result": {
+    "scored_with_hash": "a933efebb75c7036",
+    "day_baseline": 82.2,
+    "universe_size": 365,
+    "picks_realized": [
+      {
+        "machine_number": 2020,
+        "games": 5961.0,
+        "diff": 8500.0,
+        "edge": 8417.808219178081
+      },
+      {
+        "machine_number": 2416,
+        "games": 5518.0,
+        "diff": -1700.0,
+        "edge": -1782.1917808219177
+      },
+      {
+        "machine_number": 2417,
+        "games": 3654.0,
+        "diff": -900.0,
+        "edge": -982.1917808219177
+      },
+      {
+        "machine_number": 2418,
+        "games": 1525.0,
+        "diff": 0.0,
+        "edge": -82.1917808219178
+      },
+      {
+        "machine_number": 2419,
+        "games": 3713.0,
+        "diff": 500.0,
+        "edge": 417.8082191780822
+      },
+      {
+        "machine_number": 2187,
+        "games": 6927.0,
+        "diff": 1700.0,
+        "edge": 1617.8082191780823
+      },
+      {
+        "machine_number": 2188,
+        "games": 7319.0,
+        "diff": -400.0,
+        "edge": -482.1917808219178
+      },
+      {
+        "machine_number": 2189,
+        "games": 7960.0,
+        "diff": -1000.0,
+        "edge": -1082.1917808219177
+      },
+      {
+        "machine_number": 2190,
+        "games": 6842.0,
+        "diff": -1100.0,
+        "edge": -1182.1917808219177
+      }
+    ],
+    "mean_diff_per_pick": 622.2,
+    "mean_edge_per_pick": 540.0,
+    "missing_machines": [],
+    "rb_perspective": null,
+    "model_perspective": [
+      {
+        "machine_name": "スマスロ炎炎ノ消防隊2",
+        "n_machines": 5,
+        "n_realized": 5,
+        "sum_diff": 6400.0,
+        "sum_games": 20371.0,
+        "mean_diff": 1280.0
+      },
+      {
+        "machine_name": "ウルトラミラクルジャグラー",
+        "n_machines": 4,
+        "n_realized": 4,
+        "sum_diff": -800.0,
+        "sum_games": 29048.0,
+        "mean_diff": -200.0
+      }
+    ]
+  },
+  "plan_digest": "f97afbc2e74a6975"
+}

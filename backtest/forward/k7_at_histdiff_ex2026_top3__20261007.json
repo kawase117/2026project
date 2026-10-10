@@ -1,0 +1,67 @@
+{
+  "rule_id": "k7_at_histdiff_ex2026_top3",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "freeze_hash": "c8c26c0fb1179bcb",
+  "target_date": "20261007",
+  "data_asof": "20261006",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-09-07",
+    "2026-10-07"
+  ],
+  "score": "hist_mean_diff",
+  "selection_unit": "machine",
+  "success_criterion": "判定はフォワードのみ。フォワード30エントリー日を経過した時点で edge 平均が +300枚/台 以上かつ 95%CI 下限 > 0 であること。満たさなければ『AT履歴差枚による台選択』は破棄し、AT系スコアの派生はこの1本で打ち止めとする（元ルールの success_criterion をそのまま引き継ぐ。除外以外は一切変えていない）。",
+  "is_dry_run": false,
+  "picks": [
+    {
+      "machine_number": 2318,
+      "machine_name": "いざ！番長",
+      "score": 2563.157895,
+      "history_days": 19
+    },
+    {
+      "machine_number": 2101,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 2430.0,
+      "history_days": 20
+    },
+    {
+      "machine_number": 3209,
+      "machine_name": "東京喰種",
+      "score": 2015.384615,
+      "history_days": 13
+    }
+  ],
+  "result": {
+    "scored_with_hash": "c8c26c0fb1179bcb",
+    "day_baseline": 376.0,
+    "universe_size": 483,
+    "picks_realized": [
+      {
+        "machine_number": 3209,
+        "games": 0.0,
+        "diff": 0.0,
+        "edge": -375.98343685300205
+      },
+      {
+        "machine_number": 2101,
+        "games": 4689.0,
+        "diff": -1300.0,
+        "edge": -1675.983436853002
+      },
+      {
+        "machine_number": 2318,
+        "games": 543.0,
+        "diff": 400.0,
+        "edge": 24.016563146997953
+      }
+    ],
+    "mean_diff_per_pick": -300.0,
+    "mean_edge_per_pick": -676.0,
+    "missing_machines": [],
+    "rb_perspective": null,
+    "model_perspective": null
+  },
+  "plan_digest": "7d9ddeef6672f259"
+}

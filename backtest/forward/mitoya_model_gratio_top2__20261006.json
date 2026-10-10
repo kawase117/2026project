@@ -1,0 +1,90 @@
+{
+  "rule_id": "mitoya_model_gratio_top2",
+  "hall": "みとや大森町店",
+  "freeze_hash": "a0f5b81a53a8e24b",
+  "target_date": "20261006",
+  "data_asof": "20261005",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-09-15",
+    "2026-10-06"
+  ],
+  "score": "hist_model_gratio_mean_diff",
+  "selection_unit": "machine_model",
+  "success_criterion": "フォワード20エントリー日を経過した時点で、指名機種全台の総和ベースedge（対ホール全体同日平均、diff_coins_normalized）の平均が正であり、95%CI(block7)下限が0を上回ること。満たさなければ破棄する。判定はフォワードテストのみで行い、バックテスト数値は採否根拠にしない。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "邪神ちゃんドロップキック",
+      "score": 1174.89941,
+      "history_rows": 19,
+      "machines": [
+        756
+      ]
+    },
+    {
+      "machine_name": "ディスクアップ ULTRAREMIX",
+      "score": 627.349646,
+      "history_rows": 21,
+      "machines": [
+        745
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 756,
+      "machine_name": "邪神ちゃんドロップキック",
+      "score": 1174.89941,
+      "history_days": 19
+    },
+    {
+      "machine_number": 745,
+      "machine_name": "ディスクアップ ULTRAREMIX",
+      "score": 627.349646,
+      "history_days": 21
+    }
+  ],
+  "result": {
+    "scored_with_hash": "a0f5b81a53a8e24b",
+    "day_baseline": -60.4,
+    "universe_size": 277,
+    "picks_realized": [
+      {
+        "machine_number": 745,
+        "games": 3515.0,
+        "diff": 250.0,
+        "edge": 310.3971119133574
+      },
+      {
+        "machine_number": 756,
+        "games": 4763.0,
+        "diff": 275.0,
+        "edge": 335.3971119133574
+      }
+    ],
+    "mean_diff_per_pick": 262.5,
+    "mean_edge_per_pick": 322.9,
+    "missing_machines": [],
+    "rb_perspective": null,
+    "model_perspective": [
+      {
+        "machine_name": "邪神ちゃんドロップキック",
+        "n_machines": 1,
+        "n_realized": 1,
+        "sum_diff": 275.0,
+        "sum_games": 4763.0,
+        "mean_diff": 275.0
+      },
+      {
+        "machine_name": "ディスクアップ ULTRAREMIX",
+        "n_machines": 1,
+        "n_realized": 1,
+        "sum_diff": 250.0,
+        "sum_games": 3515.0,
+        "mean_diff": 250.0
+      }
+    ]
+  },
+  "plan_digest": "d3726706744bfd5a"
+}
