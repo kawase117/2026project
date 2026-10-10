@@ -27,17 +27,17 @@ from monthly_trend_calculator import MonthlyTrendCalculator
 
 class IncrementalDBUpdater:
     """増分更新クラス"""
-    
+
     def __init__(self, hall_name: str, db_path: str = None):
         """
         初期化
-        
+
         Args:
             hall_name: ホール名
             db_path: DBファイルパス（省略時はデフォルトから生成）
         """
         self.hall_name = hall_name
-        
+
         # DBパスの決定
         if db_path is None:
             # 相対パス対応：プロジェクトルートの db フォルダから取得
@@ -49,7 +49,7 @@ class IncrementalDBUpdater:
             self.db_path = os.path.join(db_dir, f"{safe_hall_name}.db")
         else:
             self.db_path = db_path
-        
+
         # DB チェック＆初期化
         self._ensure_database_initialized()
 
@@ -60,7 +60,7 @@ class IncrementalDBUpdater:
         self.rank_calc = RankCalculator(self.db_path)
         self.date_info_calc = DateInfoCalculator(hall_name, self.db_path)
         self.monthly_trend_calc = MonthlyTrendCalculator(self.db_path)
-    
+
     def _ensure_database_initialized(self):
         """DB が存在しない、またはテーブルがない場合は db_setup で初期化"""
         if not self.hall_name:
@@ -96,116 +96,114 @@ class IncrementalDBUpdater:
     def get_db_registered_dates(self) -> set:
         """
         DB に登録済みの日付を取得
-        
+
         Returns:
             登録済み日付の set（例：{'20250101', '20250102', ...}）
         """
         try:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
-            
+
             # machine_detailed_results テーブルから日付を抽出
             cursor.execute('SELECT DISTINCT date FROM machine_detailed_results ORDER BY date')
             registered_dates = set(row[0] for row in cursor.fetchall())
-            
+
             conn.close()
             return registered_dates
-            
+
         except Exception as e:
             print(f"   [WARN] DB日付取得エラー: {e}")
             return set()
-    
+
     def get_json_available_dates(self) -> set:
         """
         JSON ファイルで利用可能な日付を取得
-        
+
         Returns:
             利用可能日付の set（ファイル名から抽出）
         """
         try:
             json_files = self.json_processor.get_json_files()
             available_dates = set()
-            
+
             for json_file in json_files:
                 # ファイル名から日付を抽出（YYYYMMDD_*.json パターン）
                 filename = os.path.basename(json_file)
                 date_part = filename.split('_')[0]
-                
+
                 # 日付形式の検証（8文字の数字）
                 if len(date_part) == 8 and date_part.isdigit():
                     available_dates.add(date_part)
-            
+
             return available_dates
-            
+
         except Exception as e:
             print(f"   [WARN] JSON日付取得エラー: {e}")
             return set()
-    
+
     def get_new_dates(self, registered_dates: set, available_dates: set) -> list:
         """
         新規日付（DBに登録されていない日付）を取得
-        
+
         Returns:
             新規日付のリスト（昇順）
         """
         new_dates = available_dates - registered_dates
         return sorted(list(new_dates))
-    
+
     def process_new_date(self, date_str: str) -> bool:
         """
         単一の日付データを処理して DB に追加
-        
+
         Args:
             date_str: 日付（YYYYMMDD）
-        
+
         Returns:
             成功時 True
         """
         try:
             print(f"\n   [DATE] {date_str} を処理中...")
-            
+
             # JSON ファイルを取得
             json_files = self.json_processor.get_json_files()
             json_filepath = None
-            
+
             for jf in json_files:
                 if date_str in os.path.basename(jf):
                     json_filepath = jf
                     break
-            
+
             if not json_filepath:
                 print(f"      [ERROR] JSON ファイルが見つかりません")
                 return False
-            
+
             # JSON を読み込み
             with open(json_filepath, 'r', encoding='utf-8') as f:
                 json_data = json.load(f)
-            
+
             # 日付を検証
             json_date = json_data.get('date')
             if json_date != date_str:
                 print(f"      [WARN] JSON内の日付不一致: {date_str} != {json_date}")
                 # 日付で強制上書き
                 json_data['date'] = date_str
-            
+
             # 個別台データを処理
             machine_records = json_data.get('all_data', [])
-            machine_data_list = self.json_processor.process_all_machine_data_for_day(
-                date_str, machine_records, None
-            )
-            
+            machine_data_list = self.json_processor.process_all_machine_data_for_day(date_str, machine_records, None)
+
             if not machine_data_list:
                 print(f"      [ERROR] 機械データが0件です")
                 return False
-            
+
             # 1. 個別台データ投入
             self.data_inserter.insert_machine_detailed_results(machine_data_list)
-            
+
             # 2. 日別全体集計
             avg_games = self.data_inserter.calculate_and_insert_daily_summary(date_str)
             if avg_games:
                 self.data_inserter.update_games_deviation(date_str, avg_games)
-            
+
             # 3. 各種集計（個別に実行して失敗を明示化）
             summary_failures = []
 
@@ -237,7 +235,7 @@ class IncrementalDBUpdater:
                 print(f"      [ERROR] サブテーブル更新に失敗しました:")
                 for failure in summary_failures:
                     print(f"        - {failure}")
-            
+
             # 4. ランク・履歴計算 + 日付フラグ + 月次トレンド更新（依存関係をまとめて処理）
             try:
                 self.rank_calc.calculate_ranks_for_date(date_str)
@@ -248,23 +246,24 @@ class IncrementalDBUpdater:
             except Exception as e:
                 print(f"      [WARN] ランク/日付フラグ/月次トレンド更新スキップ - {str(e)}")
                 # 処理継続（次の日付へ）
-            
+
             print(f"      [OK] {date_str} を DB に追加しました")
             return True
-            
+
         except Exception as e:
             print(f"      [ERROR] エラー: {e}")
             import traceback
+
             traceback.print_exc()
             return False
-    
+
     def run(self, verbose: bool = True) -> dict:
         """
         増分更新を実行
-        
+
         Args:
             verbose: 詳細出力を表示するか
-        
+
         Returns:
             結果情報の辞書
         """
@@ -309,7 +308,7 @@ class IncrementalDBUpdater:
                 'message': 'JSON ファイルが見つかりません',
                 'new_dates': [],
                 'processed': 0,
-                'failed': 0
+                'failed': 0,
             }
 
         print()
@@ -325,12 +324,12 @@ class IncrementalDBUpdater:
             print(f"   [DATE] 期間: {min_date} ～ {max_date}")
         else:
             print(f"   [WARN] DB にデータが登録されていません")
-        
+
         print()
-        
+
         # 新規日付を検出
         new_dates = self.get_new_dates(registered_dates, available_dates)
-        
+
         print("[NOTE] 新規日付の検出:")
         if new_dates:
             print(f"   [NEW] {len(new_dates)}件の新規日付を検出しました")
@@ -342,43 +341,43 @@ class IncrementalDBUpdater:
                 'message': '新規データはありません',
                 'new_dates': [],
                 'processed': 0,
-                'failed': 0
+                'failed': 0,
             }
-        
+
         print()
         print("=" * 70)
         print(f"[START] 増分更新を開始します")
         print("=" * 70)
         print()
-        
+
         # 新規日付を処理
         processed_count = 0
         failed_count = 0
         processed_dates = []
-        
+
         for i, date_str in enumerate(new_dates, 1):
             print(f"[{i}/{len(new_dates)}]", end=" ")
-            
+
             if self.process_new_date(date_str):
                 processed_count += 1
                 processed_dates.append(date_str)
             else:
                 failed_count += 1
-        
+
         # 最終履歴再計算（直近7日分）
         if processed_dates:
             print()
             print("=" * 70)
             print("[TREND] 最終履歴処理を実行中...")
             print("=" * 70)
-            
+
             for date_str in processed_dates[-7:]:
                 try:
                     self.rank_calc.calculate_history_for_date(date_str)
                     print(f"   [OK] {date_str} の履歴を再計算")
                 except Exception as e:
                     print(f"   [WARN] {date_str} 履歴処理エラー: {e}")
-        
+
         # 結果サマリー
         print()
         print("=" * 70)
@@ -386,24 +385,24 @@ class IncrementalDBUpdater:
         print("=" * 70)
         print(f"[OK] 正常処理: {processed_count}件")
         print(f"[ERROR] 失敗: {failed_count}件")
-        
+
         if processed_count > 0:
             print(f"\n[DATE] 追加された日付:")
             print(f"   {processed_dates[0]} ～ {processed_dates[-1]}")
             print(f"   合計 {len(processed_dates)}日分")
-        
+
         print()
         print(f"[DB] DB パス: {self.db_path}")
         print(f"[REPORT] DB サイズ: {os.path.getsize(self.db_path) / 1024 / 1024:.2f} MB")
         print("=" * 70)
-        
+
         return {
             'status': 'success' if failed_count == 0 else 'partial',
             'message': f'{processed_count}件を追加、{failed_count}件失敗',
             'new_dates': new_dates,
             'processed': processed_count,
             'failed': failed_count,
-            'processed_dates': processed_dates
+            'processed_dates': processed_dates,
         }
 
     @classmethod
@@ -465,11 +464,31 @@ class IncrementalDBUpdater:
         print(f"成功: {success_count}, スキップ: {skipped_count}, エラー: {error_count}")
 
         for hall_name, result in results.items():
-            status_emoji = "[OK]" if result["status"] == "success" else "[SKIP]" if result["status"] == "skipped" else "[ERROR]"
+            status_emoji = (
+                "[OK]" if result["status"] == "success" else "[SKIP]" if result["status"] == "skipped" else "[ERROR]"
+            )
             print(f"{status_emoji} {hall_name}: {result['message']}")
 
         print("=" * 70)
         return results
+
+
+def _sync_machine_master_after_update(halls, db_dir=None):
+    try:
+        try:
+            from sync_new_machine_master import run as sync_new_machine_master
+        except ImportError:  # pragma: no cover
+            from database.sync_new_machine_master import run as sync_new_machine_master
+        kwargs = {"halls": halls, "apply": True}
+        if db_dir is not None:
+            kwargs["db_dir"] = db_dir
+        result = sync_new_machine_master(**kwargs)
+        print(
+            "   [MASTER] 新規=%d 追加=%d 分類同期=%d"
+            % (result["new_names"], len(result["added"]), result["category_rows_synced"])
+        )
+    except Exception as e:
+        print(f"   [WARN] 機種マスターの出典確認に失敗: {e}")
 
 
 def main():
@@ -479,6 +498,7 @@ def main():
     if len(sys.argv) > 1 and sys.argv[1] == "--all":
         # 複数ホール一括処理
         results = IncrementalDBUpdater.run_all_halls()
+        _sync_machine_master_after_update(list(results))
         # すべて成功または成功＋スキップなら exit 0
         error_count = sum(1 for r in results.values() if r["status"] == "error")
         return 0 if error_count == 0 else 1
@@ -492,6 +512,7 @@ def main():
     # hall_name が空の場合は全ホール一括処理
     if not hall_name:
         results = IncrementalDBUpdater.run_all_halls()
+        _sync_machine_master_after_update(list(results))
         error_count = sum(1 for r in results.values() if r["status"] == "error")
         return 0 if error_count == 0 else 1
 
@@ -503,6 +524,7 @@ def main():
     # 増分更新を実行
     updater = IncrementalDBUpdater(hall_name, db_path)
     result = updater.run()
+    _sync_machine_master_after_update([Path(updater.db_path).stem], Path(updater.db_path).parent)
 
     # 終了コード
     return 0 if result['status'] == 'success' else 1
@@ -511,6 +533,6 @@ def main():
 if __name__ == "__main__":
     print(f"実行時刻: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print()
-    
+
     exit_code = main()
     sys.exit(exit_code)
