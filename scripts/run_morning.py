@@ -175,6 +175,11 @@ def main() -> int:
         help="期日の来た予告の採点を行わない（ana-slo 公開前の早い試行でフォワード凍結を巻き込まないため）",
     )
     parser.add_argument(
+        "--skip-git-push",
+        action="store_true",
+        help="朝の機械生成物(backtest/forward・daily_digest)の自動コミット&プッシュを行わない",
+    )
+    parser.add_argument(
         "--only-if-complete",
         action="store_true",
         help=(
@@ -316,6 +321,14 @@ def _run(args: argparse.Namespace) -> int:
             "scraper/twitter_monitor/run_daily.py",
             [PYTHON, "-u", str(PROJECT_ROOT / "scraper" / "twitter_monitor" / "run_daily.py")],
             cwd=PROJECT_ROOT / "scraper" / "twitter_monitor",
+        )
+
+    if not args.skip_git_push:
+        # forward / daily_digest の機械生成物だけをコミットしてプッシュする(許可リスト方式)。
+        # 失敗しても朝の実行は失敗にしない。ローカルのコミットは残り、次の実行で再度プッシュされる。
+        run(
+            "scripts/auto_commit_push.py",
+            [PYTHON, "-u", str(PROJECT_ROOT / "scripts" / "auto_commit_push.py")],
         )
 
     # ana-slo が未更新でも、X が取れなくても、朝の実行そのものは失敗ではない。
