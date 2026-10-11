@@ -12,6 +12,16 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from config import ACCOUNTS, DB_PATH
+from hall_aliases import mentions_target_hall
+
+
+class UsageLimitReached(RuntimeError):
+    """Codex の利用上限（5時間枠）に達した。以降の呼び出しは全て失敗するので処理を止める。
+
+    2026-10-05 以降、上限到達後も残り約320枚を1枚ずつ呼んで全て failed 記録し、
+    翌朝 --redo-failed で同じ画像をまた呼ぶ、という空振りが毎日続いていた。
+    """
+
 
 # 店長系アカウントの投稿は台番号を含まない画像が大半で、Codex呼び出しがほぼ空振りに
 # なる（2026-09-24 実測、成功抽出したものだけで見た「台番号を含む率」）:
@@ -234,6 +244,8 @@ def extract_image(image_path: str) -> tuple[dict, str]:
         response = Path(output_path).read_text(encoding="utf-8") if Path(output_path).exists() else ""
         raw_response = response or (result.stdout + result.stderr)
         if result.returncode != 0:
+            if "usage limit" in raw_response.lower():
+                raise UsageLimitReached(raw_response[-300:])
             raise RuntimeError(f"codex exec exited {result.returncode}: {raw_response}")
         parsed = validate_extraction(json.loads(response))
         return parsed, raw_response
@@ -279,8 +291,16 @@ def select_pending_images(
     redo_failed: bool,
     text_keywords: list[str] | None = None,
     tweet_ids: list[str] | None = None,
+    hall_filter: bool = True,
 ) -> list[tuple[str, str, str, str]]:
-    """Return tweet/image/handle/timestamp rows in the requested processing order."""
+    """Return tweet/image/handle/timestamp rows in the requested processing order.
+
+    hall_filter: 本文に追跡対象ホールの名前・別名・店長名・略記が無い投稿は除く
+    （hall_aliases.mentions_target_hall）。どのアカウントも複数ホールを扱い、本文に
+    ホール名を書く運用なので全アカウントに適用する。tweet_ids を名指しした再実行では
+    利用者の意図を優先して適用しない。
+    """
+    hall_filter = hall_filter and not tweet_ids
     selected_handles = set(handles)
     if halls:
         hall_handles = {handle for handle, details in ACCOUNTS.items() if details["hall"] in halls}
@@ -333,7 +353,7 @@ def select_pending_images(
         priority_order = ""
     direction = "DESC" if newest_first else "ASC"
     sql = f"""
-        SELECT ti.tweet_id, ti.image_path, st.handle, st.posted_at_jst
+        SELECT ti.tweet_id, ti.image_path, st.handle, st.posted_at_jst, st.tweet_text
         FROM tweet_images AS ti
         JOIN seen_tweets AS st ON st.tweet_id = ti.tweet_id
         -- Candidates only: prefilter.py rejects 43% of images as photographic,
@@ -343,10 +363,18 @@ def select_pending_images(
         WHERE {' AND '.join(conditions)}
         ORDER BY {priority_order} st.posted_at_jst {direction}, ti.id {direction}
     """
-    if limit is not None:
+    # 絞り込みは SQL で書けないので、LIMIT は絞った後に Python 側で掛ける。
+    if limit is not None and not hall_filter:
         sql += " LIMIT ?"
         parameters.append(limit)
-    return connection.execute(sql, parameters).fetchall()
+    rows = connection.execute(sql, parameters).fetchall()
+    if hall_filter:
+        rows = [
+            row for row in rows if mentions_target_hall(row[4], date.fromisoformat(row[3][:10]) if row[3] else None)
+        ]
+        if limit is not None:
+            rows = rows[:limit]
+    return [row[:4] for row in rows]
 
 
 def store_success(
@@ -433,7 +461,11 @@ def extract_image_with_panel_retry(image_path: str, min_entries: int = 5) -> tup
     numbers = sum(len(e.get("machine_numbers") or []) for e in parsed.get("entries") or [])
     if _panels_with_numbers(parsed) or numbers < min_entries:
         return parsed, raw
-    retry, _ = extract_image(image_path)
+    try:
+        retry, _ = extract_image(image_path)
+    except UsageLimitReached:
+        # 1回目は成功している。読み直しだけ諦めて、取れた結果は保存する。
+        return parsed, raw
     if _panels_with_numbers(retry):
         parsed = dict(parsed, panels=retry["panels"])
     return parsed, raw
@@ -504,6 +536,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Retry images that have failed records but no success record",
     )
     parser.add_argument(
+        "--no-hall-filter",
+        action="store_true",
+        help="本文に追跡対象ホールの手がかりが無い投稿も処理する（既定は除外。Codex枠の節約）",
+    )
+    parser.add_argument(
         "--text-contains",
         help=(
             "Comma-separated keywords; only images whose tweet text mentions one "
@@ -549,7 +586,9 @@ def main(argv: list[str] | None = None) -> int:
             redo_failed=args.redo_failed,
             text_keywords=parse_csv_option(args.text_contains),
             tweet_ids=parse_csv_option(args.tweet_ids),
+            hall_filter=not args.no_hall_filter,
         )
+        print(f"抽出対象: {len(rows)}枚", flush=True)
         try:
             for tweet_id, image_path, handle, posted_at_jst in rows:
                 try:
@@ -563,6 +602,11 @@ def main(argv: list[str] | None = None) -> int:
                         parsed,
                         raw_response,
                     )
+                except UsageLimitReached as error:
+                    # failed として記録しない（翌朝の --redo-failed に載せない）。残りも呼ばない。
+                    connection.rollback()
+                    print(f"Codex の利用上限に達したため中断します: {error}", flush=True)
+                    return 0
                 except (
                     OSError,
                     RuntimeError,

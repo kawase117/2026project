@@ -74,6 +74,30 @@ HALL_ALIAS_EXCLUSIONS: dict[str, tuple[str, ...]] = {
 }
 
 
+# 本文での略記。HALL_ALIASES は infer_hall / event_days も使うので、画像抽出の
+# 絞り込みでだけ必要な略記はここに分ける（「メガ1」「蒲田7」など）。
+SHORT_FORMS: tuple[str, ...] = (
+    "楽蒲",
+    "メガシティ2000蒲田",
+    "メガ1",
+    "メガ7",
+    "蒲田1",
+    "蒲田7",
+    "アロー池上",
+)
+
+
+def mentions_target_hall(text: str, on_date: date | None) -> bool:
+    """画像抽出（Codex）にかける価値のある投稿か。追跡対象ホールの名前・店長名・略記が本文にあるか。
+
+    Codex の5時間枠は1日約80枚で尽きる。本文に対象ホールの手がかりが無い投稿
+    （チェーン横断アカウントの他店舗の結果など）は抽出しない。2026-10-12 時点で
+    sloneko222 の画像は収集の56%を占めるが、対象ホールに触れるのは1.5%だった。
+    """
+    text = text or ""
+    return bool(plausible_halls(text, on_date)) or any(word in text for word in SHORT_FORMS)
+
+
 def plausible_halls(text: str, on_date: date | None) -> set[str]:
     """本文と投稿日から、言及されている可能性のある追跡対象ホールの集合を返す。
 

@@ -41,8 +41,9 @@ JST = ZoneInfo("Asia/Tokyo")
 # 「大森」「ヒロキ」「雑色」単独は同系列の別店舗に当たるので使わない。
 HALL_KEYWORDS = {
     "楽園蒲田店": ("楽園蒲田", "楽蒲"),
-    "マルハンメガシティ2000-蒲田1": ("メガシティ2000蒲田1", "メガ1", "メガいち", "蒲田1"),
-    "マルハンメガシティ2000-蒲田7": ("メガシティ2000蒲田7", "メガ7", "メガなな", "蒲田7"),
+    # 店長名で示唆する投稿（「ウスイの速報」「よこやん店長」）も拾う。サトウは 8/23 に退任済みなので入れない。
+    "マルハンメガシティ2000-蒲田1": ("メガシティ2000蒲田1", "メガ1", "メガいち", "蒲田1", "よこやん"),
+    "マルハンメガシティ2000-蒲田7": ("メガシティ2000蒲田7", "メガ7", "メガなな", "蒲田7", "ウスイ"),
     "レイトギャップ平和島": ("レイトギャップ平和島", "平和島"),
     "みとや大森町店": ("みとや大森町", "みとや大森"),
     "ARROW池上店": ("ARROW池上", "アロー池上"),
@@ -359,7 +360,8 @@ def refresh_integrated_layer():
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="収集・欠損補完・抽出・ラベル付けを順に実行します。")
-    parser.add_argument("--extract-limit", type=int, default=400, help="1回の抽出で処理する画像数の上限 (既定 400)")
+    # 対象ホールに絞ると1日20〜30枚。Codexの5時間枠は約80枚で尽きる（2026-10-12 実測）ので、余裕を見て50。
+    parser.add_argument("--extract-limit", type=int, default=50, help="1回の抽出で処理する画像数の上限 (既定 50)")
     parser.add_argument("--extract-handles", default=None, help="抽出対象のアカウントを限定 (カンマ区切り)")
     parser.add_argument("--skip-extract", action="store_true", help="抽出を行わず、収集とラベル付けだけ実行します。")
     parser.add_argument("--skip-fulltext", action="store_true", help="折り畳まれた本文の取り直しを行いません。")
