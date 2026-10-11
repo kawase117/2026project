@@ -71,7 +71,489 @@
   "unscored_claims": [],
   "needs_manual_review": false,
   "no_confirmed_machines": false,
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20261010",
+    "hall_baseline_mean_diff": -2.2,
+    "hall_n_machines": 587,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 2,
+      "n_censored_lo": 7,
+      "machines_hi": [
+        "戦国乙女5 業火を穿つ宿焔の双刃",
+        "東京リベンジャーズ"
+      ],
+      "machines_lo": [
+        "シャーマンキング",
+        "ソードアート・オンラインII",
+        "モンスターハンターライズ：サンブレイク",
+        "押忍!番長ZERO",
+        "東京喰種",
+        "真打 吉宗"
+      ],
+      "bounds": [
+        -5095,
+        15477
+      ]
+    },
+    "claims": [
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "東京喰種",
+          "ratio": 2,
+          "note": "『東京喰種、末尾⓪が1/2以上で上2つ』(過去傾向の紹介)"
+        },
+        "n_machines": 18,
+        "ratio": 2,
+        "top_k": 9,
+        "model_top_k_mean_diff": 2783.6,
+        "hall_top_quantile_mean_diff": 1841.8,
+        "excess_vs_hall_quantile": 941.8,
+        "model_mean_diff": -467.9,
+        "n_over_hall_quantile": 8,
+        "hit": true,
+        "model_named_score": -656.0,
+        "model_named_rank": 42
+      },
+      {
+        "type": "position_rule",
+        "claim": {
+          "type": "position_rule",
+          "field": "last_digit",
+          "values": [
+            "0"
+          ],
+          "note": "末尾0がニブイチ⑤⑥(1/2)。プール判定。by_segmentも確認する"
+        },
+        "by_segment": [
+          {
+            "segment": "AT",
+            "n_machines": 356,
+            "n_target": 38,
+            "n_other": 318,
+            "effect_resid_diff": 1377.0,
+            "target_payout": 1.0679,
+            "other_payout": 0.9884
+          },
+          {
+            "segment": "OKI",
+            "n_machines": 13,
+            "n_target": 1,
+            "n_other": 12,
+            "effect_resid_diff": 1026.7,
+            "target_payout": 1.0401,
+            "other_payout": 0.9149
+          },
+          {
+            "segment": "JUG",
+            "n_machines": 117,
+            "n_target": 12,
+            "n_other": 105,
+            "effect_resid_diff": 233.9,
+            "target_payout": 1.0188,
+            "other_payout": 1.0119
+          },
+          {
+            "segment": "BT",
+            "n_machines": 85,
+            "n_target": 7,
+            "n_other": 78,
+            "effect_resid_diff": 175.7,
+            "target_payout": 1.0162,
+            "other_payout": 0.9764
+          },
+          {
+            "segment": "HANA",
+            "n_machines": 16,
+            "n_target": 2,
+            "n_other": 14,
+            "effect_resid_diff": -323.4,
+            "target_payout": 1.0024,
+            "other_payout": 1.0249
+          }
+        ],
+        "rb_normal": {
+          "n_target": 20,
+          "n_other": 153,
+          "rb_observed": 449,
+          "rb_expected": 442.2,
+          "rb_z": 0.32,
+          "hit_rb": true
+        },
+        "judged_segment": "ALL(pooled)",
+        "n_target": 60,
+        "n_other": 527,
+        "effect_resid_diff": 942.5,
+        "target_payout": 1.0486,
+        "other_payout": 0.9921,
+        "hit": true
+      },
+      {
+        "type": "position_rule",
+        "claim": {
+          "type": "position_rule",
+          "field": "last_digit",
+          "values": [
+            "0"
+          ],
+          "segment": "JUG",
+          "note": "ジャグラーシリーズの末尾0は傾向上1/2以上(本文)。ジャグ限定で判定"
+        },
+        "by_segment": [
+          {
+            "segment": "AT",
+            "n_machines": 356,
+            "n_target": 38,
+            "n_other": 318,
+            "effect_resid_diff": 1377.0,
+            "target_payout": 1.0679,
+            "other_payout": 0.9884
+          },
+          {
+            "segment": "OKI",
+            "n_machines": 13,
+            "n_target": 1,
+            "n_other": 12,
+            "effect_resid_diff": 1026.7,
+            "target_payout": 1.0401,
+            "other_payout": 0.9149
+          },
+          {
+            "segment": "JUG",
+            "n_machines": 117,
+            "n_target": 12,
+            "n_other": 105,
+            "effect_resid_diff": 233.9,
+            "target_payout": 1.0188,
+            "other_payout": 1.0119
+          },
+          {
+            "segment": "BT",
+            "n_machines": 85,
+            "n_target": 7,
+            "n_other": 78,
+            "effect_resid_diff": 175.7,
+            "target_payout": 1.0162,
+            "other_payout": 0.9764
+          },
+          {
+            "segment": "HANA",
+            "n_machines": 16,
+            "n_target": 2,
+            "n_other": 14,
+            "effect_resid_diff": -323.4,
+            "target_payout": 1.0024,
+            "other_payout": 1.0249
+          }
+        ],
+        "rb_normal": {
+          "n_target": 20,
+          "n_other": 153,
+          "rb_observed": 449,
+          "rb_expected": 442.2,
+          "rb_z": 0.32,
+          "hit_rb": true
+        },
+        "judged_segment": "JUG",
+        "n_target": 12,
+        "n_other": 105,
+        "effect_resid_diff": 233.9,
+        "target_payout": 1.0188,
+        "other_payout": 1.0119,
+        "hit": true
+      },
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 1,
+          "note": "『全台てっぺん機種あり』。最小の1。自明に当たりやすいので的中に数えない"
+        },
+        "observed_n_models": 6,
+        "candidate_models": 59,
+        "models": [
+          {
+            "machine_name": "東京リベンジャーズ",
+            "score": 9929.1,
+            "n_machines": 4,
+            "mean_diff": 7607.5,
+            "n_censored_hi": 1,
+            "n_censored_lo": 0,
+            "censoring_bias": "lower_bound",
+            "max_score_understatement": 1149.5,
+            "age_days": 397
+          },
+          {
+            "machine_name": "真打 吉宗",
+            "score": 4820.8,
+            "n_machines": 5,
+            "mean_diff": 3362.2,
+            "n_censored_hi": 0,
+            "n_censored_lo": 1,
+            "censoring_bias": "upper_bound",
+            "age_days": 187
+          },
+          {
+            "machine_name": "革命機ヴァルヴレイヴ2",
+            "score": 4664.4,
+            "n_machines": 9,
+            "mean_diff": 3952.9,
+            "age_days": 340
+          },
+          {
+            "machine_name": "からくりサーカス2",
+            "score": 3904.2,
+            "n_machines": 4,
+            "mean_diff": 3452.8,
+            "age_days": 96
+          },
+          {
+            "machine_name": "とんでもスキルで異世界放浪メシ",
+            "score": 2711.2,
+            "n_machines": 3,
+            "mean_diff": 2143.0,
+            "age_days": 67
+          },
+          {
+            "machine_name": "化物語",
+            "score": 2166.3,
+            "n_machines": 9,
+            "mean_diff": 1889.3,
+            "age_days": 306
+          }
+        ],
+        "n_new_machines_over": 0,
+        "hit": true
+      },
+      {
+        "type": "narabi",
+        "claim": {
+          "type": "narabi",
+          "n_adjacent": 3,
+          "count": 10,
+          "scope": "hall",
+          "note": "3台並び⑤⑥×10か所以上"
+        },
+        "detected_count": 13,
+        "baseline_percentile": 89.9,
+        "blocks": [
+          {
+            "start": 1018,
+            "machines": [
+              1018,
+              1019,
+              1020
+            ],
+            "section": "1017-1026",
+            "mean_diff": 1873.7
+          },
+          {
+            "start": 1039,
+            "machines": [
+              1039,
+              1040,
+              1041
+            ],
+            "section": "1037-1046",
+            "mean_diff": 3667.0
+          },
+          {
+            "start": 1173,
+            "machines": [
+              1173,
+              1174,
+              1175
+            ],
+            "section": "1170-1183",
+            "mean_diff": 2762.3
+          },
+          {
+            "start": 1200,
+            "machines": [
+              1200,
+              1201,
+              1202
+            ],
+            "section": "1197-1208",
+            "mean_diff": 1889.3
+          },
+          {
+            "start": 2008,
+            "machines": [
+              2008,
+              2009,
+              2010
+            ],
+            "section": "2008-2020",
+            "mean_diff": 2984.3
+          },
+          {
+            "start": 2025,
+            "machines": [
+              2025,
+              2026,
+              2027
+            ],
+            "section": "2021-2032",
+            "mean_diff": 6667.0
+          },
+          {
+            "start": 2028,
+            "machines": [
+              2028,
+              2029,
+              2030
+            ],
+            "section": "2021-2032",
+            "mean_diff": 6222.7
+          },
+          {
+            "start": 2050,
+            "machines": [
+              2050,
+              2051,
+              2052
+            ],
+            "section": "2045-2057",
+            "mean_diff": 6143.3
+          },
+          {
+            "start": 2162,
+            "machines": [
+              2162,
+              2163,
+              2164
+            ],
+            "section": "2153-2164",
+            "mean_diff": 2365.7
+          },
+          {
+            "start": 2180,
+            "machines": [
+              2180,
+              2181,
+              2182
+            ],
+            "section": "2175-2186",
+            "mean_diff": 3778.0
+          },
+          {
+            "start": 2225,
+            "machines": [
+              2225,
+              2226,
+              2227
+            ],
+            "section": "2225-2233",
+            "mean_diff": 2159.0
+          },
+          {
+            "start": 3123,
+            "machines": [
+              3123,
+              3124,
+              3125
+            ],
+            "section": "3121-3132",
+            "mean_diff": 4715.0
+          },
+          {
+            "start": 3169,
+            "machines": [
+              3169,
+              3170,
+              3171
+            ],
+            "section": "3166-3175",
+            "mean_diff": 2048.0
+          }
+        ],
+        "games_blocks": [],
+        "hit": null
+      },
+      {
+        "type": "narabi",
+        "claim": {
+          "type": "narabi",
+          "n_adjacent": 5,
+          "count": 2,
+          "scope": "hall",
+          "note": "5台並び⑤⑥×2か所以上"
+        },
+        "detected_count": 4,
+        "baseline_percentile": 97.5,
+        "blocks": [
+          {
+            "start": 1173,
+            "machines": [
+              1173,
+              1174,
+              1175,
+              1176,
+              1177
+            ],
+            "section": "1170-1183",
+            "mean_diff": 2114.6
+          },
+          {
+            "start": 2008,
+            "machines": [
+              2008,
+              2009,
+              2010,
+              2011,
+              2012
+            ],
+            "section": "2008-2020",
+            "mean_diff": 1924.2
+          },
+          {
+            "start": 2025,
+            "machines": [
+              2025,
+              2026,
+              2027,
+              2028,
+              2029
+            ],
+            "section": "2021-2032",
+            "mean_diff": 7324.2
+          },
+          {
+            "start": 2050,
+            "machines": [
+              2050,
+              2051,
+              2052,
+              2053,
+              2054
+            ],
+            "section": "2045-2057",
+            "mean_diff": 5638.6
+          }
+        ],
+        "games_blocks": [],
+        "hit": null
+      },
+      {
+        "type": "narabi",
+        "claim": {
+          "type": "narabi",
+          "n_adjacent": 10,
+          "count": 1,
+          "scope": "hall",
+          "note": "10台並び⑤⑥"
+        },
+        "detected_count": 0,
+        "baseline_percentile": 96.3,
+        "blocks": [],
+        "games_blocks": [],
+        "hit": null
+      }
+    ]
+  },
   "announce_digest": "07400496a7837edd",
   "provisional": true,
   "amendments": [

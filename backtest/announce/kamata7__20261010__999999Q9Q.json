@@ -33,7 +33,76 @@
   ],
   "needs_manual_review": false,
   "no_confirmed_machines": true,
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20261010",
+    "hall_baseline_mean_diff": -84.2,
+    "hall_n_machines": 715,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 11,
+          "note": "『仕掛け・全11機種』。全=全台系と解釈(機種名は本文に無い)。月ゾロの機種平均超えが11機種は高い水準なので外れ寄りの主張"
+        },
+        "observed_n_models": 6,
+        "candidate_models": 66,
+        "models": [
+          {
+            "machine_name": "東京リベンジャーズ",
+            "score": 9596.3,
+            "n_machines": 5,
+            "mean_diff": 5420.0,
+            "age_days": 397
+          },
+          {
+            "machine_name": "邪神ちゃんドロップキック",
+            "score": 4352.8,
+            "n_machines": 4,
+            "mean_diff": 2850.0,
+            "age_days": 68
+          },
+          {
+            "machine_name": "モグモグ風林火山 大海戦の巻",
+            "score": 3925.5,
+            "n_machines": 4,
+            "mean_diff": 6200.0,
+            "age_days": 33
+          },
+          {
+            "machine_name": "スマスロ サンダーV",
+            "score": 2582.1,
+            "n_machines": 4,
+            "mean_diff": 2150.0,
+            "age_days": 222
+          },
+          {
+            "machine_name": "青春ブタ野郎はバニーガール先輩の夢を見ない",
+            "score": 2183.3,
+            "n_machines": 8,
+            "mean_diff": 1775.0,
+            "age_days": 33
+          },
+          {
+            "machine_name": "沖ドキ!DUO アンコール",
+            "score": 2128.7,
+            "n_machines": 4,
+            "mean_diff": 2125.0,
+            "age_days": 292
+          }
+        ],
+        "n_new_machines_over": 0,
+        "hit": false
+      }
+    ]
+  },
   "announce_digest": "ca4808e12ec0a861",
   "provisional": true,
   "amendments": [

@@ -1,0 +1,42 @@
+{
+  "announce_id": "kamata1__20261011__999999Q9Q",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "target_date": "20261011",
+  "source": {
+    "account": "999999Q9Q",
+    "url": "",
+    "posted_at": "2026-10-10T22:12:01+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "【全国大戦そのままに、灼熱の1ゾロDAY】\n新章メガいちよこやん予想\n\n明日は1の付く日。よこやんの強化パターンはもはや鉄板級。\n全機種・ニブイチ機種（複数）・メイン機種（スマスロ中心）への単品仕掛け、この三本柱が明日も揃い踏みと見て間違いない。\n\n少台数機種は全、台数多めのメイン機種はニブイチ以上の配分を意識しておけばツモ率は格段に跳ね上がる。オススメ東京喰種は毎日当たりありの常連、真っ先に確保したい一台\n\n#マルハンメガシティ2000蒲田1",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"マルハンメガシティ2000-蒲田1\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-11\", \"2026-10-09\"], \"n_days\": 90, \"n_model_days\": 4329, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2163.4, \"models_over_threshold_per_day\": {\"mean\": 2.41, \"median\": 2.0, \"max\": 7}, \"candidate_models_per_day\": 48.1, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.1, \"median\": 3.0, \"max\": 8}, \"p_at_least_1\": 0.967, \"p_at_least_2\": 0.778, \"p_at_least_3\": 0.556, \"p_at_least_4\": 0.378, \"p_at_least_10\": 0.0}} / named_context: {\"as_of\": \"20261009\", \"window_days\": 30, \"n_candidates_ge3machines\": 50, \"hall_over_threshold_rate_approx\": 0.04, \"threshold\": 1800.0, \"models\": [{\"name\": \"東京喰種\", \"n_machines\": 20, \"rank\": 29, \"of\": 50, \"n_days_present\": 30, \"over_threshold\": 3, \"rate\": 0.1, \"mean_score\": 366.1}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "東京喰種",
+      "note": "人間確認済み: 本文「オススメ東京喰種は毎日当たりありの常連」。機種名の名指し。"
+    }
+  ],
+  "unscored_claims": [],
+  "needs_manual_review": false,
+  "no_confirmed_machines": false,
+  "result": null,
+  "announce_digest": "ef5ec97499f8746b",
+  "provisional": true,
+  "amendments": [
+    {
+      "at": "2026-10-11T09:44:36+09:00",
+      "prev_digest": "f604e980b48677e2",
+      "reason": "claims確認: 東京喰種の名指しを人間確認(自動下ごしらえの注記を更新)",
+      "void": false,
+      "amended_after_target": false
+    }
+  ]
+}

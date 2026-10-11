@@ -37,7 +37,74 @@
   "unscored_claims": [],
   "needs_manual_review": true,
   "no_confirmed_machines": false,
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20261010",
+    "hall_baseline_mean_diff": 136.5,
+    "hall_n_machines": 277,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "マイジャグラーV",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 131.7,
+        "mean_diff": 100.6,
+        "gratio": 1.31,
+        "n_machines": 34,
+        "rank": 18,
+        "candidate_models": 38,
+        "age_days": 647,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "東京喰種",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 2533.5,
+        "mean_diff": 2202.8,
+        "gratio": 1.15,
+        "n_machines": 9,
+        "rank": 2,
+        "candidate_models": 38,
+        "age_days": 614,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 1528.3,
+        "mean_diff": 1826.9,
+        "gratio": 0.837,
+        "n_machines": 17,
+        "rank": 4,
+        "candidate_models": 38,
+        "age_days": 222,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
   "announce_digest": "f621cca22f847ccc",
   "provisional": true
 }

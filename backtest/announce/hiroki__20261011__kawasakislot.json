@@ -1,0 +1,36 @@
+{
+  "announce_id": "hiroki__20261011__kawasakislot",
+  "hall": "ヒロキ東口店",
+  "target_date": "20261011",
+  "source": {
+    "account": "kawasakislot",
+    "url": "",
+    "posted_at": "2026-10-10T22:16:00+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "10/11 ヒロキ東口\nスロパチ過去5回対象機種と投入箇所のフロアマップもどぞ",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "本文は「スロパチ過去5回対象機種と投入箇所のフロアマップ」。画像3枚(過去5回6/20・7/26・8/11・8/16・9/26の投入箇所2枚、10/9付2Fフロアマップ1枚)で、10/11の予告ではなく過去の投入実績の提示。台番号・機種は画像に写っているが、10/11の対象を名指しした内容ではないためclaimsは空のまま。",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"ヒロキ東口店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-11\", \"2026-10-09\"], \"n_days\": 90, \"n_model_days\": 3646, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 1598.4, \"models_over_threshold_per_day\": {\"mean\": 2.03, \"median\": 2.0, \"max\": 7}, \"candidate_models_per_day\": 40.5, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 1.74, \"median\": 1.0, \"max\": 6}, \"p_at_least_1\": 0.822, \"p_at_least_2\": 0.422, \"p_at_least_3\": 0.222, \"p_at_least_4\": 0.156, \"p_at_least_10\": 0.0}}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [],
+  "unscored_claims": [],
+  "needs_manual_review": false,
+  "no_confirmed_machines": true,
+  "result": null,
+  "announce_digest": "93d90b7b5e0783cb",
+  "provisional": true,
+  "amendments": [
+    {
+      "at": "2026-10-11T09:44:38+09:00",
+      "prev_digest": "a9244f270005bfc0",
+      "reason": "確認: 画像は過去5回の投入箇所と10/9付フロアマップで10/11の名指しではない。claimsなしで確定。登録後にweakness_noteを追記",
+      "void": false,
+      "amended_after_target": false
+    }
+  ]
+}
