@@ -45,7 +45,108 @@
   "unscored_claims": [],
   "needs_manual_review": false,
   "no_confirmed_machines": false,
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20261010",
+    "hall_baseline_mean_diff": -63.8,
+    "hall_n_machines": 320,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 2,
+          "note": "まるごと×2機種"
+        },
+        "observed_n_models": 2,
+        "candidate_models": 29,
+        "models": [
+          {
+            "machine_name": "ラブ嬢3～Wご指名はいかがですか?～",
+            "score": 4843.1,
+            "n_machines": 3,
+            "mean_diff": 3870.7,
+            "age_days": 647
+          },
+          {
+            "machine_name": "やじきた道中記参る！",
+            "score": 4159.7,
+            "n_machines": 4,
+            "mean_diff": 3803.2,
+            "age_days": 68
+          }
+        ],
+        "n_new_machines_over": 0,
+        "hit": true
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "ミリオンゴッド‐神々の軌跡‐",
+          "ratio": 2,
+          "note": "先バレ(GODは先バレ1/2)"
+        },
+        "n_machines": 24,
+        "ratio": 2,
+        "top_k": 12,
+        "model_top_k_mean_diff": 4828.5,
+        "hall_top_quantile_mean_diff": 2144.0,
+        "excess_vs_hall_quantile": 2684.5,
+        "model_mean_diff": 724.1,
+        "n_over_hall_quantile": 13,
+        "hit": true,
+        "model_named_score": 849.3,
+        "model_named_rank": 5
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "やじきた道中記参る！",
+          "ratio": 2,
+          "note": "先バレ(やじきたは先バレ1/2)"
+        },
+        "n_machines": 4,
+        "ratio": 2,
+        "top_k": 2,
+        "model_top_k_mean_diff": 7679.0,
+        "hall_top_quantile_mean_diff": 2273.5,
+        "excess_vs_hall_quantile": 5405.5,
+        "model_mean_diff": 3803.2,
+        "n_over_hall_quantile": 3,
+        "hit": true,
+        "model_named_score": 4159.7,
+        "model_named_rank": 2
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "攻殻機動隊",
+          "ratio": 2,
+          "note": "先バレ(攻殻機動隊は先バレ1/2)"
+        },
+        "n_machines": 4,
+        "ratio": 2,
+        "top_k": 2,
+        "model_top_k_mean_diff": 3295.5,
+        "hall_top_quantile_mean_diff": 2350.4,
+        "excess_vs_hall_quantile": 945.1,
+        "model_mean_diff": 918.5,
+        "n_over_hall_quantile": 2,
+        "hit": true,
+        "model_named_score": 1060.3,
+        "model_named_rank": 3
+      }
+    ]
+  },
   "announce_digest": "e506ecc6469a7ff4",
   "provisional": true,
   "amendments": [
