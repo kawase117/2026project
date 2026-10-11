@@ -1,11 +1,11 @@
 # ACTIVE_INSTINCTS
 
-- generated_at: 2026-10-09T15:13:48+09:00
+- generated_at: 2026-10-12T07:59:26+09:00
 - compiler_version: 1.3.0
 - source_dir: `C:/Users/apto117/Documents/pachinko-analyzer/src/2026project/document/instincts`
-- total_records_scanned: 1655
+- total_records_scanned: 1657
 - active_records: 120
-- status_breakdown: unverified=1645, confirmed=1, refuted=0, superseded=8
+- status_breakdown: unverified=1647, confirmed=1, refuted=0, superseded=8
 - filters: `confidence >= 0.80` and `file_date within 21 days` (unless pinned by high confidence)
 
 ## Usage
@@ -17,98 +17,96 @@
 
 ## Active List
 
-### 1. `axis-tables-must-share-event-exclusion`
+### 1. `pachibo-pcb-has-machine-number-csv-does-not`
+- confidence: `0.85` | status: `unverified` | date: `2026-10-12` | file: `2026-10-12-pachibo-pcb-machine-number.yaml`
+- domain/source: `data-source` / `session-observation`
+- trigger: ユーザーの遊技履歴（ぱち簿）から台番号が要るとき。ぱち簿のCSVに台番号が無いと気づいたとき。.pcbファイルを渡されたとき。自分の打った台と日別・直近の実績を突き合わせるとき
+
+### 2. `shinhanabi-payout-interpolate-by-miss-rate`
+- confidence: `0.80` | status: `unverified` | date: `2026-10-12` | file: `2026-10-12-shinhanabi-payout-by-miss-rate.yaml`
+- domain/source: `machine-spec` / `user-explanation`
+- trigger: 新ハナビの期待値・機械割を計算するとき。97.7%と102.0%のどちらを使うか迷ったとき。『設定1でも機械割100超えのはずなのに負ける』と言われたとき。台全体の差枚/Gを機械割に換算して設定を読もうとするとき
+
+### 3. `axis-tables-must-share-event-exclusion`
 - confidence: `0.85` | status: `unverified` | date: `2026-10-09` | file: `2026-10-09-axis-tables-must-share-event-exclusion.yaml`
 - domain/source: `methodology` / `session-observation`
 - trigger: 曜日別とDD別など、複数の軸の表を同じ分析で並べるとき。『イベント日を除いて』と言われたとき。イベントDD集合(1・4・7・14・17・24・27・30)だけで周年日や取材日を除いたつもりになるとき(みとや・楽園)
 
-### 2. `poisson-chi2-overstates-weekday-difference`
+### 4. `poisson-chi2-overstates-weekday-difference`
 - confidence: `0.80` | status: `unverified` | date: `2026-10-09` | file: `2026-10-09-poisson-chi2-overstates-weekday-difference.yaml`
 - domain/source: `methodology` / `session-observation`
 - trigger: 曜日別やDD別のRB確率の差を、総GとRB回数のPoissonカイ二乗で検定して『有意』と書きたくなったとき。日ごとに設定が動く機種(ディスクアップ等)の軸比較で、有意性を報告するとき
 
-### 3. `discup-diff-and-winrate-follow-games-not-setting`
+### 5. `discup-diff-and-winrate-follow-games-not-setting`
 - confidence: `0.80` | status: `unverified` | date: `2026-10-09` | file: `2026-10-09-discup-diff-and-winrate-follow-games-not-setting.yaml`
 - domain/source: `methodology` / `session-observation`
 - trigger: ディスクアップ(A+AT。完全攻略の機械割が設定1でも100%超)の強い曜日・DD・台を探すとき。みとやや楽園のディスクアップで、差枚・勝率・出率が良い日を『設定が高い日』と書きたくなったとき
 
-### 4. `2026-10-07-spec-source-mismatch-versus`
+### 6. `2026-10-07-spec-source-mismatch-versus`
 - confidence: `0.85` | status: `unverified` | date: `2026-10-07` | file: `2026-10-07-spec-source-mismatch-versus.yaml`
 - domain/source: `setting-estimation` / `user-confirmed-20261006`
 - trigger: バーサスリヴァイズなど、同じ機種のスペックが一撃の複数ページ(スペックページと設定判別ページ)や、プロジェクトのスペック(bonus_specs、config.py)と食い違うとき。ユニメモの設定推測と、当方の事後確率が合わないとき。4設定機(設定1・2・5・6)の設定近似...
 - summary: バーサスリヴァイズのBB・RBは、一撃のスペックページ(マスターCSV由来、旧スペック)と、設定判別ページ(/s_versus_rexse/0/)で約10%違う。 設定1→6のBBは、設定判別ページが1/292.6→1/264.3、旧スペックが1/264.3→1/237.4。RBは、1/374.5→1/292.6...
 
-### 5. `rb-column-empty-posterior-collapse`
+### 7. `rb-column-empty-posterior-collapse`
 - confidence: `0.85` | status: `unverified` | date: `2026-10-02` | file: `2026-10-02-rb-column-empty-posterior-collapse.yaml`
 - domain/source: `setting-estimation` / `monthly-report-layer1-layer3-review-20261002`
 - trigger: ノーマル・BT・A+AT機のRB確率から設定の事後確率を出すとき。RB確率が inf や極端に低い、P(設定4以上)が0.000に張り付く機種が出たとき。機種タイプ別の平均を作るとき
 - summary: 楽園蒲田の月次レポート（backtest/monthly_report.py）の試作で、交響詩篇エウレカセブン（A+AT・25台）や喰霊などが `RB確率 1/x = inf`、P(設定4以上)=0.000 になった。ボーナスが bb_count 側にだけ入る機種で、rb_count が常に0のため。 RB単独の...
 
-### 6. `spec-settings-absent-not-missing`
+### 8. `spec-settings-absent-not-missing`
 - confidence: `0.80` | status: `unverified` | date: `2026-10-02` | file: `2026-10-02-spec-settings-absent-not-missing.yaml`
 - domain/source: `setting-estimation` / `user-correction-20261002`
 - trigger: 機種のスペック表(bonus_specs、機種マスター)に設定3、4が無いとき。アレックス、サンダーV、新ハナビなど設定1、2、5、6の機種で、設定別の確率や相当設定を書くとき。スペックの欠損と書きたくなったとき
 - summary: アレックス ブライト、スマスロ サンダーV、新ハナビなどの一部の機種は、設定が1、2、5、6の4段階で、設定3、4がもともと存在しない。 スペック表が欠けているのではない。表現上の違いにすぎない(ユーザーの指摘、2026-10-02)。 楽園の曜日別RB分析で、「スペックに設定3、4がありません」と、データ欠損の...
 
-### 7. `rb-ratio-rises-with-games-selection`
+### 9. `rb-ratio-rises-with-games-selection`
 - confidence: `0.80` | status: `unverified` | date: `2026-10-02` | file: `2026-10-02-rb-ratio-rises-with-games-selection.yaml`
 - domain/source: `methodology` / `session-observation`
 - trigger: RB比やRB確率の『自己ベースライン』『設定1比』が1を超える台・機種が多いと感じたとき。G数の多い台ほどRBが良く見えるとき。稼働の多い日ほどRBが良いのは設定が入っているからだと説明したくなったとき
 
-### 8. `best-of-n-unit-looks-high-by-chance`
+### 10. `best-of-n-unit-looks-high-by-chance`
 - confidence: `0.80` | status: `unverified` | date: `2026-10-02` | file: `2026-10-02-best-of-n-unit-looks-high-by-chance.yaml`
 - domain/source: `methodology` / `session-observation`
 - trigger: 台数が少ない機種(4〜8台。ディスクアップ・BT機・ハナビ等)で『毎日1台は高設定が入っているのでは』と読みたくなったとき。毎日いちばんRBが良い台を拾って『設定5以上○%』『高設定濃厚』と書きたくなったとき
 
-### 9. `weekday-scan-confound-checklist`
+### 11. `weekday-scan-confound-checklist`
 - confidence: `0.85` | status: `unverified` | date: `2026-09-30` | file: `2026-09-30-weekday-scan-confound-checklist.yaml`
 - domain/source: `analysis-methodology` / `session-observation`
 - trigger: 直近1ヶ月程度の小サンプルで曜日別のRB確率/差枚パターンを報告する前。複数ホール(みとや・楽園・蒲田1・蒲田7等)でこの種の曜日スキャンを行うとき。『◯曜日が強い』という結論を出す前
 
-### 10. `bonus-specs-posterior-pitfalls`
+### 12. `bonus-specs-posterior-pitfalls`
 - confidence: `0.80` | status: `unverified` | date: `2026-09-30` | file: `2026-09-30-bonus-specs-posterior-pitfalls.yaml`
 - domain/source: `analysis-methodology` / `session-observation`
 - trigger: backtest/bonus_specs.pyのposterior()/judge()を新しい機種(特にBT/A+AT、combined_probabilityしか無い機種)に適用するとき。事後分布が『設定5以上90%超』のように極端な値を返したとき
 
-### 11. `2026-09-29-narabi-block-mean-threshold`
+### 13. `2026-09-29-narabi-block-mean-threshold`
 - confidence: `0.85` | status: `unverified` | date: `2026-09-29` | file: `2026-09-29-narabi-block-mean-threshold.yaml`
 - domain/source: `scoring` / `user-decision`
 - trigger: 予告の『3台並び◯か所』『並び⑤⑥』『4台並び上2つ』を差枚で答え合わせするとき。並びブロックを検出・採点するとき。楽園蒲田・蒲田7・蒲田1・みとや大森町の並び
 
-### 12. `2026-09-24-tweet-collected-is-not-announce-registered`
+### 14. `2026-09-24-tweet-collected-is-not-announce-registered`
 - confidence: `0.85` | status: `unverified` | date: `2026-09-24` | file: `2026-09-24-tweet-collected-is-not-announce-registered.yaml`
 - domain/source: `prediction-evaluation` / `session-observation`
 - trigger: ユーザーから予告ツイートの本文が貼られたとき。ツイートが『収集できているか』と聞かれたとき。当日の推薦を作る前に、その日の予告が backtest/announce/ にあるか確認するとき
 
-### 13. `spec-lookup-none-is-name-mismatch-not-unregistered`
+### 15. `spec-lookup-none-is-name-mismatch-not-unregistered`
 - confidence: `0.90` | status: `unverified` | date: `2026-09-21` | file: `2026-09-21-spec-lookup-none-is-name-mismatch-not-unregistered.yaml`
 - domain/source: `operational-strategy` / `session-observation`
 - trigger: site777のブリーフや推定器で、BT・A+AT・ノーマル機（LBクレアの秘宝伝ボーナストリガーver.、ＳＬＯＴマッピー、LBタコスロ、LBサンダーV、異世界かるてっと）の設定推定が出ないとき。『スペックが未登録』『推定対象外』と言おうとするとき。backtest.bo...
 - summary: 2026-09-20 楽園蒲田で、LBタコスロの設定推定がブリーフに出なかった。 `setting_estimator.annotate_setting_estimates` が None を返したので「スペック未登録」と書いたが誤りだった。 実際は次の2点だった。 1. `scraper/site777/set...
 
-### 14. `event-days-are-per-hall-never-borrowed`
+### 16. `event-days-are-per-hall-never-borrowed`
 - confidence: `0.90` | status: `unverified` | date: `2026-09-20` | file: `2026-09-20-event-days-are-per-hall-never-borrowed.yaml`
 - domain/source: `hall-strategy` / `user-correction`
 - trigger: 蒲田1と蒲田7のように近い店を並べて、合同企画・収録来店・周年・取材などのイベント日の効果を測ろうとするとき。『カマタに集合』『W来店コラボ』『回胴エムワンバトル』の開催日を別ホールに当てはめようとするとき。予告ツイートの日付をイベント日として使う前
 - summary: 2026-09-19 に蒲田1・蒲田7の「カマタに集合」の開催日平均差枚を比べたとき、過去の開催日を両店に同じ5日で当てはめた。 実際は、カマタに集合は両店同日（6/13・7/25・8/30・9/19）だが、蒲田1の回胴エムワンバトル収録（6/28・7/26）は別イベントで蒲田1のみだった。 収録日を蒲田7の開催...
 
-### 15. `single-event-dummy-se-collapses-use-permutation`
+### 17. `single-event-dummy-se-collapses-use-permutation`
 - confidence: `0.85` | status: `unverified` | date: `2026-09-20` | file: `2026-09-20-single-event-dummy-se-collapses-use-permutation.yaml`
 - domain/source: `methodology` / `empirical-measurement`
 - trigger: イベント日が1〜5日しかない日をダミー変数にして回帰し、『t値が大きい』『有意』と結論しようとするとき。周年・新台入替・カマタに集合・取材など、少数日のイベントの効果を測るとき
 - summary: 2026-09-20 に蒲田7のイベント日効果を、曜日・1/7の付く日・30日・ゾロ目を統制した回帰（HC標準誤差）で測った。 周年（7/7の1日）が t=+13.5、新台入替（7/6の1日）が t=-8.3 と出たが、1日だけのダミーは残差がほぼ0になり、標準誤差が構造的に小さくなる。 カマタに集合（4日）も勝...
-
-### 16. `same-day-snapshots-are-not-replications`
-- confidence: `0.85` | status: `unverified` | date: `2026-09-19` | file: `2026-09-19-same-day-snapshots-are-not-replications.yaml`
-- domain/source: `prediction-evaluation` / `session-observation`
-- trigger: site777を同じ日に何度も再収集して、『5回連続で負』『時刻をまたいで同じ方向』『zが強まっている』と、角番・末尾・列・機種の偏りを『安定したシグナル』と言おうとするとき。AT角番1の冷遇などを収集回数で裏づけようとするとき
-- summary: 2026-09-19 楽園蒲田で site777 を13:55・14:55・15:55・18:55・21:56に5回収集した。 AT機の角番1の差枚残差は -1.5 → -2.2 → -2.7 → -2.8 → -2.4（z）と一貫して負だったため、 「5回連続で負。最も信頼できるシグナル」と報告した。 しかし各...
-
-### 17. `model-rank-hides-eligible-machine-count`
-- confidence: `0.85` | status: `unverified` | date: `2026-09-19` | file: `2026-09-19-model-rank-hides-eligible-machine-count.yaml`
-- domain/source: `prediction-evaluation` / `empirical-measurement`
-- trigger: site777のブリーフで機種を『自己ベースライン上位◯%』『平均差枚+◯』で推そうとするとき。設置台数が多いのに判定できる台が少ない機種（スマスロハナビ等）を機種として評価しようとするとき。『この機種は強い』と言う前
-- summary: 2026-09-18 楽園蒲田の site777 ブリーフ（19:25）で、スマスロハナビが判別可能機種の最上位に出た （自己ベースライン上位4%・設定5以上63%・平均差枚+1280）。これを「機種として強い」と報告したが、 ユーザーに「差枚が出ている台自体が少ないのでは」と指摘され、機種の中身を見ると次の通り...
 
 ### 18. `rb-probability-decimal-null-on-zero-count`
 - confidence: `0.98` | status: `unverified` | date: `2026-07-24` | file: `2026-07-24-deathwatch-rb-null-bug-and-layout-history-insights.yaml`
