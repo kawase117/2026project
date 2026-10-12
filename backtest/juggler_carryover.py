@@ -210,12 +210,9 @@ def cmd_groups(args):
         )
 
 
-def cmd_tomorrow(args):
-    snap, name = _latest_snapshot(args.hall)
-    d = build(args.hall, args.since, snapshot=snap)
-    hist = pairs(d[d.d < snap.d.iloc[0]])
-    day = d[d.d == snap.d.iloc[0]].copy()
-    # 持ち越しは機種ごとに違う(マイジャグラーVのみ確認)ので、機種ごとに群平均を取る。台日が少ない群は機種×RB良に粗くする。
+def _attach_cells(hist, day):
+    """履歴の群平均を、候補日の各台に付ける。
+    持ち越しは機種ごとに違う(マイジャグラーVのみ確認)ので、機種ごとに群平均を取る。台日が少ない群は機種×RB良に粗くする。"""
     cell = (
         hist.groupby(["m", "rb_good", "r7band"])
         .ph_next.agg(["mean", "count"])
@@ -229,6 +226,53 @@ def cmd_tomorrow(args):
     thin = day.cell_n.isna() | (day.cell_n < MIN_N)
     day.loc[thin, "cell_mean"] = day.loc[thin, "c_mean"]
     day.loc[thin, "cell_n"] = day.loc[thin, "c_n"]
+    return day
+
+
+def cmd_check(args):
+    """前日までの履歴だけで作った候補が、実際の当日にどうだったかを検証する(答え合わせ)。"""
+    d = build(args.hall, args.since)
+    target = pd.Timestamp(args.date)
+    prev = target - pd.Timedelta(days=1)
+    if not (d.d == target).any():
+        raise SystemExit(f"{args.date} のデータがDBに無い(DB最終日 {d.d.max():%Y%m%d})")
+    hist = pairs(d[d.d < prev])  # 前日までの組だけ(当日の結果は使わない)
+    day = _attach_cells(hist, d[d.d == prev].copy())
+    act = d[d.d == target][["u", "ph", "g", "rb", "bb"]].rename(
+        columns={"ph": "ph_act", "g": "g_act", "rb": "rb_act", "bb": "bb_act"}
+    )
+    z = day.merge(act, on="u")
+    print(
+        f"{args.hall} {args.date}: 前日の候補 {len(day)}台 / 当日の確定が揃った台 {len(z)} / 履歴は {prev:%Y%m%d} の前日まで"
+    )
+    for m, s in z.groupby("m"):
+        if len(s) < 20 or s.cell_mean.nunique() < 2:
+            continue
+        rho = s.cell_mean.rank().corr(s.ph_act.rank())
+        top = s.sort_values("cell_mean", ascending=False).head(10)
+        rest = s.drop(top.index)
+        print(
+            f"--- {m} ({len(s)}台)  順位相関(群平均×当日ph) {rho:+.3f}  上位10の当日平均ph {top.ph_act.mean():.3f}  それ以外 {rest.ph_act.mean():.3f}  全体 {s.ph_act.mean():.3f}"
+        )
+    m0 = "マイジャグラーV"
+    s = z[z.m == m0].sort_values("cell_mean", ascending=False)
+    if len(s):
+        print(f"\n[{m0}] 群平均の高い順(当日のphは確定データから)")
+        s = s.assign(rb_rate=(s.g_act / s.rb_act.where(s.rb_act > 0)).round(0))
+        print(
+            s.head(args.top)[
+                ["u", "rb_good", "r7band", "cell_mean", "cell_n", "g_act", "rb_act", "bb_act", "rb_rate", "ph_act"]
+            ]
+            .round(3)
+            .to_string(index=False)
+        )
+
+
+def cmd_tomorrow(args):
+    snap, name = _latest_snapshot(args.hall)
+    d = build(args.hall, args.since, snapshot=snap)
+    hist = pairs(d[d.d < snap.d.iloc[0]])
+    day = _attach_cells(hist, d[d.d == snap.d.iloc[0]].copy())
     print(f"スナップショット {name} / 履歴の翌日平均 {hist.ph_next.mean():.3f} / 今日の候補台日 {len(day)}")
     print("今日の差枚が無い収集では差枚由来の型(不発)は使わず、RB良と過去7日で見る。\n")
     cols = ["u", "m", "g", "rb", "bb", "rb_good", "bb_bad", "r7band", "cell_mean", "cell_n", "ph"]
@@ -240,12 +284,14 @@ def main(argv=None):
     sys.stdout.reconfigure(encoding="utf-8")
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = p.add_subparsers(dest="cmd", required=True)
-    for name, fn in (("groups", cmd_groups), ("tomorrow", cmd_tomorrow)):
+    for name, fn in (("groups", cmd_groups), ("tomorrow", cmd_tomorrow), ("check", cmd_check)):
         sp = sub.add_parser(name)
         sp.add_argument("--hall", default=DEFAULT_HALL)
         sp.add_argument("--since", default="20260601")
-        if name == "tomorrow":
+        if name in ("tomorrow", "check"):
             sp.add_argument("--top", type=int, default=20)
+        if name == "check":
+            sp.add_argument("--date", required=True, help="答え合わせする当日(YYYYMMDD)")
         sp.set_defaults(fn=fn)
     args = p.parse_args(argv)
     args.fn(args)
