@@ -2,6 +2,13 @@
   "_comment": "ジャグラー分析のホール別の例外だけを持つ。イベント日はdocument/registry/EVENT_DAYS.jsonl、配置はDBのmachine_layout_history、日別集計はdaily_hall_summaryを参照し、ここに複製しない。exclusionsは集計から除く日、regime_boundariesは結論を分けて確認すべき変化点(自動では分割しない)。dateはYYYYMMDD。",
   "halls": {
     "マルハンメガシティ2000-蒲田7": {
+      "event_days": {
+        "dd_last_digit": [1, 7],
+        "zorome": true,
+        "strong_zorome": true,
+        "month_end": true,
+        "source": "memory:kamata7-event-day-definition-fix(7のつく日+1のつく日+ゾロ目(11,22)+強ゾロ目(月=日)+月末)"
+      },
       "exclusions": [
         {
           "date": "20260707",
@@ -52,6 +59,10 @@
       ]
     },
     "みとや大森町店": {
+      "event_days": {
+        "dd": [1, 4, 7, 14, 17, 24, 27, 30],
+        "source": "memory:mitoya-event-definition-confirmed(DD{1,4,7,14,17,24,27,30}で104%超え31.5%)"
+      },
       "exclusions": [],
       "regime_boundaries": []
     },

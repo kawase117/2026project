@@ -42,9 +42,40 @@ def load_hall_config(hall, path=None):
     """ホール別の例外(除外日exclusions・変化点regime_boundaries)。無ければ空。イベント日・配置は別の台帳を参照する。"""
     p = Path(path) if path else HALL_CONFIG
     if not p.exists():
-        return {"exclusions": [], "regime_boundaries": []}
+        return {"exclusions": [], "regime_boundaries": [], "event_days": None}
     cfg = json.loads(p.read_text(encoding="utf-8")).get("halls", {}).get(hall, {})
-    return {"exclusions": cfg.get("exclusions", []), "regime_boundaries": cfg.get("regime_boundaries", [])}
+    return {
+        "exclusions": cfg.get("exclusions", []),
+        "regime_boundaries": cfg.get("regime_boundaries", []),
+        "event_days": cfg.get("event_days"),
+    }
+
+
+def is_event_day(ts, rule):
+    """ホール設定のイベント日の定義(rule)に、その日(Timestamp)が当てはまるか。
+    rule のキー: dd(日の集合)、dd_last_digit(日の末尾の集合)、zorome(11・22日)、strong_zorome(月=日)、month_end(月末)。"""
+    day = ts.day
+    if day in set(rule.get("dd", [])):
+        return True
+    if day % 10 in set(rule.get("dd_last_digit", [])):
+        return True
+    if rule.get("zorome") and day in (11, 22):
+        return True
+    if rule.get("strong_zorome") and ts.month == day:
+        return True
+    return bool(rule.get("month_end") and (ts + pd.Timedelta(days=1)).month != ts.month)
+
+
+DAY_TYPES = ("all", "normal", "event")
+
+
+def _by_day_type(frame, col, day_type):
+    """day_type(all/normal/event)で行を絞る。col はイベント日フラグの列。定義が未登録のホールで normal/event を指定したら停止する。"""
+    if day_type == "all":
+        return frame
+    if frame[col].isna().all():
+        raise SystemExit("このホールはイベント日の定義が未登録(config/juggler_analysis.json の event_days に追加する)")
+    return frame[frame[col].astype(bool) == (day_type == "event")]
 
 
 def _db(hall, db_dir=None):
@@ -263,6 +294,12 @@ def build(hall, since, snapshot=None, db_dir=None, specs=None, allow_spec_mismat
         .astype(object)
         .fillna("NA")
     )
+    rule = cfg["event_days"]
+    d["is_event"] = d.d.map(lambda ts: is_event_day(ts, rule)) if rule else np.nan
+    audit["event_rule"] = bool(rule)
+    if rule:
+        per_day = d.groupby("date").is_event.first()
+        audit["event_days"], audit["normal_days"] = int(per_day.sum()), int((~per_day.astype(bool)).sum())
     d.attrs["audit"] = audit  # merge で attrs が失われるので付け直す
     return d
 
@@ -279,6 +316,12 @@ def format_audit(a):
         lines.append(
             "[監査] 推定の対象外: " + "、".join(f"{m}({n}台日: {why})" for m, (n, why) in sorted(a["excluded"].items()))
         )
+    if a.get("event_rule"):
+        lines.append(
+            f"[監査] イベント日の定義: ホール設定あり(期間内 イベント日 {a['event_days']}日 / 通常日 {a['normal_days']}日)"
+        )
+    else:
+        lines.append("[監査] イベント日の定義: 未登録(--day-type は all のみ)")
     if a["layout_epochs"] == 0:
         lines.append("[監査] 配置履歴が無いため島別の集計は出せない")
     if a.get("excluded_rows"):
@@ -292,9 +335,12 @@ def format_audit(a):
 
 
 def pairs(d):
-    nx = d[["u", "d", "ph"]].copy()
+    """前日の行に、翌日のph(ph_next)と、翌日がイベント日か(next_event。is_event 列があれば)を付ける。"""
+    cols = ["u", "d", "ph"] + (["is_event"] if "is_event" in d.columns else [])
+    nx = d[cols].copy()
     nx["d"] = nx["d"] - pd.Timedelta(days=1)
-    return d.merge(nx.rename(columns={"ph": "ph_next"}), on=["u", "d"])
+    nx = nx.rename(columns={"ph": "ph_next", "is_event": "next_event"})
+    return d.merge(nx, on=["u", "d"])  # 前日の行は is_event(前日がイベント日か)を残し、翌日は next_event
 
 
 class Boot:
@@ -336,7 +382,11 @@ class Boot:
 def cmd_groups(args):
     d = build(args.hall, args.since, allow_spec_mismatch=args.allow_spec_mismatch)
     print(format_audit(d.attrs["audit"]))
-    z = pairs(d)
+    z = _by_day_type(pairs(d), "next_event", args.day_type)  # 予測する翌日の種類で絞る(前日の特徴量は全日)
+    if args.day_type != "all":
+        print(
+            f"[日の種類] 翌日が{ {'normal': '通常日', 'event': 'イベント日'}[args.day_type] }の組だけ (台日 {len(z)})"
+        )
     b = Boot(z)
     print(f"{args.hall}: 連続2日の台日 {len(z)} / 台 {z.u.nunique()} / 翌日の平均 設定5以上確率(全体) {b.base:.3f}")
     print("\n[全体]  ※全体比は高設定の多い機種に条件の台日が集まる組成の効果を含む。判断は下の[機種別]の自群比で行う")
@@ -554,10 +604,13 @@ def cmd_splithalf(args):
     print(format_audit(d.attrs["audit"]))
     cut = args.cut or default_cut(d)
     print(f"\n[前半・後半の境界] {cut} (前半 {d.date.min()}〜{cut} 未満 / 後半 {cut}〜{d.date.max()})")
+    dt = _by_day_type(d, "is_event", args.day_type)  # その台日の日の種類で絞る
+    if args.day_type != "all":
+        print(f"[日の種類] {dict(normal='通常日', event='イベント日')[args.day_type]}の台日だけ ({len(dt)}台日)")
     print(
         "\n[台別の平均ph(高設定になりやすさ)が前半と後半で再現するか]  ※順位相関が高くp<0.05なら台固定の兆候。再現しなければ採用しない"
     )
-    t = split_half_rank(d, cut, min_days=args.min_days)
+    t = split_half_rank(dt, cut, min_days=args.min_days)
     for r in t.itertuples():
         if np.isnan(r.rho):
             print(f"--- {r.m}: 両期間{args.min_days}日以上の台が{r.n}台で5台未満のため相関は出さない")
@@ -566,7 +619,7 @@ def cmd_splithalf(args):
                 f"--- {r.m}: {r.n}台 機種平均ph {r.base:.3f} / 順位相関 {r.rho:+.2f} (並べ替えp={r.p:.3f})"
                 f" / 前半上位3台の後半ph {r.top3_next:.3f} (後半の全台 {r.all_next:.3f})"
             )
-    z = pairs(d)
+    z = _by_day_type(pairs(d), "next_event", args.day_type)
     print("\n[持ち越しの再現: 前日RB良・過去7日低調の自群比を前半・後半で比べる]  ※両期間で同じ向きなら再現")
     last = None
     for m, half, _, line in carry_by_half(z, cut):
@@ -657,6 +710,9 @@ def cmd_position(args):
         return
     cut = args.cut or default_cut(d)
     print(f"\n[前半・後半の境界] {cut}")
+    d = _by_day_type(d, "is_event", args.day_type)  # その台日の日の種類で絞る
+    if args.day_type != "all":
+        print(f"[日の種類] {dict(normal='通常日', event='イベント日')[args.day_type]}の台日だけ ({len(d)}台日)")
     print("\n[島の端(rank_from_min/max==1)は低いか: 端−端以外の平均ph。前半・後半で同じ向きなら再現]")
     t = edge_effect(d, cut)
     for r in t.itertuples():
@@ -728,14 +784,23 @@ def score_variants(d, prev, model, top=10):
     }
 
 
-def oos_eval(d, model, start, top=10):
+def oos_eval(d, model, start, top=10, day_type="all"):
     """start 以降の各日(前日のデータがある日)について、案ごとの候補の当日平均phと、それ以外の平均phを出す。
+    day_type(all/normal/event)は評価する当日の種類。候補を作る履歴は全日を使う。
     戻り値: DataFrame(date, variant, cand, rest, diff, n_cand)。"""
     dates = sorted(d.date.unique())
+    event_by_date = d.groupby("date").is_event.first() if "is_event" in d.columns else None
     rows = []
     for i, t in enumerate(dates):
         if t < start or i == 0:
             continue
+        if day_type != "all":
+            if event_by_date is None or event_by_date.isna().all():
+                raise SystemExit(
+                    "このホールはイベント日の定義が未登録(config/juggler_analysis.json の event_days に追加する)"
+                )
+            if bool(event_by_date[t]) != (day_type == "event"):
+                continue
         prev = pd.Timestamp(dates[i - 1])
         if (pd.Timestamp(t) - prev).days != 1:
             continue  # 連続日だけ
@@ -770,7 +835,9 @@ def _day_ci(x, n=2000, seed=0):
 def cmd_oos(args):
     d = build(args.hall, args.since, allow_spec_mismatch=args.allow_spec_mismatch)
     print(format_audit(d.attrs["audit"]))
-    t = oos_eval(d, args.model, args.start, top=args.top)
+    t = oos_eval(d, args.model, args.start, top=args.top, day_type=args.day_type)
+    if args.day_type != "all":
+        print(f"[日の種類] 評価する当日が{dict(normal='通常日', event='イベント日')[args.day_type]}の日だけ")
     if t.empty:
         raise SystemExit("評価できる日が無い(--start を見直す)")
     days = t.date.nunique()
@@ -819,6 +886,13 @@ def main(argv=None):
             sp.add_argument("--top", type=int, default=20)
         if name == "check":
             sp.add_argument("--date", required=True, help="答え合わせする当日(YYYYMMDD)")
+        if name in ("groups", "splithalf", "position", "oos"):
+            sp.add_argument(
+                "--day-type",
+                choices=DAY_TYPES,
+                default="all",
+                help="予測する(評価する)日の種類。normal=通常日、event=イベント日(ホール設定のevent_days)。既定は全日",
+            )
         if name == "oos":
             sp.add_argument("--model", default="マイジャグラーV", help="評価する機種(候補はこの機種の中から選ぶ)")
             sp.add_argument("--start", default="20260801", help="評価を始める日(YYYYMMDD)")

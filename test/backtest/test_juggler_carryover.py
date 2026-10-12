@@ -414,6 +414,65 @@ def test_attach_cells_without_history_falls_back_to_edge_score():
     assert (day.score == day.score_edge).all()
 
 
+MITOYA_RULE = {"dd": [1, 4, 7, 14, 17, 24, 27, 30]}
+KAMATA7_RULE = {"dd_last_digit": [1, 7], "zorome": True, "strong_zorome": True, "month_end": True}
+
+
+def test_is_event_day_mitoya_dd_set():
+    ts = pd.Timestamp
+    assert jc.is_event_day(ts("2026-10-27"), MITOYA_RULE)
+    assert jc.is_event_day(ts("2026-10-01"), MITOYA_RULE)
+    assert not jc.is_event_day(ts("2026-10-12"), MITOYA_RULE)
+    assert not jc.is_event_day(ts("2026-10-31"), MITOYA_RULE)  # 月末でもDD集合に無ければ通常日
+
+
+def test_is_event_day_kamata7_definition():
+    """蒲田7: 7のつく日・1のつく日・ゾロ目(11,22)・強ゾロ目(月=日)・月末。"""
+    ts = pd.Timestamp
+    for day in ("2026-10-07", "2026-10-17", "2026-10-27", "2026-10-01", "2026-10-11", "2026-10-21", "2026-10-31"):
+        assert jc.is_event_day(ts(day), KAMATA7_RULE), day
+    assert jc.is_event_day(ts("2026-09-22"), KAMATA7_RULE)  # ゾロ目
+    assert jc.is_event_day(ts("2026-10-10"), KAMATA7_RULE)  # 強ゾロ目(10/10)
+    assert jc.is_event_day(ts("2026-09-09"), KAMATA7_RULE)  # 強ゾロ目(9/9)
+    assert jc.is_event_day(ts("2026-09-30"), KAMATA7_RULE)  # 月末(30日)
+    assert jc.is_event_day(ts("2026-02-28"), KAMATA7_RULE)  # 月末(2月)
+    assert not jc.is_event_day(ts("2026-10-12"), KAMATA7_RULE)
+    assert not jc.is_event_day(ts("2026-09-15"), KAMATA7_RULE)
+
+
+def test_pairs_gives_next_day_event_flag():
+    d = _oos_table(days=10)
+    d["is_event"] = d.d.map(lambda t: t.day in (3, 7))
+    z = jc.pairs(d)
+    nxt = z.assign(expected=(z.d + pd.Timedelta(days=1)).map(lambda t: t.day in (3, 7)))
+    assert (nxt.next_event == nxt.expected).all()
+    assert (z.is_event == z.d.map(lambda t: t.day in (3, 7))).all()  # 前日の行は前日自身のフラグ
+
+
+def test_day_type_filter_and_missing_definition_stops():
+    frame = pd.DataFrame({"x": [1, 2, 3], "ev": [True, False, True]})
+    assert list(jc._by_day_type(frame, "ev", "event").x) == [1, 3]
+    assert list(jc._by_day_type(frame, "ev", "normal").x) == [2]
+    assert len(jc._by_day_type(frame, "ev", "all")) == 3
+    undefined = frame.assign(ev=np.nan)
+    assert len(jc._by_day_type(undefined, "ev", "all")) == 3  # allなら定義が無くても動く
+    with pytest.raises(SystemExit):
+        jc._by_day_type(undefined, "ev", "event")
+
+
+def test_oos_eval_day_type_only_evaluates_matching_days():
+    d = _oos_table(days=45)
+    d["is_event"] = d.d.map(lambda t: t.day in (1, 4, 7, 14, 17, 24, 27))
+    both = jc.oos_eval(d, MODEL, start="20260801", top=6)
+    ev = jc.oos_eval(d, MODEL, start="20260801", top=6, day_type="event")
+    nm = jc.oos_eval(d, MODEL, start="20260801", top=6, day_type="normal")
+    assert set(ev.date) | set(nm.date) == set(both.date)
+    assert not (set(ev.date) & set(nm.date))
+    assert all(pd.Timestamp(t).day in (1, 4, 7, 14, 17, 24, 27) for t in ev.date)
+    with pytest.raises(SystemExit):
+        jc.oos_eval(d.assign(is_event=np.nan), MODEL, start="20260801", top=6, day_type="event")
+
+
 def test_halls_do_not_mix(tmp_path):
     """別ホールのDBの台番号・結果が混ざらない(同じ台番号でも別ホールの行を読まない)。"""
     layout = [(u, "20250101", None, "A") for u in (1, 2, 3, 4)]
