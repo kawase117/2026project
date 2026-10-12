@@ -1,0 +1,31 @@
+---
+id: announce-wrong-binding-void-never-delete
+trigger: "予告の下書き（announce_autodraft）が別店・別日・結果発表に紐付いていたとき。予告JSONを削除・改名したくなったとき。登録済みの予告の日付やホールを直したいとき"
+confidence: 0.9
+domain: announce-ledger
+source: session-observation
+project_id: 2026project
+project_name: pachinko-analyzer
+---
+
+# 誤紐付けの予告は削除せず `amend --void`。下書きは朝のうちに台帳へ自動登録される
+
+## Core claim
+`announce_autodraft` の下書きは、人が確認する前に**台帳(LEDGER.jsonl)へ自動登録されている**(10/11は05:21に6件)。
+台帳は追記専用なので、誤紐付けのファイルを削除・改名しても台帳の行は残る。直す手順は削除ではなく `amend --void`。
+
+## Evidence
+2026-10-12、10/11分の6件のうち4件が誤っていた。
+- 楽園蒲田2件: 本文は上永谷の取材予告と、9/29立川の結果発表(別店・予告でない)。
+- 金時東口1件: 本文は10/12の周年で、対象日が違う。
+- ヒロキ東口1件: 画像だけで機種の名指しが無い(これは誤りではなく、claimsなしで確定が正しい)。
+私は未コミットの下書きだからと3件を削除・改名したが、台帳に3行が残り、台帳の記録から再構成して `amend --void` する羽目になった。再構成したファイルはclaimsを復元できない。
+ヒロキ東口は、登録後にweakness_noteを編集したため、ダイジェストが台帳とずれた。
+
+## Action
+1. **削除・改名の前に `git status` と `backtest/announce/LEDGER.jsonl` で登録済みかを見る。** 登録済みなら削除しない。
+2. 誤紐付け: `python backtest/announce.py amend <path> --void --reason "<理由>"`。ファイルは残す。
+3. 日付違い(例: 12日の周年を11日に紐付け): 元を `--void` し、正しい日付のファイルを新しいキーで `register` する。
+4. 登録後にファイルを編集したら、必ず `amend` でダイジェストを更新する。
+5. 本文を読んで、ホール名・日付・予告か結果発表かを、登録前の下ごしらえで確認する。
+---
