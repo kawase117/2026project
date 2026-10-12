@@ -31,6 +31,18 @@ MIN_GAMES = 1500  # 事後確率を出す最低G数
 MIN_N = 30  # 群の最低台日数
 
 
+HALL_CONFIG = ROOT / "config" / "juggler_analysis.json"
+
+
+def load_hall_config(hall, path=None):
+    """ホール別の例外(除外日exclusions・変化点regime_boundaries)。無ければ空。イベント日・配置は別の台帳を参照する。"""
+    p = Path(path) if path else HALL_CONFIG
+    if not p.exists():
+        return {"exclusions": [], "regime_boundaries": []}
+    cfg = json.loads(p.read_text(encoding="utf-8")).get("halls", {}).get(hall, {})
+    return {"exclusions": cfg.get("exclusions", []), "regime_boundaries": cfg.get("regime_boundaries", [])}
+
+
 def _db(hall, db_dir=None):
     return (Path(db_dir) if db_dir else ROOT / "db") / f"{hall}.db"
 
@@ -176,12 +188,17 @@ def _posteriors(df, specs, excluded=None):
     return pd.concat(parts)
 
 
-def build(hall, since, snapshot=None, db_dir=None, specs=None, allow_spec_mismatch=False):
+def build(hall, since, snapshot=None, db_dir=None, specs=None, allow_spec_mismatch=False, config_path=None):
     """台×日の表を作る。作成前に監査を行い、結果を d.attrs["audit"] に残す。
-    スペックの不一致があれば停止する(allow_spec_mismatch=True で警告のみ)。"""
+    スペックの不一致があれば停止する(allow_spec_mismatch=True で警告のみ)。
+    ホール設定の除外日は集計から除き、変化点は監査行に出す(自動では分割しない)。"""
     raw = _load_raw(hall, since, db_dir)
     if snapshot is not None:
         raw = pd.concat([raw, snapshot], ignore_index=True)
+    cfg = load_hall_config(hall, config_path)
+    excluded_dates = {e["date"]: e["reason"] for e in cfg["exclusions"]}
+    dropped = int(raw.date.isin(excluded_dates).sum())
+    raw = raw[~raw.date.isin(excluded_dates)]
     hist = _layout_history(hall, db_dir)
     raw = attach_section(raw, hist)
     specs = load_specs(hall=hall) if specs is None else specs
@@ -206,6 +223,9 @@ def build(hall, since, snapshot=None, db_dir=None, specs=None, allow_spec_mismat
         "no_layout_rows": int(raw.section.isna().sum()),
         "layout_epochs": 0 if hist.empty else int(hist.valid_from.nunique()),
         "rows": len(raw),
+        "excluded_dates": {k: v for k, v in excluded_dates.items() if (raw.date.max() >= k >= since) or dropped},
+        "excluded_rows": dropped,
+        "regime_in_period": [b for b in cfg["regime_boundaries"] if since <= b["date"] <= f"{raw.d.max():%Y%m%d}"],
     }
     audit = d.attrs["audit"]
     d["rbp"] = d.rb / d.g
@@ -242,6 +262,13 @@ def format_audit(a):
         )
     if a["layout_epochs"] == 0:
         lines.append("[監査] 配置履歴が無いため島別の集計は出せない")
+    if a.get("excluded_rows"):
+        lines.append(
+            f"[監査] 除外日(ホール設定): {a['excluded_rows']}台日を除外 / "
+            + "、".join(f"{k}({v[:40]})" for k, v in a["excluded_dates"].items())
+        )
+    for b in a.get("regime_in_period", []):
+        lines.append(f"[監査] 期間内の変化点 {b['date']}: {b['reason']}(結論は変化点の前後で分けて確認)")
     return "\n".join(lines)
 
 
@@ -293,7 +320,7 @@ def cmd_groups(args):
     z = pairs(d)
     b = Boot(z)
     print(f"{args.hall}: 連続2日の台日 {len(z)} / 台 {z.u.nunique()} / 翌日の平均 設定5以上確率(全体) {b.base:.3f}")
-    print("\n[全体]")
+    print("\n[全体]  ※全体比は高設定の多い機種に条件の台日が集まる組成の効果を含む。判断は下の[機種別]の自群比で行う")
     for lab, mk in (
         ("前日RB良(設定5水準以上)", z.rb_good),
         ("  不発(RB良 & 差枚<=1000 or BB設定2以下)", z.fuhatsu),

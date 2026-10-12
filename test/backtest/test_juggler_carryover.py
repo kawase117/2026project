@@ -117,6 +117,52 @@ def test_shared_specs_agree_with_master_for_all_jugglers():
     assert unsupported == []
 
 
+def _write_config(path, hall):
+    import json
+
+    path.write_text(
+        json.dumps(
+            {
+                "halls": {
+                    hall: {
+                        "exclusions": [{"date": "20260803", "reason": "特殊日", "source": "test"}],
+                        "regime_boundaries": [
+                            {"date": "20260804", "reason": "店長交代", "source": "test"},
+                            {"date": "20271231", "reason": "期間外", "source": "test"},
+                        ],
+                    }
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+
+
+def test_hall_config_exclusion_and_regime_are_applied_and_reported(tmp_path):
+    """ホール設定の除外日は集計から除かれ、期間内の変化点だけが監査に出る(自動では分割しない)。"""
+    hall = "テスト店"
+    _make_db(tmp_path, hall, _rows(), [(u, "20250101", None, "A") for u in (1, 2, 3, 4)])
+    cfg = tmp_path / "juggler_analysis.json"
+    _write_config(cfg, hall)
+    d = jc.build(hall, "20260801", db_dir=tmp_path, config_path=cfg)
+    assert "20260803" not in set(d.date)
+    a = d.attrs["audit"]
+    assert a["excluded_rows"] == 4
+    assert [b["date"] for b in a["regime_in_period"]] == ["20260804"]
+    text = jc.format_audit(a)
+    assert "除外日" in text and "期間内の変化点 20260804" in text and "20271231" not in text
+
+
+def test_other_hall_config_is_not_applied(tmp_path):
+    """ある店の除外日は、設定にない別の店には効かない(ホール横断の混入を防ぐ)。"""
+    _make_db(tmp_path, "店B", _rows(), [(u, "20250101", None, "A") for u in (1, 2, 3, 4)])
+    cfg = tmp_path / "juggler_analysis.json"
+    _write_config(cfg, "店A")
+    d = jc.build("店B", "20260801", db_dir=tmp_path, config_path=cfg)
+    assert "20260803" in set(d.date)
+    assert d.attrs["audit"]["excluded_rows"] == 0
+
+
 def test_halls_do_not_mix(tmp_path):
     """別ホールのDBの台番号・結果が混ざらない(同じ台番号でも別ホールの行を読まない)。"""
     layout = [(u, "20250101", None, "A") for u in (1, 2, 3, 4)]

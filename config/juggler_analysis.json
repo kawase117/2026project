@@ -1,0 +1,63 @@
+{
+  "_comment": "ジャグラー分析のホール別の例外だけを持つ。イベント日はdocument/registry/EVENT_DAYS.jsonl、配置はDBのmachine_layout_history、日別集計はdaily_hall_summaryを参照し、ここに複製しない。exclusionsは集計から除く日、regime_boundariesは結論を分けて確認すべき変化点(自動では分割しない)。dateはYYYYMMDD。",
+  "halls": {
+    "マルハンメガシティ2000-蒲田7": {
+      "exclusions": [
+        {
+          "date": "20260707",
+          "reason": "7/7は全台設定6の特殊日(DD分析では除外必須)。ただしジャグラーの単日phは0.153で全台設定6らしい水準ではなく、ジャグラーに当てはまるかは未確認",
+          "source": "memory:kamata7-0707-all-setting6"
+        }
+      ],
+      "regime_boundaries": []
+    },
+    "マルハンメガシティ2000-蒲田1": {
+      "exclusions": [],
+      "regime_boundaries": [
+        {
+          "date": "20260803",
+          "reason": "配置替え(増設台を含む新エポック)。機種内の比較は日付つき配置で扱う",
+          "source": "DB machine_layout_history"
+        },
+        {
+          "date": "20260825",
+          "reason": "店長が2026-08-25を最後に異動。既存の蒲田1知見を8/26以降へ外挿しない",
+          "source": "memory:project-kamata1-tencho-change-20260825"
+        },
+        {
+          "date": "20260901",
+          "reason": "9/1からノーマル/BTへ投入を厚くした(ATは不変)",
+          "source": "memory:project-kamata1-september-normal-shift"
+        }
+      ]
+    },
+    "楽園蒲田店": {
+      "exclusions": [],
+      "regime_boundaries": [
+        {
+          "date": "20260706",
+          "reason": "7/6改装(配置の新エポック)",
+          "source": "memory:project-no-regime-change-rakuen-k7-heiwajima-20260914, DB machine_layout_history"
+        },
+        {
+          "date": "20260907",
+          "reason": "9/7配置替え",
+          "source": "memory:project-no-regime-change-rakuen-k7-heiwajima-20260914"
+        },
+        {
+          "date": "20260914",
+          "reason": "9/14入替",
+          "source": "memory:project-no-regime-change-rakuen-k7-heiwajima-20260914"
+        }
+      ]
+    },
+    "みとや大森町店": {
+      "exclusions": [],
+      "regime_boundaries": []
+    },
+    "金時蒲田東口店": {
+      "exclusions": [],
+      "regime_boundaries": []
+    }
+  }
+}
