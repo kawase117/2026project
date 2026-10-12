@@ -222,6 +222,71 @@ def test_carry_by_half_splits_by_previous_day():
     assert "自群比 +0.000" in lines[("後半", "前日RB良")]
 
 
+def _positioned(effect, dists, days=60, noise=0.02, seed=0):
+    """台ごとの高設定になりやすさ effect と、島の端からの距離 dists を持つ台×日の表。"""
+    rng = np.random.default_rng(seed)
+    dates = [f"2026{(7 + i // 30):02d}{(i % 30) + 1:02d}" for i in range(days)]
+    rows = []
+    for u, (e, dist) in enumerate(zip(effect, dists), start=1):
+        for d in dates:
+            rows.append(
+                {"u": u, "m": MODEL, "date": d, "dist": dist, "ph": float(np.clip(e + rng.normal(0, noise), 0, 1))}
+            )
+    return pd.DataFrame(rows)
+
+
+def test_attach_section_adds_edge_rank_by_date():
+    """配置替えをまたぐと、その日に有効な配置の端からの距離(dist)が付く。"""
+    raw = pd.DataFrame({"date": ["20260801", "20260805"], "u": [1, 1]})
+    hist = pd.DataFrame(
+        {
+            "u": [1, 1],
+            "section": ["旧", "新"],
+            "rmin": [1, 5],
+            "rmax": [9, 2],
+            "raisle": [1, 3],
+            "valid_from": ["20250101", "20260803"],
+            "valid_to": ["20260802", None],
+        }
+    )
+    out = jc.attach_section(raw, hist)
+    assert list(out.dist) == [1, 2]  # 旧: min(1,9)=1(端)、新: min(5,2)=2
+
+
+def test_edge_effect_detects_low_edge_in_both_halves():
+    dists = [1, 1, 5, 5, 5, 6, 6, 7, 7, 8]
+    d = _positioned(effect=[0.02, 0.02] + [0.2] * 8, dists=dists)
+    t = jc.edge_effect(d, cut="20260731", n_boot=200)
+    assert len(t) == 2
+    for r in t.itertuples():
+        assert r.diff < -0.1 and r.hi < 0  # 前半も後半も、端が明確に低い
+
+
+def test_edge_effect_is_zero_when_no_position_effect():
+    dists = [1, 1, 5, 5, 5, 6, 6, 7, 7, 8]
+    d = _positioned(effect=[0.2] * 10, dists=dists, seed=2)
+    t = jc.edge_effect(d, cut="20260731", n_boot=200)
+    assert all(abs(r.diff) < 0.03 for r in t.itertuples())
+
+
+def test_residual_fixed_vanishes_when_position_explains_everything():
+    """台固定が位置(端が低い)だけで説明できるデータでは、位置を除いた残差の相関は有意でない。"""
+    dists = [1] * 4 + [5] * 12
+    d = _positioned(effect=[0.02] * 4 + [0.2] * 12, dists=dists, noise=0.03, seed=1)
+    r = jc.residual_fixed(d, cut="20260731", min_days=10, n_perm=500).iloc[0]
+    assert r.rho_all > 0.5  # 位置を除く前は強い相関(端と端以外の差)
+    assert r.p_resid > 0.05  # 位置を除くと消える
+
+
+def test_residual_fixed_remains_when_machines_differ_beyond_position():
+    """位置とは別に台ごとの偏りがあるデータでは、位置を除いても残差の相関が残る。"""
+    dists = [5] * 14
+    effect = [0.05, 0.08, 0.1, 0.12, 0.15, 0.17, 0.2, 0.22, 0.25, 0.28, 0.3, 0.33, 0.36, 0.4]
+    d = _positioned(effect=effect, dists=dists, noise=0.03, seed=4)
+    r = jc.residual_fixed(d, cut="20260731", min_days=10, n_perm=500).iloc[0]
+    assert r.rho_resid > 0.8 and r.p_resid < 0.05
+
+
 def test_halls_do_not_mix(tmp_path):
     """別ホールのDBの台番号・結果が混ざらない(同じ台番号でも別ホールの行を読まない)。"""
     layout = [(u, "20250101", None, "A") for u in (1, 2, 3, 4)]

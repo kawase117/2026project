@@ -8,6 +8,7 @@
   python -m backtest.juggler_carryover tomorrow [--hall みとや大森町店]   # 最新の収集スナップショットから翌日の候補
   python -m backtest.juggler_carryover check    --date 20261012           # 前日までの履歴で作った候補の答え合わせ
   python -m backtest.juggler_carryover splithalf [--cut 20260801]          # 前半・後半で台別の偏りと持ち越しが再現するか
+  python -m backtest.juggler_carryover position  [--cut 20260801]          # 島の端が低いか、位置を除いても台固定が残るか
 
 考え方・検証結果・限界は document/JUGGLER_SETTING_PATTERNS.md を読むこと。
 """
@@ -53,21 +54,36 @@ def _layout_history(hall, db_dir=None):
     """日付つきの配置。過去の分析には現行配置(machine_layout)でなくこちらを使う(配置替えをまたぐと島が誤る)。"""
     con = sqlite3.connect(_db(hall, db_dir))
     try:
-        return pd.read_sql("select machine_number u, section, valid_from, valid_to from machine_layout_history", con)
+        return pd.read_sql(
+            "select machine_number u, section, rank_from_min rmin, rank_from_max rmax, rank_from_aisle raisle,"
+            " valid_from, valid_to from machine_layout_history",
+            con,
+        )
     except pd.errors.DatabaseError:
-        return pd.DataFrame(columns=["u", "section", "valid_from", "valid_to"])
+        try:  # rank列の無いDB(合成テスト等)
+            return pd.read_sql(
+                "select machine_number u, section, valid_from, valid_to from machine_layout_history", con
+            )
+        except pd.errors.DatabaseError:
+            return pd.DataFrame(columns=["u", "section", "valid_from", "valid_to"])
 
 
 def attach_section(raw, hist):
-    """各台日に、その日に有効な配置(valid_from <= date <= valid_to)の section を付ける。無ければNaN。"""
+    """各台日に、その日に有効な配置(valid_from <= date <= valid_to)の section と、島の端からの順位
+    (rmin/rmax/raisle。あれば)を付ける。無ければNaN。dist = min(rmin, rmax) で 1 が島の端。"""
     raw = raw.reset_index(drop=True)
+    cols = [c for c in ("section", "rmin", "rmax", "raisle") if c in hist.columns]
     if hist.empty:
-        raw["section"] = np.nan
+        for c in ("section", "rmin", "rmax", "raisle"):
+            raw[c] = np.nan
+        raw["dist"] = np.nan
         return raw
     m = raw.assign(_i=raw.index).merge(hist, on="u", how="left")
     valid = (m.date >= m.valid_from) & (m.valid_to.isna() | (m.date <= m.valid_to))
-    sec = m[valid].drop_duplicates("_i").set_index("_i").section
-    raw["section"] = sec.reindex(raw.index)
+    got = m[valid].drop_duplicates("_i").set_index("_i")
+    for c in ("section", "rmin", "rmax", "raisle"):
+        raw[c] = got[c].reindex(raw.index) if c in cols else np.nan
+    raw["dist"] = raw[["rmin", "rmax"]].min(axis=1)
     return raw
 
 
@@ -512,6 +528,109 @@ def cmd_splithalf(args):
         print(f"  {half} {line}")
 
 
+DIST_BANDS = [0, 1, 2, 4, 8, 99]  # 島の端からの最短距離の帯(1=端, 2, 3-4, 5-8, 9+)
+
+
+def edge_effect(d, cut, n_boot=300, seed=0):
+    """機種ごとに、島の端(dist==1)と端以外の台日の平均ph(設定5以上の確率)を前半・後半別に比べる。
+    位置は台日ごとの日付つき配置なので、配置替えをまたぐホールでも使える。差(端−端以外)の90%CIは台単位のブートストラップ。
+    戻り値: DataFrame(m, half, n_edge, n_other, edge, other, diff, lo, hi)"""
+    rng = np.random.default_rng(seed)
+    rows = []
+    d = d[d.dist.notna()]
+    for m, s in d.groupby("m"):
+        for half, part in (("前半", s[s.date < cut]), ("後半", s[s.date >= cut])):
+            e = part[part.dist == 1]
+            o = part[part.dist > 1]
+            if len(e) < MIN_N or len(o) < MIN_N:
+                rows.append({"m": m, "half": half, "n_edge": len(e), "n_other": len(o), "diff": np.nan})
+                continue
+            ge = e.groupby("u").ph.agg(["sum", "count"])
+            go = o.groupby("u").ph.agg(["sum", "count"])
+            vals = []
+            for _ in range(n_boot):
+                ie = rng.integers(0, len(ge), len(ge))
+                io = rng.integers(0, len(go), len(go))
+                a, b = ge.values[ie], go.values[io]
+                vals.append(a[:, 0].sum() / a[:, 1].sum() - b[:, 0].sum() / b[:, 1].sum())
+            lo, hi = np.percentile(vals, [5, 95])
+            rows.append(
+                {
+                    "m": m,
+                    "half": half,
+                    "n_edge": len(e),
+                    "n_other": len(o),
+                    "edge": e.ph.mean(),
+                    "other": o.ph.mean(),
+                    "diff": e.ph.mean() - o.ph.mean(),
+                    "lo": lo,
+                    "hi": hi,
+                }
+            )
+    return pd.DataFrame(rows)
+
+
+def residual_fixed(d, cut, min_days=20, n_perm=2000, seed=0):
+    """位置(島の端からの距離の帯)の平均を引いた後の、台別の平均phの前半・後半の相関(並べ替え検定)。
+    位置が日付で変わる台を混ぜないよう、最新の配置エポック(その台の位置が一定の期間)の台日だけを使う。
+    戻り値: DataFrame(m, n, rho_all, p_all, rho_resid, p_resid) 。rho_residが高ければ位置を除いても台固定が残る。"""
+    rng = np.random.default_rng(seed)
+    rows = []
+    d = d[d.dist.notna()]
+    for m, s in d.groupby("m"):
+        a = s[s.date < cut].groupby("u").agg(m1=("ph", "mean"), c1=("ph", "count"), dist=("dist", "min"))
+        b = s[s.date >= cut].groupby("u").agg(m2=("ph", "mean"), c2=("ph", "count"), dist2=("dist", "min"))
+        j = a.join(b, how="inner")
+        j = j[(j.c1 >= min_days) & (j.c2 >= min_days) & (j.dist == j.dist2)]  # 位置が前後半で変わらない台だけ
+        if len(j) < 8:
+            rows.append({"m": m, "n": len(j)})
+            continue
+        band = pd.cut(j.dist, DIST_BANDS)
+        r1 = j.m1 - j.groupby(band, observed=True).m1.transform("mean")
+        r2 = j.m2 - j.groupby(band, observed=True).m2.transform("mean")
+
+        def pc(x, y):
+            r = np.corrcoef(x, y)[0, 1]
+            perm = [np.corrcoef(x, rng.permutation(y))[0, 1] for _ in range(n_perm)]
+            return r, (np.sum(np.array(perm) >= r) + 1) / (n_perm + 1)
+
+        rho_all, p_all = pc(j.m1.values, j.m2.values)
+        rho_res, p_res = pc(r1.values, r2.values)
+        rows.append({"m": m, "n": len(j), "rho_all": rho_all, "p_all": p_all, "rho_resid": rho_res, "p_resid": p_res})
+    return pd.DataFrame(rows)
+
+
+def cmd_position(args):
+    d = build(args.hall, args.since, allow_spec_mismatch=args.allow_spec_mismatch)
+    a = d.attrs["audit"]
+    print(format_audit(a))
+    if a["layout_epochs"] == 0 or d.dist.isna().all():
+        print("\n配置履歴(島の端からの順位)が無いため位置の分析は出せない")
+        return
+    cut = args.cut or default_cut(d)
+    print(f"\n[前半・後半の境界] {cut}")
+    print("\n[島の端(rank_from_min/max==1)は低いか: 端−端以外の平均ph。前半・後半で同じ向きなら再現]")
+    t = edge_effect(d, cut)
+    for r in t.itertuples():
+        if np.isnan(r.diff):
+            print(f"--- {r.m} {r.half}: 端{r.n_edge}台日/端以外{r.n_other}台日 (少数)")
+        else:
+            print(
+                f"--- {r.m} {r.half}: 端 {r.edge:.3f} ({r.n_edge}台日) / 端以外 {r.other:.3f} ({r.n_other}台日)"
+                f" / 差 {r.diff:+.3f} (90%CI {r.lo:+.3f}~{r.hi:+.3f})"
+            )
+    print("\n[位置を除いた台固定: 位置帯の平均を引いた残差の、台別平均phの前半・後半の相関(最新の配置エポックのみ)]")
+    print("  ※rho_residが高くp<0.05なら、位置では説明できない台ごとの偏りが続いている。再現しなければ採用しない")
+    for r in residual_fixed(d, cut, min_days=args.min_days).itertuples():
+        if getattr(r, "rho_all", None) is None or np.isnan(r.rho_all):
+            print(f"--- {r.m}: 位置が前後半で一定の台が{r.n}台で8台未満のため出さない")
+        else:
+            print(
+                f"--- {r.m}: {r.n}台 / 位置を除く前の相関 {r.rho_all:+.2f}(p={r.p_all:.3f})"
+                f" → 位置を除いた残差の相関 {r.rho_resid:+.2f}(p={r.p_resid:.3f})"
+            )
+
+
 def main(argv=None):
     sys.stdout.reconfigure(encoding="utf-8")
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -521,6 +640,7 @@ def main(argv=None):
         ("tomorrow", cmd_tomorrow),
         ("check", cmd_check),
         ("splithalf", cmd_splithalf),
+        ("position", cmd_position),
     ):
         sp = sub.add_parser(name)
         sp.add_argument("--hall", default=DEFAULT_HALL)
@@ -534,7 +654,7 @@ def main(argv=None):
             sp.add_argument("--top", type=int, default=20)
         if name == "check":
             sp.add_argument("--date", required=True, help="答え合わせする当日(YYYYMMDD)")
-        if name == "splithalf":
+        if name in ("splithalf", "position"):
             sp.add_argument("--cut", default=None, help="前半・後半の境界(YYYYMMDD)。既定は台日の日付の中央")
             sp.add_argument("--min-days", type=int, default=20, help="両期間で必要な最低日数")
         sp.set_defaults(fn=fn)
