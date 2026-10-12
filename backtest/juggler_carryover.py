@@ -11,8 +11,10 @@
 """
 
 import argparse
+import csv
 import glob
 import json
+import re
 import sqlite3
 import sys
 from pathlib import Path
@@ -20,6 +22,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from backtest import bonus_specs
 from backtest.bonus_specs import find_spec, load_specs
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -28,13 +31,76 @@ MIN_GAMES = 1500  # 事後確率を出す最低G数
 MIN_N = 30  # 群の最低台日数
 
 
-def _layout(hall):
-    con = sqlite3.connect(ROOT / "db" / f"{hall}.db")
-    return pd.read_sql("select machine_number u, section from machine_layout", con)
+def _db(hall, db_dir=None):
+    return (Path(db_dir) if db_dir else ROOT / "db") / f"{hall}.db"
 
 
-def _load_raw(hall, since):
-    con = sqlite3.connect(ROOT / "db" / f"{hall}.db")
+def _layout_history(hall, db_dir=None):
+    """日付つきの配置。過去の分析には現行配置(machine_layout)でなくこちらを使う(配置替えをまたぐと島が誤る)。"""
+    con = sqlite3.connect(_db(hall, db_dir))
+    try:
+        return pd.read_sql("select machine_number u, section, valid_from, valid_to from machine_layout_history", con)
+    except pd.errors.DatabaseError:
+        return pd.DataFrame(columns=["u", "section", "valid_from", "valid_to"])
+
+
+def attach_section(raw, hist):
+    """各台日に、その日に有効な配置(valid_from <= date <= valid_to)の section を付ける。無ければNaN。"""
+    raw = raw.reset_index(drop=True)
+    if hist.empty:
+        raw["section"] = np.nan
+        return raw
+    m = raw.assign(_i=raw.index).merge(hist, on="u", how="left")
+    valid = (m.date >= m.valid_from) & (m.valid_to.isna() | (m.date <= m.valid_to))
+    sec = m[valid].drop_duplicates("_i").set_index("_i").section
+    raw["section"] = sec.reindex(raw.index)
+    return raw
+
+
+def _master_settings(model):
+    """machine_master.csv(公表値)の設定別BB・RB確率。見つからなければ空。"""
+    out = {}
+    with open(bonus_specs.MASTER_CSV, encoding="utf-8-sig", newline="") as handle:
+        for row in csv.DictReader(handle):
+            if row.get("canonical_machine_name") != model and row.get("machine_name") != model:
+                continue
+            for s in range(1, 7):
+                bb = re.match(r"1/([\d.]+)", row.get(f"bb_setting{s}") or "")
+                rb = re.match(r"1/([\d.]+)", row.get(f"rb_setting{s}") or "")
+                if bb and rb:
+                    out[s] = {"bb_probability": 1 / float(bb.group(1)), "rb_probability": 1 / float(rb.group(1))}
+            break
+    return out
+
+
+SPEC_TOLERANCE = 0.005  # find_specとマスターCSVの確率(分母)の相対差。2026-10-13のスペック誤りの再発防止
+
+
+def audit_specs(models, specs):
+    """機種ごとにスペックを照合する。(不一致のリスト, 対象外のリスト)を返す。
+    不一致: find_specとマスターCSVの設定別BB・RBが許容差を超えて食い違う。対象外: スペックが無い/設定が4未満。"""
+    mismatches, unsupported = [], []
+    for m in models:
+        spec = find_spec(m, specs)
+        if not spec:
+            unsupported.append((m, "スペックなし"))
+            continue
+        used = {s: v for s, v in spec["settings"].items() if v.get("bb_probability") and v.get("rb_probability")}
+        if len(used) < 4:
+            unsupported.append((m, f"設定別BB・RBが{len(used)}設定しか無い"))
+            continue
+        for s, mv in _master_settings(m).items():
+            v = used.get(s)
+            if not v:
+                continue
+            for key in ("bb_probability", "rb_probability"):
+                if abs(v[key] / mv[key] - 1) > SPEC_TOLERANCE:
+                    mismatches.append((m, s, key, 1 / v[key], 1 / mv[key]))
+    return mismatches, unsupported
+
+
+def _load_raw(hall, since, db_dir=None):
+    con = sqlite3.connect(_db(hall, db_dir))
     df = pd.read_sql(
         "select date,machine_number u,machine_name m,games_normalized g,bb_count bb,rb_count rb,"
         "diff_coins_normalized diff from machine_detailed_results "
@@ -66,18 +132,23 @@ def _latest_snapshot(hall):
     return out, Path(f).name
 
 
-def _posteriors(df, specs):
-    """台×日の設定5以上の事後確率と、前日の型を判定する閾値。"""
+def _posteriors(df, specs, excluded=None):
+    """台×日の設定5以上の事後確率と、前日の型を判定する閾値。
+    推定の対象外にした機種は excluded(dict: 機種 -> (台日数, 理由))に記録する。黙って飛ばさない。"""
+    excluded = {} if excluded is None else excluded
     parts = []
     for m, sub in df.groupby("m"):
         spec = find_spec(m, specs)
         if not spec:
+            excluded[m] = (len(sub), "スペックなし")
             continue
         ss = sorted(s for s, v in spec["settings"].items() if v.get("bb_probability") and v.get("rb_probability"))
         if len(ss) < 4:
+            excluded[m] = (len(sub), f"設定別BB・RBが{len(ss)}設定しか無い")
             continue
         use = sub[sub.g >= MIN_GAMES]
         if use.u.nunique() < 3:
+            excluded[m] = (len(sub), f"G{MIN_GAMES}以上の台が3台未満")
             continue
         g = use.g.values[:, None].astype(float)
         bb = use.bb.values[:, None]
@@ -105,12 +176,38 @@ def _posteriors(df, specs):
     return pd.concat(parts)
 
 
-def build(hall, since, snapshot=None):
-    raw = _load_raw(hall, since)
+def build(hall, since, snapshot=None, db_dir=None, specs=None, allow_spec_mismatch=False):
+    """台×日の表を作る。作成前に監査を行い、結果を d.attrs["audit"] に残す。
+    スペックの不一致があれば停止する(allow_spec_mismatch=True で警告のみ)。"""
+    raw = _load_raw(hall, since, db_dir)
     if snapshot is not None:
         raw = pd.concat([raw, snapshot], ignore_index=True)
-    raw = raw.merge(_layout(hall), on="u", how="left")
-    d = _posteriors(raw, load_specs(hall=hall))
+    hist = _layout_history(hall, db_dir)
+    raw = attach_section(raw, hist)
+    specs = load_specs(hall=hall) if specs is None else specs
+    mismatches, _ = audit_specs(sorted(raw.m.unique()), specs)
+    if mismatches and not allow_spec_mismatch:
+        lines = [
+            f"  {m} 設定{s} {k}: find_spec 1/{a:.1f} と マスターCSV 1/{b:.1f}" for m, s, k, a, b in mismatches[:12]
+        ]
+        raise SystemExit(
+            "スペック不整合のため停止(find_spec と machine_master.csv が食い違う。公表値で直すこと):\n"
+            + "\n".join(lines)
+        )
+    excluded = {}
+    d = _posteriors(raw, specs, excluded)
+    d.attrs["audit"] = {
+        "hall": hall,
+        "since": since,
+        "last": f"{raw.d.max():%Y%m%d}",
+        "models": sorted(raw.m.unique()),
+        "spec_mismatches": mismatches,
+        "excluded": excluded,
+        "no_layout_rows": int(raw.section.isna().sum()),
+        "layout_epochs": 0 if hist.empty else int(hist.valid_from.nunique()),
+        "rows": len(raw),
+    }
+    audit = d.attrs["audit"]
     d["rbp"] = d.rb / d.g
     d["bbp"] = d.bb / d.g
     d["rb_good"] = d.rbp >= d.rb5  # RBが設定5水準以上
@@ -127,7 +224,25 @@ def build(hall, since, snapshot=None):
         .astype(object)
         .fillna("NA")
     )
+    d.attrs["audit"] = audit  # merge で attrs が失われるので付け直す
     return d
+
+
+def format_audit(a):
+    """出力の先頭に必ず出す監査行。期間・スペック・配置・対象外機種を明示する(結論の前提を隠さない)。"""
+    lines = [
+        f"[監査] {a['hall']} / 期間 {a['since']}〜{a['last']} / 台日 {a['rows']}"
+        f" / 配置エポック {a['layout_epochs']} / 配置の無い台日 {a['no_layout_rows']}",
+        f"[監査] スペック照合: 機種 {len(a['models'])}、不一致 {len(a['spec_mismatches'])}"
+        + ("(許容して実行)" if a["spec_mismatches"] else "(すべて公表値と一致)"),
+    ]
+    if a["excluded"]:
+        lines.append(
+            "[監査] 推定の対象外: " + "、".join(f"{m}({n}台日: {why})" for m, (n, why) in sorted(a["excluded"].items()))
+        )
+    if a["layout_epochs"] == 0:
+        lines.append("[監査] 配置履歴が無いため島別の集計は出せない")
+    return "\n".join(lines)
 
 
 def pairs(d):
@@ -173,7 +288,8 @@ class Boot:
 
 
 def cmd_groups(args):
-    d = build(args.hall, args.since)
+    d = build(args.hall, args.since, allow_spec_mismatch=args.allow_spec_mismatch)
+    print(format_audit(d.attrs["audit"]))
     z = pairs(d)
     b = Boot(z)
     print(f"{args.hall}: 連続2日の台日 {len(z)} / 台 {z.u.nunique()} / 翌日の平均 設定5以上確率(全体) {b.base:.3f}")
@@ -231,7 +347,8 @@ def _attach_cells(hist, day):
 
 def cmd_check(args):
     """前日までの履歴だけで作った候補が、実際の当日にどうだったかを検証する(答え合わせ)。"""
-    d = build(args.hall, args.since)
+    d = build(args.hall, args.since, allow_spec_mismatch=args.allow_spec_mismatch)
+    print(format_audit(d.attrs["audit"]))
     target = pd.Timestamp(args.date)
     prev = target - pd.Timedelta(days=1)
     if not (d.d == target).any():
@@ -270,7 +387,8 @@ def cmd_check(args):
 
 def cmd_tomorrow(args):
     snap, name = _latest_snapshot(args.hall)
-    d = build(args.hall, args.since, snapshot=snap)
+    d = build(args.hall, args.since, snapshot=snap, allow_spec_mismatch=args.allow_spec_mismatch)
+    print(format_audit(d.attrs["audit"]))
     hist = pairs(d[d.d < snap.d.iloc[0]])
     day = _attach_cells(hist, d[d.d == snap.d.iloc[0]].copy())
     print(f"スナップショット {name} / 履歴の翌日平均 {hist.ph_next.mean():.3f} / 今日の候補台日 {len(day)}")
@@ -288,6 +406,11 @@ def main(argv=None):
         sp = sub.add_parser(name)
         sp.add_argument("--hall", default=DEFAULT_HALL)
         sp.add_argument("--since", default="20260601")
+        sp.add_argument(
+            "--allow-spec-mismatch",
+            action="store_true",
+            help="find_specとマスターCSVが食い違っても止めない(警告のみ)。通常は使わず公表値で直す",
+        )
         if name in ("tomorrow", "check"):
             sp.add_argument("--top", type=int, default=20)
         if name == "check":
