@@ -9,6 +9,7 @@
   python -m backtest.juggler_carryover check    --date 20261012           # 前日までの履歴で作った候補の答え合わせ
   python -m backtest.juggler_carryover splithalf [--cut 20260801]          # 前半・後半で台別の偏りと持ち越しが再現するか
   python -m backtest.juggler_carryover position  [--cut 20260801]          # 島の端が低いか、位置を除いても台固定が残るか
+  python -m backtest.juggler_carryover oos       [--model マイジャグラーV]  # 候補に島の端を反映する案の比較(アウトオブサンプル)
 
 考え方・検証結果・限界は document/JUGGLER_SETTING_PATTERNS.md を読むこと。
 """
@@ -371,9 +372,15 @@ def cmd_groups(args):
         )
 
 
-def _attach_cells(hist, day):
-    """履歴の群平均を、候補日の各台に付ける。
-    持ち越しは機種ごとに違う(マイジャグラーVのみ確認)ので、機種ごとに群平均を取る。台日が少ない群は機種×RB良に粗くする。"""
+def _edge_factors(d_upto, models):
+    """機種ごとの端の係数。d_upto は候補日の前日までの台日だけ(未来を使わない)。"""
+    return {m: edge_factor(d_upto, m) for m in models}
+
+
+def _attach_cells(hist, day, edge_f=None):
+    """履歴の群平均を、候補日の各台に付ける。score = 群平均 × 端の係数(端の台のみ。edge_f が無ければ群平均そのまま)。
+    持ち越しは機種ごとに違う(マイジャグラーVのみ確認)ので、機種ごとに群平均を取る。台日が少ない群は機種×RB良に粗くする。
+    島の端は高設定が入りにくい(検証結果 15)ので、端の台は優先度を係数で下げる(外さない。アウトオブサンプルの oos で確認)。"""
     cell = (
         hist.groupby(["m", "rb_good", "r7band"])
         .ph_next.agg(["mean", "count"])
@@ -387,6 +394,8 @@ def _attach_cells(hist, day):
     thin = day.cell_n.isna() | (day.cell_n < MIN_N)
     day.loc[thin, "cell_mean"] = day.loc[thin, "c_mean"]
     day.loc[thin, "cell_n"] = day.loc[thin, "c_n"]
+    factor = day.m.map(edge_f or {}).fillna(1.0)
+    day["score"] = day.cell_mean * np.where(day.dist == 1, factor, 1.0)
     return day
 
 
@@ -399,7 +408,7 @@ def cmd_check(args):
     if not (d.d == target).any():
         raise SystemExit(f"{args.date} のデータがDBに無い(DB最終日 {d.d.max():%Y%m%d})")
     hist = pairs(d[d.d < prev])  # 前日までの組だけ(当日の結果は使わない)
-    day = _attach_cells(hist, d[d.d == prev].copy())
+    day = _attach_cells(hist, d[d.d == prev].copy(), _edge_factors(d[d.d <= prev], d.m.unique()))
     act = d[d.d == target][["u", "ph", "g", "rb", "bb"]].rename(
         columns={"ph": "ph_act", "g": "g_act", "rb": "rb_act", "bb": "bb_act"}
     )
@@ -408,22 +417,35 @@ def cmd_check(args):
         f"{args.hall} {args.date}: 前日の候補 {len(day)}台 / 当日の確定が揃った台 {len(z)} / 履歴は {prev:%Y%m%d} の前日まで"
     )
     for m, s in z.groupby("m"):
-        if len(s) < 20 or s.cell_mean.nunique() < 2:
+        if len(s) < 20 or s.score.nunique() < 2:
             continue
-        rho = s.cell_mean.rank().corr(s.ph_act.rank())
-        top = s.sort_values("cell_mean", ascending=False).head(10)
+        rho = s.score.rank().corr(s.ph_act.rank())
+        top = s.sort_values("score", ascending=False).head(10)
         rest = s.drop(top.index)
         print(
             f"--- {m} ({len(s)}台)  順位相関(群平均×当日ph) {rho:+.3f}  上位10の当日平均ph {top.ph_act.mean():.3f}  それ以外 {rest.ph_act.mean():.3f}  全体 {s.ph_act.mean():.3f}"
         )
     m0 = "マイジャグラーV"
-    s = z[z.m == m0].sort_values("cell_mean", ascending=False)
+    s = z[z.m == m0].sort_values("score", ascending=False)
     if len(s):
-        print(f"\n[{m0}] 群平均の高い順(当日のphは確定データから)")
+        print(f"\n[{m0}] 点数(群平均×端の係数)の高い順(当日のphは確定データから)")
         s = s.assign(rb_rate=(s.g_act / s.rb_act.where(s.rb_act > 0)).round(0))
         print(
             s.head(args.top)[
-                ["u", "rb_good", "r7band", "cell_mean", "cell_n", "g_act", "rb_act", "bb_act", "rb_rate", "ph_act"]
+                [
+                    "u",
+                    "dist",
+                    "rb_good",
+                    "r7band",
+                    "cell_mean",
+                    "score",
+                    "cell_n",
+                    "g_act",
+                    "rb_act",
+                    "bb_act",
+                    "rb_rate",
+                    "ph_act",
+                ]
             ]
             .round(3)
             .to_string(index=False)
@@ -435,11 +457,13 @@ def cmd_tomorrow(args):
     d = build(args.hall, args.since, snapshot=snap, allow_spec_mismatch=args.allow_spec_mismatch)
     print(format_audit(d.attrs["audit"]))
     hist = pairs(d[d.d < snap.d.iloc[0]])
-    day = _attach_cells(hist, d[d.d == snap.d.iloc[0]].copy())
+    stamp = snap.d.iloc[0]
+    day = _attach_cells(hist, d[d.d == stamp].copy(), _edge_factors(d[d.d <= stamp], d.m.unique()))
     print(f"スナップショット {name} / 履歴の翌日平均 {hist.ph_next.mean():.3f} / 今日の候補台日 {len(day)}")
-    print("今日の差枚が無い収集では差枚由来の型(不発)は使わず、RB良と過去7日で見る。\n")
-    cols = ["u", "m", "g", "rb", "bb", "rb_good", "bb_bad", "r7band", "cell_mean", "cell_n", "ph"]
-    day = day.sort_values(["cell_mean", "ph"], ascending=False)
+    print("今日の差枚が無い収集では差枚由来の型(不発)は使わず、RB良と過去7日で見る。")
+    print("点数(score)=群平均×端の係数。dist==1が島の端で、係数で優先度を下げてある(外してはいない)。\n")
+    cols = ["u", "m", "dist", "g", "rb", "bb", "rb_good", "bb_bad", "r7band", "cell_mean", "score", "cell_n", "ph"]
+    day = day.sort_values(["score", "ph"], ascending=False)
     print(day.head(args.top)[cols].round(3).to_string(index=False))
 
 
@@ -631,6 +655,109 @@ def cmd_position(args):
             )
 
 
+VARIANTS = ("base", "edge_adj", "edge_excl")
+
+
+def edge_factor(d_upto, model):
+    """機種ごとの端の係数 = 端の台のph平均 ÷ 端以外のph平均(0.2〜1.0に収める。端を持ち上げない)。
+    d_upto は評価日より前の台日だけを渡すこと(未来を使わない)。台日が足りなければ1.0。"""
+    s = d_upto[(d_upto.m == model) & d_upto.dist.notna()]
+    e, o = s[s.dist == 1].ph, s[s.dist > 1].ph
+    if len(e) < MIN_N or len(o) < MIN_N or o.mean() <= 0:
+        return 1.0
+    return float(np.clip(e.mean() / o.mean(), 0.2, 1.0))
+
+
+def score_variants(d, prev, model, top=10):
+    """prev(前日)までの履歴だけから、3つの案で上位 top 台の台番号を決める。{案: [台番号, ...]} を返す。
+    評価日(prevの翌日)以降の列は一切使わない。"""
+    hist = pairs(d[(d.m == model) & (d.d < prev)])
+    day = _attach_cells(hist, d[(d.m == model) & (d.d == prev)].copy())
+    if day.empty or day.cell_mean.isna().all():
+        return {v: [] for v in VARIANTS}
+    f = edge_factor(d[d.d <= prev], model)
+    day = day.assign(
+        s_base=day.cell_mean,
+        s_adj=day.cell_mean * np.where(day.dist == 1, f, 1.0),
+    )
+
+    def pick(frame, col):
+        return list(frame.sort_values([col, "ph"], ascending=False).head(top).u)
+
+    return {
+        "base": pick(day, "s_base"),
+        "edge_adj": pick(day, "s_adj"),
+        "edge_excl": pick(day[~(day.dist == 1)], "s_base"),
+    }
+
+
+def oos_eval(d, model, start, top=10):
+    """start 以降の各日(前日のデータがある日)について、案ごとの候補の当日平均phと、それ以外の平均phを出す。
+    戻り値: DataFrame(date, variant, cand, rest, diff, n_cand)。"""
+    dates = sorted(d.date.unique())
+    rows = []
+    for i, t in enumerate(dates):
+        if t < start or i == 0:
+            continue
+        prev = pd.Timestamp(dates[i - 1])
+        if (pd.Timestamp(t) - prev).days != 1:
+            continue  # 連続日だけ
+        act = d[(d.m == model) & (d.date == t)].set_index("u").ph
+        if len(act) < top + 5:
+            continue
+        for var, units in score_variants(d, prev, model, top).items():
+            c = act[act.index.isin(units)]
+            r = act[~act.index.isin(units)]
+            if len(c) == 0 or len(r) == 0:
+                continue
+            rows.append(
+                {
+                    "date": t,
+                    "variant": var,
+                    "cand": c.mean(),
+                    "rest": r.mean(),
+                    "diff": c.mean() - r.mean(),
+                    "n_cand": len(c),
+                }
+            )
+    return pd.DataFrame(rows)
+
+
+def _day_ci(x, n=2000, seed=0):
+    rng = np.random.default_rng(seed)
+    x = np.asarray(x, dtype=float)
+    m = [x[rng.integers(0, len(x), len(x))].mean() for _ in range(n)]
+    return np.percentile(m, [5, 95])
+
+
+def cmd_oos(args):
+    d = build(args.hall, args.since, allow_spec_mismatch=args.allow_spec_mismatch)
+    print(format_audit(d.attrs["audit"]))
+    t = oos_eval(d, args.model, args.start, top=args.top)
+    if t.empty:
+        raise SystemExit("評価できる日が無い(--start を見直す)")
+    days = t.date.nunique()
+    print(
+        f"\n[アウトオブサンプル] {args.hall} / {args.model} / {t.date.min()}〜{t.date.max()} {days}日 / 候補は上位{args.top}台"
+    )
+    print("案 | 候補の当日平均ph | それ以外 | 差(候補−それ以外) 90%CI | 差が正の日")
+    for var in VARIANTS:
+        s = t[t.variant == var]
+        lo, hi = _day_ci(s["diff"])
+        print(
+            f"{var:<9} | {s.cand.mean():.3f} | {s.rest.mean():.3f} | {s['diff'].mean():+.3f} ({lo:+.3f}~{hi:+.3f}) | {(s['diff'] > 0).mean():.0%}"
+        )
+    base = t[t.variant == "base"].set_index("date")["diff"]
+    print("\n[案 − base の差(同じ日どうしの対応。正なら端を反映したほうが良い)]")
+    for var in ("edge_adj", "edge_excl"):
+        s = t[t.variant == var].set_index("date")["diff"]
+        dd = (s - base).dropna()
+        lo, hi = _day_ci(dd)
+        print(
+            f"{var:<9} − base: {dd.mean():+.4f} (90%CI {lo:+.4f}~{hi:+.4f}) / 良くなった日 {(dd > 0).mean():.0%} / 悪化した日 {(dd < 0).mean():.0%}"
+        )
+
+
 def main(argv=None):
     sys.stdout.reconfigure(encoding="utf-8")
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -641,6 +768,7 @@ def main(argv=None):
         ("check", cmd_check),
         ("splithalf", cmd_splithalf),
         ("position", cmd_position),
+        ("oos", cmd_oos),
     ):
         sp = sub.add_parser(name)
         sp.add_argument("--hall", default=DEFAULT_HALL)
@@ -654,6 +782,10 @@ def main(argv=None):
             sp.add_argument("--top", type=int, default=20)
         if name == "check":
             sp.add_argument("--date", required=True, help="答え合わせする当日(YYYYMMDD)")
+        if name == "oos":
+            sp.add_argument("--model", default="マイジャグラーV", help="評価する機種(候補はこの機種の中から選ぶ)")
+            sp.add_argument("--start", default="20260801", help="評価を始める日(YYYYMMDD)")
+            sp.add_argument("--top", type=int, default=10, help="候補の台数")
         if name in ("splithalf", "position"):
             sp.add_argument("--cut", default=None, help="前半・後半の境界(YYYYMMDD)。既定は台日の日付の中央")
             sp.add_argument("--min-days", type=int, default=20, help="両期間で必要な最低日数")

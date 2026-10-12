@@ -287,6 +287,69 @@ def test_residual_fixed_remains_when_machines_differ_beyond_position():
     assert r.rho_resid > 0.8 and r.p_resid < 0.05
 
 
+def _oos_table(days=40, seed=0, edge_low=True):
+    """端(dist==1)の台のphが低い合成データ。前日RB良・7日帯は全台同じにして、位置だけが差になるようにする。"""
+    rng = np.random.default_rng(seed)
+    dates = pd.date_range("2026-07-01", periods=days)
+    rows = []
+    for u in range(1, 21):
+        edge = u <= 4
+        for dt in dates:
+            base = 0.03 if (edge and edge_low) else 0.15
+            rows.append(
+                {
+                    "u": u,
+                    "m": MODEL,
+                    "d": dt,
+                    "date": f"{dt:%Y%m%d}",
+                    "dist": 1 if edge else 5,
+                    "ph": float(np.clip(base + rng.normal(0, 0.03), 0, 1)),
+                    "rb_good": bool(rng.random() < 0.3),
+                    "r7band": "-500~500",
+                }
+            )
+    return pd.DataFrame(rows)
+
+
+def test_score_variants_do_not_use_future_data():
+    """候補は前日までの履歴だけで決まる。評価日以降のphを書き換えても、候補は変わらない。"""
+    d = _oos_table()
+    prev = pd.Timestamp("2026-08-05")
+    before = jc.score_variants(d, prev, MODEL, top=5)
+    d2 = d.copy()
+    d2.loc[d2.d > prev, "ph"] = 0.99  # 評価日以降を極端に書き換える
+    after = jc.score_variants(d2, prev, MODEL, top=5)
+    assert before == after
+
+
+def test_edge_factor_uses_only_given_history_and_never_boosts_edge():
+    d = _oos_table()
+    f = jc.edge_factor(d, MODEL)
+    assert 0.2 <= f < 0.5  # 端のphは端以外の約2割〜 → 係数は小さい
+    d_no_edge_effect = _oos_table(edge_low=False)
+    assert jc.edge_factor(d_no_edge_effect, MODEL) > 0.8
+    assert jc.edge_factor(d.iloc[:5], MODEL) == 1.0  # 履歴が足りなければ1.0
+
+
+def test_edge_excl_removes_edge_machines_from_candidates():
+    d = _oos_table()
+    v = jc.score_variants(d, pd.Timestamp("2026-08-05"), MODEL, top=8)
+    assert all(u > 4 for u in v["edge_excl"])  # 端(u<=4)は候補に入らない
+
+
+def test_oos_eval_returns_all_variants_and_excludes_edge_in_edge_excl():
+    """oos_evalは3案すべてを同じ日で評価し、edge_exclの候補は端以外だけになる(日ごとの候補台の数も揃う)。"""
+    d = _oos_table(days=45)
+    t = jc.oos_eval(d, MODEL, start="20260801", top=6)
+    assert set(t.variant) == set(jc.VARIANTS)
+    n_days = t.groupby("variant").date.nunique()
+    assert n_days.nunique() == 1  # 3案とも同じ日数で比べている
+    assert (t.groupby("variant").n_cand.min() == 6).all()
+    v = jc.score_variants(d, pd.Timestamp("2026-08-05"), MODEL, top=6)
+    assert all(u > 4 for u in v["edge_excl"])
+    assert all(u > 4 for u in v["base"]) or any(u <= 4 for u in v["base"])  # baseは端を含んでもよい
+
+
 def test_halls_do_not_mix(tmp_path):
     """別ホールのDBの台番号・結果が混ざらない(同じ台番号でも別ホールの行を読まない)。"""
     layout = [(u, "20250101", None, "A") for u in (1, 2, 3, 4)]
