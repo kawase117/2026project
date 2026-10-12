@@ -1,0 +1,197 @@
+{
+  "rule_id": "kamata1_model_term60_top3",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "freeze_hash": "bb185b622fae47b2",
+  "target_date": "20261013",
+  "data_asof": "20261011",
+  "data_lag_days": 2,
+  "lookback_window": [
+    "2026-08-14",
+    "2026-10-13"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +187 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 576.599074,
+      "history_rows": 144,
+      "machines": [
+        2020,
+        2416,
+        2417,
+        2418,
+        2419
+      ]
+    },
+    {
+      "machine_name": "スマスロ北斗の拳",
+      "score": 266.300773,
+      "history_rows": 229,
+      "machines": [
+        2060,
+        2061,
+        2062,
+        2063,
+        2064,
+        2065,
+        2066
+      ]
+    },
+    {
+      "machine_name": "モンスターハンターライズ",
+      "score": 266.087106,
+      "history_rows": 108,
+      "machines": [
+        2117,
+        2118,
+        2119,
+        2120,
+        2143,
+        2144,
+        2145,
+        2146,
+        2427,
+        2429
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 2020,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 576.599074,
+      "history_days": 144
+    },
+    {
+      "machine_number": 2416,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 576.599074,
+      "history_days": 144
+    },
+    {
+      "machine_number": 2417,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 576.599074,
+      "history_days": 144
+    },
+    {
+      "machine_number": 2418,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 576.599074,
+      "history_days": 144
+    },
+    {
+      "machine_number": 2419,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 576.599074,
+      "history_days": 144
+    },
+    {
+      "machine_number": 2060,
+      "machine_name": "スマスロ北斗の拳",
+      "score": 266.300773,
+      "history_days": 229
+    },
+    {
+      "machine_number": 2061,
+      "machine_name": "スマスロ北斗の拳",
+      "score": 266.300773,
+      "history_days": 229
+    },
+    {
+      "machine_number": 2062,
+      "machine_name": "スマスロ北斗の拳",
+      "score": 266.300773,
+      "history_days": 229
+    },
+    {
+      "machine_number": 2063,
+      "machine_name": "スマスロ北斗の拳",
+      "score": 266.300773,
+      "history_days": 229
+    },
+    {
+      "machine_number": 2064,
+      "machine_name": "スマスロ北斗の拳",
+      "score": 266.300773,
+      "history_days": 229
+    },
+    {
+      "machine_number": 2065,
+      "machine_name": "スマスロ北斗の拳",
+      "score": 266.300773,
+      "history_days": 229
+    },
+    {
+      "machine_number": 2066,
+      "machine_name": "スマスロ北斗の拳",
+      "score": 266.300773,
+      "history_days": 229
+    },
+    {
+      "machine_number": 2117,
+      "machine_name": "モンスターハンターライズ",
+      "score": 266.087106,
+      "history_days": 108
+    },
+    {
+      "machine_number": 2118,
+      "machine_name": "モンスターハンターライズ",
+      "score": 266.087106,
+      "history_days": 108
+    },
+    {
+      "machine_number": 2119,
+      "machine_name": "モンスターハンターライズ",
+      "score": 266.087106,
+      "history_days": 108
+    },
+    {
+      "machine_number": 2120,
+      "machine_name": "モンスターハンターライズ",
+      "score": 266.087106,
+      "history_days": 108
+    },
+    {
+      "machine_number": 2143,
+      "machine_name": "モンスターハンターライズ",
+      "score": 266.087106,
+      "history_days": 108
+    },
+    {
+      "machine_number": 2144,
+      "machine_name": "モンスターハンターライズ",
+      "score": 266.087106,
+      "history_days": 108
+    },
+    {
+      "machine_number": 2145,
+      "machine_name": "モンスターハンターライズ",
+      "score": 266.087106,
+      "history_days": 108
+    },
+    {
+      "machine_number": 2146,
+      "machine_name": "モンスターハンターライズ",
+      "score": 266.087106,
+      "history_days": 108
+    },
+    {
+      "machine_number": 2427,
+      "machine_name": "モンスターハンターライズ",
+      "score": 266.087106,
+      "history_days": 108
+    },
+    {
+      "machine_number": 2429,
+      "machine_name": "モンスターハンターライズ",
+      "score": 266.087106,
+      "history_days": 108
+    }
+  ],
+  "result": null,
+  "plan_digest": "ba35477ffacb4250"
+}
