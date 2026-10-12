@@ -350,6 +350,70 @@ def test_oos_eval_returns_all_variants_and_excludes_edge_in_edge_excl():
     assert all(u > 4 for u in v["base"]) or any(u <= 4 for u in v["base"])  # baseは端を含んでもよい
 
 
+def _machine_effect_table(days=60, seed=0):
+    """前日の結果と無関係に、台ごとの高設定になりやすさだけが固定されたデータ(台固定型)。"""
+    rng = np.random.default_rng(seed)
+    dates = pd.date_range("2026-07-01", periods=days)
+    rows = []
+    for u in range(1, 21):
+        eff = 0.02 + 0.015 * u  # 台番号が大きいほど高い(台固定)
+        for dt in dates:
+            rows.append(
+                {
+                    "u": u,
+                    "m": MODEL,
+                    "d": dt,
+                    "date": f"{dt:%Y%m%d}",
+                    "dist": 5,
+                    "ph": float(np.clip(eff + rng.normal(0, 0.03), 0, 1)),
+                    "rb_good": bool(rng.random() < 0.3),
+                    "r7band": "-500~500",
+                }
+            )
+    return pd.DataFrame(rows)
+
+
+def test_fixed_variant_ranks_persistently_high_machines_first():
+    d = _machine_effect_table()
+    v = jc.score_variants(d, pd.Timestamp("2026-08-10"), MODEL, top=5)
+    assert set(v["fixed"]) == {16, 17, 18, 19, 20}  # 台固定の高い5台
+    assert set(v["fixed_carry"]) & {16, 17, 18, 19, 20}  # 持ち越しが無くても台固定が効く
+
+
+def test_fixed_variants_beat_base_on_machine_fixed_data_without_lookahead():
+    """台固定型のデータでは、fixed が base(持ち越しの群平均)より候補の当日phが高い。未来のphを書き換えても候補は変わらない。"""
+    d = _machine_effect_table()
+    t = jc.oos_eval(d, MODEL, start="20260805", top=5)
+    m = t.groupby("variant")["diff"].mean()
+    assert m["fixed"] > m["base"] + 0.05
+    prev = pd.Timestamp("2026-08-10")
+    before = jc.score_variants(d, prev, MODEL, top=5)
+    d2 = d.copy()
+    d2.loc[d2.d > prev, "ph"] = 0.99
+    assert jc.score_variants(d2, prev, MODEL, top=5) == before
+
+
+def test_tomorrow_score_matches_oos_fixed_carry_ranking():
+    """tomorrow/check の既定の点数(score)は、oosで評価した fixed_carry と同じ順位になる(評価した方法を使っている)。"""
+    d = _machine_effect_table()
+    prev = pd.Timestamp("2026-08-10")
+    hist = jc.pairs(d[(d.m == MODEL) & (d.d < prev)])
+    day = jc._attach_cells(
+        hist, d[(d.m == MODEL) & (d.d == prev)].copy(), jc._edge_factors(d[d.d <= prev], [MODEL]), d[d.d <= prev]
+    )
+    top = list(day.sort_values(["score", "ph"], ascending=False).head(5).u)
+    assert top == jc.score_variants(d, prev, MODEL, top=5)["fixed_carry"]
+    assert "score_edge" in day.columns
+
+
+def test_attach_cells_without_history_falls_back_to_edge_score():
+    d = _oos_table()
+    prev = pd.Timestamp("2026-08-05")
+    hist = jc.pairs(d[(d.m == MODEL) & (d.d < prev)])
+    day = jc._attach_cells(hist, d[(d.m == MODEL) & (d.d == prev)].copy())
+    assert (day.score == day.score_edge).all()
+
+
 def test_halls_do_not_mix(tmp_path):
     """別ホールのDBの台番号・結果が混ざらない(同じ台番号でも別ホールの行を読まない)。"""
     layout = [(u, "20250101", None, "A") for u in (1, 2, 3, 4)]

@@ -377,10 +377,31 @@ def _edge_factors(d_upto, models):
     return {m: edge_factor(d_upto, m) for m in models}
 
 
-def _attach_cells(hist, day, edge_f=None):
-    """履歴の群平均を、候補日の各台に付ける。score = 群平均 × 端の係数(端の台のみ。edge_f が無ければ群平均そのまま)。
+def _fixed_carry(d_upto, hist, day):
+    """候補日の各台の 台固定×持ち越し の点数。
+    台固定 = 台ごとの過去の平均ph(前日まで)を機種平均へ縮めた値(位置の効果も含む)。
+    持ち越し = 群平均 ÷ 機種の翌日平均(持ち越しが無いホールでは約1で、台固定だけが効く)。
+    台固定が無いホール(みとや)では係数が支配し、持ち越しが無いホール(蒲田7)では台固定が支配する。"""
+    out = pd.Series(np.nan, index=day.index)
+    for m, g in day.groupby("m"):
+        upto = d_upto[d_upto.m == m]
+        mm = upto.groupby("u").ph.agg(["mean", "count"])
+        model_mean = upto.ph.mean()
+        shrunk = (mm["mean"] * mm["count"] + model_mean * FIXED_SHRINK) / (mm["count"] + FIXED_SHRINK)
+        hm = hist[hist.m == m]
+        next_mean = hm.ph_next.mean() if len(hm) else np.nan
+        carry = g.cell_mean / next_mean if next_mean and next_mean > 0 else 1.0
+        out.loc[g.index] = g.u.map(shrunk).fillna(model_mean) * carry
+    return out
+
+
+def _attach_cells(hist, day, edge_f=None, d_upto=None):
+    """履歴の群平均を、候補日の各台に付ける。
+    score_edge = 群平均 × 端の係数(端の台のみ。edge_f が無ければ群平均そのまま)。
+    score = 台固定×持ち越し(d_upto が渡されたとき。無ければ score_edge と同じ)。アウトオブサンプルの oos で、
+    ホールの型(みとや=持ち越し、蒲田7=台固定)を問わず最も安定した(検証結果 17)。
     持ち越しは機種ごとに違う(マイジャグラーVのみ確認)ので、機種ごとに群平均を取る。台日が少ない群は機種×RB良に粗くする。
-    島の端は高設定が入りにくい(検証結果 15)ので、端の台は優先度を係数で下げる(外さない。アウトオブサンプルの oos で確認)。"""
+    島の端は高設定が入りにくい(検証結果 15)ので、score_edge は端の台の優先度を係数で下げる(外さない)。"""
     cell = (
         hist.groupby(["m", "rb_good", "r7band"])
         .ph_next.agg(["mean", "count"])
@@ -395,7 +416,8 @@ def _attach_cells(hist, day, edge_f=None):
     day.loc[thin, "cell_mean"] = day.loc[thin, "c_mean"]
     day.loc[thin, "cell_n"] = day.loc[thin, "c_n"]
     factor = day.m.map(edge_f or {}).fillna(1.0)
-    day["score"] = day.cell_mean * np.where(day.dist == 1, factor, 1.0)
+    day["score_edge"] = day.cell_mean * np.where(day.dist == 1, factor, 1.0)
+    day["score"] = day.score_edge if d_upto is None else _fixed_carry(d_upto, hist, day)
     return day
 
 
@@ -408,7 +430,7 @@ def cmd_check(args):
     if not (d.d == target).any():
         raise SystemExit(f"{args.date} のデータがDBに無い(DB最終日 {d.d.max():%Y%m%d})")
     hist = pairs(d[d.d < prev])  # 前日までの組だけ(当日の結果は使わない)
-    day = _attach_cells(hist, d[d.d == prev].copy(), _edge_factors(d[d.d <= prev], d.m.unique()))
+    day = _attach_cells(hist, d[d.d == prev].copy(), _edge_factors(d[d.d <= prev], d.m.unique()), d[d.d <= prev])
     act = d[d.d == target][["u", "ph", "g", "rb", "bb"]].rename(
         columns={"ph": "ph_act", "g": "g_act", "rb": "rb_act", "bb": "bb_act"}
     )
@@ -428,7 +450,7 @@ def cmd_check(args):
     m0 = "マイジャグラーV"
     s = z[z.m == m0].sort_values("score", ascending=False)
     if len(s):
-        print(f"\n[{m0}] 点数(群平均×端の係数)の高い順(当日のphは確定データから)")
+        print(f"\n[{m0}] 点数(台固定×持ち越し)の高い順(当日のphは確定データから)")
         s = s.assign(rb_rate=(s.g_act / s.rb_act.where(s.rb_act > 0)).round(0))
         print(
             s.head(args.top)[
@@ -458,11 +480,13 @@ def cmd_tomorrow(args):
     print(format_audit(d.attrs["audit"]))
     hist = pairs(d[d.d < snap.d.iloc[0]])
     stamp = snap.d.iloc[0]
-    day = _attach_cells(hist, d[d.d == stamp].copy(), _edge_factors(d[d.d <= stamp], d.m.unique()))
+    day = _attach_cells(hist, d[d.d == stamp].copy(), _edge_factors(d[d.d <= stamp], d.m.unique()), d[d.d <= stamp])
     print(f"スナップショット {name} / 履歴の翌日平均 {hist.ph_next.mean():.3f} / 今日の候補台日 {len(day)}")
     print("今日の差枚が無い収集では差枚由来の型(不発)は使わず、RB良と過去7日で見る。")
-    print("点数(score)=群平均×端の係数。dist==1が島の端で、係数で優先度を下げてある(外してはいない)。\n")
-    cols = ["u", "m", "dist", "g", "rb", "bb", "rb_good", "bb_bad", "r7band", "cell_mean", "score", "cell_n", "ph"]
+    print(
+        "点数(score)=台固定×持ち越し(台ごとの過去の平均ph×群平均の相対係数)。score_edge=群平均×端の係数(参考)。dist==1が島の端。\n"
+    )
+    cols = ["u", "m", "dist", "g", "rb", "bb", "rb_good", "r7band", "cell_mean", "score_edge", "score", "cell_n", "ph"]
     day = day.sort_values(["score", "ph"], ascending=False)
     print(day.head(args.top)[cols].round(3).to_string(index=False))
 
@@ -655,7 +679,8 @@ def cmd_position(args):
             )
 
 
-VARIANTS = ("base", "edge_adj", "edge_excl")
+VARIANTS = ("base", "edge_adj", "edge_excl", "fixed", "fixed_carry")
+FIXED_SHRINK = 20  # 台ごとの平均phを機種平均へ縮める強さ(台日換算)。台日が少ない台の偶然の高さを抑える
 
 
 def edge_factor(d_upto, model):
@@ -675,11 +700,21 @@ def score_variants(d, prev, model, top=10):
     day = _attach_cells(hist, d[(d.m == model) & (d.d == prev)].copy())
     if day.empty or day.cell_mean.isna().all():
         return {v: [] for v in VARIANTS}
+    upto = d[(d.m == model) & (d.d <= prev)]
     f = edge_factor(d[d.d <= prev], model)
+    # 台固定: 台ごとの過去の平均ph(前日まで)を機種平均へ縮める。位置の効果も台ごとの平均に含まれる。
+    mm = upto.groupby("u").ph.agg(["mean", "count"])
+    model_mean = upto.ph.mean()
+    shrunk = (mm["mean"] * mm["count"] + model_mean * FIXED_SHRINK) / (mm["count"] + FIXED_SHRINK)
+    # 持ち越しの相対係数: 群平均 ÷ 機種の翌日平均(持ち越しが無いホールでは約1で、台固定だけが効く)
+    next_mean = hist.ph_next.mean() if len(hist) else np.nan
+    carry = day.cell_mean / next_mean if next_mean and next_mean > 0 else pd.Series(1.0, index=day.index)
     day = day.assign(
         s_base=day.cell_mean,
         s_adj=day.cell_mean * np.where(day.dist == 1, f, 1.0),
+        s_fixed=day.u.map(shrunk).fillna(model_mean),
     )
+    day["s_fixed_carry"] = day.s_fixed * carry.fillna(1.0)
 
     def pick(frame, col):
         return list(frame.sort_values([col, "ph"], ascending=False).head(top).u)
@@ -688,6 +723,8 @@ def score_variants(d, prev, model, top=10):
         "base": pick(day, "s_base"),
         "edge_adj": pick(day, "s_adj"),
         "edge_excl": pick(day[~(day.dist == 1)], "s_base"),
+        "fixed": pick(day, "s_fixed"),
+        "fixed_carry": pick(day, "s_fixed_carry"),
     }
 
 
@@ -749,7 +786,7 @@ def cmd_oos(args):
         )
     base = t[t.variant == "base"].set_index("date")["diff"]
     print("\n[案 − base の差(同じ日どうしの対応。正なら端を反映したほうが良い)]")
-    for var in ("edge_adj", "edge_excl"):
+    for var in VARIANTS[1:]:
         s = t[t.variant == var].set_index("date")["diff"]
         dd = (s - base).dropna()
         lo, hi = _day_ci(dd)
