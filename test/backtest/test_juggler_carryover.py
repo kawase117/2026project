@@ -163,6 +163,65 @@ def test_other_hall_config_is_not_applied(tmp_path):
     assert d.attrs["audit"]["excluded_rows"] == 0
 
 
+def _synthetic_ph(effect, days=40, noise=0.02, seed=0, model=MODEL):
+    """台ごとの高設定になりやすさ(effect)に日替わりのノイズを足した、台×日のph。"""
+    rng = np.random.default_rng(seed)
+    dates = [f"2026{(8 + i // 30):02d}{(i % 30) + 1:02d}" for i in range(days)]
+    rows = []
+    for u, e in enumerate(effect, start=1):
+        for d in dates:
+            rows.append({"u": u, "m": model, "date": d, "ph": float(np.clip(e + rng.normal(0, noise), 0, 1))})
+    return pd.DataFrame(rows)
+
+
+def test_split_half_rank_detects_persistent_machine_effect():
+    """台ごとの偏りが前後半で続くデータでは、順位相関が高く、並べ替え検定で有意になる。"""
+    d = _synthetic_ph(effect=[0.02, 0.05, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5])
+    t = jc.split_half_rank(d, cut="20260901", min_days=10, n_perm=500)
+    r = t.iloc[0]
+    assert r.n == 8 and r.rho > 0.9 and r.p < 0.05
+    assert r.top3_next > r.all_next  # 前半の上位3台は、後半も全台より高い
+
+
+def test_split_half_rank_random_has_no_reproduction():
+    """台ごとの偏りが無い(全台同じ水準)データでは、再現しない。"""
+    d = _synthetic_ph(effect=[0.1] * 10, noise=0.05, seed=3)
+    t = jc.split_half_rank(d, cut="20260901", min_days=10, n_perm=500)
+    r = t.iloc[0]
+    assert r.p > 0.05
+
+
+def test_split_half_rank_skips_machines_with_few_days_and_small_models():
+    d = _synthetic_ph(effect=[0.1, 0.2, 0.3, 0.4, 0.5], days=40)
+    d = d[~((d.u == 5) & (d.date >= "20260901"))]  # 5番の台は後半のデータが無い
+    t = jc.split_half_rank(d, cut="20260901", min_days=10, n_perm=100)
+    assert t.iloc[0].n == 4 and np.isnan(t.iloc[0].rho)  # 5台未満になるので相関は出さない
+
+
+def test_carry_by_half_splits_by_previous_day():
+    """持ち越しの前半・後半は、前日の日付で分ける(翌日の日付ではない)。"""
+    rows = []
+    for u in range(1, 5):
+        for i, d in enumerate(["20260810", "20260820", "20260901", "20260910"]):
+            for k in range(80):  # 各区間300台日以上にするため台日を水増し
+                rows.append(
+                    {
+                        "u": u,
+                        "m": MODEL,
+                        "date": d,
+                        "rb_good": k % 2 == 0,
+                        "r7band": "-500~500",
+                        "ph_next": 0.30 if (k % 2 == 0 and d < "20260901") else 0.10,
+                    }
+                )
+    z = pd.DataFrame(rows)
+    out = jc.carry_by_half(z, cut="20260901")
+    lines = {(half, label): line for _, half, label, line in out}
+    # 前半は前日RB良のほうが高く(自群比がプラス)、後半は差が無い
+    assert "自群比 +0.100" in lines[("前半", "前日RB良")]
+    assert "自群比 +0.000" in lines[("後半", "前日RB良")]
+
+
 def test_halls_do_not_mix(tmp_path):
     """別ホールのDBの台番号・結果が混ざらない(同じ台番号でも別ホールの行を読まない)。"""
     layout = [(u, "20250101", None, "A") for u in (1, 2, 3, 4)]

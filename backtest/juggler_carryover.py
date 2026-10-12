@@ -6,6 +6,8 @@
 使い方:
   python -m backtest.juggler_carryover groups   [--hall みとや大森町店] [--since 20260601]
   python -m backtest.juggler_carryover tomorrow [--hall みとや大森町店]   # 最新の収集スナップショットから翌日の候補
+  python -m backtest.juggler_carryover check    --date 20261012           # 前日までの履歴で作った候補の答え合わせ
+  python -m backtest.juggler_carryover splithalf [--cut 20260801]          # 前半・後半で台別の偏りと持ち越しが再現するか
 
 考え方・検証結果・限界は document/JUGGLER_SETTING_PATTERNS.md を読むこと。
 """
@@ -425,11 +427,101 @@ def cmd_tomorrow(args):
     print(day.head(args.top)[cols].round(3).to_string(index=False))
 
 
+def default_cut(d):
+    """前半・後半の境界。台日の日付の中央(営業日の数で半分に分ける)。"""
+    dates = sorted(d.date.unique())
+    return dates[len(dates) // 2]
+
+
+def split_half_rank(d, cut, min_days=20, n_perm=1000, seed=0):
+    """機種ごとに、台別の平均ph(高設定になりやすさ)が前半と後半で再現するかを順位相関と並べ替え検定で見る。
+    両期間とも min_days 日以上ある台だけを使い、5台未満の機種は相関を出さない。
+    注意: phの事前分布は全期間から推定している(台別の値そのものは前半・後半で独立)。"""
+    rng = np.random.default_rng(seed)
+    rows = []
+    for m, s in d.groupby("m"):
+        a = s[s.date < cut].groupby("u").ph.agg(["mean", "count"])
+        b = s[s.date >= cut].groupby("u").ph.agg(["mean", "count"])
+        j = a.join(b, lsuffix="1", rsuffix="2", how="inner")
+        j = j[(j.count1 >= min_days) & (j.count2 >= min_days)]
+        row = {
+            "m": m,
+            "n": len(j),
+            "base": s.ph.mean(),
+            "rho": np.nan,
+            "p": np.nan,
+            "top3_next": np.nan,
+            "all_next": np.nan,
+        }
+        if len(j) >= 5:
+            r1, r2 = j.mean1.rank(), j.mean2.rank()
+            rho = r1.corr(r2)
+            perm = [r1.corr(pd.Series(rng.permutation(r2.values), index=r2.index)) for _ in range(n_perm)]
+            row.update(
+                rho=rho,
+                p=(np.sum(np.array(perm) >= rho) + 1) / (n_perm + 1),
+                top3_next=j.sort_values("mean1", ascending=False).head(3).mean2.mean(),
+                all_next=j.mean2.mean(),
+            )
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
+def carry_by_half(z, cut):
+    """前日RB良・過去7日低調の自群比を、前半(前日が cut より前)と後半に分けて出す。(機種, 区間, ラベル, 行) のリスト。"""
+    out = []
+    for name, part in (("前半", z[z.date < cut]), ("後半", z[z.date >= cut])):
+        if part.empty:
+            continue
+        b = Boot(part)
+        for m, sub in part.groupby("m"):
+            if len(sub) < 300:
+                continue
+            mk = part.m == m
+            out.append((m, name, "前日RB良", b.line("前日RB良", mk & part.rb_good, ref=mk)))
+            out.append(
+                (m, name, "過去7日低調", b.line("過去7日 -1500~-500", mk & (part.r7band == "-1500~-500"), ref=mk))
+            )
+    return out
+
+
+def cmd_splithalf(args):
+    d = build(args.hall, args.since, allow_spec_mismatch=args.allow_spec_mismatch)
+    print(format_audit(d.attrs["audit"]))
+    cut = args.cut or default_cut(d)
+    print(f"\n[前半・後半の境界] {cut} (前半 {d.date.min()}〜{cut} 未満 / 後半 {cut}〜{d.date.max()})")
+    print(
+        "\n[台別の平均ph(高設定になりやすさ)が前半と後半で再現するか]  ※順位相関が高くp<0.05なら台固定の兆候。再現しなければ採用しない"
+    )
+    t = split_half_rank(d, cut, min_days=args.min_days)
+    for r in t.itertuples():
+        if np.isnan(r.rho):
+            print(f"--- {r.m}: 両期間{args.min_days}日以上の台が{r.n}台で5台未満のため相関は出さない")
+        else:
+            print(
+                f"--- {r.m}: {r.n}台 機種平均ph {r.base:.3f} / 順位相関 {r.rho:+.2f} (並べ替えp={r.p:.3f})"
+                f" / 前半上位3台の後半ph {r.top3_next:.3f} (後半の全台 {r.all_next:.3f})"
+            )
+    z = pairs(d)
+    print("\n[持ち越しの再現: 前日RB良・過去7日低調の自群比を前半・後半で比べる]  ※両期間で同じ向きなら再現")
+    last = None
+    for m, half, _, line in carry_by_half(z, cut):
+        if m != last:
+            print(f"--- {m}")
+            last = m
+        print(f"  {half} {line}")
+
+
 def main(argv=None):
     sys.stdout.reconfigure(encoding="utf-8")
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = p.add_subparsers(dest="cmd", required=True)
-    for name, fn in (("groups", cmd_groups), ("tomorrow", cmd_tomorrow), ("check", cmd_check)):
+    for name, fn in (
+        ("groups", cmd_groups),
+        ("tomorrow", cmd_tomorrow),
+        ("check", cmd_check),
+        ("splithalf", cmd_splithalf),
+    ):
         sp = sub.add_parser(name)
         sp.add_argument("--hall", default=DEFAULT_HALL)
         sp.add_argument("--since", default="20260601")
@@ -442,6 +534,9 @@ def main(argv=None):
             sp.add_argument("--top", type=int, default=20)
         if name == "check":
             sp.add_argument("--date", required=True, help="答え合わせする当日(YYYYMMDD)")
+        if name == "splithalf":
+            sp.add_argument("--cut", default=None, help="前半・後半の境界(YYYYMMDD)。既定は台日の日付の中央")
+            sp.add_argument("--min-days", type=int, default=20, help="両期間で必要な最低日数")
         sp.set_defaults(fn=fn)
     args = p.parse_args(argv)
     args.fn(args)
