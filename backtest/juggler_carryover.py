@@ -11,10 +11,8 @@
 """
 
 import argparse
-import csv
 import glob
 import json
-import re
 import sqlite3
 import sys
 from pathlib import Path
@@ -22,43 +20,12 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from backtest import bonus_specs
 from backtest.bonus_specs import find_spec, load_specs
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_HALL = "みとや大森町店"
 MIN_GAMES = 1500  # 事後確率を出す最低G数
 MIN_N = 30  # 群の最低台日数
-
-
-# 旧設定(ml/experiments/jug_rb_setting_prediction/config.py)のBB・RB確率が公表値と食い違う機種は、
-# machine_master.csv(公表値と一致)で上書きする。2026-10-13に外部の解析サイトと機械割で確認した。
-# ウルトラミラクルは逆に旧設定が正しくマスターが誤りなので対象に含めない。
-CORRECT_FROM_MASTER = {"ゴーゴージャグラー3", "ファンキージャグラー2", "ハッピージャグラーVIII"}
-
-
-def _master_settings(model):
-    out = {}
-    with open(bonus_specs.MASTER_CSV, encoding="utf-8-sig", newline="") as handle:
-        for row in csv.DictReader(handle):
-            if row.get("canonical_machine_name") != model and row.get("machine_name") != model:
-                continue
-            for s in range(1, 7):
-                bb = re.match(r"1/([\d.]+)", row.get(f"bb_setting{s}") or "")
-                rb = re.match(r"1/([\d.]+)", row.get(f"rb_setting{s}") or "")
-                if bb and rb:
-                    out[s] = {"bb_probability": 1 / float(bb.group(1)), "rb_probability": 1 / float(rb.group(1))}
-            break
-    return out
-
-
-def _spec_for(model, specs):
-    spec = find_spec(model, specs)
-    if spec and model in CORRECT_FROM_MASTER:
-        ms = _master_settings(model)
-        if len(ms) >= 4:
-            spec = {**spec, "settings": {s: {**spec["settings"].get(s, {}), **v} for s, v in ms.items()}}
-    return spec
 
 
 def _layout(hall):
@@ -103,7 +70,7 @@ def _posteriors(df, specs):
     """台×日の設定5以上の事後確率と、前日の型を判定する閾値。"""
     parts = []
     for m, sub in df.groupby("m"):
-        spec = _spec_for(m, specs)
+        spec = find_spec(m, specs)
         if not spec:
             continue
         ss = sorted(s for s, v in spec["settings"].items() if v.get("bb_probability") and v.get("rb_probability"))
