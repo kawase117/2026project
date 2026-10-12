@@ -215,12 +215,20 @@ def cmd_tomorrow(args):
     d = build(args.hall, args.since, snapshot=snap)
     hist = pairs(d[d.d < snap.d.iloc[0]])
     day = d[d.d == snap.d.iloc[0]].copy()
+    # 持ち越しは機種ごとに違う(マイジャグラーVのみ確認)ので、機種ごとに群平均を取る。台日が少ない群は機種×RB良に粗くする。
     cell = (
-        hist.groupby(["rb_good", "r7band"])
+        hist.groupby(["m", "rb_good", "r7band"])
         .ph_next.agg(["mean", "count"])
         .rename(columns={"mean": "cell_mean", "count": "cell_n"})
     )
-    day = day.merge(cell, left_on=["rb_good", "r7band"], right_index=True, how="left")
+    coarse = (
+        hist.groupby(["m", "rb_good"]).ph_next.agg(["mean", "count"]).rename(columns={"mean": "c_mean", "count": "c_n"})
+    )
+    day = day.merge(cell, left_on=["m", "rb_good", "r7band"], right_index=True, how="left")
+    day = day.merge(coarse, left_on=["m", "rb_good"], right_index=True, how="left")
+    thin = day.cell_n.isna() | (day.cell_n < MIN_N)
+    day.loc[thin, "cell_mean"] = day.loc[thin, "c_mean"]
+    day.loc[thin, "cell_n"] = day.loc[thin, "c_n"]
     print(f"スナップショット {name} / 履歴の翌日平均 {hist.ph_next.mean():.3f} / 今日の候補台日 {len(day)}")
     print("今日の差枚が無い収集では差枚由来の型(不発)は使わず、RB良と過去7日で見る。\n")
     cols = ["u", "m", "g", "rb", "bb", "rb_good", "bb_bad", "r7band", "cell_mean", "cell_n", "ph"]
