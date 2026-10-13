@@ -3,11 +3,29 @@
   "halls": {
     "マルハンメガシティ2000-蒲田7": {
       "event_days": {
-        "dd_last_digit": [1, 7],
-        "zorome": true,
-        "strong_zorome": true,
-        "month_end": true,
-        "source": "memory:kamata7-event-day-definition-fix(7のつく日+1のつく日+ゾロ目(11,22)+強ゾロ目(月=日)+月末)"
+        "default": "announced",
+        "definitions": {
+          "announced": {
+            "dd_last_digit": [
+              1,
+              7
+            ],
+            "zorome": true,
+            "strong_zorome": true,
+            "month_end": true,
+            "status": "告知体系(ユーザーの運用上の定義)。効果の実測とは別",
+            "source": "memory:kamata7-event-day-definition-fix"
+          },
+          "measured_7kei": {
+            "dd": [
+              7,
+              17,
+              27
+            ],
+            "status": "unconfirmed(実測。AT一般で全5四半期プラス。事前登録なし)",
+            "source": "eda/event_calendar.py 蒲田7 shared / kamata7_theory.md 2.8b"
+          }
+        }
       },
       "exclusions": [
         {
@@ -36,7 +54,31 @@
           "reason": "9/1からノーマル/BTへ投入を厚くした(ATは不変)",
           "source": "memory:project-kamata1-september-normal-shift"
         }
-      ]
+      ],
+      "event_days": {
+        "default": "jug_1kei",
+        "definitions": {
+          "jug_1kei": {
+            "dd": [
+              1,
+              11,
+              21,
+              31
+            ],
+            "status": "watching(事前登録済み、結果待ち。〜2026-12-01に判定)",
+            "source": "eda/event_calendar.py 蒲田1 JUG / prereg:k1_jug_dd1kei_rbz_top3"
+          },
+          "jug_7kei": {
+            "dd": [
+              7,
+              17,
+              27
+            ],
+            "status": "参考(2026年に減衰中)",
+            "source": "eda/event_calendar.py 蒲田1 JUG のnote"
+          }
+        }
+      }
     },
     "楽園蒲田店": {
       "exclusions": [],
@@ -56,12 +98,43 @@
           "reason": "9/14入替",
           "source": "memory:project-no-regime-change-rakuen-k7-heiwajima-20260914"
         }
-      ]
+      ],
+      "event_days": {
+        "default": "jug",
+        "definitions": {
+          "jug": {
+            "dd": [
+              5,
+              11,
+              15,
+              22,
+              25
+            ],
+            "status": "confirmed(別経路でも再現)",
+            "source": "eda/event_calendar.py 楽園 JUG / rakuen_theory.md §3.1a。DD{5,15,25}はジャグ限定日"
+          }
+        }
+      }
     },
     "みとや大森町店": {
       "event_days": {
-        "dd": [1, 4, 7, 14, 17, 24, 27, 30],
-        "source": "memory:mitoya-event-definition-confirmed(DD{1,4,7,14,17,24,27,30}で104%超え31.5%)"
+        "default": "x_dds",
+        "definitions": {
+          "x_dds": {
+            "dd": [
+              1,
+              4,
+              7,
+              14,
+              17,
+              24,
+              27,
+              30
+            ],
+            "status": "confirmed(実データから逆引き確定。四半期別・2手法での再確認は未実施)",
+            "source": "memory:mitoya-event-definition-confirmed / eda/event_calendar.py のコメント"
+          }
+        }
       },
       "exclusions": [],
       "regime_boundaries": []

@@ -47,8 +47,29 @@ def load_hall_config(hall, path=None):
     return {
         "exclusions": cfg.get("exclusions", []),
         "regime_boundaries": cfg.get("regime_boundaries", []),
-        "event_days": cfg.get("event_days"),
+        "event_days": _normalize_event_days(cfg.get("event_days")),
     }
+
+
+def _normalize_event_days(ev):
+    """event_days を {"default": 名前, "definitions": {名前: 規則}} の形にそろえる。
+    旧い平坦な形(規則がそのまま入っている)は、名前 "default" の1定義として扱う。無ければ None。"""
+    if not ev:
+        return None
+    if "definitions" in ev:
+        defs = ev["definitions"]
+        return {"default": ev.get("default") or next(iter(defs)), "definitions": defs}
+    return {"default": "default", "definitions": {"default": ev}}
+
+
+def pick_event_rule(event_days, name=None):
+    """名前で定義を選ぶ(省略時は default)。無い名前なら選べる名前を挙げて停止する。(名前, 規則) を返す。event_days が無ければ (None, None)。"""
+    if not event_days:
+        return None, None
+    name = name or event_days["default"]
+    if name not in event_days["definitions"]:
+        raise SystemExit(f"イベント日の定義 '{name}' は無い。選べるのは: {', '.join(event_days['definitions'])}")
+    return name, event_days["definitions"][name]
 
 
 def is_event_day(ts, rule):
@@ -238,7 +259,9 @@ def _posteriors(df, specs, excluded=None):
     return pd.concat(parts)
 
 
-def build(hall, since, snapshot=None, db_dir=None, specs=None, allow_spec_mismatch=False, config_path=None):
+def build(
+    hall, since, snapshot=None, db_dir=None, specs=None, allow_spec_mismatch=False, config_path=None, event_def=None
+):
     """台×日の表を作る。作成前に監査を行い、結果を d.attrs["audit"] に残す。
     スペックの不一致があれば停止する(allow_spec_mismatch=True で警告のみ)。
     ホール設定の除外日は集計から除き、変化点は監査行に出す(自動では分割しない)。"""
@@ -294,9 +317,12 @@ def build(hall, since, snapshot=None, db_dir=None, specs=None, allow_spec_mismat
         .astype(object)
         .fillna("NA")
     )
-    rule = cfg["event_days"]
+    rule_name, rule = pick_event_rule(cfg["event_days"], event_def)
     d["is_event"] = d.d.map(lambda ts: is_event_day(ts, rule)) if rule else np.nan
     audit["event_rule"] = bool(rule)
+    audit["event_def"] = rule_name
+    audit["event_status"] = (rule or {}).get("status", "")
+    audit["event_defs_available"] = list((cfg["event_days"] or {}).get("definitions", {}))
     if rule:
         per_day = d.groupby("date").is_event.first()
         audit["event_days"], audit["normal_days"] = int(per_day.sum()), int((~per_day.astype(bool)).sum())
@@ -318,7 +344,8 @@ def format_audit(a):
         )
     if a.get("event_rule"):
         lines.append(
-            f"[監査] イベント日の定義: ホール設定あり(期間内 イベント日 {a['event_days']}日 / 通常日 {a['normal_days']}日)"
+            f"[監査] イベント日の定義 '{a['event_def']}' [{a['event_status']}]: 期間内 イベント日 {a['event_days']}日"
+            f" / 通常日 {a['normal_days']}日 (選べる定義: {', '.join(a['event_defs_available'])})"
         )
     else:
         lines.append("[監査] イベント日の定義: 未登録(--day-type は all のみ)")
@@ -380,7 +407,7 @@ class Boot:
 
 
 def cmd_groups(args):
-    d = build(args.hall, args.since, allow_spec_mismatch=args.allow_spec_mismatch)
+    d = build(args.hall, args.since, allow_spec_mismatch=args.allow_spec_mismatch, event_def=args.event_def)
     print(format_audit(d.attrs["audit"]))
     z = _by_day_type(pairs(d), "next_event", args.day_type)  # 予測する翌日の種類で絞る(前日の特徴量は全日)
     if args.day_type != "all":
@@ -473,7 +500,7 @@ def _attach_cells(hist, day, edge_f=None, d_upto=None):
 
 def cmd_check(args):
     """前日までの履歴だけで作った候補が、実際の当日にどうだったかを検証する(答え合わせ)。"""
-    d = build(args.hall, args.since, allow_spec_mismatch=args.allow_spec_mismatch)
+    d = build(args.hall, args.since, allow_spec_mismatch=args.allow_spec_mismatch, event_def=args.event_def)
     print(format_audit(d.attrs["audit"]))
     target = pd.Timestamp(args.date)
     prev = target - pd.Timedelta(days=1)
@@ -526,7 +553,9 @@ def cmd_check(args):
 
 def cmd_tomorrow(args):
     snap, name = _latest_snapshot(args.hall)
-    d = build(args.hall, args.since, snapshot=snap, allow_spec_mismatch=args.allow_spec_mismatch)
+    d = build(
+        args.hall, args.since, snapshot=snap, allow_spec_mismatch=args.allow_spec_mismatch, event_def=args.event_def
+    )
     print(format_audit(d.attrs["audit"]))
     hist = pairs(d[d.d < snap.d.iloc[0]])
     stamp = snap.d.iloc[0]
@@ -600,7 +629,7 @@ def carry_by_half(z, cut):
 
 
 def cmd_splithalf(args):
-    d = build(args.hall, args.since, allow_spec_mismatch=args.allow_spec_mismatch)
+    d = build(args.hall, args.since, allow_spec_mismatch=args.allow_spec_mismatch, event_def=args.event_def)
     print(format_audit(d.attrs["audit"]))
     cut = args.cut or default_cut(d)
     print(f"\n[前半・後半の境界] {cut} (前半 {d.date.min()}〜{cut} 未満 / 後半 {cut}〜{d.date.max()})")
@@ -702,7 +731,7 @@ def residual_fixed(d, cut, min_days=20, n_perm=2000, seed=0):
 
 
 def cmd_position(args):
-    d = build(args.hall, args.since, allow_spec_mismatch=args.allow_spec_mismatch)
+    d = build(args.hall, args.since, allow_spec_mismatch=args.allow_spec_mismatch, event_def=args.event_def)
     a = d.attrs["audit"]
     print(format_audit(a))
     if a["layout_epochs"] == 0 or d.dist.isna().all():
@@ -833,7 +862,7 @@ def _day_ci(x, n=2000, seed=0):
 
 
 def cmd_oos(args):
-    d = build(args.hall, args.since, allow_spec_mismatch=args.allow_spec_mismatch)
+    d = build(args.hall, args.since, allow_spec_mismatch=args.allow_spec_mismatch, event_def=args.event_def)
     print(format_audit(d.attrs["audit"]))
     t = oos_eval(d, args.model, args.start, top=args.top, day_type=args.day_type)
     if args.day_type != "all":
@@ -886,6 +915,11 @@ def main(argv=None):
             sp.add_argument("--top", type=int, default=20)
         if name == "check":
             sp.add_argument("--date", required=True, help="答え合わせする当日(YYYYMMDD)")
+        sp.add_argument(
+            "--event-def",
+            default=None,
+            help="イベント日の定義の名前(config/juggler_analysis.json の event_days.definitions)。既定はdefault。選べる名前は[監査]行に出る",
+        )
         if name in ("groups", "splithalf", "position", "oos"):
             sp.add_argument(
                 "--day-type",

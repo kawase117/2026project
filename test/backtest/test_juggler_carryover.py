@@ -473,6 +473,58 @@ def test_oos_eval_day_type_only_evaluates_matching_days():
         jc.oos_eval(d.assign(is_event=np.nan), MODEL, start="20260801", top=6, day_type="event")
 
 
+def test_event_days_flat_form_and_named_definitions_are_normalized():
+    flat = {"dd": [1, 4]}
+    n = jc._normalize_event_days(flat)
+    assert n == {"default": "default", "definitions": {"default": flat}}  # 旧い平坦な形も動く
+    named = {"default": "a", "definitions": {"a": {"dd": [1]}, "b": {"dd": [2]}}}
+    assert jc.pick_event_rule(jc._normalize_event_days(named))[0] == "a"
+    assert jc.pick_event_rule(jc._normalize_event_days(named), "b") == ("b", {"dd": [2]})
+    assert jc.pick_event_rule(None) == (None, None)
+    with pytest.raises(SystemExit) as e:
+        jc.pick_event_rule(jc._normalize_event_days(named), "c")
+    assert "a, b" in str(e.value)  # 選べる名前を挙げて停止する
+
+
+def test_registered_halls_have_event_definitions_with_status_and_source():
+    """登録済みの定義には、確からしさ(status)と出典が必ず付いている。蒲田1・楽園・みとや・蒲田7が登録済み。"""
+    for hall in (
+        "マルハンメガシティ2000-蒲田1",
+        "楽園蒲田店",
+        "みとや大森町店",
+        "マルハンメガシティ2000-蒲田7",
+    ):
+        ev = jc.load_hall_config(hall)["event_days"]
+        assert ev is not None, hall
+        for name, rule in ev["definitions"].items():
+            assert rule.get("status") and rule.get("source"), (hall, name)
+    # 楽園のジャグ(confirmed)と蒲田1の1系(watching)は、監査済みの正本(eda/event_calendar.py)と同じ日
+    assert set(jc.load_hall_config("楽園蒲田店")["event_days"]["definitions"]["jug"]["dd"]) == {5, 11, 15, 22, 25}
+    k1 = jc.load_hall_config("マルハンメガシティ2000-蒲田1")["event_days"]["definitions"]
+    assert set(k1["jug_1kei"]["dd"]) == {1, 11, 21, 31}
+
+
+def test_build_uses_selected_event_definition(tmp_path):
+    import json
+
+    hall = "テスト店"
+    _make_db(tmp_path, hall, _rows(), [(u, "20250101", None, "A") for u in (1, 2, 3, 4)])
+    cfg = tmp_path / "juggler_analysis.json"
+    defs = {
+        "d1": {"dd": [1], "status": "t", "source": "t"},
+        "d2": {"dd": [2, 3], "status": "t", "source": "t"},
+    }
+    cfg.write_text(
+        json.dumps({"halls": {hall: {"event_days": {"default": "d1", "definitions": defs}}}}), encoding="utf-8"
+    )
+    d1 = jc.build(hall, "20260801", db_dir=tmp_path, config_path=cfg)
+    d2 = jc.build(hall, "20260801", db_dir=tmp_path, config_path=cfg, event_def="d2")
+    assert set(d1[d1.is_event].date) == {"20260801"}
+    assert set(d2[d2.is_event].date) == {"20260802", "20260803"}
+    assert d2.attrs["audit"]["event_def"] == "d2" and "d1" in d2.attrs["audit"]["event_defs_available"]
+    assert "'d2'" in jc.format_audit(d2.attrs["audit"])
+
+
 def test_halls_do_not_mix(tmp_path):
     """別ホールのDBの台番号・結果が混ざらない(同じ台番号でも別ホールの行を読まない)。"""
     layout = [(u, "20250101", None, "A") for u in (1, 2, 3, 4)]
