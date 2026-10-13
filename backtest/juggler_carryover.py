@@ -598,8 +598,12 @@ def cmd_ledger(args):
             have.add((r["hall"], r["date"], r["model"]))
     added = 0
     for hall in args.halls:
-        date = args.date or build(hall, args.since).d.max().strftime("%Y%m%d")
-        rows, err = _ledger_rows(hall, date, args.since, top=args.top)
+        try:
+            date = args.date or build(hall, args.since).d.max().strftime("%Y%m%d")
+            rows, err = _ledger_rows(hall, date, args.since, top=args.top)
+        except SystemExit as e:  # スペック不一致などで止まったホールがあっても他のホールは続ける
+            print(f"{hall}: 台帳に追記できない ({e})")
+            continue
         if err:
             print(err)
             continue

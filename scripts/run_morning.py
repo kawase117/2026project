@@ -165,6 +165,11 @@ def main() -> int:
         help="当日イベントのあるホールの答え合わせ表(backtest.event_days morning)を作らない",
     )
     parser.add_argument(
+        "--skip-juggler-ledger",
+        action="store_true",
+        help="ジャグラー持ち越し候補の前向き検証台帳(backtest.juggler_carryover ledger)への追記を行わない",
+    )
+    parser.add_argument(
         "--skip-hall-review",
         action="store_true",
         help="前日分のホールレビューHTML生成(backtest.daily_digest hall-review)を行わない",
@@ -305,6 +310,15 @@ def _run(args: argparse.Namespace) -> int:
         run(
             "backtest.forward plan-all（対象は当日）",
             [PYTHON, "-u", "-X", "utf8", "-m", "backtest.forward", "plan-all"],
+        )
+
+    if not args.skip_juggler_ledger:
+        # ジャグラー持ち越し候補の前向き検証台帳。取り込んだ前日分(end)を、その前日までの履歴で
+        # 作った候補と突き合わせて backtest/forward/juggler_carryover_ledger.jsonl へ追記する。
+        # 同じ(ホール,日付,機種)は重複追記しない。失敗しても朝の実行は止めない。
+        run(
+            "backtest.juggler_carryover ledger（前向き検証の台帳）",
+            [PYTHON, "-u", "-X", "utf8", "-m", "backtest.juggler_carryover", "ledger", "--date", end],
         )
 
     if not args.skip_event_history:
