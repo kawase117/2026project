@@ -614,7 +614,15 @@ venv\Scripts\python.exe -m backtest.juggler_carryover oos --hall マルハンメ
 venv\Scripts\python.exe -m backtest.juggler_carryover oos --hall マルハンメガシティ2000-蒲田7 --model マイジャグラーV --day-type normal
 ```
 
-`tomorrow` は、スナップショット(quickは差枚なし)の「前日RB良」と「過去7日の差枚帯」を使い、履歴の群平均で並べる。差枚由来の「不発」は今日の差枚が取れる収集でのみ使える。
+```bash
+# 前向き検証の台帳（営業日ごと、朝のDB取り込み後に1回）。4ホールの機種ごとに「上位10台の当日ph − 同機種のそれ以外」を
+# backtest/forward/juggler_carryover_ledger.jsonl へ追記し、累積の日平均と90%CIを出す。同じ(ホール,日付,機種)は重複追記しない
+venv\Scripts\python.exe -m backtest.juggler_carryover ledger
+```
+
+台帳の注意: 2026-10-10〜12 の3日は後から埋めた(履歴は前日までだが、点数の設計は10/13までのデータを見て決めたため完全な前向きではない)。**真の前向きは 2026-10-13 以降の行**。ホール・機種ごとに日数が揃うまで(目安30日)は結論にしない。
+
+`tomorrow` は既定でDB最終日の確定データから作る(`--snapshot` で営業中のスナップショットから作る。quickは差枚なし)。スナップショット版は「前日RB良」と「過去7日の差枚帯」を使い、履歴の群平均で並べる。差枚由来の「不発」は今日の差枚が取れる収集でのみ使える。
 
 ## 次の課題
 

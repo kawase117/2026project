@@ -551,6 +551,82 @@ def cmd_check(args):
         )
 
 
+LEDGER = ROOT / "backtest" / "forward" / "juggler_carryover_ledger.jsonl"
+LEDGER_HALLS = ("みとや大森町店", "マルハンメガシティ2000-蒲田7", "楽園蒲田店", "マルハンメガシティ2000-蒲田1")
+
+
+def _ledger_rows(hall, date, since, event_def=None, top=10):
+    """前日までの履歴で作った上位候補が当日どうだったかを、機種ごとに1行へまとめる(前向き検証の台帳用)。"""
+    d = build(hall, since, event_def=event_def)
+    target = pd.Timestamp(date)
+    prev = target - pd.Timedelta(days=1)
+    if not (d.d == target).any():
+        return [], f"{hall}: {date} のデータがDBに無い"
+    hist = pairs(d[d.d < prev])
+    day = _attach_cells(hist, d[d.d == prev].copy(), _edge_factors(d[d.d <= prev], d.m.unique()), d[d.d <= prev])
+    act = d[d.d == target][["u", "ph"]].rename(columns={"ph": "ph_act"})
+    z = day.merge(act, on="u")
+    rows = []
+    for m, s in z.groupby("m"):
+        if len(s) < 20 or s.score.nunique() < 2:
+            continue
+        t = s.sort_values("score", ascending=False).head(top)
+        rest = s.drop(t.index)
+        rows.append(
+            {
+                "hall": hall,
+                "date": date,
+                "model": m,
+                "n": int(len(s)),
+                "top_n": int(len(t)),
+                "top_ph": round(float(t.ph_act.mean()), 4),
+                "rest_ph": round(float(rest.ph_act.mean()), 4),
+                "top_units": [int(u) for u in t.u],
+                "is_event": bool(d[d.d == target].is_event.iloc[0]) if "is_event" in d else None,
+            }
+        )
+    return rows, None
+
+
+def cmd_ledger(args):
+    """指定日(既定=DB最終日)の答え合わせを台帳へ追記する。同じ(ホール,日付,機種)は上書きせず飛ばす。"""
+    LEDGER.parent.mkdir(parents=True, exist_ok=True)
+    have = set()
+    if LEDGER.exists():
+        for line in LEDGER.read_text(encoding="utf-8").splitlines():
+            r = json.loads(line)
+            have.add((r["hall"], r["date"], r["model"]))
+    added = 0
+    for hall in args.halls:
+        date = args.date or build(hall, args.since).d.max().strftime("%Y%m%d")
+        rows, err = _ledger_rows(hall, date, args.since, top=args.top)
+        if err:
+            print(err)
+            continue
+        new = [r for r in rows if (r["hall"], r["date"], r["model"]) not in have]
+        with LEDGER.open("a", encoding="utf-8") as f:
+            for r in new:
+                f.write(json.dumps(r, ensure_ascii=False) + "\n")
+        added += len(new)
+        print(f"{hall} {date}: {len(new)}件追記 (既存 {len(rows) - len(new)}件)")
+    print(f"追記 {added}件 → {LEDGER}")
+    _ledger_summary()
+
+
+def _ledger_summary():
+    """台帳の累積: 機種ごとの(上位10台−それ以外)の当日ph差を日平均し、日ごとのばらつきから90%CIを出す。"""
+    if not LEDGER.exists():
+        return
+    df = pd.DataFrame([json.loads(x) for x in LEDGER.read_text(encoding="utf-8").splitlines()])
+    df["diff"] = df.top_ph - df.rest_ph
+    print("\n[前向き検証の累積] 上位10台の当日ph − 同機種のそれ以外(日平均)")
+    for (hall, m), s in df.groupby(["hall", "model"]):
+        lo, hi = _day_ci(s["diff"])
+        print(
+            f"{hall} / {m}: {len(s)}日 差 {s['diff'].mean():+.3f} (90%CI {lo:+.3f}~{hi:+.3f}) / 差>0 の日 {(s['diff'] > 0).mean():.0%}"
+        )
+
+
 def cmd_tomorrow(args):
     """翌日(DB最終日の次の日)の候補。既定はana-sloのDBだけで作る。--snapshot で営業中スナップショットを使う。"""
     if args.snapshot:
@@ -946,6 +1022,12 @@ def main(argv=None):
             sp.add_argument("--cut", default=None, help="前半・後半の境界(YYYYMMDD)。既定は台日の日付の中央")
             sp.add_argument("--min-days", type=int, default=20, help="両期間で必要な最低日数")
         sp.set_defaults(fn=fn)
+    lp = sub.add_parser("ledger")
+    lp.add_argument("--halls", nargs="+", default=list(LEDGER_HALLS))
+    lp.add_argument("--date", default=None, help="答え合わせする当日(YYYYMMDD)。既定は各ホールのDB最終日")
+    lp.add_argument("--since", default="20260601")
+    lp.add_argument("--top", type=int, default=10)
+    lp.set_defaults(fn=cmd_ledger)
     args = p.parse_args(argv)
     args.fn(args)
 
