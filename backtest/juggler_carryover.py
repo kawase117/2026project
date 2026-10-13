@@ -5,7 +5,7 @@
 
 使い方:
   python -m backtest.juggler_carryover groups   [--hall みとや大森町店] [--since 20260601]
-  python -m backtest.juggler_carryover tomorrow [--hall みとや大森町店]   # 最新の収集スナップショットから翌日の候補
+  python -m backtest.juggler_carryover tomorrow [--hall みとや大森町店]   # 翌日の候補（既定はDB最終日の確定データ）
   python -m backtest.juggler_carryover check    --date 20261012           # 前日までの履歴で作った候補の答え合わせ
   python -m backtest.juggler_carryover splithalf [--cut 20260801]          # 前半・後半で台別の偏りと持ち越しが再現するか
   python -m backtest.juggler_carryover position  [--cut 20260801]          # 島の端が低いか、位置を除いても台固定が残るか
@@ -552,16 +552,25 @@ def cmd_check(args):
 
 
 def cmd_tomorrow(args):
-    snap, name = _latest_snapshot(args.hall)
-    d = build(
-        args.hall, args.since, snapshot=snap, allow_spec_mismatch=args.allow_spec_mismatch, event_def=args.event_def
-    )
+    """翌日(DB最終日の次の日)の候補。既定はana-sloのDBだけで作る。--snapshot で営業中スナップショットを使う。"""
+    if args.snapshot:
+        snap, name = _latest_snapshot(args.hall)
+        d = build(
+            args.hall, args.since, snapshot=snap, allow_spec_mismatch=args.allow_spec_mismatch, event_def=args.event_def
+        )
+        stamp = snap.d.iloc[0]
+        source = f"スナップショット {name}"
+        note = "今日の差枚が無い収集では差枚由来の型(不発)は使わず、RB良と過去7日で見る。"
+    else:
+        d = build(args.hall, args.since, allow_spec_mismatch=args.allow_spec_mismatch, event_def=args.event_def)
+        stamp = d.d.max()
+        source = f"DB最終日 {stamp:%Y%m%d} の確定データ(翌日 {stamp + pd.Timedelta(days=1):%Y%m%d} の候補)"
+        note = "DBの確定データで作る。最終日の差枚・BB・RBがそろうので、差枚由来の型(不発)も使える。"
     print(format_audit(d.attrs["audit"]))
-    hist = pairs(d[d.d < snap.d.iloc[0]])
-    stamp = snap.d.iloc[0]
+    hist = pairs(d[d.d < stamp])  # 最終日の結果(翌日の目的変数)は履歴に含めない
     day = _attach_cells(hist, d[d.d == stamp].copy(), _edge_factors(d[d.d <= stamp], d.m.unique()), d[d.d <= stamp])
-    print(f"スナップショット {name} / 履歴の翌日平均 {hist.ph_next.mean():.3f} / 今日の候補台日 {len(day)}")
-    print("今日の差枚が無い収集では差枚由来の型(不発)は使わず、RB良と過去7日で見る。")
+    print(f"{source} / 履歴の翌日平均 {hist.ph_next.mean():.3f} / 今日の候補台日 {len(day)}")
+    print(note)
     print(
         "点数(score)=台固定×持ち越し(台ごとの過去の平均ph×群平均の相対係数)。score_edge=群平均×端の係数(参考)。dist==1が島の端。\n"
     )
@@ -913,6 +922,8 @@ def main(argv=None):
         )
         if name in ("tomorrow", "check"):
             sp.add_argument("--top", type=int, default=20)
+        if name == "tomorrow":
+            sp.add_argument("--snapshot", action="store_true", help="DBでなく営業中の収集スナップショットから作る")
         if name == "check":
             sp.add_argument("--date", required=True, help="答え合わせする当日(YYYYMMDD)")
         sp.add_argument(
