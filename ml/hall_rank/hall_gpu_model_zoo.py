@@ -7,6 +7,8 @@ for _name, _value in vars(_impl).items():
         continue
     globals()[_name] = _value
 
+main = _impl.main  # ruff に main の定義を見せる(上のglobals注入は静的解析に見えない)
+
 del _name, _value, _impl
 
 

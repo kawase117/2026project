@@ -19,9 +19,7 @@ jobs:
 
   pytest:
     runs-on: ubuntu-latest
-    # ローカルDB依存のテストが安定するまで非ブロッキング。
-    # 全テストがCIでグリーンになったら continue-on-error を削除すること。
-    continue-on-error: true
+    # CIで動かせないテストは test/conftest.py の _CI_SKIP でCIだけ skip する。
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
