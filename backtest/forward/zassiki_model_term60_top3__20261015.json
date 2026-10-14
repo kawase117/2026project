@@ -1,0 +1,183 @@
+{
+  "rule_id": "zassiki_model_term60_top3",
+  "hall": "ザ-シティ-ベルシティ雑色店",
+  "freeze_hash": "c19f10b6e683a454",
+  "target_date": "20261015",
+  "data_asof": "20261014",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-08-16",
+    "2026-10-15"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +87 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 308.054964,
+      "history_rows": 321,
+      "machines": [
+        873,
+        874,
+        875,
+        876,
+        877,
+        878
+      ]
+    },
+    {
+      "machine_name": "モンスターハンターライズ：サンブレイク",
+      "score": 263.48918,
+      "history_rows": 36,
+      "machines": [
+        879,
+        880,
+        881,
+        882
+      ]
+    },
+    {
+      "machine_name": "マイジャグラーV",
+      "score": 75.26598,
+      "history_rows": 597,
+      "machines": [
+        781,
+        782,
+        783,
+        784,
+        785,
+        786,
+        787,
+        788,
+        789,
+        790
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 873,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 308.054964,
+      "history_days": 321
+    },
+    {
+      "machine_number": 874,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 308.054964,
+      "history_days": 321
+    },
+    {
+      "machine_number": 875,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 308.054964,
+      "history_days": 321
+    },
+    {
+      "machine_number": 876,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 308.054964,
+      "history_days": 321
+    },
+    {
+      "machine_number": 877,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 308.054964,
+      "history_days": 321
+    },
+    {
+      "machine_number": 878,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 308.054964,
+      "history_days": 321
+    },
+    {
+      "machine_number": 879,
+      "machine_name": "モンスターハンターライズ：サンブレイク",
+      "score": 263.48918,
+      "history_days": 36
+    },
+    {
+      "machine_number": 880,
+      "machine_name": "モンスターハンターライズ：サンブレイク",
+      "score": 263.48918,
+      "history_days": 36
+    },
+    {
+      "machine_number": 881,
+      "machine_name": "モンスターハンターライズ：サンブレイク",
+      "score": 263.48918,
+      "history_days": 36
+    },
+    {
+      "machine_number": 882,
+      "machine_name": "モンスターハンターライズ：サンブレイク",
+      "score": 263.48918,
+      "history_days": 36
+    },
+    {
+      "machine_number": 781,
+      "machine_name": "マイジャグラーV",
+      "score": 75.26598,
+      "history_days": 597
+    },
+    {
+      "machine_number": 782,
+      "machine_name": "マイジャグラーV",
+      "score": 75.26598,
+      "history_days": 597
+    },
+    {
+      "machine_number": 783,
+      "machine_name": "マイジャグラーV",
+      "score": 75.26598,
+      "history_days": 597
+    },
+    {
+      "machine_number": 784,
+      "machine_name": "マイジャグラーV",
+      "score": 75.26598,
+      "history_days": 597
+    },
+    {
+      "machine_number": 785,
+      "machine_name": "マイジャグラーV",
+      "score": 75.26598,
+      "history_days": 597
+    },
+    {
+      "machine_number": 786,
+      "machine_name": "マイジャグラーV",
+      "score": 75.26598,
+      "history_days": 597
+    },
+    {
+      "machine_number": 787,
+      "machine_name": "マイジャグラーV",
+      "score": 75.26598,
+      "history_days": 597
+    },
+    {
+      "machine_number": 788,
+      "machine_name": "マイジャグラーV",
+      "score": 75.26598,
+      "history_days": 597
+    },
+    {
+      "machine_number": 789,
+      "machine_name": "マイジャグラーV",
+      "score": 75.26598,
+      "history_days": 597
+    },
+    {
+      "machine_number": 790,
+      "machine_name": "マイジャグラーV",
+      "score": 75.26598,
+      "history_days": 597
+    }
+  ],
+  "result": null,
+  "plan_digest": "78c446f83b7e33e9"
+}

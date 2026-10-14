@@ -1,0 +1,155 @@
+{
+  "rule_id": "kamata1_model_term60_top3",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "freeze_hash": "bb185b622fae47b2",
+  "target_date": "20261015",
+  "data_asof": "20261014",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-08-16",
+    "2026-10-15"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +187 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "新鬼武者3",
+      "score": 1607.108452,
+      "history_rows": 31,
+      "machines": [
+        2265,
+        2266,
+        2267,
+        2268
+      ]
+    },
+    {
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 544.498054,
+      "history_rows": 155,
+      "machines": [
+        2020,
+        2416,
+        2417,
+        2418,
+        2419
+      ]
+    },
+    {
+      "machine_name": "スマスロ北斗の拳",
+      "score": 280.884629,
+      "history_rows": 250,
+      "machines": [
+        2060,
+        2061,
+        2062,
+        2063,
+        2064,
+        2065,
+        2066
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 2265,
+      "machine_name": "新鬼武者3",
+      "score": 1607.108452,
+      "history_days": 31
+    },
+    {
+      "machine_number": 2266,
+      "machine_name": "新鬼武者3",
+      "score": 1607.108452,
+      "history_days": 31
+    },
+    {
+      "machine_number": 2267,
+      "machine_name": "新鬼武者3",
+      "score": 1607.108452,
+      "history_days": 31
+    },
+    {
+      "machine_number": 2268,
+      "machine_name": "新鬼武者3",
+      "score": 1607.108452,
+      "history_days": 31
+    },
+    {
+      "machine_number": 2020,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 544.498054,
+      "history_days": 155
+    },
+    {
+      "machine_number": 2416,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 544.498054,
+      "history_days": 155
+    },
+    {
+      "machine_number": 2417,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 544.498054,
+      "history_days": 155
+    },
+    {
+      "machine_number": 2418,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 544.498054,
+      "history_days": 155
+    },
+    {
+      "machine_number": 2419,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 544.498054,
+      "history_days": 155
+    },
+    {
+      "machine_number": 2060,
+      "machine_name": "スマスロ北斗の拳",
+      "score": 280.884629,
+      "history_days": 250
+    },
+    {
+      "machine_number": 2061,
+      "machine_name": "スマスロ北斗の拳",
+      "score": 280.884629,
+      "history_days": 250
+    },
+    {
+      "machine_number": 2062,
+      "machine_name": "スマスロ北斗の拳",
+      "score": 280.884629,
+      "history_days": 250
+    },
+    {
+      "machine_number": 2063,
+      "machine_name": "スマスロ北斗の拳",
+      "score": 280.884629,
+      "history_days": 250
+    },
+    {
+      "machine_number": 2064,
+      "machine_name": "スマスロ北斗の拳",
+      "score": 280.884629,
+      "history_days": 250
+    },
+    {
+      "machine_number": 2065,
+      "machine_name": "スマスロ北斗の拳",
+      "score": 280.884629,
+      "history_days": 250
+    },
+    {
+      "machine_number": 2066,
+      "machine_name": "スマスロ北斗の拳",
+      "score": 280.884629,
+      "history_days": 250
+    }
+  ],
+  "result": null,
+  "plan_digest": "1be53abe73bcf4b9"
+}
