@@ -86,6 +86,21 @@ def hall_max_dates() -> dict[str, str]:
     return out
 
 
+def audit_dates(before: dict[str, str], start: str, end: str) -> list[str]:
+    """データ監査に渡す日付。実行前の最終日がいちばん古いホールの翌日から end まで(start より前は見ない)。
+
+    取り込みが進まなかった日(どのホールも end まで揃っていた)でも end は必ず含める。
+    """
+    oldest = min(before.values()) if before else end
+    first = max(start, (datetime.strptime(oldest, "%Y%m%d") + timedelta(days=1)).strftime("%Y%m%d"))
+    days = []
+    day = datetime.strptime(min(first, end), "%Y%m%d")
+    while day.strftime("%Y%m%d") <= end:
+        days.append(day.strftime("%Y%m%d"))
+        day += timedelta(days=1)
+    return days
+
+
 def score_due_announcements() -> None:
     """対象日のデータが揃った未採点の予告を採点する。
 
@@ -292,12 +307,17 @@ def _run(args: argparse.Namespace) -> int:
     #   - 飛ばした段は、人が監査結果を確認してから --ignore-audit-errors 付きで再実行すれば取り戻せる
     #     （フォワードの凍結は当日16時が締め切り）。
     # 当日分が未掲載なだけのホールは ERROR にならない（presence=INFO）。
+    # 監査する日は前日(end)だけでなく、今回の実行で遡って取り込まれた可能性のある日すべて。
+    # スクレイパーは --days 日前まで欠けた日を埋めるので、前日だけを見ると、遡って入った日が
+    # 監査を通らずに採点・フォワードに使われる(2026-10-16 レビュー指摘)。
+    # 実行前の最終日がいちばん古いホールの翌日から end までを渡す(下限は遡り窓の start)。
     audit_blocked = False
     if not args.skip_audit:
-        code = run(
-            "database.data_audit --date %s" % end,
-            [PYTHON, "-u", "-X", "utf8", "-m", "database.data_audit", "--date", end],
-        )
+        audit_days = audit_dates(before, start, end)
+        command = [PYTHON, "-u", "-X", "utf8", "-m", "database.data_audit"]
+        for day in audit_days:
+            command += ["--date", day]
+        code = run("database.data_audit --date %s" % " ".join(audit_days), command)
         if code != 0 and not args.ignore_audit_errors:
             audit_blocked = True
             print("\n  ⚠️ データ監査で ERROR。予告採点・フォワード・ジャグラー台帳を今回は行わない。")

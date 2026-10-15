@@ -573,7 +573,11 @@ def main(argv: list[str] | None = None) -> int:
         if hasattr(stream, "reconfigure"):
             stream.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(description="ana-slo 取り込みDBのデータ品質監査")
-    parser.add_argument("--date", help="監査する日 YYYY-MM-DD または YYYYMMDD")
+    parser.add_argument(
+        "--date",
+        action="append",
+        help="監査する日 YYYY-MM-DD または YYYYMMDD（複数可。朝の実行は遡って取り込んだ日もまとめて渡す）",
+    )
     parser.add_argument("--hall", action="append", help="ホール名（複数可）。省略時は hall_config の active 全ホール")
     parser.add_argument("--all-days", action="store_true", help="DBにある全日付を監査する")
     parser.add_argument("--db-dir", type=Path, default=DEFAULT_DB_DIR)
@@ -588,10 +592,14 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--date か --all-days のどちらかが必要")
     days = None
     if args.date:
-        try:
-            days = [datetime.strptime(args.date.replace("-", ""), "%Y%m%d").strftime("%Y%m%d")]
-        except ValueError:
-            parser.error("--date は YYYY-MM-DD か YYYYMMDD: %s" % args.date)
+        days = []
+        for value in args.date:
+            try:
+                day = datetime.strptime(value.replace("-", ""), "%Y%m%d").strftime("%Y%m%d")
+            except ValueError:
+                parser.error("--date は YYYY-MM-DD か YYYYMMDD: %s" % value)
+            if day not in days:
+                days.append(day)
 
     results = run_audit(days, args.hall, args.db_dir, args.data_dir, args.config, all_days=args.all_days)
     if not args.no_write:
