@@ -65,7 +65,9 @@ DEFAULT_DB_DIR = PROJECT_ROOT / "db"
 DEFAULT_DATA_DIR = PROJECT_ROOT / "data"
 DEFAULT_CONFIG = PROJECT_ROOT / "config" / "hall_config.json"
 DEFAULT_OUT = PROJECT_ROOT / "document" / "registry" / "DATA_AUDIT.jsonl"
-KNOWN_MISSING_CSV = "failed_dates_report確認済み.csv"
+KNOWN_MISSING_CSV = "failed_dates_report確認済み.csv"  # 人のメモ(CSV行+自由記述)。CSV行だけ読む
+# 人が確認した休業日・未掲載日の機械可読な台帳（hall_name,date,reason,source）
+KNOWN_CLOSED_DAYS = PROJECT_ROOT / "document" / "registry" / "KNOWN_CLOSED_DAYS.csv"
 
 ERROR, WARN, INFO = "ERROR", "WARN", "INFO"
 
@@ -167,17 +169,18 @@ def load_hall_data(hall: str, db_path: Path) -> HallData | None:
         conn.close()
 
 
-def load_known_missing(data_dir: Path) -> set[tuple[str, str]]:
-    """ana-slo 側の未掲載として人が確認済みの (ホール名小文字, YYYYMMDD)。"""
-    path = data_dir / KNOWN_MISSING_CSV
+def load_known_missing(data_dir: Path, registry: Path = KNOWN_CLOSED_DAYS) -> set[tuple[str, str]]:
+    """休業日・未掲載として人が確認済みの (ホール名小文字, YYYYMMDD)。"""
     out: set[tuple[str, str]] = set()
-    if not path.exists():
-        return out
-    with path.open(encoding="utf-8-sig") as f:
-        for rec in csv.DictReader(f):
-            hall, day = (rec.get("hall_name") or "").strip(), (rec.get("date") or "").strip()
-            if hall and day:
-                out.add((hall.lower(), day.replace("-", "")))
+    for path in (Path(data_dir) / KNOWN_MISSING_CSV, Path(registry)):
+        if not path.exists():
+            continue
+        with path.open(encoding="utf-8-sig") as f:
+            for rec in csv.DictReader(f):
+                hall, day = (rec.get("hall_name") or "").strip(), (rec.get("date") or "").strip()
+                day = day.replace("-", "")
+                if hall and len(day) == 8 and day.isdigit():
+                    out.add((hall.lower(), day))
     return out
 
 
@@ -205,6 +208,20 @@ def json_path_for(data_dir: Path, hall: str, day: str) -> Path | None:
 def _prev_dates(dates: list[str], day: str, n: int) -> list[str]:
     i = bisect.bisect_left(dates, day)
     return dates[max(0, i - n) : i]
+
+
+def _baseline_dates(dates: list[str], day: str, n: int) -> list[str]:
+    """比較の基準にする日。原則は直前 n 収録日。
+
+    収録の最初の数日は直前が足りないので、後ろの日で n 日まで補う（全期間監査で効く）。
+    平和島 2025-03-24 は収録5日目で418台中100台しか入っていなかったが、直前4日では
+    基準不足で検査が素通りしていた。
+    """
+    prev = _prev_dates(dates, day, n)
+    if len(prev) >= 7:
+        return prev
+    i = bisect.bisect_right(dates, day)
+    return prev + dates[i : i + n - len(prev)]
 
 
 def _calendar_days_between(a: str, b: str) -> list[str]:
@@ -285,11 +302,12 @@ def check_json(hd: HallData, day: str, data_dir: Path) -> list[Issue]:
 
 
 def check_machine_count(hd: HallData, day: str) -> list[Issue]:
-    prev = _prev_dates(hd.dates, day, COUNT_WINDOW)
+    base = _baseline_dates(hd.dates, day, COUNT_WINDOW)
+    prev = _prev_dates(hd.dates, day, 1)
     n = len(hd.rows.get(day, []))
-    if len(prev) < 7 or n == 0:
+    if len(base) < 7 or n == 0:
         return []
-    median = statistics.median(len(hd.rows[d]) for d in prev)
+    median = statistics.median(len(hd.rows[d]) for d in base)
     if median <= 0:
         return []
     ratio = n / median
@@ -299,7 +317,7 @@ def check_machine_count(hd: HallData, day: str) -> list[Issue]:
     if abs(ratio - 1) >= COUNT_WARN_RATIO:
         # 増台・減台の翌日以降は中央値が追いつくまで（最大2週間）同じずれが続く。
         # 前日と同じ台数なら変化は既に報告済みなので INFO に落とす。
-        if len(hd.rows[prev[-1]]) == n:
+        if prev and len(hd.rows[prev[-1]]) == n:
             return [Issue("machine_count", INFO, "台数のずれが継続中（変化は報告済み）", detail)]
         return [Issue("machine_count", WARN, "台数が直近中央値から±10%以上ずれた（改装・入替・事故）", detail)]
     return []

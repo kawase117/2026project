@@ -316,3 +316,32 @@ def test_cli_writes_jsonl_and_exit_code(env, tmp_path):
     da._json_index.clear()
     assert da.main(["--all-days", "--hall", HALL, "--no-write", *base]) == 1
     assert len(out.read_text(encoding="utf-8").splitlines()) == 2  # --no-write は追記しない
+
+
+def test_early_days_use_following_days_as_baseline(env):
+    # 収録5日目に台数が4分の1（平和島 2025-03-24 の型）。直前4日だけでは基準が足りない
+    days = _days()
+
+    def shrink(by_day):
+        by_day[days[4]] = by_day[days[4]][:25]
+
+    _setup(env, mutate=shrink, json_days=[])
+    assert "machine_count" in _checks(_audit(env, days[4]), "ERROR")
+
+
+def test_known_closed_days_registry_downgrades_gap(env, tmp_path, monkeypatch):
+    db_dir, data_dir, config = env
+    days = _days()
+
+    def drop(by_day):
+        del by_day[days[15]]
+
+    _setup(env, mutate=drop)
+    registry = tmp_path / "KNOWN_CLOSED_DAYS.csv"
+    iso = "%s-%s-%s" % (days[15][:4], days[15][4:6], days[15][6:])
+    registry.write_text("hall_name,date,reason,source\n%s,%s,休業日,test\n" % (HALL, iso), encoding="utf-8")
+    monkeypatch.setattr(da, "KNOWN_CLOSED_DAYS", registry)
+    monkeypatch.setattr(da.load_known_missing, "__defaults__", (registry,))
+    rec = _audit(env, days[16])
+    assert rec["status"] == "OK"
+    assert "continuity" in _checks(rec, "INFO")
