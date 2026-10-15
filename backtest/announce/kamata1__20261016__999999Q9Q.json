@@ -10,55 +10,27 @@
   },
   "raw_text": "【6台並びが5箇所以上って普通に強くない？】\n新章メガいちよこやん予想\n\n明日は6の付く日。6台並びが5箇所以上姿を現すとされている。並びの仕掛けはどこにでも可能性がありつつも、オススメ機種は特に対象になりがちなので優先的に狙いたいポイント。\n\nまた、全との重複も意識しつつ、並び以外にも複数あるとされる単品にも騙されないように左右の挙動も確認すべし\n\nタマゴ→タマゴランプ\n→スマスロ獣王？\n\n一粒→ワン\n→ファンキージャグラー？\n\nトリュフ→豚を使って探す\n→青ブタ？\n\n大集合→異世界キャラ大集合\n→いせかる？\n\n#マルハンメガシティ2000蒲田1",
   "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
-  "weakness_note": "",
+  "weakness_note": "本文は「6台並びが5箇所以上、オススメ機種は特に対象になりがち」で機種を名指ししていない。語呂ポスト(タマゴ→獣王等)は推測でclaimsにしない。自動抽出の獣王・青ブタ・異世界かるてっとは語呂からの拾い過ぎ。",
   "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"マルハンメガシティ2000-蒲田1\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-16\", \"2026-10-14\"], \"n_days\": 90, \"n_model_days\": 4339, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2191.7, \"models_over_threshold_per_day\": {\"mean\": 2.41, \"median\": 2.0, \"max\": 7}, \"candidate_models_per_day\": 48.2, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.12, \"median\": 3.0, \"max\": 8}, \"p_at_least_1\": 0.967, \"p_at_least_2\": 0.778, \"p_at_least_3\": 0.567, \"p_at_least_4\": 0.378, \"p_at_least_10\": 0.0}} / named_context: {\"as_of\": \"20261014\", \"window_days\": 30, \"n_candidates_ge3machines\": 50, \"hall_over_threshold_rate_approx\": 0.02, \"threshold\": 1800.0, \"models\": [{\"name\": \"A‐SLOT+ 異世界かるてっと\", \"n_machines\": 1, \"rank\": null, \"of\": 50, \"n_days_present\": 30, \"over_threshold\": 1, \"rate\": 0.033, \"mean_score\": 28.0}, {\"name\": \"獣王\", \"n_machines\": 3, \"rank\": 9, \"of\": 50, \"n_days_present\": 10, \"over_threshold\": 2, \"rate\": 0.2, \"mean_score\": -890.8}, {\"name\": \"青春ブタ野郎はバニーガール先輩の夢を見ない\", \"n_machines\": 3, \"rank\": 25, \"of\": 50, \"n_days_present\": 30, \"over_threshold\": 6, \"rate\": 0.2, \"mean_score\": -88.3}]}",
   "zentaikei": {
     "metric": "gratio_mean_diff",
     "threshold": 1800.0,
     "min_machines": 3
   },
-  "claims": [
-    {
-      "type": "model_named",
-      "machine_name": "A‐SLOT+ 異世界かるてっと",
-      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
-    },
-    {
-      "type": "model_named",
-      "machine_name": "獣王",
-      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
-    },
-    {
-      "type": "model_named",
-      "machine_name": "青春ブタ野郎はバニーガール先輩の夢を見ない",
-      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
-    }
-  ],
-  "unscored_claims": [
-    {
-      "text": "ファンキージャグラー2(部分一致score=0.909)",
-      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
-      "frozen_scoring_procedure": ""
-    },
-    {
-      "text": "ミスタージャグラー(部分一致score=0.667)",
-      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
-      "frozen_scoring_procedure": ""
-    },
-    {
-      "text": "マイジャグラーV(部分一致score=0.625)",
-      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
-      "frozen_scoring_procedure": ""
-    },
-    {
-      "text": "ゴーゴージャグラー3(部分一致score=0.6)",
-      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
-      "frozen_scoring_procedure": ""
-    }
-  ],
-  "needs_manual_review": true,
+  "claims": [],
+  "unscored_claims": [],
+  "needs_manual_review": false,
   "no_confirmed_machines": false,
   "result": null,
-  "announce_digest": "5773eeb6029764a2",
-  "provisional": true
+  "announce_digest": "74f81e0edba9b21b",
+  "provisional": true,
+  "amendments": [
+    {
+      "at": "2026-10-16T07:45:27+09:00",
+      "prev_digest": "5773eeb6029764a2",
+      "reason": "確認: 本文は機種名指しなし。語呂ポストは推測のためclaims空で確定(自動抽出の獣王・青ブタ・異世界は語呂からの拾い過ぎ)",
+      "void": false,
+      "amended_after_target": false
+    }
+  ]
 }

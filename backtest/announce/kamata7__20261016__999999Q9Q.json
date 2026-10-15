@@ -10,40 +10,27 @@
   },
   "raw_text": "【ウスイの激アツ気まぐれ砲炸裂の気配】\nGALAXYウスイのメガなな予想\n\n明日のメガななは激レアの取材実施日。演者の来店を絡めた施策などは定期的にやっているが、取材のみというのはかなり珍しい。これはド派手仕掛けのサインと期待したい\n\n曜日仕掛けを意識するなら列イチ仕掛けになるが、わざわざ取材を入れているということは曜日仕掛けはお休みの可能性が高く、取材に寄せた仕掛けがメインになると予想。メガななでは初物の取材ではあるが、他店の結果を参考にしてみると\n\n【狙い所】\n・全\n→設置台数の大小は問わず。どこからでもやってくる可能性あり。\n・並び仕掛け(3台並び)\n・末尾仕掛け(ニブイチ)\n\nこの辺りは意識しておくと良さそう。メガななはこれ以外にも大量の単品があるはずなので、スロットにさえ座れればチャンスと捉えて良いだろう\n\n鯖→サバチャン\n→スマスロ獣王？\n\nおにぎり→鬼斬チャージ\n→新鬼武者3？\n\n海藻→回想→無名回想\n→Lカバネリ海門決戦？\n\n無料→0円→零\n→喰霊零？\n\n#マルハンメガシティ2000蒲田7",
   "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
-  "weakness_note": "",
+  "weakness_note": "本文はメガなな取材日の「全・3台並び・末尾ニブイチ」を狙い所とするのみで機種名指しなし。語呂ポスト(鯖→獣王等)は推測でclaimsにしない。",
   "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"マルハンメガシティ2000-蒲田7\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-16\", \"2026-10-14\"], \"n_days\": 90, \"n_model_days\": 5749, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2139.5, \"models_over_threshold_per_day\": {\"mean\": 3.2, \"median\": 3.0, \"max\": 9}, \"candidate_models_per_day\": 63.9, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.98, \"median\": 3.0, \"max\": 10}, \"p_at_least_1\": 0.989, \"p_at_least_2\": 0.922, \"p_at_least_3\": 0.733, \"p_at_least_4\": 0.456, \"p_at_least_10\": 0.022}} / named_context: {\"as_of\": \"20261014\", \"window_days\": 30, \"n_candidates_ge3machines\": 66, \"hall_over_threshold_rate_approx\": 0.045, \"threshold\": 1800.0, \"models\": [{\"name\": \"新鬼武者3\", \"n_machines\": 5, \"rank\": 57, \"of\": 66, \"n_days_present\": 30, \"over_threshold\": 1, \"rate\": 0.033, \"mean_score\": 83.5}, {\"name\": \"獣王\", \"n_machines\": 6, \"rank\": 59, \"of\": 66, \"n_days_present\": 10, \"over_threshold\": 1, \"rate\": 0.1, \"mean_score\": -2137.3}, {\"name\": \"甲鉄城のカバネリ 海門(うなと)決戦\", \"n_machines\": 42, \"rank\": 15, \"of\": 66, \"n_days_present\": 30, \"over_threshold\": 0, \"rate\": 0.0, \"mean_score\": 228.8}]}",
   "zentaikei": {
     "metric": "gratio_mean_diff",
     "threshold": 1800.0,
     "min_machines": 3
   },
-  "claims": [
-    {
-      "type": "model_named",
-      "machine_name": "新鬼武者3",
-      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
-    },
-    {
-      "type": "model_named",
-      "machine_name": "獣王",
-      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
-    },
-    {
-      "type": "model_named",
-      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
-      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
-    }
-  ],
-  "unscored_claims": [
-    {
-      "text": "ケロット5(部分一致score=0.6)",
-      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
-      "frozen_scoring_procedure": ""
-    }
-  ],
-  "needs_manual_review": true,
+  "claims": [],
+  "unscored_claims": [],
+  "needs_manual_review": false,
   "no_confirmed_machines": false,
   "result": null,
-  "announce_digest": "2bf74ea754559fa3",
-  "provisional": true
+  "announce_digest": "6da84b7aa6390cd4",
+  "provisional": true,
+  "amendments": [
+    {
+      "at": "2026-10-16T07:45:28+09:00",
+      "prev_digest": "2bf74ea754559fa3",
+      "reason": "確認: 本文はメガなな取材の全・3台並び・末尾ニブイチのみで機種名指しなし。語呂ポストは推測のためclaims空で確定",
+      "void": false,
+      "amended_after_target": false
+    }
+  ]
 }
