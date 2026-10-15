@@ -1,0 +1,49 @@
+---
+id: forward-effective-rules-carried-by-single-machine
+trigger: "予測で総合採点表(SCOREBOARD.md)の『有効』ルールや forward の k7_at_histdiff_top3・model_term60(楽園・みとや)を根拠に台・機種を推すとき。蒲田7の台番号2026(鉄台)やカバネリ海門を推したくなったとき"
+confidence: 0.75
+domain: prediction-evaluation
+source: forward-scoreboard-20261016
+project_id: 2026project
+project_name: pachinko-analyzer
+verification_status: pending
+
+# 総合採点表で「有効」のルールは、1台・1機種に支えられている。一般則として引用しない
+
+## 背景
+2026-10-16 に backtest/scoreboard.py で forward 26ルールを無作為選択との差で集計したところ、「有効」は3本だった(9/12〜10/15)。
+中身を分解すると、k7_at_histdiff_top3(+1505枚/台)は台番号2026を45日すべてで選んでいて、2026単独で+3457枚。2026を除いて選び直す別ルール(k7_at_histdiff_ex2026_top3)は+170で有意ではない。
+rakuen/mitoya の model_term60 も、毎日指名しているカバネリ海門(楽園+606、みとや+390)が牽引していて、他の指名機種はマイナスも多い。台の勝率は3本とも40〜56%。
+予測文書の「推した機種」の正側(楽園・みとや)も、同じカバネリ海門に支えられていた。
+
+## アクション
+- 「有効」ルールを根拠にするときは、picks の台・機種の内訳を見て、1台・1機種への集中を確かめる。集中していれば「ルールが効く」ではなく「その台・機種が強い」と書く。
+- 2026・カバネリ海門が撤去や扱い変更で崩れたら、これらのルールの「有効」はまとめて消えると見なす。ルールの数を独立した証拠として数えない。
+- 平均は正でも台の勝率は半分前後なので、負けにくさ優先(prefer-low-risk-winrate)の推薦では、主根拠にせず分散先として扱う。
+
+## 例
+k7_at_histdiff_top3: 平均+1505 / 2026除外の日平均+530 / ex2026ルール+170(q=0.48)。rakuen_model_term60: +389、うちカバネリ海門の日平均+606。
+---
+id: anaslo-closed-day-page-all-same-diff
+trigger: "ana-sloのデータで全台のG数が0、差枚が全台同じ値(-6,142など)の日を見つけたとき。ホールの休業日・改装日・入替日を扱うとき。日別の平均差枚に異常な落ち込みがあるとき"
+confidence: 0.85
+domain: data-quality
+source: data-audit-closed-days-20261016
+project_id: 2026project
+project_name: pachinko-analyzer
+verification_status: pending
+
+# ana-sloは休業日にも全台同値のページを出す。消すだけでは翌朝に戻るので、台帳と再計算をセットで行う
+
+## 背景
+楽園蒲田の 2025-04-21(入替)・2026-07-06(改装)は、全台 G数0・BB/RB なし・差枚が全台 -6,142(ホール平均らしき値)のページが取り込まれていて、1日あたり約-350万枚の偽の差枚がホール・機種・末尾の集計に混ざっていた。G数0のフィルタでは差枚が残るので救えない。
+増分取り込みは「JSON はあるが DB に無い日」を新規として拾うので、DB から行を消しただけでは翌朝に戻る。また、移動平均(7〜35日窓)と月次トレンドはその日を含んで計算済みなので、消した後に再計算しないと古い値が残る。
+2026-10-16 に別々のセッションが同じ削除を並行して行い、片方のバックアップは削除後の状態を写していた(共有の db/ を触る前に、既存の .bak-* と他セッションの状況を確かめる必要がある)。
+
+## アクション
+- 新しく見つけたら document/registry/KNOWN_CLOSED_DAYS.csv に hall_name,date,reason(「休業日(改装)」など種類つき),source を追記する。取り込み(incremental_db_updater)と監査(data_audit)がこれを読む。
+- DB からの除外は database/migrate_exclude_closed_days.py の CLOSED_DAYS に足して実行する(バックアップ、date列のある全テーブルの削除、移動平均37日分と月次トレンドの再計算、JSON を _excluded/ へ移動、まで一括)。手で DELETE しない。
+- 実行前に db/<ホール>.db.bak-* の有無と更新時刻を見て、他のセッションが同じ作業をしていないか確かめる。
+
+## 例
+楽園 20250421: 755行削除、20260706: 941行削除(位置・島の集計を含む)。監査では values の「全台G数0」と「9割以上の台で差枚が同じ値」の2検査が同時に発火する。
