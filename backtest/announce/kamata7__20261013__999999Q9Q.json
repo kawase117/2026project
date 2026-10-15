@@ -1,0 +1,48 @@
+{
+  "announce_id": "kamata7__20261013__999999Q9Q",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "target_date": "20261013",
+  "source": {
+    "account": "999999Q9Q",
+    "url": "",
+    "posted_at": "2026-10-13T00:18:38+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "GALAXYウスイのメガなな予想\n\n火曜日のメガななは角◯仕掛け。直近のメガななでは、おおかた同じ形の仕掛けが予想できる。要するに、AT機・ノーマル機それぞれに1つずつ角◯仕掛けが用意される。\n\nそれぞれの角はおおよそニブイチ以上の配分だが、ノーマル機側はジャグラーに寄りがち。\n\nそこに毎日恒例の全機種もあると考えて無問題。ウスイのポストは今日も無さそうだが、仕掛けの型や数が変わることはないはず\n\n#マルハンメガシティ2000蒲田7",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"マルハンメガシティ2000-蒲田7\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-13\", \"2026-10-11\"], \"n_days\": 90, \"n_model_days\": 5737, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2126.6, \"models_over_threshold_per_day\": {\"mean\": 3.19, \"median\": 3.0, \"max\": 9}, \"candidate_models_per_day\": 63.7, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.94, \"median\": 3.0, \"max\": 10}, \"p_at_least_1\": 0.989, \"p_at_least_2\": 0.911, \"p_at_least_3\": 0.722, \"p_at_least_4\": 0.456, \"p_at_least_10\": 0.022}}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [],
+  "unscored_claims": [],
+  "needs_manual_review": false,
+  "no_confirmed_machines": true,
+  "result": {
+    "scored_at_data_max": "20261013",
+    "hall_baseline_mean_diff": 99.3,
+    "hall_n_machines": 715,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": []
+  },
+  "announce_digest": "9543330b5763bb49",
+  "provisional": true,
+  "amendments": [
+    {
+      "at": "2026-10-13T10:53:56+09:00",
+      "prev_digest": "be49bfbcd4ff397e",
+      "reason": "claims訂正: 本文に機種名の指定なし。マイジャグラー部分一致は誤抽出のため除外",
+      "void": false,
+      "amended_after_target": false
+    }
+  ]
+}

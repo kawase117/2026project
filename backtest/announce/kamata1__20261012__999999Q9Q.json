@@ -42,7 +42,92 @@
   "unscored_claims": [],
   "needs_manual_review": true,
   "no_confirmed_machines": false,
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20261012",
+    "hall_baseline_mean_diff": -31.2,
+    "hall_n_machines": 365,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "スマスロ炎炎ノ消防隊2",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -175.9,
+        "mean_diff": -280.0,
+        "gratio": 0.628,
+        "n_machines": 5,
+        "rank": 27,
+        "candidate_models": 50,
+        "age_days": 252,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -297.7,
+        "mean_diff": -233.3,
+        "gratio": 1.276,
+        "n_machines": 9,
+        "rank": 34,
+        "candidate_models": 50,
+        "age_days": 126,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "東京喰種",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。 ヒント: 1/2系の可能性(model_named_ratioならratio指定が必要)"
+        },
+        "score": 486.8,
+        "mean_diff": 375.0,
+        "gratio": 1.298,
+        "n_machines": 20,
+        "rank": 10,
+        "candidate_models": 50,
+        "age_days": 615,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 350.1,
+        "mean_diff": 500.0,
+        "gratio": 0.7,
+        "n_machines": 16,
+        "rank": 11,
+        "candidate_models": 50,
+        "age_days": 224,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
   "announce_digest": "f2287ff240ed34ba",
   "provisional": true
 }

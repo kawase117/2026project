@@ -1,0 +1,183 @@
+{
+  "announce_id": "rakuen__20261014__slokotae7",
+  "hall": "楽園蒲田店",
+  "target_date": "20261014",
+  "source": {
+    "account": "slokotae7",
+    "url": "",
+    "posted_at": "2026-10-13T15:25:41+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "10月7日(水)\n楽園立川店\n\n月①周年日\n四星　ブラックホール\n146/626台(23.3%)\n対象台平均+2667枚\n店舗総差枚+43950枚\n\n【全台】\nエウレカART\n5/7　+1985枚\n邪神ちゃん\n2/5　+1025枚\n\n【1/2】\nリコリコ　22台中13台\nSAO2　15台中8台\n獣王　7台中5台\nL北斗　7台中4台\nクレアBT　4台中2台\n\n【7台並び】",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"楽園蒲田店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-14\", \"2026-10-12\"], \"n_days\": 90, \"n_model_days\": 5084, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2311.9, \"models_over_threshold_per_day\": {\"mean\": 2.83, \"median\": 2.5, \"max\": 11}, \"candidate_models_per_day\": 56.5, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.86, \"median\": 3.0, \"max\": 13}, \"p_at_least_1\": 0.978, \"p_at_least_2\": 0.889, \"p_at_least_3\": 0.644, \"p_at_least_4\": 0.456, \"p_at_least_10\": 0.011}} / named_context: {\"as_of\": \"20261012\", \"window_days\": 30, \"n_candidates_ge3machines\": 59, \"hall_over_threshold_rate_approx\": 0.051, \"threshold\": 1800.0, \"models\": [{\"name\": \"スマスロ北斗の拳\", \"n_machines\": 6, \"rank\": 7, \"of\": 59, \"n_days_present\": 30, \"over_threshold\": 0, \"rate\": 0.0, \"mean_score\": 53.8}, {\"name\": \"ソードアート・オンラインII\", \"n_machines\": 12, \"rank\": 56, \"of\": 59, \"n_days_present\": 30, \"over_threshold\": 3, \"rate\": 0.1, \"mean_score\": -286.3}, {\"name\": \"リコリス・リコイル\", \"n_machines\": 22, \"rank\": 18, \"of\": 59, \"n_days_present\": 30, \"over_threshold\": 3, \"rate\": 0.1, \"mean_score\": 249.3}, {\"name\": \"交響詩篇エウレカセブン HI-EVOLUTION ZERO TYPE‐ART\", \"n_machines\": 25, \"rank\": 23, \"of\": 59, \"n_days_present\": 30, \"over_threshold\": 0, \"rate\": 0.0, \"mean_score\": 76.5}, {\"name\": \"獣王\", \"n_machines\": 6, \"rank\": 55, \"of\": 59, \"n_days_present\": 8, \"over_threshold\": 1, \"rate\": 0.125, \"mean_score\": 35.4}, {\"name\": \"邪神ちゃんドロップキック\", \"n_machines\": 8, \"rank\": 22, \"of\": 59, \"n_days_present\": 30, \"over_threshold\": 0, \"rate\": 0.0, \"mean_score\": -75.1}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "スマスロ北斗の拳",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "ソードアート・オンラインII",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "リコリス・リコイル",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "交響詩篇エウレカセブン HI-EVOLUTION ZERO TYPE‐ART",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "獣王",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "邪神ちゃんドロップキック",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    }
+  ],
+  "unscored_claims": [],
+  "needs_manual_review": true,
+  "no_confirmed_machines": false,
+  "result": {
+    "scored_at_data_max": "20261014",
+    "hall_baseline_mean_diff": 128.4,
+    "hall_n_machines": 587,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": [],
+      "bounds": [
+        -5095,
+        15477
+      ]
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "スマスロ北斗の拳",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -467.8,
+        "mean_diff": -721.8,
+        "gratio": 0.648,
+        "n_machines": 6,
+        "rank": 55,
+        "candidate_models": 59,
+        "age_days": 651,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ソードアート・オンラインII",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -1082.2,
+        "mean_diff": -805.2,
+        "gratio": 1.344,
+        "n_machines": 12,
+        "rank": 59,
+        "candidate_models": 59,
+        "age_days": 128,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "リコリス・リコイル",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 778.0,
+        "mean_diff": 416.0,
+        "gratio": 1.87,
+        "n_machines": 22,
+        "rank": 10,
+        "candidate_models": 59,
+        "age_days": 37,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "交響詩篇エウレカセブン HI-EVOLUTION ZERO TYPE‐ART",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -55.8,
+        "mean_diff": -94.8,
+        "gratio": 0.588,
+        "n_machines": 25,
+        "rank": 37,
+        "candidate_models": 59,
+        "age_days": 651,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "獣王",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -134.6,
+        "mean_diff": -47.3,
+        "gratio": 2.844,
+        "n_machines": 6,
+        "rank": 46,
+        "candidate_models": 59,
+        "age_days": 9,
+        "age_bucket": "new",
+        "base_rate": 0.105,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "邪神ちゃんドロップキック",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -15.1,
+        "mean_diff": -172.5,
+        "gratio": 0.088,
+        "n_machines": 8,
+        "rank": 33,
+        "candidate_models": 59,
+        "age_days": 71,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
+  "announce_digest": "6da5f37b0c13fdc4",
+  "provisional": true
+}

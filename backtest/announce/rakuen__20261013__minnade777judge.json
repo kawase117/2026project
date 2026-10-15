@@ -1,0 +1,212 @@
+{
+  "announce_id": "rakuen__20261013__minnade777judge",
+  "hall": "楽園蒲田店",
+  "target_date": "20261013",
+  "source": {
+    "account": "minnade777judge",
+    "url": "",
+    "posted_at": "2026-10-12T13:23:13+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "10/13 楽園アメ横\n\n連日強化の楽園アメ横\n\n過去傾向的に\n・1/2で上2つが10機種以上\n・10台以上機種に1/2上2つ複数\n・獣王、Lカバネリ、リコリコ、マイ5、乙女5、ゴッドに1/2上2つ複数\n・ジャグに1/2上2つ\n・5台設置機種から全台上2つへ昇格あり\n・Aタイプフロアに上2つ複数\nなどがあります。",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"楽園蒲田店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-13\", \"2026-10-11\"], \"n_days\": 90, \"n_model_days\": 5083, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2305.5, \"models_over_threshold_per_day\": {\"mean\": 2.83, \"median\": 2.5, \"max\": 11}, \"candidate_models_per_day\": 56.5, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.84, \"median\": 3.0, \"max\": 13}, \"p_at_least_1\": 0.978, \"p_at_least_2\": 0.878, \"p_at_least_3\": 0.644, \"p_at_least_4\": 0.456, \"p_at_least_10\": 0.011}} / named_context: {\"as_of\": \"20261011\", \"window_days\": 30, \"n_candidates_ge3machines\": 59, \"hall_over_threshold_rate_approx\": 0.034, \"threshold\": 1800.0, \"models\": [{\"name\": \"リコリス・リコイル\", \"n_machines\": 22, \"rank\": 52, \"of\": 59, \"n_days_present\": 30, \"over_threshold\": 3, \"rate\": 0.1, \"mean_score\": 146.5}, {\"name\": \"戦国乙女5 業火を穿つ宿焔の双刃\", \"n_machines\": 18, \"rank\": 6, \"of\": 59, \"n_days_present\": 30, \"over_threshold\": 2, \"rate\": 0.067, \"mean_score\": 307.7}, {\"name\": \"獣王\", \"n_machines\": 6, \"rank\": 59, \"of\": 59, \"n_days_present\": 7, \"over_threshold\": 1, \"rate\": 0.143, \"mean_score\": 227.9}, {\"name\": \"甲鉄城のカバネリ 海門(うなと)決戦\", \"n_machines\": 30, \"rank\": 10, \"of\": 59, \"n_days_present\": 30, \"over_threshold\": 7, \"rate\": 0.233, \"mean_score\": 1239.9}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named_ratio",
+      "machine_name": "獣王",
+      "ratio": 2,
+      "note": "『獣王、Lカバネリ、リコリコ、マイ5、乙女5、ゴッドに1/2上2つ複数』(手修正: マイ5=マイジャグラーV、Lカバネリ=海門)"
+    },
+    {
+      "type": "model_named_ratio",
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "ratio": 2,
+      "note": "『獣王、Lカバネリ、リコリコ、マイ5、乙女5、ゴッドに1/2上2つ複数』(手修正: マイ5=マイジャグラーV、Lカバネリ=海門)"
+    },
+    {
+      "type": "model_named_ratio",
+      "machine_name": "リコリス・リコイル",
+      "ratio": 2,
+      "note": "『獣王、Lカバネリ、リコリコ、マイ5、乙女5、ゴッドに1/2上2つ複数』(手修正: マイ5=マイジャグラーV、Lカバネリ=海門)"
+    },
+    {
+      "type": "model_named_ratio",
+      "machine_name": "マイジャグラーV",
+      "ratio": 2,
+      "note": "『獣王、Lカバネリ、リコリコ、マイ5、乙女5、ゴッドに1/2上2つ複数』(手修正: マイ5=マイジャグラーV、Lカバネリ=海門)"
+    },
+    {
+      "type": "model_named_ratio",
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "ratio": 2,
+      "note": "『獣王、Lカバネリ、リコリコ、マイ5、乙女5、ゴッドに1/2上2つ複数』(手修正: マイ5=マイジャグラーV、Lカバネリ=海門)"
+    },
+    {
+      "type": "model_named_ratio",
+      "machine_name": "ミリオンゴッド‐神々の軌跡‐",
+      "ratio": 2,
+      "note": "『獣王、Lカバネリ、リコリコ、マイ5、乙女5、ゴッドに1/2上2つ複数』(手修正: マイ5=マイジャグラーV、Lカバネリ=海門)"
+    }
+  ],
+  "unscored_claims": [],
+  "needs_manual_review": false,
+  "no_confirmed_machines": false,
+  "result": {
+    "scored_at_data_max": "20261013",
+    "hall_baseline_mean_diff": 71.6,
+    "hall_n_machines": 587,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 1,
+      "n_censored_lo": 0,
+      "machines_hi": [
+        "攻殻機動隊"
+      ],
+      "machines_lo": [],
+      "bounds": [
+        -5095,
+        15477
+      ]
+    },
+    "claims": [
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "獣王",
+          "ratio": 2,
+          "note": "『獣王、Lカバネリ、リコリコ、マイ5、乙女5、ゴッドに1/2上2つ複数』(手修正: マイ5=マイジャグラーV、Lカバネリ=海門)"
+        },
+        "n_machines": 6,
+        "ratio": 2,
+        "top_k": 3,
+        "model_top_k_mean_diff": 1952.7,
+        "hall_top_quantile_mean_diff": 1018.1,
+        "excess_vs_hall_quantile": 934.6,
+        "model_mean_diff": 333.7,
+        "n_over_hall_quantile": 2,
+        "hit": true,
+        "model_named_score": 779.9,
+        "model_named_rank": 8
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+          "ratio": 2,
+          "note": "『獣王、Lカバネリ、リコリコ、マイ5、乙女5、ゴッドに1/2上2つ複数』(手修正: マイ5=マイジャグラーV、Lカバネリ=海門)"
+        },
+        "n_machines": 30,
+        "ratio": 2,
+        "top_k": 15,
+        "model_top_k_mean_diff": 3375.0,
+        "hall_top_quantile_mean_diff": 922.4,
+        "excess_vs_hall_quantile": 2452.6,
+        "model_mean_diff": 1114.7,
+        "n_over_hall_quantile": 19,
+        "hit": true,
+        "model_named_score": 2556.4,
+        "model_named_rank": 2
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "リコリス・リコイル",
+          "ratio": 2,
+          "note": "『獣王、Lカバネリ、リコリコ、マイ5、乙女5、ゴッドに1/2上2つ複数』(手修正: マイ5=マイジャグラーV、Lカバネリ=海門)"
+        },
+        "n_machines": 22,
+        "ratio": 2,
+        "top_k": 11,
+        "model_top_k_mean_diff": 489.5,
+        "hall_top_quantile_mean_diff": 1038.0,
+        "excess_vs_hall_quantile": -548.5,
+        "model_mean_diff": -257.2,
+        "n_over_hall_quantile": 8,
+        "hit": false,
+        "model_named_score": -288.5,
+        "model_named_rank": 48
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "マイジャグラーV",
+          "ratio": 2,
+          "note": "『獣王、Lカバネリ、リコリコ、マイ5、乙女5、ゴッドに1/2上2つ複数』(手修正: マイ5=マイジャグラーV、Lカバネリ=海門)"
+        },
+        "n_machines": 20,
+        "ratio": 2,
+        "top_k": 10,
+        "model_top_k_mean_diff": 581.5,
+        "hall_top_quantile_mean_diff": 1041.9,
+        "excess_vs_hall_quantile": -460.4,
+        "model_mean_diff": -278.1,
+        "n_over_hall_quantile": 9,
+        "hit": false,
+        "model_named_score": -401.8,
+        "model_named_rank": 51
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+          "ratio": 2,
+          "note": "『獣王、Lカバネリ、リコリコ、マイ5、乙女5、ゴッドに1/2上2つ複数』(手修正: マイ5=マイジャグラーV、Lカバネリ=海門)"
+        },
+        "n_machines": 18,
+        "ratio": 2,
+        "top_k": 9,
+        "model_top_k_mean_diff": 74.6,
+        "hall_top_quantile_mean_diff": 1034.4,
+        "excess_vs_hall_quantile": -959.9,
+        "model_mean_diff": -954.7,
+        "n_over_hall_quantile": 4,
+        "hit": false,
+        "model_named_score": -1389.4,
+        "model_named_rank": 57
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "ミリオンゴッド‐神々の軌跡‐",
+          "ratio": 2,
+          "note": "『獣王、Lカバネリ、リコリコ、マイ5、乙女5、ゴッドに1/2上2つ複数』(手修正: マイ5=マイジャグラーV、Lカバネリ=海門)"
+        },
+        "n_machines": 13,
+        "ratio": 2,
+        "top_k": 7,
+        "model_top_k_mean_diff": 639.9,
+        "hall_top_quantile_mean_diff": 1017.3,
+        "excess_vs_hall_quantile": -377.4,
+        "model_mean_diff": -406.2,
+        "n_over_hall_quantile": 3,
+        "hit": false,
+        "model_named_score": -639.1,
+        "model_named_rank": 54
+      }
+    ]
+  },
+  "announce_digest": "3eee156527f3fa4e",
+  "provisional": true,
+  "amendments": [
+    {
+      "at": "2026-10-13T10:53:58+09:00",
+      "prev_digest": "f787e1cca5950667",
+      "reason": "claims訂正: 『1/2で上2つ複数』なのでmodel_named_ratio(ratio=2)に変更。マイ5=マイジャグラーV、Lカバネリ=海門を追加",
+      "void": false,
+      "amended_after_target": false
+    }
+  ]
+}

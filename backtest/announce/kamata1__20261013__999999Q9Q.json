@@ -1,0 +1,96 @@
+{
+  "announce_id": "kamata1__20261013__999999Q9Q",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "target_date": "20261013",
+  "source": {
+    "account": "999999Q9Q",
+    "url": "",
+    "posted_at": "2026-10-12T22:28:59+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "【迷ったら東京喰種・Lカバネリ、あとは壁際ロング列】\n新章メガいちよこやん予想\n\n明日は3の付く日。よこやん采配の基本パターンである全機種・ニブイチ機種・メイン機種（スマスロ中心）の単品強化、この詰め合わせ3点セットを意識するのが吉と予想できる。\n\n全も単品も、毎日安定して仕掛けてくるのが今のメガいち。狙い所を絞るならば、最初にも書いたが同2機種、そして一番のロング列に向かうのが正攻法。\n\n【よこやんポスト】\n舟盛り→舟→ボート→ボートレース\n→モンキーターン5？\n\n牛→牛\n→ウルトラミラクルジャグラー？\n\n魚・お刺身・海鮮→海戦\n→アズールレーン？\n\n舟盛とか刺身パックとかによく入ってる黄色いたんぽぽなのか食用菊なのかわからない謎のお花→花→彼岸花\n→リコリコ？\n→東京喰種？\n\n東京喰種はメイン機種としてメガいちのど真ん中に鎮座するエース機種。仕掛けがない日など、存在しないと言えるほどに毎日強化されているエリアなので、実はあながち適当な予想ではない\n\n#マルハンメガシティ2000蒲田1",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"マルハンメガシティ2000-蒲田1\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-13\", \"2026-10-11\"], \"n_days\": 90, \"n_model_days\": 4333, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2190.3, \"models_over_threshold_per_day\": {\"mean\": 2.41, \"median\": 2.0, \"max\": 7}, \"candidate_models_per_day\": 48.1, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.11, \"median\": 3.0, \"max\": 8}, \"p_at_least_1\": 0.967, \"p_at_least_2\": 0.778, \"p_at_least_3\": 0.556, \"p_at_least_4\": 0.378, \"p_at_least_10\": 0.0}} / named_context: {\"as_of\": \"20261011\", \"window_days\": 30, \"n_candidates_ge3machines\": 50, \"hall_over_threshold_rate_approx\": 0.06, \"threshold\": 1800.0, \"models\": [{\"name\": \"ウルトラミラクルジャグラー\", \"n_machines\": 4, \"rank\": 33, \"of\": 50, \"n_days_present\": 30, \"over_threshold\": 6, \"rate\": 0.2, \"mean_score\": 416.0}, {\"name\": \"モンキーターンV\", \"n_machines\": 9, \"rank\": 21, \"of\": 50, \"n_days_present\": 30, \"over_threshold\": 0, \"rate\": 0.0, \"mean_score\": 7.8}, {\"name\": \"リコリス・リコイル\", \"n_machines\": 12, \"rank\": 10, \"of\": 50, \"n_days_present\": 30, \"over_threshold\": 3, \"rate\": 0.1, \"mean_score\": -117.2}, {\"name\": \"東京喰種\", \"n_machines\": 20, \"rank\": 15, \"of\": 50, \"n_days_present\": 30, \"over_threshold\": 3, \"rate\": 0.1, \"mean_score\": 344.0}, {\"name\": \"甲鉄城のカバネリ 海門(うなと)決戦\", \"n_machines\": 16, \"rank\": 23, \"of\": 50, \"n_days_present\": 30, \"over_threshold\": 0, \"rate\": 0.0, \"mean_score\": 193.8}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "東京喰種",
+      "note": "『迷ったら東京喰種・Lカバネリ』"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "note": "『迷ったら東京喰種・Lカバネリ』"
+    }
+  ],
+  "unscored_claims": [],
+  "needs_manual_review": false,
+  "no_confirmed_machines": false,
+  "result": {
+    "scored_at_data_max": "20261013",
+    "hall_baseline_mean_diff": -14.2,
+    "hall_n_machines": 365,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "東京喰種",
+          "note": "『迷ったら東京喰種・Lカバネリ』"
+        },
+        "score": -175.3,
+        "mean_diff": -220.0,
+        "gratio": 0.797,
+        "n_machines": 20,
+        "rank": 36,
+        "candidate_models": 50,
+        "age_days": 616,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+          "note": "『迷ったら東京喰種・Lカバネリ』"
+        },
+        "score": 133.7,
+        "mean_diff": 150.0,
+        "gratio": 0.891,
+        "n_machines": 16,
+        "rank": 16,
+        "candidate_models": 50,
+        "age_days": 225,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
+  "announce_digest": "d4b306c63f5acdfb",
+  "provisional": true,
+  "amendments": [
+    {
+      "at": "2026-10-13T10:53:46+09:00",
+      "prev_digest": "6c531a9fb6605977",
+      "reason": "claims訂正: 語呂ポストの『？』付き推測(モンキーターンV・リコリコ・ウルトラミラクルジャグラー)を除外。本文の名指しは東京喰種とLカバネリのみ",
+      "void": false,
+      "amended_after_target": false
+    }
+  ]
+}

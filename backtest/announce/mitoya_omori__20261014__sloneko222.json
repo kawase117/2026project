@@ -1,0 +1,39 @@
+{
+  "announce_id": "mitoya_omori__20261014__sloneko222",
+  "hall": "みとや大森町店",
+  "target_date": "20261014",
+  "source": {
+    "account": "sloneko222",
+    "url": "",
+    "posted_at": "2026-10-13T18:59:01+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "10/14\nみとや錦糸町北口\n「4の付く日」\n\n直近5日間のデータ\n合計 +484,500枚\n平均 +335枚\n勝率 44.6% (644/1445台)\n\n10/04 合計 -21,500枚  平均 -74枚(113/289台)\n09/24 合計 +139,000枚  平均 +481枚(131/289台)\n09/14 合計 +66,000枚  平均 +228枚(116/289台)\n09/04 合計 +209,500枚  平均",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"みとや大森町店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-14\", \"2026-10-12\"], \"n_days\": 90, \"n_model_days\": 3201, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2025.3, \"models_over_threshold_per_day\": {\"mean\": 1.79, \"median\": 2.0, \"max\": 7}, \"candidate_models_per_day\": 35.6, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 1.97, \"median\": 2.0, \"max\": 8}, \"p_at_least_1\": 0.822, \"p_at_least_2\": 0.567, \"p_at_least_3\": 0.333, \"p_at_least_4\": 0.122, \"p_at_least_10\": 0.0}}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [],
+  "unscored_claims": [],
+  "needs_manual_review": true,
+  "no_confirmed_machines": true,
+  "result": {
+    "scored_at_data_max": "20261014",
+    "hall_baseline_mean_diff": -151.9,
+    "hall_n_machines": 277,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": []
+  },
+  "announce_digest": "4eac3c966e860224",
+  "provisional": true
+}

@@ -27,7 +27,38 @@
   "unscored_claims": [],
   "needs_manual_review": false,
   "no_confirmed_machines": false,
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20261012",
+    "hall_baseline_mean_diff": -30.2,
+    "hall_n_machines": 715,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "モンスターハンターライズ：サンブレイク",
+          "note": "本文「モンハンサンブレイクとかやってくれませんか？」は投稿者の要望で確定した名指しではない。自動抽出のライズ10台は誤りで、サンブレイク13台に訂正(2026-10-12)。弱い言及。"
+        },
+        "score": -1594.3,
+        "mean_diff": -1453.8,
+        "gratio": 1.097,
+        "n_machines": 13,
+        "rank": 61,
+        "candidate_models": 66,
+        "age_days": 7,
+        "age_bucket": "new",
+        "base_rate": 0.105,
+        "hit": false
+      }
+    ]
+  },
   "announce_digest": "5ab31cbfbb2b2b93",
   "provisional": true,
   "amendments": [
