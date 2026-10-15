@@ -9,6 +9,7 @@ from .estimate import ROOT, at_scores, estimate, mark_new_machines
 from .schema import JST, SnapshotRow
 
 OUTPUT = ROOT / "scraper/realtime/output/rankings"
+FINAL_NO_PRIOR_TOP = 20  # 総合ランキング末尾の「事前なし」参考表の行数
 
 
 def read_snapshots(paths, latest_per_hall=True):
@@ -36,7 +37,7 @@ def build_ranking(
         raise ValueError("top and min_confidence out of range")
     mark_new_machines(rows, db_dir)
     context = at_scores(rows)
-    buckets = {"ranked": [], "at_scores": [], "uncertain": [], "new_machines": []}
+    buckets = {"ranked": [], "no_prior": [], "at_scores": [], "uncertain": [], "new_machines": []}
     for row in rows:
         result = estimate(
             row, specs=(specs_by_hall or {}).get(row.hall), audit=audit, hall_prior=hall_prior, at_context=context
@@ -53,6 +54,7 @@ def build_ranking(
             "discriminability": result["discriminability"],
             "kind": result["kind"],
             "score": result["score"],
+            "prior_applied": result.get("prior_applied"),
             "flags": list(row.quality_flags),
             "notes": result["notes"],
             "is_new_machine": row.is_new_machine,
@@ -65,13 +67,18 @@ def build_ranking(
             bucket = "at_scores"
         elif result["discriminability"] != "high" or result["confidence"] < min_confidence:
             bucket = "uncertain"
+        elif result.get("prior_applied") is False:
+            # ホール別事前の無い台(DBなし・台日不足)は一様事前のままで、事前のある台と同じ表に混ぜない
+            bucket = "no_prior"
         else:
             bucket = "ranked"
         buckets[bucket].append(item)
     buckets["ranked"].sort(key=lambda x: x["p_high"], reverse=True)
+    buckets["no_prior"].sort(key=lambda x: x["p_high"], reverse=True)
     buckets["at_scores"].sort(key=lambda x: x["score"], reverse=True)
     buckets["uncertain"].sort(key=lambda x: (x["p_high"] is not None, x["p_high"] or -1), reverse=True)
     buckets["ranked"] = buckets["ranked"][:top]
+    buckets["no_prior"] = buckets["no_prior"][:top]
     buckets["at_scores"] = buckets["at_scores"][:top]
     return buckets
 
@@ -79,6 +86,7 @@ def build_ranking(
 def format_ranking(data):
     titles = {
         "ranked": "RB事後確率順位",
+        "no_prior": "ホール別事前なし（一様事前のため高めに出る。順位に混ぜない）",
         "at_scores": "AT参考スコア（G比×平均差枚）",
         "uncertain": "判別不能に近い・判別不能",
         "new_machines": "新台（順位から除外）",
@@ -96,18 +104,23 @@ def format_ranking(data):
     return "\n".join(lines)
 
 
-def format_hall_report(hall, rows, top=8):
-    """1ホール分の即時報告。RB事後確率の高い順(判別可能機種のみ)。"""
-    data = build_ranking(rows, top=10000)
-    ranked = [r for r in data["ranked"] if r["rb"]]  # RB0は情報なしなので表示しない
+def format_hall_report(hall, rows, top=8, hall_prior=None):
+    """1ホール分の即時報告。RB事後確率の高い順(判別可能機種のみ)。事前なしの台は(補正なし)を付けて同じ表に並べる。"""
+    data = build_ranking(rows, top=10000, hall_prior=hall_prior)
+    ranked = sorted(
+        (r for r in data["ranked"] + data["no_prior"] if r["rb"]),  # RB0は情報なしなので表示しない
+        key=lambda r: r["p_high"],
+        reverse=True,
+    )
     stamp = max((r.observed_at for r in rows), default="")[11:16]
     estimable = sum(1 for r in ranked + data["uncertain"] if r["p_high"] is not None)
     lines = [f"\n=== {hall} (観測{stamp} / 取得{len(rows)}台 / RBで推定できた台{estimable}) ==="]
     if not ranked:
         lines.append("  推定できる台がありません")
     for r in ranked[:top]:
+        mark = " (補正なし)" if r.get("prior_applied") is False else ""
         lines.append(
-            f'  {r["unit"]} {r["model"]} {r["games"]}G RB{r["rb"]} 設定5以上={r["p_high"]:.2f} (確度{r["confidence"]:.2f})'
+            f'  {r["unit"]} {r["model"]} {r["games"]}G RB{r["rb"]} 設定5以上={r["p_high"]:.2f} (確度{r["confidence"]:.2f}){mark}'
         )
     return "\n".join(lines)
 
@@ -123,6 +136,17 @@ def format_final(data):
             f'{i} | {r["hall"]} | {r["unit"]} | {r["model"]} | {r["games"]} | {r["rb"]} | {r["p_high"]:.2f} | {r["confidence"]:.2f}'
         )
     lines.append("※途中の高RBは最終で平均に回帰しうる。判別不能に近い機種・AT機・新台は含まない。")
+    no_prior = [r for r in data.get("no_prior", []) if r["rb"]][:FINAL_NO_PRIOR_TOP]
+    if no_prior:
+        lines += [
+            "\n##### ホール別事前なし(補正なし・順位に混ぜない参考表) #####",
+            "※DBがない、または台日不足で一様事前のまま。4設定機は5以上が50%から始まるため、上の表より高く出る。",
+            "ホール | 台 | 機種 | G | RB | 設定5以上 | 確度",
+        ]
+        for r in no_prior:
+            lines.append(
+                f'{r["hall"]} | {r["unit"]} | {r["model"]} | {r["games"]} | {r["rb"]} | {r["p_high"]:.2f} | {r["confidence"]:.2f}'
+            )
     return "\n".join(lines)
 
 

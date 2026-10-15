@@ -181,8 +181,10 @@ def estimate(row: SnapshotRow, *, specs=None, audit=None, hall_prior=None, spec_
     base = _entropy([prior_high, 1 - prior_high])
     confidence = max(0.0, min(1.0, (base - _entropy([post_high, 1 - post_high])) / base)) if base else 0.0
     notes = list(evidence_notes)
-    if hall_prior is not None and len(set(prior.values())) == 1:
-        notes.append("ホール別事前なし: 一様事前(DBなし・台日不足。事前のあるホールより高く出やすい)")
+    # ホール別事前を渡したとき、その台に事前が当たったか(None=事前を渡していない)
+    prior_applied = None if hall_prior is None else len(set(prior.values())) > 1
+    if prior_applied is False:
+        notes.append("ホール別事前なし: 一様事前(DBなし・台日不足。4設定機は5以上が50%から始まり過大)")
     if row.games < SMALL_GAMES:
         notes.append("1000G未満: 尤度をG/1000乗して事前へ縮小")
     elif row.games <= EARLY_GAMES:
@@ -196,6 +198,7 @@ def estimate(row: SnapshotRow, *, specs=None, audit=None, hall_prior=None, spec_
         "kind": "rb_posterior",
         "score": None,
         "setting_probabilities": probs,
+        "prior_applied": prior_applied,
         "notes": notes,
     }
 

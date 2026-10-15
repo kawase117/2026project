@@ -19,7 +19,10 @@ from backtest.bonus_specs import find_spec, load_specs, normalize
 ROOT = Path(__file__).resolve().parents[2]
 PRIOR_PATH = ROOT / "scraper/realtime/output/hall_priors.json"
 MIN_GAMES = 2000  # これ未満の台日はRB確率が不安定で、回されない台の偏りも強い
-MIN_MACHINE_DAYS = 300  # これ未満の機種は事前を作らず一様のまま(150台日台では窓を変えると5〜6割合が大きく動く)
+MIN_MACHINE_DAYS = 300  # 6設定機: これ未満は事前を作らず一様のまま(150台日台では窓を変えると5〜6割合が大きく動く)
+MIN_MACHINE_DAYS_FEW_SETTINGS = (
+    150  # 4設定機(1・2・5・6): 設定2と5の間隔が大きく、少ない台日でも安定。一様事前だと5以上が50%になり過大
+)
 FLOOR = 0.05  # 推定が0に張り付いた設定を完全に消さないための一様分布の混ぜ込み
 EM_ITERATIONS = 300
 
@@ -76,7 +79,8 @@ def estimate_hall(hall, *, db_dir=ROOT / "db", days=90, as_of=None, min_games=MI
     result = {}
     for key, (spec, values) in grouped.items():
         rb_prob = _rb_settings(spec)
-        if len(values) < min_days or len(rb_prob) < 4 or not any(s >= 5 for s in rb_prob):
+        needed = min(min_days, MIN_MACHINE_DAYS_FEW_SETTINGS) if len(rb_prob) <= 4 else min_days
+        if len(values) < needed or len(rb_prob) < 4 or not any(s >= 5 for s in rb_prob):
             continue
         arr = np.array(values, dtype=float)
         weights = smooth(decompose(arr[:, 0], arr[:, 1], rb_prob))

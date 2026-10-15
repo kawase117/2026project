@@ -40,7 +40,7 @@ def _publish(rows, hall: str, mode: str) -> None:
     if REPORT["each"]:
         from .rank import format_hall_report
 
-        text = format_hall_report(hall, rows, top=REPORT["top"])
+        text = format_hall_report(hall, rows, top=REPORT["top"], hall_prior=REPORT.get("prior"))
         with _PRINT_LOCK:
             print(text, flush=True)
 
@@ -321,7 +321,10 @@ def main(argv: list[str] | None = None) -> int:
             )
             print("site777: RB table only; graph skipped. daidata: prefetch filtering TODO")
         return 0
-    REPORT.update(each=not args.no_report, top=args.report_top)
+    from .hall_prior import load_hall_priors
+
+    hall_prior = None if args.uniform_prior else load_hall_priors()
+    REPORT.update(each=not args.no_report, top=args.report_top, prior=hall_prior)
     workers = {"dmm": _dmm, "site777": _site, "daidata": _daidata}
     with ThreadPoolExecutor(max_workers=3) as pool:
         futures = {
@@ -332,14 +335,9 @@ def main(argv: list[str] | None = None) -> int:
         results = [item for future in futures.values() for item in future.result()]
     print(format_table(results))
     if not args.no_report and _ROWS:
-        from .hall_prior import load_hall_priors
         from .rank import build_ranking, format_final, write_ranking
 
-        data = build_ranking(
-            [r for rows in _ROWS.values() for r in rows],
-            top=args.final_top,
-            hall_prior=None if args.uniform_prior else load_hall_priors(),
-        )
+        data = build_ranking([r for rows in _ROWS.values() for r in rows], top=args.final_top, hall_prior=hall_prior)
         print(format_final(data))
         print(f"JSON: {write_ranking(data)}")
     for item in results:
