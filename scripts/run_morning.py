@@ -170,6 +170,11 @@ def main() -> int:
         help="ジャグラー持ち越し候補の前向き検証台帳(backtest.juggler_carryover ledger)への追記を行わない",
     )
     parser.add_argument(
+        "--skip-scoreboard",
+        action="store_true",
+        help="前向き検証の総合採点表(backtest.scoreboard → backtest/forward/SCOREBOARD.md)を更新しない",
+    )
+    parser.add_argument(
         "--skip-hall-review",
         action="store_true",
         help="前日分のホールレビューHTML生成(backtest.daily_digest hall-review)を行わない",
@@ -319,6 +324,14 @@ def _run(args: argparse.Namespace) -> int:
         run(
             "backtest.juggler_carryover ledger（前向き検証の台帳）",
             [PYTHON, "-u", "-X", "utf8", "-m", "backtest.juggler_carryover", "ledger", "--date", end],
+        )
+
+    if not args.skip_scoreboard:
+        # 前向き検証の総合採点表。forward の採点と juggler 台帳の追記が終わった後に置く。
+        # backtest/forward/SCOREBOARD.{md,json} に書くので、下の自動コミットの許可範囲に入る。
+        run(
+            "backtest.scoreboard（前向き検証の総合採点表）",
+            [PYTHON, "-u", "-X", "utf8", "-m", "backtest.scoreboard"],
         )
 
     if not args.skip_event_history:
