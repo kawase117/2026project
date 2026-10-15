@@ -149,7 +149,16 @@ class IncrementalDBUpdater:
             新規日付のリスト（昇順）
         """
         new_dates = available_dates - registered_dates
-        return sorted(list(new_dates))
+        # 休業日・改装日の台帳にある日は取り込まない。ana-slo の休業日ページ(全台G数0・差枚が全台同値)を
+        # DB から消しても、JSON が残っているので放っておくと翌朝に戻ってしまう(2026-10-16)。
+        try:
+            from database.closed_days import closed_dates
+        except ImportError:
+            from closed_days import closed_dates
+        closed = set(closed_dates(self.hall_name)) & new_dates
+        if closed:
+            print(f"   [SKIP] 休業日・改装日の台帳にある日は取り込まない: {sorted(closed)}")
+        return sorted(list(new_dates - closed))
 
     def process_new_date(self, date_str: str) -> bool:
         """
