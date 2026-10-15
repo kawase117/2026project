@@ -66,7 +66,25 @@ RECENT_DAYS = 28  # 短期の法則にも価値がある(feedback)。直近だ�
 Z_ALPHA = 1.6449  # 片側5%
 Z_POWER = 0.8416  # 検出力80%
 # 系列ごとの「検出したい差」。あと何日要るかの計算に使う。
-MDE_TARGET = {"forward_edge": 100.0, "forward_rb": 0.10, "juggler_ph": 0.05}
+MDE_TARGET = {
+    "forward_edge": 100.0,
+    "forward_rb": 0.10,
+    "juggler_ph": 0.05,
+    "pred_models": 100.0,
+    "pred_avoid": 100.0,
+    "pred_units": 100.0,
+    "pred_jug_units": 100.0,
+    "announce_named": 100.0,
+}
+PRED_DIR = Path(__file__).resolve().parent / "predictions"
+ANNOUNCE_DIR = Path(__file__).resolve().parent / "announce"
+# 予測台帳の result のキー → 採点表の系列
+PRED_FAMILIES = {
+    "models": "pred_models",
+    "avoid_models": "pred_avoid",
+    "units": "pred_units",
+    "jug_units": "pred_jug_units",
+}
 
 
 @dataclass
@@ -276,6 +294,96 @@ def build_juggler_rows(ledger: list[dict]) -> list[Row]:
     return rows
 
 
+def load_predictions(pred_dir: Path, since: str | None = None) -> list[dict]:
+    """予測文書の台帳(backtest.prediction_ledger)のうち採点済みのもの。"""
+    out = []
+    for path in sorted(pred_dir.glob("*__*.json")) if pred_dir.exists() else []:
+        obj = json.loads(path.read_text(encoding="utf-8"))
+        if obj.get("result") and not (since and obj["target_date"] < since):
+            out.append(obj)
+    return out
+
+
+def build_prediction_rows(preds: list[dict]) -> list[Row]:
+    """ホール×名指しの種類ごとに、1日1値(edge)の系列を作る。"""
+    groups: dict[tuple[str, str], list[tuple[str, float, str]]] = {}
+    for p in preds:
+        for key, family in PRED_FAMILIES.items():
+            part = p["result"].get(key)
+            if part and part.get("edge") is not None:
+                groups.setdefault((family, p["hall"]), []).append((p["target_date"], part["edge"], p["timing"]))
+    rows = []
+    for (family, hall), items in sorted(groups.items()):
+        items.sort()
+        timing = {t: sum(1 for *_, x in items if x == t) for t in ("pre_open", "same_day", "after")}
+        rows.append(
+            _row(family, f"{family}/{hall}", hall, hall, [(d, v) for d, v, _ in items], extra={"timing": timing})
+        )
+    return rows
+
+
+def _announce_superseded(path: Path) -> bool:
+    stem = path.name[: -len(".json")]
+    return (path.parent / f"{stem}.withdrawn.json").exists() or (path.parent / f"{stem}__v2.json").exists()
+
+
+def load_announcements(announce_dir: Path, since: str | None = None) -> list[dict]:
+    """採点済みの予告。撤回・差し替え・遡及登録の版は除く(scripts/run_morning.py と同じ基準)。"""
+    out = []
+    for path in sorted(announce_dir.glob("*__*.json")) if announce_dir.exists() else []:
+        if path.name.endswith(".withdrawn.json") or _announce_superseded(path):
+            continue
+        try:
+            obj = json.loads(path.read_text(encoding="utf-8"))
+        except OSError, json.JSONDecodeError:
+            continue
+        if not obj.get("result") or obj.get("retroactive") or (since and obj.get("target_date", "") < since):
+            continue
+        out.append(obj)
+    return out
+
+
+def build_announce_rows(announcements: list[dict]) -> list[Row]:
+    """予告アカウント×ホールごとに、名指し機種の台平均 − ホールの台平均 を1予告1値で並べる。
+
+    機種平均を機種間で単純平均せず、台数で重みづけする(forward の model_perspective と同じ理由)。
+    あわせて閾値超え(hit)の実数と、機種の年齢別ベースレートから見た期待数を残す。
+    """
+    groups: dict[tuple[str, str], list[tuple[str, float]]] = {}
+    hits: dict[tuple[str, str], list[float]] = {}
+    for a in announcements:
+        res = a["result"]
+        base = res.get("hall_baseline_mean_diff")
+        named = [
+            c
+            for c in res.get("claims", [])
+            if c.get("type") == "model_named" and c.get("mean_diff") is not None and c.get("n_machines")
+        ]
+        if base is None or not named:
+            continue
+        n = sum(c["n_machines"] for c in named)
+        edge = sum(c["mean_diff"] * c["n_machines"] for c in named) / n - base
+        key = ((a.get("source") or {}).get("account") or "?", a["hall"])
+        groups.setdefault(key, []).append((a["target_date"], edge))
+        h = hits.setdefault(key, [0, 0.0, 0])
+        for c in named:
+            if c.get("hit") is not None and c.get("base_rate") is not None:
+                h[0] += int(c["hit"])
+                h[1] += float(c["base_rate"])
+                h[2] += 1
+    rows = []
+    for (account, hall), items in sorted(groups.items()):
+        # 同じアカウントが同じ日に複数投稿した場合は日平均にする(1単位=アカウント×ホール×日)
+        by_date: dict[str, list[float]] = {}
+        for d, v in items:
+            by_date.setdefault(d, []).append(v)
+        series = [(d, float(np.mean(v))) for d, v in sorted(by_date.items())]
+        h = hits[(account, hall)]
+        extra = {"hits": h[0], "expected_hits": round(h[1], 1), "n_named_scored": h[2]}
+        rows.append(_row("announce_named", f"{account}/{hall}", hall, account, series, extra=extra))
+    return rows
+
+
 def finalize(rows: list[Row]) -> list[Row]:
     """系列(family)ごとに BH 補正し、判定と「あと何日」を埋める。"""
     for family in sorted({r.family for r in rows}):
@@ -290,9 +398,16 @@ def finalize(rows: list[Row]) -> list[Row]:
     return rows
 
 
-def build(forward_dir: Path = FORWARD_DIR, since: str | None = None) -> list[Row]:
+def build(
+    forward_dir: Path = FORWARD_DIR,
+    since: str | None = None,
+    pred_dir: Path = PRED_DIR,
+    announce_dir: Path = ANNOUNCE_DIR,
+) -> list[Row]:
     rows = build_forward_rows(load_plans(forward_dir, since))
     rows += build_juggler_rows(load_juggler_ledger(forward_dir, since))
+    rows += build_prediction_rows(load_predictions(pred_dir, since))
+    rows += build_announce_rows(load_announcements(announce_dir, since))
     return finalize(rows)
 
 
@@ -305,7 +420,22 @@ def _f(v, fmt):
     return "—" if v is None else format(v, fmt)
 
 
-def _section(out, rows, family, title, unit, fmt, note, with_extra=False):
+def _forward_cols(r: Row) -> str:
+    ce = r.extra.get("criterion_edge")
+    return f" {_f(r.extra.get('pick_win_rate'), '.0%')} | {'+%d枚' % ce if ce else '—'} |"
+
+
+def _timing_cols(r: Row) -> str:
+    t = r.extra.get("timing", {})
+    return f" {t.get('pre_open', 0)}/{t.get('same_day', 0)}/{t.get('after', 0)} |"
+
+
+def _announce_cols(r: Row) -> str:
+    e = r.extra
+    return f" {e.get('hits', 0)} / {_f(e.get('expected_hits'), '.1f')} ({e.get('n_named_scored', 0)}件) |"
+
+
+def _section(out, rows, family, title, unit, fmt, note, extra_head=None, extra_cols=None, key_head="ルール"):
     members = sorted(
         (r for r in rows if r.family == family),
         key=lambda r: (VERDICT_ORDER.get(r.verdict, 9), -(r.stat.mean if r.stat.mean is not None else -1e9)),
@@ -323,11 +453,11 @@ def _section(out, rows, family, title, unit, fmt, note, with_extra=False):
         "内訳: " + " / ".join(f"{k} {counts[k]}" for k in VERDICT_ORDER if k in counts),
         "",
     ]
-    head = f"| 判定 | ルール | ホール | 日数 | 平均{unit} | 95%CI | 正の日 | q | 直近{RECENT_DAYS}日(日数) | あと何日 |"
+    head = f"| 判定 | {key_head} | ホール | 日数 | 平均{unit} | 95%CI | 正の日 | q | 直近{RECENT_DAYS}日(日数) | あと何日 |"
     sep = "|---|---|---|---:|---:|---|---:|---:|---:|---:|"
-    if with_extra:
-        head += " 台の勝率 | 事前基準 |"
-        sep += "---:|---:|"
+    if extra_head:
+        head += "".join(f" {h} |" for h in extra_head)
+        sep += "---:|" * len(extra_head)
     out += [head, sep]
     for r in members:
         s = r.stat
@@ -336,9 +466,8 @@ def _section(out, rows, family, title, unit, fmt, note, with_extra=False):
             f"{_f(s.ci_lo, fmt)} 〜 {_f(s.ci_hi, fmt)} | {_f(s.share_positive, '.0%')} | {_f(s.q, '.3f')} | "
             f"{_f(r.recent_mean, fmt)} ({r.recent_n}) | {_f(r.days_needed, 'd')} |"
         )
-        if with_extra:
-            ce = r.extra.get("criterion_edge")
-            line += f" {_f(r.extra.get('pick_win_rate'), '.0%')} | {'+%d枚' % ce if ce else '—'} |"
+        if extra_cols:
+            line += extra_cols(r)
         out.append(line)
     out.append("")
 
@@ -367,7 +496,8 @@ def render_markdown(rows: list[Row], generated_at: str, since: str | None) -> st
         f"目標差 +{MDE_TARGET['forward_edge']:.0f}枚/台。台の勝率は差枚>0の台の割合"
         "(母集団の勝率と比べていない記述統計)。事前基準は success_criterion から拾った最初の「+N枚」で、"
         "照合は本文で行うこと。",
-        with_extra=True,
+        extra_head=["台の勝率", "事前基準"],
+        extra_cols=_forward_cols,
     )
     _section(
         out,
@@ -388,11 +518,51 @@ def render_markdown(rows: list[Row], generated_at: str, since: str | None) -> st
         "+.3f",
         f"phは当日の高設定確率の推定。目標差 +{MDE_TARGET['juggler_ph']:.2f}。",
     )
+    pred_note = (
+        "予測文書(document/reviews/*-prediction.md)から backtest.prediction_ledger が機械的に抜き出した名指し。"
+        "edge は名指しした台(機種なら全台)の平均差枚 − そのホールの当日全台平均。"
+        "事前性は 開店前/当日中/事後 の件数(事後=git の初出コミットが翌日以降で、事前に書いたことを証明できないもの)。"
+    )
+    for family, title in (
+        ("pred_models", "4. 予測文書: 推した機種(枚/台)"),
+        ("pred_avoid", "5. 予測文書: 避けると書いた機種(全台平均 − 機種平均。正なら避けて正解)"),
+        ("pred_units", "6. 予測文書: 判断で名指しした台"),
+        ("pred_jug_units", "7. 予測文書: ジャグラー候補表の台"),
+    ):
+        _section(
+            out,
+            rows,
+            family,
+            title,
+            "(枚)",
+            "+.0f",
+            pred_note,
+            extra_head=["事前性 開店前/当日/事後"],
+            extra_cols=_timing_cols,
+            key_head="対象",
+        )
+    _section(
+        out,
+        rows,
+        "announce_named",
+        "8. 予告の名指し機種(アカウント×ホール)",
+        "(枚)",
+        "+.0f",
+        "予告で名指しされた機種(model_named)の台平均差枚 − ホールの当日台平均。台数で重みづけ。"
+        "撤回・差し替え・遡及登録の版は除く。判定は差枚の上積み(日の強さを差し引いた値)で行う。"
+        "閾値超えの「期待」は機種の年齢別ベースレートの合計で、**日を条件づけていない**。予告が出る日はホール全体が強いので"
+        "実数が期待を大きく上回って見えるが、それは名指しの力ではなく日の力を含む(feedback: named-model-conditional-baserate)。"
+        "自動下ごしらえで本文から拾った claim を含むので、名指しの読み違いも混ざる。",
+        extra_head=["閾値超え 実/期待"],
+        extra_cols=_announce_cols,
+        key_head="アカウント",
+    )
     out += [
         "## 注意",
         "",
         "- 同じホール・同じ日の複数ルールは独立ではない。本数を独立な証拠として数えないこと。",
-        "- 台帳に載っていない予測(予測文書のTOP候補・予告の名指し)はまだこの表に入っていない。",
+        "- 予測文書の抽出は機械的。古い書式(「判断」の節が無い文書)はほとんど抜けない。"
+        "照合できなかった語は backtest/predictions/*.json の unresolved に残る。",
         "- data_lag_days≥2(古いデータで凍結した日)も含む。件数は SCOREBOARD.json の extra.n_stale_data_days。",
         "",
     ]
@@ -424,7 +594,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     forward_dir = Path(args.forward_dir)
-    rows = build(forward_dir, args.since)
+    rows = build(forward_dir, args.since, PRED_DIR, ANNOUNCE_DIR)
     generated_at = datetime.now(JST).isoformat(timespec="seconds")
     md = render_markdown(rows, generated_at, args.since)
     print(md)

@@ -327,6 +327,11 @@ def _run(args: argparse.Namespace) -> int:
         )
 
     if not args.skip_scoreboard:
+        # 予測文書の名指し(backtest/predictions)の採点を先に済ませてから総合採点表を作る。
+        run(
+            "backtest.prediction_ledger score-due（予測文書の名指しの採点）",
+            [PYTHON, "-u", "-X", "utf8", "-m", "backtest.prediction_ledger", "score-due"],
+        )
         # 前向き検証の総合採点表。forward の採点と juggler 台帳の追記が終わった後に置く。
         # backtest/forward/SCOREBOARD.{md,json} に書くので、下の自動コミットの許可範囲に入る。
         run(

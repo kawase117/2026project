@@ -29,6 +29,7 @@ description: backtest/ 配下39モジュールの役割分担と使い分けの�
 | 未来日の選択を凍結する | `forward.py` | `plan` / `plan-all` |
 | 凍結した選択を採点する | `forward.py` | `score` / `audit` |
 | どのルールが無作為より上か一覧する | `scoreboard.py` | （直接実行）→ `backtest/forward/SCOREBOARD.md` |
+| 予測文書の名指しを凍結・採点する | `prediction_ledger.py` | `freeze-doc` / `score-due` / `backfill` |
 | 予告・結果発表・実績を1表に束ねる | `integrated.py` | `day` / `coverage` / `ingest-*` |
 | 結果発表アカウントを正解ラベル化 | `result_corpus.py` | `build` / `ingest-prose` / `link-machines` / `stats` |
 | ボーナス確率で設定を判別 | `bonus_specs.py` | `judge` / `coverage` |

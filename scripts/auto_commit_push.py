@@ -6,6 +6,7 @@ git の処理が無く、未コミットの変更が毎日溜まっていた(202
 対象は許可リスト方式で、機械的に生成され人が手を入れない出力だけ:
     backtest/forward/        凍結picks・実行ログ・台帳
     backtest/daily_digest/   ホールレビュー・watches・summary
+    backtest/predictions/    予測文書の名指しの凍結と採点(score-due が result を書き込む)
 
 対象外にしているもの(自動でコミットしない):
     backtest/announce/       下書きが台帳のダイジェストと対になっている。セッションで編集中の
@@ -32,7 +33,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-ALLOWED_PATHS = ["backtest/forward", "backtest/daily_digest"]
+ALLOWED_PATHS = ["backtest/forward", "backtest/daily_digest", "backtest/predictions"]
 BRANCH = "main"
 JST = ZoneInfo("Asia/Tokyo")
 
