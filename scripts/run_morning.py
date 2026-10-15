@@ -185,6 +185,16 @@ def main() -> int:
         help="朝の機械生成物(backtest/forward・daily_digest)の自動コミット&プッシュを行わない",
     )
     parser.add_argument(
+        "--skip-audit",
+        action="store_true",
+        help="取り込み直後のデータ品質監査(database.data_audit)を行わない",
+    )
+    parser.add_argument(
+        "--ignore-audit-errors",
+        action="store_true",
+        help="監査が ERROR でも予告採点・フォワード・ジャグラー台帳を止めない（人が中身を確認した後の再実行用）",
+    )
+    parser.add_argument(
         "--only-if-complete",
         action="store_true",
         help=(
@@ -264,6 +274,31 @@ def _run(args: argparse.Namespace) -> int:
                 return 0
             print("\n  ※ --only-if-complete: 全ホールが前日分まで揃った。このまま最後まで進める。")
 
+    # 取り込んだ前日分(end)のデータ品質監査。結果は document/registry/DATA_AUDIT.jsonl に追記される。
+    #
+    # ERROR のときに朝の実行全体を止めず、「一度書いたら直せない段」だけを飛ばす。理由:
+    #   - このスクリプトは個々の段が失敗しても終了コードで落とさず先へ進む作法で、
+    #     完全性で後続を止めるのも --only-if-complete が「不可逆な段をまとめてゲートする」形を取っている。
+    #     監査も同じ形に合わせる。
+    #   - 予告の採点（作り直し禁止）、フォワードの採点・凍結（凍結は上書きしない）、
+    #     ジャグラー台帳（追記のみ）は、壊れたデータで一度書くと嘘の実績が残る。だから飛ばす。
+    #   - 履歴の蓄積・ホールレビュー・当日の答え合わせ表は同じ日を再実行すれば上書きされるので続ける。
+    #     X 収集と自動プッシュはデータ品質と無関係なので続ける。
+    #   - 飛ばした段は、人が監査結果を確認してから --ignore-audit-errors 付きで再実行すれば取り戻せる
+    #     （フォワードの凍結は当日16時が締め切り）。
+    # 当日分が未掲載なだけのホールは ERROR にならない（presence=INFO）。
+    audit_blocked = False
+    if not args.skip_audit:
+        code = run(
+            "database.data_audit --date %s" % end,
+            [PYTHON, "-u", "-X", "utf8", "-m", "database.data_audit", "--date", end],
+        )
+        if code != 0 and not args.ignore_audit_errors:
+            audit_blocked = True
+            print("\n  ⚠️ データ監査で ERROR。予告採点・フォワード・ジャグラー台帳を今回は行わない。")
+            print("     document/registry/DATA_AUDIT.jsonl を確認し、問題なければ")
+            print("     --skip-anaslo --ignore-audit-errors を付けて再実行すること。")
+
     if not args.skip_history:
         # 角番ピークと並び箇所数を analysis_results.db に貯める。取込の直後に
         # 置くのは、その日の raw データが入った状態でしか計算できないため。
@@ -283,13 +318,13 @@ def _run(args: argparse.Namespace) -> int:
             [PYTHON, "-u", "-X", "utf8", "-m", "backtest.daily_digest", "hall-review", "--all-halls", "--date", end],
         )
 
-    if not args.skip_announce_score:
+    if not args.skip_announce_score and not audit_blocked:
         print("\n" + "=" * 70)
         print("期日の来た予告の採点")
         print("=" * 70)
         score_due_announcements()
 
-    if not args.skip_forward:
+    if not args.skip_forward and not audit_blocked:
         # フォワードテスト。ここに置いていなかったせいで 2026-08-13〜09-10 の
         # 29日間、plan-all も score も一度も走らなかった（約270プラン日を失った）。
         # 手で回す運用に戻さないこと。
@@ -312,7 +347,7 @@ def _run(args: argparse.Namespace) -> int:
             [PYTHON, "-u", "-X", "utf8", "-m", "backtest.forward", "plan-all"],
         )
 
-    if not args.skip_juggler_ledger:
+    if not args.skip_juggler_ledger and not audit_blocked:
         # ジャグラー持ち越し候補の前向き検証台帳。取り込んだ前日分(end)を、その前日までの履歴で
         # 作った候補と突き合わせて backtest/forward/juggler_carryover_ledger.jsonl へ追記する。
         # 同じ(ホール,日付,機種)は重複追記しない。失敗しても朝の実行は止めない。
