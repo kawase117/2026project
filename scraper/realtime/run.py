@@ -302,6 +302,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--no-report", action="store_true", help="ホールごとの即時報告と最後の総合ランキングを出さない")
     parser.add_argument("--report-top", type=int, default=8, help="ホールごとの即時報告に出す台数")
     parser.add_argument("--final-top", type=int, default=50, help="最後の総合ランキングに出す台数")
+    parser.add_argument("--uniform-prior", action="store_true", help="ホール別の設定事前を使わず一様事前にする")
     args = parser.parse_args(argv)
     keys = list(HALLS) if args.halls == "all" else args.halls.split(",")
     if not keys or any(key not in HALLS for key in keys) or len(set(keys)) != len(keys):
@@ -331,9 +332,14 @@ def main(argv: list[str] | None = None) -> int:
         results = [item for future in futures.values() for item in future.result()]
     print(format_table(results))
     if not args.no_report and _ROWS:
+        from .hall_prior import load_hall_priors
         from .rank import build_ranking, format_final, write_ranking
 
-        data = build_ranking([r for rows in _ROWS.values() for r in rows], top=args.final_top)
+        data = build_ranking(
+            [r for rows in _ROWS.values() for r in rows],
+            top=args.final_top,
+            hall_prior=None if args.uniform_prior else load_hall_priors(),
+        )
         print(format_final(data))
         print(f"JSON: {write_ranking(data)}")
     for item in results:

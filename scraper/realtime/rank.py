@@ -147,9 +147,17 @@ def main(argv=None):
     parser.add_argument("--latest-per-hall", action="store_true")
     parser.add_argument("--top", type=int, default=50)
     parser.add_argument("--min-confidence", type=float, default=0.0)
+    parser.add_argument("--uniform-prior", action="store_true", help="ホール別の設定事前を使わず一様事前にする")
     args = parser.parse_args(argv)
     rows = read_snapshots(args.snapshots, latest_per_hall=True)
-    data = build_ranking(rows, top=args.top, min_confidence=args.min_confidence)
+    from .hall_prior import load_hall_priors
+
+    data = build_ranking(
+        rows,
+        top=args.top,
+        min_confidence=args.min_confidence,
+        hall_prior=None if args.uniform_prior else load_hall_priors(),
+    )
     print(format_ranking(data))
     print(f"JSON: {write_ranking(data)}")
     return 0

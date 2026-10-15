@@ -9,6 +9,7 @@ from pathlib import Path
 
 from backtest.bonus_specs import find_spec, load_specs, posterior
 from .adapters.common import model_name
+from .hall_prior import spec_key
 from .quick_filter import load_audit
 from .schema import SnapshotRow
 
@@ -24,12 +25,15 @@ def _entropy(probs):
     return -sum(p * math.log(p) for p in probs if p > 0)
 
 
-def _prior(settings, hall, hall_prior):
+def _prior(settings, hall, hall_prior, model=None):
     supplied = (
         hall_prior.get(hall)
         if isinstance(hall_prior, dict) and any(isinstance(k, str) for k in hall_prior)
         else hall_prior
     )
+    if isinstance(supplied, dict) and any(isinstance(k, str) for k in supplied):
+        # {機種キー: {設定: 重み}}。機種が無ければ一様事前にする
+        supplied = supplied.get(spec_key(model)) if model else None
     weights = {s: float(supplied.get(s, 0)) if supplied else 1.0 for s in settings}
     total = sum(weights.values())
     if total <= 0 or any(v < 0 for v in weights.values()):
@@ -136,7 +140,7 @@ def estimate(row: SnapshotRow, *, specs=None, audit=None, hall_prior=None, spec_
     if chosen is None:
         return _none("高低両側の設定別ボーナス確率が揃っていない")
     mode, settings, bb_count, evidence_notes = chosen
-    prior = _prior(settings, row.hall, hall_prior)
+    prior = _prior(settings, row.hall, hall_prior, name)
     keys = {
         "bb_rb": ("bb_probability", "rb_probability"),
         "rb": ("rb_probability",),
@@ -177,6 +181,8 @@ def estimate(row: SnapshotRow, *, specs=None, audit=None, hall_prior=None, spec_
     base = _entropy([prior_high, 1 - prior_high])
     confidence = max(0.0, min(1.0, (base - _entropy([post_high, 1 - post_high])) / base)) if base else 0.0
     notes = list(evidence_notes)
+    if hall_prior is not None and len(set(prior.values())) == 1:
+        notes.append("ホール別事前なし: 一様事前(DBなし・台日不足。事前のあるホールより高く出やすい)")
     if row.games < SMALL_GAMES:
         notes.append("1000G未満: 尤度をG/1000乗して事前へ縮小")
     elif row.games <= EARLY_GAMES:
