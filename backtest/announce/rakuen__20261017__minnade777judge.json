@@ -1,0 +1,38 @@
+{
+  "announce_id": "rakuen__20261017__minnade777judge",
+  "hall": "楽園蒲田店",
+  "target_date": "20261017",
+  "source": {
+    "account": "minnade777judge",
+    "url": "",
+    "posted_at": "2026-10-16T15:07:59+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "10/17 楽園上永谷\n\n近隣対抗に燃える楽園上永谷。\n\n過去の傾向として\n・攻殻機動隊が1/2上2つ\n・GODが1/3上2つ\n・全台上2つ機種、1/2&1/3上2つ機種複数\n・1/4、1/5で上2つ\n・1/6てっぺん機種\nなどがあります。\n\n過去傾向を徹底的に分析してみんなでジャッジ！",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"楽園蒲田店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-17\", \"2026-10-15\"], \"n_days\": 90, \"n_model_days\": 5087, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2330.0, \"models_over_threshold_per_day\": {\"mean\": 2.83, \"median\": 2.5, \"max\": 11}, \"candidate_models_per_day\": 56.5, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.93, \"median\": 3.0, \"max\": 13}, \"p_at_least_1\": 0.978, \"p_at_least_2\": 0.911, \"p_at_least_3\": 0.678, \"p_at_least_4\": 0.467, \"p_at_least_10\": 0.011}} / named_context: {\"as_of\": \"20261015\", \"window_days\": 30, \"n_candidates_ge3machines\": 59, \"hall_over_threshold_rate_approx\": 0.034, \"threshold\": 1800.0, \"models\": [{\"name\": \"ミリオンゴッド‐神々の軌跡‐\", \"n_machines\": 13, \"rank\": 51, \"of\": 59, \"n_days_present\": 30, \"over_threshold\": 0, \"rate\": 0.0, \"mean_score\": -19.3}, {\"name\": \"攻殻機動隊\", \"n_machines\": 3, \"rank\": 4, \"of\": 59, \"n_days_present\": 30, \"over_threshold\": 10, \"rate\": 0.333, \"mean_score\": 1377.0}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "ミリオンゴッド‐神々の軌跡‐",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "攻殻機動隊",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。 ヒント: 1/2系の可能性(model_named_ratioならratio指定が必要)"
+    }
+  ],
+  "unscored_claims": [],
+  "needs_manual_review": true,
+  "no_confirmed_machines": false,
+  "result": null,
+  "announce_digest": "e91aa4d2eabd1c16",
+  "provisional": true
+}

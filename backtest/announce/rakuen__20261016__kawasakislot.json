@@ -39,7 +39,108 @@
   "unscored_claims": [],
   "needs_manual_review": false,
   "no_confirmed_machines": false,
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20261016",
+    "hall_baseline_mean_diff": 21.2,
+    "hall_n_machines": 587,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 1,
+      "machines_hi": [],
+      "machines_lo": [
+        "ソードアート・オンラインII"
+      ],
+      "bounds": [
+        -5095,
+        15477
+      ]
+    },
+    "claims": [
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "化物語",
+          "ratio": 2,
+          "note": "手修正(10/16): 「化物語が1/2⑤⑥」(先バレ)"
+        },
+        "n_machines": 9,
+        "ratio": 2,
+        "top_k": 5,
+        "model_top_k_mean_diff": 4410.2,
+        "hall_top_quantile_mean_diff": 1048.1,
+        "excess_vs_hall_quantile": 3362.1,
+        "model_mean_diff": 1836.6,
+        "n_over_hall_quantile": 6,
+        "hit": true,
+        "model_named_score": 5907.4,
+        "model_named_rank": 2
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+          "ratio": 3,
+          "note": "手修正(10/16): 「Lカバネリが1/3⑤⑥」(先バレ)。カバネリ全般は海門決戦に確定"
+        },
+        "n_machines": 30,
+        "ratio": 3,
+        "top_k": 10,
+        "model_top_k_mean_diff": 2552.7,
+        "hall_top_quantile_mean_diff": 1655.0,
+        "excess_vs_hall_quantile": 897.7,
+        "model_mean_diff": -190.1,
+        "n_over_hall_quantile": 11,
+        "hit": true,
+        "model_named_score": -449.6,
+        "model_named_rank": 53
+      },
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 1,
+          "note": "手修正(10/16): 「全⑤⑥機種」(アンケート)"
+        },
+        "observed_n_models": 4,
+        "candidate_models": 59,
+        "models": [
+          {
+            "machine_name": "押忍!番長ZERO",
+            "score": 7227.4,
+            "n_machines": 3,
+            "mean_diff": 2175.0,
+            "age_days": 653
+          },
+          {
+            "machine_name": "化物語",
+            "score": 5907.4,
+            "n_machines": 9,
+            "mean_diff": 1836.6,
+            "age_days": 312
+          },
+          {
+            "machine_name": "青春ブタ野郎はバニーガール先輩の夢を見ない",
+            "score": 3640.2,
+            "n_machines": 7,
+            "mean_diff": 2224.9,
+            "age_days": 39
+          },
+          {
+            "machine_name": "真打 吉宗",
+            "score": 2074.5,
+            "n_machines": 5,
+            "mean_diff": 2371.8,
+            "age_days": 193
+          }
+        ],
+        "n_new_machines_over": 0,
+        "hit": true
+      }
+    ]
+  },
   "announce_digest": "b9ad8513e09b69cf",
   "provisional": true,
   "amendments": [
