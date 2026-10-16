@@ -25,6 +25,10 @@ ACCOUNTS = {
     # kawasakislot の予告が「過去結果」として引用する一次資料。2026-09-20 に追加。
     "datagasubete": {"hall": "rakuen_kamata", "role": "結果報告(機種別の全台/1/2)"},
     "kengyo_niki": {"hall": "hiroki", "role": "答え合わせ"},
+    # 蒲田エリアのデータ系アカウント（2026-10-17 ユーザー指定）。ヒロキのイベントには
+    # LINE（アスロボ7）に流れず Twitter だけに出るものがあり、9/12・10/12 の東口
+    # HALFBURST 取材が台帳に無かった原因の穴埋め。投稿傾向は未検証のため role は仮置き。
+    "Kamacho_data": {"hall": "hiroki", "role": "蒲田データ(ヒロキ含む、投稿傾向未検証)"},
     "sloneko222": {"hall": "arrow_ikegami_mitoya_omori", "role": "結果報告"},
     # みとや大森町店の店舗公式アカウント（2026-09-24 ユーザー確認）。sloneko222は
     # エリア横断の個人アカウントで、こちらは店舗自身の一次資料。投稿傾向（台番号を
