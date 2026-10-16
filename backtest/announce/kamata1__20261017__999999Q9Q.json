@@ -10,7 +10,7 @@
   },
   "raw_text": "【メイン機種があまりにも強すぎる】\n新章メガいちよこやん予想\n\n明日は7の付く日。全系機種・ニブイチ機種（複数）・メイン機種（スマスロ中心）への単品強化で店内全域にチャンスがあるとされている。\n\n【狙い所】\n・全機種\n→主に2〜5台機種。7の日は複数機種やりがち。\n・ニブイチ機種\n→主に7台以上の多台数機種。\n・メイン機種への単品投下\n→おすすめの戦国乙女5、北斗転生、スマスロ北斗は優先的に。\n\n単品仕掛けは早見切りされる箇所もあるので、空台にも可能性が十分あるということは念頭に置いておきたい\n\n#マルハンメガシティ2000蒲田1",
   "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
-  "weakness_note": "",
+  "weakness_note": "本文は「全機種(主に2〜5台機種)・ニブイチ機種(複数、主に7台以上)・メイン機種(戦国乙女5、北斗転生、スマスロ北斗)への単品」。メイン機種3つは『単品投下』で強度が不明のため、model_namedとしては採点しない(全台系を要求する名指しではない)。自動抽出の3機種は外した。",
   "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"マルハンメガシティ2000-蒲田1\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-17\", \"2026-10-15\"], \"n_days\": 90, \"n_model_days\": 4341, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2190.1, \"models_over_threshold_per_day\": {\"mean\": 2.42, \"median\": 2.0, \"max\": 7}, \"candidate_models_per_day\": 48.2, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.1, \"median\": 3.0, \"max\": 8}, \"p_at_least_1\": 0.967, \"p_at_least_2\": 0.767, \"p_at_least_3\": 0.556, \"p_at_least_4\": 0.378, \"p_at_least_10\": 0.0}} / named_context: {\"as_of\": \"20261015\", \"window_days\": 30, \"n_candidates_ge3machines\": 50, \"hall_over_threshold_rate_approx\": 0.08, \"threshold\": 1800.0, \"models\": [{\"name\": \"スマスロ北斗の拳\", \"n_machines\": 7, \"rank\": 40, \"of\": 50, \"n_days_present\": 30, \"over_threshold\": 4, \"rate\": 0.133, \"mean_score\": 550.0}, {\"name\": \"北斗の拳 転生の章2\", \"n_machines\": 11, \"rank\": 36, \"of\": 50, \"n_days_present\": 30, \"over_threshold\": 0, \"rate\": 0.0, \"mean_score\": 71.3}, {\"name\": \"戦国乙女5 業火を穿つ宿焔の双刃\", \"n_machines\": 9, \"rank\": 3, \"of\": 50, \"n_days_present\": 30, \"over_threshold\": 4, \"rate\": 0.133, \"mean_score\": 3.3}]}",
   "zentaikei": {
     "metric": "gratio_mean_diff",
@@ -19,25 +19,24 @@
   },
   "claims": [
     {
-      "type": "model_named",
-      "machine_name": "スマスロ北斗の拳",
-      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
-    },
-    {
-      "type": "model_named",
-      "machine_name": "北斗の拳 転生の章2",
-      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
-    },
-    {
-      "type": "model_named",
-      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
-      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+      "type": "zentaikei_count",
+      "n_models": 2,
+      "note": "「全系機種」は複数機種あるとされる(7の日は複数機種やりがち)。主に2〜5台機種"
     }
   ],
   "unscored_claims": [],
-  "needs_manual_review": true,
+  "needs_manual_review": false,
   "no_confirmed_machines": false,
   "result": null,
-  "announce_digest": "a2a9e24f87a92331",
-  "provisional": true
+  "announce_digest": "7bc6041717cfb0f4",
+  "provisional": true,
+  "amendments": [
+    {
+      "at": "2026-10-17T07:34:49+09:00",
+      "prev_digest": "a2a9e24f87a92331",
+      "reason": "claims訂正: 全機種(複数)のみ採点。メイン機種(戦国乙女5・北斗転生・スマスロ北斗)の単品は強度不明のため外す",
+      "void": false,
+      "amended_after_target": false
+    }
+  ]
 }
