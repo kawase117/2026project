@@ -46,7 +46,7 @@ REVIEWS = PROJECT_ROOT / "document" / "reviews"
 PREDICTIONS = PROJECT_ROOT / "backtest" / "predictions"
 AUTO_MARK = "<!-- auto-morning-docs -->"
 CLAUDE_TIMEOUT_SEC = 25 * 60
-CONCURRENCY = 3  # claude -p を同時に走らせるホール数（逐次だと10ホールで1時間近くかかる）
+CONCURRENCY = 5  # claude -p を同時に走らせるホール数（逐次だと10ホールで1時間近くかかる）
 
 # backtest.prediction_ledger.HALL_KEY と同じ対応。表示名は文書の見出しに使う（freeze-doc が拾う）。
 HALLS = {
