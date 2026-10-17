@@ -12,5 +12,7 @@ rem 07:30 slot: ana-slo retry (idempotent -- scraper skips already-fetched days)
 rem then DB update, history, announce scoring, and forward-test freeze -- once.
 rem X monitoring runs separately at 03:00 (scripts\run_twitter_0300.bat).
 "%PYTHON%" -u scripts\run_morning.py --skip-twitter >> "%LOG_FILE%" 2>&1
+rem Draft docs for halls not handled at 07:00 (done-markers skip finished halls/stages).
+"%PYTHON%" -u scripts\run_morning_docs.py >> "%LOG_FILE%" 2>&1
 popd
 endlocal

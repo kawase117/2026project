@@ -17,5 +17,8 @@ rem yesterday, finishes history / announce scoring / forward freeze right
 rem here. If any hall is still short, it stops and leaves the rest to the
 rem 07:30 task (run_morning.bat), which always runs to completion regardless.
 "%PYTHON%" -u scripts\run_morning.py --skip-twitter --only-if-complete >> "%LOG_FILE%" 2>&1
+rem Draft answer-check -> juggler -> prediction docs for halls whose yesterday data is in.
+rem Halls still missing are picked up by the 07:30 task (done-markers make re-runs cheap).
+"%PYTHON%" -u scripts\run_morning_docs.py >> "%LOG_FILE%" 2>&1
 popd
 endlocal
