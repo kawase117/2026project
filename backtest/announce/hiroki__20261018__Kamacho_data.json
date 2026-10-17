@@ -1,0 +1,37 @@
+{
+  "announce_id": "hiroki__20261018__Kamacho_data",
+  "hall": "ヒロキ東口店",
+  "target_date": "20261018",
+  "source": {
+    "account": "Kamacho_data",
+    "url": "",
+    "posted_at": "2026-10-17T22:07:52+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "10/18(日) ヒロキ東口 割/切リサーチ 過去の結果\n\nイベント日ごとの総差枚\n\n5/16(土)　-31,390枚\n平均：-31,390枚\n\n前回はマイナス\n今回も続くか…\n\n回数少ないので、狙い目はなし。\n\n#ヒロキ東口",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"ヒロキ東口店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-18\", \"2026-10-16\"], \"n_days\": 90, \"n_model_days\": 3632, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 1562.1, \"models_over_threshold_per_day\": {\"mean\": 2.02, \"median\": 2.0, \"max\": 7}, \"candidate_models_per_day\": 40.4, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 1.68, \"median\": 1.0, \"max\": 6}, \"p_at_least_1\": 0.8, \"p_at_least_2\": 0.422, \"p_at_least_3\": 0.222, \"p_at_least_4\": 0.144, \"p_at_least_10\": 0.0}}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [],
+  "unscored_claims": [],
+  "needs_manual_review": false,
+  "no_confirmed_machines": true,
+  "result": null,
+  "announce_digest": "ca49b81c278e4dd4",
+  "provisional": true,
+  "amendments": [
+    {
+      "at": "2026-10-18T08:18:55+09:00",
+      "prev_digest": "fe03ceab2c101ed4",
+      "reason": "予告ではない: 過去の結果の集計(Kamacho_data)。東口の予告はアスロボ(割／切リサーチ来店取材)で、EVENT_DAYSに登録済み",
+      "void": true,
+      "amended_after_target": false
+    }
+  ],
+  "voided": true
+}

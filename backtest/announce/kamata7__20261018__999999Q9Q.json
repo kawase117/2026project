@@ -1,0 +1,53 @@
+{
+  "announce_id": "kamata7__20261018__999999Q9Q",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "target_date": "20261018",
+  "source": {
+    "account": "999999Q9Q",
+    "url": "",
+    "posted_at": "2026-10-18T00:12:36+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "GALAXYウスイのメガなな予想\n\n日曜日のメガななは機種イチ以上。メインだろうがバラ寄りの機種だろうが、どんな機種でも機種イチが仕込まれると言われている。少台数機種から狙いたくなるが、メイン機種、特にジャグラーは毎回各機種から複数の高設定の香りがする。\n\n週末になると、台数多めの機種で全をやりがちなのがウスイという男。前日が7の付く日だろうとその辺りのメタ読みは全く気にする必要はない\n\n#マルハンメガシティ2000蒲田7",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "本文は「日曜は機種イチ以上、台数多めの機種で全をやりがち」。機種名の名指しなし。機種イチ以上は反証不能なのでclaimsにしない。",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"マルハンメガシティ2000-蒲田7\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-18\", \"2026-10-16\"], \"n_days\": 90, \"n_model_days\": 5757, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2129.4, \"models_over_threshold_per_day\": {\"mean\": 3.2, \"median\": 3.0, \"max\": 9}, \"candidate_models_per_day\": 64.0, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.93, \"median\": 3.0, \"max\": 10}, \"p_at_least_1\": 0.989, \"p_at_least_2\": 0.922, \"p_at_least_3\": 0.722, \"p_at_least_4\": 0.444, \"p_at_least_10\": 0.022}}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "zentaikei_count",
+      "n_models": 1,
+      "note": "「週末は台数多めの機種で全をやりがち」(全が1機種以上)。機種イチ以上は反証できないため採点しない"
+    }
+  ],
+  "unscored_claims": [
+    {
+      "text": "マイジャグラーV(部分一致score=0.625)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    },
+    {
+      "text": "マイジャグラーⅥ(部分一致score=0.625)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    }
+  ],
+  "needs_manual_review": false,
+  "no_confirmed_machines": true,
+  "result": null,
+  "announce_digest": "4bac6d2761ade207",
+  "provisional": true,
+  "amendments": [
+    {
+      "at": "2026-10-18T08:18:51+09:00",
+      "prev_digest": "17f6bec91d98af9b",
+      "reason": "claims確定: 全1機種以上のみ。機種イチ以上は反証不能で除外",
+      "void": false,
+      "amended_after_target": false
+    }
+  ]
+}

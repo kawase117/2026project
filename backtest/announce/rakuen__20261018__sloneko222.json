@@ -1,0 +1,48 @@
+{
+  "announce_id": "rakuen__20261018__sloneko222",
+  "hall": "楽園蒲田店",
+  "target_date": "20261018",
+  "source": {
+    "account": "sloneko222",
+    "url": "",
+    "posted_at": "2026-10-17T19:00:04+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "明日のスロ猫チェック\n\n「日曜日」\nエスパス西武新宿\nエスパス渋谷新館\nエスパス秋葉原\n\n「8の付く日」\nARROW池上\nアイランド秋葉原\n大山オーシャン\n\n---------------------------------\n\nエスパス 新宿 歌舞伎 町\nエスパス秋葉原\nエスパス上野新館\nエスパス上野本館\nエスパス高田馬場\nエスパス赤坂見附\nエスパス新大久保\nエスパス渋谷新館\nエスパス新小岩\nマルハン八王子四谷\nマルハン日野\nマルハン昭島\nピーアーク三田\nピーアーク相模大野\nラカータ坂戸\nラカータ鶴ヶ島777\nエスパス西武新宿\n大山オーシャンスロット専門館\n楽園川崎\nトワーズ桶川\nパラッツォ三郷中央\nジャンジャンデルノザウルス今市",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"楽園蒲田店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-18\", \"2026-10-16\"], \"n_days\": 90, \"n_model_days\": 5088, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2295.2, \"models_over_threshold_per_day\": {\"mean\": 2.83, \"median\": 2.5, \"max\": 11}, \"candidate_models_per_day\": 56.5, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.89, \"median\": 3.0, \"max\": 13}, \"p_at_least_1\": 0.978, \"p_at_least_2\": 0.911, \"p_at_least_3\": 0.667, \"p_at_least_4\": 0.456, \"p_at_least_10\": 0.011}}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [],
+  "unscored_claims": [
+    {
+      "text": "ケロット4(部分一致score=0.6)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    },
+    {
+      "text": "ケロット5(部分一致score=0.6)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    }
+  ],
+  "needs_manual_review": false,
+  "no_confirmed_machines": true,
+  "result": null,
+  "announce_digest": "7720ff9ed83e1787",
+  "provisional": true,
+  "amendments": [
+    {
+      "at": "2026-10-18T08:18:59+09:00",
+      "prev_digest": "675e4293c243ccb9",
+      "reason": "予告ではない: 明日のスロ猫チェックの店名一覧",
+      "void": true,
+      "amended_after_target": false
+    }
+  ],
+  "voided": true
+}
