@@ -163,6 +163,10 @@ def facts_block(key: str, today: str, yesterday: str) -> str:
   （スキーマは database/CLAUDE.md。date は YYYYMMDD の文字列、台番号は machine_number）。
 - 当日の予告ファイル:
 {listing}
+- 予告に「狙い目はリプにぶら下げる」とあるときの機種・台番号は、予告の本文ではなく投稿者の自分への返信にある。
+  `scraper/twitter_monitor/state.db` の `self_replies`（tweet_id, handle, tweet_text, posted_at_jst, image_paths）に集めてある。
+  予告を出したアカウントの、予告より後の返信を読む（画像は image_paths の画像ファイル）。
+  返信が見つからなければ「狙い目の返信はまだ収集できていない」と事実として書き、機種を創作しない。
 """
 
 

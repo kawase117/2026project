@@ -423,6 +423,10 @@ def _run(args: argparse.Namespace) -> int:
         print("空きは %d 日なので通常の巡回で足ります。" % gap_days)
 
     run("scrape_tweets.py")
+    # 「狙い目はリプにぶら下げときます」型の予告は、機種・台番号が自分への返信にある。
+    # scrape_tweets.py は返信を捨てるので、別テーブル self_replies に集める（予告の抽出には混ぜない）。
+    # 失敗しても予告の収集と登録は止めない。
+    run("scrape_self_replies.py")
 
     if not args.skip_fulltext:
         # 台帳ギャップ検知も予告の登録もこの全文を読むので、prefilter より前に置く。
