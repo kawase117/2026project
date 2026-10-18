@@ -225,6 +225,7 @@ CLAIM_TYPES = {
     "model_named_ratio",  # 特定機種を名指し（1/N⑤⑥＝一部の台だけ高設定）
     "category_share",  # 閾値超え機種のうち当該カテゴリが min_share 以上
     "category_high_share",  # 当該カテゴリの台のうち高設定(既定4〜6)の割合が min_share 程度（RBの尤度で推定）
+    "model_high_share",  # 当該機種の台のうち高設定(既定4〜6)の割合が min_share 程度（basis: bonus=BB/RB, payout=差枚×機械割）
     "position_rule",  # 特定位置（角番・末尾等）に仕掛けがある
     "narabi",  # 同一 section 内の連番ブロック
 }
@@ -237,6 +238,8 @@ HIGH_SHARE_CATEGORIES = {"jug_flag", "hana_flag"}
 HIGH_SHARE_DEFAULT_HIGH = (4, 5, 6)  # 現場では実際に入るのは主に5（456）。
 HIGH_SHARE_DEFAULT_MIN_GAMES = 1500  # 2,000G未満は誤警報が多い。1,500Gを下限にして台数を確保する。
 HIGH_SHARE_MIN_UNITS = 10  # これ未満の台数では割合を推定しない（hit=None）。
+HIGH_SHARE_MIN_HISTORY = 300  # basis=payout: 差枚のばらつきを推定するのに必要な、機種の履歴の台日数。
+HIGH_SHARE_BASES = {"bonus", "payout"}
 POSITION_FIELDS = {"rank_from_aisle", "rank_from_min", "rank_from_max", "last_digit", "section"}
 
 # 機種タイプのセグメント。末尾・角番の効果はセグメントごとに符号が違うため、
@@ -393,6 +396,19 @@ def validate(obj: dict) -> None:
             min_games = c.get("min_games", HIGH_SHARE_DEFAULT_MIN_GAMES)
             if isinstance(min_games, bool) or not isinstance(min_games, int) or min_games < 0:
                 raise ValueError("category_high_share.min_games は 0 以上の整数")
+        if t == "model_high_share":
+            if not c.get("machine_name"):
+                raise ValueError("model_high_share.machine_name が無い")
+            if c.get("basis") not in HIGH_SHARE_BASES:
+                raise ValueError(f"model_high_share.basis は {sorted(HIGH_SHARE_BASES)} のいずれか")
+            if not 0 < float(c.get("min_share", 0)) <= 1:
+                raise ValueError("model_high_share.min_share は 0 < x <= 1")
+            high = c.get("high_settings", list(HIGH_SHARE_DEFAULT_HIGH))
+            if not high or any(isinstance(s, bool) or not isinstance(s, int) or not 1 <= s <= 6 for s in high):
+                raise ValueError("model_high_share.high_settings は 1〜6 の整数のリスト")
+            min_games = c.get("min_games", HIGH_SHARE_DEFAULT_MIN_GAMES)
+            if isinstance(min_games, bool) or not isinstance(min_games, int) or min_games < 0:
+                raise ValueError("model_high_share.min_games は 0 以上の整数")
         if t == "position_rule":
             if c.get("field") not in POSITION_FIELDS:
                 raise ValueError(f"position_rule.field は {sorted(POSITION_FIELDS)} のいずれか")
@@ -1084,6 +1100,9 @@ def _judge_claims(obj: dict, day: pd.DataFrame, first_seen: pd.Series | None = N
         elif t == "category_high_share":
             entry.update(_judge_category_high_share(c, obj["hall"], day))
 
+        elif t == "model_high_share":
+            entry.update(_judge_model_high_share(c, obj, day))
+
         elif t == "model_named_ratio":
             entry.update(_judge_model_named_ratio(c, day, ms, min_machines))
 
@@ -1223,6 +1242,11 @@ def estimate_high_share(units: list[tuple[dict, int, int, int]], high_settings=H
             continue
         lows.append(_logmeanexp(lo))
         highs.append(_logmeanexp(hi))
+    return _mixture_share(lows, highs)
+
+
+def _mixture_share(lows: list[float], highs: list[float]) -> dict | None:
+    """台ごとの「低設定群のもとでの対数尤度」「高設定群のもとでの対数尤度」から、高設定の割合を推定する。"""
     n = len(lows)
     if n < HIGH_SHARE_MIN_UNITS:
         return None
@@ -1236,6 +1260,36 @@ def estimate_high_share(units: list[tuple[dict, int, int, int]], high_settings=H
         "ci_low": round(float(inside.min()), 3),
         "ci_high": round(float(inside.max()), 3),
     }
+
+
+def estimate_high_share_payout(
+    units: list[tuple[int, float]],
+    payout: dict[int, float],
+    variance_per_game: float,
+    high_settings=HIGH_SHARE_DEFAULT_HIGH,
+) -> dict | None:
+    """差枚×機械割から、台のうち高設定の割合を推定する（AT・ARTなどBB/RBで測れない機種向け）。
+
+    units は (回転数, 差枚) のリスト。payout は設定→機械割(%)。回転数Gで機械割pなら期待差枚は
+    3×G×(p/100−1)（3枚掛け）。差枚はこの期待値のまわりに標準偏差 √(variance_per_game×G) で
+    ばらつくとし、低設定群（high_settings 以外）と高設定群の期待差枚の平均で2群の混合を作る。
+
+    他の機種と差枚を比べないので、機械割が低めの機種が不利にならない。ただし差枚は設定の
+    直接の証拠ではなく、AT・ARTは裾が重い。区間は広くなりやすい（台数が少ない日はほぼ何も言えない）。
+    """
+    high = set(high_settings)
+    lo_rates = [p for k, p in payout.items() if k not in high and p == p]
+    hi_rates = [p for k, p in payout.items() if k in high and p == p]
+    if not lo_rates or not hi_rates or variance_per_game <= 0:
+        return None
+    mu_lo, mu_hi = np.mean(lo_rates) / 100 - 1, np.mean(hi_rates) / 100 - 1
+    lows: list[float] = []
+    highs: list[float] = []
+    for games, diff in units:
+        sd = float(np.sqrt(variance_per_game * games))
+        lows.append(float(-0.5 * ((diff - 3 * games * mu_lo) / sd) ** 2 - np.log(sd)))
+        highs.append(float(-0.5 * ((diff - 3 * games * mu_hi) / sd) ** 2 - np.log(sd)))
+    return _mixture_share(lows, highs)
 
 
 def _judge_category_high_share(c: dict, hall: str, day: pd.DataFrame) -> dict:
@@ -1271,6 +1325,11 @@ def _judge_category_high_share(c: dict, hall: str, day: pd.DataFrame) -> dict:
             "hit": None,
             "note": f"推定に使える台が{HIGH_SHARE_MIN_UNITS}台未満（{min_games}G以上のRB判別可能な台: {len(units)}）",
         }
+    return _share_result(est, claimed, high, min_games)
+
+
+def _share_result(est: dict, claimed: float, high: tuple, min_games: int) -> dict:
+    """推定の区間と主張値から3段階の verdict を作る（category_high_share と model_high_share で共通）。"""
     if est["ci_low"] > claimed:
         verdict = "期待を上回る"
     elif est["ci_high"] < claimed:
@@ -1285,6 +1344,99 @@ def _judge_category_high_share(c: dict, hall: str, day: pd.DataFrame) -> dict:
         "verdict": verdict,
         "hit": verdict != "期待を下回る",
     }
+
+
+def _columns_match_spec(spec: dict, history: pd.DataFrame) -> bool:
+    """DBのBB/RB列が、スペックの設定1〜6の範囲に入っているか（列の意味が合っているかの簡易確認）。
+
+    A+AT・ARTは名前だけでRB判別可能とされるが、DBのBB/RB列がスペックのBB/RBと別物のことがある
+    （例: 楽園のエウレカ ZERO TYPE-ARTは、RBが常に0でBBが1/198と、スペックの1/258〜278より速い）。
+    その場合はBB/RBで設定を推定してはいけない。AT_RB_AUDITの考え方と同じ±15%の余裕で見る。
+    """
+    games = float(history["games_normalized"].sum())
+    if games <= 0:
+        return False
+    for column, key in (("bb_count", "bb_probability"), ("rb_count", "rb_probability")):
+        probs = [v[key] for v in spec["settings"].values() if v.get(key)]
+        if not probs:
+            continue
+        count = float(history[column].sum())
+        if count <= 0:
+            return False
+        rate = count / games
+        if not min(probs) * 0.85 <= rate <= max(probs) * 1.15:
+            return False
+    return True
+
+
+def _judge_model_high_share(c: dict, obj: dict, day: pd.DataFrame) -> dict:
+    """「エウレカの1/3⑤⑥」型の主張を、その機種の台のうち高設定の割合の推定で判定する。
+
+    basis="bonus": BB/RBの尤度（ノーマル機・BB/RBの意味が確認できるA+AT）。DBの列がスペックと
+        合わない機種は hit=None（推定しない）。
+    basis="payout": 差枚×機械割（AT・ARTなど）。回転数Gの期待差枚は3×G×(機械割−1)。差枚のばらつきは
+        対象日より前のその機種の履歴から √G に比例する分散として推定する（低設定群と高設定群の差も
+        含むので、やや広め＝保守的）。履歴が足りなければ hit=None。
+    ⚠️ 他の機種と差枚を比べないので、機械割が低めの機種が不利にならない。ただし差枚は設定の
+    直接の証拠ではなく、AT・ARTは区間が広い。「期待を下回る」と否定できたときだけ hit=False。
+    """
+    from backtest.bonus_specs import find_spec, load_specs
+
+    name = c["machine_name"]
+    basis = c["basis"]
+    high = tuple(c.get("high_settings", HIGH_SHARE_DEFAULT_HIGH))
+    min_games = int(c.get("min_games", HIGH_SHARE_DEFAULT_MIN_GAMES))
+    claimed = float(c["min_share"])
+    mine = day[(day["machine_name"] == name) & (day["games_normalized"] >= min_games)]
+    spec = find_spec(name, load_specs(hall=obj["hall"]))
+    if spec is None:
+        return {"hit": None, "note": f"{name} の設定別スペックが無い"}
+    frame = obj.get("_score_frame", day)
+    history = frame[
+        (frame["machine_name"] == name) & (frame["date"] < obj["target_date"]) & (frame["games_normalized"] > 0)
+    ]
+
+    if basis == "bonus":
+        if not spec.get("judgeable"):
+            return {"hit": None, "note": f"{name} はBB/RBで設定を判別できない（basis=payout を使う）"}
+        if not _columns_match_spec(spec, history):
+            return {
+                "hit": None,
+                "note": f"{name} のBB/RB列がスペックの範囲に合わない（列の意味が未確認）。basis=payout を使う",
+            }
+        units = [
+            (spec, int(r["games_normalized"]), int(r["bb_count"]), int(r["rb_count"]))
+            for _, r in mine.iterrows()
+            if not (pd.isna(r["bb_count"]) or pd.isna(r["rb_count"]))
+        ]
+        est = estimate_high_share(units, high)
+        extra: dict = {"basis": "bonus"}
+    else:
+        payout = {int(k): v.get("payout_rate") for k, v in spec["settings"].items()}
+        if len(history) < HIGH_SHARE_MIN_HISTORY:
+            return {
+                "hit": None,
+                "note": f"{name} の履歴が{HIGH_SHARE_MIN_HISTORY}台日未満（差枚のばらつきを推定できない）",
+            }
+        g_hist = float(history["games_normalized"].sum())
+        mean_rate = float(history["diff_coins_normalized"].sum()) / (3 * g_hist)
+        residual = history["diff_coins_normalized"] - 3 * history["games_normalized"] * mean_rate
+        variance = float((residual**2 / history["games_normalized"]).mean())
+        units_p = [(int(r["games_normalized"]), float(r["diff_coins_normalized"])) for _, r in mine.iterrows()]
+        est = estimate_high_share_payout(units_p, payout, variance, high)
+        extra = {
+            "basis": "payout",
+            "history_unit_days": int(len(history)),
+            "history_payout_pct": round(100 * (1 + mean_rate), 1),
+            "diff_sd_per_sqrt_game": round(float(np.sqrt(variance)), 1),
+        }
+    if est is None:
+        return {
+            "hit": None,
+            "basis": basis,
+            "note": f"推定に使える台が{HIGH_SHARE_MIN_UNITS}台未満（{min_games}G以上: {len(mine)}台）",
+        }
+    return {**_share_result(est, claimed, high, min_games), **extra}
 
 
 def _judge_model_named_ratio(c: dict, day: pd.DataFrame, ms: pd.DataFrame, min_machines: int) -> dict:

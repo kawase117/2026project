@@ -124,3 +124,117 @@ def test_judge_returns_none_when_category_missing():
         pd.DataFrame({"machine_name": ["x"]}),
     )
     assert out["hit"] is None
+
+
+# ---- model_high_share（機種の割合。basis=bonus / payout）----
+
+from backtest.announce import estimate_high_share_payout  # noqa: E402
+
+PAYOUT = {1: 97.7, 2: 98.7, 3: 100.5, 4: 104.4, 5: 106.3, 6: 108.1}
+
+
+def _payout_units(n, share, games=5000, sd_per_sqrt_game=20.0, seed=0):
+    rng = np.random.default_rng(seed)
+    out = []
+    for i in range(n):
+        setting = int(rng.choice([4, 5, 6])) if i < round(n * share) else int(rng.choice([1, 2, 3]))
+        mean = 3 * games * (PAYOUT[setting] / 100 - 1)
+        out.append((games, float(rng.normal(mean, sd_per_sqrt_game * np.sqrt(games)))))
+    return out
+
+
+def test_payout_estimate_recovers_share_and_covers_truth():
+    ests = [estimate_high_share_payout(_payout_units(60, 0.3, seed=s), PAYOUT, 20.0**2) for s in range(40)]
+    coverage = np.mean([e["ci_low"] <= 0.3 <= e["ci_high"] for e in ests])
+    assert coverage >= 0.85
+    assert abs(np.mean([e["share_hat"] for e in ests]) - 0.3) < 0.08  # 偏りが小さい
+
+
+def test_payout_estimate_none_when_too_few_units_or_bad_input():
+    assert estimate_high_share_payout(_payout_units(HIGH_SHARE_MIN_UNITS - 1, 0.5), PAYOUT, 400.0) is None
+    assert estimate_high_share_payout(_payout_units(30, 0.5), PAYOUT, 0.0) is None
+
+
+def test_validation_model_high_share():
+    ok = {"type": "model_high_share", "machine_name": "エウレカ", "min_share": 0.333, "basis": "payout"}
+    announce.validate(_announce(ok))
+    with pytest.raises(ValueError, match="basis"):
+        announce.validate(_announce({**ok, "basis": "diff"}))
+    with pytest.raises(ValueError, match="machine_name"):
+        announce.validate(_announce({**ok, "machine_name": ""}))
+    with pytest.raises(ValueError, match="min_share"):
+        announce.validate(_announce({**ok, "min_share": 1.5}))
+
+
+def _frame(share, n_hist_days=20, n_units=30, games=5000, seed=5):
+    """履歴(対象日より前)と対象日の台別データ。差枚は機械割のとおりに生成する。"""
+    rng = np.random.default_rng(seed)
+    rows = []
+    dates = [f"202601{d:02d}" for d in range(1, n_hist_days + 1)] + ["20260201"]
+    for date in dates:
+        s = share if date == "20260201" else 0.25
+        for i in range(n_units):
+            setting = int(rng.choice([4, 5, 6])) if i < round(n_units * s) else int(rng.choice([1, 2, 3]))
+            mean = 3 * games * (PAYOUT[setting] / 100 - 1)
+            rows.append(
+                {
+                    "date": date,
+                    "machine_name": "エウレカ",
+                    "machine_number": 3000 + i,
+                    "games_normalized": games,
+                    "diff_coins_normalized": float(rng.normal(mean, 20.0 * np.sqrt(games))),
+                    "bb_count": int(games / 198),
+                    "rb_count": 0,
+                }
+            )
+    return pd.DataFrame(rows)
+
+
+def _obj(frame):
+    return {"hall": "テスト", "target_date": "20260201", "_score_frame": frame}
+
+
+def test_judge_model_high_share_payout_levels(monkeypatch):
+    spec = {"settings": {k: {"payout_rate": v} for k, v in PAYOUT.items()}, "judgeable": True}
+    monkeypatch.setattr("backtest.bonus_specs.load_specs", lambda hall=None: {"dummy": spec})
+    monkeypatch.setattr("backtest.bonus_specs.find_spec", lambda name, specs=None: spec)
+    claim = {"type": "model_high_share", "machine_name": "エウレカ", "min_share": 0.33, "basis": "payout"}
+    f_in = _frame(0.33)
+    inside = announce._judge_model_high_share(claim, _obj(f_in), f_in[f_in.date == "20260201"])
+    # 差枚は情報が弱く、高設定の割合の値は低めに寄る。「下回る」と否定できるのは、主張値が十分高いとき。
+    f_lo = _frame(0.0, n_units=60)
+    below = announce._judge_model_high_share({**claim, "min_share": 0.6}, _obj(f_lo), f_lo[f_lo.date == "20260201"])
+    f_hi = _frame(0.9)
+    above = announce._judge_model_high_share({**claim, "min_share": 0.2}, _obj(f_hi), f_hi[f_hi.date == "20260201"])
+    assert inside["basis"] == "payout" and inside["hit"] is True  # 否定できない（区間が広い）
+    assert inside["verdict"] in ("期待通り（矛盾なし）", "期待を上回る")
+    assert below["verdict"] == "期待を下回る" and below["hit"] is False
+    assert above["verdict"] == "期待を上回る" and above["hit"] is True
+    assert inside["history_unit_days"] == 20 * 30  # 履歴は対象日より前だけ
+
+
+def test_judge_model_high_share_payout_needs_history(monkeypatch):
+    spec = {"settings": {k: {"payout_rate": v} for k, v in PAYOUT.items()}, "judgeable": True}
+    monkeypatch.setattr("backtest.bonus_specs.load_specs", lambda hall=None: {"dummy": spec})
+    monkeypatch.setattr("backtest.bonus_specs.find_spec", lambda name, specs=None: spec)
+    f = _frame(0.3, n_hist_days=3)
+    out = announce._judge_model_high_share(
+        {"type": "model_high_share", "machine_name": "エウレカ", "min_share": 0.3, "basis": "payout"},
+        _obj(f),
+        f[f.date == "20260201"],
+    )
+    assert out["hit"] is None and "履歴" in out["note"]
+
+
+def test_judge_model_high_share_bonus_rejects_columns_that_do_not_match_spec(monkeypatch):
+    # エウレカのようにRBが常に0でBBがスペックより速い機種は、BB/RBでは推定しない。
+    spec = {**SPEC, "judgeable": True}
+    monkeypatch.setattr("backtest.bonus_specs.load_specs", lambda hall=None: {"dummy": spec})
+    monkeypatch.setattr("backtest.bonus_specs.find_spec", lambda name, specs=None: spec)
+    f = _frame(0.3)
+    out = announce._judge_model_high_share(
+        {"type": "model_high_share", "machine_name": "エウレカ", "min_share": 0.3, "basis": "bonus"},
+        _obj(f),
+        f[f.date == "20260201"],
+    )
+    assert out["hit"] is None and "列" in out["note"]
