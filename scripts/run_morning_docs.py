@@ -94,7 +94,19 @@ JUGGLER_LOW_NOTE = "ジャグラーの設定5以上の割合が低く、候補�
 BAD_PHRASES = re.compile(
     r"参照(不可|できな|が限定)|未取り込み|未取得|初期化|取得済みですか|ご確認ください|ユーザーへの確認"
     r"|データが(取得|参照)できな|DB(が|は)(空|存在しない|ない)"
+    # 2026-10-19: DBは10/18まで揃っていたのに、金時東口の予測が「DBの最終更新日は20260715」と書いた。
+    r"|DB[^。\n]{0,20}(古い|止ま|更新されて(い)?ない)|最終更新日は\d{8}|\d{8}以降のデータがない"
 )
+# ana-slo の公開が遅く、前日分がまだ無いホール（日数）。ARROW池上は毎朝ちょうど1日遅れで、
+# 翌朝に前日分が入る（2026-10-17〜19 の朝のログで確認）。待っていると文書が永久に出ないので、
+# 遅れを許して DB 最終日までの確定データで書く。
+HALL_LAG_DAYS = {"arrow": 1}
+
+
+def ready_day(key: str, yesterday: str) -> str:
+    """そのホールが「揃った」と言える最低の日付。"""
+    lag = HALL_LAG_DAYS.get(key, 0)
+    return (datetime.strptime(yesterday, "%Y%m%d") - timedelta(days=lag)).strftime("%Y%m%d")
 
 
 def find_claude() -> str:
@@ -161,13 +173,23 @@ def announce_files(key: str, day: str) -> list[Path]:
 def facts_block(key: str, today: str, yesterday: str) -> str:
     hall, display = HALLS[key]
     latest = hall_max_dates().get(hall, "なし")
+    if latest >= yesterday:
+        lag_note = "前日分は入っている。"
+    else:
+        lag_note = (
+            "前日（%s）分は ana-slo の公開が遅れていてまだ無い（毎朝1日遅れで、翌朝に入る）。"
+            "最終日（%s）までの確定データで書き、前日分が無い事実は「ana-slo未公開」と書いてよい。"
+            % (yesterday, latest)
+        )
     announces = announce_files(key, today)
     listing = "\n".join("  - backtest/announce/%s" % p.name for p in announces) or "  - なし（予告は登録されていない）"
     return f"""\
 ## 確定している事実（スクリプトが計算した。これと矛盾することを書かない）
 - 当日: {jp_date(today)} / 前日: {jp_date(yesterday)}。曜日はこれを使う。自分で数えない。
-- {display}のDBは `db/{hall}.db`。`machine_detailed_results` の最終日は {latest}。前日分は入っている。
-  「DBが空・未初期化・未取り込み・参照不可」と書いてはいけない。実際に sqlite3 で問い合わせて確かめる
+- {display}のDBは `db/{hall}.db`（このパスだけを使う。別名のDBファイルを作らない）。
+  `machine_detailed_results` の最終日は {latest}。{lag_note}
+  「DBが空・古い・止まっている・最終更新日は…・未初期化・未取り込み・参照不可」と書いてはいけない。
+  実際に sqlite3 で `SELECT MAX(date) FROM machine_detailed_results` を問い合わせて確かめる
   （スキーマは database/CLAUDE.md。date は YYYYMMDD の文字列、台番号は machine_number）。
 - 当日の予告ファイル:
 {listing}
@@ -467,16 +489,24 @@ def process_hall(key: str, day_dir: Path, yesterday: str, today: str, dry_run: b
 
     def answercheck_stage() -> bool:
         """機械集計を作ってプロンプトに渡し、検証に通った出力の先頭へ同じ表を差し込む。"""
-        facts = day_facts(PROJECT_ROOT / "db" / ("%s.db" % HALLS[key][0]), yesterday)
+        # ana-slo の公開が遅れるホールは、DB にある最終日の分を答え合わせする。
+        answer_day = min(yesterday, hall_max_dates().get(HALLS[key][0], yesterday))
+        facts = day_facts(PROJECT_ROOT / "db" / ("%s.db" % HALLS[key][0]), answer_day)
         facts_md = render_facts(facts, key, PREDICTIONS, ANNOUNCE_DIR, ANNOUNCE_PREFIX.get(key, key)) if facts else ""
         if not facts:
             print(
-                "  機械集計: %s の %s 分が DB に無い。集計の挿入と数字の照合は行わない" % (key, yesterday), flush=True
+                "  機械集計: %s の %s 分が DB に無い。集計の挿入と数字の照合は行わない" % (key, answer_day), flush=True
+            )
+        prompt = answercheck_prompt(key, answer_day, today, part("answercheck"), facts_md)
+        if answer_day != yesterday:
+            prompt += (
+                "\n\n## 注意\n前日（%s）分は ana-slo 未公開のため、DB最終日（%s）の分を答え合わせする。"
+                "見出し直下に「※%s分の答え合わせ（前日分は未公開）」と1行書く。\n" % (yesterday, answer_day, answer_day)
             )
         ok = generate(
-            answercheck_prompt(key, yesterday, today, part("answercheck"), facts_md),
+            prompt,
             part("answercheck"),
-            lambda text: validate_answercheck(text, yesterday, facts),
+            lambda text: validate_answercheck(text, answer_day, facts),
             "%s 答え合わせ" % key,
         )
         if ok and facts_md:
@@ -541,7 +571,7 @@ def main() -> int:
             for key in args.halls or HALLS:
                 if key in handled:
                     continue
-                if maxes.get(HALLS[key][0], "") >= yesterday:
+                if maxes.get(HALLS[key][0], "") >= ready_day(key, yesterday):
                     targets.append(key)
                 else:
                     waiting.append("%s(DB最終 %s)" % (key, maxes.get(HALLS[key][0], "なし")))
