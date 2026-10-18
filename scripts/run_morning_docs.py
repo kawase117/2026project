@@ -45,7 +45,15 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from run_morning import hall_max_dates  # 同ディレクトリ
+from morning_facts import (  # 同ディレクトリ
+    MODEL_MIN_UNITS,
+    DayFacts,
+    check_numbers,
+    day_facts,
+    inject_facts,
+    render_facts,
+)
+from run_morning import hall_max_dates
 from runlock import acquire_or_exit
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -188,13 +196,14 @@ def weekday_errors(text: str, day: str) -> list[str]:
     return sorted(set(errors))
 
 
-def validate_answercheck(text: str, yesterday: str) -> list[str]:
+def validate_answercheck(text: str, yesterday: str, facts: DayFacts | None = None) -> list[str]:
     errors = []
     if not text.lstrip().startswith("## "):
         errors.append("先頭行が `## <ホール名>` の見出しでない")
     for m in BAD_PHRASES.finditer(text):
         errors.append("分析できなかった・質問で終わった表現がある: 「%s」" % m.group(0))
     errors += weekday_errors(text, yesterday)
+    errors += check_numbers(text, facts)
     if "予測への示唆" not in text:
         errors.append("末尾に「今日の予測への示唆」の節がない")
     return errors
@@ -223,14 +232,30 @@ COMMON_RULES = """\
 """
 
 
-def answercheck_prompt(key: str, yesterday: str, today: str, out: Path) -> str:
+def facts_prompt_block(facts_md: str) -> str:
+    """機械集計をプロンプトに渡す。出力ファイルにはスクリプトが同じ表を自動で差し込む。"""
+    if not facts_md:
+        return ""
+    return f"""\
+## 機械集計（スクリプトがDBと台帳から計算済み。この表は出力ファイルの先頭に自動で挿入される）
+{facts_md}
+
+- 表を書き写さない。ホール全体の平均差枚・総差枚・機種別の平均は、この表の値だけを使い、自分で計算し直して別の値を書かない
+  （書いた数字は DB と照合され、合わなければ不合格になる）。
+- 表に無い数字（台別・末尾・並びなど）は sqlite3 で確かめてから書く。
+- 台数が{MODEL_MIN_UNITS}台未満の機種は表に出していない。1〜2台の突出から機種の評価や新しい仮説を作らない。
+
+"""
+
+
+def answercheck_prompt(key: str, yesterday: str, today: str, out: Path, facts_md: str = "") -> str:
     hall, display = HALLS[key]
     ydash = "%s-%s-%s" % (yesterday[:4], yesterday[4:6], yesterday[6:])
     return f"""\
 {display}（DB名: {hall}）の{yesterday}分の答え合わせを書いてください。出力先: {out}
 
 {facts_block(key, today, yesterday)}
-## 手順
+{facts_prompt_block(facts_md)}## 手順
 1. `document/reviews/` の直近の `*-answercheck.md` のうち{display}の節を1つ読み、体裁と深さを合わせる。
 2. 前日の予測があれば `backtest/predictions/{yesterday}__{key}.json` と `document/reviews/{ydash}-prediction.md` の{display}の節、
    予告があれば `backtest/announce/{ANNOUNCE_PREFIX.get(key, key)}__{yesterday}__*.json`（撤回済み `.withdrawn.json` は除く）を読む。
@@ -439,16 +464,27 @@ def process_hall(key: str, day_dir: Path, yesterday: str, today: str, dry_run: b
         return day_dir / ("%s.%s.md" % (key, stage))
 
     need_judgement = bool(announce_files(key, today)) or key in JUGGLER_HALLS
+
+    def answercheck_stage() -> bool:
+        """機械集計を作ってプロンプトに渡し、検証に通った出力の先頭へ同じ表を差し込む。"""
+        facts = day_facts(PROJECT_ROOT / "db" / ("%s.db" % HALLS[key][0]), yesterday)
+        facts_md = render_facts(facts, key, PREDICTIONS, ANNOUNCE_DIR, ANNOUNCE_PREFIX.get(key, key)) if facts else ""
+        if not facts:
+            print(
+                "  機械集計: %s の %s 分が DB に無い。集計の挿入と数字の照合は行わない" % (key, yesterday), flush=True
+            )
+        ok = generate(
+            answercheck_prompt(key, yesterday, today, part("answercheck"), facts_md),
+            part("answercheck"),
+            lambda text: validate_answercheck(text, yesterday, facts),
+            "%s 答え合わせ" % key,
+        )
+        if ok and facts_md:
+            inject_facts(part("answercheck"), facts_md)
+        return ok
+
     stages = [
-        (
-            "answercheck",
-            lambda: generate(
-                answercheck_prompt(key, yesterday, today, part("answercheck")),
-                part("answercheck"),
-                lambda text: validate_answercheck(text, yesterday),
-                "%s 答え合わせ" % key,
-            ),
-        ),
+        ("answercheck", answercheck_stage),
         ("juggler", lambda: run_juggler(key, part("juggler"))),
         (
             "prediction",
