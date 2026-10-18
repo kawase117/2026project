@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parents[2]
 HERE = Path(__file__).resolve().parent
 JST = ZoneInfo("Asia/Tokyo")
 HALLS = {
-    "hiroki_west": ("ヒロキ西口店", "dmm", "nishiguchi"),
+    "hiroki_west": ("ヒロキ蒲田西口店", "dmm", "nishiguchi"),
     "hiroki_max": ("ヒロキMAX蒲田店", "dmm", "max"),
     "hiroki_east": ("ヒロキ東口店", "dmm", "higashiguchi"),
     "mitoya": ("みとや大森町店", "daidata", None),
