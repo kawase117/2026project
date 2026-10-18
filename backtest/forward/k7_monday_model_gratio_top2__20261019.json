@@ -1,0 +1,92 @@
+{
+  "rule_id": "k7_monday_model_gratio_top2",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "freeze_hash": "678fec8decdec048",
+  "target_date": "20261019",
+  "data_asof": "20261018",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-09-19",
+    "2026-10-19"
+  ],
+  "score": "hist_model_gratio_mean_diff",
+  "selection_unit": "machine_model",
+  "success_criterion": "フォワードで月曜20エントリー日を経過した時点で、picks の平均差枚が同日ホール平均に対して +300枚/台 以上、かつ 95%CI 下限 > 0 であること。満たさなければ破棄し、蒲田7の曜日仕掛けを機種粒度で狙う路線はこの1本で打ち止めとする。バックテストの結果は採否根拠にしない（in-sample。曜日の指定は instinct 由来で事後発見ではないが、score と top_n の組み合わせは今回初めて決めたので in-sample 評価は甘い方向に歪む）。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "痛いのは嫌なので防御力に極振りしたいと思います。",
+      "score": 539.938278,
+      "history_rows": 51,
+      "machines": [
+        2269,
+        2270,
+        2271,
+        2272
+      ]
+    },
+    {
+      "machine_name": "モグモグ風林火山 大海戦の巻",
+      "score": 392.277846,
+      "history_rows": 27,
+      "machines": [
+        3027,
+        3028,
+        3029,
+        3030
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 2269,
+      "machine_name": "痛いのは嫌なので防御力に極振りしたいと思います。",
+      "score": 539.938278,
+      "history_days": 51
+    },
+    {
+      "machine_number": 2270,
+      "machine_name": "痛いのは嫌なので防御力に極振りしたいと思います。",
+      "score": 539.938278,
+      "history_days": 51
+    },
+    {
+      "machine_number": 2271,
+      "machine_name": "痛いのは嫌なので防御力に極振りしたいと思います。",
+      "score": 539.938278,
+      "history_days": 51
+    },
+    {
+      "machine_number": 2272,
+      "machine_name": "痛いのは嫌なので防御力に極振りしたいと思います。",
+      "score": 539.938278,
+      "history_days": 51
+    },
+    {
+      "machine_number": 3027,
+      "machine_name": "モグモグ風林火山 大海戦の巻",
+      "score": 392.277846,
+      "history_days": 27
+    },
+    {
+      "machine_number": 3028,
+      "machine_name": "モグモグ風林火山 大海戦の巻",
+      "score": 392.277846,
+      "history_days": 27
+    },
+    {
+      "machine_number": 3029,
+      "machine_name": "モグモグ風林火山 大海戦の巻",
+      "score": 392.277846,
+      "history_days": 27
+    },
+    {
+      "machine_number": 3030,
+      "machine_name": "モグモグ風林火山 大海戦の巻",
+      "score": 392.277846,
+      "history_days": 27
+    }
+  ],
+  "result": null,
+  "plan_digest": "a944aed6b69c89ec"
+}
