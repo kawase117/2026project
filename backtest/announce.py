@@ -224,11 +224,19 @@ CLAIM_TYPES = {
     "model_named",  # 特定機種を名指し（全台系＝機種平均が閾値超え）
     "model_named_ratio",  # 特定機種を名指し（1/N⑤⑥＝一部の台だけ高設定）
     "category_share",  # 閾値超え機種のうち当該カテゴリが min_share 以上
+    "category_high_share",  # 当該カテゴリの台のうち高設定(既定4〜6)の割合が min_share 程度（RBの尤度で推定）
     "position_rule",  # 特定位置（角番・末尾等）に仕掛けがある
     "narabi",  # 同一 section 内の連番ブロック
 }
 
 CATEGORY_FIELDS = {"jug_flag", "hana_flag", "oki_flag", "bt_flag"}
+
+# category_high_share: 「ジャグの20%⑤⑥」＝ジャグラーの台のうち高設定が20%、という主張を測る。
+# 設定はRBの尤度でしか見えないので、RBで設定差を推定できるノーマル機のカテゴリに限る。
+HIGH_SHARE_CATEGORIES = {"jug_flag", "hana_flag"}
+HIGH_SHARE_DEFAULT_HIGH = (4, 5, 6)  # 現場では実際に入るのは主に5（456）。
+HIGH_SHARE_DEFAULT_MIN_GAMES = 1500  # 2,000G未満は誤警報が多い。1,500Gを下限にして台数を確保する。
+HIGH_SHARE_MIN_UNITS = 10  # これ未満の台数では割合を推定しない（hit=None）。
 POSITION_FIELDS = {"rank_from_aisle", "rank_from_min", "rank_from_max", "last_digit", "section"}
 
 # 機種タイプのセグメント。末尾・角番の効果はセグメントごとに符号が違うため、
@@ -371,6 +379,20 @@ def validate(obj: dict) -> None:
                 raise ValueError(f"category_share.category は {sorted(CATEGORY_FIELDS)} のいずれか")
             if not 0 < float(c.get("min_share", 0)) <= 1:
                 raise ValueError("category_share.min_share は 0 < x <= 1")
+        if t == "category_high_share":
+            if c.get("category") not in HIGH_SHARE_CATEGORIES:
+                raise ValueError(
+                    f"category_high_share.category は {sorted(HIGH_SHARE_CATEGORIES)} のいずれか"
+                    "（RBで設定を推定できるノーマル機のカテゴリに限る）"
+                )
+            if not 0 < float(c.get("min_share", 0)) <= 1:
+                raise ValueError("category_high_share.min_share は 0 < x <= 1")
+            high = c.get("high_settings", list(HIGH_SHARE_DEFAULT_HIGH))
+            if not high or any(isinstance(s, bool) or not isinstance(s, int) or not 1 <= s <= 6 for s in high):
+                raise ValueError("category_high_share.high_settings は 1〜6 の整数のリスト")
+            min_games = c.get("min_games", HIGH_SHARE_DEFAULT_MIN_GAMES)
+            if isinstance(min_games, bool) or not isinstance(min_games, int) or min_games < 0:
+                raise ValueError("category_high_share.min_games は 0 以上の整数")
         if t == "position_rule":
             if c.get("field") not in POSITION_FIELDS:
                 raise ValueError(f"position_rule.field は {sorted(POSITION_FIELDS)} のいずれか")
@@ -1059,6 +1081,9 @@ def _judge_claims(obj: dict, day: pd.DataFrame, first_seen: pd.Series | None = N
                         entry.update(r)
                         entry["hit"] = bool(r["effect_resid_diff"] > 0)
 
+        elif t == "category_high_share":
+            entry.update(_judge_category_high_share(c, obj["hall"], day))
+
         elif t == "model_named_ratio":
             entry.update(_judge_model_named_ratio(c, day, ms, min_machines))
 
@@ -1141,6 +1166,125 @@ def _position_by_segment(sub: pd.DataFrame, field: str, values: list) -> list[di
         row.update(r if r is not None else {"note": "対象/対象外のどちらかが空"})
         out.append(row)
     return sorted(out, key=lambda x: -(x.get("effect_resid_diff") or float("-inf")))
+
+
+def _logmeanexp(values: list[float]) -> float:
+    top = max(values)
+    return top + float(np.log(np.mean(np.exp(np.array(values) - top))))
+
+
+def _unit_setting_loglik(spec: dict, games: int, bb: int, rb: int) -> dict[int, float]:
+    """1台のBB/RBが、各設定のもとでどれだけ起こりやすいか（対数尤度）。
+
+    bonus_specs.posterior と同じ扱い（BB/RBは別々の証拠、BB/RB別のスペックが無ければ合算）。
+    """
+    from backtest.bonus_specs import _log_binomial
+
+    out: dict[int, float] = {}
+    for setting, values in spec["settings"].items():
+        total, used = 0.0, 0
+        for count, key in ((bb, "bb_probability"), (rb, "rb_probability")):
+            if key == "bb_probability" and values.get("use_bb") is False:
+                continue
+            term = _log_binomial(count, games, values.get(key))
+            if term is not None:
+                total += term
+                used += 1
+        if not used and values.get("combined_probability") is not None:
+            term = _log_binomial((bb or 0) + (rb or 0), games, values["combined_probability"])
+            if term is None:
+                continue
+            total, used = term, 1
+        if used:
+            out[int(setting)] = total
+    return out
+
+
+def estimate_high_share(units: list[tuple[dict, int, int, int]], high_settings=HIGH_SHARE_DEFAULT_HIGH) -> dict | None:
+    """台のうち高設定の割合を、BB/RBの尤度から推定する（2群の混合モデル）。
+
+    units は (スペック, 回転数, BB, RB) のリスト。各台は「高設定群（high_settings）」か
+    「それ以外の群」のどちらかの設定を持つとし、群の中は一様とする。高設定群の割合 π を
+    プロファイル尤度で推定し、尤度が最大値から 1.92 以内（χ²(1)の95%）の π を区間にする。
+
+    なぜ差枚の閾値で測らないか:
+        ジャグラーの設定5が20%入っても、機種平均の差枚は負のまま（4,800Gで設定5は約+470枚、
+        設定1〜2は約−360枚なので、0.2×470＋0.8×(−360)≒−190）。機種平均が+1,800を超える
+        ことはありえず、閾値超え機種のうちジャグラーの割合で見る判定は主張と対応しない。
+    """
+    lows: list[float] = []
+    highs: list[float] = []
+    high = set(high_settings)
+    for spec, games, bb, rb in units:
+        ll = _unit_setting_loglik(spec, int(games), int(bb), int(rb))
+        lo = [v for k, v in ll.items() if k not in high]
+        hi = [v for k, v in ll.items() if k in high]
+        if not lo or not hi:
+            continue
+        lows.append(_logmeanexp(lo))
+        highs.append(_logmeanexp(hi))
+    n = len(lows)
+    if n < HIGH_SHARE_MIN_UNITS:
+        return None
+    grid = np.linspace(0.001, 0.999, 999)
+    la, ha = np.array(lows), np.array(highs)
+    total = np.logaddexp(np.log1p(-grid)[:, None] + la[None, :], np.log(grid)[:, None] + ha[None, :]).sum(axis=1)
+    inside = grid[total >= total.max() - 1.92]
+    return {
+        "n_units": n,
+        "share_hat": round(float(grid[total.argmax()]), 3),
+        "ci_low": round(float(inside.min()), 3),
+        "ci_high": round(float(inside.max()), 3),
+    }
+
+
+def _judge_category_high_share(c: dict, hall: str, day: pd.DataFrame) -> dict:
+    """「ジャグの20%⑤⑥」型の主張を、高設定の割合の推定で判定する。
+
+    verdict は3段階。区間が主張値を含む → 期待通り（矛盾なし）、区間の下限が主張値より上 →
+    期待を上回る、区間の上限が主張値より下 → 期待を下回る。hit は「期待を下回る」以外を True にする
+    （区間が広い日は主張を否定も肯定もできないので、否定できたときだけ False）。
+    ⚠️ 「外れ」ではなく「期待通りの結果ではなかった」。予告が出ていたことは否定しない。
+    """
+    from backtest.bonus_specs import find_spec, load_specs
+
+    field = c["category"]
+    high = tuple(c.get("high_settings", HIGH_SHARE_DEFAULT_HIGH))
+    min_games = int(c.get("min_games", HIGH_SHARE_DEFAULT_MIN_GAMES))
+    claimed = float(c["min_share"])
+    if field not in day.columns:
+        return {"hit": None, "note": f"当日データに {field} が無い"}
+
+    specs = load_specs(hall=hall)
+    units = []
+    for _, row in day[(day[field] == 1) & (day["games_normalized"] >= min_games)].iterrows():
+        if pd.isna(row["bb_count"]) or pd.isna(row["rb_count"]):
+            continue
+        spec = find_spec(row["machine_name"], specs)
+        if spec is None or not spec.get("judgeable"):
+            continue
+        units.append((spec, int(row["games_normalized"]), int(row["bb_count"]), int(row["rb_count"])))
+
+    est = estimate_high_share(units, high)
+    if est is None:
+        return {
+            "hit": None,
+            "note": f"推定に使える台が{HIGH_SHARE_MIN_UNITS}台未満（{min_games}G以上のRB判別可能な台: {len(units)}）",
+        }
+    if est["ci_low"] > claimed:
+        verdict = "期待を上回る"
+    elif est["ci_high"] < claimed:
+        verdict = "期待を下回る"
+    else:
+        verdict = "期待通り（矛盾なし）"
+    return {
+        **est,
+        "claimed_share": claimed,
+        "high_settings": list(high),
+        "min_games": min_games,
+        "verdict": verdict,
+        "hit": verdict != "期待を下回る",
+    }
 
 
 def _judge_model_named_ratio(c: dict, day: pd.DataFrame, ms: pd.DataFrame, min_machines: int) -> dict:
