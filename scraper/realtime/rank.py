@@ -7,6 +7,7 @@ from pathlib import Path
 
 from .estimate import ROOT, at_scores, estimate, mark_new_machines
 from .schema import JST, SnapshotRow
+from .section_rb import section_rb as compute_section_rb
 
 OUTPUT = ROOT / "scraper/realtime/output/rankings"
 FINAL_NO_PRIOR_TOP = 20  # 総合ランキング末尾の「事前なし」参考表の行数
@@ -31,7 +32,15 @@ def read_snapshots(paths, latest_per_hall=True):
 
 
 def build_ranking(
-    rows, *, top=50, min_confidence=0.0, db_dir=ROOT / "db", hall_prior=None, specs_by_hall=None, audit=None
+    rows,
+    *,
+    top=50,
+    min_confidence=0.0,
+    db_dir=ROOT / "db",
+    hall_prior=None,
+    specs_by_hall=None,
+    audit=None,
+    section_rb=True,
 ):
     if top < 1 or not 0 <= min_confidence <= 1:
         raise ValueError("top and min_confidence out of range")
@@ -80,7 +89,38 @@ def build_ranking(
     buckets["ranked"] = buckets["ranked"][:top]
     buckets["no_prior"] = buckets["no_prior"][:top]
     buckets["at_scores"] = buckets["at_scores"][:top]
+    # 列・島ごとのRB合算(台ごとの確率では薄まる列単位の偏りを拾う)。順位の本表には混ぜない
+    buckets["section_rb"] = (
+        compute_section_rb(rows, db_dir=db_dir, specs_by_hall=specs_by_hall, audit=audit) if section_rb else {}
+    )
     return buckets
+
+
+def format_section_rb(data):
+    """列・島ごとの合算RB。データが空なら何も出さない(空文字)。"""
+    section = data.get("section_rb") or {}
+    if not any(section.values()):
+        return ""
+    lines = [
+        "\n##### 列・島ごとの合算RB(RB判別できる台のみ・設定平均のp値が小さい順) #####",
+        "※偶然の確率が小さいほど、列全体で高設定寄りに偏っている。途中経過の偏りは最終で薄まりうる。",
+    ]
+    for hall, entries in section.items():
+        if not entries:
+            continue
+        lines += [
+            f"【{hall}】",
+            "台番号範囲 | 台数 | 機種 | 合算G | 合算RB | 1/x | 最高設定超 | p(最低設定) | p(設定平均)",
+        ]
+        for e in entries:
+            one_in = "-" if e["rb_one_in"] is None else f'1/{e["rb_one_in"]:.0f}'
+            p_low = "-" if e["p_low"] is None else f'{e["p_low"]:.2g}'
+            p_avg = "-" if e["p_avg"] is None else f'{e["p_avg"]:.2g}'
+            lines.append(
+                f'{e["unit_from"]}〜{e["unit_to"]} | {e["n"]} | {"・".join(e["models"])} | {e["total_games"]} | '
+                f'{e["total_rb"]} | {one_in} | {e["better_than_high"]}/{e["n"]} | {p_low} | {p_avg}'
+            )
+    return "\n".join(lines)
 
 
 def format_ranking(data):
@@ -101,12 +141,12 @@ def format_ranking(data):
             lines.append(
                 f'{r["hall"]} | {r["unit"]} | {r["model"]} | {r["games"]} | {r["rb"]} | {p} | {score} | {r["confidence"]:.3f} | {r["discriminability"]} | {flags}'
             )
-    return "\n".join(lines)
+    return "\n".join(lines) + format_section_rb(data)
 
 
 def format_hall_report(hall, rows, top=8, hall_prior=None):
     """1ホール分の即時報告。RB事後確率の高い順(判別可能機種のみ)。事前なしの台は(補正なし)を付けて同じ表に並べる。"""
-    data = build_ranking(rows, top=10000, hall_prior=hall_prior)
+    data = build_ranking(rows, top=10000, hall_prior=hall_prior, section_rb=False)
     ranked = sorted(
         (r for r in data["ranked"] + data["no_prior"] if r["rb"]),  # RB0は情報なしなので表示しない
         key=lambda r: r["p_high"],
@@ -147,7 +187,7 @@ def format_final(data):
             lines.append(
                 f'{r["hall"]} | {r["unit"]} | {r["model"]} | {r["games"]} | {r["rb"]} | {r["p_high"]:.2f} | {r["confidence"]:.2f}'
             )
-    return "\n".join(lines)
+    return "\n".join(lines) + format_section_rb(data)
 
 
 def write_ranking(data, out_dir=OUTPUT, now=None):
