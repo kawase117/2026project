@@ -70,6 +70,7 @@ import json
 import os
 import re
 import sqlite3
+import unicodedata
 from collections import Counter
 from datetime import date, datetime
 
@@ -536,6 +537,396 @@ def ingest_prose_reports(state_db=STATE_DB, analysis_db=ANALYSIS_DB):
     ):
         print("  %-28s %3d 件" % (hall, count))
     return added
+
+
+# ---------------------------------------------------------------------------------------------
+# 発信者判定の「結果速報」(slo_tokyo)。ホール公表ではないので、別テーブルに入れる。
+#
+# 既存の external_result_* は「ホール自身が公表した該当台」として、event_days / integrated /
+# monthly_report_layer2 などが全行を読む。slo_tokyo の全・🌈(設定6)・ピック(設定4以上と判定した台)は
+# 発信者が設定を判定したもので、東口の「全🌈」には差枚が大きくマイナスの1台機種も入る。同じ表に
+# 入れるとそれらの読み手が公表と取り違えるので、poster_result_* に分ける(設計: document/plans/
+# 2026-10-20-slo-tokyo-result-ingest.md)。
+#
+# 用語(ユーザー申告 2026-10-20): 全・全系=その機種の全台に設定4以上、🌈=設定6、
+# 並び「台〜台」=その間の台すべてに設定、優秀以上=設定4以上、列全=その列の全台に設定、
+# パネル全=同機種の該当パネルの全台、取材対象=予告の対象(結果ではない)。
+# 導出: ピック件数=各カテゴリに載った台数の合計(全の機種の台数+N台並び×箇所+単品の箇所数+
+# 1/2の半数+その他の台数)。「その他(N台)」は残りの台数ではなく、分類できない設定判定台。
+# ---------------------------------------------------------------------------------------------
+BULLET_ACCOUNTS = {
+    "slo_tokyo": {
+        "marker": "結果速報",
+        # 本文1行目のホール名 → DB名。載っていないホールは hall_name をそのまま使い、追跡外にする。
+        "halls": {
+            "ヒロキ蒲田東口店": "ヒロキ東口店",
+            "ヒロキMAX蒲田店": "ヒロキMAX蒲田店",
+            "マルハンメガシティ2000蒲田1": "マルハンメガシティ2000-蒲田1",
+            "マルハンメガシティ2000蒲田7": "マルハンメガシティ2000-蒲田7",
+        },
+    },
+}
+# full_text が無く、タイムライン本文(tweet_text)がこれ以上なら、途中で切れているとみなす。
+TRUNCATED_MIN = 120
+
+POSTER_SCHEMA = """
+CREATE TABLE IF NOT EXISTS poster_result_reports (
+    report_id       TEXT PRIMARY KEY,    -- tweet_id
+    source          TEXT NOT NULL,
+    tweet_url       TEXT,
+    posted_at       TEXT,
+    hall_name       TEXT,                -- DB名(対応表に無ければ本文のまま)
+    hall_name_raw   TEXT,                -- 本文1行目のホール名
+    business_date   TEXT,                -- YYYYMMDD(本文が年つきで書く)
+    weekday_stated  TEXT,
+    weekday_ok      INTEGER,             -- 本文の曜日と日付の曜日が一致したか
+    event_name      TEXT,                -- ▶で始まる最初の行(▶ポイントは除く)
+    day_note        TEXT,                -- ■で始まる件数なしの最初の行(■日曜日 など)
+    hall_mean_diff  INTEGER,             -- 全体平均(枚/台)。対象台の平均ではない
+    pick_machines   INTEGER,             -- ピック: 発信者が設定4以上と判定した台数
+    total_machines  INTEGER,
+    pick_pct        REAL,
+    is_tracked_hall INTEGER NOT NULL,
+    text_complete   INTEGER NOT NULL,    -- 全文が取れているか(切れた本文は機種行を作らない)
+    parse_ok        INTEGER NOT NULL,    -- 件数検算・全文・日付がすべて通ったか
+    parse_notes     TEXT,                -- 通らなかった理由(JSON配列)
+    pick_units_sum  REAL,                -- カテゴリの台数の合計(ピックの検算用。読めない見出しがあると足りない)
+    models_resolved INTEGER,             -- 当日DBの機種名に引き当たった箇条書きの数
+    models_total    INTEGER,
+    raw_text        TEXT NOT NULL,
+    ingested_at     TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS poster_result_models (
+    report_id        TEXT NOT NULL REFERENCES poster_result_reports(report_id),
+    seq              INTEGER NOT NULL,
+    granularity      TEXT,               -- 全台 / 1/2 / 3台並び / 単品 / 優秀以上 / その他 ... 読めない見出しは NULL
+    granularity_raw  TEXT NOT NULL,      -- 見出しの名前そのまま(全系・全🌈・5台並び全 ...)
+    section_count    INTEGER,            -- 見出しの件数(N機種 / N箇所 / N台)
+    section_unit     TEXT,               -- 機種 / 箇所 / 台
+    model_name       TEXT NOT NULL,      -- 箇条書きの原文(並びは「A〜B」のまま)
+    model_parts      TEXT,               -- 「〜」で分けた機種名のJSON配列
+    n_units          INTEGER,            -- 単位が「台」の見出し(その他・末尾など)の台数
+    PRIMARY KEY (report_id, seq)
+);
+
+CREATE INDEX IF NOT EXISTS idx_prr_hall_date ON poster_result_reports(hall_name, business_date);
+CREATE INDEX IF NOT EXISTS idx_prm_granularity ON poster_result_models(granularity);
+"""
+
+RE_POSTER_HEAD = re.compile(r"^\s*(\d{4})-(\d{2})-(\d{2})\s+(.+?)\s*[｜|]\s*結果速報")
+RE_POSTER_SECTION = re.compile(r"^■\s*(.+?)\s*[(（]\s*(\d+)\s*(機種|箇所|台)\s*[)）]\s*$")
+RE_POSTER_WEEKDAY = re.compile(r"^■\s*([月火水木金土日])曜日")
+RE_POSTER_PICK = re.compile(r"ピック\s*([\d.]+)\s*[%％]\s*[(（]\s*(\d+)\s*/\s*(\d+)\s*[)）]")
+RE_POSTER_MEAN = re.compile(r"全体平均\s*([+\-−]?[\d,]+)\s*枚")
+
+
+def poster_granularity(heading):
+    """見出しの名前を正規形にする。読めない見出しは None(推測で正規化しない)。
+
+    🌈の有無は区別しない(絵文字はDBの本文から落ちる。🌈=設定6、無印=設定4以上の全台)。
+    「N台並び全」は「N台並び」と同じ扱い(ユーザー回答 2026-10-20)。
+    """
+    h = re.sub(r"[\s　🌈]", "", heading or "")
+    if h in ("全", "全系"):
+        return "全台"
+    if h in ("列全", "パネル全", "単品", "優秀以上", "その他", "取材対象"):
+        return h
+    match = re.fullmatch(r"(\d+)台並び全?", h)
+    if match:
+        return "%s台並び" % match.group(1)
+    if re.fullmatch(r"\d+/\d+", h) or re.fullmatch(r"列\d+/\d+", h):
+        return h
+    if h.startswith("末尾"):
+        return "末尾"
+    if h.startswith("角"):
+        return "角"
+    if h.startswith("特定箇所"):
+        return "特定箇所"
+    return None
+
+
+def parse_slo_tokyo(text):
+    """1投稿を辞書に分解する。1行目が「年月日 ホール ｜結果速報」でなければ None。
+
+    戻り値: {"header": {...}, "models": [...], "notes": [...]}。
+    notes は検算が通らなかった理由。見出しの件数(N機種 / N箇所)と直下の箇条書きの数は
+    一致するはずで(実測 96セクション中96)、ずれたらその理由を残す。
+    """
+    lines = [RE_INVISIBLE.sub("", line).strip() for line in (text or "").splitlines()]
+    head = next((RE_POSTER_HEAD.match(line) for line in lines if line), None)
+    if head is None:
+        return None
+    try:
+        day = date(int(head.group(1)), int(head.group(2)), int(head.group(3)))
+    except ValueError:
+        return None
+    header = {
+        "business_date": day.strftime("%Y%m%d"),
+        "hall_name_raw": head.group(4).strip(),
+        "weekday_stated": None,
+        "weekday_ok": None,
+        "event_name": None,
+        "day_note": None,
+    }
+    notes = []
+
+    sections = []
+    current = None
+    for line in lines[1:]:
+        if not line:
+            continue
+        weekday = RE_POSTER_WEEKDAY.match(line)
+        if weekday and header["weekday_stated"] is None:
+            header["weekday_stated"] = weekday.group(1)
+            header["weekday_ok"] = int(WEEKDAYS[day.weekday()] == weekday.group(1))
+        section = RE_POSTER_SECTION.match(line)
+        if section:
+            current = {
+                "raw": section.group(1).strip(),
+                "count": int(section.group(2)),
+                "unit": section.group(3),
+                "items": [],
+            }
+            sections.append(current)
+            continue
+        if line.startswith("・") or line.startswith("･"):
+            if current is not None:
+                current["items"].append(line[1:].strip())
+            continue
+        # ここから先は箇条書きの区切り。次の見出しまで、行は直前のセクションに属さない。
+        current = None
+        if line.startswith("■") and header["day_note"] is None:
+            header["day_note"] = line[1:].strip()
+        elif line.startswith("▶"):
+            label = line[1:].strip()
+            if label and label != "ポイント" and header["event_name"] is None:
+                header["event_name"] = label
+
+    match = RE_POSTER_MEAN.search(text)
+    header["hall_mean_diff"] = norm_int(match.group(1)) if match else None
+    match = RE_POSTER_PICK.search(text)
+    if match:
+        header["pick_pct"] = float(match.group(1))
+        header["pick_machines"] = int(match.group(2))
+        header["total_machines"] = int(match.group(3))
+
+    models = []
+    for section in sections:
+        granularity = poster_granularity(section["raw"])
+        base = {
+            "granularity": granularity,
+            "granularity_raw": section["raw"],
+            "section_count": section["count"],
+            "section_unit": section["unit"],
+        }
+        if section["unit"] in ("機種", "箇所") and len(section["items"]) != section["count"]:
+            notes.append(
+                "件数不一致: %s 見出し%d 箇条書き%d" % (section["raw"], section["count"], len(section["items"]))
+            )
+        if section["items"]:
+            for item in section["items"]:
+                parts = [part.strip() for part in item.split("〜") if part.strip()]
+                models.append(dict(base, model_name=item, model_parts=parts, n_units=None))
+        elif section["unit"] == "台":
+            # 機種名なしの件数だけの見出し(その他・末尾 など)。台数をそのまま持つ。
+            models.append(dict(base, model_name=section["raw"], model_parts=[], n_units=section["count"]))
+    if header["weekday_ok"] == 0:
+        notes.append("曜日不一致: 本文%s曜日・日付は%s曜日" % (header["weekday_stated"], WEEKDAYS[day.weekday()]))
+    return {"header": header, "models": models, "notes": notes}
+
+
+def _poster_key(name):
+    """機種名の照合キー。半角カナ・先頭の L/LB/S・スマスロ等・空白と記号を除く。"""
+    value = unicodedata.normalize("NFKC", str(name or "")).strip()
+    value = re.sub(r"^(LB|L|S)\s*", "", value)
+    value = re.sub(r"(スマスロ|パチスロ)", "", value)
+    return re.sub(r"[\s・!！\-‐‑–—~〜～:：\.\[\]()（）]", "", value).lower()
+
+
+def resolve_poster_model(name, day_names):
+    """発信者の機種名を、当日DBの機種名(day_names)に引き当てる。引けなければ None。"""
+    key = _poster_key(name)
+    if not key:
+        return None
+    for real in day_names:
+        if _poster_key(real) == key:
+            return real
+    hits = [real for real in day_names if len(key) >= 4 and (key in _poster_key(real) or _poster_key(real) in key)]
+    return hits[0] if len(hits) == 1 else None
+
+
+def poster_pick_units(models, machine_counts):
+    """カテゴリに載った台数の合計(ピック件数の検算用)と、機種名を引けた数・箇条書きの数。
+
+    machine_counts は {当日DBの機種名: 台数}。数える対象は、全台=機種の全台、N台並び=N台×箇所、
+    単品=1台×箇所、1/2=機種の半数、優秀以上=機種の全台、その他=件数。末尾・角・列全などは
+    台数が決まらないので数えない(その分、合計は足りなくなる。足りない日は読めない見出しがあるサイン)。
+    """
+    total = 0.0
+    resolved = items = 0
+    counted_sections = set()
+    for row in models:
+        gran = row["granularity"]
+        if row["section_unit"] == "台":
+            # 単位が「台」の見出し(その他・末尾など)は、見出しの台数をそのまま数える(箇条書きがあっても1回だけ)
+            if row["granularity_raw"] not in counted_sections:
+                counted_sections.add(row["granularity_raw"])
+                total += row["section_count"] or 0
+            if row["n_units"] is not None:
+                continue
+        items += 1
+        names = [resolve_poster_model(part, machine_counts) for part in row["model_parts"]]
+        resolved += int(all(names))
+        match = re.fullmatch(r"(\d+)台並び", gran or "")
+        if match:
+            total += int(match.group(1))
+        elif gran in ("単品", "角"):
+            total += 1
+        elif gran in ("全台", "優秀以上"):
+            total += sum(machine_counts.get(n, 0) for n in names if n)
+        elif gran == "1/2":
+            total += sum(machine_counts.get(n, 0) for n in names if n) / 2
+    return total, resolved, items
+
+
+def _day_machine_counts(hall, business_date):
+    """当日の {機種名: 台数}。DBが無ければ空。"""
+    path = os.path.join(ROOT, "db", "%s.db" % hall)
+    if not os.path.isfile(path) or not os.path.getsize(path):
+        return {}
+    try:
+        con = sqlite3.connect("file:%s?mode=ro" % path, uri=True)
+        try:
+            return dict(
+                con.execute(
+                    "SELECT machine_name, COUNT(*) FROM machine_detailed_results WHERE date = ? GROUP BY 1",
+                    (business_date,),
+                ).fetchall()
+            )
+        finally:
+            con.close()
+    except sqlite3.Error:
+        return {}
+
+
+def build_poster(state_db=STATE_DB, analysis_db=ANALYSIS_DB):
+    """slo_tokyo の結果速報を poster_result_* へ作り直す(派生データ。毎回 state.db から作れる)。"""
+    source = sqlite3.connect("file:%s?mode=ro" % state_db, uri=True)
+    target = sqlite3.connect(analysis_db)
+    target.executescript(POSTER_SCHEMA)
+    tracked = tracked_halls()
+    now = datetime.now().astimezone().isoformat(timespec="seconds")
+
+    stored = incomplete = bad = skipped = 0
+    resolved_total = items_total = pick_match = pick_known = 0
+    for account, spec in BULLET_ACCOUNTS.items():
+        rows = source.execute(
+            "SELECT tweet_id, tweet_url, posted_at_jst, full_text, tweet_text FROM seen_tweets WHERE handle = ?",
+            (account,),
+        ).fetchall()
+        # 同じ(ホール, 営業日)に複数あれば最新の投稿を残す(訂正投稿に備える)。
+        latest = {}
+        for tweet_id, url, posted, full, short in rows:
+            text = full or short or ""
+            if spec["marker"] not in text:
+                skipped += 1
+                continue
+            parsed = parse_slo_tokyo(text)
+            if parsed is None:
+                skipped += 1
+                continue
+            hall_raw = parsed["header"]["hall_name_raw"]
+            hall = spec["halls"].get(hall_raw, hall_raw)
+            key = (hall, parsed["header"]["business_date"])
+            if key not in latest or (posted or "") > (latest[key][1] or ""):
+                latest[key] = (tweet_id, posted, url, full, short, text, parsed, hall)
+
+        target.execute(
+            "DELETE FROM poster_result_models WHERE report_id IN (SELECT report_id FROM poster_result_reports WHERE source = ?)",
+            (account,),
+        )
+        target.execute("DELETE FROM poster_result_reports WHERE source = ?", (account,))
+        for (hall, business_date), (tweet_id, posted, url, full, short, text, parsed, _) in sorted(latest.items()):
+            header, models, notes = parsed["header"], parsed["models"], list(parsed["notes"])
+            complete = int(full is not None or len(short or "") < TRUNCATED_MIN)
+            if not complete:
+                incomplete += 1
+                notes.append("本文が途中で切れている(full_text なし)。機種行は作らない")
+                models = []
+            counts = _day_machine_counts(hall, business_date) if hall in tracked else {}
+            pick_sum, resolved, items = poster_pick_units(models, counts) if counts else (None, None, None)
+            ok = int(complete and not notes)
+            bad += int(not ok)
+            stored += 1
+            if resolved is not None:
+                resolved_total += resolved
+                items_total += items
+            if pick_sum is not None and header.get("pick_machines") is not None:
+                pick_known += 1
+                pick_match += int(abs(pick_sum - header["pick_machines"]) < 0.5)
+            target.execute(
+                "INSERT INTO poster_result_reports (report_id, source, tweet_url, posted_at, hall_name, hall_name_raw, "
+                "business_date, weekday_stated, weekday_ok, event_name, day_note, hall_mean_diff, pick_machines, "
+                "total_machines, pick_pct, is_tracked_hall, text_complete, parse_ok, parse_notes, pick_units_sum, "
+                "models_resolved, models_total, raw_text, ingested_at) "
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                (
+                    tweet_id,
+                    account,
+                    url,
+                    posted,
+                    hall,
+                    header["hall_name_raw"],
+                    business_date,
+                    header["weekday_stated"],
+                    header["weekday_ok"],
+                    header["event_name"],
+                    header["day_note"],
+                    header["hall_mean_diff"],
+                    header.get("pick_machines"),
+                    header.get("total_machines"),
+                    header.get("pick_pct"),
+                    int(hall in tracked),
+                    complete,
+                    ok,
+                    json.dumps(notes, ensure_ascii=False) if notes else None,
+                    pick_sum,
+                    resolved,
+                    items,
+                    text,
+                    now,
+                ),
+            )
+            for seq, row in enumerate(models):
+                target.execute(
+                    "INSERT INTO poster_result_models (report_id, seq, granularity, granularity_raw, section_count, "
+                    "section_unit, model_name, model_parts, n_units) VALUES (?,?,?,?,?,?,?,?,?)",
+                    (
+                        tweet_id,
+                        seq,
+                        row["granularity"],
+                        row["granularity_raw"],
+                        row["section_count"],
+                        row["section_unit"],
+                        row["model_name"],
+                        json.dumps(row["model_parts"], ensure_ascii=False) if row["model_parts"] else None,
+                        row["n_units"],
+                    ),
+                )
+    target.commit()
+    print(
+        "結果速報: %d 件を登録 (検算が通らない %d 件 / 本文が切れている %d 件 / 対象外の投稿 %d 件)"
+        % (stored, bad, incomplete, skipped)
+    )
+    if items_total:
+        print(
+            "  機種名の引き当て(追跡内ホール): %d/%d (%.0f%%)"
+            % (resolved_total, items_total, 100 * resolved_total / items_total)
+        )
+    if pick_known:
+        print("  ピックの検算(カテゴリの台数の合計と一致): %d/%d 件" % (pick_match, pick_known))
+    return stored
 
 
 MIN_IMAGE_NUMBERS = 3
@@ -1247,6 +1638,7 @@ def main():
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("build", help="state.db から解析して analysis_results.db へ取り込む")
     sub.add_parser("ingest-prose", help="散文アカウントの速報をホール・営業日つきで登録する")
+    sub.add_parser("build-poster", help="slo_tokyo の結果速報を poster_result_* へ取り込む(発信者の設定判定)")
     sub.add_parser("link-machines", help="画像抽出の台番号を本文のホール・日付に結び付ける")
     sub.add_parser("propagate-granularity", help="台単位ラベルに仕掛けの粒度を付ける")
     sub.add_parser("number-proposals", help="人が確かめる台番号の直しの候補を出す")
@@ -1258,6 +1650,8 @@ def main():
         build()
     elif args.command == "ingest-prose":
         ingest_prose_reports()
+    elif args.command == "build-poster":
+        build_poster()
     elif args.command == "link-machines":
         link_machines()
         propagate_granularity()
