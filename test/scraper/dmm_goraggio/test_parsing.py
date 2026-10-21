@@ -28,6 +28,16 @@ def test_parse_machine_list() -> None:
     ]
 
 
+def test_parse_machine_list_preserves_raw_ideographic_space() -> None:
+    html = """
+    <table><thead><tr><th>台番号</th><th>機種名</th><th>BB回数</th><th>RB回数</th>
+    <th>前日最終スタート</th><th>スタート回数</th></tr></thead>
+    <tbody><tr><td>1001</td><td>1F L　ｽﾏｽﾛ ﾘｺﾘｽ･ﾘｺｲﾙ KX</td><td>0</td><td>0</td>
+    <td>0</td><td>12</td></tr></tbody></table>
+    """
+    assert parse_machine_list(html, "https://example.test")[0]["machine_name"] == "1F L　ｽﾏｽﾛ ﾘｺﾘｽ･ﾘｺｲﾙ KX"
+
+
 def test_parse_detail_only_expected_date_and_estimates_diff() -> None:
     html = """
     <article><div id="contentsHeader"><h2>テスト機</h2><div>1001番台</div><div class="suppleMeta"><time>2026.08.15 22:57</time></div></div>

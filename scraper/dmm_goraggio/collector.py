@@ -3,21 +3,25 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import re
 import sqlite3
 import sys
 import time
 import unicodedata
 from contextlib import closing
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
+from urllib.parse import parse_qs, urljoin, urlparse
 from zoneinfo import ZoneInfo
 
+from bs4 import BeautifulSoup
 from playwright.async_api import APIRequestContext, Browser, BrowserContext, Playwright, async_playwright
 
 if __package__ in {None, ""}:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from scraper.dmm_goraggio.parsing import (  # noqa: E402
+    compact_text,
     discover_data_url,
     find_device_warning,
     parse_detail,
@@ -58,6 +62,231 @@ class CollectionError(RuntimeError):
 
 class RateLimitError(CollectionError):
     pass
+
+
+class ModelJoinError(CollectionError):
+    pass
+
+
+def failure_info(exc: Exception, stage: str, **context) -> dict:
+    message = str(exc).strip()[:200]
+    status = getattr(exc, "status", None)
+    if status is None:
+        match = re.search(r"\bHTTP\s+(\d{3})\b", str(exc))
+        status = int(match.group(1)) if match else None
+    return {
+        "stage": stage,
+        **context,
+        "exception_type": type(exc).__name__,
+        "message": message,
+        "http_status": status,
+        "error": f"{type(exc).__name__}: {message}" if message else type(exc).__name__,
+    }
+
+
+def _same_hall_link(href: str, data_root: str, endpoint: str) -> str | None:
+    base = data_root + endpoint if href.startswith("?") else data_root + "/"
+    url = urljoin(base, href)
+    parsed, root = urlparse(url), urlparse(data_root)
+    return url if parsed.netloc == root.netloc and parsed.path == root.path.rstrip("/") + endpoint else None
+
+
+def parse_ball_price_links(html: str, data_root: str) -> list[tuple[str, str]]:
+    """Find the site's links to each slot-rate model index."""
+    links = {}
+    for link in BeautifulSoup(html, "html.parser").find_all("a", href=True):
+        url = _same_hall_link(link["href"], data_root, "/list")
+        if url is None:
+            continue
+        query = parse_qs(urlparse(url).query)
+        if query.get("mode") != ["psModelNameSearch"] or query.get("ps") != ["S"]:
+            continue
+        if "ballPrice" in query:
+            links[query["ballPrice"][0]] = url
+    return list(links.items())
+
+
+def parse_model_links(html: str, data_root: str) -> list[tuple[str, str, str]]:
+    """Keep model spelling, ballPrice, and URL from the site's unit-list links."""
+    links = {}
+    for link in BeautifulSoup(html, "html.parser").find_all("a", href=True):
+        url = _same_hall_link(link["href"], data_root, "/unit_list")
+        if url is None:
+            continue
+        query = parse_qs(urlparse(url).query)
+        if query.get("ps") != ["S"] or "ballPrice" not in query or "model" not in query:
+            continue
+        model, price = query["model"][0], query["ballPrice"][0]
+        links[(model, price)] = url
+    return [(model, price, url) for (model, price), url in links.items()]
+
+
+def _model_key(name: str) -> str:
+    return name.strip()
+
+
+def _rate_price(rate: str | None) -> float | None:
+    """Convert yen/coin or coins/yen labels to yen per coin."""
+    value = rate or ""
+    coins_first = re.search(r"(\d+(?:\.\d+)?)\s*枚\s*/\s*(\d+(?:\.\d+)?)\s*円", value)
+    if coins_first:
+        coins, yen = map(float, coins_first.groups())
+        return yen / coins if coins > 0 else None
+    yen_first = re.search(r"(\d+(?:\.\d+)?)\s*円\s*/\s*(\d+(?:\.\d+)?)\s*枚", value)
+    if yen_first:
+        yen, coins = map(float, yen_first.groups())
+        return yen / coins if coins > 0 else None
+    direct = re.search(r"(\d+(?:\.\d+)?)\s*円", value)
+    return float(direct.group(1)) if direct else None
+
+
+def keep_standard_rate_machines(machines: list[dict]) -> tuple[list[dict], list[str]]:
+    kept = []
+    unknown_rates = set()
+    for machine in machines:
+        rate = machine.get("rate")
+        yen_per_coin = _rate_price(rate)
+        if yen_per_coin is None:
+            kept.append(machine)
+            unknown_rates.add(str(rate))
+        elif yen_per_coin >= 10:
+            kept.append(machine)
+    warnings = [f"貸玉レートを換算できません。対象に保持: {rate}" for rate in sorted(unknown_rates)]
+    return kept, warnings
+
+
+def select_model_links(machines: list[dict], links: list[tuple[str, str, str]]) -> list[tuple[str, str, str]]:
+    by_model: dict[str, list[tuple[str, str, str]]] = {}
+    for link in links:
+        by_model.setdefault(_model_key(link[0]), []).append(link)
+    selected = []
+    for model in {_model_key(machine["machine_name"]) for machine in machines}:
+        candidates = by_model.get(model, [])
+        if len(candidates) <= 1:
+            selected.extend(candidates)
+            continue
+        rates = {
+            _rate_price(machine.get("rate")) for machine in machines if _model_key(machine["machine_name"]) == model
+        }
+        if None in rates:
+            selected.extend(candidates)
+            continue
+        matching = [link for link in candidates if any(abs(float(link[1]) - rate) < 0.011 for rate in rates)]
+        selected.extend(matching if matching else candidates)
+    return selected
+
+
+def _business_date(value: str | date, expected: date) -> date | None:
+    if isinstance(value, date):
+        return value
+    match = re.search(r"(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})", value)
+    if match:
+        try:
+            return date(*map(int, match.groups()))
+        except ValueError:
+            return None
+    match = re.search(r"(\d{1,2})月(\d{1,2})日", value)
+    if match:
+        month, day = map(int, match.groups())
+        year = expected.year - (expected.month == 1 and month == 12)
+        try:
+            return date(year, month, day)
+        except ValueError:
+            return None
+    return None
+
+
+def parse_model_page(html: str, expected_date: date) -> tuple[date | None, dict[str, int | None]]:
+    """Return the first business-day tab and cumulative starts by unit number."""
+    soup = BeautifulSoup(html, "html.parser")
+    current_option = soup.select_one('select[name="hist_num"] option[value="0"]')
+    first_date = (
+        _business_date(compact_text(current_option.get_text(" ", strip=True)), expected_date)
+        if current_option is not None
+        else None
+    )
+    if current_option is None:
+        # Keep the earlier page form supported by the fixed fragment tests.
+        for node in soup.select(".swiper-slide h4.Text-Left-01, .swiper-slide h4, .nav-tabs a, .date-tab, .dateTab"):
+            first_date = _business_date(compact_text(node.get_text(" ", strip=True)), expected_date)
+            if first_date is not None:
+                break
+    if first_date is None:
+        raise ValueError("モデルページの先頭営業日が見つかりません")
+    for table in soup.find_all("table"):
+        headers = [compact_text(cell.get_text(" ", strip=True)) for cell in table.select("thead th")]
+        if "台番号" not in headers or "累計スタート" not in headers:
+            continue
+        number_index, games_index = headers.index("台番号"), headers.index("累計スタート")
+        units: dict[str, int | None] = {}
+        for row in table.select("tbody tr"):
+            cells = row.find_all("td", recursive=False)
+            if len(cells) < len(headers):
+                continue
+            number = compact_text(cells[number_index].get_text(" ", strip=True))
+            if not number.isdigit():
+                continue
+            raw = compact_text(cells[games_index].get_text(" ", strip=True)).replace(",", "")
+            units[number] = int(raw) if re.fullmatch(r"\d+", raw) else None
+        if not units:
+            raise ValueError("モデルページの台番号行が見つかりません")
+        return first_date, units
+    raise ValueError("モデルページの累計スタート表が見つかりません")
+
+
+def apply_model_games(
+    machines: list[dict],
+    model_pages: dict[tuple[str, str], tuple[date | None, dict[str, int | None]]],
+    links: list[tuple[str, str, str]],
+    business_date: date,
+    failures: list[dict],
+    index_failed: bool = False,
+) -> None:
+    available = {(model, price) for model, price, _ in links}
+    failed = {(item.get("model"), item.get("ballPrice")) for item in failures if item.get("model")}
+    index_errors = [item for item in failures if item.get("stage") == "model_index"]
+    by_model: dict[str, list[tuple[str, str]]] = {}
+    for model, price in available:
+        by_model.setdefault(_model_key(model), []).append((model, price))
+    missing: dict[str, set[str]] = {}
+    for machine in machines:
+        machine["total_games"] = None
+        model, number = _model_key(machine["machine_name"]), machine["machine_number"]
+        candidates = by_model.get(model, [])
+        if not candidates:
+            if index_failed and index_errors:
+                source = index_errors[0]
+                reason = f"fetch failure: model index {source['exception_type']}: {source['message']}"
+            else:
+                reason = "not in list"
+            missing.setdefault(model, set()).add(reason)
+            continue
+        matches = [
+            (price, units[number])
+            for key in candidates
+            if key in model_pages
+            for page_date, units in [model_pages[key]]
+            if page_date == business_date and number in units
+            for price in [key[1]]
+        ]
+        rate = _rate_price(machine.get("rate"))
+        preferred = [
+            (price, games) for price, games in matches if rate is not None and abs(float(price) - rate) < 0.011
+        ]
+        chosen = preferred if preferred else matches
+        if len(chosen) == 1:
+            machine["total_games"] = chosen[0][1]
+        elif len(chosen) > 1:
+            missing.setdefault(model, set()).add("ballPrice mismatch: ambiguous unit join")
+        elif any(key in failed for key in candidates):
+            # The model-page failure already carries the original exception.
+            continue
+        elif any(key in model_pages and model_pages[key][0] != business_date for key in candidates):
+            missing.setdefault(model, set()).add("営業日不一致")
+        else:
+            missing.setdefault(model, set()).add("ballPrice mismatch: unit number not found")
+    for model, reasons in sorted(missing.items()):
+        failures.append(failure_info(ModelJoinError("; ".join(sorted(reasons))), "model_page", model=model))
 
 
 def resolve_hall(hall: str, dmm_url: str | None = None, output_dir: Path | None = None) -> tuple[dict, str, Path]:
@@ -132,6 +361,96 @@ async def response_text(response, stage: str) -> str:
     return text
 
 
+class RequestPacer:
+    def __init__(self, request: APIRequestContext, interval_ms: int):
+        self.request = request
+        self.effective_interval_ms = interval_ms
+        self.lock = asyncio.Lock()
+        self.last_started = 0.0
+        self.pause_until = 0.0
+        self.request_count = 0
+        self.rate_limit_events = 0
+
+    async def get(self, url: str, stage: str) -> str:
+        for attempt in range(3):
+            async with self.lock:
+                now = time.monotonic()
+                wait = max(0.0, self.pause_until - now, self.last_started + self.effective_interval_ms / 1000 - now)
+                if wait:
+                    await asyncio.sleep(wait)
+                self.last_started = time.monotonic()
+                self.request_count += 1
+            response = await self.request.get(url, timeout=45_000)
+            try:
+                return await response_text(response, stage)
+            except RateLimitError:
+                async with self.lock:
+                    self.rate_limit_events += 1
+                    self.effective_interval_ms = max(self.effective_interval_ms, 2500)
+                    self.pause_until = max(self.pause_until, time.monotonic() + 65)
+                if attempt == 2:
+                    raise
+        raise CollectionError(f"{stage}: 応答本文を取得できません")
+
+
+async def collect_model_pages(
+    pacer: RequestPacer, links: list[tuple[str, str, str]], workers: int, business_date: date
+) -> tuple[dict[tuple[str, str], tuple[date | None, dict[str, int | None]]], list[dict]]:
+    queue = asyncio.Queue()
+    for item in links:
+        queue.put_nowait(item)
+    pages = {}
+    failures = []
+
+    async def worker() -> None:
+        while True:
+            try:
+                model, price, url = queue.get_nowait()
+            except asyncio.QueueEmpty:
+                return
+            try:
+                html = await pacer.get(url, f"model:{model}")
+                pages[(model, price)] = await asyncio.to_thread(parse_model_page, html, business_date)
+            except Exception as exc:
+                failures.append(failure_info(exc, "model_page", model=model, ballPrice=price))
+            finally:
+                queue.task_done()
+
+    await asyncio.gather(*(worker() for _ in range(workers)))
+    return pages, failures
+
+
+async def discover_model_links(
+    pacer: RequestPacer, data_root: str, machines: list[dict]
+) -> tuple[list[tuple[str, str, str]], list[dict]]:
+    failures: list[dict] = []
+    links: list[tuple[str, str, str]] = []
+    try:
+        index_url = f"{data_root}/list?mode=psModelNameSearch&ps=S"
+        index_html = await pacer.get(index_url, "model_index")
+        price_links = parse_ball_price_links(index_html, data_root)
+        if not price_links:
+            raise CollectionError("ballPrice別の機種一覧リンクがありません")
+        price_links = [
+            (price, url)
+            for price, url in price_links
+            if _rate_price(price + "円") is None or _rate_price(price + "円") >= 10
+        ]
+    except Exception as exc:
+        price_links = []
+        failures.append(failure_info(exc, "model_index"))
+    for price, url in price_links:
+        try:
+            index_html = await pacer.get(url, f"ball_price_index:{price}")
+            price_models = [link for link in parse_model_links(index_html, data_root) if link[1] == price]
+            if not price_models:
+                raise CollectionError("unit_list機種リンクがありません")
+            links.extend(price_models)
+        except Exception as exc:
+            failures.append(failure_info(exc, "model_index", ballPrice=price))
+    return select_model_links(machines, links), failures
+
+
 async def validate_mobile_entry(playwright: Playwright, dmm_url: str) -> tuple[Browser, BrowserContext, str, int]:
     browser = await playwright.chromium.launch(headless=True)
     device = dict(playwright.devices["iPhone 13"])
@@ -182,54 +501,22 @@ def unchanged(machine: dict, prior_machine: dict | None) -> bool:
 
 
 async def collect_details(
-    request: APIRequestContext,
+    pacer: RequestPacer,
     targets: list[dict],
     business_date,
     graph_dir: Path,
     workers: int,
-    request_interval_ms: int,
 ) -> tuple[dict[str, dict], list[dict], int, int, int]:
     queue: asyncio.Queue[dict] = asyncio.Queue()
     for target in targets:
         queue.put_nowait(target)
     details: dict[str, dict] = {}
     failures: list[dict] = []
-    request_count = 0
-    request_lock = asyncio.Lock()
-    start_lock = asyncio.Lock()
-    last_started = 0.0
-    pause_until = 0.0
-    effective_interval_ms = request_interval_ms
-    rate_limit_events = 0
     graph_dir.mkdir(parents=True, exist_ok=True)
 
     async def fetch(target: dict) -> None:
-        nonlocal request_count, last_started, pause_until, effective_interval_ms, rate_limit_events
         machine_number = target["machine_number"]
-        html = None
-        for attempt in range(3):
-            async with start_lock:
-                now = time.monotonic()
-                start_at = max(pause_until, last_started + effective_interval_ms / 1000)
-                wait_seconds = max(0.0, start_at - now)
-                if wait_seconds:
-                    await asyncio.sleep(wait_seconds)
-                last_started = time.monotonic()
-            response = await request.get(target["detail_url"], timeout=45_000)
-            async with request_lock:
-                request_count += 1
-            try:
-                html = await response_text(response, f"detail:{machine_number}")
-                break
-            except RateLimitError:
-                async with start_lock:
-                    rate_limit_events += 1
-                    effective_interval_ms = max(effective_interval_ms, 2500)
-                    pause_until = max(pause_until, time.monotonic() + 65)
-                if attempt == 2:
-                    raise
-        if html is None:
-            raise CollectionError(f"detail:{machine_number}: 応答本文を取得できません")
+        html = await pacer.get(target["detail_url"], f"detail:{machine_number}")
         detail, svg = await asyncio.to_thread(parse_detail, html, business_date, machine_number)
         if svg:
             graph_path = graph_dir / f"{machine_number}.svg"
@@ -248,13 +535,34 @@ async def collect_details(
             try:
                 await fetch(target)
             except Exception as exc:  # keep partial evidence and continue other machines
-                # 例外文にはリクエストヘッダ(クッキー)が含まれるため、1行目だけを記録する
-                failures.append({"machine_number": target["machine_number"], "error": str(exc).splitlines()[0]})
+                failures.append(failure_info(exc, "detail", machine_number=target["machine_number"]))
             finally:
                 queue.task_done()
 
     await asyncio.gather(*(worker() for _ in range(workers)))
-    return details, failures, request_count, rate_limit_events, effective_interval_ms
+    return details, failures, pacer.request_count, pacer.rate_limit_events, pacer.effective_interval_ms
+
+
+async def collect_details_then_models(
+    pacer: RequestPacer,
+    targets: list[dict],
+    machines: list[dict],
+    data_root: str,
+    business_date: date,
+    graph_dir: Path,
+    workers: int,
+) -> tuple[
+    dict[str, dict],
+    list[dict],
+    list[tuple[str, str, str]],
+    dict[tuple[str, str], tuple[date | None, dict[str, int | None]]],
+    list[dict],
+]:
+    # Preserve the legacy detail opportunity before additional model requests or backoff.
+    details, detail_failures, _, _, _ = await collect_details(pacer, targets, business_date, graph_dir, workers)
+    links, index_failures = await discover_model_links(pacer, data_root, machines)
+    pages, page_failures = await collect_model_pages(pacer, links, workers, business_date)
+    return details, detail_failures, links, pages, index_failures + page_failures
 
 
 async def run(args: argparse.Namespace) -> dict:
@@ -284,6 +592,10 @@ async def run(args: argparse.Namespace) -> dict:
             request_count += 1
             list_html = await response_text(list_response, "slot_list")
             machines = parse_machine_list(list_html, data_root)
+            all_unit_numbers = {machine["machine_number"] for machine in machines}
+            machines, rate_warnings = keep_standard_rate_machines(machines)
+            business_date = started_at.date()
+            pacer = RequestPacer(request, args.request_interval_ms)
             db_hall = hall_config["db_hall"]
             by_number, names = (
                 load_db_names(Path(__file__).resolve().parents[2] / "db" / f"{db_hall}.db")
@@ -293,7 +605,6 @@ async def run(args: argparse.Namespace) -> dict:
             for machine in machines:
                 machine["machine_name_normalized"] = normalize_machine_name(machine, by_number, names)
 
-            business_date = started_at.date()
             prior_machines = {row["machine_number"]: row for row in (prior or {}).get("machines", [])}
             prior_details = (
                 (prior or {}).get("details", {})
@@ -321,6 +632,10 @@ async def run(args: argparse.Namespace) -> dict:
                         eligible_units.add(number)
                 # --units は呼び出し側(realtime.run)が判別可能機種で選別済みなので、ここで絞り直さない。
             known_units = {row["machine_number"] for row in machines}
+            excluded_requested = sorted(requested_units & (all_unit_numbers - known_units))
+            requested_units.difference_update(excluded_requested)
+            if excluded_requested:
+                rate_warnings.append(f"低貸玉の指定台を対象外: {', '.join(excluded_requested)}")
             unknown_units = sorted(requested_units - known_units)
             if unknown_units:
                 raise CollectionError(f"存在しない指定台です: {', '.join(unknown_units)}")
@@ -353,15 +668,27 @@ async def run(args: argparse.Namespace) -> dict:
                 ):
                     targets.append(machine)
 
-            fresh_details, failures, detail_requests, rate_limit_events, effective_interval_ms = await collect_details(
-                request,
+            fresh_details, failures, model_links, model_pages, model_failures = await collect_details_then_models(
+                pacer,
                 targets,
+                machines,
+                data_root,
                 business_date,
                 graph_dir,
                 args.workers,
-                args.request_interval_ms,
             )
-            request_count += detail_requests
+            failures.extend(model_failures)
+            apply_model_games(
+                machines,
+                model_pages,
+                model_links,
+                business_date,
+                failures,
+                index_failed=any(item["stage"] == "model_index" for item in model_failures),
+            )
+            request_count += pacer.request_count
+            rate_limit_events = pacer.rate_limit_events
+            effective_interval_ms = pacer.effective_interval_ms
             details.update(fresh_details)
             for detail in fresh_details.values():
                 detail["machine_name_normalized"] = normalize_machine_name(detail, by_number, names)
@@ -378,6 +705,9 @@ async def run(args: argparse.Namespace) -> dict:
         and (args.mode != "full" or len(details) == len(machines))
         and successful_target_count == required_detail_count - reused_detail_count
     )
+    failure_counts = {
+        stage: sum(item.get("stage") == stage for item in failures) for stage in ("model_index", "model_page", "detail")
+    }
     result = {
         "version": 1,
         "mode": args.mode,
@@ -399,6 +729,8 @@ async def run(args: argparse.Namespace) -> dict:
         "rate_limit_events": rate_limit_events,
         "requested_units": sorted(requested_units),
         "failures": failures,
+        "warnings": rate_warnings,
+        "failure_counts": failure_counts,
         "machines": machines,
         "details": details,
     }
@@ -459,6 +791,8 @@ def main() -> int:
             "effective_interval_ms",
             "rate_limit_events",
             "failures",
+            "warnings",
+            "failure_counts",
         )
     }
     run_record["data_path"] = str(output_path)

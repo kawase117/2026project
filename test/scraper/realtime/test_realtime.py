@@ -61,6 +61,35 @@ def test_dmm_adapter(tmp_path, monkeypatch):
     assert actual[0].diff == -40 and actual[0].diff_kind == "estimated"
 
 
+def test_dmm_adapter_model_games_fallback_and_zero(tmp_path, monkeypatch):
+    monkeypatch.setattr("scraper.realtime.adapters.dmm.model_name", lambda _: "AT")
+    path = tmp_path / "latest_quick.json"
+    path.write_text(
+        json.dumps(
+            {
+                "observed_at": NOW.isoformat(),
+                "complete": True,
+                "machines": [
+                    {"machine_number": "101", "machine_name": "AT", "total_games": 3000},
+                    {"machine_number": "102", "machine_name": "AT", "total_games": 2000},
+                    {"machine_number": "103", "machine_name": "AT", "total_games": 0},
+                    {"machine_number": "104", "machine_name": "AT", "total_games": None},
+                ],
+                "details": {"101": {"games": 0}, "102": {"games": None}},
+            }
+        ),
+        encoding="utf-8",
+    )
+    rows = dmm.adapt(path, "ヒロキ東口店")
+    assert [item.games for item in rows] == [0, 2000, 0, None]
+    assert "games_from_model_page" not in rows[0].quality_flags
+    assert "games_from_model_page" in rows[1].quality_flags
+    assert "detail_missing" not in rows[1].quality_flags
+    assert {"detail_missing", "games_from_model_page"} <= set(rows[2].quality_flags)
+    assert "detail_missing" in rows[3].quality_flags
+    assert "games_from_model_page" not in rows[3].quality_flags
+
+
 def test_site777_adapter(tmp_path, monkeypatch):
     monkeypatch.setattr("scraper.realtime.adapters.site777.model_name", lambda _: "新ハナビ")
     full = {

@@ -93,7 +93,7 @@ def parse_machine_list(html: str, source_url: str) -> list[dict]:
             {
                 "machine_number": machine_number,
                 "rate": values[index["貸玉"]] if "貸玉" in index else None,
-                "machine_name": values[index["機種名"]],
+                "machine_name": cells[index["機種名"]].get_text().strip(),
                 "bb_count": parse_int(values[index["BB回数"]]),
                 "rb_count": parse_int(values[index["RB回数"]]),
                 "previous_final_start": parse_int(values[index["前日最終スタート"]]),

@@ -26,6 +26,9 @@ def adapt(path: Path, hall: str, observed_at: datetime | None = None) -> list[Sn
         if model is None:
             model = model_name(raw)
         diff = number(detail.get("latest_diff_estimated"))
+        detail_games = number(detail.get("games"))
+        model_games = number(machine.get("total_games"))
+        from_model_page = detail_games is None and model_games is not None
         result.append(
             SnapshotRow(
                 hall=hall,
@@ -34,14 +37,16 @@ def adapt(path: Path, hall: str, observed_at: datetime | None = None) -> list[Sn
                 unit=unit,
                 model=model,
                 model_raw=raw,
-                games=number(detail.get("games")),
+                games=detail_games if detail_games is not None else model_games,
                 bb=number(detail.get("bb_count", machine.get("bb_count"))),
                 rb=number(detail.get("rb_count", machine.get("rb_count"))),
                 diff=diff,
                 diff_kind="estimated" if diff is not None else None,
                 max_payout=number(detail.get("max_payout")),
                 source="dmm",
-                quality_flags=flags + (["detail_missing"] if not detail else []),
+                quality_flags=flags
+                + (["detail_missing"] if not detail else [])
+                + (["games_from_model_page"] if from_model_page else []),
             )
         )
     return result
