@@ -9,7 +9,9 @@
 | pachi-ev-analyzer | [公開ソースのCSV・JSON出力実装](https://github.com/kawano09023-droid/pachi-ev-analyzer/blob/main/src/app/page.tsx)。CSV見出しは `date,machine,store,investment,return,profit,memo`。JSONは `records` と `settings` を持つ | CSVは列自動候補、JSONは専用入口。JSONの `type` から遊技種別を設定し、`unitDiff` を含む元の行と元JSON全体を保存する | 公開ソースと合成データによる検証。配布版の実出力ファイルでは未検証。元アプリの資金設定は適用しない |
 | パチンコ・パチスロ収支管理など | [Google Playの説明](https://play.google.com/store/apps/details?id=com.gevvoihorry.PachinkoBalance)にCSV出力機能の記載あり | 汎用CSVの列対応で取り込める可能性がある | 見出し・文字コード・行の例が公開確認できず、アプリ固有の対応を名乗らない |
 | まわパチ | [Google Playの説明](https://play.google.com/store/apps/details?id=com.reasin.pachiapp)にCSV・JSON出力機能の記載あり | CSVは汎用列対応の対象 | 実際のCSV/JSON構造が未確認。JSONを専用形式と誤認して読まない |
+| パチフォリオ | [公式ガイド](https://slot-log.me/guide/how-to/)に全記録・マスタのCSV/TSV出力を明記 | 汎用CSVの列対応で記録部分を確認可能 | 見出し・マスタとの関係・原本が未確認。専用形式対応は未実装 |
+| Gamble Memo | [開発元の説明](https://www.team-nave.com/system/jp/products/gamblememo/)にCSV出力を明記 | 賭金・払戻金・ギャンブル種別という見出しは汎用CSVの候補にする | 実CSVの見出しは未確認。ホール・機種がない記録も空欄として扱うが、Gamble Memo専用対応とはしない |
 
-汎用CSVはUTF-8を先に厳密に読み、失敗したときだけ利用者に確認してWindows-31Jで再読込する。カンマ・タブ区切りを判定し、必須列と先頭行を確認してから一括保存する。行の欠損、収支の不一致、同一IDの内容衝突は取り込まず、保存済みデータを部分変更しない。CSVにない遊技種別や現金・玉メダル内訳は推測しない。
+汎用CSVはUTF-8を先に厳密に読み、失敗したときだけ利用者に確認してWindows-31Jで再読込する。カンマ・タブ区切りを判定し、日付・投資・回収の必須列と先頭行を確認してから一括保存する。ホール・機種の列がなければ空欄で保存する。対応付けない列を含む各行の全セルと見出しは記録の詳細情報に残し、JSON・ZIPバックアップにも含める。元CSVのバイト列自体は保存しない。行の欠損、収支の不一致、同一IDの内容衝突は取り込まず、保存済みデータを部分変更しない。CSVにない遊技種別や現金・玉メダル内訳は推測しない。
 
 今後、アプリ名を冠した正式対応を増やすには、そのアプリの実出力ファイルを権利者・利用者の許可を得て入手し、個人情報を除いた再現用フィクスチャで列、文字コード、欠損値、複数行、再取込、形式の版差を検証する。実原本はリポジトリにコミットしない。

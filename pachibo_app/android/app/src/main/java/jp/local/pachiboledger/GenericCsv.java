@@ -16,17 +16,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/** User-mapped UTF-8 CSV; every imported value comes from an explicit source column. */
+/** User-mapped CSV; every imported value comes from an explicit source column. */
 final class GenericCsv {
     static final String[] FIELDS={"日付","投資（円）","回収（円）","ホール","機種","台番号","タグ","メモ",
         "遊技種別","稼働時間（分）","収支（照合用）"};
     private static final String[][] ALIASES={{"日付","遊技日","date","プレイ日"},
-        {"投資","投資額","投資金額","investment","investment_yen","investment_total_yen"},
-        {"回収","回収額","回収金額","recovery","recovery_yen","recovery_total_yen","return"},
+        {"投資","投資額","投資金額","賭金","investment","investment_yen","investment_total_yen"},
+        {"回収","回収額","回収金額","払戻金","recovery","recovery_yen","recovery_total_yen","return"},
         {"ホール","店舗","店舗名","ホール名","店名","hall","store"},
         {"機種","機種名","machine"},{"台番号","台番","machine_number"},
         {"タグ","tags","tag_names"},{"メモ","備考","memo","コメント"},
-        {"種別","遊技種別","ゲーム種別","kind","game_kind"},
+        {"種別","遊技種別","ゲーム種別","ギャンブル種別","kind","game_kind"},
         {"稼働時間","稼働時間（分）","稼働時間(分)","duration_minutes"},
         {"収支","損益","profit","profit_yen"}};
     final List<List<String>> lines;
@@ -83,11 +83,12 @@ final class GenericCsv {
         java.util.Set<Integer> used=new java.util.HashSet<>();
         for(int f=0;f<columns.length;f++){
             int col=columns[f];
-            if(f<5&&col<0)throw new IllegalArgumentException(FIELDS[f]+"の列を選択してください");
+            if(f<3&&col<0)throw new IllegalArgumentException(FIELDS[f]+"の列を選択してください");
             if(col>=headers().size())throw new IllegalArgumentException("列番号が範囲外です");
             if(col>=0&&!used.add(col))throw new IllegalArgumentException("同じ列を複数の項目に対応付けています");
         }
         JSONArray records=new JSONArray(),tags=new JSONArray(),details=new JSONArray();Map<String,String> names=new HashMap<>(knownTags);
+        JSONArray sourceHeaders=new JSONArray();for(String name:headers())sourceHeaders.put(name);
         for(int i=1;i<lines.size();i++){
             List<String> line=lines.get(i);
             if(line.size()==1&&line.get(0).isEmpty())continue;
@@ -121,11 +122,15 @@ final class GenericCsv {
                 .put("tag_ids",ids).put("match_status","csv_unclassified")
                 .put("source_item_id",fingerprint+"/"+i).put("legacy_tag_bits","");
             records.put(row);
+            JSONArray sourceCells=new JSONArray();for(String value:line)sourceCells.put(value);
+            JSONObject sourceDetails=new JSONObject().put("source_csv_headers",sourceHeaders)
+                .put("source_csv_cells",sourceCells).put("source_csv_encoding",encoding)
+                .put("source_csv_delimiter",String.valueOf(delimiter));
             if(columns[9]>=0&&!cell(line,columns[9]).trim().isEmpty()){
                 Long minutes=durationMinutes(cell(line,columns[9]),i);
-                if(minutes!=null)details.put(new JSONObject().put("id",id).put("payload",
-                    new JSONObject().put("duration_minutes",minutes).toString()));
+                if(minutes!=null)sourceDetails.put("duration_minutes",minutes);
             }
+            details.put(new JSONObject().put("id",id).put("payload",sourceDetails.toString()));
         }
         return new JSONObject().put("records",records).put("tags",tags).put("record_details",details);
     }

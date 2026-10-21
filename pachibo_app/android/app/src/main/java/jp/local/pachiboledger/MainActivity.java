@@ -451,7 +451,7 @@ public final class MainActivity extends Activity {
         for(int i=0;i<csv.headers().size();i++)options[i+1]=(i+1)+"："+csv.headers().get(i);
         android.widget.Spinner[] selectors=new android.widget.Spinner[GenericCsv.FIELDS.length];
         for(int i=0;i<selectors.length;i++){
-            panel.addView(text(GenericCsv.FIELDS[i]+(i<5?"（必須）":"（任意）"),14));
+            panel.addView(text(GenericCsv.FIELDS[i]+(i<3?"（必須）":"（任意）"),14));
             android.widget.Spinner spinner=new android.widget.Spinner(this);
             spinner.setAdapter(new android.widget.ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,options));
             spinner.setSelection(csv.suggested(i)+1);panel.addView(spinner);selectors[i]=spinner;
@@ -465,13 +465,17 @@ public final class MainActivity extends Activity {
                 for(JSONObject tag:jsonRows(db.tags()))known.put(tag.getString("name"),tag.getString("source_id"));
                 JSONObject converted=csv.convert(mapping,known);
                 JSONArray rows=converted.getJSONArray("records");String first=null,last=null;
+                int missingHall=0,missingMachine=0;
                 for(int i=0;i<rows.length();i++){
-                    String date=rows.getJSONObject(i).getString("date");
+                    JSONObject row=rows.getJSONObject(i);String date=row.getString("date");
                     if(first==null||date.compareTo(first)<0)first=date;
                     if(last==null||date.compareTo(last)>0)last=date;
+                    if(row.getString("hall").isEmpty())missingHall++;
+                    if(row.getString("machine").isEmpty())missingMachine++;
                 }
                 String summary=rows.length()+"件 / "+(first==null?"記録なし":first+" ～ "+last)+"\n"
-                    +"元CSVにない項目は推測せず、遊技種別は未分類のまま保持します。\n\n"+csv.sample(mapping);
+                    +"ホール空欄 "+missingHall+"件・機種空欄 "+missingMachine+"件\n"
+                    +"元CSVにない項目は空欄または未分類にし、元の全列を記録に保持します。\n\n"+csv.sample(mapping);
                 runOnUiThread(()->{preview.setText(csv.sample(mapping));
                     new AlertDialog.Builder(this).setTitle("CSV取り込み前の確認").setMessage(summary)
                     .setNegativeButton("戻る",null).setPositiveButton("取り込む",(d,w)->{

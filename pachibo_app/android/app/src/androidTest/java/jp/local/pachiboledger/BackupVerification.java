@@ -307,6 +307,24 @@ public final class BackupVerification extends Instrumentation {
             JSONObject csvRow=converted.getJSONArray("records").getJSONObject(0);
             check("未分類".equals(csvRow.getString("kind"))&&"001".equals(csvRow.getString("machine_number"))
                 &&csvRow.getString("memo").contains("\n"),"CSV mapping guessed or lost source values");
+            JSONObject csvSource=source.recordDetails(csvRow.getString("id"));
+            check(csvSource.getJSONArray("source_csv_headers").length()==8
+                &&"改行\nメモ".equals(csvSource.getJSONArray("source_csv_cells").getString(7)),
+                "CSV source columns were not preserved");
+            GenericCsv sparse=new GenericCsv(("日付,賭金,払戻金,ギャンブル種別,独自項目\n"
+                +"2026-10-12,500,1800,スロット,移行後も残す値\n")
+                .getBytes(StandardCharsets.UTF_8));
+            int[] sparseMap=new int[GenericCsv.FIELDS.length];
+            for(int i=0;i<sparseMap.length;i++)sparseMap[i]=sparse.suggested(i);
+            JSONObject sparseConverted=sparse.convert(sparseMap,new HashMap<>());
+            JSONObject sparseRow=sparseConverted.getJSONArray("records").getJSONObject(0);
+            check(sparseRow.getString("hall").isEmpty()&&sparseRow.getString("machine").isEmpty()
+                &&"スロット".equals(sparseRow.getString("kind")),
+                "Missing hall or machine was fabricated or generic bet/refund aliases failed");
+            source.importCsv(sparseConverted);
+            check("移行後も残す値".equals(source.recordDetails(sparseRow.getString("id"))
+                .getJSONArray("source_csv_cells").getString(4)),
+                "Unmapped CSV column was discarded");
             String pRecordHeader="日付,店舗コード,店舗,メーカー,機種コード,機種,台番号,投資額,回収額,収支,メモ,稼働時間,時給\r\n";
             GenericCsv pRecord=new GenericCsv((pRecordHeader+
                 "2026/10/19,10,公式例店,メーカー,20,公式例機,009,1000,2500,+1500,\"改行\nメモ\",120.0,750.0\r\n")
