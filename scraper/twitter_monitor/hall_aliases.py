@@ -70,7 +70,7 @@ HALL_ALIASES: dict[str, list[tuple[str, date | None, date | None]]] = {
 
 # 追跡外の同系列ホール名。ここに載る語は当該ホールの別名判定から除く。
 HALL_ALIAS_EXCLUSIONS: dict[str, tuple[str, ...]] = {
-    "楽園蒲田店": ("楽園池袋",),
+    "楽園蒲田店": ("楽園池袋", "楽園上永谷"),
 }
 
 

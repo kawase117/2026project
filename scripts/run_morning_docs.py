@@ -34,9 +34,11 @@ claude に推測させないこと（2026-10-18 の初回で、曜日を間違�
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import shutil
+import sqlite3
 import subprocess
 import sys
 from collections.abc import Callable
@@ -51,6 +53,7 @@ from morning_facts import (  # 同ディレクトリ
     check_numbers,
     day_facts,
     inject_facts,
+    poster_lines,
     render_facts,
 )
 from run_morning import hall_max_dates
@@ -63,6 +66,12 @@ OUT_ROOT = PROJECT_ROOT / "output" / "morning_docs"
 REVIEWS = PROJECT_ROOT / "document" / "reviews"
 PREDICTIONS = PROJECT_ROOT / "backtest" / "predictions"
 ANNOUNCE_DIR = PROJECT_ROOT / "backtest" / "announce"
+EVENT_DAYS_PATH = PROJECT_ROOT / "document" / "registry" / "EVENT_DAYS.jsonl"
+EVENT_SERIES_PATH = PROJECT_ROOT / "document" / "registry" / "EVENT_SERIES.jsonl"
+DB_DIR = PROJECT_ROOT / "db"
+# slo_tokyo の結果速報(発信者の設定判定)を取り込んだ派生データ。build_poster が毎朝作り直す。
+ANALYSIS_DB = DB_DIR / "analysis_results.db"
+OTHER_HALL_WORDS = ("楽園上永谷", "楽園池袋")
 AUTO_MARK = "<!-- auto-morning-docs -->"
 CLAUDE_TIMEOUT_SEC = 25 * 60
 CONCURRENCY = 5  # claude -p を同時に走らせるホール数（逐次だと10ホールで1時間近くかかる）
@@ -182,7 +191,20 @@ def facts_block(key: str, today: str, yesterday: str) -> str:
             % (yesterday, latest)
         )
     announces = announce_files(key, today)
-    listing = "\n".join("  - backtest/announce/%s" % p.name for p in announces) or "  - なし（予告は登録されていない）"
+    listing_lines = []
+    for p in announces:
+        line = "  - backtest/announce/%s" % p.name
+        try:
+            raw_text = json.loads(p.read_text(encoding="utf-8")).get("raw_text")
+            if isinstance(raw_text, str):
+                for word in OTHER_HALL_WORDS:
+                    if word in raw_text:
+                        line += " ※本文に別店舗名「%s」。このホールの予告ではない可能性が高い。根拠にしない" % word
+                        break
+        except OSError, ValueError, AttributeError:
+            pass
+        listing_lines.append(line)
+    listing = "\n".join(listing_lines) or "  - なし（予告は登録されていない）"
     return f"""\
 ## 確定している事実（スクリプトが計算した。これと矛盾することを書かない）
 - 当日: {jp_date(today)} / 前日: {jp_date(yesterday)}。曜日はこれを使う。自分で数えない。
@@ -198,6 +220,150 @@ def facts_block(key: str, today: str, yesterday: str) -> str:
   予告を出したアカウントの、予告より後の返信を読む（画像は image_paths の画像ファイル）。
   返信が見つからなければ「狙い目の返信はまだ収集できていない」と事実として書き、機種を創作しない。
 """
+
+
+def event_history_block(key: str, today: str) -> str:
+    """当日の name 系列について、当日より前の機械実績だけをまとめる。"""
+    heading = "## 同じ系列の過去回(機械集計。この表の値だけを使う)"
+    hall = HALLS[key][0]
+
+    def read_jsonl(path: Path) -> list[dict]:
+        return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+    events = read_jsonl(EVENT_DAYS_PATH)
+    today_ids = {row["event_id"] for row in events if row.get("hall") == hall and row.get("date") == today}
+    if not today_ids:
+        return heading + "\n本日はイベント日台帳に登録なし"
+
+    series_rows = read_jsonl(EVENT_SERIES_PATH)
+    superseded = {row["supersedes"] for row in series_rows if row.get("supersedes")}
+    series = [
+        row
+        for row in series_rows
+        if row.get("axis") == "name"
+        and row.get("decision") == "same"
+        and row.get("hall") == hall
+        and row.get("row_id") not in superseded
+        and today_ids.intersection(row.get("event_ids", []))
+    ]
+    if not series:
+        return heading + "\n同じ系列なし(前例なし)"
+
+    lines = [heading]
+    db_path = (DB_DIR / (hall + ".db")).resolve()
+    with sqlite3.connect(db_path.as_uri() + "?mode=ro", uri=True) as conn:
+        oldest = conn.execute("SELECT MIN(date) FROM machine_detailed_results").fetchone()[0]
+        first_dates = dict(
+            conn.execute(
+                "SELECT machine_name, MIN(date) FROM machine_detailed_results "
+                "WHERE machine_name IS NOT NULL GROUP BY machine_name"
+            )
+        )
+        for item in series:
+            dates = sorted({event_id[:8] for event_id in item["event_ids"] if event_id[:8] < today})
+            lines.append("### %s" % item.get("label", item["series_id"]))
+            if not dates:
+                lines.append("この系列の過去回なし(初開催)")
+                continue
+            if len(dates) < 3:
+                lines.append("過去回が少ない(%d回)" % len(dates))
+            rows = conn.execute(
+                "SELECT date, machine_name, machine_number, games_normalized, diff_coins_normalized "
+                "FROM machine_detailed_results WHERE date >= ? AND date < ? "
+                "AND machine_name IS NOT NULL AND machine_number IS NOT NULL "
+                "AND games_normalized IS NOT NULL AND bb_count IS NOT NULL AND rb_count IS NOT NULL "
+                "AND diff_coins_normalized IS NOT NULL",
+                (dates[0], today),
+            ).fetchall()
+            by_day: dict[str, list[tuple]] = {}
+            by_model_day: dict[tuple[str, str], list[int]] = {}
+            for day, name, number, games, diff in rows:
+                by_day.setdefault(day, []).append((name, number, games, diff))
+                by_model_day.setdefault((day, name), []).append(diff)
+            regular = sorted(set(by_day) - set(dates))
+
+            def average(values: list[float]) -> float:
+                return sum(values) / len(values) if values else 0.0
+
+            def rate(values: list[float]) -> float:
+                return 100 * sum(value > 0 for value in values) / len(values) if values else 0.0
+
+            def is_new(day: str, name: str) -> bool:
+                first = first_dates[name]
+                return (
+                    first > oldest and (datetime.strptime(day, "%Y%m%d") - datetime.strptime(first, "%Y%m%d")).days <= 7
+                )
+
+            normal_diffs = [row[3] for day in regular for row in by_day[day]]
+            lines.append("通常日(%d日、系列日を除く) 台平均%+.0f枚" % (len(regular), average(normal_diffs)))
+            for day in dates:
+                day_rows = by_day.get(day, [])
+                diffs = [row[3] for row in day_rows]
+                lines.append(
+                    "- %s: %d台、台平均%+.0f枚、総差枚%+d枚、台勝率%.1f%%、+3000枚以上%d台"
+                    % (
+                        "%s-%s-%s" % (day[:4], day[4:6], day[6:]),
+                        len(diffs),
+                        average(diffs),
+                        sum(diffs),
+                        rate(diffs),
+                        sum(diff >= 3000 for diff in diffs),
+                    )
+                )
+                models: dict[str, list[int]] = {}
+                jug = []
+                for name, _, _, diff in day_rows:
+                    if "ジャグラー" in name:
+                        jug.append(diff)
+                    else:
+                        models.setdefault(name, []).append(diff)
+                eligible = [(name, values) for name, values in models.items() if len(values) >= 5]
+                eligible.sort(key=lambda entry: (average(entry[1]), entry[0]), reverse=True)
+
+                def model_text(items: list[tuple[str, list[int]]]) -> str:
+                    return (
+                        "、".join("%s(%d台,%+.0f枚)" % (name, len(values), average(values)) for name, values in items)
+                        or "なし"
+                    )
+
+                lines.append(
+                    "  機種上位3: %s / 下位3: %s / ジャグラー全体: %d台,%+.0f枚"
+                    % (model_text(eligible[:3]), model_text(list(reversed(eligible[-3:]))), len(jug), average(jug))
+                )
+
+            for label, selected_days in (("系列日", dates), ("通常日", regular)):
+                groups: dict[str, list[float]] = {"偶数(n>=2)": [], "奇数(n>=2)": [], "1台": []}
+                for (day, name), diffs in by_model_day.items():
+                    if day not in selected_days or is_new(day, name):
+                        continue
+                    group = "1台" if len(diffs) == 1 else ("偶数(n>=2)" if len(diffs) % 2 == 0 else "奇数(n>=2)")
+                    groups[group].append(average(diffs))
+                lines.append(
+                    "%s 偶奇(新台除外): %s"
+                    % (
+                        label,
+                        " / ".join(
+                            "%s %d機種日、台平均の平均%+.0f枚、プラス率%.1f%%"
+                            % (group, len(values), average(values), rate(values))
+                            for group, values in groups.items()
+                        ),
+                    )
+                )
+
+            normal_high = [
+                row[3] for day in regular for row in by_day[day] if row[2] >= 8000 and not is_new(day, row[0])
+            ]
+            lines.append(
+                "通常日 高回転(8000G以上、新台除外): 1日あたり%.1f台、台勝率%.1f%%"
+                % (len(normal_high) / len(regular) if regular else 0, rate(normal_high))
+            )
+            for day in dates:
+                high = [row[3] for row in by_day.get(day, []) if row[2] >= 8000 and not is_new(day, row[0])]
+                lines.append(
+                    "- %s 高回転: %d台、台平均%+.0f枚、台勝率%.1f%%"
+                    % ("%s-%s-%s" % (day[:4], day[4:6], day[6:]), len(high), average(high), rate(high))
+                )
+    return "\n".join(lines[:40])
 
 
 def weekday_errors(text: str, day: str) -> list[str]:
@@ -294,6 +460,10 @@ def answercheck_prompt(key: str, yesterday: str, today: str, out: Path, facts_md
 def prediction_prompt(key: str, today: str, yesterday: str, answer: Path, out: Path) -> str:
     hall, display = HALLS[key]
     has_announce = bool(announce_files(key, today))
+    try:
+        history = event_history_block(key, today)
+    except Exception as exc:
+        history = "過去回の集計に失敗: %s" % type(exc).__name__
     return f"""\
 {display}（DB名: {hall}）の{today}の予測を書いてください。出力先: {out}
 
@@ -304,6 +474,9 @@ def prediction_prompt(key: str, today: str, yesterday: str, answer: Path, out: P
   `venv\\Scripts\\python.exe -m backtest.event_days check` 等で当日のイベント日台帳（document/registry/EVENT_DAYS.jsonl）も確認する。
   X の収集結果（scraper/twitter_monitor）に当日分の未登録の予告があれば読む。登録はしない。
 - 体裁の手本: `document/reviews/2026-10-17-prediction.md` の{display}の節。
+
+{history}
+- 表を書き写さない。過去回の数字はこの表の値だけを使い、自分で計算し直した別の値を書かない。標本が少ないことは必ず書く。
 
 ## 書式（凍結が機械的に拾うので厳守）
 - 見出しは `## {display}`。その下は自由に書いてよいが、次の2種類の行を書く。
@@ -422,6 +595,20 @@ def juggler_section(day_dir: Path, today: str, ready: list[str]) -> str:
     return "\n".join(lines)
 
 
+def build_poster_reports() -> None:
+    """slo_tokyo の結果速報を poster_result_* へ取り込み直す(毎朝、答え合わせの前に1回)。
+
+    派生データなので何度でも作り直せる。失敗しても朝の文書は止めない(速報の節が出ないだけ)。
+    """
+    try:
+        sys.path.insert(0, str(PROJECT_ROOT))
+        from backtest.result_corpus import build_poster
+
+        build_poster()
+    except Exception as exc:  # noqa: BLE001 - 取り込みの不調で答え合わせ全体を止めない
+        print("  slo_tokyo の取り込みに失敗: %s(速報の節を出さずに続ける)" % exc, flush=True)
+
+
 def is_auto_doc(path: Path) -> bool:
     return (not path.exists()) or AUTO_MARK in path.read_text(encoding="utf-8")[:400]
 
@@ -491,8 +678,15 @@ def process_hall(key: str, day_dir: Path, yesterday: str, today: str, dry_run: b
         """機械集計を作ってプロンプトに渡し、検証に通った出力の先頭へ同じ表を差し込む。"""
         # ana-slo の公開が遅れるホールは、DB にある最終日の分を答え合わせする。
         answer_day = min(yesterday, hall_max_dates().get(HALLS[key][0], yesterday))
-        facts = day_facts(PROJECT_ROOT / "db" / ("%s.db" % HALLS[key][0]), answer_day)
-        facts_md = render_facts(facts, key, PREDICTIONS, ANNOUNCE_DIR, ANNOUNCE_PREFIX.get(key, key)) if facts else ""
+        hall_db = PROJECT_ROOT / "db" / ("%s.db" % HALLS[key][0])
+        facts = day_facts(hall_db, answer_day)
+        # 発信者(slo_tokyo)の設定判定と、判定された機種の実績。速報が無いホール・日は空。
+        poster_block = poster_lines(ANALYSIS_DB, hall_db, HALLS[key][0], answer_day)
+        facts_md = (
+            render_facts(facts, key, PREDICTIONS, ANNOUNCE_DIR, ANNOUNCE_PREFIX.get(key, key), poster_block)
+            if facts
+            else ""
+        )
         if not facts:
             print(
                 "  機械集計: %s の %s 分が DB に無い。集計の挿入と数字の照合は行わない" % (key, answer_day), flush=True
@@ -563,6 +757,8 @@ def main() -> int:
                         stale.unlink()
 
         print("朝の文書 当日=%s 前日=%s" % (today, yesterday), flush=True)
+        if not args.dry_run:
+            build_poster_reports()
         handled: set[str] = set()
         while True:
             # 処理中に別の起動（run_morning.py）が前日分を取り込むことがあるので、1周ごとに見直す。

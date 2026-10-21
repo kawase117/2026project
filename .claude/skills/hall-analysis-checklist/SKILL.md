@@ -83,4 +83,5 @@ gate列はそのまま使わない（楽観的、詳細はファイル内の警�
 
 - `pachinko-live-analysis` — ホール戦略の具体的なパターン集（holdover・ロケール選択等）
 - `announce-prep` — パス5の下ごしらえ
+- `event-day-replay` — パス6の具体化。イベント日の過去回と紐付け、ニブイチ/ハーフの偶奇、高回転×高差枚の台を見る手順
 - `backtest-module-guide` — 推定器・モジュールの地図
