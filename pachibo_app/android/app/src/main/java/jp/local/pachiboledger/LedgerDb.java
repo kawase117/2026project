@@ -137,6 +137,8 @@ final class LedgerDb extends SQLiteOpenHelper {
 
     int importCsv(JSONObject converted)throws JSONException{
         JSONArray tags=converted.getJSONArray("tags"),rows=converted.getJSONArray("records");
+        JSONArray details=converted.optJSONArray("record_details");
+        JSONArray archives=converted.optJSONArray("source_archives");
         SQLiteDatabase db=getWritableDatabase();db.beginTransaction();
         try{
             for(int i=0;i<tags.length();i++){
@@ -145,6 +147,16 @@ final class LedgerDb extends SQLiteOpenHelper {
                 insertOrMatch(db,"tags","source_id",value);
             }
             for(int i=0;i<rows.length();i++)insertOrMatch(db,"records","id",values(rows.getJSONObject(i)));
+            if(details!=null)for(int i=0;i<details.length();i++){
+                JSONObject row=details.getJSONObject(i);ContentValues value=new ContentValues();
+                value.put("id",row.getString("id"));value.put("payload",row.getString("payload"));
+                insertOrMatch(db,"record_details","id",value);
+            }
+            if(archives!=null)for(int i=0;i<archives.length();i++){
+                JSONObject row=archives.getJSONObject(i);ContentValues value=new ContentValues();
+                value.put("id",row.getString("id"));value.put("payload",row.getString("payload"));
+                insertOrMatch(db,"source_archives","id",value);
+            }
             db.setTransactionSuccessful();
         }finally{db.endTransaction();}
         return rows.length();

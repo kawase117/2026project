@@ -35,8 +35,11 @@ final class UnifiedLedger {
             expenseHall=details.optString("expense_hall");expenseMachine=details.optString("expense_machine");
             long started=session?original.optLong("started_at",-1):details.optLong("started_at",-1);
             long ended=session?original.optLong("ended_at",-1):details.optLong("ended_at",-1);
-            durationMinutes=(!session||fields.optBoolean("time_recorded",true))&&started>=0&&ended>started?
-                (ended-started)/60000:null;
+            if((!session||fields.optBoolean("time_recorded",true))&&started>=0&&ended>started)
+                durationMinutes=(ended-started)/60000;
+            else if(!session&&details.optLong("duration_minutes",0)>0)
+                durationMinutes=details.getLong("duration_minutes");
+            else durationMinutes=null;
             spins=positiveOptional(details.has("spins")?details:fields,"spins");
             workFields=details.has("work_yen")?details:fields;
             workYen=signedOptional(workFields,"work_yen");

@@ -301,12 +301,75 @@ public final class BackupVerification extends Instrumentation {
             counters.increment(counterId);
             byte[] generic=("日付,投資,回収,ホール,機種,台番号,タグ,メモ\n"+
                 "2026/10/15,10,1500,CSV店,試験機,001,朝一|狙い,\"改行\nメモ\"\n").getBytes(StandardCharsets.UTF_8);
-            GenericCsv csv=new GenericCsv(generic);int[] mapping={0,1,2,3,4,5,6,7};
+            GenericCsv csv=new GenericCsv(generic);int[] mapping={0,1,2,3,4,5,6,7,-1,-1,-1};
             JSONObject converted=csv.convert(mapping,new HashMap<>());
             check(source.importCsv(converted)==1 && source.importCsv(converted)==1,"CSV import was not repeatable");
             JSONObject csvRow=converted.getJSONArray("records").getJSONObject(0);
             check("未分類".equals(csvRow.getString("kind"))&&"001".equals(csvRow.getString("machine_number"))
                 &&csvRow.getString("memo").contains("\n"),"CSV mapping guessed or lost source values");
+            String pRecordHeader="日付,店舗コード,店舗,メーカー,機種コード,機種,台番号,投資額,回収額,収支,メモ,稼働時間,時給\r\n";
+            GenericCsv pRecord=new GenericCsv((pRecordHeader+
+                "2026/10/19,10,公式例店,メーカー,20,公式例機,009,1000,2500,+1500,\"改行\nメモ\",120.0,750.0\r\n")
+                .getBytes(StandardCharsets.UTF_8));
+            check(pRecord.matchesPRecordSample(),"Official pRecord sample header not recognized");
+            int[] pMap=new int[GenericCsv.FIELDS.length];
+            for(int i=0;i<pMap.length;i++)pMap[i]=pRecord.suggested(i);
+            JSONObject pConverted=pRecord.convert(pMap,new HashMap<>());
+            check(pConverted.getJSONArray("records").getJSONObject(0).getLong("profit_yen")==1500
+                &&new JSONObject(pConverted.getJSONArray("record_details").getJSONObject(0).getString("payload"))
+                    .getLong("duration_minutes")==120,
+                "Official pRecord sample conversion failed");
+            source.importCsv(pConverted);
+            String tsv="遊技日\t投資金額\t回収金額\t店舗名\t機種名\t種別\tメモ\n"
+                +"2026-10-20\t1000\t2000\t試験店\t試験機\tパチスロ\t旧端末\n";
+            GenericCsv ms932=new GenericCsv(tsv.getBytes(java.nio.charset.Charset.forName("Windows-31J")),
+                java.nio.charset.Charset.forName("Windows-31J"));
+            int[] tMap=new int[GenericCsv.FIELDS.length];
+            for(int i=0;i<tMap.length;i++)tMap[i]=ms932.suggested(i);
+            JSONObject tConverted=ms932.convert(tMap,new HashMap<>());
+            check(ms932.delimiter=='\t'&&"スロット".equals(tConverted.getJSONArray("records")
+                .getJSONObject(0).getString("kind")),"MS932 TSV or game type mapping failed");
+            source.importCsv(tConverted);
+            GenericCsv pachiEvCsv=new GenericCsv(("date,machine,store,investment,return,profit,memo\r\n"
+                +"2026-10-14,公開実装機種,公開実装店,1200,3400,2200,CSV記録\r\n")
+                .getBytes(StandardCharsets.UTF_8));
+            check(pachiEvCsv.matchesPachiEvCsv(),"Published pachi-ev CSV header not recognized");
+            int[] evMap=new int[GenericCsv.FIELDS.length];
+            for(int i=0;i<evMap.length;i++)evMap[i]=pachiEvCsv.suggested(i);
+            JSONObject evCsvConverted=pachiEvCsv.convert(evMap,new HashMap<>());
+            check(evCsvConverted.getJSONArray("records").getJSONObject(0).getLong("profit_yen")==2200,
+                "Published pachi-ev CSV was not mapped");
+            source.importCsv(evCsvConverted);
+            JSONObject evOriginal=new JSONObject().put("id","published-example-1")
+                .put("date","2026-10-13").put("machine","公開実装機種")
+                .put("hall","公開実装店").put("investment",1000).put("recovery",3000)
+                .put("unitDiff",120).put("type","枚").put("memo","JSON記録");
+            JSONObject evInput=new JSONObject().put("records",new JSONArray().put(evOriginal))
+                .put("settings",new JSONObject().put("bankroll",100000));
+            JSONObject evJsonConverted=PachiEvJson.convert(evInput);
+            JSONObject evRow=evJsonConverted.getJSONArray("records").getJSONObject(0);
+            String evId=evRow.getString("id");
+            check("スロット".equals(evRow.getString("kind"))
+                &&new JSONObject(evJsonConverted.getJSONArray("record_details").getJSONObject(0)
+                    .getString("payload")).getJSONObject("source_original").getInt("unitDiff")==120,
+                "Published pachi-ev JSON fields were not preserved");
+            check(source.importCsv(evJsonConverted)==1&&source.importCsv(evJsonConverted)==1,
+                "pachi-ev JSON import was not repeatable");
+            check(source.recordDetails(evId).getJSONObject("source_original").getInt("unitDiff")==120,
+                "pachi-ev source units disappeared after import");
+            String evBefore=source.backup().toString();
+            JSONObject evConflict=new JSONObject(evJsonConverted.toString());
+            evConflict.getJSONArray("records").getJSONObject(0).put("memo","同じIDで異なる内容");
+            boolean evRejected=false;
+            try{source.importCsv(evConflict);}catch(IllegalStateException expected){evRejected=true;}
+            check(evRejected&&evBefore.equals(source.backup().toString()),
+                "pachi-ev JSON conflict partially changed the database");
+            boolean duplicateEvRejected=false;
+            try{PachiEvJson.convert(new JSONObject().put("settings",new JSONObject())
+                .put("records",new JSONArray().put(evOriginal).put(new JSONObject(evOriginal.toString()))));}
+            catch(IllegalArgumentException expected){duplicateEvRejected=true;}
+            check(duplicateEvRejected&&evBefore.equals(source.backup().toString()),
+                "Duplicate pachi-ev source ID changed the database");
             android.database.sqlite.SQLiteDatabase exporting=source.getWritableDatabase();exporting.beginTransaction();
             try{
                 JSONObject consistent=source.backup();

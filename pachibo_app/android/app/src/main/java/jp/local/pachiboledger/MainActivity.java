@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public final class MainActivity extends Activity {
-    private static final int IMPORT_JSON = 10, EXPORT_JSON = 11, IMPORT_PCB = 12, EXPORT_CSV = 13, EXPORT_ALL = 14, IMPORT_MACHINES=15, IMPORT_ZIP=16, IMPORT_CSV=17;
+    private static final int IMPORT_JSON = 10, EXPORT_JSON = 11, IMPORT_PCB = 12, EXPORT_CSV = 13, EXPORT_ALL = 14, IMPORT_MACHINES=15, IMPORT_ZIP=16, IMPORT_CSV=17, IMPORT_PACHI_EV_JSON=18;
     private LedgerDb db;
     private LinearLayout body;
     private LinearLayout actionBar;
@@ -310,6 +310,10 @@ public final class MainActivity extends Activity {
             Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT);intent.addCategory(Intent.CATEGORY_OPENABLE);
             intent.setType("text/*");startActivityForResult(intent,IMPORT_CSV);
         }));
+        body.addView(button("pachi-ev-analyzerのJSONを読み込む",()->{
+            Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT);intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.setType("application/json");startActivityForResult(intent,IMPORT_PACHI_EV_JSON);
+        }));
         body.addView(button("全項目をJSONで保存", () -> {
             Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
             intent.addCategory(Intent.CATEGORY_OPENABLE); intent.setType("application/json");
@@ -382,16 +386,66 @@ public final class MainActivity extends Activity {
                     if(bytes.size()+n>16*1024*1024)throw new IllegalArgumentException("CSVが16MBを超えています");
                     bytes.write(buffer,0,n);
                 }
-                GenericCsv csv=new GenericCsv(bytes.toByteArray());
-                runOnUiThread(()->showCsvMapping(csv));
+                byte[] file=bytes.toByteArray();
+                try{
+                    GenericCsv csv=new GenericCsv(file);
+                    runOnUiThread(()->showCsvMapping(csv));
+                }catch(java.nio.charset.CharacterCodingException encodingError){
+                    runOnUiThread(()->new AlertDialog.Builder(this).setTitle("CSVの文字コード")
+                        .setMessage("UTF-8として読めません。Shift_JISとして内容を確認しますか？")
+                        .setNegativeButton("取り消す",null).setPositiveButton("確認する",(dialog,which)->
+                            new Thread(()->{try{
+                                GenericCsv csv=new GenericCsv(file,java.nio.charset.Charset.forName("Windows-31J"));
+                                runOnUiThread(()->showCsvMapping(csv));
+                            }catch(Exception e){runOnUiThread(()->error(e));}},"csv-ms932").start()).show());
+                }
             }catch(Exception e){runOnUiThread(()->error(e));}
         },"csv-read").start();
+    }
+
+    private void importPachiEvJson(android.net.Uri uri){
+        new Thread(()->{
+            try(InputStream stream=getContentResolver().openInputStream(uri)){
+                if(stream==null)throw new IllegalArgumentException("JSONを開けません");
+                ByteArrayOutputStream bytes=new ByteArrayOutputStream();byte[] buffer=new byte[16384];int n;
+                while((n=stream.read(buffer))!=-1){
+                    if(bytes.size()+n>16*1024*1024)throw new IllegalArgumentException("JSONが16MBを超えています");
+                    bytes.write(buffer,0,n);
+                }
+                String source=StandardCharsets.UTF_8.newDecoder()
+                    .onMalformedInput(java.nio.charset.CodingErrorAction.REPORT)
+                    .onUnmappableCharacter(java.nio.charset.CodingErrorAction.REPORT)
+                    .decode(java.nio.ByteBuffer.wrap(bytes.toByteArray())).toString();
+                JSONObject converted=PachiEvJson.convert(new JSONObject(source));
+                JSONArray records=converted.getJSONArray("records");String first=null,last=null;
+                for(int i=0;i<records.length();i++){
+                    String date=records.getJSONObject(i).getString("date");
+                    if(first==null||date.compareTo(first)<0)first=date;
+                    if(last==null||date.compareTo(last)>0)last=date;
+                }
+                String summary=records.length()+"件 / "+(first==null?"記録なし":first+" ～ "+last)
+                    +"\n投資・回収・遊技種別・メモを移します。差玉・差枚を含む元JSONは原本として保存します。設定の資金上限はアプリの設定には反映しません。";
+                runOnUiThread(()->new AlertDialog.Builder(this).setTitle("他アプリJSONの取り込み前確認")
+                    .setMessage(summary).setNegativeButton("取り消す",null)
+                    .setPositiveButton("取り込む",(dialog,which)->new Thread(()->{
+                        try{int count=db.importCsv(converted);runOnUiThread(()->{
+                            showCalendar();Toast.makeText(this,count+"件を読み込みました",Toast.LENGTH_LONG).show();
+                        });}catch(Exception e){runOnUiThread(()->error(e));}
+                    },"pachi-ev-import").start()).show());
+            }catch(Exception e){runOnUiThread(()->error(e));}
+        },"pachi-ev-preview").start();
     }
 
     private void showCsvMapping(GenericCsv csv){
         android.widget.LinearLayout panel=new android.widget.LinearLayout(this);panel.setOrientation(1);
         panel.setPadding(20,8,20,8);
         android.widget.ScrollView scroll=new android.widget.ScrollView(this);scroll.addView(panel);
+        panel.addView(text("文字コード："+csv.encoding+" ／ 区切り："+
+            (csv.delimiter=='\t'?"タブ":"カンマ")+"。列対応と内容を確認してください。",14));
+        if(csv.matchesPRecordSample())panel.addView(text(
+            "pRecordの公式公開例と同じ列順です。実際の出力は取り込み前に確認してください。",14));
+        if(csv.matchesPachiEvCsv())panel.addView(text(
+            "pachi-ev-analyzerの公開ソースのCSV列と一致します。CSVには遊技種別と差玉・差枚がありません。",14));
         String[] options=new String[csv.headers().size()+1];options[0]="（列なし）";
         final AlertDialog[] mappingDialog=new AlertDialog[1];
         for(int i=0;i<csv.headers().size();i++)options[i+1]=(i+1)+"："+csv.headers().get(i);
@@ -417,7 +471,7 @@ public final class MainActivity extends Activity {
                     if(last==null||date.compareTo(last)>0)last=date;
                 }
                 String summary=rows.length()+"件 / "+(first==null?"記録なし":first+" ～ "+last)+"\n"
-                    +"遊技種別などCSVにない値は推測せず未分類のまま保持します。\n\n"+csv.sample(mapping);
+                    +"元CSVにない項目は推測せず、遊技種別は未分類のまま保持します。\n\n"+csv.sample(mapping);
                 runOnUiThread(()->{preview.setText(csv.sample(mapping));
                     new AlertDialog.Builder(this).setTitle("CSV取り込み前の確認").setMessage(summary)
                     .setNegativeButton("戻る",null).setPositiveButton("取り込む",(d,w)->{
@@ -456,6 +510,8 @@ public final class MainActivity extends Activity {
                 importData(data.getData(),false,true);
             } else if(requestCode==IMPORT_CSV){
                 importCsv(data.getData());
+            } else if(requestCode==IMPORT_PACHI_EV_JSON){
+                importPachiEvJson(data.getData());
             } else if (requestCode == EXPORT_ALL) {
                 exportBackup(data.getData(),true);
             } else if (requestCode == EXPORT_JSON) {
