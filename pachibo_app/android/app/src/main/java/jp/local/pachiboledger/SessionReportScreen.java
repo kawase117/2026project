@@ -95,6 +95,9 @@ final class SessionReportScreen {
         for(UnifiedLedger.Row row:selected)if(row.profit!=null)complete.add(row);
         AnalysisMetrics.Stats stats=AnalysisMetrics.calculate(complete);
         output.addView(text("期間："+(from.isEmpty()?"最初の記録":from)+" ～ "+(to.isEmpty()?"最新":to),14));
+        output.addView(text("対象 "+selected.size()+"件 / 実収支に計上 "+complete.size()+"件 / 除外 "+
+            (selected.size()-complete.size())+"件",15));
+        if(stats.playCount>0&&stats.playCount<10)output.addView(text("遊技が10件未満です。平均・勝率・比較結果は少数例として見てください。",14));
         if(chartRange>0)output.addView(text("グラフ幅：±"+String.format(Locale.JAPAN,"%,d円",chartRange)+
             "。値が範囲を超える場合は自動で拡張します。",13));
         output.addView(text("経費込みの収支  "+FormUi.money(stats.total()),21));
@@ -139,7 +142,13 @@ final class SessionReportScreen {
         for(Map.Entry<String,BigInteger> day:stats.days.entrySet()){
             running=running.add(day.getValue());cumulative.put(day.getKey(),running.doubleValue());
         }
-        output.addView(text("累積収支（日付軸、経費込み）",18));
+        SortedMap<String,Double> daily=new TreeMap<>();
+        for(Map.Entry<String,BigInteger> day:stats.days.entrySet())daily.put(day.getKey(),day.getValue().doubleValue());
+        output.addView(text("日別損益：その日に確定した遊技と経費の合計。日ごとの増減です。",18));
+        DateProfitChart dailyChart=new DateProfitChart(activity);dailyChart.setBars(true);
+        dailyChart.setMinimumRangeYen(chartRange);dailyChart.setValues(daily);
+        output.addView(dailyChart,new LinearLayout.LayoutParams(-1,FormUi.dp(activity,220)));
+        output.addView(text("累積損益：日別損益を日付順に足した残高。実収支の推移です。",18));
         DateProfitChart line=new DateProfitChart(activity);line.setMinimumRangeYen(chartRange);line.setValues(cumulative);
         output.addView(line,new LinearLayout.LayoutParams(-1,FormUi.dp(activity,220)));
         output.addView(text("一台ごとの収支分布",18));

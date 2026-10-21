@@ -150,4 +150,21 @@ final class UnifiedLedger {
         }
         return result;
     }
+    static JSONArray export(List<Row> rows,Map<String,String> tagNames,LedgerDb db)throws Exception{
+        JSONArray result=export(rows,tagNames);
+        Map<String,JSONArray> counts=new HashMap<>();
+        try(android.database.Cursor c=db.getReadableDatabase().rawQuery(
+            "SELECT owner_type,owner_id,name,count FROM counters ORDER BY owner_type,owner_id,name",null)){
+            while(c.moveToNext()){
+                String key=c.getString(0)+"/"+c.getString(1);
+                counts.computeIfAbsent(key,ignored->new JSONArray()).put(
+                    new JSONObject().put("name",c.getString(2)).put("count",c.getLong(3)));
+            }
+        }
+        for(int i=0;i<result.length();i++){
+            JSONObject row=result.getJSONObject(i);
+            row.put("counters",counts.getOrDefault(row.getString("source_format")+"/"+row.getString("id"),new JSONArray()));
+        }
+        return result;
+    }
 }

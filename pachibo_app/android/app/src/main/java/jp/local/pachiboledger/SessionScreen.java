@@ -71,12 +71,14 @@ final class SessionScreen {
         try {
             String sessionId=row.getString("id");boolean active="active".equals(row.optString("state"));
             new AlertDialog.Builder(activity).setTitle("記録の操作")
-                .setItems(active?new String[]{"開いて入力","削除"}:new String[]{"開いて編集","収支明細を訂正","削除"},
+                .setItems(active?new String[]{"開いて入力","小役カウンタ","削除"}:new String[]{"開いて編集","小役カウンタ","収支明細を訂正","削除"},
                     (dialog,which)->{
                         if(active){if(which==0)attempt(()->SessionEditor.show(activity,db,LocalDate.parse(row.getString("date")),store.session(sessionId),refresh));
+                            else if(which==1)CounterScreen.show(activity,db,"session",sessionId);
                             else confirmDelete(sessionId);}
                         else if(which==0)attempt(()->SessionEditor.show(activity,db,LocalDate.parse(row.getString("date")),store.session(sessionId),refresh));
-                        else if(which==1)attempt(()->details(sessionId));
+                        else if(which==1)CounterScreen.show(activity,db,"session",sessionId);
+                        else if(which==2)attempt(()->details(sessionId));
                         else confirmDelete(sessionId);
                     }).show();
         }catch(Exception error){new AlertDialog.Builder(activity).setMessage(error.getMessage()).setPositiveButton("閉じる",null).show();}

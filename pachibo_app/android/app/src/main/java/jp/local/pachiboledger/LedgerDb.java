@@ -14,7 +14,7 @@ import java.util.UUID;
 
 final class LedgerDb extends SQLiteOpenHelper {
     LedgerDb(Context context) { this(context, "ledger.db"); }
-    LedgerDb(Context context, String name) { super(context, name, null, 7); }
+    LedgerDb(Context context, String name) { super(context, name, null, 8); }
 
     @Override public void onConfigure(SQLiteDatabase db) { db.setForeignKeyConstraintsEnabled(true); }
 
@@ -28,6 +28,7 @@ final class LedgerDb extends SQLiteOpenHelper {
         AccountStore.createTables(db);
         Catalog.createTables(db);
         CalendarEventStore.createTables(db);
+        CounterStore.createTable(db);
     }
 
     @Override public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
@@ -37,6 +38,7 @@ final class LedgerDb extends SQLiteOpenHelper {
         if (oldVersion < 5) AccountStore.createTables(db);
         if (oldVersion < 6) Catalog.createTables(db);
         if (oldVersion < 7) CalendarEventStore.createTables(db);
+        if (oldVersion < 8) CounterStore.createTable(db);
     }
 
     private static void createArchives(SQLiteDatabase db) {
@@ -54,8 +56,9 @@ final class LedgerDb extends SQLiteOpenHelper {
     }
 
     int importJson(JSONObject input) throws JSONException {
+        BackupIO.validate(input);
         String format = input.optString("format");
-        if (!"pachibo-ledger-v1".equals(format) && !"pachibo-ledger-v2".equals(format) && !"pachibo-ledger-v3".equals(format) && !"pachibo-ledger-v4".equals(format) && !"pachibo-ledger-v5".equals(format) && !"pachibo-ledger-v6".equals(format) && !"pachibo-ledger-v7".equals(format)) throw new JSONException("Unknown backup format");
+        if (!"pachibo-ledger-v1".equals(format) && !"pachibo-ledger-v2".equals(format) && !"pachibo-ledger-v3".equals(format) && !"pachibo-ledger-v4".equals(format) && !"pachibo-ledger-v5".equals(format) && !"pachibo-ledger-v6".equals(format) && !"pachibo-ledger-v7".equals(format) && !"pachibo-ledger-v8".equals(format)) throw new JSONException("未対応のバックアップ形式です: "+format);
         JSONArray rows = input.getJSONArray("records");
         JSONArray tags = input.optJSONArray("tags");
         SQLiteDatabase db = getWritableDatabase();
@@ -78,7 +81,7 @@ final class LedgerDb extends SQLiteOpenHelper {
                 if("pachibo-ledger-v1".equals(format))importLegacyTimes(db,row);
             }
             if (!"pachibo-ledger-v1".equals(format)) {
-                String[] tables = "pachibo-ledger-v7".equals(format) ? new String[]{"accounts", "sessions", "operations", "transfers", "source_archives", "edit_history", "catalog", "record_details", "calendar_events"} : "pachibo-ledger-v6".equals(format) ? new String[]{"accounts", "sessions", "operations", "transfers", "source_archives", "edit_history", "catalog", "record_details"} : "pachibo-ledger-v5".equals(format) ? new String[]{"accounts", "sessions", "operations", "transfers", "source_archives", "edit_history"} : "pachibo-ledger-v4".equals(format) ? new String[]{"sessions", "operations", "transfers", "source_archives", "edit_history"} : "pachibo-ledger-v3".equals(format) ? new String[]{"sessions", "operations", "transfers", "source_archives"} : new String[]{"sessions", "operations", "transfers"};
+                String[] tables = "pachibo-ledger-v8".equals(format) ? new String[]{"accounts", "sessions", "operations", "transfers", "source_archives", "edit_history", "catalog", "record_details", "calendar_events", "counters"} : "pachibo-ledger-v7".equals(format) ? new String[]{"accounts", "sessions", "operations", "transfers", "source_archives", "edit_history", "catalog", "record_details", "calendar_events"} : "pachibo-ledger-v6".equals(format) ? new String[]{"accounts", "sessions", "operations", "transfers", "source_archives", "edit_history", "catalog", "record_details"} : "pachibo-ledger-v5".equals(format) ? new String[]{"accounts", "sessions", "operations", "transfers", "source_archives", "edit_history"} : "pachibo-ledger-v4".equals(format) ? new String[]{"sessions", "operations", "transfers", "source_archives", "edit_history"} : "pachibo-ledger-v3".equals(format) ? new String[]{"sessions", "operations", "transfers", "source_archives"} : new String[]{"sessions", "operations", "transfers"};
                 for (String table : tables) {
                     JSONArray data = input.getJSONArray(table);
                     for (int i = 0; i < data.length(); i++) {
@@ -93,6 +96,11 @@ final class LedgerDb extends SQLiteOpenHelper {
                         }
                         // Exact repeats are harmless; differing content aborts the entire import.
                         insertOrMatch(db, table, "id", v);
+                    }
+                }
+                if("pachibo-ledger-v8".equals(format)){
+                    try(Cursor orphan=db.rawQuery("SELECT c.id FROM counters c LEFT JOIN records r ON c.owner_type='record' AND c.owner_id=r.id LEFT JOIN sessions s ON c.owner_type='session' AND c.owner_id=s.id WHERE (c.owner_type='record' AND r.id IS NULL) OR (c.owner_type='session' AND s.id IS NULL) LIMIT 1",null)){
+                        if(orphan.moveToFirst())throw new IllegalArgumentException("参照先の遊技記録がないカウンタがあります: "+orphan.getString(0));
                     }
                 }
             } else {
@@ -125,6 +133,21 @@ final class LedgerDb extends SQLiteOpenHelper {
             db.setTransactionSuccessful();
         } finally { db.endTransaction(); }
         return rows.length() + (input.optJSONArray("sessions") == null ? 0 : input.getJSONArray("sessions").length());
+    }
+
+    int importCsv(JSONObject converted)throws JSONException{
+        JSONArray tags=converted.getJSONArray("tags"),rows=converted.getJSONArray("records");
+        SQLiteDatabase db=getWritableDatabase();db.beginTransaction();
+        try{
+            for(int i=0;i<tags.length();i++){
+                JSONObject row=tags.getJSONObject(i);ContentValues value=new ContentValues();
+                for(String key:new String[]{"source_id","name","type","priority"})value.put(key,row.getString(key));
+                insertOrMatch(db,"tags","source_id",value);
+            }
+            for(int i=0;i<rows.length();i++)insertOrMatch(db,"records","id",values(rows.getJSONObject(i)));
+            db.setTransactionSuccessful();
+        }finally{db.endTransaction();}
+        return rows.length();
     }
 
     private static void insertOrMatch(SQLiteDatabase db, String table, String primaryKey, ContentValues incoming) {
@@ -215,7 +238,7 @@ final class LedgerDb extends SQLiteOpenHelper {
         }finally{db.endTransaction();}
     }
 
-    void delete(String id) { getWritableDatabase().delete("records", "id=?", new String[]{id}); }
+    void delete(String id) { SQLiteDatabase db=getWritableDatabase();db.beginTransaction();try{db.delete("counters","owner_type='record' AND owner_id=?",new String[]{id});db.delete("records", "id=?", new String[]{id});db.setTransactionSuccessful();}finally{db.endTransaction();} }
 
     List<JSONObject> records() throws JSONException {
         List<JSONObject> result = new ArrayList<>();
@@ -266,12 +289,12 @@ final class LedgerDb extends SQLiteOpenHelper {
         db.beginTransaction();
         try {
         JSONObject out = new JSONObject();
-        out.put("format", "pachibo-ledger-v7");
+        out.put("format", "pachibo-ledger-v8");
         out.put("tags", tags());
         JSONArray rows = new JSONArray();
         for (JSONObject row : records()) rows.put(row);
         out.put("records", rows);
-        for (String table : new String[]{"sessions", "operations", "transfers", "source_archives", "edit_history", "accounts", "catalog", "record_details", "calendar_events"}) {
+        for (String table : new String[]{"sessions", "operations", "transfers", "source_archives", "edit_history", "accounts", "catalog", "record_details", "calendar_events", "counters"}) {
             JSONArray data = new JSONArray();
             try (Cursor c = db.rawQuery("SELECT * FROM " + table, null)) {
                 while (c.moveToNext()) {

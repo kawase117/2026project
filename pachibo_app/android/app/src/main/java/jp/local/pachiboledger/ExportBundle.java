@@ -47,8 +47,8 @@ final class ExportBundle {
             if(allRecords!=null)text(zip,"all_records.csv",csv(allRecords,"id","date","hall","kind","machine","machine_number",
                 "investment_total_yen","recovery_total_yen","profit_yen","spins","work_yen","work_source",
                 "work_equal_border","work_rotation_rate","work_holding_percent","work_exchange_yen","work_exchange_balls",
-                "status","tag_ids","tag_names","memo"));
-            for(String table:new String[]{"records","tags","sessions","operations","transfers","source_archives","edit_history","accounts","catalog","record_details","calendar_events"}) {
+                "status","tag_ids","tag_names","memo","counters"));
+            for(String table:new String[]{"records","tags","sessions","operations","transfers","source_archives","edit_history","accounts","catalog","record_details","calendar_events","counters"}) {
                 JSONArray rows=backup.getJSONArray(table);
                 text(zip,table+".csv",csv(rows,table.equals("tags")?"source_id":"id"));
             }
@@ -73,7 +73,7 @@ final class ExportBundle {
                 if(payload.has("source_pcb_base64")) write(zip,folder+"original.pcb",android.util.Base64.decode(payload.getString("source_pcb_base64"),android.util.Base64.DEFAULT));
             }
             text(zip,"source_index.csv",csv(index,"id","folder"));
-            text(zip,"README.txt","遊技収支帳 全データ出力 v7\nUTF-8 BOM付きCSV。セル内の配列・オブジェクトはJSONです。\n__null_fields列はNULLの列名をJSON配列で示します。空文字とNULLを区別できます。\nall_records.csvは取込分と新規分を一つにした閲覧用一覧です。statusがcomplete以外のprofit_yenは空欄です。\nrecordsは取込・後入力の原記録、sessionsは開始・終了で作った原記録、operationsは円または数量の符号付き増減、transfersは台移動です。metadata列に機種・台番号・メモ等を保持します。\naccountsはホール・口座・評価率の入力候補です。calendar_eventsは単発・繰り返しのホールイベントです。edit_historyは明細訂正と取り消しの履歴です。record_tagsはIDによるタグ関係です。source_archivesとsourcesには取り込み元を保存します。\n復元にはZIPを展開してbackup.jsonをアプリに取り込んでください。CSV編集による復元には対応しません。\n");
+            text(zip,"README.txt","遊技収支帳 全データ出力 v8\nUTF-8 BOM付きCSV。セル内の配列・オブジェクトはJSONです。\n__null_fields列はNULLの列名をJSON配列で示します。空文字とNULLを区別できます。\nall_records.csvは取込分と新規分を一つにした閲覧用一覧です。statusがcomplete以外のprofit_yenは空欄です。\nrecordsは取込・後入力の原記録、sessionsは開始・終了で作った原記録、operationsは円または数量の符号付き増減、transfersは台移動です。metadata列に機種・台番号・メモ等を保持します。\naccountsはホール・口座・評価率の入力候補です。calendar_eventsは単発・繰り返しのホールイベントです。countersは遊技記録の小役カウントです。edit_historyは明細訂正と取り消しの履歴です。record_tagsはIDによるタグ関係です。source_archivesとsourcesには取り込み元を保存します。\n復元にはZIPまたはbackup.jsonをアプリに取り込んでください。CSV編集による復元には対応しません。\n");
         }
     }
 }

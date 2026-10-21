@@ -58,6 +58,7 @@ public final class BackupVerification extends Instrumentation {
             source.getWritableDatabase().execSQL("DROP TABLE accounts");
             source.getWritableDatabase().execSQL("DROP TABLE record_details");
             source.getWritableDatabase().execSQL("DROP TABLE catalog");
+            source.getWritableDatabase().execSQL("DROP TABLE counters");
             source.getWritableDatabase().setVersion(3); source.close();
             check(store.history("A").isEmpty(),"v3 migration failed");
             check(store.details("A",true).size()==1,"Migration lost transfer");
@@ -290,6 +291,22 @@ public final class BackupVerification extends Instrumentation {
             check(CalendarEventStore.occurs(dd,java.time.LocalDate.parse("2026-10-11"))
                 &&CalendarEventStore.occurs(dd,java.time.LocalDate.parse("2026-10-22"))
                 &&!CalendarEventStore.occurs(dd,java.time.LocalDate.parse("2026-11-11")),"Monthly DD boundaries failed");
+            CounterStore counters=new CounterStore(source);
+            counters.add("session","A","ベル");
+            String counterId=counters.list("session","A").getJSONObject(0).getString("id");
+            counters.increment(counterId);counters.increment(counterId);
+            new CounterStore(source).undo(counterId);
+            check(new CounterStore(source).list("session","A").getJSONObject(0).getLong("count")==1,
+                "Counter did not resume and undo after reopening store");
+            counters.increment(counterId);
+            byte[] generic=("日付,投資,回収,ホール,機種,台番号,タグ,メモ\n"+
+                "2026/10/15,10,1500,CSV店,試験機,001,朝一|狙い,\"改行\nメモ\"\n").getBytes(StandardCharsets.UTF_8);
+            GenericCsv csv=new GenericCsv(generic);int[] mapping={0,1,2,3,4,5,6,7};
+            JSONObject converted=csv.convert(mapping,new HashMap<>());
+            check(source.importCsv(converted)==1 && source.importCsv(converted)==1,"CSV import was not repeatable");
+            JSONObject csvRow=converted.getJSONArray("records").getJSONObject(0);
+            check("未分類".equals(csvRow.getString("kind"))&&"001".equals(csvRow.getString("machine_number"))
+                &&csvRow.getString("memo").contains("\n"),"CSV mapping guessed or lost source values");
             android.database.sqlite.SQLiteDatabase exporting=source.getWritableDatabase();exporting.beginTransaction();
             try{
                 JSONObject consistent=source.backup();
@@ -298,7 +315,40 @@ public final class BackupVerification extends Instrumentation {
                 exporting.setTransactionSuccessful();
             }finally{exporting.endTransaction();}
             JSONObject before=source.backup();
+            String clean=before.toString();
+            JSONObject changedCsv=new JSONObject(converted.toString());
+            changedCsv.getJSONArray("tags").put(new JSONObject().put("source_id","csv-new-tag")
+                .put("name","衝突後のタグ").put("type","").put("priority",""));
+            changedCsv.getJSONArray("records").getJSONObject(0).put("memo","衝突する変更");
+            boolean csvConflict=false;
+            try{source.importCsv(changedCsv);}catch(IllegalStateException expected){csvConflict=true;}
+            check(csvConflict&&clean.equals(source.backup().toString()),"CSV conflict partially changed data");
+            JSONObject orphan=new JSONObject(clean);
+            orphan.getJSONArray("counters").put(new JSONObject().put("id","orphan-counter")
+                .put("owner_type","session").put("owner_id","missing-session")
+                .put("name","不正").put("count",1).put("undo_available",0).put("updated_at",1));
+            boolean orphanFailed=false;
+            try{source.importJson(orphan);}catch(IllegalArgumentException expected){orphanFailed=true;}
+            check(orphanFailed&&clean.equals(source.backup().toString()),"Orphan counter partially changed data");
+            JSONObject duplicate=new JSONObject(clean);
+            duplicate.getJSONArray("records").put(new JSONObject(duplicate.getJSONArray("records").getJSONObject(0).toString()));
+            boolean duplicateFailed=false;
+            try{source.importJson(duplicate);}catch(JSONException expected){duplicateFailed=true;}
+            check(duplicateFailed&&clean.equals(source.backup().toString()),"Duplicate ID changed the database");
+            boolean corruptFailed=false;
+            try{BackupIO.readJson(new ByteArrayInputStream("{broken".getBytes(StandardCharsets.UTF_8)));}
+            catch(Exception expected){corruptFailed=true;}
+            check(corruptFailed&&clean.equals(source.backup().toString()),"Corrupt JSON changed the database");
             ByteArrayOutputStream bytes=new ByteArrayOutputStream(); ExportBundle.write(before,bytes,UnifiedLedger.export(UnifiedLedger.rows(source)));
+            JSONObject fromZip=BackupIO.readZip(new ByteArrayInputStream(bytes.toByteArray()),context.getCacheDir());
+            check(before.toString().equals(fromZip.toString()),"ZIP backup.json changed during reading");
+            boolean truncatedFailed=false;
+            try{BackupIO.readZip(new ByteArrayInputStream(Arrays.copyOf(bytes.toByteArray(),bytes.size()/2)),context.getCacheDir());}
+            catch(Exception expected){truncatedFailed=true;}
+            check(truncatedFailed&&clean.equals(source.backup().toString()),"Truncated ZIP changed the database");
+            JSONObject fromJson=BackupIO.readJson(new ByteArrayInputStream(before.toString().getBytes(StandardCharsets.UTF_8)));
+            check(before.toString().equals(fromJson.toString())&&BackupIO.preview(fromJson).contains("期間"),
+                "JSON preview or read failed");
             Map<String,byte[]> entries=new LinkedHashMap<>();
             try(ZipInputStream zip=new ZipInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
                 ZipEntry entry; byte[] buffer=new byte[8192];
@@ -309,13 +359,28 @@ public final class BackupVerification extends Instrumentation {
                 }
             }
             check(entries.containsKey("sessions.csv")&&entries.containsKey("record_tags.csv")&&entries.containsKey("all_records.csv")
-                &&entries.containsKey("calendar_events.csv"),"CSV tables missing");
+                &&entries.containsKey("calendar_events.csv")&&entries.containsKey("counters.csv"),"CSV tables missing");
             check(new String(entries.get("tags.csv"),StandardCharsets.UTF_8).contains("朝一,特日\n🎰\"\"試験\"\""),"CSV escaping lost");
             check(Arrays.equals(pcb,entries.get("sources/0/original.pcb")),"PCB bytes changed");
             check(new String(entries.get("sources/0/raw_entries.csv"),StandardCharsets.UTF_8).contains("unknown_setting"),"Unknown field missing");
             JSONObject exported=new JSONObject(new String(entries.get("backup.json"),StandardCharsets.UTF_8));
-            restored.importJson(exported);
+            restored.importJson(fromZip);
             check(before.toString().equals(restored.backup().toString()),"Round trip mismatch");
+            String jsonName="verification-json.db";context.deleteDatabase(jsonName);
+            try(LedgerDb jsonRestored=new LedgerDb(context,jsonName)){
+                jsonRestored.importJson(fromJson);
+                check(before.toString().equals(jsonRestored.backup().toString()),"JSON empty database round trip mismatch");
+            }finally{context.deleteDatabase(jsonName);}
+            check(new CounterStore(restored).list("session","A").getJSONObject(0).getLong("count")==2,
+                "Restored counter value differs");
+            String oldName="verification-v7.db";context.deleteDatabase(oldName);
+            try(LedgerDb oldRestored=new LedgerDb(context,oldName)){
+                JSONObject v7=new JSONObject(before.toString());v7.put("format","pachibo-ledger-v7");v7.remove("counters");
+                oldRestored.importJson(v7);
+                check(oldRestored.backup().getJSONArray("records").length()==before.getJSONArray("records").length()
+                    &&oldRestored.backup().getJSONArray("calendar_events").length()==before.getJSONArray("calendar_events").length()
+                    &&oldRestored.backup().getJSONArray("counters").length()==0,"v7 backup compatibility failed");
+            }finally{context.deleteDatabase(oldName);}
             check(new CalendarEventStore(restored).list().size()==4,"Calendar events not restored");
             restored.importJson(exported);
             check(before.toString().equals(restored.backup().toString()),"Duplicate import changed data");
@@ -335,7 +400,7 @@ public final class BackupVerification extends Instrumentation {
             check(rejected,"Edited record overwritten");
             check(edited.equals(restored.backup().toString()),"Failed import was not atomic");
             try(OutputStream file=context.openFileOutput("verification-complete.zip",Context.MODE_PRIVATE)) { file.write(bytes.toByteArray()); }
-            result.putString("stream","ROUNDTRIP_PASS: mixed cash/medal finish, same-day guard, finish tags/memo, machine categories, catalog, quantities, chosen times, normalized numbers, accounts, basic edits, amount direction, v3-to-v7 migration, calendar event recurrences and restore, history, undo after restore, atomic history failure, corrections, stale rejection, unknown transfers, CSV escaping, nulls, tags, PCB bytes, unknown fields, sessions, transfers, repeated import and conflict rollback\n");
+            result.putString("stream","ROUNDTRIP_PASS: v8 JSON/ZIP empty-DB restoration, v7 backup compatibility, duplicate/corrupt rejection, generic CSV mapping, counter save/undo/restore, mixed cash/medal finish, tags, calendar events, exchange rates, calculation details, PCB preservation and conflict rollback\n");
             finish(-1,result);
         } catch(Throwable error) {
             result.putString("stream","ROUNDTRIP_FAIL: "+android.util.Log.getStackTraceString(error)); finish(0,result);

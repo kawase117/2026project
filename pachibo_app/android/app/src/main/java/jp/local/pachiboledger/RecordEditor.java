@@ -15,6 +15,8 @@ final class RecordEditor {
         if(!row.has("id"))row.put("id","local-"+UUID.randomUUID());
         JSONObject details=db.recordDetails(row.getString("id"));
         LinearLayout form=new LinearLayout(a);form.setOrientation(1);form.setPadding(24,12,24,12);ScrollView scroll=new ScrollView(a);scroll.addView(form);
+        if(existing!=null){Button counter=new Button(a);counter.setText("小役カウンタを開く");FormUi.styleButton(counter);
+            form.addView(counter);counter.setOnClickListener(v->CounterScreen.show(a,db,"record",row.optString("id")));}
         EditText date=FormUi.date(a,form,"遊技日",row.optString("date",java.time.LocalDate.now().toString()),false);
         int timeStart=form.getChildCount();
         EditText start=FormUi.time(a,form,"開始時刻",clock(details,"started_at"));

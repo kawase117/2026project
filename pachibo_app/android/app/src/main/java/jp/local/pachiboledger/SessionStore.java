@@ -80,6 +80,7 @@ final class SessionStore {
             }
             db.execSQL("DELETE FROM edit_history WHERE entity_type='operations' AND entity_id IN (SELECT id FROM operations WHERE session_id=?)",new Object[]{id});
             db.delete("operations","session_id=?",new String[]{id});
+            db.delete("counters","owner_type='session' AND owner_id=?",new String[]{id});
             db.delete("sessions","id=?",new String[]{id});
             db.setTransactionSuccessful();
         } finally { db.endTransaction(); }
