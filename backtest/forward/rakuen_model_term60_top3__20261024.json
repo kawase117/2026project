@@ -1,0 +1,113 @@
+{
+  "rule_id": "rakuen_model_term60_top3",
+  "hall": "楽園蒲田店",
+  "freeze_hash": "8956697aae9be829",
+  "target_date": "20261024",
+  "data_asof": "20261023",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-08-25",
+    "2026-10-24"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +125 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "チバリヨ2",
+      "score": 608.278066,
+      "history_rows": 75,
+      "machines": [
+        3185,
+        3186,
+        3187
+      ]
+    },
+    {
+      "machine_name": "鉄拳6",
+      "score": 561.415648,
+      "history_rows": 49,
+      "machines": [
+        3118,
+        3119,
+        3120
+      ]
+    },
+    {
+      "machine_name": "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION",
+      "score": 555.158612,
+      "history_rows": 193,
+      "machines": [
+        2021,
+        2022,
+        2023,
+        2024
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 3185,
+      "machine_name": "チバリヨ2",
+      "score": 608.278066,
+      "history_days": 75
+    },
+    {
+      "machine_number": 3186,
+      "machine_name": "チバリヨ2",
+      "score": 608.278066,
+      "history_days": 75
+    },
+    {
+      "machine_number": 3187,
+      "machine_name": "チバリヨ2",
+      "score": 608.278066,
+      "history_days": 75
+    },
+    {
+      "machine_number": 3118,
+      "machine_name": "鉄拳6",
+      "score": 561.415648,
+      "history_days": 49
+    },
+    {
+      "machine_number": 3119,
+      "machine_name": "鉄拳6",
+      "score": 561.415648,
+      "history_days": 49
+    },
+    {
+      "machine_number": 3120,
+      "machine_name": "鉄拳6",
+      "score": 561.415648,
+      "history_days": 49
+    },
+    {
+      "machine_number": 2021,
+      "machine_name": "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION",
+      "score": 555.158612,
+      "history_days": 193
+    },
+    {
+      "machine_number": 2022,
+      "machine_name": "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION",
+      "score": 555.158612,
+      "history_days": 193
+    },
+    {
+      "machine_number": 2023,
+      "machine_name": "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION",
+      "score": 555.158612,
+      "history_days": 193
+    },
+    {
+      "machine_number": 2024,
+      "machine_name": "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION",
+      "score": 555.158612,
+      "history_days": 193
+    }
+  ],
+  "result": null,
+  "plan_digest": "86ea0833d2fecca3"
+}
