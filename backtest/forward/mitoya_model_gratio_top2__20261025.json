@@ -1,0 +1,169 @@
+{
+  "rule_id": "mitoya_model_gratio_top2",
+  "hall": "みとや大森町店",
+  "freeze_hash": "a0f5b81a53a8e24b",
+  "target_date": "20261025",
+  "data_asof": "20261024",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-10-04",
+    "2026-10-25"
+  ],
+  "score": "hist_model_gratio_mean_diff",
+  "selection_unit": "machine_model",
+  "success_criterion": "フォワード20エントリー日を経過した時点で、指名機種全台の総和ベースedge（対ホール全体同日平均、diff_coins_normalized）の平均が正であり、95%CI(block7)下限が0を上回ること。満たさなければ破棄する。判定はフォワードテストのみで行い、バックテスト数値は採否根拠にしない。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "マイジャグラーⅥ",
+      "score": 1174.824293,
+      "history_rows": 108,
+      "machines": [
+        641,
+        642,
+        643,
+        644,
+        645,
+        646,
+        647,
+        648,
+        649,
+        666,
+        667,
+        668,
+        669,
+        670,
+        671,
+        672,
+        673,
+        674
+      ]
+    },
+    {
+      "machine_name": "化物語",
+      "score": 626.862697,
+      "history_rows": 14,
+      "machines": [
+        749
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 641,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 1174.824293,
+      "history_days": 108
+    },
+    {
+      "machine_number": 642,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 1174.824293,
+      "history_days": 108
+    },
+    {
+      "machine_number": 643,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 1174.824293,
+      "history_days": 108
+    },
+    {
+      "machine_number": 644,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 1174.824293,
+      "history_days": 108
+    },
+    {
+      "machine_number": 645,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 1174.824293,
+      "history_days": 108
+    },
+    {
+      "machine_number": 646,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 1174.824293,
+      "history_days": 108
+    },
+    {
+      "machine_number": 647,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 1174.824293,
+      "history_days": 108
+    },
+    {
+      "machine_number": 648,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 1174.824293,
+      "history_days": 108
+    },
+    {
+      "machine_number": 649,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 1174.824293,
+      "history_days": 108
+    },
+    {
+      "machine_number": 666,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 1174.824293,
+      "history_days": 108
+    },
+    {
+      "machine_number": 667,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 1174.824293,
+      "history_days": 108
+    },
+    {
+      "machine_number": 668,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 1174.824293,
+      "history_days": 108
+    },
+    {
+      "machine_number": 669,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 1174.824293,
+      "history_days": 108
+    },
+    {
+      "machine_number": 670,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 1174.824293,
+      "history_days": 108
+    },
+    {
+      "machine_number": 671,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 1174.824293,
+      "history_days": 108
+    },
+    {
+      "machine_number": 672,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 1174.824293,
+      "history_days": 108
+    },
+    {
+      "machine_number": 673,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 1174.824293,
+      "history_days": 108
+    },
+    {
+      "machine_number": 674,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 1174.824293,
+      "history_days": 108
+    },
+    {
+      "machine_number": 749,
+      "machine_name": "化物語",
+      "score": 626.862697,
+      "history_days": 14
+    }
+  ],
+  "result": null,
+  "plan_digest": "90dee32e8c6a3127"
+}
