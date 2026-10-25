@@ -1,0 +1,38 @@
+{
+  "rule_id": "k7_at_histdiff_ex2026_top3",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "freeze_hash": "c8c26c0fb1179bcb",
+  "target_date": "20261026",
+  "data_asof": "20261025",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-09-26",
+    "2026-10-26"
+  ],
+  "score": "hist_mean_diff",
+  "selection_unit": "machine",
+  "success_criterion": "判定はフォワードのみ。フォワード30エントリー日を経過した時点で edge 平均が +300枚/台 以上かつ 95%CI 下限 > 0 であること。満たさなければ『AT履歴差枚による台選択』は破棄し、AT系スコアの派生はこの1本で打ち止めとする（元ルールの success_criterion をそのまま引き継ぐ。除外以外は一切変えていない）。",
+  "is_dry_run": false,
+  "picks": [
+    {
+      "machine_number": 3039,
+      "machine_name": "とある魔術の禁書目録2",
+      "score": 2673.684211,
+      "history_days": 19
+    },
+    {
+      "machine_number": 3231,
+      "machine_name": "東京喰種",
+      "score": 2282.142857,
+      "history_days": 28
+    },
+    {
+      "machine_number": 2006,
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 2215.0,
+      "history_days": 20
+    }
+  ],
+  "result": null,
+  "plan_digest": "d7d13bb396fe06a8"
+}
