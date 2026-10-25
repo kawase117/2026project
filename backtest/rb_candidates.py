@@ -31,6 +31,7 @@ MIN_LONG_RUN_DAYS = 60
 MIN_CURRENT_UNITS = 3
 MIN_FAMILIES = 5
 PICK_SHARE = 0.2
+OTHER_UNIT_LIMIT = 15
 MIN_UNIT_DAYS = 25
 DOW_LOOKBACK = 8
 DOW_REFERENCE_DAYS = 60
@@ -139,13 +140,19 @@ def rank_units(con: sqlite3.Connection, target_date: str, asof: str, top_familie
     result = {}
     for family in top_families:
         values = [
-            {"machine_number": number, "n_days": value[0], "s1": value[1] / value[2]}
+            {"machine_number": number, "n_days": value[0], "s1": value[1] / value[2], "rb": value[1], "exp": value[2]}
             for (f, number), value in totals.items()
             if f == family and value[0] >= MIN_UNIT_DAYS and value[2] > 0
         ]
+        if len(values) < 5:
+            continue
+        # 機種内の偏差: 台の90日設定1比 − その機種の台の合算設定1比。強い機種でなくても、機種内で突出した台を拾う。
+        family_s1 = sum(v["rb"] for v in values) / sum(v["exp"] for v in values)
+        for v in values:
+            v["dev"] = v["s1"] - family_s1
+            del v["rb"], v["exp"]
         values.sort(key=lambda row: (-row["s1"], row["machine_number"]))
-        if len(values) >= 5:
-            result[family] = values[: max(1, math.ceil(PICK_SHARE * len(values)))]
+        result[family] = values[: max(1, math.ceil(PICK_SHARE * len(values)))]
     return result
 
 
@@ -230,12 +237,26 @@ def render_section(rows: list[dict]) -> str:
                     f"| {item['family_name']} | {item['units']} | {item['adj90']:+.3f} | {item['z90']:+.3f} | {z7} |"
                 )
         if row["units"]:
-            out.append(
-                "台の補助: "
-                + " / ".join(
-                    f"{f}: " + ", ".join(str(u["machine_number"]) for u in units) for f, units in row["units"].items()
+            candidate_names = {item["family_name"] for item in row["candidates"]}
+            inside = {f: units for f, units in row["units"].items() if f in candidate_names}
+            if inside:
+                out.append(
+                    "台の補助(候補機種): "
+                    + " / ".join(
+                        f"{f}: " + ", ".join(str(u["machine_number"]) for u in units) for f, units in inside.items()
+                    )
                 )
+            others = sorted(
+                ((f, u) for f, units in row["units"].items() if f not in candidate_names for u in units),
+                key=lambda pair: -pair[1].get("dev", 0.0),
             )
+            if others:
+                out.append(
+                    f"台の補助(その他の機種、機種内の偏差の大きい順に上位{OTHER_UNIT_LIMIT}台。凍結は全機種の機種内上位20%): "
+                    + " / ".join(
+                        f"{f} {u['machine_number']}({u.get('dev', 0.0):+.2f})" for f, u in others[:OTHER_UNIT_LIMIT]
+                    )
+                )
         flag = row["day_flag"]
         out += [f"日の補助: {flag['flag']} (pct={flag['pct']:.2f})" if flag else "日の補助: 有効値不足", ""]
     return "\n".join(out).rstrip() + "\n"
@@ -285,8 +306,9 @@ def generate(
                     )
                     if row["status"] == "ok":
                         if hall in RB_UNIT_HALLS:
+                            # 候補機種に限らず、ランキングの対象になった全機種で機種内の上位20%を選ぶ(検証と同じ選び方)
                             row["units"] = rank_units(
-                                con, target_date, asof, [r["family_name"] for r in row["candidates"]]
+                                con, target_date, asof, [r["family_name"] for r in rank["eligible"]]
                             )
                         row["day_flag"] = day_flag(con, target_date, asof)
         except Exception as exc:
