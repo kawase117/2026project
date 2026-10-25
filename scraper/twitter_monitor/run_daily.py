@@ -355,7 +355,9 @@ def refresh_integrated_layer():
     run_project("-m", "backtest.integrated", "ingest-retro")
     run_project("-m", "backtest.integrated", "coverage")
     # 結果発表の取り込みが済んだ後に、イベントの各回との結びつきを照合し直す（遅れて出た発表を拾う）。
-    run_project("-m", "backtest.event_days", "link")
+    # 紐付けが変わった過去回は、変化があるときだけ output/event_history/<当日>/link_changes.md に残す。
+    changes_out = PROJECT_ROOT / "output" / "event_history" / datetime.now(JST).strftime("%Y%m%d") / "link_changes.md"
+    run_project("-m", "backtest.event_days", "link", "--changes-out", str(changes_out))
 
 
 def main() -> int:

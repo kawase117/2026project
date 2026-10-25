@@ -196,3 +196,87 @@ def test_link_is_idempotent_and_supersedes_when_candidate_changes(tmp_path):
     assert len(rows) == 2
     assert rows[1]["supersedes"] == rows[0]["row_id"]
     assert rows[1]["candidate_tweets"][0]["tweet_id"] == "new"
+
+
+def _add_report(analysis, report_id, ds, posted):
+    con = sqlite3.connect(analysis)
+    con.execute(
+        "insert into external_result_reports values (?,?,?,?,?)",
+        (report_id, f"https://x.test/status/{report_id}", posted, "楽園蒲田店", ds),
+    )
+    con.execute("insert into external_result_machines values (?,?,?)", (report_id, "x", 1))
+    con.commit()
+    con.close()
+
+
+def test_link_changes_are_reported_only_when_status_changes(tmp_path, capsys):
+    """遅れて出た結果発表で waiting→linked に変わった過去回を、変化があるときだけ書き出す。"""
+    analysis, state = _dbs(tmp_path)
+    business = date.today() - timedelta(days=20)
+    ds = business.strftime("%Y%m%d")
+    events = tmp_path / "EVENT_DAYS.jsonl"
+    _write_events(events, [{"event_id": "e", "hall": "楽園", "date": ds}])
+    out = tmp_path / "out" / "link_changes.md"
+    args = _args(tmp_path, events, analysis, state)
+    args.changes_out = str(out)
+
+    # 初回の waiting は変化として扱わない（ファイルも作らない）。
+    event_days.cmd_link(args)
+    assert not out.exists()
+    assert "結果発表の紐付けが変わった過去回" not in capsys.readouterr().out
+
+    # 変化なしの再実行でも、ファイルは作らない。
+    event_days.cmd_link(args)
+    assert not out.exists()
+
+    # 結果発表が遅れて出ると waiting → linked として記録される。
+    _add_report(analysis, "r1", ds, (business + timedelta(days=20)).isoformat() + "T10:00:00+09:00")
+    event_days.cmd_link(args)
+    text = out.read_text(encoding="utf-8")
+    assert "楽園蒲田店" in text or "楽園" in text
+    assert "waiting → linked" in text
+    assert "営業日の 20 日後" in text
+    assert "結果発表の紐付けが変わった過去回: 1 件" in capsys.readouterr().out
+
+    # 同じ日に再度走って変化が無ければ、追記もしない。
+    before = out.read_text(encoding="utf-8")
+    event_days.cmd_link(args)
+    assert out.read_text(encoding="utf-8") == before
+
+    # 報告が増えたとき（linked のまま）は追記される。前の回の記録は消えない。
+    _add_report(analysis, "r2", ds, (business + timedelta(days=21)).isoformat() + "T10:00:00+09:00")
+    event_days.cmd_link(args)
+    after = out.read_text(encoding="utf-8")
+    assert after.startswith(before)
+    assert len(after) > len(before)
+    assert after.count("linked → linked") == 1
+
+
+def test_first_time_linked_is_reported_and_multiple_candidates_ask_for_human(tmp_path):
+    analysis, state = _dbs(tmp_path)
+    business = date.today() - timedelta(days=15)
+    ds = business.strftime("%Y%m%d")
+    events = tmp_path / "EVENT_DAYS.jsonl"
+    _write_events(events, [{"event_id": "e", "hall": "楽園", "date": ds}])
+    _add_report(analysis, "r1", ds, (business + timedelta(days=1)).isoformat() + "T10:00:00+09:00")
+    out = tmp_path / "link_changes.md"
+    args = _args(tmp_path, events, analysis, state)
+    args.changes_out = str(out)
+    event_days.cmd_link(args)
+    assert "（新規） → linked" in out.read_text(encoding="utf-8")
+
+    # 候補が複数のときは自動で選ばず、人が確認するよう書く。
+    pending = [
+        {
+            "hall": "楽園蒲田店",
+            "business_date": ds,
+            "status": "multiple_candidates",
+            "report_ids": [],
+            "candidate_tweets": [{"tweet_id": "a"}, {"tweet_id": "b"}],
+            "delay_days": None,
+        }
+    ]
+    previous = {("楽園蒲田店", ds): {"status": "waiting", "report_ids": []}}
+    lines = event_days._render_link_changes(event_days._link_changes(pending, previous))
+    assert any("waiting → multiple_candidates" in line for line in lines)
+    assert any("人が確認" in line for line in lines)

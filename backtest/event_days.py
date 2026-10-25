@@ -810,7 +810,55 @@ def cmd_link(a):
                 f.write(json.dumps(row, ensure_ascii=False) + "\n")
     print("追記: %d 行%s" % (len(pending), "（dry-run）" if a.dry_run else ""))
     print("status: " + " ".join("%s=%d" % (key, counts[key]) for key in counts))
+    changes = _link_changes(pending, latest)
+    if changes:
+        lines = _render_link_changes(changes)
+        print("\n".join(lines))
+        out = getattr(a, "changes_out", None)
+        if out and not a.dry_run:
+            os.makedirs(os.path.dirname(out), exist_ok=True)
+            # 同じ日に複数回走る（07:00 と 07:30 など）ので追記する。後の回で上書きして前の回の変化を消さない。
+            with open(out, "a", encoding="utf-8") as f:
+                f.write("## %s\n\n%s\n\n" % (checked_at, "\n".join(lines)))
     return 0
+
+
+def _link_changes(pending, latest):
+    """今回の追記のうち、人が見るべき変化だけを返す。
+
+    - 以前と状態が変わった（waiting→linked など）、または linked のまま報告が増えた。
+    - 初回から linked（イベントを後から登録したら、結果発表が既にあった）。
+    初回の waiting / not_found は変化として扱わない（毎朝の新規イベントで埋まるため）。
+    """
+    out = []
+    for row in pending:
+        previous = latest.get((row["hall"], row["business_date"]))
+        if previous is None:
+            if row["status"] == "linked":
+                out.append((None, row))
+            continue
+        if previous.get("status") != row["status"] or (
+            row["status"] == "linked" and previous.get("report_ids") != row["report_ids"]
+        ):
+            out.append((previous, row))
+    out.sort(key=lambda pr: (pr[1]["business_date"], pr[1]["hall"]))
+    return out
+
+
+def _render_link_changes(changes):
+    lines = ["結果発表の紐付けが変わった過去回: %d 件" % len(changes)]
+    for previous, row in changes:
+        before = previous["status"] if previous else "（新規）"
+        if row["status"] == "linked":
+            detail = "報告 %d 件" % len(row["report_ids"])
+            if row.get("delay_days") is not None:
+                detail += "、投稿は営業日の %d 日後" % row["delay_days"]
+        else:
+            detail = "候補ツイート %d 件" % len(row["candidate_tweets"])
+        lines.append("- %s %s: %s → %s（%s）" % (row["hall"], row["business_date"], before, row["status"], detail))
+        if row["status"] == "multiple_candidates":
+            lines.append("  候補が複数あり、自動では選ばない。人が確認して紐付ける。")
+    return lines
 
 
 def cmd_link_report(a):
@@ -1925,6 +1973,11 @@ def main(argv=None):
         s.add_argument("--links-ledger", default=RESULT_LINKS_LEDGER)
         if name == "link":
             s.add_argument("--dry-run", action="store_true")
+            s.add_argument(
+                "--changes-out",
+                default=None,
+                help="紐付けが変わった過去回の一覧を、変化があるときだけこのファイルへ書く",
+            )
         s.set_defaults(fn=fn)
     s = sub.add_parser("series")
     s.add_argument("--event-ledger", default=LEDGER)
