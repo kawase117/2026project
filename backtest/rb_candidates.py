@@ -35,6 +35,16 @@ OTHER_UNIT_LIMIT = 15
 MIN_UNIT_DAYS = 25
 DOW_LOOKBACK = 8
 DOW_REFERENCE_DAYS = 60
+# 凹み戻り(rbdip): 長期が強い台の直近の凹みを、好調な台(対照)と分けて凍結する。検証はバックテストの探索的な結果。
+DIP_HALLS = ("マルハンメガシティ2000-蒲田7", "楽園蒲田店")
+LONG_DAYS = 180
+RECENT_DAYS = 7
+MIN_LONG_ROWS = 20
+MIN_RECENT_ROWS = 3
+LONG_PCT = 0.6
+DIP_PCT = 0.3
+HOT_PCT = 0.7
+MIN_DIP_FAMILY_UNITS = 5
 
 
 def _day(value: str) -> datetime:
@@ -156,6 +166,81 @@ def rank_units(con: sqlite3.Connection, target_date: str, asof: str, top_familie
     return result
 
 
+def _pct_ranks(values: list[float]) -> list[float]:
+    """pandas の rank(pct=True) と同じ。同値は平均順位、順位÷件数。"""
+    order = sorted(range(len(values)), key=lambda i: values[i])
+    ranks = [0.0] * len(values)
+    i = 0
+    while i < len(order):
+        j = i
+        while j + 1 < len(order) and values[order[j + 1]] == values[order[i]]:
+            j += 1
+        for k in range(i, j + 1):
+            ranks[order[k]] = (i + j) / 2 + 1
+        i = j + 1
+    return [r / len(values) for r in ranks]
+
+
+def rank_dip_units(con: sqlite3.Connection, target_date: str, asof: str) -> dict:
+    """長期(180日)が強い台のうち、直近7日が凹んだ台(a)と、直近も好調な台(b、対照)を機種内の順位で選ぶ。
+
+    窓は date >= 対象日−N日 かつ date < 対象日。台は現行台(asof の日にいる台)で、同機種の履歴だけを使う。
+    パーセンタイルは、長期・直近の両方が計算できる台の中の平均順位。
+    """
+    records, _ = _data(con, target_date)
+    comparable = prediction_rb.comparable_families(prediction_rb.family_rows(con, min(target_date, _start(asof, -1))))
+    current = defaultdict(set)
+    for number, name in con.execute(
+        "SELECT machine_number, machine_name FROM machine_detailed_results WHERE date = ?", (asof,)
+    ):
+        spec = prediction_rb.rb_family(name)
+        if spec:
+            current[spec[0]].add(int(number))
+    long_start, recent_start = _start(target_date, LONG_DAYS), _start(target_date, RECENT_DAYS)
+    totals = defaultdict(lambda: [0, 0.0, 0.0, 0, 0.0, 0.0])
+    for date, number, family, games, rb, floor, _ in records:
+        if family not in comparable or number not in current[family] or date < long_start:
+            continue
+        item = totals[(family, number)]
+        item[0] += 1
+        item[1] += rb
+        item[2] += games * floor
+        if date >= recent_start:
+            item[3] += 1
+            item[4] += rb
+            item[5] += games * floor
+    by_family = defaultdict(list)
+    for (family, number), v in totals.items():
+        if v[0] >= MIN_LONG_ROWS and v[3] >= MIN_RECENT_ROWS and v[2] > 0 and v[5] > 0:
+            by_family[family].append((number, v))
+    a, b, families = [], [], 0
+    for family, members in by_family.items():
+        if len(members) < MIN_DIP_FAMILY_UNITS:
+            continue
+        families += 1
+        long_mean = sum(v[1] for _, v in members) / sum(v[2] for _, v in members)
+        recent_mean = sum(v[4] for _, v in members) / sum(v[5] for _, v in members)
+        long_pct = _pct_ranks([v[1] / v[2] for _, v in members])
+        recent_pct = _pct_ranks([v[4] / v[5] for _, v in members])
+        for (number, v), lp, rp in zip(members, long_pct, recent_pct, strict=True):
+            row = {
+                "family_name": family,
+                "machine_number": number,
+                "s1_long": v[1] / v[2],
+                "s1_recent": v[4] / v[5],
+                "long_dev": v[1] / v[2] - long_mean,
+                "recent_dev": v[4] / v[5] - recent_mean,
+                "long_pct": lp,
+                "recent_pct": rp,
+            }
+            if lp >= LONG_PCT and rp <= DIP_PCT:
+                a.append(row)
+            elif lp >= LONG_PCT and rp >= HOT_PCT:
+                b.append(row)
+    key = lambda r: (-r["long_dev"], r["machine_number"])  # noqa: E731
+    return {"a": sorted(a, key=key), "b": sorted(b, key=key), "n_families": families}
+
+
 def day_level(con: sqlite3.Connection, date: str, comparable: dict | None = None) -> float | None:
     if comparable is None:
         comparable = prediction_rb.comparable_families(prediction_rb.family_rows(con, date))
@@ -257,6 +342,18 @@ def render_section(rows: list[dict]) -> str:
                         f"{f} {u['machine_number']}({u.get('dev', 0.0):+.2f})" for f, u in others[:OTHER_UNIT_LIMIT]
                     )
                 )
+        if row["hall"] in DIP_HALLS:
+            dip_a = (row.get("dip") or {}).get("a") or []
+            if dip_a:
+                out.append(
+                    "台の補助(凹み戻り、長期が強い台の直近7日の凹み。対照は別に凍結): "
+                    + " / ".join(
+                        f"{u['family_name']} {u['machine_number']}(長期偏差 {u['long_dev']:+.2f} / 直近偏差 {u['recent_dev']:+.2f})"
+                        for u in dip_a
+                    )
+                )
+            else:
+                out.append("台の補助(凹み戻り): 該当なし")
         flag = row["day_flag"]
         out += [f"日の補助: {flag['flag']} (pct={flag['pct']:.2f})" if flag else "日の補助: 有効値不足", ""]
     return "\n".join(out).rstrip() + "\n"
@@ -283,6 +380,7 @@ def generate(
             "avoid": [],
             "units": {},
             "day_flag": None,
+            "dip": None,
         }
         path = db_dir / f"{hall}.db"
         try:
@@ -311,6 +409,11 @@ def generate(
                                 con, target_date, asof, [r["family_name"] for r in rank["eligible"]]
                             )
                         row["day_flag"] = day_flag(con, target_date, asof)
+                        if hall in DIP_HALLS:
+                            try:
+                                row["dip"] = rank_dip_units(con, target_date, asof)
+                            except Exception as exc:  # 凹み戻りの失敗で既存の候補を止めない
+                                row["dip_error"] = str(exc)
         except Exception as exc:
             row["reason"] = str(exc)
         rows.append(row)
@@ -334,6 +437,25 @@ def generate(
                         print(f"{row['hall']}: 既存のためスキップ")
                 except Exception as exc:
                     row.update(status="skipped", reason=f"freeze_error: {exc}")
+            dip = row.get("dip") or {}
+            if dip and not no_freeze:
+                # 凹み戻り(A)と対照(B)は別エントリで凍結する。空のグループは凍結しない。
+                for kind, group_key in (("rb_dip", "a"), ("rb_dip_ctrl", "b")):
+                    group = dip.get(group_key) or []
+                    if not group:
+                        continue
+                    picks = {
+                        "models": [],
+                        "avoid_models": [],
+                        "units": sorted({u["machine_number"] for u in group}),
+                        "jug_units": [],
+                    }
+                    extra = {"dip": group, "data_asof": row["data_asof"], "lag_days": row["lag_days"]}
+                    try:
+                        if prediction_ledger.freeze_rb_dip(row["hall"], target_date, picks, extra, now, kind) is None:
+                            print(f"{row['hall']}: {kind} は既存のためスキップ")
+                    except Exception as exc:
+                        row["dip_error"] = f"freeze_error: {exc}"
             fh.write(
                 json.dumps(
                     {
@@ -344,6 +466,8 @@ def generate(
                         "data_asof": row["data_asof"],
                         "lag_days": row["lag_days"],
                         "frozen": frozen,
+                        "dip_a": len(dip.get("a") or []) if row["hall"] in DIP_HALLS else None,
+                        "dip_b": len(dip.get("b") or []) if row["hall"] in DIP_HALLS else None,
                         "generated_at": now.isoformat(),
                     },
                     ensure_ascii=False,

@@ -393,6 +393,58 @@ def freeze_rb_auto(
     return path
 
 
+RB_DIP_SUFFIX = {"rb_dip": "rbdip", "rb_dip_ctrl": "rbdipctrl"}
+
+
+def freeze_rb_dip(
+    hall: str,
+    target_date: str,
+    picks: dict,
+    extra: dict,
+    frozen_at: datetime,
+    kind: str,
+    pred_dir: Path = PRED_DIR,
+) -> Path | None:
+    """長期が強い台の直近の凹み(rb_dip)と、対照の好調な台(rb_dip_ctrl)を、別エントリで一度だけ凍結する。"""
+    if kind not in RB_DIP_SUFFIX:
+        raise ValueError(f"kind は rb_dip / rb_dip_ctrl のみ: {kind}")
+    pred_dir.mkdir(parents=True, exist_ok=True)
+    pid = f"{target_date}__{HALL_KEY.get(hall) or RB_AUTO_EXTRA_KEYS.get(hall, hall)}__{RB_DIP_SUFFIX[kind]}"
+    path = pred_dir / f"{pid}.json"
+    if path.exists():
+        return None
+    obj = {
+        "prediction_id": pid,
+        "hall": hall,
+        "target_date": target_date,
+        "picks": picks,
+        "frozen_at": frozen_at.isoformat(timespec="seconds"),
+        "timing": timing_of(frozen_at, target_date),
+        "timing_basis": "frozen_at",
+        "source": kind,
+        "data_asof": extra.get("data_asof"),
+        "lag_days": extra.get("lag_days"),
+        "rb_dip": extra,
+        "result": None,
+    }
+    obj["digest"] = _digest(obj)
+    path.write_text(json.dumps(obj, ensure_ascii=False, indent=1), encoding="utf-8")
+    with (pred_dir / LEDGER_NAME).open("a", encoding="utf-8") as fh:
+        fh.write(
+            json.dumps(
+                {
+                    "prediction_id": pid,
+                    "digest": obj["digest"],
+                    "frozen_at": obj["frozen_at"],
+                    "timing": obj["timing"],
+                },
+                ensure_ascii=False,
+            )
+            + "\n"
+        )
+    return path
+
+
 def target_of_doc(path: Path) -> str:
     m = DOC_NAME.search(path.name)
     if not m:

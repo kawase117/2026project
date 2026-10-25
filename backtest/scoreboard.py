@@ -83,6 +83,9 @@ MDE_TARGET = {
     "rbm_top": 0.03,
     "rbm_bottom": 0.03,
     "rbauto_units": 0.02,
+    "rbdip_units": 0.02,
+    "rbdip_ctrl_units": 0.02,
+    "rbdip_diff": 0.02,
     "announce_named": 100.0,
 }
 PRED_DIR = Path(__file__).resolve().parent / "predictions"
@@ -333,6 +336,13 @@ def build_prediction_rows(preds: list[dict]) -> list[Row]:
                     (p["target_date"], units["rb_s1_edge"], p["timing"])
                 )
             continue
+        if p.get("source") in ("rb_dip", "rb_dip_ctrl"):
+            # 凹み戻り(自動)は人の判断・rb_auto の系列に混ぜない。値は台の設定1比の差(同日・同機種の非選択台との差)。
+            family = "rbdip_units" if p["source"] == "rb_dip" else "rbdip_ctrl_units"
+            units = (p["result"].get("rb_s1") or {}).get("units") or {}
+            if units.get("rb_s1_edge") is not None:
+                groups.setdefault((family, p["hall"]), []).append((p["target_date"], units["rb_s1_edge"], p["timing"]))
+            continue
         for key, family in PRED_FAMILIES.items():
             part = p["result"].get(key)
             if part and part.get("edge") is not None:
@@ -354,6 +364,19 @@ def build_prediction_rows(preds: list[dict]) -> list[Row]:
                 if "revision_of" in p:
                     family = f"{family}[{p['revision']}]"
                 groups.setdefault((family, p["hall"]), []).append((p["target_date"], part["rb_s1_edge"], p["timing"]))
+    # 凹み戻りの増分: 同じ (ホール, 対象日) に凹み(A)と対照(B)の両方の値がある日だけ A − B を1値にする。
+    ctrl = {
+        (hall, date): value
+        for (family, hall), items in groups.items()
+        if family == "rbdip_ctrl_units"
+        for date, value, _ in items
+    }
+    for (family, hall), items in list(groups.items()):
+        if family != "rbdip_units":
+            continue
+        for date, value, timing_ in items:
+            if (hall, date) in ctrl:
+                groups.setdefault(("rbdip_diff", hall), []).append((date, value - ctrl[(hall, date)], timing_))
     rows = []
     for (family, hall), items in sorted(groups.items()):
         items.sort()
@@ -622,6 +645,9 @@ def render_markdown(rows: list[Row], generated_at: str, since: str | None) -> st
         ("rbm_top", "RB機種候補(自動): 上位機種"),
         ("rbm_bottom", "RB機種候補(自動): 下位機種"),
         ("rbauto_units", "RB機種候補(自動): 台の補助"),
+        ("rbdip_units", "凹み戻り(自動): 凹んだ台"),
+        ("rbdip_ctrl_units", "凹み戻り(自動): 対照(好調な台)"),
+        ("rbdip_diff", "凹み戻り(自動): 凹み − 対照"),
     ):
         _section(
             out,

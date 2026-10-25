@@ -133,8 +133,10 @@ def ledger_lines(predictions_dir: Path, key: str, day: str) -> list[str]:
     path = predictions_dir / ("%s__%s.json" % (day, key))
     paths = ([path] if path.exists() else []) + sorted(predictions_dir.glob("%s__%s__rev*.json" % (day, key)))
     auto_path = predictions_dir / ("%s__%s__rbauto.json" % (day, key))
+    dip_path = predictions_dir / ("%s__%s__rbdip.json" % (day, key))
+    dip_ctrl_path = predictions_dir / ("%s__%s__rbdipctrl.json" % (day, key))
     if not paths:
-        if not auto_path.exists():
+        if not auto_path.exists() and not dip_path.exists() and not dip_ctrl_path.exists():
             return []
     lines = ["#### 凍結した予測の採点（prediction_ledger）", ""]
     labels = {"models": "推した機種", "avoid_models": "避ける機種", "units": "推した台", "jug_units": "ジャグラー候補"}
@@ -209,6 +211,17 @@ def ledger_lines(predictions_dir: Path, key: str, day: str) -> list[str]:
                 )
         except OSError, ValueError:
             pass
+    if dip_path.exists() or dip_ctrl_path.exists():
+
+        def dip_edge(path: Path) -> str:
+            try:
+                result = (json.loads(path.read_text(encoding="utf-8")).get("result") or {}) if path.exists() else {}
+                value = ((result.get("rb_s1") or {}).get("units") or {}).get("rb_s1_edge")
+            except OSError, ValueError:
+                return "-"
+            return f"{value:+.3f}" if value is not None else "-"
+
+        lines.append("凹み戻り(自動): 凹み edge %s / 対照 %s" % (dip_edge(dip_path), dip_edge(dip_ctrl_path)))
     return lines
 
 
