@@ -132,8 +132,10 @@ def ledger_lines(predictions_dir: Path, key: str, day: str) -> list[str]:
     """凍結した予測（backtest/predictions）の採点。無ければ空。"""
     path = predictions_dir / ("%s__%s.json" % (day, key))
     paths = ([path] if path.exists() else []) + sorted(predictions_dir.glob("%s__%s__rev*.json" % (day, key)))
+    auto_path = predictions_dir / ("%s__%s__rbauto.json" % (day, key))
     if not paths:
-        return []
+        if not auto_path.exists():
+            return []
     lines = ["#### 凍結した予測の採点（prediction_ledger）", ""]
     labels = {"models": "推した機種", "avoid_models": "避ける機種", "units": "推した台", "jug_units": "ジャグラー候補"}
     for entry in paths:
@@ -187,6 +189,26 @@ def ledger_lines(predictions_dir: Path, key: str, day: str) -> list[str]:
                     difference = "差%+.2f" % edge if edge is not None else "差-"
                     s1_parts.append("%s %.2f倍 %s" % (kind, item["s1_ratio"], difference))
             lines.append(prefix + "RB(設定1比): " + (" / ".join(s1_parts) if s1_parts else "採点対象なし"))
+    if auto_path.exists():
+        try:
+            auto = json.loads(auto_path.read_text(encoding="utf-8"))
+            result = auto.get("result") or {}
+            machine = result.get("rb_machine") or {}
+            units = (result.get("rb_s1") or {}).get("units") or {}
+
+            def edge(part: dict, sign: int = 1) -> str:
+                value = part.get("edge")
+                return f"{sign * value:+.3f}" if value is not None else "-"
+
+            unit_value = units.get("rb_s1_edge")
+            unit_text = f"{unit_value:+.3f}" if unit_value is not None else "-"
+            if result:
+                lines.append(
+                    "RB機種候補(自動): 上位 edge %s / 下位 %s / 台 %s"
+                    % (edge(machine.get("top") or {}), edge(machine.get("bottom") or {}, -1), unit_text)
+                )
+        except OSError, ValueError:
+            pass
     return lines
 
 

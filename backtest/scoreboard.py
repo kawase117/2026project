@@ -80,6 +80,9 @@ MDE_TARGET = {
     "rb_jug_units": 0.05,
     "rb1_units": 0.10,
     "rb1_jug_units": 0.10,
+    "rbm_top": 0.03,
+    "rbm_bottom": 0.03,
+    "rbauto_units": 0.02,
     "announce_named": 100.0,
 }
 PRED_DIR = Path(__file__).resolve().parent / "predictions"
@@ -316,6 +319,20 @@ def build_prediction_rows(preds: list[dict]) -> list[Row]:
     """ホール×名指しの種類ごとに、1日1値(edge)の系列を作る。"""
     groups: dict[tuple[str, str], list[tuple[str, float, str]]] = {}
     for p in preds:
+        if p.get("source") == "rb_auto":
+            machine = p["result"].get("rb_machine") or {}
+            for key, family, sign in (("top", "rbm_top", 1), ("bottom", "rbm_bottom", -1)):
+                part = machine.get(key) or {}
+                if part.get("edge") is not None:
+                    groups.setdefault((family, p["hall"]), []).append(
+                        (p["target_date"], sign * part["edge"], p["timing"])
+                    )
+            units = (p["result"].get("rb_s1") or {}).get("units") or {}
+            if units.get("rb_s1_edge") is not None:
+                groups.setdefault(("rbauto_units", p["hall"]), []).append(
+                    (p["target_date"], units["rb_s1_edge"], p["timing"])
+                )
+            continue
         for key, family in PRED_FAMILIES.items():
             part = p["result"].get(key)
             if part and part.get("edge") is not None:
@@ -600,6 +617,22 @@ def render_markdown(rows: list[Row], generated_at: str, since: str | None) -> st
             extra_head=["事前性 開店前/当日/事後"],
             extra_cols=_timing_cols,
             key_head="対象",
+        )
+    for family, title in (
+        ("rbm_top", "RB機種候補(自動): 上位機種"),
+        ("rbm_bottom", "RB機種候補(自動): 下位機種"),
+        ("rbauto_units", "RB機種候補(自動): 台の補助"),
+    ):
+        _section(
+            out,
+            rows,
+            family,
+            title,
+            "(RB差)",
+            "+.3f",
+            f"開店前に自動凍結した候補。目標差 +{MDE_TARGET[family]:.2f}。",
+            extra_head=["事前性 開店前/当日/事後"],
+            extra_cols=_timing_cols,
         )
     _section(
         out,

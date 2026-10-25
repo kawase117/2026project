@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import math
 import sqlite3
+from pathlib import Path
+from collections import defaultdict
+from contextlib import closing
 from datetime import datetime, timedelta
 from functools import lru_cache
 
@@ -217,3 +220,144 @@ def rb_s1_result(con: sqlite3.Connection, picks: dict, target_date: str) -> dict
         result[kind] = metric
     result["excluded"] = {key: value if key == "low_games" else sorted(value) for key, value in excluded.items()}
     return result
+
+
+@lru_cache(maxsize=4096)
+def rb_family(name: str) -> tuple[str, float, float] | None:
+    """判別可能な機種名を (family, 設定1相当RB率, 最大RB率) に写す。"""
+    spec = bonus_specs.find_spec(name, _specs())
+    if not spec or not spec.get("judgeable"):
+        return None
+    values = [
+        float(v["rb_probability"])
+        for v in (spec.get("settings") or {}).values()
+        if isinstance(v.get("rb_probability"), (int, float))
+        and math.isfinite(v["rb_probability"])
+        and 0 < v["rb_probability"] <= 1
+    ]
+    if len(values) < 2 or max(values) <= min(values):
+        return None
+    return spec["family_name"], min(values), max(values)
+
+
+def zval(rb: float, games: float, floor: float, maximum: float) -> float:
+    return (rb / games - floor) / (maximum - floor)
+
+
+def family_rows(con: sqlite3.Connection, before: str, start: str | None = None) -> list[tuple]:
+    """対象日以前の採用可能な台日。family は呼び出し側で解決する。"""
+    sql = (
+        "SELECT date, machine_number, machine_name, games_normalized, rb_count "
+        "FROM machine_detailed_results WHERE date < ? AND games_normalized >= ? "
+        "AND rb_count IS NOT NULL"
+    )
+    params = [before, MIN_GAMES]
+    if start is not None:
+        sql += " AND date >= ?"
+        params.append(start)
+    return list(con.execute(sql, params))
+
+
+def comparable_families(rows: list[tuple]) -> dict[str, tuple[int, float, float, float, float]]:
+    """ホールごとに family を集計して比較可のものだけ返す。"""
+    sums = defaultdict(lambda: [0, 0.0, 0.0, 0.0, 0.0])
+    for _, _, name, games, rb in rows:
+        spec = rb_family(name)
+        if spec is None:
+            continue
+        family, floor, maximum = spec
+        item = sums[family]
+        item[0] += 1
+        item[1] += games
+        item[2] += rb
+        item[3], item[4] = floor, maximum
+    return {
+        f: tuple(v)
+        for f, v in sums.items()
+        if v[0] >= MIN_HISTORY_MACHINE_DAYS
+        and v[1] > 0
+        and v[3] * (1 - RANGE_MARGIN) <= v[2] / v[1] <= v[4] * (1 + RANGE_MARGIN)
+    }
+
+
+@lru_cache(maxsize=32)
+def family_offsets(db_dir: Path, asof_exclusive: str) -> dict[str, float]:
+    """各ホールで比較可能な family のみ全ホール合算し、RB率を共通尺度 z にする。"""
+    totals = defaultdict(lambda: [0.0, 0.0, 0.0, 0.0])
+    for path in sorted(Path(db_dir).glob("*.db")):
+        if "analysis" in path.name:
+            continue
+        try:
+            with closing(sqlite3.connect(path.resolve().as_uri() + "?mode=ro", uri=True)) as con:
+                if not con.execute(
+                    "SELECT 1 FROM sqlite_master WHERE type='table' AND name='machine_detailed_results'"
+                ).fetchone():
+                    continue
+                for family, (_, games, rb, floor, maximum) in comparable_families(
+                    family_rows(con, asof_exclusive)
+                ).items():
+                    item = totals[family]
+                    item[0] += games
+                    item[1] += rb
+                    item[2], item[3] = floor, maximum
+        except sqlite3.Error:
+            continue
+    return {f: zval(v[1], v[0], v[2], v[3]) for f, v in totals.items()}
+
+
+def rb_machine_result(con: sqlite3.Connection, picks: dict, target_date: str, offsets: dict[str, float]) -> dict:
+    """機種間の当日RB差。
+
+    z=(ΣRB/ΣG-p_floor)/(p_max-p_floor)、adj=z-offset_f。
+    重み w=ΣG×(p_max-p_floor)^2/p_floor とし、edge は選択群と他群の
+    w 加重平均 adj の差。2026-01-01〜10-24、13ホールの検証では
+    補正後上位20%−他が +0.06 z だった。
+    """
+    history = comparable_families(family_rows(con, target_date))
+    day = defaultdict(lambda: [0, 0.0, 0.0])
+    excluded = {"not_judgeable": set(), "no_offset": set(), "not_comparable": set()}
+    for _, _, name, games, rb in con.execute(
+        "SELECT date, machine_number, machine_name, games_normalized, rb_count FROM machine_detailed_results "
+        "WHERE date = ? AND games_normalized >= ? AND rb_count IS NOT NULL",
+        (target_date, MIN_GAMES),
+    ):
+        spec = rb_family(name)
+        if spec is None:
+            excluded["not_judgeable"].add(name)
+            continue
+        family = spec[0]
+        item = day[family]
+        item[0] += 1
+        item[1] += games
+        item[2] += rb
+    eligible = {}
+    for family, (n, games, rb) in day.items():
+        if family not in offsets:
+            excluded["no_offset"].add(family)
+        elif n < 3 or family not in history:
+            excluded["not_comparable"].add(family)
+        else:
+            _, _, _, floor, maximum = history[family]
+            eligible[family] = (
+                zval(rb, games, floor, maximum) - offsets[family],
+                games * (maximum - floor) ** 2 / floor,
+            )
+
+    def summary(names: list[str]) -> dict | None:
+        selected = {rb_family(n)[0] for n in names if rb_family(n) is not None} & eligible.keys()
+        other = eligible.keys() - selected
+        if not selected or not other:
+            return None
+
+        def mean(group):
+            return sum(eligible[f][0] * eligible[f][1] for f in group) / sum(eligible[f][1] for f in group)
+
+        adj = mean(selected)
+        return {"n_families": len(selected), "adj": adj, "edge": adj - mean(other)}
+
+    return {
+        "n_eligible": len(eligible),
+        "top": summary(picks.get("models") or []),
+        "bottom": summary(picks.get("avoid_models") or []),
+        "excluded": {k: sorted(v) for k, v in excluded.items()},
+    }

@@ -595,6 +595,33 @@ def juggler_section(day_dir: Path, today: str, ready: list[str]) -> str:
     return "\n".join(lines)
 
 
+def run_rb_candidates(day_dir: Path, today: str, dry_run: bool) -> bool:
+    """RB候補を一日一回生成する。失敗しても朝文書の他の段は続ける。"""
+    cmd = [
+        PYTHON,
+        "-X",
+        "utf8",
+        "-m",
+        "backtest.rb_candidates",
+        "generate",
+        "--date",
+        today,
+        "--md-out",
+        str(day_dir / "rb_candidates.md"),
+    ]
+    if dry_run:
+        cmd.append("--no-freeze")
+    try:
+        result = subprocess.run(cmd, cwd=PROJECT_ROOT, capture_output=True, text=True, timeout=600)
+        if result.returncode:
+            print("RB機種候補の生成失敗: " + (result.stderr or result.stdout)[-1000:], flush=True)
+            return False
+        return True
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        print(f"RB機種候補の生成失敗: {exc}", flush=True)
+        return False
+
+
 def build_poster_reports() -> None:
     """slo_tokyo の結果速報を poster_result_* へ取り込み直す(毎朝、答え合わせの前に1回)。
 
@@ -647,7 +674,7 @@ def merge(day_dir: Path, today: str, yesterday: str) -> None:
     got, missing, ready = pieces("prediction")
     if got:
         path = REVIEWS / ("%s-prediction.md" % dash(today))
-        if any(PREDICTIONS.glob("%s__*.json" % today)):
+        if any(p for p in PREDICTIONS.glob("%s__*.json" % today) if "__rbauto" not in p.stem):
             print("予測は凍結済みのため文書を作り直さない。", flush=True)
             return
         if not is_auto_doc(path):
@@ -661,6 +688,9 @@ def merge(day_dir: Path, today: str, yesterday: str) -> None:
         if missing:
             head += "\n未生成: %s（07:30 の起動で作る）" % "・".join(missing)
         body = "\n\n".join(got) + "\n\n" + juggler_section(day_dir, today, ready)
+        rb_part = day_dir / "rb_candidates.md"
+        if rb_part.exists():
+            body += "\n\n" + rb_part.read_text(encoding="utf-8").strip()
         path.write_text(head + "\n\n" + body + "\n", encoding="utf-8")
         print("書き出し: %s" % path.relative_to(PROJECT_ROOT), flush=True)
 
@@ -759,6 +789,8 @@ def main() -> int:
         print("朝の文書 当日=%s 前日=%s" % (today, yesterday), flush=True)
         if not args.dry_run:
             build_poster_reports()
+        if not (day_dir / "rb_candidates.md").exists():
+            run_rb_candidates(day_dir, today, args.dry_run)
         handled: set[str] = set()
         while True:
             # 処理中に別の起動（run_morning.py）が前日分を取り込むことがあるので、1周ごとに見直す。

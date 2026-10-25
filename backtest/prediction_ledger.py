@@ -46,7 +46,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from backtest import model_alias
-from backtest.prediction_rb import rb_result, rb_s1_result
+from backtest.prediction_rb import rb_result, rb_s1_result, rb_machine_result, family_offsets
 
 JST = ZoneInfo("Asia/Tokyo")
 ROOT = Path(__file__).resolve().parents[1]
@@ -85,6 +85,9 @@ HALL_KEY = {
     "ARROW池上店": "arrow",
     "ザ-シティ-ベルシティ雑色店": "zassiki",
 }
+# 予測文書には出ないが、RB機種候補の自動凍結(rbauto)だけが使うホール。HALLS と HALL_KEY の一致を要求する
+# 既存テスト(test_hiroki_halls_registered)があるので、HALL_KEY には足さずここで持つ。
+RB_AUTO_EXTRA_KEYS = {"BIGディッパー戸越銀座店": "big_dipper"}
 
 DOC_NAME = re.compile(r"(\d{4})-(\d{2})-(\d{2})-prediction\.md$")
 # 区切り記号で切った断片がそのまま機種名に当たらないときだけ、助詞で更に分ける
@@ -354,6 +357,42 @@ def freeze(
     return path
 
 
+def freeze_rb_auto(
+    hall: str, target_date: str, picks: dict, extra: dict, frozen_at: datetime, pred_dir: Path = PRED_DIR
+) -> Path | None:
+    """人の予測と独立したRB自動候補を一度だけ凍結する。"""
+    pred_dir.mkdir(parents=True, exist_ok=True)
+    pid = f"{target_date}__{HALL_KEY.get(hall) or RB_AUTO_EXTRA_KEYS.get(hall, hall)}__rbauto"
+    path = pred_dir / f"{pid}.json"
+    if path.exists():
+        return None
+    obj = {
+        "prediction_id": pid,
+        "hall": hall,
+        "target_date": target_date,
+        "picks": picks,
+        "frozen_at": frozen_at.isoformat(timespec="seconds"),
+        "timing": timing_of(frozen_at, target_date),
+        "timing_basis": "frozen_at",
+        "source": "rb_auto",
+        "data_asof": extra.get("data_asof"),
+        "lag_days": extra.get("lag_days"),
+        "rb_auto": extra,
+        "result": None,
+    }
+    obj["digest"] = _digest(obj)
+    path.write_text(json.dumps(obj, ensure_ascii=False, indent=1), encoding="utf-8")
+    with (pred_dir / LEDGER_NAME).open("a", encoding="utf-8") as fh:
+        fh.write(
+            json.dumps(
+                {"prediction_id": pid, "digest": obj["digest"], "frozen_at": obj["frozen_at"], "timing": obj["timing"]},
+                ensure_ascii=False,
+            )
+            + "\n"
+        )
+    return path
+
+
 def target_of_doc(path: Path) -> str:
     m = DOC_NAME.search(path.name)
     if not m:
@@ -476,6 +515,24 @@ def score(obj: dict) -> dict:
         except Exception as exc:
             obj["result"]["rb_s1"] = None
             obj["result"]["rb_s1_error"] = str(exc)
+        if obj.get("source") == "rb_auto":
+            try:
+                obj["result"]["rb_machine"] = rb_machine_result(
+                    con, p, obj["target_date"], family_offsets(DB_DIR, obj["target_date"])
+                )
+            except Exception as exc:
+                obj["result"]["rb_machine"] = None
+                obj["result"]["rb_machine_error"] = str(exc)
+            try:
+                from backtest.rb_candidates import day_level
+
+                obj["result"]["rb_day"] = {
+                    "flag": (obj.get("rb_auto") or {}).get("day_flag"),
+                    "y_level": day_level(con, obj["target_date"]),
+                }
+            except Exception as exc:
+                obj["result"]["rb_day"] = {"flag": (obj.get("rb_auto") or {}).get("day_flag"), "y_level": None}
+                obj["result"]["rb_day_error"] = str(exc)
     return obj
 
 
@@ -505,7 +562,10 @@ def rescore_rb(pred_dir: Path = PRED_DIR) -> list[str]:
     for path in sorted(pred_dir.glob("*__*.json")):
         obj = json.loads(path.read_text(encoding="utf-8"))
         result = obj.get("result")
-        if not result or ("rb" in result and "rb_s1" in result):
+        needed = [k for k in ("rb", "rb_s1") if k not in (result or {})]
+        if obj.get("source") == "rb_auto" and result and "rb_machine" not in result:
+            needed.append("rb_machine")
+        if not result or not needed:
             continue
         try:
             with _ro(obj["hall"]) as con:
@@ -524,6 +584,25 @@ def rescore_rb(pred_dir: Path = PRED_DIR) -> list[str]:
                         added.append(key)
                     except (sqlite3.Error, ValueError, ArithmeticError) as exc:
                         msgs.append(f"スキップ {path.name}: {key}採点失敗 ({exc})")
+                if "rb_machine" in needed:
+                    try:
+                        result["rb_machine"] = rb_machine_result(
+                            con, obj["picks"], obj["target_date"], family_offsets(DB_DIR, obj["target_date"])
+                        )
+                        added.append("rb_machine")
+                    except Exception as exc:
+                        result["rb_machine"] = None
+                        result["rb_machine_error"] = str(exc)
+                        added.append("rb_machine")
+                    if "rb_day" not in result:
+                        try:
+                            from backtest.rb_candidates import day_level
+
+                            level = day_level(con, obj["target_date"])
+                        except Exception as exc:
+                            level = None
+                            result["rb_day_error"] = str(exc)
+                        result["rb_day"] = {"flag": (obj.get("rb_auto") or {}).get("day_flag"), "y_level": level}
         except sqlite3.Error as exc:
             msgs.append(f"スキップ {path.name}: DBを読めない ({exc})")
             continue
