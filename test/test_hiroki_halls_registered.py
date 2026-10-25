@@ -73,6 +73,15 @@ def test_ledger_hall_of(heading, expected):
     assert prediction_ledger.hall_of(heading) == expected
 
 
+def test_slohunter_account_is_monitored_for_both_halls():
+    from config import ACCOUNTS
+
+    assert ACCOUNTS["pachi_slohunter"]["hall"] == "hiroki_nishiguchi_max"
+    # ホールのグループ名は --halls の絞り込みに使われるので、他アカウントと衝突しない
+    others = {h for h, d in ACCOUNTS.items() if d["hall"] == "hiroki_nishiguchi_max"}
+    assert others == {"pachi_slohunter"}
+
+
 def test_ledger_keys_and_announce_slugs_are_unique_and_complete():
     assert set(prediction_ledger.HALL_KEY) == set(prediction_ledger.HALLS)
     keys = list(prediction_ledger.HALL_KEY.values())
