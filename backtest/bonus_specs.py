@@ -60,6 +60,8 @@ import os
 import re
 import sqlite3
 import unicodedata
+from contextlib import closing
+from pathlib import Path
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -82,6 +84,13 @@ AT_AUDIT_CSV = os.path.join(ROOT, "document", "registry", "AT_RB_AUDIT.csv")
 # ユーザー提供のAT初当り確率(2026-06-10、instinct rb-probability-juggler-hokuto-spec)。設定3は公表なし。
 USER_AT_SPECS = {
     "スマスロ北斗の拳": {1: 383.4, 2: 370.5, 4: 297.8, 5: 258.7, 6: 235.1},
+}
+
+# 既存スペック(legacy)のキーが一撃マスターの正規化名と一致しない機種。同じ機種が
+# ノーマル(legacy)とBT(一撃)の2件に重複登録されていたため、一撃側を legacy に統合する(2026-10-25)。
+LEGACY_ABSORBS = {
+    "クレアの秘宝伝": ("クレアの秘宝伝 ～はじまりの扉と太陽の石～ ボーナストリガーver.",),
+    "ハレムエス": ("翔べ！ハーレムエース", "翔べ!ハーレムエース(スマスロ)"),
 }
 
 RE_PREFIX = re.compile(r"^(LB|L|S|スマスロ|パチスロ)\s*")
@@ -259,6 +268,11 @@ def load_specs(master_csv=MASTER_CSV, hall=None):
                 "use_bb": values.get("use_bb", True),
             }
         previous = specs.get(key, {})
+        for name in LEGACY_ABSORBS.get(key, ()):
+            # 名前の正規化が合わず別エントリになっていた同一機種を統合する(分類は一撃側のBTを引き継ぐ)
+            absorbed = specs.pop(normalize(name), None)
+            if absorbed and not previous:
+                previous = absorbed
         specs[key] = {
             "family_name": entry.get("family_name"),
             "category": previous.get("category", "ノーマル"),
@@ -271,18 +285,85 @@ def load_specs(master_csv=MASTER_CSV, hall=None):
     return specs
 
 
+# 名前にスペックのキーが含まれるが、別機種のため部分一致で紐づけない(2026-10-25)。
+# 例: 「もっと！クレアの秘宝伝」「CREA Newクレアの秘宝伝」は「クレアの秘宝伝BT」とは別の機種。
+NOT_SAME_MACHINE = frozenset(
+    normalize(name)
+    for name in (
+        "もっと！クレアの秘宝伝 女神の歌声と太陽の子供達",
+        "CREA Newクレアの秘宝伝",
+    )
+)
+
+
+def _matching_spec_entry(target, specs):
+    """既存の部分一致規則で (辞書キー, spec) を選ぶ。別機種として除外した名前は紐づけない。"""
+    if target in NOT_SAME_MACHINE and target not in specs:
+        return None, None
+    best_key = None
+    best = None
+    for key, spec in specs.items():
+        if len(key) >= 4 and (key in target or target in key):
+            if best is None or len(key) > len(normalize(best["family_name"])):
+                best_key = key
+                best = spec
+    return best_key, best
+
+
 def find_spec(machine_name, specs=None):
     """機種名から spec を引く。完全一致 → 長い部分一致の順。"""
     specs = specs or load_specs()
     target = normalize(machine_name)
     if target in specs:
         return specs[target]
-    best = None
-    for key, spec in specs.items():
-        if len(key) >= 4 and (key in target or target in key):
-            if best is None or len(key) > len(normalize(best["family_name"])):
-                best = spec
-    return best
+    return _matching_spec_entry(target, specs)[1]
+
+
+def partial_match_info(machine_name, specs=None):
+    """完全一致がなく、既存の照合規則で別名に紐づく場合の情報。"""
+    specs = specs or load_specs()
+    target = normalize(machine_name)
+    if target in specs:
+        return None
+    key, spec = _matching_spec_entry(target, specs)
+    if spec is None:
+        return None
+    return {
+        "machine_name": machine_name,
+        "matched_key": key,
+        "matched_family": spec["family_name"],
+        "category": spec["category"],
+        "judgeable": spec["judgeable"],
+    }
+
+
+def audit_partial_matches(db_dir=DB_DIR, specs=None):
+    """全ホールの部分一致を読み取り専用で集計する。"""
+    specs = specs or load_specs()
+    found = {}
+    for path in sorted(Path(db_dir).glob("*.db")):
+        if "analysis" in path.name:
+            continue
+        with closing(sqlite3.connect(f"{path.resolve().as_uri()}?mode=ro", uri=True)) as connection:
+            exists = connection.execute(
+                "SELECT 1 FROM sqlite_master WHERE type='table' AND name='machine_detailed_results'"
+            ).fetchone()
+            if not exists:
+                continue
+            for name, count in connection.execute(
+                "SELECT machine_name, COUNT(*) FROM machine_detailed_results GROUP BY machine_name"
+            ):
+                if not name:
+                    continue
+                entry = found.setdefault(name, {"halls": [], "machine_days": 0})
+                entry["halls"].append(path.stem)
+                entry["machine_days"] += count
+    result = []
+    for name, counts in found.items():
+        info = partial_match_info(name, specs)
+        if info is not None:
+            result.append({**info, **counts})
+    return sorted(result, key=lambda entry: entry["machine_days"], reverse=True)
 
 
 def _log_binomial(k, n, p):
@@ -447,12 +528,21 @@ def main():
     j.add_argument("--bb", type=int, required=True)
     j.add_argument("--rb", type=int, required=True)
     sub.add_parser("coverage", help="判別可否をカテゴリ別に見る")
+    sub.add_parser("partial-matches", help="DB中の部分一致によるスペック紐付けを監査する")
     args = parser.parse_args()
 
     if args.command == "judge":
         judge(args.machine_name, args.games, args.bb, args.rb)
-    else:
+    elif args.command == "coverage":
         coverage()
+    else:
+        rows = audit_partial_matches()
+        print("機種名 | 紐づいた旧スペック | 台日数 | ホール")
+        for row in rows:
+            print(
+                "%s | %s | %s | %s"
+                % (row["machine_name"], row["matched_family"], row["machine_days"], ", ".join(row["halls"]))
+            )
 
 
 if __name__ == "__main__":

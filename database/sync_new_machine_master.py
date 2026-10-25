@@ -25,7 +25,7 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from backtest.bonus_specs import categorize, load_specs, normalize  # noqa: E402
+from backtest.bonus_specs import categorize, load_specs, normalize, partial_match_info  # noqa: E402
 from scraper import fetch_rtp_via_llm as research  # noqa: E402
 from scraper import machine_master_research_url_mapper as url_mapper  # noqa: E402
 
@@ -210,6 +210,14 @@ def run(
     if errors := research.validate_master(header, rows):
         raise ValueError(f"機種マスターCSVが不正です: {errors[:3]}")
     missing, gaps = discover(db_dir, halls, known_rows(header, rows))
+    specs = load_specs(master_csv)
+    partial_match_warnings = []
+    for item in missing.values():
+        info = partial_match_info(item["name"], specs)
+        if info is not None:
+            if item.get("first_seen"):
+                info["first_seen"] = item["first_seen"]
+            partial_match_warnings.append(info)
     outcomes: list[dict] = []
     added = []
     deadline = time.monotonic() + MAX_RUNTIME_SECONDS
@@ -275,6 +283,7 @@ def run(
         "category_rows_synced": synced if apply else 0,
         "category_rows_ready": 0 if apply else synced,
         "outcomes": outcomes,
+        "partial_match_warnings": partial_match_warnings,
     }
     if apply:
         review_path.parent.mkdir(parents=True, exist_ok=True)
@@ -297,6 +306,10 @@ def main() -> int:
         halls = [item["hall_name"] for item in config["halls"] if item.get("active", True)]
     result = run(halls=halls, apply=args.apply)
     print(json.dumps(result, ensure_ascii=False, indent=2))
+    if result["partial_match_warnings"]:
+        print("【警告】マスター未登録の新機種が旧スペックに部分一致で紐づいています")
+        for item in result["partial_match_warnings"]:
+            print("%s → %s" % (item["machine_name"], item["matched_family"]))
     return 0
 
 

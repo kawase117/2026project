@@ -46,6 +46,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from backtest import model_alias
+from backtest.prediction_rb import rb_result, rb_s1_result
 
 JST = ZoneInfo("Asia/Tokyo")
 ROOT = Path(__file__).resolve().parents[1]
@@ -314,10 +315,19 @@ def _digest(obj: dict) -> str:
     return hashlib.sha256(json.dumps(body, ensure_ascii=False, sort_keys=True).encode()).hexdigest()[:16]
 
 
-def freeze(spec: dict, frozen_at: datetime, basis: str, source_doc: str, pred_dir: Path = PRED_DIR) -> Path | None:
+def freeze(
+    spec: dict,
+    frozen_at: datetime,
+    basis: str,
+    source_doc: str,
+    pred_dir: Path = PRED_DIR,
+    revision: str | None = None,
+    reason: str = "",
+) -> Path | None:
     """1ホール×1日の名指しを凍結する。既にあれば上書きしない(None を返す)。"""
     pred_dir.mkdir(parents=True, exist_ok=True)
-    pid = f"{spec['target_date']}__{HALL_KEY.get(spec['hall'], spec['hall'])}"
+    original_id = f"{spec['target_date']}__{HALL_KEY.get(spec['hall'], spec['hall'])}"
+    pid = f"{original_id}__{revision}" if revision else original_id
     path = pred_dir / f"{pid}.json"
     if path.exists():
         return None
@@ -330,6 +340,8 @@ def freeze(spec: dict, frozen_at: datetime, basis: str, source_doc: str, pred_di
         "timing": timing_of(frozen_at, spec["target_date"]),
         "result": None,
     }
+    if revision:
+        obj.update(revision_of=original_id, revision=revision, revision_reason=reason)
     obj["digest"] = _digest(obj)
     path.write_text(json.dumps(obj, ensure_ascii=False, indent=1), encoding="utf-8")
     with (pred_dir / LEDGER_NAME).open("a", encoding="utf-8") as fh:
@@ -355,7 +367,25 @@ def git_first_commit(path: Path) -> datetime | None:
     return datetime.fromisoformat(out[-1]).astimezone(JST) if out else None
 
 
-def freeze_doc(path: Path, frozen_at: datetime, basis: str, pred_dir: Path = PRED_DIR) -> list[str]:
+def freeze_doc(
+    path: Path,
+    frozen_at: datetime,
+    basis: str,
+    pred_dir: Path = PRED_DIR,
+    revision: str | None = None,
+    halls: list[str] | None = None,
+    reason: str = "",
+) -> list[str]:
+    if revision is not None and not re.fullmatch(r"rev[0-9]+", revision):
+        raise ValueError("revision は rev1 形式で指定してください")
+    if revision is not None and not halls:
+        raise ValueError("revision には --hall が1つ以上必要です")
+    selected = set()
+    for name in halls or []:
+        hall = name if name in HALLS else hall_of(name)
+        if hall is None:
+            raise ValueError(f"未知のホール名: {name}")
+        selected.add(hall)
     target = target_of_doc(path)
     try:
         source = str(path.relative_to(ROOT)).replace("\\", "/")
@@ -363,7 +393,27 @@ def freeze_doc(path: Path, frozen_at: datetime, basis: str, pred_dir: Path = PRE
         source = path.name
     msgs = []
     for spec in extract(path.read_text(encoding="utf-8"), target):
-        written = freeze(spec, frozen_at, basis, source, pred_dir)
+        if halls is not None and spec["hall"] not in selected:
+            continue
+        if revision:
+            hall = spec["hall"]
+            original_id = f"{target}__{HALL_KEY.get(hall, hall)}"
+            original_path = pred_dir / f"{original_id}.json"
+            revised_path = pred_dir / f"{original_id}__{revision}.json"
+            if not original_path.exists():
+                rejection = "元版が存在しない"
+            elif json.loads(original_path.read_text(encoding="utf-8")).get("result") is not None:
+                rejection = "元版は採点済み"
+            elif revised_path.exists():
+                rejection = "同名の改訂が既に存在する"
+            elif timing_of(frozen_at, target) == "after":
+                rejection = "対象日の翌日以降"
+            else:
+                rejection = None
+            if rejection:
+                msgs.append(f"改訂拒否 {target} {hall}: {rejection}")
+                continue
+        written = freeze(spec, frozen_at, basis, source, pred_dir, revision=revision, reason=reason)
         p = spec["picks"]
         msgs.append(
             f"{'凍結' if written else '既存のためスキップ'} {target} {spec['hall']}: 機種{len(p['models'])} "
@@ -396,22 +446,32 @@ def score(obj: dict) -> dict:
                 (obj["target_date"],),
             )
         ]
-    if not rows:
-        raise ValueError(f"{obj['target_date']} {obj['hall']} のデータがDBにまだ無い")
-    day_mean = sum(d for _, _, d in rows) / len(rows)
-    p = obj["picks"]
-    models, avoid = set(p["models"]), set(p["avoid_models"])
-    units, jug = set(p["units"]), set(p["jug_units"])
-    obj["result"] = {
-        "day_mean": round(day_mean, 1),
-        "universe_size": len(rows),
-        "models": _edge([r for r in rows if r[1] in models], day_mean),
-        "avoid_models": _edge([r for r in rows if r[1] in avoid], day_mean, sign=-1.0),
-        "units": _edge([r for r in rows if r[0] in units], day_mean),
-        "jug_units": _edge([r for r in rows if r[0] in jug], day_mean),
-        "missing_units": sorted((units | jug) - {r[0] for r in rows}),
-        "missing_models": sorted((models | avoid) - {r[1] for r in rows}),
-    }
+        if not rows:
+            raise ValueError(f"{obj['target_date']} {obj['hall']} のデータがDBにまだ無い")
+        day_mean = sum(d for _, _, d in rows) / len(rows)
+        p = obj["picks"]
+        models, avoid = set(p["models"]), set(p["avoid_models"])
+        units, jug = set(p["units"]), set(p["jug_units"])
+        obj["result"] = {
+            "day_mean": round(day_mean, 1),
+            "universe_size": len(rows),
+            "models": _edge([r for r in rows if r[1] in models], day_mean),
+            "avoid_models": _edge([r for r in rows if r[1] in avoid], day_mean, sign=-1.0),
+            "units": _edge([r for r in rows if r[0] in units], day_mean),
+            "jug_units": _edge([r for r in rows if r[0] in jug], day_mean),
+            "missing_units": sorted((units | jug) - {r[0] for r in rows}),
+            "missing_models": sorted((models | avoid) - {r[1] for r in rows}),
+        }
+        try:
+            obj["result"]["rb"] = rb_result(con, p, obj["target_date"])
+        except Exception as exc:
+            obj["result"]["rb"] = None
+            obj["result"]["rb_error"] = str(exc)
+        try:
+            obj["result"]["rb_s1"] = rb_s1_result(con, p, obj["target_date"])
+        except Exception as exc:
+            obj["result"]["rb_s1"] = None
+            obj["result"]["rb_s1_error"] = str(exc)
     return obj
 
 
@@ -435,6 +495,41 @@ def score_due(pred_dir: Path = PRED_DIR) -> list[str]:
     return msgs
 
 
+def rescore_rb(pred_dir: Path = PRED_DIR) -> list[str]:
+    """既採点ファイルに欠けているRB系列だけを独立に追加する。"""
+    msgs = []
+    for path in sorted(pred_dir.glob("*__*.json")):
+        obj = json.loads(path.read_text(encoding="utf-8"))
+        result = obj.get("result")
+        if not result or ("rb" in result and "rb_s1" in result):
+            continue
+        try:
+            with _ro(obj["hall"]) as con:
+                has_day = con.execute(
+                    "SELECT 1 FROM machine_detailed_results WHERE date = ? LIMIT 1", (obj["target_date"],)
+                ).fetchone()
+                if not has_day:
+                    msgs.append(f"スキップ {path.name}: 対象日の行がない")
+                    continue
+                added = []
+                for key, calculate in (("rb", rb_result), ("rb_s1", rb_s1_result)):
+                    if key in result:
+                        continue
+                    try:
+                        result[key] = calculate(con, obj["picks"], obj["target_date"])
+                        added.append(key)
+                    except (sqlite3.Error, ValueError, ArithmeticError) as exc:
+                        msgs.append(f"スキップ {path.name}: {key}採点失敗 ({exc})")
+        except sqlite3.Error as exc:
+            msgs.append(f"スキップ {path.name}: DBを読めない ({exc})")
+            continue
+        if not added:
+            continue
+        path.write_text(json.dumps(obj, ensure_ascii=False, indent=1), encoding="utf-8")
+        msgs.append(f"RB採点 {path.name}: {', '.join(added)}")
+    return msgs
+
+
 # ---------------------------------------------------------------- CLI
 
 
@@ -445,15 +540,31 @@ def main(argv: list[str] | None = None) -> int:
     p_ex.add_argument("doc")
     p_fr = sub.add_parser("freeze-doc", help="予測文書の名指しを今の時刻で凍結する(書いた直後に実行)")
     p_fr.add_argument("doc")
+    p_fr.add_argument("--revision")
+    p_fr.add_argument("--hall", action="append", nargs="+", dest="halls")
+    p_fr.add_argument("--reason", default="")
     sub.add_parser("backfill", help="未凍結の過去の予測文書を git 初出時刻つきで取り込む")
     sub.add_parser("score-due", help="対象日のデータがある未採点の予測を採点する")
+    sub.add_parser("rescore-rb", help="採点済み台帳へRB採点だけを後付けする")
     args = parser.parse_args(argv)
 
     if args.cmd == "extract":
         path = Path(args.doc).resolve()
         print(json.dumps(extract(path.read_text(encoding="utf-8"), target_of_doc(path)), ensure_ascii=False, indent=1))
     elif args.cmd == "freeze-doc":
-        for m in freeze_doc(Path(args.doc).resolve(), datetime.now(JST), "frozen_at"):
+        try:
+            halls = [hall for group in args.halls for hall in group] if args.halls else None
+            messages = freeze_doc(
+                Path(args.doc).resolve(),
+                datetime.now(JST),
+                "frozen_at",
+                revision=args.revision,
+                halls=halls,
+                reason=args.reason,
+            )
+        except ValueError as exc:
+            p_fr.error(str(exc))
+        for m in messages:
             print(m)
     elif args.cmd == "backfill":
         for path in sorted(REVIEWS_DIR.glob("*-prediction.md")):
@@ -465,6 +576,9 @@ def main(argv: list[str] | None = None) -> int:
                 print(m)
     elif args.cmd == "score-due":
         for m in score_due():
+            print(m)
+    elif args.cmd == "rescore-rb":
+        for m in rescore_rb():
             print(m)
     return 0
 

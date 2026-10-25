@@ -16,8 +16,14 @@ import json
 import re
 import sqlite3
 import statistics
+import sys
 from dataclasses import dataclass, field
 from pathlib import Path
+
+# scripts/ から実行しても backtest/ を読めるようにする(poster_lines が機種名の照合に使う)。
+_PROJECT_ROOT = str(Path(__file__).resolve().parents[1])
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
 
 MODEL_MIN_UNITS = 3  # これ未満の台数の機種は表に出さない（1〜2台の突出を平均で語らせない）
 BIG_WIN = 2000  # 「大きく出た台」の目安（枚）
@@ -125,37 +131,62 @@ def render_models(facts: DayFacts) -> list[str]:
 def ledger_lines(predictions_dir: Path, key: str, day: str) -> list[str]:
     """凍結した予測（backtest/predictions）の採点。無ければ空。"""
     path = predictions_dir / ("%s__%s.json" % (day, key))
-    if not path.exists():
+    paths = ([path] if path.exists() else []) + sorted(predictions_dir.glob("%s__%s__rev*.json" % (day, key)))
+    if not paths:
         return []
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except OSError, ValueError:
-        return []
-    result = data.get("result")
     lines = ["#### 凍結した予測の採点（prediction_ledger）", ""]
-    if not result:
-        return lines + ["未採点。"]
-    lines.append(
-        "当日の全台平均 %s、対象 %s台。edge は推した機種・台・ジャグラー候補なら「名指しした台の平均 − 当日の全台平均」、"
-        "避ける機種なら「当日の全台平均 − 機種の平均」（正なら避けて正解）。"
-        % (_signed(result.get("day_mean", 0)), result.get("universe_size", "?"))
-    )
     labels = {"models": "推した機種", "avoid_models": "避ける機種", "units": "推した台", "jug_units": "ジャグラー候補"}
-    for k, label in labels.items():
-        r = result.get(k)
-        picks = (data.get("picks") or {}).get(k) or []
-        if not r:
+    for entry in paths:
+        try:
+            data = json.loads(entry.read_text(encoding="utf-8"))
+        except OSError, ValueError:
+            continue
+        prefix = "改訂%s: " % data.get("revision", entry.stem.rsplit("__", 1)[-1]) if entry != path else ""
+        result = data.get("result")
+        if not result:
+            lines.append(prefix + "未採点。")
             continue
         lines.append(
-            "- %s（%s）: %d台、平均 %s、edge %s"
-            % (
-                label,
-                "・".join(map(str, picks)) or "-",
-                r.get("n_machines", 0),
-                _signed(r.get("mean_diff", 0)),
-                _signed(r.get("edge", 0)),
-            )
+            prefix
+            + "当日の全台平均 %s、対象 %s台。edge は推した機種・台・ジャグラー候補なら「名指しした台の平均 − 当日の全台平均」、"
+            "避ける機種なら「当日の全台平均 − 機種の平均」（正なら避けて正解）。"
+            % (_signed(result.get("day_mean", 0)), result.get("universe_size", "?"))
         )
+        for k, label in labels.items():
+            r = result.get(k)
+            picks = (data.get("picks") or {}).get(k) or []
+            if not r:
+                continue
+            lines.append(
+                prefix
+                + "- %s（%s）: %d台、平均 %s、edge %s"
+                % (
+                    label,
+                    "・".join(map(str, picks)) or "-",
+                    r.get("n_machines", 0),
+                    _signed(r.get("mean_diff", 0)),
+                    _signed(r.get("edge", 0)),
+                )
+            )
+        rb = result.get("rb") or {}
+        rb_parts = []
+        for k in labels:
+            item = rb.get(k)
+            if item and item.get("rb_ratio") is not None:
+                z = item.get("z")
+                rb_parts.append("%s %.2f倍(z=%s)" % (k, item["rb_ratio"], "%.2f" % z if z is not None else "-"))
+        if result.get("rb") is not None:
+            lines.append(prefix + "RB: " + (" / ".join(rb_parts) if rb_parts else "採点対象なし"))
+        rb_s1 = result.get("rb_s1")
+        if rb_s1 is not None:
+            s1_parts = []
+            for kind in ("units", "jug_units"):
+                item = rb_s1.get(kind)
+                if item and item.get("s1_ratio") is not None:
+                    edge = item.get("rb_s1_edge")
+                    difference = "差%+.2f" % edge if edge is not None else "差-"
+                    s1_parts.append("%s %.2f倍 %s" % (kind, item["s1_ratio"], difference))
+            lines.append(prefix + "RB(設定1比): " + (" / ".join(s1_parts) if s1_parts else "採点対象なし"))
     return lines
 
 
@@ -195,7 +226,131 @@ def announce_lines(announce_dir: Path, prefix: str, day: str) -> list[str]:
     return ["#### 予告の機械採点（announce score）", "", *out]
 
 
-def render_facts(facts: DayFacts, key: str, predictions_dir: Path, announce_dir: Path, announce_prefix: str) -> str:
+POSTER_DETAIL = ("全台", "優秀以上", "1/2")  # 機種ごとに実績を出す見出し(台数が決まる)
+POSTER_SHOW = 14  # 表に出す機種の最大数(全台・優秀以上・1/2の合計)
+
+
+def _poster_stats(diffs: list[int]) -> str:
+    big = sum(1 for d in diffs if d >= BIG_WIN)
+    wins = sum(1 for d in diffs if d > 0)
+    return "%d | %s | %d | %d%%" % (len(diffs), _signed(sum(diffs) / len(diffs)), big, round(100 * wins / len(diffs)))
+
+
+def poster_lines(analysis_db: Path, hall_db: Path, hall: str, day: str) -> list[str]:
+    """slo_tokyo の結果速報(発信者の設定判定)を、当日のDBの実績と突き合わせる。無ければ空。
+
+    これはホール公表ではなく発信者の判定。全・全系=その機種の全台に設定4以上、🌈=設定6、
+    ピック=設定4以上と判定した台、優秀以上=設定4以上、並び「A〜B」=その間の台すべてに設定
+    (ユーザー申告 2026-10-20)。ここでは「判定された機種が実際にどう動いたか」を出すだけで、
+    当たり外れの結論は書かない(設定の有無は差枚だけでは決まらない)。
+    """
+    if not analysis_db.exists() or not hall_db.exists():
+        return []
+    try:
+        from backtest.result_corpus import resolve_poster_model  # scripts/ から実行しても backtest/ を読めるように
+
+        con = sqlite3.connect("file:%s?mode=ro" % analysis_db, uri=True)
+        try:
+            report = con.execute(
+                "SELECT report_id, event_name, hall_mean_diff, pick_machines, total_machines, pick_pct, "
+                "parse_ok, parse_notes FROM poster_result_reports WHERE hall_name = ? AND business_date = ?",
+                (hall, day),
+            ).fetchone()
+            if not report:
+                return []
+            models = con.execute(
+                "SELECT granularity, granularity_raw, section_count, section_unit, model_name, model_parts, n_units "
+                "FROM poster_result_models WHERE report_id = ? ORDER BY seq",
+                (report[0],),
+            ).fetchall()
+        finally:
+            con.close()
+        con = sqlite3.connect("file:%s?mode=ro" % hall_db, uri=True)
+        try:
+            rows = con.execute(
+                "SELECT machine_name, diff_coins_normalized FROM machine_detailed_results "
+                "WHERE date = ? AND diff_coins_normalized IS NOT NULL",
+                (day,),
+            ).fetchall()
+        finally:
+            con.close()
+    except sqlite3.Error, ImportError:
+        return []
+    if not rows:
+        return []
+    by_name: dict[str, list[int]] = {}
+    for name, diff in rows:
+        by_name.setdefault(name, []).append(diff)
+    hall_mean = sum(d for ds in by_name.values() for d in ds) / sum(len(ds) for ds in by_name.values())
+
+    _, event, poster_mean, pick, total, pct, parse_ok, notes = report
+    head = "発信者の全体平均 %s(DBは %s)" % (
+        _signed(poster_mean) if poster_mean is not None else "-",
+        _signed(hall_mean),
+    )
+    if pick is not None:
+        head += "。ピック %d/%d台(%s%%)=設定4以上と判定した台" % (pick, total, pct)
+    if event:
+        head += "。▶%s" % event
+    out = [
+        "#### 発信者(slo_tokyo)の設定判定と実績(機械集計。ホール公表ではない)",
+        "",
+        head + "。",
+        "全・全系=その機種の全台に設定4以上、🌈=設定6、優秀以上=設定4以上(ユーザー申告)。"
+        "差枚が大きくマイナスの機種があっても、判定と矛盾しない(設定6でも負ける)。",
+    ]
+    if not parse_ok:
+        out.append("※この速報は検算が通っていない: %s。数字は参考程度に扱う。" % (notes or "理由不明"))
+
+    detail, other = [], {}
+    for gran, raw, count, unit, model_name, parts_json, n_units in models:
+        if gran in POSTER_DETAIL:
+            for part in json.loads(parts_json or "[]"):
+                real = resolve_poster_model(part, by_name)
+                detail.append((gran, part, real))
+        elif gran:
+            other.setdefault(gran, []).append(model_name if not n_units else "%d台" % n_units)
+    if detail:
+        out += [
+            "",
+            "| 区分 | 機種(発信者の表記) | DBの機種名 | 台数 | 平均差枚 | +%d以上の台 | 勝率 |" % BIG_WIN,
+            "|---|---|---|---:|---:|---:|---:|",
+        ]
+        for gran, part, real in detail[:POSTER_SHOW]:
+            if real:
+                out.append("| %s | %s | %s | %s |" % (gran, part, real, _poster_stats(by_name[real])))
+            else:
+                out.append("| %s | %s | (DBに見つからない) | - | - | - | - |" % (gran, part))
+        if len(detail) > POSTER_SHOW:
+            out.append("（%d機種のうち先頭%d機種のみ）" % (len(detail), POSTER_SHOW))
+        whole = [by_name[real] for gran, _, real in detail if gran == "全台" and real]
+        if whole:
+            flat = [d for ds in whole for d in ds]
+            out.append(
+                "全系の機種の全台: %d台、平均 %s、勝率 %d%%(ホール平均 %s)。"
+                % (
+                    len(flat),
+                    _signed(sum(flat) / len(flat)),
+                    round(100 * sum(1 for d in flat if d > 0) / len(flat)),
+                    _signed(hall_mean),
+                )
+            )
+    if other:
+        out.append("")
+        for gran, items in other.items():
+            shown = "、".join(items[:6]) + (" ほか%d" % (len(items) - 6) if len(items) > 6 else "")
+            out.append("- %s(%d件): %s" % (gran, len(items), shown))
+    return out
+
+
+def render_facts(
+    facts: DayFacts,
+    key: str,
+    predictions_dir: Path,
+    announce_dir: Path,
+    announce_prefix: str,
+    poster_block: list[str] | None = None,
+) -> str:
     head = "- %d台、日平均 %s/台、中央値 %s、勝率 %d%%、平均G %s、総差枚 %s枚。" % (
         facts.n_units,
         _signed(facts.mean),
@@ -209,6 +364,7 @@ def render_facts(facts: DayFacts, key: str, predictions_dir: Path, announce_dir:
     for block in (
         ledger_lines(predictions_dir, key, facts.day),
         announce_lines(announce_dir, announce_prefix, facts.day),
+        poster_block or [],
     ):
         if block:
             parts += ["", *block]

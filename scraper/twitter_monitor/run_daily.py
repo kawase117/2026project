@@ -50,6 +50,11 @@ HALL_KEYWORDS = {
     "ザ-シティ-ベルシティ雑色店": ("ベルシティ雑色",),
     "ヒロキ東口店": ("ヒロキ東口",),
 }
+# 全文の取り直しだけに足す語。slo_tokyo の結果速報は、1行目にホールの正式名を書く
+# （「2026-10-18 ヒロキ蒲田東口店 ｜結果速報」）。HALL_KEYWORDS の「ヒロキ東口」では当たらず、
+# ヒロキMAXはそもそも載っていない。HALL_KEYWORDS は予告の検出にも使うので、ここでは触らずに別に持つ。
+# 蒲田1・蒲田7は HALL_KEYWORDS の「蒲田1」「蒲田7」で当たる。
+FULLTEXT_EXTRA_KEYWORDS = ("ヒロキ蒲田東口", "ヒロキMAX蒲田")
 # 何日ぶん遡って登録漏れを探すか。これより古い分は register が拒否するので、
 # 気づいても RETROACTIVE_NOTES.md 送りになる。
 ANNOUNCE_LOOKBACK_DAYS = 10
@@ -446,7 +451,7 @@ def _run(args: argparse.Namespace) -> int:
             "--since",
             (today - timedelta(days=FULLTEXT_LOOKBACK_DAYS)).isoformat(),
             "--any-of",
-            ",".join(word for words in HALL_KEYWORDS.values() for word in words),
+            ",".join([word for words in HALL_KEYWORDS.values() for word in words] + list(FULLTEXT_EXTRA_KEYWORDS)),
             "--limit",
             str(FULLTEXT_LIMIT),
         )

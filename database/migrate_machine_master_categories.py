@@ -76,6 +76,20 @@ def hall_names():
     return names
 
 
+def _stale_unmatched(connection, names, existing):
+    """未照合なのに分類列に値が残っている行。以前の部分一致などで入った古い値で、今の find_spec では引けない。"""
+    if not all(column in existing for column, _ in NEW_COLUMNS):
+        return []
+    condition = " OR ".join("%s IS NOT NULL" % column for column, _ in NEW_COLUMNS)
+    return [
+        name
+        for name in names
+        if connection.execute(
+            "SELECT 1 FROM machine_master WHERE machine_name_normalized = ? AND (%s)" % condition, (name,)
+        ).fetchone()
+    ]
+
+
 def migrate(hall, specs, apply_changes):
     path = os.path.join(DB_DIR, hall + ".db")
     connection = sqlite3.connect(path)
@@ -103,7 +117,14 @@ def migrate(hall, specs, apply_changes):
                 "  bonus_judgeable = ?, spec_source = ? WHERE machine_name_normalized = ?",
                 (spec.get("game_type"), spec["category"], int(spec["judgeable"]), spec.get("source"), name),
             )
+    stale = _stale_unmatched(connection, unmatched_names, existing)
     if apply_changes:
+        for name in stale:
+            connection.execute(
+                "UPDATE machine_master SET %s WHERE machine_name_normalized = ?"
+                % ", ".join("%s = NULL" % column for column, _ in NEW_COLUMNS),
+                (name,),
+            )
         connection.commit()
     connection.close()
 
@@ -111,6 +132,8 @@ def migrate(hall, specs, apply_changes):
     print("  %-28s %3d機種  照合 %3d / 未照合 %2d   %s" % (hall, len(rows), matched, unmatched, summary))
     if unmatched_names:
         print("      未照合: %s" % ", ".join(str(n)[:20] for n in unmatched_names[:6]))
+    for name in stale:
+        print("      %s: %s" % ("分類列をNULLに戻した" if apply_changes else "分類列をNULLに戻す(対象)", name))
     return matched, unmatched
 
 

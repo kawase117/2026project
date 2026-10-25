@@ -74,6 +74,12 @@ MDE_TARGET = {
     "pred_avoid": 100.0,
     "pred_units": 100.0,
     "pred_jug_units": 100.0,
+    "rb_models": 0.05,
+    "rb_avoid_models": 0.05,
+    "rb_units": 0.05,
+    "rb_jug_units": 0.05,
+    "rb1_units": 0.10,
+    "rb1_jug_units": 0.10,
     "announce_named": 100.0,
 }
 PRED_DIR = Path(__file__).resolve().parent / "predictions"
@@ -85,6 +91,8 @@ PRED_FAMILIES = {
     "units": "pred_units",
     "jug_units": "pred_jug_units",
 }
+RB_PRED_FAMILIES = {key: f"rb_{key}" for key in ("models", "avoid_models", "units", "jug_units")}
+RB1_PRED_FAMILIES = {key: f"rb1_{key}" for key in ("units", "jug_units")}
 
 
 @dataclass
@@ -311,7 +319,24 @@ def build_prediction_rows(preds: list[dict]) -> list[Row]:
         for key, family in PRED_FAMILIES.items():
             part = p["result"].get(key)
             if part and part.get("edge") is not None:
+                if "revision_of" in p:
+                    family = f"{family}[{p['revision']}]"
                 groups.setdefault((family, p["hall"]), []).append((p["target_date"], part["edge"], p["timing"]))
+        rb = p["result"].get("rb") or {}
+        for key, family in RB_PRED_FAMILIES.items():
+            part = rb.get(key)
+            if part and part.get("rb_edge") is not None:
+                if "revision_of" in p:
+                    family = f"{family}[{p['revision']}]"
+                edge = part["rb_edge"] * (-1 if key == "avoid_models" else 1)
+                groups.setdefault((family, p["hall"]), []).append((p["target_date"], edge, p["timing"]))
+        rb_s1 = p["result"].get("rb_s1") or {}
+        for key, family in RB1_PRED_FAMILIES.items():
+            part = rb_s1.get(key)
+            if part and part.get("rb_s1_edge") is not None:
+                if "revision_of" in p:
+                    family = f"{family}[{p['revision']}]"
+                groups.setdefault((family, p["hall"]), []).append((p["target_date"], part["rb_s1_edge"], p["timing"]))
     rows = []
     for (family, hall), items in sorted(groups.items()):
         items.sort()
@@ -393,7 +418,7 @@ def finalize(rows: list[Row]) -> list[Row]:
             r.stat.q = q
             r.verdict = verdict(r.stat)
             if r.verdict in ("差を検出できず", "標本不足"):
-                need = days_needed(r.stat.sd, MDE_TARGET[family])
+                need = days_needed(r.stat.sd, MDE_TARGET[family.split("[", 1)[0]])
                 r.days_needed = None if need is None else max(need - r.stat.n_days, 0)
     return rows
 
@@ -537,6 +562,41 @@ def render_markdown(rows: list[Row], generated_at: str, since: str | None) -> st
             "(枚)",
             "+.0f",
             pred_note,
+            extra_head=["事前性 開店前/当日/事後"],
+            extra_cols=_timing_cols,
+            key_head="対象",
+        )
+    for family, title in (
+        ("rb_models", "予測文書RB: 推した機種"),
+        ("rb_avoid_models", "予測文書RB: 避ける機種"),
+        ("rb_units", "予測文書RB: 判断で名指しした台"),
+        ("rb_jug_units", "予測文書RB: ジャグラー候補表の台"),
+    ):
+        _section(
+            out,
+            rows,
+            family,
+            title,
+            "(RB比の差)",
+            "+.3f",
+            "機種の過去60日RB率に対する当日RB比から、当日の判別機種全体のRB比を引く。"
+            "避ける機種は符号を反転。目標差 +0.05（5ポイント）。",
+            extra_head=["事前性 開店前/当日/事後"],
+            extra_cols=_timing_cols,
+            key_head="対象",
+        )
+    for family, title in (
+        ("rb1_units", "予測文書RB(設定1比): 判断で名指しした台"),
+        ("rb1_jug_units", "予測文書RB(設定1比): ジャグラー候補表の台"),
+    ):
+        _section(
+            out,
+            rows,
+            family,
+            title,
+            "(設定1比の差)",
+            "+.3f",
+            f"同日・同ホール・同機種の非選択台との差。期待RB回数で機種を重みづけ。目標差 +{MDE_TARGET[family]:.2f}。",
             extra_head=["事前性 開店前/当日/事後"],
             extra_cols=_timing_cols,
             key_head="対象",
