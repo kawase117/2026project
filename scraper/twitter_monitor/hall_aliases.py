@@ -44,6 +44,15 @@ HALL_ALIASES: dict[str, list[tuple[str, date | None, date | None]]] = {
         ("ヒロキ東口", None, None),
         ("アスロボ7", None, None),
     ],
+    # 「ヒロキ」単独は同系列の別店舗に当たるので使わない（東口・西口・MAXを区別する語だけ）。
+    "ヒロキ蒲田西口店": [
+        ("ヒロキ蒲田西口", None, None),
+        ("ヒロキ西口", None, None),
+    ],
+    "ヒロキMAX蒲田店": [
+        ("ヒロキMAX蒲田", None, None),
+        ("ヒロキMAX", None, None),
+    ],
     "みとや大森町店": [
         ("みとや大森町", None, None),
         ("みとや", None, None),

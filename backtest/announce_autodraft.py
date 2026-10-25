@@ -52,6 +52,8 @@ HALL_SLUGS = {
     "楽園蒲田店": "rakuen",
     "レイトギャップ平和島": "heiwajima",
     "ヒロキ東口店": "hiroki",
+    "ヒロキ蒲田西口店": "hiroki_nishiguchi",
+    "ヒロキMAX蒲田店": "hiroki_max",
     "みとや大森町店": "mitoya_omori",
     "ARROW池上店": "arrow",
     "金時京急蒲田店": "kinji_keikyu",

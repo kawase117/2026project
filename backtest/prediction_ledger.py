@@ -66,6 +66,8 @@ HALLS: dict[str, tuple[str, ...]] = {
     "金時蒲田東口店": ("金時蒲田東口", "金時東口"),
     "金時京急蒲田店": ("金時京急蒲田", "金時京急"),
     "ヒロキ東口店": ("ヒロキ東口",),
+    "ヒロキ蒲田西口店": ("ヒロキ蒲田西口", "ヒロキ西口"),
+    "ヒロキMAX蒲田店": ("ヒロキMAX蒲田", "ヒロキMAX"),
     "ARROW池上店": ("ARROW池上", "ARROW"),
     "ザ-シティ-ベルシティ雑色店": ("雑色",),
 }
@@ -78,6 +80,8 @@ HALL_KEY = {
     "金時蒲田東口店": "kinji_higashiguchi",
     "金時京急蒲田店": "kinji_keikyu",
     "ヒロキ東口店": "hiroki_higashiguchi",
+    "ヒロキ蒲田西口店": "hiroki_nishiguchi",
+    "ヒロキMAX蒲田店": "hiroki_max",
     "ARROW池上店": "arrow",
     "ザ-シティ-ベルシティ雑色店": "zassiki",
 }
