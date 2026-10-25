@@ -1,0 +1,136 @@
+{
+  "announce_id": "kamata1__20261022__999999Q9Q",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "target_date": "20261022",
+  "source": {
+    "account": "999999Q9Q",
+    "url": "",
+    "posted_at": "2026-10-21T22:24:05+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "ゾロ目よこやんのメガいち予想\n\n【明日のHOTっと】\n・全機種\n・ニブイチ機種（多数を想定して良し）\n・単品大量\n└主にスマスロメイン機種とジャグラーシリーズが厚め\n\nゾロ目の日は特定日扱い。よこやん基本三本柱の「全系機種・ニブイチ機種・メイン機種（スマスロ中心）の単品強化」に期待できるとされている。\n\n前回の9月22日は、全3機種にニブイチ6機種。ウルトラミラクルジャグラー全をのぞいて、いずれもハイスペック全台への仕掛けであった。こと明日のメガいちに関しては、設定⑥の機械割が高いハイスペックマシンを優先して取る、なんて戦略がどハマりする可能性が高い\n\n【よこやんポスト】\n卵使用→玉子→玉5→五輪玉\n→いざ番長？\n→新鬼武者3？\n\n誘惑\n→ToLOVEる？\n\n十勝→勝\n→からくりサーカス2？\n\n三重奏→マジアマゼンタ・マジアアズール・マジアサルファ\n→まほあこ？\n\n#マルハンメガシティ2000蒲田1",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"マルハンメガシティ2000-蒲田1\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-22\", \"2026-10-20\"], \"n_days\": 90, \"n_model_days\": 4351, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2207.0, \"models_over_threshold_per_day\": {\"mean\": 2.42, \"median\": 2.0, \"max\": 7}, \"candidate_models_per_day\": 48.3, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.2, \"median\": 3.0, \"max\": 8}, \"p_at_least_1\": 0.967, \"p_at_least_2\": 0.789, \"p_at_least_3\": 0.578, \"p_at_least_4\": 0.389, \"p_at_least_10\": 0.0}} / named_context: {\"as_of\": \"20261020\", \"window_days\": 30, \"n_candidates_ge3machines\": 50, \"hall_over_threshold_rate_approx\": 0.1, \"threshold\": 1800.0, \"models\": [{\"name\": \"からくりサーカス\", \"n_machines\": 2, \"rank\": null, \"of\": 50, \"n_days_present\": 14, \"over_threshold\": 0, \"rate\": 0.0, \"mean_score\": 38.4}, {\"name\": \"からくりサーカス2\", \"n_machines\": 5, \"rank\": 31, \"of\": 50, \"n_days_present\": 30, \"over_threshold\": 2, \"rate\": 0.067, \"mean_score\": 89.4}, {\"name\": \"ウルトラミラクルジャグラー\", \"n_machines\": 4, \"rank\": 12, \"of\": 50, \"n_days_present\": 30, \"over_threshold\": 7, \"rate\": 0.233, \"mean_score\": 539.5}, {\"name\": \"新鬼武者3\", \"n_machines\": 4, \"rank\": 19, \"of\": 50, \"n_days_present\": 30, \"over_threshold\": 3, \"rate\": 0.1, \"mean_score\": 377.6}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "からくりサーカス",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "からくりサーカス2",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "ウルトラミラクルジャグラー",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。 ヒント: 全台系の可能性(zentaikei_countならn_models必須/model_namedのままでも可) / 1/2系の可能性(model_named_ratioならratio指定が必要)"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "新鬼武者3",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    }
+  ],
+  "unscored_claims": [
+    {
+      "text": "マイジャグラーV(部分一致score=0.625)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    },
+    {
+      "text": "マイジャグラーⅥ(部分一致score=0.625)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    }
+  ],
+  "needs_manual_review": true,
+  "no_confirmed_machines": false,
+  "result": {
+    "scored_at_data_max": "20261022",
+    "hall_baseline_mean_diff": 103.6,
+    "hall_n_machines": 365,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "からくりサーカス",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "hit": null,
+        "note": "当日 からくりサーカス が設置3台以上の候補に無い（撤去・台数不足・表記ゆれ）"
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "からくりサーカス2",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -104.7,
+        "mean_diff": -340.0,
+        "gratio": 0.308,
+        "n_machines": 5,
+        "rank": 28,
+        "candidate_models": 50,
+        "age_days": 108,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ウルトラミラクルジャグラー",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。 ヒント: 全台系の可能性(zentaikei_countならn_models必須/model_namedのままでも可) / 1/2系の可能性(model_named_ratioならratio指定が必要)"
+        },
+        "score": 1302.8,
+        "mean_diff": 650.0,
+        "gratio": 2.004,
+        "n_machines": 4,
+        "rank": 5,
+        "candidate_models": 50,
+        "age_days": 659,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "新鬼武者3",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -282.7,
+        "mean_diff": -575.0,
+        "gratio": 0.492,
+        "n_machines": 4,
+        "rank": 40,
+        "candidate_models": 50,
+        "age_days": 381,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
+  "announce_digest": "eb0ccff0bb2a8d0e",
+  "provisional": true
+}

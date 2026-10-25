@@ -1,0 +1,89 @@
+{
+  "announce_id": "rakuen__20261023__slokotae7",
+  "hall": "楽園蒲田店",
+  "target_date": "20261023",
+  "source": {
+    "account": "slokotae7",
+    "url": "",
+    "posted_at": "2026-10-22T13:04:41+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "10月14日(水)\n楽園柏店\n\n四星　火星神\n30/489台\n対象台平均+1532枚\n\n【1/2】\nサンブレイク　10台中6台\n真打吉宗　10台中5台\nいざ番長　5台中3台\nワルダイ　4台中2台\n秘宝伝　3台中2台\n\nその他ジャグ単品",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"楽園蒲田店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-23\", \"2026-10-21\"], \"n_days\": 90, \"n_model_days\": 5089, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2292.3, \"models_over_threshold_per_day\": {\"mean\": 2.83, \"median\": 3.0, \"max\": 11}, \"candidate_models_per_day\": 56.5, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.93, \"median\": 3.0, \"max\": 13}, \"p_at_least_1\": 0.978, \"p_at_least_2\": 0.911, \"p_at_least_3\": 0.689, \"p_at_least_4\": 0.489, \"p_at_least_10\": 0.011}} / named_context: {\"as_of\": \"20261021\", \"window_days\": 30, \"n_candidates_ge3machines\": 57, \"hall_over_threshold_rate_approx\": 0.088, \"threshold\": 1800.0, \"models\": [{\"name\": \"ワールドダイスター\", \"n_machines\": 6, \"rank\": 54, \"of\": 57, \"n_days_present\": 30, \"over_threshold\": 3, \"rate\": 0.1, \"mean_score\": 247.6}, {\"name\": \"吉宗\", \"n_machines\": null, \"rank\": null, \"of\": 57, \"n_days_present\": 0, \"over_threshold\": 0, \"rate\": null, \"mean_score\": null}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "ワールドダイスター",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "吉宗",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    }
+  ],
+  "unscored_claims": [],
+  "needs_manual_review": true,
+  "no_confirmed_machines": false,
+  "result": {
+    "scored_at_data_max": "20261023",
+    "hall_baseline_mean_diff": 366.7,
+    "hall_n_machines": 587,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 3,
+      "n_censored_lo": 2,
+      "machines_hi": [
+        "ソードアート・オンラインII",
+        "モンスターハンターライズ"
+      ],
+      "machines_lo": [
+        "真打 吉宗",
+        "魔法少女にあこがれて"
+      ],
+      "bounds": [
+        -5095,
+        15477
+      ]
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ワールドダイスター",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -918.4,
+        "mean_diff": -952.2,
+        "gratio": 0.965,
+        "n_machines": 6,
+        "rank": 50,
+        "candidate_models": 57,
+        "age_days": 80,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "吉宗",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "hit": null,
+        "note": "当日 吉宗 が設置3台以上の候補に無い（撤去・台数不足・表記ゆれ）"
+      }
+    ]
+  },
+  "announce_digest": "23c82bf71744502c",
+  "provisional": true
+}

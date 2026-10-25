@@ -1,0 +1,164 @@
+{
+  "announce_id": "rakuen__20261021__slokotae7",
+  "hall": "楽園蒲田店",
+  "target_date": "20261021",
+  "source": {
+    "account": "slokotae7",
+    "url": "",
+    "posted_at": "2026-10-20T15:08:08+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "10月11日(日)\n楽園町田店\n\nゾロ目日\n四星　ブラックホール\n80/339台(26.3%)\n対象台平均+1689枚\n店舗総差枚+33858枚\n\n【列全】\nLカバネリ　平均+1973枚\n\n【1/2】\n東京喰種　17台中9台\nゴージャグ　15台中8台\n獣王　6台中3台\n戦国乙女5　6台中3台\nファンキー　6台中3台\n\n【3台並び】\nマイジャグ",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"楽園蒲田店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-21\", \"2026-10-19\"], \"n_days\": 90, \"n_model_days\": 5091, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2292.2, \"models_over_threshold_per_day\": {\"mean\": 2.83, \"median\": 3.0, \"max\": 11}, \"candidate_models_per_day\": 56.6, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.91, \"median\": 3.0, \"max\": 13}, \"p_at_least_1\": 0.978, \"p_at_least_2\": 0.911, \"p_at_least_3\": 0.678, \"p_at_least_4\": 0.478, \"p_at_least_10\": 0.011}} / named_context: {\"as_of\": \"20261019\", \"window_days\": 30, \"n_candidates_ge3machines\": 57, \"hall_over_threshold_rate_approx\": 0.053, \"threshold\": 1800.0, \"models\": [{\"name\": \"マイジャグラーV\", \"n_machines\": 20, \"rank\": 50, \"of\": 57, \"n_days_present\": 30, \"over_threshold\": 0, \"rate\": 0.0, \"mean_score\": -247.0}, {\"name\": \"戦国乙女5 業火を穿つ宿焔の双刃\", \"n_machines\": 18, \"rank\": 27, \"of\": 57, \"n_days_present\": 30, \"over_threshold\": 2, \"rate\": 0.067, \"mean_score\": 205.9}, {\"name\": \"東京喰種\", \"n_machines\": 18, \"rank\": 41, \"of\": 57, \"n_days_present\": 30, \"over_threshold\": 0, \"rate\": 0.0, \"mean_score\": 93.8}, {\"name\": \"獣王\", \"n_machines\": 6, \"rank\": 3, \"of\": 57, \"n_days_present\": 15, \"over_threshold\": 2, \"rate\": 0.133, \"mean_score\": -345.0}, {\"name\": \"甲鉄城のカバネリ 海門(うなと)決戦\", \"n_machines\": 30, \"rank\": 5, \"of\": 57, \"n_days_present\": 30, \"over_threshold\": 6, \"rate\": 0.2, \"mean_score\": 1197.1}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "マイジャグラーV",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "東京喰種",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。 ヒント: 1/2系の可能性(model_named_ratioならratio指定が必要)"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "獣王",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    }
+  ],
+  "unscored_claims": [],
+  "needs_manual_review": true,
+  "no_confirmed_machines": false,
+  "result": {
+    "scored_at_data_max": "20261021",
+    "hall_baseline_mean_diff": 1.2,
+    "hall_n_machines": 587,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 1,
+      "n_censored_lo": 1,
+      "machines_hi": [
+        "チバリヨ2"
+      ],
+      "machines_lo": [
+        "リコリス・リコイル"
+      ],
+      "bounds": [
+        -5095,
+        15477
+      ]
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "マイジャグラーV",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -336.6,
+        "mean_diff": -197.2,
+        "gratio": 1.707,
+        "n_machines": 20,
+        "rank": 48,
+        "candidate_models": 57,
+        "age_days": 658,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -24.9,
+        "mean_diff": -36.7,
+        "gratio": 0.679,
+        "n_machines": 18,
+        "rank": 26,
+        "candidate_models": 57,
+        "age_days": 135,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "東京喰種",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。 ヒント: 1/2系の可能性(model_named_ratioならratio指定が必要)"
+        },
+        "score": -371.5,
+        "mean_diff": -324.9,
+        "gratio": 1.143,
+        "n_machines": 18,
+        "rank": 49,
+        "candidate_models": 57,
+        "age_days": 624,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "獣王",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -518.2,
+        "mean_diff": -237.8,
+        "gratio": 2.179,
+        "n_machines": 6,
+        "rank": 50,
+        "candidate_models": 57,
+        "age_days": 16,
+        "age_bucket": "new",
+        "base_rate": 0.105,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 407.2,
+        "mean_diff": 168.6,
+        "gratio": 2.415,
+        "n_machines": 30,
+        "rank": 10,
+        "candidate_models": 57,
+        "age_days": 233,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
+  "announce_digest": "e50ff60671dde961",
+  "provisional": true
+}

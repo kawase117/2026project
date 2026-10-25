@@ -27,7 +27,90 @@
   "unscored_claims": [],
   "needs_manual_review": false,
   "no_confirmed_machines": false,
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20261017",
+    "hall_baseline_mean_diff": 460.8,
+    "hall_n_machines": 365,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 2,
+          "note": "「全系機種」は複数機種あるとされる(7の日は複数機種やりがち)。主に2〜5台機種"
+        },
+        "observed_n_models": 8,
+        "candidate_models": 50,
+        "models": [
+          {
+            "machine_name": "ソードアート・オンラインII",
+            "score": 4890.6,
+            "n_machines": 6,
+            "mean_diff": 3216.7,
+            "age_days": 131
+          },
+          {
+            "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+            "score": 4712.9,
+            "n_machines": 5,
+            "mean_diff": 5180.0,
+            "age_days": 557
+          },
+          {
+            "machine_name": "革命機ヴァルヴレイヴ2",
+            "score": 2987.7,
+            "n_machines": 7,
+            "mean_diff": 2728.6,
+            "age_days": 347
+          },
+          {
+            "machine_name": "青春ブタ野郎はバニーガール先輩の夢を見ない",
+            "score": 2940.7,
+            "n_machines": 3,
+            "mean_diff": 3366.7,
+            "age_days": 39
+          },
+          {
+            "machine_name": "ワールドダイスター",
+            "score": 2765.9,
+            "n_machines": 3,
+            "mean_diff": 1966.7,
+            "age_days": 75
+          },
+          {
+            "machine_name": "チバリヨ2プラス",
+            "score": 2445.8,
+            "n_machines": 3,
+            "mean_diff": 4800.0,
+            "age_days": 637
+          },
+          {
+            "machine_name": "北斗の拳 転生の章2",
+            "score": 2021.8,
+            "n_machines": 11,
+            "mean_diff": 2209.1,
+            "age_days": 284
+          },
+          {
+            "machine_name": "ToLOVEるダークネス TRANCE ver.8.7",
+            "score": 1986.1,
+            "n_machines": 3,
+            "mean_diff": 2100.0,
+            "age_days": 516
+          }
+        ],
+        "n_new_machines_over": 0,
+        "hit": true
+      }
+    ]
+  },
   "announce_digest": "7bc6041717cfb0f4",
   "provisional": true,
   "amendments": [

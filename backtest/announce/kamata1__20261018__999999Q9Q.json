@@ -27,7 +27,62 @@
   "unscored_claims": [],
   "needs_manual_review": false,
   "no_confirmed_machines": true,
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20261018",
+    "hall_baseline_mean_diff": -143.8,
+    "hall_n_machines": 365,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 1,
+          "note": "「全・メイン機種の強化は確実」(全が1機種以上)。個人予想の東京喰種・オススメ3機種(戦国乙女5、スマスロ北斗、北斗転生)は推測のため採点しない"
+        },
+        "observed_n_models": 4,
+        "candidate_models": 50,
+        "models": [
+          {
+            "machine_name": "ソードアート・オンラインII",
+            "score": 4831.2,
+            "n_machines": 6,
+            "mean_diff": 2000.0,
+            "age_days": 132
+          },
+          {
+            "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+            "score": 3436.1,
+            "n_machines": 9,
+            "mean_diff": 2555.6,
+            "age_days": 132
+          },
+          {
+            "machine_name": "かぐや様は告らせたい",
+            "score": 2315.9,
+            "n_machines": 3,
+            "mean_diff": 1466.7,
+            "age_days": 655
+          },
+          {
+            "machine_name": "青春ブタ野郎はバニーガール先輩の夢を見ない",
+            "score": 2001.0,
+            "n_machines": 3,
+            "mean_diff": 1933.3,
+            "age_days": 40
+          }
+        ],
+        "n_new_machines_over": 0,
+        "hit": true
+      }
+    ]
+  },
   "announce_digest": "30b797da4a231df6",
   "provisional": true,
   "amendments": [

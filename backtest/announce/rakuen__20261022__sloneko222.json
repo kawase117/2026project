@@ -1,0 +1,45 @@
+{
+  "announce_id": "rakuen__20261022__sloneko222",
+  "hall": "楽園蒲田店",
+  "target_date": "20261022",
+  "source": {
+    "account": "sloneko222",
+    "url": "",
+    "posted_at": "2026-10-21T19:58:21+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "10/22(木)\n楽園溝の口\n『ゾロ目日』×『狂鬼の宴』取材！\nアルカナの館（\nhttps://\nx.gd/5EXVK）\n\n◥◣◥◣◥◣◥◣ ◢◤◢◤◢◤◢◤\n 緊急告知 \nゾロ目日に『狂鬼の宴』が再臨！\n圧倒的な仕掛け＆出玉に期待！\n◢◤◢◤◢◤◢◤ ◥◣◥◣◥◣◥◣\n\n過去傾向！",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"楽園蒲田店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-22\", \"2026-10-20\"], \"n_days\": 90, \"n_model_days\": 5090, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2294.8, \"models_over_threshold_per_day\": {\"mean\": 2.83, \"median\": 3.0, \"max\": 11}, \"candidate_models_per_day\": 56.6, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.92, \"median\": 3.0, \"max\": 13}, \"p_at_least_1\": 0.978, \"p_at_least_2\": 0.911, \"p_at_least_3\": 0.689, \"p_at_least_4\": 0.478, \"p_at_least_10\": 0.011}}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [],
+  "unscored_claims": [],
+  "needs_manual_review": true,
+  "no_confirmed_machines": true,
+  "result": {
+    "scored_at_data_max": "20261022",
+    "hall_baseline_mean_diff": 154.3,
+    "hall_n_machines": 587,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 1,
+      "n_censored_lo": 0,
+      "machines_hi": [
+        "聖闘士星矢 海皇覚醒 CUSTOM EDITION"
+      ],
+      "machines_lo": [],
+      "bounds": [
+        -5095,
+        15477
+      ]
+    },
+    "claims": []
+  },
+  "announce_digest": "dc045d4af52ec1ea",
+  "provisional": true
+}

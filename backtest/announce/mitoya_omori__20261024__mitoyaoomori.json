@@ -1,0 +1,45 @@
+{
+  "announce_id": "mitoya_omori__20261024__mitoyaoomori",
+  "hall": "みとや大森町店",
+  "target_date": "20261024",
+  "source": {
+    "account": "mitoyaoomori",
+    "url": "",
+    "posted_at": "2026-10-23T21:01:19+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "明日は \n月日  \n抽選時間は： \n\nいくぜみとや \n\nパチンコ・スロット \n全６５２台\n朝一より 全力情熱営業 \n\n朝一お早めのご来店 \nお待ちしております",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"みとや大森町店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-24\", \"2026-10-22\"], \"n_days\": 90, \"n_model_days\": 3254, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 1900.7, \"models_over_threshold_per_day\": {\"mean\": 1.81, \"median\": 2.0, \"max\": 7}, \"candidate_models_per_day\": 36.2, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 1.93, \"median\": 2.0, \"max\": 8}, \"p_at_least_1\": 0.822, \"p_at_least_2\": 0.567, \"p_at_least_3\": 0.322, \"p_at_least_4\": 0.1, \"p_at_least_10\": 0.0}}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [],
+  "unscored_claims": [
+    {
+      "text": "ケロット5(部分一致score=0.6)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    }
+  ],
+  "needs_manual_review": true,
+  "no_confirmed_machines": true,
+  "result": {
+    "scored_at_data_max": "20261024",
+    "hall_baseline_mean_diff": 34.0,
+    "hall_n_machines": 277,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": []
+  },
+  "announce_digest": "5766a405a1e390ea",
+  "provisional": true
+}

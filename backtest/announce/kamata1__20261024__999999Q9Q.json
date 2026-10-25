@@ -1,0 +1,102 @@
+{
+  "announce_id": "kamata1__20261024__999999Q9Q",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "target_date": "20261024",
+  "source": {
+    "account": "999999Q9Q",
+    "url": "",
+    "posted_at": "2026-10-23T23:23:11+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "【777コンパスが使えない今、LINE抽選のメガいちがアツい】\n蒲田1のカマタに集合！予想\n\n明日はカマタに集合！が開催。前回は全が5機種、ニブイチ以上が7機種と完全に蒲田の主役となっており、明日も主役級の活躍が期待できるとされている。\n\n狙い目はいつも通り少数機種からやりがちな全と台数の多いメインどころに仕掛けられがちなニブイチと単品。777コンパスのメンテナンスで緊急店頭抽選になっている店舗が多い中、メガいちはLINE抽選。つまりいつも通りメガななとのW抽選が受けられるのでかなりアツい\n\n\n→3台並び？\n\n→サングラス→太陽\n→スマスロ獣王？\n\n→サングラス→サン\n→モンハンサンブレイク？\n\n→キャンディ→CANDY TUNE→倍々fight→倍倍チャンス\n→化物語？\n\n#マルハンメガシティ2000蒲田1",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"マルハンメガシティ2000-蒲田1\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-24\", \"2026-10-22\"], \"n_days\": 90, \"n_model_days\": 4355, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2235.6, \"models_over_threshold_per_day\": {\"mean\": 2.42, \"median\": 2.0, \"max\": 7}, \"candidate_models_per_day\": 48.4, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.24, \"median\": 3.0, \"max\": 8}, \"p_at_least_1\": 0.967, \"p_at_least_2\": 0.8, \"p_at_least_3\": 0.589, \"p_at_least_4\": 0.4, \"p_at_least_10\": 0.0}} / named_context: {\"as_of\": \"20261022\", \"window_days\": 30, \"n_candidates_ge3machines\": 50, \"hall_over_threshold_rate_approx\": 0.04, \"threshold\": 1800.0, \"models\": [{\"name\": \"モンスターハンターライズ\", \"n_machines\": 10, \"rank\": 2, \"of\": 50, \"n_days_present\": 30, \"over_threshold\": 1, \"rate\": 0.033, \"mean_score\": 122.2}, {\"name\": \"化物語\", \"n_machines\": 2, \"rank\": null, \"of\": 50, \"n_days_present\": 30, \"over_threshold\": 0, \"rate\": 0.0, \"mean_score\": -38.9}, {\"name\": \"獣王\", \"n_machines\": 3, \"rank\": 1, \"of\": 50, \"n_days_present\": 18, \"over_threshold\": 4, \"rate\": 0.222, \"mean_score\": 361.1}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "モンスターハンターライズ",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "化物語",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "獣王",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    }
+  ],
+  "unscored_claims": [],
+  "needs_manual_review": true,
+  "no_confirmed_machines": false,
+  "result": {
+    "scored_at_data_max": "20261024",
+    "hall_baseline_mean_diff": 109.6,
+    "hall_n_machines": 365,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "モンスターハンターライズ",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 914.7,
+        "mean_diff": 1240.0,
+        "gratio": 0.738,
+        "n_machines": 10,
+        "rank": 12,
+        "candidate_models": 50,
+        "age_days": 661,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "化物語",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "hit": null,
+        "note": "当日 化物語 が設置3台以上の候補に無い（撤去・台数不足・表記ゆれ）"
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "獣王",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -1852.3,
+        "mean_diff": -1200.0,
+        "gratio": 1.544,
+        "n_machines": 3,
+        "rank": 47,
+        "candidate_models": 50,
+        "age_days": 19,
+        "age_bucket": "new",
+        "base_rate": 0.105,
+        "hit": false
+      }
+    ]
+  },
+  "announce_digest": "814957bf191edece",
+  "provisional": true
+}

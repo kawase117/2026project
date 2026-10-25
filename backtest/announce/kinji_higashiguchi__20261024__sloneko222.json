@@ -1,0 +1,116 @@
+{
+  "announce_id": "kinji_higashiguchi__20261024__sloneko222",
+  "hall": "金時蒲田東口店",
+  "target_date": "20261024",
+  "source": {
+    "account": "sloneko222",
+    "url": "",
+    "posted_at": "2026-10-23T19:20:00+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "10/24(土)\n金時蒲田東口\n『戦極～電光石火』取材！\n\n取材傾向のポイント\n ジャグラーシリーズが最優先！\n┗【高配分・並び・大量の単品】に期待大！\n\nジャグラー設置リスト\nネオアイム／マイジャグV／マイジャグⅥ\nゴージャグ／ファンキー／ジャグラーガールズ",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"金時蒲田東口店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-24\", \"2026-10-22\"], \"n_days\": 89, \"n_model_days\": 2027, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 1172.9, \"models_over_threshold_per_day\": {\"mean\": 1.15, \"median\": 1.0, \"max\": 6}, \"candidate_models_per_day\": 22.8, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 0.67, \"median\": 0.0, \"max\": 5}, \"p_at_least_1\": 0.449, \"p_at_least_2\": 0.157, \"p_at_least_3\": 0.034, \"p_at_least_4\": 0.022, \"p_at_least_10\": 0.0}} / named_context: {\"as_of\": \"20261022\", \"window_days\": 30, \"n_candidates_ge3machines\": 23, \"hall_over_threshold_rate_approx\": 0.0, \"threshold\": 1800.0, \"models\": [{\"name\": \"ジャグラーガールズ\", \"n_machines\": 5, \"rank\": 21, \"of\": 23, \"n_days_present\": 30, \"over_threshold\": 5, \"rate\": 0.167, \"mean_score\": 584.5}, {\"name\": \"ネオアイムジャグラーEX\", \"n_machines\": 20, \"rank\": 5, \"of\": 23, \"n_days_present\": 30, \"over_threshold\": 0, \"rate\": 0.0, \"mean_score\": 60.4}, {\"name\": \"マイジャグラーV\", \"n_machines\": 20, \"rank\": 2, \"of\": 23, \"n_days_present\": 30, \"over_threshold\": 0, \"rate\": 0.0, \"mean_score\": 130.6}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "ジャグラーガールズ",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "ネオアイムジャグラーEX",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "マイジャグラーV",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    }
+  ],
+  "unscored_claims": [
+    {
+      "text": "マイジャグラーⅥ(部分一致score=0.625)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    }
+  ],
+  "needs_manual_review": true,
+  "no_confirmed_machines": false,
+  "result": {
+    "scored_at_data_max": "20261024",
+    "hall_baseline_mean_diff": 21.2,
+    "hall_n_machines": 195,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ジャグラーガールズ",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 1198.5,
+        "mean_diff": 456.2,
+        "gratio": 2.627,
+        "n_machines": 5,
+        "rank": 4,
+        "candidate_models": 23,
+        "age_days": 425,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ネオアイムジャグラーEX",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 250.8,
+        "mean_diff": 198.8,
+        "gratio": 1.262,
+        "n_machines": 20,
+        "rank": 11,
+        "candidate_models": 23,
+        "age_days": 403,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "マイジャグラーV",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 456.4,
+        "mean_diff": 246.7,
+        "gratio": 1.85,
+        "n_machines": 20,
+        "rank": 8,
+        "candidate_models": 23,
+        "age_days": 425,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
+  "announce_digest": "e6837fd94617123c",
+  "provisional": true
+}

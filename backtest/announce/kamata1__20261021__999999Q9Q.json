@@ -1,0 +1,133 @@
+{
+  "announce_id": "kamata1__20261021__999999Q9Q",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "target_date": "20261021",
+  "source": {
+    "account": "999999Q9Q",
+    "url": "",
+    "posted_at": "2026-10-20T23:23:51+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "【1の付く日は、メガいちメガなな合法W抽選】\n新章メガいちよこやん予想\n\n明日は1の付く日。よこやん采配の全域強化パターン、全系機種・ニブイチ機種・メイン機種（スマスロ中心）の単品仕掛け、この三本柱が揃い踏みとなる日。\n\n楽園蒲田との殴り合いは今日で一段落、揃ってNO取材デーとなるが、1の付く日ともなればマルハンサイドの独壇場。ポストからの連想はなさそうだが、だからこそ正面からオススメ機種へ行くのが吉。\n\n個人的なおすすめは\n・東京喰種（常に高配分&オススメ）\n・ミリオンゴッド（オススメ）\n・Lカバネリ海門決戦（高配分の頻度高め）\n・戦国乙女5から始まる壁際ロング列\n\nこの辺りのラインナップは、毎回1の付く日に当たりが見える状況。少台数側は全まで見える。\n\n#マルハンメガシティ2000蒲田1",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"マルハンメガシティ2000-蒲田1\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-21\", \"2026-10-19\"], \"n_days\": 90, \"n_model_days\": 4349, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2208.7, \"models_over_threshold_per_day\": {\"mean\": 2.42, \"median\": 2.0, \"max\": 7}, \"candidate_models_per_day\": 48.3, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.21, \"median\": 3.0, \"max\": 8}, \"p_at_least_1\": 0.967, \"p_at_least_2\": 0.789, \"p_at_least_3\": 0.578, \"p_at_least_4\": 0.4, \"p_at_least_10\": 0.0}} / named_context: {\"as_of\": \"20261019\", \"window_days\": 30, \"n_candidates_ge3machines\": 50, \"hall_over_threshold_rate_approx\": 0.06, \"threshold\": 1800.0, \"models\": [{\"name\": \"ミリオンゴッド‐神々の軌跡‐\", \"n_machines\": 8, \"rank\": 14, \"of\": 50, \"n_days_present\": 30, \"over_threshold\": 0, \"rate\": 0.0, \"mean_score\": -346.6}, {\"name\": \"戦国乙女5 業火を穿つ宿焔の双刃\", \"n_machines\": 9, \"rank\": 21, \"of\": 50, \"n_days_present\": 30, \"over_threshold\": 4, \"rate\": 0.133, \"mean_score\": -12.6}, {\"name\": \"東京喰種\", \"n_machines\": 20, \"rank\": 44, \"of\": 50, \"n_days_present\": 30, \"over_threshold\": 2, \"rate\": 0.067, \"mean_score\": 283.5}, {\"name\": \"甲鉄城のカバネリ 海門(うなと)決戦\", \"n_machines\": 16, \"rank\": 19, \"of\": 50, \"n_days_present\": 30, \"over_threshold\": 0, \"rate\": 0.0, \"mean_score\": 231.2}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "ミリオンゴッド‐神々の軌跡‐",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "東京喰種",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    }
+  ],
+  "unscored_claims": [],
+  "needs_manual_review": true,
+  "no_confirmed_machines": false,
+  "result": {
+    "scored_at_data_max": "20261021",
+    "hall_baseline_mean_diff": 131.8,
+    "hall_n_machines": 365,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ミリオンゴッド‐神々の軌跡‐",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 976.8,
+        "mean_diff": 1300.0,
+        "gratio": 0.751,
+        "n_machines": 8,
+        "rank": 8,
+        "candidate_models": 50,
+        "age_days": 184,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 253.5,
+        "mean_diff": 477.8,
+        "gratio": 0.531,
+        "n_machines": 9,
+        "rank": 19,
+        "candidate_models": 50,
+        "age_days": 135,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "東京喰種",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 330.9,
+        "mean_diff": 255.0,
+        "gratio": 1.298,
+        "n_machines": 20,
+        "rank": 16,
+        "candidate_models": 50,
+        "age_days": 624,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -276.6,
+        "mean_diff": -368.8,
+        "gratio": 0.75,
+        "n_machines": 16,
+        "rank": 40,
+        "candidate_models": 50,
+        "age_days": 233,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
+  "announce_digest": "8cae1093d3e9ca18",
+  "provisional": true
+}

@@ -1,0 +1,98 @@
+{
+  "announce_id": "rakuen__20261024__minnade777judge",
+  "hall": "楽園蒲田店",
+  "target_date": "20261024",
+  "source": {
+    "account": "minnade777judge",
+    "url": "",
+    "posted_at": "2026-10-23T15:11:44+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "10/24 楽園渋谷道玄坂\n\n渋谷ウィークは連日強化の道玄坂店。\n\n過去の傾向として\n・Lカバネリが1/2で上2つ\n・リコリコが1/3で上2つ\n・全台上2つ機種、1/2&1/3上2つ機種複数\n・1/4、1/5で上2つ機種\n・1/6でてっぺん機種\nなどがあります。\n\n過去傾向を徹底的に分析してみんなでジャッジ！",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"楽園蒲田店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-24\", \"2026-10-22\"], \"n_days\": 90, \"n_model_days\": 5088, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2265.5, \"models_over_threshold_per_day\": {\"mean\": 2.83, \"median\": 3.0, \"max\": 11}, \"candidate_models_per_day\": 56.5, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.9, \"median\": 3.0, \"max\": 13}, \"p_at_least_1\": 0.978, \"p_at_least_2\": 0.911, \"p_at_least_3\": 0.689, \"p_at_least_4\": 0.489, \"p_at_least_10\": 0.011}} / named_context: {\"as_of\": \"20261022\", \"window_days\": 30, \"n_candidates_ge3machines\": 57, \"hall_over_threshold_rate_approx\": 0.035, \"threshold\": 1800.0, \"models\": [{\"name\": \"リコリス・リコイル\", \"n_machines\": 22, \"rank\": 13, \"of\": 57, \"n_days_present\": 30, \"over_threshold\": 4, \"rate\": 0.133, \"mean_score\": 521.8}, {\"name\": \"甲鉄城のカバネリ 海門(うなと)決戦\", \"n_machines\": 30, \"rank\": 6, \"of\": 57, \"n_days_present\": 30, \"over_threshold\": 5, \"rate\": 0.167, \"mean_score\": 1121.8}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "リコリス・リコイル",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    }
+  ],
+  "unscored_claims": [],
+  "needs_manual_review": true,
+  "no_confirmed_machines": false,
+  "result": {
+    "scored_at_data_max": "20261024",
+    "hall_baseline_mean_diff": 77.4,
+    "hall_n_machines": 587,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 3,
+      "machines_hi": [],
+      "machines_lo": [
+        "ソードアート・オンラインII",
+        "甲鉄城のカバネリ 海門(うなと)決戦",
+        "真打 吉宗"
+      ],
+      "bounds": [
+        -5095,
+        15477
+      ]
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "リコリス・リコイル",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 331.2,
+        "mean_diff": 223.4,
+        "gratio": 1.483,
+        "n_machines": 22,
+        "rank": 18,
+        "candidate_models": 57,
+        "age_days": 47,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 588.9,
+        "mean_diff": 430.5,
+        "gratio": 1.368,
+        "n_machines": 30,
+        "rank": 13,
+        "candidate_models": 57,
+        "n_censored_hi": 0,
+        "n_censored_lo": 1,
+        "censoring_bias": "upper_bound",
+        "age_days": 236,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
+  "announce_digest": "9648272f67f07063",
+  "provisional": true
+}

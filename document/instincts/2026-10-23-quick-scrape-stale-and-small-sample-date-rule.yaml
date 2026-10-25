@@ -1,0 +1,64 @@
+---
+id: quick-scrape-check-observed-at-per-hall-before-reporting
+trigger: "クイックスクレイピング（scraper.realtime.run --mode quick）を実行した直後に、ランキングや列の合算RBを報告しようとするとき。楽園蒲田（サイトセブン）の結果を報告するとき。『収集は完走した』と書きたくなったとき"
+confidence: 0.8
+domain: realtime-scraping
+source: session-2026-10-22-quick-scrape
+project_id: 2026project
+project_name: pachinko-analyzer
+verification_status: pending
+related:
+  - site777-highsetting-scan
+---
+
+# クイック収集は「完走」と「今日のデータ」が別。報告の前にホールごとの observed_at と最大Gを見る
+
+## Core claim
+`scraper.realtime.run --mode quick` は終了コード0で完走しても、楽園蒲田（サイトセブン）が**前日の最終値のまま**返ることがある。ランキングは `--latest-per-hall` で最新ファイルを選ぶので、古いデータでも順位は出る。見かけ上は正常で、報告すると昨日の台を今日の候補として出してしまう。
+
+## Evidence
+10/22 15:34 の収集で、楽園蒲田のスナップショットのファイル名は 20261022_153412 なのに、全269台の `observed_at` が 2026-10-21T18:11、最大G数 5,499（昨日の値）だった。他の4ホールは 10/22 15:34〜15:49 で正常。ランキング1位は昨日のデータの 1193番（ネオアイムEX）になっていた。同日 17:00 の再収集では今日の値（最大G 5,078）に更新された。
+
+## Action
+1. クイック収集の後、**ホールごとに最新スナップショットの `observed_at`（日付と時刻）と最大G数**を確認する。ファイル名の日時は信用しない。
+2. 今日の日付でないホールは、ランキング・列の合算RBを**報告から外す**。「楽園は昨日のデータのまま」と言い、時間を置いて再収集する。
+3. 再収集の後も、同じ確認を繰り返す。
+
+## 例
+```python
+# 5ホールの最新ファイルの observed_at を数える
+for h in halls:
+    f = sorted(glob(f'scraper/realtime/output/snapshots/{h}_quick_{today}_*.jsonl'))[-1]
+    c = Counter(str(json.loads(l)['observed_at'])[:16] for l in open(f, encoding='utf-8-sig'))
+```
+
+---
+id: same-date-three-samples-not-a-basis-for-weak
+trigger: "22日・ゾロ目の日・月イチ周年日など、同じ日付の過去3回の実績を根拠に、ホールや機種を『弱い』『避ける』と書こうとするとき。予告の『全域強化』を過去3回のマイナスで割り引きたくなったとき。蒲田7・蒲田1・楽園の予測を書くとき"
+confidence: 0.75
+domain: prediction-workflow
+source: session-2026-10-22-answercheck
+project_id: 2026project
+project_name: pachinko-analyzer
+verification_status: pending
+related:
+  - prediction-autodraft-claims-must-be-rechecked-against-raw-announce
+---
+
+# 同じ日付の過去3回は標本が小さすぎる。ホール水準も機種も「弱い」と決めつけない
+
+## Core claim
+22日のような同日付は、DBの範囲（7月以降）で3回しかない。3回とも負でも、**ホール水準の予告を割り引く根拠にはならず**、機種ごとの3回（4〜9台なら当たり台の偏りが大きい）は特に当てにならない。
+
+## Evidence
+10/22の予測で、蒲田7の22日（+136／−361／−207）と蒲田1の22日（−25／−70／−58）が負だったことから「予告の全域強化に沿っていない」と書いた。実際は蒲田7 +234/台（100台が+2,000以上）、蒲田1 +104/台で、どちらも過去の22日を上回った。楽園のモンスターハンターライズ（22日の3回が −230／−940／−465、4〜9台）も弱いと書いたが、当日は19台で +1,431 と最強クラスだった。一方で、楽園の22日は +201／+130／+180 と一貫して高く、4回目も +154 で続いた。同じ3回でも、一貫して高いホール水準は続き、機種別の負けは続かなかった。
+
+## Action
+1. 同日付の3回は「傾向」と書くまでにとどめ、予告や機種の採否を決める根拠にしない。
+2. 機種別の3回は、台数が10台未満なら参考にとどめる。
+3. 「避ける」にするなら、同日付以外の条件（別の日付種別での実測、台数が多い機種）も満たすものだけにする。
+4. ホール水準の見立てを書くときは、過去3回の幅（−361〜+136など）を併記し、「外れうる」と書く。
+
+## 補足
+10/22の「ミリオンゴッドを避ける」は同日付3回（−616／−524／−1,276、21〜25台）に基づき、結果もホール比 −148 で成立した。台数が多く方向が揃う場合は、避ける根拠にしてよい。
+---

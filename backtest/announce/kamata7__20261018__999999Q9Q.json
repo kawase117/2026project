@@ -38,7 +38,76 @@
   ],
   "needs_manual_review": false,
   "no_confirmed_machines": true,
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20261018",
+    "hall_baseline_mean_diff": 311.0,
+    "hall_n_machines": 715,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 1,
+          "note": "「週末は台数多めの機種で全をやりがち」(全が1機種以上)。機種イチ以上は反証できないため採点しない"
+        },
+        "observed_n_models": 6,
+        "candidate_models": 66,
+        "models": [
+          {
+            "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+            "score": 5711.1,
+            "n_machines": 24,
+            "mean_diff": 4762.5,
+            "age_days": 132
+          },
+          {
+            "machine_name": "少女☆歌劇 レヴュースタァライト ‐The SLOT‐",
+            "score": 3387.9,
+            "n_machines": 3,
+            "mean_diff": 2266.7,
+            "age_days": 468
+          },
+          {
+            "machine_name": "SHAKE BONUS TRIGGER",
+            "score": 3169.0,
+            "n_machines": 3,
+            "mean_diff": 2933.3,
+            "age_days": 363
+          },
+          {
+            "machine_name": "プリズムナナ",
+            "score": 2782.7,
+            "n_machines": 3,
+            "mean_diff": 3633.3,
+            "age_days": 313
+          },
+          {
+            "machine_name": "攻殻機動隊",
+            "score": 2676.6,
+            "n_machines": 3,
+            "mean_diff": 4566.7,
+            "age_days": 258
+          },
+          {
+            "machine_name": "モンスターハンターライズ",
+            "score": 1961.0,
+            "n_machines": 10,
+            "mean_diff": 2100.0,
+            "age_days": 468
+          }
+        ],
+        "n_new_machines_over": 0,
+        "hit": true
+      }
+    ]
+  },
   "announce_digest": "4bac6d2761ade207",
   "provisional": true,
   "amendments": [

@@ -1,0 +1,94 @@
+{
+  "announce_id": "kamata1__20261023__999999Q9Q",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "target_date": "20261023",
+  "source": {
+    "account": "999999Q9Q",
+    "url": "",
+    "posted_at": "2026-10-22T23:21:42+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "【メガいちのオススメ機種は本当にオススメなんだから！】\n新章メガいちよこやん予想\n\n明日は3の付く日。よこやん采配の基本パターンである全機種・ニブイチ機種・メイン機種の単品仕掛けを意識しておけば問題なし。\n\n全は少数機種からやりがちなので少数機種から攻めるのもよし、オススメ機種は高配分、単品仕掛けの常連なのでオススメ機種から攻めるのも魅力的\n\n【よこやんポスト】\nランチ→ドラゴンボール\n→ドラゴンハナハナ？\n\nおむすび→おにぎり→鬼斬チャージ\n→新鬼武者3？\n\n→駿府城\n→絆2天膳？\n\n鮭→SHAKE\n→シェイクBT？\n\n#マルハンメガシティ2000蒲田1",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"マルハンメガシティ2000-蒲田1\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-23\", \"2026-10-21\"], \"n_days\": 90, \"n_model_days\": 4353, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2235.7, \"models_over_threshold_per_day\": {\"mean\": 2.42, \"median\": 2.0, \"max\": 7}, \"candidate_models_per_day\": 48.4, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.23, \"median\": 3.0, \"max\": 8}, \"p_at_least_1\": 0.967, \"p_at_least_2\": 0.789, \"p_at_least_3\": 0.589, \"p_at_least_4\": 0.4, \"p_at_least_10\": 0.0}} / named_context: {\"as_of\": \"20261021\", \"window_days\": 30, \"n_candidates_ge3machines\": 50, \"hall_over_threshold_rate_approx\": 0.04, \"threshold\": 1800.0, \"models\": [{\"name\": \"SHAKE BONUS TRIGGER\", \"n_machines\": 1, \"rank\": null, \"of\": 50, \"n_days_present\": 30, \"over_threshold\": 5, \"rate\": 0.167, \"mean_score\": 405.4}, {\"name\": \"バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION\", \"n_machines\": 2, \"rank\": null, \"of\": 50, \"n_days_present\": 30, \"over_threshold\": 1, \"rate\": 0.033, \"mean_score\": 35.0}, {\"name\": \"新鬼武者3\", \"n_machines\": 4, \"rank\": 45, \"of\": 50, \"n_days_present\": 30, \"over_threshold\": 3, \"rate\": 0.1, \"mean_score\": 372.7}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "SHAKE BONUS TRIGGER",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "新鬼武者3",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    }
+  ],
+  "unscored_claims": [],
+  "needs_manual_review": true,
+  "no_confirmed_machines": false,
+  "result": {
+    "scored_at_data_max": "20261023",
+    "hall_baseline_mean_diff": -38.4,
+    "hall_n_machines": 365,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "SHAKE BONUS TRIGGER",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "hit": null,
+        "note": "当日 SHAKE BONUS TRIGGER が設置3台以上の候補に無い（撤去・台数不足・表記ゆれ）"
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "hit": null,
+        "note": "当日 バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION が設置3台以上の候補に無い（撤去・台数不足・表記ゆれ）"
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "新鬼武者3",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 38.6,
+        "mean_diff": 100.0,
+        "gratio": 0.386,
+        "n_machines": 4,
+        "rank": 21,
+        "candidate_models": 50,
+        "age_days": 382,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
+  "announce_digest": "3336b7dbef7c6b86",
+  "provisional": true
+}

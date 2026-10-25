@@ -1,0 +1,59 @@
+{
+  "announce_id": "hiroki__20261025__sloneko222",
+  "hall": "ヒロキ東口店",
+  "target_date": "20261025",
+  "source": {
+    "account": "sloneko222",
+    "url": "",
+    "posted_at": "2026-10-24T19:32:00+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "10/25\nヒロキ東口\n\n『戦極～電光石火』取材！\n\n⋱過去傾向⋰\n＜戦極～電光石火＞\nジャグラーシリーズが最優先！\n┗高配分～機種イチまで幅広い仕掛けに期待\n単品・仕掛けも複数確認\n今月「マイジャグⅥ」が加わり、\nさらに盛り上がること間違いなし\n\n【電光石火の過去実績】\n9/20\nジャグラーシリーズ\n優秀機種候補\nハピジャグV Ⅲ(1/2台+）平均+1,900枚\nファンキー2(3/4台+）平均+625枚\nマイジャグV(11/26台+）\nジャグラーガールズ(2/3台+）\n\n8/22\nジャグラーシリーズ\n総差枚：+8,450枚\n平均差枚：+146枚\n\n優秀機種候補\nファンキー2(2/4台+）平均+663枚\nマイジャグV(16/26台+）平均+338枚\nゴージャグ3(2/6台+）平均+300枚\nジャグラーガールズ(2/3台+）\nミスジャグ(2/4台+）",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"ヒロキ東口店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-25\", \"2026-10-23\"], \"n_days\": 90, \"n_model_days\": 3618, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 1555.6, \"models_over_threshold_per_day\": {\"mean\": 2.01, \"median\": 2.0, \"max\": 7}, \"candidate_models_per_day\": 40.2, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 1.61, \"median\": 1.0, \"max\": 6}, \"p_at_least_1\": 0.767, \"p_at_least_2\": 0.4, \"p_at_least_3\": 0.222, \"p_at_least_4\": 0.133, \"p_at_least_10\": 0.0}} / named_context: {\"as_of\": \"20261023\", \"window_days\": 30, \"n_candidates_ge3machines\": 40, \"hall_over_threshold_rate_approx\": 0.0, \"threshold\": 1800.0, \"models\": [{\"name\": \"ゴーゴージャグラー3\", \"n_machines\": 6, \"rank\": 10, \"of\": 40, \"n_days_present\": 30, \"over_threshold\": 0, \"rate\": 0.0, \"mean_score\": -150.2}, {\"name\": \"ジャグラーガールズ\", \"n_machines\": 3, \"rank\": 35, \"of\": 40, \"n_days_present\": 30, \"over_threshold\": 0, \"rate\": 0.0, \"mean_score\": 40.2}, {\"name\": \"ハッピージャグラーVIII\", \"n_machines\": 2, \"rank\": null, \"of\": 40, \"n_days_present\": 30, \"over_threshold\": 2, \"rate\": 0.067, \"mean_score\": 91.9}, {\"name\": \"ファンキージャグラー2\", \"n_machines\": 4, \"rank\": 28, \"of\": 40, \"n_days_present\": 30, \"over_threshold\": 0, \"rate\": 0.0, \"mean_score\": -30.9}, {\"name\": \"マイジャグラーV\", \"n_machines\": 14, \"rank\": 19, \"of\": 40, \"n_days_present\": 30, \"over_threshold\": 1, \"rate\": 0.033, \"mean_score\": -35.7}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "ゴーゴージャグラー3",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "ジャグラーガールズ",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。 ヒント: 1/2系の可能性(model_named_ratioならratio指定が必要)"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "ハッピージャグラーVIII",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "ファンキージャグラー2",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "マイジャグラーV",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    }
+  ],
+  "unscored_claims": [
+    {
+      "text": "マイジャグラーⅥ(部分一致score=0.625)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    }
+  ],
+  "needs_manual_review": true,
+  "no_confirmed_machines": false,
+  "result": null,
+  "announce_digest": "f76427bdb56dd7a5",
+  "provisional": true
+}

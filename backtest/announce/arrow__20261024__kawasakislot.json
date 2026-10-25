@@ -1,0 +1,54 @@
+{
+  "announce_id": "arrow__20261024__kawasakislot",
+  "hall": "ARROW池上店",
+  "target_date": "20261024",
+  "source": {
+    "account": "kawasakislot",
+    "url": "",
+    "posted_at": "2026-10-23T19:36:46+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "10/24 ARROW池上\n→とある来店取材【並行演算】【薔薇領域】初\n\nアローの初取材はとにかく実績\n最近OCでも話題になること増えたし、No取材日でも設定使ってるお店ですｗ\n\n明日の仕掛けは他店舗での結果を見るに\n並行演算：3台並び×5か所以上\n薔薇領域：バラ（1台機種）の20％以上\nでよいかなとｗ\n\n3台並びはスマスロからドリルするのがおすすめ\n特に扱い良さげな東京喰種とか真打吉宗、ニューキング、乙女5、カバネリあたり\n\nバラは23台あるので1/5の5台を目安に押し引き\n他取材での結果はいざ番、ケロット、ニューパルあたりよく対象になってるイメージある\n\n9:30抽選",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"ARROW池上店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-22\", \"2026-10-20\"], \"n_days\": 90, \"n_model_days\": 2738, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2294.4, \"models_over_threshold_per_day\": {\"mean\": 1.52, \"median\": 1.0, \"max\": 10}, \"candidate_models_per_day\": 30.4, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 2.1, \"median\": 1.5, \"max\": 10}, \"p_at_least_1\": 0.833, \"p_at_least_2\": 0.5, \"p_at_least_3\": 0.344, \"p_at_least_4\": 0.189, \"p_at_least_10\": 0.011}} / named_context: {\"as_of\": \"20261020\", \"window_days\": 30, \"n_candidates_ge3machines\": 29, \"hall_over_threshold_rate_approx\": 0.0, \"threshold\": 1800.0, \"models\": [{\"name\": \"吉宗\", \"n_machines\": null, \"rank\": null, \"of\": 29, \"n_days_present\": 0, \"over_threshold\": 0, \"rate\": null, \"mean_score\": null}, {\"name\": \"戦国乙女5 業火を穿つ宿焔の双刃\", \"n_machines\": 10, \"rank\": 4, \"of\": 29, \"n_days_present\": 30, \"over_threshold\": 3, \"rate\": 0.1, \"mean_score\": 257.1}, {\"name\": \"東京喰種\", \"n_machines\": 16, \"rank\": 8, \"of\": 29, \"n_days_present\": 30, \"over_threshold\": 1, \"rate\": 0.033, \"mean_score\": 81.8}, {\"name\": \"甲鉄城のカバネリ\", \"n_machines\": 1, \"rank\": null, \"of\": 29, \"n_days_present\": 30, \"over_threshold\": 3, \"rate\": 0.1, \"mean_score\": 19.7}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "吉宗",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "東京喰種",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "甲鉄城のカバネリ",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    }
+  ],
+  "unscored_claims": [
+    {
+      "text": "ケロット5(部分一致score=0.8)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    }
+  ],
+  "needs_manual_review": true,
+  "no_confirmed_machines": false,
+  "result": null,
+  "announce_digest": "eb8e77677c4b6c59",
+  "provisional": true
+}

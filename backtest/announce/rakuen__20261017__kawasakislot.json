@@ -59,7 +59,219 @@
   "unscored_claims": [],
   "needs_manual_review": false,
   "no_confirmed_machines": false,
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20261017",
+    "hall_baseline_mean_diff": -23.0,
+    "hall_n_machines": 587,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 6,
+      "machines_hi": [],
+      "machines_lo": [
+        "からくりサーカス2",
+        "シャーマンキング",
+        "ソードアート・オンラインII",
+        "戦国乙女5 業火を穿つ宿焔の双刃",
+        "攻殻機動隊",
+        "甲鉄城のカバネリ 海門(うなと)決戦"
+      ],
+      "bounds": [
+        -5095,
+        15477
+      ]
+    },
+    "claims": [
+      {
+        "type": "position_rule",
+        "claim": {
+          "type": "position_rule",
+          "field": "last_digit",
+          "values": [
+            "7"
+          ],
+          "note": "「末尾7が1/2⑤⑥」(アンケート)。プール判定、by_segmentも確認する"
+        },
+        "by_segment": [
+          {
+            "segment": "OKI",
+            "n_machines": 13,
+            "n_target": 1,
+            "n_other": 12,
+            "effect_resid_diff": 4929.0,
+            "target_payout": 1.2794,
+            "other_payout": 1.0034
+          },
+          {
+            "segment": "HANA",
+            "n_machines": 16,
+            "n_target": 2,
+            "n_other": 14,
+            "effect_resid_diff": 1629.0,
+            "target_payout": 1.0735,
+            "other_payout": 1.0238
+          },
+          {
+            "segment": "JUG",
+            "n_machines": 117,
+            "n_target": 11,
+            "n_other": 106,
+            "effect_resid_diff": 1308.6,
+            "target_payout": 1.053,
+            "other_payout": 0.9939
+          },
+          {
+            "segment": "AT",
+            "n_machines": 356,
+            "n_target": 36,
+            "n_other": 320,
+            "effect_resid_diff": 988.8,
+            "target_payout": 1.0432,
+            "other_payout": 0.9895
+          },
+          {
+            "segment": "BT",
+            "n_machines": 85,
+            "n_target": 9,
+            "n_other": 76,
+            "effect_resid_diff": 748.4,
+            "target_payout": 1.0162,
+            "other_payout": 0.9812
+          }
+        ],
+        "rb_normal": {
+          "n_target": 22,
+          "n_other": 148,
+          "rb_observed": 412,
+          "rb_expected": 358.9,
+          "rb_z": 2.8,
+          "hit_rb": true
+        },
+        "judged_segment": "ALL(pooled)",
+        "n_target": 59,
+        "n_other": 528,
+        "effect_resid_diff": 1101.6,
+        "target_payout": 1.0459,
+        "other_payout": 0.9904,
+        "hit": true
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "北斗の拳 転生の章2",
+          "ratio": 3,
+          "note": "「転生・L北斗・エウレカが1/3」(先バレ・アンケート)。転生6台"
+        },
+        "n_machines": 6,
+        "ratio": 3,
+        "top_k": 2,
+        "model_top_k_mean_diff": 4619.5,
+        "hall_top_quantile_mean_diff": 2651.4,
+        "excess_vs_hall_quantile": 1968.1,
+        "model_mean_diff": 1460.7,
+        "n_over_hall_quantile": 3,
+        "hit": true,
+        "model_named_score": 1957.7,
+        "model_named_rank": 2
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "スマスロ北斗の拳",
+          "ratio": 3,
+          "note": "同上。L北斗8台"
+        },
+        "n_machines": 6,
+        "ratio": 3,
+        "top_k": 2,
+        "model_top_k_mean_diff": 3834.0,
+        "hall_top_quantile_mean_diff": 2664.4,
+        "excess_vs_hall_quantile": 1169.6,
+        "model_mean_diff": 1706.8,
+        "n_over_hall_quantile": 4,
+        "hit": true,
+        "model_named_score": 1858.2,
+        "model_named_rank": 4
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "交響詩篇エウレカセブン HI-EVOLUTION ZERO TYPE‐ART",
+          "ratio": 3,
+          "note": "同上。エウレカ25台"
+        },
+        "n_machines": 25,
+        "ratio": 3,
+        "top_k": 9,
+        "model_top_k_mean_diff": 1249.0,
+        "hall_top_quantile_mean_diff": 2718.2,
+        "excess_vs_hall_quantile": -1469.2,
+        "model_mean_diff": -258.7,
+        "n_over_hall_quantile": 8,
+        "hit": false,
+        "model_named_score": -326.0,
+        "model_named_rank": 32
+      },
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 2,
+          "note": "「全⑤⑥複数」(アンケート)。1機種は7台以上"
+        },
+        "observed_n_models": 4,
+        "candidate_models": 59,
+        "models": [
+          {
+            "machine_name": "真打 吉宗",
+            "score": 2226.7,
+            "n_machines": 5,
+            "mean_diff": 1943.2,
+            "age_days": 194
+          },
+          {
+            "machine_name": "北斗の拳 転生の章2",
+            "score": 1957.7,
+            "n_machines": 6,
+            "mean_diff": 1460.7,
+            "age_days": 285
+          },
+          {
+            "machine_name": "化物語",
+            "score": 1891.9,
+            "n_machines": 9,
+            "mean_diff": 1254.4,
+            "age_days": 313
+          },
+          {
+            "machine_name": "スマスロ北斗の拳",
+            "score": 1858.2,
+            "n_machines": 6,
+            "mean_diff": 1706.8,
+            "age_days": 654
+          }
+        ],
+        "n_new_machines_over": 0,
+        "hit": true
+      },
+      {
+        "type": "category_share",
+        "claim": {
+          "type": "category_share",
+          "category": "jug_flag",
+          "min_share": 0.2,
+          "note": "「ジャグ20%⑤⑥」(アンケート)"
+        },
+        "observed_share": 0.0,
+        "in_category": 0,
+        "n_over": 4,
+        "hit": false
+      }
+    ]
+  },
   "announce_digest": "d52403d0c5a04f0d",
   "provisional": true,
   "amendments": [

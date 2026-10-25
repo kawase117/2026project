@@ -1,0 +1,116 @@
+{
+  "announce_id": "rakuen__20261022__kawasakislot",
+  "hall": "楽園蒲田店",
+  "target_date": "20261022",
+  "source": {
+    "account": "kawasakislot",
+    "url": "",
+    "posted_at": "2026-10-21T18:33:53+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "10/22 楽園溝の口\n→狂鬼の宴\n\n特定日ゾロ目に2回目の狂鬼の宴！\n先バレ機種もあって狙いやすい内容\n\n仕掛けの内容としては以下のような感じに\n・全⑤⑥×2機種以上\n・ニブイチ⑤⑥×2機種以上\n┗Lカバネリ・東京喰種・マイジャグ5から全台orニブイチが1機種以上あり\n・3台並び⑤⑥×2箇所以上",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"楽園蒲田店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-22\", \"2026-10-20\"], \"n_days\": 90, \"n_model_days\": 5090, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2294.8, \"models_over_threshold_per_day\": {\"mean\": 2.83, \"median\": 3.0, \"max\": 11}, \"candidate_models_per_day\": 56.6, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.92, \"median\": 3.0, \"max\": 13}, \"p_at_least_1\": 0.978, \"p_at_least_2\": 0.911, \"p_at_least_3\": 0.689, \"p_at_least_4\": 0.478, \"p_at_least_10\": 0.011}} / named_context: {\"as_of\": \"20261020\", \"window_days\": 30, \"n_candidates_ge3machines\": 57, \"hall_over_threshold_rate_approx\": 0.07, \"threshold\": 1800.0, \"models\": [{\"name\": \"マイジャグラーV\", \"n_machines\": 20, \"rank\": 30, \"of\": 57, \"n_days_present\": 30, \"over_threshold\": 0, \"rate\": 0.0, \"mean_score\": -246.0}, {\"name\": \"東京喰種\", \"n_machines\": 18, \"rank\": 39, \"of\": 57, \"n_days_present\": 30, \"over_threshold\": 0, \"rate\": 0.0, \"mean_score\": 91.7}, {\"name\": \"甲鉄城のカバネリ 海門(うなと)決戦\", \"n_machines\": 30, \"rank\": 10, \"of\": 57, \"n_days_present\": 30, \"over_threshold\": 5, \"rate\": 0.167, \"mean_score\": 1066.4}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "マイジャグラーV",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "東京喰種",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。 ヒント: 全台系の可能性(zentaikei_countならn_models必須/model_namedのままでも可)"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    }
+  ],
+  "unscored_claims": [],
+  "needs_manual_review": true,
+  "no_confirmed_machines": false,
+  "result": {
+    "scored_at_data_max": "20261022",
+    "hall_baseline_mean_diff": 154.3,
+    "hall_n_machines": 587,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 1,
+      "n_censored_lo": 0,
+      "machines_hi": [
+        "聖闘士星矢 海皇覚醒 CUSTOM EDITION"
+      ],
+      "machines_lo": [],
+      "bounds": [
+        -5095,
+        15477
+      ]
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "マイジャグラーV",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -106.9,
+        "mean_diff": -73.5,
+        "gratio": 1.455,
+        "n_machines": 20,
+        "rank": 41,
+        "candidate_models": 57,
+        "age_days": 659,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "東京喰種",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。 ヒント: 全台系の可能性(zentaikei_countならn_models必須/model_namedのままでも可)"
+        },
+        "score": 35.9,
+        "mean_diff": 48.0,
+        "gratio": 0.747,
+        "n_machines": 18,
+        "rank": 30,
+        "candidate_models": 57,
+        "age_days": 625,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 1059.5,
+        "mean_diff": 559.0,
+        "gratio": 1.895,
+        "n_machines": 30,
+        "rank": 6,
+        "candidate_models": 57,
+        "age_days": 234,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
+  "announce_digest": "acf03c933d97bbe0",
+  "provisional": true
+}

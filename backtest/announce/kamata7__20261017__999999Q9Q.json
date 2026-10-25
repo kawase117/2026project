@@ -27,7 +27,69 @@
   "unscored_claims": [],
   "needs_manual_review": false,
   "no_confirmed_machines": true,
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20261017",
+    "hall_baseline_mean_diff": 99.2,
+    "hall_n_machines": 715,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 1,
+          "note": "「全機種」(毎日あるとされる全)。3台以上の機種には機種イチ以上が毎回ありそう"
+        },
+        "observed_n_models": 5,
+        "candidate_models": 66,
+        "models": [
+          {
+            "machine_name": "ワールドダイスター",
+            "score": 6496.9,
+            "n_machines": 7,
+            "mean_diff": 4142.9,
+            "age_days": 75
+          },
+          {
+            "machine_name": "攻殻機動隊",
+            "score": 3702.3,
+            "n_machines": 3,
+            "mean_diff": 4833.3,
+            "age_days": 257
+          },
+          {
+            "machine_name": "邪神ちゃんドロップキック",
+            "score": 2370.1,
+            "n_machines": 4,
+            "mean_diff": 1675.0,
+            "age_days": 75
+          },
+          {
+            "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+            "score": 2223.3,
+            "n_machines": 10,
+            "mean_diff": 1860.0,
+            "age_days": 467
+          },
+          {
+            "machine_name": "からくりサーカス",
+            "score": 2179.1,
+            "n_machines": 7,
+            "mean_diff": 2385.7,
+            "age_days": 467
+          }
+        ],
+        "n_new_machines_over": 0,
+        "hit": true
+      }
+    ]
+  },
   "announce_digest": "42aac5fe1b92877b",
   "provisional": true,
   "amendments": [
