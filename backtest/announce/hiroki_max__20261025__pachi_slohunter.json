@@ -1,0 +1,52 @@
+{
+  "announce_id": "hiroki_max__20261025__pachi_slohunter",
+  "hall": "ヒロキMAX蒲田店",
+  "target_date": "20261025",
+  "source": {
+    "account": "pachi_slohunter",
+    "url": "https://x.com/pachi_slohunter/status/2113937292733899109",
+    "posted_at": "2026-10-24T19:15:00+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "👾ガイの注目店舗👾\n\n10/25\nヒロキMAX蒲田\n\n👾ゴウケツ来店取材👊\n\n📣今回の注目ポイント\n📍店内10％規模の高配分に期待🔥\n📍3台並びを軸とした仕掛け⁉️\n↪︎店内各所に塊が潜む可能性👀\n\n📣さらに注目したいのが‼️\n🎰東京喰種\n🎰Lカバネリ\n↪︎両機種に6台並び傾向⁉️\n↪︎ここは最優先でチェックしたい👀\n\n📣直近のデータも重要\n📍10/23・24の動向をチェック‼️\n↪︎好調台の継続や据え置きも警戒🔥\n↪︎前日までの結果がヒントになるか⁉️\n\n🎫コンパス抽選 9:30〜\n\n6台並び・3台並びの両面から、店内を広くチェックしたい🕵️",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "東京喰種",
+      "note": "『両機種に6台並び傾向⁉️』『最優先でチェック』(発信者の見立て、個人の解説アカウント)。直近30日 rank44/57・閾値超え0/30日・平均score-54.1、10/24は30台合計-15680。baserate(+1800超え)は1日2.14機種"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "note": "本文『Lカバネリ』を別名照合でスマスロ版(14台)に紐付け。MAXには旧『甲鉄城のカバネリ』3台もあるが6台並びは成立しないため海門決戦を採用(要ユーザー確認)。直近30日 rank18/57・閾値超え2/30日・平均score+255.0"
+    },
+    {
+      "type": "narabi",
+      "n_adjacent": 3,
+      "count": null,
+      "scope": "hall",
+      "note": "『3台並びを軸とした仕掛け⁉️』『店内各所に塊が潜む可能性』。か所数の公約なし(count=null)。「⑤⑥」等の設定の明示もなく、並び=差枚ブロックとして判定"
+    },
+    {
+      "type": "narabi",
+      "n_adjacent": 6,
+      "count": null,
+      "scope": "東京喰種",
+      "note": "『6台並び傾向⁉️』(断定ではない)。東京喰種は30台設置"
+    },
+    {
+      "type": "narabi",
+      "n_adjacent": 6,
+      "count": null,
+      "scope": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "note": "『6台並び傾向⁉️』(断定ではない)。海門決戦は14台設置"
+    }
+  ],
+  "result": null,
+  "announce_digest": "0062435addcbcb48"
+}
