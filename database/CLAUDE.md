@@ -37,7 +37,9 @@
 主な位置列は両テーブル共通: `section`(TEXT 例 `2223-2240`)、`section_min`/`section_max`、
 `rank_from_min`/`rank_from_max`（セクション内順位）、`rank_from_aisle`（通路角番）。
 `rank_from_aisle` が入っているのは蒲田7とみとやのみ。楽園・蒲田1は全NULL、雑色ほか5ホールは
-`machine_layout` 自体が空。
+`machine_layout` 自体が空。ヒロキ蒲田西口店・ヒロキMAX蒲田店も座標なしで `machine_layout` /
+`machine_layout_history` ともに空（2026-10-25。`db_setup.create_database` が空の履歴テーブルを作る。
+これが無いと `run_backtest.load_frame` が落ちて announce の dbmax/baserate が使えなかった）。
 
 🔴 **セクション台数を `section_max - section_min + 1` で出してはいけない。**
 これは「section の台番号が連番」を前提にしている。蒲田1の 20260803 エポックでは

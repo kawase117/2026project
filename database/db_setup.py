@@ -12,24 +12,44 @@ from table_config import MACHINE_TYPE_CONFIGS, SUMMARY_TABLE_CONFIGS, get_rank_c
 
 sys.stdout.reconfigure(encoding='utf-8')
 
+MACHINE_LAYOUT_HISTORY_SQL = """
+CREATE TABLE IF NOT EXISTS machine_layout_history (
+    machine_number  INTEGER NOT NULL,
+    hall_name       TEXT,
+    valid_from      TEXT NOT NULL,
+    valid_to        TEXT,
+    x               INTEGER,
+    y               INTEGER,
+    display_y       INTEGER,
+    section         TEXT,
+    section_min     INTEGER,
+    section_max     INTEGER,
+    rank_from_min   INTEGER,
+    rank_from_max   INTEGER,
+    rank_from_aisle INTEGER,
+    PRIMARY KEY (machine_number, valid_from)
+)
+"""
+
+
 def create_database(hall_name, db_dir="."):
     """データベース作成"""
     safe_hall_name = hall_name.replace(" ", "_").replace("（", "(").replace("）", ")")
     db_filename = f"{safe_hall_name}.db"
-    
+
     # db/ フォルダ直下に配置
     db_folder = os.path.join(db_dir, "db")
     os.makedirs(db_folder, exist_ok=True)
     db_path = os.path.join(db_folder, db_filename)
-    
+
     if os.path.exists(db_path):
         os.remove(db_path)
         print(f"既存DB削除: {db_path}")
-    
+
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     print(f"データベース作成: {db_path}")
-    
+
     # 1. 台配置マスター（フロア座標付き）
     cursor.execute('''
         CREATE TABLE machine_layout (
@@ -50,7 +70,14 @@ def create_database(hall_name, db_dir="."):
         )
     ''')
     print("[OK] machine_layout")
-    
+
+    # 1b. 台配置の日付次元（正本）。座標CSVが無い新ホールでは空のままでよい（位置はNULLになる）。
+    # これが無いと backtest.run_backtest.load_frame の LEFT JOIN が
+    # 「no such table」で落ち、announce の dbmax/baserate が使えない（2026-10-25、ヒロキ西口・MAX）。
+    # DDL は database/migrate_machine_layout_history.py の CREATE_SQL と同じに保つ（テストで照合）。
+    cursor.execute(MACHINE_LAYOUT_HISTORY_SQL)
+    print("[OK] machine_layout_history")
+
     # 2. 個別台データ
     cursor.execute('''
         CREATE TABLE machine_detailed_results (
@@ -75,11 +102,11 @@ def create_database(hall_name, db_dir="."):
         )
     ''')
     print("[OK] machine_detailed_results")
-    
+
     # 3. 機種別サマリー
     rank_columns = get_rank_columns('machine_type_rank')
     rank_columns_sql = ',\n            '.join(rank_columns)
-    
+
     cursor.execute(f'''
         CREATE TABLE daily_machine_type_summary (
             date TEXT,
@@ -108,17 +135,17 @@ def create_database(hall_name, db_dir="."):
     ''')
     cursor.execute('CREATE INDEX idx_daily_machine_type_date ON daily_machine_type_summary(date)')
     print("[OK] daily_machine_type_summary")
-    
+
     # 4. 末尾別集計（6テーブル）
     _create_summary_tables(cursor, 'last_digit_summary', 'last_digit')
-    
+
     # 5. 位置別集計（6テーブル）
     _create_summary_tables(cursor, 'daily_position_summary', 'rank_from_min', is_integer_key=True)
-    
+
     # 6. 島別集計
     rank_columns = get_rank_columns('island_rank')
     rank_columns_sql = ',\n            '.join(rank_columns)
-    
+
     cursor.execute(f'''
         CREATE TABLE daily_island_summary (
             date TEXT,
@@ -136,7 +163,7 @@ def create_database(hall_name, db_dir="."):
     ''')
     cursor.execute('CREATE INDEX idx_daily_island_date ON daily_island_summary(date)')
     print("[OK] daily_island_summary")
-    
+
     # 7. 日別全体集計
     cursor.execute('''
         CREATE TABLE daily_hall_summary (
@@ -168,10 +195,10 @@ def create_database(hall_name, db_dir="."):
 
     # 8. 月次トレンド集計
     _create_monthly_trend_tables(cursor)
-    
+
     conn.commit()
     conn.close()
-    
+
     print(f"\nテーブル作成完了:")
     print(f"  - 基本: 3テーブル")
     print(f"  - 末尾別: 6テーブル (all, jug, hana, oki, bt, other)")
@@ -179,33 +206,34 @@ def create_database(hall_name, db_dir="."):
     print(f"  - 島別: 1テーブル")
     print(f"  - 月次トレンド: 18テーブル (3軸 × 6タイプ)")
     print(f"  - ランク・履歴カラム: 全集計テーブルに統合完了")
-    
+
     # 台配置CSV自動インポート
     _import_machine_layout(db_path, hall_name, db_dir)
-    
+
     return db_path
+
 
 def _create_summary_tables(cursor, base_name, key_column, is_integer_key=False):
     """集計テーブルを設定駆動で作成（ランク・履歴カラム含む）"""
     key_type = 'INTEGER' if is_integer_key else 'TEXT'
-    
+
     # テーブルの rank_prefix を特定
     rank_prefix = None
     for summary_config in SUMMARY_TABLE_CONFIGS:
         if summary_config['base_name'] == base_name:
             rank_prefix = summary_config['rank_prefix']
             break
-    
+
     if not rank_prefix:
         rank_prefix = base_name.replace('daily_', '').replace('_summary', '')
-    
+
     for config in MACHINE_TYPE_CONFIGS:
         suffix = config['suffix']
         table_name = f"{base_name}_{suffix}"
-        
+
         rank_columns = get_rank_columns(rank_prefix)
         rank_columns_sql = ',\n                '.join(rank_columns)
-        
+
         cursor.execute(f'''
             CREATE TABLE {table_name} (
                 date TEXT,
@@ -228,6 +256,7 @@ def _create_summary_tables(cursor, base_name, key_column, is_integer_key=False):
         cursor.execute(f'CREATE INDEX idx_{table_name}_date ON {table_name}(date)')
         cursor.execute(f'CREATE INDEX idx_{table_name}_key ON {table_name}({key_column})')
         print(f"[OK] {table_name}")
+
 
 def _create_monthly_trend_tables(cursor):
     """月次トレンドテーブルを作成（3軸 × 6機種タイプ = 18テーブル）"""
@@ -269,12 +298,11 @@ def _create_monthly_trend_tables(cursor):
                     PRIMARY KEY (year_month, {key_name})
                 )
             ''')
-            cursor.execute(
-                f'CREATE INDEX IF NOT EXISTS idx_{table_name}_ym ON {table_name}(year_month)'
-            )
+            cursor.execute(f'CREATE INDEX IF NOT EXISTS idx_{table_name}_ym ON {table_name}(year_month)')
             print(f"[OK] {table_name}")
 
     print("月次トレンドテーブル作成完了: 18テーブル")
+
 
 def _load_reversed_sections(hall_name: str, db_dir: str) -> frozenset:
     """hall_config.json から逆順セクションセットを取得する。
@@ -285,16 +313,19 @@ def _load_reversed_sections(hall_name: str, db_dir: str) -> frozenset:
     """
     import json
     from pathlib import Path
+
     # hall_config.json は db_dir の親か、プロジェクトルートの config/ に置かれている
     candidates = [Path(__file__).resolve().parents[1] / "config" / "hall_config.json"]
 
     # 後方互換として既存の db_dir ベース探索も残す。
     base_dir = db_dir if db_dir != "." else os.getcwd()
-    candidates.extend([
-        Path(base_dir) / "config" / "hall_config.json",
-        Path(os.path.dirname(base_dir)) / "config" / "hall_config.json",
-        Path(base_dir) / ".." / "config" / "hall_config.json",
-    ])
+    candidates.extend(
+        [
+            Path(base_dir) / "config" / "hall_config.json",
+            Path(os.path.dirname(base_dir)) / "config" / "hall_config.json",
+            Path(base_dir) / ".." / "config" / "hall_config.json",
+        ]
+    )
 
     for path in candidates:
         if not path.exists():
@@ -304,11 +335,7 @@ def _load_reversed_sections(hall_name: str, db_dir: str) -> frozenset:
                 config = json.load(f)
             for hall in config.get("halls", []):
                 if hall.get("hall_name") == hall_name:
-                    sections = (
-                        hall
-                        .get("layout_settings", {})
-                        .get("reversed_sections", [])
-                    )
+                    sections = hall.get("layout_settings", {}).get("reversed_sections", [])
                     return frozenset(sections)
         except Exception:
             continue
@@ -371,39 +398,39 @@ def _import_machine_layout(db_path, hall_name, db_dir):
                 else:
                     rank_from_aisle = None
 
-                if (
-                    rank_from_min is not None and rank_from_min > 0
-                    and rank_from_max is not None and rank_from_max > 0
-                ):
+                if rank_from_min is not None and rank_from_min > 0 and rank_from_max is not None and rank_from_max > 0:
                     physical_corner = min(rank_from_min, rank_from_max)
                     physical_corner_valid = 1
                 else:
                     physical_corner = -1
                     physical_corner_valid = 0
 
-                records.append((
-                    int(row['machine_number']),
-                    row['hall_name'],
-                    _to_int(row.get('X')),
-                    _to_int(row.get('Y')),
-                    _to_int(row.get('display_y')),
-                    section,
-                    _to_int(row.get('section_min')),
-                    _to_int(row.get('section_max')),
-                    rank_from_min,
-                    rank_from_max,
-                    is_reversed,
-                    rank_from_aisle,
-                    physical_corner,
-                    physical_corner_valid,
-                ))
-            except (ValueError, KeyError):
+                records.append(
+                    (
+                        int(row['machine_number']),
+                        row['hall_name'],
+                        _to_int(row.get('X')),
+                        _to_int(row.get('Y')),
+                        _to_int(row.get('display_y')),
+                        section,
+                        _to_int(row.get('section_min')),
+                        _to_int(row.get('section_max')),
+                        rank_from_min,
+                        rank_from_max,
+                        is_reversed,
+                        rank_from_aisle,
+                        physical_corner,
+                        physical_corner_valid,
+                    )
+                )
+            except ValueError, KeyError:
                 continue
 
         if records:
             conn = sqlite3.connect(db_path)
             cursor = conn.cursor()
-            cursor.executemany('''
+            cursor.executemany(
+                '''
                 INSERT OR REPLACE INTO machine_layout
                 (machine_number, hall_name, x, y, display_y,
                  section, section_min, section_max,
@@ -411,7 +438,9 @@ def _import_machine_layout(db_path, hall_name, db_dir):
                  is_reversed_section, rank_from_aisle,
                  physical_corner, physical_corner_valid)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', records)
+            ''',
+                records,
+            )
             conn.commit()
             conn.close()
             print(f"[OK] フロア座標データ: {len(records)}台 ({hall_name})")
@@ -419,21 +448,22 @@ def _import_machine_layout(db_path, hall_name, db_dir):
     except Exception as e:
         print(f"[WARN] フロア座標CSV読み込みエラー: {str(e)}")
 
+
 def create_machine_master_db(db_dir="."):
     """machine_master.db を新規作成（複数ホール間共有マスターDB）"""
     db_folder = os.path.join(db_dir, "db")
     os.makedirs(db_folder, exist_ok=True)
-    
+
     db_path = os.path.join(db_folder, "machine_master.db")
-    
+
     if os.path.exists(db_path):
         os.remove(db_path)
         print(f"既存 machine_master.db 削除: {db_path}")
-    
+
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     print(f"machine_master.db 作成: {db_path}")
-    
+
     # machine_master テーブル定義
     cursor.execute('''
         CREATE TABLE machine_master (
@@ -463,7 +493,7 @@ def create_machine_master_db(db_dir="."):
         )
     ''')
     print("[OK] machine_master テーブル作成")
-    
+
     # BT機種15個の初期データを登録
     bt_machines = [
         ('__LBパチスロ ヱヴァンゲリヲン ～約束の扉__', '__LBパチスロ ヱヴァンゲリヲン ～約束の扉__'),
@@ -482,20 +512,24 @@ def create_machine_master_db(db_dir="."):
         ('LBプレミアムうまい棒', 'LBプレミアムうまい棒'),
         ('スマスロニューパルサーBT', 'スマスロニューパルサーBT'),
     ]
-    
+
     for machine_name, official_name in bt_machines:
-        cursor.execute('''
+        cursor.execute(
+            '''
             INSERT INTO machine_master (
                 machine_name_normalized, bt_flag, official_name
             ) VALUES (?, 1, ?)
-        ''', (machine_name, official_name))
-    
+        ''',
+            (machine_name, official_name),
+        )
+
     print(f"[OK] BT機種15個を登録")
-    
+
     conn.commit()
     conn.close()
-    
+
     return db_path
+
 
 if __name__ == "__main__":
     print("main_processor.pyから実行してください。")
