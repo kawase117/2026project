@@ -814,6 +814,10 @@ def cmd_link(a):
     if changes:
         lines = _render_link_changes(changes)
         print("\n".join(lines))
+        addenda_dir = getattr(a, "addenda_dir", None)
+        if addenda_dir and not a.dry_run:
+            for path in _append_retro_addenda(changes, addenda_dir, a.analysis_db, checked_at):
+                print("遡及の追記: %s" % path)
         out = getattr(a, "changes_out", None)
         if out and not a.dry_run:
             os.makedirs(os.path.dirname(out), exist_ok=True)
@@ -843,6 +847,67 @@ def _link_changes(pending, latest):
             out.append((previous, row))
     out.sort(key=lambda pr: (pr[1]["business_date"], pr[1]["hall"]))
     return out
+
+
+AUTO_DOC_MARK = "<!-- auto-morning-docs -->"
+
+
+def _append_retro_addenda(changes, reviews_dir, analysis_db, checked_at):
+    """遅れて見つかった結果発表を、その営業日の答え合わせ文書へ「追記（遡及）」として足す。
+
+    本文は書き換えない。人手の文書にはその文書の末尾へ、無い・自動下書きの日は
+    `<日付>-answercheck-addendum.md` へ書く（自動下書きは朝の処理に作り直されるため）。
+    同じ(ホール, 報告)は印(marker)で重複させない。結果発表との照合そのものはここでは行わない。
+    """
+    written = []
+    for _previous, row in changes:
+        if row["status"] != "linked":
+            continue
+        ds = row["business_date"]
+        dashed = "%s-%s-%s" % (ds[:4], ds[4:6], ds[6:])
+        ids = ",".join(sorted(str(x) for x in row["report_ids"]))
+        marker = "<!-- retro:%s:%s -->" % (row["hall"], ids)
+        main = os.path.join(reviews_dir, "%s-answercheck.md" % dashed)
+        side = os.path.join(reviews_dir, "%s-answercheck-addendum.md" % dashed)
+        main_text = open(main, encoding="utf-8").read() if os.path.exists(main) else ""
+        target = main if main_text and AUTO_DOC_MARK not in main_text[:400] else side
+        if any(os.path.exists(p) and marker in open(p, encoding="utf-8").read() for p in (main, side)):
+            continue
+        reports = []
+        with _ro_connect(analysis_db) as con:
+            for report_id in row["report_ids"]:
+                got = con.execute(
+                    "select tweet_url,posted_at from external_result_reports where report_id=?", (report_id,)
+                ).fetchone()
+                machines = con.execute(
+                    "select count(*) from external_result_machines where report_id=?", (report_id,)
+                ).fetchone()[0]
+                reports.append((got[0] if got else "", got[1] if got else "", machines))
+        lines = [
+            "## 追記（遡及）: %s の結果発表が見つかった" % row["hall"],
+            "",
+            marker,
+            "",
+            "- 発見: %s" % checked_at,
+        ]
+        if row.get("delay_days") is not None:
+            lines.append("- 営業日の %d 日後に投稿された結果発表。" % row["delay_days"])
+        for url, posted, machines in reports:
+            lines.append("- 報告: %s（投稿 %s、台 %d 件）" % (url or "URLなし", posted or "不明", machines))
+        lines.append("- 紐付け: EVENT_RESULT_LINKS.jsonl の %s" % (row.get("row_id") or "（行ID不明）"))
+        lines.append("- この文書の本文は当時の判断のまま。結果発表との照合は別に行う。")
+        block = "\n".join(lines) + "\n"
+        os.makedirs(reviews_dir, exist_ok=True)
+        fresh = not os.path.exists(target)
+        with open(target, "a", encoding="utf-8") as f:
+            if fresh:
+                f.write("# %s 答え合わせ（遡及の追記）\n\n" % dashed)
+            else:
+                f.write("\n")
+            f.write(block)
+        if target not in written:
+            written.append(target)
+    return written
 
 
 def _render_link_changes(changes):
@@ -1973,6 +2038,11 @@ def main(argv=None):
         s.add_argument("--links-ledger", default=RESULT_LINKS_LEDGER)
         if name == "link":
             s.add_argument("--dry-run", action="store_true")
+            s.add_argument(
+                "--addenda-dir",
+                default=None,
+                help="新しく linked になった過去回の答え合わせ文書へ「追記（遡及）」を足す document/reviews",
+            )
             s.add_argument(
                 "--changes-out",
                 default=None,

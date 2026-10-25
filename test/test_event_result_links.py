@@ -280,3 +280,74 @@ def test_first_time_linked_is_reported_and_multiple_candidates_ask_for_human(tmp
     lines = event_days._render_link_changes(event_days._link_changes(pending, previous))
     assert any("waiting → multiple_candidates" in line for line in lines)
     assert any("人が確認" in line for line in lines)
+
+
+def _linked_row(ds, report_ids, hall="楽園蒲田店", delay=3):
+    return {
+        "row_id": "erl-test-1",
+        "hall": hall,
+        "business_date": ds,
+        "status": "linked",
+        "report_ids": report_ids,
+        "candidate_tweets": [],
+        "delay_days": delay,
+    }
+
+
+def test_retro_addendum_goes_to_human_doc_or_sidecar_and_is_idempotent(tmp_path):
+    analysis, _state = _dbs(tmp_path)
+    ds = "20260920"
+    _add_report(analysis, "r1", ds, "2026-09-23T10:00:00+09:00")
+    reviews = tmp_path / "reviews"
+    reviews.mkdir()
+    changes = [({"status": "waiting", "report_ids": []}, _linked_row(ds, ["r1"]))]
+
+    # 答え合わせ文書が無い日は、別ファイルを作る。
+    got = event_days._append_retro_addenda(changes, str(reviews), str(analysis), "2026-10-25T08:00:00+09:00")
+    side = reviews / "2026-09-20-answercheck-addendum.md"
+    assert got == [str(side)]
+    text = side.read_text(encoding="utf-8")
+    assert "追記（遡及）" in text and "https://x.test/status/r1" in text and "3 日後" in text
+
+    # 同じ報告は二重に足さない。
+    assert event_days._append_retro_addenda(changes, str(reviews), str(analysis), "x") == []
+    assert side.read_text(encoding="utf-8").count("追記（遡及）") == 1
+
+    # 人手の文書がある日は、その文書の末尾へ足し、本文は変えない。
+    ds2 = "20260921"
+    _add_report(analysis, "r2", ds2, "2026-09-22T10:00:00+09:00")
+    human = reviews / "2026-09-21-answercheck.md"
+    human.write_text("# 人手の答え合わせ\n\n本文。\n", encoding="utf-8")
+    event_days._append_retro_addenda([(None, _linked_row(ds2, ["r2"], delay=1))], str(reviews), str(analysis), "x")
+    body = human.read_text(encoding="utf-8")
+    assert body.startswith("# 人手の答え合わせ\n\n本文。\n")
+    assert "追記（遡及）" in body
+    assert not (reviews / "2026-09-21-answercheck-addendum.md").exists()
+
+    # 自動下書き（朝の処理に作り直される文書）には書かず、別ファイルへ。
+    ds3 = "20260922"
+    _add_report(analysis, "r3", ds3, "2026-09-23T10:00:00+09:00")
+    auto = reviews / "2026-09-22-answercheck.md"
+    auto.write_text("# 自動\n\n<!-- auto-morning-docs --> 07:42 作成。\n", encoding="utf-8")
+    event_days._append_retro_addenda([(None, _linked_row(ds3, ["r3"], delay=1))], str(reviews), str(analysis), "x")
+    assert "追記（遡及）" not in auto.read_text(encoding="utf-8")
+    assert (reviews / "2026-09-22-answercheck-addendum.md").exists()
+
+
+def test_cmd_link_writes_addenda_only_for_newly_linked(tmp_path):
+    analysis, state = _dbs(tmp_path)
+    business = date.today() - timedelta(days=12)
+    ds = business.strftime("%Y%m%d")
+    events = tmp_path / "EVENT_DAYS.jsonl"
+    _write_events(events, [{"event_id": "e", "hall": "楽園", "date": ds}])
+    reviews = tmp_path / "reviews"
+    args = _args(tmp_path, events, analysis, state)
+    args.addenda_dir = str(reviews)
+    event_days.cmd_link(args)  # 初回 waiting: 追記なし
+    assert not reviews.exists()
+    _add_report(analysis, "r1", ds, (business + timedelta(days=2)).isoformat() + "T10:00:00+09:00")
+    event_days.cmd_link(args)
+    files = list(reviews.glob("*-answercheck-addendum.md"))
+    assert len(files) == 1 and "追記（遡及）" in files[0].read_text(encoding="utf-8")
+    event_days.cmd_link(args)  # 変化なし: 重複しない
+    assert files[0].read_text(encoding="utf-8").count("追記（遡及）") == 1

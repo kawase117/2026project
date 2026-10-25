@@ -357,7 +357,16 @@ def refresh_integrated_layer():
     # 結果発表の取り込みが済んだ後に、イベントの各回との結びつきを照合し直す（遅れて出た発表を拾う）。
     # 紐付けが変わった過去回は、変化があるときだけ output/event_history/<当日>/link_changes.md に残す。
     changes_out = PROJECT_ROOT / "output" / "event_history" / datetime.now(JST).strftime("%Y%m%d") / "link_changes.md"
-    run_project("-m", "backtest.event_days", "link", "--changes-out", str(changes_out))
+    # 新しく結果発表が見つかった過去回は、その営業日の答え合わせ文書へ「追記（遡及）」を足す。
+    run_project(
+        "-m",
+        "backtest.event_days",
+        "link",
+        "--changes-out",
+        str(changes_out),
+        "--addenda-dir",
+        str(PROJECT_ROOT / "document" / "reviews"),
+    )
 
 
 def main() -> int:
