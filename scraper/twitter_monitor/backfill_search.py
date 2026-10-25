@@ -133,6 +133,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="既にstatus=failedで記録されている窓だけを再試行します。",
     )
+    parser.add_argument(
+        "--keyword",
+        default=None,
+        help="検索語を足して結果を絞ります（例: ヒロキ）。進捗は「ハンドル#語」で別に記録します。",
+    )
     args = parser.parse_args()
     args.until = args.until or datetime.now(JST).date()
     if args.until <= args.since:
@@ -165,9 +170,17 @@ def build_windows(since: date, until: date, window_days: int) -> list[DateWindow
     return windows
 
 
-def search_url(handle: str, window: DateWindow) -> str:
-    query = f"from:{handle} since:{window.start.isoformat()} until:{window.end.isoformat()}"
+def search_url(handle: str, window: DateWindow, keyword: str | None = None) -> str:
+    # keyword を足すと検索結果が絞られる。週350件規模のアカウントで結果ページが読み込めず
+    # 窓が failed になり続けたとき（pachi_slohunter 2026-07-20〜22, 08-17〜25）の回避策。
+    words = f" {keyword}" if keyword else ""
+    query = f"from:{handle}{words} since:{window.start.isoformat()} until:{window.end.isoformat()}"
     return f"https://x.com/search?q={quote(query, safe='')}&f=live"
+
+
+def progress_key(handle: str, keyword: str | None = None) -> str:
+    """進捗の保存キー。絞り込み検索は全件ではないので、元の窓の done/failed を上書きしない。"""
+    return f"{handle}#{keyword}" if keyword else handle
 
 
 def initialize_progress_table(connection: sqlite3.Connection) -> None:
@@ -322,10 +335,11 @@ def collect_window(
     connection: sqlite3.Connection,
     handle: str,
     window: DateWindow,
+    keyword: str | None = None,
 ) -> WindowResult:
     inserted_total = 0
     had_eligible = False
-    url = search_url(handle, window)
+    url = search_url(handle, window, keyword)
 
     for attempt in range(len(BACKOFF_SECONDS) + 1):
         try:
@@ -402,7 +416,7 @@ def main() -> int:
         initialize_database(connection)
         initialize_progress_table(connection)
         runnable = sum(
-            should_process(progress_status(connection, handle, window), args.redo_failed)
+            should_process(progress_status(connection, progress_key(handle, args.keyword), window), args.redo_failed)
             for handle in args.handles
             for window in windows
         )
@@ -428,7 +442,7 @@ def main() -> int:
                     for handle in args.handles:
                         account_inserted = 0
                         for window in windows:
-                            old_status = progress_status(connection, handle, window)
+                            old_status = progress_status(connection, progress_key(handle, args.keyword), window)
                             if not should_process(old_status, args.redo_failed):
                                 LOGGER.info(
                                     "%s | %s..%s | skip status=%s",
@@ -439,7 +453,7 @@ def main() -> int:
                                 )
                                 continue
                             try:
-                                result = collect_window(page, connection, handle, window)
+                                result = collect_window(page, connection, handle, window, args.keyword)
                             except LoggedOutError as error:
                                 connection.commit()
                                 LOGGER.critical("%s", error)
@@ -456,7 +470,9 @@ def main() -> int:
                                 )
                                 result = WindowResult("failed", reason=str(error))
 
-                            save_progress(connection, handle, window, result.inserted, result.status)
+                            save_progress(
+                                connection, progress_key(handle, args.keyword), window, result.inserted, result.status
+                            )
                             account_inserted += result.inserted
                             total_inserted += result.inserted
                             total_processed += 1
@@ -476,7 +492,7 @@ def main() -> int:
                                 LOGGER.info("次の検索窓まで%.1f秒待機します", delay)
                                 page.wait_for_timeout(int(delay * 1_000))
 
-                        counts = account_status_counts(connection, handle, windows)
+                        counts = account_status_counts(connection, progress_key(handle, args.keyword), windows)
                         LOGGER.info(
                             "%s: 新規%d件 (窓%d個中、done=%d, empty=%d, failed=%d)",
                             handle,
@@ -497,7 +513,7 @@ def main() -> int:
 
         overall = {"done": 0, "empty": 0, "failed": 0}
         for handle in args.handles:
-            counts = account_status_counts(connection, handle, windows)
+            counts = account_status_counts(connection, progress_key(handle, args.keyword), windows)
             for status in overall:
                 overall[status] += counts[status]
 
