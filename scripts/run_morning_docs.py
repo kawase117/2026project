@@ -58,6 +58,7 @@ from morning_facts import (  # 同ディレクトリ
 )
 from run_morning import hall_max_dates
 from runlock import acquire_or_exit
+from takoslot_note import takoslot_section
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 PYTHON = str(PROJECT_ROOT / "venv" / "Scripts" / "python.exe")
@@ -595,6 +596,17 @@ def juggler_section(day_dir: Path, today: str, ready: list[str]) -> str:
     return "\n".join(lines)
 
 
+def append_takoslot(path: Path, hall_db: Path, day: str, display: str, kind: str) -> None:
+    """日付の末尾が7〜9の日だけ、タコスロの機械集計を文書の末尾に足す。失敗しても文書は止めない。"""
+    try:
+        section = takoslot_section(hall_db, day, display, kind)
+    except Exception as exc:  # noqa: BLE001 - 付録の不調で朝文書の生成を止めない
+        print("  タコスロの集計に失敗: %s" % exc, flush=True)
+        return
+    if section:
+        path.write_text(path.read_text(encoding="utf-8").rstrip() + "\n\n" + section, encoding="utf-8")
+
+
 def run_rb_candidates(day_dir: Path, today: str, dry_run: bool) -> bool:
     """RB候補を一日一回生成する。失敗しても朝文書の他の段は続ける。"""
     cmd = [
@@ -735,20 +747,26 @@ def process_hall(key: str, day_dir: Path, yesterday: str, today: str, dry_run: b
         )
         if ok and facts_md:
             inject_facts(part("answercheck"), facts_md)
+        if ok:
+            append_takoslot(part("answercheck"), hall_db, answer_day, HALLS[key][1], "answer")
+        return ok
+
+    def prediction_stage() -> bool:
+        ok = generate(
+            prediction_prompt(key, today, yesterday, part("answercheck"), part("prediction")),
+            part("prediction"),
+            lambda text: validate_prediction(text, key, today, need_judgement),
+            "%s 予測" % key,
+        )
+        if ok:
+            hall_db = PROJECT_ROOT / "db" / ("%s.db" % HALLS[key][0])
+            append_takoslot(part("prediction"), hall_db, today, HALLS[key][1], "prediction")
         return ok
 
     stages = [
         ("answercheck", answercheck_stage),
         ("juggler", lambda: run_juggler(key, part("juggler"))),
-        (
-            "prediction",
-            lambda: generate(
-                prediction_prompt(key, today, yesterday, part("answercheck"), part("prediction")),
-                part("prediction"),
-                lambda text: validate_prediction(text, key, today, need_judgement),
-                "%s 予測" % key,
-            ),
-        ),
+        ("prediction", prediction_stage),
     ]
     for stage, action in stages:
         if done(stage).exists():
