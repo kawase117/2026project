@@ -167,7 +167,9 @@ def roster(hall: str, target_date: str) -> tuple[str | None, dict[str, set[int]]
 
 def _clean(tok: str) -> str | None:
     tok = _TRAILING_NUM.sub("", tok.strip().strip("*")).strip()
-    if len(model_alias.norm(tok)) < 2 or tok in _STOPWORDS:
+    key = model_alias.norm(tok)
+    # 数字だけの語(「直近 30 日」の 30)は、名前に数字を含む機種(沖ドキ!GOLD‐30)に当ててはいけない
+    if len(key) < 2 or key.isdigit() or tok in _STOPWORDS:
         return None
     return tok
 
@@ -175,12 +177,80 @@ def _clean(tok: str) -> str | None:
 _ALIAS_KEYS = {model_alias.norm(a) for a in model_alias.ALIASES}
 
 
+_HIRAGANA_ONLY = re.compile(r"^[ぁ-ゟ]+$")
+# 本文に正式名そのものが丸ごと入っているかを見るときの最小の長さ(norm後)。これより短い名前は
+# 一般語に紛れやすいので、従来どおり断片ごとの照合に任せる。
+_MIN_FULL_NAME_LEN = 3
+_MARK = ""
+
+
 def _loose_short_match(tok: str, hits: list[str]) -> bool:
-    """2文字の語が正式名の途中に部分一致しただけのとき True(「根拠はなく」の「なく」→『うみねこのなく頃に』)。"""
+    """2文字の語が正式名の途中や語尾に部分一致しただけのとき True。
+
+    「根拠はなく」の「なく」→『うみねこのなく頃に』、「材料がない」の「ない」→『…夢を見ない』。
+    略称表にある語はそのまま通す。表にない2文字は、ひらがなだけなら一般語とみなして弾く。
+    それ以外(獣王・吉宗)は正式名の先頭か語尾に当たるときだけ通す。
+    """
     key = model_alias.norm(tok)
     if len(key) > 2 or key in _ALIAS_KEYS:
         return False
+    if _HIRAGANA_ONLY.match(key):
+        return True
     return not all(model_alias.norm(n).startswith(key) or model_alias.norm(n).endswith(key) for n in hits)
+
+
+def _norm_with_index(text: str) -> tuple[str, list[int]]:
+    """model_alias.norm と同じ表記ゆれの吸収をしつつ、各文字が元の文字列の何文字目かを返す。"""
+    chars, idx = [], []
+    for i, ch in enumerate(text):
+        for c in model_alias.norm(ch):
+            chars.append(c)
+            idx.append(i)
+    return "".join(chars), idx
+
+
+def _mask_full_names(text: str, names: list[str]) -> tuple[str, list[str]]:
+    """本文に丸ごと書かれた正式名を先に取り、その範囲を「、」に置き換える。
+
+    長い名前から順に取るので、『甲鉄城のカバネリ 海門(うなと)決戦』と書いてあれば、それを含む
+    短い『甲鉄城のカバネリ』は(別の場所に書かれていない限り)拾わない。範囲を消すので、
+    「-30」の差枚扱いや、「ZERO」のような断片が残って別機種に当たることもない。
+    """
+    normed, idx = _norm_with_index(text)
+    cands = sorted(
+        ((model_alias.norm(n), n) for n in names if len(model_alias.norm(n)) >= _MIN_FULL_NAME_LEN),
+        key=lambda kn: -len(kn[0]),
+    )
+    spans: list[tuple[int, int]] = []
+    found: list[str] = []
+    span_name: dict[tuple[int, int], str] = {}
+    for key, name in cands:
+        start = normed.find(key)
+        while start != -1:
+            end = start + len(key)
+            # 名前の直後に版数・型番がくっついているときは別機種なので取らない
+            # (「からくりサーカス2」の本文から『からくりサーカス』、「マイジャグラーVI」から『マイジャグラーV』)。
+            # 空白や括弧は norm で消えるので、見るのは元の文字列の次の1文字。
+            at = idx[end - 1] + 1
+            nxt = text[at] if at < len(text) else ""
+            glued = bool(nxt) and (
+                (nxt.isdigit() and not key[-1].isdigit())
+                or (nxt.isascii() and nxt.isalpha() and key[-1].isascii() and key[-1].isalpha())
+            )
+            overlap = any(start < e and s < end for s, e in spans)
+            if not glued and not overlap:
+                spans.append((start, end))
+                span_name[(start, end)] = name
+            start = normed.find(key, start + 1)
+    # 取った範囲は、本文での並びを保てるよう目印(私用領域の文字+通し番号)に置き換える
+    out = list(text)
+    for n, span in enumerate(sorted(spans)):
+        first, last = idx[span[0]], idx[span[1] - 1]
+        for i in range(first, last + 1):
+            out[i] = ""
+        out[first] = f"、{_MARK}{n}{_MARK}、"
+        found.append(span_name[span])
+    return "".join(out), found
 
 
 def match_models(line: str, names: list[str]) -> tuple[list[str], list[str]]:
@@ -191,7 +261,11 @@ def match_models(line: str, names: list[str]) -> tuple[list[str], list[str]]:
             if n not in matched:
                 matched.append(n)
 
-    for chunk in _SPLIT.split(unicodedata.normalize("NFKC", line)):
+    text, full = _mask_full_names(unicodedata.normalize("NFKC", line), names)
+    for chunk in _SPLIT.split(text):
+        if chunk.startswith(_MARK):
+            take({"names": [full[int(chunk.strip(_MARK))]]})
+            continue
         whole = _clean(chunk)
         if whole is None:
             continue
