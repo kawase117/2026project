@@ -88,6 +88,8 @@ HALLS = {
     "kinji_higashiguchi": ("金時蒲田東口店", "金時東口"),
     "kinji_keikyu": ("金時京急蒲田店", "金時京急"),
     "hiroki_higashiguchi": ("ヒロキ東口店", "ヒロキ東口"),
+    "hiroki_max": ("ヒロキMAX蒲田店", "ヒロキMAX"),
+    "hiroki_nishiguchi": ("ヒロキ蒲田西口店", "ヒロキ西口"),
     "arrow": ("ARROW池上店", "ARROW"),
     "zassiki": ("ザ-シティ-ベルシティ雑色店", "雑色"),
 }
