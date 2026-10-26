@@ -97,9 +97,15 @@ HALLS = {
 ANNOUNCE_PREFIX = {"hiroki_higashiguchi": "hiroki"}
 # CLAUDE.md: 設定5以上の割合が高いホールは予告の有無にかかわらず候補を出す。
 # 蒲田1は予告にジャグラー強化がある日だけ。機械実行は安いので表の元データは作り、載せるかは merge で決める。
-JUGGLER_HALLS = {"kamata7", "rakuen", "mitoya", "kamata1"}
+JUGGLER_HALLS = {"kamata7", "rakuen", "mitoya", "kamata1", "hiroki_nishiguchi"}
 # 全ホール共通の「ジャグラー候補」表の1列目。prediction_ledger.hall_of が当てられる呼び名にする。
-JUGGLER_LABEL = {"kamata7": "蒲田7", "rakuen": "楽園蒲田店", "mitoya": "みとや大森町店", "kamata1": "蒲田1"}
+JUGGLER_LABEL = {
+    "kamata7": "蒲田7",
+    "rakuen": "楽園蒲田店",
+    "mitoya": "みとや大森町店",
+    "kamata1": "蒲田1",
+    "hiroki_nishiguchi": "ヒロキ蒲田西口店",
+}
 JUGGLER_LOW_NOTE = "ジャグラーの設定5以上の割合が低く、候補を出さない。"
 
 # 分析できなかったと言い訳する出力は、DBが実在する以上は不合格にする。
@@ -557,7 +563,7 @@ def parse_juggler(text: str) -> tuple[str, list[tuple[int, str, bool, int, int]]
     avg = re.search(r"履歴の翌日平均\s*([\d.]+)", text)
     rows = []
     for line in text.splitlines():
-        m = re.match(r"^\s*(\d{3,4})\s+(\S+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(True|False)\s", line)
+        m = re.match(r"^\s*(\d{3,4})\s+(\S+)\s+(\d+|NaN)\s+(\d+)\s+(\d+)\s+(\d+)\s+(True|False)\s", line)
         if m:
             rows.append((int(m.group(1)), m.group(2), m.group(7) == "True", int(m.group(4)), int(m.group(5))))
     return (avg.group(1) if avg else "-"), rows
