@@ -1,0 +1,38 @@
+{
+  "rule_id": "rakuen_jug_tail7_dd7kei_top3",
+  "hall": "楽園蒲田店",
+  "freeze_hash": "2a2616fd57310faa",
+  "target_date": "20261027",
+  "data_asof": "20261026",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-09-27",
+    "2026-10-27"
+  ],
+  "score": "hist_mean_rb_prob_model_z",
+  "selection_unit": "machine",
+  "success_criterion": "フォワード20エントリー日を経過した時点で、選出3台のedge（対同日ジャグ全台平均、diff_coins_normalized）の平均が +300枚/台 以上、かつ7日ブロックブートストラップ95%CI下限が0を上回ること。満たさなければ棄却し、工事後4日で観測された +1,006枚 は後ろ向き探索のアーティファクトだったと結論する。判定はフォワードテストのみで行い、バックテスト数値は採否根拠にしない。あわせて同一期間の rakuen_jug_renovation_rb_top3（末尾条件なし・全日エントリー）のエッジと比較し、本ルールが上回らなければ『末尾7』という条件は情報を持たず、観測されたエッジはDD7系という日の効果、またはRB上位選択の効果に過ぎないと結論する。",
+  "is_dry_run": false,
+  "picks": [
+    {
+      "machine_number": 1117,
+      "machine_name": "ネオアイムジャグラーEX",
+      "score": 0.262338,
+      "history_days": 20
+    },
+    {
+      "machine_number": 1127,
+      "machine_name": "ネオアイムジャグラーEX",
+      "score": 0.256735,
+      "history_days": 16
+    },
+    {
+      "machine_number": 1157,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 0.120345,
+      "history_days": 27
+    }
+  ],
+  "result": null,
+  "plan_digest": "46c35527a1515846"
+}

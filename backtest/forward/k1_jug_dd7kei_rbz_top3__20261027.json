@@ -1,0 +1,38 @@
+{
+  "rule_id": "k1_jug_dd7kei_rbz_top3",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "freeze_hash": "454fcf4a44767c4d",
+  "target_date": "20261027",
+  "data_asof": "20261026",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-09-27",
+    "2026-10-27"
+  ],
+  "score": "hist_mean_rb_prob_model_z",
+  "selection_unit": "machine",
+  "success_criterion": "フォワード20エントリー日を経過した時点で、選出3台のedge（対同日ジャグ全台平均、diff_coins_normalized）の平均が +200枚/台 以上、かつ7日ブロックブートストラップ95%CI下限が0を上回ること。満たさなければ棄却する。あわせて k1_jug_plain_rbz_top3 との差も報告し、本ルールのエッジが平常日ルールと同等以下であれば『7のつく日』という日の効果は存在せず、観測されたエッジはRB上位選択の効果に過ぎないと結論する。判定はフォワードテストのみで行う。",
+  "is_dry_run": false,
+  "picks": [
+    {
+      "machine_number": 2292,
+      "machine_name": "ネオアイムジャグラーEX",
+      "score": 0.501239,
+      "history_days": 28
+    },
+    {
+      "machine_number": 2235,
+      "machine_name": "ジャグラーガールズ",
+      "score": 0.394198,
+      "history_days": 28
+    },
+    {
+      "machine_number": 2193,
+      "machine_name": "ファンキージャグラー2",
+      "score": 0.274642,
+      "history_days": 27
+    }
+  ],
+  "result": null,
+  "plan_digest": "eea4bc3b422ee68e"
+}

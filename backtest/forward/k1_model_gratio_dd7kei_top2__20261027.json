@@ -1,0 +1,78 @@
+{
+  "rule_id": "k1_model_gratio_dd7kei_top2",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "freeze_hash": "a933efebb75c7036",
+  "target_date": "20261027",
+  "data_asof": "20261026",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-10-06",
+    "2026-10-27"
+  ],
+  "score": "hist_model_gratio_mean_diff",
+  "selection_unit": "machine_model",
+  "success_criterion": "フォワード20エントリー日を経過した時点で、指名機種全台の総和ベースedge（対ホール全体同日平均、diff_coins_normalized）の平均が正であり、7日ブロックブートストラップ95%CI下限が0を上回ること。満たさなければ破棄する。判定はフォワードテストのみで行い、バックテスト数値および2026-08-07の観測は採否根拠にしない。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "ToLOVEるダークネス TRANCE ver.8.7",
+      "score": 989.595202,
+      "history_rows": 13,
+      "machines": [
+        2180,
+        2181,
+        2182
+      ]
+    },
+    {
+      "machine_name": "アズールレーン THE ANIMATION",
+      "score": 931.509789,
+      "history_rows": 15,
+      "machines": [
+        2411,
+        2412,
+        2413
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 2180,
+      "machine_name": "ToLOVEるダークネス TRANCE ver.8.7",
+      "score": 989.595202,
+      "history_days": 13
+    },
+    {
+      "machine_number": 2181,
+      "machine_name": "ToLOVEるダークネス TRANCE ver.8.7",
+      "score": 989.595202,
+      "history_days": 13
+    },
+    {
+      "machine_number": 2182,
+      "machine_name": "ToLOVEるダークネス TRANCE ver.8.7",
+      "score": 989.595202,
+      "history_days": 13
+    },
+    {
+      "machine_number": 2411,
+      "machine_name": "アズールレーン THE ANIMATION",
+      "score": 931.509789,
+      "history_days": 15
+    },
+    {
+      "machine_number": 2412,
+      "machine_name": "アズールレーン THE ANIMATION",
+      "score": 931.509789,
+      "history_days": 15
+    },
+    {
+      "machine_number": 2413,
+      "machine_name": "アズールレーン THE ANIMATION",
+      "score": 931.509789,
+      "history_days": 15
+    }
+  ],
+  "result": null,
+  "plan_digest": "ddd2a366dd038303"
+}
