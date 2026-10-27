@@ -1,0 +1,323 @@
+{
+  "rule_id": "mitoya_model_term60_top3",
+  "hall": "みとや大森町店",
+  "freeze_hash": "673d238a7e985850",
+  "target_date": "20261028",
+  "data_asof": "20261027",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-08-29",
+    "2026-10-28"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +120 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "マイジャグラーⅥ",
+      "score": 564.711378,
+      "history_rows": 162,
+      "machines": [
+        641,
+        642,
+        643,
+        644,
+        645,
+        646,
+        647,
+        648,
+        649,
+        666,
+        667,
+        668,
+        669,
+        670,
+        671,
+        672,
+        673,
+        674
+      ]
+    },
+    {
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 458.197302,
+      "history_rows": 953,
+      "machines": [
+        624,
+        625,
+        626,
+        627,
+        628,
+        629,
+        630,
+        631,
+        632,
+        633,
+        634,
+        635,
+        636,
+        637,
+        638,
+        639,
+        640
+      ]
+    },
+    {
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 310.200508,
+      "history_rows": 259,
+      "machines": [
+        586,
+        587,
+        588,
+        589,
+        590
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 641,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 564.711378,
+      "history_days": 162
+    },
+    {
+      "machine_number": 642,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 564.711378,
+      "history_days": 162
+    },
+    {
+      "machine_number": 643,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 564.711378,
+      "history_days": 162
+    },
+    {
+      "machine_number": 644,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 564.711378,
+      "history_days": 162
+    },
+    {
+      "machine_number": 645,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 564.711378,
+      "history_days": 162
+    },
+    {
+      "machine_number": 646,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 564.711378,
+      "history_days": 162
+    },
+    {
+      "machine_number": 647,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 564.711378,
+      "history_days": 162
+    },
+    {
+      "machine_number": 648,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 564.711378,
+      "history_days": 162
+    },
+    {
+      "machine_number": 649,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 564.711378,
+      "history_days": 162
+    },
+    {
+      "machine_number": 666,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 564.711378,
+      "history_days": 162
+    },
+    {
+      "machine_number": 667,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 564.711378,
+      "history_days": 162
+    },
+    {
+      "machine_number": 668,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 564.711378,
+      "history_days": 162
+    },
+    {
+      "machine_number": 669,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 564.711378,
+      "history_days": 162
+    },
+    {
+      "machine_number": 670,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 564.711378,
+      "history_days": 162
+    },
+    {
+      "machine_number": 671,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 564.711378,
+      "history_days": 162
+    },
+    {
+      "machine_number": 672,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 564.711378,
+      "history_days": 162
+    },
+    {
+      "machine_number": 673,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 564.711378,
+      "history_days": 162
+    },
+    {
+      "machine_number": 674,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 564.711378,
+      "history_days": 162
+    },
+    {
+      "machine_number": 624,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 458.197302,
+      "history_days": 953
+    },
+    {
+      "machine_number": 625,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 458.197302,
+      "history_days": 953
+    },
+    {
+      "machine_number": 626,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 458.197302,
+      "history_days": 953
+    },
+    {
+      "machine_number": 627,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 458.197302,
+      "history_days": 953
+    },
+    {
+      "machine_number": 628,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 458.197302,
+      "history_days": 953
+    },
+    {
+      "machine_number": 629,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 458.197302,
+      "history_days": 953
+    },
+    {
+      "machine_number": 630,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 458.197302,
+      "history_days": 953
+    },
+    {
+      "machine_number": 631,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 458.197302,
+      "history_days": 953
+    },
+    {
+      "machine_number": 632,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 458.197302,
+      "history_days": 953
+    },
+    {
+      "machine_number": 633,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 458.197302,
+      "history_days": 953
+    },
+    {
+      "machine_number": 634,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 458.197302,
+      "history_days": 953
+    },
+    {
+      "machine_number": 635,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 458.197302,
+      "history_days": 953
+    },
+    {
+      "machine_number": 636,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 458.197302,
+      "history_days": 953
+    },
+    {
+      "machine_number": 637,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 458.197302,
+      "history_days": 953
+    },
+    {
+      "machine_number": 638,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 458.197302,
+      "history_days": 953
+    },
+    {
+      "machine_number": 639,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 458.197302,
+      "history_days": 953
+    },
+    {
+      "machine_number": 640,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 458.197302,
+      "history_days": 953
+    },
+    {
+      "machine_number": 586,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 310.200508,
+      "history_days": 259
+    },
+    {
+      "machine_number": 587,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 310.200508,
+      "history_days": 259
+    },
+    {
+      "machine_number": 588,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 310.200508,
+      "history_days": 259
+    },
+    {
+      "machine_number": 589,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 310.200508,
+      "history_days": 259
+    },
+    {
+      "machine_number": 590,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 310.200508,
+      "history_days": 259
+    }
+  ],
+  "result": null,
+  "plan_digest": "742d93e98aff6e18"
+}

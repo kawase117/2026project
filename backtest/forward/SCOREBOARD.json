@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-27T07:38:01+09:00",
+ "generated_at": "2026-10-28T07:36:41+09:00",
  "since": null,
  "params": {
   "block_days": 7,
@@ -38,27 +38,27 @@
    "hall": "レイトギャップ平和島",
    "label": "heiwajima_model_term60_top3",
    "first_date": "20260912",
-   "last_date": "20261026",
+   "last_date": "20261027",
    "stat": {
-    "n_days": 43,
-    "mean": 198.49302325581397,
-    "ci_lo": 40.34831395348837,
-    "ci_hi": 326.67901162790696,
-    "p_one_sided": 0.0035633458976434746,
-    "share_positive": 0.627906976744186,
-    "sd": 460.0728417458162,
-    "q": 0.023161748334682587
+    "n_days": 44,
+    "mean": 201.57045454545457,
+    "ci_lo": 47.39920454545455,
+    "ci_hi": 321.7347727272727,
+    "p_one_sided": 0.0026485812247083406,
+    "share_positive": 0.6363636363636364,
+    "sd": 455.1496858711712,
+    "q": 0.017215777960604212
    },
-   "recent_mean": 138.71153846153845,
+   "recent_mean": 163.9576923076923,
    "recent_n": 26,
    "verdict": "有効",
    "days_needed": null,
    "criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +81 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
    "extra": {
-    "n_plans": 43,
+    "n_plans": 44,
     "n_stale_data_days": 0,
     "pick_win_rate": 0.348,
-    "n_machine_days": 638,
+    "n_machine_days": 650,
     "criterion_edge": 60
    }
   },
@@ -77,7 +77,7 @@
     "p_one_sided": 0.623483256685019,
     "share_positive": 0.25,
     "sd": 458.0082568396921,
-    "q": 0.8336540788816187
+    "q": 0.8093688472755008
    },
    "recent_mean": -24.433333333333355,
    "recent_n": 3,
@@ -107,7 +107,7 @@
     "p_one_sided": 0.774304751308081,
     "share_positive": 0.25,
     "sd": 0.15441646429200637,
-    "q": 0.774304751308081
+    "q": 0.7976394389521786
    },
    "recent_mean": -0.04777777777777773,
    "recent_n": 3,
@@ -329,7 +329,7 @@
     "p_one_sided": 0.4847605227821651,
     "share_positive": 0.41818181818181815,
     "sd": 604.1822613939977,
-    "q": 0.7877358495210183
+    "q": 0.7380019544247008
    },
    "recent_mean": -52.81923076923078,
    "recent_n": 26,
@@ -521,7 +521,7 @@
     "p_one_sided": 0.06955277422558591,
     "share_positive": 0.5384615384615384,
     "sd": 151.81285934181747,
-    "q": 0.2710314298962941
+    "q": 0.2384138162551941
    },
    "recent_mean": 45.48846153846155,
    "recent_n": 26,
@@ -626,27 +626,27 @@
    "hall": "みとや大森町店",
    "label": "mitoya_at_eventdd_histdiff_top3",
    "first_date": "20260727",
-   "last_date": "20261024",
+   "last_date": "20261027",
    "stat": {
-    "n_days": 14,
-    "mean": -896.1928571428572,
-    "ci_lo": -1669.775357142857,
-    "ci_hi": -282.61428571428576,
-    "p_one_sided": 0.9818165286096415,
-    "share_positive": 0.21428571428571427,
-    "sd": 1437.3805065862991,
+    "n_days": 15,
+    "mean": -883.48,
+    "ci_lo": -1554.9266666666667,
+    "ci_hi": -437.04,
+    "p_one_sided": 0.9864769978882144,
+    "share_positive": 0.2,
+    "sd": 1385.969358659439,
     "q": 0.9895199834982663
    },
-   "recent_mean": -892.6142857142856,
+   "recent_mean": -810.3142857142857,
    "recent_n": 7,
    "verdict": "有害",
    "days_needed": null,
    "criterion": "【重要】AT一般×イベントDD という組み合わせは 2026-07-27 に同じデータを見て発見したものであり、バックテストは in-sample である。数値を採否根拠にしてはならない。判定はフォワードのみ。フォワード20エントリー日を経過した時点で edge 平均が +200枚/台 以上かつ 95%CI 下限 > 0 であること。満たさなければ破棄し、みとやのAT系スコアの派生はこの1本で打ち止めとする。なお 2026-05 の店長交代以降のイベントDD日は実測21日しかなく、レジーム再変化の可能性は常に残る。",
    "extra": {
-    "n_plans": 14,
+    "n_plans": 15,
     "n_stale_data_days": 0,
-    "pick_win_rate": 0.238,
-    "n_machine_days": 42,
+    "pick_win_rate": 0.244,
+    "n_machine_days": 45,
     "criterion_edge": 200
    }
   },
@@ -656,27 +656,27 @@
    "hall": "みとや大森町店",
    "label": "mitoya_jug_eventdd_rb_top3",
    "first_date": "20260724",
-   "last_date": "20261024",
+   "last_date": "20261027",
    "stat": {
-    "n_days": 15,
-    "mean": -199.23999999999998,
-    "ci_lo": -460.9333333333333,
-    "ci_hi": 34.459999999999994,
-    "p_one_sided": 0.930978496399852,
-    "share_positive": 0.3333333333333333,
-    "sd": 490.565577092983,
+    "n_days": 16,
+    "mean": -180.25,
+    "ci_lo": -439.8084375,
+    "ci_hi": 75.64375,
+    "p_one_sided": 0.923091469090235,
+    "share_positive": 0.375,
+    "sd": 479.9800704195956,
     "q": 0.9895199834982663
    },
-   "recent_mean": 13.685714285714292,
+   "recent_mean": 132.81428571428572,
    "recent_n": 7,
    "verdict": "差を検出できず",
-   "days_needed": 134,
+   "days_needed": 127,
    "criterion": "エッジの平均が +200枚/台 以上かつ 95%CI 下限 > 0。エントリー日が限定される分、1日あたりの取り分は蒲田7ルールより高くないと交通費に負ける。",
    "extra": {
-    "n_plans": 15,
+    "n_plans": 16,
     "n_stale_data_days": 0,
     "pick_win_rate": 0.333,
-    "n_machine_days": 45,
+    "n_machine_days": 48,
     "criterion_edge": 200
    }
   },
@@ -686,21 +686,21 @@
    "hall": "みとや大森町店",
    "label": "mitoya_jug_eventdd_rb_top3",
    "first_date": "20260730",
-   "last_date": "20261024",
+   "last_date": "20261027",
    "stat": {
-    "n_days": 13,
-    "mean": 0.03102564102564104,
-    "ci_lo": -0.018974358974358944,
-    "ci_hi": 0.11257051282051275,
-    "p_one_sided": 0.25950120183752184,
-    "share_positive": 0.46153846153846156,
-    "sd": 0.16837119824619762,
+    "n_days": 14,
+    "mean": 0.02380952380952383,
+    "ci_lo": -0.044297619047619016,
+    "ci_hi": 0.11261904761904759,
+    "p_one_sided": 0.29809125755229515,
+    "share_positive": 0.42857142857142855,
+    "sd": 0.16400363318290143,
     "q": 0.5496641288952854
    },
-   "recent_mean": 0.018095238095238084,
+   "recent_mean": 0.03523809523809523,
    "recent_n": 7,
    "verdict": "差を検出できず",
-   "days_needed": 5,
+   "days_needed": 3,
    "criterion": null,
    "extra": {}
   },
@@ -710,27 +710,27 @@
    "hall": "みとや大森町店",
    "label": "mitoya_jug_eventdd_rbz_top3",
    "first_date": "20260724",
-   "last_date": "20261024",
+   "last_date": "20261027",
    "stat": {
-    "n_days": 15,
-    "mean": -46.06666666666671,
-    "ci_lo": -627.7066666666667,
-    "ci_hi": 476.26,
-    "p_one_sided": 0.5849211465845298,
-    "share_positive": 0.4,
-    "sd": 816.3759687674253,
-    "q": 0.8336540788816187
+    "n_days": 16,
+    "mean": -19.9625,
+    "ci_lo": -591.2276562500001,
+    "ci_hi": 494.7634374999989,
+    "p_one_sided": 0.5393091205411276,
+    "share_positive": 0.4375,
+    "sd": 795.5760478001669,
+    "q": 0.7380019544247008
    },
-   "recent_mean": 497.4428571428571,
+   "recent_mean": 551.8142857142857,
    "recent_n": 7,
    "verdict": "差を検出できず",
-   "days_needed": 398,
+   "days_needed": 376,
    "criterion": "【重要】このルールは既存ルールの失敗を見た後に作られた変種であり、バックテストの数値を採否根拠にしてはならない。判定はフォワードテストのみで行う。フォワード20エントリー日を経過した時点で edge 平均が +200枚/台 以上かつ 95%CI 下限 > 0 であること。満たさなければ破棄。またRB確率系のバリアントはこの1本で打ち止めとし、これ以上の派生を作らない。",
    "extra": {
-    "n_plans": 15,
+    "n_plans": 16,
     "n_stale_data_days": 0,
-    "pick_win_rate": 0.467,
-    "n_machine_days": 45,
+    "pick_win_rate": 0.479,
+    "n_machine_days": 48,
     "criterion_edge": 200
    }
   },
@@ -740,18 +740,18 @@
    "hall": "みとや大森町店",
    "label": "mitoya_jug_eventdd_rbz_top3",
    "first_date": "20260730",
-   "last_date": "20261024",
+   "last_date": "20261027",
    "stat": {
-    "n_days": 13,
-    "mean": -0.03307692307692307,
-    "ci_lo": -0.19435897435897434,
-    "ci_hi": 0.13435897435897434,
-    "p_one_sided": 0.6987490677922356,
-    "share_positive": 0.46153846153846156,
-    "sd": 0.22296595628888652,
-    "q": 0.774304751308081
+    "n_days": 14,
+    "mean": -0.051904761904761905,
+    "ci_lo": -0.18190476190476187,
+    "ci_hi": 0.1288095238095238,
+    "p_one_sided": 0.7976394389521786,
+    "share_positive": 0.42857142857142855,
+    "sd": 0.22550499562648949,
+    "q": 0.7976394389521786
    },
-   "recent_mean": 0.10952380952380954,
+   "recent_mean": 0.09333333333333331,
    "recent_n": 7,
    "verdict": "差を検出できず",
    "days_needed": 18,
@@ -764,27 +764,27 @@
    "hall": "みとや大森町店",
    "label": "mitoya_model_gratio_top2",
    "first_date": "20260804",
-   "last_date": "20261026",
+   "last_date": "20261027",
    "stat": {
-    "n_days": 49,
-    "mean": -71.54897959183674,
-    "ci_lo": -524.3755102040817,
-    "ci_hi": 241.54505102040795,
-    "p_one_sided": 0.6961015354012332,
-    "share_positive": 0.5918367346938775,
-    "sd": 969.4697565169428,
-    "q": 0.8618399962110507
+    "n_days": 50,
+    "mean": -54.4,
+    "ci_lo": -501.70154999999994,
+    "ci_hi": 238.73469999999978,
+    "p_one_sided": 0.6537209920302122,
+    "share_positive": 0.6,
+    "sd": 967.1581724889911,
+    "q": 0.8093688472755008
    },
-   "recent_mean": 152.0923076923077,
+   "recent_mean": 207.41923076923078,
    "recent_n": 26,
    "verdict": "差を検出できず",
-   "days_needed": 533,
+   "days_needed": 529,
    "criterion": "フォワード20エントリー日を経過した時点で、指名機種全台の総和ベースedge（対ホール全体同日平均、diff_coins_normalized）の平均が正であり、95%CI(block7)下限が0を上回ること。満たさなければ破棄する。判定はフォワードテストのみで行い、バックテスト数値は採否根拠にしない。",
    "extra": {
-    "n_plans": 49,
+    "n_plans": 50,
     "n_stale_data_days": 0,
-    "pick_win_rate": 0.482,
-    "n_machine_days": 326,
+    "pick_win_rate": 0.49,
+    "n_machine_days": 361,
     "criterion_edge": null
    }
   },
@@ -794,27 +794,27 @@
    "hall": "みとや大森町店",
    "label": "mitoya_model_term60_top3",
    "first_date": "20260912",
-   "last_date": "20261026",
+   "last_date": "20261027",
    "stat": {
-    "n_days": 43,
-    "mean": 284.2325581395349,
-    "ci_lo": 139.12302325581396,
-    "ci_hi": 472.93401162790695,
-    "p_one_sided": 0.00023769245002476047,
-    "share_positive": 0.7674418604651163,
-    "sd": 491.8338960418253,
-    "q": 0.002060001233547924
+    "n_days": 44,
+    "mean": 293.5568181818182,
+    "ci_lo": 139.33034090909092,
+    "ci_hi": 468.03193181818176,
+    "p_one_sided": 0.0001327444870642842,
+    "share_positive": 0.7727272727272727,
+    "sd": 490.00043540451816,
+    "q": 0.0011504522212237966
    },
-   "recent_mean": 424.3192307692307,
+   "recent_mean": 459.7230769230769,
    "recent_n": 26,
    "verdict": "有効",
    "days_needed": null,
    "criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +120 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
    "extra": {
-    "n_plans": 43,
+    "n_plans": 44,
     "n_stale_data_days": 0,
-    "pick_win_rate": 0.422,
-    "n_machine_days": 1267,
+    "pick_win_rate": 0.426,
+    "n_machine_days": 1307,
     "criterion_edge": 60
    }
   },
@@ -824,27 +824,27 @@
    "hall": "楽園蒲田店",
    "label": "rakuen_block2247_position_follow",
    "first_date": "20260810",
-   "last_date": "20261026",
+   "last_date": "20261027",
    "stat": {
-    "n_days": 45,
-    "mean": 322.17333333333335,
-    "ci_lo": 61.38655555555559,
-    "ci_hi": 707.3234999999992,
-    "p_one_sided": 0.07297000035669457,
-    "share_positive": 0.4444444444444444,
-    "sd": 1460.0567130018678,
-    "q": 0.2710314298962941
+    "n_days": 46,
+    "mean": 344.13043478260875,
+    "ci_lo": 30.837826086956493,
+    "ci_hi": 699.3377173913035,
+    "p_one_sided": 0.057403518368600366,
+    "share_positive": 0.45652173913043476,
+    "sd": 1451.4028710748273,
+    "q": 0.2384138162551941
    },
-   "recent_mean": -6.623076923076903,
+   "recent_mean": 43.68076923076924,
    "recent_n": 26,
    "verdict": "差を検出できず",
-   "days_needed": 1274,
+   "days_needed": 1257,
    "criterion": "本ルールは 20260706-20260808 のデータから発見したものであり、同期間のバックテストは in-sample の自己参照なので採否根拠にしない。判定はフォワードのみ。フォワード30エントリー日を経過した時点で mean_edge_per_pick の平均が +300枚/台 以上、かつ 95%CI 下限 > 0 であること。満たさなければ破棄し、位置ブロック追走ルールの派生はこの1本で打ち止めとする。機種入替が起きてもセクション2247-2250を追い続ける(機種を追わないことが位置仮説の核心であり、ここを機種追走に変えたら別ルールとして新規登録する)。入替当日は新機種の履歴が無く plan が失敗するため、その日はエントリー無しとして30日に数えない。",
    "extra": {
-    "n_plans": 45,
+    "n_plans": 46,
     "n_stale_data_days": 0,
-    "pick_win_rate": 0.383,
-    "n_machine_days": 180,
+    "pick_win_rate": 0.386,
+    "n_machine_days": 184,
     "criterion_edge": 300
    }
   },
@@ -863,7 +863,7 @@
     "p_one_sided": 0.05152295398193152,
     "share_positive": 1.0,
     "sd": 388.35844267892514,
-    "q": 0.2679193607060439
+    "q": 0.2384138162551941
    },
    "recent_mean": 643.3000000000001,
    "recent_n": 3,
@@ -884,27 +884,27 @@
    "hall": "楽園蒲田店",
    "label": "rakuen_jug_renovation_rb_top3",
    "first_date": "20260728",
-   "last_date": "20261026",
+   "last_date": "20261027",
    "stat": {
-    "n_days": 54,
-    "mean": -23.342592592592595,
-    "ci_lo": -172.50254629629632,
-    "ci_hi": 145.28032407407395,
-    "p_one_sided": 0.641272368370476,
-    "share_positive": 0.42592592592592593,
-    "sd": 471.50283442268227,
-    "q": 0.8336540788816187
+    "n_days": 55,
+    "mean": -2.6290909090909116,
+    "ci_lo": -174.9445454545455,
+    "ci_hi": 139.81709090909087,
+    "p_one_sided": 0.5157415080721479,
+    "share_positive": 0.43636363636363634,
+    "sd": 491.72724473240373,
+    "q": 0.7380019544247008
    },
-   "recent_mean": -207.20384615384617,
+   "recent_mean": -161.9961538461539,
    "recent_n": 26,
    "verdict": "差を検出できず",
-   "days_needed": 84,
+   "days_needed": 95,
    "criterion": "【重要】この主張は2026-07-28に工事後データを直接見て発見したものであり、バックテストは in-sample である。数値を採否根拠にしてはならない。判定はフォワードのみ。フォワード20エントリー日を経過した時点で edge 平均が +200枚/台 以上かつ 95%CI 下限 > 0 であること。満たさなければ破棄し、楽園のジャグ系スコアの派生はこの1本で打ち止めとする。なお工事後n=19時点の新台特需（設定不問の高回転）が混入している可能性は未検証で、フォワード期間が進むにつれて減衰する場合はレジームではなく特需だったと判断する。",
    "extra": {
-    "n_plans": 54,
+    "n_plans": 55,
     "n_stale_data_days": 0,
-    "pick_win_rate": 0.333,
-    "n_machine_days": 162,
+    "pick_win_rate": 0.345,
+    "n_machine_days": 165,
     "criterion_edge": 200
    }
   },
@@ -914,21 +914,21 @@
    "hall": "楽園蒲田店",
    "label": "rakuen_jug_renovation_rb_top3",
    "first_date": "20260729",
-   "last_date": "20261026",
+   "last_date": "20261027",
    "stat": {
-    "n_days": 53,
-    "mean": -0.026446540880503147,
-    "ci_lo": -0.12832783018867927,
-    "ci_hi": 0.09317688679245283,
-    "p_one_sided": 0.7330676241768098,
-    "share_positive": 0.49056603773584906,
-    "sd": 0.3074196507031478,
-    "q": 0.774304751308081
+    "n_days": 54,
+    "mean": -0.025030864197530867,
+    "ci_lo": -0.12754243827160489,
+    "ci_hi": 0.09055787037037034,
+    "p_one_sided": 0.7256921368111473,
+    "share_positive": 0.5,
+    "sd": 0.3046833065141926,
+    "q": 0.7976394389521786
    },
-   "recent_mean": -0.11012820512820515,
+   "recent_mean": -0.12692307692307692,
    "recent_n": 26,
    "verdict": "差を検出できず",
-   "days_needed": 6,
+   "days_needed": 4,
    "criterion": null,
    "extra": {}
   },
@@ -938,27 +938,27 @@
    "hall": "楽園蒲田店",
    "label": "rakuen_jug_tail7_dd7kei_top3",
    "first_date": "20260917",
-   "last_date": "20261007",
+   "last_date": "20261027",
    "stat": {
-    "n_days": 3,
-    "mean": 1141.7333333333333,
-    "ci_lo": -39.9,
-    "ci_hi": 2151.5,
-    "p_one_sided": 0.10780656472879908,
-    "share_positive": 0.6666666666666666,
-    "sd": 1105.76313165765,
-    "q": 0.32596575078387025
+    "n_days": 4,
+    "mean": 952.775,
+    "ci_lo": 173.0,
+    "ci_hi": 1732.5500000000002,
+    "p_one_sided": 0.0733580973092905,
+    "share_positive": 0.75,
+    "sd": 978.7555410656262,
+    "q": 0.2384138162551941
    },
-   "recent_mean": 1141.7333333333333,
-   "recent_n": 3,
+   "recent_mean": 849.75,
+   "recent_n": 2,
    "verdict": "標本不足",
-   "days_needed": 753,
+   "days_needed": 589,
    "criterion": "フォワード20エントリー日を経過した時点で、選出3台のedge（対同日ジャグ全台平均、diff_coins_normalized）の平均が +300枚/台 以上、かつ7日ブロックブートストラップ95%CI下限が0を上回ること。満たさなければ棄却し、工事後4日で観測された +1,006枚 は後ろ向き探索のアーティファクトだったと結論する。判定はフォワードテストのみで行い、バックテスト数値は採否根拠にしない。あわせて同一期間の rakuen_jug_renovation_rb_top3（末尾条件なし・全日エントリー）のエッジと比較し、本ルールが上回らなければ『末尾7』という条件は情報を持たず、観測されたエッジはDD7系という日の効果、またはRB上位選択の効果に過ぎないと結論する。",
    "extra": {
-    "n_plans": 3,
+    "n_plans": 4,
     "n_stale_data_days": 0,
     "pick_win_rate": 0.667,
-    "n_machine_days": 9,
+    "n_machine_days": 12,
     "criterion_edge": 300
    }
   },
@@ -968,21 +968,21 @@
    "hall": "楽園蒲田店",
    "label": "rakuen_jug_tail7_dd7kei_top3",
    "first_date": "20260917",
-   "last_date": "20261007",
+   "last_date": "20261027",
    "stat": {
-    "n_days": 3,
-    "mean": -0.042222222222222126,
-    "ci_lo": -0.17333333333333334,
-    "ci_hi": 0.07666666666666688,
-    "p_one_sided": 0.6905534084938758,
-    "share_positive": 0.3333333333333333,
-    "sd": 0.12544734766840254,
-    "q": 0.774304751308081
+    "n_days": 4,
+    "mean": -0.014166666666666577,
+    "ci_lo": -0.11249999999999999,
+    "ci_hi": 0.07333333333333347,
+    "p_one_sided": 0.5880227775869085,
+    "share_positive": 0.5,
+    "sd": 0.11678961775267026,
+    "q": 0.7976394389521786
    },
-   "recent_mean": -0.042222222222222126,
-   "recent_n": 3,
+   "recent_mean": -0.05166666666666664,
+   "recent_n": 2,
    "verdict": "標本不足",
-   "days_needed": 7,
+   "days_needed": 5,
    "criterion": null,
    "extra": {}
   },
@@ -992,27 +992,27 @@
    "hall": "楽園蒲田店",
    "label": "rakuen_model_term60_top3",
    "first_date": "20260912",
-   "last_date": "20261026",
+   "last_date": "20261027",
    "stat": {
-    "n_days": 43,
-    "mean": 357.4348837209302,
-    "ci_lo": 245.53406976744182,
-    "ci_hi": 455.9422093023256,
-    "p_one_sided": 2.7345422109409207e-05,
-    "share_positive": 0.813953488372093,
-    "sd": 522.0022905823312,
-    "q": 0.0003554904874223197
+    "n_days": 44,
+    "mean": 351.04090909090905,
+    "ci_lo": 242.68096590909093,
+    "ci_hi": 455.4682954545454,
+    "p_one_sided": 2.566683614209651e-05,
+    "share_positive": 0.8181818181818182,
+    "sd": 517.6372732518587,
+    "q": 0.00033366886984725463
    },
-   "recent_mean": 367.6307692307692,
+   "recent_mean": 354.1615384615385,
    "recent_n": 26,
    "verdict": "有効",
    "days_needed": null,
    "criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +125 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
    "extra": {
-    "n_plans": 43,
+    "n_plans": 44,
     "n_stale_data_days": 0,
-    "pick_win_rate": 0.419,
-    "n_machine_days": 1558,
+    "pick_win_rate": 0.417,
+    "n_machine_days": 1596,
     "criterion_edge": 60
    }
   },
@@ -1022,27 +1022,27 @@
    "hall": "ザ-シティ-ベルシティ雑色店",
    "label": "zassiki_jug_fixed_top3",
    "first_date": "20260727",
-   "last_date": "20261026",
+   "last_date": "20261027",
    "stat": {
-    "n_days": 55,
-    "mean": -8.381818181818176,
-    "ci_lo": -113.62831818181816,
-    "ci_hi": 102.72399999999995,
-    "p_one_sided": 0.5410794404887294,
-    "share_positive": 0.45454545454545453,
-    "sd": 599.7957844105217,
-    "q": 0.8275332619239391
+    "n_days": 56,
+    "mean": -4.701785714285718,
+    "ci_lo": -113.61727678571428,
+    "ci_hi": 101.6861160714285,
+    "p_one_sided": 0.5234720264296673,
+    "share_positive": 0.4642857142857143,
+    "sd": 594.955772379479,
+    "q": 0.7380019544247008
    },
-   "recent_mean": -76.62307692307692,
+   "recent_mean": -67.58846153846153,
    "recent_n": 26,
    "verdict": "差を検出できず",
-   "days_needed": 168,
+   "days_needed": 163,
    "criterion": "edge（同日ジャグ全台平均との差枚差）の平均が +150枚/台 以上、かつ 7日ブロックbootstrap の 95%CI 下限 > 0。分散分解が示す固定台効果 2.02pp は平均投資額換算で約300枚/日に相当するため、その半分は取れて然るべき。下回れば固定効果仮説も棄却する。",
    "extra": {
-    "n_plans": 55,
+    "n_plans": 56,
     "n_stale_data_days": 1,
-    "pick_win_rate": 0.382,
-    "n_machine_days": 165,
+    "pick_win_rate": 0.381,
+    "n_machine_days": 168,
     "criterion_edge": 150
    }
   },
@@ -1052,27 +1052,27 @@
    "hall": "ザ-シティ-ベルシティ雑色店",
    "label": "zassiki_model_term60_top3",
    "first_date": "20260912",
-   "last_date": "20261026",
+   "last_date": "20261027",
    "stat": {
-    "n_days": 43,
-    "mean": 55.46976744186046,
-    "ci_lo": -87.35999999999999,
-    "ci_hi": 273.3102906976744,
-    "p_one_sided": 0.21784227566942663,
-    "share_positive": 0.5348837209302325,
-    "sd": 462.16885109381093,
-    "q": 0.40456422624322086
+    "n_days": 44,
+    "mean": 48.98863636363637,
+    "ci_lo": -96.63517045454545,
+    "ci_hi": 270.9070454545453,
+    "p_one_sided": 0.24129148898210748,
+    "share_positive": 0.5227272727272727,
+    "sd": 458.7818943812526,
+    "q": 0.44811276525248533
    },
-   "recent_mean": -25.850000000000005,
+   "recent_mean": -54.723076923076924,
    "recent_n": 26,
    "verdict": "差を検出できず",
-   "days_needed": 90,
+   "days_needed": 87,
    "criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +87 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
    "extra": {
-    "n_plans": 43,
+    "n_plans": 44,
     "n_stale_data_days": 1,
-    "pick_win_rate": 0.352,
-    "n_machine_days": 920,
+    "pick_win_rate": 0.35,
+    "n_machine_days": 936,
     "criterion_edge": 60
    }
   },
@@ -1838,25 +1838,25 @@
    "hall": "みとや大森町店",
    "label": "みとや大森町店",
    "first_date": "20261014",
-   "last_date": "20261026",
+   "last_date": "20261027",
    "stat": {
-    "n_days": 13,
-    "mean": 331.9384615384615,
-    "ci_lo": 218.99961538461542,
-    "ci_hi": 623.1311538461539,
-    "p_one_sided": 0.04596007615041049,
-    "share_positive": 0.6153846153846154,
-    "sd": 653.3947371720272,
-    "q": 0.38353407389974564
+    "n_days": 14,
+    "mean": 406.27142857142854,
+    "ci_lo": 217.39285714285714,
+    "ci_hi": 637.5214285714285,
+    "p_one_sided": 0.022660381873133458,
+    "share_positive": 0.6428571428571429,
+    "sd": 686.61472617313,
+    "q": 0.2266038187313346
    },
-   "recent_mean": 331.9384615384615,
-   "recent_n": 13,
+   "recent_mean": 406.27142857142854,
+   "recent_n": 14,
    "verdict": "差を検出できず",
-   "days_needed": 251,
+   "days_needed": 278,
    "criterion": null,
    "extra": {
     "timing": {
-     "pre_open": 8,
+     "pre_open": 9,
      "same_day": 3,
      "after": 2
     }
@@ -1877,7 +1877,7 @@
     "p_one_sided": 0.840291115235433,
     "share_positive": 0.2,
     "sd": 371.130452806018,
-    "q": 0.9713796509077455
+    "q": 0.9478448721218145
    },
    "recent_mean": -188.54000000000002,
    "recent_n": 5,
@@ -1967,7 +1967,7 @@
     "p_one_sided": 0.853060384909633,
     "share_positive": 0.23076923076923078,
     "sd": 578.9126511765896,
-    "q": 0.9713796509077455
+    "q": 0.9478448721218145
    },
    "recent_mean": -176.24615384615385,
    "recent_n": 13,
@@ -2018,25 +2018,25 @@
    "hall": "楽園蒲田店",
    "label": "楽園蒲田店",
    "first_date": "20261013",
-   "last_date": "20261025",
+   "last_date": "20261027",
    "stat": {
-    "n_days": 13,
-    "mean": -96.96153846153847,
-    "ci_lo": -192.35096153846152,
-    "ci_hi": 8.399999999999991,
-    "p_one_sided": 0.8965482559186797,
-    "share_positive": 0.3076923076923077,
-    "sd": 262.0284448250531,
-    "q": 0.9713796509077455
+    "n_days": 14,
+    "mean": -28.378571428571426,
+    "ci_lo": -180.27589285714285,
+    "ci_hi": 34.935714285714276,
+    "p_one_sided": 0.6138144208506009,
+    "share_positive": 0.35714285714285715,
+    "sd": 359.4832106458711,
+    "q": 0.8769186610969852
    },
-   "recent_mean": -96.96153846153847,
-   "recent_n": 13,
+   "recent_mean": -28.378571428571426,
+   "recent_n": 14,
    "verdict": "差を検出できず",
-   "days_needed": 30,
+   "days_needed": 66,
    "criterion": null,
    "extra": {
     "timing": {
-     "pre_open": 7,
+     "pre_open": 8,
      "same_day": 3,
      "after": 3
     }
@@ -2057,7 +2057,7 @@
     "p_one_sided": 0.6138430627678897,
     "share_positive": 0.6,
     "sd": 363.4179508499821,
-    "q": 0.9713796509077455
+    "q": 0.8769186610969852
    },
    "recent_mean": -50.31999999999999,
    "recent_n": 5,
@@ -2087,7 +2087,7 @@
     "p_one_sided": 0.6053290460104688,
     "share_positive": 0.4,
     "sd": 320.1870000484092,
-    "q": 0.9713796509077455
+    "q": 0.8769186610969852
    },
    "recent_mean": -40.9,
    "recent_n": 5,
@@ -2228,25 +2228,25 @@
    "hall": "みとや大森町店",
    "label": "みとや大森町店",
    "first_date": "20261008",
-   "last_date": "20261024",
+   "last_date": "20261027",
    "stat": {
-    "n_days": 8,
-    "mean": 621.0625,
-    "ci_lo": 486.88750000000005,
-    "ci_hi": 769.15,
-    "p_one_sided": 2.4994941024638836e-05,
+    "n_days": 9,
+    "mean": 608.5666666666667,
+    "ci_lo": 546.0444444444444,
+    "ci_hi": 757.6888888888889,
+    "p_one_sided": 5.894957095796136e-06,
     "share_positive": 1.0,
-    "sd": 200.0083493792911,
-    "q": 0.0002249544692217495
+    "sd": 190.80942062697008,
+    "q": 5.3054613862165226e-05
    },
-   "recent_mean": 621.0625,
-   "recent_n": 8,
+   "recent_mean": 608.5666666666667,
+   "recent_n": 9,
    "verdict": "標本不足",
-   "days_needed": 17,
+   "days_needed": 14,
    "criterion": null,
    "extra": {
     "timing": {
-     "pre_open": 3,
+     "pre_open": 4,
      "same_day": 2,
      "after": 3
     }
@@ -2408,25 +2408,25 @@
    "hall": "レイトギャップ平和島",
    "label": "レイトギャップ平和島",
    "first_date": "20261013",
-   "last_date": "20261026",
+   "last_date": "20261027",
    "stat": {
-    "n_days": 4,
-    "mean": 753.2249999999999,
-    "ci_lo": -34.175,
-    "ci_hi": 1900.9499999999998,
-    "p_one_sided": 0.13897286070743733,
-    "share_positive": 0.75,
-    "sd": 1139.567966014606,
-    "q": 0.2501511492733872
+    "n_days": 5,
+    "mean": 627.5799999999999,
+    "ci_lo": 35.1,
+    "ci_hi": 1546.028999999996,
+    "p_one_sided": 0.12161875964270275,
+    "share_positive": 0.8,
+    "sd": 1026.1065695141026,
+    "q": 0.21891376735686494
    },
-   "recent_mean": 753.2249999999999,
-   "recent_n": 4,
+   "recent_mean": 627.5799999999999,
+   "recent_n": 5,
    "verdict": "標本不足",
-   "days_needed": 799,
+   "days_needed": 646,
    "criterion": null,
    "extra": {
     "timing": {
-     "pre_open": 3,
+     "pre_open": 4,
      "same_day": 0,
      "after": 1
     }
@@ -2438,25 +2438,25 @@
    "hall": "楽園蒲田店",
    "label": "楽園蒲田店",
    "first_date": "20261006",
-   "last_date": "20261026",
+   "last_date": "20261027",
    "stat": {
-    "n_days": 20,
-    "mean": 382.15500000000003,
-    "ci_lo": 143.277375,
-    "ci_hi": 445.89549999999974,
-    "p_one_sided": 0.003704515864325458,
-    "share_positive": 0.9,
-    "sd": 570.2329980621495,
-    "q": 0.01667032138946456
+    "n_days": 21,
+    "mean": 400.1761904761905,
+    "ci_lo": 148.9333333333333,
+    "ci_hi": 527.6904761904761,
+    "p_one_sided": 0.0019435783660470111,
+    "share_positive": 0.9047619047619048,
+    "sd": 561.8962697017679,
+    "q": 0.00874610264721155
    },
-   "recent_mean": 382.15500000000003,
-   "recent_n": 20,
+   "recent_mean": 400.1761904761905,
+   "recent_n": 21,
    "verdict": "有効",
    "days_needed": null,
    "criterion": null,
    "extra": {
     "timing": {
-     "pre_open": 10,
+     "pre_open": 11,
      "same_day": 4,
      "after": 6
     }
@@ -2507,7 +2507,7 @@
     "p_one_sided": 0.10268402483810983,
     "share_positive": 1.0,
     "sd": 1667.032042283531,
-    "q": 0.2310390558857471
+    "q": 0.21891376735686494
    },
    "recent_mean": 1781.6000000000001,
    "recent_n": 3,
@@ -2798,25 +2798,25 @@
    "hall": "みとや大森町店",
    "label": "みとや大森町店",
    "first_date": "20261008",
-   "last_date": "20261008",
+   "last_date": "20261027",
    "stat": {
-    "n_days": 1,
-    "mean": 1114.2,
-    "ci_lo": null,
-    "ci_hi": null,
+    "n_days": 2,
+    "mean": 973.2,
+    "ci_lo": 832.2,
+    "ci_hi": 1114.2,
     "p_one_sided": null,
     "share_positive": 1.0,
-    "sd": null,
+    "sd": 199.4041122946064,
     "q": null
    },
-   "recent_mean": 1114.2,
-   "recent_n": 1,
+   "recent_mean": 973.2,
+   "recent_n": 2,
    "verdict": "標本不足",
-   "days_needed": null,
+   "days_needed": 23,
    "criterion": null,
    "extra": {
     "timing": {
-     "pre_open": 0,
+     "pre_open": 1,
      "same_day": 0,
      "after": 1
     }
@@ -2978,25 +2978,25 @@
    "hall": "みとや大森町店",
    "label": "みとや大森町店",
    "first_date": "20261014",
-   "last_date": "20261026",
+   "last_date": "20261027",
    "stat": {
-    "n_days": 8,
-    "mean": -0.011343431315002622,
-    "ci_lo": -0.1397390392719446,
-    "ci_hi": 0.17391598574579611,
-    "p_one_sided": 0.5554222142239202,
-    "share_positive": 0.5,
-    "sd": 0.2219897698245687,
-    "q": 0.9490116057713607
+    "n_days": 9,
+    "mean": 0.02537808848453417,
+    "ci_lo": -0.08864881781797769,
+    "ci_hi": 0.1522874406184282,
+    "p_one_sided": 0.3771650634029169,
+    "share_positive": 0.5555555555555556,
+    "sd": 0.23506542879783346,
+    "q": 0.848621392656563
    },
-   "recent_mean": -0.011343431315002622,
-   "recent_n": 8,
+   "recent_mean": 0.02537808848453417,
+   "recent_n": 9,
    "verdict": "標本不足",
-   "days_needed": 23,
+   "days_needed": 26,
    "criterion": null,
    "extra": {
     "timing": {
-     "pre_open": 5,
+     "pre_open": 6,
      "same_day": 1,
      "after": 2
     }
@@ -3158,25 +3158,25 @@
    "hall": "楽園蒲田店",
    "label": "楽園蒲田店",
    "first_date": "20261015",
-   "last_date": "20261025",
+   "last_date": "20261027",
    "stat": {
-    "n_days": 10,
-    "mean": 0.05550670198296128,
-    "ci_lo": -0.09344429012172861,
-    "ci_hi": 0.1864998211287377,
-    "p_one_sided": 0.30749202611468596,
-    "share_positive": 0.5,
-    "sd": 0.33694610524151536,
-    "q": 0.9224760783440579
+    "n_days": 11,
+    "mean": 0.07926759277063687,
+    "ci_lo": -0.0832360473899291,
+    "ci_hi": 0.17759141801085201,
+    "p_one_sided": 0.2215537400920884,
+    "share_positive": 0.5454545454545454,
+    "sd": 0.3292260458939208,
+    "q": 0.6646612202762652
    },
-   "recent_mean": 0.05550670198296128,
-   "recent_n": 10,
+   "recent_mean": 0.07926759277063687,
+   "recent_n": 11,
    "verdict": "差を検出できず",
-   "days_needed": 61,
+   "days_needed": 57,
    "criterion": null,
    "extra": {
     "timing": {
-     "pre_open": 6,
+     "pre_open": 7,
      "same_day": 3,
      "after": 1
     }
@@ -3608,25 +3608,25 @@
    "hall": "みとや大森町店",
    "label": "みとや大森町店",
    "first_date": "20261014",
-   "last_date": "20261026",
+   "last_date": "20261027",
    "stat": {
-    "n_days": 12,
-    "mean": -0.018548814810116655,
-    "ci_lo": -0.059740721445255184,
-    "ci_hi": 0.07681224464584972,
-    "p_one_sided": 0.6752787122303148,
-    "share_positive": 0.5,
-    "sd": 0.13751831150571997,
-    "q": 0.9949393461288691
+    "n_days": 13,
+    "mean": -0.008154549529400142,
+    "ci_lo": -0.0608901575735833,
+    "ci_hi": 0.07132730555987038,
+    "p_one_sided": 0.5832261713325266,
+    "share_positive": 0.5384615384615384,
+    "sd": 0.13689366405671363,
+    "q": 0.9720436188875444
    },
-   "recent_mean": -0.018548814810116655,
-   "recent_n": 12,
+   "recent_mean": -0.008154549529400142,
+   "recent_n": 13,
    "verdict": "差を検出できず",
-   "days_needed": 35,
+   "days_needed": 34,
    "criterion": null,
    "extra": {
     "timing": {
-     "pre_open": 7,
+     "pre_open": 8,
      "same_day": 3,
      "after": 2
     }
@@ -3647,7 +3647,7 @@
     "p_one_sided": 0.5823108922056813,
     "share_positive": 0.3333333333333333,
     "sd": 0.31881737656970344,
-    "q": 0.9949393461288691
+    "q": 0.9720436188875444
    },
    "recent_mean": -0.043445983363508134,
    "recent_n": 3,
@@ -3788,25 +3788,25 @@
    "hall": "楽園蒲田店",
    "label": "楽園蒲田店",
    "first_date": "20261015",
-   "last_date": "20261025",
+   "last_date": "20261027",
    "stat": {
-    "n_days": 10,
-    "mean": -0.0006385148321282119,
-    "ci_lo": -0.12896345681816457,
-    "ci_hi": 0.10781147742613721,
-    "p_one_sided": 0.5030736709114583,
-    "share_positive": 0.5,
-    "sd": 0.2549055988106087,
-    "q": 0.9949393461288691
+    "n_days": 11,
+    "mean": 0.021147720368868552,
+    "ci_lo": -0.11778066912646538,
+    "ci_hi": 0.10422211881658239,
+    "p_one_sided": 0.39337483299793335,
+    "share_positive": 0.5454545454545454,
+    "sd": 0.25238902187111895,
+    "q": 0.9720436188875444
    },
-   "recent_mean": -0.0006385148321282119,
-   "recent_n": 10,
+   "recent_mean": 0.021147720368868552,
+   "recent_n": 11,
    "verdict": "差を検出できず",
-   "days_needed": 151,
+   "days_needed": 147,
    "criterion": null,
    "extra": {
     "timing": {
-     "pre_open": 6,
+     "pre_open": 7,
      "same_day": 3,
      "after": 1
     }
@@ -3857,7 +3857,7 @@
     "p_one_sided": 0.5030404159624213,
     "share_positive": 0.3333333333333333,
     "sd": 0.13022601893925403,
-    "q": 0.9949393461288691
+    "q": 0.9720436188875444
    },
    "recent_mean": -0.0006465813352997859,
    "recent_n": 3,
@@ -3968,25 +3968,25 @@
    "hall": "みとや大森町店",
    "label": "みとや大森町店",
    "first_date": "20261008",
-   "last_date": "20261024",
+   "last_date": "20261027",
    "stat": {
-    "n_days": 4,
-    "mean": -0.11917364743448325,
-    "ci_lo": -0.39175319471127457,
-    "ci_hi": 0.019734914380790947,
-    "p_one_sided": 0.7770943529745848,
-    "share_positive": 0.75,
-    "sd": 0.27228430936067316,
+    "n_days": 5,
+    "mean": -0.10537935670412532,
+    "ci_lo": -0.3222039820931906,
+    "ci_hi": 0.017684898570623053,
+    "p_one_sided": 0.8110740443930557,
+    "share_positive": 0.6,
+    "sd": 0.2378139422464172,
     "q": 0.8847316298636405
    },
-   "recent_mean": -0.11917364743448325,
-   "recent_n": 4,
+   "recent_mean": -0.10537935670412532,
+   "recent_n": 5,
    "verdict": "標本不足",
-   "days_needed": 180,
+   "days_needed": 135,
    "criterion": null,
    "extra": {
     "timing": {
-     "pre_open": 1,
+     "pre_open": 2,
      "same_day": 2,
      "after": 1
     }
@@ -4138,6 +4138,36 @@
     "timing": {
      "pre_open": 2,
      "same_day": 1,
+     "after": 0
+    }
+   }
+  },
+  {
+   "family": "rb_models",
+   "key": "rb_models/レイトギャップ平和島",
+   "hall": "レイトギャップ平和島",
+   "label": "レイトギャップ平和島",
+   "first_date": "20261027",
+   "last_date": "20261027",
+   "stat": {
+    "n_days": 1,
+    "mean": 0.07858212362571182,
+    "ci_lo": null,
+    "ci_hi": null,
+    "p_one_sided": null,
+    "share_positive": 1.0,
+    "sd": null,
+    "q": null
+   },
+   "recent_mean": 0.07858212362571182,
+   "recent_n": 1,
+   "verdict": "標本不足",
+   "days_needed": null,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 1,
+     "same_day": 0,
      "after": 0
     }
    }
@@ -4418,25 +4448,25 @@
    "hall": "みとや大森町店",
    "label": "みとや大森町店",
    "first_date": "20261008",
-   "last_date": "20261008",
+   "last_date": "20261027",
    "stat": {
-    "n_days": 1,
-    "mean": -0.5275642254456294,
-    "ci_lo": null,
-    "ci_hi": null,
+    "n_days": 2,
+    "mean": -0.18487533017320446,
+    "ci_lo": -0.5275642254456294,
+    "ci_hi": 0.1578135650992205,
     "p_one_sided": null,
-    "share_positive": 0.0,
-    "sd": null,
+    "share_positive": 0.5,
+    "sd": 0.4846352833689166,
     "q": null
    },
-   "recent_mean": -0.5275642254456294,
-   "recent_n": 1,
+   "recent_mean": -0.18487533017320446,
+   "recent_n": 2,
    "verdict": "標本不足",
-   "days_needed": null,
+   "days_needed": 579,
    "criterion": null,
    "extra": {
     "timing": {
-     "pre_open": 0,
+     "pre_open": 1,
      "same_day": 0,
      "after": 1
     }
@@ -4508,25 +4538,25 @@
    "hall": "みとや大森町店",
    "label": "みとや大森町店",
    "first_date": "20261026",
-   "last_date": "20261026",
+   "last_date": "20261027",
    "stat": {
-    "n_days": 1,
-    "mean": -0.25784869706388597,
-    "ci_lo": null,
-    "ci_hi": null,
+    "n_days": 2,
+    "mean": -0.14059149656735156,
+    "ci_lo": -0.25784869706388597,
+    "ci_hi": -0.02333429607081715,
     "p_one_sided": null,
     "share_positive": 0.0,
-    "sd": null,
+    "sd": 0.1658267232281002,
     "q": null
    },
-   "recent_mean": -0.25784869706388597,
-   "recent_n": 1,
+   "recent_mean": -0.14059149656735156,
+   "recent_n": 2,
    "verdict": "標本不足",
-   "days_needed": null,
+   "days_needed": 424,
    "criterion": null,
    "extra": {
     "timing": {
-     "pre_open": 1,
+     "pre_open": 2,
      "same_day": 0,
      "after": 0
     }
@@ -4598,25 +4628,25 @@
    "hall": "楽園蒲田店",
    "label": "楽園蒲田店",
    "first_date": "20261026",
-   "last_date": "20261026",
+   "last_date": "20261027",
    "stat": {
-    "n_days": 1,
-    "mean": -0.6607694717079213,
-    "ci_lo": null,
-    "ci_hi": null,
+    "n_days": 2,
+    "mean": -0.3345576885594481,
+    "ci_lo": -0.6607694717079213,
+    "ci_hi": -0.008345905410974883,
     "p_one_sided": null,
     "share_positive": 0.0,
-    "sd": null,
+    "sd": 0.4613331279344819,
     "q": null
    },
-   "recent_mean": -0.6607694717079213,
-   "recent_n": 1,
+   "recent_mean": -0.3345576885594481,
+   "recent_n": 2,
    "verdict": "標本不足",
-   "days_needed": null,
+   "days_needed": 3288,
    "criterion": null,
    "extra": {
     "timing": {
-     "pre_open": 1,
+     "pre_open": 2,
      "same_day": 0,
      "after": 0
     }
@@ -4658,25 +4688,25 @@
    "hall": "楽園蒲田店",
    "label": "楽園蒲田店",
    "first_date": "20261026",
-   "last_date": "20261026",
+   "last_date": "20261027",
    "stat": {
-    "n_days": 1,
-    "mean": 0.8470041494038985,
-    "ci_lo": null,
-    "ci_hi": null,
+    "n_days": 2,
+    "mean": 0.5857714965096649,
+    "ci_lo": 0.3245388436154312,
+    "ci_hi": 0.8470041494038985,
     "p_one_sided": null,
     "share_positive": 1.0,
-    "sd": null,
+    "sd": 0.36943876065772835,
     "q": null
    },
-   "recent_mean": 0.8470041494038985,
-   "recent_n": 1,
+   "recent_mean": 0.5857714965096649,
+   "recent_n": 2,
    "verdict": "標本不足",
-   "days_needed": null,
+   "days_needed": 2108,
    "criterion": null,
    "extra": {
     "timing": {
-     "pre_open": 1,
+     "pre_open": 2,
      "same_day": 0,
      "after": 0
     }
@@ -4718,18 +4748,48 @@
    "hall": "楽園蒲田店",
    "label": "楽園蒲田店",
    "first_date": "20261026",
+   "last_date": "20261027",
+   "stat": {
+    "n_days": 2,
+    "mean": 0.2512138079502167,
+    "ci_lo": 0.1862346776959771,
+    "ci_hi": 0.3161929382044563,
+    "p_one_sided": null,
+    "share_positive": 1.0,
+    "sd": 0.09189436727675356,
+    "q": null
+   },
+   "recent_mean": 0.2512138079502167,
+   "recent_n": 2,
+   "verdict": "標本不足",
+   "days_needed": 129,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 2,
+     "same_day": 0,
+     "after": 0
+    }
+   }
+  },
+  {
+   "family": "rbm_bottom",
+   "key": "rbm_bottom/ARROW池上店",
+   "hall": "ARROW池上店",
+   "label": "ARROW池上店",
+   "first_date": "20261026",
    "last_date": "20261026",
    "stat": {
     "n_days": 1,
-    "mean": 0.1862346776959771,
+    "mean": -0.020834575054624188,
     "ci_lo": null,
     "ci_hi": null,
     "p_one_sided": null,
-    "share_positive": 1.0,
+    "share_positive": 0.0,
     "sd": null,
     "q": null
    },
-   "recent_mean": 0.1862346776959771,
+   "recent_mean": -0.020834575054624188,
    "recent_n": 1,
    "verdict": "標本不足",
    "days_needed": null,
@@ -4744,29 +4804,59 @@
   },
   {
    "family": "rbm_bottom",
+   "key": "rbm_bottom/BIGディッパー戸越銀座店",
+   "hall": "BIGディッパー戸越銀座店",
+   "label": "BIGディッパー戸越銀座店",
+   "first_date": "20261026",
+   "last_date": "20261027",
+   "stat": {
+    "n_days": 2,
+    "mean": 0.12713148772450264,
+    "ci_lo": 0.08198963727126025,
+    "ci_hi": 0.172273338177745,
+    "p_one_sided": null,
+    "share_positive": 1.0,
+    "sd": 0.06384021714159342,
+    "q": null
+   },
+   "recent_mean": 0.12713148772450264,
+   "recent_n": 2,
+   "verdict": "標本不足",
+   "days_needed": 26,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 2,
+     "same_day": 0,
+     "after": 0
+    }
+   }
+  },
+  {
+   "family": "rbm_bottom",
    "key": "rbm_bottom/みとや大森町店",
    "hall": "みとや大森町店",
    "label": "みとや大森町店",
    "first_date": "20261026",
-   "last_date": "20261026",
+   "last_date": "20261027",
    "stat": {
-    "n_days": 1,
-    "mean": 0.15959237251260125,
-    "ci_lo": null,
-    "ci_hi": null,
+    "n_days": 2,
+    "mean": 0.35803332211396494,
+    "ci_lo": 0.15959237251260125,
+    "ci_hi": 0.5564742717153286,
     "p_one_sided": null,
     "share_positive": 1.0,
-    "sd": null,
+    "sd": 0.2806378822564443,
     "q": null
    },
-   "recent_mean": 0.15959237251260125,
-   "recent_n": 1,
+   "recent_mean": 0.35803332211396494,
+   "recent_n": 2,
    "verdict": "標本不足",
-   "days_needed": null,
+   "days_needed": 540,
    "criterion": null,
    "extra": {
     "timing": {
-     "pre_open": 1,
+     "pre_open": 2,
      "same_day": 0,
      "after": 0
     }
@@ -4808,25 +4898,25 @@
    "hall": "レイトギャップ平和島",
    "label": "レイトギャップ平和島",
    "first_date": "20261026",
-   "last_date": "20261026",
+   "last_date": "20261027",
    "stat": {
-    "n_days": 1,
-    "mean": -0.1877226868514802,
-    "ci_lo": null,
-    "ci_hi": null,
+    "n_days": 2,
+    "mean": 0.13268771552802267,
+    "ci_lo": -0.1877226868514802,
+    "ci_hi": 0.4530981179075255,
     "p_one_sided": null,
-    "share_positive": 0.0,
-    "sd": null,
+    "share_positive": 0.5,
+    "sd": 0.45312873657051356,
     "q": null
    },
-   "recent_mean": -0.1877226868514802,
-   "recent_n": 1,
+   "recent_mean": 0.13268771552802267,
+   "recent_n": 2,
    "verdict": "標本不足",
-   "days_needed": null,
+   "days_needed": 1409,
    "criterion": null,
    "extra": {
     "timing": {
-     "pre_open": 1,
+     "pre_open": 2,
      "same_day": 0,
      "after": 0
     }
@@ -4838,18 +4928,48 @@
    "hall": "楽園蒲田店",
    "label": "楽園蒲田店",
    "first_date": "20261026",
+   "last_date": "20261027",
+   "stat": {
+    "n_days": 2,
+    "mean": 0.14276687899059076,
+    "ci_lo": 0.061332319179294145,
+    "ci_hi": 0.22420143880188736,
+    "p_one_sided": null,
+    "share_positive": 1.0,
+    "sd": 0.11516585893101866,
+    "q": null
+   },
+   "recent_mean": 0.14276687899059076,
+   "recent_n": 2,
+   "verdict": "標本不足",
+   "days_needed": 90,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 2,
+     "same_day": 0,
+     "after": 0
+    }
+   }
+  },
+  {
+   "family": "rbm_top",
+   "key": "rbm_top/ARROW池上店",
+   "hall": "ARROW池上店",
+   "label": "ARROW池上店",
+   "first_date": "20261026",
    "last_date": "20261026",
    "stat": {
     "n_days": 1,
-    "mean": 0.061332319179294145,
+    "mean": -0.002720710208548374,
     "ci_lo": null,
     "ci_hi": null,
     "p_one_sided": null,
-    "share_positive": 1.0,
+    "share_positive": 0.0,
     "sd": null,
     "q": null
    },
-   "recent_mean": 0.061332319179294145,
+   "recent_mean": -0.002720710208548374,
    "recent_n": 1,
    "verdict": "標本不足",
    "days_needed": null,
@@ -4864,29 +4984,59 @@
   },
   {
    "family": "rbm_top",
+   "key": "rbm_top/BIGディッパー戸越銀座店",
+   "hall": "BIGディッパー戸越銀座店",
+   "label": "BIGディッパー戸越銀座店",
+   "first_date": "20261026",
+   "last_date": "20261027",
+   "stat": {
+    "n_days": 2,
+    "mean": 0.24933813713540892,
+    "ci_lo": -0.0951110111957498,
+    "ci_hi": 0.5937872854665677,
+    "p_one_sided": null,
+    "share_positive": 0.5,
+    "sd": 0.4871246571177866,
+    "q": null
+   },
+   "recent_mean": 0.24933813713540892,
+   "recent_n": 2,
+   "verdict": "標本不足",
+   "days_needed": 1629,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 2,
+     "same_day": 0,
+     "after": 0
+    }
+   }
+  },
+  {
+   "family": "rbm_top",
    "key": "rbm_top/みとや大森町店",
    "hall": "みとや大森町店",
    "label": "みとや大森町店",
    "first_date": "20261026",
-   "last_date": "20261026",
+   "last_date": "20261027",
    "stat": {
-    "n_days": 1,
-    "mean": 0.18155352115703574,
-    "ci_lo": null,
-    "ci_hi": null,
+    "n_days": 2,
+    "mean": 0.21934400480407196,
+    "ci_lo": 0.18155352115703574,
+    "ci_hi": 0.2571344884511082,
     "p_one_sided": null,
     "share_positive": 1.0,
-    "sd": null,
+    "sd": 0.0534438145022773,
     "q": null
    },
-   "recent_mean": 0.18155352115703574,
-   "recent_n": 1,
+   "recent_mean": 0.21934400480407196,
+   "recent_n": 2,
    "verdict": "標本不足",
-   "days_needed": null,
+   "days_needed": 18,
    "criterion": null,
    "extra": {
     "timing": {
-     "pre_open": 1,
+     "pre_open": 2,
      "same_day": 0,
      "after": 0
     }
@@ -4924,14 +5074,14 @@
   },
   {
    "family": "rbm_top",
-   "key": "rbm_top/楽園蒲田店",
-   "hall": "楽園蒲田店",
-   "label": "楽園蒲田店",
-   "first_date": "20261026",
-   "last_date": "20261026",
+   "key": "rbm_top/レイトギャップ平和島",
+   "hall": "レイトギャップ平和島",
+   "label": "レイトギャップ平和島",
+   "first_date": "20261027",
+   "last_date": "20261027",
    "stat": {
     "n_days": 1,
-    "mean": 0.07956780989320147,
+    "mean": 0.6529586562132023,
     "ci_lo": null,
     "ci_hi": null,
     "p_one_sided": null,
@@ -4939,7 +5089,7 @@
     "sd": null,
     "q": null
    },
-   "recent_mean": 0.07956780989320147,
+   "recent_mean": 0.6529586562132023,
    "recent_n": 1,
    "verdict": "標本不足",
    "days_needed": null,
@@ -4947,6 +5097,36 @@
    "extra": {
     "timing": {
      "pre_open": 1,
+     "same_day": 0,
+     "after": 0
+    }
+   }
+  },
+  {
+   "family": "rbm_top",
+   "key": "rbm_top/楽園蒲田店",
+   "hall": "楽園蒲田店",
+   "label": "楽園蒲田店",
+   "first_date": "20261026",
+   "last_date": "20261027",
+   "stat": {
+    "n_days": 2,
+    "mean": 0.12848888559271643,
+    "ci_lo": 0.07956780989320147,
+    "ci_hi": 0.17740996129223136,
+    "p_one_sided": null,
+    "share_positive": 1.0,
+    "sd": 0.06918484874013488,
+    "q": null
+   },
+   "recent_mean": 0.12848888559271643,
+   "recent_n": 2,
+   "verdict": "標本不足",
+   "days_needed": 31,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 2,
      "same_day": 0,
      "after": 0
     }
@@ -4967,7 +5147,7 @@
     "p_one_sided": 0.10073480924188294,
     "share_positive": 0.6428571428571429,
     "sd": 657.9564726679758,
-    "q": 0.1511022138628244
+    "q": 0.1561851387354676
    },
    "recent_mean": 129.6903669525496,
    "recent_n": 20,
@@ -5135,7 +5315,7 @@
     "p_one_sided": 0.06054682332227509,
     "share_positive": 0.8,
     "sd": 287.29899153478567,
-    "q": 0.1511022138628244
+    "q": 0.1561851387354676
    },
    "recent_mean": 211.26813276934925,
    "recent_n": 4,
@@ -5154,26 +5334,26 @@
    "hall": "楽園蒲田店",
    "label": "kawasakislot",
    "first_date": "20260807",
-   "last_date": "20261026",
+   "last_date": "20261027",
    "stat": {
-    "n_days": 42,
-    "mean": 126.77149314324927,
-    "ci_lo": -2.5836068329246467,
-    "ci_hi": 197.62530485883954,
-    "p_one_sided": 0.011500098588822063,
-    "share_positive": 0.6428571428571429,
-    "sd": 347.81216357317186,
-    "q": 0.06900059153293238
+    "n_days": 43,
+    "mean": 122.97819243855811,
+    "ci_lo": 0.8454745719421728,
+    "ci_hi": 198.66317563850177,
+    "p_one_sided": 0.012039985572210445,
+    "share_positive": 0.627906976744186,
+    "sd": 344.54566756244304,
+    "q": 0.07223991343326266
    },
-   "recent_mean": 109.86901191836118,
+   "recent_mean": 105.65078174828068,
    "recent_n": 19,
-   "verdict": "差を検出できず",
-   "days_needed": 33,
+   "verdict": "有効",
+   "days_needed": null,
    "criterion": null,
    "extra": {
     "hits": 51,
-    "expected_hits": 17.9,
-    "n_named_scored": 357
+    "expected_hits": 18.4,
+    "n_named_scored": 366
    }
   },
   {
@@ -5210,26 +5390,26 @@
    "hall": "楽園蒲田店",
    "label": "minnade777judge",
    "first_date": "20260928",
-   "last_date": "20261026",
+   "last_date": "20261027",
    "stat": {
-    "n_days": 9,
-    "mean": 941.4167129197202,
-    "ci_lo": 357.5055618889235,
-    "ci_hi": 2042.778587183426,
-    "p_one_sided": 0.09519582284136964,
-    "share_positive": 0.7777777777777778,
-    "sd": 1974.0268471855784,
-    "q": 0.1511022138628244
+    "n_days": 10,
+    "mean": 815.8233749610815,
+    "ci_lo": 212.8716679865547,
+    "ci_hi": 1934.5064017588452,
+    "p_one_sided": 0.10412342582364507,
+    "share_positive": 0.7,
+    "sd": 1903.0352287227556,
+    "q": 0.1561851387354676
    },
-   "recent_mean": 1048.6889774732817,
+   "recent_mean": 939.7868941399485,
    "recent_n": 8,
-   "verdict": "標本不足",
-   "days_needed": 2401,
+   "verdict": "差を検出できず",
+   "days_needed": 2230,
    "criterion": null,
    "extra": {
     "hits": 2,
-    "expected_hits": 1.1,
-    "n_named_scored": 22
+    "expected_hits": 1.3,
+    "n_named_scored": 24
    }
   },
   {
@@ -5266,26 +5446,26 @@
    "hall": "レイトギャップ平和島",
    "label": "pachi_slohunter",
    "first_date": "20261026",
-   "last_date": "20261026",
+   "last_date": "20261027",
    "stat": {
-    "n_days": 1,
-    "mean": 888.5999999999999,
-    "ci_lo": null,
-    "ci_hi": null,
+    "n_days": 2,
+    "mean": 466.21716417910443,
+    "ci_lo": 43.834328358208964,
+    "ci_hi": 888.5999999999999,
     "p_one_sided": null,
     "share_positive": 1.0,
-    "sd": null,
+    "sd": 597.3395349315188,
     "q": null
    },
-   "recent_mean": 888.5999999999999,
-   "recent_n": 1,
+   "recent_mean": 466.21716417910443,
+   "recent_n": 2,
    "verdict": "標本不足",
-   "days_needed": null,
+   "days_needed": 219,
    "criterion": null,
    "extra": {
-    "hits": 2,
-    "expected_hits": 0.5,
-    "n_named_scored": 9
+    "hits": 3,
+    "expected_hits": 0.9,
+    "n_named_scored": 18
    }
   },
   {
