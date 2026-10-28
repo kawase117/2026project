@@ -33,7 +33,7 @@ AIアシスタントへ：このファイルをセッション開始時に必ず
 - 既定はana-sloのDB最終日の確定データから作る（スナップショット不要。全ホールで出せる）。営業中スナップショットを使うときだけ `--snapshot` を付ける。凍結forward（`backtest/forward/*_jug_*__<日付>.json`）は参考として併記する。
 - DBが対象日の前日まで取り込まれていないときは、その旨を書く。黙って省略しない。
 - 予告のclaimsは登録済みなら直接編集せず `backtest.announce amend` を使う。
-- **予測文書を書いたら、開店(10:00)前に `venv\Scripts\python.exe -m backtest.prediction_ledger freeze-doc document/reviews/<日付>-prediction.md` で凍結する**（2026-10-16 追加）。推す機種は「判断:」の行、避ける機種は「避ける」を含む行、ジャグラーは「ジャグラー候補」表に書く(この3か所だけが機械的に抜かれ、翌朝採点されて `backtest/forward/SCOREBOARD.md` に載る)。凍結後に文書を直しても台帳は変わらない。
+- **予測文書を書いたら、開店(10:00)前に `venv\Scripts\python.exe -m backtest.prediction_ledger freeze-doc document/reviews/<日付>-prediction.md` で凍結する**（2026-10-16 追加）。推す機種は「判断:」の行、避ける機種は行頭が「避ける:」の行、ジャグラーは「ジャグラー候補」表に書く(この3か所だけが機械的に抜かれ、翌朝採点されて `backtest/forward/SCOREBOARD.md` に載る)。「判断:」の行でも、文末が打ち消し(〜ない・〜なし・見送る)の文、「避け」を含む文、ジャグラー候補表を指す節の機種は推す扱いにならず、凍結時に「推さなかった文」として表示される(2026-10-29 変更)。凍結後に文書を直しても台帳は変わらない。
 
 ## プロジェクト概要
 

@@ -298,6 +298,62 @@ def match_units(line: str, numbers: set[int]) -> list[int]:
     return out
 
 
+# 避ける機種の行は、行頭のラベル「避ける:」「避ける機種:」「**避ける:**」に限る。
+# 「外挿は避けるべき」のような動詞の「避ける」を拾わないため(2026-10-29 ARROW)。
+_AVOID_LABEL = re.compile(r"^[\s\-*>]*\**\s*避ける(?:機種|台|候補)?\s*\**\s*[:：]")
+# 表の見立てのセルが「**避ける。**」のときも避ける行とする(2026-10-14 みとや)。
+_AVOID_CELL = re.compile(r"^\**\s*避ける\s*[。.:：]?\s*\**\s*(?:$|[^側候べ])")
+# 文末が打ち消し・見送りの文は、その文の機種・台を推さない(2026-10-29 金時京急「…固定を見込まない」)。
+# 日本語は文末で肯否が決まるので、「絞る根拠はなく、分散先はカバネリ海門」は推す側に残る。
+# 「避け」を含む文も推さない(ラベルでない「避ける」は避ける行にもしない)。
+_NEGATED_END = re.compile(r"(?:ない|なし|無い|無し|ません|控える|見送る|見送り)$")
+_SENT_TRAIL = "。．.）)」』】*  "
+# 下のジャグラー候補表を指すだけの節。表は jug_units で別に採点するので、その節の機種は推さない
+# (2026-10-29 金時東口「ジャグラー候補(…ガールズ 642、ミスター 700)を開店後のRBで確認する」)。
+_JUG_TABLE_REF = re.compile(r"ジャグラー候補|下表")
+
+
+def is_avoid_line(line: str) -> bool:
+    if _AVOID_LABEL.match(line):
+        return True
+    if line.lstrip().startswith("|"):
+        return any(_AVOID_CELL.match(c.strip()) for c in line.strip().strip("|").split("|")[1:])
+    return False
+
+
+def _clauses(sent: str) -> list[str]:
+    """読点で節に分ける。括弧の中の読点(「(ガールズ 642、ミスター 700)」)では切らない。"""
+    out, buf, depth = [], "", 0
+    for ch in sent:
+        if ch in "(（「『【[":
+            depth += 1
+        elif ch in ")）」』】]" and depth:
+            depth -= 1
+        if ch in "、，," and depth == 0:
+            out.append(buf)
+            buf = ""
+        else:
+            buf += ch
+    return out + [buf]
+
+
+def push_parts(line: str) -> tuple[list[tuple[str, bool]], list[str]]:
+    """判断の行を ([(節, 機種も拾うか)], 推さない文) に振り分ける。
+
+    推さない文: 文末が打ち消し・見送り、または「避け」を含む文。機種も台番号も拾わない。
+    ジャグラー候補表を指す節は台番号だけ拾う(jug_units と重なれば後で除く)。
+    """
+    parts, skip = [], []
+    for sent in re.split(r"(?<=[。．])", line):
+        if not sent.strip():
+            continue
+        if "避け" in sent or _NEGATED_END.search(sent.strip().rstrip(_SENT_TRAIL)):
+            skip.append(sent)
+            continue
+        parts += [(clause, not _JUG_TABLE_REF.search(clause)) for clause in _clauses(sent)]
+    return parts, skip
+
+
 def _sections(md: str) -> list[tuple[str, list[str]]]:
     """## 見出しごとに本文行をまとめる(### は親の ## に含める)。"""
     out: list[tuple[str, list[str]]] = []
@@ -330,6 +386,8 @@ def extract(md: str, target_date: str) -> list[dict]:
                 "data_asof": cache[hall][0],
                 "picks": {"models": [], "avoid_models": [], "units": [], "jug_units": []},
                 "unresolved": [],
+                # 判断の行にあるが、打ち消しの文やジャグラー候補表を指す文なので推さなかった名前(確認用)
+                "skipped": [],
             },
         )
 
@@ -362,15 +420,25 @@ def extract(md: str, target_date: str) -> list[dict]:
                 continue
             stripped = line.strip()
             is_judgement = in_judgement or stripped.startswith(("判断", "**判断", "- 判断"))
-            if "避け" in stripped:
+            if is_avoid_line(stripped):
                 models, unres = match_models(stripped, names)
                 s["picks"]["avoid_models"] += [m for m in models if m not in s["picks"]["avoid_models"]]
                 s["unresolved"] += unres
             elif is_judgement:
-                models, unres = match_models(stripped, names)
-                s["picks"]["models"] += [m for m in models if m not in s["picks"]["models"]]
-                s["picks"]["units"] += [u for u in match_units(stripped, numbers) if u not in s["picks"]["units"]]
-                s["unresolved"] += unres
+                parts, skip = push_parts(stripped)
+                for part, take_models in parts:
+                    models, unres = match_models(part, names)
+                    if take_models:
+                        s["picks"]["models"] += [m for m in models if m not in s["picks"]["models"]]
+                        s["unresolved"] += unres
+                    elif models:
+                        s["skipped"].append({"text": part.strip(), "models": models, "units": []})
+                    s["picks"]["units"] += [u for u in match_units(part, numbers) if u not in s["picks"]["units"]]
+                for sent in skip:
+                    models, _ = match_models(sent, names)
+                    units = match_units(sent, numbers)
+                    if models or units:
+                        s["skipped"].append({"text": sent.strip(), "models": models, "units": units})
     for s in specs.values():
         s["picks"]["models"] = [m for m in s["picks"]["models"] if m not in s["picks"]["avoid_models"]]
         # 「判断」の行が下のジャグラー候補表を指しているだけの台は、ジャグ候補として1回だけ数える。
@@ -588,6 +656,10 @@ def freeze_doc(
             f"{'凍結' if written else '既存のためスキップ'} {target} {spec['hall']}: 機種{len(p['models'])} "
             f"避ける{len(p['avoid_models'])} 台{len(p['units'])} ジャグ{len(p['jug_units'])} 未照合{len(spec['unresolved'])}"
         )
+        for sk in spec.get("skipped", []):
+            msgs.append(
+                f"  推さなかった文({spec['hall']}): {'・'.join(sk['models'] + [str(u) for u in sk['units']])} ← {sk['text'][:60]}"
+            )
     return msgs
 
 

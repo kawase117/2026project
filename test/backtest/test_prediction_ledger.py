@@ -110,3 +110,113 @@ def test_score_edges_against_day_mean(roster, tmp_path, monkeypatch):
     assert r["jug_units"]["edge"] == round(100 - day_mean, 1)
     with pytest.raises(ValueError, match="採点済み"):
         pl.score(obj)
+
+
+# ---- 打ち消しの文・動詞の「避ける」を推す/避けるとして拾わない(2026-10-29 の自動下書きで起きた誤り)
+
+ROSTERS_1029 = {
+    "金時蒲田東口店": {
+        "マイジャグラーⅥ": {601, 603, 606},
+        "ジャグラーガールズSS": {642},
+        "ミスタージャグラー": {700},
+    },
+    "金時京急蒲田店": {"ミリオンゴッド‐神々の軌跡‐": {101, 102}, "真打吉宗": {201}, "獣王": {301}},
+    "ARROW池上店": {
+        "革命機ヴァルヴレイヴ2": {11, 12},
+        "東京喰種": {21},
+        "ソードアート・オンラインII": {31},
+        "獣王": {41},
+    },
+}
+
+DOC_1029 = """# 予測
+
+## 金時東口
+
+判断: 機種を絞る根拠がない。ジャグラー候補(マイⅥ 606・601・603、ガールズ 642、ミスター 700)を開店後のRBで確認する。稼働が少なく判断は弱い。
+
+## 金時京急
+
+判断: 機種を絞る根拠がなく、開店後の末尾別RB初期値とホール全体の稼働で確認する。直近の高設定候補（ミリオンゴッド・真打吉宗）は、前日の実績だけでは翌日の固定を見込まない。
+
+避ける: 獣王（直近−630/台）。
+
+## ARROW
+
+前日（10/27）の実績で強かった機種は3種（ヴァルヴレイヴ2 +1,570、東京喰種 +1,564、SAO +1,077）だが、単日実績だけでは翌日への外挿は避けるべき。継続性の確認が必要。
+
+### 判断
+
+前日の上位（ヴァルヴレイヴ2・東京喰種）は単日実績だけでは翌日への外挿は避けるべき。
+判断: 根拠の薄さから、特定の機種・台を推奨できない。
+
+**避ける:** 獣王。
+
+## ジャグラー候補
+
+| ホール | 履歴の翌日平均 | 上位の候補 |
+|---|---|---|
+| 金時蒲田東口店 | 0.038 | 606・601・603(マイⅥ)、642(ガールズ)、700(ミスター) |
+"""
+
+
+@pytest.fixture
+def rosters_1029(monkeypatch):
+    monkeypatch.setattr(
+        pl, "roster", lambda hall, date: ("20261028", ROSTERS_1029[hall]) if hall in ROSTERS_1029 else (None, {})
+    )
+
+
+def _by_hall(specs):
+    return {s["hall"]: s for s in specs}
+
+
+def test_jug_table_reference_is_not_a_model_pick(rosters_1029):
+    s = _by_hall(pl.extract(DOC_1029, "20261029"))["金時蒲田東口店"]
+    assert s["picks"]["models"] == []
+    assert s["picks"]["jug_units"] == [606, 601, 603, 642, 700]
+    assert s["picks"]["units"] == []
+    # 推さなかった機種は消さずに skipped に残す(凍結時に表示して確認できるように)
+    assert {m for sk in s["skipped"] for m in sk["models"]} >= {"ジャグラーガールズSS", "ミスタージャグラー"}
+
+
+def test_negated_judgement_sentence_is_not_a_pick(rosters_1029):
+    s = _by_hall(pl.extract(DOC_1029, "20261029"))["金時京急蒲田店"]
+    assert s["picks"]["models"] == []
+    assert s["picks"]["avoid_models"] == ["獣王"]
+    assert s["skipped"][0]["models"] == ["ミリオンゴッド‐神々の軌跡‐", "真打吉宗"]
+
+
+def test_avoid_requires_line_head_label(rosters_1029):
+    s = _by_hall(pl.extract(DOC_1029, "20261029"))["ARROW池上店"]
+    # 動詞の「避けるべき」は避ける行ではない。判断の節にあっても推さない
+    assert s["picks"]["avoid_models"] == ["獣王"]
+    assert s["picks"]["models"] == []
+
+
+@pytest.mark.parametrize(
+    "line, expected",
+    [
+        ("避ける: 獣王", True),
+        ("避ける：獣王", True),
+        ("**避ける:** 獣王", True),
+        ("- 避ける機種: 獣王", True),
+        ("| 獣王 | 561〜564(4台) | **避ける。** 差枚が悪い |", True),
+        ("単日実績だけでは翌日への外挿は避けるべき。", False),
+        ("- **語呂の数字**: 獣王は6台で30日平均 −1,153、避ける。", False),
+        ("| ヤバチバ | 4 | 23%、-458 | 13% | 超え率の割に平均が負。避ける側 |", False),
+    ],
+)
+def test_is_avoid_line(line, expected):
+    assert pl.is_avoid_line(line) is expected
+
+
+def test_push_parts_keeps_positive_tail_after_negated_clause():
+    # 「絞る根拠はなく、分散先は…」は文末が肯定なので推す。下表を指す節は台番号だけ
+    parts, skip = pl.push_parts("判断: カバネリ海門を軸に、化物語、ジャグラーは下表の台から探す。")
+    assert skip == []
+    assert [take for _, take in parts] == [True, True, False]
+    parts, skip = pl.push_parts(
+        "判断: 機種を絞る根拠がない。カバネリ海門決戦は日の効果は無いが常に強いので並べて見る。"
+    )
+    assert len(skip) == 1 and [take for _, take in parts] == [True]
