@@ -115,6 +115,74 @@ def test_prediction_rows_one_value_per_hall_day(tmp_path):
     assert "pred_avoid/店" not in by_family(rows, "pred_avoid")
 
 
+def write_pred(pred, name, hall, date, *, models=None, avoid=None, timing="pre_open", **kw):
+    obj = {
+        "hall": hall,
+        "target_date": date,
+        "timing": timing,
+        "result": {
+            "models": None if models is None else {"edge": models},
+            "avoid_models": None if avoid is None else {"edge": avoid},
+            "units": None,
+            "jug_units": None,
+        },
+        **kw,
+    }
+    (pred / name).write_text(json.dumps(obj, ensure_ascii=False), encoding="utf-8")
+
+
+def test_avoid_split_by_timing(tmp_path):
+    pred = tmp_path / "pred"
+    pred.mkdir()
+    write_pred(pred, "20261001__a.json", "店", "20261001", avoid=100.0, timing="pre_open")
+    write_pred(pred, "20261002__a.json", "店", "20261002", avoid=-300.0, timing="same_day")
+    write_pred(pred, "20261003__a.json", "店", "20261003", avoid=-500.0, timing="after")
+    rows = scoreboard.build(tmp_path, None, pred, tmp_path / "no_announce")
+    pre = by_family(rows, "pred_avoid")["pred_avoid/店"]
+    late = by_family(rows, "pred_avoid_late")["pred_avoid_late/店"]
+    assert pre.stat.n_days == 1 and pre.stat.mean == 100.0
+    assert late.stat.n_days == 2 and late.stat.mean == -400.0
+
+
+def test_vs_base_same_hall_same_day(tmp_path):
+    hall_a, hall_b = scoreboard.CORE_HALLS[0], scoreboard.CORE_HALLS[1]
+    for hall, rule in ((hall_a, "rakuen"), (hall_b, "mitoya")):
+        for d, edge in (("20261001", 50.0), ("20261002", 80.0)):
+            obj = {
+                "rule_id": f"{rule}{scoreboard.BASE_RULE_SUFFIX}",
+                "hall": hall,
+                "target_date": d,
+                "result": {"mean_edge_per_pick": edge, "picks_realized": []},
+            }
+            (tmp_path / f"{rule}{scoreboard.BASE_RULE_SUFFIX}__{d}.json").write_text(
+                json.dumps(obj, ensure_ascii=False), encoding="utf-8"
+            )
+    pred = tmp_path / "pred"
+    pred.mkdir()
+    write_pred(pred, "20261001__r.json", hall_a, "20261001", models=250.0)
+    write_pred(pred, "20261002__r.json", hall_a, "20261002", models=0.0, timing="after")
+    write_pred(pred, "20261001__m.json", hall_b, "20261001", models=150.0)
+    write_pred(pred, "20261003__r.json", hall_a, "20261003", models=999.0)  # 基準の無い日は比べない
+    write_pred(pred, "20261001__r__v2.json", hall_a, "20261001", models=999.0, revision_of="x", revision=2)
+    write_pred(pred, "20261001__r__rbauto.json", hall_a, "20261001", models=999.0, source="rb_auto")
+    rows = by_family(scoreboard.build(tmp_path, None, pred, tmp_path / "no_announce"), "pred_vs_base")
+    a = rows[f"pred_vs_base/{hall_a}"]
+    assert a.stat.n_days == 2
+    assert abs(a.stat.mean - (200.0 - 80.0) / 2) < 1e-9  # (250−50) と (0−80)
+    assert a.extra["own_mean"] == 125.0 and a.extra["base_mean"] == 65.0
+    core = rows[f"pred_vs_base/{scoreboard.CORE_LABEL}"]
+    # 10/01 は2ホールの日平均 (200 + 100)/2、10/02 は1ホール −80
+    assert core.stat.n_days == 2
+    assert abs(core.stat.mean - (150.0 - 80.0) / 2) < 1e-9
+    assert core.extra["timing"] == {"pre_open": 1, "same_day": 0, "after": 1}
+
+
+def test_markdown_has_plan_map_and_rb_note(tmp_path):
+    md = scoreboard.render_markdown(build(tmp_path), "2026-10-30T00:00:00+09:00", None)
+    assert "11月の検証計画と判定に使う表" in md
+    assert "月次はRB比の表で判定し、差枚の表は3か月単位" in md
+
+
 def test_announce_rows_weight_by_machines_and_skip_withdrawn(tmp_path):
     ann = tmp_path / "ann"
     ann.mkdir()

@@ -72,10 +72,13 @@ MDE_TARGET = {
     "juggler_ph": 0.05,
     "pred_models": 100.0,
     "pred_avoid": 100.0,
+    "pred_avoid_late": 100.0,
+    "pred_vs_base": 100.0,
     "pred_units": 100.0,
     "pred_jug_units": 100.0,
     "rb_models": 0.05,
     "rb_avoid_models": 0.05,
+    "rb_avoid_models_late": 0.05,
     "rb_units": 0.05,
     "rb_jug_units": 0.05,
     "rb1_units": 0.10,
@@ -99,6 +102,14 @@ PRED_FAMILIES = {
 }
 RB_PRED_FAMILIES = {key: f"rb_{key}" for key in ("models", "avoid_models", "units", "jug_units")}
 RB1_PRED_FAMILIES = {key: f"rb1_{key}" for key in ("units", "jug_units")}
+# 「避ける」は開店前に凍結したものだけが事前の判断。当日・事後に書いたものは結果を見てから書けるので別系列にする。
+LATE_SUFFIX = "_late"
+# 手書きの推しと比べる機械的な基準(直近60日の機種平均上位3)。forward の rule_id の末尾。
+BASE_RULE_SUFFIX = "_model_term60_top3"
+# 11月の検証計画の「4ホール合計」に入れるホール(2026-10 月次振り返り 5節)。
+CORE_HALLS = ("楽園蒲田店", "みとや大森町店", "マルハンメガシティ2000-蒲田7", "マルハンメガシティ2000-蒲田1")
+CORE_LABEL = "4ホール合計"
+TIMING_ORDER = ("pre_open", "same_day", "after")
 
 
 @dataclass
@@ -343,9 +354,12 @@ def build_prediction_rows(preds: list[dict]) -> list[Row]:
             if units.get("rb_s1_edge") is not None:
                 groups.setdefault((family, p["hall"]), []).append((p["target_date"], units["rb_s1_edge"], p["timing"]))
             continue
+        late = LATE_SUFFIX if p.get("timing") != "pre_open" else ""
         for key, family in PRED_FAMILIES.items():
             part = p["result"].get(key)
             if part and part.get("edge") is not None:
+                if key == "avoid_models":
+                    family += late
                 if "revision_of" in p:
                     family = f"{family}[{p['revision']}]"
                 groups.setdefault((family, p["hall"]), []).append((p["target_date"], part["edge"], p["timing"]))
@@ -353,6 +367,8 @@ def build_prediction_rows(preds: list[dict]) -> list[Row]:
         for key, family in RB_PRED_FAMILIES.items():
             part = rb.get(key)
             if part and part.get("rb_edge") is not None:
+                if key == "avoid_models":
+                    family += late
                 if "revision_of" in p:
                     family = f"{family}[{p['revision']}]"
                 edge = part["rb_edge"] * (-1 if key == "avoid_models" else 1)
@@ -383,6 +399,52 @@ def build_prediction_rows(preds: list[dict]) -> list[Row]:
         timing = {t: sum(1 for *_, x in items if x == t) for t in ("pre_open", "same_day", "after")}
         rows.append(
             _row(family, f"{family}/{hall}", hall, hall, [(d, v) for d, v, _ in items], extra={"timing": timing})
+        )
+    return rows
+
+
+def build_vs_base_rows(preds: list[dict], plans: list[dict]) -> list[Row]:
+    """手書きで推した機種の edge − 同じホール・同じ日の基準(model_term60_top3)の edge。
+
+    両方の edge は「名指しした台の平均差枚 − ホールの当日全台平均」で同じ定義なので、差がそのまま
+    手書きの上積みになる。人の予測文書の初版だけを使う(自動凍結・改訂版は除く)。
+    ホール別の行に加え、CORE_HALLS の日平均を「4ホール合計」の1行にする(同じ日のホールは独立でないため)。
+    """
+    base = {
+        (p["hall"], p["target_date"]): p["result"]["mean_edge_per_pick"]
+        for p in plans
+        if p["rule_id"].endswith(BASE_RULE_SUFFIX) and p["result"].get("mean_edge_per_pick") is not None
+    }
+    groups: dict[str, list[tuple[str, float, float, float, str]]] = {}
+    for p in preds:
+        if p.get("source") or "revision_of" in p:
+            continue
+        part = p["result"].get("models") or {}
+        b = base.get((p["hall"], p["target_date"]))
+        if part.get("edge") is None or b is None:
+            continue
+        groups.setdefault(p["hall"], []).append((p["target_date"], part["edge"] - b, part["edge"], b, p["timing"]))
+    core: dict[str, list[tuple[float, float, float, str]]] = {}
+    for hall in CORE_HALLS:
+        for d, diff, own, b, t in groups.get(hall, []):
+            core.setdefault(d, []).append((diff, own, b, t))
+    if core:
+        groups[CORE_LABEL] = [
+            # 事前性は、その日のホールのうち最も遅いものにそろえる
+            (d, *(float(np.mean([x[i] for x in v])) for i in range(3)), max((x[3] for x in v), key=TIMING_ORDER.index))
+            for d, v in core.items()
+        ]
+    rows = []
+    for hall, items in sorted(groups.items()):
+        items.sort()
+        timing = {t: sum(1 for *_, x in items if x == t) for t in ("pre_open", "same_day", "after")}
+        extra = {
+            "timing": timing,
+            "own_mean": round(float(np.mean([x[2] for x in items])), 1),
+            "base_mean": round(float(np.mean([x[3] for x in items])), 1),
+        }
+        rows.append(
+            _row("pred_vs_base", f"pred_vs_base/{hall}", hall, hall, [(d, v) for d, v, *_ in items], extra=extra)
         )
     return rows
 
@@ -469,9 +531,12 @@ def build(
     pred_dir: Path = PRED_DIR,
     announce_dir: Path = ANNOUNCE_DIR,
 ) -> list[Row]:
-    rows = build_forward_rows(load_plans(forward_dir, since))
+    plans = load_plans(forward_dir, since)
+    preds = load_predictions(pred_dir, since)
+    rows = build_forward_rows(plans)
     rows += build_juggler_rows(load_juggler_ledger(forward_dir, since))
-    rows += build_prediction_rows(load_predictions(pred_dir, since))
+    rows += build_prediction_rows(preds)
+    rows += build_vs_base_rows(preds, plans)
     rows += build_announce_rows(load_announcements(announce_dir, since))
     return finalize(rows)
 
@@ -498,6 +563,48 @@ def _timing_cols(r: Row) -> str:
 def _announce_cols(r: Row) -> str:
     e = r.extra
     return f" {e.get('hits', 0)} / {_f(e.get('expected_hits'), '.1f')} ({e.get('n_named_scored', 0)}件) |"
+
+
+def _vs_base_cols(r: Row) -> str:
+    e = r.extra
+    return f" {_f(e.get('own_mean'), '+.0f')} | {_f(e.get('base_mean'), '+.0f')} |" + _timing_cols(r)
+
+
+# 2026-10 月次振り返り(document/reviews/2026-10-monthly-retrospective.md)5節の11月検証計画 → 判定に使う表
+PLAN_MAP = (
+    (
+        "手書きの推し − 基準",
+        f"4a の「{CORE_LABEL}」が正、かつ楽園・みとやの行が正",
+        "4a。RB判別機の推しは「予測文書RB: 推した機種」も併読",
+    ),
+    (
+        "開店前の「避ける」",
+        "平均edgeが正",
+        "5(開店前の凍結のみ)と「予測文書RB: 避ける機種・開店前の凍結」。5b は数えない",
+    ),
+    (
+        "ジャグラー候補(みとや)",
+        "差枚edgeの95%CI下限 > 0 を維持",
+        "7 のみとやの行。RB比は「予測文書RB(設定1比): ジャグラー候補表の台」",
+    ),
+    ("ジャグラー候補(楽園)", "差を検出、または平均 > +100", "7 の楽園の行と、RB(設定1比)のジャグラー候補表の楽園の行"),
+    (
+        "凍結前点検の警告件数",
+        "月の後半で前半より減る",
+        "この採点表の外。学びの台帳(document/registry/LESSONS.jsonl)の月次集計で見る",
+    ),
+)
+
+
+def _plan_map() -> list[str]:
+    out = [
+        "## 11月の検証計画と判定に使う表",
+        "",
+        "| 項目 | 合格の基準 | 判定に使う表 |",
+        "|---|---|---|",
+    ]
+    out += [f"| {a} | {b} | {c} |" for a, b, c in PLAN_MAP]
+    return out + [""]
 
 
 def _section(out, rows, family, title, unit, fmt, note, extra_head=None, extra_cols=None, key_head="ルール"):
@@ -550,7 +657,14 @@ def render_markdown(rows: list[Row], generated_at: str, since: str | None) -> st
         f"**差を検出できず**=どちらでもない(効果ゼロの意味ではない) / **標本不足**={MIN_DAYS}日未満。"
         "「あと何日」は観測したばらつきで目標差を検出力80%・片側5%で捉えるのに要る追加日数。",
         "",
+        "**RB判別機(ジャグラー・ハナハナ・ディスクアップなど)は、月次はRB比の表で判定し、差枚の表は3か月単位で見る。**"
+        "差枚は運の分散が大きく、1か月では差を検出できないことが多い。RB比は設定の有無に直結し、1か月で判定に届く。",
+        "",
+        "**「避ける」は開店前に凍結したものだけを判断の成績として読む。** 当日・事後に書いた「避ける」は結果を見てから"
+        "書けるので、別の表(当日・事後)に分けた。",
+        "",
     ]
+    out += _plan_map()
     _section(
         out,
         rows,
@@ -588,9 +702,25 @@ def render_markdown(rows: list[Row], generated_at: str, since: str | None) -> st
         "edge は名指しした台(機種なら全台)の平均差枚 − そのホールの当日全台平均。"
         "事前性は 開店前/当日中/事後 の件数(事後=git の初出コミットが翌日以降で、事前に書いたことを証明できないもの)。"
     )
+    _section(
+        out,
+        rows,
+        "pred_vs_base",
+        "4a. 予測文書: 手書きの推し − 基準(model_term60_top3)",
+        "(枚)",
+        "+.0f",
+        "同じホール・同じ日の「手書きで推した機種のedge − 基準(直近60日の機種平均上位3)のedge」。"
+        "正なら手書きが基準に上積みしている。人の予測文書の初版だけを使い、改訂版・自動凍結は除く。"
+        f"「{CORE_LABEL}」は{'・'.join(CORE_HALLS)}の日平均を1日1値にしたもの。"
+        "手書き・基準の列は、比べた日だけの平均。",
+        extra_head=["手書き", "基準", "事前性 開店前/当日/事後"],
+        extra_cols=_vs_base_cols,
+        key_head="対象",
+    )
     for family, title in (
         ("pred_models", "4. 予測文書: 推した機種(枚/台)"),
-        ("pred_avoid", "5. 予測文書: 避けると書いた機種(全台平均 − 機種平均。正なら避けて正解)"),
+        ("pred_avoid", "5. 予測文書: 避けると書いた機種・開店前の凍結(全台平均 − 機種平均。正なら避けて正解)"),
+        ("pred_avoid_late", "5b. 予測文書: 避けると書いた機種・当日/事後に書いたもの(判断の成績には数えない)"),
         ("pred_units", "6. 予測文書: 判断で名指しした台"),
         ("pred_jug_units", "7. 予測文書: ジャグラー候補表の台"),
     ):
@@ -608,7 +738,8 @@ def render_markdown(rows: list[Row], generated_at: str, since: str | None) -> st
         )
     for family, title in (
         ("rb_models", "予測文書RB: 推した機種"),
-        ("rb_avoid_models", "予測文書RB: 避ける機種"),
+        ("rb_avoid_models", "予測文書RB: 避ける機種・開店前の凍結"),
+        ("rb_avoid_models_late", "予測文書RB: 避ける機種・当日/事後に書いたもの"),
         ("rb_units", "予測文書RB: 判断で名指しした台"),
         ("rb_jug_units", "予測文書RB: ジャグラー候補表の台"),
     ):

@@ -523,6 +523,59 @@ def lessons_prompt_block() -> str:
     return "## 既知の学び（document/registry/LESSONS.jsonl。2回以上確認したもの）\n" + "\n".join(lines) + "\n\n"
 
 
+PREDICTION_FORM_PATH = PROJECT_ROOT / ".claude" / "skills" / "prediction-format" / "SKILL.md"
+FORWARD_DIR = PROJECT_ROOT / "backtest" / "forward"
+BASE_RULE_SUFFIX = "_model_term60_top3"
+
+
+def prediction_form() -> str:
+    """予測の形(prediction-format スキルの印の間)。スキルを正本にし、プロンプトへそのまま埋め込む。"""
+    try:
+        text = PREDICTION_FORM_PATH.read_text(encoding="utf-8")
+    except OSError:
+        return ""
+    m = re.search(r"<!-- form:start -->\n(.*?)<!-- form:end -->", text, re.S)
+    return m.group(1).strip() + "\n\n" if m else ""
+
+
+def baseline_models(key: str, today: str) -> tuple[list[str], str]:
+    """当日の基準(model_term60_top3)の機種名と出所。
+
+    forward の凍結は run_morning(07:30台)で、07:00台の下書きより後になる日がある。
+    凍結済みならそれを、無ければ同じ事前登録ルールで選択だけを計算する(書き出さない)。
+    """
+    rule = key + BASE_RULE_SUFFIX
+    frozen = FORWARD_DIR / ("%s__%s.json" % (rule, today))
+    if frozen.exists():
+        try:
+            models = json.loads(frozen.read_text(encoding="utf-8")).get("models") or []
+            return [m["machine_name"] for m in models], frozen.name
+        except OSError, ValueError, KeyError, TypeError:
+            pass
+    prereg = PROJECT_ROOT / "backtest" / "prereg" / (rule + ".json")
+    if not prereg.exists():
+        return [], ""
+    try:
+        sys.path.insert(0, str(PROJECT_ROOT))
+        from backtest.forward import plan
+        from backtest.prereg import PreRegistration
+
+        obj = plan(PreRegistration.load(str(prereg)), today)
+        return [m["machine_name"] for m in obj.get("models") or []], "%s を当日分で計算（未凍結）" % prereg.name
+    except Exception as exc:  # noqa: BLE001 - 基準が出せなくても下書きは止めない
+        print("  基準の計算に失敗(%s): %s" % (key, exc), flush=True)
+        return [], ""
+
+
+def baseline_block(key: str, today: str, has_announce: bool) -> str:
+    """予測の形の1番(基準を最初に載せる)のため、基準の行をプロンプトで指定する。"""
+    names, source = baseline_models(key, today)
+    if not names:
+        return "## 基準\nこのホールの基準（%s%s）は無い。基準の行は書かない。\n\n" % (key, BASE_RULE_SUFFIX)
+    head = "基準(参考、推さない)" if key == "kamata7" and not has_announce else "基準"
+    return "## 基準（%s）\n節の最初に次の行をそのまま書く:\n`%s: %s`\n\n" % (source, head, "・".join(names))
+
+
 def prediction_prompt(key: str, today: str, yesterday: str, answer: Path, out: Path) -> str:
     hall, display = HALLS[key]
     has_announce = bool(announce_files(key, today))
@@ -543,24 +596,25 @@ def prediction_prompt(key: str, today: str, yesterday: str, answer: Path, out: P
 
 {history}
 - 表を書き写さない。過去回の数字はこの表の値だけを使い、自分で計算し直した別の値を書かない。標本が少ないことは必ず書く。
+  過去回は従。主にするのは予告の筆頭名指し・公約機種・先バレ。
 
-## 書式（凍結が機械的に拾うので厳守）
-- 見出しは `## {display}`。その下は自由に書いてよいが、次の2種類の行を書く。
-  - 推す機種・台: 行頭を `判断:` で始める（例: `判断: カバネリ(42台)を軸に、台数の多い機種から。`）。
+{baseline_block(key, today, has_announce)}{prediction_form()}## 書式（凍結が機械的に拾うので厳守）
+- 見出しは `## {display}`。その下は上の「予測の形」に従い、次の2種類の行を書く。
+  - 推す機種: 行頭を `判断:` で始め、推す機種の名前を書く（例: `判断: 機種A・機種B・機種C(基準)に、機種D(公約機種)を足す。`）。
     {"予告・イベント日がある日は必ず1行書く。" if has_announce else "機種を絞る根拠が無ければ、その旨を `判断:` の行に書く。"}
-  - 避ける機種: 行頭を `避ける:` で始める（例: `避ける: 東京喰種(7の付く日−405)。`）。無ければ書かない。
-- 凍結は `避ける:` で始まる行に出る機種名をすべて避ける扱いにする。`避ける:` の行には推す機種の名前を入れない。
-- `判断:` の行は文ごとに読む。文末が打ち消し（「〜ない」「〜なし」「見送る」）の文と、「避け」を含む文の機種・台は推す扱いにしない。
-  推す機種は肯定の文に書く（例: `判断: 機種を絞る根拠はなく、分散先はカバネリ海門。`）。
-  `判断:` の行でジャグラー候補の機種名を挙げても推す扱いにならない（台番号は末尾の表で採点される）。
-  推さない機種を `判断:` の行に挙げる必要はない。解説は別の行に書く。
+  - 避ける機種: 「避ける」を含む行（例: `避ける: 機種F(機械割が低い)。`）。理由は構造（機械割・稼働不足・台数の変化）だけ。無ければ書かない。
+- 凍結は「避け」を含む行を全部「避ける機種」として拾い、そこに出る機種名をすべて避ける扱いにする。
+  だから「避ける」「避け」という語は、避ける機種を書く `避ける:` の行以外では使わない。
+  判断の行や解説では、「見送る」「推さない」「弱い」などと言い換える。
+  `避ける:` の行には、避ける機種の名前だけを書き、推す機種の名前は入れない。
 - **ジャグラー候補の表は書かない。** スクリプトが全ホール共通の「## ジャグラー候補」の節を作る。
   必要なら本文で「ジャグラーは末尾の表を参照」と書くだけにする。
 - 予告が無いホール・機種を絞る根拠が無いホールは、数行で済ませる。
 
 ## 方針
 - 予告の台番号・機種名・条件は原文どおりに。解釈が割れるものは「解釈が割れる」と書き、判断にしない。
-- 推す根拠の数字（直近3か月、同条件の過去回の実績、母数）を添える。母数が小さければそう書く。
+- 基準から差し替える機種にだけ根拠を添える（予告の原文・公約・母数）。母数が小さければそう書く。
+- 台番号は本文で選ばない。末尾の「RB機種候補」の表（自動）に任せる。予告で台が指定された日だけ原文どおりに書く。
 - 予告に「狙い目はリプに記載予定」のように、機種・台番号が後から出ると書かれている場合は、まだ出ていないことを事実として書き、機種を創作しない。
 - 下の「既知の学び」の型（前日の結果・少台数機種・3回以下の過去回など）だけを根拠にした `判断:` `避ける:` の行は、
   凍結（freeze-doc）の点検で止まる。予告・公約・機械割・稼働・台数の変化・RB判別機の自動候補など、別の根拠を書く。
