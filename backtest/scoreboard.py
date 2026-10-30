@@ -89,6 +89,16 @@ MDE_TARGET = {
     "rbdip_units": 0.02,
     "rbdip_ctrl_units": 0.02,
     "rbdip_diff": 0.02,
+    # 回転数(backtest.prediction_games)。到達・打たれた割合は%ポイント、G比は比の差
+    "gm_reach_units": 10.0,
+    "gm_reach_models": 10.0,
+    "gm_g_units": 0.10,
+    "gm_g_models": 0.10,
+    "rbst_played": 10.0,
+    "rbst_g": 0.10,
+    "rbst5_played": 10.0,
+    "rbst5_rb": 0.05,
+    "jugm_units": 100.0,
     "announce_named": 100.0,
     # 結果ツイートとの照合(%ポイント): 名指しが結果に入った割合 − 基準の割合
     "rc_units": 10.0,
@@ -355,6 +365,16 @@ def build_prediction_rows(preds: list[dict]) -> list[Row]:
                 groups.setdefault(("rbauto_units", p["hall"]), []).append(
                     (p["target_date"], units["rb_s1_edge"], p["timing"])
                 )
+            # 2段採点の1段目: 打たれなかった候補も消さずに「打たれたか」を数える(同機種の候補外との差)
+            stage = p["result"].get("rb_stage") or {}
+            for family, value in (
+                ("rbst_played", (stage.get("all") or {}).get("played_edge")),
+                ("rbst_g", (stage.get("all") or {}).get("g_edge")),
+                ("rbst5_played", (stage.get("top5") or {}).get("played_edge")),
+                ("rbst5_rb", (stage.get("top5_rb_s1") or {}).get("rb_s1_edge")),
+            ):
+                if value is not None:
+                    groups.setdefault((family, p["hall"]), []).append((p["target_date"], value, p["timing"]))
             continue
         if p.get("source") in ("rb_dip", "rb_dip_ctrl"):
             # 凹み戻り(自動)は人の判断・rb_auto の系列に混ぜない。値は台の設定1比の差(同日・同機種の非選択台との差)。
@@ -389,6 +409,19 @@ def build_prediction_rows(preds: list[dict]) -> list[Row]:
                 if "revision_of" in p:
                     family = f"{family}[{p['revision']}]"
                 groups.setdefault((family, p["hall"]), []).append((p["target_date"], part["rb_s1_edge"], p["timing"]))
+        if "revision_of" not in p:
+            games = p["result"].get("games") or {}
+            for kind in ("units", "models"):
+                part = games.get(kind) or {}
+                for family, value in (
+                    (f"gm_reach_{kind}", part.get("reach_edge")),
+                    (f"gm_g_{kind}", part.get("g_edge")),
+                ):
+                    if value is not None:
+                        groups.setdefault((family, p["hall"]), []).append((p["target_date"], value, p["timing"]))
+            jm = p["result"].get("jug_model") or {}
+            if jm.get("edge") is not None:
+                groups.setdefault(("jugm_units", p["hall"]), []).append((p["target_date"], jm["edge"], p["timing"]))
     # 凹み戻りの増分: 同じ (ホール, 対象日) に凹み(A)と対照(B)の両方の値がある日だけ A − B を1値にする。
     ctrl = {
         (hall, date): value
@@ -639,6 +672,13 @@ PLAN_MAP = (
         "7 のみとやの行。RB比は「予測文書RB(設定1比): ジャグラー候補表の台」",
     ),
     ("ジャグラー候補(楽園)", "差を検出、または平均 > +100", "7 の楽園の行と、RB(設定1比)のジャグラー候補表の楽園の行"),
+    ("蒲田7の持ち越し上位を外す", "同じ機種の候補外との差が負のまま", "12 の蒲田7の行"),
+    ("名指しの回転数(AT機)", "7,000G到達が同機種の名指し外より多い", "10a・10b。差枚の表より先に読む"),
+    (
+        "RB自動候補の打たれ方",
+        "候補が候補外より打たれ、打たれた台のRB比が高い",
+        "11a〜11d と「RB機種候補(自動): 台の補助」",
+    ),
     (
         "凍結前点検の警告件数",
         "月の後半で前半より減る",
@@ -842,6 +882,57 @@ def render_markdown(rows: list[Row], generated_at: str, since: str | None) -> st
             extra_head=["事前性 開店前/当日/事後"],
             extra_cols=_timing_cols,
         )
+    games_note = (
+        "回転数(backtest.prediction_games)。AT機で7,000G以上回った台は、途中の示唆を見て打ち続けられた可能性が高い"
+        "(backtest.continuation_scan: 差枚マイナスの台でも7,000G以上の台は結果ツイートに1.5〜4.6倍入る)。"
+        "到達は「7,000G到達の割合(AT機) − 同じ日・同じ機種の名指ししなかった台の割合」の%ポイント。"
+        "G比は「台の回転数 ÷ 同じ日・同じ機種の中央値」の差。機種の名指しは同機種の対照が無いので、"
+        "回転数をホールの当日中央値で割り、名指ししなかった機種の台と比べる。**差枚より先に読む。**"
+    )
+    for family, title, unit, fmt in (
+        ("gm_reach_units", "10a. 回転数: 判断で名指しした台・7,000G到達(AT機)", "(pt)", "+.1f"),
+        ("gm_reach_models", "10b. 回転数: 推した機種・7,000G到達(AT機)", "(pt)", "+.1f"),
+        ("gm_g_units", "10c. 回転数: 判断で名指しした台・G比", "(G比の差)", "+.2f"),
+        ("gm_g_models", "10d. 回転数: 推した機種・G比(ホール中央値比)", "(G比の差)", "+.2f"),
+    ):
+        _section(
+            out,
+            rows,
+            family,
+            title,
+            unit,
+            fmt,
+            games_note,
+            extra_head=["事前性 開店前/当日/事後"],
+            extra_cols=_timing_cols,
+            key_head="対象",
+        )
+    stage_note = (
+        "RB自動候補の2段採点。1段目は全候補について「打たれたか」(3,000G到達の割合・G比)を、同じ日・同じ機種の候補外の台と"
+        "比べる(打たれなかった候補も成績から消さない)。2段目は打たれた台のRB比で、全候補は「RB機種候補(自動): 台の補助」、"
+        "上位5台(機種内の偏差の大きい順)はこの節の最後の表。"
+    )
+    for family, title, unit, fmt in (
+        ("rbst_played", "11a. RB自動候補 1段目: 全候補が打たれた割合", "(pt)", "+.1f"),
+        ("rbst_g", "11b. RB自動候補 1段目: 全候補のG比", "(G比の差)", "+.2f"),
+        ("rbst5_played", "11c. RB自動候補 1段目: 上位5台が打たれた割合", "(pt)", "+.1f"),
+        ("rbst5_rb", "11d. RB自動候補 2段目: 上位5台のRB(設定1比)", "(設定1比の差)", "+.3f"),
+    ):
+        _section(out, rows, family, title, unit, fmt, stage_note)
+    _section(
+        out,
+        rows,
+        "jugm_units",
+        "12. ジャグラー候補表の台 − 同じ機種の候補外(差枚)",
+        "(枚)",
+        "+.0f",
+        "7 はホールの全台平均との差で、機種の強さを含む。こちらは同じ日・同じ機種の候補外の台との差で、"
+        "候補の選び方そのものの成績。蒲田7の「持ち越し上位を外す」仮説(10月 −212)は、この表の蒲田7の行が"
+        "負のままかで11月に判定する。",
+        extra_head=["事前性 開店前/当日/事後"],
+        extra_cols=_timing_cols,
+        key_head="対象",
+    )
     _section(
         out,
         rows,

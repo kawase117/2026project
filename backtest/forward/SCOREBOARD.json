@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-30T14:36:45+09:00",
+ "generated_at": "2026-10-31T00:36:32+09:00",
  "since": null,
  "params": {
   "block_days": 7,
@@ -31,7 +31,20 @@
    "rbdip_units": 0.02,
    "rbdip_ctrl_units": 0.02,
    "rbdip_diff": 0.02,
-   "announce_named": 100.0
+   "gm_reach_units": 10.0,
+   "gm_reach_models": 10.0,
+   "gm_g_units": 0.1,
+   "gm_g_models": 0.1,
+   "rbst_played": 10.0,
+   "rbst_g": 0.1,
+   "rbst5_played": 10.0,
+   "rbst5_rb": 0.05,
+   "jugm_units": 100.0,
+   "announce_named": 100.0,
+   "rc_units": 10.0,
+   "rc_jug_units": 10.0,
+   "rc_models": 10.0,
+   "rc_avoid_models": 10.0
   }
  },
  "rows": [
@@ -1294,6 +1307,1206 @@
    "days_needed": 7,
    "criterion": null,
    "extra": {}
+  },
+  {
+   "family": "gm_g_models",
+   "key": "gm_g_models/ARROW池上店",
+   "hall": "ARROW池上店",
+   "label": "ARROW池上店",
+   "first_date": "20261010",
+   "last_date": "20261028",
+   "stat": {
+    "n_days": 4,
+    "mean": 0.10705152210745006,
+    "ci_lo": 0.03850312362519892,
+    "ci_hi": 0.1701885650385156,
+    "p_one_sided": 0.04018603323707688,
+    "share_positive": 1.0,
+    "sd": 0.08234561166468421,
+    "q": 0.07233485982673839
+   },
+   "recent_mean": 0.10705152210745006,
+   "recent_n": 4,
+   "verdict": "標本不足",
+   "days_needed": 1,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 1,
+     "same_day": 3,
+     "after": 0
+    }
+   }
+  },
+  {
+   "family": "gm_g_models",
+   "key": "gm_g_models/みとや大森町店",
+   "hall": "みとや大森町店",
+   "label": "みとや大森町店",
+   "first_date": "20261008",
+   "last_date": "20261029",
+   "stat": {
+    "n_days": 11,
+    "mean": 0.642009111259311,
+    "ci_lo": -0.10179848102465226,
+    "ci_hi": 1.3401674981597032,
+    "p_one_sided": 0.040056904861473314,
+    "share_positive": 0.5454545454545454,
+    "sd": 1.093497087534415,
+    "q": 0.07233485982673839
+   },
+   "recent_mean": 0.642009111259311,
+   "recent_n": 11,
+   "verdict": "差を検出できず",
+   "days_needed": 729,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 5,
+     "same_day": 3,
+     "after": 3
+    }
+   }
+  },
+  {
+   "family": "gm_g_models",
+   "key": "gm_g_models/ザ-シティ-ベルシティ雑色店",
+   "hall": "ザ-シティ-ベルシティ雑色店",
+   "label": "ザ-シティ-ベルシティ雑色店",
+   "first_date": "20261019",
+   "last_date": "20261025",
+   "stat": {
+    "n_days": 3,
+    "mean": 0.5624381083574956,
+    "ci_lo": -0.6633485234625914,
+    "ci_hi": 1.249659633487768,
+    "p_one_sided": 0.2282997957446803,
+    "share_positive": 0.6666666666666666,
+    "sd": 1.0641613283461824,
+    "q": 0.2935283088145889
+   },
+   "recent_mean": 0.5624381083574956,
+   "recent_n": 3,
+   "verdict": "標本不足",
+   "days_needed": 698,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 2,
+     "same_day": 1,
+     "after": 0
+    }
+   }
+  },
+  {
+   "family": "gm_g_models",
+   "key": "gm_g_models/ヒロキMAX蒲田店",
+   "hall": "ヒロキMAX蒲田店",
+   "label": "ヒロキMAX蒲田店",
+   "first_date": "20261026",
+   "last_date": "20261026",
+   "stat": {
+    "n_days": 1,
+    "mean": 1.6941591035416215,
+    "ci_lo": null,
+    "ci_hi": null,
+    "p_one_sided": null,
+    "share_positive": 1.0,
+    "sd": null,
+    "q": null
+   },
+   "recent_mean": 1.6941591035416215,
+   "recent_n": 1,
+   "verdict": "標本不足",
+   "days_needed": null,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 1,
+     "same_day": 0,
+     "after": 0
+    }
+   }
+  },
+  {
+   "family": "gm_g_models",
+   "key": "gm_g_models/ヒロキ東口店",
+   "hall": "ヒロキ東口店",
+   "label": "ヒロキ東口店",
+   "first_date": "20261017",
+   "last_date": "20261026",
+   "stat": {
+    "n_days": 5,
+    "mean": 0.15025206681769884,
+    "ci_lo": -0.46450528159157517,
+    "ci_hi": 1.113941847337275,
+    "p_one_sided": 0.38227871809650654,
+    "share_positive": 0.4,
+    "sd": 1.0479244414771305,
+    "q": 0.43006355785856987
+   },
+   "recent_mean": 0.15025206681769884,
+   "recent_n": 5,
+   "verdict": "標本不足",
+   "days_needed": 674,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 4,
+     "same_day": 1,
+     "after": 0
+    }
+   }
+  },
+  {
+   "family": "gm_g_models",
+   "key": "gm_g_models/マルハンメガシティ2000-蒲田1",
+   "hall": "マルハンメガシティ2000-蒲田1",
+   "label": "マルハンメガシティ2000-蒲田1",
+   "first_date": "20261006",
+   "last_date": "20261025",
+   "stat": {
+    "n_days": 17,
+    "mean": 0.18968118626485597,
+    "ci_lo": 0.02169732244388347,
+    "ci_hi": 0.2475409298421411,
+    "p_one_sided": 0.03586865251084785,
+    "share_positive": 0.5294117647058824,
+    "sd": 0.40554785049813963,
+    "q": 0.07233485982673839
+   },
+   "recent_mean": 0.18968118626485597,
+   "recent_n": 17,
+   "verdict": "有効",
+   "days_needed": null,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 10,
+     "same_day": 2,
+     "after": 5
+    }
+   }
+  },
+  {
+   "family": "gm_g_models",
+   "key": "gm_g_models/マルハンメガシティ2000-蒲田7",
+   "hall": "マルハンメガシティ2000-蒲田7",
+   "label": "マルハンメガシティ2000-蒲田7",
+   "first_date": "20261008",
+   "last_date": "20261029",
+   "stat": {
+    "n_days": 17,
+    "mean": -0.05751853561431983,
+    "ci_lo": -0.16743087300691156,
+    "ci_hi": 0.11442457332912756,
+    "p_one_sided": 0.8224033018390646,
+    "share_positive": 0.47058823529411764,
+    "sd": 0.24907793526951363,
+    "q": 0.8224033018390646
+   },
+   "recent_mean": -0.05751853561431983,
+   "recent_n": 17,
+   "verdict": "差を検出できず",
+   "days_needed": 22,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 8,
+     "same_day": 4,
+     "after": 5
+    }
+   }
+  },
+  {
+   "family": "gm_g_models",
+   "key": "gm_g_models/レイトギャップ平和島",
+   "hall": "レイトギャップ平和島",
+   "label": "レイトギャップ平和島",
+   "first_date": "20261013",
+   "last_date": "20261028",
+   "stat": {
+    "n_days": 6,
+    "mean": 0.7163671135862876,
+    "ci_lo": 0.3471738857129168,
+    "ci_hi": 1.0415745804848326,
+    "p_one_sided": 0.014425872549080959,
+    "share_positive": 1.0,
+    "sd": 0.5777980992592179,
+    "q": 0.06491642647086432
+   },
+   "recent_mean": 0.7163671135862876,
+   "recent_n": 6,
+   "verdict": "標本不足",
+   "days_needed": 201,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 4,
+     "same_day": 1,
+     "after": 1
+    }
+   }
+  },
+  {
+   "family": "gm_g_models",
+   "key": "gm_g_models/楽園蒲田店",
+   "hall": "楽園蒲田店",
+   "label": "楽園蒲田店",
+   "first_date": "20261006",
+   "last_date": "20261028",
+   "stat": {
+    "n_days": 22,
+    "mean": 0.7805908942339652,
+    "ci_lo": 0.39683992394181333,
+    "ci_hi": 1.0674598122061159,
+    "p_one_sided": 0.0007565131922312078,
+    "share_positive": 0.8181818181818182,
+    "sd": 1.0044509099664227,
+    "q": 0.0068086187300808705
+   },
+   "recent_mean": 0.7805908942339652,
+   "recent_n": 22,
+   "verdict": "有効",
+   "days_needed": null,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 11,
+     "same_day": 5,
+     "after": 6
+    }
+   }
+  },
+  {
+   "family": "gm_g_models",
+   "key": "gm_g_models/金時京急蒲田店",
+   "hall": "金時京急蒲田店",
+   "label": "金時京急蒲田店",
+   "first_date": "20261023",
+   "last_date": "20261025",
+   "stat": {
+    "n_days": 2,
+    "mean": 0.6119690689723418,
+    "ci_lo": 0.3531161142449625,
+    "ci_hi": 0.8708220236997213,
+    "p_one_sided": null,
+    "share_positive": 1.0,
+    "sd": 0.3660733592358087,
+    "q": null
+   },
+   "recent_mean": 0.6119690689723418,
+   "recent_n": 2,
+   "verdict": "標本不足",
+   "days_needed": 81,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 1,
+     "same_day": 1,
+     "after": 0
+    }
+   }
+  },
+  {
+   "family": "gm_g_models",
+   "key": "gm_g_models/金時蒲田東口店",
+   "hall": "金時蒲田東口店",
+   "label": "金時蒲田東口店",
+   "first_date": "20261012",
+   "last_date": "20261025",
+   "stat": {
+    "n_days": 3,
+    "mean": 1.10771025476586,
+    "ci_lo": -0.15321497496348835,
+    "ci_hi": 1.9361979761089552,
+    "p_one_sided": 0.11299432765049812,
+    "share_positive": 0.6666666666666666,
+    "sd": 1.1098032568981753,
+    "q": 0.16949149147574719
+   },
+   "recent_mean": 1.10771025476586,
+   "recent_n": 3,
+   "verdict": "標本不足",
+   "days_needed": 759,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 0,
+     "same_day": 2,
+     "after": 1
+    }
+   }
+  },
+  {
+   "family": "gm_g_units",
+   "key": "gm_g_units/ARROW池上店",
+   "hall": "ARROW池上店",
+   "label": "ARROW池上店",
+   "first_date": "20261019",
+   "last_date": "20261019",
+   "stat": {
+    "n_days": 1,
+    "mean": 0.08404822149930496,
+    "ci_lo": null,
+    "ci_hi": null,
+    "p_one_sided": null,
+    "share_positive": 1.0,
+    "sd": null,
+    "q": null
+   },
+   "recent_mean": 0.08404822149930496,
+   "recent_n": 1,
+   "verdict": "標本不足",
+   "days_needed": null,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 1,
+     "same_day": 0,
+     "after": 0
+    }
+   }
+  },
+  {
+   "family": "gm_g_units",
+   "key": "gm_g_units/ヒロキ東口店",
+   "hall": "ヒロキ東口店",
+   "label": "ヒロキ東口店",
+   "first_date": "20261019",
+   "last_date": "20261019",
+   "stat": {
+    "n_days": 1,
+    "mean": 0.15108001464426635,
+    "ci_lo": null,
+    "ci_hi": null,
+    "p_one_sided": null,
+    "share_positive": 1.0,
+    "sd": null,
+    "q": null
+   },
+   "recent_mean": 0.15108001464426635,
+   "recent_n": 1,
+   "verdict": "標本不足",
+   "days_needed": null,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 1,
+     "same_day": 0,
+     "after": 0
+    }
+   }
+  },
+  {
+   "family": "gm_g_units",
+   "key": "gm_g_units/マルハンメガシティ2000-蒲田7",
+   "hall": "マルハンメガシティ2000-蒲田7",
+   "label": "マルハンメガシティ2000-蒲田7",
+   "first_date": "20261012",
+   "last_date": "20261025",
+   "stat": {
+    "n_days": 4,
+    "mean": -0.012401740843475603,
+    "ci_lo": -0.40957388632070135,
+    "ci_hi": 0.2367676651403025,
+    "p_one_sided": 0.5223401059068676,
+    "share_positive": 0.75,
+    "sd": 0.40774631279842005,
+    "q": 0.5223401059068676
+   },
+   "recent_mean": -0.012401740843475603,
+   "recent_n": 4,
+   "verdict": "標本不足",
+   "days_needed": 99,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 1,
+     "same_day": 1,
+     "after": 2
+    }
+   }
+  },
+  {
+   "family": "gm_g_units",
+   "key": "gm_g_units/楽園蒲田店",
+   "hall": "楽園蒲田店",
+   "label": "楽園蒲田店",
+   "first_date": "20261006",
+   "last_date": "20261006",
+   "stat": {
+    "n_days": 1,
+    "mean": -0.4366443271924527,
+    "ci_lo": null,
+    "ci_hi": null,
+    "p_one_sided": null,
+    "share_positive": 0.0,
+    "sd": null,
+    "q": null
+   },
+   "recent_mean": -0.4366443271924527,
+   "recent_n": 1,
+   "verdict": "標本不足",
+   "days_needed": null,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 1,
+     "same_day": 0,
+     "after": 0
+    }
+   }
+  },
+  {
+   "family": "gm_g_units",
+   "key": "gm_g_units/金時京急蒲田店",
+   "hall": "金時京急蒲田店",
+   "label": "金時京急蒲田店",
+   "first_date": "20261023",
+   "last_date": "20261023",
+   "stat": {
+    "n_days": 1,
+    "mean": -0.054611351017890164,
+    "ci_lo": null,
+    "ci_hi": null,
+    "p_one_sided": null,
+    "share_positive": 0.0,
+    "sd": null,
+    "q": null
+   },
+   "recent_mean": -0.054611351017890164,
+   "recent_n": 1,
+   "verdict": "標本不足",
+   "days_needed": null,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 1,
+     "same_day": 0,
+     "after": 0
+    }
+   }
+  },
+  {
+   "family": "gm_reach_models",
+   "key": "gm_reach_models/ARROW池上店",
+   "hall": "ARROW池上店",
+   "label": "ARROW池上店",
+   "first_date": "20261010",
+   "last_date": "20261028",
+   "stat": {
+    "n_days": 4,
+    "mean": 20.563949076914025,
+    "ci_lo": 13.243262114229857,
+    "ci_hi": 30.39298414785066,
+    "p_one_sided": 0.015488011823237682,
+    "share_positive": 1.0,
+    "sd": 10.68733110239405,
+    "q": 0.05420804138133189
+   },
+   "recent_mean": 20.563949076914025,
+   "recent_n": 4,
+   "verdict": "標本不足",
+   "days_needed": 4,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 1,
+     "same_day": 3,
+     "after": 0
+    }
+   }
+  },
+  {
+   "family": "gm_reach_models",
+   "key": "gm_reach_models/みとや大森町店",
+   "hall": "みとや大森町店",
+   "label": "みとや大森町店",
+   "first_date": "20261008",
+   "last_date": "20261029",
+   "stat": {
+    "n_days": 10,
+    "mean": -3.460953097573841,
+    "ci_lo": -6.176691066596601,
+    "ci_hi": -2.020141271886565,
+    "p_one_sided": 0.9924091853906979,
+    "share_positive": 0.0,
+    "sd": 3.659408166565905,
+    "q": 0.9924091853906979
+   },
+   "recent_mean": -3.460953097573841,
+   "recent_n": 10,
+   "verdict": "有害",
+   "days_needed": null,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 5,
+     "same_day": 2,
+     "after": 3
+    }
+   }
+  },
+  {
+   "family": "gm_reach_models",
+   "key": "gm_reach_models/ザ-シティ-ベルシティ雑色店",
+   "hall": "ザ-シティ-ベルシティ雑色店",
+   "label": "ザ-シティ-ベルシティ雑色店",
+   "first_date": "20261019",
+   "last_date": "20261019",
+   "stat": {
+    "n_days": 1,
+    "mean": 0.0,
+    "ci_lo": null,
+    "ci_hi": null,
+    "p_one_sided": null,
+    "share_positive": 0.0,
+    "sd": null,
+    "q": null
+   },
+   "recent_mean": 0.0,
+   "recent_n": 1,
+   "verdict": "標本不足",
+   "days_needed": null,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 1,
+     "same_day": 0,
+     "after": 0
+    }
+   }
+  },
+  {
+   "family": "gm_reach_models",
+   "key": "gm_reach_models/ヒロキMAX蒲田店",
+   "hall": "ヒロキMAX蒲田店",
+   "label": "ヒロキMAX蒲田店",
+   "first_date": "20261026",
+   "last_date": "20261026",
+   "stat": {
+    "n_days": 1,
+    "mean": 0.0,
+    "ci_lo": null,
+    "ci_hi": null,
+    "p_one_sided": null,
+    "share_positive": 0.0,
+    "sd": null,
+    "q": null
+   },
+   "recent_mean": 0.0,
+   "recent_n": 1,
+   "verdict": "標本不足",
+   "days_needed": null,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 1,
+     "same_day": 0,
+     "after": 0
+    }
+   }
+  },
+  {
+   "family": "gm_reach_models",
+   "key": "gm_reach_models/ヒロキ東口店",
+   "hall": "ヒロキ東口店",
+   "label": "ヒロキ東口店",
+   "first_date": "20261017",
+   "last_date": "20261026",
+   "stat": {
+    "n_days": 4,
+    "mean": -2.06323533621504,
+    "ci_lo": -5.801104972375691,
+    "ci_hi": 0.0,
+    "p_one_sided": 0.8221098863890298,
+    "share_positive": 0.0,
+    "sd": 3.7889284753263843,
+    "q": 0.9591282007872014
+   },
+   "recent_mean": -2.06323533621504,
+   "recent_n": 4,
+   "verdict": "標本不足",
+   "days_needed": 0,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 4,
+     "same_day": 0,
+     "after": 0
+    }
+   }
+  },
+  {
+   "family": "gm_reach_models",
+   "key": "gm_reach_models/マルハンメガシティ2000-蒲田1",
+   "hall": "マルハンメガシティ2000-蒲田1",
+   "label": "マルハンメガシティ2000-蒲田1",
+   "first_date": "20261006",
+   "last_date": "20261023",
+   "stat": {
+    "n_days": 15,
+    "mean": 0.13659939324248865,
+    "ci_lo": -1.6102671144804148,
+    "ci_hi": 1.8216688829531251,
+    "p_one_sided": 0.4659264812104217,
+    "share_positive": 0.2,
+    "sd": 6.076469440899198,
+    "q": 0.6522970736945903
+   },
+   "recent_mean": 0.13659939324248865,
+   "recent_n": 15,
+   "verdict": "差を検出できず",
+   "days_needed": 0,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 9,
+     "same_day": 1,
+     "after": 5
+    }
+   }
+  },
+  {
+   "family": "gm_reach_models",
+   "key": "gm_reach_models/マルハンメガシティ2000-蒲田7",
+   "hall": "マルハンメガシティ2000-蒲田7",
+   "label": "マルハンメガシティ2000-蒲田7",
+   "first_date": "20261008",
+   "last_date": "20261029",
+   "stat": {
+    "n_days": 17,
+    "mean": 0.8656958204391487,
+    "ci_lo": -5.779170569046947,
+    "ci_hi": 9.292308023817784,
+    "p_one_sided": 0.4140267328741063,
+    "share_positive": 0.17647058823529413,
+    "sd": 16.166739287569534,
+    "q": 0.6522970736945903
+   },
+   "recent_mean": 0.8656958204391487,
+   "recent_n": 17,
+   "verdict": "差を検出できず",
+   "days_needed": 0,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 8,
+     "same_day": 4,
+     "after": 5
+    }
+   }
+  },
+  {
+   "family": "gm_reach_models",
+   "key": "gm_reach_models/レイトギャップ平和島",
+   "hall": "レイトギャップ平和島",
+   "label": "レイトギャップ平和島",
+   "first_date": "20261013",
+   "last_date": "20261028",
+   "stat": {
+    "n_days": 6,
+    "mean": 24.250788072070236,
+    "ci_lo": 8.155544661880034,
+    "ci_hi": 37.486690067227705,
+    "p_one_sided": 0.028514950162244226,
+    "share_positive": 1.0,
+    "sd": 24.119412960858025,
+    "q": 0.06653488371190319
+   },
+   "recent_mean": 24.250788072070236,
+   "recent_n": 6,
+   "verdict": "標本不足",
+   "days_needed": 30,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 4,
+     "same_day": 1,
+     "after": 1
+    }
+   }
+  },
+  {
+   "family": "gm_reach_models",
+   "key": "gm_reach_models/楽園蒲田店",
+   "hall": "楽園蒲田店",
+   "label": "楽園蒲田店",
+   "first_date": "20261006",
+   "last_date": "20261028",
+   "stat": {
+    "n_days": 22,
+    "mean": 17.41671074066488,
+    "ci_lo": 12.962322940488049,
+    "ci_hi": 19.463216435004604,
+    "p_one_sided": 5.8173868121739154e-05,
+    "share_positive": 0.8181818181818182,
+    "sd": 17.306927405533706,
+    "q": 0.00040721707685217407
+   },
+   "recent_mean": 17.41671074066488,
+   "recent_n": 22,
+   "verdict": "有効",
+   "days_needed": null,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 11,
+     "same_day": 5,
+     "after": 6
+    }
+   }
+  },
+  {
+   "family": "gm_reach_models",
+   "key": "gm_reach_models/金時京急蒲田店",
+   "hall": "金時京急蒲田店",
+   "label": "金時京急蒲田店",
+   "first_date": "20261025",
+   "last_date": "20261025",
+   "stat": {
+    "n_days": 1,
+    "mean": -3.75,
+    "ci_lo": null,
+    "ci_hi": null,
+    "p_one_sided": null,
+    "share_positive": 0.0,
+    "sd": null,
+    "q": null
+   },
+   "recent_mean": -3.75,
+   "recent_n": 1,
+   "verdict": "標本不足",
+   "days_needed": null,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 0,
+     "same_day": 1,
+     "after": 0
+    }
+   }
+  },
+  {
+   "family": "gm_reach_models",
+   "key": "gm_reach_models/金時蒲田東口店",
+   "hall": "金時蒲田東口店",
+   "label": "金時蒲田東口店",
+   "first_date": "20261012",
+   "last_date": "20261012",
+   "stat": {
+    "n_days": 1,
+    "mean": -17.045454545454547,
+    "ci_lo": null,
+    "ci_hi": null,
+    "p_one_sided": null,
+    "share_positive": 0.0,
+    "sd": null,
+    "q": null
+   },
+   "recent_mean": -17.045454545454547,
+   "recent_n": 1,
+   "verdict": "標本不足",
+   "days_needed": null,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 0,
+     "same_day": 0,
+     "after": 1
+    }
+   }
+  },
+  {
+   "family": "gm_reach_units",
+   "key": "gm_reach_units/マルハンメガシティ2000-蒲田7",
+   "hall": "マルハンメガシティ2000-蒲田7",
+   "label": "マルハンメガシティ2000-蒲田7",
+   "first_date": "20261012",
+   "last_date": "20261025",
+   "stat": {
+    "n_days": 3,
+    "mean": -1.2345679012345678,
+    "ci_lo": -3.7037037037037037,
+    "ci_hi": 0.0,
+    "p_one_sided": 0.7886751345948129,
+    "share_positive": 0.0,
+    "sd": 2.1383343303319475,
+    "q": 0.7886751345948129
+   },
+   "recent_mean": -1.2345679012345678,
+   "recent_n": 3,
+   "verdict": "標本不足",
+   "days_needed": 0,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 1,
+     "same_day": 1,
+     "after": 1
+    }
+   }
+  },
+  {
+   "family": "gm_reach_units",
+   "key": "gm_reach_units/楽園蒲田店",
+   "hall": "楽園蒲田店",
+   "label": "楽園蒲田店",
+   "first_date": "20261006",
+   "last_date": "20261006",
+   "stat": {
+    "n_days": 1,
+    "mean": -60.714285714285715,
+    "ci_lo": null,
+    "ci_hi": null,
+    "p_one_sided": null,
+    "share_positive": 0.0,
+    "sd": null,
+    "q": null
+   },
+   "recent_mean": -60.714285714285715,
+   "recent_n": 1,
+   "verdict": "標本不足",
+   "days_needed": null,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 1,
+     "same_day": 0,
+     "after": 0
+    }
+   }
+  },
+  {
+   "family": "jugm_units",
+   "key": "jugm_units/ARROW池上店",
+   "hall": "ARROW池上店",
+   "label": "ARROW池上店",
+   "first_date": "20261015",
+   "last_date": "20261018",
+   "stat": {
+    "n_days": 4,
+    "mean": 237.18516249375625,
+    "ci_lo": -460.41692708333335,
+    "ci_hi": 782.7128343878344,
+    "p_one_sided": 0.27401101011522594,
+    "share_positive": 0.75,
+    "sd": 702.7327043737766,
+    "q": 0.663592579178352
+   },
+   "recent_mean": 237.18516249375625,
+   "recent_n": 4,
+   "verdict": "標本不足",
+   "days_needed": 302,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 3,
+     "same_day": 0,
+     "after": 1
+    }
+   }
+  },
+  {
+   "family": "jugm_units",
+   "key": "jugm_units/みとや大森町店",
+   "hall": "みとや大森町店",
+   "label": "みとや大森町店",
+   "first_date": "20261014",
+   "last_date": "20261029",
+   "stat": {
+    "n_days": 16,
+    "mean": -15.306527576031868,
+    "ci_lo": -328.2260531135531,
+    "ci_hi": 188.28873056222196,
+    "p_one_sided": 0.5291687847215998,
+    "share_positive": 0.4375,
+    "sd": 822.7504834762075,
+    "q": 0.8819479745359997
+   },
+   "recent_mean": -15.306527576031868,
+   "recent_n": 16,
+   "verdict": "差を検出できず",
+   "days_needed": 403,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 10,
+     "same_day": 4,
+     "after": 2
+    }
+   }
+  },
+  {
+   "family": "jugm_units",
+   "key": "jugm_units/ザ-シティ-ベルシティ雑色店",
+   "hall": "ザ-シティ-ベルシティ雑色店",
+   "label": "ザ-シティ-ベルシティ雑色店",
+   "first_date": "20261016",
+   "last_date": "20261018",
+   "stat": {
+    "n_days": 3,
+    "mean": -109.75467171717173,
+    "ci_lo": -460.3681818181819,
+    "ci_hi": 327.375,
+    "p_one_sided": 0.6589400480277731,
+    "share_positive": 0.3333333333333333,
+    "sd": 400.93467646345283,
+    "q": 0.9413429257539615
+   },
+   "recent_mean": -109.75467171717173,
+   "recent_n": 3,
+   "verdict": "標本不足",
+   "days_needed": 97,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 3,
+     "same_day": 0,
+     "after": 0
+    }
+   }
+  },
+  {
+   "family": "jugm_units",
+   "key": "jugm_units/ヒロキ東口店",
+   "hall": "ヒロキ東口店",
+   "label": "ヒロキ東口店",
+   "first_date": "20261014",
+   "last_date": "20261018",
+   "stat": {
+    "n_days": 5,
+    "mean": -663.8482905982906,
+    "ci_lo": -1115.5666666666666,
+    "ci_hi": -226.63162393162392,
+    "p_one_sided": 0.9693258037579393,
+    "share_positive": 0.2,
+    "sd": 575.4248782164799,
+    "q": 0.9693258037579394
+   },
+   "recent_mean": -663.8482905982906,
+   "recent_n": 5,
+   "verdict": "標本不足",
+   "days_needed": 200,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 3,
+     "same_day": 0,
+     "after": 2
+    }
+   }
+  },
+  {
+   "family": "jugm_units",
+   "key": "jugm_units/ヒロキ蒲田西口店",
+   "hall": "ヒロキ蒲田西口店",
+   "label": "ヒロキ蒲田西口店",
+   "first_date": "20261028",
+   "last_date": "20261029",
+   "stat": {
+    "n_days": 2,
+    "mean": -156.2880952380952,
+    "ci_lo": -358.40952380952376,
+    "ci_hi": 45.83333333333335,
+    "p_one_sided": null,
+    "share_positive": 0.5,
+    "sd": 285.8428655319391,
+    "q": null
+   },
+   "recent_mean": -156.2880952380952,
+   "recent_n": 2,
+   "verdict": "標本不足",
+   "days_needed": 49,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 1,
+     "same_day": 1,
+     "after": 0
+    }
+   }
+  },
+  {
+   "family": "jugm_units",
+   "key": "jugm_units/マルハンメガシティ2000-蒲田1",
+   "hall": "マルハンメガシティ2000-蒲田1",
+   "label": "マルハンメガシティ2000-蒲田1",
+   "first_date": "20261014",
+   "last_date": "20261029",
+   "stat": {
+    "n_days": 10,
+    "mean": 212.22736123525596,
+    "ci_lo": 6.618364092048296,
+    "ci_hi": 595.7151515151514,
+    "p_one_sided": 0.16397076893536197,
+    "share_positive": 0.5,
+    "sd": 648.8014101297773,
+    "q": 0.663592579178352
+   },
+   "recent_mean": 212.22736123525596,
+   "recent_n": 10,
+   "verdict": "差を検出できず",
+   "days_needed": 251,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 6,
+     "same_day": 2,
+     "after": 2
+    }
+   }
+  },
+  {
+   "family": "jugm_units",
+   "key": "jugm_units/マルハンメガシティ2000-蒲田7",
+   "hall": "マルハンメガシティ2000-蒲田7",
+   "label": "マルハンメガシティ2000-蒲田7",
+   "first_date": "20261014",
+   "last_date": "20261029",
+   "stat": {
+    "n_days": 15,
+    "mean": -212.09343434343432,
+    "ci_lo": -427.0025252525253,
+    "ci_hi": -44.2828282828283,
+    "p_one_sided": 0.9091579388300632,
+    "share_positive": 0.26666666666666666,
+    "sd": 584.4559320304023,
+    "q": 0.9693258037579394
+   },
+   "recent_mean": -212.09343434343432,
+   "recent_n": 15,
+   "verdict": "有害",
+   "days_needed": null,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 9,
+     "same_day": 4,
+     "after": 2
+    }
+   }
+  },
+  {
+   "family": "jugm_units",
+   "key": "jugm_units/レイトギャップ平和島",
+   "hall": "レイトギャップ平和島",
+   "label": "レイトギャップ平和島",
+   "first_date": "20261014",
+   "last_date": "20261018",
+   "stat": {
+    "n_days": 5,
+    "mean": 225.1352380952381,
+    "ci_lo": -608.7314285714286,
+    "ci_hi": 969.935238095238,
+    "p_one_sided": 0.331796289589176,
+    "share_positive": 0.8,
+    "sd": 1073.7428934380039,
+    "q": 0.663592579178352
+   },
+   "recent_mean": 225.1352380952381,
+   "recent_n": 5,
+   "verdict": "標本不足",
+   "days_needed": 708,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 3,
+     "same_day": 0,
+     "after": 2
+    }
+   }
+  },
+  {
+   "family": "jugm_units",
+   "key": "jugm_units/楽園蒲田店",
+   "hall": "楽園蒲田店",
+   "label": "楽園蒲田店",
+   "first_date": "20261013",
+   "last_date": "20261029",
+   "stat": {
+    "n_days": 16,
+    "mean": 39.30919554034308,
+    "ci_lo": -23.214779869492986,
+    "ci_hi": 122.28768442622948,
+    "p_one_sided": 0.3107414270588899,
+    "share_positive": 0.4375,
+    "sd": 311.88743708065743,
+    "q": 0.663592579178352
+   },
+   "recent_mean": 39.30919554034308,
+   "recent_n": 16,
+   "verdict": "差を検出できず",
+   "days_needed": 45,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 9,
+     "same_day": 4,
+     "after": 3
+    }
+   }
+  },
+  {
+   "family": "jugm_units",
+   "key": "jugm_units/金時京急蒲田店",
+   "hall": "金時京急蒲田店",
+   "label": "金時京急蒲田店",
+   "first_date": "20261014",
+   "last_date": "20261017",
+   "stat": {
+    "n_days": 4,
+    "mean": -594.7916666666666,
+    "ci_lo": -1694.9583333333335,
+    "ci_hi": 190.16666666666669,
+    "p_one_sided": 0.8075085799897074,
+    "share_positive": 0.5,
+    "sd": 1172.3907859978228,
+    "q": 0.9693258037579394
+   },
+   "recent_mean": -594.7916666666666,
+   "recent_n": 4,
+   "verdict": "標本不足",
+   "days_needed": 846,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 2,
+     "same_day": 0,
+     "after": 2
+    }
+   }
+  },
+  {
+   "family": "jugm_units",
+   "key": "jugm_units/金時蒲田東口店",
+   "hall": "金時蒲田東口店",
+   "label": "金時蒲田東口店",
+   "first_date": "20261014",
+   "last_date": "20261018",
+   "stat": {
+    "n_days": 5,
+    "mean": 197.8552380952381,
+    "ci_lo": -458.58095238095245,
+    "ci_hi": 617.3833333333334,
+    "p_one_sided": 0.289576126421041,
+    "share_positive": 0.8,
+    "sd": 733.9428322148112,
+    "q": 0.663592579178352
+   },
+   "recent_mean": 197.8552380952381,
+   "recent_n": 5,
+   "verdict": "標本不足",
+   "days_needed": 329,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 3,
+     "same_day": 0,
+     "after": 2
+    }
+   }
   },
   {
    "family": "pred_avoid",
@@ -5556,6 +6769,246 @@
    }
   },
   {
+   "family": "rbst5_played",
+   "key": "rbst5_played/みとや大森町店",
+   "hall": "みとや大森町店",
+   "label": "みとや大森町店",
+   "first_date": "20261026",
+   "last_date": "20261029",
+   "stat": {
+    "n_days": 4,
+    "mean": -14.392857142857144,
+    "ci_lo": -23.333333333333336,
+    "ci_hi": -5.452380952380953,
+    "p_one_sided": 0.9582413670386427,
+    "share_positive": 0.0,
+    "sd": 11.262777240608985,
+    "q": 0.9582413670386427
+   },
+   "recent_mean": -14.392857142857144,
+   "recent_n": 4,
+   "verdict": "標本不足",
+   "days_needed": 4,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 4,
+     "same_day": 0,
+     "after": 0
+    }
+   }
+  },
+  {
+   "family": "rbst5_played",
+   "key": "rbst5_played/マルハンメガシティ2000-蒲田7",
+   "hall": "マルハンメガシティ2000-蒲田7",
+   "label": "マルハンメガシティ2000-蒲田7",
+   "first_date": "20261026",
+   "last_date": "20261029",
+   "stat": {
+    "n_days": 3,
+    "mean": -8.714596949891071,
+    "ci_lo": -24.313725490196088,
+    "ci_hi": 20.392156862745093,
+    "p_one_sided": 0.6948107806219442,
+    "share_positive": 0.3333333333333333,
+    "sd": 25.228871053062278,
+    "q": 0.9582413670386427
+   },
+   "recent_mean": -8.714596949891071,
+   "recent_n": 3,
+   "verdict": "標本不足",
+   "days_needed": 37,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 3,
+     "same_day": 0,
+     "after": 0
+    }
+   }
+  },
+  {
+   "family": "rbst5_rb",
+   "key": "rbst5_rb/みとや大森町店",
+   "hall": "みとや大森町店",
+   "label": "みとや大森町店",
+   "first_date": "20261026",
+   "last_date": "20261029",
+   "stat": {
+    "n_days": 4,
+    "mean": -0.11115855514696646,
+    "ci_lo": -0.3525222643436208,
+    "ci_hi": 0.25609178842556024,
+    "p_one_sided": 0.7015134486402812,
+    "share_positive": 0.25,
+    "sd": 0.3771235424882932,
+    "q": 0.7015134486402812
+   },
+   "recent_mean": -0.11115855514696646,
+   "recent_n": 4,
+   "verdict": "標本不足",
+   "days_needed": 348,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 4,
+     "same_day": 0,
+     "after": 0
+    }
+   }
+  },
+  {
+   "family": "rbst5_rb",
+   "key": "rbst5_rb/マルハンメガシティ2000-蒲田7",
+   "hall": "マルハンメガシティ2000-蒲田7",
+   "label": "マルハンメガシティ2000-蒲田7",
+   "first_date": "20261026",
+   "last_date": "20261029",
+   "stat": {
+    "n_days": 3,
+    "mean": 0.246469813406461,
+    "ci_lo": -0.28095856368792493,
+    "ci_hi": 0.8838076764014255,
+    "p_one_sided": 0.27229453694823125,
+    "share_positive": 0.6666666666666666,
+    "sd": 0.5901103031054175,
+    "q": 0.5445890738964625
+   },
+   "recent_mean": 0.246469813406461,
+   "recent_n": 3,
+   "verdict": "標本不足",
+   "days_needed": 859,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 3,
+     "same_day": 0,
+     "after": 0
+    }
+   }
+  },
+  {
+   "family": "rbst_g",
+   "key": "rbst_g/みとや大森町店",
+   "hall": "みとや大森町店",
+   "label": "みとや大森町店",
+   "first_date": "20261026",
+   "last_date": "20261029",
+   "stat": {
+    "n_days": 4,
+    "mean": -0.18840947395575966,
+    "ci_lo": -0.47024937725675875,
+    "ci_hi": 0.09343042934523936,
+    "p_one_sided": 0.8279422000767269,
+    "share_positive": 0.5,
+    "sd": 0.33629775691239233,
+    "q": 0.8842369124985063
+   },
+   "recent_mean": -0.18840947395575966,
+   "recent_n": 4,
+   "verdict": "標本不足",
+   "days_needed": 66,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 4,
+     "same_day": 0,
+     "after": 0
+    }
+   }
+  },
+  {
+   "family": "rbst_g",
+   "key": "rbst_g/マルハンメガシティ2000-蒲田7",
+   "hall": "マルハンメガシティ2000-蒲田7",
+   "label": "マルハンメガシティ2000-蒲田7",
+   "first_date": "20261026",
+   "last_date": "20261029",
+   "stat": {
+    "n_days": 3,
+    "mean": -0.17609559742325734,
+    "ci_lo": -0.32228197636662526,
+    "ci_hi": 0.024363564425206253,
+    "p_one_sided": 0.8842369124985063,
+    "share_positive": 0.3333333333333333,
+    "sd": 0.17958266609256326,
+    "q": 0.8842369124985063
+   },
+   "recent_mean": -0.17609559742325734,
+   "recent_n": 3,
+   "verdict": "標本不足",
+   "days_needed": 17,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 3,
+     "same_day": 0,
+     "after": 0
+    }
+   }
+  },
+  {
+   "family": "rbst_played",
+   "key": "rbst_played/みとや大森町店",
+   "hall": "みとや大森町店",
+   "label": "みとや大森町店",
+   "first_date": "20261026",
+   "last_date": "20261029",
+   "stat": {
+    "n_days": 4,
+    "mean": -3.634049773755656,
+    "ci_lo": -11.745852187028659,
+    "ci_hi": 7.715874811463046,
+    "p_one_sided": 0.7036552467795996,
+    "share_positive": 0.25,
+    "sd": 12.178829276709708,
+    "q": 0.9231869757112193
+   },
+   "recent_mean": -3.634049773755656,
+   "recent_n": 4,
+   "verdict": "標本不足",
+   "days_needed": 6,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 4,
+     "same_day": 0,
+     "after": 0
+    }
+   }
+  },
+  {
+   "family": "rbst_played",
+   "key": "rbst_played/マルハンメガシティ2000-蒲田7",
+   "hall": "マルハンメガシティ2000-蒲田7",
+   "label": "マルハンメガシティ2000-蒲田7",
+   "first_date": "20261026",
+   "last_date": "20261029",
+   "stat": {
+    "n_days": 3,
+    "mean": -10.99248799505539,
+    "ci_lo": -17.950465594881514,
+    "ci_hi": -1.558673105528049,
+    "p_one_sided": 0.9231869757112193,
+    "share_positive": 0.0,
+    "sd": 8.471720189389664,
+    "q": 0.9231869757112193
+   },
+   "recent_mean": -10.99248799505539,
+   "recent_n": 3,
+   "verdict": "標本不足",
+   "days_needed": 2,
+   "criterion": null,
+   "extra": {
+    "timing": {
+     "pre_open": 3,
+     "same_day": 0,
+     "after": 0
+    }
+   }
+  },
+  {
    "family": "pred_vs_base",
    "key": "pred_vs_base/4ホール合計",
    "hall": "4ホール合計",
@@ -6310,6 +7763,438 @@
     "expected_hits": 0.4,
     "n_named_scored": 6
    }
+  },
+  {
+   "family": "rc_avoid_models",
+   "key": "rc_avoid_models/RB自動/マルハンメガシティ2000-蒲田7",
+   "hall": "マルハンメガシティ2000-蒲田7",
+   "label": "RB自動",
+   "first_date": "20261028",
+   "last_date": "20261028",
+   "stat": {
+    "n_days": 1,
+    "mean": -9.236947791164656,
+    "ci_lo": null,
+    "ci_hi": null,
+    "p_one_sided": null,
+    "share_positive": 0.0,
+    "sd": null,
+    "q": null
+   },
+   "recent_mean": -9.236947791164656,
+   "recent_n": 1,
+   "verdict": "標本不足",
+   "days_needed": null,
+   "criterion": null,
+   "extra": {}
+  },
+  {
+   "family": "rc_avoid_models",
+   "key": "rc_avoid_models/RB自動/楽園蒲田店",
+   "hall": "楽園蒲田店",
+   "label": "RB自動",
+   "first_date": "20261026",
+   "last_date": "20261028",
+   "stat": {
+    "n_days": 3,
+    "mean": -20.698924731182796,
+    "ci_lo": -52.1505376344086,
+    "ci_hi": 12.09677419354839,
+    "p_one_sided": 0.8096225452274057,
+    "share_positive": 0.3333333333333333,
+    "sd": 32.144738211791214,
+    "q": 0.8096225452274057
+   },
+   "recent_mean": -20.698924731182796,
+   "recent_n": 3,
+   "verdict": "標本不足",
+   "days_needed": 61,
+   "criterion": null,
+   "extra": {}
+  },
+  {
+   "family": "rc_avoid_models",
+   "key": "rc_avoid_models/人/ヒロキ東口店",
+   "hall": "ヒロキ東口店",
+   "label": "人",
+   "first_date": "20261026",
+   "last_date": "20261026",
+   "stat": {
+    "n_days": 1,
+    "mean": -36.8421052631579,
+    "ci_lo": null,
+    "ci_hi": null,
+    "p_one_sided": null,
+    "share_positive": 0.0,
+    "sd": null,
+    "q": null
+   },
+   "recent_mean": -36.8421052631579,
+   "recent_n": 1,
+   "verdict": "標本不足",
+   "days_needed": null,
+   "criterion": null,
+   "extra": {}
+  },
+  {
+   "family": "rc_avoid_models",
+   "key": "rc_avoid_models/人/マルハンメガシティ2000-蒲田1",
+   "hall": "マルハンメガシティ2000-蒲田1",
+   "label": "人",
+   "first_date": "20261026",
+   "last_date": "20261029",
+   "stat": {
+    "n_days": 2,
+    "mean": -29.333333333333336,
+    "ci_lo": -70.66666666666667,
+    "ci_hi": 12.0,
+    "p_one_sided": null,
+    "share_positive": 0.5,
+    "sd": 58.45416057808793,
+    "q": null
+   },
+   "recent_mean": -29.333333333333336,
+   "recent_n": 2,
+   "verdict": "標本不足",
+   "days_needed": 210,
+   "criterion": null,
+   "extra": {}
+  },
+  {
+   "family": "rc_avoid_models",
+   "key": "rc_avoid_models/人/楽園蒲田店",
+   "hall": "楽園蒲田店",
+   "label": "人",
+   "first_date": "20261028",
+   "last_date": "20261028",
+   "stat": {
+    "n_days": 1,
+    "mean": 14.516129032258066,
+    "ci_lo": null,
+    "ci_hi": null,
+    "p_one_sided": null,
+    "share_positive": 1.0,
+    "sd": null,
+    "q": null
+   },
+   "recent_mean": 14.516129032258066,
+   "recent_n": 1,
+   "verdict": "標本不足",
+   "days_needed": null,
+   "criterion": null,
+   "extra": {}
+  },
+  {
+   "family": "rc_jug_units",
+   "key": "rc_jug_units/人/マルハンメガシティ2000-蒲田1",
+   "hall": "マルハンメガシティ2000-蒲田1",
+   "label": "人",
+   "first_date": "20261029",
+   "last_date": "20261029",
+   "stat": {
+    "n_days": 1,
+    "mean": -12.244897959183673,
+    "ci_lo": null,
+    "ci_hi": null,
+    "p_one_sided": null,
+    "share_positive": 0.0,
+    "sd": null,
+    "q": null
+   },
+   "recent_mean": -12.244897959183673,
+   "recent_n": 1,
+   "verdict": "標本不足",
+   "days_needed": null,
+   "criterion": null,
+   "extra": {}
+  },
+  {
+   "family": "rc_jug_units",
+   "key": "rc_jug_units/人/マルハンメガシティ2000-蒲田7",
+   "hall": "マルハンメガシティ2000-蒲田7",
+   "label": "人",
+   "first_date": "20261028",
+   "last_date": "20261028",
+   "stat": {
+    "n_days": 1,
+    "mean": 29.47368421052632,
+    "ci_lo": null,
+    "ci_hi": null,
+    "p_one_sided": null,
+    "share_positive": 1.0,
+    "sd": null,
+    "q": null
+   },
+   "recent_mean": 29.47368421052632,
+   "recent_n": 1,
+   "verdict": "標本不足",
+   "days_needed": null,
+   "criterion": null,
+   "extra": {}
+  },
+  {
+   "family": "rc_jug_units",
+   "key": "rc_jug_units/人/楽園蒲田店",
+   "hall": "楽園蒲田店",
+   "label": "人",
+   "first_date": "20261027",
+   "last_date": "20261028",
+   "stat": {
+    "n_days": 2,
+    "mean": 33.333333333333336,
+    "ci_lo": 21.81818181818182,
+    "ci_hi": 44.84848484848485,
+    "p_one_sided": null,
+    "share_positive": 1.0,
+    "sd": 16.284883445508367,
+    "q": null
+   },
+   "recent_mean": 33.333333333333336,
+   "recent_n": 2,
+   "verdict": "標本不足",
+   "days_needed": 15,
+   "criterion": null,
+   "extra": {}
+  },
+  {
+   "family": "rc_models",
+   "key": "rc_models/RB自動/マルハンメガシティ2000-蒲田7",
+   "hall": "マルハンメガシティ2000-蒲田7",
+   "label": "RB自動",
+   "first_date": "20261028",
+   "last_date": "20261028",
+   "stat": {
+    "n_days": 1,
+    "mean": 75.90361445783132,
+    "ci_lo": null,
+    "ci_hi": null,
+    "p_one_sided": null,
+    "share_positive": 1.0,
+    "sd": null,
+    "q": null
+   },
+   "recent_mean": 75.90361445783132,
+   "recent_n": 1,
+   "verdict": "標本不足",
+   "days_needed": null,
+   "criterion": null,
+   "extra": {}
+  },
+  {
+   "family": "rc_models",
+   "key": "rc_models/RB自動/楽園蒲田店",
+   "hall": "楽園蒲田店",
+   "label": "RB自動",
+   "first_date": "20261026",
+   "last_date": "20261028",
+   "stat": {
+    "n_days": 3,
+    "mean": 31.8100358422939,
+    "ci_lo": 18.817204301075265,
+    "ci_hi": 54.56989247311827,
+    "p_one_sided": 0.05415377466110825,
+    "share_positive": 1.0,
+    "sd": 19.776495195245715,
+    "q": 0.06365461996316508
+   },
+   "recent_mean": 31.8100358422939,
+   "recent_n": 3,
+   "verdict": "標本不足",
+   "days_needed": 22,
+   "criterion": null,
+   "extra": {}
+  },
+  {
+   "family": "rc_models",
+   "key": "rc_models/人/ヒロキ東口店",
+   "hall": "ヒロキ東口店",
+   "label": "人",
+   "first_date": "20261026",
+   "last_date": "20261026",
+   "stat": {
+    "n_days": 1,
+    "mean": -13.157894736842104,
+    "ci_lo": null,
+    "ci_hi": null,
+    "p_one_sided": null,
+    "share_positive": 0.0,
+    "sd": null,
+    "q": null
+   },
+   "recent_mean": -13.157894736842104,
+   "recent_n": 1,
+   "verdict": "標本不足",
+   "days_needed": null,
+   "criterion": null,
+   "extra": {}
+  },
+  {
+   "family": "rc_models",
+   "key": "rc_models/人/マルハンメガシティ2000-蒲田7",
+   "hall": "マルハンメガシティ2000-蒲田7",
+   "label": "人",
+   "first_date": "20261028",
+   "last_date": "20261028",
+   "stat": {
+    "n_days": 1,
+    "mean": -24.096385542168676,
+    "ci_lo": null,
+    "ci_hi": null,
+    "p_one_sided": null,
+    "share_positive": 0.0,
+    "sd": null,
+    "q": null
+   },
+   "recent_mean": -24.096385542168676,
+   "recent_n": 1,
+   "verdict": "標本不足",
+   "days_needed": null,
+   "criterion": null,
+   "extra": {}
+  },
+  {
+   "family": "rc_models",
+   "key": "rc_models/人/楽園蒲田店",
+   "hall": "楽園蒲田店",
+   "label": "人",
+   "first_date": "20261026",
+   "last_date": "20261028",
+   "stat": {
+    "n_days": 3,
+    "mean": 48.47670250896058,
+    "ci_lo": 21.236559139784944,
+    "ci_hi": 85.48387096774194,
+    "p_one_sided": 0.06365461996316508,
+    "share_positive": 1.0,
+    "sd": 33.21859951300516,
+    "q": 0.06365461996316508
+   },
+   "recent_mean": 48.47670250896058,
+   "recent_n": 3,
+   "verdict": "標本不足",
+   "days_needed": 66,
+   "criterion": null,
+   "extra": {}
+  },
+  {
+   "family": "rc_units",
+   "key": "rc_units/RB自動/マルハンメガシティ2000-蒲田7",
+   "hall": "マルハンメガシティ2000-蒲田7",
+   "label": "RB自動",
+   "first_date": "20261028",
+   "last_date": "20261028",
+   "stat": {
+    "n_days": 1,
+    "mean": -3.143341593843746,
+    "ci_lo": null,
+    "ci_hi": null,
+    "p_one_sided": null,
+    "share_positive": 0.0,
+    "sd": null,
+    "q": null
+   },
+   "recent_mean": -3.143341593843746,
+   "recent_n": 1,
+   "verdict": "標本不足",
+   "days_needed": null,
+   "criterion": null,
+   "extra": {}
+  },
+  {
+   "family": "rc_units",
+   "key": "rc_units/凹み戻り/マルハンメガシティ2000-蒲田7",
+   "hall": "マルハンメガシティ2000-蒲田7",
+   "label": "凹み戻り",
+   "first_date": "20261028",
+   "last_date": "20261028",
+   "stat": {
+    "n_days": 1,
+    "mean": -8.771929824561402,
+    "ci_lo": null,
+    "ci_hi": null,
+    "p_one_sided": null,
+    "share_positive": 0.0,
+    "sd": null,
+    "q": null
+   },
+   "recent_mean": -8.771929824561402,
+   "recent_n": 1,
+   "verdict": "標本不足",
+   "days_needed": null,
+   "criterion": null,
+   "extra": {}
+  },
+  {
+   "family": "rc_units",
+   "key": "rc_units/凹み戻り/楽園蒲田店",
+   "hall": "楽園蒲田店",
+   "label": "凹み戻り",
+   "first_date": "20261026",
+   "last_date": "20261028",
+   "stat": {
+    "n_days": 3,
+    "mean": -0.06746784735399618,
+    "ci_lo": -9.803921568627452,
+    "ci_hi": 15.483870967741934,
+    "p_one_sided": 0.5030356480827969,
+    "share_positive": 0.3333333333333333,
+    "sd": 13.609841267677735,
+    "q": 0.5030356480827969
+   },
+   "recent_mean": -0.06746784735399618,
+   "recent_n": 3,
+   "verdict": "標本不足",
+   "days_needed": 9,
+   "criterion": null,
+   "extra": {}
+  },
+  {
+   "family": "rc_units",
+   "key": "rc_units/凹み戻りの対照/マルハンメガシティ2000-蒲田7",
+   "hall": "マルハンメガシティ2000-蒲田7",
+   "label": "凹み戻りの対照",
+   "first_date": "20261028",
+   "last_date": "20261028",
+   "stat": {
+    "n_days": 1,
+    "mean": 7.097322566935828,
+    "ci_lo": null,
+    "ci_hi": null,
+    "p_one_sided": null,
+    "share_positive": 1.0,
+    "sd": null,
+    "q": null
+   },
+   "recent_mean": 7.097322566935828,
+   "recent_n": 1,
+   "verdict": "標本不足",
+   "days_needed": null,
+   "criterion": null,
+   "extra": {}
+  },
+  {
+   "family": "rc_units",
+   "key": "rc_units/凹み戻りの対照/楽園蒲田店",
+   "hall": "楽園蒲田店",
+   "label": "凹み戻りの対照",
+   "first_date": "20261026",
+   "last_date": "20261028",
+   "stat": {
+    "n_days": 3,
+    "mean": 6.975474323697495,
+    "ci_lo": 2.5198938992042446,
+    "ci_hi": 11.87002652519894,
+    "p_one_sided": 0.06171345557642069,
+    "share_positive": 1.0,
+    "sd": 4.690497542551314,
+    "q": 0.12342691115284138
+   },
+   "recent_mean": 6.975474323697495,
+   "recent_n": 3,
+   "verdict": "標本不足",
+   "days_needed": 0,
+   "criterion": null,
+   "extra": {}
   }
  ]
 }

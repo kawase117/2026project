@@ -124,7 +124,9 @@ def test_rescore_only_adds_rb_and_is_idempotent(tmp_path, monkeypatch):
     assert len(pl.rescore_rb(pred)) == 1
     written = json.loads(path.read_text(encoding="utf-8"))
     assert {k: v for k, v in written.items() if k != "result"} == {k: v for k, v in obj.items() if k != "result"}
-    assert {k: v for k, v in written["result"].items() if k not in ("rb", "rb_s1")} == obj["result"]
+    assert {k: v for k, v in written["result"].items() if k not in ("rb", "rb_s1", "games", "jug_model")} == obj[
+        "result"
+    ]
     content = path.read_bytes()
     assert pl.rescore_rb(pred) == []
     assert path.read_bytes() == content

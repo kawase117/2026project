@@ -46,6 +46,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from backtest import model_alias
+from backtest.prediction_games import games_result, jug_model_result, rb_stage_result
 from backtest.prediction_rb import rb_result, rb_s1_result, rb_machine_result, family_offsets
 
 JST = ZoneInfo("Asia/Tokyo")
@@ -776,6 +777,17 @@ def _edge(rows: list[tuple[int, str, float]], day_mean: float, sign: float = 1.0
     return {"n_machines": len(rows), "mean_diff": round(mean, 1), "edge": round(sign * (mean - day_mean), 1)}
 
 
+def _games_scorers(obj: dict) -> list[tuple[str, object]]:
+    """回転数の採点(backtest.prediction_games)。result のキーと、con を受けて値を返す関数の組。"""
+    p, date = obj["picks"], obj["target_date"]
+    scorers = [("games", lambda con: games_result(con, p, date))]
+    if obj.get("source") == "rb_auto":
+        scorers.append(("rb_stage", lambda con: rb_stage_result(con, p, date, obj.get("rb_auto"))))
+    if not obj.get("source"):
+        scorers.append(("jug_model", lambda con: jug_model_result(con, p, date)))
+    return scorers
+
+
 def score(obj: dict) -> dict:
     if obj.get("result") is not None:
         raise ValueError("採点済み。作り直しは禁止。")
@@ -816,6 +828,12 @@ def score(obj: dict) -> dict:
         except Exception as exc:
             obj["result"]["rb_s1"] = None
             obj["result"]["rb_s1_error"] = str(exc)
+        for key, calculate in _games_scorers(obj):
+            try:
+                obj["result"][key] = calculate(con)
+            except Exception as exc:
+                obj["result"][key] = None
+                obj["result"][f"{key}_error"] = str(exc)
         if obj.get("source") == "rb_auto":
             try:
                 obj["result"]["rb_machine"] = rb_machine_result(
@@ -866,6 +884,8 @@ def rescore_rb(pred_dir: Path = PRED_DIR) -> list[str]:
         needed = [k for k in ("rb", "rb_s1") if k not in (result or {})]
         if obj.get("source") == "rb_auto" and result and "rb_machine" not in result:
             needed.append("rb_machine")
+        games_needed = [(k, f) for k, f in _games_scorers(obj) if k not in (result or {})]
+        needed += [k for k, _ in games_needed]
         if not result or not needed:
             continue
         try:
@@ -884,6 +904,12 @@ def rescore_rb(pred_dir: Path = PRED_DIR) -> list[str]:
                         result[key] = calculate(con, obj["picks"], obj["target_date"])
                         added.append(key)
                     except (sqlite3.Error, ValueError, ArithmeticError) as exc:
+                        msgs.append(f"スキップ {path.name}: {key}採点失敗 ({exc})")
+                for key, calculate in games_needed:
+                    try:
+                        result[key] = calculate(con)
+                        added.append(key)
+                    except (sqlite3.Error, ValueError, ArithmeticError, KeyError) as exc:
                         msgs.append(f"スキップ {path.name}: {key}採点失敗 ({exc})")
                 if "rb_machine" in needed:
                     try:
