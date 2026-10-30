@@ -41,6 +41,7 @@ import shutil
 import sqlite3
 import subprocess
 import sys
+import unicodedata
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
@@ -403,6 +404,52 @@ def validate_answercheck(text: str, yesterday: str, facts: DayFacts | None = Non
     errors += check_numbers(text, facts)
     if "予測への示唆" not in text:
         errors.append("末尾に「今日の予測への示唆」の節がない")
+    errors += suggestion_errors(text, load_lessons())
+    return errors
+
+
+def load_lessons() -> list[dict]:
+    """学びの台帳(document/registry/LESSONS.jsonl)。読めなければ空(朝の文書は止めない)。"""
+    try:
+        sys.path.insert(0, str(PROJECT_ROOT))
+        from backtest import lessons
+
+        return lessons.load()
+    except Exception as exc:  # noqa: BLE001 - 台帳の不調で答え合わせ全体を止めない
+        print("学びの台帳を読めない: %s" % exc, flush=True)
+        return []
+
+
+# 示唆の行が、前日の機種・末尾・列・台の継続を根拠にしているか(L001)。
+_PREV_DAY = re.compile(r"前日|昨日|前々日|連日|[2-3]日連続|直近[2-3]日")
+_CARRY_OBJECT = re.compile(r"機種|末尾|列|台|並び")
+
+
+def suggestion_errors(text: str, lessons: list[dict]) -> list[str]:
+    """「今日の予測への示唆」の節に、前日の継続を根拠にした示唆があれば不合格にする。
+
+    示唆は、予告の有無・イベント日か・当日見る指標に限る(2026-10 振り返り 4.C.2)。
+    10月は、この節が前日の結果を翌朝の予測に流し込み、学びと逆の材料になっていた。
+    「続かない」「根拠にしない」のように学びを正しく使った行は、台帳の prev_day 型の exempt で外す。
+    """
+    m = re.search(r"^#+[^\n]*予測への示唆[^\n]*\n", text, re.M)
+    if not m:
+        return []
+    body = text[m.end() :]
+    nxt = re.search(r"^#+ ", body, re.M)
+    body = body[: nxt.start()] if nxt else body
+    exempt = [p for x in lessons if x.get("basis_type") == "prev_day" for p in x.get("exempt", [])]
+    errors = []
+    for line in body.splitlines():
+        s = unicodedata.normalize("NFKC", line.strip())
+        if not s or not _PREV_DAY.search(s) or not _CARRY_OBJECT.search(s):
+            continue
+        if any(re.search(p, s) for p in exempt):
+            continue
+        errors.append(
+            "「予測への示唆」に前日の機種・末尾・列・台の継続を根拠にした行がある(L001)。"
+            "示唆は予告の有無・イベント日か・当日見る指標に限る: 「%s」" % line.strip()
+        )
     return errors
 
 
@@ -460,10 +507,20 @@ def answercheck_prompt(key: str, yesterday: str, today: str, out: Path, facts_md
    差枚だけで的中/不成立と結論しない。機種はG比×平均差枚、台単位はRB確率を自己ベースラインと比べる。
    末尾・角番・並び・個別RBも見る。予告の機械採点（announce の result）が空でも、DBから直接照合してよい。
 4. 予測が外れた・当たった理由、翌日以降に使える学びを短く書く。予測が無かった日は、実際に強かった機種・台・並びを書く。
+   下の「既知の学び」に当たるものは説明し直さず、「既知(L00x)を再確認」と1行だけ書く。本文の「学び」には新しいものだけを書く。
 5. 表を書くときは、見出し行・区切り行(`|---|`)・全行の列数をそろえる。値が無い列は作らない。
 6. 最後に1節「今日（{today}）の予測への示唆」を設け、箇条書き3点以内で書く。予測担当がこれを読む。
+   示唆に書いてよいのは、予告の有無、イベント日か、当日見る指標（開店後の回転数・G比・RB確率など）だけ。
+   前日の機種・末尾・列・台が今日も続くことを根拠にした示唆は書かない（検証で不合格になる。L001）。
 
-{COMMON_RULES.format(display=display)}"""
+{lessons_prompt_block()}{COMMON_RULES.format(display=display)}"""
+
+
+def lessons_prompt_block() -> str:
+    lines = [f"- {x['id']}: {x['rule']}" for x in load_lessons()]
+    if not lines:
+        return ""
+    return "## 既知の学び（document/registry/LESSONS.jsonl。2回以上確認したもの）\n" + "\n".join(lines) + "\n\n"
 
 
 def prediction_prompt(key: str, today: str, yesterday: str, answer: Path, out: Path) -> str:
@@ -505,8 +562,10 @@ def prediction_prompt(key: str, today: str, yesterday: str, answer: Path, out: P
 - 予告の台番号・機種名・条件は原文どおりに。解釈が割れるものは「解釈が割れる」と書き、判断にしない。
 - 推す根拠の数字（直近3か月、同条件の過去回の実績、母数）を添える。母数が小さければそう書く。
 - 予告に「狙い目はリプに記載予定」のように、機種・台番号が後から出ると書かれている場合は、まだ出ていないことを事実として書き、機種を創作しない。
+- 下の「既知の学び」の型（前日の結果・少台数機種・3回以下の過去回など）だけを根拠にした `判断:` `避ける:` の行は、
+  凍結（freeze-doc）の点検で止まる。予告・公約・機械割・稼働・台数の変化・RB判別機の自動候補など、別の根拠を書く。
 
-{COMMON_RULES.format(display=display)}"""
+{lessons_prompt_block()}{COMMON_RULES.format(display=display)}"""
 
 
 def generate(prompt: str, out: Path, validate: Callable[[str], list[str]], label: str) -> bool:

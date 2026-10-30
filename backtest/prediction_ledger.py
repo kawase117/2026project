@@ -365,6 +365,47 @@ def _sections(md: str) -> list[tuple[str, list[str]]]:
     return out
 
 
+def decision_lines(md: str) -> list[tuple[str, str, str]]:
+    """判断・避けるの行を (hall, "judge"|"avoid", 行) で返す。行の分け方は extract と同じ。
+
+    凍結前の点検(backtest.lessons)が、行の根拠を学びの台帳と照らすために使う。DBを読まない。
+    """
+    out = []
+    for title, lines in _sections(md):
+        if "ジャグラー候補" in title:
+            continue
+        hall = hall_of(title)
+        if hall is None:
+            continue
+        in_judgement = False
+        for line in lines:
+            if line.startswith("### "):
+                in_judgement = "判断" in line
+                continue
+            stripped = line.strip()
+            if not stripped:
+                continue
+            if "避け" in stripped:
+                out.append((hall, "avoid", stripped))
+            elif in_judgement or stripped.startswith(("判断", "**判断", "- 判断")):
+                out.append((hall, "judge", stripped))
+    return out
+
+
+class LessonBlocked(ValueError):
+    """判断・避けるの行の根拠が、学びの台帳の型だけだった。"""
+
+
+def lesson_gate(md: str, halls: set[str], lessons: list[dict], allow: dict[str, str]) -> tuple[list[dict], list[dict]]:
+    """(止める行, --allow で通す行) を返す。1行に複数の学びが当たれば、全部が許可されたときだけ通す。"""
+    from backtest.lessons import check_lines
+
+    found = check_lines([x for x in decision_lines(md) if x[0] in halls], lessons)
+    blocked = [f for f in found if not set(f["lessons"]) <= set(allow)]
+    allowed = [f for f in found if set(f["lessons"]) <= set(allow)]
+    return blocked, allowed
+
+
 def extract(md: str, target_date: str) -> list[dict]:
     """予測文書から、ホールごとの名指しを取り出す。"""
     specs: dict[str, dict] = {}
@@ -612,7 +653,17 @@ def freeze_doc(
     revision: str | None = None,
     halls: list[str] | None = None,
     reason: str = "",
+    lessons: list[dict] | None = None,
+    allow: dict[str, str] | None = None,
+    dry_run: bool = False,
+    gate_log=None,
 ) -> list[str]:
+    """予測文書を凍結する。lessons を渡すと、凍結の前に判断・避けるの行を学びの台帳と照らす。
+
+    台帳の型だけを根拠にした行があれば、1つも凍結せずに LessonBlocked を送出する(警告では
+    人が読み飛ばすため)。allow={id: 理由} の学びは通し、理由を凍結JSONの lesson_allows に残す。
+    dry_run では凍結も記録もせず、凍結される件数と止まる行だけを返す。
+    """
     if revision is not None and not re.fullmatch(r"rev[0-9]+", revision):
         raise ValueError("revision は rev1 形式で指定してください")
     if revision is not None and not halls:
@@ -628,9 +679,58 @@ def freeze_doc(
         source = str(path.relative_to(ROOT)).replace("\\", "/")
     except ValueError:
         source = path.name
+    md = path.read_text(encoding="utf-8")
+    specs = [s for s in extract(md, target) if halls is None or s["hall"] in selected]
     msgs = []
-    for spec in extract(path.read_text(encoding="utf-8"), target):
-        if halls is not None and spec["hall"] not in selected:
+    allows_by_hall: dict[str, list[dict]] = {}
+    if lessons is not None:
+        allow = allow or {}
+        blocked, allowed = lesson_gate(md, {s["hall"] for s in specs}, lessons, allow)
+        at = frozen_at.isoformat(timespec="seconds")
+
+        def events(found, action):
+            return [
+                {
+                    "at": at,
+                    "doc": source,
+                    "target_date": target,
+                    "hall": f["hall"],
+                    "lesson": lid,
+                    "action": action,
+                    "line": f["line"],
+                    "reason": allow.get(lid, "") if action == "allowed" else "",
+                }
+                for f in found
+                for lid in f["lessons"]
+                if action == "allowed" or lid not in allow
+            ]
+
+        for f in allowed:
+            allows_by_hall.setdefault(f["hall"], []).append(
+                {"lessons": f["lessons"], "line": f["line"], "reasons": {lid: allow[lid] for lid in f["lessons"]}}
+            )
+        lines = [
+            f"止める {f['hall']} [{'判断' if f['kind'] == 'judge' else '避ける'}] {','.join(f['lessons'])}: {f['line']}"
+            for f in blocked
+        ] + [f"許可 {f['hall']} {','.join(f['lessons'])}: {f['line']}" for f in allowed]
+        if not dry_run and gate_log is not None:
+            gate_log(events(blocked, "blocked") + (events(allowed, "allowed") if not blocked else []))
+        if blocked and not dry_run:
+            raise LessonBlocked(
+                "学びの台帳の型だけを根拠にした行があるため、凍結を止めた(1件も凍結していない)。\n"
+                + "\n".join(lines)
+                + "\n行を直すか、根拠を承知で通すなら --allow L00x:理由 を付ける。"
+            )
+        msgs += lines
+    for spec in specs:
+        if allows_by_hall.get(spec["hall"]):
+            spec = {**spec, "lesson_allows": allows_by_hall[spec["hall"]]}
+        if dry_run:
+            p = spec["picks"]
+            msgs.append(
+                f"凍結予定(dry-run) {target} {spec['hall']}: 機種{len(p['models'])} 避ける{len(p['avoid_models'])} "
+                f"台{len(p['units'])} ジャグ{len(p['jug_units'])} 未照合{len(spec['unresolved'])}"
+            )
             continue
         if revision:
             hall = spec["hall"]
@@ -824,6 +924,14 @@ def main(argv: list[str] | None = None) -> int:
     p_fr.add_argument("--revision")
     p_fr.add_argument("--hall", action="append", nargs="+", dest="halls")
     p_fr.add_argument("--reason", default="")
+    p_fr.add_argument(
+        "--allow",
+        action="append",
+        default=[],
+        metavar="L00x:理由",
+        help="学びの台帳の点検で止まる行を、理由を残して通す(複数可)",
+    )
+    p_fr.add_argument("--dry-run", action="store_true", help="凍結も記録もせず、凍結される件数と止まる行だけ表示する")
     sub.add_parser("backfill", help="未凍結の過去の予測文書を git 初出時刻つきで取り込む")
     sub.add_parser("score-due", help="対象日のデータがある未採点の予測を採点する")
     sub.add_parser("rescore-rb", help="採点済み台帳へRB採点だけを後付けする")
@@ -833,8 +941,11 @@ def main(argv: list[str] | None = None) -> int:
         path = Path(args.doc).resolve()
         print(json.dumps(extract(path.read_text(encoding="utf-8"), target_of_doc(path)), ensure_ascii=False, indent=1))
     elif args.cmd == "freeze-doc":
+        from backtest import lessons as lessons_mod
+
         try:
             halls = [hall for group in args.halls for hall in group] if args.halls else None
+            ledger = lessons_mod.load()
             messages = freeze_doc(
                 Path(args.doc).resolve(),
                 datetime.now(JST),
@@ -842,7 +953,14 @@ def main(argv: list[str] | None = None) -> int:
                 revision=args.revision,
                 halls=halls,
                 reason=args.reason,
+                lessons=ledger,
+                allow=lessons_mod.parse_allow(args.allow, ledger),
+                dry_run=args.dry_run,
+                gate_log=lessons_mod.log_gate,
             )
+        except LessonBlocked as exc:
+            print(str(exc))
+            return 2
         except ValueError as exc:
             p_fr.error(str(exc))
         for m in messages:
