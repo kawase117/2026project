@@ -387,6 +387,11 @@ def _run(args: argparse.Namespace) -> int:
             "backtest.prediction_ledger score-due（予測文書の名指しの採点）",
             [PYTHON, "-u", "-X", "utf8", "-m", "backtest.prediction_ledger", "score-due"],
         )
+        # 営業中に凍結した示唆続行台のペース(backtest/continuation_pace)を前日の実績で採点する。
+        run(
+            "backtest.continuation_pace score-due（示唆続行台のペースの採点）",
+            [PYTHON, "-u", "-X", "utf8", "-m", "backtest.continuation_pace", "score-due"],
+        )
         # 前向き検証の総合採点表。forward の採点と juggler 台帳の追記が終わった後に置く。
         # backtest/forward/SCOREBOARD.{md,json} に書くので、下の自動コミットの許可範囲に入る。
         run(

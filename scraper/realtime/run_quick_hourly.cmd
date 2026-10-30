@@ -11,5 +11,7 @@ for /f %%d in ('powershell -NoProfile -Command "Get-Date -Format yyyyMMdd"') do 
 echo ===== %date% %time% start ===== >> logs\realtime_quick_%TODAY%.log
 venv\Scripts\python.exe -m scraper.realtime.run --halls all --mode quick >> logs\realtime_quick_%TODAY%.log 2>&1
 set RC=%ERRORLEVEL%
+rem 13時・15時・17時の窓に入った最初の収集で、示唆続行台のペース台を凍結する（収集の終了コードは変えない）
+venv\Scripts\python.exe -m backtest.continuation_pace freeze-due >> logs\realtime_quick_%TODAY%.log 2>&1
 echo ===== %date% %time% end rc=%RC% ===== >> logs\realtime_quick_%TODAY%.log
 exit /b %RC%

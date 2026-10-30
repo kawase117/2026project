@@ -126,6 +126,8 @@ RB自動候補の台(10/26〜10/29)は、3,000G未満の台を採点から外し
 
 完了条件: 10月の過去のクイック収集で1〜3を遡って計算し、時刻別の結果を報告する(遡及の数字は参考扱いで、判定は11月の前向きの数字で行う)。凍結と採点が毎日回る。テストが通る。
 
+実装(2026-10-31): `backtest/continuation_pace.py`(freeze-due / score-due / show / retro)。凍結は `scraper/realtime/run_quick_hourly.cmd` の収集の直後、採点は `scripts/run_morning.py`、採点表は 13a〜13d。遡及は `document/reviews/2026-10-31-continuation-pace-retro.md`。**未了: 毎時のクイック収集がタスクスケジューラに登録されていない**ので、登録するまで凍結は回らない。蒲田7・蒲田1はクイック収集の対象外。
+
 ---
 
 ## 進め方

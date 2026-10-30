@@ -99,6 +99,11 @@ MDE_TARGET = {
     "rbst5_played": 10.0,
     "rbst5_rb": 0.05,
     "jugm_units": 100.0,
+    # 示唆続行台のペース(backtest.continuation_pace)。到達・結果は%ポイント、差枚と残りの差枚は枚
+    "cp_reach": 10.0,
+    "cp_result": 10.0,
+    "cp_diff": 100.0,
+    "cp_rest": 100.0,
     "announce_named": 100.0,
     # 結果ツイートとの照合(%ポイント): 名指しが結果に入った割合 − 基準の割合
     "rc_units": 10.0,
@@ -593,6 +598,38 @@ def build_result_check_rows(checks: list[dict]) -> list[Row]:
     return rows
 
 
+def load_pace(pace_dir: Path | None, since: str | None = None) -> list[dict]:
+    from backtest.continuation_pace import FROZEN_DIR, load_scored
+
+    return load_scored(pace_dir or FROZEN_DIR, since)
+
+
+def build_pace_rows(items: list[dict]) -> list[Row]:
+    """示唆続行台のペース(営業中に凍結)を、ホール×時刻ごとに1日1値で並べる。
+
+    到達・結果・差枚は「ペース台 − 同じ日・同じ機種のペース外の台」。残りの差枚は、その時刻に座った場合の
+    「閉店時の差枚 − 収集時点の差枚」の台平均(差ではなく、0 なら座っても増えない)。
+    """
+    from backtest.continuation_pace import series_label
+
+    groups: dict[tuple[str, str, str], list[tuple[str, float]]] = {}
+    for f in items:
+        res = f["result"]
+        for family, value in (
+            ("cp_reach", res.get("reach_edge")),
+            ("cp_result", res.get("result_edge")),
+            ("cp_diff", res.get("diff_edge")),
+            ("cp_rest", res.get("rest_diff_mean")),
+        ):
+            if value is not None:
+                groups.setdefault((family, f["hall"], series_label(f)), []).append((f["target_date"], value))
+    rows = []
+    for (family, hall, label), series in sorted(groups.items()):
+        series.sort()
+        rows.append(_row(family, f"{family}/{hall}/{label}", hall, label, series))
+    return rows
+
+
 def finalize(rows: list[Row]) -> list[Row]:
     """系列(family)ごとに BH 補正し、判定と「あと何日」を埋める。"""
     for family in sorted({r.family for r in rows}):
@@ -613,6 +650,7 @@ def build(
     pred_dir: Path = PRED_DIR,
     announce_dir: Path = ANNOUNCE_DIR,
     result_checks: Path = RESULT_CHECKS,
+    pace_dir: Path | None = None,
 ) -> list[Row]:
     plans = load_plans(forward_dir, since)
     preds = load_predictions(pred_dir, since)
@@ -622,6 +660,7 @@ def build(
     rows += build_vs_base_rows(preds, plans)
     rows += build_announce_rows(load_announcements(announce_dir, since))
     rows += build_result_check_rows(load_result_checks(result_checks, since))
+    rows += build_pace_rows(load_pace(pace_dir, since))
     return finalize(rows)
 
 
@@ -678,6 +717,11 @@ PLAN_MAP = (
         "RB自動候補の打たれ方",
         "候補が候補外より打たれ、打たれた台のRB比が高い",
         "11a〜11d と「RB機種候補(自動): 台の補助」",
+    ),
+    (
+        "示唆続行台のペース",
+        "ペース台の7,000G到達が同機種のペース外より多い",
+        "13a〜13d。時刻別に読み、13d で座る価値を見る",
     ),
     (
         "凍結前点検の警告件数",
@@ -933,6 +977,19 @@ def render_markdown(rows: list[Row], generated_at: str, since: str | None) -> st
         extra_cols=_timing_cols,
         key_head="対象",
     )
+    pace_note = (
+        "営業中のクイック収集で、回転数が「8,000G×経過÷13時間」以上のAT台(ジャグラー・新台を除く)を13時・15時・17時に"
+        "凍結し、翌朝採点したもの(backtest.continuation_pace)。到達・結果・差枚は同じ日・同じ機種のペース外の台との差。"
+        "結果は結果ツイートがAT台を挙げた日だけ。残りの差枚はその時刻に座った場合の増減で、収集時点の差枚がある取得元"
+        "(ヒロキ)だけ。10月の遡及は document/reviews/2026-10-31-continuation-pace-retro.md(参考扱い)。"
+    )
+    for family, title, unit, fmt in (
+        ("cp_reach", "13a. 示唆続行台のペース: 7,000G到達", "(pt)", "+.1f"),
+        ("cp_result", "13b. 示唆続行台のペース: 結果ツイート", "(pt)", "+.1f"),
+        ("cp_diff", "13c. 示唆続行台のペース: 閉店時の差枚", "(枚)", "+.0f"),
+        ("cp_rest", "13d. 示唆続行台のペース: その時刻から座った場合の残りの差枚", "(枚)", "+.0f"),
+    ):
+        _section(out, rows, family, title, unit, fmt, pace_note, key_head="時刻")
     _section(
         out,
         rows,
