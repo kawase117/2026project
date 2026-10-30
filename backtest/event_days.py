@@ -37,7 +37,7 @@ from datetime import date, datetime, timedelta, timezone
 import pandas as pd
 
 from backtest import model_alias as _model_alias
-from scraper.twitter_monitor.hall_aliases import HALL_ALIAS_EXCLUSIONS, HALL_ALIASES
+from scraper.twitter_monitor.hall_aliases import HALL_ALIAS_EXCLUSIONS, HALL_ALIASES, account_halls
 from backtest.announce import extract_narabi_mentions, load_announce_bundles
 from backtest.announce import assign_segment, match_machine_names
 from backtest.run_backtest import load_frame
@@ -655,6 +655,10 @@ def _candidate_text_has_date(text, business_date):
 _CHAIN_ONLY_ALIASES = {"楽園"}
 
 
+# 結果発表の候補にする投稿の最早時刻(営業日のこの時刻以降)。posted_at_jst は ISO 文字列なので文字列で比べる。
+RESULT_EARLIEST = "%sT22:00:00"
+
+
 def _candidate_mentions_hall(text, hall, on_date):
     scan = text or ""
     for other in HALL_ALIAS_EXCLUSIONS.get(hall, ()):
@@ -682,6 +686,14 @@ def _result_data(analysis_db, state_db, hall, business_date):
         machine_counts = dict(
             con.execute("select report_id,count(*) from external_result_machines group by report_id").fetchall()
         )
+        # slo_tokyo の結果速報は poster_result_reports に別に取り込まれる(result_corpus.build_poster)。
+        # これを見ずにヒロキMAX・東口の10月の過去回が waiting に残っていた(2026-10-30)。台番号は持たない。
+        if con.execute("select 1 from sqlite_master where type='table' and name='poster_result_reports'").fetchone():
+            rows += con.execute(
+                "select report_id,tweet_url,posted_at,hall_name,business_date "
+                "from poster_result_reports where business_date=?",
+                (business_date,),
+            ).fetchall()
     for report_id, tweet_url, posted_at, hall_name, report_date in rows:
         if _normalize_hall(hall_name) != hall:
             continue
@@ -703,16 +715,13 @@ def _result_data(analysis_db, state_db, hall, business_date):
     end = start + timedelta(days=45)
     with _ro_connect(state_db) as con:
         accounts = con.execute("select handle,hall,role from accounts").fetchall()
+        # 複数ホールを1つのキーで扱うアカウント(hiroki = 東口・西口・MAX など)は account_halls で展開する。
+        # 以前は kamata7_kamata1 だけを特別扱いし、slo_tokyo・pachi_slohunter・sloneko222 が
+        # 西口・MAX・ARROW・みとやの候補にならなかった(2026-10-30)。
         allowed = {
             handle
             for handle, account_hall, role in accounts
-            if (
-                _normalize_hall(account_hall) == hall
-                or (
-                    account_hall == "kamata7_kamata1"
-                    and hall in {"マルハンメガシティ2000-蒲田1", "マルハンメガシティ2000-蒲田7"}
-                )
-            )
+            if (_normalize_hall(account_hall) == hall or hall in account_halls(account_hall))
             and ("答え合わせ" in (role or "") or "結果報告" in (role or ""))
         }
         if allowed:
@@ -725,6 +734,9 @@ def _result_data(analysis_db, state_db, hall, business_date):
                     continue
                 posted_date = _date_from_posted(posted_at)
                 if posted_date is None or not (start <= posted_date <= end):
+                    continue
+                # 結果は閉店後にしか出ない。営業日の22時より前の投稿は予告・途中経過(「注目店舗」「入場状況」)。
+                if str(posted_at) < RESULT_EARLIEST % (start.isoformat(),):
                     continue
                 text = full_text or tweet_text or ""
                 if not _candidate_text_has_date(text, business_date):

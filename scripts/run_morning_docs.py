@@ -61,6 +61,8 @@ from run_morning import hall_max_dates
 from runlock import acquire_or_exit
 from takoslot_note import takoslot_section
 
+import result_check
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 PYTHON = str(PROJECT_ROOT / "venv" / "Scripts" / "python.exe")
 JST = ZoneInfo("Asia/Tokyo")
@@ -846,6 +848,8 @@ def process_hall(key: str, day_dir: Path, yesterday: str, today: str, dry_run: b
         facts = day_facts(hall_db, answer_day)
         # 発信者(slo_tokyo)の設定判定と、判定された機種の実績。速報が無いホール・日は空。
         poster_block = poster_lines(ANALYSIS_DB, hall_db, HALLS[key][0], answer_day)
+        # 他の結果アカウントが台番号を挙げた台と、凍結した予測の的中(画像ごとに当日の実在台で検証済み)。
+        poster_block = poster_block + result_check.lines_for_facts(HALLS[key][0], answer_day)
         facts_md = (
             render_facts(facts, key, PREDICTIONS, ANNOUNCE_DIR, ANNOUNCE_PREFIX.get(key, key), poster_block)
             if facts
@@ -904,6 +908,15 @@ def process_hall(key: str, day_dir: Path, yesterday: str, today: str, dry_run: b
         done(stage).write_text(datetime.now(JST).isoformat(), encoding="utf-8")
 
 
+def check_results(today: str) -> None:
+    """二段階の答え合わせ: 前日・前々日の答え合わせへ、結果ツイートとの照合を追記する。失敗しても朝の文書は止めない。"""
+    try:
+        for m in result_check.run(result_check.default_days(today)):
+            print("  結果照合: %s" % m, flush=True)
+    except Exception as e:  # noqa: BLE001  照合は付け足しなので、朝の文書を優先する
+        print("  結果照合に失敗(朝の文書は続ける): %s: %s" % (type(e).__name__, e), flush=True)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument(
@@ -929,6 +942,7 @@ def main() -> int:
         print("朝の文書 当日=%s 前日=%s" % (today, yesterday), flush=True)
         if not args.dry_run:
             build_poster_reports()
+            check_results(today)
         if not (day_dir / "rb_candidates.md").exists():
             run_rb_candidates(day_dir, today, args.dry_run)
         handled: set[str] = set()

@@ -351,3 +351,37 @@ def test_cmd_link_writes_addenda_only_for_newly_linked(tmp_path):
     assert len(files) == 1 and "追記（遡及）" in files[0].read_text(encoding="utf-8")
     event_days.cmd_link(args)  # 変化なし: 重複しない
     assert files[0].read_text(encoding="utf-8").count("追記（遡及）") == 1
+
+
+def test_multi_hall_account_key_and_result_hours(tmp_path):
+    """hiroki キー(東口・西口・MAX)のアカウントが西口の候補になる。営業日22時前の投稿は予告・途中経過として外す。"""
+    analysis, state = _dbs(tmp_path)
+    con = sqlite3.connect(state)
+    con.execute("insert into accounts values (?,?,?)", ("hunter", "hiroki", "結果報告"))
+    for tid, posted in [("early", "2026-10-20T21:00:00+09:00"), ("late", "2026-10-20T23:30:00+09:00")]:
+        con.execute(
+            "insert into seen_tweets values (?,?,?,?,?,?)",
+            (tid, "hunter", f"https://x.test/{tid}", posted, "10/20 ヒロキ西口 結果", None),
+        )
+    con.commit()
+    con.close()
+    reports, candidates = event_days._result_data(str(analysis), str(state), "ヒロキ蒲田西口店", "20261020")
+    assert reports == []
+    assert [c["tweet_id"] for c in candidates] == ["late"]
+
+
+def test_poster_result_reports_count_as_reports(tmp_path):
+    analysis, state = _dbs(tmp_path)
+    con = sqlite3.connect(analysis)
+    con.execute(
+        "create table poster_result_reports (report_id text, tweet_url text, posted_at text,"
+        " hall_name text, business_date text)"
+    )
+    con.execute(
+        "insert into poster_result_reports values (?,?,?,?,?)",
+        ("p1", "https://x.test/status/p1", "2026-10-21T09:00:00+09:00", "ヒロキMAX蒲田店", "20261020"),
+    )
+    con.commit()
+    con.close()
+    reports, _ = event_days._result_data(str(analysis), str(state), "ヒロキMAX蒲田店", "20261020")
+    assert [r["report_id"] for r in reports] == ["p1"]
