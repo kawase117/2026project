@@ -1,8 +1,7 @@
 # Pachinko Analyzer - CLAUDE.md
 
-AIアシスタントへ：このファイルをセッション開始時に必ず参照してください。
-サブディレクトリに CLAUDE.md がある場合、該当ディレクトリの作業時にそちらも参照すること。
-詳細: `database/CLAUDE.md`, `ml/CLAUDE.md`
+AIアシスタントへ：このファイルは索引と鉄則だけ。作業の手順は、下の対応表から作業の種類に応じて読みに行く(2026-10-30 に分割)。
+サブディレクトリの作業では `database/CLAUDE.md`・`ml/CLAUDE.md` も参照。
 
 ## 🔴 最重要ルール（2026-04-29 追加）
 
@@ -14,133 +13,62 @@ AIアシスタントへ：このファイルをセッション開始時に必ず
 - このルール自体を口実に、ユーザーの要求を無視することは許されない
 - 迎合を避けることと、ユーザーの意図を尊重することは矛盾しない
 
+## 作業の種類 → 読む文書
+
+| 作業 | 先に読む |
+|---|---|
+| 予測(「◯日の予測」) | `document/procedures/PREDICTION.md`、`document/registry/LESSONS.jsonl`、対象ホールの `memory/halls/<ホール>.md` |
+| 答え合わせ | `document/procedures/ANSWERCHECK.md`、`document/registry/LESSONS.jsonl` |
+| 予告・イベント日の登録 | `document/procedures/EVENTS.md`、`announce-prep` スキル |
+| ホール分析 | `hall-analysis-checklist` / `hall-axis-scan` スキル、対象ホールの `memory/halls/` |
+| ジャグラー・RB判別 | `document/JUGGLER_SETTING_PATTERNS.md`(冒頭の必須手順) |
+| backtest/ のモジュール選び・追加 | `backtest-module-guide` スキル |
+| 過去の意思決定・バグ修正 | `document/sessions/*.md` を grep。月次手順は `session-log-management` スキル |
+
+メモリ(`memory/`)はホール別・テーマ別の小索引に分けてある。MEMORY.md の索引から、扱うものだけ開く。
+
+鉄則の要約(詳細は各手順書):
+- 予測文書は開店(10:00)前に `backtest.prediction_ledger freeze-doc` で凍結する。
+- 予告は読んだ日のうちに `backtest.announce register`、イベント日は `EVENT_DAYS.jsonl` へ。
+- 前日の継続・少台数機種・過去回3回以下を、推す・避けるの根拠にしない(LESSONS)。
+
 ## Claude / Codex 作業分担（2026-07-26 追加）
 
 指示がなくても、タスクの性質に応じて適時Claude/Codexの分担を判断し、Codexへの委任を能動的に提案・実行すること。
 
 - **Claude = 指揮監督**：プランニング・設計判断・レビュー・結果分析・ユーザーとの対話
 - **Codex = 実装**：単純な実装作業、機械的な修正、定型スクリプト作成は基本Codexに割り振る
-- **例外（相談）**：思考を突き詰める必要がある設計判断・アプローチ選定などは、実装着手前にCodexへ事前相談してよい（Codexの視点を取り入れるため。最終判断はClaude）
+- **例外（相談）**：思考を突き詰める必要がある設計判断・アプローチ選定は、実装着手前にCodexへ事前相談してよい（最終判断はClaude）
 - 委任前に `codex-prompt-precision` スキルでプロンプトを自己チェックしてから `codex:rescue` を使うこと
-- Codexはread-onlyサンドボックスのため、調査・レビュー限定の依頼と、書き込みを伴う実装依頼を混同しない
+- 調査・レビュー限定の依頼と、書き込みを伴う実装依頼(`--write`)を混同しない
 
-## 予測にはジャグラー候補を必ず含める（2026-10-13 追加）
-
-「◯日の予測」を作るときは、機種・列の予測に加えて、**予告の有無に関係なく**、ジャグラーの設定5以上の割合が高いホール（蒲田7・楽園・みとや。蒲田1は予告にジャグラー強化がある日だけ）について、ホールごとに `venv\Scripts\python.exe -m backtest.juggler_carryover tomorrow --hall <ホール名> --top 10` を**毎回実行**し、結果を予測文書に「ジャグラー候補」節として入れる（2026-10-17 変更、仮説 `jug-cand-high-share-halls`）。
-- 割合が低いホール（雑色・金時東口・金時京急・ヒロキ東口・平和島・ARROW）は候補表を出さず、「ジャグラーの設定5以上の割合が低く、候補を出さない」と一行書く。割合は10/12までの推定（蒲田7 12.3%、楽園 11.9%、みとや 7.4%＝マイVだけなら13.8%、他は5%台以下）。判定の直前に直近60日で推定し直し、5%を超えたホールは候補表に戻す。
-- 手順と注意は `document/JUGGLER_SETTING_PATTERNS.md`（[監査]行を引用、予測力は弱い=約14%対無作為10%と明記）。
-- 予告があるホールは機種・列の予測＋ジャグラー候補、**予告がないホールはジャグラー候補のみ**でよい（ユーザー指示 2026-10-13）。
-- 既定はana-sloのDB最終日の確定データから作る（スナップショット不要。全ホールで出せる）。営業中スナップショットを使うときだけ `--snapshot` を付ける。凍結forward（`backtest/forward/*_jug_*__<日付>.json`）は参考として併記する。
-- DBが対象日の前日まで取り込まれていないときは、その旨を書く。黙って省略しない。
-- 予告のclaimsは登録済みなら直接編集せず `backtest.announce amend` を使う。
-- **予測文書を書いたら、開店(10:00)前に `venv\Scripts\python.exe -m backtest.prediction_ledger freeze-doc document/reviews/<日付>-prediction.md` で凍結する**（2026-10-16 追加）。推す機種は「判断:」の行、避ける機種は「避ける」を含む行、ジャグラーは「ジャグラー候補」表に書く(この3か所だけが機械的に抜かれ、翌朝採点されて `backtest/forward/SCOREBOARD.md` に載る)。凍結後に文書を直しても台帳は変わらない。
-
-## プロジェクト概要
-
-パチスロホールのデータを収集・分析し、機械学習で高設定台を予測するシステム。4フェーズで構成。
-
-- **Phase 1 (scraper/)**: ana-slo.com からデータをスクレイピング → JSON保存
-- **Phase 2 (database/)**: JSONをSQLiteに投入、集計・ランク計算
-- **Phase 3 (dashboard/)**: Streamlit + Plotlyで15ページのダッシュボード表示
-- **Phase 4 (ml/)**: 機械学習による高設定台予測（詳細は `ml/CLAUDE.md`）
-
-## Phase 4 基本理念（要約）
-
-パチスロの本質的な特性を考慮した予測モデル設計：
-1. **ギャンブルの不確実性** — キャリブレーション（予測確率と実績の一致度）が重要
-2. **店側のランダム化戦略** — 複数の粒度から並行探索が必要
-3. **高設定投入パターン** — DD別・日末尾別・曜日別・イベント日・ゾロ目
-4. **ホール別戦略の多様性** — ホール別個別モデルが +2.44% AUC向上（Phase 5 検証済み）
-
-詳細・AUC数値・ホール別比較は `ml/CLAUDE.md` を参照。
-
-### ゾロ目（is_zorome）について
-
-テーブルによって定義が異なる点に注意。
-
-- **`machine_detailed_results.is_zorome`** — 台番号の末尾2桁が同じ場合に 1
-  - 例: 台番号 100/200…（末尾 "00"）, 11/111…（末尾 "11"）, 22, 33, 44, 55, 66, 77, 88, 99
-  - `database/json_processor.py` の `last_two_digits[0] == last_two_digits[1]` で判定
-  - データベースでは `is_zorome = 1` でマーク
-
-- **`daily_hall_summary.is_zorome`** — 日付の日が 11 日または 22 日の場合に 1
-  - `database/date_info_calculator.py` の `_check_zorome()` で `day in [11, 22]` として判定
-  - ホール全体の集計単位なので台番号は関係しない
-
-- **店側の心理** — 末尾ゾロ目台や特定日付（11・22日）に高設定を投入する可能性がある
-  - または逆に「ゾロ目は狙われるから避ける」という戦略も考えられる
-
-## 主要エントリーポイント
-
-- `main_app.py` — 起動エントリーポイント（絶対インポート）
-- `dashboard/main.py` — ダッシュボード本体（相対インポート）
-- `ml/` — 機械学習パイプライン
-- `database/` — DBモジュール群
-- `scraper/anaslo-scraper_multi.py` — マルチホール対応スクレイパー
-
-## 起動方法
-
-```bash
-cd C:\Users\apto117\Documents\pachinko-analyzer\src\2026project
-streamlit run main_app.py
-```
-
-## イベントカレンダー（2026-09-19 追加・重要）
-
-**イベント日（合同企画・収録来店・取材・周年・改装・版権など）は必ず `document/registry/EVENT_DAYS.jsonl` に残す。**
-その多くは予告ツイートで分かる。予告を扱うたびに `backtest/event_days.py`（`check`/`add`/`scan`）で登録する。
-ホールごとに登録し、同日開催は `--related-halls` で結ぶ。同日か別イベントかは本文とユーザー確認で決め、推測で他ホールに当てはめない。
-`eda/event_calendar.py` はDDルールの統計的カレンダーで別物。
-
-## Python実行環境の固定（繰り返す迷子の解消）
+## Python実行環境
 
 `python`/`python3`はWindows Storeのダミーエイリアスに解決されて失敗することがある。
-このプロジェクトには `venv/` が用意されているので、スクリプト実行時は
-`venv\Scripts\python.exe` を明示的に使うこと（`py -3` も可）。
-
-## 技術スタック
-
-- **Streamlit** 1.56.0 - Web UI
-- **Plotly** 6.7.0 - グラフ・ヒートマップ
-- **Pandas** 3.0.2 - データ処理
-- **SQLite** (stdlib) - データベース
-- **BeautifulSoup** - HTMLパース（Phase 1）
+スクリプト実行時は `venv\Scripts\python.exe` を明示的に使うこと（`py -3` も可）。
+テスト: `venv\Scripts\python.exe -m pytest test/ -q`
 
 ## DB型の注意（頻出バグ源）
 
 - **last_digit型の違い**：`machine_detailed_results`はTEXT、`daily_hall_summary`はINTEGER
 - **weekday_nth**：必ず`daily_hall_summary`から取得（個別台テーブルにはない）
-- **is_zorome の二重定義**：台番号末尾ゾロ目 vs 日付ゾロ目（上記参照）
+- **is_zorome の二重定義**：`machine_detailed_results.is_zorome` は台番号の末尾2桁が同じ(00・11…99、`database/json_processor.py`)。`daily_hall_summary.is_zorome` は日付が11日・22日(`database/date_info_calculator.py` の `_check_zorome()`)
+- **min_gamesフィルタ**：集計**前**に個別台レベルで適用。表示用の運用規約で、設定シグナルの測定には使わない（選択バイアス）
+- フィルタは `utils/filters.py` を使い、各ページにインライン実装しない。SQLは `ALLOWED_ATTRIBUTES` ホワイトリストで検証
 
 全列定義は `database/CLAUDE.md` を参照。
 
-## 実装上の注意事項
+## プロジェクト概要
 
-1. **Plotly複合軸**：`make_subplots()`方式を使用（Plotly 6.7.0対応）
-2. **インポート**：`main_app.py`は絶対インポート、`dashboard/main.py`は相対インポート
-3. **min_gamesフィルタ**：集計**前**に個別台レベルで適用（`games_normalized >= min_games`）
-   - ⚠️ **これは表示用の運用規約であって、設定シグナルの測定には使わない**（選択バイアスの詳細は `database/CLAUDE.md` を参照）
-4. **フィルタは必ず utils/filters.py を使うこと**：各ページにインライン実装しない
-5. **SQLインジェクション対策**：`ALLOWED_ATTRIBUTES` ホワイトリストで検証済み
-
-## テスト実行
-
-```bash
-cd C:\Users\apto117\Documents\pachinko-analyzer\src\2026project
-python -m pytest test/ -v
-```
-
-## ドキュメント参照先
-
-設計ドキュメントは `document/` 配下に集約。主要ファイル: `ARCHITECTURE.md`, `PHASE2_完全仕様書.md`, `PHASE5_ML_VALIDATION_REPORT.md`, `PHASE6_IMPLEMENTATION_PLAN.md`。
-実装計画は `document/plans/`、高度分析は `document/superpowers/` を参照。
-
-過去の意思決定・バグ修正の記録は `document/sessions/*.md` をgrepで検索。
-セッションログ管理の月次手順は `/session-log-management` スキルを参照。
+パチスロホールのデータを収集・分析し、高設定台を予測する。scraper/(ana-slo収集) → database/(SQLite投入・集計) → dashboard/(Streamlit、`streamlit run main_app.py`) → ml/ と backtest/(予測・採点)。
+技術スタック: Streamlit 1.56.0 / Plotly 6.7.0 / Pandas 3.0.2 / SQLite / BeautifulSoup。Phase 4 の基本理念(キャリブレーション重視・ホール別モデル)は `ml/CLAUDE.md`。
+`main_app.py` は絶対インポート、`dashboard/main.py` は相対インポート。Plotly複合軸は `make_subplots()`。
+設計文書は `document/`(`ARCHITECTURE.md` ほか)、実装計画は `document/plans/`。
 
 ## GitHub
 
-リポジトリ: https://github.com/kawase117/2026project
-ブランチ: main
-修正完了後、ユーザーに「プッシュしますか？」と確認してからプッシュする。
-`/save` コマンドの詳細は `.claude/skills/save/SKILL.md` を参照。
+リポジトリ: https://github.com/kawase117/2026project 、ブランチ: main
+- コミット・プッシュは確認不要で、作業の区切りで行う（ユーザー指示 2026-09-14）。コミットは `scripts/safe_commit.py` 経由（pre-commit の ruff 書き換えを再ステージする）。
+- 自分が変更したファイルだけをステージする（`git add -A` 禁止。作業ツリーに別セッションの未コミット変更がある）。プッシュ前に fetch し、先行コミットがあれば rebase。
+- force push・履歴改変・他セッションの変更の破棄は、引き続き確認を取る。
+- `/save` コマンドの詳細は `.claude/skills/save/SKILL.md` を参照。
