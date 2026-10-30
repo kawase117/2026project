@@ -94,15 +94,15 @@ def _pick(number, dev):
 
 def test_render_splits_candidate_and_other_units():
     text = cand.render_section([_row({"F4": [_pick(400, 0.1)], "F0": [_pick(0, 0.3)], "F1": [_pick(100, 0.2)]})])
-    assert "台の補助(候補機種): F4: 400" in text
-    other = next(line for line in text.splitlines() if line.startswith("台の補助(その他の機種"))
+    assert "台の補助(候補機種):\n- F4: 400" in text
+    other = text.split("台の補助(その他の機種", 1)[1]
     # 偏差の大きい順に並び、候補機種の台は含まれない
-    assert other.index("F0 0(+0.30)") < other.index("F1 100(+0.20)")
-    assert "F4" not in other.split(": ", 1)[1]
+    assert other.index("- F0: 0(+0.30)") < other.index("- F1: 100(+0.20)")
+    assert "F4" not in other
 
 
 def test_render_caps_other_units(monkeypatch):
     monkeypatch.setattr(cand, "OTHER_UNIT_LIMIT", 2)
     text = cand.render_section([_row({"F0": [_pick(1, 0.1), _pick(2, 0.4), _pick(3, 0.3)]})])
-    other = next(line for line in text.splitlines() if line.startswith("台の補助(その他の機種"))
-    assert "F0 2(+0.40)" in other and "F0 3(+0.30)" in other and "F0 1(" not in other
+    other = text.split("台の補助(その他の機種", 1)[1]
+    assert "- F0: 2(+0.40)・3(+0.30)" in other and "1(" not in other

@@ -303,59 +303,71 @@ def render_section(rows: list[dict]) -> str:
         "## RB機種候補（機械出力、DBだけから作成。開店前に自動凍結。人の判断の採点とは別）",
         "",
         "効果は小さく、台と曜日は補助情報です。",
-        "補正済みzは機種共通の傾向を引いたホール固有分です。",
+        "",
+        "- 位置: RB確率が設定1(0)から最高設定(1)のどこにあるか。90日と7日。",
+        "- 補正90日: 90日の位置から機種共通の傾向を引いたホール固有分。表はこの順。",
+        "- 台の偏差: 機種内で台のRB確率がどれだけ上か。",
         "",
     ]
     for row in rows:
-        out += [
-            f"### {row['hall']}",
-            f"DB最終日: {row['data_asof'] or '-'} / 遅れ: {row['lag_days'] if row['lag_days'] is not None else '-'}日",
-        ]
+        asof = row["data_asof"] or "-"
+        lag = row["lag_days"]
+        lag_note = f"、{lag}日遅れ" if lag else ""
+        out += [f"### {row['hall']}（DB最終日 {asof}{lag_note}）", ""]
         if row["status"] != "ok":
             out += [f"スキップ: {row['reason']}", ""]
             continue
-        for label, key in (("候補", "candidates"), ("避ける候補", "avoid")):
-            out += [label, "| 機種 | 台数 | adj90 | z90 | z7 |", "|---|---:|---:|---:|---:|"]
+        flag = row["day_flag"]
+        out += [f"日の補助: **{flag['flag']}**（pct {flag['pct']:.2f}）" if flag else "日の補助: 有効値不足", ""]
+        out += ["| 区分 | 機種 | 台数 | 補正90日 | 位置90日 | 位置7日 |", "|---|---|---:|---:|---:|---:|"]
+        for label, key in (("候補", "candidates"), ("避ける", "avoid")):
             for item in row[key]:
                 z7 = f"{item['z7']:+.3f}" if item["z7"] is not None else "-"
                 out.append(
-                    f"| {item['family_name']} | {item['units']} | {item['adj90']:+.3f} | {item['z90']:+.3f} | {z7} |"
+                    f"| {label} | {item['family_name']} | {item['units']} | {item['adj90']:+.3f}"
+                    f" | {item['z90']:+.3f} | {z7} |"
                 )
+        out.append("")
         if row["units"]:
             candidate_names = {item["family_name"] for item in row["candidates"]}
             inside = {f: units for f, units in row["units"].items() if f in candidate_names}
             if inside:
-                out.append(
-                    "台の補助(候補機種): "
-                    + " / ".join(
-                        f"{f}: " + ", ".join(str(u["machine_number"]) for u in units) for f, units in inside.items()
-                    )
-                )
+                out.append("台の補助(候補機種):")
+                out += [f"- {f}: " + "・".join(str(u["machine_number"]) for u in units) for f, units in inside.items()]
+                out.append("")
             others = sorted(
                 ((f, u) for f, units in row["units"].items() if f not in candidate_names for u in units),
                 key=lambda pair: -pair[1].get("dev", 0.0),
-            )
+            )[:OTHER_UNIT_LIMIT]
             if others:
+                # 偏差の大きい順に選んだ台を、機種ごとにまとめて書く(機種の順は最初に出た台の順)。
+                grouped: dict[str, list[dict]] = {}
+                for f, u in others:
+                    grouped.setdefault(f, []).append(u)
                 out.append(
-                    f"台の補助(その他の機種、機種内の偏差の大きい順に上位{OTHER_UNIT_LIMIT}台。凍結は全機種の機種内上位20%): "
-                    + " / ".join(
-                        f"{f} {u['machine_number']}({u.get('dev', 0.0):+.2f})" for f, u in others[:OTHER_UNIT_LIMIT]
-                    )
+                    f"台の補助(その他の機種、台の偏差の大きい順に上位{OTHER_UNIT_LIMIT}台。凍結は全機種の機種内上位20%):"
                 )
+                out += [
+                    f"- {f}: " + "・".join(f"{u['machine_number']}({u.get('dev', 0.0):+.2f})" for u in units)
+                    for f, units in grouped.items()
+                ]
+                out.append("")
         if row["hall"] in DIP_HALLS:
             dip_a = (row.get("dip") or {}).get("a") or []
             if dip_a:
-                out.append(
-                    "台の補助(凹み戻り、長期が強い台の直近7日の凹み。対照は別に凍結): "
-                    + " / ".join(
-                        f"{u['family_name']} {u['machine_number']}(長期偏差 {u['long_dev']:+.2f} / 直近偏差 {u['recent_dev']:+.2f})"
-                        for u in dip_a
-                    )
-                )
+                out += [
+                    "台の補助(凹み戻り、長期が強い台の直近7日の凹み。対照は別に凍結):",
+                    "",
+                    "| 機種 | 台 | 長期偏差 | 直近偏差 |",
+                    "|---|---:|---:|---:|",
+                ]
+                out += [
+                    f"| {u['family_name']} | {u['machine_number']} | {u['long_dev']:+.2f} | {u['recent_dev']:+.2f} |"
+                    for u in dip_a
+                ]
             else:
                 out.append("台の補助(凹み戻り): 該当なし")
-        flag = row["day_flag"]
-        out += [f"日の補助: {flag['flag']} (pct={flag['pct']:.2f})" if flag else "日の補助: 有効値不足", ""]
+            out.append("")
     return "\n".join(out).rstrip() + "\n"
 
 
