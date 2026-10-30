@@ -16,6 +16,7 @@ freeze_hash は asdict(self) 全体のハッシュなので、フィールドを
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -54,7 +55,8 @@ def test_existing_rule_freeze_hash_unchanged(rule_id: str, expected_hash: str) -
 def _all_forward_plans() -> list[Path]:
     if not FORWARD_DIR.exists():
         return []
-    return sorted(FORWARD_DIR.glob("*.json"))
+    # SCOREBOARD.json(採点表)など plan でない JSON は除く。plan の名前は「規則__YYYYMMDD.json」
+    return sorted(p for p in FORWARD_DIR.glob("*.json") if re.match(r"^.+__\d{8}\.json$", p.name))
 
 
 @pytest.mark.parametrize("plan_path", _all_forward_plans(), ids=lambda p: p.name)

@@ -98,9 +98,10 @@ def test_score_picks_counts_units_models_and_avoid(env):
         "avoid_models": ["マイジャグラーV"],
     }
     s = rc.score_picks(found, picks)
-    assert s["jug_units"] == {"named": 2, "hit": [1101]}
-    assert s["models"] == {"named": 2, "hit": ["東京リベンジャーズ"]}
-    assert s["avoid_models"] == {"named": 1, "hit": []}
+    # 台の基準は同じ機種(ネオアイム 10台中 6台が結果)、機種の基準は当日の3機種中2機種
+    assert s["jug_units"] == {"named": 2, "hit": [1101], "base": 0.6}
+    assert s["models"] == {"named": 2, "hit": ["東京リベンジャーズ"], "base": 2 / 3}
+    assert s["avoid_models"] == {"named": 1, "hit": [], "base": 2 / 3}
     assert rc.model_base_rate(found) == (3, 2)
 
 

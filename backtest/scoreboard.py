@@ -90,6 +90,11 @@ MDE_TARGET = {
     "rbdip_ctrl_units": 0.02,
     "rbdip_diff": 0.02,
     "announce_named": 100.0,
+    # 結果ツイートとの照合(%ポイント): 名指しが結果に入った割合 − 基準の割合
+    "rc_units": 10.0,
+    "rc_jug_units": 10.0,
+    "rc_models": 10.0,
+    "rc_avoid_models": 10.0,
 }
 PRED_DIR = Path(__file__).resolve().parent / "predictions"
 ANNOUNCE_DIR = Path(__file__).resolve().parent / "announce"
@@ -106,6 +111,10 @@ RB1_PRED_FAMILIES = {key: f"rb1_{key}" for key in ("units", "jug_units")}
 LATE_SUFFIX = "_late"
 # 手書きの推しと比べる機械的な基準(直近60日の機種平均上位3)。forward の rule_id の末尾。
 BASE_RULE_SUFFIX = "_model_term60_top3"
+# 結果ツイートとの照合の記録(scripts/result_check.py)。差枚とは別の、台単位の正解。
+RESULT_CHECKS = Path(__file__).resolve().parents[1] / "document" / "registry" / "RESULT_CHECKS.jsonl"
+# 照合の採点ラベル → 系列の名前。改訂版(revN)は人の初版と重なるので数えない。
+RC_SOURCES = {"人の予測": "人", "RB自動候補": "RB自動", "凹み戻り": "凹み戻り", "凹み戻りの対照": "凹み戻りの対照"}
 # 11月の検証計画の「4ホール合計」に入れるホール(2026-10 月次振り返り 5節)。
 CORE_HALLS = ("楽園蒲田店", "みとや大森町店", "マルハンメガシティ2000-蒲田7", "マルハンメガシティ2000-蒲田1")
 CORE_LABEL = "4ホール合計"
@@ -511,6 +520,46 @@ def build_announce_rows(announcements: list[dict]) -> list[Row]:
     return rows
 
 
+def load_result_checks(path: Path = RESULT_CHECKS, since: str | None = None) -> list[dict]:
+    """照合の記録。同じ (ホール, 営業日) は最後の記録だけを使う(結果が後から増えると追記されるため)。"""
+    if not path.exists():
+        return []
+    latest: dict[tuple[str, str], dict] = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        rec = json.loads(line)
+        if rec.get("status") != "linked" or (since and rec["business_date"] < since):
+            continue
+        latest[(rec["hall"], rec["business_date"])] = rec
+    return [latest[k] for k in sorted(latest)]
+
+
+def build_result_check_rows(checks: list[dict]) -> list[Row]:
+    """名指しが結果ツイートに入った割合 − 基準の割合(%ポイント)。避ける機種は符号を反転(入らないほど正)。
+
+    基準は、台なら名指しした台と同じ機種の台のうち結果に入った割合、機種なら当日の全機種のうち結果のある割合。
+    結果ツイートはジャグラーなど一部の機種に偏るので、その偏りを差し引く。基準の無い記録(旧形式)は使わない。
+    """
+    groups: dict[tuple[str, str, str], list[tuple[str, float]]] = {}
+    for rec in checks:
+        for label, scores in (rec.get("scores") or {}).items():
+            src = RC_SOURCES.get(label)
+            if not src:
+                continue
+            for kind, part in (scores or {}).items():
+                if part.get("base") is None or not part.get("named"):
+                    continue
+                share = len(part["hit"]) / part["named"]
+                value = (part["base"] - share) if kind == "avoid_models" else (share - part["base"])
+                groups.setdefault((f"rc_{kind}", src, rec["hall"]), []).append((rec["business_date"], 100 * value))
+    rows = []
+    for (family, src, hall), series in sorted(groups.items()):
+        series.sort()
+        rows.append(_row(family, f"{family}/{src}/{hall}", hall, src, series))
+    return rows
+
+
 def finalize(rows: list[Row]) -> list[Row]:
     """系列(family)ごとに BH 補正し、判定と「あと何日」を埋める。"""
     for family in sorted({r.family for r in rows}):
@@ -530,6 +579,7 @@ def build(
     since: str | None = None,
     pred_dir: Path = PRED_DIR,
     announce_dir: Path = ANNOUNCE_DIR,
+    result_checks: Path = RESULT_CHECKS,
 ) -> list[Row]:
     plans = load_plans(forward_dir, since)
     preds = load_predictions(pred_dir, since)
@@ -538,6 +588,7 @@ def build(
     rows += build_prediction_rows(preds)
     rows += build_vs_base_rows(preds, plans)
     rows += build_announce_rows(load_announcements(announce_dir, since))
+    rows += build_result_check_rows(load_result_checks(result_checks, since))
     return finalize(rows)
 
 
@@ -807,6 +858,25 @@ def render_markdown(rows: list[Row], generated_at: str, since: str | None) -> st
         extra_cols=_announce_cols,
         key_head="アカウント",
     )
+    for family, title in (
+        ("rc_units", "9. 結果ツイートとの照合: 判断で名指しした台"),
+        ("rc_jug_units", "9. 結果ツイートとの照合: ジャグラー候補表の台"),
+        ("rc_models", "9. 結果ツイートとの照合: 推した機種"),
+        ("rc_avoid_models", "9. 結果ツイートとの照合: 避ける機種(入らないほど正)"),
+    ):
+        _section(
+            out,
+            rows,
+            family,
+            title,
+            "(pt)",
+            "+.1f",
+            "発信者が結果として挙げた台(ホール公表とは限らない)に名指しが入った割合 − 基準の割合、%ポイント。"
+            "台の基準は同じ機種の台のうち結果に入った割合、機種の基準は当日の全機種のうち結果のある割合。"
+            "機種は結果の台が1台でもあれば的中と数える。結果ツイートが出た日だけの系列で、出ない日は数えない"
+            f"(出る日は強い日に偏る)。目標差 +{MDE_TARGET[family]:.0f}pt。",
+            key_head="予測",
+        )
     out += [
         "## 注意",
         "",

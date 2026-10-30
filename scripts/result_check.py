@@ -250,13 +250,18 @@ def score_picks(found: dict, picks: dict) -> dict:
     for k in ("units", "jug_units"):
         named = [int(u) for u in picks.get(k) or []]
         if named:
-            out[k] = {"named": len(named), "hit": sorted(u for u in named if u in hit_units)}
+            # 基準: 名指しした台と同じ機種の台のうち、結果に入った割合(結果ツイートの機種の偏りを差し引く)
+            pool = {n for m in {found["day_units"].get(u) for u in named} if m for n in by_model.get(m, [])}
+            base = sum(1 for n in pool if n in hit_units) / len(pool) if pool else None
+            out[k] = {"named": len(named), "hit": sorted(u for u in named if u in hit_units), "base": base}
+    rate = model_base_rate(found)
     for k in ("models", "avoid_models"):
         named = list(picks.get(k) or [])
         if named:
             out[k] = {
                 "named": len(named),
                 "hit": [m for m in named if m in hit_models or any(n in hit_units for n in by_model.get(m, []))],
+                "base": rate[1] / rate[0] if rate else None,
             }
     return out
 

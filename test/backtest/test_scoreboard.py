@@ -2,6 +2,8 @@
 """総合採点表(backtest.scoreboard)の集計単位・除外・判定を固定する。"""
 
 import json
+
+import pytest
 import os
 import sys
 
@@ -222,3 +224,35 @@ def test_bh_monotone_and_skips_none():
     q = scoreboard.benjamini_hochberg([0.01, 0.04, None, 0.03])
     assert q[2] is None
     assert q[0] <= q[3] <= q[1]
+
+
+def test_result_check_rows_use_base_rate_and_latest_record(tmp_path):
+    path = tmp_path / "RESULT_CHECKS.jsonl"
+    recs = [
+        # 同じホール・日の古い記録(結果が増える前)は使わない
+        {
+            "hall": "H",
+            "business_date": "20261027",
+            "status": "linked",
+            "scores": {"人の予測": {"models": {"named": 2, "hit": [], "base": 0.5}}},
+        },
+        {
+            "hall": "H",
+            "business_date": "20261027",
+            "status": "linked",
+            "scores": {
+                "人の予測": {
+                    "models": {"named": 2, "hit": ["A"], "base": 0.25},
+                    "avoid_models": {"named": 1, "hit": [], "base": 0.25},
+                },
+                "rev1": {"models": {"named": 1, "hit": ["A"], "base": 0.25}},
+                "RB自動候補": {"jug_units": {"named": 4, "hit": [1], "base": None}},
+            },
+        },
+        {"hall": "H", "business_date": "20261028", "status": "waiting", "scores": {}},
+    ]
+    path.write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in recs), encoding="utf-8")
+    rows = {r.key: r for r in scoreboard.build_result_check_rows(scoreboard.load_result_checks(path))}
+    assert set(rows) == {"rc_models/人/H", "rc_avoid_models/人/H"}  # 改訂版と基準の無い記録は数えない
+    assert rows["rc_models/人/H"].stat.mean == pytest.approx(25.0)  # 1/2 − 0.25
+    assert rows["rc_avoid_models/人/H"].stat.mean == pytest.approx(25.0)  # 0.25 − 0/1
