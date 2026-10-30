@@ -225,9 +225,8 @@ def test_render_dip_line_and_empty_marker():
         "dip": {"a": [{"family_name": "F0", "machine_number": 8, "long_dev": 0.1, "recent_dev": -0.2}], "b": []},
     }
     text = cand.render_section([row])
-    assert (
-        "台の補助(凹み戻り、長期が強い台の直近7日の凹み。対照は別に凍結): F0 8(長期偏差 +0.10 / 直近偏差 -0.20)" in text
-    )
+    assert "台の補助(凹み戻り、長期が強い台の直近7日の凹み。対照は別に凍結):" in text
+    assert "| F0 | 8 | +0.10 | -0.20 |" in text
     row["dip"] = {"a": [], "b": []}
     assert "台の補助(凹み戻り): 該当なし" in cand.render_section([row])
     row["hall"] = "ARROW池上店"
