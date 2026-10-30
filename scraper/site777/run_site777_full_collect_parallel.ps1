@@ -6,7 +6,9 @@ param(
     [string]$RateLimiterUrl = '',
     [switch]$SkipHighest,
     # JSON array file of site model names to collect. When set, output goes to site777_quick_* files (the full data is never overwritten).
-    [string]$ModelNamesFile = ''
+    [string]$ModelNamesFile = '',
+    # Output file prefix override. The quick AT stage uses site777_quick_at so the RB quick data is never overwritten.
+    [string]$OutputPrefix = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -18,7 +20,7 @@ $collectorTemplate = Join-Path $moduleDirectory 'site777_full_collect_parallel.j
 $collector = Join-Path $runtimeDirectory 'site777_full_collect_parallel_runtime.js'
 $exporter = Join-Path $moduleDirectory 'site777_export_parallel_collect.js'
 $resetter = Join-Path $moduleDirectory 'site777_reset_parallel_collect.js'
-$prefix = if ($ModelNamesFile) { 'site777_quick' } else { 'site777_full' }
+$prefix = if ($OutputPrefix) { $OutputPrefix } elseif ($ModelNamesFile) { 'site777_quick' } else { 'site777_full' }
 $summaryPath = Join-Path $outputDirectory "${prefix}_summary.json"
 $dataPath = Join-Path $outputDirectory "${prefix}_data.json"
 $partialDataPath = Join-Path $outputDirectory "${prefix}_data_partial.json"

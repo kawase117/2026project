@@ -163,3 +163,119 @@ def test_pace_due_only_first_run_of_each_window(tmp_path, monkeypatch):
     assert not run.pace_due(HALL, datetime(2026, 10, 30, 14, 10, tzinfo=JST))
     assert run.pace_due(HALL, datetime(2026, 10, 30, 15, 10, tzinfo=JST))
     assert not run.pace_due(HALL, datetime(2026, 10, 30, 19, 10, tzinfo=JST))
+
+
+# ---------------------------------------------------------------- 基本段と追加段(_site の通し)
+
+from types import SimpleNamespace  # noqa: E402
+
+from scraper.realtime import quick_filter  # noqa: E402
+from scraper.realtime.adapters import common  # noqa: E402
+
+
+def _site_doc(mdc, name, unit, games, started=STARTED):
+    rows = [["台番", "累計ゲーム", "BB回数", "RB回数", "ART回数"], [str(unit), str(games), "1", "1", "3"]]
+    return {
+        "complete": True,
+        "startedAt": started,
+        "completedAt": "2026-10-30T04:15:00.000Z",
+        "models": {
+            mdc: {"mdc": mdc, "name": name, "jackpot": {"updateTime": "2026/10/30 13:10", "pages": [{"rows": rows}]}}
+        },
+    }
+
+
+@pytest.fixture
+def site_env(tmp_path, monkeypatch):
+    """楽園の _site を、収集・グラフを偽の _run_command に差し替えて通す。"""
+    out = tmp_path / "scraper" / "site777" / "output"
+    out.mkdir(parents=True)
+    (out / "site777_full_data.json").write_text(json.dumps({"models": {}}), encoding="utf-8")
+    monkeypatch.setattr(run, "ROOT", tmp_path)
+    monkeypatch.setattr(run, "HERE", tmp_path / "rt")
+    (tmp_path / "rt" / "output").mkdir(parents=True)
+    monkeypatch.setitem(run.REPORT, "each", False)
+    monkeypatch.setattr(run, "_ROWS", {})
+    monkeypatch.setattr(common, "model_name", lambda raw: raw)
+    monkeypatch.setattr(quick_filter, "load_master_flags_any", lambda *a: {})
+    monkeypatch.setattr(
+        quick_filter,
+        "site_model_allowlist",
+        lambda path, hall, audit, flags, resolve, extra=frozenset(): ["AT機", "RB機"] if extra else ["RB機"],
+    )
+    monkeypatch.setattr(run, "_site_at_names", lambda hall: {"AT機"})
+    monkeypatch.setattr(run, "pace_due", lambda hall, t: True)
+    monkeypatch.setattr(run, "site_pace_keys", lambda rows, hall, keys, db_dir=None: ["2:20"])
+    state = {"at": "ok", "graph": "ok", "calls": []}
+
+    def fake(command):
+        text = " ".join(command)
+        state["calls"].append(text)
+        if "full_collect_parallel" in text and "-OutputPrefix" not in text:
+            (out / "site777_quick_data.json").write_text(json.dumps(_site_doc("1", "RB機", 10, 3000)))
+            (out / "site777_quick_summary.json").write_text(json.dumps({"ok": True, "complete": True}))
+        elif "-OutputPrefix" in text:
+            if state["at"] == "raise":
+                raise OSError("browser closed")
+            if state["at"] == "ok":
+                (out / "site777_quick_at_data.json").write_text(
+                    json.dumps(_site_doc("2", "AT機", 20, 4000, started="2026-10-30T04:16:00.000Z"))
+                )
+        elif "graph_pipeline" in text and state["graph"] == "ok":
+            _metrics(
+                out / "site777_quick_graph_metrics.json", [{"key": "2:20", "status": "ok", "estimatedLatestDiff": 700}]
+            )
+        return SimpleNamespace(returncode=0 if state["graph"] == "ok" else 1, stderr="")
+
+    monkeypatch.setattr(run, "_run_command", fake)
+    return tmp_path / "rt" / "output" / "snapshots", state
+
+
+def _read_snaps(directory):
+    found = {}
+    for path in sorted(directory.glob("*.jsonl")):
+        mode = path.name.split("_")[1]
+        found[mode] = {r["unit"]: r for r in map(json.loads, path.read_text(encoding="utf-8").splitlines())}
+    return found
+
+
+def test_site_base_snapshot_then_pace_stage(site_env):
+    snaps, state = site_env
+    [item] = run._site(["rakuen"], "quick", 1000)
+    assert item.status == "OK" and not item.error
+    found = _read_snaps(snaps)
+    # 基本段は RB機種だけ、追加段は RB機種 + AT機 + ペース台の差枚
+    assert set(found["quick"]) == {10}
+    assert set(found["pace"]) == {10, 20}
+    assert found["pace"][20]["diff"] == 700 and found["pace"][10]["diff"] is None
+    # 基本段の台表に AT機を混ぜない(追加段は別の出力先)
+    assert "-OutputPrefix site777_quick_at" in state["calls"][1]
+    assert "AT機" not in state["calls"][0] and run._ROWS[HALL] and len(run._ROWS[HALL]) == 2
+
+
+@pytest.mark.parametrize("failure", ["at_stale", "at_raise", "graph"])
+def test_site_pace_stage_failure_keeps_base_snapshot(site_env, failure):
+    snaps, state = site_env
+    if failure == "at_stale":
+        state["at"] = "stale"  # AT機の台表が書き換わらない(ブラウザが途中で閉じた)
+    elif failure == "at_raise":
+        state["at"] = "raise"
+    else:
+        state["graph"] = "fail"
+    [item] = run._site(["rakuen"], "quick", 1000)
+    assert item.status == "OK" and not item.error
+    found = _read_snaps(snaps)
+    assert set(found["quick"]) == {10}  # 凍結用の基本段は残る
+    if failure == "at_raise":
+        assert "pace" not in found
+    elif failure == "at_stale":
+        assert set(found["pace"]) == {10}  # AT機の台は失うが、基本段の台で追加段は書く
+    else:
+        assert set(found["pace"]) == {10, 20} and found["pace"][20]["diff"] is None  # 失うのは差枚だけ
+
+
+def test_site_pace_stage_skipped_outside_window(site_env, monkeypatch):
+    snaps, state = site_env
+    monkeypatch.setattr(run, "pace_due", lambda hall, t: False)
+    run._site(["rakuen"], "quick", 1000)
+    assert set(_read_snaps(snaps)) == {"quick"} and len(state["calls"]) == 1

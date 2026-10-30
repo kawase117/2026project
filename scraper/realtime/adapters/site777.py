@@ -42,9 +42,9 @@ def _quick_metrics(output_dir: Path, full: dict) -> dict[str, dict]:
     return {item["key"]: item for item in document.get("machines", [])}
 
 
-def unit_keys(output_dir: Path) -> dict[int, str]:
+def unit_keys(output_dir: Path, data_name: str = "site777_quick_data.json") -> dict[int, str]:
     """クイック収集の台表の台番号 → グラフ取得に使うキー(mdc:台番号)。"""
-    full = _read(Path(output_dir) / "site777_quick_data.json")
+    full = _read(Path(output_dir) / data_name)
     keys = {}
     for mdc, model in full.get("models", {}).items():
         for page in (model.get("jackpot") or {}).get("pages", []):
@@ -55,10 +55,16 @@ def unit_keys(output_dir: Path) -> dict[int, str]:
 
 
 def adapt(
-    output_dir: Path, hall: str = "楽園蒲田店", observed_at: datetime | None = None, *, quick: bool = False
+    output_dir: Path,
+    hall: str = "楽園蒲田店",
+    observed_at: datetime | None = None,
+    *,
+    quick: bool = False,
+    data_name: str = "site777_quick_data.json",
 ) -> list[SnapshotRow]:
+    """data_name は quick の台表。追加段(AT機の台表を足したもの)は site777_quick_pace_data.json を渡す。"""
     output_dir = Path(output_dir)
-    quick_path = output_dir / "site777_quick_data.json"
+    quick_path = output_dir / data_name
     # quick は機種を絞った別ファイルに出る。フル収集のデータとは混ぜない。
     full = _read(quick_path if quick and quick_path.exists() else output_dir / "site777_full_data.json")
     graph = {} if quick else _read(output_dir / "site777_graph_metrics_filtered.json")

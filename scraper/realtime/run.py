@@ -35,11 +35,11 @@ _ROWS: dict[str, list] = {}  # ホール名 -> 今回の収集で保存した行
 REPORT = {"each": True, "top": 8}
 
 
-def _publish(rows, hall: str, mode: str) -> None:
+def _publish(rows, hall: str, mode: str, report: bool = True) -> None:
     """スナップショットを保存し、そのホールの上位を即座に出す(全体の完了を待たない)。"""
     write_snapshot(rows, HERE / "output", hall, mode, datetime.now(JST))
     _ROWS[hall] = rows
-    if REPORT["each"]:
+    if REPORT["each"] and report:
         from .rank import format_hall_report
 
         text = format_hall_report(hall, rows, top=REPORT["top"], hall_prior=REPORT.get("prior"))
@@ -132,13 +132,29 @@ def site_pace_keys(rows, hall: str, unit_keys: dict[int, str], db_dir: Path = RO
     return sorted(unit_keys[u["unit"]] for u in units if u["pace"] and u["unit"] in unit_keys)
 
 
+SITE_PACE_DATA = "site777_quick_pace_data.json"
+
+
+def _site_at_names(hall: str) -> set[str]:
+    """ホールDBの機種マスターでATとして扱う機種(backtest.continuation_scan.AT_TYPES)の正式名。"""
+    db = ROOT / "db" / f"{hall}.db"
+    if not db.exists():
+        return set()
+    from backtest.continuation_scan import _ro, at_models
+
+    con = _ro(db)
+    try:
+        return at_models(con)
+    finally:
+        con.close()
+
+
 def _site_pace_diff(output: Path, hall: str, rows):
-    """ペース台だけ台別のグラフを取り、OCRで差枚を読んで rows を作り直す。失敗しても台表の rows はそのまま使う。"""
+    """ペース台だけ台別のグラフを取り、OCRで差枚を読んで rows を作り直す。グラフが失敗すれば差枚の無い rows のまま。"""
     start = time.monotonic()
     metrics = output / "site777_quick_graph_metrics.json"
     metrics.unlink(missing_ok=True)  # 前の回の差枚を今回の台に付けない
-    t = max((datetime.fromisoformat(r.source_updated_at or r.observed_at) for r in rows), default=None)
-    keys = site_pace_keys(rows, hall, site777.unit_keys(output)) if t and pace_due(hall, t) else []
+    keys = site_pace_keys(rows, hall, site777.unit_keys(output, SITE_PACE_DATA))
     if keys:
         keys_path = HERE / "output" / "site777_quick_pace_keys.json"
         keys_path.write_text(json.dumps(keys), encoding="utf-8")
@@ -151,7 +167,7 @@ def _site_pace_diff(output: Path, hall: str, rows):
                 "-File",
                 str(ROOT / "scraper/site777/run_site777_graph_pipeline.ps1"),
                 "-InputPath",
-                str(output / "site777_quick_data.json"),
+                str(output / SITE_PACE_DATA),
                 "-MinGames",
                 "0",
                 "-KeysFile",
@@ -163,11 +179,47 @@ def _site_pace_diff(output: Path, hall: str, rows):
                 print(
                     f"site777 pace graph failed rc={process.returncode}: {first_line(process.stderr)}", file=sys.stderr
                 )
-        rows = site777.adapt(output, hall, quick=True)
+        rows = site777.adapt(output, hall, quick=True, data_name=SITE_PACE_DATA)
     with _PRINT_LOCK:
         got = sum(r.diff is not None for r in rows)
         print(f"site777 pace diff: targets={len(keys)} diff={got} seconds={time.monotonic() - start:.1f}", flush=True)
     return rows
+
+
+def _site_pace_stage(output: Path, hall: str, at_models_site: list[str]) -> None:
+    """追加段: AT機の台表を足し、ペース台の差枚をグラフから読んで、mode=pace のスナップショットを書く。
+
+    基本段(RB判別機種の台表)のスナップショットは書き済みなので、ここが失敗しても失うのは
+    AT機の台とペース台の差枚だけ。AT機の台表が取れなくても、基本段の台でペース台のグラフは取る。
+    """
+    start = time.monotonic()
+    merged = json.loads((output / "site777_quick_data.json").read_text(encoding="utf-8-sig"))
+    if at_models_site:
+        at_path = output / "site777_quick_at_data.json"
+        before = at_path.stat().st_mtime_ns if at_path.exists() else -1
+        names_path = HERE / "output" / "site777_quick_at_models.json"
+        names_path.write_text(json.dumps(at_models_site), encoding="utf-8")  # ASCIIエスケープ(PowerShell 5対策)
+        _run_command(
+            commands(["rakuen"], "quick", 0)["site777"][0]
+            + ["-ModelNamesFile", str(names_path), "-OutputPrefix", "site777_quick_at"]
+        )
+        if at_path.exists() and at_path.stat().st_mtime_ns != before:
+            at = json.loads(at_path.read_text(encoding="utf-8-sig"))
+            merged["models"] = {**at.get("models", {}), **merged.get("models", {})}
+        else:
+            with _PRINT_LOCK:
+                print("site777 AT table was not refreshed: ペース台は基本段の台だけで判定する", file=sys.stderr)
+    # startedAt は基本段のものを保つ(グラフの sourceSnapshotId と照合する)
+    (output / SITE_PACE_DATA).write_text(json.dumps(merged, ensure_ascii=False), encoding="utf-8")
+    rows = site777.adapt(output, hall, quick=True, data_name=SITE_PACE_DATA)
+    try:
+        rows = _site_pace_diff(output, hall, rows)
+    except (OSError, ValueError, KeyError, sqlite3.Error) as exc:  # 差枚が取れなくてもAT機の台は書く
+        with _PRINT_LOCK:
+            print(f"site777 pace diff skipped: {first_line(exc)}", file=sys.stderr)
+    _publish(rows, hall, "pace", report=False)
+    with _PRINT_LOCK:
+        print(f"site777 pace stage: rows={len(rows)} seconds={time.monotonic() - start:.1f}", flush=True)
 
 
 @dataclass
@@ -298,6 +350,7 @@ def _site(keys: list[str], mode: str, quick_min_games: int, pace_diff: bool = Tr
     start = time.monotonic()
     output = ROOT / "scraper/site777/output"
     summary_path = output / ("site777_quick_summary.json" if mode == "quick" else "site777_graph_summary_filtered.json")
+    at_extra: list[str] = []
     try:
         before = summary_path.stat().st_mtime_ns if summary_path.exists() else -1
         data_path = output / ("site777_quick_data.json" if mode == "quick" else "site777_full_data.json")
@@ -314,27 +367,15 @@ def _site(keys: list[str], mode: str, quick_min_games: int, pace_diff: bool = Tr
             )
 
             flags = load_master_flags(ROOT / "db" / f"{hall}.db") or load_master_flags_any(ROOT / "db")
-            at_names = set()
-            # 1回あたり約+8分(AT機81機種の台表)と約+6分(ペース台のグラフ、中央値56台)かかるので、
-            # 凍結に使う回(13・15・17時の窓の最初の1回)だけ取る(2026-10-31 実測の見積もり)
-            pace_diff = pace_diff and pace_due(hall, datetime.now(JST))
-            if pace_diff and (ROOT / "db" / f"{hall}.db").exists():
-                # 示唆続行台のペース判定のため、RB判別できないAT機の台表も取る(差枚はペース台だけ)
-                from backtest.continuation_scan import _ro, at_models
-
-                con = _ro(ROOT / "db" / f"{hall}.db")
-                try:
-                    at_names = at_models(con)
-                finally:
-                    con.close()
             allowed = site_model_allowlist(
-                output / "site777_full_data.json",
-                hall,
-                audit_for_hall(load_audit(), hall),
-                flags,
-                model_name,
-                at_names,
+                output / "site777_full_data.json", hall, audit_for_hall(load_audit(), hall), flags, model_name
             )
+            # 追加段で足すAT機(基本段に入っていないもの)。基本段が全機種を取る(allowed が空)なら足すものは無い
+            if pace_diff and allowed:
+                at_all = site_model_allowlist(
+                    output / "site777_full_data.json", hall, {}, {}, model_name, _site_at_names(hall)
+                )
+                at_extra = [name for name in at_all if name not in allowed]
             if allowed:  # 前回フル収集が無ければ絞らず全機種を取る
                 names_path = HERE / "output" / "site777_quick_models.json"
                 names_path.parent.mkdir(parents=True, exist_ok=True)
@@ -350,12 +391,6 @@ def _site(keys: list[str], mode: str, quick_min_games: int, pace_diff: bool = Tr
             raise RuntimeError("site777 quick data was not refreshed")
         summary = json.loads(summary_path.read_text(encoding="utf-8-sig"))
         rows = site777.adapt(output, hall, quick=mode == "quick")
-        if mode == "quick" and pace_diff:
-            try:
-                rows = _site_pace_diff(output, hall, rows)
-            except (OSError, ValueError, KeyError, sqlite3.Error) as exc:  # 差枚が取れなくても台表は出す
-                with _PRINT_LOCK:
-                    print(f"site777 pace diff skipped: {first_line(exc)}", file=sys.stderr)
         _publish(rows, hall, mode)
         item.count = len(rows)
         item.failures = int(summary.get("failures") or 0)
@@ -363,6 +398,14 @@ def _site(keys: list[str], mode: str, quick_min_games: int, pace_diff: bool = Tr
         item.status = "OK" if summary.get("ok") and summary.get("complete") and not item.failures else "INCOMPLETE"
     except (OSError, ValueError, KeyError, RuntimeError) as exc:
         item.error = first_line(exc)
+    # 追加段は基本段のスナップショットを書いたあとに回す。1回あたり約+8分(AT機81機種の台表)と約+6分
+    # (ペース台のグラフ、中央値56台)かかるので、凍結に使う回(13・15・17時の窓の最初の1回)だけ(2026-10-31 見積もり)
+    if mode == "quick" and pace_diff and not item.error and pace_due(hall, datetime.now(JST)):
+        try:
+            _site_pace_stage(output, hall, at_extra)
+        except (OSError, ValueError, KeyError, RuntimeError, sqlite3.Error) as exc:
+            with _PRINT_LOCK:
+                print(f"site777 pace stage failed: {first_line(exc)}", file=sys.stderr)
     item.seconds = time.monotonic() - start
     return [item]
 
@@ -423,8 +466,8 @@ def main(argv: list[str] | None = None) -> int:
                 f"games >= {args.quick_min_games} or same-day BB/RB/G changed"
             )
             print(
-                "site777: RB table + AT models (unless --no-pace-diff); graph only for pace units "
-                "(8000G x elapsed/13h). daidata: prefetch filtering TODO"
+                "site777: RB table, then (13/15/17h window, unless --no-pace-diff) AT tables + pace-unit graphs "
+                "(8000G x elapsed/13h) as a separate pace snapshot. daidata: prefetch filtering TODO"
             )
         return 0
     from .hall_prior import load_hall_priors

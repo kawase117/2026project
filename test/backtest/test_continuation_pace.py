@@ -154,3 +154,20 @@ def test_snapshot_with_other_day_data_is_ignored(env):
     stale = next((tmp / "snap").glob("*.jsonl"))
     stale.rename(stale.with_name("楽園蒲田店_quick_20261030_015148.jsonl"))
     assert cp.load_snapshots("20261030", tmp / "snap") == {}
+
+
+def test_pace_snapshot_replaces_preceding_quick(env):
+    """楽園の追加段(mode=pace)は直前の quick を置き換え、データ時刻は quick のものを保つ。"""
+    tmp, db_dir = env
+    t = datetime(2026, 10, 30, 13, 15, tzinfo=JST)
+    _snapshot(tmp / "snap", t, [(1, "AT1", 2100, None)])
+    pace = _snapshot(
+        tmp / "snap", datetime(2026, 10, 30, 13, 40, tzinfo=JST), [(1, "AT1", 2100, -500), (2, "AT1", 2500, 300)]
+    )
+    pace = pace.rename(pace.with_name(pace.name.replace("_quick_", "_pace_")))
+    [(when, path, rows)] = cp.load_snapshots("20261030", tmp / "snap")["楽園蒲田店"]
+    assert when == t and path == pace and {r["unit"]: r["diff"] for r in rows} == {1: -500, 2: 300}
+    # 追加段が無ければ quick をそのまま使う
+    pace.unlink()
+    [(_, path, rows)] = cp.load_snapshots("20261030", tmp / "snap")["楽園蒲田店"]
+    assert "_quick_" in path.name and rows[0]["diff"] is None

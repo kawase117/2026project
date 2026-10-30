@@ -23,8 +23,10 @@
 注意:
     - 蒲田7・蒲田1はクイック収集の対象外(2026-10 時点)。収集が増えれば同じ処理で回る。
     - 蒲田7は作業5で土日・イベント日の比が弱かった(1.17)ので、SPLIT_HALLS のホールは平日と分けて系列にする。
-    - 楽園(サイトセブン)のクイック収集は、RB判別機種に加えてAT機の台表も取り、ペース台だけ台別のグラフから
-      差枚を読む(2026-10-31〜、scraper.realtime.run の site_pace_keys がこのモジュールと同じ判定で選ぶ)。
+    - 楽園(サイトセブン)のクイック収集は、RB判別機種の台表で quick のスナップショットを書いたあと、凍結に使う回だけ
+      追加段でAT機の台表とペース台のグラフ(差枚)を足し、mode=pace のスナップショットを書く(2026-10-31〜、
+      scraper.realtime.run の site_pace_keys がこのモジュールと同じ判定で選ぶ)。load_snapshots は pace を直前の
+      quick と置き換える。追加段が失敗しても quick は残るので、失うのはAT機の台と差枚だけ。
     - DMM系(ヒロキ)はAT機の回転数が取れない台が多い。回転数の無い台はペース台にも比較の相手にも入れない。
     - (3) はヒロキ(DMMの推定差枚)と、2026-10-31 以降の楽園(ペース台のグラフ)で出る。ダイデータは差枚を取らない。
 
@@ -97,11 +99,19 @@ def checkpoint_of(t: datetime) -> int | None:
 
 
 def load_snapshots(date: str, snapshot_dir: Path = SNAPSHOT_DIR) -> dict[str, list[tuple[datetime, Path, list[dict]]]]:
-    """営業日 → {ホールDB名: [(データ時刻, ファイル, 行)...]}(時刻順)。"""
+    """営業日 → {ホールDB名: [(データ時刻, ファイル, 行)...]}(時刻順)。
+
+    楽園の追加段(mode=pace: RB機種の台表 + AT機の台表 + ペース台の差枚)は、直前の quick の行を置き換える。
+    データ時刻は quick のものを保つ(窓の判定を追加段の有無で変えない)。追加段が無ければ quick をそのまま使う。
+    """
     out: dict[str, list] = defaultdict(list)
+    paces: list[tuple[str, Path]] = []
     for path in sorted(snapshot_dir.glob(f"*_{date}_*.jsonl")):
         snap_hall, _, mode = path.name.split(f"_{date}_")[0].rpartition("_")
-        if snap_hall not in HALLS or mode not in ("quick", "full"):
+        if snap_hall not in HALLS or mode not in ("quick", "full", "pace"):
+            continue
+        if mode == "pace":
+            paces.append((snap_hall, path))
             continue
         rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
         if not rows:
@@ -110,6 +120,18 @@ def load_snapshots(date: str, snapshot_dir: Path = SNAPSHOT_DIR) -> dict[str, li
         if t.strftime("%Y%m%d") != date:
             continue  # 収集に失敗して前の日の台表を書いたもの(2026-10-31 に楽園で発生)
         out[HALLS[snap_hall][0]].append((t, path, rows))
+    for snap_hall, path in paces:
+        stamp = path.name.split(f"_{date}_")[1]
+        base = [
+            i
+            for i, (_, p, _) in enumerate(out.get(HALLS[snap_hall][0], []))
+            if p.name.startswith(f"{snap_hall}_quick_{date}_") and p.name.split(f"_{date}_")[1] <= stamp
+        ]
+        rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+        if base and rows:
+            snaps = out[HALLS[snap_hall][0]]
+            i = max(base, key=lambda j: snaps[j][1].name)
+            snaps[i] = (snaps[i][0], path, rows)
     for v in out.values():
         v.sort(key=lambda x: x[0])
     return dict(out)
