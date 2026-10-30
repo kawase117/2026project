@@ -288,6 +288,12 @@ def test_history_field_obs_verdict_weights(monkeypatch, tmp_path):
         resolve=False,
     )
     field_obs.add("H", "20260920", "全", "field_group", "現地組", machine_name="喰種", path=str(obs), resolve=False)
+    # 登録時刻は今になるので、asof(10/10)より前の翌日に固定する。固定しないと10/10を過ぎて落ちる(2026-10-30)
+    fixed = [
+        dict(json.loads(line), registered_at="2026-09-21T10:00:00+09:00")
+        for line in obs.read_text("utf-8").splitlines()
+    ]
+    obs.write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in fixed), encoding="utf-8")
     got = event_days.build_history(
         "H",
         "20261010",

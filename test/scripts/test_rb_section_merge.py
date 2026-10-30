@@ -40,3 +40,14 @@ def test_merge_appends_rb_after_juggler_even_with_rbauto(tmp_path, monkeypatch):
     morning.merge(day_dir, "20261025", "20261024")
     text = (reviews / "2026-10-25-prediction.md").read_text(encoding="utf-8")
     assert text.index("## ジャグラー候補") < text.index("## RB機種候補")
+
+
+def test_kamata7_juggler_table_is_stopped_with_its_own_reason(tmp_path):
+    """蒲田7は10月の採点で有害と出たので候補表を出さない。割合が低いホールの理由とは書き分ける。"""
+    (tmp_path / "kamata7.juggler.md").write_text(
+        "履歴の翌日平均 0.14\n 3346 マイジャグラーV 1 5000 30 0 True x\n", encoding="utf-8"
+    )
+    text = morning.juggler_section(tmp_path, "20261031", ["kamata7"])
+    assert "| 蒲田7 |" not in text
+    assert "ジャグラー候補は出さない(10月は有害" in text
+    assert morning.JUGGLER_LOW_NOTE not in text

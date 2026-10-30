@@ -110,6 +110,8 @@ JUGGLER_LABEL = {
     "hiroki_nishiguchi": "ヒロキ蒲田西口店",
 }
 JUGGLER_LOW_NOTE = "ジャグラーの設定5以上の割合が低く、候補を出さない。"
+# 採点で有害と出たので候補表を止めたホール(PREDICTION.md の扱いの表)。割合が低いホールとは理由が違うので別に書く。
+JUGGLER_STOPPED = {"kamata7": "ジャグラー候補は出さない(10月は有害、差枚edge −141・95%CI上限 −15)。"}
 
 # 分析できなかったと言い訳する出力は、DBが実在する以上は不合格にする。
 BAD_PHRASES = re.compile(
@@ -687,8 +689,11 @@ def parse_juggler(text: str) -> tuple[str, list[tuple[int, str, bool, int, int]]
 
 def juggler_section(day_dir: Path, today: str, ready: list[str]) -> str:
     """全ホール共通の「## ジャグラー候補」の節。prediction_ledger は1列目をホール、最終列を台番号として読む。"""
-    table, low = [], []
+    table, low, stopped = [], [], []
     for key in ready:
+        if key in JUGGLER_STOPPED:
+            stopped.append("%s は、%s" % (HALLS[key][1], JUGGLER_STOPPED[key]))
+            continue
         if key not in JUGGLER_LABEL:
             low.append(HALLS[key][1])
             continue
@@ -716,6 +721,8 @@ def juggler_section(day_dir: Path, today: str, ready: list[str]) -> str:
         lines += ["| ホール | 履歴の翌日平均 | 上位の候補（台、機種） |", "|---|---|---|"] + table
     if low:
         lines += ["", "%s は、%s" % ("・".join(low), JUGGLER_LOW_NOTE)]
+    for line in stopped:
+        lines += ["", line]
     lines += ["", "予測力は弱い（約14%対無作為10%）ので参考値。開店後のRB確率で確認する。"]
     return "\n".join(lines)
 

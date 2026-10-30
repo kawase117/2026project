@@ -354,7 +354,8 @@ def test_cmd_link_writes_addenda_only_for_newly_linked(tmp_path):
 
 
 def test_multi_hall_account_key_and_result_hours(tmp_path):
-    """hiroki キー(東口・西口・MAX)のアカウントが西口の候補になる。営業日22時前の投稿は予告・途中経過として外す。"""
+    """結果の役割のアカウントは、担当キー(ここでは hiroki)を問わず本文のホール名で候補になる。
+    営業日22時前の投稿は予告・途中経過として外す。"""
     analysis, state = _dbs(tmp_path)
     con = sqlite3.connect(state)
     con.execute("insert into accounts values (?,?,?)", ("hunter", "hiroki", "結果報告"))
@@ -385,3 +386,19 @@ def test_poster_result_reports_count_as_reports(tmp_path):
     con.close()
     reports, _ = event_days._result_data(str(analysis), str(state), "ヒロキMAX蒲田店", "20261020")
     assert [r["report_id"] for r in reports] == ["p1"]
+
+
+def test_other_store_of_same_chain_is_not_a_candidate(tmp_path):
+    """「みとや」は同系列の他店舗(水道橋・浅草など)にも当たるので、その店名を除いて判定する。"""
+    analysis, state = _dbs(tmp_path)
+    con = sqlite3.connect(state)
+    con.execute("insert into accounts values (?,?,?)", ("kotae", "rakuen_kamata", "答え合わせ"))
+    for tid, text in [("other", "10月14日(水) みとや浅草千束 周年日"), ("own", "10月14日(水) みとや大森町 結果")]:
+        con.execute(
+            "insert into seen_tweets values (?,?,?,?,?,?)",
+            (tid, "kotae", f"https://x.test/{tid}", "2026-10-15T11:00:00+09:00", text, None),
+        )
+    con.commit()
+    con.close()
+    _, candidates = event_days._result_data(str(analysis), str(state), "みとや大森町店", "20261014")
+    assert [c["tweet_id"] for c in candidates] == ["own"]

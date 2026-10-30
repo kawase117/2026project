@@ -15,28 +15,6 @@ infer_hall.py の台番号+機種名の数値一致だけでは、対象外ホ�
 
 from datetime import date
 
-# config.ACCOUNTS / accounts テーブルの hall キー -> そのアカウントが扱う実績DB名の集合。
-# 1つのキーで複数ホールを扱うアカウント(slo_tokyo・pachi_slohunter・sloneko222)の結果発表が、
-# 東口以外のヒロキやARROW・みとやの候補から漏れていた(2026-10-30、作業4)。
-# kamata_area(reo_slotgroup)は蒲田周辺の複数ホールを扱うので、本文のホール名で絞る前提で全追跡ホールにする。
-ACCOUNT_HALL_KEYS: dict[str, tuple[str, ...]] = {
-    "rakuen_kamata": ("楽園蒲田店",),
-    "kamata1": ("マルハンメガシティ2000-蒲田1",),
-    "kamata7_kamata1": ("マルハンメガシティ2000-蒲田7", "マルハンメガシティ2000-蒲田1"),
-    "mitoya": ("みとや大森町店",),
-    "hiroki": ("ヒロキ東口店", "ヒロキ蒲田西口店", "ヒロキMAX蒲田店"),
-    "hiroki_nishiguchi_max": ("ヒロキ蒲田西口店", "ヒロキMAX蒲田店"),
-    "arrow_ikegami_mitoya_omori": ("ARROW池上店", "みとや大森町店"),
-}
-
-
-def account_halls(key: str | None) -> tuple[str, ...]:
-    """アカウントの hall キーが扱う実績DB名。kamata_area は全追跡ホール、未知のキーは空。"""
-    if key == "kamata_area":
-        return tuple(HALL_ALIASES)
-    return ACCOUNT_HALL_KEYS.get(key or "", ())
-
-
 # hall_name -> [(keyword, valid_from, valid_until), ...]
 # valid_from/valid_until は None なら無期限。日付は投稿日(posted_at_jst の日付部分)で判定する。
 HALL_ALIASES: dict[str, list[tuple[str, date | None, date | None]]] = {
@@ -102,6 +80,8 @@ HALL_ALIASES: dict[str, list[tuple[str, date | None, date | None]]] = {
 # 追跡外の同系列ホール名。ここに載る語は当該ホールの別名判定から除く。
 HALL_ALIAS_EXCLUSIONS: dict[str, tuple[str, ...]] = {
     "楽園蒲田店": ("楽園池袋", "楽園上永谷"),
+    # 結果アカウント(slokotae7 ほか)は同系列の他店舗の結果も出す(2026-10-30 に3件の誤った候補)
+    "みとや大森町店": ("みとや水道橋", "みとやジャックポット", "みとや浅草"),
 }
 
 

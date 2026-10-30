@@ -37,7 +37,7 @@ from datetime import date, datetime, timedelta, timezone
 import pandas as pd
 
 from backtest import model_alias as _model_alias
-from scraper.twitter_monitor.hall_aliases import HALL_ALIAS_EXCLUSIONS, HALL_ALIASES, account_halls
+from scraper.twitter_monitor.hall_aliases import HALL_ALIAS_EXCLUSIONS, HALL_ALIASES
 from backtest.announce import extract_narabi_mentions, load_announce_bundles
 from backtest.announce import assign_segment, match_machine_names
 from backtest.run_backtest import load_frame
@@ -715,14 +715,14 @@ def _result_data(analysis_db, state_db, hall, business_date):
     end = start + timedelta(days=45)
     with _ro_connect(state_db) as con:
         accounts = con.execute("select handle,hall,role from accounts").fetchall()
-        # 複数ホールを1つのキーで扱うアカウント(hiroki = 東口・西口・MAX など)は account_halls で展開する。
-        # 以前は kamata7_kamata1 だけを特別扱いし、slo_tokyo・pachi_slohunter・sloneko222 が
-        # 西口・MAX・ARROW・みとやの候補にならなかった(2026-10-30)。
+        # 結果を出す役割のアカウントなら、担当ホールのキーを問わず候補にする。ホールは本文の名前で絞る
+        # (_candidate_mentions_hall)。キーは実際に投稿するホールとずれる: kawasakislot(楽園キー)と
+        # sloneko222(ARROW・みとやキー)が金時の結果を、slo_tokyo・pachi_slohunter が西口・MAXの結果を出していた
+        # (2026-10-30)。Kamacho_data のような集計アカウントは役割で外れる。
         allowed = {
             handle
-            for handle, account_hall, role in accounts
-            if (_normalize_hall(account_hall) == hall or hall in account_halls(account_hall))
-            and ("答え合わせ" in (role or "") or "結果報告" in (role or ""))
+            for handle, _account_hall, role in accounts
+            if "答え合わせ" in (role or "") or "結果報告" in (role or "")
         }
         if allowed:
             tweets = con.execute(
