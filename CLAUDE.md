@@ -17,7 +17,7 @@ AIアシスタントへ：このファイルは索引と鉄則だけ。作業の
 
 | 作業 | 先に読む |
 |---|---|
-| 予測(「◯日の予測」) | `document/procedures/PREDICTION.md`、`document/registry/LESSONS.jsonl`、対象ホールの `memory/halls/<ホール>.md` |
+| 予測(「◯日の予測」) | `document/procedures/PREDICTION.md`(手順・ジャグラー規則・凍結)、`prediction-format` スキル(ホール節の形の正本)、`document/registry/LESSONS.jsonl`、対象ホールの `memory/halls/<ホール>.md` |
 | 答え合わせ | `document/procedures/ANSWERCHECK.md`、`document/registry/LESSONS.jsonl` |
 | 予告・イベント日の登録 | `document/procedures/EVENTS.md`、`announce-prep` スキル |
 | ホール分析 | `hall-analysis-checklist` / `hall-axis-scan` スキル、対象ホールの `memory/halls/` |
