@@ -369,6 +369,7 @@ def decision_lines(md: str) -> list[tuple[str, str, str]]:
     """判断・避けるの行を (hall, "judge"|"avoid", 行) で返す。行の分け方は extract と同じ。
 
     凍結前の点検(backtest.lessons)が、行の根拠を学びの台帳と照らすために使う。DBを読まない。
+    判断の行は、推す側に残る文だけを返す(打ち消し・見送りの文は凍結に入らないので点検しない)。
     """
     out = []
     for title, lines in _sections(md):
@@ -385,10 +386,12 @@ def decision_lines(md: str) -> list[tuple[str, str, str]]:
             stripped = line.strip()
             if not stripped:
                 continue
-            if "避け" in stripped:
+            if is_avoid_line(stripped):
                 out.append((hall, "avoid", stripped))
             elif in_judgement or stripped.startswith(("判断", "**判断", "- 判断")):
-                out.append((hall, "judge", stripped))
+                pushed = "、".join(part for part, _ in push_parts(stripped)[0]).strip()
+                if pushed:
+                    out.append((hall, "judge", pushed))
     return out
 
 
