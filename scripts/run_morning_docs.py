@@ -576,8 +576,8 @@ def baseline_block(key: str, today: str, has_announce: bool) -> str:
     names, source = baseline_models(key, today)
     if not names:
         return "## 基準\nこのホールの基準（%s%s）は無い。基準の行は書かない。\n\n" % (key, BASE_RULE_SUFFIX)
-    head = "基準(参考、推さない)" if key == "kamata7" and not has_announce else "基準"
-    return "## 基準（%s）\n節の最初に次の行をそのまま書く:\n`%s: %s`\n\n" % (source, head, "・".join(names))
+    # 予告の無い日も基準は試験枠の一つとして載せる(prediction-format の3)。has_announce は呼び出し側との互換のため残す
+    return "## 基準（%s）\n節の最初に次の行をそのまま書く:\n`基準: %s`\n\n" % (source, "・".join(names))
 
 
 def prediction_prompt(key: str, today: str, yesterday: str, answer: Path, out: Path) -> str:
