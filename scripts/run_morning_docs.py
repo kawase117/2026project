@@ -817,7 +817,8 @@ def merge(day_dir: Path, today: str, yesterday: str) -> None:
     got, missing, ready = pieces("prediction")
     if got:
         path = REVIEWS / ("%s-prediction.md" % dash(today))
-        if any(p for p in PREDICTIONS.glob("%s__*.json" % today) if "__rbauto" not in p.stem):
+        auto_tags = ("__rbauto", "__rbdipctrl", "__rbdip")  # 自動凍結。人の凍結ではない
+        if any(p for p in PREDICTIONS.glob("%s__*.json" % today) if not p.stem.endswith(auto_tags)):
             print("予測は凍結済みのため文書を作り直さない。", flush=True)
             return
         if not is_auto_doc(path):

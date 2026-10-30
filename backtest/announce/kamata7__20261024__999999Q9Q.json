@@ -37,7 +37,74 @@
   "unscored_claims": [],
   "needs_manual_review": true,
   "no_confirmed_machines": false,
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20261026",
+    "hall_baseline_mean_diff": 159.3,
+    "hall_n_machines": 715,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "モンスターハンターライズ",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 40.6,
+        "mean_diff": 60.0,
+        "gratio": 0.677,
+        "n_machines": 10,
+        "rank": 35,
+        "candidate_models": 66,
+        "age_days": 474,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "化物語",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -543.2,
+        "mean_diff": -820.0,
+        "gratio": 0.662,
+        "n_machines": 5,
+        "rank": 54,
+        "candidate_models": 66,
+        "age_days": 319,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "獣王",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 1625.1,
+        "mean_diff": 1116.7,
+        "gratio": 1.455,
+        "n_machines": 6,
+        "rank": 8,
+        "candidate_models": 66,
+        "age_days": 19,
+        "age_bucket": "new",
+        "base_rate": 0.105,
+        "hit": false
+      }
+    ]
+  },
   "announce_digest": "273d686d3ed3912a",
   "provisional": true
 }

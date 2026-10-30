@@ -47,6 +47,100 @@
       "note": "『6台並び傾向⁉️』(断定ではない)。海門決戦は14台設置"
     }
   ],
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20261025",
+    "hall_baseline_mean_diff": -60.7,
+    "hall_n_machines": 424,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "東京喰種",
+          "note": "『両機種に6台並び傾向⁉️』『最優先でチェック』(発信者の見立て、個人の解説アカウント)。直近30日 rank44/57・閾値超え0/30日・平均score-54.1、10/24は30台合計-15680。baserate(+1800超え)は1日2.14機種"
+        },
+        "score": 23.6,
+        "mean_diff": 15.4,
+        "gratio": 1.53,
+        "n_machines": 30,
+        "rank": 14,
+        "candidate_models": 57,
+        "age_days": 405,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+          "note": "本文『Lカバネリ』を別名照合でスマスロ版(14台)に紐付け。MAXには旧『甲鉄城のカバネリ』3台もあるが6台並びは成立しないため海門決戦を採用(要ユーザー確認)。直近30日 rank18/57・閾値超え2/30日・平均score+255.0"
+        },
+        "score": 2491.5,
+        "mean_diff": 1217.2,
+        "gratio": 2.047,
+        "n_machines": 14,
+        "rank": 1,
+        "candidate_models": 57,
+        "age_days": 236,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": true
+      },
+      {
+        "type": "narabi",
+        "claim": {
+          "type": "narabi",
+          "n_adjacent": 3,
+          "count": null,
+          "scope": "hall",
+          "note": "『3台並びを軸とした仕掛け⁉️』『店内各所に塊が潜む可能性』。か所数の公約なし(count=null)。「⑤⑥」等の設定の明示もなく、並び=差枚ブロックとして判定"
+        },
+        "detected_count": 0,
+        "baseline_percentile": 100.0,
+        "blocks": [],
+        "games_blocks": [],
+        "hit": null
+      },
+      {
+        "type": "narabi",
+        "claim": {
+          "type": "narabi",
+          "n_adjacent": 6,
+          "count": null,
+          "scope": "東京喰種",
+          "note": "『6台並び傾向⁉️』(断定ではない)。東京喰種は30台設置"
+        },
+        "detected_count": 0,
+        "baseline_percentile": 100.0,
+        "blocks": [],
+        "games_blocks": [],
+        "hit": null
+      },
+      {
+        "type": "narabi",
+        "claim": {
+          "type": "narabi",
+          "n_adjacent": 6,
+          "count": null,
+          "scope": "甲鉄城のカバネリ 海門(うなと)決戦",
+          "note": "『6台並び傾向⁉️』(断定ではない)。海門決戦は14台設置"
+        },
+        "detected_count": 0,
+        "baseline_percentile": 100.0,
+        "blocks": [],
+        "games_blocks": [],
+        "hit": null
+      }
+    ]
+  },
   "announce_digest": "0062435addcbcb48"
 }

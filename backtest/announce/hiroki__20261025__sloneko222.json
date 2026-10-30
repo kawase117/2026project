@@ -53,7 +53,102 @@
   ],
   "needs_manual_review": true,
   "no_confirmed_machines": false,
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20261025",
+    "hall_baseline_mean_diff": -3.5,
+    "hall_n_machines": 279,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ゴーゴージャグラー3",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -467.3,
+        "mean_diff": -249.8,
+        "gratio": 1.87,
+        "n_machines": 6,
+        "rank": 35,
+        "candidate_models": 40,
+        "age_days": 662,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ジャグラーガールズ",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。 ヒント: 1/2系の可能性(model_named_ratioならratio指定が必要)"
+        },
+        "score": 1186.5,
+        "mean_diff": 476.0,
+        "gratio": 2.493,
+        "n_machines": 3,
+        "rank": 4,
+        "candidate_models": 40,
+        "age_days": 662,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ハッピージャグラーVIII",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "hit": null,
+        "note": "当日 ハッピージャグラーVIII が設置3台以上の候補に無い（撤去・台数不足・表記ゆれ）"
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ファンキージャグラー2",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 3355.4,
+        "mean_diff": 1298.5,
+        "gratio": 2.584,
+        "n_machines": 4,
+        "rank": 2,
+        "candidate_models": 40,
+        "age_days": 662,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "マイジャグラーV",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -674.2,
+        "mean_diff": -332.3,
+        "gratio": 2.029,
+        "n_machines": 14,
+        "rank": 38,
+        "candidate_models": 40,
+        "age_days": 662,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
   "announce_digest": "f76427bdb56dd7a5",
   "provisional": true
 }

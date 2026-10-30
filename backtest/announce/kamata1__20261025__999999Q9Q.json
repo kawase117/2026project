@@ -47,7 +47,102 @@
   "unscored_claims": [],
   "needs_manual_review": true,
   "no_confirmed_machines": false,
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20261025",
+    "hall_baseline_mean_diff": -168.2,
+    "hall_n_machines": 365,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "からくりサーカス",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "hit": null,
+        "note": "当日 からくりサーカス が設置3台以上の候補に無い（撤去・台数不足・表記ゆれ）"
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "からくりサーカス2",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -194.8,
+        "mean_diff": -600.0,
+        "gratio": 0.325,
+        "n_machines": 5,
+        "rank": 31,
+        "candidate_models": 50,
+        "age_days": 111,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ウルトラミラクルジャグラー",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -1186.4,
+        "mean_diff": -700.0,
+        "gratio": 1.695,
+        "n_machines": 4,
+        "rank": 45,
+        "candidate_models": 50,
+        "age_days": 662,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -134.9,
+        "mean_diff": -200.0,
+        "gratio": 0.674,
+        "n_machines": 5,
+        "rank": 29,
+        "candidate_models": 50,
+        "age_days": 565,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ミスタージャグラー",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 325.3,
+        "mean_diff": 250.0,
+        "gratio": 1.301,
+        "n_machines": 4,
+        "rank": 10,
+        "candidate_models": 50,
+        "age_days": 662,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
   "announce_digest": "33aec61bd6b43aee",
   "provisional": true
 }

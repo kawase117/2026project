@@ -48,7 +48,76 @@
   ],
   "needs_manual_review": true,
   "no_confirmed_machines": false,
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20261024",
+    "hall_baseline_mean_diff": 119.1,
+    "hall_n_machines": 320,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "吉宗",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "hit": null,
+        "note": "当日 吉宗 が設置3台以上の候補に無い（撤去・台数不足・表記ゆれ）"
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 1081.6,
+        "mean_diff": 954.1,
+        "gratio": 1.134,
+        "n_machines": 10,
+        "rank": 6,
+        "candidate_models": 29,
+        "age_days": 138,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "東京喰種",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -858.1,
+        "mean_diff": -1036.2,
+        "gratio": 0.828,
+        "n_machines": 16,
+        "rank": 25,
+        "candidate_models": 29,
+        "age_days": 627,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "甲鉄城のカバネリ",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "hit": null,
+        "note": "当日 甲鉄城のカバネリ が設置3台以上の候補に無い（撤去・台数不足・表記ゆれ）"
+      }
+    ]
+  },
   "announce_digest": "eb8e77677c4b6c59",
   "provisional": true
 }
