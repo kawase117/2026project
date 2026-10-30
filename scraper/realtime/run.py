@@ -3,12 +3,14 @@
 import argparse
 import json
 import os
+import sqlite3
 import subprocess
 import sys
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
+from functools import partial
 from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -99,6 +101,73 @@ def _top_up(path: Path, hall: str, base_command: list[str], audit, flags, proces
     document["complete"] = not failures
     path.write_text(json.dumps(document, ensure_ascii=False), encoding="utf-8")
     return process
+
+
+def pace_due(hall: str, t: datetime) -> bool:
+    """t が13・15・17時の窓に入り、その窓をまだ凍結していないか。continuation_pace は窓の最初の1回しか使わない。"""
+    from backtest import continuation_pace as cp
+
+    hour = cp.checkpoint_of(t)
+    return hour is not None and not cp.frozen_path(hall, t.strftime("%Y%m%d"), hour).exists()
+
+
+def site_pace_keys(rows, hall: str, unit_keys: dict[int, str], db_dir: Path = ROOT / "db") -> list[str]:
+    """クイック収集の台表から、示唆続行台のペース台(backtest.continuation_pace と同じ判定)のグラフキーを返す。"""
+    from backtest import continuation_pace as cp
+
+    db = Path(db_dir) / f"{hall}.db"
+    times = [datetime.fromisoformat(r.source_updated_at or r.observed_at) for r in rows]
+    if not times or not db.exists():
+        return []
+    t = max(times)
+    if cp.elapsed_hours(t) < cp.MIN_ELAPSED:
+        return []
+    date = t.strftime("%Y%m%d")
+    con = cp._ro(db)
+    try:
+        ctx = cp.hall_context(con, date)
+    finally:
+        con.close()
+    units = cp.pace_units([r.to_dict() for r in rows], ctx, date, t)["units"]
+    return sorted(unit_keys[u["unit"]] for u in units if u["pace"] and u["unit"] in unit_keys)
+
+
+def _site_pace_diff(output: Path, hall: str, rows):
+    """ペース台だけ台別のグラフを取り、OCRで差枚を読んで rows を作り直す。失敗しても台表の rows はそのまま使う。"""
+    start = time.monotonic()
+    metrics = output / "site777_quick_graph_metrics.json"
+    metrics.unlink(missing_ok=True)  # 前の回の差枚を今回の台に付けない
+    t = max((datetime.fromisoformat(r.source_updated_at or r.observed_at) for r in rows), default=None)
+    keys = site_pace_keys(rows, hall, site777.unit_keys(output)) if t and pace_due(hall, t) else []
+    if keys:
+        keys_path = HERE / "output" / "site777_quick_pace_keys.json"
+        keys_path.write_text(json.dumps(keys), encoding="utf-8")
+        process = _run_command(
+            [
+                "powershell.exe",
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                str(ROOT / "scraper/site777/run_site777_graph_pipeline.ps1"),
+                "-InputPath",
+                str(output / "site777_quick_data.json"),
+                "-MinGames",
+                "0",
+                "-KeysFile",
+                str(keys_path),
+            ]
+        )
+        if process.returncode != 0:
+            with _PRINT_LOCK:
+                print(
+                    f"site777 pace graph failed rc={process.returncode}: {first_line(process.stderr)}", file=sys.stderr
+                )
+        rows = site777.adapt(output, hall, quick=True)
+    with _PRINT_LOCK:
+        got = sum(r.diff is not None for r in rows)
+        print(f"site777 pace diff: targets={len(keys)} diff={got} seconds={time.monotonic() - start:.1f}", flush=True)
+    return rows
 
 
 @dataclass
@@ -223,7 +292,7 @@ def _dmm(keys: list[str], mode: str, quick_min_games: int) -> list[Result]:
     return result
 
 
-def _site(keys: list[str], mode: str, quick_min_games: int) -> list[Result]:
+def _site(keys: list[str], mode: str, quick_min_games: int, pace_diff: bool = True) -> list[Result]:
     hall = HALLS[keys[0]][0]
     item = Result(hall, "site777")
     start = time.monotonic()
@@ -231,6 +300,8 @@ def _site(keys: list[str], mode: str, quick_min_games: int) -> list[Result]:
     summary_path = output / ("site777_quick_summary.json" if mode == "quick" else "site777_graph_summary_filtered.json")
     try:
         before = summary_path.stat().st_mtime_ns if summary_path.exists() else -1
+        data_path = output / ("site777_quick_data.json" if mode == "quick" else "site777_full_data.json")
+        data_before = data_path.stat().st_mtime_ns if data_path.exists() else -1
         command = commands(keys, mode, quick_min_games)["site777"][0]
         if mode == "quick":
             from .adapters.common import model_name
@@ -243,8 +314,26 @@ def _site(keys: list[str], mode: str, quick_min_games: int) -> list[Result]:
             )
 
             flags = load_master_flags(ROOT / "db" / f"{hall}.db") or load_master_flags_any(ROOT / "db")
+            at_names = set()
+            # 1回あたり約+8分(AT機81機種の台表)と約+6分(ペース台のグラフ、中央値56台)かかるので、
+            # 凍結に使う回(13・15・17時の窓の最初の1回)だけ取る(2026-10-31 実測の見積もり)
+            pace_diff = pace_diff and pace_due(hall, datetime.now(JST))
+            if pace_diff and (ROOT / "db" / f"{hall}.db").exists():
+                # 示唆続行台のペース判定のため、RB判別できないAT機の台表も取る(差枚はペース台だけ)
+                from backtest.continuation_scan import _ro, at_models
+
+                con = _ro(ROOT / "db" / f"{hall}.db")
+                try:
+                    at_names = at_models(con)
+                finally:
+                    con.close()
             allowed = site_model_allowlist(
-                output / "site777_full_data.json", hall, audit_for_hall(load_audit(), hall), flags, model_name
+                output / "site777_full_data.json",
+                hall,
+                audit_for_hall(load_audit(), hall),
+                flags,
+                model_name,
+                at_names,
             )
             if allowed:  # 前回フル収集が無ければ絞らず全機種を取る
                 names_path = HERE / "output" / "site777_quick_models.json"
@@ -256,8 +345,17 @@ def _site(keys: list[str], mode: str, quick_min_games: int) -> list[Result]:
         _run_command(command)
         if not summary_path.exists() or summary_path.stat().st_mtime_ns == before:
             raise RuntimeError("site777 summary was not refreshed")
+        if mode == "quick" and (not data_path.exists() or data_path.stat().st_mtime_ns == data_before):
+            # 台表は完走したときだけ書き換わる。前の回の台表を今回のスナップショットとして書かない
+            raise RuntimeError("site777 quick data was not refreshed")
         summary = json.loads(summary_path.read_text(encoding="utf-8-sig"))
         rows = site777.adapt(output, hall, quick=mode == "quick")
+        if mode == "quick" and pace_diff:
+            try:
+                rows = _site_pace_diff(output, hall, rows)
+            except (OSError, ValueError, KeyError, sqlite3.Error) as exc:  # 差枚が取れなくても台表は出す
+                with _PRINT_LOCK:
+                    print(f"site777 pace diff skipped: {first_line(exc)}", file=sys.stderr)
         _publish(rows, hall, mode)
         item.count = len(rows)
         item.failures = int(summary.get("failures") or 0)
@@ -303,6 +401,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--report-top", type=int, default=8, help="ホールごとの即時報告に出す台数")
     parser.add_argument("--final-top", type=int, default=50, help="最後の総合ランキングに出す台数")
     parser.add_argument("--uniform-prior", action="store_true", help="ホール別の設定事前を使わず一様事前にする")
+    parser.add_argument(
+        "--no-pace-diff",
+        action="store_true",
+        help="楽園のquickでAT機の台表とペース台の差枚(グラフ)を取らない(RB判別機種だけに戻す)",
+    )
     args = parser.parse_args(argv)
     keys = list(HALLS) if args.halls == "all" else args.halls.split(",")
     if not keys or any(key not in HALLS for key in keys) or len(set(keys)) != len(keys):
@@ -319,13 +422,16 @@ def main(argv: list[str] | None = None) -> int:
                 f"quick: RB eligible (audit A or master normal/BT/A+AT; X excluded); "
                 f"games >= {args.quick_min_games} or same-day BB/RB/G changed"
             )
-            print("site777: RB table only; graph skipped. daidata: prefetch filtering TODO")
+            print(
+                "site777: RB table + AT models (unless --no-pace-diff); graph only for pace units "
+                "(8000G x elapsed/13h). daidata: prefetch filtering TODO"
+            )
         return 0
     from .hall_prior import load_hall_priors
 
     hall_prior = None if args.uniform_prior else load_hall_priors()
     REPORT.update(each=not args.no_report, top=args.report_top, prior=hall_prior)
-    workers = {"dmm": _dmm, "site777": _site, "daidata": _daidata}
+    workers = {"dmm": _dmm, "site777": partial(_site, pace_diff=not args.no_pace_diff), "daidata": _daidata}
     with ThreadPoolExecutor(max_workers=3) as pool:
         futures = {
             source: pool.submit(workers[source], selected, args.mode, args.quick_min_games)

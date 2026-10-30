@@ -145,3 +145,12 @@ def test_split_label_for_kamata7():
     f = {"hall": "マルハンメガシティ2000-蒲田7", "checkpoint_hour": 15, "busy": True}
     assert cp.series_label(f) == "15時・土日イベント"
     assert cp.series_label({**f, "hall": "楽園蒲田店"}) == "15時"
+
+
+def test_snapshot_with_other_day_data_is_ignored(env):
+    """収集に失敗して前の日の台表のまま書かれたスナップショットは、その日の凍結に使わない。"""
+    tmp, db_dir = env
+    _snapshot(tmp / "snap", datetime(2026, 10, 27, 14, 27, tzinfo=JST), [(1, "AT1", 5000, None)])
+    stale = next((tmp / "snap").glob("*.jsonl"))
+    stale.rename(stale.with_name("楽園蒲田店_quick_20261030_015148.jsonl"))
+    assert cp.load_snapshots("20261030", tmp / "snap") == {}

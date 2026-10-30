@@ -128,6 +128,8 @@ RB自動候補の台(10/26〜10/29)は、3,000G未満の台を採点から外し
 
 実装(2026-10-31): `backtest/continuation_pace.py`(freeze-due / score-due / show / retro)。凍結は `scraper/realtime/run_quick_hourly.cmd` の収集の直後、採点は `scripts/run_morning.py`、採点表は 13a〜13d。遡及は `document/reviews/2026-10-31-continuation-pace-retro.md`。**未了: 毎時のクイック収集がタスクスケジューラに登録されていない**ので、登録するまで凍結は回らない。蒲田7・蒲田1はクイック収集の対象外。
 
+追加(2026-10-31): 楽園の残りの差枚。楽園のクイック収集は、凍結に使う回(13・15・17時の窓で、まだ凍結していない最初の1回)だけ、RB判別機種に加えてAT機81機種の台表を取る。ペース台(`continuation_pace.pace_units` と同じ判定)だけ台別のグラフをOCRで読み、`diff`(推定)に入れる(`scraper/realtime/run.py` の `site_pace_keys` / `pace_due`、出力は `site777_quick_graph_*`)。増える時間は過去の収集ログからの見積もり: AT機の台表 約+500秒、ペース台のグラフ 約+335秒(中央値56台・17機種、最大178台で約+14分)。毎時やると1回5分強が約19分になるので、凍結の回に限った。`--no-pace-diff` で従来どおりに戻せる。深夜の実測は2回ともサイト側でブラウザが途中で閉じて完走せず、営業中の実測は未了。みとや(ダイデータ)は、台表の行の `detail?unit=` がヒロキ(DMM)と同じダイデータの詳細ページで、`scraper/dmm_goraggio/parsing.py` のグラフSVG(`#today_graph`)の差枚推定がそのまま使える見込み(未実装、実ページは未取得)。
+
 ---
 
 ## 進め方

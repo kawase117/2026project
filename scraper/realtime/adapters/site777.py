@@ -18,6 +18,42 @@ def _updated(value: str | None) -> str | None:
     return datetime.strptime(value, "%Y/%m/%d %H:%M").isoformat()
 
 
+def _diff(metric: dict, flags: list[str]) -> int | None:
+    """グラフから読んだ差枚。読めない・振り切れの台は flags に理由を足して None。"""
+    if metric.get("status") != "ok" or metric.get("diffUnreliable"):
+        flags.append("diff_unreadable")
+    elif metric.get("diffCensoredHigh") or metric.get("diffCensoredLow"):
+        flags.append("diff_censored")
+    elif (diff := number(metric.get("estimatedLatestDiff"))) is not None:
+        return diff
+    else:
+        flags.append("diff_unreadable")
+    return None
+
+
+def _quick_metrics(output_dir: Path, full: dict) -> dict[str, dict]:
+    """クイック収集のペース台のグラフ(site777_quick_graph_metrics.json)。今回の台表から作ったものだけ使う。"""
+    path = output_dir / "site777_quick_graph_metrics.json"
+    if not path.exists():
+        return {}
+    document = _read(path)
+    if not full.get("startedAt") or document.get("sourceSnapshotId") != full.get("startedAt"):
+        return {}  # 前の回の残り
+    return {item["key"]: item for item in document.get("machines", [])}
+
+
+def unit_keys(output_dir: Path) -> dict[int, str]:
+    """クイック収集の台表の台番号 → グラフ取得に使うキー(mdc:台番号)。"""
+    full = _read(Path(output_dir) / "site777_quick_data.json")
+    keys = {}
+    for mdc, model in full.get("models", {}).items():
+        for page in (model.get("jackpot") or {}).get("pages", []):
+            for cells in page.get("rows", [])[1:]:
+                if cells and (unit := number(cells[0])) is not None:
+                    keys[unit] = f"{mdc}:{unit}"
+    return keys
+
+
 def adapt(
     output_dir: Path, hall: str = "楽園蒲田店", observed_at: datetime | None = None, *, quick: bool = False
 ) -> list[SnapshotRow]:
@@ -27,7 +63,8 @@ def adapt(
     full = _read(quick_path if quick and quick_path.exists() else output_dir / "site777_full_data.json")
     graph = {} if quick else _read(output_dir / "site777_graph_metrics_filtered.json")
     summary = {} if quick else _read(output_dir / "site777_graph_summary_filtered.json")
-    metrics = {item["key"]: item for item in graph.get("machines", [])}
+    # quick はペース台(閉店時に8,000Gへ届く勢いのAT台)だけグラフを取る(作業6の残りの差枚用)
+    metrics = _quick_metrics(output_dir, full) if quick else {item["key"]: item for item in graph.get("machines", [])}
     flags = []
     if not full.get("complete") or (not quick and not summary.get("complete")):
         flags.append("incomplete")
@@ -54,16 +91,12 @@ def adapt(
                 metric = metrics.get(f"{mdc}:{unit}", {})
                 diff = None
                 local_flags = flags.copy()
-                if quick:
+                if quick and not metric:
                     local_flags.append("diff_not_collected")
-                elif games is None or games < 2000 or metric.get("status") != "ok" or metric.get("diffUnreliable"):
+                elif not quick and (games is None or games < 2000):
                     local_flags.append("diff_unreadable")
-                elif metric.get("diffCensoredHigh") or metric.get("diffCensoredLow"):
-                    local_flags.append("diff_censored")
                 else:
-                    diff = number(metric.get("estimatedLatestDiff"))
-                    if diff is None:
-                        local_flags.append("diff_unreadable")
+                    diff = _diff(metric, local_flags)
                 rows.append(
                     SnapshotRow(
                         hall=hall,

@@ -123,8 +123,11 @@ def site_model_allowlist(
     audit: dict[tuple[str, str], str],
     master_flags: dict[str, bool],
     model_name,
+    extra_models: set[str] = frozenset(),
 ) -> list[str]:
     """サイトセブンのフル収集データにある機種のうち、RB判別可能なもののサイト表記名を返す。
+
+    extra_models(正式名)はRB判別できなくても含める。AT機を入れて示唆続行台のペース判定に使う(作業6)。
 
     前回のフル収集データが無い、または判別可能機種が0件なら空リスト(=呼び出し側は絞り込まず全機種収集)。
     """
@@ -135,7 +138,8 @@ def site_model_allowlist(
     names = {
         m["name"]
         for m in models.values()
-        if m.get("name") and rb_eligible(hall, model_name(m["name"]), audit, master_flags)
+        if m.get("name")
+        and ((official := model_name(m["name"])) in extra_models or rb_eligible(hall, official, audit, master_flags))
     }
     return sorted(names)
 

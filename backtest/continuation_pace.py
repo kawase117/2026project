@@ -23,9 +23,10 @@
 注意:
     - 蒲田7・蒲田1はクイック収集の対象外(2026-10 時点)。収集が増えれば同じ処理で回る。
     - 蒲田7は作業5で土日・イベント日の比が弱かった(1.17)ので、SPLIT_HALLS のホールは平日と分けて系列にする。
-    - 楽園(サイトセブン)のクイック収集はRB判別機種に絞っているので、AT機は一部しか載らない。
+    - 楽園(サイトセブン)のクイック収集は、RB判別機種に加えてAT機の台表も取り、ペース台だけ台別のグラフから
+      差枚を読む(2026-10-31〜、scraper.realtime.run の site_pace_keys がこのモジュールと同じ判定で選ぶ)。
     - DMM系(ヒロキ)はAT機の回転数が取れない台が多い。回転数の無い台はペース台にも比較の相手にも入れない。
-    - サイトセブン・ダイデータのクイック収集は差枚を取らないので、(3) はヒロキ(DMMの推定差枚)だけで出る。
+    - (3) はヒロキ(DMMの推定差枚)と、2026-10-31 以降の楽園(ペース台のグラフ)で出る。ダイデータは差枚を取らない。
 
 使い方:
     venv\\Scripts\\python.exe -m backtest.continuation_pace freeze-due            # クイック収集の直後
@@ -106,6 +107,8 @@ def load_snapshots(date: str, snapshot_dir: Path = SNAPSHOT_DIR) -> dict[str, li
         if not rows:
             continue
         t = max(data_time(r) for r in rows)
+        if t.strftime("%Y%m%d") != date:
+            continue  # 収集に失敗して前の日の台表を書いたもの(2026-10-31 に楽園で発生)
         out[HALLS[snap_hall][0]].append((t, path, rows))
     for v in out.values():
         v.sort(key=lambda x: x[0])

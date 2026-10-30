@@ -5,7 +5,10 @@ param(
     [int]$IntervalMs = 2500,
     [Parameter(Mandatory = $true)]
     [string]$InputPath,
-    [string]$RateLimiterUrl = ''
+    [string]$RateLimiterUrl = '',
+    # JSON array of machine keys (mdc:unit). When set, only these machines are collected and every output goes to
+    # site777_quick_graph_* files, so the full pipeline's graph files are never overwritten (quick-mode pace units).
+    [string]$KeysFile = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -17,14 +20,22 @@ $profile = Join-Path $runtimeDirectory 'site777_graph_profile'
 $collectorTemplate = Join-Path $moduleDirectory 'site777_graph_collect.js'
 $collector = Join-Path $runtimeDirectory 'site777_graph_pipeline_runtime.js'
 $exporter = Join-Path $moduleDirectory 'site777_graph_export.js'
-$summaryPath = Join-Path $outputDirectory 'site777_graph_summary_filtered.json'
-$dataPath = Join-Path $outputDirectory 'site777_graph_data_filtered.json'
-$targetConfigPath = Join-Path $outputDirectory 'site777_graph_targets.json'
+if ($KeysFile) {
+    $summaryPath = Join-Path $outputDirectory 'site777_quick_graph_summary.json'
+    $dataPath = Join-Path $outputDirectory 'site777_quick_graph_data.json'
+    $targetConfigPath = Join-Path $outputDirectory 'site777_quick_graph_targets.json'
+    $ocrPath = Join-Path $outputDirectory 'site777_quick_graph_ocr.json'
+    $metricsPath = Join-Path $outputDirectory 'site777_quick_graph_metrics.json'
+} else {
+    $summaryPath = Join-Path $outputDirectory 'site777_graph_summary_filtered.json'
+    $dataPath = Join-Path $outputDirectory 'site777_graph_data_filtered.json'
+    $targetConfigPath = Join-Path $outputDirectory 'site777_graph_targets.json'
+    $ocrPath = Join-Path $outputDirectory 'site777_graph_ocr_filtered.json'
+    $metricsPath = Join-Path $outputDirectory 'site777_graph_metrics_filtered.json'
+}
 $targetPreparer = Join-Path $moduleDirectory 'site777_prepare_graph_targets.py'
 $ocrScript = Join-Path $moduleDirectory 'site777_graph_ocr.ps1'
 $analyzer = Join-Path $moduleDirectory 'site777_graph_analyze.py'
-$ocrPath = Join-Path $outputDirectory 'site777_graph_ocr_filtered.json'
-$metricsPath = Join-Path $outputDirectory 'site777_graph_metrics_filtered.json'
 $priorAnalysisPath = Join-Path $outputDirectory 'site777_analysis_filtered.json'
 $python = Join-Path $projectRoot 'venv\Scripts\python.exe'
 $session = 'site777graphspipeline'
@@ -68,6 +79,9 @@ try {
             '--prior-metrics', $metricsPath,
             '--allow-incomplete'
         )
+        if ($KeysFile) {
+            $prepareArgs += @('--keys-file', $KeysFile, '--image-prefix', 'site777_graphs_quick')
+        }
         & $python @prepareArgs | Out-Null
         if ($LASTEXITCODE -ne 0) {
             throw "Graph target preparation failed: $LASTEXITCODE"

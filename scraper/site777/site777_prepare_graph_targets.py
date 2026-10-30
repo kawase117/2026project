@@ -52,7 +52,10 @@ def build_config(
     prior_metrics: dict[str, Any] | None = None,
     force_all_graphs: bool = False,
     allow_incomplete: bool = False,
+    keys: set[str] | None = None,
+    image_prefix: str = "site777_graphs_filtered",
 ) -> dict[str, Any]:
+    """keys を渡すと、その台(mdc:台番号)だけを対象にする(クイック収集のペース台、min_games は 0 で呼ぶ)。"""
     if not source.get("complete") and not allow_incomplete:
         raise ValueError("full data is incomplete")
     source_id = (
@@ -76,10 +79,10 @@ def build_config(
         for row in numeric_rows(model.get("jackpot", {}).get("pages", [])):
             all_machine_count += 1
             games = parse_int(row[1])
-            if games is None or games < min_games:
-                continue
             machine_number = row[0]
             key = f"{model['mdc']}:{machine_number}"
+            if games is None or games < min_games or (keys is not None and key not in keys):
+                continue
             jackpot_update_time = model.get("jackpot", {}).get("updateTime")
             previous_machine = prior_analysis_by_key.get(key)
             previous_metric = prior_metrics_by_key.get(key)
@@ -140,7 +143,7 @@ def build_config(
         "excludedCount": all_machine_count - len(targets),
         "targetModelCount": len({target["mdc"] for target in targets}),
         "collectModelCount": len({target["mdc"] for target in targets if target["action"] == "collect"}),
-        "imageDirectory": f"site777_graphs_filtered/{safe_source_id}_{min_games}G",
+        "imageDirectory": f"{image_prefix}/{safe_source_id}_{min_games}G",
         "targets": targets,
     }
 
@@ -155,6 +158,8 @@ def main() -> int:
     parser.add_argument("--prior-metrics", type=Path)
     parser.add_argument("--force-all-graphs", action="store_true")
     parser.add_argument("--allow-incomplete", action="store_true")
+    parser.add_argument("--keys-file", type=Path, help="対象を絞る台キー(mdc:台番号)のJSON配列")
+    parser.add_argument("--image-prefix", default="site777_graphs_filtered")
     args = parser.parse_args()
     if args.min_games < 0:
         raise SystemExit("--min-games must be non-negative")
@@ -180,6 +185,8 @@ def main() -> int:
         prior_metrics,
         args.force_all_graphs,
         args.allow_incomplete,
+        set(json.loads(args.keys_file.read_text(encoding="utf-8-sig"))) if args.keys_file else None,
+        args.image_prefix,
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(config, ensure_ascii=True, indent=2), encoding="utf-8")
