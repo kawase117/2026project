@@ -1,0 +1,23 @@
+{
+  "rule_id": "zassiki_fri_at_avoid",
+  "hall": "ザ-シティ-ベルシティ雑色店",
+  "hypothesis": "雑色の金曜はATの割が他の日より低い(8〜9月 −3.04pt、10月 −5.09pt)。金曜はATを外し、ボーナス判別できる機種(ノーマル・BT・判別可のA+AT)に寄せればホール平均を上回る。",
+  "source_instinct": "document/reviews/2026-10-31-pattern-scan-others.md (2026-10-31 パターンスキャン) 追記の割の測り直し。指標は結果を見た後に足した",
+  "eval_start": "20260801",
+  "eval_end": "20261030",
+  "success_criterion": "11月の金曜のエッジ(bonus_judgeable の全台平均 − 全台平均)の平均が、11月の金曜以外の日の同じ量を上回る。金曜は4日なので12月まで積んで判定する。",
+  "universe": {},
+  "eligibility": {
+    "bonus_judgeable": 1
+  },
+  "entry_days": {
+    "weekday": [
+      4
+    ]
+  },
+  "score": "none",
+  "lookback_days": 30,
+  "min_history_days": 1,
+  "top_n": 1,
+  "min_games": 0
+}

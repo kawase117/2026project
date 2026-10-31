@@ -1,0 +1,212 @@
+{
+ "prereg_id": "pattern_scan_trials__20261031",
+ "frozen_at": "2026-10-31T13:58:10+09:00",
+ "origin": "2026-10-31 のパターンスキャン(7本のレビュー文書)の試験枠の候補。ユーザー指示「試験枠の候補を11月に反映して」。backtest/forward で自動採点できる9本は backtest/prereg/ に登録済み(rakuen_corner_avoid、rakuen_at_over_jug、k1_sat_jug、arrow_d5_jug、zassiki_d8_jug、kinji_k_d0_jug、hiroki_e_sun_jug、zassiki_fri_at_avoid、mitoya_myjug_aisle_end_avoid)。ここに置くのは、その枠に乗らないもの(ホール全体の日の強弱、新しい選び方が要る台の規則)。",
+ "hypotheses": [
+  {
+   "id": "k1-d8-weak",
+   "hall": "マルハンメガシティ2000-蒲田1",
+   "claim": "8のつく日はホール全体が弱い(hm 9月 −174・10月 −135、各3日)。試験枠 K1 は「見送り」",
+   "kind": "日の粒度(ホール全体)",
+   "target_dates_2026_11": [
+    "20261108",
+    "20261118",
+    "20261128"
+   ],
+   "expected_direction": "hm・割とも負",
+   "prospective": true,
+   "source": "document/reviews/2026-10-31-pattern-scan-kamata1.md a-1",
+   "scoring_procedure": "日ごとに、(1) ホールの1台平均差枚 hm と、(2) 割 = 1 + Σ差枚 ÷ (3ΣG)(全台・AT・ジャグ)と、(3) ジャグの平均ph(backtest.juggler_carryover.build)を出す。対象日の平均 − 同じ月の対象外の日の平均を、日を単位にしたブートストラップの95%区間つきで記録する。min_games で台を落とさない。 11月は対象日が3〜4日しかないので、11月末は記録だけ。12月末に計6〜8日で、向きが合い95%区間が0をまたがなければ成立、逆向きなら失効、0をまたげば watching。"
+  },
+  {
+   "id": "arrow-d8-strong",
+   "hall": "ARROW池上店",
+   "claim": "8のつく日はホール全体が強い(hm +481 → +285、割 +2.84pt → +1.53pt)",
+   "kind": "日の粒度(ホール全体)",
+   "target_dates_2026_11": [
+    "20261108",
+    "20261118",
+    "20261128"
+   ],
+   "expected_direction": "hm・割とも正",
+   "prospective": true,
+   "source": "document/reviews/2026-10-31-pattern-scan-others.md (a)1・追記",
+   "scoring_procedure": "日ごとに、(1) ホールの1台平均差枚 hm と、(2) 割 = 1 + Σ差枚 ÷ (3ΣG)(全台・AT・ジャグ)と、(3) ジャグの平均ph(backtest.juggler_carryover.build)を出す。対象日の平均 − 同じ月の対象外の日の平均を、日を単位にしたブートストラップの95%区間つきで記録する。min_games で台を落とさない。 11月は対象日が3〜4日しかないので、11月末は記録だけ。12月末に計6〜8日で、向きが合い95%区間が0をまたがなければ成立、逆向きなら失効、0をまたげば watching。"
+  },
+  {
+   "id": "hiroki-e-d6-strong",
+   "hall": "ヒロキ東口店",
+   "claim": "6のつく日はホール全体が強い(hm +293 → +119、割 +3.69pt → +2.62pt)",
+   "kind": "日の粒度(ホール全体)",
+   "target_dates_2026_11": [
+    "20261106",
+    "20261116",
+    "20261126"
+   ],
+   "expected_direction": "正",
+   "prospective": true,
+   "source": "document/reviews/2026-10-31-pattern-scan-others.md (a)2・追記",
+   "scoring_procedure": "日ごとに、(1) ホールの1台平均差枚 hm と、(2) 割 = 1 + Σ差枚 ÷ (3ΣG)(全台・AT・ジャグ)と、(3) ジャグの平均ph(backtest.juggler_carryover.build)を出す。対象日の平均 − 同じ月の対象外の日の平均を、日を単位にしたブートストラップの95%区間つきで記録する。min_games で台を落とさない。 11月は対象日が3〜4日しかないので、11月末は記録だけ。12月末に計6〜8日で、向きが合い95%区間が0をまたがなければ成立、逆向きなら失効、0をまたげば watching。"
+  },
+  {
+   "id": "hiroki-e-d7-weak",
+   "hall": "ヒロキ東口店",
+   "claim": "7のつく日はホール全体が弱い(hm −134 → −90、割 −2.29pt → −0.38pt)",
+   "kind": "日の粒度(ホール全体)",
+   "target_dates_2026_11": [
+    "20261107",
+    "20261117",
+    "20261127"
+   ],
+   "expected_direction": "負",
+   "prospective": true,
+   "source": "document/reviews/2026-10-31-pattern-scan-others.md (a)2・追記",
+   "scoring_procedure": "日ごとに、(1) ホールの1台平均差枚 hm と、(2) 割 = 1 + Σ差枚 ÷ (3ΣG)(全台・AT・ジャグ)と、(3) ジャグの平均ph(backtest.juggler_carryover.build)を出す。対象日の平均 − 同じ月の対象外の日の平均を、日を単位にしたブートストラップの95%区間つきで記録する。min_games で台を落とさない。 11月は対象日が3〜4日しかないので、11月末は記録だけ。12月末に計6〜8日で、向きが合い95%区間が0をまたがなければ成立、逆向きなら失効、0をまたげば watching。"
+  },
+  {
+   "id": "hiroki-e-eventdays",
+   "hall": "ヒロキ東口店",
+   "claim": "イベント台帳の日は割が高い(全体 +2.35pt → +2.69pt、AT +3.23pt → +3.47pt)。対象日は、前日までに EVENT_DAYS.jsonl に登録された11月の日",
+   "kind": "日の粒度(ホール全体)",
+   "target_dates_2026_11": [],
+   "expected_direction": "割が正",
+   "prospective": true,
+   "source": "document/reviews/2026-10-31-pattern-scan-others.md 追記",
+   "scoring_procedure": "日ごとに、(1) ホールの1台平均差枚 hm と、(2) 割 = 1 + Σ差枚 ÷ (3ΣG)(全台・AT・ジャグ)と、(3) ジャグの平均ph(backtest.juggler_carryover.build)を出す。対象日の平均 − 同じ月の対象外の日の平均を、日を単位にしたブートストラップの95%区間つきで記録する。min_games で台を落とさない。 11月は対象日が3〜4日しかないので、11月末は記録だけ。12月末に計6〜8日で、向きが合い95%区間が0をまたがなければ成立、逆向きなら失効、0をまたげば watching。"
+  },
+  {
+   "id": "heiwajima-d6-strong",
+   "hall": "レイトギャップ平和島",
+   "claim": "6のつく日は割が高い(全体 +1.11pt → +1.99pt、AT +1.50pt → +2.47pt)",
+   "kind": "日の粒度(ホール全体)",
+   "target_dates_2026_11": [
+    "20261106",
+    "20261116",
+    "20261126"
+   ],
+   "expected_direction": "割が正",
+   "prospective": true,
+   "source": "document/reviews/2026-10-31-pattern-scan-others.md 追記",
+   "scoring_procedure": "日ごとに、(1) ホールの1台平均差枚 hm と、(2) 割 = 1 + Σ差枚 ÷ (3ΣG)(全台・AT・ジャグ)と、(3) ジャグの平均ph(backtest.juggler_carryover.build)を出す。対象日の平均 − 同じ月の対象外の日の平均を、日を単位にしたブートストラップの95%区間つきで記録する。min_games で台を落とさない。 11月は対象日が3〜4日しかないので、11月末は記録だけ。12月末に計6〜8日で、向きが合い95%区間が0をまたがなければ成立、逆向きなら失効、0をまたげば watching。"
+  },
+  {
+   "id": "kinji-h-d3-strong",
+   "hall": "金時蒲田東口店",
+   "claim": "3のつく日はホール全体が強い(hm +89 → +73、割 +1.31pt → +1.52pt、ジャグph +0.01 → +0.01)。対照として2のつく日のジャグph(−0.01 → −0.01)も記録する",
+   "kind": "日の粒度(ホール全体)",
+   "target_dates_2026_11": [
+    "20261103",
+    "20261113",
+    "20261123"
+   ],
+   "expected_direction": "正(2のつく日のphは負)",
+   "prospective": true,
+   "source": "document/reviews/2026-10-31-pattern-scan-others.md 本文・追記",
+   "scoring_procedure": "日ごとに、(1) ホールの1台平均差枚 hm と、(2) 割 = 1 + Σ差枚 ÷ (3ΣG)(全台・AT・ジャグ)と、(3) ジャグの平均ph(backtest.juggler_carryover.build)を出す。対象日の平均 − 同じ月の対象外の日の平均を、日を単位にしたブートストラップの95%区間つきで記録する。min_games で台を落とさない。 11月は対象日が3〜4日しかないので、11月末は記録だけ。12月末に計6〜8日で、向きが合い95%区間が0をまたがなければ成立、逆向きなら失効、0をまたげば watching。"
+  },
+  {
+   "id": "k7-sun-jug-ph-low",
+   "hall": "マルハンメガシティ2000-蒲田7",
+   "claim": "日曜はジャグの平均phが低い(−0.01 → −0.02)",
+   "kind": "日の粒度(ホール全体)",
+   "target_dates_2026_11": [
+    "20261101",
+    "20261108",
+    "20261115",
+    "20261122",
+    "20261129"
+   ],
+   "expected_direction": "ジャグphが負",
+   "prospective": true,
+   "source": "document/reviews/2026-10-31-pattern-scan-kamata7.md 追記",
+   "scoring_procedure": "日ごとに、(1) ホールの1台平均差枚 hm と、(2) 割 = 1 + Σ差枚 ÷ (3ΣG)(全台・AT・ジャグ)と、(3) ジャグの平均ph(backtest.juggler_carryover.build)を出す。対象日の平均 − 同じ月の対象外の日の平均を、日を単位にしたブートストラップの95%区間つきで記録する。min_games で台を落とさない。 11月は対象日が3〜4日しかないので、11月末は記録だけ。12月末に計6〜8日で、向きが合い95%区間が0をまたがなければ成立、逆向きなら失効、0をまたげば watching。"
+  },
+  {
+   "id": "k7-jug-lag7-top1-avoid",
+   "hall": "マルハンメガシティ2000-蒲田7",
+   "claim": "ジャグラーの7日前の同機種内差枚1位の台は当日下がる(8〜9月 −79、10月 −202)",
+   "kind": "台の粒度(forward 未対応の規則)",
+   "selection_rule": "対象日 t の7暦日前の台日表で、ジャグの各機種(同日2台以上)の差枚1位を1台ずつ選び「外す」。t−7 が欠測なら出さない。対照として8日前の1位も同じ手順で選ぶ。",
+   "prospective": true,
+   "source": "document/reviews/2026-10-31-pattern-scan-kamata7.md 案1",
+   "scoring_procedure": "採点: 外した台の差枚 − 同機種の他の台の平均(dm)。日ごとに1観測。 開店前の情報だけで決まる機械的な規則なので、凍結を毎朝の自動処理に乗せていなくても、規則はここで固定される。11月末に、各日の前日までのデータだけから台を選び直して採点する(当日以降のデータを選択に使わない)。 判定: 11月の日数が20以上で、平均が負かつ95%区間の上限 < 0 なら成立。試験枠(c)の置き換えをユーザーと決める。"
+  },
+  {
+   "id": "mitoya-mjv-prevph-top3",
+   "hall": "みとや大森町店",
+   "claim": "マイジャグラーVの前日ph上位3台は、当日も同機種の他の台より上(8〜9月 +309、10月 +335)",
+   "kind": "台の粒度(forward 未対応の規則)",
+   "selection_rule": "対象日の前日のマイジャグラーV全台のphを juggler_carryover.build() で出し、上位3台を選ぶ。対照は前日差枚の上位3台。",
+   "prospective": true,
+   "source": "document/reviews/2026-10-31-pattern-scan-mitoya.md 案1",
+   "scoring_procedure": "採点: 3台の dmv(同日のマイジャグラーV平均、自分を除く、との差)の平均と dph。日ごとに1観測。 開店前の情報だけで決まる機械的な規則なので、凍結を毎朝の自動処理に乗せていなくても、規則はここで固定される。11月末に、各日の前日までのデータだけから台を選び直して採点する(当日以降のデータを選択に使わない)。 判定: 日数20以上で区間の下限 > 0 なら成立。判断の行への格上げと L001 の適用範囲をユーザーと決める。"
+  },
+  {
+   "id": "rakuen-pos34-first",
+   "hall": "楽園蒲田店",
+   "claim": "楽園は端から3〜4台目が同機種の他の台より強い(3台目 +88 → +73、4台目 +65 → +163)",
+   "kind": "台の粒度(forward 未対応の規則)",
+   "selection_rule": "min(rank_from_min, rank_from_max) が 3 または 4 の台(prereg の eligibility は OR を書けないため、こちらで登録)。",
+   "prospective": true,
+   "source": "document/reviews/2026-10-31-pattern-scan-rakuen.md R2",
+   "scoring_procedure": "採点: 該当台の dm(同日の同機種の他の台の平均との差)の、日ごとの平均。 開店前の情報だけで決まる機械的な規則なので、凍結を毎朝の自動処理に乗せていなくても、規則はここで固定される。11月末に、各日の前日までのデータだけから台を選び直して採点する(当日以降のデータを選択に使わない)。 判定: 日数20以上で平均 > 0 かつ区間の下限 > 0 なら成立。"
+  },
+  {
+   "id": "arrow-at-recent-hot-avoid",
+   "hall": "ARROW池上店",
+   "claim": "ATで直近7日に同機種内差 +1,000超が1日でもある台は、当日下がる",
+   "kind": "台の粒度(forward 未対応の規則)",
+   "selection_rule": "t−1〜t−7 の同機種内の差(dm)が +1,000 を超えた日が1日でもあるATの台を「外す」。",
+   "prospective": true,
+   "source": "document/reviews/2026-10-31-pattern-scan-others.md (a)3",
+   "scoring_procedure": "採点: 外した台の dm の日ごとの平均。 開店前の情報だけで決まる機械的な規則なので、凍結を毎朝の自動処理に乗せていなくても、規則はここで固定される。11月末に、各日の前日までのデータだけから台を選び直して採点する(当日以降のデータを選択に使わない)。 判定: 日数20以上で平均 < 0 かつ区間の上限 < 0 なら成立。"
+  },
+  {
+   "id": "heiwajima-new7-avoid",
+   "hall": "レイトギャップ平和島",
+   "claim": "新台は導入0〜6日が弱い(約 −850)",
+   "kind": "台の粒度(forward 未対応の規則)",
+   "selection_rule": "機種の初出日から0〜6日の台を「避ける」(構造の理由: 台数の変化)。",
+   "prospective": true,
+   "source": "document/reviews/2026-10-31-pattern-scan-others.md (a)4",
+   "scoring_procedure": "採点: 導入0〜6日の台の dh(同日ホール平均との差)の日ごとの平均。新台の無い日は観測なし。 開店前の情報だけで決まる機械的な規則なので、凍結を毎朝の自動処理に乗せていなくても、規則はここで固定される。11月末に、各日の前日までのデータだけから台を選び直して採点する(当日以降のデータを選択に使わない)。 判定: 導入のあった日が5日以上たまった時点で、平均 < 0 かつ区間の上限 < 0 なら成立。"
+  },
+  {
+   "id": "k7-model-bottom20-avoid",
+   "hall": "マルハンメガシティ2000-蒲田7",
+   "claim": "機種の水準は翌月に持続する。直近60日の下位20%の機種は当日も弱い",
+   "kind": "台の粒度(forward 未対応の規則)",
+   "selection_rule": "対象日より前の60日の dh の機種別平均で、下位20%の機種を「避ける」。",
+   "prospective": true,
+   "source": "document/reviews/2026-10-31-pattern-scan-kamata7.md 案2",
+   "scoring_procedure": "採点: 下位20%の機種の当日 dh の平均。 開店前の情報だけで決まる機械的な規則なので、凍結を毎朝の自動処理に乗せていなくても、規則はここで固定される。11月末に、各日の前日までのデータだけから台を選び直して採点する(当日以降のデータを選択に使わない)。 判定: 日数20以上で平均 < 0 かつ区間の上限 < 0 なら成立。"
+  },
+  {
+   "id": "heiwajima-model-bottom20-avoid",
+   "hall": "レイトギャップ平和島",
+   "claim": "機種の水準は翌月に持続する。直近60日の下位20%の機種は当日も弱い",
+   "kind": "台の粒度(forward 未対応の規則)",
+   "selection_rule": "対象日より前の60日の dh の機種別平均で、下位20%の機種を「避ける」。",
+   "prospective": true,
+   "source": "document/reviews/2026-10-31-pattern-scan-others.md (a)5",
+   "scoring_procedure": "採点: 下位20%の機種の当日 dh の平均。 開店前の情報だけで決まる機械的な規則なので、凍結を毎朝の自動処理に乗せていなくても、規則はここで固定される。11月末に、各日の前日までのデータだけから台を選び直して採点する(当日以降のデータを選択に使わない)。 判定: 日数20以上で平均 < 0 かつ区間の上限 < 0 なら成立。"
+  },
+  {
+   "id": "k1-unit-rotation",
+   "hall": "マルハンメガシティ2000-蒲田1",
+   "kind": "月の粒度(記録のみ)",
+   "prospective": true,
+   "claim": "交代後、台の月またぎは逆相関(9月 → 10月 rho −0.23)。10月の台別 dm 上位20%は11月に下がる",
+   "selection_rule": "10/1〜10/30 の台別 dm 平均の上位20%(15台日以上)。",
+   "scoring_procedure": "11月末に、10月 → 11月の台別 dm 平均の順位相関と、10月上位20%の11月の dm 平均を記録する。負の相関が再現すれば成立。",
+   "source": "document/reviews/2026-10-31-pattern-scan-kamata1.md (e)"
+  }
+ ],
+ "shared_caveats": [
+  "すべて8〜10月の後付けの探索から出た。発見と確認(10月)は分けたが、ホール内で数百セルを試した中の生き残りで、多重比較の楽観が残る。",
+  "日の粒度は対象日が月3〜4日しかない。1か月で判定しない。",
+  "割は回転の多い日に低め、少ない日に高めに出る偏りがある(空いた日は良い台だけが長く打たれる)。ジャグは平均phを主に見る。",
+  "ホールをまたいでまとめない。"
+ ],
+ "result": {}
+}

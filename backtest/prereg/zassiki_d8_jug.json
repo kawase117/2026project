@@ -1,0 +1,25 @@
+{
+  "rule_id": "zassiki_d8_jug",
+  "hall": "ザ-シティ-ベルシティ雑色店",
+  "hypothesis": "雑色の8のつく日は、ジャグラーの割(とph)が他の日より高い(8〜9月 割 +1.88pt・ph +0.02、10月 割 +2.55pt・ph +0.02)。その日はジャグラーを打てばホール平均を上回る。",
+  "source_instinct": "document/reviews/2026-10-31-pattern-scan-others.md 追記 (2026-10-31 パターンスキャン) の割・phの測り直し。指標は結果を見た後に足したので、11月で前向きに確かめる",
+  "eval_start": "20260801",
+  "eval_end": "20261030",
+  "success_criterion": "11月の対象日のエッジ(ジャグ全台平均 − 同日ホール全台平均)の平均が、11月の対象外の日の同じ量を上回り、かつ対象日の平均が0以上。対象日は月3〜4日しかないので、11月で棄却はせず12月まで積んでから判定する。",
+  "universe": {},
+  "eligibility": {
+    "jug_flag": 1
+  },
+  "entry_days": {
+    "dd": [
+      8,
+      18,
+      28
+    ]
+  },
+  "score": "none",
+  "lookback_days": 30,
+  "min_history_days": 1,
+  "top_n": 1,
+  "min_games": 0
+}

@@ -1,0 +1,24 @@
+{
+  "rule_id": "rakuen_corner_avoid",
+  "hall": "楽園蒲田店",
+  "hypothesis": "楽園は島の端1台目(rank_from_min==1 または rank_from_max==1)が同機種の他の台より弱い(8〜9月 −147、10月 −197)。角を外すだけでホール全台平均を上回る。",
+  "source_instinct": "document/reviews/2026-10-31-pattern-scan-rakuen.md (2026-10-31 パターンスキャン) a-1。端から2〜4台目への段差でも反証済み",
+  "eval_start": "20260801",
+  "eval_end": "20261030",
+  "success_criterion": "11月のエッジ(角以外の全台平均 − 全台平均)の平均が +30枚/台 以上、かつ日を単位にした95%区間の下限 > 0。角は全台の約24%なので、同機種内 −150 なら全台平均との差は約 +40 になる。",
+  "universe": {},
+  "eligibility": {
+    "rank_from_min": {
+      "min": 2
+    },
+    "rank_from_max": {
+      "min": 2
+    }
+  },
+  "entry_days": {},
+  "score": "none",
+  "lookback_days": 30,
+  "min_history_days": 1,
+  "top_n": 1,
+  "min_games": 0
+}

@@ -1,0 +1,27 @@
+{
+  "rule_id": "mitoya_myjug_aisle_end_avoid",
+  "hall": "みとや大森町店",
+  "hypothesis": "みとやのマイジャグラーVは通路側の端の2台(641・674)が弱い。この2台を外すだけでマイジャグラーV全台平均を上回る。",
+  "source_instinct": "document/reviews/2026-10-31-pattern-scan-mitoya.md (2026-10-31 パターンスキャン) a-2。台番号の指定は位置の代わり(配置エポック1で不変)",
+  "eval_start": "20260801",
+  "eval_end": "20261030",
+  "success_criterion": "11月のエッジ(641・674以外のマイジャグラーV平均 − マイジャグラーV全台平均)の平均 > 0、かつ95%区間の下限 > 0。",
+  "universe": {
+    "machine_name": "マイジャグラーV"
+  },
+  "eligibility": {
+    "machine_name": "マイジャグラーV",
+    "machine_number": {
+      "exclude": [
+        641,
+        674
+      ]
+    }
+  },
+  "entry_days": {},
+  "score": "none",
+  "lookback_days": 30,
+  "min_history_days": 1,
+  "top_n": 1,
+  "min_games": 0
+}

@@ -1,0 +1,21 @@
+{
+  "rule_id": "rakuen_at_over_jug",
+  "hall": "楽園蒲田店",
+  "hypothesis": "楽園はAT(ジャグ・花火・BT以外)がホール平均より上、ジャグラーは下(AT 8〜9月 +33・10月 +58、ジャグ −62・−121)。同じ期待ならATを先にする。",
+  "source_instinct": "document/reviews/2026-10-31-pattern-scan-rakuen.md (2026-10-31 パターンスキャン) a-2。機種群の機械割の差と設定の入りは分けられていない",
+  "eval_start": "20260801",
+  "eval_end": "20261030",
+  "success_criterion": "11月のエッジ(ジャグ・花火・BT以外の全台平均 − 全台平均)の平均 > 0、かつ95%区間の下限 > 0。",
+  "universe": {},
+  "eligibility": {
+    "jug_flag": 0,
+    "hana_flag": 0,
+    "bt_flag": 0
+  },
+  "entry_days": {},
+  "score": "none",
+  "lookback_days": 30,
+  "min_history_days": 1,
+  "top_n": 1,
+  "min_games": 0
+}
