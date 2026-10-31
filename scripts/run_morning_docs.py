@@ -97,7 +97,7 @@ HALLS = {
     "zassiki": ("ザ-シティ-ベルシティ雑色店", "雑色"),
 }
 # 予告ファイル名の頭は、ledger のキーと違うホールがある。
-ANNOUNCE_PREFIX = {"hiroki_higashiguchi": "hiroki"}
+ANNOUNCE_PREFIX = {"hiroki_higashiguchi": "hiroki", "mitoya": "mitoya_omori"}
 # CLAUDE.md: 設定5以上の割合が高いホールは予告の有無にかかわらず候補を出す。
 # 蒲田1は予告にジャグラー強化がある日だけ。機械実行は安いので表の元データは作り、載せるかは merge で決める。
 JUGGLER_HALLS = {"kamata7", "rakuen", "mitoya", "kamata1", "hiroki_nishiguchi"}
@@ -193,6 +193,91 @@ def announce_files(key: str, day: str) -> list[Path]:
     return sorted(p for p in ANNOUNCE_DIR.glob("%s__%s__*.json" % (prefix, day)) if ".withdrawn" not in p.name)
 
 
+def unregistered_announce_posts(key: str, today: str, since_hours: int = 36) -> list[tuple[str, str]]:
+    """収集済みの投稿のうち、当日分の予告らしいのに予告JSONが無いもの(発信者, URL)。
+
+    判定は backtest.announce_autodraft の下書き作成と同じ: 本文がこのホールに言及し、
+    対象日(本文先頭の日付、無ければ投稿日+1)が当日で、<prefix>__<日付>__<発信者>.json
+    (撤回済み・下書きを含む)が無い。結果発表の誤検出はありうるので、中身は読ませず存在だけ渡す。
+    """
+    try:
+        from backtest import announce_autodraft as ad
+
+        hall = HALLS[key][0]
+        slug = ANNOUNCE_PREFIX.get(key, key)
+        if hall not in ad.HALL_SLUGS:
+            return []
+        found = []
+        for row in ad._fetch_recent_tweets(since_hours):
+            text = row.get("full_text") or row.get("tweet_text") or ""
+            try:
+                posted_at = datetime.fromisoformat(row["posted_at_jst"])
+            except KeyError, ValueError, TypeError:
+                continue
+            if not text or ad._guess_target_date(text, posted_at) != today:
+                continue
+            if hall not in ad.hall_aliases.plausible_halls(text, posted_at.date()):
+                continue
+            handle = row["handle"]
+            if any(ANNOUNCE_DIR.glob("%s__%s__%s.*" % (slug, today, handle))):
+                continue
+            found.append((handle, "https://x.com/%s/status/%s" % (handle, row["tweet_id"])))
+        return found
+    except Exception as exc:  # noqa: BLE001 - 検出できなくても下書きは止めない
+        print("  未登録の予告の検出に失敗(%s): %s" % (key, exc), flush=True)
+        return []
+
+
+def unregistered_announce_block(key: str, today: str) -> str:
+    posts = unregistered_announce_posts(key, today)
+    if not posts:
+        return ""
+    handles = sorted({h for h, _ in posts})
+    lines = "\n".join("  - %s %s" % (h, u) for h, u in posts)
+    return (
+        "- 未登録の予告らしい投稿が %d 件ある（スクリプトが収集結果から検出。内容は人が確認していない）:\n%s\n"
+        "  内容は読まない。機種・台・条件の判断に使わない。出力ファイルには `判断:` の行の外に1行 "
+        "`未登録の予告あり(未確認): %s` と書くだけにする。\n" % (len(posts), lines, "・".join(handles))
+    )
+
+
+_MACHINE_NO = re.compile(r"(?<![\d,.+\-/])\d{3,4}(?![\d,./]|[年月日枚回Gg%円万台])")
+_ANNOUNCE_TEXT_KEYS = ("raw_text", "claims", "unscored_claims", "weakness_note", "amendments")
+
+
+def announce_numbers(key: str, today: str) -> set[str]:
+    """当日の登録済み予告JSON(撤回・無効化は除く)の本文とclaimsに出る3〜4桁の数字。"""
+    nums: set[str] = set()
+    for p in announce_files(key, today):
+        try:
+            obj = json.loads(p.read_text(encoding="utf-8"))
+        except OSError, ValueError:
+            continue
+        if any(a.get("void") for a in obj.get("amendments") or [] if isinstance(a, dict)):
+            continue
+        blob = unicodedata.normalize("NFKC", json.dumps([obj.get(k) for k in _ANNOUNCE_TEXT_KEYS], ensure_ascii=False))
+        nums.update(re.findall(r"(?<!\d)\d{3,4}(?!\d)", blob))
+    return nums
+
+
+def judgement_number_errors(text: str, key: str, today: str) -> list[str]:
+    """`判断:` の行の台番号(3〜4桁)は、登録済み予告に出るものだけ。台を本文で選ぶのは予告で台が指定された日だけ。"""
+    allowed = announce_numbers(key, today)
+    errors = []
+    for line in text.splitlines():
+        s = unicodedata.normalize("NFKC", line.strip())
+        if not re.match(r"^[\s\-*]*\**判断\**\s*[:：]", s):
+            continue
+        stray = sorted({n for n in _MACHINE_NO.findall(s) if n not in allowed})
+        if stray:
+            errors.append(
+                "`判断:` の行に、登録済みの予告に無い台番号がある(%s)。台番号は予告で指定された日だけ原文どおりに書く。"
+                "予告が無い日・予告に無い番号は、末尾のRB機種候補の表(自動)に任せる: 「%s」"
+                % ("・".join(stray), line.strip())
+            )
+    return errors
+
+
 def facts_block(key: str, today: str, yesterday: str) -> str:
     hall, display = HALLS[key]
     latest = hall_max_dates().get(hall, "なし")
@@ -227,9 +312,9 @@ def facts_block(key: str, today: str, yesterday: str) -> str:
   「DBが空・古い・止まっている・最終更新日は…・未初期化・未取り込み・参照不可」と書いてはいけない。
   実際に sqlite3 で `SELECT MAX(date) FROM machine_detailed_results` を問い合わせて確かめる
   （スキーマは database/CLAUDE.md。date は YYYYMMDD の文字列、台番号は machine_number）。
-- 当日の予告ファイル:
+- 当日の予告ファイル（予告として使ってよいのは、この登録済みのファイルだけ）:
 {listing}
-- 予告に「狙い目はリプにぶら下げる」とあるときの機種・台番号は、予告の本文ではなく投稿者の自分への返信にある。
+{unregistered_announce_block(key, today)}- 予告に「狙い目はリプにぶら下げる」とあるときの機種・台番号は、予告の本文ではなく投稿者の自分への返信にある。
   `scraper/twitter_monitor/state.db` の `self_replies`（tweet_id, handle, tweet_text, posted_at_jst, image_paths）に集めてある。
   予告を出したアカウントの、予告より後の返信を読む（画像は image_paths の画像ファイル）。
   返信が見つからなければ「狙い目の返信はまだ収集できていない」と事実として書き、機種を創作しない。
@@ -466,6 +551,7 @@ def validate_prediction(text: str, key: str, today: str, need_judgement: bool) -
     errors += weekday_errors(text, today)
     if need_judgement and not re.search(r"^[\s\-*]*\**判断\**\s*[:：]", text, re.M):
         errors.append("`判断: ...` で始まる行がない（凍結が推す機種・台をここから拾う）")
+    errors += judgement_number_errors(text, key, today)
     return errors
 
 
@@ -595,7 +681,7 @@ def prediction_prompt(key: str, today: str, yesterday: str, answer: Path, out: P
 - 前日の答え合わせ: {answer}（末尾の「予測への示唆」も読む）
 - 当日の予告: 上の予告ファイル（あれば）。撤回済みは除く。
   `venv\\Scripts\\python.exe -m backtest.event_days check` 等で当日のイベント日台帳（document/registry/EVENT_DAYS.jsonl）も確認する。
-  X の収集結果（scraper/twitter_monitor）に当日分の未登録の予告があれば読む。登録はしない。
+  予告として使ってよいのは登録済みのファイルだけ。X の収集結果は読まない（未登録の予告の有無は上の事実に書いてある）。
 - 体裁の手本: `document/reviews/2026-10-17-prediction.md` の{display}の節。
 
 {history}
