@@ -1,0 +1,21 @@
+{
+  "rule_id": "k7_jug_lag8_top1",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "hypothesis": "対照: 8日前に同機種内で差枚1位だった台(8〜9月 +2、10月 +67)。k7_jug_lag7_top1 の効果が「約1週間前」に固有かを見る。",
+  "source_instinct": "document/reviews/2026-10-31-pattern-scan-kamata7.md (2026-10-31 パターンスキャン) 案1の対照",
+  "eval_start": "20260801",
+  "eval_end": "20261030",
+  "success_criterion": "対照なので成功の基準は置かない。エッジの平均と95%区間を記録し、k7_jug_lag7_top1 と比べる。",
+  "universe": {
+    "jug_flag": 1
+  },
+  "eligibility": {
+    "jug_flag": 1
+  },
+  "entry_days": {},
+  "score": "lag8_model_top1",
+  "lookback_days": 10,
+  "min_history_days": 1,
+  "top_n": 99,
+  "min_games": 0
+}

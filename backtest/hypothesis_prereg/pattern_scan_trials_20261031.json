@@ -208,5 +208,8 @@
   "割は回転の多い日に低め、少ない日に高めに出る偏りがある(空いた日は良い台だけが長く打たれる)。ジャグは平均phを主に見る。",
   "ホールをまたいでまとめない。"
  ],
- "result": {}
+ "result": {},
+ "correction": {
+  "2026-11-01": "k7-jug-lag7-top1-avoid と mitoya-mjv-prevph-top3 は、score を追加して backtest/prereg/ に移した(k7_jug_lag7_top1・k7_jug_lag8_top1、mitoya_mjv_prevph_top3・mitoya_mjv_prevdiff_top3)。この2件は手で採点しない。また origin に「自動採点に乗る」と書いた9本は score='none' のため plan-all に拾われていなかった。同日 score='all_eligible' に直した(計画・採点の証拠はまだ無かった)。"
+ }
 }

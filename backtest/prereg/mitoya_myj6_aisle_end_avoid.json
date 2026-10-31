@@ -1,0 +1,27 @@
+{
+  "rule_id": "mitoya_myj6_aisle_end_avoid",
+  "hall": "みとや大森町店",
+  "hypothesis": "みとやの通路側の島の端(641・674)は弱い。8〜10月はマイジャグラーVで見た位置の効果(2026-10-31 パターンスキャン a-2)を、10/19からその位置に入ったマイジャグラーⅥ(641〜649・666〜674の18台)で確かめる。641・674を外せばマイジャグラーⅥ全台平均を上回る。",
+  "source_instinct": "document/reviews/2026-10-31-pattern-scan-mitoya.md a-2 と JUGGLER_SETTING_PATTERNS.md の島の端。機種が替わった後への持ち越しは未検証(新台の時期を含む)",
+  "eval_start": "20261019",
+  "eval_end": "20261031",
+  "success_criterion": "11月のエッジ(641・674以外のマイジャグラーⅥ平均 − マイジャグラーⅥ全台平均)の平均 > 0、かつ95%区間の下限 > 0。",
+  "universe": {
+    "machine_name": "マイジャグラーⅥ"
+  },
+  "eligibility": {
+    "machine_name": "マイジャグラーⅥ",
+    "machine_number": {
+      "exclude": [
+        641,
+        674
+      ]
+    }
+  },
+  "entry_days": {},
+  "score": "all_eligible",
+  "lookback_days": 30,
+  "min_history_days": 1,
+  "top_n": 999,
+  "min_games": 0
+}

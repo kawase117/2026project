@@ -1,0 +1,21 @@
+{
+  "rule_id": "mitoya_mjv_prevph_top3",
+  "hall": "みとや大森町店",
+  "hypothesis": "みとやのマイジャグラーVは、前日の設定5以上の事後確率(ph)が上位の3台が、当日も同機種の他の台より上(8〜9月 +309、10月 +335)。",
+  "source_instinct": "document/reviews/2026-10-31-pattern-scan-mitoya.md (2026-10-31 パターンスキャン) 案1。phの事前は lookback 窓(30日)だけでEM推定する",
+  "eval_start": "20260801",
+  "eval_end": "20261030",
+  "success_criterion": "11月の日数が20以上で、エッジ(3台の差枚 − 同日マイジャグラーV全台平均)の平均の95%区間の下限 > 0。対照の mitoya_mjv_prevdiff_top3 を上回ること。",
+  "universe": {
+    "machine_name": "マイジャグラーV"
+  },
+  "eligibility": {
+    "machine_name": "マイジャグラーV"
+  },
+  "entry_days": {},
+  "score": "prev_day_ph",
+  "lookback_days": 30,
+  "min_history_days": 1,
+  "top_n": 3,
+  "min_games": 0
+}

@@ -184,9 +184,20 @@ def restrict_to_current_machine(hist: pd.DataFrame, today: pd.DataFrame) -> pd.D
     return hist.merge(current, on=["machine_number", "machine_name"], how="inner")
 
 
-def score_history(hist: pd.DataFrame, score: str) -> pd.Series:
-    """lookback 窓の履歴から台ごとのスコアを返す。大きいほど良い向きに揃える。"""
+def score_history(hist: pd.DataFrame, score: str, d0: pd.Timestamp | None = None, hall: str | None = None) -> pd.Series:
+    """lookback 窓の履歴から台ごとのスコアを返す。大きいほど良い向きに揃える。
+
+    d0（対象日）は、対象日から数えた特定の日を参照するスコア（prev_day_ph・lagN_model_top1）だけが使う。
+    窓の端の日付で代用すると、欠測日があったときに別の日を参照してしまうため、明示的に受け取る。
+    hall は prev_day_ph のスペック読み込みに使う。
+    """
     g = hist.groupby("machine_number")
+    if score == "all_eligible":
+        return pd.Series(1.0, index=pd.Index(hist["machine_number"].unique(), name="machine_number"))
+    if score == "prev_day_ph":
+        return _prev_day_ph(hist, d0, hall)
+    if score in ("lag7_model_top1", "lag8_model_top1"):
+        return _lag_model_top1(hist, d0, lag=int(score[3]))
     if score == "hist_mean_diff":
         return g["diff_coins_normalized"].mean()
     if score == "hist_hit104_rate":
@@ -272,6 +283,59 @@ def _tail_rb_due(hist: pd.DataFrame, n_tails: int, recent_days: int) -> pd.Serie
     due = total.nsmallest(n_tails)
     tails = h.drop_duplicates("machine_number").set_index("machine_number")["tail"]
     return (-tails.map(due)).dropna()
+
+
+def _require_d0(d0: pd.Timestamp | None, score: str) -> pd.Timestamp:
+    if d0 is None:
+        raise ValueError(f"score={score!r} は対象日 d0 が要る")
+    return pd.Timestamp(d0)
+
+
+def _prev_day_ph(hist: pd.DataFrame, d0: pd.Timestamp | None, hall: str | None) -> pd.Series:
+    """対象日の前日（暦日）の、設定5以上の事後確率。前日が欠測なら空（その日は選ばない）。
+
+    事後確率は juggler_carryover と同じ二項尤度と機種別EMで出す。事前の推定には lookback 窓の
+    行だけを使うので、対象日以降の情報は入らない。2026-10-31 パターンスキャン（みとや）では、
+    マイジャグラーVの前日ph上位3台が同機種の他の台より 8〜9月 +309・10月 +335 だった。
+    """
+    from backtest.juggler_carryover import _posteriors
+    from backtest.bonus_specs import load_specs
+
+    prev = (_require_d0(d0, "prev_day_ph") - pd.Timedelta(days=1)).strftime("%Y%m%d")
+    h = hist[hist["bb_count"].notna() & hist["rb_count"].notna()]
+    if not (h["date"] == prev).any():
+        return pd.Series(dtype=float)
+    raw = pd.DataFrame(
+        {
+            "date": h["date"],
+            "u": h["machine_number"],
+            "m": h["machine_name"],
+            "g": h["games_normalized"],
+            "bb": h["bb_count"],
+            "rb": h["rb_count"],
+        }
+    )
+    try:
+        post = _posteriors(raw, load_specs(hall=hall))
+    except ValueError:  # 推定できる機種が1つも無い（pd.concat が空）
+        return pd.Series(dtype=float)
+    return post[post["date"] == prev].set_index("u")["ph"].rename_axis("machine_number")
+
+
+def _lag_model_top1(hist: pd.DataFrame, d0: pd.Timestamp | None, lag: int) -> pd.Series:
+    """対象日の lag 暦日前に、同じ機種の中で差枚1位だった台（機種ごとに1台）。他の台は NaN。
+
+    2台以上ある機種だけを対象にする。その日が欠測なら空。2026-10-31 パターンスキャン（蒲田7）では、
+    ジャグラーの7日前の同機種内1位は当日 8〜9月 −79・10月 −202、8日前は +2・+67 だった。
+    外す側の規則なので、選んだ台のエッジが負なら仮説どおり。
+    """
+    day = (_require_d0(d0, f"lag{lag}_model_top1") - pd.Timedelta(days=lag)).strftime("%Y%m%d")
+    h = hist[hist["date"] == day]
+    h = h[h.groupby("machine_name")["machine_number"].transform("count") >= 2]
+    if h.empty:
+        return pd.Series(dtype=float)
+    top = h.loc[h.groupby("machine_name")["diff_coins_normalized"].idxmax()]
+    return pd.Series(1.0, index=pd.Index(top["machine_number"].values, name="machine_number"))
 
 
 def usable_models(hist: pd.DataFrame, reg: PreRegistration) -> pd.Index:
@@ -363,7 +427,7 @@ def run(reg: PreRegistration) -> tuple[pd.DataFrame, dict]:
 
             if reg.selection_unit == "machine_model":
                 usable = usable_models(hist, reg)
-                scores = score_history(hist[hist["machine_name"].isin(usable)], reg.score)
+                scores = score_history(hist[hist["machine_name"].isin(usable)], reg.score, d0=d0, hall=reg.hall)
                 scores = scores[scores.index.isin(today["machine_name"])].dropna()
                 if scores.empty:
                     skipped_no_history += 1
@@ -373,7 +437,7 @@ def run(reg: PreRegistration) -> tuple[pd.DataFrame, dict]:
             else:
                 counts = hist.groupby("machine_number").size()
                 usable = counts[counts >= reg.min_history_days].index
-                scores = score_history(hist[hist["machine_number"].isin(usable)], reg.score)
+                scores = score_history(hist[hist["machine_number"].isin(usable)], reg.score, d0=d0, hall=reg.hall)
                 scores = scores[scores.index.isin(today["machine_number"])].dropna()
                 if scores.empty:
                     skipped_no_history += 1

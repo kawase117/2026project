@@ -167,7 +167,7 @@ def plan(reg: PreRegistration, target_date: str, allow_past: bool = False) -> di
 
     if reg.selection_unit == "machine_model":
         usable = usable_models(hist, reg)
-        scores = score_history(hist[hist["machine_name"].isin(usable)], reg.score).dropna()
+        scores = score_history(hist[hist["machine_name"].isin(usable)], reg.score, d0=d0, hall=reg.hall).dropna()
         if scores.empty:
             raise ValueError("min_history_days / min_machines_per_model を満たす機種がない")
         top_models = scores.sort_values(ascending=False).head(reg.top_n)
@@ -214,7 +214,7 @@ def plan(reg: PreRegistration, target_date: str, allow_past: bool = False) -> di
 
     counts = hist.groupby("machine_number").size()
     usable = counts[counts >= reg.min_history_days].index
-    scores = score_history(hist[hist["machine_number"].isin(usable)], reg.score).dropna()
+    scores = score_history(hist[hist["machine_number"].isin(usable)], reg.score, d0=d0, hall=reg.hall).dropna()
     if scores.empty:
         raise ValueError("min_history_days を満たす台がない")
 
