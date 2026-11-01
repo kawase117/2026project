@@ -484,6 +484,22 @@ def weekday_errors(text: str, day: str) -> list[str]:
     return sorted(set(errors))
 
 
+_FACTS_HEADING = re.compile(r"^#+\s*機械集計", re.M)
+_FACTS_TABLE = re.compile(r"^\s*\|\s*機種\s*\|\s*台数\s*\|\s*平均差枚\s*\|", re.M)
+
+
+def duplicate_facts_errors(text: str) -> list[str]:
+    """機械集計はスクリプトが先頭に差し込む。LLM が書くと二重になる(前日の文書を真似た)。"""
+    errors = []
+    if _FACTS_HEADING.search(text):
+        errors.append("「機械集計」の見出しを書いている。スクリプトが差し込むので書かない")
+    if _FACTS_TABLE.search(text):
+        errors.append(
+            "機械集計の表(`| 機種 | 台数 | 平均差枚 |` で始まる表)を書き写している。スクリプトが差し込むので書かない"
+        )
+    return errors
+
+
 def validate_answercheck(
     text: str,
     yesterday: str,
@@ -498,6 +514,7 @@ def validate_answercheck(
         errors.append("分析できなかった・質問で終わった表現がある: 「%s」" % m.group(0))
     errors += weekday_errors(text, yesterday)
     errors += check_numbers(text, facts)
+    errors += duplicate_facts_errors(text)
     errors += check_table_numbers(text, table, facts_md)[0]
     if "予測への示唆" not in text:
         errors.append("末尾に「今日の予測への示唆」の節がない")
@@ -599,7 +616,9 @@ def answercheck_prompt(key: str, yesterday: str, today: str, out: Path, facts_md
 
 {facts_block(key, today, yesterday)}
 {facts_prompt_block(facts_md)}## 手順
-1. `document/reviews/` の直近の `*-answercheck.md` のうち{display}の節を1つ読み、体裁と深さを合わせる。
+1. 出力の構成は次のとおり（過去の答え合わせの文書は手本にしない。誤りと崩れた体裁が引き継がれる）。各節は数行、全体で40行以内。
+   `## {display}` → `### 予測との照合` → `### 当日の実績` → `### 学び` → `### 今日（{today}）の予測への示唆`。
+   「機械集計」の見出し・表（`| 機種 | 台数 | 平均差枚 |` で始まる表）は書かない。スクリプトが出力の先頭に差し込む。
 2. 前日の予測があれば `backtest/predictions/{yesterday}__{key}.json` と `document/reviews/{ydash}-prediction.md` の{display}の節、
    予告があれば `backtest/announce/{ANNOUNCE_PREFIX.get(key, key)}__{yesterday}__*.json`（撤回済み `.withdrawn.json` は除く）を読む。
 3. `/hall-analysis-checklist`、`/prediction-evaluation` の方針に従う。
@@ -610,7 +629,7 @@ def answercheck_prompt(key: str, yesterday: str, today: str, out: Path, facts_md
    表の数字は引用するだけで、計算し直さない。予測が無かった日は、表の「予測外で強かった」と実際に強かった機種・台・並びを書く。
    下の「既知の学び」に当たるものは説明し直さず、「既知(L00x)を再確認」と1行だけ書く。本文の「学び」には新しいものだけを書く。
 5. 表を書くときは、見出し行・区切り行(`|---|`)・全行の列数をそろえる。値が無い列は作らない。
-6. 最後に1節「今日（{today}）の予測への示唆」を設け、箇条書き3点以内で書く。予測担当がこれを読む。
+6. 最後の節「今日（{today}）の予測への示唆」は、箇条書き3点以内で書く。予測担当がこれを読む。
    示唆に書いてよいのは、予告の有無、イベント日か、当日見る指標（開店後の回転数・G比・RB確率など）だけ。
    前日の機種・末尾・列・台が今日も続くことを根拠にした示唆は書かない（検証で不合格になる。L001）。
 
@@ -629,14 +648,20 @@ FORWARD_DIR = PROJECT_ROOT / "backtest" / "forward"
 BASE_RULE_SUFFIX = "_model_term60_top3"
 
 
+class PredictionFormError(RuntimeError):
+    """予測の形(prediction-format スキル)が読めない。形の指示が無いまま書かせないため、下書きを止める。"""
+
+
 def prediction_form() -> str:
     """予測の形(prediction-format スキルの印の間)。スキルを正本にし、プロンプトへそのまま埋め込む。"""
     try:
         text = PREDICTION_FORM_PATH.read_text(encoding="utf-8")
-    except OSError:
-        return ""
+    except OSError as exc:
+        raise PredictionFormError("予測の形のスキルを読めない: %s (%s)" % (PREDICTION_FORM_PATH, exc)) from exc
     m = re.search(r"<!-- form:start -->\n(.*?)<!-- form:end -->", text, re.S)
-    return m.group(1).strip() + "\n\n" if m else ""
+    if not m or not m.group(1).strip():
+        raise PredictionFormError("予測の形の印(form:start/form:end)が無いか空: %s" % PREDICTION_FORM_PATH)
+    return m.group(1).strip() + "\n\n"
 
 
 def baseline_models(key: str, today: str) -> tuple[list[str], str]:
@@ -693,7 +718,6 @@ def prediction_prompt(key: str, today: str, yesterday: str, answer: Path, out: P
 - 当日の予告: 上の予告ファイル（あれば）。撤回済みは除く。
   `venv\\Scripts\\python.exe -m backtest.event_days check` 等で当日のイベント日台帳（document/registry/EVENT_DAYS.jsonl）も確認する。
   予告として使ってよいのは登録済みのファイルだけ。X の収集結果は読まない（未登録の予告の有無は上の事実に書いてある）。
-- 体裁の手本: `document/reviews/2026-10-17-prediction.md` の{display}の節。
 
 {history}
 - 表を書き写さない。過去回の数字はこの表の値だけを使い、自分で計算し直した別の値を書かない。標本が少ないことは必ず書く。
@@ -869,6 +893,50 @@ def score_ledgers(dry_run: bool) -> None:
             print("台帳の採点 %s %s: 完了" % (module, sub), flush=True)
 
 
+# 2026-10-31 パターンスキャンの試験枠(backtest/prereg/ のフォワード)。予測文書の末尾に、その日凍結した台を載せる。
+# (ホール表示名, 中身, 向き)。向き: 推す側 = 選んだ台が上なら仮説どおり、外す側 = 選んだ台が下なら仮説どおり。
+TRIAL_RULES = {
+    "mitoya_mjv_prevph_top3": ("みとや", "マイジャグラーVの前日ph上位3台", "推す側"),
+    "mitoya_mjv_prevdiff_top3": ("みとや", "マイジャグラーVの前日差枚上位3台(対照)", "対照"),
+    "mitoya_myj6_aisle_end_avoid": ("みとや", "マイジャグラーⅥの通路端641・674以外", "推す側"),
+    "k7_jug_lag7_top1": ("蒲田7", "ジャグラーの7日前の同機種内1位", "外す側"),
+    "k7_jug_lag8_top1": ("蒲田7", "ジャグラーの8日前の同機種内1位(対照)", "対照"),
+    "rakuen_corner_avoid": ("楽園", "島の端1台目以外", "推す側"),
+    "rakuen_at_over_jug": ("楽園", "ジャグラー・花火・BT以外(AT)", "推す側"),
+    "k1_sat_jug": ("蒲田1", "土曜のジャグラー", "推す側"),
+    "arrow_d5_jug": ("ARROW", "5のつく日のジャグラー", "推す側"),
+    "zassiki_d8_jug": ("雑色", "8のつく日のジャグラー", "推す側"),
+    "kinji_k_d0_jug": ("金時京急", "0のつく日のジャグラー", "推す側"),
+    "hiroki_e_sun_jug": ("ヒロキ東口", "日曜のジャグラー", "推す側"),
+    "zassiki_fri_at_avoid": ("雑色", "金曜はボーナス判別できる機種(ATを外す)", "推す側"),
+}
+TRIAL_LIST_MAX = 12  # これより多く選ぶルール(条件で全台を選ぶもの)は台数だけ書く
+
+
+def trial_section(today: str) -> str:
+    """試験枠の凍結を表にする。凍結の拾い出し(判断・「避」を含む行・ジャグラー候補の表)に当たらない語だけを使う。"""
+    rows = []
+    for rule, (display, what, direction) in TRIAL_RULES.items():
+        path = FORWARD_DIR / ("%s__%s.json" % (rule, today))
+        if not path.exists():
+            continue
+        try:
+            picks = [int(p["machine_number"]) for p in json.loads(path.read_text(encoding="utf-8"))["picks"]]
+        except OSError, ValueError, KeyError, TypeError:
+            continue
+        shown = "・".join(map(str, picks)) if len(picks) <= TRIAL_LIST_MAX else "%d台(条件に合う台すべて)" % len(picks)
+        rows.append("| %s | %s | %s | %s |" % (display, what, direction, shown))
+    head = (
+        "## 試験枠(前向き検証の凍結)\n\n"
+        "2026-10-31 のパターンスキャンから登録した規則(`backtest/prereg/`)。毎朝自動で凍結・採点され、"
+        "`backtest/forward/SCOREBOARD.md` に載る。推しではないので `判断:` の行に写さない。"
+        "外す側は、選んだ台が同じ機種の他の台より下なら仮説どおり。\n\n"
+    )
+    if not rows:
+        return head + "今日が対象日の規則は無いか、まだ凍結されていない(07:30 の凍結後に作り直す)。"
+    return head + "| ホール | 規則 | 向き | 台 |\n|---|---|---|---|\n" + "\n".join(rows)
+
+
 def run_rb_candidates(day_dir: Path, today: str, dry_run: bool) -> bool:
     """RB候補を一日一回生成する。失敗しても朝文書の他の段は続ける。"""
     cmd = [
@@ -966,6 +1034,7 @@ def merge(day_dir: Path, today: str, yesterday: str) -> None:
         rb_part = day_dir / "rb_candidates.md"
         if rb_part.exists():
             body += "\n\n" + rb_part.read_text(encoding="utf-8").strip()
+        body += "\n\n" + trial_section(today)
         path.write_text(head + "\n\n" + body + "\n", encoding="utf-8")
         print("書き出し: %s" % path.relative_to(PROJECT_ROOT), flush=True)
 
@@ -1035,8 +1104,13 @@ def process_hall(key: str, day_dir: Path, yesterday: str, today: str, dry_run: b
         return ok
 
     def prediction_stage() -> bool:
+        try:
+            prompt = prediction_prompt(key, today, yesterday, part("answercheck"), part("prediction"))
+        except PredictionFormError as exc:
+            print("  予測の形が無いので下書きを止める(%s): %s" % (key, exc), flush=True)
+            return False
         ok = generate(
-            prediction_prompt(key, today, yesterday, part("answercheck"), part("prediction")),
+            prompt,
             part("prediction"),
             lambda text: validate_prediction(text, key, today, need_judgement),
             "%s 予測" % key,

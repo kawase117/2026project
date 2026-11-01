@@ -1,5 +1,6 @@
 """朝のRB候補生成の失敗隔離と文書への差し込み。"""
 
+import json
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -51,3 +52,22 @@ def test_kamata7_juggler_table_is_stopped_with_its_own_reason(tmp_path):
     assert "| 蒲田7 |" not in text
     assert "ジャグラー候補は出さない(10月は有害" in text
     assert morning.JUGGLER_LOW_NOTE not in text
+
+
+def test_trial_section_lists_frozen_picks_without_freeze_trigger_words(tmp_path, monkeypatch):
+    """試験枠の表は凍結の拾い出し(判断:・「避け」・ジャグラー候補)に当たらない。多すぎる選択は台数だけ。"""
+    monkeypatch.setattr(morning, "FORWARD_DIR", tmp_path)
+    picks = lambda units: json.dumps({"picks": [{"machine_number": u} for u in units]})  # noqa: E731
+    (tmp_path / "mitoya_mjv_prevph_top3__20261101.json").write_text(picks([652, 660, 663]), encoding="utf-8")
+    (tmp_path / "rakuen_corner_avoid__20261101.json").write_text(picks(range(1, 41)), encoding="utf-8")
+    text = morning.trial_section("20261101")
+    assert "| みとや | マイジャグラーVの前日ph上位3台 | 推す側 | 652・660・663 |" in text
+    assert "40台(条件に合う台すべて)" in text
+    assert "蒲田7" not in text  # 凍結の無い規則は行を出さない
+    assert "避" not in text and "ジャグラー候補" not in text
+    assert not any(line.lstrip().startswith("判断") for line in text.splitlines())
+
+
+def test_trial_section_says_so_when_nothing_is_frozen(tmp_path, monkeypatch):
+    monkeypatch.setattr(morning, "FORWARD_DIR", tmp_path)
+    assert "まだ凍結されていない" in morning.trial_section("20261101")

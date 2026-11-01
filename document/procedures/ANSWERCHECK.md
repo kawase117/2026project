@@ -47,3 +47,15 @@
 
 - 「今日の予測への示唆」は、予告の有無・イベント日か・当日見る指標に限る。前日の機種・末尾・列の継続を根拠にした示唆は書かない。
 - 断片の数字に誤りがあることがある。`<日付>-answercheck-addendum.md` があれば、検算済みのそちらを採る。
+
+## 6. 試験枠(2026-10-31 パターンスキャン、11月の前向き検証)
+
+- 毎日: 予測文書末尾の「試験枠(前向き検証の凍結)」の規則は、`backtest/forward/SCOREBOARD.md` で成績を見る(`run_morning.py` が凍結・採点する)。1日の結果で結論を出さず、規則ごとの累計だけ見る。外す側(蒲田7の7日前1位)は edge が負なら仮説どおり。対照(8日前1位・前日差枚上位)と並べて読む。
+- 月末(11/30 の翌朝): 2本立てで採点し、`document/reviews/2026-11-30-pattern-scan-trials-score.md` に書く。
+  - フォワードの規則: 各 prereg の `success_criterion` で判定する。
+  - `backtest/hypothesis_prereg/pattern_scan_trials_20261031.json` の日の仮説8本は
+    `venv\Scripts\python.exe -X utf8 -m backtest.day_wari --prereg backtest/hypothesis_prereg/pattern_scan_trials_20261031.json --start 20261101 --end 20261130`
+    で hm・割(全台・AT・ジャグ)・ph の差と区間を出し、各仮説の `scoring_procedure` の判定文で成否を書く。対象日が3日しかないので、区間が0をまたげば「保留」で、撤回ではない。
+  - 台の仮説(楽園の位置3〜4・ARROWの直近好調AT・平和島の新台7日・蒲田7/平和島の機種下位20%・蒲田1の台の入れ替わり)は、`scoring_procedure` どおりに前日までのデータだけで台を選び直して採点する(専用モジュールは未作成。作るなら `backtest-module-guide` を先に読む)。
+  - 結果はファイルの `result` に書き、仮説の文面・判定基準は書き換えない。
+- 日の良し悪しは差枚だけで決めない。回転が増えた日は割(ジャグラーは平均ph)で測る(LESSONS L007)。
