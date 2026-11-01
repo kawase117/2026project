@@ -1,0 +1,311 @@
+{
+  "rule_id": "mitoya_model_gratio_top2",
+  "hall": "みとや大森町店",
+  "freeze_hash": "a0f5b81a53a8e24b",
+  "target_date": "20261031",
+  "data_asof": "20261030",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-10-10",
+    "2026-10-31"
+  ],
+  "score": "hist_model_gratio_mean_diff",
+  "selection_unit": "machine_model",
+  "success_criterion": "フォワード20エントリー日を経過した時点で、指名機種全台の総和ベースedge（対ホール全体同日平均、diff_coins_normalized）の平均が正であり、95%CI(block7)下限が0を上回ること。満たさなければ破棄する。判定はフォワードテストのみで行い、バックテスト数値は採否根拠にしない。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "マイジャグラーⅥ",
+      "score": 1050.417617,
+      "history_rows": 216,
+      "machines": [
+        641,
+        642,
+        643,
+        644,
+        645,
+        646,
+        647,
+        648,
+        649,
+        666,
+        667,
+        668,
+        669,
+        670,
+        671,
+        672,
+        673,
+        674
+      ]
+    },
+    {
+      "machine_name": "ガールズ&パンツァー 最終章",
+      "score": 678.406204,
+      "history_rows": 17,
+      "machines": [
+        759
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 641,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 1050.417617,
+      "history_days": 216
+    },
+    {
+      "machine_number": 642,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 1050.417617,
+      "history_days": 216
+    },
+    {
+      "machine_number": 643,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 1050.417617,
+      "history_days": 216
+    },
+    {
+      "machine_number": 644,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 1050.417617,
+      "history_days": 216
+    },
+    {
+      "machine_number": 645,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 1050.417617,
+      "history_days": 216
+    },
+    {
+      "machine_number": 646,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 1050.417617,
+      "history_days": 216
+    },
+    {
+      "machine_number": 647,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 1050.417617,
+      "history_days": 216
+    },
+    {
+      "machine_number": 648,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 1050.417617,
+      "history_days": 216
+    },
+    {
+      "machine_number": 649,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 1050.417617,
+      "history_days": 216
+    },
+    {
+      "machine_number": 666,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 1050.417617,
+      "history_days": 216
+    },
+    {
+      "machine_number": 667,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 1050.417617,
+      "history_days": 216
+    },
+    {
+      "machine_number": 668,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 1050.417617,
+      "history_days": 216
+    },
+    {
+      "machine_number": 669,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 1050.417617,
+      "history_days": 216
+    },
+    {
+      "machine_number": 670,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 1050.417617,
+      "history_days": 216
+    },
+    {
+      "machine_number": 671,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 1050.417617,
+      "history_days": 216
+    },
+    {
+      "machine_number": 672,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 1050.417617,
+      "history_days": 216
+    },
+    {
+      "machine_number": 673,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 1050.417617,
+      "history_days": 216
+    },
+    {
+      "machine_number": 674,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 1050.417617,
+      "history_days": 216
+    },
+    {
+      "machine_number": 759,
+      "machine_name": "ガールズ&パンツァー 最終章",
+      "score": 678.406204,
+      "history_days": 17
+    }
+  ],
+  "result": {
+    "scored_with_hash": "a0f5b81a53a8e24b",
+    "day_baseline": 107.6,
+    "universe_size": 277,
+    "picks_realized": [
+      {
+        "machine_number": 641,
+        "games": 8865.0,
+        "diff": -517.0,
+        "edge": -624.6064981949459
+      },
+      {
+        "machine_number": 642,
+        "games": 6223.0,
+        "diff": -1758.0,
+        "edge": -1865.6064981949457
+      },
+      {
+        "machine_number": 643,
+        "games": 8343.0,
+        "diff": 206.0,
+        "edge": 98.39350180505416
+      },
+      {
+        "machine_number": 644,
+        "games": 7817.0,
+        "diff": -358.0,
+        "edge": -465.60649819494586
+      },
+      {
+        "machine_number": 645,
+        "games": 8543.0,
+        "diff": -1522.0,
+        "edge": -1629.6064981949457
+      },
+      {
+        "machine_number": 646,
+        "games": 8616.0,
+        "diff": -275.0,
+        "edge": -382.60649819494586
+      },
+      {
+        "machine_number": 647,
+        "games": 9162.0,
+        "diff": 1658.0,
+        "edge": 1550.3935018050543
+      },
+      {
+        "machine_number": 648,
+        "games": 8424.0,
+        "diff": 583.0,
+        "edge": 475.39350180505414
+      },
+      {
+        "machine_number": 649,
+        "games": 8933.0,
+        "diff": 5231.0,
+        "edge": 5123.393501805054
+      },
+      {
+        "machine_number": 666,
+        "games": 8266.0,
+        "diff": 1944.0,
+        "edge": 1836.3935018050543
+      },
+      {
+        "machine_number": 667,
+        "games": 7663.0,
+        "diff": 2278.0,
+        "edge": 2170.3935018050543
+      },
+      {
+        "machine_number": 668,
+        "games": 8295.0,
+        "diff": 417.0,
+        "edge": 309.39350180505414
+      },
+      {
+        "machine_number": 669,
+        "games": 6860.0,
+        "diff": -908.0,
+        "edge": -1015.6064981949459
+      },
+      {
+        "machine_number": 670,
+        "games": 7679.0,
+        "diff": -906.0,
+        "edge": -1013.6064981949459
+      },
+      {
+        "machine_number": 671,
+        "games": 6765.0,
+        "diff": -542.0,
+        "edge": -649.6064981949459
+      },
+      {
+        "machine_number": 672,
+        "games": 8150.0,
+        "diff": 1433.0,
+        "edge": 1325.3935018050543
+      },
+      {
+        "machine_number": 673,
+        "games": 7611.0,
+        "diff": 2300.0,
+        "edge": 2192.3935018050543
+      },
+      {
+        "machine_number": 674,
+        "games": 8033.0,
+        "diff": 3764.0,
+        "edge": 3656.3935018050543
+      },
+      {
+        "machine_number": 759,
+        "games": 556.0,
+        "diff": -428.0,
+        "edge": -535.6064981949459
+      }
+    ],
+    "mean_diff_per_pick": 663.2,
+    "mean_edge_per_pick": 555.6,
+    "missing_machines": [],
+    "rb_perspective": null,
+    "model_perspective": [
+      {
+        "machine_name": "マイジャグラーⅥ",
+        "n_machines": 18,
+        "n_realized": 18,
+        "sum_diff": 13028.0,
+        "sum_games": 144248.0,
+        "mean_diff": 723.8
+      },
+      {
+        "machine_name": "ガールズ&パンツァー 最終章",
+        "n_machines": 1,
+        "n_realized": 1,
+        "sum_diff": -428.0,
+        "sum_games": 556.0,
+        "mean_diff": -428.0
+      }
+    ]
+  },
+  "plan_digest": "ea4009de22363b5c"
+}

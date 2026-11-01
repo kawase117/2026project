@@ -1,0 +1,155 @@
+{
+  "rule_id": "zassiki_model_term60_top3",
+  "hall": "ザ-シティ-ベルシティ雑色店",
+  "freeze_hash": "c19f10b6e683a454",
+  "target_date": "20261101",
+  "data_asof": "20261031",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-09-02",
+    "2026-11-01"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +87 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 225.060654,
+      "history_rows": 315,
+      "machines": [
+        873,
+        874,
+        875,
+        876,
+        877,
+        878
+      ]
+    },
+    {
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 114.756461,
+      "history_rows": 122,
+      "machines": [
+        862,
+        863,
+        864,
+        865,
+        866,
+        867
+      ]
+    },
+    {
+      "machine_name": "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION",
+      "score": 108.09603,
+      "history_rows": 48,
+      "machines": [
+        824,
+        825,
+        826,
+        827
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 873,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 225.060654,
+      "history_days": 315
+    },
+    {
+      "machine_number": 874,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 225.060654,
+      "history_days": 315
+    },
+    {
+      "machine_number": 875,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 225.060654,
+      "history_days": 315
+    },
+    {
+      "machine_number": 876,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 225.060654,
+      "history_days": 315
+    },
+    {
+      "machine_number": 877,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 225.060654,
+      "history_days": 315
+    },
+    {
+      "machine_number": 878,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 225.060654,
+      "history_days": 315
+    },
+    {
+      "machine_number": 862,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 114.756461,
+      "history_days": 122
+    },
+    {
+      "machine_number": 863,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 114.756461,
+      "history_days": 122
+    },
+    {
+      "machine_number": 864,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 114.756461,
+      "history_days": 122
+    },
+    {
+      "machine_number": 865,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 114.756461,
+      "history_days": 122
+    },
+    {
+      "machine_number": 866,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 114.756461,
+      "history_days": 122
+    },
+    {
+      "machine_number": 867,
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "score": 114.756461,
+      "history_days": 122
+    },
+    {
+      "machine_number": 824,
+      "machine_name": "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION",
+      "score": 108.09603,
+      "history_days": 48
+    },
+    {
+      "machine_number": 825,
+      "machine_name": "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION",
+      "score": 108.09603,
+      "history_days": 48
+    },
+    {
+      "machine_number": 826,
+      "machine_name": "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION",
+      "score": 108.09603,
+      "history_days": 48
+    },
+    {
+      "machine_number": 827,
+      "machine_name": "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION",
+      "score": 108.09603,
+      "history_days": 48
+    }
+  ],
+  "result": null,
+  "plan_digest": "9bc6cfa3f0bb6f07"
+}

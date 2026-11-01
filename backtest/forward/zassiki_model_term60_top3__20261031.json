@@ -1,0 +1,404 @@
+{
+  "rule_id": "zassiki_model_term60_top3",
+  "hall": "ザ-シティ-ベルシティ雑色店",
+  "freeze_hash": "c19f10b6e683a454",
+  "target_date": "20261031",
+  "data_asof": "20261030",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-09-01",
+    "2026-10-31"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +87 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 207.566272,
+      "history_rows": 315,
+      "machines": [
+        873,
+        874,
+        875,
+        876,
+        877,
+        878
+      ]
+    },
+    {
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 90.221311,
+      "history_rows": 881,
+      "machines": [
+        766,
+        767,
+        768,
+        769,
+        770,
+        771,
+        772,
+        773,
+        774,
+        775,
+        776,
+        777,
+        778,
+        779,
+        780
+      ]
+    },
+    {
+      "machine_name": "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION",
+      "score": 77.771338,
+      "history_rows": 44,
+      "machines": [
+        824,
+        825,
+        826,
+        827
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 873,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 207.566272,
+      "history_days": 315
+    },
+    {
+      "machine_number": 874,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 207.566272,
+      "history_days": 315
+    },
+    {
+      "machine_number": 875,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 207.566272,
+      "history_days": 315
+    },
+    {
+      "machine_number": 876,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 207.566272,
+      "history_days": 315
+    },
+    {
+      "machine_number": 877,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 207.566272,
+      "history_days": 315
+    },
+    {
+      "machine_number": 878,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 207.566272,
+      "history_days": 315
+    },
+    {
+      "machine_number": 766,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 90.221311,
+      "history_days": 881
+    },
+    {
+      "machine_number": 767,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 90.221311,
+      "history_days": 881
+    },
+    {
+      "machine_number": 768,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 90.221311,
+      "history_days": 881
+    },
+    {
+      "machine_number": 769,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 90.221311,
+      "history_days": 881
+    },
+    {
+      "machine_number": 770,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 90.221311,
+      "history_days": 881
+    },
+    {
+      "machine_number": 771,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 90.221311,
+      "history_days": 881
+    },
+    {
+      "machine_number": 772,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 90.221311,
+      "history_days": 881
+    },
+    {
+      "machine_number": 773,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 90.221311,
+      "history_days": 881
+    },
+    {
+      "machine_number": 774,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 90.221311,
+      "history_days": 881
+    },
+    {
+      "machine_number": 775,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 90.221311,
+      "history_days": 881
+    },
+    {
+      "machine_number": 776,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 90.221311,
+      "history_days": 881
+    },
+    {
+      "machine_number": 777,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 90.221311,
+      "history_days": 881
+    },
+    {
+      "machine_number": 778,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 90.221311,
+      "history_days": 881
+    },
+    {
+      "machine_number": 779,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 90.221311,
+      "history_days": 881
+    },
+    {
+      "machine_number": 780,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 90.221311,
+      "history_days": 881
+    },
+    {
+      "machine_number": 824,
+      "machine_name": "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION",
+      "score": 77.771338,
+      "history_days": 44
+    },
+    {
+      "machine_number": 825,
+      "machine_name": "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION",
+      "score": 77.771338,
+      "history_days": 44
+    },
+    {
+      "machine_number": 826,
+      "machine_name": "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION",
+      "score": 77.771338,
+      "history_days": 44
+    },
+    {
+      "machine_number": 827,
+      "machine_name": "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION",
+      "score": 77.771338,
+      "history_days": 44
+    }
+  ],
+  "result": {
+    "scored_with_hash": "c19f10b6e683a454",
+    "day_baseline": -425.9,
+    "universe_size": 128,
+    "picks_realized": [
+      {
+        "machine_number": 766,
+        "games": 2421.0,
+        "diff": -1858.0,
+        "edge": -1432.1328125
+      },
+      {
+        "machine_number": 767,
+        "games": 3747.0,
+        "diff": -1470.0,
+        "edge": -1044.1328125
+      },
+      {
+        "machine_number": 768,
+        "games": 3250.0,
+        "diff": -1209.0,
+        "edge": -783.1328125
+      },
+      {
+        "machine_number": 769,
+        "games": 7734.0,
+        "diff": 552.0,
+        "edge": 977.8671875
+      },
+      {
+        "machine_number": 770,
+        "games": 8572.0,
+        "diff": 1143.0,
+        "edge": 1568.8671875
+      },
+      {
+        "machine_number": 771,
+        "games": 4215.0,
+        "diff": -1116.0,
+        "edge": -690.1328125
+      },
+      {
+        "machine_number": 772,
+        "games": 4640.0,
+        "diff": -964.0,
+        "edge": -538.1328125
+      },
+      {
+        "machine_number": 773,
+        "games": 6849.0,
+        "diff": -1713.0,
+        "edge": -1287.1328125
+      },
+      {
+        "machine_number": 774,
+        "games": 7025.0,
+        "diff": -886.0,
+        "edge": -460.1328125
+      },
+      {
+        "machine_number": 775,
+        "games": 6547.0,
+        "diff": -320.0,
+        "edge": 105.8671875
+      },
+      {
+        "machine_number": 776,
+        "games": 3552.0,
+        "diff": -1806.0,
+        "edge": -1380.1328125
+      },
+      {
+        "machine_number": 777,
+        "games": 4259.0,
+        "diff": -1864.0,
+        "edge": -1438.1328125
+      },
+      {
+        "machine_number": 778,
+        "games": 6322.0,
+        "diff": -1412.0,
+        "edge": -986.1328125
+      },
+      {
+        "machine_number": 779,
+        "games": 1020.0,
+        "diff": -581.0,
+        "edge": -155.1328125
+      },
+      {
+        "machine_number": 780,
+        "games": 9357.0,
+        "diff": 361.0,
+        "edge": 786.8671875
+      },
+      {
+        "machine_number": 873,
+        "games": 3599.0,
+        "diff": -107.0,
+        "edge": 318.8671875
+      },
+      {
+        "machine_number": 874,
+        "games": 3286.0,
+        "diff": 1072.0,
+        "edge": 1497.8671875
+      },
+      {
+        "machine_number": 875,
+        "games": 4542.0,
+        "diff": 829.0,
+        "edge": 1254.8671875
+      },
+      {
+        "machine_number": 876,
+        "games": 2996.0,
+        "diff": -1526.0,
+        "edge": -1100.1328125
+      },
+      {
+        "machine_number": 877,
+        "games": 2977.0,
+        "diff": -2039.0,
+        "edge": -1613.1328125
+      },
+      {
+        "machine_number": 878,
+        "games": 4267.0,
+        "diff": 578.0,
+        "edge": 1003.8671875
+      },
+      {
+        "machine_number": 824,
+        "games": 4455.0,
+        "diff": 2048.0,
+        "edge": 2473.8671875
+      },
+      {
+        "machine_number": 825,
+        "games": 1876.0,
+        "diff": -1696.0,
+        "edge": -1270.1328125
+      },
+      {
+        "machine_number": 826,
+        "games": 4441.0,
+        "diff": 1926.0,
+        "edge": 2351.8671875
+      },
+      {
+        "machine_number": 827,
+        "games": 2898.0,
+        "diff": -2283.0,
+        "edge": -1857.1328125
+      }
+    ],
+    "mean_diff_per_pick": -573.6,
+    "mean_edge_per_pick": -147.8,
+    "missing_machines": [],
+    "rb_perspective": null,
+    "model_perspective": [
+      {
+        "machine_name": "北斗の拳 転生の章2",
+        "n_machines": 6,
+        "n_realized": 6,
+        "sum_diff": -1193.0,
+        "sum_games": 21667.0,
+        "mean_diff": -198.8
+      },
+      {
+        "machine_name": "ゴーゴージャグラー3",
+        "n_machines": 15,
+        "n_realized": 15,
+        "sum_diff": -13143.0,
+        "sum_games": 79510.0,
+        "mean_diff": -876.2
+      },
+      {
+        "machine_name": "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION",
+        "n_machines": 4,
+        "n_realized": 4,
+        "sum_diff": -5.0,
+        "sum_games": 13670.0,
+        "mean_diff": -1.2
+      }
+    ]
+  },
+  "plan_digest": "27a1af08e51a18eb"
+}

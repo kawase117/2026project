@@ -1,0 +1,67 @@
+{
+  "rule_id": "zassiki_jug_fixed_top3",
+  "hall": "ザ-シティ-ベルシティ雑色店",
+  "freeze_hash": "a0b246e660ee0d4e",
+  "target_date": "20261031",
+  "data_asof": "20261030",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-05-04",
+    "2026-10-31"
+  ],
+  "score": "hist_mean_diff",
+  "selection_unit": "machine",
+  "success_criterion": "edge（同日ジャグ全台平均との差枚差）の平均が +150枚/台 以上、かつ 7日ブロックbootstrap の 95%CI 下限 > 0。分散分解が示す固定台効果 2.02pp は平均投資額換算で約300枚/日に相当するため、その半分は取れて然るべき。下回れば固定効果仮説も棄却する。",
+  "is_dry_run": false,
+  "picks": [
+    {
+      "machine_number": 780,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 381.244444,
+      "history_days": 135
+    },
+    {
+      "machine_number": 774,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 190.309524,
+      "history_days": 168
+    },
+    {
+      "machine_number": 783,
+      "machine_name": "マイジャグラーV",
+      "score": 176.927536,
+      "history_days": 138
+    }
+  ],
+  "result": {
+    "scored_with_hash": "a0b246e660ee0d4e",
+    "day_baseline": -474.6,
+    "universe_size": 47,
+    "picks_realized": [
+      {
+        "machine_number": 774,
+        "games": 7025.0,
+        "diff": -886.0,
+        "edge": -411.40425531914894
+      },
+      {
+        "machine_number": 780,
+        "games": 9357.0,
+        "diff": 361.0,
+        "edge": 835.5957446808511
+      },
+      {
+        "machine_number": 783,
+        "games": 4462.0,
+        "diff": -1725.0,
+        "edge": -1250.404255319149
+      }
+    ],
+    "mean_diff_per_pick": -750.0,
+    "mean_edge_per_pick": -275.4,
+    "missing_machines": [],
+    "rb_perspective": null,
+    "model_perspective": null
+  },
+  "plan_digest": "fef70b8fec9ceacd"
+}

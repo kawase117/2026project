@@ -1,0 +1,222 @@
+{
+  "rule_id": "rakuen_model_term60_top3",
+  "hall": "楽園蒲田店",
+  "freeze_hash": "8956697aae9be829",
+  "target_date": "20261031",
+  "data_asof": "20261030",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-09-01",
+    "2026-10-31"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +125 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "聖闘士星矢 海皇覚醒 CUSTOM EDITION",
+      "score": 750.054052,
+      "history_rows": 41,
+      "machines": [
+        2029,
+        2030,
+        2031,
+        2032
+      ]
+    },
+    {
+      "machine_name": "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION",
+      "score": 525.071183,
+      "history_rows": 191,
+      "machines": [
+        2021,
+        2022,
+        2023,
+        2024
+      ]
+    },
+    {
+      "machine_name": "チバリヨ2",
+      "score": 520.740339,
+      "history_rows": 89,
+      "machines": [
+        3185,
+        3186,
+        3187
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 2029,
+      "machine_name": "聖闘士星矢 海皇覚醒 CUSTOM EDITION",
+      "score": 750.054052,
+      "history_days": 41
+    },
+    {
+      "machine_number": 2030,
+      "machine_name": "聖闘士星矢 海皇覚醒 CUSTOM EDITION",
+      "score": 750.054052,
+      "history_days": 41
+    },
+    {
+      "machine_number": 2031,
+      "machine_name": "聖闘士星矢 海皇覚醒 CUSTOM EDITION",
+      "score": 750.054052,
+      "history_days": 41
+    },
+    {
+      "machine_number": 2032,
+      "machine_name": "聖闘士星矢 海皇覚醒 CUSTOM EDITION",
+      "score": 750.054052,
+      "history_days": 41
+    },
+    {
+      "machine_number": 2021,
+      "machine_name": "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION",
+      "score": 525.071183,
+      "history_days": 191
+    },
+    {
+      "machine_number": 2022,
+      "machine_name": "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION",
+      "score": 525.071183,
+      "history_days": 191
+    },
+    {
+      "machine_number": 2023,
+      "machine_name": "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION",
+      "score": 525.071183,
+      "history_days": 191
+    },
+    {
+      "machine_number": 2024,
+      "machine_name": "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION",
+      "score": 525.071183,
+      "history_days": 191
+    },
+    {
+      "machine_number": 3185,
+      "machine_name": "チバリヨ2",
+      "score": 520.740339,
+      "history_days": 89
+    },
+    {
+      "machine_number": 3186,
+      "machine_name": "チバリヨ2",
+      "score": 520.740339,
+      "history_days": 89
+    },
+    {
+      "machine_number": 3187,
+      "machine_name": "チバリヨ2",
+      "score": 520.740339,
+      "history_days": 89
+    }
+  ],
+  "result": {
+    "scored_with_hash": "8956697aae9be829",
+    "day_baseline": 80.2,
+    "universe_size": 587,
+    "picks_realized": [
+      {
+        "machine_number": 2021,
+        "games": 3942.0,
+        "diff": -2714.0,
+        "edge": -2794.2299829642247
+      },
+      {
+        "machine_number": 2022,
+        "games": 5233.0,
+        "diff": -2333.0,
+        "edge": -2413.2299829642247
+      },
+      {
+        "machine_number": 2023,
+        "games": 7711.0,
+        "diff": -1666.0,
+        "edge": -1746.229982964225
+      },
+      {
+        "machine_number": 2024,
+        "games": 4176.0,
+        "diff": -2428.0,
+        "edge": -2508.2299829642247
+      },
+      {
+        "machine_number": 2029,
+        "games": 783.0,
+        "diff": 477.0,
+        "edge": 396.77001703577514
+      },
+      {
+        "machine_number": 2030,
+        "games": 3281.0,
+        "diff": -333.0,
+        "edge": -413.22998296422486
+      },
+      {
+        "machine_number": 2031,
+        "games": 1869.0,
+        "diff": -857.0,
+        "edge": -937.2299829642249
+      },
+      {
+        "machine_number": 2032,
+        "games": 4507.0,
+        "diff": -1476.0,
+        "edge": -1556.229982964225
+      },
+      {
+        "machine_number": 3185,
+        "games": 400.0,
+        "diff": -666.0,
+        "edge": -746.2299829642249
+      },
+      {
+        "machine_number": 3186,
+        "games": 3345.0,
+        "diff": 5334.0,
+        "edge": 5253.770017035775
+      },
+      {
+        "machine_number": 3187,
+        "games": 1420.0,
+        "diff": -619.0,
+        "edge": -699.2299829642249
+      }
+    ],
+    "mean_diff_per_pick": -661.9,
+    "mean_edge_per_pick": -742.1,
+    "missing_machines": [],
+    "rb_perspective": null,
+    "model_perspective": [
+      {
+        "machine_name": "聖闘士星矢 海皇覚醒 CUSTOM EDITION",
+        "n_machines": 4,
+        "n_realized": 4,
+        "sum_diff": -2189.0,
+        "sum_games": 10440.0,
+        "mean_diff": -547.2
+      },
+      {
+        "machine_name": "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION",
+        "n_machines": 4,
+        "n_realized": 4,
+        "sum_diff": -9141.0,
+        "sum_games": 21062.0,
+        "mean_diff": -2285.2
+      },
+      {
+        "machine_name": "チバリヨ2",
+        "n_machines": 3,
+        "n_realized": 3,
+        "sum_diff": 4049.0,
+        "sum_games": 5165.0,
+        "mean_diff": 1349.7
+      }
+    ]
+  },
+  "plan_digest": "3188a966a2c06085"
+}

@@ -1,0 +1,235 @@
+{
+  "rule_id": "kamata1_model_term60_top3",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "freeze_hash": "bb185b622fae47b2",
+  "target_date": "20261031",
+  "data_asof": "20261030",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-09-01",
+    "2026-10-31"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +187 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "新鬼武者3",
+      "score": 653.903681,
+      "history_rows": 80,
+      "machines": [
+        2265,
+        2266,
+        2267,
+        2268
+      ]
+    },
+    {
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 398.730514,
+      "history_rows": 218,
+      "machines": [
+        2020,
+        2416,
+        2417,
+        2418,
+        2419
+      ]
+    },
+    {
+      "machine_name": "アズールレーン THE ANIMATION",
+      "score": 300.36845,
+      "history_rows": 35,
+      "machines": [
+        2411,
+        2412,
+        2413
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 2265,
+      "machine_name": "新鬼武者3",
+      "score": 653.903681,
+      "history_days": 80
+    },
+    {
+      "machine_number": 2266,
+      "machine_name": "新鬼武者3",
+      "score": 653.903681,
+      "history_days": 80
+    },
+    {
+      "machine_number": 2267,
+      "machine_name": "新鬼武者3",
+      "score": 653.903681,
+      "history_days": 80
+    },
+    {
+      "machine_number": 2268,
+      "machine_name": "新鬼武者3",
+      "score": 653.903681,
+      "history_days": 80
+    },
+    {
+      "machine_number": 2020,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 398.730514,
+      "history_days": 218
+    },
+    {
+      "machine_number": 2416,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 398.730514,
+      "history_days": 218
+    },
+    {
+      "machine_number": 2417,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 398.730514,
+      "history_days": 218
+    },
+    {
+      "machine_number": 2418,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 398.730514,
+      "history_days": 218
+    },
+    {
+      "machine_number": 2419,
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "score": 398.730514,
+      "history_days": 218
+    },
+    {
+      "machine_number": 2411,
+      "machine_name": "アズールレーン THE ANIMATION",
+      "score": 300.36845,
+      "history_days": 35
+    },
+    {
+      "machine_number": 2412,
+      "machine_name": "アズールレーン THE ANIMATION",
+      "score": 300.36845,
+      "history_days": 35
+    },
+    {
+      "machine_number": 2413,
+      "machine_name": "アズールレーン THE ANIMATION",
+      "score": 300.36845,
+      "history_days": 35
+    }
+  ],
+  "result": {
+    "scored_with_hash": "bb185b622fae47b2",
+    "day_baseline": -163.6,
+    "universe_size": 365,
+    "picks_realized": [
+      {
+        "machine_number": 2020,
+        "games": 3067.0,
+        "diff": -1600.0,
+        "edge": -1436.4383561643835
+      },
+      {
+        "machine_number": 2416,
+        "games": 2683.0,
+        "diff": -2600.0,
+        "edge": -2436.4383561643835
+      },
+      {
+        "machine_number": 2417,
+        "games": 2290.0,
+        "diff": -300.0,
+        "edge": -136.43835616438355
+      },
+      {
+        "machine_number": 2418,
+        "games": 3201.0,
+        "diff": -100.0,
+        "edge": 63.56164383561645
+      },
+      {
+        "machine_number": 2419,
+        "games": 3020.0,
+        "diff": -1000.0,
+        "edge": -836.4383561643835
+      },
+      {
+        "machine_number": 2265,
+        "games": 2103.0,
+        "diff": 3700.0,
+        "edge": 3863.5616438356165
+      },
+      {
+        "machine_number": 2266,
+        "games": 1652.0,
+        "diff": -1500.0,
+        "edge": -1336.4383561643835
+      },
+      {
+        "machine_number": 2267,
+        "games": 1968.0,
+        "diff": -1400.0,
+        "edge": -1236.4383561643835
+      },
+      {
+        "machine_number": 2268,
+        "games": 2371.0,
+        "diff": -1900.0,
+        "edge": -1736.4383561643835
+      },
+      {
+        "machine_number": 2411,
+        "games": 1456.0,
+        "diff": -700.0,
+        "edge": -536.4383561643835
+      },
+      {
+        "machine_number": 2412,
+        "games": 1333.0,
+        "diff": 200.0,
+        "edge": 363.56164383561645
+      },
+      {
+        "machine_number": 2413,
+        "games": 1139.0,
+        "diff": -200.0,
+        "edge": -36.43835616438355
+      }
+    ],
+    "mean_diff_per_pick": -616.7,
+    "mean_edge_per_pick": -453.1,
+    "missing_machines": [],
+    "rb_perspective": null,
+    "model_perspective": [
+      {
+        "machine_name": "新鬼武者3",
+        "n_machines": 4,
+        "n_realized": 4,
+        "sum_diff": -1100.0,
+        "sum_games": 8094.0,
+        "mean_diff": -275.0
+      },
+      {
+        "machine_name": "スマスロ炎炎ノ消防隊2",
+        "n_machines": 5,
+        "n_realized": 5,
+        "sum_diff": -5600.0,
+        "sum_games": 14261.0,
+        "mean_diff": -1120.0
+      },
+      {
+        "machine_name": "アズールレーン THE ANIMATION",
+        "n_machines": 3,
+        "n_realized": 3,
+        "sum_diff": -700.0,
+        "sum_games": 3928.0,
+        "mean_diff": -233.3
+      }
+    ]
+  },
+  "plan_digest": "81a7ec346ccd1711"
+}

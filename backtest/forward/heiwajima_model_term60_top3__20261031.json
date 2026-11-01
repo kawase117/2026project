@@ -1,0 +1,235 @@
+{
+  "rule_id": "heiwajima_model_term60_top3",
+  "hall": "レイトギャップ平和島",
+  "freeze_hash": "80fab02ec0c44816",
+  "target_date": "20261031",
+  "data_asof": "20261030",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-09-01",
+    "2026-10-31"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +81 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 458.159018,
+      "history_rows": 206,
+      "machines": [
+        933,
+        934,
+        935,
+        936
+      ]
+    },
+    {
+      "machine_name": "モンスターハンターライズ：サンブレイク",
+      "score": 442.501942,
+      "history_rows": 104,
+      "machines": [
+        901,
+        902,
+        903,
+        904
+      ]
+    },
+    {
+      "machine_name": "化物語",
+      "score": 304.708347,
+      "history_rows": 206,
+      "machines": [
+        929,
+        930,
+        931,
+        932
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 933,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 458.159018,
+      "history_days": 206
+    },
+    {
+      "machine_number": 934,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 458.159018,
+      "history_days": 206
+    },
+    {
+      "machine_number": 935,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 458.159018,
+      "history_days": 206
+    },
+    {
+      "machine_number": 936,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 458.159018,
+      "history_days": 206
+    },
+    {
+      "machine_number": 901,
+      "machine_name": "モンスターハンターライズ：サンブレイク",
+      "score": 442.501942,
+      "history_days": 104
+    },
+    {
+      "machine_number": 902,
+      "machine_name": "モンスターハンターライズ：サンブレイク",
+      "score": 442.501942,
+      "history_days": 104
+    },
+    {
+      "machine_number": 903,
+      "machine_name": "モンスターハンターライズ：サンブレイク",
+      "score": 442.501942,
+      "history_days": 104
+    },
+    {
+      "machine_number": 904,
+      "machine_name": "モンスターハンターライズ：サンブレイク",
+      "score": 442.501942,
+      "history_days": 104
+    },
+    {
+      "machine_number": 929,
+      "machine_name": "化物語",
+      "score": 304.708347,
+      "history_days": 206
+    },
+    {
+      "machine_number": 930,
+      "machine_name": "化物語",
+      "score": 304.708347,
+      "history_days": 206
+    },
+    {
+      "machine_number": 931,
+      "machine_name": "化物語",
+      "score": 304.708347,
+      "history_days": 206
+    },
+    {
+      "machine_number": 932,
+      "machine_name": "化物語",
+      "score": 304.708347,
+      "history_days": 206
+    }
+  ],
+  "result": {
+    "scored_with_hash": "80fab02ec0c44816",
+    "day_baseline": -407.9,
+    "universe_size": 421,
+    "picks_realized": [
+      {
+        "machine_number": 933,
+        "games": 3924.0,
+        "diff": 1374.0,
+        "edge": 1781.895486935867
+      },
+      {
+        "machine_number": 934,
+        "games": 4294.0,
+        "diff": 1453.0,
+        "edge": 1860.895486935867
+      },
+      {
+        "machine_number": 935,
+        "games": 2275.0,
+        "diff": 0.0,
+        "edge": 407.895486935867
+      },
+      {
+        "machine_number": 936,
+        "games": 7468.0,
+        "diff": -3701.0,
+        "edge": -3293.1045130641332
+      },
+      {
+        "machine_number": 901,
+        "games": 5469.0,
+        "diff": -2069.0,
+        "edge": -1661.104513064133
+      },
+      {
+        "machine_number": 902,
+        "games": 3732.0,
+        "diff": 476.0,
+        "edge": 883.895486935867
+      },
+      {
+        "machine_number": 903,
+        "games": 5637.0,
+        "diff": -5530.0,
+        "edge": -5122.104513064133
+      },
+      {
+        "machine_number": 904,
+        "games": 5128.0,
+        "diff": -2561.0,
+        "edge": -2153.1045130641332
+      },
+      {
+        "machine_number": 929,
+        "games": 1990.0,
+        "diff": -1049.0,
+        "edge": -641.104513064133
+      },
+      {
+        "machine_number": 930,
+        "games": 3405.0,
+        "diff": 213.0,
+        "edge": 620.895486935867
+      },
+      {
+        "machine_number": 931,
+        "games": 4511.0,
+        "diff": -1773.0,
+        "edge": -1365.104513064133
+      },
+      {
+        "machine_number": 932,
+        "games": 1569.0,
+        "diff": -459.0,
+        "edge": -51.104513064133016
+      }
+    ],
+    "mean_diff_per_pick": -1135.5,
+    "mean_edge_per_pick": -727.6,
+    "missing_machines": [],
+    "rb_perspective": null,
+    "model_perspective": [
+      {
+        "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+        "n_machines": 4,
+        "n_realized": 4,
+        "sum_diff": -874.0,
+        "sum_games": 17961.0,
+        "mean_diff": -218.5
+      },
+      {
+        "machine_name": "モンスターハンターライズ：サンブレイク",
+        "n_machines": 4,
+        "n_realized": 4,
+        "sum_diff": -9684.0,
+        "sum_games": 19966.0,
+        "mean_diff": -2421.0
+      },
+      {
+        "machine_name": "化物語",
+        "n_machines": 4,
+        "n_realized": 4,
+        "sum_diff": -3068.0,
+        "sum_games": 11475.0,
+        "mean_diff": -767.0
+      }
+    ]
+  },
+  "plan_digest": "2b23b240efcccbb7"
+}
