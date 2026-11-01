@@ -19,6 +19,136 @@
  "frozen_at": "2026-11-01T08:03:27+09:00",
  "timing_basis": "frozen_at",
  "timing": "pre_open",
- "result": null,
+ "result": {
+  "day_mean": -55.9,
+  "universe_size": 128,
+  "models": {
+   "n_machines": 25,
+   "mean_diff": 514.4,
+   "edge": 570.3
+  },
+  "avoid_models": null,
+  "units": null,
+  "jug_units": null,
+  "missing_units": [],
+  "missing_models": [],
+  "rb": {
+   "min_games": 3000,
+   "baseline_days": 60,
+   "min_base_machine_days": 20,
+   "day_rb_ratio": 0.9290385285908905,
+   "models": {
+    "n_machines": 15,
+    "games": 93814.0,
+    "rb_obs": 320.0,
+    "rb_exp": 318.9746528317936,
+    "rb_ratio": 1.00321450986498,
+    "z": 0.05741070098186259,
+    "rb_edge": 0.07417598127408953
+   },
+   "avoid_models": null,
+   "units": null,
+   "jug_units": null,
+   "excluded": {
+    "low_games": 8,
+    "no_baseline": [],
+    "not_judgeable": [
+     "いざ！番長",
+     "からくりサーカス2",
+     "とある魔術の禁書目録2",
+     "やじきた道中記参る！",
+     "スーパーリオエース2",
+     "ソードアート・オンラインII",
+     "チバリヨ2",
+     "ドッチ",
+     "ネオプラネット",
+     "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION",
+     "パリピ孔明",
+     "プリズムナナ",
+     "マギアレコード 魔法少女まどか☆マギカ外伝",
+     "ミリオンゴッド‐神々の軌跡‐",
+     "モンキーターンV",
+     "モンスターハンターライズ",
+     "モンスターハンターライズ：サンブレイク",
+     "ヤバチバ",
+     "リコリス・リコイル",
+     "ワールドダイスター",
+     "七つの魔剣が支配する",
+     "北斗の拳 転生の章2",
+     "咲‐Saki‐ 頂上決戦",
+     "彼女、お借りします",
+     "戦国コレクション6",
+     "戦国乙女5 業火を穿つ宿焔の双刃",
+     "押忍!番長ZERO",
+     "新鬼武者3",
+     "東京リベンジャーズ",
+     "東京喰種",
+     "獣王",
+     "甲鉄城のカバネリ 海門(うなと)決戦",
+     "真打 吉宗",
+     "転生王女と天才令嬢の魔法革命",
+     "邪神ちゃんドロップキック",
+     "青春ブタ野郎はバニーガール先輩の夢を見ない"
+    ]
+   }
+  },
+  "rb_s1": {
+   "min_games": 3000,
+   "min_history_machine_days": 100,
+   "range_margin": 0.05,
+   "models": {
+    "n_machines": 15,
+    "games": 93814.0,
+    "rb_obs": 320.0,
+    "rb_exp_s1": 264.86166007905143,
+    "s1_ratio": 1.2081778838979254,
+    "z": 3.388005744739459,
+    "rb_s1_edge": null
+   },
+   "avoid_models": null,
+   "units": null,
+   "jug_units": null,
+   "excluded": {
+    "low_games": 57,
+    "not_judgeable": [
+     "いざ！番長",
+     "とある魔術の禁書目録2",
+     "ソードアート・オンラインII",
+     "チバリヨ2",
+     "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION",
+     "モンキーターンV",
+     "モンスターハンターライズ：サンブレイク",
+     "ヤバチバ",
+     "リコリス・リコイル",
+     "ワールドダイスター",
+     "北斗の拳 転生の章2",
+     "戦国乙女5 業火を穿つ宿焔の双刃",
+     "東京リベンジャーズ",
+     "獣王",
+     "甲鉄城のカバネリ 海門(うなと)決戦"
+    ],
+    "no_rb_spec": [],
+    "history_short": [
+     "マイジャグラーⅥ"
+    ],
+    "out_of_range": []
+   }
+  },
+  "games": {
+   "reach_games": 7000,
+   "hall_median_games": 3235.5,
+   "units": null,
+   "jug_units": null,
+   "models": {
+    "n_machines": 25,
+    "g_ratio": 1.51150672229949,
+    "g_edge": 0.4751578438830151,
+    "n_at": 10,
+    "reach_share": 0.0,
+    "reach_edge": -1.492537313432836
+   }
+  },
+  "jug_model": null
+ },
  "digest": "58afa860427fe3c9"
 }

@@ -1,0 +1,74 @@
+{
+  "rule_id": "k7_jug_lag8_top1",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "freeze_hash": "851e5982e7fc4549",
+  "target_date": "20261102",
+  "data_asof": "20261031",
+  "data_lag_days": 2,
+  "lookback_window": [
+    "2026-10-23",
+    "2026-11-02"
+  ],
+  "score": "lag8_model_top1",
+  "selection_unit": "machine",
+  "success_criterion": "対照なので成功の基準は置かない。エッジの平均と95%区間を記録し、k7_jug_lag7_top1 と比べる。",
+  "is_dry_run": false,
+  "picks": [
+    {
+      "machine_number": 3307,
+      "machine_name": "ウルトラミラクルジャグラー",
+      "score": 1.0,
+      "history_days": 8
+    },
+    {
+      "machine_number": 3185,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 1.0,
+      "history_days": 8
+    },
+    {
+      "machine_number": 3323,
+      "machine_name": "ジャグラーガールズ",
+      "score": 1.0,
+      "history_days": 8
+    },
+    {
+      "machine_number": 3347,
+      "machine_name": "ネオアイムジャグラーEX",
+      "score": 1.0,
+      "history_days": 8
+    },
+    {
+      "machine_number": 3298,
+      "machine_name": "ハッピージャグラーVIII",
+      "score": 1.0,
+      "history_days": 8
+    },
+    {
+      "machine_number": 3147,
+      "machine_name": "ファンキージャグラー2",
+      "score": 1.0,
+      "history_days": 8
+    },
+    {
+      "machine_number": 3123,
+      "machine_name": "マイジャグラーV",
+      "score": 1.0,
+      "history_days": 8
+    },
+    {
+      "machine_number": 3131,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 1.0,
+      "history_days": 8
+    },
+    {
+      "machine_number": 3315,
+      "machine_name": "ミスタージャグラー",
+      "score": 1.0,
+      "history_days": 8
+    }
+  ],
+  "result": null,
+  "plan_digest": "488685bfdac6f112"
+}
