@@ -824,6 +824,40 @@ def append_takoslot(path: Path, hall_db: Path, day: str, display: str, kind: str
         path.write_text(path.read_text(encoding="utf-8").rstrip() + "\n\n" + section, encoding="utf-8")
 
 
+SCORE_DUE_COMMANDS = (
+    ("backtest.prediction_ledger", "score-due"),
+    ("backtest.forward", "score-due"),
+)
+
+
+def score_ledgers(dry_run: bool) -> None:
+    """答え合わせの前に、凍結済みの台帳を採点する。失敗しても下書きは止めない。
+
+    run_morning.py --only-if-complete は全ホール揃わないと採点を飛ばす。どちらの score-due も
+    ホール(plan)ごとに対象日のデータがあるものだけを採点し、無いものは未採点のまま残し、
+    採点済みには触らないので、揃ったホールだけの時点で何度走らせてもよい。
+    """
+    if dry_run:
+        return
+    for module, sub in SCORE_DUE_COMMANDS:
+        try:
+            result = subprocess.run(
+                [PYTHON, "-X", "utf8", "-m", module, sub],
+                cwd=PROJECT_ROOT,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                timeout=600,
+            )
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            print("台帳の採点失敗 %s %s: %s" % (module, sub, exc), flush=True)
+            continue
+        if result.returncode:
+            print("台帳の採点失敗 %s %s: %s" % (module, sub, (result.stderr or result.stdout)[-300:]), flush=True)
+        else:
+            print("台帳の採点 %s %s: 完了" % (module, sub), flush=True)
+
+
 def run_rb_candidates(day_dir: Path, today: str, dry_run: bool) -> bool:
     """RB候補を一日一回生成する。失敗しても朝文書の他の段は続ける。"""
     cmd = [
@@ -1057,6 +1091,7 @@ def main() -> int:
             if not targets:
                 break
             handled.update(targets)
+            score_ledgers(args.dry_run)
             with ThreadPoolExecutor(max_workers=CONCURRENCY) as pool:
                 list(pool.map(lambda k: process_hall(k, day_dir, yesterday, today, args.dry_run), targets))
             if not args.dry_run:
