@@ -48,6 +48,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+from answercheck_table import CheckTable, build_check_table, check_table_numbers
 from morning_facts import (  # 同ディレクトリ
     MODEL_MIN_UNITS,
     DayFacts,
@@ -483,7 +484,13 @@ def weekday_errors(text: str, day: str) -> list[str]:
     return sorted(set(errors))
 
 
-def validate_answercheck(text: str, yesterday: str, facts: DayFacts | None = None) -> list[str]:
+def validate_answercheck(
+    text: str,
+    yesterday: str,
+    facts: DayFacts | None = None,
+    table: CheckTable | None = None,
+    facts_md: str = "",
+) -> list[str]:
     errors = []
     if not text.lstrip().startswith("## "):
         errors.append("先頭行が `## <ホール名>` の見出しでない")
@@ -491,6 +498,7 @@ def validate_answercheck(text: str, yesterday: str, facts: DayFacts | None = Non
         errors.append("分析できなかった・質問で終わった表現がある: 「%s」" % m.group(0))
     errors += weekday_errors(text, yesterday)
     errors += check_numbers(text, facts)
+    errors += check_table_numbers(text, table, facts_md)[0]
     if "予測への示唆" not in text:
         errors.append("末尾に「今日の予測への示唆」の節がない")
     errors += suggestion_errors(text, load_lessons())
@@ -574,9 +582,10 @@ def facts_prompt_block(facts_md: str) -> str:
 ## 機械集計（スクリプトがDBと台帳から計算済み。この表は出力ファイルの先頭に自動で挿入される）
 {facts_md}
 
-- 表を書き写さない。ホール全体の平均差枚・総差枚・機種別の平均は、この表の値だけを使い、自分で計算し直して別の値を書かない
-  （書いた数字は DB と照合され、合わなければ不合格になる）。
-- 表に無い数字（台別・末尾・並びなど）は sqlite3 で確かめてから書く。
+- 表を書き写さない。ホール全体の平均差枚・総差枚・機種別の平均・G比・順位・RB比・z は、この表の値だけを使い、
+  自分で計算し直して別の値を書かない（引き算・合計もしない）。書いた数字は表と照合され、食い違えば不合格になる。
+- 「予測の照合」表がある場合、予測の当たり外れは表の「判定」「予測の結果」をそのまま使う。自分で判定し直さない。
+- 表に無い数字（台別・末尾・並びなど）は sqlite3 で確かめてから書く。表に無い数字を使うと、出力に注記が付く。
 - 台数が{MODEL_MIN_UNITS}台未満の機種は表に出していない。1〜2台の突出から機種の評価や新しい仮説を作らない。
 
 """
@@ -593,10 +602,12 @@ def answercheck_prompt(key: str, yesterday: str, today: str, out: Path, facts_md
 1. `document/reviews/` の直近の `*-answercheck.md` のうち{display}の節を1つ読み、体裁と深さを合わせる。
 2. 前日の予測があれば `backtest/predictions/{yesterday}__{key}.json` と `document/reviews/{ydash}-prediction.md` の{display}の節、
    予告があれば `backtest/announce/{ANNOUNCE_PREFIX.get(key, key)}__{yesterday}__*.json`（撤回済み `.withdrawn.json` は除く）を読む。
-3. `/hall-analysis-checklist`、`/prediction-evaluation` の方針に従い、DBの実測と突き合わせる。
-   差枚だけで的中/不成立と結論しない。機種はG比×平均差枚、台単位はRB確率を自己ベースラインと比べる。
-   末尾・角番・並び・個別RBも見る。予告の機械採点（announce の result）が空でも、DBから直接照合してよい。
-4. 予測が外れた・当たった理由、翌日以降に使える学びを短く書く。予測が無かった日は、実際に強かった機種・台・並びを書く。
+3. `/hall-analysis-checklist`、`/prediction-evaluation` の方針に従う。
+   差枚だけで的中/不成立と結論しない（照合表がG比×平均差枚とRB比で判定済み）。
+   末尾・角番・並び・個別RBなど表に無い点は sqlite3 で確かめてよい。予告の機械採点（announce の result）が空でも、DBから直接照合してよい。
+4. 当たり外れは「予測の照合」表の判定をそのまま使い、自分で判定し直さない（表が無い日は、数字で断定せず「照合表なし」と書く）。
+   書くのは次の3つの文章だけ: (a)外れた理由の仮説、(b)予測から外したのに強かった機種（表の「予測外で強かった」から選ぶ）、(c)今日の示唆。
+   表の数字は引用するだけで、計算し直さない。予測が無かった日は、表の「予測外で強かった」と実際に強かった機種・台・並びを書く。
    下の「既知の学び」に当たるものは説明し直さず、「既知(L00x)を再確認」と1行だけ書く。本文の「学び」には新しいものだけを書く。
 5. 表を書くときは、見出し行・区切り行(`|---|`)・全行の列数をそろえる。値が無い列は作らない。
 6. 最後に1節「今日（{today}）の予測への示唆」を設け、箇条書き3点以内で書く。予測担当がこれを読む。
@@ -987,6 +998,16 @@ def process_hall(key: str, day_dir: Path, yesterday: str, today: str, dry_run: b
             print(
                 "  機械集計: %s の %s 分が DB に無い。集計の挿入と数字の照合は行わない" % (key, answer_day), flush=True
             )
+        table = None
+        if facts_md:
+            try:
+                table = build_check_table(
+                    hall_db, PREDICTIONS, ANNOUNCE_DIR, ANNOUNCE_PREFIX.get(key, key), key, answer_day
+                )
+            except Exception as exc:  # noqa: BLE001 - 照合表が作れなくても下書きは止めない
+                print("  予測の照合表の作成に失敗(%s): %s" % (key, exc), flush=True)
+            if table:
+                facts_md = facts_md + "\n\n" + table.text
         prompt = answercheck_prompt(key, answer_day, today, part("answercheck"), facts_md)
         if answer_day != yesterday:
             prompt += (
@@ -996,11 +1017,19 @@ def process_hall(key: str, day_dir: Path, yesterday: str, today: str, dry_run: b
         ok = generate(
             prompt,
             part("answercheck"),
-            lambda text: validate_answercheck(text, answer_day, facts),
+            lambda text: validate_answercheck(text, answer_day, facts, table, facts_md),
             "%s 答え合わせ" % key,
         )
         if ok and facts_md:
             inject_facts(part("answercheck"), facts_md)
+            warnings = check_table_numbers(part("answercheck").read_text(encoding="utf-8"), table, facts_md)[1]
+            if warnings:
+                print("  表に無い数字(%s): %s" % (key, " / ".join(warnings)), flush=True)
+                with part("answercheck").open("a", encoding="utf-8") as fh:
+                    fh.write(
+                        "\n※機械注記: 次の数字は機械集計・照合表に無い（LLMが計算したか別の出所）。引用前に確かめる: %s\n"
+                        % "、".join(warnings[:6] + (["ほか%d件" % (len(warnings) - 6)] if len(warnings) > 6 else []))
+                    )
         if ok:
             append_takoslot(part("answercheck"), hall_db, answer_day, HALLS[key][1], "answer")
         return ok
