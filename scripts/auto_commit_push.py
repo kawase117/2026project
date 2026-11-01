@@ -81,7 +81,9 @@ def main(argv: list[str] | None = None) -> int:
         print(f"[auto-push] {busy} の途中のためスキップ")
         return 0
 
-    status = git("status", "--porcelain", "--", *ALLOWED_PATHS)
+    # まだ一度も作られていない出力先（初回の凍結前など）は、git add が pathspec エラーで失敗するので除く。
+    paths = [p for p in ALLOWED_PATHS if (PROJECT_ROOT / p).exists()]
+    status = git("status", "--porcelain", "--", *paths)
     # 日本語パスは git が引用符付きで返すため、行数だけ数える。
     changed = [line for line in status.stdout.splitlines() if line.strip()]
     if not changed:
@@ -90,18 +92,18 @@ def main(argv: list[str] | None = None) -> int:
         print(f"[auto-push] 対象の変更 {len(changed)} 件")
         if args.dry_run:
             return 0
-        add = git("add", "--", *ALLOWED_PATHS)
+        add = git("add", "--", *paths)
         if add.returncode != 0:
             print("[auto-push] git add 失敗:", add.stderr.strip(), file=sys.stderr)
             return 1
         today = datetime.now(JST).strftime("%Y-%m-%d")
         message = f"chore: 朝の自動出力を追加（forward・daily_digest）{today}"
         # パス指定のコミットは、他にステージ済みのファイルがあっても巻き込まない。
-        commit = git("commit", "-m", message, "--", *ALLOWED_PATHS)
+        commit = git("commit", "-m", message, "--", *paths)
         if commit.returncode != 0:
             # pre-commit(ruff-format等)が書き換えた場合は再ステージして1回だけ再試行する。
-            git("add", "--", *ALLOWED_PATHS)
-            commit = git("commit", "-m", message, "--", *ALLOWED_PATHS)
+            git("add", "--", *paths)
+            commit = git("commit", "-m", message, "--", *paths)
         if commit.returncode != 0:
             print("[auto-push] コミット失敗:", (commit.stdout + commit.stderr).strip()[-600:], file=sys.stderr)
             return 1
