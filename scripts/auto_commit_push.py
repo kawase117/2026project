@@ -39,6 +39,7 @@ ALLOWED_PATHS = [
     "backtest/daily_digest",
     "backtest/predictions",
     "backtest/continuation_pace",
+    "backtest/persistent",
     # document/registry/ は人が書く台帳なので対象外だが、この1ファイルだけは毎朝の監査が機械的に追記する
     "document/registry/DATA_AUDIT.jsonl",
 ]
