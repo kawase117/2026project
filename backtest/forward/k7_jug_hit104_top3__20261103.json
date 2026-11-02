@@ -1,0 +1,38 @@
+{
+  "rule_id": "k7_jug_hit104_top3",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "freeze_hash": "da834a49ac60a45d",
+  "target_date": "20261103",
+  "data_asof": "20261102",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-10-04",
+    "2026-11-03"
+  ],
+  "score": "hist_hit104_rate",
+  "selection_unit": "machine",
+  "success_criterion": "エッジの平均が +150枚/台 以上かつ 95%CI 下限 > 0。RB確率版（k7_jug_rb_top3）に劣る場合はこちらを破棄する。",
+  "is_dry_run": false,
+  "picks": [
+    {
+      "machine_number": 3184,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 0.545455,
+      "history_days": 22
+    },
+    {
+      "machine_number": 3137,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 0.5,
+      "history_days": 14
+    },
+    {
+      "machine_number": 3174,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 0.5,
+      "history_days": 24
+    }
+  ],
+  "result": null,
+  "plan_digest": "6738cc94413c755f"
+}

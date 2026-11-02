@@ -1,0 +1,141 @@
+{
+  "rule_id": "kamata7_model_term60_top3",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "freeze_hash": "b5bec81d02cedc0e",
+  "target_date": "20261103",
+  "data_asof": "20261102",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-09-04",
+    "2026-11-03"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +75 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "戦国コレクション6",
+      "score": 376.411989,
+      "history_rows": 54,
+      "machines": [
+        2306,
+        2307,
+        2308,
+        2309
+      ]
+    },
+    {
+      "machine_name": "からくりサーカス",
+      "score": 250.464736,
+      "history_rows": 270,
+      "machines": [
+        3202,
+        3203,
+        3204,
+        3205,
+        3206,
+        3207,
+        3208
+      ]
+    },
+    {
+      "machine_name": "ガールズ&パンツァー 最終章",
+      "score": 246.012144,
+      "history_rows": 159,
+      "machines": [
+        2322,
+        2323,
+        2324
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 2306,
+      "machine_name": "戦国コレクション6",
+      "score": 376.411989,
+      "history_days": 54
+    },
+    {
+      "machine_number": 2307,
+      "machine_name": "戦国コレクション6",
+      "score": 376.411989,
+      "history_days": 54
+    },
+    {
+      "machine_number": 2308,
+      "machine_name": "戦国コレクション6",
+      "score": 376.411989,
+      "history_days": 54
+    },
+    {
+      "machine_number": 2309,
+      "machine_name": "戦国コレクション6",
+      "score": 376.411989,
+      "history_days": 54
+    },
+    {
+      "machine_number": 3202,
+      "machine_name": "からくりサーカス",
+      "score": 250.464736,
+      "history_days": 270
+    },
+    {
+      "machine_number": 3203,
+      "machine_name": "からくりサーカス",
+      "score": 250.464736,
+      "history_days": 270
+    },
+    {
+      "machine_number": 3204,
+      "machine_name": "からくりサーカス",
+      "score": 250.464736,
+      "history_days": 270
+    },
+    {
+      "machine_number": 3205,
+      "machine_name": "からくりサーカス",
+      "score": 250.464736,
+      "history_days": 270
+    },
+    {
+      "machine_number": 3206,
+      "machine_name": "からくりサーカス",
+      "score": 250.464736,
+      "history_days": 270
+    },
+    {
+      "machine_number": 3207,
+      "machine_name": "からくりサーカス",
+      "score": 250.464736,
+      "history_days": 270
+    },
+    {
+      "machine_number": 3208,
+      "machine_name": "からくりサーカス",
+      "score": 250.464736,
+      "history_days": 270
+    },
+    {
+      "machine_number": 2322,
+      "machine_name": "ガールズ&パンツァー 最終章",
+      "score": 246.012144,
+      "history_days": 159
+    },
+    {
+      "machine_number": 2323,
+      "machine_name": "ガールズ&パンツァー 最終章",
+      "score": 246.012144,
+      "history_days": 159
+    },
+    {
+      "machine_number": 2324,
+      "machine_name": "ガールズ&パンツァー 最終章",
+      "score": 246.012144,
+      "history_days": 159
+    }
+  ],
+  "result": null,
+  "plan_digest": "3926cbf1037bf62f"
+}
