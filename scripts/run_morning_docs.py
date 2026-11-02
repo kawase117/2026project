@@ -269,7 +269,8 @@ def judgement_number_errors(text: str, key: str, today: str) -> list[str]:
         s = unicodedata.normalize("NFKC", line.strip())
         if not re.match(r"^[\s\-*]*\**判断\**\s*[:：]", s):
             continue
-        stray = sorted({n for n in _MACHINE_NO.findall(s) if n not in allowed})
+        s_no = s.replace("鉄台2026", "")  # 蒲田7の予告が無い日の定型の語。台番号ではない
+        stray = sorted({n for n in _MACHINE_NO.findall(s_no) if n not in allowed})
         if stray:
             errors.append(
                 "`判断:` の行に、登録済みの予告に無い台番号がある(%s)。台番号は予告で指定された日だけ原文どおりに書く。"
@@ -535,8 +536,8 @@ def load_lessons() -> list[dict]:
 
 
 # 示唆の行が、前日の機種・末尾・列・台の継続を根拠にしているか(L001)。
-_PREV_DAY = re.compile(r"前日|昨日|前々日|連日|[2-3]日連続|直近[2-3]日")
-_CARRY_OBJECT = re.compile(r"機種|末尾|列|台|並び")
+_PREV_DAY = re.compile(r"前日|昨日|前々日|[2-3]日連続|直近[2-3]日")
+_CARRY_OBJECT = re.compile(r"機種|末尾|列|(?<![\d,])台|並び")
 
 
 def suggestion_errors(text: str, lessons: list[dict]) -> list[str]:
@@ -556,6 +557,7 @@ def suggestion_errors(text: str, lessons: list[dict]) -> list[str]:
     errors = []
     for line in body.splitlines():
         s = unicodedata.normalize("NFKC", line.strip())
+        s = re.sub(r"「[^」]*」", "", s)  # 予告などの引用は書き手の根拠ではない
         if not s or not _PREV_DAY.search(s) or not _CARRY_OBJECT.search(s):
             continue
         if any(re.search(p, s) for p in exempt):
@@ -632,6 +634,7 @@ def answercheck_prompt(key: str, yesterday: str, today: str, out: Path, facts_md
 6. 最後の節「今日（{today}）の予測への示唆」は、箇条書き3点以内で書く。予測担当がこれを読む。
    示唆に書いてよいのは、予告の有無、イベント日か、当日見る指標（開店後の回転数・G比・RB確率など）だけ。
    前日の機種・末尾・列・台が今日も続くことを根拠にした示唆は書かない（検証で不合格になる。L001）。
+   この節では「前日」「昨日」の語を使わない。機種の平均に「全体平均」の語を使わない（ホール全体の値と取り違えて検証が落ちる）。
 
 {lessons_prompt_block()}{COMMON_RULES.format(display=display)}"""
 
@@ -747,8 +750,32 @@ def prediction_prompt(key: str, today: str, yesterday: str, answer: Path, out: P
 {lessons_prompt_block()}{COMMON_RULES.format(display=display)}"""
 
 
-def generate(prompt: str, out: Path, validate: Callable[[str], list[str]], label: str) -> bool:
-    """claude に書かせ、検証に通るまで最大2回。通らなければ .rejected.md に退避する。"""
+SUGGESTION_FALLBACK = """\
+- 予告の有無と、イベント日かどうかを、予測文書の冒頭で確かめる。
+- 当日見る指標は、開店後の回転数・G比・RB確率。
+- 前日の結果は今日の根拠にしない（L001）。
+"""
+
+
+def replace_suggestion(text: str) -> str | None:
+    """「予測への示唆」の節の本文を定型文に置き換える。節が無ければ None。"""
+    m = re.search(r"^#+[^\n]*予測への示唆[^\n]*\n", text, re.M)
+    if not m:
+        return None
+    rest = text[m.end() :]
+    nxt = re.search(r"^#+ ", rest, re.M)
+    tail = rest[nxt.start() :] if nxt else ""
+    return text[: m.end()] + "\n" + SUGGESTION_FALLBACK + ("\n" + tail if tail else "")
+
+
+def generate(
+    prompt: str,
+    out: Path,
+    validate: Callable[[str], list[str]],
+    label: str,
+    repair: Callable[[str], str | None] | None = None,
+) -> bool:
+    """claude に書かせ、検証に通るまで最大2回。通らなければ repair で直せるか試し、だめなら .rejected.md に退避する。"""
     feedback = ""
     for attempt in (1, 2):
         if out.exists():
@@ -766,6 +793,12 @@ def generate(prompt: str, out: Path, validate: Callable[[str], list[str]], label
         feedback = "\n\n## 前回の出力は不合格だった\n%s\n同じ誤りを繰り返さず、ファイル全体を書き直す。\n" % "\n".join(
             "- " + e for e in errors
         )
+    if repair and out.exists():
+        repaired = repair(out.read_text(encoding="utf-8"))
+        if repaired is not None and not validate(repaired):
+            out.write_text(repaired, encoding="utf-8")
+            print("    示唆の節を定型文に置き換えて合格", flush=True)
+            return True
     if out.exists():
         rejected = out.with_name(out.stem + ".rejected.md")
         rejected.unlink(missing_ok=True)
@@ -1088,6 +1121,7 @@ def process_hall(key: str, day_dir: Path, yesterday: str, today: str, dry_run: b
             part("answercheck"),
             lambda text: validate_answercheck(text, answer_day, facts, table, facts_md),
             "%s 答え合わせ" % key,
+            repair=replace_suggestion,
         )
         if ok and facts_md:
             inject_facts(part("answercheck"), facts_md)
