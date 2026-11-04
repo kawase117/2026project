@@ -1,0 +1,190 @@
+{
+  "rule_id": "kamata7_model_term60_top3",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "freeze_hash": "b5bec81d02cedc0e",
+  "target_date": "20261104",
+  "data_asof": "20261103",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-09-05",
+    "2026-11-04"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +75 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "戦国コレクション6",
+      "score": 553.686247,
+      "history_rows": 58,
+      "machines": [
+        2306,
+        2307,
+        2308,
+        2309
+      ]
+    },
+    {
+      "machine_name": "からくりサーカス",
+      "score": 210.603431,
+      "history_rows": 275,
+      "machines": [
+        3202,
+        3203,
+        3204,
+        3205,
+        3206,
+        3207,
+        3208
+      ]
+    },
+    {
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 194.444432,
+      "history_rows": 375,
+      "machines": [
+        2001,
+        2002,
+        2003,
+        2004,
+        2005,
+        2006,
+        2125,
+        2126,
+        2127,
+        2128
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 2306,
+      "machine_name": "戦国コレクション6",
+      "score": 553.686247,
+      "history_days": 58
+    },
+    {
+      "machine_number": 2307,
+      "machine_name": "戦国コレクション6",
+      "score": 553.686247,
+      "history_days": 58
+    },
+    {
+      "machine_number": 2308,
+      "machine_name": "戦国コレクション6",
+      "score": 553.686247,
+      "history_days": 58
+    },
+    {
+      "machine_number": 2309,
+      "machine_name": "戦国コレクション6",
+      "score": 553.686247,
+      "history_days": 58
+    },
+    {
+      "machine_number": 3202,
+      "machine_name": "からくりサーカス",
+      "score": 210.603431,
+      "history_days": 275
+    },
+    {
+      "machine_number": 3203,
+      "machine_name": "からくりサーカス",
+      "score": 210.603431,
+      "history_days": 275
+    },
+    {
+      "machine_number": 3204,
+      "machine_name": "からくりサーカス",
+      "score": 210.603431,
+      "history_days": 275
+    },
+    {
+      "machine_number": 3205,
+      "machine_name": "からくりサーカス",
+      "score": 210.603431,
+      "history_days": 275
+    },
+    {
+      "machine_number": 3206,
+      "machine_name": "からくりサーカス",
+      "score": 210.603431,
+      "history_days": 275
+    },
+    {
+      "machine_number": 3207,
+      "machine_name": "からくりサーカス",
+      "score": 210.603431,
+      "history_days": 275
+    },
+    {
+      "machine_number": 3208,
+      "machine_name": "からくりサーカス",
+      "score": 210.603431,
+      "history_days": 275
+    },
+    {
+      "machine_number": 2001,
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 194.444432,
+      "history_days": 375
+    },
+    {
+      "machine_number": 2002,
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 194.444432,
+      "history_days": 375
+    },
+    {
+      "machine_number": 2003,
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 194.444432,
+      "history_days": 375
+    },
+    {
+      "machine_number": 2004,
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 194.444432,
+      "history_days": 375
+    },
+    {
+      "machine_number": 2005,
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 194.444432,
+      "history_days": 375
+    },
+    {
+      "machine_number": 2006,
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 194.444432,
+      "history_days": 375
+    },
+    {
+      "machine_number": 2125,
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 194.444432,
+      "history_days": 375
+    },
+    {
+      "machine_number": 2126,
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 194.444432,
+      "history_days": 375
+    },
+    {
+      "machine_number": 2127,
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 194.444432,
+      "history_days": 375
+    },
+    {
+      "machine_number": 2128,
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 194.444432,
+      "history_days": 375
+    }
+  ],
+  "result": null,
+  "plan_digest": "0e6ea34af0e53c90"
+}

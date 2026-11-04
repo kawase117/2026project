@@ -1,0 +1,120 @@
+{
+  "rule_id": "heiwajima_model_term60_top3",
+  "hall": "レイトギャップ平和島",
+  "freeze_hash": "80fab02ec0c44816",
+  "target_date": "20261104",
+  "data_asof": "20261103",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-09-05",
+    "2026-11-04"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +81 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 382.617985,
+      "history_rows": 206,
+      "machines": [
+        933,
+        934,
+        935,
+        936
+      ]
+    },
+    {
+      "machine_name": "モンスターハンターライズ：サンブレイク",
+      "score": 329.976536,
+      "history_rows": 120,
+      "machines": [
+        901,
+        902,
+        903,
+        904
+      ]
+    },
+    {
+      "machine_name": "新鬼武者3",
+      "score": 237.724858,
+      "history_rows": 156,
+      "machines": [
+        898,
+        899,
+        900
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 933,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 382.617985,
+      "history_days": 206
+    },
+    {
+      "machine_number": 934,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 382.617985,
+      "history_days": 206
+    },
+    {
+      "machine_number": 935,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 382.617985,
+      "history_days": 206
+    },
+    {
+      "machine_number": 936,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 382.617985,
+      "history_days": 206
+    },
+    {
+      "machine_number": 901,
+      "machine_name": "モンスターハンターライズ：サンブレイク",
+      "score": 329.976536,
+      "history_days": 120
+    },
+    {
+      "machine_number": 902,
+      "machine_name": "モンスターハンターライズ：サンブレイク",
+      "score": 329.976536,
+      "history_days": 120
+    },
+    {
+      "machine_number": 903,
+      "machine_name": "モンスターハンターライズ：サンブレイク",
+      "score": 329.976536,
+      "history_days": 120
+    },
+    {
+      "machine_number": 904,
+      "machine_name": "モンスターハンターライズ：サンブレイク",
+      "score": 329.976536,
+      "history_days": 120
+    },
+    {
+      "machine_number": 898,
+      "machine_name": "新鬼武者3",
+      "score": 237.724858,
+      "history_days": 156
+    },
+    {
+      "machine_number": 899,
+      "machine_name": "新鬼武者3",
+      "score": 237.724858,
+      "history_days": 156
+    },
+    {
+      "machine_number": 900,
+      "machine_name": "新鬼武者3",
+      "score": 237.724858,
+      "history_days": 156
+    }
+  ],
+  "result": null,
+  "plan_digest": "c5680d42d7f8b9c5"
+}
