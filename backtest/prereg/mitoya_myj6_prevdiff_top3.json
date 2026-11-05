@@ -1,0 +1,21 @@
+{
+  "rule_id": "mitoya_myj6_prevdiff_top3",
+  "hall": "みとや大森町店",
+  "hypothesis": "対照: マイジャグラーⅥの前日差枚の上位3台。LESSONS L001 のとおり効かないと予想する。mitoya_myj6_prevph_top3 との差で、phで選ぶことの上積みを測る。",
+  "source_instinct": "backtest/prereg/retired/mitoya_mjv_prevdiff_top3.json の後継(2026-11-06 ユーザー指示)。元は document/reviews/2026-10-31-pattern-scan-mitoya.md 案1の対照",
+  "eval_start": "20261019",
+  "eval_end": "20261105",
+  "success_criterion": "対照なので成功の基準は置かない。2026-11-06〜12-05 のエッジの平均と95%区間を記録し、mitoya_myj6_prevph_top3 と比べる。",
+  "universe": {
+    "machine_name": "マイジャグラーⅥ"
+  },
+  "eligibility": {
+    "machine_name": "マイジャグラーⅥ"
+  },
+  "entry_days": {},
+  "score": "hist_mean_diff",
+  "lookback_days": 1,
+  "min_history_days": 1,
+  "top_n": 3,
+  "min_games": 0
+}

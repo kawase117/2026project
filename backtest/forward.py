@@ -236,7 +236,11 @@ def plan(reg: PreRegistration, target_date: str, allow_past: bool = False) -> di
 
 def _reg_from_plan(plan_obj: dict) -> PreRegistration:
     """plan が参照している事前登録を読み直し、ハッシュ一致を検証する。"""
-    reg = PreRegistration.load(PREREG_DIR / f"{plan_obj['rule_id']}.json")
+    # 引退した規則は retired/ に置く。plan-all の対象からは外れるが、凍結済みの plan はまだ採点できる。
+    path = PREREG_DIR / f"{plan_obj['rule_id']}.json"
+    if not path.exists():
+        path = PREREG_DIR / "retired" / path.name
+    reg = PreRegistration.load(path)
     if reg.freeze_hash() != plan_obj["freeze_hash"]:
         raise ValueError(
             "事前登録が plan 作成後に書き換えられている。"

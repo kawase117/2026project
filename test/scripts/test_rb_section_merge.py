@@ -58,10 +58,10 @@ def test_trial_section_lists_frozen_picks_without_freeze_trigger_words(tmp_path,
     """試験枠の表は凍結の拾い出し(判断:・「避け」・ジャグラー候補)に当たらない。多すぎる選択は台数だけ。"""
     monkeypatch.setattr(morning, "FORWARD_DIR", tmp_path)
     picks = lambda units: json.dumps({"picks": [{"machine_number": u} for u in units]})  # noqa: E731
-    (tmp_path / "mitoya_mjv_prevph_top3__20261101.json").write_text(picks([652, 660, 663]), encoding="utf-8")
+    (tmp_path / "mitoya_myj6_prevph_top3__20261101.json").write_text(picks([652, 660, 663]), encoding="utf-8")
     (tmp_path / "rakuen_corner_avoid__20261101.json").write_text(picks(range(1, 41)), encoding="utf-8")
     text = morning.trial_section("20261101")
-    assert "| みとや | マイジャグラーVの前日ph上位3台 | 推す側 | 652・660・663 |" in text
+    assert "| みとや | マイジャグラーⅥの前日ph上位3台 | 推す側 | 652・660・663 |" in text
     assert "40台(条件に合う台すべて)" in text
     assert "蒲田7" not in text  # 凍結の無い規則は行を出さない
     assert "避" not in text and "ジャグラー候補" not in text

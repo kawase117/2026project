@@ -1,0 +1,21 @@
+{
+  "rule_id": "mitoya_myj6_prevph_top3",
+  "hall": "みとや大森町店",
+  "hypothesis": "みとやのマイジャグラーⅥは、前日の設定5以上の事後確率(ph)が上位の3台が、当日も同機種の他の台より上。マイジャグラーVで見た傾向(8〜9月 +309、10月 +335)が機種の入れ替え後も続くかを確かめる。",
+  "source_instinct": "backtest/prereg/retired/mitoya_mjv_prevph_top3.json の後継(2026-11-06 ユーザー指示)。元は document/reviews/2026-10-31-pattern-scan-mitoya.md 案1。Vの実績は引き継がない。Ⅵへの持ち越しは未検証で、10/19に18台導入、11/02から34台の新台の時期を含む",
+  "eval_start": "20261019",
+  "eval_end": "20261105",
+  "success_criterion": "2026-11-06〜12-05 の日数が20以上で、エッジ(3台の差枚 − 同日マイジャグラーⅥ全台平均)の平均の95%区間の下限 > 0。対照の mitoya_myj6_prevdiff_top3 を上回ること。",
+  "universe": {
+    "machine_name": "マイジャグラーⅥ"
+  },
+  "eligibility": {
+    "machine_name": "マイジャグラーⅥ"
+  },
+  "entry_days": {},
+  "score": "prev_day_ph",
+  "lookback_days": 30,
+  "min_history_days": 1,
+  "top_n": 3,
+  "min_games": 0
+}
