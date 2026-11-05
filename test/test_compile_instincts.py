@@ -262,6 +262,33 @@ def test_ttl_retires_stale_records_unless_confirmed(tmp_path: Path) -> None:
     assert with_ttl == {"kept-claim", "fresh-claim"}
 
 
+def test_confirmed_record_survives_low_confidence_and_age(tmp_path: Path) -> None:
+    # 人が確認した記録が、古さと confidence で落ちていた(2026-11-06 棚卸しで confirmed が1件も ACTIVE に無かった)
+    old_date = (datetime.now(timezone.utc).date() - timedelta(days=200)).isoformat()
+    write_instinct(
+        tmp_path / f"{old_date}-kept.yaml",
+        header=_relation_header("kept-claim", confidence=0.7) + "\nverification_status: confirmed",
+    )
+    write_instinct(tmp_path / f"{old_date}-old.yaml", header=_relation_header("old-claim", confidence=0.7))
+    records = ci.dedupe_latest(ci.collect_records(tmp_path, include_underscored_sources=False))
+    kept = {r.record_id for r in ci.filter_records(records, 0.80, 0.95, 21, False, ttl_days=180)}
+    assert kept == {"kept-claim"}
+
+
+def test_confirmed_record_is_not_cut_by_max_records(tmp_path: Path) -> None:
+    old_date = (datetime.now(timezone.utc).date() - timedelta(days=100)).isoformat()
+    write_instinct(
+        tmp_path / f"{old_date}-kept.yaml",
+        header=_relation_header("kept-claim", confidence=0.7) + "\nverification_status: confirmed",
+    )
+    for i in range(3):
+        write_instinct(tmp_path / f"{old_date}-high{i}.yaml", header=_relation_header(f"high-{i}", confidence=0.99))
+    records = ci.dedupe_latest(ci.collect_records(tmp_path, include_underscored_sources=False))
+    ranked = ci.filter_records(records, 0.80, 0.95, 21, False, ttl_days=180)
+    selected = ci.allocate_records(ranked, 2, 21, 0)
+    assert "kept-claim" in {r.record_id for r in selected}
+
+
 def test_extract_action_prefers_japanese_action_heading(tmp_path: Path) -> None:
     body = "# title\n\n## 背景\nbackground line\n\n## アクション\n- 折り返された\n  指針の続き\n\n## 例\nexample\n"
     assert ci.extract_action(body, "fallback trigger") == "折り返された 指針の続き"

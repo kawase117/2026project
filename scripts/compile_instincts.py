@@ -456,8 +456,12 @@ def filter_records(
         if not include_refuted and record.verification_status in EXCLUDED_STATUSES:
             continue
 
-        # Anything explicitly confirmed is exempt: someone vouched for it.
-        if ttl_cutoff is not None and record.verification_status != "confirmed" and record.file_date:
+        # Anything explicitly confirmed is exempt from TTL, recency and confidence: someone vouched for it.
+        if record.verification_status == "confirmed":
+            filtered.append(record)
+            continue
+
+        if ttl_cutoff is not None and record.file_date:
             try:
                 if datetime.strptime(record.file_date, "%Y-%m-%d").date() < ttl_cutoff:
                     continue
@@ -654,7 +658,12 @@ def allocate_records(
         )
 
     recent = sorted((r for r in records if is_recent(r)), key=by_date, reverse=True)
-    older = sorted((r for r in records if not is_recent(r)), key=lambda r: sort_key(r), reverse=True)
+    # 確認済みは confidence に関わらず上限で切らない
+    older = sorted(
+        (r for r in records if not is_recent(r)),
+        key=lambda r: (r.verification_status == "confirmed", *sort_key(r)),
+        reverse=True,
+    )
 
     quota = max(0, min(recent_slots, max_records))
     selected = recent[:quota]
