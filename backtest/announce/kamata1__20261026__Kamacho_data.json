@@ -1,0 +1,39 @@
+{
+  "announce_id": "kamata1__20261026__Kamacho_data",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "target_date": "20261026",
+  "source": {
+    "account": "Kamacho_data",
+    "url": "",
+    "posted_at": "2026-10-25T22:15:16+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "10/26(月) メガシティ蒲田1 あかまる来店取材 過去の結果\n\nイベント日ごとの総差枚\n\n10/3(土)　+58,000枚\n9/11(金)　+99,000枚\n平均：+78,500枚\n\n過去2回すべてプラス\n今回も続くか…\n\n狙い目はリプにぶら下げときます。\n\n#メガシティ蒲田1 #マルハンメガシティ2000蒲田1",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"マルハンメガシティ2000-蒲田1\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-26\", \"2026-10-24\"], \"n_days\": 90, \"n_model_days\": 4359, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2223.9, \"models_over_threshold_per_day\": {\"mean\": 2.42, \"median\": 2.0, \"max\": 7}, \"candidate_models_per_day\": 48.4, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.2, \"median\": 3.0, \"max\": 8}, \"p_at_least_1\": 0.956, \"p_at_least_2\": 0.8, \"p_at_least_3\": 0.578, \"p_at_least_4\": 0.389, \"p_at_least_10\": 0.0}}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [],
+  "unscored_claims": [],
+  "needs_manual_review": true,
+  "no_confirmed_machines": true,
+  "result": {
+    "scored_at_data_max": "20261026",
+    "hall_baseline_mean_diff": -21.4,
+    "hall_n_machines": 365,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": []
+  },
+  "announce_digest": "9e8085fd73b443b1",
+  "provisional": true
+}

@@ -1,0 +1,39 @@
+{
+  "announce_id": "kamata7__20261102__kawasakislot",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "target_date": "20261102",
+  "source": {
+    "account": "kawasakislot",
+    "url": "",
+    "posted_at": "2026-11-01T19:47:33+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "明日メガ7来店まじかww\nウスイさんと同じくらいイケメンだなぁ...\n愛のハイエナめっちゃ見てます←",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"マルハンメガシティ2000-蒲田7\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-08-02\", \"2026-10-31\"], \"n_days\": 89, \"n_model_days\": 5751, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2187.3, \"models_over_threshold_per_day\": {\"mean\": 3.24, \"median\": 3.0, \"max\": 9}, \"candidate_models_per_day\": 64.6, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 4.07, \"median\": 3.0, \"max\": 10}, \"p_at_least_1\": 0.989, \"p_at_least_2\": 0.944, \"p_at_least_3\": 0.742, \"p_at_least_4\": 0.494, \"p_at_least_10\": 0.022}}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [],
+  "unscored_claims": [],
+  "needs_manual_review": true,
+  "no_confirmed_machines": true,
+  "result": {
+    "scored_at_data_max": "20261102",
+    "hall_baseline_mean_diff": 137.8,
+    "hall_n_machines": 715,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": []
+  },
+  "announce_digest": "9b40965089d30754",
+  "provisional": true
+}

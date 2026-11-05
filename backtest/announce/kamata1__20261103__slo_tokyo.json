@@ -1,0 +1,347 @@
+{
+  "announce_id": "kamata1__20261103__slo_tokyo",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "target_date": "20261103",
+  "source": {
+    "account": "slo_tokyo",
+    "url": "",
+    "posted_at": "2026-11-02T18:42:51+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "2026-11-01 マルハンメガシティ2000蒲田1 ｜結果速報\n\n■①の付く日、よこやん就任日\n\n東京大戦、あしなっくす来店\n\nピック28.2%(103/365)\n\n■ 全系(3機種)\n・スマスロ北斗の拳\n・マイジャグラーV\n・攻殻機動隊\n\n■ 1/2(6機種)\n・マギアレコード 魔法少女まどか☆マギカ外伝\n・甲鉄城のカバネリ 海門(うなと)決戦\n・リコリス・リコイル\n・東京喰種\n・化物語\n・ジャグラーガールズ\n\n■ 2台並び(3箇所)\n・ミリオンゴッド‐神々の軌跡‐\n・スマスロ サンダーV〜ディスクアップ ULTRAREMIX\n・ファンキージャグラー2\n\n■ その他(36台)",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"マルハンメガシティ2000-蒲田1\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-08-04\", \"2026-11-02\"], \"n_days\": 89, \"n_model_days\": 4326, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2166.8, \"models_over_threshold_per_day\": {\"mean\": 2.44, \"median\": 2.0, \"max\": 7}, \"candidate_models_per_day\": 48.6, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.13, \"median\": 3.0, \"max\": 8}, \"p_at_least_1\": 0.955, \"p_at_least_2\": 0.787, \"p_at_least_3\": 0.551, \"p_at_least_4\": 0.371, \"p_at_least_10\": 0.0}} / named_context: {\"as_of\": \"20261102\", \"window_days\": 30, \"n_candidates_ge3machines\": 55, \"hall_over_threshold_rate_approx\": 0.018, \"threshold\": 1800.0, \"models\": [{\"name\": \"ジャグラーガールズ\", \"n_machines\": 4, \"rank\": 23, \"of\": 55, \"n_days_present\": 30, \"over_threshold\": 4, \"rate\": 0.133, \"mean_score\": 452.2}, {\"name\": \"スマスロ サンダーV\", \"n_machines\": 1, \"rank\": null, \"of\": 55, \"n_days_present\": 30, \"over_threshold\": 2, \"rate\": 0.067, \"mean_score\": 377.8}, {\"name\": \"スマスロ北斗の拳\", \"n_machines\": 7, \"rank\": 16, \"of\": 55, \"n_days_present\": 30, \"over_threshold\": 5, \"rate\": 0.167, \"mean_score\": 656.5}, {\"name\": \"ディスクアップ ULTRAREMIX\", \"n_machines\": 1, \"rank\": null, \"of\": 55, \"n_days_present\": 30, \"over_threshold\": 5, \"rate\": 0.167, \"mean_score\": 228.8}, {\"name\": \"ファンキージャグラー2\", \"n_machines\": 16, \"rank\": 36, \"of\": 55, \"n_days_present\": 30, \"over_threshold\": 0, \"rate\": 0.0, \"mean_score\": 160.5}, {\"name\": \"マイジャグラーV\", \"n_machines\": 16, \"rank\": 28, \"of\": 55, \"n_days_present\": 30, \"over_threshold\": 0, \"rate\": 0.0, \"mean_score\": 162.4}, {\"name\": \"マギアレコード 魔法少女まどか☆マギカ外伝\", \"n_machines\": 5, \"rank\": 46, \"of\": 55, \"n_days_present\": 30, \"over_threshold\": 1, \"rate\": 0.033, \"mean_score\": 148.1}, {\"name\": \"ミリオンゴッド‐神々の軌跡‐\", \"n_machines\": 8, \"rank\": 8, \"of\": 55, \"n_days_present\": 30, \"over_threshold\": 2, \"rate\": 0.067, \"mean_score\": 12.1}, {\"name\": \"リコリス・リコイル\", \"n_machines\": 12, \"rank\": 6, \"of\": 55, \"n_days_present\": 30, \"over_threshold\": 0, \"rate\": 0.0, \"mean_score\": -109.0}, {\"name\": \"化物語\", \"n_machines\": 2, \"rank\": null, \"of\": 55, \"n_days_present\": 29, \"over_threshold\": 1, \"rate\": 0.034, \"mean_score\": -113.9}, {\"name\": \"攻殻機動隊\", \"n_machines\": 3, \"rank\": 38, \"of\": 55, \"n_days_present\": 30, \"over_threshold\": 2, \"rate\": 0.067, \"mean_score\": 100.3}, {\"name\": \"東京喰種\", \"n_machines\": 20, \"rank\": 37, \"of\": 55, \"n_days_present\": 30, \"over_threshold\": 1, \"rate\": 0.033, \"mean_score\": 142.0}, {\"name\": \"甲鉄城のカバネリ\", \"n_machines\": 2, \"rank\": null, \"of\": 55, \"n_days_present\": 29, \"over_threshold\": 0, \"rate\": 0.0, \"mean_score\": -45.3}, {\"name\": \"甲鉄城のカバネリ 海門(うなと)決戦\", \"n_machines\": 15, \"rank\": 31, \"of\": 55, \"n_days_present\": 30, \"over_threshold\": 1, \"rate\": 0.033, \"mean_score\": 318.3}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "ジャグラーガールズ",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "スマスロ サンダーV",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "スマスロ北斗の拳",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "ディスクアップ ULTRAREMIX",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "ファンキージャグラー2",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "マイジャグラーV",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。 ヒント: 1/2系の可能性(model_named_ratioならratio指定が必要)"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。 ヒント: 1/2系の可能性(model_named_ratioならratio指定が必要)"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "ミリオンゴッド‐神々の軌跡‐",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "リコリス・リコイル",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "化物語",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "攻殻機動隊",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。 ヒント: 1/2系の可能性(model_named_ratioならratio指定が必要)"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "東京喰種",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "甲鉄城のカバネリ",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    }
+  ],
+  "unscored_claims": [
+    {
+      "text": "ディスクアップ2(部分一致score=0.875)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    },
+    {
+      "text": "マイジャグラーⅥ(部分一致score=0.875)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    },
+    {
+      "text": "ULTRAMAN(部分一致score=0.625)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    }
+  ],
+  "needs_manual_review": true,
+  "no_confirmed_machines": false,
+  "result": {
+    "scored_at_data_max": "20261103",
+    "hall_baseline_mean_diff": -26.0,
+    "hall_n_machines": 365,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ジャグラーガールズ",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 132.2,
+        "mean_diff": 125.0,
+        "gratio": 1.058,
+        "n_machines": 4,
+        "rank": 22,
+        "candidate_models": 55,
+        "age_days": 671,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "スマスロ サンダーV",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "hit": null,
+        "note": "当日 スマスロ サンダーV が設置3台以上の候補に無い（撤去・台数不足・表記ゆれ）"
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "スマスロ北斗の拳",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -566.2,
+        "mean_diff": -657.1,
+        "gratio": 0.862,
+        "n_machines": 7,
+        "rank": 41,
+        "candidate_models": 55,
+        "age_days": 671,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ディスクアップ ULTRAREMIX",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "hit": null,
+        "note": "当日 ディスクアップ ULTRAREMIX が設置3台以上の候補に無い（撤去・台数不足・表記ゆれ）"
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ファンキージャグラー2",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 1394.1,
+        "mean_diff": 906.2,
+        "gratio": 1.538,
+        "n_machines": 16,
+        "rank": 6,
+        "candidate_models": 55,
+        "age_days": 671,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "マイジャグラーV",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。 ヒント: 1/2系の可能性(model_named_ratioならratio指定が必要)"
+        },
+        "score": 432.9,
+        "mean_diff": 306.2,
+        "gratio": 1.413,
+        "n_machines": 16,
+        "rank": 14,
+        "candidate_models": 55,
+        "age_days": 671,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。 ヒント: 1/2系の可能性(model_named_ratioならratio指定が必要)"
+        },
+        "score": -26.2,
+        "mean_diff": -40.0,
+        "gratio": 0.655,
+        "n_machines": 5,
+        "rank": 27,
+        "candidate_models": 55,
+        "age_days": 574,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ミリオンゴッド‐神々の軌跡‐",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -139.1,
+        "mean_diff": -137.5,
+        "gratio": 1.012,
+        "n_machines": 8,
+        "rank": 34,
+        "candidate_models": 55,
+        "age_days": 197,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "リコリス・リコイル",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 586.1,
+        "mean_diff": 416.7,
+        "gratio": 1.407,
+        "n_machines": 12,
+        "rank": 11,
+        "candidate_models": 55,
+        "age_days": 56,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "化物語",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "hit": null,
+        "note": "当日 化物語 が設置3台以上の候補に無い（撤去・台数不足・表記ゆれ）"
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "攻殻機動隊",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。 ヒント: 1/2系の可能性(model_named_ratioならratio指定が必要)"
+        },
+        "score": 667.3,
+        "mean_diff": 1500.0,
+        "gratio": 0.445,
+        "n_machines": 3,
+        "rank": 10,
+        "candidate_models": 55,
+        "age_days": 274,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "東京喰種",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -54.0,
+        "mean_diff": -55.0,
+        "gratio": 0.982,
+        "n_machines": 20,
+        "rank": 28,
+        "candidate_models": 55,
+        "age_days": 637,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "甲鉄城のカバネリ",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "hit": null,
+        "note": "当日 甲鉄城のカバネリ が設置3台以上の候補に無い（撤去・台数不足・表記ゆれ）"
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 115.0,
+        "mean_diff": 140.0,
+        "gratio": 0.821,
+        "n_machines": 15,
+        "rank": 23,
+        "candidate_models": 55,
+        "age_days": 246,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
+  "announce_digest": "2f93361946f72565",
+  "provisional": true
+}

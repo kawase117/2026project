@@ -1,0 +1,48 @@
+{
+  "announce_id": "arrow__20261105__Kamacho_data",
+  "hall": "ARROW池上店",
+  "target_date": "20261105",
+  "source": {
+    "account": "Kamacho_data",
+    "url": "",
+    "posted_at": "2026-11-04T21:12:03+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "11/5(木) 5のつく日！\n\n前回（10/25(日)）のジャグラーシリーズ、\n平均差枚はこんな感じでした。\n\nヒロキ西口 +246枚（52台）\nARROW池上 +234枚（80台）\n金時蒲田東口 +210枚（78台）\n\n過去データはnoteメンバーシップでのみ配信中\n#ヒロキ西口",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"ARROW池上店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-08-06\", \"2026-11-04\"], \"n_days\": 90, \"n_model_days\": 2731, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2186.4, \"models_over_threshold_per_day\": {\"mean\": 1.52, \"median\": 1.0, \"max\": 10}, \"candidate_models_per_day\": 30.3, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 2.03, \"median\": 1.0, \"max\": 10}, \"p_at_least_1\": 0.8, \"p_at_least_2\": 0.478, \"p_at_least_3\": 0.322, \"p_at_least_4\": 0.2, \"p_at_least_10\": 0.011}}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [],
+  "unscored_claims": [
+    {
+      "text": "マイジャグラーV(部分一致score=0.625)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    },
+    {
+      "text": "マイジャグラーⅥ(部分一致score=0.625)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    }
+  ],
+  "needs_manual_review": false,
+  "no_confirmed_machines": true,
+  "result": null,
+  "announce_digest": "5a6d429b7ee55d57",
+  "provisional": true,
+  "amendments": [
+    {
+      "at": "2026-11-05T11:21:01+09:00",
+      "prev_digest": "0ef282e70dc1f536",
+      "reason": "過去回(10/25)のジャグラー平均差枚の集計で、当日の公約を含まない。予告ではない",
+      "void": true,
+      "amended_after_target": false
+    }
+  ],
+  "voided": true
+}

@@ -1,0 +1,39 @@
+{
+  "announce_id": "hiroki__20261101__Kamacho_data",
+  "hall": "ヒロキ東口店",
+  "target_date": "20261101",
+  "source": {
+    "account": "Kamacho_data",
+    "url": "",
+    "posted_at": "2026-10-31T21:44:18+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "11/1(日) ヒロキ東口 ヒロキバトル 過去の結果\n\nイベント日ごとの総差枚\n\n10/3(土)　-34,937枚\n9/5(土)　+19,685枚\n8/1(土)　+7,163枚\n7/4(土)　-53,778枚\n5/2(土)　+824枚\n平均：-12,209枚\n\n過去5回中3回プラス\n今回も続くか…\n\n狙い目はリプにぶら下げときます。\n\n#ヒロキ東口",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"ヒロキ東口店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-08-01\", \"2026-10-30\"], \"n_days\": 90, \"n_model_days\": 3604, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 1457.2, \"models_over_threshold_per_day\": {\"mean\": 2.01, \"median\": 2.0, \"max\": 8}, \"candidate_models_per_day\": 40.0, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 1.54, \"median\": 1.0, \"max\": 5}, \"p_at_least_1\": 0.733, \"p_at_least_2\": 0.411, \"p_at_least_3\": 0.222, \"p_at_least_4\": 0.122, \"p_at_least_10\": 0.0}}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [],
+  "unscored_claims": [],
+  "needs_manual_review": true,
+  "no_confirmed_machines": true,
+  "result": {
+    "scored_at_data_max": "20261101",
+    "hall_baseline_mean_diff": -129.4,
+    "hall_n_machines": 279,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": []
+  },
+  "announce_digest": "9499bec1ee951a82",
+  "provisional": true
+}

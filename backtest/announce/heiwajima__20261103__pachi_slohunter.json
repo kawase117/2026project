@@ -1,0 +1,39 @@
+{
+  "announce_id": "heiwajima__20261103__pachi_slohunter",
+  "hall": "レイトギャップ平和島",
+  "target_date": "20261103",
+  "source": {
+    "account": "pachi_slohunter",
+    "url": "",
+    "posted_at": "2026-11-02T19:20:00+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "ガイの注目店舗\n⠀\n11/3\nレイトギャップ平和島\n⠀\nHALF STRONG取材\n⠀\n今回の最重要仕掛け\n1/2以上が優秀以上の機種\n10機種以上に期待\n⠀\n今回の注目候補\nミリオンゴッド-神々の軌跡-\n11/2〜11/8の週間オススメ機種\n⠀\n立ち回り\n前日の新装開店の状況を確認\n複数台が好挙動なら同機種も探索\nメインだけでなく少数台機種も視野に\n⠀\n今後のスケジュール\n11/4 裏全撃来店取材\n11/5 GO TO REITO\n11/6 裏破天荒来店取材×RG\n⠀\n新装翌日のHALF STRONG取材\n機種単位の仕掛けに期待",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"レイトギャップ平和島\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-08-04\", \"2026-11-02\"], \"n_days\": 90, \"n_model_days\": 4051, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 1921.0, \"models_over_threshold_per_day\": {\"mean\": 2.26, \"median\": 2.0, \"max\": 7}, \"candidate_models_per_day\": 45.0, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 2.5, \"median\": 2.0, \"max\": 7}, \"p_at_least_1\": 0.922, \"p_at_least_2\": 0.711, \"p_at_least_3\": 0.456, \"p_at_least_4\": 0.244, \"p_at_least_10\": 0.0}}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [],
+  "unscored_claims": [],
+  "needs_manual_review": true,
+  "no_confirmed_machines": true,
+  "result": {
+    "scored_at_data_max": "20261103",
+    "hall_baseline_mean_diff": -171.0,
+    "hall_n_machines": 423,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": []
+  },
+  "announce_digest": "c9527206356e7f00",
+  "provisional": true
+}

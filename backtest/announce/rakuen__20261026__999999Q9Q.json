@@ -1,0 +1,51 @@
+{
+  "announce_id": "rakuen__20261026__999999Q9Q",
+  "hall": "楽園蒲田店",
+  "target_date": "20261026",
+  "source": {
+    "account": "999999Q9Q",
+    "url": "",
+    "posted_at": "2026-10-25T23:19:21+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "【vs楽園の次はvsヒロキ3店舗！？】\nGALAXYウスイのメガなな予想\n\n明日のメガななは珍しく取材あり。中身としては、ネーミングからビシバシ伝わってくるが、ニブイチ配分が10機種以上あると考えられる。\n時同じくして明日の蒲田、ヒロキ3店舗が合同でニブイチ匂わせの取材を敢行。これは真正面からぶつけてきたということだろう\n\n月曜の列仕掛けは一旦忘れて良し（というかニブイチの組み合わせで勝手にどこかにニブイチ列ができそうだが…）。日頃から単品も数多存在するメガななであれば、ニブイチ10機種などあくまで最低ラインとなるに違いない。\n\nさあ明日も元気よく、店頭で手引き抽選と洒落込もうか。\n\n#マルハンメガシティ2000蒲田7",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"楽園蒲田店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-26\", \"2026-10-24\"], \"n_days\": 90, \"n_model_days\": 5088, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2295.2, \"models_over_threshold_per_day\": {\"mean\": 2.83, \"median\": 3.0, \"max\": 11}, \"candidate_models_per_day\": 56.5, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.92, \"median\": 3.0, \"max\": 13}, \"p_at_least_1\": 0.978, \"p_at_least_2\": 0.922, \"p_at_least_3\": 0.689, \"p_at_least_4\": 0.489, \"p_at_least_10\": 0.011}}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [],
+  "unscored_claims": [
+    {
+      "text": "GALFY(部分一致score=0.6)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    }
+  ],
+  "needs_manual_review": true,
+  "no_confirmed_machines": true,
+  "result": {
+    "scored_at_data_max": "20261026",
+    "hall_baseline_mean_diff": 8.5,
+    "hall_n_machines": 587,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 1,
+      "n_censored_lo": 0,
+      "machines_hi": [
+        "甲鉄城のカバネリ 海門(うなと)決戦"
+      ],
+      "machines_lo": [],
+      "bounds": [
+        -5095,
+        15477
+      ]
+    },
+    "claims": []
+  },
+  "announce_digest": "7475c6dca6932fc0",
+  "provisional": true
+}

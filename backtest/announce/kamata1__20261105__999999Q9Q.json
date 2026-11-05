@@ -1,0 +1,52 @@
+{
+  "announce_id": "kamata1__20261105__999999Q9Q",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "target_date": "20261105",
+  "source": {
+    "account": "999999Q9Q",
+    "url": "",
+    "posted_at": "2026-11-04T23:17:47+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "【ジャグラー強化の1日がやって来ました】\nよこやんの新章メガいち伝説予想\n\n明日は5の付く日。よこやん采配によるジャグラーシリーズの全域強化が展開されるとされている。全機種仕掛けも基本通りあるので、ジャグラーを押さえつつAT機側も虎視眈々と探すべし。\n\n個人的には全をピンポイントで狙うというより、全域に散りばめられたピン差しの当たりに辿り着く方が簡単な気もする\n\nひと粒→1粒→ワン\n→ファンキージャグラー？\n\n甘いチョコ→スイート→ときめきスイート\n→ToLOVEる？\n\n異色コンビ→異色→異色BC\n→絆2天膳？\n\nセブンアイ→セブン→7台設置機種\n→スマスロ北斗？\n→モンハンサンブレイク？\n\nグミ→ぐみ\n→戦国乙女5？\n\n#マルハンメガシティ2000蒲田1",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"マルハンメガシティ2000-蒲田1\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-08-05\", \"2026-11-03\"], \"n_days\": 90, \"n_model_days\": 4383, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2160.1, \"models_over_threshold_per_day\": {\"mean\": 2.44, \"median\": 2.0, \"max\": 7}, \"candidate_models_per_day\": 48.7, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.12, \"median\": 3.0, \"max\": 8}, \"p_at_least_1\": 0.956, \"p_at_least_2\": 0.778, \"p_at_least_3\": 0.556, \"p_at_least_4\": 0.367, \"p_at_least_10\": 0.0}} / named_context: {\"as_of\": \"20261103\", \"window_days\": 30, \"n_candidates_ge3machines\": 55, \"hall_over_threshold_rate_approx\": 0.055, \"threshold\": 1800.0, \"models\": [{\"name\": \"スマスロ北斗の拳\", \"n_machines\": 7, \"rank\": 41, \"of\": 55, \"n_days_present\": 30, \"over_threshold\": 6, \"rate\": 0.2, \"mean_score\": 725.9}, {\"name\": \"バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION\", \"n_machines\": 2, \"rank\": null, \"of\": 55, \"n_days_present\": 30, \"over_threshold\": 3, \"rate\": 0.1, \"mean_score\": 292.8}, {\"name\": \"モンスターハンターライズ\", \"n_machines\": 5, \"rank\": 18, \"of\": 55, \"n_days_present\": 30, \"over_threshold\": 1, \"rate\": 0.033, \"mean_score\": 143.2}, {\"name\": \"戦国乙女5 業火を穿つ宿焔の双刃\", \"n_machines\": 9, \"rank\": 17, \"of\": 55, \"n_days_present\": 30, \"over_threshold\": 5, \"rate\": 0.167, \"mean_score\": 236.0}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [],
+  "unscored_claims": [
+    {
+      "text": "ファンキージャグラー2(部分一致score=0.909)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    },
+    {
+      "text": "マイジャグラーV(部分一致score=0.625)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    },
+    {
+      "text": "マイジャグラーⅥ(部分一致score=0.625)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    }
+  ],
+  "needs_manual_review": false,
+  "no_confirmed_machines": true,
+  "result": null,
+  "announce_digest": "120b4c7bf36063f4",
+  "provisional": true,
+  "amendments": [
+    {
+      "at": "2026-11-06T04:12:32+09:00",
+      "prev_digest": "1a667a774aaa7341",
+      "reason": "claimsを空にする。北斗・モンハン・絆2・戦国乙女5は語呂合わせ(疑問符付き)の候補で断言ではない。本文の公約は『ジャグラー全域強化』(ユーザー了承、方針A)",
+      "void": false,
+      "amended_after_target": true
+    }
+  ]
+}

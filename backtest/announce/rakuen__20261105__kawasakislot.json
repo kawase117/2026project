@@ -1,0 +1,58 @@
+{
+  "announce_id": "rakuen__20261105__kawasakislot",
+  "hall": "楽園蒲田店",
+  "target_date": "20261105",
+  "source": {
+    "account": "kawasakislot",
+    "url": "",
+    "posted_at": "2026-11-04T20:19:10+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "11/5 楽園蒲田\n→四星(水星神・超太陽神)、毎日仕掛け\n\n明日も毎日仕掛けに加えて全⑥も\nアンケート内容を軸に立ち回り！\n・全⑥機種\n・3台並び⑤⑥×15カ所以上（各フロアに複数）\n・週間オススメのカバネリに注目\n　\nフロアごとに3台並びやりそうな機種をまとめると\n新館1F：おすすめ&1番扱い良いカバネリはほぼ毎日2か所以上\n新館2F：高頻度で2か所ある東京喰種・バラ並びや少数機種全もよく新館2Fから\n本館1F：都内最大設置のネオアイム\n本館2F：化物語、リコリコ\n本館3F：沖スロ、アクロス系、エウレカ、増台タコスロ\n\n超太陽神の時の全⑥は3～6台設置機種が高頻度でトロ報告もよく聞きますｗ\n10月月間実績で言うと攻殻機動隊/鉄拳/バジ天膳/バンドリ/東リベ\n\n5つくだし、ジャグラーシリーズの寄せも若干意識\n　\n抽選は9:40～\n抽選受けてカバネリ狙いに行きたいところですがそれ以外の機種も狙える機種多いので二の矢としても！",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"楽園蒲田店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-08-06\", \"2026-11-04\"], \"n_days\": 90, \"n_model_days\": 5088, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2342.2, \"models_over_threshold_per_day\": {\"mean\": 2.83, \"median\": 3.0, \"max\": 11}, \"candidate_models_per_day\": 56.5, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.93, \"median\": 3.0, \"max\": 13}, \"p_at_least_1\": 0.989, \"p_at_least_2\": 0.944, \"p_at_least_3\": 0.711, \"p_at_least_4\": 0.489, \"p_at_least_10\": 0.011}} / named_context: {\"as_of\": \"20261104\", \"window_days\": 30, \"n_candidates_ge3machines\": 57, \"hall_over_threshold_rate_approx\": 0.035, \"threshold\": 1800.0, \"models\": [{\"name\": \"タコスロ\", \"n_machines\": 5, \"rank\": 42, \"of\": 57, \"n_days_present\": 30, \"over_threshold\": 4, \"rate\": 0.133, \"mean_score\": 466.4}, {\"name\": \"ネオアイムジャグラーEX\", \"n_machines\": 66, \"rank\": 27, \"of\": 57, \"n_days_present\": 30, \"over_threshold\": 0, \"rate\": 0.0, \"mean_score\": 25.8}, {\"name\": \"リコリス・リコイル\", \"n_machines\": 22, \"rank\": 13, \"of\": 57, \"n_days_present\": 30, \"over_threshold\": 1, \"rate\": 0.033, \"mean_score\": 325.1}, {\"name\": \"交響詩篇エウレカセブン HI-EVOLUTION ZERO TYPE‐ART\", \"n_machines\": 25, \"rank\": 23, \"of\": 57, \"n_days_present\": 30, \"over_threshold\": 0, \"rate\": 0.0, \"mean_score\": 89.5}, {\"name\": \"化物語\", \"n_machines\": 9, \"rank\": 3, \"of\": 57, \"n_days_present\": 30, \"over_threshold\": 8, \"rate\": 0.267, \"mean_score\": 949.9}, {\"name\": \"攻殻機動隊\", \"n_machines\": 3, \"rank\": 46, \"of\": 57, \"n_days_present\": 30, \"over_threshold\": 6, \"rate\": 0.2, \"mean_score\": 597.2}, {\"name\": \"東京リベンジャーズ\", \"n_machines\": 4, \"rank\": 10, \"of\": 57, \"n_days_present\": 30, \"over_threshold\": 4, \"rate\": 0.133, \"mean_score\": 868.8}, {\"name\": \"東京喰種\", \"n_machines\": 18, \"rank\": 47, \"of\": 57, \"n_days_present\": 30, \"over_threshold\": 4, \"rate\": 0.133, \"mean_score\": 541.9}, {\"name\": \"甲鉄城のカバネリ\", \"n_machines\": 1, \"rank\": null, \"of\": 57, \"n_days_present\": 30, \"over_threshold\": 4, \"rate\": 0.133, \"mean_score\": 481.5}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "甲鉄城のカバネリ",
+      "note": "本文「週間オススメのカバネリに注目」「カバネリ狙い」「おすすめ&1番扱い良い」。公約として残す唯一の機種。"
+    }
+  ],
+  "unscored_claims": [
+    {
+      "text": "バンドリ！(部分一致score=0.8)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    },
+    {
+      "text": "LBタコスロ(部分一致score=0.667)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    },
+    {
+      "text": "マイジャグラーV(部分一致score=0.625)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    }
+  ],
+  "needs_manual_review": false,
+  "no_confirmed_machines": false,
+  "result": null,
+  "announce_digest": "46b1915c9a4ac4ec",
+  "provisional": true,
+  "amendments": [
+    {
+      "at": "2026-11-06T04:12:30+09:00",
+      "prev_digest": "2034f260f1372d34",
+      "reason": "claimsをカバネリのみに絞る。他は『やりそうな機種』の列挙・過去実績・フロア説明で公約ではない(ユーザー了承、方針A)",
+      "void": false,
+      "amended_after_target": true
+    }
+  ]
+}

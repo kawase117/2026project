@@ -1,0 +1,159 @@
+{
+  "announce_id": "heiwajima__20261028__pachi_slohunter",
+  "hall": "レイトギャップ平和島",
+  "target_date": "20261028",
+  "source": {
+    "account": "pachi_slohunter",
+    "url": "",
+    "posted_at": "2026-10-27T19:45:00+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "ガイの注目店舗\n⠀\n10/28\nレイトギャップ平和島\n⠀\nHALF BURST\nINFINITY\n⠀\nHALF BURSTの注目ポイント\n2台以上設置機種から10機種以上\n↪︎各機種1/2以上に注目\n機種まるごとの仕掛け\n並び・BOX\n↪︎機種単位だけでなく塊まで広く見たい\n⠀\nパチンコオススメ\n北斗の拳\nソードアート・オンライン\n↪︎2機種の動向に注目\n⠀\n週間オススメスロット\nリコリス・リコイル\nモンキーターンV\nミリオンゴッド\n↪︎10/26〜11/1のオススメ機種\n⠀\n店頭抽選\n↪︎9:25までに店舗へ\n↪︎9:30抽選開始\n↪︎9:50再整列\n※混雑状況により時間が前後する可能性あり\n⠀\nHALF BURST×INFINITYの同時開催\n幅広い仕掛けに期待したい",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"レイトギャップ平和島\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-28\", \"2026-10-26\"], \"n_days\": 90, \"n_model_days\": 4036, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 1913.3, \"models_over_threshold_per_day\": {\"mean\": 2.24, \"median\": 2.0, \"max\": 7}, \"candidate_models_per_day\": 44.8, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 2.47, \"median\": 2.0, \"max\": 7}, \"p_at_least_1\": 0.911, \"p_at_least_2\": 0.711, \"p_at_least_3\": 0.467, \"p_at_least_4\": 0.233, \"p_at_least_10\": 0.0}} / named_context: {\"as_of\": \"20261026\", \"window_days\": 30, \"n_candidates_ge3machines\": 46, \"hall_over_threshold_rate_approx\": 0.13, \"threshold\": 1800.0, \"models\": [{\"name\": \"スマスロ北斗の拳\", \"n_machines\": 6, \"rank\": 21, \"of\": 46, \"n_days_present\": 30, \"over_threshold\": 1, \"rate\": 0.033, \"mean_score\": -178.9}, {\"name\": \"ソードアート・オンライン\", \"n_machines\": 1, \"rank\": null, \"of\": 46, \"n_days_present\": 30, \"over_threshold\": 7, \"rate\": 0.233, \"mean_score\": 1837.0}, {\"name\": \"ミリオンゴッド‐神々の軌跡‐\", \"n_machines\": 17, \"rank\": 2, \"of\": 46, \"n_days_present\": 30, \"over_threshold\": 3, \"rate\": 0.1, \"mean_score\": 186.6}, {\"name\": \"モンキーターンV\", \"n_machines\": 18, \"rank\": 14, \"of\": 46, \"n_days_present\": 30, \"over_threshold\": 1, \"rate\": 0.033, \"mean_score\": 140.0}, {\"name\": \"リコリス・リコイル\", \"n_machines\": 7, \"rank\": 7, \"of\": 46, \"n_days_present\": 30, \"over_threshold\": 2, \"rate\": 0.067, \"mean_score\": -214.2}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "スマスロ北斗の拳",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "ソードアート・オンライン",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "ミリオンゴッド‐神々の軌跡‐",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "モンキーターンV",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "リコリス・リコイル",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    }
+  ],
+  "unscored_claims": [
+    {
+      "text": "ソードアート・オンラインII(部分一致score=0.857)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    },
+    {
+      "text": "ケロット5(部分一致score=0.6)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    }
+  ],
+  "needs_manual_review": true,
+  "no_confirmed_machines": false,
+  "result": {
+    "scored_at_data_max": "20261028",
+    "hall_baseline_mean_diff": -86.7,
+    "hall_n_machines": 421,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "スマスロ北斗の拳",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -243.1,
+        "mean_diff": -337.5,
+        "gratio": 0.72,
+        "n_machines": 6,
+        "rank": 29,
+        "candidate_models": 46,
+        "age_days": 587,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ソードアート・オンライン",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "hit": null,
+        "note": "当日 ソードアート・オンライン が設置3台以上の候補に無い（撤去・台数不足・表記ゆれ）"
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ミリオンゴッド‐神々の軌跡‐",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -585.6,
+        "mean_diff": -474.6,
+        "gratio": 1.234,
+        "n_machines": 17,
+        "rank": 39,
+        "candidate_models": 46,
+        "age_days": 191,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "モンキーターンV",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -320.9,
+        "mean_diff": -332.2,
+        "gratio": 0.966,
+        "n_machines": 18,
+        "rank": 34,
+        "candidate_models": 46,
+        "age_days": 587,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "リコリス・リコイル",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -1085.1,
+        "mean_diff": -831.1,
+        "gratio": 1.306,
+        "n_machines": 7,
+        "rank": 43,
+        "candidate_models": 46,
+        "age_days": 51,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
+  "announce_digest": "9c02a4df0a98709d",
+  "provisional": true
+}

@@ -1,0 +1,63 @@
+{
+  "announce_id": "rakuen__20261105__slokotae7",
+  "hall": "楽園蒲田店",
+  "target_date": "20261105",
+  "source": {
+    "account": "slokotae7",
+    "url": "",
+    "posted_at": "2026-11-04T16:58:15+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "10月22日(木)\n楽園柏店\n\nゾロ目日\n四星　ブラックホール\n120/489台(24.5%)\n対象台平均+1998枚\n\n【全台】\nまほあこ\n2/3　平均+2447枚\nミスジャグ\n3/4　平均+1105枚\nSBJ\n1/3　平均+17枚\n\n【1/2】\nマギレコ　7台中5台\n青ブタ　4台中2台\nジャグガ　4台中2台\n\n【4台並び】\n戦国乙女5　平均+3693枚\nLカバネリ",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"楽園蒲田店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-08-06\", \"2026-11-04\"], \"n_days\": 90, \"n_model_days\": 5088, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2342.2, \"models_over_threshold_per_day\": {\"mean\": 2.83, \"median\": 3.0, \"max\": 11}, \"candidate_models_per_day\": 56.5, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.93, \"median\": 3.0, \"max\": 13}, \"p_at_least_1\": 0.989, \"p_at_least_2\": 0.944, \"p_at_least_3\": 0.711, \"p_at_least_4\": 0.489, \"p_at_least_10\": 0.011}} / named_context: {\"as_of\": \"20261104\", \"window_days\": 30, \"n_candidates_ge3machines\": 57, \"hall_over_threshold_rate_approx\": 0.035, \"threshold\": 1800.0, \"models\": [{\"name\": \"ジャグラーガールズ\", \"n_machines\": 4, \"rank\": 45, \"of\": 57, \"n_days_present\": 30, \"over_threshold\": 0, \"rate\": 0.0, \"mean_score\": -114.2}, {\"name\": \"マギアレコード 魔法少女まどか☆マギカ外伝\", \"n_machines\": 8, \"rank\": 12, \"of\": 57, \"n_days_present\": 30, \"over_threshold\": 4, \"rate\": 0.133, \"mean_score\": 273.4}, {\"name\": \"戦国乙女5 業火を穿つ宿焔の双刃\", \"n_machines\": 18, \"rank\": 17, \"of\": 57, \"n_days_present\": 30, \"over_threshold\": 0, \"rate\": 0.0, \"mean_score\": -110.4}, {\"name\": \"甲鉄城のカバネリ 海門(うなと)決戦\", \"n_machines\": 30, \"rank\": 2, \"of\": 57, \"n_days_present\": 30, \"over_threshold\": 9, \"rate\": 0.3, \"mean_score\": 1259.6}, {\"name\": \"青春ブタ野郎はバニーガール先輩の夢を見ない\", \"n_machines\": 7, \"rank\": 38, \"of\": 57, \"n_days_present\": 30, \"over_threshold\": 4, \"rate\": 0.133, \"mean_score\": 303.2}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "ジャグラーガールズ",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "青春ブタ野郎はバニーガール先輩の夢を見ない",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    }
+  ],
+  "unscored_claims": [],
+  "needs_manual_review": false,
+  "no_confirmed_machines": false,
+  "result": null,
+  "announce_digest": "088e83c488a08d10",
+  "provisional": true,
+  "amendments": [
+    {
+      "at": "2026-11-05T11:21:08+09:00",
+      "prev_digest": "65fd8ee75bbdc521",
+      "reason": "楽園柏店の10/22の結果集計。別ホールで、予告ではない",
+      "void": true,
+      "amended_after_target": false
+    }
+  ],
+  "voided": true
+}

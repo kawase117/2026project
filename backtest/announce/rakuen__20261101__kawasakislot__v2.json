@@ -1,0 +1,143 @@
+{
+  "announce_id": "rakuen__20261101__kawasakislot__v2",
+  "hall": "楽園蒲田店",
+  "target_date": "20261101",
+  "source": {
+    "account": "kawasakislot",
+    "url": "https://x.com/kawasakislot/status/2116465466772467924",
+    "posted_at": "2026-10-31T18:41:03+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "11/1 楽園蒲田\n明日は毎月1日恒例の始動+苺ゆい(\n@strawberry_yui_\n)さん来店\n+カバネリ＆L星矢が先バレ1/2のアルマゲドン取材も入っていて狙い所は明確！\n　\nアンケート内容は下記3つで、全てが発動\n・Lカバネリ,L星矢が1/2⑤⑥\n・全⑤⑥機種\n・11月は毎日各フロアに3台並び⑤⑥複数\n・11月は毎日15カ所以上3台並び⑤⑥\n\n11月も毎日仕掛け継続は嬉しいｗ\n\n明日は34番以内ならカバネリ30台+聖闘士星矢4台へ\n次点で3台並び＆まるごと機種探し！\n\nここ2ヶ月の1日は全×2機種ありで、3台機種ではなく割と多めの機種からやりがち\n9/1：やじきた6台+真打5台、10/1：SAO12台+からくり4台\n\n機種的にはまずは扱い良い機種や直近増台などから！\n新館1F：GOD\n新館2F：東京喰種・バラ並びや少数機種全もよく新館2Fから\n本館1F：都内最大設置のネオアイム\n本館2F：化物語、リコリコ、バンドリ、増台マギレコ\n本館3F：沖スロ、アクロス系、エウレカ\n\nあとは末尾15も1/2～1/3くらいは並びや全、単品でPickされてたので狙っても\n　\n抽選は9:40～\n明日は500人打ち切りの可能性あり\n直近土日は8/1で9:30ごろ",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "2026-11-01 人手で確認(claims確定)。同key rakuen__20261101__kawasakislot の下書きは楽園大山の投稿で、楽園蒲田の予告ではないため登録しない。",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"楽園蒲田店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-08-01\", \"2026-10-30\"], \"n_days\": 90, \"n_model_days\": 5088, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2303.0, \"models_over_threshold_per_day\": {\"mean\": 2.83, \"median\": 3.0, \"max\": 11}, \"candidate_models_per_day\": 56.5, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.88, \"median\": 3.0, \"max\": 13}, \"p_at_least_1\": 0.989, \"p_at_least_2\": 0.933, \"p_at_least_3\": 0.7, \"p_at_least_4\": 0.467, \"p_at_least_10\": 0.011}}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named_ratio",
+      "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+      "ratio": 2,
+      "note": "『Lカバネリ,L星矢が1/2⑤⑥』先バレ。34番以内ならカバネリ30台"
+    },
+    {
+      "type": "model_named_ratio",
+      "machine_name": "聖闘士星矢 海皇覚醒 CUSTOM EDITION",
+      "ratio": 2,
+      "note": "『L星矢1/2⑤⑥』先バレ。聖闘士星矢4台"
+    },
+    {
+      "type": "zentaikei_count",
+      "n_models": 1,
+      "note": "『全⑤⑥機種』。機種数の明示なしで最小の1。自明に当たりやすいので的中に数えない"
+    }
+  ],
+  "unscored_claims": [
+    "3台並び⑤⑥複数・15カ所以上(並び)",
+    "末尾15は傾向で先バレではない(本人注記)"
+  ],
+  "needs_manual_review": false,
+  "no_confirmed_machines": false,
+  "result": {
+    "scored_at_data_max": "20261101",
+    "hall_baseline_mean_diff": -79.9,
+    "hall_n_machines": 587,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 2,
+      "machines_hi": [],
+      "machines_lo": [
+        "リコリス・リコイル",
+        "戦国コレクション6"
+      ],
+      "bounds": [
+        -5095,
+        15477
+      ]
+    },
+    "claims": [
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+          "ratio": 2,
+          "note": "『Lカバネリ,L星矢が1/2⑤⑥』先バレ。34番以内ならカバネリ30台"
+        },
+        "n_machines": 30,
+        "ratio": 2,
+        "top_k": 15,
+        "model_top_k_mean_diff": 5375.0,
+        "hall_top_quantile_mean_diff": 1420.4,
+        "excess_vs_hall_quantile": 3954.6,
+        "model_mean_diff": 1852.8,
+        "n_over_hall_quantile": 18,
+        "hit": true,
+        "model_named_score": 3014.5,
+        "model_named_rank": 3
+      },
+      {
+        "type": "model_named_ratio",
+        "claim": {
+          "type": "model_named_ratio",
+          "machine_name": "聖闘士星矢 海皇覚醒 CUSTOM EDITION",
+          "ratio": 2,
+          "note": "『L星矢1/2⑤⑥』先バレ。聖闘士星矢4台"
+        },
+        "n_machines": 4,
+        "ratio": 2,
+        "top_k": 2,
+        "model_top_k_mean_diff": 2214.5,
+        "hall_top_quantile_mean_diff": 1631.8,
+        "excess_vs_hall_quantile": 582.7,
+        "model_mean_diff": -642.5,
+        "n_over_hall_quantile": 2,
+        "hit": true,
+        "model_named_score": -1033.6,
+        "model_named_rank": 49
+      },
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 1,
+          "note": "『全⑤⑥機種』。機種数の明示なしで最小の1。自明に当たりやすいので的中に数えない"
+        },
+        "observed_n_models": 3,
+        "candidate_models": 57,
+        "models": [
+          {
+            "machine_name": "攻殻機動隊",
+            "score": 16212.4,
+            "n_machines": 3,
+            "mean_diff": 9571.7,
+            "age_days": 272
+          },
+          {
+            "machine_name": "東京リベンジャーズ",
+            "score": 4768.5,
+            "n_machines": 4,
+            "mean_diff": 2500.2,
+            "age_days": 419
+          },
+          {
+            "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
+            "score": 3014.5,
+            "n_machines": 30,
+            "mean_diff": 1852.8,
+            "age_days": 244
+          }
+        ],
+        "n_new_machines_over": 0,
+        "hit": true
+      }
+    ]
+  },
+  "provisional": true,
+  "announce_digest": "9820fc55a45e454e"
+}

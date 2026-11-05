@@ -1,0 +1,121 @@
+{
+  "announce_id": "heiwajima__20261101__pachi_slohunter",
+  "hall": "レイトギャップ平和島",
+  "target_date": "20261101",
+  "source": {
+    "account": "pachi_slohunter",
+    "url": "",
+    "posted_at": "2026-10-31T20:50:00+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "ガイの注目店舗\n⠀\n11/1\nレイトギャップ平和島\n⠀\n月初到来\nオススメ週間最終日\n⠀\n今回の注目ポイント\n11月スタートの注目日\n↪︎10/26〜11/1のオススメ期間も最終日\n↪︎月初の店内状況に期待\n⠀\n週間オススメスロット\nリコリス・リコイル\nモンキーターンV\nミリオンゴッド\n↪︎期間中に注目されてきた3機種\n↪︎最終日の動向も見逃せない\n⠀\nパチンコオススメ\n北斗の拳\nソードアート・オンライン\n↪︎週間オススメの2機種\n↪︎月初の好状況にも期待\n⠀\n月初の注目ポイント\n週間を通した機種ごとの動向\n連日好挙動が見られる箇所\n↪︎ここまでのデータも参考にしたい\n⠀\n店頭抽選\n↪︎9:25までに店舗へ\n↪︎9:30抽選開始\n↪︎9:50再整列\n※混雑状況により時間が前後する可能性あり\n⠀\n月初到来×オススメ週間最終日\n11月の幕開けから期待が高まる一日\nレイトギャップ平和島の本気に注目したい",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "2026-11-01 人手で確認(claims確定)。推奨の紹介で確度は低い。10/31の同系予告は5機種すべて負け越し。",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"レイトギャップ平和島\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-08-01\", \"2026-10-30\"], \"n_days\": 90, \"n_model_days\": 4044, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 1952.3, \"models_over_threshold_per_day\": {\"mean\": 2.26, \"median\": 2.0, \"max\": 7}, \"candidate_models_per_day\": 44.9, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 2.53, \"median\": 2.0, \"max\": 7}, \"p_at_least_1\": 0.922, \"p_at_least_2\": 0.722, \"p_at_least_3\": 0.478, \"p_at_least_4\": 0.244, \"p_at_least_10\": 0.0}} / named_context: {\"as_of\": \"20261030\", \"window_days\": 30, \"n_candidates_ge3machines\": 46, \"hall_over_threshold_rate_approx\": 0.043, \"threshold\": 1800.0, \"models\": [{\"name\": \"スマスロ北斗の拳\", \"n_machines\": 6, \"rank\": 25, \"of\": 46, \"n_days_present\": 30, \"over_threshold\": 1, \"rate\": 0.033, \"mean_score\": -95.1}, {\"name\": \"ソードアート・オンライン\", \"n_machines\": 1, \"rank\": null, \"of\": 46, \"n_days_present\": 30, \"over_threshold\": 8, \"rate\": 0.267, \"mean_score\": 2055.5}, {\"name\": \"ミリオンゴッド‐神々の軌跡‐\", \"n_machines\": 17, \"rank\": 30, \"of\": 46, \"n_days_present\": 30, \"over_threshold\": 3, \"rate\": 0.1, \"mean_score\": 251.0}, {\"name\": \"モンキーターンV\", \"n_machines\": 18, \"rank\": 6, \"of\": 46, \"n_days_present\": 30, \"over_threshold\": 1, \"rate\": 0.033, \"mean_score\": 148.3}, {\"name\": \"リコリス・リコイル\", \"n_machines\": 7, \"rank\": 4, \"of\": 46, \"n_days_present\": 30, \"over_threshold\": 2, \"rate\": 0.067, \"mean_score\": -121.3}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "リコリス・リコイル",
+      "note": "週間オススメスロット(期間最終日)。公約ではなく推奨"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "モンキーターンV",
+      "note": "週間オススメスロット(期間最終日)。公約ではなく推奨"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "ミリオンゴッド‐神々の軌跡‐",
+      "note": "週間オススメスロット(期間最終日)。公約ではなく推奨"
+    }
+  ],
+  "unscored_claims": [
+    "パチンコオススメ(北斗の拳・SAO)はパチンコでスロットDB対象外"
+  ],
+  "needs_manual_review": false,
+  "no_confirmed_machines": false,
+  "result": {
+    "scored_at_data_max": "20261101",
+    "hall_baseline_mean_diff": -92.0,
+    "hall_n_machines": 421,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "リコリス・リコイル",
+          "note": "週間オススメスロット(期間最終日)。公約ではなく推奨"
+        },
+        "score": -804.9,
+        "mean_diff": -608.6,
+        "gratio": 1.323,
+        "n_machines": 7,
+        "rank": 42,
+        "candidate_models": 46,
+        "age_days": 55,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "モンキーターンV",
+          "note": "週間オススメスロット(期間最終日)。公約ではなく推奨"
+        },
+        "score": 314.5,
+        "mean_diff": 262.4,
+        "gratio": 1.198,
+        "n_machines": 18,
+        "rank": 13,
+        "candidate_models": 46,
+        "age_days": 591,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ミリオンゴッド‐神々の軌跡‐",
+          "note": "週間オススメスロット(期間最終日)。公約ではなく推奨"
+        },
+        "score": -389.8,
+        "mean_diff": -248.8,
+        "gratio": 1.567,
+        "n_machines": 17,
+        "rank": 33,
+        "candidate_models": 46,
+        "age_days": 195,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
+  "announce_digest": "86c07a5e1ba137d3",
+  "provisional": true,
+  "amendments": [
+    {
+      "at": "2026-11-01T08:24:26+09:00",
+      "prev_digest": "b85b4a7abde9436b",
+      "reason": "朝の点検でclaimsを原文に合わせて確定(機械抽出の過去月・他機種の誤検出を除き、先バレ1/2・全系を型付け)",
+      "void": false,
+      "amended_after_target": false
+    }
+  ]
+}

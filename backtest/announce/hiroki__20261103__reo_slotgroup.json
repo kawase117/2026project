@@ -1,0 +1,102 @@
+{
+  "announce_id": "hiroki__20261103__reo_slotgroup",
+  "hall": "ヒロキ東口店",
+  "target_date": "20261103",
+  "source": {
+    "account": "reo_slotgroup",
+    "url": "",
+    "posted_at": "2026-11-02T19:17:28+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "11/3 れおのホール予想\n\nヒロキ東口\n\n□Half Strong 取材(初開催)\n\n明日は初のHalf Strong 取材と注目の1日で他での開催を見るに“1/2×10機種”以上が軸にあり『マギレコ.SAO2.やじきた』は対象となることが予想されるので最優先に\n\n☑︎まずは2台設置の先出し機種『やじきた』はどちらかが”超優秀台”と狙いやすくなっており更に初開催ということで”全台系”への昇格など派手な仕掛けにも期待していきましょう\n\n英語取材のオープンチャットはこちら\n\nhttps://\nline.me/ti/g2/e3hXhxm5\nZdUpU4PUEOaVB1dsuqJFpt92SZNg2w?utm_source=invitation&utm_medium=link_copy&utm_campaign=default\n…",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"ヒロキ東口店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-08-04\", \"2026-11-02\"], \"n_days\": 90, \"n_model_days\": 3600, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 1458.7, \"models_over_threshold_per_day\": {\"mean\": 2.0, \"median\": 2.0, \"max\": 8}, \"candidate_models_per_day\": 40.0, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 1.54, \"median\": 1.0, \"max\": 5}, \"p_at_least_1\": 0.722, \"p_at_least_2\": 0.4, \"p_at_least_3\": 0.233, \"p_at_least_4\": 0.133, \"p_at_least_10\": 0.0}} / named_context: {\"as_of\": \"20261102\", \"window_days\": 30, \"n_candidates_ge3machines\": 40, \"hall_over_threshold_rate_approx\": 0.025, \"threshold\": 1800.0, \"models\": [{\"name\": \"やじきた道中記参る！\", \"n_machines\": 2, \"rank\": null, \"of\": 40, \"n_days_present\": 30, \"over_threshold\": 1, \"rate\": 0.033, \"mean_score\": -94.9}, {\"name\": \"ソードアート・オンラインII\", \"n_machines\": 3, \"rank\": 40, \"of\": 40, \"n_days_present\": 30, \"over_threshold\": 10, \"rate\": 0.333, \"mean_score\": -1347.7}, {\"name\": \"マギアレコード 魔法少女まどか☆マギカ外伝\", \"n_machines\": 6, \"rank\": 13, \"of\": 40, \"n_days_present\": 30, \"over_threshold\": 0, \"rate\": 0.0, \"mean_score\": -19.9}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "やじきた道中記参る！",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "ソードアート・オンラインII",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    }
+  ],
+  "unscored_claims": [],
+  "needs_manual_review": true,
+  "no_confirmed_machines": false,
+  "result": {
+    "scored_at_data_max": "20261103",
+    "hall_baseline_mean_diff": -155.5,
+    "hall_n_machines": 279,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "やじきた道中記参る！",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "hit": null,
+        "note": "当日 やじきた道中記参る！ が設置3台以上の候補に無い（撤去・台数不足・表記ゆれ）"
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ソードアート・オンラインII",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -11201.7,
+        "mean_diff": -4367.7,
+        "gratio": 2.565,
+        "n_machines": 3,
+        "rank": 40,
+        "candidate_models": 40,
+        "age_days": 148,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -1989.6,
+        "mean_diff": -1448.3,
+        "gratio": 1.374,
+        "n_machines": 6,
+        "rank": 39,
+        "candidate_models": 40,
+        "age_days": 575,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
+  "announce_digest": "b88c4d7f200336e8",
+  "provisional": true
+}

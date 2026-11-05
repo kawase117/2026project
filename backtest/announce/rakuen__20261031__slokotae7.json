@@ -1,0 +1,149 @@
+{
+  "announce_id": "rakuen__20261031__slokotae7",
+  "hall": "楽園蒲田店",
+  "target_date": "20261031",
+  "source": {
+    "account": "slokotae7",
+    "url": "",
+    "posted_at": "2026-10-30T20:47:02+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "10月22日(木)\n楽園町田店\n\n四星　ブラックホール\n69/339台(20.4%)\n対象台平均+1592枚\n店舗総差枚+30867枚\n\n【1/2】\n東京喰種　17台中9台\nLハナビ　6台中3台\n青ブタ　4台中2台\nニューキンハナ　4台中2台\n\nその他末尾ゾロ目\nその他単品",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"楽園蒲田店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-31\", \"2026-10-29\"], \"n_days\": 90, \"n_model_days\": 5088, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2295.2, \"models_over_threshold_per_day\": {\"mean\": 2.83, \"median\": 3.0, \"max\": 11}, \"candidate_models_per_day\": 56.5, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.84, \"median\": 3.0, \"max\": 13}, \"p_at_least_1\": 0.978, \"p_at_least_2\": 0.922, \"p_at_least_3\": 0.689, \"p_at_least_4\": 0.467, \"p_at_least_10\": 0.011}} / named_context: {\"as_of\": \"20261029\", \"window_days\": 30, \"n_candidates_ge3machines\": 57, \"hall_over_threshold_rate_approx\": 0.053, \"threshold\": 1800.0, \"models\": [{\"name\": \"スマスロ ハナビ\", \"n_machines\": 7, \"rank\": 29, \"of\": 57, \"n_days_present\": 30, \"over_threshold\": 0, \"rate\": 0.0, \"mean_score\": 94.4}, {\"name\": \"ニューキングハナハナV‐30\", \"n_machines\": 8, \"rank\": 22, \"of\": 57, \"n_days_present\": 30, \"over_threshold\": 1, \"rate\": 0.033, \"mean_score\": 176.8}, {\"name\": \"東京喰種\", \"n_machines\": 18, \"rank\": 8, \"of\": 57, \"n_days_present\": 30, \"over_threshold\": 2, \"rate\": 0.067, \"mean_score\": 393.8}, {\"name\": \"青春ブタ野郎はバニーガール先輩の夢を見ない\", \"n_machines\": 7, \"rank\": 41, \"of\": 57, \"n_days_present\": 30, \"over_threshold\": 5, \"rate\": 0.167, \"mean_score\": 418.4}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "スマスロ ハナビ",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "ニューキングハナハナV‐30",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "東京喰種",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。 ヒント: 1/2系の可能性(model_named_ratioならratio指定が必要)"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "青春ブタ野郎はバニーガール先輩の夢を見ない",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    }
+  ],
+  "unscored_claims": [
+    {
+      "text": "新ハナビ(部分一致score=0.75)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    }
+  ],
+  "needs_manual_review": true,
+  "no_confirmed_machines": false,
+  "result": {
+    "scored_at_data_max": "20261031",
+    "hall_baseline_mean_diff": 80.2,
+    "hall_n_machines": 587,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 8,
+      "machines_hi": [],
+      "machines_lo": [
+        "いざ！番長",
+        "ソードアート・オンラインII",
+        "ミリオンゴッド‐神々の軌跡‐",
+        "戦国乙女5 業火を穿つ宿焔の双刃",
+        "転生王女と天才令嬢の魔法革命"
+      ],
+      "bounds": [
+        -5095,
+        15477
+      ]
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "スマスロ ハナビ",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 13.6,
+        "mean_diff": 34.4,
+        "gratio": 0.394,
+        "n_machines": 7,
+        "rank": 26,
+        "candidate_models": 57,
+        "age_days": 271,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ニューキングハナハナV‐30",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -420.6,
+        "mean_diff": -434.2,
+        "gratio": 0.968,
+        "n_machines": 8,
+        "rank": 40,
+        "candidate_models": 57,
+        "age_days": 299,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "東京喰種",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。 ヒント: 1/2系の可能性(model_named_ratioならratio指定が必要)"
+        },
+        "score": 1432.1,
+        "mean_diff": 1370.7,
+        "gratio": 1.045,
+        "n_machines": 18,
+        "rank": 6,
+        "candidate_models": 57,
+        "age_days": 634,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "青春ブタ野郎はバニーガール先輩の夢を見ない",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -133.9,
+        "mean_diff": -122.1,
+        "gratio": 1.096,
+        "n_machines": 7,
+        "rank": 30,
+        "candidate_models": 57,
+        "age_days": 54,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
+  "announce_digest": "0446243fda4468bc",
+  "provisional": true
+}

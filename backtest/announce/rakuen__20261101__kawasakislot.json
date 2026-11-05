@@ -1,0 +1,37 @@
+{
+  "announce_id": "rakuen__20261101__kawasakislot",
+  "hall": "楽園蒲田店",
+  "target_date": "20261101",
+  "source": {
+    "account": "kawasakislot",
+    "url": "",
+    "posted_at": "2026-10-30T19:17:00+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "最近流行りの毎日仕掛けが11/1～楽園大山でスタートするそうｗ\n\n内容は\n・週間オススメ機種から1/2以上⑤⑥\n※1ヶ月で5台以上設置の全機種が最低1回対象に\n・バラコーナーから⑤⑥あり\n※1ヶ月で合計42台が最低1回対象に\n・3台以上機種から1/2⑤⑥あり\n\n【11/1～週間オススメ】",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"楽園蒲田店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-07-31\", \"2026-10-29\"], \"n_days\": 90, \"n_model_days\": 5088, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2295.2, \"models_over_threshold_per_day\": {\"mean\": 2.83, \"median\": 3.0, \"max\": 11}, \"candidate_models_per_day\": 56.5, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.84, \"median\": 3.0, \"max\": 13}, \"p_at_least_1\": 0.978, \"p_at_least_2\": 0.922, \"p_at_least_3\": 0.689, \"p_at_least_4\": 0.467, \"p_at_least_10\": 0.011}}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [],
+  "unscored_claims": [],
+  "needs_manual_review": false,
+  "no_confirmed_machines": true,
+  "result": null,
+  "announce_digest": "6c76a2b3a7a9172e",
+  "provisional": true,
+  "amendments": [
+    {
+      "at": "2026-11-01T08:24:29+09:00",
+      "prev_digest": "1cd9df0173b085b9",
+      "reason": "楽園大山の毎日仕掛けの投稿で楽園蒲田の予告ではない(楽園蒲田はkawasakislot__v2で登録)",
+      "void": true,
+      "amended_after_target": false
+    }
+  ],
+  "voided": true
+}

@@ -1,0 +1,93 @@
+{
+  "announce_id": "kamata1__20261101__999999Q9Q",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "target_date": "20261101",
+  "source": {
+    "account": "999999Q9Q",
+    "url": "",
+    "posted_at": "2026-10-31T18:33:44+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "【マルハンメガシティ2000蒲田1】\n11月1日（日）　#東京大戦\n明日行くならココが1番\n\n攻略の鍵\n月イチ店長就任日\n1の付く日\nあしなっくす来店\n\n【DATA】\n10月1日 総差枚+33,100枚\n9月1日 総差枚+136,200枚\n8月1日 -\n\n【傾向】 \nよこやん就任からはや2ヶ月。強烈な話題にこそならないが、月の半分以上は総差枚プラスを記録しておりまだまだ美味しさは止まらない。\n\n全機種・ニブイチ機種・メイン機種の単品強化、この３つをもってメガいちのアツい1日は構成される。少台数機種は全、多台数機種はニブイチを見据えて立ち回れば、早めに全体の温度感を掴めるはず。戦国乙女5から始まるロング列は日常的に単品が潜むことでもお馴染み\n\n#マルハンメガシティ2000蒲田1\n\n【同アカウント 11/01 00:13 よこやん予想の投稿】\n【月イチ就任日×月イチ周年日】\n新章メガいちよこやん予想\n\n明日は11月1日。1の付く日、1ゾロ、月イチ店長就任日、メガいちの月イチ周年日、東京大戦。あまりにも強い要素が重なり過ぎている。\n\nメガいちの1の付く日は、よこやん采配の王道である全系機種・ニブイチ機種・メイン機種（スマスロ中心）単品強化の三本柱で全域強化を成してくると言われている。\n\n狙い方はいたってシンプル。少台数機種は全系、台数多めのメイン機種は高配分・単品を意識して機種単位で温度感を探るのがベスト。店長ポストに手掛かりもなく決めかねる感じもするが、迷ったら壁際ロング列に特攻すれば問題なし。平日から日常的に配分の高いHOTっとエリアである\n\n#マルハンメガシティ2000蒲田1",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "2026-11-01 人手で確認(claims確定)。",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"マルハンメガシティ2000-蒲田1\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-08-01\", \"2026-10-30\"], \"n_days\": 89, \"n_model_days\": 4321, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2167.8, \"models_over_threshold_per_day\": {\"mean\": 2.44, \"median\": 2.0, \"max\": 7}, \"candidate_models_per_day\": 48.6, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.13, \"median\": 3.0, \"max\": 8}, \"p_at_least_1\": 0.955, \"p_at_least_2\": 0.798, \"p_at_least_3\": 0.539, \"p_at_least_4\": 0.371, \"p_at_least_10\": 0.0}} / named_context: {\"as_of\": \"20261030\", \"window_days\": 30, \"n_candidates_ge3machines\": 50, \"hall_over_threshold_rate_approx\": 0.1, \"threshold\": 1800.0, \"models\": [{\"name\": \"戦国乙女5 業火を穿つ宿焔の双刃\", \"n_machines\": 9, \"rank\": 47, \"of\": 50, \"n_days_present\": 30, \"over_threshold\": 5, \"rate\": 0.167, \"mean_score\": 166.3}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "zentaikei_count",
+      "n_models": 1,
+      "note": "『全系機種・ニブイチ機種・メイン機種の単品強化の三本柱』。機種数の明示なしで最小の1。自明に当たりやすいので的中に数えない"
+    }
+  ],
+  "unscored_claims": [
+    "ニブイチ機種・メイン機種(スマスロ中心)単品強化(機種名なし)",
+    "戦国乙女5から始まるロング列/壁際ロング列は位置の言及で、乙女5の名指しではない"
+  ],
+  "needs_manual_review": false,
+  "no_confirmed_machines": true,
+  "result": {
+    "scored_at_data_max": "20261102",
+    "hall_baseline_mean_diff": -1.1,
+    "hall_n_machines": 365,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "zentaikei_count",
+        "claim": {
+          "type": "zentaikei_count",
+          "n_models": 1,
+          "note": "『全系機種・ニブイチ機種・メイン機種の単品強化の三本柱』。機種数の明示なしで最小の1。自明に当たりやすいので的中に数えない"
+        },
+        "observed_n_models": 3,
+        "candidate_models": 50,
+        "models": [
+          {
+            "machine_name": "スマスロ北斗の拳",
+            "score": 4972.0,
+            "n_machines": 7,
+            "mean_diff": 4014.3,
+            "age_days": 669
+          },
+          {
+            "machine_name": "攻殻機動隊",
+            "score": 3164.6,
+            "n_machines": 3,
+            "mean_diff": 3166.7,
+            "age_days": 272
+          },
+          {
+            "machine_name": "ジャグラーガールズ",
+            "score": 1906.5,
+            "n_machines": 4,
+            "mean_diff": 1275.0,
+            "age_days": 669
+          }
+        ],
+        "n_new_machines_over": 0,
+        "hit": true
+      }
+    ]
+  },
+  "announce_digest": "55c31a0e3cc5928b",
+  "provisional": true,
+  "amendments": [
+    {
+      "at": "2026-11-01T08:24:28+09:00",
+      "prev_digest": "4b87f86380479443",
+      "reason": "朝の点検でclaimsを原文に合わせて確定(機械抽出の過去月・他機種の誤検出を除き、先バレ1/2・全系を型付け)",
+      "void": false,
+      "amended_after_target": false
+    }
+  ]
+}

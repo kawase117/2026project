@@ -1,0 +1,177 @@
+{
+  "announce_id": "rakuen__20261103__slokotae7",
+  "hall": "楽園蒲田店",
+  "target_date": "20261103",
+  "source": {
+    "account": "slokotae7",
+    "url": "",
+    "posted_at": "2026-11-02T12:34:51+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "10月26日(月)\n楽園町田店\n\nアルティメットCG調査隊\n70/339台(20.6%)\n対象台平均+1965枚\n店舗総差枚+23872枚\n\n【全台】\n東京喰種\n10/17　平均+2584枚\nハッピーVⅢ\n3/4　平均+776枚\nウルミラ\n1/3　平均+514枚\n\n【1/2】\nGOD　6台中3台\nSAOⅡ　6台中3台\n邪神ちゃん　4台中2台\nニューキンハナ　4台中2台",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"楽園蒲田店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-08-04\", \"2026-11-02\"], \"n_days\": 90, \"n_model_days\": 5088, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2330.5, \"models_over_threshold_per_day\": {\"mean\": 2.83, \"median\": 3.0, \"max\": 11}, \"candidate_models_per_day\": 56.5, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.94, \"median\": 3.0, \"max\": 13}, \"p_at_least_1\": 0.989, \"p_at_least_2\": 0.956, \"p_at_least_3\": 0.722, \"p_at_least_4\": 0.478, \"p_at_least_10\": 0.011}} / named_context: {\"as_of\": \"20261102\", \"window_days\": 30, \"n_candidates_ge3machines\": 56, \"hall_over_threshold_rate_approx\": 0.018, \"threshold\": 1800.0, \"models\": [{\"name\": \"ソードアート・オンライン\", \"n_machines\": 1, \"rank\": null, \"of\": 56, \"n_days_present\": 30, \"over_threshold\": 2, \"rate\": 0.067, \"mean_score\": -8.5}, {\"name\": \"ニューキングハナハナV‐30\", \"n_machines\": 8, \"rank\": 34, \"of\": 56, \"n_days_present\": 30, \"over_threshold\": 1, \"rate\": 0.033, \"mean_score\": 142.2}, {\"name\": \"ハッピージャグラーVIII\", \"n_machines\": 7, \"rank\": 41, \"of\": 56, \"n_days_present\": 30, \"over_threshold\": 1, \"rate\": 0.033, \"mean_score\": 90.4}, {\"name\": \"ミリオンゴッド‐神々の軌跡‐\", \"n_machines\": 13, \"rank\": 51, \"of\": 56, \"n_days_present\": 30, \"over_threshold\": 1, \"rate\": 0.033, \"mean_score\": -72.4}, {\"name\": \"東京喰種\", \"n_machines\": 18, \"rank\": 12, \"of\": 56, \"n_days_present\": 30, \"over_threshold\": 3, \"rate\": 0.1, \"mean_score\": 497.3}, {\"name\": \"邪神ちゃんドロップキック\", \"n_machines\": 2, \"rank\": null, \"of\": 56, \"n_days_present\": 30, \"over_threshold\": 2, \"rate\": 0.067, \"mean_score\": -156.2}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "ソードアート・オンライン",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "ニューキングハナハナV‐30",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "ハッピージャグラーVIII",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "ミリオンゴッド‐神々の軌跡‐",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "東京喰種",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。 ヒント: 全台系の可能性(zentaikei_countならn_models必須/model_namedのままでも可)"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "邪神ちゃんドロップキック",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    }
+  ],
+  "unscored_claims": [
+    {
+      "text": "マッピー(部分一致score=0.75)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    }
+  ],
+  "needs_manual_review": true,
+  "no_confirmed_machines": false,
+  "result": {
+    "scored_at_data_max": "20261103",
+    "hall_baseline_mean_diff": 15.7,
+    "hall_n_machines": 581,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 3,
+      "machines_hi": [],
+      "machines_lo": [
+        "ゴジラ対エヴァンゲリオン 2",
+        "獣王",
+        "魔法少女にあこがれて"
+      ],
+      "bounds": [
+        -5095,
+        15477
+      ]
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ソードアート・オンライン",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "hit": null,
+        "note": "当日 ソードアート・オンライン が設置3台以上の候補に無い（撤去・台数不足・表記ゆれ）"
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ニューキングハナハナV‐30",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -295.0,
+        "mean_diff": -446.1,
+        "gratio": 0.661,
+        "n_machines": 8,
+        "rank": 39,
+        "candidate_models": 56,
+        "age_days": 302,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ハッピージャグラーVIII",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -611.3,
+        "mean_diff": -611.9,
+        "gratio": 0.999,
+        "n_machines": 7,
+        "rank": 45,
+        "candidate_models": 56,
+        "age_days": 671,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ミリオンゴッド‐神々の軌跡‐",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -225.3,
+        "mean_diff": -439.1,
+        "gratio": 0.513,
+        "n_machines": 13,
+        "rank": 36,
+        "candidate_models": 56,
+        "age_days": 197,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "東京喰種",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。 ヒント: 全台系の可能性(zentaikei_countならn_models必須/model_namedのままでも可)"
+        },
+        "score": 2328.0,
+        "mean_diff": 1590.5,
+        "gratio": 1.464,
+        "n_machines": 18,
+        "rank": 3,
+        "candidate_models": 56,
+        "age_days": 637,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": true
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "邪神ちゃんドロップキック",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "hit": null,
+        "note": "当日 邪神ちゃんドロップキック が設置3台以上の候補に無い（撤去・台数不足・表記ゆれ）"
+      }
+    ]
+  },
+  "announce_digest": "379752bfa59a5c3d",
+  "provisional": true
+}
