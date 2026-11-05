@@ -1,12 +1,12 @@
 ---
 name: backtest-module-guide
-description: backtest/ 配下39モジュールの役割分担と使い分けの地図。「予告を登録したい」「答え合わせしたい」「設定が入ったか判定したい」「並びを検出したい」「セオリーが死んでいないか見たい」といった要求から正しいモジュール・サブコマンドへ最短で辿り着くために使う。backtest/ に新しい分析スクリプトを追加する前にも必ず参照し、既存モジュールの再実装を防ぐ。
+description: backtest/ 配下のモジュールの役割分担と使い分けの地図。「予告を登録したい」「答え合わせしたい」「設定が入ったか判定したい」「並びを検出したい」「セオリーが死んでいないか見たい」といった要求から正しいモジュール・サブコマンドへ最短で辿り着くために使う。backtest/ に新しい分析スクリプトを追加する前にも必ず参照し、既存モジュールの再実装を防ぐ。
 ---
 
 # backtest モジュール地図
 
 `backtest/` は直近60日で **255ファイル変更** と本プロジェクト最大の主戦場。
-39モジュールあり、名前が似た派生が多いので、書き始める前にここで行き先を確認する。
+約70モジュールあり、名前が似た派生が多いので、書き始める前にここで行き先を確認する。
 
 ## 大原則
 
@@ -101,3 +101,53 @@ compare_percentile_ratios.py                        分割比率の系統的テ�
 - `prediction-recheck` — DB欠損が埋まった後の答え合わせ再実行
 - `prediction-evaluation` — 答え合わせの評価設計（単日評価の禁止・hit@3優位）
 - `site777-highsetting-scan` — リアルタイム収集からの高設定割り出し
+
+## 上の表に無いモジュール(各ファイルの冒頭の説明から機械的に抜き出した一覧。2026-11-06)
+
+使い分けの判断は載せていない。詳細は各ファイルの docstring を読む。
+
+| モジュール | 説明 |
+|---|---|
+| `absolute_performance_analysis` | 絶対パフォーマンス分析 - テスト期間で最高勝率を達成するグループの特定 |
+| `announce_autodraft` | ホール予告の半自動下ごしらえ(検出→dbmax/match-name/baserate/named-context→claims案)。 |
+| `at_rb_audit` | AT機のAT初当り確率が、DBのどの列(bb / rb / bb+rb)に入っているかの監査。 |
+| `axis_scan` | 位置軸(末尾・角番・並び)× 時間軸(曜日・D・DD・ゾロ目・イベント公約)の総当たり検定。 |
+| `axis_sweep_baserate` | 軸スイープ（機種/列/末尾/角番/フロア×交互作用）のベースレートと再現性を測る。 |
+| `check_schema` | (説明なし) |
+| `check_test_data` | (説明なし) |
+| `condition_drilldown` | 1ホールの日付条件を、カテゴリ → 機種 → 台番号 と掘り下げる。 |
+| `conditional_analysis` | 条件付き分析モジュール - 特定の日（DD or 曜日）での台選択有効性検証 |
+| `continuation_pace` | 示唆続行台を営業中に拾う: クイック収集の回転数から、閉店時に7,000Gへ届きそうなAT台を凍結して翌朝採点する |
+| `continuation_scan` | 示唆続行台の検証: AT機で回転数の多い台に、結果ツイートの台が集まるか(2026-10 振り返り 作業5の1)。 |
+| `cross_attribute_performance_analysis` | クロス属性パフォーマンス分析 - 複数訓練期間・複数条件値対応版 |
+| `cross_metric_validation_triple` | クロスメトリック検証 - 勝率・G数グループ分割からテスト差枚を検証 |
+| `daily_digest` | Generate a per-day announce watch digest from the Twitter monitor state. |
+| `date_conditions` | 日付条件（ゾロ目・7のつく日・月末・土日など）が、その店で本当に効くか。 |
+| `day_wari` | 日の軸(曜日・末尾日・イベント台帳の日)を、差枚だけでなく割とジャグラーの平均phで測る。 |
+| `detailed_conditional_analysis` | 詳細条件付き分析 - 高勝率vs低勝率の再現性比較 |
+| `event_days` | 日付単位のイベント日レジストリ（予告ツイート由来）。 |
+| `field_obs` | 現場の報告（演出での設定確認・現地組の報告）を台帳に残す。 |
+| `juggler_carryover` | ジャグラー設定の持ち越し分析(読み取り専用)。 |
+| `lessons` | 学びの台帳(document/registry/LESSONS.jsonl)と、予測文書の判断行の点検。 |
+| `main` | バックテスト実行スクリプト |
+| `main_conditional` | 条件付き分析実行スクリプト |
+| `model_alias` | 結果発表・予告に書かれた機種の略称を、実績DBの正式な機種名に当てる。 |
+| `model_standing` | 機種がその店でどう扱われているかの一覧。 |
+| `monthly_report` | 楽園蒲田の月初レポート（層1）。層2は monthly_report_layer2.py。 |
+| `monthly_report_announce` | 楽園蒲田 月初レポート 層2b（予告で事前に名指しされた機種 vs 同日の未名指し機種）。 |
+| `monthly_report_announce_content` | 楽園蒲田 月初レポート 層2b-内容（予告の中身を、請求の種類ごとに分布で測る）。 |
+| `monthly_report_layer2` | 楽園蒲田 月初レポート 層2（イベント実績）。 |
+| `monthly_report_layer3` | 楽園蒲田 月初レポート 層3（機種タイプ×日条件の事前確率）。 |
+| `persistent_units` | 持続して強い台の週次一覧。 |
+| `prediction_games` | 予測台帳の名指しを、差枚・RB比とは別に回転数で採点する(2026-10 振り返り 作業5の2〜4)。 |
+| `prediction_rb` | 予測台帳のRB判別機種を、同一ホール・機種の過去RB率で採点する。 |
+| `rb_candidates` | RB判別機種のホール別候補をDBから生成し、独立した台帳へ凍結する。 |
+| `relative_performance_analysis_coin_diff` | 相対パフォーマンス分析 - 平均差枚ベース（勝率の代わりに平均差枚を指標） |
+| `relative_performance_analysis_coin_diff_triple` | 相対パフォーマンス分析 - 平均差枚ベース（3グループ版） |
+| `relative_performance_analysis_games` | 相対パフォーマンス分析 - 平均G数ベース |
+| `relative_performance_analysis_games_triple` | 相対パフォーマンス分析 - 平均G数ベース（3グループ版） |
+| `relative_performance_multi_period_triple` | 相対パフォーマンス分析 - 3グループ版（上位36%・中間28%・下位36%） |
+| `setting_labels` | 確認された台の設定ラベルを追記専用 JSONL で管理する。 |
+| `seven_d_results` | SEVEN-D（@datagasubete）の楽園蒲田の結果投稿を、外部結果テーブルへ取り込む。 |
+| `test_analyze_relative_performance` | (説明なし) |
+| `unit_time_scan` | 単位(機種・島・機種タイプ)×時間軸の総当たり。 |

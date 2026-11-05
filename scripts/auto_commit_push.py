@@ -7,6 +7,7 @@ git の処理が無く、未コミットの変更が毎日溜まっていた(202
     backtest/forward/        凍結picks・実行ログ・台帳
     backtest/daily_digest/   ホールレビュー・watches・summary
     backtest/predictions/    予測文書の名指しの凍結と採点(score-due が result を書き込む)
+    backtest/rb_candidates/  朝のRB候補の凍結(run_morning_docs が1日1ファイル書く)
     document/registry/DATA_AUDIT.jsonl  取り込み直後のデータ品質監査の結果(1ホール1日1行の追記)
 
 対象外にしているもの(自動でコミットしない):
@@ -40,6 +41,7 @@ ALLOWED_PATHS = [
     "backtest/predictions",
     "backtest/continuation_pace",
     "backtest/persistent",
+    "backtest/rb_candidates",
     # document/registry/ は人が書く台帳なので対象外だが、この1ファイルだけは毎朝の監査が機械的に追記する
     "document/registry/DATA_AUDIT.jsonl",
 ]

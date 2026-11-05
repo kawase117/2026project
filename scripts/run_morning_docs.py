@@ -987,7 +987,10 @@ def run_rb_candidates(day_dir: Path, today: str, dry_run: bool) -> bool:
     if dry_run:
         cmd.append("--no-freeze")
     try:
-        result = subprocess.run(cmd, cwd=PROJECT_ROOT, capture_output=True, text=True, timeout=600)
+        # 子は -X utf8 で書く。encoding を省くと cp932 で読み、読み取りスレッドが落ちて stdout が None になる
+        result = subprocess.run(
+            cmd, cwd=PROJECT_ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=600
+        )
         if result.returncode:
             print("RB機種候補の生成失敗: " + (result.stderr or result.stdout)[-1000:], flush=True)
             return False

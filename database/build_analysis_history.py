@@ -151,6 +151,7 @@ def main():
             if p.stem not in {"pachinko", "pachinko_data", "poco_analysis", "楽園転田店", "analysis_results"}
         ]
     total = 0
+    failed = []
     for hall in halls:
         path = DB_DIR / (hall + ".db")
         con = sqlite3.connect("file:%s?mode=ro" % path, uri=True)
@@ -162,18 +163,30 @@ def main():
                 )
             ]
         except sqlite3.Error:
+            # machine_detailed_results が無いのは空のDBで、ホールのDBではない。失敗に数えない
             con.close()
             continue
         written = 0
-        for date in dates:
-            for definition_id, rows in ((kaku_id, kakuban_rows(con, date)), (narabi_id, narabi_rows(con, date))):
-                if rows:
-                    written += store.put_values(st, hall, date, definition_id, rows)
-        con.close()
+        try:
+            for date in dates:
+                for definition_id, rows in ((kaku_id, kakuban_rows(con, date)), (narabi_id, narabi_rows(con, date))):
+                    if rows:
+                        written += store.put_values(st, hall, date, definition_id, rows)
+        except sqlite3.Error as exc:
+            # 1ホールの不備で後ろのホールを巻き添えにしない(2026-10-16〜11-05 に実際に起きた)
+            print("%-32s 失敗: %s" % (hall, exc))
+            failed.append(hall)
+            continue
+        finally:
+            con.close()
         print("%-32s %3d日  %5d行" % (hall, len(dates), written))
         total += written
     print("\n合計 %d 行" % total)
     st.close()
+    if failed:
+        print("失敗したホール: %s" % ", ".join(failed))
+        return 1
+    return 0
 
 
 if __name__ == "__main__":

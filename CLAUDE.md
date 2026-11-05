@@ -54,14 +54,14 @@ AIアシスタントへ：このファイルは索引と鉄則だけ。作業の
 - **weekday_nth**：必ず`daily_hall_summary`から取得（個別台テーブルにはない）
 - **is_zorome の二重定義**：`machine_detailed_results.is_zorome` は台番号の末尾2桁が同じ(00・11…99、`database/json_processor.py`)。`daily_hall_summary.is_zorome` は日付が11日・22日(`database/date_info_calculator.py` の `_check_zorome()`)
 - **min_gamesフィルタ**：集計**前**に個別台レベルで適用。表示用の運用規約で、設定シグナルの測定には使わない（選択バイアス）
-- フィルタは `utils/filters.py` を使い、各ページにインライン実装しない。SQLは `ALLOWED_ATTRIBUTES` ホワイトリストで検証
+- フィルタは `dashboard/utils/filters.py` を使い、各ページにインライン実装しない。SQLは `ALLOWED_ATTRIBUTES` ホワイトリストで検証
 
 全列定義は `database/CLAUDE.md` を参照。
 
 ## プロジェクト概要
 
 パチスロホールのデータを収集・分析し、高設定台を予測する。scraper/(ana-slo収集) → database/(SQLite投入・集計) → dashboard/(Streamlit、`streamlit run main_app.py`) → ml/ と backtest/(予測・採点)。
-技術スタック: Streamlit 1.56.0 / Plotly 6.7.0 / Pandas 3.0.2 / SQLite / BeautifulSoup。Phase 4 の基本理念(キャリブレーション重視・ホール別モデル)は `ml/CLAUDE.md`。
+技術スタック: Streamlit 1.58.0 / Plotly 6.7.0 / Pandas 3.0.3 / SQLite / BeautifulSoup。Phase 4 の基本理念(キャリブレーション重視・ホール別モデル)は `ml/CLAUDE.md`。
 `main_app.py` は絶対インポート、`dashboard/main.py` は相対インポート。Plotly複合軸は `make_subplots()`。
 設計文書は `document/`(`ARCHITECTURE.md` ほか)、実装計画は `document/plans/`。
 
@@ -71,4 +71,4 @@ AIアシスタントへ：このファイルは索引と鉄則だけ。作業の
 - コミット・プッシュは確認不要で、作業の区切りで行う（ユーザー指示 2026-09-14）。コミットは `scripts/safe_commit.py` 経由（pre-commit の ruff 書き換えを再ステージする）。
 - 自分が変更したファイルだけをステージする（`git add -A` 禁止。作業ツリーに別セッションの未コミット変更がある）。プッシュ前に fetch し、先行コミットがあれば rebase。
 - force push・履歴改変・他セッションの変更の破棄は、引き続き確認を取る。
-- `/save` コマンドの詳細は `.claude/skills/save/SKILL.md` を参照。
+- `/save` コマンドの詳細は `~/.claude/skills/save/SKILL.md` を参照。

@@ -11,8 +11,8 @@ pre-commitのruff-check/ruff-formatがファイルを書き換えてコミット
     venv\\Scripts\\python.exe scripts/safe_commit.py "コミットメッセージ"
 
 事前に対象ファイルを `git add` しておくこと(このスクリプトは `git add -A` のような
-無差別なステージは行わない。再試行時のみ、既にステージ済み/追跡済みのファイルに対して
-`git add -u` で再ステージする)。
+無差別なステージは行わない。再試行時も、コミット前にステージされていたファイルだけを
+再ステージする。作業ツリーにある他セッションの変更は巻き込まない)。
 """
 
 from __future__ import annotations
@@ -28,15 +28,24 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     message = argv[0]
 
+    # 再試行で再ステージしてよいのは、今ステージされているファイルだけ。-z で日本語パスの引用を避ける。
+    staged_out = subprocess.run(
+        ["git", "diff", "--cached", "--name-only", "--diff-filter=d", "-z"],
+        capture_output=True,
+        encoding="utf-8",
+    ).stdout
+    staged = [path for path in staged_out.split("\0") if path]
+
     result = subprocess.run(["git", "commit", "-m", message])
     if result.returncode == 0:
         print("commit succeeded")
         return 0
 
     # pre-commit のフックがファイルを書き換えた場合、変更はワークツリーに残るが
-    # ステージには乗っていない。追跡済みファイルの変更分だけ再ステージして1回だけ再試行する。
+    # ステージには乗っていない。ステージ済みだったファイルだけ再ステージして1回だけ再試行する。
     print("commit failed (pre-commitがファイルを書き換えた可能性) — 再ステージして1回だけ再試行します", file=sys.stderr)
-    subprocess.run(["git", "add", "-u"])
+    if staged:
+        subprocess.run(["git", "add", "--", *staged])
 
     result = subprocess.run(["git", "commit", "-m", message])
     if result.returncode == 0:

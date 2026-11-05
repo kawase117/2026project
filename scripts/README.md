@@ -83,7 +83,7 @@ id を1行ずつ書く（`#` 以降はコメント）。
 
 ### `safe_commit.py`
 
-- 役割: `git commit` を実行し、pre-commitのruff-check/ruff-formatがファイルを書き換えて失敗した場合、追跡済みファイルを再ステージして1回だけ再コミットする。
+- 役割: `git commit` を実行し、pre-commitのruff-check/ruff-formatがファイルを書き換えて失敗した場合、ステージ済みだったファイルだけを再ステージして1回だけ再コミットする。
 - フックはスキップしない。書き換え分の再ステージのみを自動化する。
 - 実行例:
   - `venv\Scripts\python.exe scripts/safe_commit.py "fix: ..."`
