@@ -1,5 +1,13 @@
 # 楽園（楽園蒲田店） 台選び理論ドキュメント
 
+> **2026-11-06 棚卸し**: 本文の最終更新は 2026-09-16。直近3か月の再検証はまだなので、本文の数値を予測の根拠にする前に `hall-axis-scan` で確かめる。
+> `rakuen_jug_edge1`・`rakuen_hana_edge1` は旧定義(§2.1b)の監視。現行の定義は §2.1c の `rakuen_clean_*` を見る。
+> - `rakuen_clean_edge1_jug`: payout=UNDERPOWERED / rb_rate=UNDERPOWERED / bonus_rate=UNDERPOWERED
+> - `rakuen_clean_edge1_bt`: payout=UNDERPOWERED / rb_rate=UNDERPOWERED / bonus_rate=WEAKENED
+> - `rakuen_jug_edge1`: payout=DEAD / rb_rate=REVERSED / bonus_rate=DEAD
+> - `rakuen_hana_edge1`: payout=UNDERPOWERED / rb_rate=DEAD / bonus_rate=DEAD
+> - `rakuen_dd_at`: payout=UNDERPOWERED
+
 > **目的**: 楽園蒲田店のEDAで判明した知見を「台選びの理論」として体系化する。
 > **対象読者**: 毎日通い、最良の台を選ぶプレイヤー。
 > **最終更新**: 2026-07-13（§6.3 Type A確定区画のハード除外フィルタを構想メモとして追記。MLパイプラインが実用段階に達していないため実装は見送り、当面は台選びフロー(§12)の手動ルールとして運用）

@@ -88,7 +88,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--ttl-days",
         type=int,
-        default=90,
+        default=180,
         help=(
             "Drop records older than this unless verification_status is 'confirmed'. "
             "Retirement should not depend on someone remembering to declare it. 0 disables."

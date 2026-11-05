@@ -1,0 +1,51 @@
+---
+id: mitoya-discup745-dd27-rb-no-high-setting
+trigger: "みとや大森町のディスクアップULTRAREMIX 745番を、DD27・末尾7の日（7・17・27日）の強い推奨や筆頭候補として予測文書に書くとき。『DD27は過去平均+742』『9/27に的中した』を根拠にしたくなったとき"
+confidence: 0.6
+domain: hall-machine-prediction
+source: session-2026-10-27-mitoya-discup745-bonus-probability
+project_id: 2026project
+project_name: pachinko-analyzer
+verification_status: pending
+related:
+  - mitoya-discup-745-weekday-dd-edge-not-reliable
+  - discup-diff-and-winrate-follow-games-not-setting
+---
+
+# みとやのディスクアップ745は、DD27も末尾7の日もRB確率が設定1〜2並みで、高設定日の形跡がない
+
+## Core claim
+745番のDD27の強さ（過去平均+742、9/27の+4,183）は差枚だけの話で、ボーナス確率は高設定を支持しない。DD27のRBは設定1より悪く、末尾7の日も普段の日と区別がつかない。DD27の大勝ちはBBの引きによるもので、BBにはほとんど設定差がない（設定1は1/287、設定6は1/261）。
+
+## Evidence
+- n_observations: 745番の全期間（2025-07〜2026-10-26）のうち、DD27は13日、末尾7の日は38日、それ以外は355日
+- data scope: みとや大森町店、ディスクアップ ULTRAREMIX 745番（2026/5からは単独設置）
+- metric scope: rb_count / bb_count / games_normalized。設定1・2・5・6の4設定機で、3・4は補間していない
+- result summary:
+  - 単独設置期のDD27: 5日・21,512GでRBは1/552（設定1の1/495より悪い）、設定5以上の確率は9%（一様事前）、差枚は+7,138
+  - 単独設置期の末尾7の日: 17日でRBは1/464（近似設定2.4）。それ以外の日は1/498
+  - 全期間のDD27: RBは1/505（設定1未満）、合算は1/174
+  - 日ごとの混合で見ると（3,000G以上の日、日ごとに設定5以上の確率を計算）、確率が0.5以上の日の割合はDD27が18%（11日中2日）、末尾7が27%、それ以外の日も27%で、上乗せはない
+  - 8/27（+3,483）のRBは1/589、9/27（+4,183）のRBは1/497で、どちらも設定1並み
+  - 10/27当日の途中経過（14:53時点）は1,608G・RB3回で1/536
+  - 差枚は、どの区分の日でもプラスだった（全期間のそれ以外の日でも約+208/日）
+
+## Interpretation
+- 745番の差枚プラスは、攻略できる客の存在と機械割の構造で説明でき、設定とは切り離して読む（related: discup-diff-and-winrate-follow-games-not-setting）
+- DD27の過去平均+742は、BBに偏った数日に引っ張られていた
+- 末尾7の日はRBがわずかに良いが（近似設定2.4と1未満の差）、標本が小さく、日ごとの混合では差が消える
+
+## Action
+- 745番を、DD27や末尾7の日の「強い推奨」「筆頭」に置かない。置くなら「差枚の実績だけで、ボーナス確率は支持しない」と明記する
+- 推すかどうかは、当日のRB確率（目安1/400より良いか）と回転数で決める。BBの多さや差枚では判断しない
+- 10/27の最終データが入ったら、RBが1/400より良かったかを確かめてこの記録を更新する（悪ければconfirmedに近づく）
+- DD27の過去回を見るときは、差枚と並べてRBの確率を必ず出す
+
+## Relation
+- related:
+  - mitoya-discup-745-weekday-dd-edge-not-reliable
+  - discup-diff-and-winrate-follow-games-not-setting
+- 補足: memoryのmitoya-discup-745-dd27-strong-pick（ユーザー指示の「強い推奨」）は差枚が根拠で、この記録はその根拠をボーナス確率で否定する。推奨の扱いはユーザーの判断に従う
+
+## Status
+- status: active
