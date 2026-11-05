@@ -1,0 +1,104 @@
+{
+ "axis_id": "T6",
+ "hall": "みとや大森町店",
+ "asof": "20261104",
+ "window": "3m,all,regime",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "窓3×単位(全台+タイプ)×指標7×水準。全組み合わせ(2軸)。3日未満の水準は除外",
+ "planned": 532,
+ "done": 404,
+ "excluded": 128,
+ "cells_file": "results/T6.cells.csv",
+ "excluded_file": "results/T6.excluded.csv",
+ "n_days": 90,
+ "n_units": 167,
+ "families": 42,
+ "cells": 404,
+ "p05": 79,
+ "p05_expected": 20.2,
+ "bh_q02": 89,
+ "top": [
+  {
+   "label": "A+AT",
+   "metric": "RB帯補正",
+   "n_days": 6,
+   "effect": 0.284,
+   "ci": [
+    -0.074,
+    0.6429
+   ],
+   "q": 0.4603,
+   "contrast": "in_vs_out",
+   "level": "祝日の前日",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ジャグラー",
+   "metric": "機械割差",
+   "n_days": 6,
+   "effect": 0.583,
+   "ci": [
+    -0.1515,
+    1.3178
+   ],
+   "q": 0.7058,
+   "contrast": "in_vs_out",
+   "level": "祝日の前日",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ハナハナ・ハナビ",
+   "metric": "機械割差",
+   "n_days": 32,
+   "effect": 1.314,
+   "ci": [
+    0.5504,
+    2.078
+   ],
+   "q": 0.7058,
+   "contrast": "in_vs_out",
+   "level": "土日祝",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "A+AT",
+   "metric": "RB帯補正",
+   "n_days": 8,
+   "effect": 0.12,
+   "ci": [
+    -0.1765,
+    0.4171
+   ],
+   "q": 0.7564,
+   "contrast": "in_vs_out",
+   "level": "連休(3日以上の土日祝)",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "A+AT",
+   "metric": "RB無補正",
+   "n_days": 6,
+   "effect": 0.269,
+   "ci": [
+    -0.1223,
+    0.661
+   ],
+   "q": 0.7976,
+   "contrast": "in_vs_out",
+   "level": "祝日の前日",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "AT帯補正: 80%検出の目安 ±0.174; AT無補正: 80%検出の目安 ±0.212; RB帯補正: 80%検出の目安 ±0.072; RB無補正: 80%検出の目安 ±0.074; 回転数: 80%検出の目安 ±795.667; 差枚: 80%検出の目安 ±220.534; 機械割差: 80%検出の目安 ±2.495",
+ "caveats": [
+  "基準は窓全体の機種平均なので in_sample。開店前の評価には使わない",
+  "RBは帯補正あり・なしを並べる。符号が割れたら判定しない"
+ ],
+ "reason": ""
+}

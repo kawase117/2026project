@@ -1,0 +1,104 @@
+{
+ "axis_id": "T7",
+ "hall": "みとや大森町店",
+ "asof": "20261104",
+ "window": "3m,all,regime",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "窓3×単位(全台+タイプ)×指標7×水準。全組み合わせ(2軸)。3日未満の水準は除外",
+ "planned": 133,
+ "done": 101,
+ "excluded": 32,
+ "cells_file": "results/T7.cells.csv",
+ "excluded_file": "results/T7.excluded.csv",
+ "n_days": 90,
+ "n_units": 167,
+ "families": 42,
+ "cells": 101,
+ "p05": 17,
+ "p05_expected": 5.1,
+ "bh_q02": 19,
+ "top": [
+  {
+   "label": "全台",
+   "metric": "機械割差",
+   "n_days": 6,
+   "effect": 0.488,
+   "ci": [
+    -0.4947,
+    1.4699
+   ],
+   "q": 0.3363,
+   "contrast": "in_vs_out",
+   "level": "台帳のイベント日",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "AT・ART",
+   "metric": "機械割差",
+   "n_days": 6,
+   "effect": 0.932,
+   "ci": [
+    -1.1835,
+    3.0478
+   ],
+   "q": 0.8406,
+   "contrast": "in_vs_out",
+   "level": "台帳のイベント日",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ハナハナ・ハナビ",
+   "metric": "RB帯補正",
+   "n_days": 6,
+   "effect": 0.012,
+   "ci": [
+    -0.1297,
+    0.154
+   ],
+   "q": 0.9625,
+   "contrast": "in_vs_out",
+   "level": "台帳のイベント日",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "A+AT",
+   "metric": "RB帯補正",
+   "n_days": 6,
+   "effect": 0.011,
+   "ci": [
+    -0.4157,
+    0.4382
+   ],
+   "q": 0.9625,
+   "contrast": "in_vs_out",
+   "level": "台帳のイベント日",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "全台",
+   "metric": "回転数",
+   "n_days": 6,
+   "effect": 305.959,
+   "ci": [
+    -310.7717,
+    922.6906
+   ],
+   "q": 0.5317,
+   "contrast": "in_vs_out",
+   "level": "台帳のイベント日",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "AT帯補正: 80%検出の目安 ±0.211; AT無補正: 80%検出の目安 ±0.337; RB帯補正: 80%検出の目安 ±0.131; RB無補正: 80%検出の目安 ±0.120; 回転数: 80%検出の目安 ±925.466; 差枚: 80%検出の目安 ±263.301; 機械割差: 80%検出の目安 ±3.795",
+ "caveats": [
+  "基準は窓全体の機種平均なので in_sample。開店前の評価には使わない",
+  "RBは帯補正あり・なしを並べる。符号が割れたら判定しない"
+ ],
+ "reason": ""
+}

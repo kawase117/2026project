@@ -123,8 +123,11 @@ def is_new_machine(first_seen, ds, db_min, days=NEW_MACHINE_DAYS):
     return delta.days < days
 
 
-def build_day_table(hall=mr.DEFAULT_HALL, start="20260707", end="20260930", specs=None):
-    """台日表(区分 seg=RB/OTHER、当り回数 hit、期待 E / Ediff / Gexp、配置 ld / edge)を返す。"""
+def build_day_table(hall=mr.DEFAULT_HALL, start="20260707", end="20260930", specs=None, require_layout=True):
+    """台日表(区分 seg=RB/OTHER、当り回数 hit、期待 E / Ediff / Gexp、配置 ld / edge)を返す。
+
+    require_layout=False のときは、配置のない台日を落とさない(配置履歴が空のホールの機種×時間で使う)。
+    """
     db = mr.hall_db_path(hall)
     specs = specs or bs.load_specs(
         hall=hall
@@ -160,7 +163,7 @@ def build_day_table(hall=mr.DEFAULT_HALL, start="20260707", end="20260930", spec
     raw["band"] = np.digitize(raw.games_normalized, BAND_EDGES)
     raw["G"] = raw.games_normalized
     raw["machine_number"] = raw.machine_number.astype(int)
-    raw = _attach_layout(raw, db)
+    raw = _attach_layout(raw, db, require_layout)
     rb = raw[raw.seg == "RB"]
     cnt = rb.groupby(["machine_name", "ds"]).machine_number.transform("nunique")
     mx = cnt.groupby(rb.machine_name).max()
@@ -169,7 +172,7 @@ def build_day_table(hall=mr.DEFAULT_HALL, start="20260707", end="20260930", spec
     return add_expectations(raw)
 
 
-def _attach_layout(raw, db):
+def _attach_layout(raw, db, require_layout=True):
     con = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
     try:
         lay = pd.read_sql_query(
@@ -185,7 +188,10 @@ def _attach_layout(raw, db):
         "index"
     )  # 日付に対応する配置の版
     raw = raw.join(merged[["section", "rank_from_min", "rank_from_max"]])
-    raw = raw[raw.section.notna()].copy()
+    if require_layout:
+        raw = raw[raw.section.notna()].copy()
+    else:
+        raw = raw.copy()
     raw["edge"] = np.minimum(raw.rank_from_min, raw.rank_from_max)
     raw["ld"] = raw.machine_number % 10
     return raw

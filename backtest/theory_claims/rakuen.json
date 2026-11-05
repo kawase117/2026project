@@ -1,0 +1,26 @@
+{
+ "hall": "楽園蒲田店",
+ "claims": [
+  {"claim_id": "clean_edge1_jug", "source": "§2.1c・§12.1", "text": "clean列の端(depth=1)はジャグラーで強い", "contrast": "same_day", "universe": {"jug_flag": 1}, "target": {"rakuen_clean_edge1": true}, "metrics": ["payout", "rb_rate", "bonus_rate"]},
+  {"claim_id": "clean_edge1_bt", "source": "§2.1c・§12.1", "text": "clean列の端(depth=1)は技術介入で強い", "contrast": "same_day", "universe": {"bt_flag": 1}, "target": {"rakuen_clean_edge1": true}, "metrics": ["payout", "rb_rate", "bonus_rate"]},
+  {"claim_id": "old_edge1_jug", "source": "§2.1b(旧定義)", "text": "端番(旧定義)はジャグラーで強い", "contrast": "same_day", "universe": {"jug_flag": 1}, "target": {"section_edge1": true}, "metrics": ["payout", "rb_rate", "bonus_rate"]},
+  {"claim_id": "old_edge1_hana", "source": "§2.1b(旧定義)", "text": "端番(旧定義)はハナハナで強い", "contrast": "same_day", "universe": {"hana_flag": 1}, "target": {"section_edge1": true}, "metrics": ["payout", "rb_rate", "bonus_rate"]},
+  {"claim_id": "dd_jug", "source": "§3.1a・§12.2", "text": "ジャグラーのイベントDD {22,5,11,25,15}", "contrast": "cross_day", "universe": {"jug_flag": 1}, "days": {"dd": [22, 5, 11, 25, 15]}, "metrics": ["payout", "rb_rate", "bonus_rate"]},
+  {"claim_id": "dd_jug_b", "source": "§3.1a・§12.2", "text": "ジャグ限定日 B日 {5,15,25} は客が気づいていない日", "contrast": "cross_day", "universe": {"jug_flag": 1}, "days": {"dd": [5, 15, 25]}, "metrics": ["payout", "rb_rate", "games"]},
+  {"claim_id": "dd_jug_avoid", "source": "§12.2", "text": "ジャグラーの回避DD {14,19}", "contrast": "cross_day", "universe": {"jug_flag": 1}, "days": {"dd": [14, 19]}, "metrics": ["payout", "rb_rate"]},
+  {"claim_id": "dd_bt", "source": "§3.1a・§12.2", "text": "技術介入のイベントDD {30,22,11}", "contrast": "cross_day", "universe": {"bt_flag": 1}, "days": {"dd": [30, 22, 11]}, "metrics": ["payout", "bonus_rate"]},
+  {"claim_id": "dd_at", "source": "§3.1a・§12.2", "text": "AT一般のイベントDD {30,22,11,10}", "contrast": "cross_day", "universe": {"jug_flag": 0, "hana_flag": 0, "oki_flag": 0, "bt_flag": 0}, "days": {"dd": [30, 22, 11, 10]}, "metrics": ["payout", "games"]},
+  {"claim_id": "dd_at_avoid", "source": "§12.2", "text": "AT一般の回避DD {19,14}", "contrast": "cross_day", "universe": {"jug_flag": 0, "hana_flag": 0, "oki_flag": 0, "bt_flag": 0}, "days": {"dd": [19, 14]}, "metrics": ["payout"]},
+  {"claim_id": "dd_hana", "source": "§12.2", "text": "ハナハナのイベントDD {7,17,27}", "contrast": "cross_day", "universe": {"hana_flag": 1}, "days": {"dd": [7, 17, 27]}, "metrics": ["payout", "rb_rate"]},
+  {"claim_id": "dd_a_all", "source": "§3.1a", "text": "公示型 A日 {11,22,30} は全カテゴリが動き大幅増G", "contrast": "cross_day", "days": {"dd": [11, 22, 30]}, "metrics": ["payout", "games"]},
+  {"claim_id": "strong_zorome", "source": "§12.2", "text": "強ゾロ目(月=日)は全カテゴリ共通", "contrast": "cross_day", "days": {"strong_zorome": [1]}, "metrics": ["payout", "games"]},
+  {"claim_id": "dd11_bt_ld7", "source": "§3.1b・§12.1", "text": "DD11×技術介入×末尾7", "contrast": "same_day", "universe": {"bt_flag": 1}, "days": {"dd": [11]}, "target": {"ld": 7}, "metrics": ["payout", "bonus_rate"]},
+  {"claim_id": "bandori_dd14", "source": "§10.1", "text": "DD14 はバンドリ全(媒体報告)", "contrast": "cross_day", "machine_like": ["バンドリ"], "days": {"dd": [14]}, "metrics": ["payout", "diff", "games"]}
+ ],
+ "untested": [
+  {"text": "セクション推薦 baseline モデル(§6・§12.3)", "reason": "モデルのwalk-forwardの再実行は今回の範囲外。前向き検証の採点表で見る"},
+  {"text": "A日の機種別の順位(エウレカセブン軸など、§12.2)", "reason": "機種×DDの個別セルは機種×時間 M1 の総当たりに含む。説としての再判定はしていない"},
+  {"text": "§8・§12.5 の区画ごとのDD(1130-1134のDD22 ほか)", "reason": "旧 section の定義に依存し、工事後の区画で読み替える対応表がない"},
+  {"text": "§16 カテゴリ×フロア×機種規模", "reason": "フロアの列がDBにない(座標ファイルが別)"}
+ ]
+}

@@ -1,0 +1,105 @@
+{
+ "hall": "ザ-シティ-ベルシティ雑色店",
+ "claims": [
+  {
+   "claim_id": "jug_dd_top",
+   "source": "§4",
+   "text": "ジャグラーの上位DD {6,28,20,5}",
+   "contrast": "cross_day",
+   "days": {
+    "dd": [
+     6,
+     28,
+     20,
+     5
+    ]
+   },
+   "metrics": [
+    "payout",
+    "rb_rate"
+   ],
+   "universe": {
+    "jug_flag": 1
+   }
+  },
+  {
+   "claim_id": "jug_dd_low",
+   "source": "§4",
+   "text": "ジャグラーの下位DD {27,23,21}",
+   "contrast": "cross_day",
+   "days": {
+    "dd": [
+     27,
+     23,
+     21
+    ]
+   },
+   "metrics": [
+    "payout",
+    "rb_rate"
+   ],
+   "universe": {
+    "jug_flag": 1
+   }
+  },
+  {
+   "claim_id": "at_dd_top",
+   "source": "§4",
+   "text": "AT一般の上位DD {28,8,18,6}",
+   "contrast": "cross_day",
+   "days": {
+    "dd": [
+     28,
+     8,
+     18,
+     6
+    ]
+   },
+   "metrics": [
+    "payout"
+   ],
+   "universe": {
+    "jug_flag": 0,
+    "hana_flag": 0,
+    "oki_flag": 0,
+    "bt_flag": 0
+   }
+  },
+  {
+   "claim_id": "at_dd_low",
+   "source": "§4",
+   "text": "AT一般の下位DD {12,25,23}",
+   "contrast": "cross_day",
+   "days": {
+    "dd": [
+     12,
+     25,
+     23
+    ]
+   },
+   "metrics": [
+    "payout"
+   ],
+   "universe": {
+    "jug_flag": 0,
+    "hana_flag": 0,
+    "oki_flag": 0,
+    "bt_flag": 0
+   }
+  }
+ ],
+ "untested": [
+  {
+   "text": "機種別DD/曜日スキャンの個別機種(文書の表)",
+   "reason": "文書にピークの日が書かれておらず、旧スキャンの再現は別スクリプト。機種×時間の総当たりは M1 で見た"
+  },
+  {
+   "text": "機種横断一致度スキャン(文書 §2)",
+   "reason": "旧指標(一致率)の再現はしていない。DD軸は T2・T3 と M2 で見た"
+  },
+  {
+   "text": "固定台効果が大きいが日替わりの予測は効かない(§3.2 分散分解)",
+   "reason": "分散分解は再実行していない。台番号の水準の翌月検証は L4 の next_month で見た"
+  }
+ ]
+}

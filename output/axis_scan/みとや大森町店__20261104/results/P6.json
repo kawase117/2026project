@@ -1,0 +1,106 @@
+{
+ "axis_id": "P6",
+ "hall": "みとや大森町店",
+ "asof": "20261104",
+ "window": "3m,all",
+ "status": "完了",
+ "basis": "ex_post",
+ "scope": "2区分×指標5×窓2",
+ "planned": 20,
+ "done": 20,
+ "excluded": 0,
+ "cells_file": "results/P6.cells.csv",
+ "excluded_file": "results/P6.excluded.csv",
+ "n_days": 90,
+ "n_units": 165,
+ "families": 0,
+ "cells": 20,
+ "p05": 11,
+ "p05_expected": 1.0,
+ "bh_q02": 12,
+ "top": [
+  {
+   "label": "機種の内側",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 0.288,
+   "ci": [
+    0.1771,
+    0.4017
+   ],
+   "q": 0.002,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "機種の内側",
+   "metric": "RB位置",
+   "n_days": 90,
+   "effect": 0.019,
+   "ci": [
+    0.0099,
+    0.0299
+   ],
+   "q": 0.002,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "機種の境界",
+   "metric": "RB位置",
+   "n_days": 90,
+   "effect": 0.132,
+   "ci": [
+    0.0336,
+    0.229
+   ],
+   "q": 0.002,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "機種の境界",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 0.543,
+   "ci": [
+    -0.0481,
+    1.083
+   ],
+   "q": 0.072,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "機種の境界",
+   "metric": "AT位置",
+   "n_days": 89,
+   "effect": 0.072,
+   "ci": [
+    -0.0649,
+    0.2231
+   ],
+   "q": 0.644,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "AT位置: 3m の CI 半幅の中央値 ±0.087; RB位置: 3m の CI 半幅の中央値 ±0.054; 回転数: 3m の CI 半幅の中央値 ±18.123; 差枚: 3m の CI 半幅の中央値 ±26.590; 機械割差: 3m の CI 半幅の中央値 ±0.339",
+ "caveats": [
+  "隣は台番号の連番で近似"
+ ],
+ "reason": "",
+ "extra": {
+  "next_month": []
+ }
+}

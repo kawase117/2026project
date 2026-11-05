@@ -1,0 +1,95 @@
+{
+ "axis_id": "M1",
+ "hall": "みとや大森町店",
+ "asof": "20261104",
+ "window": "20260807-20261104",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "単位×時間。「前日の稼働」は暦日でないので外した。3m のみ",
+ "planned": 15438,
+ "done": 8018,
+ "excluded": 7420,
+ "cells_file": "results/M1.cells.csv",
+ "excluded_file": "results/M1.excluded.csv",
+ "n_days": 90,
+ "n_units": 83,
+ "families": 177,
+ "cells": 8018,
+ "p05": 394,
+ "p05_expected": 400.9,
+ "bh_q02": 0,
+ "top": [
+  {
+   "label": "戦国乙女5 業火を穿つ宿焔の双刃×強ゾロ目(月=日)",
+   "metric": "機械割",
+   "n_days": 3,
+   "effect": 14.5569,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.7282,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ワールドダイスター×7日",
+   "metric": "機械割",
+   "n_days": 3,
+   "effect": 36.7134,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.7282,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "うみねこのなく頃に2×19日",
+   "metric": "機械割",
+   "n_days": 3,
+   "effect": 15.4544,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.7282,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "やじきた道中記参る！×9日",
+   "metric": "機械割",
+   "n_days": 3,
+   "effect": 72.0892,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.7282,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "かぐや様は告らせたい×7のつく日",
+   "metric": "回転数",
+   "n_days": 9,
+   "effect": 0.6119,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.7282,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "",
+ "caveats": [
+  "seg は排他で、差枚は出さない",
+  "基準は期間全体で in_sample",
+  "新台は除外"
+ ],
+ "reason": ""
+}

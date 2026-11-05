@@ -1,0 +1,231 @@
+{
+ "axis_id": "L3",
+ "hall": "みとや大森町店",
+ "asof": "20261104",
+ "window": "1m,2m,3m,train,verify,m202611,m202610,m202609,m202608",
+ "status": "完了",
+ "basis": "ex_post",
+ "scope": "単位×指標5×窓9×対比2(全組み合わせ、2軸)。train で選び verify で確かめる翌月検証を含む",
+ "planned": 540,
+ "done": 452,
+ "excluded": 88,
+ "cells_file": "results/L3.cells.csv",
+ "excluded_file": "results/L3.excluded.csv",
+ "n_days": 90,
+ "n_units": 167,
+ "families": 0,
+ "cells": 452,
+ "p05": 172,
+ "p05_expected": 22.6,
+ "bh_q02": 216,
+ "top": [
+  {
+   "label": "通路角3以上",
+   "metric": "RB位置",
+   "n_days": 90,
+   "effect": 0.036,
+   "ci": [
+    0.025,
+    0.0457
+   ],
+   "q": 0.0015,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": 0.048
+  },
+  {
+   "label": "通路角3以上",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 0.374,
+   "ci": [
+    0.2344,
+    0.5118
+   ],
+   "q": 0.003,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": 0.313
+  },
+  {
+   "label": "端3以上",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 0.306,
+   "ci": [
+    0.1256,
+    0.4529
+   ],
+   "q": 0.003,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": 0.044
+  },
+  {
+   "label": "端3以上",
+   "metric": "RB位置",
+   "n_days": 90,
+   "effect": 0.025,
+   "ci": [
+    0.009,
+    0.0379
+   ],
+   "q": 0.006,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": 0.018
+  },
+  {
+   "label": "端2",
+   "metric": "AT位置",
+   "n_days": 90,
+   "effect": 0.066,
+   "ci": [
+    -0.0563,
+    0.1743
+   ],
+   "q": 0.762,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": -0.025
+  }
+ ],
+ "power": "AT位置: 3m の CI 半幅の中央値 ±0.064; RB位置: 3m の CI 半幅の中央値 ±0.039; 回転数: 3m の CI 半幅の中央値 ±56.181; 差枚: 3m の CI 半幅の中央値 ±67.930; 機械割差: 3m の CI 半幅の中央値 ±0.701",
+ "caveats": [
+  "新台(導入後7日)は除外",
+  "同じ日の他の台日との差で、当日の比較なので事後分析",
+  "差枚と機械割差は1つの証拠として数える"
+ ],
+ "reason": "",
+ "extra": {
+  "next_month": [
+   {
+    "unit_kind": "端番",
+    "metric": "AT位置",
+    "n_units": 3,
+    "spearman_train_verify": -0.5,
+    "top_units": [
+     "端2",
+     "端1"
+    ],
+    "train_mean": 0.049,
+    "verify_mean": -0.029,
+    "verify_all_mean": 0.006
+   },
+   {
+    "unit_kind": "端番",
+    "metric": "RB位置",
+    "n_units": 3,
+    "spearman_train_verify": -0.5,
+    "top_units": [
+     "端2",
+     "端3以上"
+    ],
+    "train_mean": 0.062,
+    "verify_mean": 0.048,
+    "verify_all_mean": 0.06
+   },
+   {
+    "unit_kind": "端番",
+    "metric": "回転数",
+    "n_units": 3,
+    "spearman_train_verify": 0.5,
+    "top_units": [
+     "端1",
+     "端2"
+    ],
+    "train_mean": 274.657,
+    "verify_mean": 278.954,
+    "verify_all_mean": 151.391
+   },
+   {
+    "unit_kind": "端番",
+    "metric": "差枚",
+    "n_units": 3,
+    "spearman_train_verify": -1.0,
+    "top_units": [
+     "端3以上",
+     "端1"
+    ],
+    "train_mean": -15.898,
+    "verify_mean": 12.858,
+    "verify_all_mean": 33.606
+   },
+   {
+    "unit_kind": "端番",
+    "metric": "機械割差",
+    "n_units": 3,
+    "spearman_train_verify": -1.0,
+    "top_units": [
+     "端3以上",
+     "端1"
+    ],
+    "train_mean": 0.203,
+    "verify_mean": 0.687,
+    "verify_all_mean": 0.99
+   },
+   {
+    "unit_kind": "通路角",
+    "metric": "RB位置",
+    "n_units": 3,
+    "spearman_train_verify": 0.5,
+    "top_units": [
+     "通路角2",
+     "通路角3以上"
+    ],
+    "train_mean": 0.064,
+    "verify_mean": 0.026,
+    "verify_all_mean": 0.003
+   },
+   {
+    "unit_kind": "通路角",
+    "metric": "回転数",
+    "n_units": 3,
+    "spearman_train_verify": 0.5,
+    "top_units": [
+     "通路角1",
+     "通路角2"
+    ],
+    "train_mean": 374.955,
+    "verify_mean": 344.994,
+    "verify_all_mean": 212.321
+   },
+   {
+    "unit_kind": "通路角",
+    "metric": "差枚",
+    "n_units": 3,
+    "spearman_train_verify": -0.5,
+    "top_units": [
+     "通路角3以上",
+     "通路角2"
+    ],
+    "train_mean": -19.264,
+    "verify_mean": 68.778,
+    "verify_all_mean": 50.217
+   },
+   {
+    "unit_kind": "通路角",
+    "metric": "機械割差",
+    "n_units": 3,
+    "spearman_train_verify": -0.5,
+    "top_units": [
+     "通路角3以上",
+     "通路角2"
+    ],
+    "train_mean": 0.061,
+    "verify_mean": 1.101,
+    "verify_all_mean": 1.001
+   }
+  ]
+ }
+}

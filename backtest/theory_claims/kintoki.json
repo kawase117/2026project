@@ -1,0 +1,115 @@
+{
+ "hall": "金時京急蒲田店",
+ "claims": [
+  {
+   "claim_id": "jug_dd_top",
+   "source": "§3",
+   "text": "ジャグラーの上位DD {3,15,24,20}",
+   "contrast": "cross_day",
+   "days": {
+    "dd": [
+     3,
+     15,
+     24,
+     20
+    ]
+   },
+   "metrics": [
+    "payout",
+    "rb_rate"
+   ],
+   "universe": {
+    "jug_flag": 1
+   }
+  },
+  {
+   "claim_id": "jug_dd_low",
+   "source": "§3",
+   "text": "ジャグラーの下位DD {8,21,31}",
+   "contrast": "cross_day",
+   "days": {
+    "dd": [
+     8,
+     21,
+     31
+    ]
+   },
+   "metrics": [
+    "payout",
+    "rb_rate"
+   ],
+   "universe": {
+    "jug_flag": 1
+   }
+  },
+  {
+   "claim_id": "at_dd_top",
+   "source": "§3",
+   "text": "AT一般の上位DD {20,4,15,25}",
+   "contrast": "cross_day",
+   "days": {
+    "dd": [
+     20,
+     4,
+     15,
+     25
+    ]
+   },
+   "metrics": [
+    "payout"
+   ],
+   "universe": {
+    "jug_flag": 0,
+    "hana_flag": 0,
+    "oki_flag": 0,
+    "bt_flag": 0
+   }
+  },
+  {
+   "claim_id": "at_dd_low",
+   "source": "§3",
+   "text": "AT一般の下位DD {22,23,18}",
+   "contrast": "cross_day",
+   "days": {
+    "dd": [
+     22,
+     23,
+     18
+    ]
+   },
+   "metrics": [
+    "payout"
+   ],
+   "universe": {
+    "jug_flag": 0,
+    "hana_flag": 0,
+    "oki_flag": 0,
+    "bt_flag": 0
+   }
+  },
+  {
+   "claim_id": "dd23_all",
+   "source": "§2",
+   "text": "DD23 はホール全体で弱い",
+   "contrast": "cross_day",
+   "days": {
+    "dd": [
+     23
+    ]
+   },
+   "metrics": [
+    "payout"
+   ]
+  }
+ ],
+ "untested": [
+  {
+   "text": "機種別DD/曜日スキャンの個別機種(文書の表)",
+   "reason": "文書にピークの日が書かれておらず、旧スキャンの再現は別スクリプト。機種×時間の総当たりは M1 で見た"
+  },
+  {
+   "text": "機種横断一致度スキャン(文書 §2)",
+   "reason": "旧指標(一致率)の再現はしていない。DD軸は T2・T3 と M2 で見た"
+  }
+ ]
+}

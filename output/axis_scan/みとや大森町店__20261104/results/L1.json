@@ -1,0 +1,171 @@
+{
+ "axis_id": "L1",
+ "hall": "みとや大森町店",
+ "asof": "20261104",
+ "window": "1m,2m,3m,train,verify,m202611,m202610,m202609,m202608",
+ "status": "完了",
+ "basis": "ex_post",
+ "scope": "単位×指標5×窓9×対比2(全組み合わせ、2軸)。train で選び verify で確かめる翌月検証を含む",
+ "planned": 7740,
+ "done": 3258,
+ "excluded": 4482,
+ "cells_file": "results/L1.cells.csv",
+ "excluded_file": "results/L1.excluded.csv",
+ "n_days": 90,
+ "n_units": 167,
+ "families": 0,
+ "cells": 3258,
+ "p05": 1407,
+ "p05_expected": 162.9,
+ "bh_q02": 1477,
+ "top": [
+  {
+   "label": "マイジャグラーV",
+   "metric": "RB位置",
+   "n_days": 87,
+   "effect": 0.122,
+   "ci": [
+    0.1014,
+    0.1453
+   ],
+   "q": 0.0032,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": 0.134
+  },
+  {
+   "label": "ネオアイムジャグラーEX",
+   "metric": "RB位置",
+   "n_days": 90,
+   "effect": 0.075,
+   "ci": [
+    0.033,
+    0.1175
+   ],
+   "q": 0.0032,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "甲鉄城のカバネリ 海門(うなと)決戦",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 5.255,
+   "ci": [
+    4.1183,
+    6.32
+   ],
+   "q": 0.0102,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": 7.073
+  },
+  {
+   "label": "ディスクアップ ULTRAREMIX",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 4.261,
+   "ci": [
+    1.8846,
+    6.7308
+   ],
+   "q": 0.0102,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": 1.897
+  },
+  {
+   "label": "ソードアート・オンラインII",
+   "metric": "回転数",
+   "n_days": 90,
+   "effect": 3047.857,
+   "ci": [
+    2826.9849,
+    3257.711
+   ],
+   "q": 0.0013,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": 2628.767
+  }
+ ],
+ "power": "RB位置: 3m の CI 半幅の中央値 ±0.114; 回転数: 3m の CI 半幅の中央値 ±247.530; 差枚: 3m の CI 半幅の中央値 ±259.236; 機械割差: 3m の CI 半幅の中央値 ±3.213",
+ "caveats": [
+  "新台(導入後7日)は除外",
+  "同じ日の他の台日との差で、当日の比較なので事後分析",
+  "差枚と機械割差は1つの証拠として数える"
+ ],
+ "reason": "",
+ "extra": {
+  "next_month": [
+   {
+    "unit_kind": "機種",
+    "metric": "RB位置",
+    "n_units": 14,
+    "spearman_train_verify": 0.648,
+    "top_units": [
+     "スマート沖スロ ニューキングハナハナV",
+     "マイジャグラーV"
+    ],
+    "train_mean": 0.13,
+    "verify_mean": 0.153,
+    "verify_all_mean": -0.09
+   },
+   {
+    "unit_kind": "機種",
+    "metric": "回転数",
+    "n_units": 49,
+    "spearman_train_verify": 0.773,
+    "top_units": [
+     "ソードアート・オンラインII",
+     "マイジャグラーV",
+     "邪神ちゃんドロップキック",
+     "ディスクアップ ULTRAREMIX"
+    ],
+    "train_mean": 2393.678,
+    "verify_mean": 2162.105,
+    "verify_all_mean": -604.652
+   },
+   {
+    "unit_kind": "機種",
+    "metric": "差枚",
+    "n_units": 49,
+    "spearman_train_verify": 0.358,
+    "top_units": [
+     "ディスクアップ ULTRAREMIX",
+     "邪神ちゃんドロップキック",
+     "甲鉄城のカバネリ 海門(うなと)決戦",
+     "東京喰種"
+    ],
+    "train_mean": 470.144,
+    "verify_mean": 284.234,
+    "verify_all_mean": -57.496
+   },
+   {
+    "unit_kind": "機種",
+    "metric": "機械割差",
+    "n_units": 49,
+    "spearman_train_verify": 0.304,
+    "top_units": [
+     "甲鉄城のカバネリ 海門(うなと)決戦",
+     "ディスクアップ ULTRAREMIX",
+     "新鬼武者3",
+     "邪神ちゃんドロップキック"
+    ],
+    "train_mean": 4.231,
+    "verify_mean": 3.23,
+    "verify_all_mean": -1.299
+   }
+  ]
+ }
+}

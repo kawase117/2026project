@@ -1,0 +1,53 @@
+{
+ "axis_id": "CLAIM",
+ "hall": "みとや大森町店",
+ "asof": "20261104",
+ "window": "直近90日とそれ以前",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "説16件×指標。説の定義は backtest/theory_claims/mitoya.json。n_days=直近の日数、n_units=比較期間の日数",
+ "planned": 30,
+ "done": 30,
+ "excluded": 0,
+ "cells_file": "results/CLAIM.cells.csv",
+ "excluded_file": "results/CLAIM.excluded.csv",
+ "n_days": 90,
+ "n_units": 16,
+ "families": 0,
+ "cells": 30,
+ "p05": 0,
+ "p05_expected": 0.0,
+ "bh_q02": 0,
+ "top": [],
+ "power": "",
+ "caveats": [
+  "判定は差の有意性に基づく。CIがゼロを跨ぐだけでは「消えた」にしない",
+  "直近が6日未満は判定しない",
+  "payout は same_day が非加重(deathwatch と同じ)、cross_day と hall_level が回転数加重。旧本文の非加重の数値とは直接比べない"
+ ],
+ "reason": "",
+ "extra": {
+  "untested": [
+   {
+    "text": "マイジャグラーⅥの前日ph・差枚の上位3台(`mitoya_myj6_prevph_top3`・`mitoya_myj6_prevdiff_top3`)",
+    "reason": "全34台化が 11/02 で、Vの数値は引き継がない。前向き検証で見る"
+   },
+   {
+    "text": "通路端のマイジャグラーⅥを避ける(`mitoya_myj6_aisle_end_avoid`)",
+    "reason": "同上"
+   },
+   {
+    "text": "イベント日×RB確率ルール(§3.1b)",
+    "reason": "前向き検証の台帳で判定中。スコアボードで見る"
+   },
+   {
+    "text": "debut_phase の二重構造(§2.7)",
+    "reason": "経過日の定義が旧スクリプト依存。新台の効果は N1 で別に見た"
+   },
+   {
+    "text": "セクション別の順位(523-539 除外ほか)",
+    "reason": "1セル17日以下で今回は説として測らない。島の水準は L2 で見た"
+   }
+  ]
+ }
+}

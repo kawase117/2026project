@@ -1,0 +1,105 @@
+{
+ "axis_id": "H6",
+ "hall": "みとや大森町店",
+ "asof": "20261104",
+ "window": "3m,prev3m",
+ "status": "完了",
+ "basis": "as_of",
+ "scope": "単位5×指標5×窓2×(素の値/自分の長期水準を引く)。全期間は計算量で対象外(前の3か月を再現確認に置く)",
+ "planned": 100,
+ "done": 65,
+ "excluded": 35,
+ "cells_file": "results/H6.cells.csv",
+ "excluded_file": "results/H6.excluded.csv",
+ "n_days": 90,
+ "n_units": 277,
+ "families": 2,
+ "cells": 65,
+ "p05": 41,
+ "p05_expected": 3.2,
+ "bh_q02": 45,
+ "top": [
+  {
+   "label": "島|機械割差|own_level_removed",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 0.116,
+   "ci": [
+    0.0507,
+    0.1801
+   ],
+   "q": 0.0011,
+   "contrast": "own_level_removed",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "機種|機械割差|own_level_removed",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 0.051,
+   "ci": [
+    0.0241,
+    0.078
+   ],
+   "q": 0.0011,
+   "contrast": "own_level_removed",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "島|差枚|own_level_removed",
+   "metric": "差枚",
+   "n_days": 90,
+   "effect": 0.138,
+   "ci": [
+    0.0778,
+    0.2054
+   ],
+   "q": 0.0011,
+   "contrast": "own_level_removed",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "島|RB位置|own_level_removed",
+   "metric": "RB位置",
+   "n_days": 90,
+   "effect": 0.096,
+   "ci": [
+    0.0293,
+    0.1628
+   ],
+   "q": 0.0144,
+   "contrast": "own_level_removed",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "機種|差枚|own_level_removed",
+   "metric": "差枚",
+   "n_days": 90,
+   "effect": 0.035,
+   "ci": [
+    0.0067,
+    0.0624
+   ],
+   "q": 0.0385,
+   "contrast": "own_level_removed",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "順位相関の CI 半幅の中央値 ±0.053",
+ "caveats": [
+  "top は自分の長期水準を引いた版から選ぶ。素の値は日を問わない強さ(水準)を再検出するだけなので候補にしない",
+  "特徴量は対象日より前だけ。結果(当日の値)は同日の断面で引いたもの",
+  "台番号は同じ機種の期間だけで窓を作る"
+ ],
+ "reason": ""
+}

@@ -1,0 +1,201 @@
+{
+ "hall": "ヒロキ東口店",
+ "claims": [
+  {
+   "claim_id": "jug_dd_top",
+   "source": "§3",
+   "text": "ジャグラーの上位DD {30,16,11,6}",
+   "contrast": "cross_day",
+   "days": {
+    "dd": [
+     30,
+     16,
+     11,
+     6
+    ]
+   },
+   "metrics": [
+    "payout",
+    "rb_rate"
+   ],
+   "universe": {
+    "jug_flag": 1
+   }
+  },
+  {
+   "claim_id": "jug_dd_low",
+   "source": "§3",
+   "text": "ジャグラーの下位DD {28,31,19}",
+   "contrast": "cross_day",
+   "days": {
+    "dd": [
+     28,
+     31,
+     19
+    ]
+   },
+   "metrics": [
+    "payout",
+    "rb_rate"
+   ],
+   "universe": {
+    "jug_flag": 1
+   }
+  },
+  {
+   "claim_id": "at_dd_top",
+   "source": "§3",
+   "text": "AT一般の上位DD {11,26,6,29}",
+   "contrast": "cross_day",
+   "days": {
+    "dd": [
+     11,
+     26,
+     6,
+     29
+    ]
+   },
+   "metrics": [
+    "payout"
+   ],
+   "universe": {
+    "jug_flag": 0,
+    "hana_flag": 0,
+    "oki_flag": 0,
+    "bt_flag": 0
+   }
+  },
+  {
+   "claim_id": "at_dd_low",
+   "source": "§3",
+   "text": "AT一般の下位DD {5,18,4}",
+   "contrast": "cross_day",
+   "days": {
+    "dd": [
+     5,
+     18,
+     4
+    ]
+   },
+   "metrics": [
+    "payout"
+   ],
+   "universe": {
+    "jug_flag": 0,
+    "hana_flag": 0,
+    "oki_flag": 0,
+    "bt_flag": 0
+   }
+  },
+  {
+   "claim_id": "hanabi_sat_sun",
+   "source": "§5",
+   "text": "新ハナビは土日に高設定が多い",
+   "contrast": "cross_day",
+   "days": {
+    "weekday": [
+     5,
+     6
+    ]
+   },
+   "metrics": [
+    "rb_rate",
+    "payout"
+   ],
+   "machine_like": [
+    "新ハナビ"
+   ]
+  },
+  {
+   "claim_id": "hanabi_wed",
+   "source": "§5",
+   "text": "新ハナビは水曜も準候補",
+   "contrast": "cross_day",
+   "days": {
+    "weekday": [
+     2
+    ]
+   },
+   "metrics": [
+    "rb_rate",
+    "payout"
+   ],
+   "machine_like": [
+    "新ハナビ"
+   ]
+  },
+  {
+   "claim_id": "hanabi_weekday_low",
+   "source": "§5",
+   "text": "新ハナビは月火木が弱い",
+   "contrast": "cross_day",
+   "days": {
+    "weekday": [
+     0,
+     1,
+     3
+    ]
+   },
+   "metrics": [
+    "rb_rate",
+    "payout"
+   ],
+   "machine_like": [
+    "新ハナビ"
+   ]
+  },
+  {
+   "claim_id": "hanabi_dd_top",
+   "source": "§5",
+   "text": "新ハナビの最強DD {30,26,25,28}",
+   "contrast": "cross_day",
+   "days": {
+    "dd": [
+     30,
+     26,
+     25,
+     28
+    ]
+   },
+   "metrics": [
+    "rb_rate",
+    "payout"
+   ],
+   "machine_like": [
+    "新ハナビ"
+   ]
+  },
+  {
+   "claim_id": "hanabi_dd_low",
+   "source": "§5",
+   "text": "新ハナビの回避DD {9,10,1,22,29}",
+   "contrast": "cross_day",
+   "days": {
+    "dd": [
+     9,
+     10,
+     1,
+     22,
+     29
+    ]
+   },
+   "metrics": [
+    "rb_rate",
+    "payout"
+   ],
+   "machine_like": [
+    "新ハナビ"
+   ]
+  }
+ ],
+ "untested": [
+  {
+   "text": "機種別DD/曜日スキャンの個別機種(文書の表)",
+   "reason": "文書にピークの日が書かれておらず、旧スキャンの再現は別スクリプト。機種×時間の総当たりは M1 で見た"
+  },
+  {
+   "text": "機種横断一致度スキャン(文書 §2)",
+   "reason": "旧指標(一致率)の再現はしていない。DD軸は T2・T3 と M2 で見た"
+  }
+ ]
+}

@@ -1,0 +1,318 @@
+{
+ "hall": "マルハンメガシティ2000-蒲田7",
+ "claims": [
+  {
+   "claim_id": "at_corner1",
+   "source": "冒頭 2026-07-23",
+   "text": "AT一般の通路角1は同機種の他台より弱い",
+   "contrast": "same_day",
+   "metrics": [
+    "payout",
+    "diff"
+   ],
+   "universe": {
+    "jug_flag": 0,
+    "hana_flag": 0,
+    "oki_flag": 0,
+    "bt_flag": 0
+   },
+   "target": {
+    "rank_from_aisle": 1
+   }
+  },
+  {
+   "claim_id": "jug_corner1",
+   "source": "冒頭 2026-07-23",
+   "text": "ジャグラーの通路角1は機械割で差がない",
+   "contrast": "same_day",
+   "metrics": [
+    "payout",
+    "rb_rate"
+   ],
+   "universe": {
+    "jug_flag": 1
+   },
+   "target": {
+    "rank_from_aisle": 1
+   }
+  },
+  {
+   "claim_id": "jug_edge1",
+   "source": "§2.1",
+   "text": "ジャグラーの端番1(角番1)は避ける",
+   "contrast": "same_day",
+   "metrics": [
+    "payout",
+    "rb_rate",
+    "diff"
+   ],
+   "universe": {
+    "jug_flag": 1
+   },
+   "target": {
+    "section_edge1": true
+   }
+  },
+  {
+   "claim_id": "at_edge1",
+   "source": "§2.1・冒頭",
+   "text": "AT一般の端番1は弱い",
+   "contrast": "same_day",
+   "metrics": [
+    "payout",
+    "diff"
+   ],
+   "universe": {
+    "jug_flag": 0,
+    "hana_flag": 0,
+    "oki_flag": 0,
+    "bt_flag": 0
+   },
+   "target": {
+    "section_edge1": true
+   }
+  },
+  {
+   "claim_id": "saturday",
+   "source": "冒頭 2026-09-10",
+   "text": "土曜はホール全体で明確に強い",
+   "contrast": "cross_day",
+   "metrics": [
+    "payout",
+    "bonus_rate",
+    "games"
+   ],
+   "days": {
+    "weekday": [
+     5
+    ]
+   }
+  },
+  {
+   "claim_id": "sunday",
+   "source": "冒頭 2026-09-10",
+   "text": "日曜も強い",
+   "contrast": "cross_day",
+   "metrics": [
+    "payout",
+    "bonus_rate",
+    "games"
+   ],
+   "days": {
+    "weekday": [
+     6
+    ]
+   }
+  },
+  {
+   "claim_id": "thu_fri_weak",
+   "source": "冒頭 2026-09-10",
+   "text": "木・金は弱い",
+   "contrast": "cross_day",
+   "metrics": [
+    "payout",
+    "bonus_rate"
+   ],
+   "days": {
+    "weekday": [
+     3,
+     4
+    ]
+   }
+  },
+  {
+   "claim_id": "at_saturday",
+   "source": "§2.4",
+   "text": "AT群×土曜は安定して正",
+   "contrast": "cross_day",
+   "metrics": [
+    "payout"
+   ],
+   "universe": {
+    "jug_flag": 0,
+    "hana_flag": 0,
+    "oki_flag": 0,
+    "bt_flag": 0
+   },
+   "days": {
+    "weekday": [
+     5
+    ]
+   }
+  },
+  {
+   "claim_id": "strong_zorome",
+   "source": "冒頭 2026-09-10",
+   "text": "強ゾロ目(月=日)は強い",
+   "contrast": "cross_day",
+   "metrics": [
+    "payout",
+    "bonus_rate",
+    "games"
+   ],
+   "days": {
+    "strong_zorome": [
+     1
+    ]
+   }
+  },
+  {
+   "claim_id": "dd7_series",
+   "source": "冒頭 2026-09-10・§4",
+   "text": "7のつく日は強い",
+   "contrast": "cross_day",
+   "metrics": [
+    "payout",
+    "bonus_rate",
+    "games"
+   ],
+   "days": {
+    "dd": [
+     7,
+     17,
+     27
+    ]
+   }
+  },
+  {
+   "claim_id": "dd30",
+   "source": "§4 Layer1",
+   "text": "DD30 は全面投入",
+   "contrast": "cross_day",
+   "metrics": [
+    "payout",
+    "bonus_rate"
+   ],
+   "days": {
+    "dd": [
+     30
+    ]
+   }
+  },
+  {
+   "claim_id": "dd18_23_trough",
+   "source": "§4 Layer1",
+   "text": "DD18-23 は投入の谷",
+   "contrast": "cross_day",
+   "metrics": [
+    "payout",
+    "bonus_rate"
+   ],
+   "days": {
+    "dd": [
+     18,
+     19,
+     20,
+     21,
+     22,
+     23
+    ]
+   }
+  },
+  {
+   "claim_id": "a_event",
+   "source": "§2.5",
+   "text": "イベント日の効果はA機に集中する(1・7のつく日、ゾロ目、30・31で近似)",
+   "contrast": "cross_day",
+   "metrics": [
+    "payout",
+    "rb_rate"
+   ],
+   "machine_like": [
+    "ジャグラー",
+    "ハナハナ"
+   ],
+   "days": {
+    "dd": [
+     1,
+     7,
+     11,
+     17,
+     21,
+     22,
+     27,
+     30,
+     31
+    ]
+   }
+  },
+  {
+   "claim_id": "n_event",
+   "source": "§2.5",
+   "text": "イベント日の効果はN機には薄い",
+   "contrast": "cross_day",
+   "metrics": [
+    "payout"
+   ],
+   "universe": {
+    "jug_flag": 0,
+    "hana_flag": 0
+   },
+   "days": {
+    "dd": [
+     1,
+     7,
+     11,
+     17,
+     21,
+     22,
+     27,
+     30,
+     31
+    ]
+   }
+  },
+  {
+   "claim_id": "unit_zorome",
+   "source": "§2.6",
+   "text": "台末尾ゾロ目は安定して優位",
+   "contrast": "same_day",
+   "metrics": [
+    "payout",
+    "diff"
+   ],
+   "target": {
+    "unit_zorome": 1
+   }
+  },
+  {
+   "claim_id": "tetsudai_2026",
+   "source": "§8.1",
+   "text": "台番号2026は鉄台",
+   "contrast": "same_day",
+   "metrics": [
+    "payout",
+    "diff"
+   ],
+   "target": {
+    "unit_no": 2026
+   }
+  }
+ ],
+ "untested": [
+  {
+   "text": "6セグメント構造と各セグメントの有効変数(§1)",
+   "reason": "フロアとA/N区画の定義が旧スクリプト依存。島の水準は L2、機種タイプは M2 で見た"
+  },
+  {
+   "text": "DD×角番テーブル(§2.1)",
+   "reason": "3軸で検出力が尽きる。X1 の DD×角番 で2軸までを見た"
+  },
+  {
+   "text": "経過日数の3フェーズ(§2.7)",
+   "reason": "定義が旧スクリプト依存。新台の効果は N1 で別に見た"
+  },
+  {
+   "text": "機種別DD/曜日パターン(§2.8・§2.8b)",
+   "reason": "個別セルは M1 の総当たりに含む。説としての再判定はしていない"
+  },
+  {
+   "text": "MLモデル V12b(§5)",
+   "reason": "walk-forward の再実行は範囲外"
+  },
+  {
+   "text": "AT一般の機種ラインナップ追従(冒頭 2026-07-23)",
+   "reason": "前向き検証が未実施の規則。L1 と H系で機種の水準の持続は見た"
+  }
+ ]
+}

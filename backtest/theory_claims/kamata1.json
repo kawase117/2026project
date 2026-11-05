@@ -1,0 +1,439 @@
+{
+ "hall": "マルハンメガシティ2000-蒲田1",
+ "claims": [
+  {
+   "claim_id": "a_event",
+   "source": "§2.1",
+   "text": "A系はイベント日に強い",
+   "contrast": "cross_day",
+   "metrics": [
+    "payout",
+    "rb_rate"
+   ],
+   "machine_like": [
+    "ジャグラー",
+    "ハナハナ"
+   ],
+   "days": {
+    "dd": [
+     1,
+     7,
+     11,
+     17,
+     21,
+     22,
+     27,
+     30,
+     31
+    ]
+   },
+   "recent_from": "20260826"
+  },
+  {
+   "claim_id": "n_event_none",
+   "source": "§2.1",
+   "text": "N系はイベント日で差が出ない",
+   "contrast": "cross_day",
+   "metrics": [
+    "payout",
+    "games"
+   ],
+   "universe": {
+    "jug_flag": 0,
+    "hana_flag": 0
+   },
+   "days": {
+    "dd": [
+     1,
+     7,
+     11,
+     17,
+     21,
+     22,
+     27,
+     30,
+     31
+    ]
+   },
+   "recent_from": "20260826"
+  },
+  {
+   "claim_id": "a_dd30",
+   "source": "§2.1",
+   "text": "A系のDD30は最強",
+   "contrast": "cross_day",
+   "metrics": [
+    "payout",
+    "rb_rate"
+   ],
+   "machine_like": [
+    "ジャグラー",
+    "ハナハナ"
+   ],
+   "days": {
+    "dd": [
+     30
+    ]
+   },
+   "recent_from": "20260826"
+  },
+  {
+   "claim_id": "a_dd1",
+   "source": "§2.1",
+   "text": "A系のDD1は強い",
+   "contrast": "cross_day",
+   "metrics": [
+    "payout",
+    "rb_rate"
+   ],
+   "machine_like": [
+    "ジャグラー",
+    "ハナハナ"
+   ],
+   "days": {
+    "dd": [
+     1
+    ]
+   },
+   "recent_from": "20260826"
+  },
+  {
+   "claim_id": "a_dd7",
+   "source": "§2.1",
+   "text": "A系のDD7は強い",
+   "contrast": "cross_day",
+   "metrics": [
+    "payout",
+    "rb_rate"
+   ],
+   "machine_like": [
+    "ジャグラー",
+    "ハナハナ"
+   ],
+   "days": {
+    "dd": [
+     7
+    ]
+   },
+   "recent_from": "20260826"
+  },
+  {
+   "claim_id": "a_dd9",
+   "source": "§2.1",
+   "text": "A系のDD9は強い(イベント定義外)",
+   "contrast": "cross_day",
+   "metrics": [
+    "payout",
+    "rb_rate"
+   ],
+   "machine_like": [
+    "ジャグラー",
+    "ハナハナ"
+   ],
+   "days": {
+    "dd": [
+     9
+    ]
+   },
+   "recent_from": "20260826"
+  },
+  {
+   "claim_id": "a_dd_weak",
+   "source": "§2.1",
+   "text": "A系のDD19・20・29は弱い",
+   "contrast": "cross_day",
+   "metrics": [
+    "payout",
+    "rb_rate"
+   ],
+   "machine_like": [
+    "ジャグラー",
+    "ハナハナ"
+   ],
+   "days": {
+    "dd": [
+     19,
+     20,
+     29
+    ]
+   },
+   "recent_from": "20260826"
+  },
+  {
+   "claim_id": "d8_weak",
+   "source": "メモリ pattern-scan 2026-10-31(派生仮説)",
+   "text": "8のつく日は弱い",
+   "contrast": "cross_day",
+   "metrics": [
+    "payout",
+    "rb_rate"
+   ],
+   "machine_like": [
+    "ジャグラー",
+    "ハナハナ"
+   ],
+   "days": {
+    "dd": [
+     8,
+     18,
+     28
+    ]
+   },
+   "recent_from": "20260826"
+  },
+  {
+   "claim_id": "a_saturday",
+   "source": "冒頭 2026-09-10",
+   "text": "A系は土曜が明確に強い",
+   "contrast": "cross_day",
+   "metrics": [
+    "payout",
+    "rb_rate"
+   ],
+   "machine_like": [
+    "ジャグラー",
+    "ハナハナ"
+   ],
+   "days": {
+    "weekday": [
+     5
+    ]
+   },
+   "recent_from": "20260826"
+  },
+  {
+   "claim_id": "n_saturday",
+   "source": "冒頭 2026-09-10",
+   "text": "N系も土曜が強い",
+   "contrast": "cross_day",
+   "metrics": [
+    "payout"
+   ],
+   "universe": {
+    "jug_flag": 0,
+    "hana_flag": 0
+   },
+   "days": {
+    "weekday": [
+     5
+    ]
+   },
+   "recent_from": "20260826"
+  },
+  {
+   "claim_id": "a_strong_zorome",
+   "source": "§2.6",
+   "text": "A系のゾロ目(月=日)は最強",
+   "contrast": "cross_day",
+   "metrics": [
+    "payout",
+    "rb_rate"
+   ],
+   "machine_like": [
+    "ジャグラー",
+    "ハナハナ"
+   ],
+   "days": {
+    "strong_zorome": [
+     1
+    ]
+   },
+   "recent_from": "20260826"
+  },
+  {
+   "claim_id": "n_strong_zorome",
+   "source": "冒頭 2026-09-10",
+   "text": "N系のゾロ目(月=日)は平均が正",
+   "contrast": "cross_day",
+   "metrics": [
+    "payout"
+   ],
+   "universe": {
+    "jug_flag": 0,
+    "hana_flag": 0
+   },
+   "days": {
+    "strong_zorome": [
+     1
+    ]
+   },
+   "recent_from": "20260826"
+  },
+  {
+   "claim_id": "a_edge1",
+   "source": "§2.3",
+   "text": "A系の端番1は全島で最弱",
+   "contrast": "same_day",
+   "metrics": [
+    "payout",
+    "rb_rate",
+    "diff"
+   ],
+   "machine_like": [
+    "ジャグラー",
+    "ハナハナ"
+   ],
+   "target": {
+    "section_edge1": true
+   },
+   "recent_from": "20260826"
+  },
+  {
+   "claim_id": "n_edge1",
+   "source": "§2.3",
+   "text": "N系の端番1は回避",
+   "contrast": "same_day",
+   "metrics": [
+    "payout",
+    "diff"
+   ],
+   "universe": {
+    "jug_flag": 0,
+    "hana_flag": 0
+   },
+   "target": {
+    "section_edge1": true
+   },
+   "recent_from": "20260826"
+  },
+  {
+   "claim_id": "sec_2143",
+   "source": "§2.5",
+   "text": "2143-2146 はイベント日に強い",
+   "contrast": "cross_day",
+   "metrics": [
+    "payout"
+   ],
+   "universe": {
+    "section": [
+     "2143-2146"
+    ]
+   },
+   "days": {
+    "dd": [
+     1,
+     7,
+     11,
+     17,
+     21,
+     22,
+     27,
+     30,
+     31
+    ]
+   },
+   "recent_from": "20260826"
+  },
+  {
+   "claim_id": "sec_2099",
+   "source": "§2.5",
+   "text": "2099-2109 はイベント日に強い",
+   "contrast": "cross_day",
+   "metrics": [
+    "payout"
+   ],
+   "universe": {
+    "section": [
+     "2099-2109"
+    ]
+   },
+   "days": {
+    "dd": [
+     1,
+     7,
+     11,
+     17,
+     21,
+     22,
+     27,
+     30,
+     31
+    ]
+   },
+   "recent_from": "20260826"
+  },
+  {
+   "claim_id": "sec_2060",
+   "source": "§2.5",
+   "text": "2060-2076 はイベント日に強い",
+   "contrast": "cross_day",
+   "metrics": [
+    "payout"
+   ],
+   "universe": {
+    "section": [
+     "2060-2076"
+    ]
+   },
+   "days": {
+    "dd": [
+     1,
+     7,
+     11,
+     17,
+     21,
+     22,
+     27,
+     30,
+     31
+    ]
+   },
+   "recent_from": "20260826"
+  },
+  {
+   "claim_id": "a_level",
+   "source": "メモリ september-shift(派生仮説)",
+   "text": "交代後はA系の水準が他より上がった(9月だけとされる)",
+   "contrast": "hall_level",
+   "metrics": [
+    "payout",
+    "diff"
+   ],
+   "machine_like": [
+    "ジャグラー",
+    "ハナハナ"
+   ],
+   "recent_from": "20260826"
+  },
+  {
+   "claim_id": "thunderv_sunday",
+   "source": "§10.3",
+   "text": "サンダーVは日曜のRB確率が高い(観察中)",
+   "contrast": "cross_day",
+   "metrics": [
+    "rb_rate"
+   ],
+   "machine_like": [
+    "サンダーV"
+   ],
+   "days": {
+    "weekday": [
+     6
+    ]
+   },
+   "recent_from": "20260826"
+  }
+ ],
+ "untested": [
+  {
+   "text": "島タイプ×DD(§2.7)・X角番(§2.8)",
+   "reason": "島タイプと X 角番の定義は旧スクリプト依存。x,y 列はあるが、同じ定義を再構成して一致を確かめていない"
+  },
+  {
+   "text": "中型斜め島の kakuban=5 の選択(§2.3)",
+   "reason": "島タイプの定義に依存。位置の水準は L3 で見た"
+  },
+  {
+   "text": "機種別DD/曜日パターン(§2.9・§2.9b)",
+   "reason": "個別セルは M1 の総当たりに含む。説としての再判定はしていない"
+  },
+  {
+   "text": "splitモデルのバックテスト(§6)",
+   "reason": "walk-forward の再実行は範囲外"
+  },
+  {
+   "text": "K1 vs K7 のホール選択(§4)",
+   "reason": "ホール間の比較で、ホール単独の再検証の範囲外"
+  }
+ ]
+}

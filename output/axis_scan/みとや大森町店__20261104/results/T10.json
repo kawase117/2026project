@@ -1,0 +1,104 @@
+{
+ "axis_id": "T10",
+ "hall": "みとや大森町店",
+ "asof": "20261104",
+ "window": "3m,all,regime",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "窓3×単位(全台+タイプ)×指標7×水準。全組み合わせ(2軸)。3日未満の水準は除外",
+ "planned": 49,
+ "done": 32,
+ "excluded": 17,
+ "cells_file": "results/T10.cells.csv",
+ "excluded_file": "results/T10.excluded.csv",
+ "n_days": 90,
+ "n_units": 167,
+ "families": 14,
+ "cells": 32,
+ "p05": 16,
+ "p05_expected": 1.6,
+ "bh_q02": 16,
+ "top": [
+  {
+   "label": "BT",
+   "metric": "RB帯補正",
+   "n_days": 192,
+   "effect": 0.03,
+   "ci": [
+    0.0073,
+    0.0532
+   ],
+   "q": 0.044,
+   "contrast": "in_vs_out",
+   "level": "20260427以降",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ハナハナ・ハナビ",
+   "metric": "RB帯補正",
+   "n_days": 192,
+   "effect": 0.036,
+   "ci": [
+    0.0014,
+    0.0715
+   ],
+   "q": 0.093,
+   "contrast": "in_vs_out",
+   "level": "20260427以降",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ハナハナ・ハナビ",
+   "metric": "機械割差",
+   "n_days": 192,
+   "effect": 0.654,
+   "ci": [
+    -0.351,
+    1.6596
+   ],
+   "q": 0.4998,
+   "contrast": "in_vs_out",
+   "level": "20260427以降",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "BT",
+   "metric": "RB無補正",
+   "n_days": 192,
+   "effect": 0.01,
+   "ci": [
+    -0.0141,
+    0.034
+   ],
+   "q": 0.6122,
+   "contrast": "in_vs_out",
+   "level": "20260427以降",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ハナハナ・ハナビ",
+   "metric": "RB無補正",
+   "n_days": 192,
+   "effect": 0.01,
+   "ci": [
+    -0.0266,
+    0.0471
+   ],
+   "q": 0.6122,
+   "contrast": "in_vs_out",
+   "level": "20260427以降",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "AT帯補正: 80%検出の目安 ±0.023; AT無補正: 80%検出の目安 ±0.037; RB帯補正: 80%検出の目安 ±0.033; RB無補正: 80%検出の目安 ±0.034; 回転数: 80%検出の目安 ±270.099; 差枚: 80%検出の目安 ±87.889; 機械割差: 80%検出の目安 ±1.003",
+ "caveats": [
+  "基準は窓全体の機種平均なので in_sample。開店前の評価には使わない",
+  "RBは帯補正あり・なしを並べる。符号が割れたら判定しない"
+ ],
+ "reason": ""
+}

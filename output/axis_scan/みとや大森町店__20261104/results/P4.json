@@ -1,0 +1,95 @@
+{
+ "axis_id": "P4",
+ "hall": "みとや大森町店",
+ "asof": "20261104",
+ "window": "20260807-20261104",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "単位×時間。「前日の稼働」は暦日でないので外した。3m のみ",
+ "planned": 3348,
+ "done": 2360,
+ "excluded": 988,
+ "cells_file": "results/P4.cells.csv",
+ "excluded_file": "results/P4.excluded.csv",
+ "n_days": 90,
+ "n_units": 18,
+ "families": 177,
+ "cells": 2360,
+ "p05": 133,
+ "p05_expected": 118.0,
+ "bh_q02": 0,
+ "top": [
+  {
+   "label": "745-755×8日",
+   "metric": "機械割",
+   "n_days": 3,
+   "effect": 20.5606,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.3368,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "723-733×4のつく日",
+   "metric": "回転数",
+   "n_days": 9,
+   "effect": 0.1903,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.3368,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "805-815×2のつく日",
+   "metric": "RB当り",
+   "n_days": 9,
+   "effect": 0.1451,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.3368,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "540-556×26日",
+   "metric": "回転数",
+   "n_days": 3,
+   "effect": 0.2487,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.3368,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "608-623×1日",
+   "metric": "回転数",
+   "n_days": 3,
+   "effect": 0.2814,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.6986,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "",
+ "caveats": [
+  "seg は排他で、差枚は出さない",
+  "基準は期間全体で in_sample",
+  "新台は除外"
+ ],
+ "reason": ""
+}
