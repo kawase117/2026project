@@ -1,0 +1,505 @@
+{
+  "rule_id": "kamata7_model_term60_top3",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "freeze_hash": "b5bec81d02cedc0e",
+  "target_date": "20261106",
+  "data_asof": "20261104",
+  "data_lag_days": 2,
+  "lookback_window": [
+    "2026-09-07",
+    "2026-11-06"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +75 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "戦国コレクション6",
+      "score": 583.217998,
+      "history_rows": 65,
+      "machines": [
+        2306,
+        2307,
+        2308,
+        2309
+      ]
+    },
+    {
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 179.012306,
+      "history_rows": 1074,
+      "machines": [
+        2077,
+        2078,
+        2079,
+        2080,
+        2081,
+        2082,
+        2083,
+        2084,
+        2085,
+        2086,
+        2087,
+        2088,
+        2089,
+        2090,
+        2091,
+        2092,
+        2093,
+        2094,
+        2095,
+        2096,
+        2097
+      ]
+    },
+    {
+      "machine_name": "東京喰種",
+      "score": 148.077697,
+      "history_rows": 2316,
+      "machines": [
+        3209,
+        3210,
+        3211,
+        3212,
+        3213,
+        3214,
+        3215,
+        3216,
+        3217,
+        3218,
+        3219,
+        3220,
+        3221,
+        3222,
+        3223,
+        3224,
+        3225,
+        3226,
+        3227,
+        3228,
+        3229,
+        3230,
+        3231,
+        3232,
+        3233,
+        3234,
+        3235,
+        3236,
+        3237,
+        3238,
+        3239,
+        3240,
+        3241,
+        3242,
+        3243,
+        3244,
+        3245,
+        3246,
+        3247,
+        3248,
+        3249
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 2306,
+      "machine_name": "戦国コレクション6",
+      "score": 583.217998,
+      "history_days": 65
+    },
+    {
+      "machine_number": 2307,
+      "machine_name": "戦国コレクション6",
+      "score": 583.217998,
+      "history_days": 65
+    },
+    {
+      "machine_number": 2308,
+      "machine_name": "戦国コレクション6",
+      "score": 583.217998,
+      "history_days": 65
+    },
+    {
+      "machine_number": 2309,
+      "machine_name": "戦国コレクション6",
+      "score": 583.217998,
+      "history_days": 65
+    },
+    {
+      "machine_number": 2077,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 179.012306,
+      "history_days": 1074
+    },
+    {
+      "machine_number": 2078,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 179.012306,
+      "history_days": 1074
+    },
+    {
+      "machine_number": 2079,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 179.012306,
+      "history_days": 1074
+    },
+    {
+      "machine_number": 2080,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 179.012306,
+      "history_days": 1074
+    },
+    {
+      "machine_number": 2081,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 179.012306,
+      "history_days": 1074
+    },
+    {
+      "machine_number": 2082,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 179.012306,
+      "history_days": 1074
+    },
+    {
+      "machine_number": 2083,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 179.012306,
+      "history_days": 1074
+    },
+    {
+      "machine_number": 2084,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 179.012306,
+      "history_days": 1074
+    },
+    {
+      "machine_number": 2085,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 179.012306,
+      "history_days": 1074
+    },
+    {
+      "machine_number": 2086,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 179.012306,
+      "history_days": 1074
+    },
+    {
+      "machine_number": 2087,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 179.012306,
+      "history_days": 1074
+    },
+    {
+      "machine_number": 2088,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 179.012306,
+      "history_days": 1074
+    },
+    {
+      "machine_number": 2089,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 179.012306,
+      "history_days": 1074
+    },
+    {
+      "machine_number": 2090,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 179.012306,
+      "history_days": 1074
+    },
+    {
+      "machine_number": 2091,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 179.012306,
+      "history_days": 1074
+    },
+    {
+      "machine_number": 2092,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 179.012306,
+      "history_days": 1074
+    },
+    {
+      "machine_number": 2093,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 179.012306,
+      "history_days": 1074
+    },
+    {
+      "machine_number": 2094,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 179.012306,
+      "history_days": 1074
+    },
+    {
+      "machine_number": 2095,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 179.012306,
+      "history_days": 1074
+    },
+    {
+      "machine_number": 2096,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 179.012306,
+      "history_days": 1074
+    },
+    {
+      "machine_number": 2097,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 179.012306,
+      "history_days": 1074
+    },
+    {
+      "machine_number": 3209,
+      "machine_name": "東京喰種",
+      "score": 148.077697,
+      "history_days": 2316
+    },
+    {
+      "machine_number": 3210,
+      "machine_name": "東京喰種",
+      "score": 148.077697,
+      "history_days": 2316
+    },
+    {
+      "machine_number": 3211,
+      "machine_name": "東京喰種",
+      "score": 148.077697,
+      "history_days": 2316
+    },
+    {
+      "machine_number": 3212,
+      "machine_name": "東京喰種",
+      "score": 148.077697,
+      "history_days": 2316
+    },
+    {
+      "machine_number": 3213,
+      "machine_name": "東京喰種",
+      "score": 148.077697,
+      "history_days": 2316
+    },
+    {
+      "machine_number": 3214,
+      "machine_name": "東京喰種",
+      "score": 148.077697,
+      "history_days": 2316
+    },
+    {
+      "machine_number": 3215,
+      "machine_name": "東京喰種",
+      "score": 148.077697,
+      "history_days": 2316
+    },
+    {
+      "machine_number": 3216,
+      "machine_name": "東京喰種",
+      "score": 148.077697,
+      "history_days": 2316
+    },
+    {
+      "machine_number": 3217,
+      "machine_name": "東京喰種",
+      "score": 148.077697,
+      "history_days": 2316
+    },
+    {
+      "machine_number": 3218,
+      "machine_name": "東京喰種",
+      "score": 148.077697,
+      "history_days": 2316
+    },
+    {
+      "machine_number": 3219,
+      "machine_name": "東京喰種",
+      "score": 148.077697,
+      "history_days": 2316
+    },
+    {
+      "machine_number": 3220,
+      "machine_name": "東京喰種",
+      "score": 148.077697,
+      "history_days": 2316
+    },
+    {
+      "machine_number": 3221,
+      "machine_name": "東京喰種",
+      "score": 148.077697,
+      "history_days": 2316
+    },
+    {
+      "machine_number": 3222,
+      "machine_name": "東京喰種",
+      "score": 148.077697,
+      "history_days": 2316
+    },
+    {
+      "machine_number": 3223,
+      "machine_name": "東京喰種",
+      "score": 148.077697,
+      "history_days": 2316
+    },
+    {
+      "machine_number": 3224,
+      "machine_name": "東京喰種",
+      "score": 148.077697,
+      "history_days": 2316
+    },
+    {
+      "machine_number": 3225,
+      "machine_name": "東京喰種",
+      "score": 148.077697,
+      "history_days": 2316
+    },
+    {
+      "machine_number": 3226,
+      "machine_name": "東京喰種",
+      "score": 148.077697,
+      "history_days": 2316
+    },
+    {
+      "machine_number": 3227,
+      "machine_name": "東京喰種",
+      "score": 148.077697,
+      "history_days": 2316
+    },
+    {
+      "machine_number": 3228,
+      "machine_name": "東京喰種",
+      "score": 148.077697,
+      "history_days": 2316
+    },
+    {
+      "machine_number": 3229,
+      "machine_name": "東京喰種",
+      "score": 148.077697,
+      "history_days": 2316
+    },
+    {
+      "machine_number": 3230,
+      "machine_name": "東京喰種",
+      "score": 148.077697,
+      "history_days": 2316
+    },
+    {
+      "machine_number": 3231,
+      "machine_name": "東京喰種",
+      "score": 148.077697,
+      "history_days": 2316
+    },
+    {
+      "machine_number": 3232,
+      "machine_name": "東京喰種",
+      "score": 148.077697,
+      "history_days": 2316
+    },
+    {
+      "machine_number": 3233,
+      "machine_name": "東京喰種",
+      "score": 148.077697,
+      "history_days": 2316
+    },
+    {
+      "machine_number": 3234,
+      "machine_name": "東京喰種",
+      "score": 148.077697,
+      "history_days": 2316
+    },
+    {
+      "machine_number": 3235,
+      "machine_name": "東京喰種",
+      "score": 148.077697,
+      "history_days": 2316
+    },
+    {
+      "machine_number": 3236,
+      "machine_name": "東京喰種",
+      "score": 148.077697,
+      "history_days": 2316
+    },
+    {
+      "machine_number": 3237,
+      "machine_name": "東京喰種",
+      "score": 148.077697,
+      "history_days": 2316
+    },
+    {
+      "machine_number": 3238,
+      "machine_name": "東京喰種",
+      "score": 148.077697,
+      "history_days": 2316
+    },
+    {
+      "machine_number": 3239,
+      "machine_name": "東京喰種",
+      "score": 148.077697,
+      "history_days": 2316
+    },
+    {
+      "machine_number": 3240,
+      "machine_name": "東京喰種",
+      "score": 148.077697,
+      "history_days": 2316
+    },
+    {
+      "machine_number": 3241,
+      "machine_name": "東京喰種",
+      "score": 148.077697,
+      "history_days": 2316
+    },
+    {
+      "machine_number": 3242,
+      "machine_name": "東京喰種",
+      "score": 148.077697,
+      "history_days": 2316
+    },
+    {
+      "machine_number": 3243,
+      "machine_name": "東京喰種",
+      "score": 148.077697,
+      "history_days": 2316
+    },
+    {
+      "machine_number": 3244,
+      "machine_name": "東京喰種",
+      "score": 148.077697,
+      "history_days": 2316
+    },
+    {
+      "machine_number": 3245,
+      "machine_name": "東京喰種",
+      "score": 148.077697,
+      "history_days": 2316
+    },
+    {
+      "machine_number": 3246,
+      "machine_name": "東京喰種",
+      "score": 148.077697,
+      "history_days": 2316
+    },
+    {
+      "machine_number": 3247,
+      "machine_name": "東京喰種",
+      "score": 148.077697,
+      "history_days": 2316
+    },
+    {
+      "machine_number": 3248,
+      "machine_name": "東京喰種",
+      "score": 148.077697,
+      "history_days": 2316
+    },
+    {
+      "machine_number": 3249,
+      "machine_name": "東京喰種",
+      "score": 148.077697,
+      "history_days": 2316
+    }
+  ],
+  "result": null,
+  "plan_digest": "2af62e89d8968f3a"
+}

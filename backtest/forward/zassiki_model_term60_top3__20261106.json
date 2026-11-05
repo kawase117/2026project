@@ -1,0 +1,134 @@
+{
+  "rule_id": "zassiki_model_term60_top3",
+  "hall": "ザ-シティ-ベルシティ雑色店",
+  "freeze_hash": "c19f10b6e683a454",
+  "target_date": "20261106",
+  "data_asof": "20261105",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-09-07",
+    "2026-11-06"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +87 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 256.873061,
+      "history_rows": 313,
+      "machines": [
+        873,
+        874,
+        875,
+        876,
+        877,
+        878
+      ]
+    },
+    {
+      "machine_name": "東京喰種",
+      "score": 131.014215,
+      "history_rows": 72,
+      "machines": [
+        861,
+        862,
+        863
+      ]
+    },
+    {
+      "machine_name": "モンキーターンV",
+      "score": 130.93628,
+      "history_rows": 121,
+      "machines": [
+        857,
+        858,
+        859,
+        860
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 873,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 256.873061,
+      "history_days": 313
+    },
+    {
+      "machine_number": 874,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 256.873061,
+      "history_days": 313
+    },
+    {
+      "machine_number": 875,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 256.873061,
+      "history_days": 313
+    },
+    {
+      "machine_number": 876,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 256.873061,
+      "history_days": 313
+    },
+    {
+      "machine_number": 877,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 256.873061,
+      "history_days": 313
+    },
+    {
+      "machine_number": 878,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 256.873061,
+      "history_days": 313
+    },
+    {
+      "machine_number": 861,
+      "machine_name": "東京喰種",
+      "score": 131.014215,
+      "history_days": 72
+    },
+    {
+      "machine_number": 862,
+      "machine_name": "東京喰種",
+      "score": 131.014215,
+      "history_days": 72
+    },
+    {
+      "machine_number": 863,
+      "machine_name": "東京喰種",
+      "score": 131.014215,
+      "history_days": 72
+    },
+    {
+      "machine_number": 857,
+      "machine_name": "モンキーターンV",
+      "score": 130.93628,
+      "history_days": 121
+    },
+    {
+      "machine_number": 858,
+      "machine_name": "モンキーターンV",
+      "score": 130.93628,
+      "history_days": 121
+    },
+    {
+      "machine_number": 859,
+      "machine_name": "モンキーターンV",
+      "score": 130.93628,
+      "history_days": 121
+    },
+    {
+      "machine_number": 860,
+      "machine_name": "モンキーターンV",
+      "score": 130.93628,
+      "history_days": 121
+    }
+  ],
+  "result": null,
+  "plan_digest": "a83863add9c151d7"
+}

@@ -1,0 +1,141 @@
+{
+  "rule_id": "kamata1_model_term60_top3",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "freeze_hash": "bb185b622fae47b2",
+  "target_date": "20261106",
+  "data_asof": "20261104",
+  "data_lag_days": 2,
+  "lookback_window": [
+    "2026-09-07",
+    "2026-11-06"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +187 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "新鬼武者3",
+      "score": 403.779308,
+      "history_rows": 100,
+      "machines": [
+        2265,
+        2266,
+        2267,
+        2268
+      ]
+    },
+    {
+      "machine_name": "スマスロ北斗の拳",
+      "score": 353.847003,
+      "history_rows": 389,
+      "machines": [
+        2060,
+        2061,
+        2062,
+        2063,
+        2064,
+        2065,
+        2066
+      ]
+    },
+    {
+      "machine_name": "痛いのは嫌なので防御力に極振りしたいと思います。",
+      "score": 252.764047,
+      "history_rows": 145,
+      "machines": [
+        2203,
+        2204,
+        2205
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 2265,
+      "machine_name": "新鬼武者3",
+      "score": 403.779308,
+      "history_days": 100
+    },
+    {
+      "machine_number": 2266,
+      "machine_name": "新鬼武者3",
+      "score": 403.779308,
+      "history_days": 100
+    },
+    {
+      "machine_number": 2267,
+      "machine_name": "新鬼武者3",
+      "score": 403.779308,
+      "history_days": 100
+    },
+    {
+      "machine_number": 2268,
+      "machine_name": "新鬼武者3",
+      "score": 403.779308,
+      "history_days": 100
+    },
+    {
+      "machine_number": 2060,
+      "machine_name": "スマスロ北斗の拳",
+      "score": 353.847003,
+      "history_days": 389
+    },
+    {
+      "machine_number": 2061,
+      "machine_name": "スマスロ北斗の拳",
+      "score": 353.847003,
+      "history_days": 389
+    },
+    {
+      "machine_number": 2062,
+      "machine_name": "スマスロ北斗の拳",
+      "score": 353.847003,
+      "history_days": 389
+    },
+    {
+      "machine_number": 2063,
+      "machine_name": "スマスロ北斗の拳",
+      "score": 353.847003,
+      "history_days": 389
+    },
+    {
+      "machine_number": 2064,
+      "machine_name": "スマスロ北斗の拳",
+      "score": 353.847003,
+      "history_days": 389
+    },
+    {
+      "machine_number": 2065,
+      "machine_name": "スマスロ北斗の拳",
+      "score": 353.847003,
+      "history_days": 389
+    },
+    {
+      "machine_number": 2066,
+      "machine_name": "スマスロ北斗の拳",
+      "score": 353.847003,
+      "history_days": 389
+    },
+    {
+      "machine_number": 2203,
+      "machine_name": "痛いのは嫌なので防御力に極振りしたいと思います。",
+      "score": 252.764047,
+      "history_days": 145
+    },
+    {
+      "machine_number": 2204,
+      "machine_name": "痛いのは嫌なので防御力に極振りしたいと思います。",
+      "score": 252.764047,
+      "history_days": 145
+    },
+    {
+      "machine_number": 2205,
+      "machine_name": "痛いのは嫌なので防御力に極振りしたいと思います。",
+      "score": 252.764047,
+      "history_days": 145
+    }
+  ],
+  "result": null,
+  "plan_digest": "79ee021c2e2cf2fa"
+}
