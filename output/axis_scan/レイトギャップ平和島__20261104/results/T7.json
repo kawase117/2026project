@@ -1,0 +1,89 @@
+{
+ "axis_id": "T7",
+ "hall": "レイトギャップ平和島",
+ "asof": "20261104",
+ "window": "3m,all",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "窓2×単位(全台+タイプ)×指標7×水準。全組み合わせ(2軸)。3日未満の水準は除外",
+ "planned": 91,
+ "done": 64,
+ "excluded": 27,
+ "cells_file": "results/T7.cells.csv",
+ "excluded_file": "results/T7.excluded.csv",
+ "n_days": 90,
+ "n_units": 189,
+ "families": 28,
+ "cells": 64,
+ "p05": 6,
+ "p05_expected": 3.2,
+ "bh_q02": 13,
+ "top": [
+  {
+   "label": "A+AT",
+   "metric": "機械割差",
+   "n_days": 3,
+   "effect": 2.183,
+   "ci": [
+    -5.7686,
+    10.1347
+   ],
+   "q": 0.9495,
+   "contrast": "in_vs_out",
+   "level": "台帳のイベント日",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ジャグラー",
+   "metric": "機械割差",
+   "n_days": 3,
+   "effect": 0.057,
+   "ci": [
+    -1.2613,
+    1.3751
+   ],
+   "q": 0.9495,
+   "contrast": "in_vs_out",
+   "level": "台帳のイベント日",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "A+AT",
+   "metric": "回転数",
+   "n_days": 3,
+   "effect": 1337.742,
+   "ci": [
+    -63.1392,
+    2738.6231
+   ],
+   "q": 0.3961,
+   "contrast": "in_vs_out",
+   "level": "台帳のイベント日",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ジャグラー",
+   "metric": "回転数",
+   "n_days": 3,
+   "effect": 889.574,
+   "ci": [
+    120.7942,
+    1658.3535
+   ],
+   "q": 0.3961,
+   "contrast": "in_vs_out",
+   "level": "台帳のイベント日",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "AT帯補正: 80%検出の目安 ±0.277; AT無補正: 80%検出の目安 ±0.286; RB帯補正: 80%検出の目安 ±0.163; RB無補正: 80%検出の目安 ±0.187; 回転数: 80%検出の目安 ±1528.429; 差枚: 80%検出の目安 ±385.334; 機械割差: 80%検出の目安 ±3.944",
+ "caveats": [
+  "基準は窓全体の機種平均なので in_sample。開店前の評価には使わない",
+  "RBは帯補正あり・なしを並べる。符号が割れたら判定しない"
+ ],
+ "reason": ""
+}

@@ -1,0 +1,135 @@
+{
+ "axis_id": "V1",
+ "hall": "レイトギャップ平和島",
+ "asof": "20261104",
+ "window": "20260807-20261104",
+ "status": "完了",
+ "basis": "ex_post",
+ "scope": "群×3G閾値×2負け定義。比較はイベント日と他の日(曜日の中で入れ替え)。日を1観測にする",
+ "planned": 600,
+ "done": 462,
+ "excluded": 138,
+ "cells_file": "results/V1.cells.csv",
+ "excluded_file": "results/V1.excluded.csv",
+ "n_days": 90,
+ "n_units": 423,
+ "families": 0,
+ "cells": 462,
+ "p05": 7,
+ "p05_expected": 23.1,
+ "bh_q02": 1,
+ "top": [
+  {
+   "label": "真打 吉宗|6000G|機械割差<=-10.0pt",
+   "metric": "発生率",
+   "n_days": 90,
+   "effect": 0.295,
+   "ci": [
+    0.1263,
+    0.4637
+   ],
+   "q": 0.1537,
+   "contrast": "イベント日vs他",
+   "level": "真打 吉宗",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "真打 吉宗|5000G|機械割差<=-10.0pt",
+   "metric": "発生率",
+   "n_days": 90,
+   "effect": 0.299,
+   "ci": [
+    0.1169,
+    0.4808
+   ],
+   "q": 0.9222,
+   "contrast": "イベント日vs他",
+   "level": "真打 吉宗",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "",
+ "caveats": [
+  "大負け×高回転だけでは要確認候補。確認済みのRB・AT当り率の裏付けがあるものだけ不発候補",
+  "日次の合計なので、負けてから回されたのか先に好調で後から負けたのかは判別できない",
+  "新台は除外。機種人気は「自機種の前の90日のp75超」の割合で併記"
+ ],
+ "reason": "",
+ "extra": {
+  "repeat_top_5000G": [
+   {
+    "gmin": 5000,
+    "loss": "機械割差<=-10.0pt",
+    "machine_number": 849,
+    "machine_name": "ソードアート・オンラインII",
+    "times": 38
+   },
+   {
+    "gmin": 5000,
+    "loss": "差枚<=-2000",
+    "machine_number": 854,
+    "machine_name": "ソードアート・オンラインII",
+    "times": 38
+   },
+   {
+    "gmin": 5000,
+    "loss": "差枚<=-2000",
+    "machine_number": 849,
+    "machine_name": "ソードアート・オンラインII",
+    "times": 38
+   },
+   {
+    "gmin": 5000,
+    "loss": "機械割差<=-10.0pt",
+    "machine_number": 854,
+    "machine_name": "ソードアート・オンラインII",
+    "times": 37
+   },
+   {
+    "gmin": 5000,
+    "loss": "機械割差<=-10.0pt",
+    "machine_number": 852,
+    "machine_name": "ソードアート・オンラインII",
+    "times": 31
+   },
+   {
+    "gmin": 5000,
+    "loss": "差枚<=-2000",
+    "machine_number": 852,
+    "machine_name": "ソードアート・オンラインII",
+    "times": 31
+   },
+   {
+    "gmin": 5000,
+    "loss": "差枚<=-2000",
+    "machine_number": 853,
+    "machine_name": "ソードアート・オンラインII",
+    "times": 31
+   },
+   {
+    "gmin": 5000,
+    "loss": "機械割差<=-10.0pt",
+    "machine_number": 853,
+    "machine_name": "ソードアート・オンラインII",
+    "times": 30
+   },
+   {
+    "gmin": 5000,
+    "loss": "機械割差<=-10.0pt",
+    "machine_number": 851,
+    "machine_name": "ソードアート・オンラインII",
+    "times": 29
+   },
+   {
+    "gmin": 5000,
+    "loss": "差枚<=-2000",
+    "machine_number": 851,
+    "machine_name": "ソードアート・オンラインII",
+    "times": 28
+   }
+  ],
+  "repeat_file": "V1_repeat.csv"
+ }
+}

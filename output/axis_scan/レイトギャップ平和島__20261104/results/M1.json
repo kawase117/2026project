@@ -1,0 +1,95 @@
+{
+ "axis_id": "M1",
+ "hall": "レイトギャップ平和島",
+ "asof": "20261104",
+ "window": "20260807-20261104",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "単位×時間。「前日の稼働」は暦日でないので外した。3m のみ",
+ "planned": 17484,
+ "done": 9652,
+ "excluded": 7832,
+ "cells_file": "results/M1.cells.csv",
+ "excluded_file": "results/M1.excluded.csv",
+ "n_days": 90,
+ "n_units": 94,
+ "families": 177,
+ "cells": 9652,
+ "p05": 516,
+ "p05_expected": 482.6,
+ "bh_q02": 0,
+ "top": [
+  {
+   "label": "革命機ヴァルヴレイヴ2×25日",
+   "metric": "回転数",
+   "n_days": 3,
+   "effect": 0.6397,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.5672,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "鉄拳6×月初1-3日",
+   "metric": "機械割",
+   "n_days": 9,
+   "effect": 37.3989,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.5672,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "チバリヨ2プラス×月末28日以降",
+   "metric": "機械割",
+   "n_days": 11,
+   "effect": 22.5696,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.5672,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "不二子BT×16日",
+   "metric": "回転数",
+   "n_days": 3,
+   "effect": 1.0673,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.5672,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ストリートファイター6×21日",
+   "metric": "機械割",
+   "n_days": 3,
+   "effect": 36.6379,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.5672,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "",
+ "caveats": [
+  "seg は排他で、差枚は出さない",
+  "基準は期間全体で in_sample",
+  "新台は除外"
+ ],
+ "reason": ""
+}

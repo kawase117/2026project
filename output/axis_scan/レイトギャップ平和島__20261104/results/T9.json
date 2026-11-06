@@ -1,0 +1,28 @@
+{
+ "axis_id": "T9",
+ "hall": "レイトギャップ平和島",
+ "asof": "20261104",
+ "window": "3m,all",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "窓2×単位(全台+タイプ)×指標7×水準。全組み合わせ(2軸)。3日未満の水準は除外",
+ "planned": 182,
+ "done": 32,
+ "excluded": 150,
+ "cells_file": "results/T9.cells.csv",
+ "excluded_file": "results/T9.excluded.csv",
+ "n_days": 90,
+ "n_units": 189,
+ "families": 14,
+ "cells": 32,
+ "p05": 1,
+ "p05_expected": 1.6,
+ "bh_q02": 1,
+ "top": [],
+ "power": "",
+ "caveats": [
+  "基準は窓全体の機種平均なので in_sample。開店前の評価には使わない",
+  "RBは帯補正あり・なしを並べる。符号が割れたら判定しない"
+ ],
+ "reason": ""
+}

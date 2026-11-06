@@ -1,0 +1,104 @@
+{
+ "axis_id": "T4",
+ "hall": "レイトギャップ平和島",
+ "asof": "20261104",
+ "window": "3m,all",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "窓2×単位(全台+タイプ)×指標7×水準。全組み合わせ(2軸)。3日未満の水準は除外",
+ "planned": 182,
+ "done": 138,
+ "excluded": 44,
+ "cells_file": "results/T4.cells.csv",
+ "excluded_file": "results/T4.excluded.csv",
+ "n_days": 90,
+ "n_units": 189,
+ "families": 28,
+ "cells": 138,
+ "p05": 11,
+ "p05_expected": 6.9,
+ "bh_q02": 11,
+ "top": [
+  {
+   "label": "AT・ART",
+   "metric": "機械割差",
+   "n_days": 3,
+   "effect": 0.995,
+   "ci": [
+    -0.4102,
+    2.4002
+   ],
+   "q": 0.3923,
+   "contrast": "in_vs_out",
+   "level": "強ゾロ目(月=日)",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ハナハナ・ハナビ",
+   "metric": "機械割差",
+   "n_days": 6,
+   "effect": 1.797,
+   "ci": [
+    -1.5091,
+    5.1025
+   ],
+   "q": 0.5867,
+   "contrast": "in_vs_out",
+   "level": "ゾロ目(11,22)",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "A+AT",
+   "metric": "RB帯補正",
+   "n_days": 6,
+   "effect": 0.238,
+   "ci": [
+    -0.3448,
+    0.8207
+   ],
+   "q": 0.6517,
+   "contrast": "in_vs_out",
+   "level": "ゾロ目(11,22)",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "全台",
+   "metric": "AT無補正",
+   "n_days": 3,
+   "effect": 0.023,
+   "ci": [
+    -0.1653,
+    0.2118
+   ],
+   "q": 0.8121,
+   "contrast": "in_vs_out",
+   "level": "強ゾロ目(月=日)",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "A+AT",
+   "metric": "RB無補正",
+   "n_days": 6,
+   "effect": 0.227,
+   "ci": [
+    -0.3473,
+    0.8015
+   ],
+   "q": 0.8126,
+   "contrast": "in_vs_out",
+   "level": "ゾロ目(11,22)",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "AT帯補正: 80%検出の目安 ±0.230; AT無補正: 80%検出の目安 ±0.241; RB帯補正: 80%検出の目安 ±0.128; RB無補正: 80%検出の目安 ±0.144; 回転数: 80%検出の目安 ±1285.100; 差枚: 80%検出の目安 ±319.685; 機械割差: 80%検出の目安 ±3.099",
+ "caveats": [
+  "基準は窓全体の機種平均なので in_sample。開店前の評価には使わない",
+  "RBは帯補正あり・なしを並べる。符号が割れたら判定しない"
+ ],
+ "reason": ""
+}

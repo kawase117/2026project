@@ -1,0 +1,174 @@
+{
+ "axis_id": "L1",
+ "hall": "レイトギャップ平和島",
+ "asof": "20261104",
+ "window": "1m,2m,3m,train,verify,m202611,m202610,m202609,m202608",
+ "status": "完了",
+ "basis": "ex_post",
+ "scope": "単位×指標5×窓9×対比2(全組み合わせ、2軸)。train で選び verify で確かめる翌月検証を含む",
+ "planned": 8820,
+ "done": 4098,
+ "excluded": 4722,
+ "cells_file": "results/L1.cells.csv",
+ "excluded_file": "results/L1.excluded.csv",
+ "n_days": 90,
+ "n_units": 189,
+ "families": 0,
+ "cells": 4098,
+ "p05": 1570,
+ "p05_expected": 204.9,
+ "bh_q02": 1612,
+ "top": [
+  {
+   "label": "アイムジャグラーEX-TP",
+   "metric": "RB位置",
+   "n_days": 90,
+   "effect": 0.19,
+   "ci": [
+    0.1244,
+    0.2622
+   ],
+   "q": 0.0023,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": 0.181
+  },
+  {
+   "label": "ネオアイムジャグラーEX",
+   "metric": "RB位置",
+   "n_days": 90,
+   "effect": 0.117,
+   "ci": [
+    0.0891,
+    0.1425
+   ],
+   "q": 0.0023,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": 0.143
+  },
+  {
+   "label": "甲鉄城のカバネリ 海門(うなと)決戦",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 1.285,
+   "ci": [
+    0.2856,
+    2.4081
+   ],
+   "q": 0.104,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "東京喰種",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 1.498,
+   "ci": [
+    0.2228,
+    2.6938
+   ],
+   "q": 0.156,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": -0.144
+  },
+  {
+   "label": "ソードアート・オンラインII",
+   "metric": "回転数",
+   "n_days": 90,
+   "effect": 3058.759,
+   "ci": [
+    2869.8808,
+    3285.3682
+   ],
+   "q": 0.0014,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": 2835.203
+  }
+ ],
+ "power": "RB位置: 3m の CI 半幅の中央値 ±0.096; 回転数: 3m の CI 半幅の中央値 ±280.446; 差枚: 3m の CI 半幅の中央値 ±224.697; 機械割差: 3m の CI 半幅の中央値 ±2.646",
+ "caveats": [
+  "新台(導入後7日)は除外",
+  "同じ日の他の台日との差で、当日の比較なので事後分析",
+  "差枚と機械割差は1つの証拠として数える"
+ ],
+ "reason": "",
+ "extra": {
+  "next_month": [
+   {
+    "unit_kind": "機種",
+    "metric": "RB位置",
+    "n_units": 14,
+    "spearman_train_verify": 0.714,
+    "top_units": [
+     "アイムジャグラーEX-TP",
+     "ネオアイムジャグラーEX"
+    ],
+    "train_mean": 0.126,
+    "verify_mean": 0.162,
+    "verify_all_mean": -0.062
+   },
+   {
+    "unit_kind": "機種",
+    "metric": "回転数",
+    "n_units": 71,
+    "spearman_train_verify": 0.777,
+    "top_units": [
+     "ソードアート・オンラインII",
+     "真打 吉宗",
+     "戦国乙女5 業火を穿つ宿焔の双刃",
+     "とある魔術の禁書目録2",
+     "ミリオンゴッド‐神々の軌跡‐"
+    ],
+    "train_mean": 2003.129,
+    "verify_mean": 1345.835,
+    "verify_all_mean": -479.541
+   },
+   {
+    "unit_kind": "機種",
+    "metric": "差枚",
+    "n_units": 71,
+    "spearman_train_verify": 0.253,
+    "top_units": [
+     "虚構推理",
+     "マギアレコード 魔法少女まどか☆マギカ外伝",
+     "化物語",
+     "モンキーターンV",
+     "東京喰種"
+    ],
+    "train_mean": 190.775,
+    "verify_mean": 88.307,
+    "verify_all_mean": -39.098
+   },
+   {
+    "unit_kind": "機種",
+    "metric": "機械割差",
+    "n_units": 71,
+    "spearman_train_verify": 0.24,
+    "top_units": [
+     "化物語",
+     "虚構推理",
+     "マギアレコード 魔法少女まどか☆マギカ外伝",
+     "新鬼武者3",
+     "ソードアート・オンライン"
+    ],
+    "train_mean": 1.839,
+    "verify_mean": 0.995,
+    "verify_all_mean": -0.455
+   }
+  ]
+ }
+}

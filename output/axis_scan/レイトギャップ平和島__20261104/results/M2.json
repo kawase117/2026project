@@ -1,0 +1,95 @@
+{
+ "axis_id": "M2",
+ "hall": "レイトギャップ平和島",
+ "asof": "20261104",
+ "window": "20260807-20261104",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "単位×時間。「前日の稼働」は暦日でないので外した。3m のみ",
+ "planned": 930,
+ "done": 707,
+ "excluded": 223,
+ "cells_file": "results/M2.cells.csv",
+ "excluded_file": "results/M2.excluded.csv",
+ "n_days": 90,
+ "n_units": 5,
+ "families": 177,
+ "cells": 707,
+ "p05": 59,
+ "p05_expected": 35.4,
+ "bh_q02": 4,
+ "top": [
+  {
+   "label": "AT・ART×木曜",
+   "metric": "機械割",
+   "n_days": 12,
+   "effect": 2.424,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.1766,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "AT・ART×9日",
+   "metric": "機械割",
+   "n_days": 3,
+   "effect": 4.0983,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.1766,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ハナハナ・ハナビ×13日",
+   "metric": "回転数",
+   "n_days": 3,
+   "effect": 0.5123,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.1766,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ハナハナ・ハナビ×月初1-3日",
+   "metric": "機械割",
+   "n_days": 9,
+   "effect": 4.9204,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.4709,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "BT×3のつく日",
+   "metric": "回転数",
+   "n_days": 9,
+   "effect": 0.1772,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.5913,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "",
+ "caveats": [
+  "seg は排他で、差枚は出さない",
+  "基準は期間全体で in_sample",
+  "新台は除外"
+ ],
+ "reason": ""
+}

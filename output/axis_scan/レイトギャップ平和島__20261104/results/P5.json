@@ -1,0 +1,106 @@
+{
+ "axis_id": "P5",
+ "hall": "レイトギャップ平和島",
+ "asof": "20261104",
+ "window": "3m,all",
+ "status": "完了",
+ "basis": "ex_post",
+ "scope": "区分5×指標5×窓2",
+ "planned": 50,
+ "done": 42,
+ "excluded": 8,
+ "cells_file": "results/P5.cells.csv",
+ "excluded_file": "results/P5.excluded.csv",
+ "n_days": 90,
+ "n_units": 189,
+ "families": 0,
+ "cells": 42,
+ "p05": 33,
+ "p05_expected": 2.1,
+ "bh_q02": 37,
+ "top": [
+  {
+   "label": "21台以上",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 0.643,
+   "ci": [
+    0.2231,
+    1.0475
+   ],
+   "q": 0.0025,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "21台以上",
+   "metric": "RB位置",
+   "n_days": 90,
+   "effect": 0.083,
+   "ci": [
+    0.0647,
+    0.1011
+   ],
+   "q": 0.0025,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "11-20台",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 0.259,
+   "ci": [
+    -0.0489,
+    0.5535
+   ],
+   "q": 0.1325,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "6-10台",
+   "metric": "回転数",
+   "n_days": 90,
+   "effect": 438.039,
+   "ci": [
+    266.589,
+    629.6124
+   ],
+   "q": 0.0013,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "21台以上",
+   "metric": "回転数",
+   "n_days": 90,
+   "effect": 180.22,
+   "ci": [
+    116.9647,
+    246.4199
+   ],
+   "q": 0.0013,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "RB位置: 3m の CI 半幅の中央値 ±0.035; 回転数: 3m の CI 半幅の中央値 ±97.882; 差枚: 3m の CI 半幅の中央値 ±46.977; 機械割差: 3m の CI 半幅の中央値 ±0.412",
+ "caveats": [
+  "機種の水準と分離しない。台数で揃えた機種比較ではない"
+ ],
+ "reason": "",
+ "extra": {
+  "next_month": []
+ }
+}
