@@ -177,7 +177,7 @@ def load_table(hall: str, db_dir: Path | None = None) -> pd.DataFrame:
         m = out[["ds", "machine_number"]].reset_index().merge(lay, on="machine_number", how="inner")
         m = m[(m.ds >= m.valid_from) & (m.ds <= m.valid_to)].drop_duplicates("index").set_index("index")
         for col in ("section", "rank_from_min", "rank_from_max", "rank_from_aisle"):
-            out.loc[m.index, col] = m[col]
+            out.loc[m.index, col] = m[col] if col == "section" else pd.to_numeric(m[col], errors="coerce")
     out["ld"] = out.machine_number % 10
     edge = out[["rank_from_min", "rank_from_max"]].min(axis=1)
     out["edge"] = edge.map(lambda v: None if pd.isna(v) else ("端1" if v == 1 else "端2" if v == 2 else "端3以上"))
@@ -275,8 +275,20 @@ def metric_arrays(df: pd.DataFrame, metric: str) -> tuple[np.ndarray, np.ndarray
     raise ValueError(metric)
 
 
+def _recenter(part: pd.DataFrame, group: list[str]) -> pd.Series:
+    """群の中で残差の和をゼロに戻す。
+
+    自分を除いた平均との差は、回転数と率に正の相関があると(勝っている台ほど回される)
+    群の和が (G1-G2)(r1-r2) のように正になり、どの単位の効果も底上げされる。
+    分母に比例して配り直すので、差の大きさの尺度は変えない。
+    """
+    grouped = part.groupby(group, sort=False)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        return part._r - part._d * (grouped._r.transform("sum") / grouped._d.transform("sum"))
+
+
 def residual_rows(df: pd.DataFrame, metric: str, group: list[str]) -> pd.DataFrame:
-    """同じ日・同じ群の、自分を除いた平均との差(行単位)。群に1行しかない行は落とす。"""
+    """同じ日・同じ群の、自分を除いた平均との差(行単位、群の和はゼロ)。群に1行しかない行は落とす。"""
     num, den, mask = metric_arrays(df, metric)
     part = df.loc[mask].assign(_n=num[mask], _d=den[mask])
     grouped = part.groupby(group, sort=False)
@@ -286,7 +298,8 @@ def residual_rows(df: pd.DataFrame, metric: str, group: list[str]) -> pd.DataFra
     with np.errstate(invalid="ignore", divide="ignore"):
         ref = (tn - part._n) / (td - part._d)
     part = part.assign(_r=part._n - part._d * ref)
-    return part[np.isfinite(part._r) & (part._d > 0)]
+    part = part[np.isfinite(part._r) & (part._d > 0)]
+    return part.assign(_r=_recenter(part, group))
 
 
 def unit_level_residual(df: pd.DataFrame, metric: str, unit: str, group: list[str]) -> pd.DataFrame:
@@ -301,7 +314,8 @@ def unit_level_residual(df: pd.DataFrame, metric: str, unit: str, group: list[st
     with np.errstate(invalid="ignore", divide="ignore"):
         ref = (tn - u._n) / (td - u._d)
     u = u.assign(_r=u._n - u._d * ref)
-    return u[np.isfinite(u._r) & (u._d > 0)]
+    u = u[np.isfinite(u._r) & (u._d > 0)]
+    return u.assign(_r=_recenter(u, list(dict.fromkeys(["ds", *group]))))
 
 
 def block_weights(days: int, iters: int, rng: np.random.Generator, block: int = BLOCK) -> np.ndarray:
@@ -338,7 +352,8 @@ def boot_table(frame, unit, days, iters, rng, min_days=5):
         hi[ok] = np.nanpercentile(sims[:, ok], 97.5, axis=0)
     p = np.maximum(np.minimum(1.0, 2 * np.minimum((sims <= 0).mean(0), (sims >= 0).mean(0))), 1.0 / iters)
     table = pd.DataFrame(dict(unit=units, n_days=n_days, effect=eff, ci_lo=lo, ci_hi=hi, p=p))
-    return table[(table.n_days >= min_days) & np.isfinite(table.effect)]
+    # 同機種の全台が1つの島にあると、機種内の残差は島の中で打ち消し合って必ずゼロになる。比較が成り立たないので結果に入れない。
+    return table[(table.n_days >= min_days) & np.isfinite(table.effect) & ((table.ci_hi - table.ci_lo) > 1e-9)]
 
 
 # ---------------------------------------------------------------- 結果ファイルと台帳
@@ -685,7 +700,7 @@ def _level_axis(
                         )  # fmt: skip
                     present = set(table.unit) if len(table) else set()
                     excluded += [
-                        _ex(axis_id, kind, u, "", metric, contrast, window, "FEW_DAYS_OR_NO_METRIC")
+                        _ex(axis_id, kind, u, "", metric, contrast, window, "FEW_DAYS_OR_NO_CONTRAST")
                         for u in all_units
                         if u not in present
                     ]
@@ -2005,7 +2020,7 @@ def render_section(key: str, ledger: Ledger, *, reviewed: str) -> str:
         ]
     out += [
         "### 軸スキャンの上位候補(事後の探索。候補であって確定ではない)", "",
-        "水準(L)は同じ日の中の差で事後分析、時間軸(T)は in_sample、履歴(H)は as_of。翌月は train(直近30日より前の90日)で選んだ単位の verify(直近30日)の値。", "",
+        "水準(L)は同じ日の中の差で事後分析、時間軸(T)は in_sample、履歴(H)は as_of。翌月は train(直近30日より前の90日)で選んだ単位の verify(直近30日)の値。同機種の全台が1つの島にある島は、機種と島を分けられないので機種内比較から除く。", "",
         *_top_lines(ledger, ("L1", "L2", "L3", "L4", "L5", "T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8", "H1", "H2", "H3", "H4", "H5", "H6", "P1", "P2", "P3", "M1", "M2", "P4", "V1")), "",
         "### 軸ごとの件数と検出力", "", *_axis_overview(ledger), "",
     ]  # fmt: skip

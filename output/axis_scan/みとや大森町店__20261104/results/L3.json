@@ -7,100 +7,100 @@
  "basis": "ex_post",
  "scope": "単位×指標5×窓9×対比2(全組み合わせ、2軸)。train で選び verify で確かめる翌月検証を含む",
  "planned": 540,
- "done": 452,
- "excluded": 88,
+ "done": 446,
+ "excluded": 94,
  "cells_file": "results/L3.cells.csv",
  "excluded_file": "results/L3.excluded.csv",
  "n_days": 90,
  "n_units": 167,
  "families": 0,
- "cells": 452,
- "p05": 172,
- "p05_expected": 22.6,
- "bh_q02": 216,
+ "cells": 446,
+ "p05": 145,
+ "p05_expected": 22.3,
+ "bh_q02": 191,
  "top": [
   {
    "label": "通路角3以上",
    "metric": "RB位置",
    "n_days": 90,
-   "effect": 0.036,
+   "effect": 0.007,
    "ci": [
-    0.025,
-    0.0457
+    0.0017,
+    0.012
    ],
-   "q": 0.0015,
+   "q": 0.012,
    "contrast": "within_machine",
    "level": "",
    "falsification": "済",
    "next_month": "済",
-   "verify_effect": 0.048
+   "verify_effect": 0.007
   },
   {
-   "label": "通路角3以上",
-   "metric": "機械割差",
-   "n_days": 90,
-   "effect": 0.374,
-   "ci": [
-    0.2344,
-    0.5118
-   ],
-   "q": 0.003,
-   "contrast": "within_machine",
-   "level": "",
-   "falsification": "済",
-   "next_month": "済",
-   "verify_effect": 0.313
-  },
-  {
-   "label": "端3以上",
-   "metric": "機械割差",
-   "n_days": 90,
-   "effect": 0.306,
-   "ci": [
-    0.1256,
-    0.4529
-   ],
-   "q": 0.003,
-   "contrast": "within_machine",
-   "level": "",
-   "falsification": "済",
-   "next_month": "済",
-   "verify_effect": 0.044
-  },
-  {
-   "label": "端3以上",
+   "label": "通路角2",
    "metric": "RB位置",
    "n_days": 90,
-   "effect": 0.025,
+   "effect": 0.029,
    "ci": [
-    0.009,
-    0.0379
+    -0.0094,
+    0.0664
    ],
-   "q": 0.006,
+   "q": 0.152,
    "contrast": "within_machine",
    "level": "",
    "falsification": "済",
    "next_month": "済",
-   "verify_effect": 0.018
+   "verify_effect": -0.015
   },
   {
    "label": "端2",
    "metric": "AT位置",
    "n_days": 90,
-   "effect": 0.066,
+   "effect": 0.044,
    "ci": [
-    -0.0563,
-    0.1743
+    -0.0766,
+    0.1512
    ],
-   "q": 0.762,
+   "q": 0.744,
    "contrast": "within_machine",
    "level": "",
    "falsification": "済",
    "next_month": "済",
-   "verify_effect": -0.025
+   "verify_effect": -0.046
+  },
+  {
+   "label": "通路角3以上",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 0.047,
+   "ci": [
+    -0.0758,
+    0.1902
+   ],
+   "q": 0.747,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": -0.16
+  },
+  {
+   "label": "端3以上",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 0.035,
+   "ci": [
+    -0.163,
+    0.194
+   ],
+   "q": 0.964,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": -0.313
   }
  ],
- "power": "AT位置: 3m の CI 半幅の中央値 ±0.064; RB位置: 3m の CI 半幅の中央値 ±0.039; 回転数: 3m の CI 半幅の中央値 ±56.181; 差枚: 3m の CI 半幅の中央値 ±67.930; 機械割差: 3m の CI 半幅の中央値 ±0.701",
+ "power": "AT位置: 3m の CI 半幅の中央値 ±0.061; RB位置: 3m の CI 半幅の中央値 ±0.039; 回転数: 3m の CI 半幅の中央値 ±56.181; 差枚: 3m の CI 半幅の中央値 ±67.930; 機械割差: 3m の CI 半幅の中央値 ±0.676",
  "caveats": [
   "新台(導入後7日)は除外",
   "同じ日の他の台日との差で、当日の比較なので事後分析",
@@ -118,9 +118,9 @@
      "端2",
      "端1"
     ],
-    "train_mean": 0.049,
-    "verify_mean": -0.029,
-    "verify_all_mean": 0.006
+    "train_mean": 0.029,
+    "verify_mean": -0.053,
+    "verify_all_mean": -0.015
    },
    {
     "unit_kind": "端番",
@@ -131,9 +131,9 @@
      "端2",
      "端3以上"
     ],
-    "train_mean": 0.062,
-    "verify_mean": 0.048,
-    "verify_all_mean": 0.06
+    "train_mean": 0.028,
+    "verify_mean": 0.0,
+    "verify_all_mean": 0.012
    },
    {
     "unit_kind": "端番",
@@ -170,9 +170,9 @@
      "端3以上",
      "端1"
     ],
-    "train_mean": 0.203,
-    "verify_mean": 0.687,
-    "verify_all_mean": 0.99
+    "train_mean": -0.126,
+    "verify_mean": 0.116,
+    "verify_all_mean": 0.418
    },
    {
     "unit_kind": "通路角",
@@ -183,9 +183,9 @@
      "通路角2",
      "通路角3以上"
     ],
-    "train_mean": 0.064,
-    "verify_mean": 0.026,
-    "verify_all_mean": 0.003
+    "train_mean": 0.036,
+    "verify_mean": -0.004,
+    "verify_all_mean": -0.023
    },
    {
     "unit_kind": "通路角",
@@ -222,9 +222,9 @@
      "通路角3以上",
      "通路角2"
     ],
-    "train_mean": 0.061,
-    "verify_mean": 1.101,
-    "verify_all_mean": 1.001
+    "train_mean": -0.204,
+    "verify_mean": 0.74,
+    "verify_all_mean": 0.618
    }
   ]
  }

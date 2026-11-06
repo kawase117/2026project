@@ -15,66 +15,36 @@
  "n_units": 167,
  "families": 0,
  "cells": 14439,
- "p05": 3655,
+ "p05": 3600,
  "p05_expected": 722.0,
- "bh_q02": 3441,
+ "bh_q02": 3389,
  "top": [
   {
-   "label": "702",
+   "label": "503",
    "metric": "機械割差",
-   "n_days": 90,
-   "effect": 9.796,
+   "n_days": 80,
+   "effect": 8.655,
    "ci": [
-    3.6572,
-    16.0846
+    3.7194,
+    13.7585
    ],
-   "q": 0.0425,
-   "contrast": "within_machine",
-   "level": "",
-   "falsification": "済",
-   "next_month": "未検証"
-  },
-  {
-   "label": "699",
-   "metric": "機械割差",
-   "n_days": 90,
-   "effect": 8.719,
-   "ci": [
-    3.5635,
-    13.8655
-   ],
-   "q": 0.0425,
+   "q": 0.1275,
    "contrast": "within_machine",
    "level": "",
    "falsification": "済",
    "next_month": "済",
-   "verify_effect": 6.307
+   "verify_effect": 6.478
   },
   {
-   "label": "679",
-   "metric": "RB位置",
+   "label": "589",
+   "metric": "機械割差",
    "n_days": 90,
-   "effect": 0.188,
+   "effect": 10.463,
    "ci": [
-    0.054,
-    0.3079
+    3.2323,
+    19.5548
    ],
-   "q": 0.102,
-   "contrast": "within_machine",
-   "level": "",
-   "falsification": "済",
-   "next_month": "未検証"
-  },
-  {
-   "label": "742",
-   "metric": "RB位置",
-   "n_days": 90,
-   "effect": 0.185,
-   "ci": [
-    0.0414,
-    0.3315
-   ],
-   "q": 0.204,
+   "q": 0.1275,
    "contrast": "within_machine",
    "level": "",
    "falsification": "済",
@@ -84,19 +54,50 @@
    "label": "594",
    "metric": "AT位置",
    "n_days": 59,
-   "effect": 0.144,
+   "effect": 0.127,
    "ci": [
-    -0.0082,
-    0.3038
+    -0.0182,
+    0.2731
    ],
-   "q": 0.304,
+   "q": 0.24,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "679",
+   "metric": "RB位置",
+   "n_days": 90,
+   "effect": 0.179,
+   "ci": [
+    0.0451,
+    0.2987
+   ],
+   "q": 0.408,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": 0.076
+  },
+  {
+   "label": "643",
+   "metric": "RB位置",
+   "n_days": 83,
+   "effect": 0.158,
+   "ci": [
+    0.0412,
+    0.2701
+   ],
+   "q": 0.408,
    "contrast": "within_machine",
    "level": "",
    "falsification": "済",
    "next_month": "未検証"
   }
  ],
- "power": "AT位置: 3m の CI 半幅の中央値 ±0.154; RB位置: 3m の CI 半幅の中央値 ±0.120; 回転数: 3m の CI 半幅の中央値 ±321.009; 差枚: 3m の CI 半幅の中央値 ±356.391; 機械割差: 3m の CI 半幅の中央値 ±4.737",
+ "power": "AT位置: 3m の CI 半幅の中央値 ±0.146; RB位置: 3m の CI 半幅の中央値 ±0.120; 回転数: 3m の CI 半幅の中央値 ±321.009; 差枚: 3m の CI 半幅の中央値 ±356.391; 機械割差: 3m の CI 半幅の中央値 ±4.696",
  "caveats": [
   "新台(導入後7日)は除外",
   "同じ日の他の台日との差で、当日の比較なので事後分析",
@@ -109,17 +110,17 @@
     "unit_kind": "台番号",
     "metric": "RB位置",
     "n_units": 97,
-    "spearman_train_verify": 0.089,
+    "spearman_train_verify": 0.044,
     "top_units": [
      "699",
-     "701",
-     "702",
-     "703",
-     "809"
+     "809",
+     "735",
+     "713",
+     "679"
     ],
-    "train_mean": 0.411,
-    "verify_mean": 0.215,
-    "verify_all_mean": 0.044
+    "train_mean": 0.202,
+    "verify_mean": 0.028,
+    "verify_all_mean": -0.005
    },
    {
     "unit_kind": "台番号",
@@ -157,17 +158,17 @@
     "unit_kind": "台番号",
     "metric": "機械割差",
     "n_units": 251,
-    "spearman_train_verify": 0.043,
+    "spearman_train_verify": -0.061,
     "top_units": [
-     "600",
-     "699",
      "696",
-     "698",
-     "553"
+     "600",
+     "553",
+     "522",
+     "561"
     ],
-    "train_mean": 7.367,
-    "verify_mean": 1.537,
-    "verify_all_mean": 0.413
+    "train_mean": 6.578,
+    "verify_mean": -1.329,
+    "verify_all_mean": -0.048
    }
   ]
  }

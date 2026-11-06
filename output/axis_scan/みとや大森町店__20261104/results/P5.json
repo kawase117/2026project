@@ -7,26 +7,26 @@
  "basis": "ex_post",
  "scope": "区分5×指標5×窓2",
  "planned": 50,
- "done": 41,
- "excluded": 9,
+ "done": 40,
+ "excluded": 10,
  "cells_file": "results/P5.cells.csv",
  "excluded_file": "results/P5.excluded.csv",
  "n_days": 90,
  "n_units": 167,
  "families": 0,
- "cells": 41,
- "p05": 32,
- "p05_expected": 2.1,
- "bh_q02": 37,
+ "cells": 40,
+ "p05": 31,
+ "p05_expected": 2.0,
+ "bh_q02": 38,
  "top": [
   {
    "label": "21台以上",
    "metric": "RB位置",
    "n_days": 76,
-   "effect": 0.063,
+   "effect": 0.061,
    "ci": [
-    0.0525,
-    0.0739
+    0.0512,
+    0.0724
    ],
    "q": 0.0017,
    "contrast": "vs_hall",
@@ -38,27 +38,12 @@
    "label": "21台以上",
    "metric": "機械割差",
    "n_days": 76,
-   "effect": 0.92,
+   "effect": 0.913,
    "ci": [
-    0.5727,
-    1.276
+    0.5654,
+    1.2691
    ],
    "q": 0.005,
-   "contrast": "vs_hall",
-   "level": "",
-   "falsification": "未実施",
-   "next_month": "未検証"
-  },
-  {
-   "label": "3-5台",
-   "metric": "AT位置",
-   "n_days": 59,
-   "effect": 0.021,
-   "ci": [
-    0.0057,
-    0.0352
-   ],
-   "q": 0.008,
    "contrast": "vs_hall",
    "level": "",
    "falsification": "未実施",
@@ -68,12 +53,12 @@
    "label": "11-20台",
    "metric": "RB位置",
    "n_days": 90,
-   "effect": 0.032,
+   "effect": 0.031,
    "ci": [
-    0.0072,
-    0.0531
+    0.0058,
+    0.0515
    ],
-   "q": 0.0175,
+   "q": 0.025,
    "contrast": "vs_hall",
    "level": "",
    "falsification": "未実施",
@@ -83,19 +68,34 @@
    "label": "11-20台",
    "metric": "機械割差",
    "n_days": 90,
-   "effect": 0.429,
+   "effect": 0.422,
    "ci": [
-    -0.0524,
-    0.9233
+    -0.0597,
+    0.915
    ],
-   "q": 0.16,
+   "q": 0.1733,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "21台以上",
+   "metric": "回転数",
+   "n_days": 76,
+   "effect": 2635.974,
+   "ci": [
+    2525.1757,
+    2748.8783
+   ],
+   "q": 0.0013,
    "contrast": "vs_hall",
    "level": "",
    "falsification": "未実施",
    "next_month": "未検証"
   }
  ],
- "power": "AT位置: 3m の CI 半幅の中央値 ±0.015; RB位置: 3m の CI 半幅の中央値 ±0.051; 回転数: 3m の CI 半幅の中央値 ±111.710; 差枚: 3m の CI 半幅の中央値 ±55.641; 機械割差: 3m の CI 半幅の中央値 ±0.563",
+ "power": "RB位置: 3m の CI 半幅の中央値 ±0.051; 回転数: 3m の CI 半幅の中央値 ±111.710; 差枚: 3m の CI 半幅の中央値 ±55.641; 機械割差: 3m の CI 半幅の中央値 ±0.564",
  "caveats": [
   "機種の水準と分離しない。台数で揃えた機種比較ではない"
  ],

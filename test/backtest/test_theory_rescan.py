@@ -121,6 +121,23 @@ def test_residual_rows_leave_one_out_and_drop_singletons():
     assert out._r.tolist() == [30.0, -30.0]
 
 
+def test_residuals_sum_to_zero_when_winners_are_played_more():
+    # 回転の多い台ほど率が高いと、自分を除いた平均との差は群の和が正に偏る。戻した後はゼロ。
+    df = pd.DataFrame(
+        dict(ds=["a"] * 3, machine_name=["m"] * 3, G=[9000.0, 3000.0, 1000.0], diff=[2700.0, 90.0, -300.0])
+    )
+    out = tr.residual_rows(df, "機械割差", ["ds", "machine_name"])
+    assert abs(out._r.sum()) < 1e-6
+    assert out._r.iloc[0] > 0 > out._r.iloc[2]
+
+
+def test_unit_level_residual_sums_to_zero():
+    df = pd.DataFrame(
+        dict(ds=["a"] * 3, machine_name=["m", "n", "o"], G=[9000.0, 3000.0, 1000.0], diff=[2700.0, 90.0, -300.0])
+    )
+    assert abs(tr.unit_level_residual(df, "機械割差", "machine_name", [])._r.sum()) < 1e-6
+
+
 def test_block_weights_sum_to_days():
     w = tr.block_weights(20, 50, np.random.default_rng(0))
     assert w.shape == (50, 20) and (w.sum(1) == 20).all()
@@ -135,6 +152,21 @@ def test_boot_table_detects_planted_unit():
     table = tr.boot_table(pd.DataFrame(rows), "u", days, 300, rng).set_index("unit")
     assert table.loc["good", "p"] < 0.01 and table.loc["good", "ci_lo"] > 0
     assert table.loc["flat", "ci_lo"] < 0 < table.loc["flat", "ci_hi"]
+
+
+def test_boot_table_drops_unit_with_no_contrast():
+    # 機種の全台が1つの島にあると機種内の残差の和はゼロで、比較にならない。
+    days = [f"d{i:02d}" for i in range(20)]
+    rng = np.random.default_rng(0)
+    rows = []
+    for d in days:
+        e = rng.normal(0, 1)
+        rows += [
+            dict(ds=d, sec="whole", _r=e, _d=1.0),
+            dict(ds=d, sec="whole", _r=-e, _d=1.0),
+            dict(ds=d, sec="split", _r=e, _d=1.0),
+        ]
+    assert tr.boot_table(pd.DataFrame(rows), "sec", days, 100, rng).unit.tolist() == ["split"]
 
 
 def test_time_stats_in_minus_out():

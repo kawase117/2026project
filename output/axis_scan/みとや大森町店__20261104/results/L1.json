@@ -15,91 +15,91 @@
  "n_units": 167,
  "families": 0,
  "cells": 3258,
- "p05": 1407,
+ "p05": 1428,
  "p05_expected": 162.9,
- "bh_q02": 1477,
+ "bh_q02": 1514,
  "top": [
   {
    "label": "マイジャグラーV",
    "metric": "RB位置",
    "n_days": 87,
-   "effect": 0.122,
+   "effect": 0.093,
    "ci": [
-    0.1014,
-    0.1453
+    0.0763,
+    0.1116
    ],
-   "q": 0.0032,
+   "q": 0.0027,
    "contrast": "vs_hall",
    "level": "",
    "falsification": "済",
    "next_month": "済",
-   "verify_effect": 0.134
+   "verify_effect": 0.107
+  },
+  {
+   "label": "甲鉄城のカバネリ 海門(うなと)決戦",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 5.172,
+   "ci": [
+    4.0401,
+    6.222
+   ],
+   "q": 0.0087,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": 6.966
+  },
+  {
+   "label": "ディスクアップ ULTRAREMIX",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 4.176,
+   "ci": [
+    1.7883,
+    6.6733
+   ],
+   "q": 0.0087,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": 1.786
   },
   {
    "label": "ネオアイムジャグラーEX",
    "metric": "RB位置",
    "n_days": 90,
-   "effect": 0.075,
+   "effect": 0.049,
    "ci": [
-    0.033,
-    0.1175
+    0.0066,
+    0.0916
    ],
-   "q": 0.0032,
+   "q": 0.0233,
    "contrast": "vs_hall",
    "level": "",
    "falsification": "済",
    "next_month": "未検証"
   },
   {
-   "label": "甲鉄城のカバネリ 海門(うなと)決戦",
-   "metric": "機械割差",
-   "n_days": 90,
-   "effect": 5.255,
-   "ci": [
-    4.1183,
-    6.32
-   ],
-   "q": 0.0102,
-   "contrast": "vs_hall",
-   "level": "",
-   "falsification": "済",
-   "next_month": "済",
-   "verify_effect": 7.073
-  },
-  {
-   "label": "ディスクアップ ULTRAREMIX",
-   "metric": "機械割差",
-   "n_days": 90,
-   "effect": 4.261,
-   "ci": [
-    1.8846,
-    6.7308
-   ],
-   "q": 0.0102,
-   "contrast": "vs_hall",
-   "level": "",
-   "falsification": "済",
-   "next_month": "済",
-   "verify_effect": 1.897
-  },
-  {
    "label": "ソードアート・オンラインII",
    "metric": "回転数",
    "n_days": 90,
-   "effect": 3047.857,
+   "effect": 3009.442,
    "ci": [
-    2826.9849,
-    3257.711
+    2791.0723,
+    3215.1016
    ],
    "q": 0.0013,
    "contrast": "vs_hall",
    "level": "",
    "falsification": "済",
    "next_month": "済",
-   "verify_effect": 2628.767
+   "verify_effect": 2597.725
   }
  ],
- "power": "RB位置: 3m の CI 半幅の中央値 ±0.114; 回転数: 3m の CI 半幅の中央値 ±247.530; 差枚: 3m の CI 半幅の中央値 ±259.236; 機械割差: 3m の CI 半幅の中央値 ±3.213",
+ "power": "RB位置: 3m の CI 半幅の中央値 ±0.113; 回転数: 3m の CI 半幅の中央値 ±247.826; 差枚: 3m の CI 半幅の中央値 ±259.386; 機械割差: 3m の CI 半幅の中央値 ±3.219",
  "caveats": [
   "新台(導入後7日)は除外",
   "同じ日の他の台日との差で、当日の比較なので事後分析",
@@ -117,9 +117,9 @@
      "スマート沖スロ ニューキングハナハナV",
      "マイジャグラーV"
     ],
-    "train_mean": 0.13,
-    "verify_mean": 0.153,
-    "verify_all_mean": -0.09
+    "train_mean": 0.104,
+    "verify_mean": 0.13,
+    "verify_all_mean": -0.112
    },
    {
     "unit_kind": "機種",
@@ -132,9 +132,9 @@
      "邪神ちゃんドロップキック",
      "ディスクアップ ULTRAREMIX"
     ],
-    "train_mean": 2393.678,
-    "verify_mean": 2162.105,
-    "verify_all_mean": -604.652
+    "train_mean": 2351.571,
+    "verify_mean": 2131.039,
+    "verify_all_mean": -635.347
    },
    {
     "unit_kind": "機種",
@@ -147,24 +147,24 @@
      "甲鉄城のカバネリ 海門(うなと)決戦",
      "東京喰種"
     ],
-    "train_mean": 470.144,
-    "verify_mean": 284.234,
-    "verify_all_mean": -57.496
+    "train_mean": 467.79,
+    "verify_mean": 280.721,
+    "verify_all_mean": -60.971
    },
    {
     "unit_kind": "機種",
     "metric": "機械割差",
     "n_units": 49,
-    "spearman_train_verify": 0.304,
+    "spearman_train_verify": 0.302,
     "top_units": [
      "甲鉄城のカバネリ 海門(うなと)決戦",
      "ディスクアップ ULTRAREMIX",
      "新鬼武者3",
      "邪神ちゃんドロップキック"
     ],
-    "train_mean": 4.231,
-    "verify_mean": 3.23,
-    "verify_all_mean": -1.299
+    "train_mean": 4.163,
+    "verify_mean": 3.13,
+    "verify_all_mean": -1.398
    }
   ]
  }

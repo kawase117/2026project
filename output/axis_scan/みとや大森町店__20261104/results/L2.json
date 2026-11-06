@@ -7,98 +7,95 @@
  "basis": "ex_post",
  "scope": "単位×指標5×窓9×対比2(全組み合わせ、2軸)。train で選び verify で確かめる翌月検証を含む",
  "planned": 1620,
- "done": 1008,
- "excluded": 612,
+ "done": 606,
+ "excluded": 1014,
  "cells_file": "results/L2.cells.csv",
  "excluded_file": "results/L2.excluded.csv",
  "n_days": 90,
  "n_units": 167,
  "families": 0,
- "cells": 1008,
- "p05": 506,
- "p05_expected": 50.4,
- "bh_q02": 559,
+ "cells": 606,
+ "p05": 343,
+ "p05_expected": 30.3,
+ "bh_q02": 397,
  "top": [
   {
+   "label": "641-657",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 0.15,
+   "ci": [
+    -0.0275,
+    0.3137
+   ],
+   "q": 0.192,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
    "label": "591-607",
-   "metric": "AT位置",
+   "metric": "機械割差",
    "n_days": 90,
-   "effect": 0.017,
+   "effect": 0.061,
    "ci": [
-    0.0083,
-    0.027
+    -0.1344,
+    0.2591
    ],
-   "q": 0.001,
-   "contrast": "within_machine",
-   "level": "",
-   "falsification": "未実施",
-   "next_month": "未検証"
-  },
-  {
-   "label": "701-711",
-   "metric": "RB位置",
-   "n_days": 90,
-   "effect": 0.231,
-   "ci": [
-    0.1262,
-    0.3538
-   ],
-   "q": 0.0015,
-   "contrast": "within_machine",
-   "level": "",
-   "falsification": "済",
-   "next_month": "済",
-   "verify_effect": 0.316
-  },
-  {
-   "label": "805-815",
-   "metric": "RB位置",
-   "n_days": 90,
-   "effect": 0.133,
-   "ci": [
-    0.0997,
-    0.169
-   ],
-   "q": 0.0015,
+   "q": 0.53,
    "contrast": "within_machine",
    "level": "",
    "falsification": "済",
    "next_month": "未検証"
   },
   {
-   "label": "701-711",
-   "metric": "機械割差",
+   "label": "658-674",
+   "metric": "RB位置",
    "n_days": 90,
-   "effect": 4.109,
+   "effect": 0.0,
    "ci": [
-    3.3172,
-    4.9263
+    -0.0084,
+    0.0077
    ],
-   "q": 0.0024,
+   "q": 0.936,
    "contrast": "within_machine",
    "level": "",
    "falsification": "済",
-   "next_month": "済",
-   "verify_effect": 4.727
+   "next_month": "未検証"
   },
   {
-   "label": "805-815",
-   "metric": "機械割差",
+   "label": "658-674",
+   "metric": "回転数",
    "n_days": 90,
-   "effect": 2.046,
+   "effect": 64.419,
    "ci": [
-    1.6578,
-    2.4646
+    1.1511,
+    121.5261
    ],
-   "q": 0.0024,
+   "q": 0.092,
    "contrast": "within_machine",
    "level": "",
    "falsification": "済",
-   "next_month": "済",
-   "verify_effect": 2.498
+   "next_month": "未検証"
+  },
+  {
+   "label": "591-607",
+   "metric": "回転数",
+   "n_days": 90,
+   "effect": 4.427,
+   "ci": [
+    -11.253,
+    22.2214
+   ],
+   "q": 0.654,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "済",
+   "next_month": "未検証"
   }
  ],
- "power": "AT位置: 3m の CI 半幅の中央値 ±0.009; RB位置: 3m の CI 半幅の中央値 ±0.035; 回転数: 3m の CI 半幅の中央値 ±82.875; 差枚: 3m の CI 半幅の中央値 ±52.923; 機械割差: 3m の CI 半幅の中央値 ±0.520",
+ "power": "RB位置: 3m の CI 半幅の中央値 ±0.041; 回転数: 3m の CI 半幅の中央値 ±142.754; 差枚: 3m の CI 半幅の中央値 ±78.744; 機械割差: 3m の CI 半幅の中央値 ±0.839",
  "caveats": [
   "新台(導入後7日)は除外",
   "同じ日の他の台日との差で、当日の比較なので事後分析",
@@ -106,59 +103,6 @@
  ],
  "reason": "",
  "extra": {
-  "next_month": [
-   {
-    "unit_kind": "島",
-    "metric": "RB位置",
-    "n_units": 9,
-    "spearman_train_verify": 0.917,
-    "top_units": [
-     "701-711",
-     "692-700"
-    ],
-    "train_mean": 0.204,
-    "verify_mean": 0.367,
-    "verify_all_mean": 0.113
-   },
-   {
-    "unit_kind": "島",
-    "metric": "回転数",
-    "n_units": 17,
-    "spearman_train_verify": 0.098,
-    "top_units": [
-     "658-674",
-     "591-607"
-    ],
-    "train_mean": 25.267,
-    "verify_mean": 38.353,
-    "verify_all_mean": 0.0
-   },
-   {
-    "unit_kind": "島",
-    "metric": "差枚",
-    "n_units": 17,
-    "spearman_train_verify": 0.367,
-    "top_units": [
-     "641-657",
-     "591-607"
-    ],
-    "train_mean": 10.767,
-    "verify_mean": 20.334,
-    "verify_all_mean": 0.0
-   },
-   {
-    "unit_kind": "島",
-    "metric": "機械割差",
-    "n_units": 17,
-    "spearman_train_verify": 0.713,
-    "top_units": [
-     "701-711",
-     "805-815"
-    ],
-    "train_mean": 2.811,
-    "verify_mean": 3.613,
-    "verify_all_mean": 0.733
-   }
-  ]
+  "next_month": []
  }
 }
