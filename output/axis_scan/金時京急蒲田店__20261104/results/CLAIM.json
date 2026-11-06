@@ -1,0 +1,41 @@
+{
+ "axis_id": "CLAIM",
+ "hall": "金時京急蒲田店",
+ "asof": "20261104",
+ "window": "直近90日とそれ以前",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "説5件×指標。説の定義は backtest/theory_claims/kintoki.json。n_days=直近の日数、n_units=比較期間の日数",
+ "planned": 7,
+ "done": 7,
+ "excluded": 0,
+ "cells_file": "results/CLAIM.cells.csv",
+ "excluded_file": "results/CLAIM.excluded.csv",
+ "n_days": 90,
+ "n_units": 5,
+ "families": 0,
+ "cells": 7,
+ "p05": 0,
+ "p05_expected": 0.0,
+ "bh_q02": 0,
+ "top": [],
+ "power": "",
+ "caveats": [
+  "判定は差の有意性に基づく。CIがゼロを跨ぐだけでは「消えた」にしない",
+  "直近が6日未満は判定しない",
+  "payout は same_day が非加重(deathwatch と同じ)、cross_day と hall_level が回転数加重。旧本文の非加重の数値とは直接比べない"
+ ],
+ "reason": "",
+ "extra": {
+  "untested": [
+   {
+    "text": "機種別DD/曜日スキャンの個別機種(文書の表)",
+    "reason": "文書にピークの日が書かれておらず、旧スキャンの再現は別スクリプト。機種×時間の総当たりは M1 で見た"
+   },
+   {
+    "text": "機種横断一致度スキャン(文書 §2)",
+    "reason": "旧指標(一致率)の再現はしていない。DD軸は T2・T3 と M2 で見た"
+   }
+  ]
+ }
+}

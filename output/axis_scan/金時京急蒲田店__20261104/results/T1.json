@@ -1,0 +1,104 @@
+{
+ "axis_id": "T1",
+ "hall": "金時京急蒲田店",
+ "asof": "20261104",
+ "window": "3m,all",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "窓2×単位(全台+タイプ)×指標5×水準。全組み合わせ(2軸)。3日未満の水準は除外",
+ "planned": 490,
+ "done": 448,
+ "excluded": 42,
+ "cells_file": "results/T1.cells.csv",
+ "excluded_file": "results/T1.excluded.csv",
+ "n_days": 90,
+ "n_units": 131,
+ "families": 20,
+ "cells": 448,
+ "p05": 94,
+ "p05_expected": 22.4,
+ "bh_q02": 99,
+ "top": [
+  {
+   "label": "全台",
+   "metric": "RB帯補正",
+   "n_days": 13,
+   "effect": 0.06,
+   "ci": [
+    0.0257,
+    0.0938
+   ],
+   "q": 0.007,
+   "contrast": "in_vs_out",
+   "level": "水曜",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ジャグラー",
+   "metric": "RB帯補正",
+   "n_days": 13,
+   "effect": 0.063,
+   "ci": [
+    0.0258,
+    0.1001
+   ],
+   "q": 0.021,
+   "contrast": "in_vs_out",
+   "level": "水曜",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "全台",
+   "metric": "機械割差",
+   "n_days": 13,
+   "effect": 1.425,
+   "ci": [
+    0.4654,
+    2.3855
+   ],
+   "q": 0.028,
+   "contrast": "in_vs_out",
+   "level": "月曜",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "全台",
+   "metric": "RB無補正",
+   "n_days": 13,
+   "effect": 0.016,
+   "ci": [
+    -0.0071,
+    0.0395
+   ],
+   "q": 0.5294,
+   "contrast": "in_vs_out",
+   "level": "日曜",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ハナハナ・ハナビ",
+   "metric": "RB無補正",
+   "n_days": 13,
+   "effect": 0.143,
+   "ci": [
+    0.0045,
+    0.2806
+   ],
+   "q": 0.5737,
+   "contrast": "in_vs_out",
+   "level": "金曜",
+   "falsification": "済",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "RB帯補正: 80%検出の目安 ±0.121; RB無補正: 80%検出の目安 ±0.131; 回転数: 80%検出の目安 ±763.274; 差枚: 80%検出の目安 ±279.879; 機械割差: 80%検出の目安 ±4.262",
+ "caveats": [
+  "基準は窓全体の機種平均なので in_sample。開店前の評価には使わない",
+  "RBは帯補正あり・なしを並べる。符号が割れたら判定しない"
+ ],
+ "reason": ""
+}

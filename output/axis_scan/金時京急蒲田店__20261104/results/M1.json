@@ -1,0 +1,95 @@
+{
+ "axis_id": "M1",
+ "hall": "金時京急蒲田店",
+ "asof": "20261104",
+ "window": "20260807-20261104",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "単位×時間。「前日の稼働」は暦日でないので外した。3m のみ",
+ "planned": 11532,
+ "done": 6300,
+ "excluded": 5232,
+ "cells_file": "results/M1.cells.csv",
+ "excluded_file": "results/M1.excluded.csv",
+ "n_days": 90,
+ "n_units": 62,
+ "families": 174,
+ "cells": 6300,
+ "p05": 326,
+ "p05_expected": 315.0,
+ "bh_q02": 0,
+ "top": [
+  {
+   "label": "甲鉄城のカバネリ×1のつく日",
+   "metric": "機械割",
+   "n_days": 11,
+   "effect": 38.764,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.9308,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "とある科学の超電磁砲2×金曜",
+   "metric": "機械割",
+   "n_days": 13,
+   "effect": 79.5458,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.9308,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "スマスロ炎炎ノ消防隊2×月曜",
+   "metric": "機械割",
+   "n_days": 13,
+   "effect": 17.1784,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.9308,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ケロット5×月曜",
+   "metric": "RB当り",
+   "n_days": 13,
+   "effect": 0.2611,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.9308,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "真打 吉宗×月末28日以降",
+   "metric": "機械割",
+   "n_days": 11,
+   "effect": 26.0053,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.9308,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "",
+ "caveats": [
+  "seg は排他で、差枚は出さない",
+  "基準は期間全体で in_sample",
+  "新台は除外"
+ ],
+ "reason": ""
+}

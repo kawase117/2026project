@@ -1,0 +1,106 @@
+{
+ "axis_id": "P5",
+ "hall": "金時京急蒲田店",
+ "asof": "20261104",
+ "window": "3m,all",
+ "status": "完了",
+ "basis": "ex_post",
+ "scope": "区分5×指標4×窓2",
+ "planned": 32,
+ "done": 32,
+ "excluded": 0,
+ "cells_file": "results/P5.cells.csv",
+ "excluded_file": "results/P5.excluded.csv",
+ "n_days": 90,
+ "n_units": 131,
+ "families": 0,
+ "cells": 32,
+ "p05": 24,
+ "p05_expected": 1.6,
+ "bh_q02": 27,
+ "top": [
+  {
+   "label": "6-10台",
+   "metric": "RB位置",
+   "n_days": 90,
+   "effect": 0.063,
+   "ci": [
+    0.0468,
+    0.0786
+   ],
+   "q": 0.002,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "11-20台",
+   "metric": "機械割差",
+   "n_days": 73,
+   "effect": 0.738,
+   "ci": [
+    0.1181,
+    1.2464
+   ],
+   "q": 0.052,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "6-10台",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 0.455,
+   "ci": [
+    -0.0302,
+    0.9354
+   ],
+   "q": 0.0933,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "11-20台",
+   "metric": "回転数",
+   "n_days": 73,
+   "effect": 2059.513,
+   "ci": [
+    1979.6571,
+    2137.992
+   ],
+   "q": 0.001,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "6-10台",
+   "metric": "回転数",
+   "n_days": 90,
+   "effect": 470.157,
+   "ci": [
+    385.6273,
+    572.3109
+   ],
+   "q": 0.001,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "RB位置: 3m の CI 半幅の中央値 ±0.039; 回転数: 3m の CI 半幅の中央値 ±75.950; 差枚: 3m の CI 半幅の中央値 ±46.782; 機械割差: 3m の CI 半幅の中央値 ±0.566",
+ "caveats": [
+  "機種の水準と分離しない。台数で揃えた機種比較ではない"
+ ],
+ "reason": "",
+ "extra": {
+  "next_month": []
+ }
+}

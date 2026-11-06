@@ -1,0 +1,78 @@
+{
+ "axis_id": "S1",
+ "hall": "金時京急蒲田店",
+ "asof": "20261104",
+ "window": "3m,all",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "日×窓。分類は開始時に固定した規則",
+ "planned": 761,
+ "done": 761,
+ "excluded": 0,
+ "cells_file": "results/S1.cells.csv",
+ "excluded_file": "results/S1.excluded.csv",
+ "n_days": 90,
+ "n_units": 131,
+ "families": 0,
+ "cells": 761,
+ "p05": 0,
+ "p05_expected": 0.0,
+ "bh_q02": 0,
+ "top": [],
+ "power": "",
+ "caveats": [
+  "基準は窓全体の機種の好調率。検定なしの分類で、件数を見るためのもの",
+  "台数4台未満の機種は除く"
+ ],
+ "reason": "",
+ "extra": {
+  "3m": {
+   "n_days": 90,
+   "counts": {
+    "集中型": 80,
+    "全体型": 7,
+    "どちらでもない": 3
+   },
+   "event_counts": {
+    "集中型": 2
+   },
+   "event_days": 2,
+   "hall_resid_pt_by_label": {
+    "どちらでもない": -1.76,
+    "全体型": 0.75,
+    "集中型": -0.04
+   },
+   "center_machines": {
+    "ゴーゴージャグラー3": 40,
+    "ネオアイムジャグラーEX": 30,
+    "マイジャグラーV": 28,
+    "ファンキージャグラー2": 24,
+    "ミリオンゴッド‐神々の軌跡‐": 9
+   }
+  },
+  "all": {
+   "n_days": 671,
+   "counts": {
+    "集中型": 550,
+    "全体型": 69,
+    "どちらでもない": 52
+   },
+   "event_counts": {
+    "集中型": 2
+   },
+   "event_days": 2,
+   "hall_resid_pt_by_label": {
+    "どちらでもない": -0.51,
+    "全体型": 1.25,
+    "集中型": -0.28
+   },
+   "center_machines": {
+    "ゴーゴージャグラー3": 174,
+    "ファンキージャグラー2": 168,
+    "マイジャグラーV": 159,
+    "アイムジャグラーEX-TP": 106,
+    "ネオアイムジャグラーEX": 92
+   }
+  }
+ }
+}

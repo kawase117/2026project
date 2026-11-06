@@ -1,0 +1,95 @@
+{
+ "axis_id": "M2",
+ "hall": "金時京急蒲田店",
+ "asof": "20261104",
+ "window": "20260807-20261104",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "単位×時間。「前日の稼働」は暦日でないので外した。3m のみ",
+ "planned": 1116,
+ "done": 745,
+ "excluded": 371,
+ "cells_file": "results/M2.cells.csv",
+ "excluded_file": "results/M2.excluded.csv",
+ "n_days": 90,
+ "n_units": 6,
+ "families": 174,
+ "cells": 745,
+ "p05": 51,
+ "p05_expected": 37.2,
+ "bh_q02": 0,
+ "top": [
+  {
+   "label": "ジャグラー×水曜",
+   "metric": "RB当り",
+   "n_days": 13,
+   "effect": 0.0564,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.2481,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ハナハナ・ハナビ×26日",
+   "metric": "機械割",
+   "n_days": 3,
+   "effect": 13.8495,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.3721,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ハナハナ・ハナビ×8-14日",
+   "metric": "回転数",
+   "n_days": 21,
+   "effect": 0.237,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.4466,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ノーマル他×23日",
+   "metric": "回転数",
+   "n_days": 3,
+   "effect": 0.6388,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.5316,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ハナハナ・ハナビ×6のつく日",
+   "metric": "機械割",
+   "n_days": 8,
+   "effect": 5.9386,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.5413,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "",
+ "caveats": [
+  "seg は排他で、差枚は出さない",
+  "基準は期間全体で in_sample",
+  "新台は除外"
+ ],
+ "reason": ""
+}

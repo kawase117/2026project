@@ -1,0 +1,105 @@
+{
+ "axis_id": "H1",
+ "hall": "金時京急蒲田店",
+ "asof": "20261104",
+ "window": "3m,prev3m",
+ "status": "完了",
+ "basis": "as_of",
+ "scope": "単位3×指標4×窓2×(素の値/自分の長期水準を引く)。全期間は計算量で対象外(前の3か月を再現確認に置く)",
+ "planned": 48,
+ "done": 48,
+ "excluded": 0,
+ "cells_file": "results/H1.cells.csv",
+ "excluded_file": "results/H1.excluded.csv",
+ "n_days": 90,
+ "n_units": 148,
+ "families": 2,
+ "cells": 48,
+ "p05": 13,
+ "p05_expected": 2.4,
+ "bh_q02": 14,
+ "top": [
+  {
+   "label": "機種|RB位置|own_level_removed",
+   "metric": "RB位置",
+   "n_days": 90,
+   "effect": 0.057,
+   "ci": [
+    -0.0083,
+    0.114
+   ],
+   "q": 0.2453,
+   "contrast": "own_level_removed",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "末尾|RB位置|own_level_removed",
+   "metric": "RB位置",
+   "n_days": 90,
+   "effect": 0.024,
+   "ci": [
+    -0.0609,
+    0.1125
+   ],
+   "q": 0.8456,
+   "contrast": "own_level_removed",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "機種|機械割差|own_level_removed",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 0.007,
+   "ci": [
+    -0.0325,
+    0.0471
+   ],
+   "q": 0.8705,
+   "contrast": "own_level_removed",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "機種|差枚|own_level_removed",
+   "metric": "差枚",
+   "n_days": 90,
+   "effect": 0.005,
+   "ci": [
+    -0.0304,
+    0.0403
+   ],
+   "q": 0.8705,
+   "contrast": "own_level_removed",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "末尾|回転数|own_level_removed",
+   "metric": "回転数",
+   "n_days": 90,
+   "effect": 0.179,
+   "ci": [
+    0.1246,
+    0.23
+   ],
+   "q": 0.002,
+   "contrast": "own_level_removed",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "順位相関の CI 半幅の中央値 ±0.037",
+ "caveats": [
+  "top は自分の長期水準を引いた版から選ぶ。素の値は日を問わない強さ(水準)を再検出するだけなので候補にしない",
+  "特徴量は対象日より前だけ。結果(当日の値)は同日の断面で引いたもの",
+  "台番号は同じ機種の期間だけで窓を作る"
+ ],
+ "reason": ""
+}
