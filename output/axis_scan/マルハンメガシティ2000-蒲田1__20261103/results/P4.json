@@ -1,0 +1,95 @@
+{
+ "axis_id": "P4",
+ "hall": "マルハンメガシティ2000-蒲田1",
+ "asof": "20261103",
+ "window": "20260806-20261103",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "単位×時間。「前日の稼働」は暦日でないので外した。3m のみ",
+ "planned": 5394,
+ "done": 3736,
+ "excluded": 1658,
+ "cells_file": "results/P4.cells.csv",
+ "excluded_file": "results/P4.excluded.csv",
+ "n_days": 90,
+ "n_units": 29,
+ "families": 177,
+ "cells": 3736,
+ "p05": 235,
+ "p05_expected": 186.8,
+ "bh_q02": 0,
+ "top": [
+  {
+   "label": "2187-2190×月末28日以降",
+   "metric": "回転数",
+   "n_days": 11,
+   "effect": 0.2245,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.4665,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "2147-2150+2430×月末28日以降",
+   "metric": "回転数",
+   "n_days": 11,
+   "effect": 0.1948,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.4665,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "2167-2176×台帳のイベント日",
+   "metric": "機械割",
+   "n_days": 19,
+   "effect": 10.6595,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.4665,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "2317-2330×月末28日以降",
+   "metric": "RB当り",
+   "n_days": 11,
+   "effect": 0.0977,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.4665,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "2302-2316×給料日前後24-26日",
+   "metric": "回転数",
+   "n_days": 9,
+   "effect": 0.1281,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.4665,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "",
+ "caveats": [
+  "seg は排他で、差枚は出さない",
+  "基準は期間全体で in_sample",
+  "新台は除外"
+ ],
+ "reason": ""
+}

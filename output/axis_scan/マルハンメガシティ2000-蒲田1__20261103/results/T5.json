@@ -1,0 +1,104 @@
+{
+ "axis_id": "T5",
+ "hall": "マルハンメガシティ2000-蒲田1",
+ "asof": "20261103",
+ "window": "3m,all,regime",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "窓3×単位(全台+タイプ)×指標7×水準。全組み合わせ(2軸)。3日未満の水準は除外",
+ "planned": 1064,
+ "done": 792,
+ "excluded": 272,
+ "cells_file": "results/T5.cells.csv",
+ "excluded_file": "results/T5.excluded.csv",
+ "n_days": 90,
+ "n_units": 167,
+ "families": 42,
+ "cells": 792,
+ "p05": 134,
+ "p05_expected": 39.6,
+ "bh_q02": 160,
+ "top": [
+  {
+   "label": "全台",
+   "metric": "RB無補正",
+   "n_days": 19,
+   "effect": 0.051,
+   "ci": [
+    0.0192,
+    0.0824
+   ],
+   "q": 0.008,
+   "contrast": "in_vs_out",
+   "level": "1-7日",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ジャグラー",
+   "metric": "RB無補正",
+   "n_days": 19,
+   "effect": 0.055,
+   "ci": [
+    0.0215,
+    0.0879
+   ],
+   "q": 0.064,
+   "contrast": "in_vs_out",
+   "level": "1-7日",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ハナハナ・ハナビ",
+   "metric": "RB帯補正",
+   "n_days": 11,
+   "effect": 0.096,
+   "ci": [
+    0.0359,
+    0.1563
+   ],
+   "q": 0.096,
+   "contrast": "in_vs_out",
+   "level": "月末28日以降",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ジャグラー",
+   "metric": "機械割差",
+   "n_days": 19,
+   "effect": 1.113,
+   "ci": [
+    0.408,
+    1.818
+   ],
+   "q": 0.1,
+   "contrast": "in_vs_out",
+   "level": "1-7日",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ジャグラー",
+   "metric": "機械割差",
+   "n_days": 9,
+   "effect": 1.31,
+   "ci": [
+    0.3382,
+    2.2812
+   ],
+   "q": 0.1499,
+   "contrast": "in_vs_out",
+   "level": "月初1-3日",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "AT帯補正: 80%検出の目安 ±0.099; AT無補正: 80%検出の目安 ±0.141; RB帯補正: 80%検出の目安 ±0.078; RB無補正: 80%検出の目安 ±0.088; 回転数: 80%検出の目安 ±878.796; 差枚: 80%検出の目安 ±199.278; 機械割差: 80%検出の目安 ±2.271",
+ "caveats": [
+  "基準は窓全体の機種平均なので in_sample。開店前の評価には使わない",
+  "RBは帯補正あり・なしを並べる。符号が割れたら判定しない"
+ ],
+ "reason": ""
+}

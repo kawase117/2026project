@@ -1,0 +1,104 @@
+{
+ "axis_id": "T2",
+ "hall": "マルハンメガシティ2000-蒲田1",
+ "asof": "20261103",
+ "window": "3m,all,regime",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "窓3×単位(全台+タイプ)×指標7×水準。全組み合わせ(2軸)。3日未満の水準は除外",
+ "planned": 1330,
+ "done": 990,
+ "excluded": 340,
+ "cells_file": "results/T2.cells.csv",
+ "excluded_file": "results/T2.excluded.csv",
+ "n_days": 90,
+ "n_units": 167,
+ "families": 42,
+ "cells": 990,
+ "p05": 169,
+ "p05_expected": 49.5,
+ "bh_q02": 135,
+ "top": [
+  {
+   "label": "全台",
+   "metric": "RB無補正",
+   "n_days": 11,
+   "effect": 0.056,
+   "ci": [
+    0.0172,
+    0.0956
+   ],
+   "q": 0.045,
+   "contrast": "in_vs_out",
+   "level": "1のつく日",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ジャグラー",
+   "metric": "RB無補正",
+   "n_days": 11,
+   "effect": 0.065,
+   "ci": [
+    0.0233,
+    0.1066
+   ],
+   "q": 0.1199,
+   "contrast": "in_vs_out",
+   "level": "1のつく日",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ハナハナ・ハナビ",
+   "metric": "RB帯補正",
+   "n_days": 9,
+   "effect": 0.107,
+   "ci": [
+    0.0401,
+    0.1747
+   ],
+   "q": 0.1199,
+   "contrast": "in_vs_out",
+   "level": "8のつく日",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "A+AT",
+   "metric": "RB帯補正",
+   "n_days": 8,
+   "effect": 0.379,
+   "ci": [
+    0.0936,
+    0.664
+   ],
+   "q": 0.2499,
+   "contrast": "in_vs_out",
+   "level": "5のつく日",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ジャグラー",
+   "metric": "機械割差",
+   "n_days": 11,
+   "effect": 1.096,
+   "ci": [
+    0.2671,
+    1.9252
+   ],
+   "q": 0.3998,
+   "contrast": "in_vs_out",
+   "level": "1のつく日",
+   "falsification": "済",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "AT帯補正: 80%検出の目安 ±0.115; AT無補正: 80%検出の目安 ±0.170; RB帯補正: 80%検出の目安 ±0.094; RB無補正: 80%検出の目安 ±0.106; 回転数: 80%検出の目安 ±1056.821; 差枚: 80%検出の目安 ±239.927; 機械割差: 80%検出の目安 ±2.669",
+ "caveats": [
+  "基準は窓全体の機種平均なので in_sample。開店前の評価には使わない",
+  "RBは帯補正あり・なしを並べる。符号が割れたら判定しない"
+ ],
+ "reason": ""
+}

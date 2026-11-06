@@ -1,0 +1,104 @@
+{
+ "axis_id": "T9",
+ "hall": "マルハンメガシティ2000-蒲田1",
+ "asof": "20261103",
+ "window": "3m,all,regime",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "窓3×単位(全台+タイプ)×指標7×水準。全組み合わせ(2軸)。3日未満の水準は除外",
+ "planned": 931,
+ "done": 320,
+ "excluded": 611,
+ "cells_file": "results/T9.cells.csv",
+ "excluded_file": "results/T9.excluded.csv",
+ "n_days": 90,
+ "n_units": 167,
+ "families": 42,
+ "cells": 320,
+ "p05": 30,
+ "p05_expected": 16.0,
+ "bh_q02": 21,
+ "top": [
+  {
+   "label": "全台",
+   "metric": "機械割差",
+   "n_days": 5,
+   "effect": 0.951,
+   "ci": [
+    -0.2203,
+    2.1227
+   ],
+   "q": 0.4963,
+   "contrast": "in_vs_out",
+   "level": "coverage",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "AT・ART",
+   "metric": "AT帯補正",
+   "n_days": 4,
+   "effect": 0.019,
+   "ci": [
+    -0.0808,
+    0.1181
+   ],
+   "q": 0.7196,
+   "contrast": "in_vs_out",
+   "level": "collab",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "全台",
+   "metric": "AT帯補正",
+   "n_days": 4,
+   "effect": 0.019,
+   "ci": [
+    -0.0837,
+    0.121
+   ],
+   "q": 0.7421,
+   "contrast": "in_vs_out",
+   "level": "collab",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "AT・ART",
+   "metric": "AT無補正",
+   "n_days": 4,
+   "effect": 0.035,
+   "ci": [
+    -0.1196,
+    0.1893
+   ],
+   "q": 0.7981,
+   "contrast": "in_vs_out",
+   "level": "collab",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "全台",
+   "metric": "AT無補正",
+   "n_days": 4,
+   "effect": 0.035,
+   "ci": [
+    -0.1175,
+    0.1872
+   ],
+   "q": 0.8141,
+   "contrast": "in_vs_out",
+   "level": "collab",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "AT帯補正: 80%検出の目安 ±0.130; AT無補正: 80%検出の目安 ±0.208; RB帯補正: 80%検出の目安 ±0.091; RB無補正: 80%検出の目安 ±0.125; 回転数: 80%検出の目安 ±1154.174; 差枚: 80%検出の目安 ±319.663; 機械割差: 80%検出の目安 ±3.217",
+ "caveats": [
+  "基準は窓全体の機種平均なので in_sample。開店前の評価には使わない",
+  "RBは帯補正あり・なしを並べる。符号が割れたら判定しない"
+ ],
+ "reason": ""
+}

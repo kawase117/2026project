@@ -1,0 +1,91 @@
+{
+ "axis_id": "P6",
+ "hall": "マルハンメガシティ2000-蒲田1",
+ "asof": "20261103",
+ "window": "3m,all",
+ "status": "完了",
+ "basis": "ex_post",
+ "scope": "2区分×指標5×窓2",
+ "planned": 20,
+ "done": 20,
+ "excluded": 0,
+ "cells_file": "results/P6.cells.csv",
+ "excluded_file": "results/P6.excluded.csv",
+ "n_days": 90,
+ "n_units": 147,
+ "families": 0,
+ "cells": 20,
+ "p05": 6,
+ "p05_expected": 1.0,
+ "bh_q02": 10,
+ "top": [
+  {
+   "label": "機種の内側",
+   "metric": "AT位置",
+   "n_days": 90,
+   "effect": 0.017,
+   "ci": [
+    -0.0047,
+    0.0376
+   ],
+   "q": 0.108,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "機種の境界",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 0.159,
+   "ci": [
+    -0.4776,
+    0.8975
+   ],
+   "q": 0.66,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "機種の境界",
+   "metric": "RB位置",
+   "n_days": 90,
+   "effect": 0.001,
+   "ci": [
+    -0.0525,
+    0.051
+   ],
+   "q": 0.96,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "機種の内側",
+   "metric": "回転数",
+   "n_days": 90,
+   "effect": 8.355,
+   "ci": [
+    0.6972,
+    16.8303
+   ],
+   "q": 0.03,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "AT位置: 3m の CI 半幅の中央値 ±0.075; RB位置: 3m の CI 半幅の中央値 ±0.028; 回転数: 3m の CI 半幅の中央値 ±18.468; 差枚: 3m の CI 半幅の中央値 ±32.270; 機械割差: 3m の CI 半幅の中央値 ±0.415",
+ "caveats": [
+  "隣は台番号の連番で近似"
+ ],
+ "reason": "",
+ "extra": {
+  "next_month": []
+ }
+}

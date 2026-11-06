@@ -1,0 +1,96 @@
+{
+ "axis_id": "P1",
+ "hall": "マルハンメガシティ2000-蒲田1",
+ "asof": "20261103",
+ "window": "20260806-20261103",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "位置×時間(曜日・D・DD・ゾロ目・イベント系列)。全組み合わせ(2軸)。3m のみ",
+ "planned": 2000,
+ "done": 2000,
+ "excluded": 0,
+ "cells_file": "results/P1.cells.csv",
+ "excluded_file": "results/P1.excluded.csv",
+ "n_days": 90,
+ "n_units": 365,
+ "families": 16,
+ "cells": 2000,
+ "p05": 113,
+ "p05_expected": 100.0,
+ "bh_q02": 0,
+ "top": [
+  {
+   "label": "7のつく日×末尾7",
+   "metric": "OTHER:回転数/期待",
+   "n_days": 9,
+   "effect": 0.1161,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.7586,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "16日×末尾9",
+   "metric": "OTHER:機械割(差枚/3G)",
+   "n_days": 3,
+   "effect": 0.1168,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.7586,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "29日×末尾9",
+   "metric": "OTHER:回転数/期待",
+   "n_days": 3,
+   "effect": 0.1615,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.7586,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "15日×末尾9",
+   "metric": "OTHER:機械割(差枚/3G)",
+   "n_days": 3,
+   "effect": 0.1282,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.7586,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "0のつく日×末尾6",
+   "metric": "OTHER:機械割(差枚/3G)",
+   "n_days": 9,
+   "effect": 0.0664,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.7586,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "",
+ "caveats": [
+  "axis_scan は G=0 を読み込まない",
+  "区分 seg は排他(RB側は機械割差なし、OTHER側はRBなし)",
+  "基準は期間全体で in_sample",
+  "新台は除外"
+ ],
+ "reason": ""
+}

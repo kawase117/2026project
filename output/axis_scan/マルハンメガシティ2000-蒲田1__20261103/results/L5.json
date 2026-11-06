@@ -1,0 +1,177 @@
+{
+ "axis_id": "L5",
+ "hall": "マルハンメガシティ2000-蒲田1",
+ "asof": "20261103",
+ "window": "1m,2m,3m,train,verify,m202611,m202610,m202609,m202608",
+ "status": "完了",
+ "basis": "ex_post",
+ "scope": "単位×指標5×窓9×対比2(全組み合わせ、2軸)。train で選び verify で確かめる翌月検証を含む",
+ "planned": 900,
+ "done": 752,
+ "excluded": 148,
+ "cells_file": "results/L5.cells.csv",
+ "excluded_file": "results/L5.excluded.csv",
+ "n_days": 90,
+ "n_units": 167,
+ "families": 0,
+ "cells": 752,
+ "p05": 160,
+ "p05_expected": 37.6,
+ "bh_q02": 161,
+ "top": [
+  {
+   "label": "1",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 1.014,
+   "ci": [
+    0.2789,
+    1.9444
+   ],
+   "q": 0.12,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "4",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 0.723,
+   "ci": [
+    -0.1376,
+    1.4939
+   ],
+   "q": 0.32,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": 0.218
+  },
+  {
+   "label": "5",
+   "metric": "AT位置",
+   "n_days": 90,
+   "effect": 0.062,
+   "ci": [
+    -0.0602,
+    0.175
+   ],
+   "q": 0.5852,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": 0.019
+  },
+  {
+   "label": "2",
+   "metric": "AT位置",
+   "n_days": 57,
+   "effect": 0.068,
+   "ci": [
+    -0.091,
+    0.1942
+   ],
+   "q": 0.5852,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "9",
+   "metric": "RB位置",
+   "n_days": 90,
+   "effect": 0.019,
+   "ci": [
+    -0.0174,
+    0.062
+   ],
+   "q": 0.936,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": 0.023
+  }
+ ],
+ "power": "AT位置: 3m の CI 半幅の中央値 ±0.137; RB位置: 3m の CI 半幅の中央値 ±0.036; 回転数: 3m の CI 半幅の中央値 ±56.505; 差枚: 3m の CI 半幅の中央値 ±76.920; 機械割差: 3m の CI 半幅の中央値 ±0.811",
+ "caveats": [
+  "新台(導入後7日)は除外",
+  "同じ日の他の台日との差で、当日の比較なので事後分析",
+  "差枚と機械割差は1つの証拠として数える"
+ ],
+ "reason": "",
+ "extra": {
+  "next_month": [
+   {
+    "unit_kind": "末尾",
+    "metric": "AT位置",
+    "n_units": 4,
+    "spearman_train_verify": 0.8,
+    "top_units": [
+     "5",
+     "3"
+    ],
+    "train_mean": 0.021,
+    "verify_mean": 0.069,
+    "verify_all_mean": 0.025
+   },
+   {
+    "unit_kind": "末尾",
+    "metric": "RB位置",
+    "n_units": 10,
+    "spearman_train_verify": -0.479,
+    "top_units": [
+     "1",
+     "9"
+    ],
+    "train_mean": 0.023,
+    "verify_mean": -0.0,
+    "verify_all_mean": 0.0
+   },
+   {
+    "unit_kind": "末尾",
+    "metric": "回転数",
+    "n_units": 10,
+    "spearman_train_verify": 0.842,
+    "top_units": [
+     "1",
+     "7"
+    ],
+    "train_mean": 83.846,
+    "verify_mean": 106.457,
+    "verify_all_mean": 0.375
+   },
+   {
+    "unit_kind": "末尾",
+    "metric": "差枚",
+    "n_units": 10,
+    "spearman_train_verify": -0.139,
+    "top_units": [
+     "4",
+     "8"
+    ],
+    "train_mean": 87.858,
+    "verify_mean": -118.723,
+    "verify_all_mean": -0.217
+   },
+   {
+    "unit_kind": "末尾",
+    "metric": "機械割差",
+    "n_units": 10,
+    "spearman_train_verify": 0.006,
+    "top_units": [
+     "4",
+     "8"
+    ],
+    "train_mean": 0.816,
+    "verify_mean": -1.37,
+    "verify_all_mean": -0.02
+   }
+  ]
+ }
+}

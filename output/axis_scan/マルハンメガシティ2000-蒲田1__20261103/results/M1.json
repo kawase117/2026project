@@ -1,0 +1,95 @@
+{
+ "axis_id": "M1",
+ "hall": "マルハンメガシティ2000-蒲田1",
+ "asof": "20261103",
+ "window": "20260806-20261103",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "単位×時間。「前日の稼働」は暦日でないので外した。3m のみ",
+ "planned": 16368,
+ "done": 9298,
+ "excluded": 7070,
+ "cells_file": "results/M1.cells.csv",
+ "excluded_file": "results/M1.excluded.csv",
+ "n_days": 90,
+ "n_units": 88,
+ "families": 177,
+ "cells": 9298,
+ "p05": 457,
+ "p05_expected": 464.9,
+ "bh_q02": 0,
+ "top": [
+  {
+   "label": "押忍！番長4×強ゾロ目(月=日)",
+   "metric": "回転数",
+   "n_days": 3,
+   "effect": 1.0951,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.6192,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "リコリス・リコイル×土日祝",
+   "metric": "回転数",
+   "n_days": 32,
+   "effect": 0.0712,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.6192,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "デビル メイ クライ5 スタイリッシュトライブ×4のつく日",
+   "metric": "回転数",
+   "n_days": 8,
+   "effect": 0.6448,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.6192,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ジャグラーガールズ×6日",
+   "metric": "回転数",
+   "n_days": 3,
+   "effect": 0.4173,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.6192,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "戦国コレクション6×28日",
+   "metric": "回転数",
+   "n_days": 3,
+   "effect": 1.3962,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.6192,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "",
+ "caveats": [
+  "seg は排他で、差枚は出さない",
+  "基準は期間全体で in_sample",
+  "新台は除外"
+ ],
+ "reason": ""
+}

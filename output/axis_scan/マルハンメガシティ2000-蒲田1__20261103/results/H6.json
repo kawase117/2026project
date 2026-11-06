@@ -1,0 +1,105 @@
+{
+ "axis_id": "H6",
+ "hall": "マルハンメガシティ2000-蒲田1",
+ "asof": "20261103",
+ "window": "3m,prev3m",
+ "status": "完了",
+ "basis": "as_of",
+ "scope": "単位5×指標5×窓2×(素の値/自分の長期水準を引く)。全期間は計算量で対象外(前の3か月を再現確認に置く)",
+ "planned": 100,
+ "done": 72,
+ "excluded": 28,
+ "cells_file": "results/H6.cells.csv",
+ "excluded_file": "results/H6.excluded.csv",
+ "n_days": 90,
+ "n_units": 416,
+ "families": 2,
+ "cells": 72,
+ "p05": 29,
+ "p05_expected": 3.6,
+ "bh_q02": 29,
+ "top": [
+  {
+   "label": "機種|機械割差|own_level_removed",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 0.044,
+   "ci": [
+    0.0174,
+    0.0719
+   ],
+   "q": 0.0028,
+   "contrast": "own_level_removed",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "機種|差枚|own_level_removed",
+   "metric": "差枚",
+   "n_days": 90,
+   "effect": 0.035,
+   "ci": [
+    0.0114,
+    0.0577
+   ],
+   "q": 0.0103,
+   "contrast": "own_level_removed",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "台番号|差枚|own_level_removed",
+   "metric": "差枚",
+   "n_days": 90,
+   "effect": 0.008,
+   "ci": [
+    -0.0037,
+    0.0189
+   ],
+   "q": 0.42,
+   "contrast": "own_level_removed",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "島|RB位置|own_level_removed",
+   "metric": "RB位置",
+   "n_days": 90,
+   "effect": 0.008,
+   "ci": [
+    -0.0914,
+    0.1004
+   ],
+   "q": 0.9416,
+   "contrast": "own_level_removed",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "台番号|機械割差|own_level_removed",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 0.001,
+   "ci": [
+    -0.0131,
+    0.0156
+   ],
+   "q": 0.9731,
+   "contrast": "own_level_removed",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "順位相関の CI 半幅の中央値 ±0.047",
+ "caveats": [
+  "top は自分の長期水準を引いた版から選ぶ。素の値は日を問わない強さ(水準)を再検出するだけなので候補にしない",
+  "特徴量は対象日より前だけ。結果(当日の値)は同日の断面で引いたもの",
+  "台番号は同じ機種の期間だけで窓を作る"
+ ],
+ "reason": ""
+}

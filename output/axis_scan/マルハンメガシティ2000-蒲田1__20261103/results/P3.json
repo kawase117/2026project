@@ -1,0 +1,96 @@
+{
+ "axis_id": "P3",
+ "hall": "マルハンメガシティ2000-蒲田1",
+ "asof": "20261103",
+ "window": "20260806-20261103",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "位置×時間(曜日・D・DD・ゾロ目・イベント系列)。全組み合わせ(2軸)。3m のみ",
+ "planned": 100,
+ "done": 100,
+ "excluded": 0,
+ "cells_file": "results/P3.cells.csv",
+ "excluded_file": "results/P3.excluded.csv",
+ "n_days": 90,
+ "n_units": 365,
+ "families": 8,
+ "cells": 100,
+ "p05": 5,
+ "p05_expected": 5.0,
+ "bh_q02": 0,
+ "top": [
+  {
+   "label": "29日×隣接ペア",
+   "metric": "OTHER:隣接ペア残差積",
+   "n_days": 3,
+   "effect": 0.1408,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.7867,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "30日×隣接ペア",
+   "metric": "RB:隣接ペア残差積",
+   "n_days": 3,
+   "effect": 0.102,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.8159,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "6のつく日×隣接ペア",
+   "metric": "OTHER:隣接ペア残差積",
+   "n_days": 9,
+   "effect": 0.0651,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.8159,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "11日×隣接ペア",
+   "metric": "RB:隣接ペア残差積",
+   "n_days": 3,
+   "effect": 0.0964,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.8159,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "28日×隣接ペア",
+   "metric": "OTHER:隣接ペア残差積",
+   "n_days": 3,
+   "effect": 0.1105,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.8159,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "",
+ "caveats": [
+  "axis_scan は G=0 を読み込まない",
+  "区分 seg は排他(RB側は機械割差なし、OTHER側はRBなし)",
+  "基準は期間全体で in_sample",
+  "新台は除外"
+ ],
+ "reason": ""
+}

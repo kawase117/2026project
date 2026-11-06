@@ -1,0 +1,104 @@
+{
+ "axis_id": "T6",
+ "hall": "マルハンメガシティ2000-蒲田1",
+ "asof": "20261103",
+ "window": "3m,all,regime",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "窓3×単位(全台+タイプ)×指標7×水準。全組み合わせ(2軸)。3日未満の水準は除外",
+ "planned": 532,
+ "done": 396,
+ "excluded": 136,
+ "cells_file": "results/T6.cells.csv",
+ "excluded_file": "results/T6.excluded.csv",
+ "n_days": 90,
+ "n_units": 167,
+ "families": 42,
+ "cells": 396,
+ "p05": 73,
+ "p05_expected": 19.8,
+ "bh_q02": 91,
+ "top": [
+  {
+   "label": "ハナハナ・ハナビ",
+   "metric": "機械割差",
+   "n_days": 6,
+   "effect": 2.56,
+   "ci": [
+    0.1646,
+    4.9549
+   ],
+   "q": 0.3432,
+   "contrast": "in_vs_out",
+   "level": "祝日の前日",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "AT・ART",
+   "metric": "AT帯補正",
+   "n_days": 6,
+   "effect": 0.037,
+   "ci": [
+    -0.0656,
+    0.1388
+   ],
+   "q": 0.5202,
+   "contrast": "in_vs_out",
+   "level": "祝日の前日",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "全台",
+   "metric": "AT帯補正",
+   "n_days": 6,
+   "effect": 0.037,
+   "ci": [
+    -0.0663,
+    0.1395
+   ],
+   "q": 0.5347,
+   "contrast": "in_vs_out",
+   "level": "祝日の前日",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "全台",
+   "metric": "AT無補正",
+   "n_days": 6,
+   "effect": 0.1,
+   "ci": [
+    -0.0717,
+    0.2718
+   ],
+   "q": 0.6907,
+   "contrast": "in_vs_out",
+   "level": "祝日の前日",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "AT・ART",
+   "metric": "AT無補正",
+   "n_days": 6,
+   "effect": 0.1,
+   "ci": [
+    -0.0713,
+    0.2713
+   ],
+   "q": 0.7526,
+   "contrast": "in_vs_out",
+   "level": "祝日の前日",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "AT帯補正: 80%検出の目安 ±0.136; AT無補正: 80%検出の目安 ±0.202; RB帯補正: 80%検出の目安 ±0.069; RB無補正: 80%検出の目安 ±0.093; 回転数: 80%検出の目安 ±1249.683; 差枚: 80%検出の目安 ±220.489; 機械割差: 80%検出の目安 ±2.010",
+ "caveats": [
+  "基準は窓全体の機種平均なので in_sample。開店前の評価には使わない",
+  "RBは帯補正あり・なしを並べる。符号が割れたら判定しない"
+ ],
+ "reason": ""
+}

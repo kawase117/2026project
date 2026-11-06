@@ -1,0 +1,104 @@
+{
+ "axis_id": "T1",
+ "hall": "マルハンメガシティ2000-蒲田1",
+ "asof": "20261103",
+ "window": "3m,all,regime",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "窓3×単位(全台+タイプ)×指標7×水準。全組み合わせ(2軸)。3日未満の水準は除外",
+ "planned": 931,
+ "done": 693,
+ "excluded": 238,
+ "cells_file": "results/T1.cells.csv",
+ "excluded_file": "results/T1.excluded.csv",
+ "n_days": 90,
+ "n_units": 167,
+ "families": 42,
+ "cells": 693,
+ "p05": 158,
+ "p05_expected": 34.6,
+ "bh_q02": 158,
+ "top": [
+  {
+   "label": "全台",
+   "metric": "RB帯補正",
+   "n_days": 13,
+   "effect": 0.035,
+   "ci": [
+    0.0066,
+    0.0637
+   ],
+   "q": 0.0303,
+   "contrast": "in_vs_out",
+   "level": "火曜",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ジャグラー",
+   "metric": "RB帯補正",
+   "n_days": 13,
+   "effect": 0.038,
+   "ci": [
+    0.0085,
+    0.067
+   ],
+   "q": 0.1166,
+   "contrast": "in_vs_out",
+   "level": "火曜",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "A+AT",
+   "metric": "機械割差",
+   "n_days": 13,
+   "effect": 4.223,
+   "ci": [
+    0.2538,
+    8.1928
+   ],
+   "q": 0.3248,
+   "contrast": "in_vs_out",
+   "level": "木曜",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ジャグラー",
+   "metric": "機械割差",
+   "n_days": 13,
+   "effect": 0.811,
+   "ci": [
+    -0.0037,
+    1.6265
+   ],
+   "q": 0.3248,
+   "contrast": "in_vs_out",
+   "level": "火曜",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "A+AT",
+   "metric": "RB無補正",
+   "n_days": 13,
+   "effect": 0.346,
+   "ci": [
+    0.0805,
+    0.6124
+   ],
+   "q": 0.3638,
+   "contrast": "in_vs_out",
+   "level": "土曜",
+   "falsification": "済",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "AT帯補正: 80%検出の目安 ±0.099; AT無補正: 80%検出の目安 ±0.144; RB帯補正: 80%検出の目安 ±0.082; RB無補正: 80%検出の目安 ±0.093; 回転数: 80%検出の目安 ±1038.629; 差枚: 80%検出の目安 ±216.233; 機械割差: 80%検出の目安 ±2.332",
+ "caveats": [
+  "基準は窓全体の機種平均なので in_sample。開店前の評価には使わない",
+  "RBは帯補正あり・なしを並べる。符号が割れたら判定しない"
+ ],
+ "reason": ""
+}

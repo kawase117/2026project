@@ -1,0 +1,163 @@
+{
+ "axis_id": "L2",
+ "hall": "マルハンメガシティ2000-蒲田1",
+ "asof": "20261103",
+ "window": "1m,2m,3m,train,verify,m202611,m202610,m202609,m202608",
+ "status": "完了",
+ "basis": "ex_post",
+ "scope": "単位×指標5×窓9×対比2(全組み合わせ、2軸)。train で選び verify で確かめる翌月検証を含む",
+ "planned": 3690,
+ "done": 998,
+ "excluded": 2692,
+ "cells_file": "results/L2.cells.csv",
+ "excluded_file": "results/L2.excluded.csv",
+ "n_days": 90,
+ "n_units": 167,
+ "families": 0,
+ "cells": 998,
+ "p05": 365,
+ "p05_expected": 49.9,
+ "bh_q02": 391,
+ "top": [
+  {
+   "label": "2191-2202",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 0.015,
+   "ci": [
+    -0.0,
+    0.0453
+   ],
+   "q": 0.42,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "2167-2176",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 1.412,
+   "ci": [
+    -0.7727,
+    3.5805
+   ],
+   "q": 0.6,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": -1.246
+  },
+  {
+   "label": "2191-2202",
+   "metric": "RB位置",
+   "n_days": 90,
+   "effect": 0.001,
+   "ci": [
+    -0.0001,
+    0.003
+   ],
+   "q": 0.68,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "2151-2161",
+   "metric": "RB位置",
+   "n_days": 90,
+   "effect": 0.004,
+   "ci": [
+    -0.0159,
+    0.0244
+   ],
+   "q": 0.706,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "2167-2176",
+   "metric": "回転数",
+   "n_days": 90,
+   "effect": 66.753,
+   "ci": [
+    3.0501,
+    141.094
+   ],
+   "q": 0.1333,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": 159.068
+  }
+ ],
+ "power": "RB位置: 3m の CI 半幅の中央値 ±0.027; 回転数: 3m の CI 半幅の中央値 ±139.764; 差枚: 3m の CI 半幅の中央値 ±121.911; 機械割差: 3m の CI 半幅の中央値 ±1.617",
+ "caveats": [
+  "新台(導入後7日)は除外",
+  "同じ日の他の台日との差で、当日の比較なので事後分析",
+  "差枚と機械割差は1つの証拠として数える"
+ ],
+ "reason": "",
+ "extra": {
+  "next_month": [
+   {
+    "unit_kind": "島",
+    "metric": "RB位置",
+    "n_units": 3,
+    "spearman_train_verify": -1.0,
+    "top_units": [
+     "2236-2255",
+     "2282-2301"
+    ],
+    "train_mean": 0.001,
+    "verify_mean": -0.002,
+    "verify_all_mean": 0.002
+   },
+   {
+    "unit_kind": "島",
+    "metric": "回転数",
+    "n_units": 6,
+    "spearman_train_verify": 0.829,
+    "top_units": [
+     "2167-2176",
+     "2236-2255"
+    ],
+    "train_mean": 35.605,
+    "verify_mean": 83.432,
+    "verify_all_mean": -27.022
+   },
+   {
+    "unit_kind": "島",
+    "metric": "差枚",
+    "n_units": 6,
+    "spearman_train_verify": -0.657,
+    "top_units": [
+     "2167-2176",
+     "2282-2301"
+    ],
+    "train_mean": 143.496,
+    "verify_mean": -56.271,
+    "verify_all_mean": 20.39
+   },
+   {
+    "unit_kind": "島",
+    "metric": "機械割差",
+    "n_units": 6,
+    "spearman_train_verify": -0.943,
+    "top_units": [
+     "2167-2176",
+     "2282-2301"
+    ],
+    "train_mean": 1.416,
+    "verify_mean": -0.659,
+    "verify_all_mean": 0.266
+   }
+  ]
+ }
+}

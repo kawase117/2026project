@@ -1,0 +1,95 @@
+{
+ "axis_id": "M2",
+ "hall": "マルハンメガシティ2000-蒲田1",
+ "asof": "20261103",
+ "window": "20260806-20261103",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "単位×時間。「前日の稼働」は暦日でないので外した。3m のみ",
+ "planned": 930,
+ "done": 708,
+ "excluded": 222,
+ "cells_file": "results/M2.cells.csv",
+ "excluded_file": "results/M2.excluded.csv",
+ "n_days": 90,
+ "n_units": 5,
+ "families": 177,
+ "cells": 708,
+ "p05": 49,
+ "p05_expected": 35.4,
+ "bh_q02": 0,
+ "top": [
+  {
+   "label": "A+AT×木曜",
+   "metric": "機械割",
+   "n_days": 13,
+   "effect": 6.0254,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.3536,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ジャグラー×5のつく日",
+   "metric": "回転数",
+   "n_days": 8,
+   "effect": 0.0394,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.3536,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ハナハナ・ハナビ×月末28日以降",
+   "metric": "RB当り",
+   "n_days": 11,
+   "effect": 0.0977,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.3536,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "AT・ART×8-14日",
+   "metric": "回転数",
+   "n_days": 21,
+   "effect": 0.0092,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.4042,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ハナハナ・ハナビ×8のつく日",
+   "metric": "RB当り",
+   "n_days": 9,
+   "effect": 0.1071,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.4421,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "",
+ "caveats": [
+  "seg は排他で、差枚は出さない",
+  "基準は期間全体で in_sample",
+  "新台は除外"
+ ],
+ "reason": ""
+}

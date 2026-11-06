@@ -1,0 +1,104 @@
+{
+ "axis_id": "T4",
+ "hall": "マルハンメガシティ2000-蒲田1",
+ "asof": "20261103",
+ "window": "3m,all,regime",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "窓3×単位(全台+タイプ)×指標7×水準。全組み合わせ(2軸)。3日未満の水準は除外",
+ "planned": 266,
+ "done": 166,
+ "excluded": 100,
+ "cells_file": "results/T4.cells.csv",
+ "excluded_file": "results/T4.excluded.csv",
+ "n_days": 90,
+ "n_units": 167,
+ "families": 42,
+ "cells": 166,
+ "p05": 40,
+ "p05_expected": 8.3,
+ "bh_q02": 49,
+ "top": [
+  {
+   "label": "全台",
+   "metric": "AT無補正",
+   "n_days": 3,
+   "effect": 0.217,
+   "ci": [
+    0.0514,
+    0.3816
+   ],
+   "q": 0.019,
+   "contrast": "in_vs_out",
+   "level": "強ゾロ目(月=日)",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "AT・ART",
+   "metric": "AT無補正",
+   "n_days": 3,
+   "effect": 0.217,
+   "ci": [
+    0.0474,
+    0.3856
+   ],
+   "q": 0.026,
+   "contrast": "in_vs_out",
+   "level": "強ゾロ目(月=日)",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "全台",
+   "metric": "AT帯補正",
+   "n_days": 3,
+   "effect": 0.068,
+   "ci": [
+    -0.0479,
+    0.1835
+   ],
+   "q": 0.2744,
+   "contrast": "in_vs_out",
+   "level": "強ゾロ目(月=日)",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "AT・ART",
+   "metric": "AT帯補正",
+   "n_days": 3,
+   "effect": 0.068,
+   "ci": [
+    -0.0505,
+    0.186
+   ],
+   "q": 0.2879,
+   "contrast": "in_vs_out",
+   "level": "強ゾロ目(月=日)",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "全台",
+   "metric": "RB無補正",
+   "n_days": 6,
+   "effect": 0.029,
+   "ci": [
+    -0.0247,
+    0.0819
+   ],
+   "q": 0.3838,
+   "contrast": "in_vs_out",
+   "level": "ゾロ目(11,22)",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "AT帯補正: 80%検出の目安 ±0.145; AT無補正: 80%検出の目安 ±0.206; RB帯補正: 80%検出の目安 ±0.102; RB無補正: 80%検出の目安 ±0.141; 回転数: 80%検出の目安 ±1330.265; 差枚: 80%検出の目安 ±360.957; 機械割差: 80%検出の目安 ±3.472",
+ "caveats": [
+  "基準は窓全体の機種平均なので in_sample。開店前の評価には使わない",
+  "RBは帯補正あり・なしを並べる。符号が割れたら判定しない"
+ ],
+ "reason": ""
+}
