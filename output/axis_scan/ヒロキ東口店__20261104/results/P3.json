@@ -1,0 +1,96 @@
+{
+ "axis_id": "P3",
+ "hall": "ヒロキ東口店",
+ "asof": "20261104",
+ "window": "20260807-20261104",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "位置×時間(曜日・D・DD・ゾロ目・イベント系列)。全組み合わせ(2軸)。3m のみ",
+ "planned": 100,
+ "done": 100,
+ "excluded": 0,
+ "cells_file": "results/P3.cells.csv",
+ "excluded_file": "results/P3.excluded.csv",
+ "n_days": 90,
+ "n_units": 279,
+ "families": 8,
+ "cells": 100,
+ "p05": 4,
+ "p05_expected": 5.0,
+ "bh_q02": 0,
+ "top": [
+  {
+   "label": "5日×隣接ペア",
+   "metric": "OTHER:隣接ペア残差積",
+   "n_days": 2,
+   "effect": 0.3417,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.7954,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "5日×隣接ペア",
+   "metric": "RB:隣接ペア残差積",
+   "n_days": 2,
+   "effect": 0.1285,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.8656,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "29日×隣接ペア",
+   "metric": "OTHER:隣接ペア残差積",
+   "n_days": 3,
+   "effect": 0.1933,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.8656,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "17日×隣接ペア",
+   "metric": "RB:隣接ペア残差積",
+   "n_days": 3,
+   "effect": 0.093,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.8656,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "27日×隣接ペア",
+   "metric": "RB:隣接ペア残差積",
+   "n_days": 3,
+   "effect": 0.1106,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.8762,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "",
+ "caveats": [
+  "axis_scan は G=0 を読み込まない",
+  "区分 seg は排他(RB側は機械割差なし、OTHER側はRBなし)",
+  "基準は期間全体で in_sample",
+  "新台は除外"
+ ],
+ "reason": ""
+}

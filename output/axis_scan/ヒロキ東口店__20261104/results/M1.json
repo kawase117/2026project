@@ -1,0 +1,95 @@
+{
+ "axis_id": "M1",
+ "hall": "ヒロキ東口店",
+ "asof": "20261104",
+ "window": "20260807-20261104",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "単位×時間。「前日の稼働」は暦日でないので外した。3m のみ",
+ "planned": 16740,
+ "done": 9348,
+ "excluded": 7392,
+ "cells_file": "results/M1.cells.csv",
+ "excluded_file": "results/M1.excluded.csv",
+ "n_days": 90,
+ "n_units": 90,
+ "families": 177,
+ "cells": 9348,
+ "p05": 405,
+ "p05_expected": 467.4,
+ "bh_q02": 0,
+ "top": [
+  {
+   "label": "彼女、お借りします×木曜",
+   "metric": "機械割",
+   "n_days": 12,
+   "effect": 24.029,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.983,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "鉄拳6×8のつく日",
+   "metric": "機械割",
+   "n_days": 9,
+   "effect": 82.8942,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.983,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "鉄拳6×8-14日",
+   "metric": "機械割",
+   "n_days": 21,
+   "effect": 37.8739,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.983,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "スマスロ サンダーV×木曜",
+   "metric": "RB当り",
+   "n_days": 12,
+   "effect": 0.496,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.983,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "無職転生 ～異世界行ったら本気だす～×給料日前後24-26日",
+   "metric": "機械割",
+   "n_days": 9,
+   "effect": 39.3014,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.983,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "",
+ "caveats": [
+  "seg は排他で、差枚は出さない",
+  "基準は期間全体で in_sample",
+  "新台は除外"
+ ],
+ "reason": ""
+}

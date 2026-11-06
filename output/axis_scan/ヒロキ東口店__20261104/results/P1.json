@@ -1,0 +1,96 @@
+{
+ "axis_id": "P1",
+ "hall": "ヒロキ東口店",
+ "asof": "20261104",
+ "window": "20260807-20261104",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "位置×時間(曜日・D・DD・ゾロ目・イベント系列)。全組み合わせ(2軸)。3m のみ",
+ "planned": 2000,
+ "done": 1600,
+ "excluded": 400,
+ "cells_file": "results/P1.cells.csv",
+ "excluded_file": "results/P1.excluded.csv",
+ "n_days": 90,
+ "n_units": 279,
+ "families": 16,
+ "cells": 1600,
+ "p05": 88,
+ "p05_expected": 80.0,
+ "bh_q02": 0,
+ "top": [
+  {
+   "label": "6のつく日×末尾2",
+   "metric": "RB:回転数/期待",
+   "n_days": 8,
+   "effect": 0.2286,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.7148,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "8日×末尾6",
+   "metric": "OTHER:機械割(差枚/3G)",
+   "n_days": 3,
+   "effect": 0.1374,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.7148,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "水曜×末尾2",
+   "metric": "RB:回転数/期待",
+   "n_days": 13,
+   "effect": 0.2609,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.7148,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "20日×末尾0",
+   "metric": "RB:回転数/期待",
+   "n_days": 3,
+   "effect": 0.283,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.7148,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "5のつく日×末尾1",
+   "metric": "RB:当りO/E",
+   "n_days": 8,
+   "effect": 0.1128,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.7148,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "",
+ "caveats": [
+  "axis_scan は G=0 を読み込まない",
+  "区分 seg は排他(RB側は機械割差なし、OTHER側はRBなし)",
+  "基準は期間全体で in_sample",
+  "新台は除外"
+ ],
+ "reason": ""
+}

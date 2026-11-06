@@ -1,0 +1,104 @@
+{
+ "axis_id": "T3",
+ "hall": "ヒロキ東口店",
+ "asof": "20261104",
+ "window": "3m,all",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "窓2×単位(全台+タイプ)×指標7×水準。全組み合わせ(2軸)。3日未満の水準は除外",
+ "planned": 3038,
+ "done": 2183,
+ "excluded": 855,
+ "cells_file": "results/T3.cells.csv",
+ "excluded_file": "results/T3.excluded.csv",
+ "n_days": 90,
+ "n_units": 185,
+ "families": 28,
+ "cells": 2183,
+ "p05": 222,
+ "p05_expected": 109.2,
+ "bh_q02": 115,
+ "top": [
+  {
+   "label": "AT・ART",
+   "metric": "AT帯補正",
+   "n_days": 3,
+   "effect": 0.208,
+   "ci": [
+    0.0759,
+    0.3409
+   ],
+   "q": 0.084,
+   "contrast": "in_vs_out",
+   "level": "29日",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "全台",
+   "metric": "AT帯補正",
+   "n_days": 3,
+   "effect": 0.208,
+   "ci": [
+    0.0756,
+    0.3412
+   ],
+   "q": 0.1259,
+   "contrast": "in_vs_out",
+   "level": "29日",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ハナハナ・ハナビ",
+   "metric": "RB帯補正",
+   "n_days": 3,
+   "effect": 0.58,
+   "ci": [
+    0.3138,
+    0.8459
+   ],
+   "q": 0.1399,
+   "contrast": "in_vs_out",
+   "level": "14日",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "全台",
+   "metric": "機械割差",
+   "n_days": 3,
+   "effect": 4.23,
+   "ci": [
+    0.7845,
+    7.6758
+   ],
+   "q": 0.2781,
+   "contrast": "in_vs_out",
+   "level": "16日",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ハナハナ・ハナビ",
+   "metric": "RB無補正",
+   "n_days": 3,
+   "effect": 0.35,
+   "ci": [
+    0.0981,
+    0.6015
+   ],
+   "q": 0.3638,
+   "contrast": "in_vs_out",
+   "level": "14日",
+   "falsification": "済",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "AT帯補正: 80%検出の目安 ±0.185; AT無補正: 80%検出の目安 ±0.181; RB帯補正: 80%検出の目安 ±0.269; RB無補正: 80%検出の目安 ±0.338; 回転数: 80%検出の目安 ±1561.400; 差枚: 80%検出の目安 ±523.887; 機械割差: 80%検出の目安 ±8.387",
+ "caveats": [
+  "基準は窓全体の機種平均なので in_sample。開店前の評価には使わない",
+  "RBは帯補正あり・なしを並べる。符号が割れたら判定しない"
+ ],
+ "reason": ""
+}

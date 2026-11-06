@@ -1,0 +1,163 @@
+{
+ "axis_id": "L3",
+ "hall": "ヒロキ東口店",
+ "asof": "20261104",
+ "window": "1m,2m,3m,train,verify,m202611,m202610,m202609,m202608",
+ "status": "完了",
+ "basis": "ex_post",
+ "scope": "単位×指標5×窓9×対比2(全組み合わせ、2軸)。train で選び verify で確かめる翌月検証を含む",
+ "planned": 270,
+ "done": 240,
+ "excluded": 30,
+ "cells_file": "results/L3.cells.csv",
+ "excluded_file": "results/L3.excluded.csv",
+ "n_days": 90,
+ "n_units": 185,
+ "families": 0,
+ "cells": 240,
+ "p05": 66,
+ "p05_expected": 12.0,
+ "bh_q02": 84,
+ "top": [
+  {
+   "label": "端1",
+   "metric": "AT位置",
+   "n_days": 90,
+   "effect": 0.097,
+   "ci": [
+    0.0221,
+    0.1774
+   ],
+   "q": 0.018,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": 0.151
+  },
+  {
+   "label": "端3以上",
+   "metric": "RB位置",
+   "n_days": 90,
+   "effect": 0.007,
+   "ci": [
+    -0.0041,
+    0.0159
+   ],
+   "q": 0.369,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": 0.011
+  },
+  {
+   "label": "端3以上",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 0.147,
+   "ci": [
+    -0.2407,
+    0.5833
+   ],
+   "q": 0.735,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": 0.664
+  },
+  {
+   "label": "端1",
+   "metric": "回転数",
+   "n_days": 90,
+   "effect": 426.273,
+   "ci": [
+    384.4195,
+    467.0286
+   ],
+   "q": 0.001,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": 394.798
+  }
+ ],
+ "power": "AT位置: 3m の CI 半幅の中央値 ±0.076; RB位置: 3m の CI 半幅の中央値 ±0.030; 回転数: 3m の CI 半幅の中央値 ±36.461; 差枚: 3m の CI 半幅の中央値 ±48.510; 機械割差: 3m の CI 半幅の中央値 ±0.722",
+ "caveats": [
+  "新台(導入後7日)は除外",
+  "同じ日の他の台日との差で、当日の比較なので事後分析",
+  "差枚と機械割差は1つの証拠として数える"
+ ],
+ "reason": "",
+ "extra": {
+  "next_month": [
+   {
+    "unit_kind": "端番",
+    "metric": "AT位置",
+    "n_units": 3,
+    "spearman_train_verify": 0.5,
+    "top_units": [
+     "端1",
+     "端2"
+    ],
+    "train_mean": 0.016,
+    "verify_mean": 0.049,
+    "verify_all_mean": 0.019
+   },
+   {
+    "unit_kind": "端番",
+    "metric": "RB位置",
+    "n_units": 3,
+    "spearman_train_verify": 1.0,
+    "top_units": [
+     "端3以上",
+     "端1"
+    ],
+    "train_mean": 0.001,
+    "verify_mean": 0.0,
+    "verify_all_mean": -0.008
+   },
+   {
+    "unit_kind": "端番",
+    "metric": "回転数",
+    "n_units": 3,
+    "spearman_train_verify": 1.0,
+    "top_units": [
+     "端1",
+     "端3以上"
+    ],
+    "train_mean": 198.452,
+    "verify_mean": 157.745,
+    "verify_all_mean": 66.802
+   },
+   {
+    "unit_kind": "端番",
+    "metric": "差枚",
+    "n_units": 3,
+    "spearman_train_verify": -0.5,
+    "top_units": [
+     "端2",
+     "端3以上"
+    ],
+    "train_mean": 4.156,
+    "verify_mean": -19.229,
+    "verify_all_mean": -27.577
+   },
+   {
+    "unit_kind": "端番",
+    "metric": "機械割差",
+    "n_units": 3,
+    "spearman_train_verify": -0.5,
+    "top_units": [
+     "端2",
+     "端3以上"
+    ],
+    "train_mean": 0.129,
+    "verify_mean": -0.34,
+    "verify_all_mean": -0.509
+   }
+  ]
+ }
+}

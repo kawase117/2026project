@@ -1,0 +1,151 @@
+{
+ "axis_id": "L2",
+ "hall": "ヒロキ東口店",
+ "asof": "20261104",
+ "window": "1m,2m,3m,train,verify,m202611,m202610,m202609,m202608",
+ "status": "完了",
+ "basis": "ex_post",
+ "scope": "単位×指標5×窓9×対比2(全組み合わせ、2軸)。train で選び verify で確かめる翌月検証を含む",
+ "planned": 2250,
+ "done": 800,
+ "excluded": 1450,
+ "cells_file": "results/L2.cells.csv",
+ "excluded_file": "results/L2.excluded.csv",
+ "n_days": 90,
+ "n_units": 185,
+ "families": 0,
+ "cells": 800,
+ "p05": 259,
+ "p05_expected": 40.0,
+ "bh_q02": 271,
+ "top": [
+  {
+   "label": "2053+2055-2058+2060-2063+2065-2067",
+   "metric": "RB位置",
+   "n_days": 90,
+   "effect": 0.014,
+   "ci": [
+    -0.0073,
+    0.0368
+   ],
+   "q": 0.327,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "2053+2055-2058+2060-2063+2065-2067",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 0.276,
+   "ci": [
+    -0.134,
+    0.6207
+   ],
+   "q": 0.44,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": 0.213
+  },
+  {
+   "label": "2028+2030-2033+2035-2038+2050-2052",
+   "metric": "RB位置",
+   "n_days": 83,
+   "effect": 0.007,
+   "ci": [
+    -0.0176,
+    0.0274
+   ],
+   "q": 0.546,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "2206-2208+2210-2213+2215-2218+2220",
+   "metric": "機械割差",
+   "n_days": 88,
+   "effect": 0.47,
+   "ci": [
+    -1.3283,
+    2.0274
+   ],
+   "q": 0.576,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": -0.126
+  },
+  {
+   "label": "2206-2208+2210-2213+2215-2218+2220",
+   "metric": "回転数",
+   "n_days": 90,
+   "effect": 19.236,
+   "ci": [
+    -1.6107,
+    38.4885
+   ],
+   "q": 0.185,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": 10.279
+  }
+ ],
+ "power": "RB位置: 3m の CI 半幅の中央値 ±0.046; 回転数: 3m の CI 半幅の中央値 ±125.847; 差枚: 3m の CI 半幅の中央値 ±86.360; 機械割差: 3m の CI 半幅の中央値 ±1.897",
+ "caveats": [
+  "新台(導入後7日)は除外",
+  "同じ日の他の台日との差で、当日の比較なので事後分析",
+  "差枚と機械割差は1つの証拠として数える"
+ ],
+ "reason": "",
+ "extra": {
+  "next_month": [
+   {
+    "unit_kind": "島",
+    "metric": "回転数",
+    "n_units": 4,
+    "spearman_train_verify": 0.0,
+    "top_units": [
+     "2206-2208+2210-2213+2215-2218+2220",
+     "2261-2263+2265-2268+2270-2273+2275"
+    ],
+    "train_mean": 12.19,
+    "verify_mean": -9.293,
+    "verify_all_mean": 0.007
+   },
+   {
+    "unit_kind": "島",
+    "metric": "差枚",
+    "n_units": 4,
+    "spearman_train_verify": 0.8,
+    "top_units": [
+     "2053+2055-2058+2060-2063+2065-2067",
+     "2206-2208+2210-2213+2215-2218+2220"
+    ],
+    "train_mean": 7.872,
+    "verify_mean": 0.735,
+    "verify_all_mean": -0.016
+   },
+   {
+    "unit_kind": "島",
+    "metric": "機械割差",
+    "n_units": 4,
+    "spearman_train_verify": 0.0,
+    "top_units": [
+     "2206-2208+2210-2213+2215-2218+2220",
+     "2053+2055-2058+2060-2063+2065-2067"
+    ],
+    "train_mean": 0.256,
+    "verify_mean": 0.044,
+    "verify_all_mean": -0.017
+   }
+  ]
+ }
+}

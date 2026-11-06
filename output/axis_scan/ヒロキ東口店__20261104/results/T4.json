@@ -1,0 +1,104 @@
+{
+ "axis_id": "T4",
+ "hall": "ヒロキ東口店",
+ "asof": "20261104",
+ "window": "3m,all",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "窓2×単位(全台+タイプ)×指標7×水準。全組み合わせ(2軸)。3日未満の水準は除外",
+ "planned": 196,
+ "done": 148,
+ "excluded": 48,
+ "cells_file": "results/T4.cells.csv",
+ "excluded_file": "results/T4.excluded.csv",
+ "n_days": 90,
+ "n_units": 185,
+ "families": 28,
+ "cells": 148,
+ "p05": 36,
+ "p05_expected": 7.4,
+ "bh_q02": 43,
+ "top": [
+  {
+   "label": "全台",
+   "metric": "RB無補正",
+   "n_days": 6,
+   "effect": 0.092,
+   "ci": [
+    0.0157,
+    0.1687
+   ],
+   "q": 0.037,
+   "contrast": "in_vs_out",
+   "level": "ゾロ目(11,22)",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ジャグラー",
+   "metric": "RB無補正",
+   "n_days": 6,
+   "effect": 0.107,
+   "ci": [
+    0.0259,
+    0.1872
+   ],
+   "q": 0.04,
+   "contrast": "in_vs_out",
+   "level": "ゾロ目(11,22)",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ジャグラー",
+   "metric": "機械割差",
+   "n_days": 6,
+   "effect": 2.109,
+   "ci": [
+    0.5629,
+    3.6552
+   ],
+   "q": 0.048,
+   "contrast": "in_vs_out",
+   "level": "ゾロ目(11,22)",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "全台",
+   "metric": "機械割差",
+   "n_days": 6,
+   "effect": 1.962,
+   "ci": [
+    -0.1199,
+    4.0442
+   ],
+   "q": 0.1059,
+   "contrast": "in_vs_out",
+   "level": "ゾロ目(11,22)",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "全台",
+   "metric": "AT無補正",
+   "n_days": 6,
+   "effect": 0.022,
+   "ci": [
+    -0.0648,
+    0.1096
+   ],
+   "q": 0.6147,
+   "contrast": "in_vs_out",
+   "level": "ゾロ目(11,22)",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "AT帯補正: 80%検出の目安 ±0.126; AT無補正: 80%検出の目安 ±0.137; RB帯補正: 80%検出の目安 ±0.203; RB無補正: 80%検出の目安 ±0.239; 回転数: 80%検出の目安 ±1341.916; 差枚: 80%検出の目安 ±478.849; 機械割差: 80%検出の目安 ±5.707",
+ "caveats": [
+  "基準は窓全体の機種平均なので in_sample。開店前の評価には使わない",
+  "RBは帯補正あり・なしを並べる。符号が割れたら判定しない"
+ ],
+ "reason": ""
+}

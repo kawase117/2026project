@@ -1,0 +1,172 @@
+{
+ "axis_id": "L1",
+ "hall": "ヒロキ東口店",
+ "asof": "20261104",
+ "window": "1m,2m,3m,train,verify,m202611,m202610,m202609,m202608",
+ "status": "完了",
+ "basis": "ex_post",
+ "scope": "単位×指標5×窓9×対比2(全組み合わせ、2軸)。train で選び verify で確かめる翌月検証を含む",
+ "planned": 8460,
+ "done": 4016,
+ "excluded": 4444,
+ "cells_file": "results/L1.cells.csv",
+ "excluded_file": "results/L1.excluded.csv",
+ "n_days": 90,
+ "n_units": 185,
+ "families": 0,
+ "cells": 4016,
+ "p05": 1335,
+ "p05_expected": 200.8,
+ "bh_q02": 1361,
+ "top": [
+  {
+   "label": "バーサスリヴァイズ",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 2.407,
+   "ci": [
+    0.8092,
+    4.016
+   ],
+   "q": 0.038,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "モンキーターンV",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 3.594,
+   "ci": [
+    1.0761,
+    5.8527
+   ],
+   "q": 0.076,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": 2.665
+  },
+  {
+   "label": "ミスタージャグラー",
+   "metric": "RB位置",
+   "n_days": 90,
+   "effect": 0.072,
+   "ci": [
+    -0.0317,
+    0.166
+   ],
+   "q": 0.588,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ネオアイムジャグラーEX",
+   "metric": "RB位置",
+   "n_days": 90,
+   "effect": 0.026,
+   "ci": [
+    -0.0173,
+    0.0735
+   ],
+   "q": 0.588,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ソードアート・オンラインII",
+   "metric": "回転数",
+   "n_days": 90,
+   "effect": 3161.582,
+   "ci": [
+    2782.4429,
+    3525.3269
+   ],
+   "q": 0.0015,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": 2712.092
+  }
+ ],
+ "power": "RB位置: 3m の CI 半幅の中央値 ±0.191; 回転数: 3m の CI 半幅の中央値 ±211.569; 差枚: 3m の CI 半幅の中央値 ±203.501; 機械割差: 3m の CI 半幅の中央値 ±4.187",
+ "caveats": [
+  "新台(導入後7日)は除外",
+  "同じ日の他の台日との差で、当日の比較なので事後分析",
+  "差枚と機械割差は1つの証拠として数える"
+ ],
+ "reason": "",
+ "extra": {
+  "next_month": [
+   {
+    "unit_kind": "機種",
+    "metric": "RB位置",
+    "n_units": 20,
+    "spearman_train_verify": 0.319,
+    "top_units": [
+     "不二子BT",
+     "ジャグラーガールズ"
+    ],
+    "train_mean": 0.08,
+    "verify_mean": 0.244,
+    "verify_all_mean": -0.026
+   },
+   {
+    "unit_kind": "機種",
+    "metric": "回転数",
+    "n_units": 66,
+    "spearman_train_verify": 0.876,
+    "top_units": [
+     "ソードアート・オンラインII",
+     "とある魔術の禁書目録2",
+     "マイジャグラーV",
+     "ワールドダイスター",
+     "邪神ちゃんドロップキック"
+    ],
+    "train_mean": 1924.073,
+    "verify_mean": 918.659,
+    "verify_all_mean": -236.433
+   },
+   {
+    "unit_kind": "機種",
+    "metric": "差枚",
+    "n_units": 66,
+    "spearman_train_verify": 0.205,
+    "top_units": [
+     "ディスクアップ ULTRAREMIX",
+     "東京喰種",
+     "スマスロ サンダーV",
+     "モンキーターンV",
+     "虚構推理"
+    ],
+    "train_mean": 192.553,
+    "verify_mean": 98.75,
+    "verify_all_mean": 1.955
+   },
+   {
+    "unit_kind": "機種",
+    "metric": "機械割差",
+    "n_units": 66,
+    "spearman_train_verify": 0.163,
+    "top_units": [
+     "吉宗",
+     "ディスクアップ ULTRAREMIX",
+     "虚構推理",
+     "スマスロ サンダーV",
+     "モンキーターンV"
+    ],
+    "train_mean": 3.307,
+    "verify_mean": 2.217,
+    "verify_all_mean": 0.324
+   }
+  ]
+ }
+}

@@ -1,0 +1,106 @@
+{
+ "axis_id": "P5",
+ "hall": "ヒロキ東口店",
+ "asof": "20261104",
+ "window": "3m,all",
+ "status": "完了",
+ "basis": "ex_post",
+ "scope": "区分5×指標5×窓2",
+ "planned": 50,
+ "done": 39,
+ "excluded": 11,
+ "cells_file": "results/P5.cells.csv",
+ "excluded_file": "results/P5.excluded.csv",
+ "n_days": 90,
+ "n_units": 185,
+ "families": 0,
+ "cells": 39,
+ "p05": 27,
+ "p05_expected": 2.0,
+ "bh_q02": 29,
+ "top": [
+  {
+   "label": "11-20台",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 1.219,
+   "ci": [
+    0.2463,
+    2.442
+   ],
+   "q": 0.03,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "3-5台",
+   "metric": "RB位置",
+   "n_days": 90,
+   "effect": 0.055,
+   "ci": [
+    -0.0049,
+    0.1171
+   ],
+   "q": 0.152,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "6-10台",
+   "metric": "RB位置",
+   "n_days": 90,
+   "effect": 0.018,
+   "ci": [
+    -0.0142,
+    0.0499
+   ],
+   "q": 0.3947,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "21台以上",
+   "metric": "機械割差",
+   "n_days": 59,
+   "effect": 0.128,
+   "ci": [
+    -0.4533,
+    0.6189
+   ],
+   "q": 0.676,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "21台以上",
+   "metric": "回転数",
+   "n_days": 59,
+   "effect": 1852.246,
+   "ci": [
+    1699.0999,
+    2022.6482
+   ],
+   "q": 0.0025,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "RB位置: 3m の CI 半幅の中央値 ±0.046; 回転数: 3m の CI 半幅の中央値 ±84.250; 差枚: 3m の CI 半幅の中央値 ±56.562; 機械割差: 3m の CI 半幅の中央値 ±0.834",
+ "caveats": [
+  "機種の水準と分離しない。台数で揃えた機種比較ではない"
+ ],
+ "reason": "",
+ "extra": {
+  "next_month": []
+ }
+}

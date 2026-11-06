@@ -1,0 +1,104 @@
+{
+ "axis_id": "T6",
+ "hall": "ヒロキ東口店",
+ "asof": "20261104",
+ "window": "3m,all",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "窓2×単位(全台+タイプ)×指標7×水準。全組み合わせ(2軸)。3日未満の水準は除外",
+ "planned": 392,
+ "done": 296,
+ "excluded": 96,
+ "cells_file": "results/T6.cells.csv",
+ "excluded_file": "results/T6.excluded.csv",
+ "n_days": 90,
+ "n_units": 185,
+ "families": 28,
+ "cells": 296,
+ "p05": 79,
+ "p05_expected": 14.8,
+ "bh_q02": 93,
+ "top": [
+  {
+   "label": "ハナハナ・ハナビ",
+   "metric": "RB無補正",
+   "n_days": 32,
+   "effect": 0.053,
+   "ci": [
+    0.0194,
+    0.0875
+   ],
+   "q": 0.5597,
+   "contrast": "in_vs_out",
+   "level": "土日祝",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ハナハナ・ハナビ",
+   "metric": "RB帯補正",
+   "n_days": 6,
+   "effect": 0.046,
+   "ci": [
+    -0.1015,
+    0.1943
+   ],
+   "q": 0.7718,
+   "contrast": "in_vs_out",
+   "level": "祝日",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ジャグラー",
+   "metric": "RB無補正",
+   "n_days": 32,
+   "effect": 0.074,
+   "ci": [
+    0.0543,
+    0.0945
+   ],
+   "q": 0.8096,
+   "contrast": "in_vs_out",
+   "level": "土日祝",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "AT・ART",
+   "metric": "AT無補正",
+   "n_days": 6,
+   "effect": 0.021,
+   "ci": [
+    -0.0789,
+    0.121
+   ],
+   "q": 0.8231,
+   "contrast": "in_vs_out",
+   "level": "祝日",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "全台",
+   "metric": "AT無補正",
+   "n_days": 6,
+   "effect": 0.021,
+   "ci": [
+    -0.0821,
+    0.1241
+   ],
+   "q": 0.8231,
+   "contrast": "in_vs_out",
+   "level": "祝日",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "AT帯補正: 80%検出の目安 ±0.102; AT無補正: 80%検出の目安 ±0.109; RB帯補正: 80%検出の目安 ±0.118; RB無補正: 80%検出の目安 ±0.152; 回転数: 80%検出の目安 ±1152.274; 差枚: 80%検出の目安 ±214.546; 機械割差: 80%検出の目安 ±3.869",
+ "caveats": [
+  "基準は窓全体の機種平均なので in_sample。開店前の評価には使わない",
+  "RBは帯補正あり・なしを並べる。符号が割れたら判定しない"
+ ],
+ "reason": ""
+}

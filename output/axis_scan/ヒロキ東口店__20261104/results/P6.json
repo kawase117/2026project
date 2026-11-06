@@ -1,0 +1,76 @@
+{
+ "axis_id": "P6",
+ "hall": "ヒロキ東口店",
+ "asof": "20261104",
+ "window": "3m,all",
+ "status": "完了",
+ "basis": "ex_post",
+ "scope": "2区分×指標5×窓2",
+ "planned": 20,
+ "done": 17,
+ "excluded": 3,
+ "cells_file": "results/P6.cells.csv",
+ "excluded_file": "results/P6.excluded.csv",
+ "n_days": 90,
+ "n_units": 99,
+ "families": 0,
+ "cells": 17,
+ "p05": 4,
+ "p05_expected": 0.9,
+ "bh_q02": 6,
+ "top": [
+  {
+   "label": "機種の内側",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 0.097,
+   "ci": [
+    -0.0692,
+    0.2599
+   ],
+   "q": 0.25,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "機種の内側",
+   "metric": "RB位置",
+   "n_days": 90,
+   "effect": 0.003,
+   "ci": [
+    -0.0072,
+    0.0121
+   ],
+   "q": 0.532,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "機種の内側",
+   "metric": "回転数",
+   "n_days": 90,
+   "effect": 14.709,
+   "ci": [
+    6.7049,
+    23.6572
+   ],
+   "q": 0.001,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "RB位置: 3m の CI 半幅の中央値 ±0.032; 回転数: 3m の CI 半幅の中央値 ±26.269; 差枚: 3m の CI 半幅の中央値 ±31.495; 機械割差: 3m の CI 半幅の中央値 ±0.601",
+ "caveats": [
+  "隣は台番号の連番で近似"
+ ],
+ "reason": "",
+ "extra": {
+  "next_month": []
+ }
+}
