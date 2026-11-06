@@ -1,0 +1,96 @@
+{
+ "axis_id": "P1",
+ "hall": "楽園蒲田店",
+ "asof": "20261104",
+ "window": "20260807-20261104",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "位置×時間(曜日・D・DD・ゾロ目・イベント系列)。全組み合わせ(2軸)。3m のみ",
+ "planned": 2640,
+ "done": 2640,
+ "excluded": 0,
+ "cells_file": "results/P1.cells.csv",
+ "excluded_file": "results/P1.excluded.csv",
+ "n_days": 90,
+ "n_units": 587,
+ "families": 20,
+ "cells": 2640,
+ "p05": 167,
+ "p05_expected": 132.0,
+ "bh_q02": 19,
+ "top": [
+  {
+   "label": "イベント: ブラックホール取材(マルハンメガシティ特定日対抗)(3日)×末尾7",
+   "metric": "OTHER:回転数/期待",
+   "n_days": 3,
+   "effect": 0.5883,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.1618,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "公約: 並び:7台(3日)×末尾7",
+   "metric": "OTHER:回転数/期待",
+   "n_days": 3,
+   "effect": 0.5883,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.1618,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "10日×末尾0",
+   "metric": "OTHER:回転数/期待",
+   "n_days": 3,
+   "effect": 0.4684,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.1618,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "17日×末尾7",
+   "metric": "OTHER:回転数/期待",
+   "n_days": 3,
+   "effect": 0.5065,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.1618,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "7日×末尾7",
+   "metric": "OTHER:回転数/期待",
+   "n_days": 3,
+   "effect": 0.709,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.1618,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "",
+ "caveats": [
+  "axis_scan は G=0 を読み込まない",
+  "区分 seg は排他(RB側は機械割差なし、OTHER側はRBなし)",
+  "基準は期間全体で in_sample",
+  "新台は除外"
+ ],
+ "reason": ""
+}

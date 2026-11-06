@@ -1,0 +1,96 @@
+{
+ "axis_id": "P2",
+ "hall": "楽園蒲田店",
+ "asof": "20261104",
+ "window": "20260807-20261104",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "位置×時間(曜日・D・DD・ゾロ目・イベント系列)。全組み合わせ(2軸)。3m のみ",
+ "planned": 792,
+ "done": 792,
+ "excluded": 0,
+ "cells_file": "results/P2.cells.csv",
+ "excluded_file": "results/P2.excluded.csv",
+ "n_days": 90,
+ "n_units": 587,
+ "families": 20,
+ "cells": 792,
+ "p05": 43,
+ "p05_expected": 39.6,
+ "bh_q02": 3,
+ "top": [
+  {
+   "label": "7のつく日×角2",
+   "metric": "RB:回転数/期待",
+   "n_days": 9,
+   "effect": 0.1788,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.1618,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "27日×角2",
+   "metric": "RB:回転数/期待",
+   "n_days": 3,
+   "effect": 0.1893,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.3052,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "26日×角2",
+   "metric": "OTHER:機械割(差枚/3G)",
+   "n_days": 3,
+   "effect": 0.0372,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.436,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "28日×角3以上",
+   "metric": "RB:当りO/E",
+   "n_days": 3,
+   "effect": 0.0705,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.5236,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "13日×角1",
+   "metric": "OTHER:回転数/期待",
+   "n_days": 3,
+   "effect": 0.1317,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.5236,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "",
+ "caveats": [
+  "axis_scan は G=0 を読み込まない",
+  "区分 seg は排他(RB側は機械割差なし、OTHER側はRBなし)",
+  "基準は期間全体で in_sample",
+  "新台は除外"
+ ],
+ "reason": ""
+}

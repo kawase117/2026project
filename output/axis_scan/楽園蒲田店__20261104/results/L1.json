@@ -1,0 +1,173 @@
+{
+ "axis_id": "L1",
+ "hall": "楽園蒲田店",
+ "asof": "20261104",
+ "window": "1m,2m,3m,train,verify,m202611,m202610,m202609,m202608",
+ "status": "完了",
+ "basis": "ex_post",
+ "scope": "単位×指標5×窓9×対比2(全組み合わせ、2軸)。train で選び verify で確かめる翌月検証を含む",
+ "planned": 13950,
+ "done": 6122,
+ "excluded": 7828,
+ "cells_file": "results/L1.cells.csv",
+ "excluded_file": "results/L1.excluded.csv",
+ "n_days": 90,
+ "n_units": 275,
+ "families": 0,
+ "cells": 6122,
+ "p05": 2449,
+ "p05_expected": 306.1,
+ "bh_q02": 2555,
+ "top": [
+  {
+   "label": "邪神ちゃんドロップキック",
+   "metric": "AT位置",
+   "n_days": 86,
+   "effect": 0.749,
+   "ci": [
+    0.5197,
+    0.9319
+   ],
+   "q": 0.0015,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ニューキングハナハナV‐30",
+   "metric": "RB位置",
+   "n_days": 90,
+   "effect": 0.346,
+   "ci": [
+    0.2123,
+    0.5096
+   ],
+   "q": 0.0018,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": 0.255
+  },
+  {
+   "label": "ネオアイムジャグラーEX",
+   "metric": "RB位置",
+   "n_days": 90,
+   "effect": 0.206,
+   "ci": [
+    0.1743,
+    0.2348
+   ],
+   "q": 0.0018,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": 0.21
+  },
+  {
+   "label": "ダンベル何キロ持てる？",
+   "metric": "AT位置",
+   "n_days": 52,
+   "effect": 0.405,
+   "ci": [
+    0.1025,
+    0.7481
+   ],
+   "q": 0.004,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION",
+   "metric": "機械割差",
+   "n_days": 89,
+   "effect": 4.178,
+   "ci": [
+    1.7048,
+    6.9911
+   ],
+   "q": 0.0164,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": 2.005
+  }
+ ],
+ "power": "AT位置: 3m の CI 半幅の中央値 ±0.283; RB位置: 3m の CI 半幅の中央値 ±0.114; 回転数: 3m の CI 半幅の中央値 ±311.719; 差枚: 3m の CI 半幅の中央値 ±230.490; 機械割差: 3m の CI 半幅の中央値 ±3.005",
+ "caveats": [
+  "新台(導入後7日)は除外",
+  "同じ日の他の台日との差で、当日の比較なので事後分析",
+  "差枚と機械割差は1つの証拠として数える"
+ ],
+ "reason": "",
+ "extra": {
+  "next_month": [
+   {
+    "unit_kind": "機種",
+    "metric": "RB位置",
+    "n_units": 23,
+    "spearman_train_verify": 0.395,
+    "top_units": [
+     "ニューキングハナハナV‐30",
+     "ネオアイムジャグラーEX"
+    ],
+    "train_mean": 0.295,
+    "verify_mean": 0.232,
+    "verify_all_mean": -0.137
+   },
+   {
+    "unit_kind": "機種",
+    "metric": "回転数",
+    "n_units": 98,
+    "spearman_train_verify": 0.757,
+    "top_units": [
+     "甲鉄城のカバネリ 海門(うなと)決戦",
+     "攻殻機動隊",
+     "ソードアート・オンラインII",
+     "マイジャグラーV",
+     "マッピー"
+    ],
+    "train_mean": 1521.696,
+    "verify_mean": 1218.952,
+    "verify_all_mean": -486.771
+   },
+   {
+    "unit_kind": "機種",
+    "metric": "差枚",
+    "n_units": 98,
+    "spearman_train_verify": 0.162,
+    "top_units": [
+     "甲鉄城のカバネリ 海門(うなと)決戦",
+     "バンドリ！",
+     "北斗の拳 転生の章2",
+     "犬夜叉2",
+     "Re:ゼロから始める異世界生活 season2"
+    ],
+    "train_mean": 326.112,
+    "verify_mean": 171.712,
+    "verify_all_mean": -10.34
+   },
+   {
+    "unit_kind": "機種",
+    "metric": "機械割差",
+    "n_units": 98,
+    "spearman_train_verify": 0.08,
+    "top_units": [
+     "バンドリ！",
+     "犬夜叉2",
+     "Re:ゼロから始める異世界生活 season2",
+     "デビル メイ クライ5 スタイリッシュトライブ",
+     "ゴジラ対エヴァンゲリオン"
+    ],
+    "train_mean": 3.415,
+    "verify_mean": -0.049,
+    "verify_all_mean": -0.187
+   }
+  ]
+ }
+}

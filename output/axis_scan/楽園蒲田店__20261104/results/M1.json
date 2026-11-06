@@ -1,0 +1,95 @@
+{
+ "axis_id": "M1",
+ "hall": "楽園蒲田店",
+ "asof": "20261104",
+ "window": "20260807-20261104",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "単位×時間。「前日の稼働」は暦日でないので外した。3m のみ",
+ "planned": 27528,
+ "done": 14330,
+ "excluded": 13198,
+ "cells_file": "results/M1.cells.csv",
+ "excluded_file": "results/M1.excluded.csv",
+ "n_days": 90,
+ "n_units": 148,
+ "families": 177,
+ "cells": 14330,
+ "p05": 803,
+ "p05_expected": 716.5,
+ "bh_q02": 0,
+ "top": [
+  {
+   "label": "魔法少女にあこがれて×台帳のイベント日",
+   "metric": "機械割",
+   "n_days": 60,
+   "effect": 6.8348,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.4338,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "北斗の拳 転生の章2×給料日前後24-26日",
+   "metric": "回転数",
+   "n_days": 9,
+   "effect": 0.472,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.4338,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ハッピージャグラーVIII×4日",
+   "metric": "回転数",
+   "n_days": 3,
+   "effect": 0.7344,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.4338,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "スーパーリオエース2×21日",
+   "metric": "回転数",
+   "n_days": 3,
+   "effect": 1.395,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.4338,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "戦国乙女5 業火を穿つ宿焔の双刃×土日祝",
+   "metric": "回転数",
+   "n_days": 32,
+   "effect": 0.0339,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.4338,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "",
+ "caveats": [
+  "seg は排他で、差枚は出さない",
+  "基準は期間全体で in_sample",
+  "新台は除外"
+ ],
+ "reason": ""
+}

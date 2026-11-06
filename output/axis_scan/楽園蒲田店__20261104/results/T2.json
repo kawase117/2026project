@@ -1,0 +1,104 @@
+{
+ "axis_id": "T2",
+ "hall": "楽園蒲田店",
+ "asof": "20261104",
+ "window": "3m,all,regime",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "窓3×単位(全台+タイプ)×指標7×水準。全組み合わせ(2軸)。3日未満の水準は除外",
+ "planned": 1470,
+ "done": 1110,
+ "excluded": 360,
+ "cells_file": "results/T2.cells.csv",
+ "excluded_file": "results/T2.excluded.csv",
+ "n_days": 90,
+ "n_units": 275,
+ "families": 42,
+ "cells": 1110,
+ "p05": 258,
+ "p05_expected": 55.5,
+ "bh_q02": 273,
+ "top": [
+  {
+   "label": "全台",
+   "metric": "RB帯補正",
+   "n_days": 8,
+   "effect": 0.06,
+   "ci": [
+    0.0268,
+    0.0936
+   ],
+   "q": 0.01,
+   "contrast": "in_vs_out",
+   "level": "5のつく日",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "全台",
+   "metric": "RB無補正",
+   "n_days": 9,
+   "effect": 0.062,
+   "ci": [
+    0.0207,
+    0.1025
+   ],
+   "q": 0.0125,
+   "contrast": "in_vs_out",
+   "level": "7のつく日",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ジャグラー",
+   "metric": "機械割差",
+   "n_days": 8,
+   "effect": 2.0,
+   "ci": [
+    0.8898,
+    3.1094
+   ],
+   "q": 0.03,
+   "contrast": "in_vs_out",
+   "level": "5のつく日",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ハナハナ・ハナビ",
+   "metric": "RB帯補正",
+   "n_days": 8,
+   "effect": 0.091,
+   "ci": [
+    0.0399,
+    0.1418
+   ],
+   "q": 0.05,
+   "contrast": "in_vs_out",
+   "level": "5のつく日",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ハナハナ・ハナビ",
+   "metric": "機械割差",
+   "n_days": 9,
+   "effect": 2.588,
+   "ci": [
+    0.9006,
+    4.2763
+   ],
+   "q": 0.1,
+   "contrast": "in_vs_out",
+   "level": "7のつく日",
+   "falsification": "済",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "AT帯補正: 80%検出の目安 ±0.123; AT無補正: 80%検出の目安 ±0.139; RB帯補正: 80%検出の目安 ±0.074; RB無補正: 80%検出の目安 ±0.084; 回転数: 80%検出の目安 ±938.124; 差枚: 80%検出の目安 ±206.071; 機械割差: 80%検出の目安 ±2.344",
+ "caveats": [
+  "基準は窓全体の機種平均なので in_sample。開店前の評価には使わない",
+  "RBは帯補正あり・なしを並べる。符号が割れたら判定しない"
+ ],
+ "reason": ""
+}

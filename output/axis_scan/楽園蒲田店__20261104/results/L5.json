@@ -1,0 +1,175 @@
+{
+ "axis_id": "L5",
+ "hall": "楽園蒲田店",
+ "asof": "20261104",
+ "window": "1m,2m,3m,train,verify,m202611,m202610,m202609,m202608",
+ "status": "完了",
+ "basis": "ex_post",
+ "scope": "単位×指標5×窓9×対比2(全組み合わせ、2軸)。train で選び verify で確かめる翌月検証を含む",
+ "planned": 900,
+ "done": 776,
+ "excluded": 124,
+ "cells_file": "results/L5.cells.csv",
+ "excluded_file": "results/L5.excluded.csv",
+ "n_days": 90,
+ "n_units": 275,
+ "families": 0,
+ "cells": 776,
+ "p05": 150,
+ "p05_expected": 38.8,
+ "bh_q02": 153,
+ "top": [
+  {
+   "label": "0",
+   "metric": "AT位置",
+   "n_days": 90,
+   "effect": 0.171,
+   "ci": [
+    -0.0861,
+    0.4226
+   ],
+   "q": 0.3743,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "3",
+   "metric": "AT位置",
+   "n_days": 73,
+   "effect": 0.277,
+   "ci": [
+    -0.148,
+    0.8015
+   ],
+   "q": 0.3743,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "3",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 0.499,
+   "ci": [
+    -0.2805,
+    1.275
+   ],
+   "q": 0.5467,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": 0.23
+  },
+  {
+   "label": "7",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 0.255,
+   "ci": [
+    -0.3501,
+    0.8684
+   ],
+   "q": 0.5467,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "2",
+   "metric": "RB位置",
+   "n_days": 90,
+   "effect": 0.024,
+   "ci": [
+    -0.0116,
+    0.0645
+   ],
+   "q": 0.7067,
+   "contrast": "within_machine",
+   "level": "",
+   "falsification": "済",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "AT位置: 3m の CI 半幅の中央値 ±0.315; RB位置: 3m の CI 半幅の中央値 ±0.042; 回転数: 3m の CI 半幅の中央値 ±55.135; 差枚: 3m の CI 半幅の中央値 ±62.781; 機械割差: 3m の CI 半幅の中央値 ±0.644",
+ "caveats": [
+  "新台(導入後7日)は除外",
+  "同じ日の他の台日との差で、当日の比較なので事後分析",
+  "差枚と機械割差は1つの証拠として数える"
+ ],
+ "reason": "",
+ "extra": {
+  "next_month": [
+   {
+    "unit_kind": "末尾",
+    "metric": "AT位置",
+    "n_units": 6,
+    "spearman_train_verify": 0.257,
+    "top_units": [
+     "7",
+     "8"
+    ],
+    "train_mean": 0.19,
+    "verify_mean": -0.096,
+    "verify_all_mean": -0.019
+   },
+   {
+    "unit_kind": "末尾",
+    "metric": "RB位置",
+    "n_units": 10,
+    "spearman_train_verify": 0.079,
+    "top_units": [
+     "7",
+     "5"
+    ],
+    "train_mean": 0.025,
+    "verify_mean": -0.003,
+    "verify_all_mean": -0.0
+   },
+   {
+    "unit_kind": "末尾",
+    "metric": "回転数",
+    "n_units": 10,
+    "spearman_train_verify": 0.709,
+    "top_units": [
+     "7",
+     "0"
+    ],
+    "train_mean": 143.62,
+    "verify_mean": 135.691,
+    "verify_all_mean": -0.967
+   },
+   {
+    "unit_kind": "末尾",
+    "metric": "差枚",
+    "n_units": 10,
+    "spearman_train_verify": -0.115,
+    "top_units": [
+     "3",
+     "9"
+    ],
+    "train_mean": 40.093,
+    "verify_mean": -57.757,
+    "verify_all_mean": -1.567
+   },
+   {
+    "unit_kind": "末尾",
+    "metric": "機械割差",
+    "n_units": 10,
+    "spearman_train_verify": 0.127,
+    "top_units": [
+     "3",
+     "9"
+    ],
+    "train_mean": 0.394,
+    "verify_mean": -0.359,
+    "verify_all_mean": -0.015
+   }
+  ]
+ }
+}

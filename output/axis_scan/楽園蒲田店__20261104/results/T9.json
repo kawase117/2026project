@@ -1,0 +1,104 @@
+{
+ "axis_id": "T9",
+ "hall": "楽園蒲田店",
+ "asof": "20261104",
+ "window": "3m,all,regime",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "窓3×単位(全台+タイプ)×指標7×水準。全組み合わせ(2軸)。3日未満の水準は除外",
+ "planned": 735,
+ "done": 555,
+ "excluded": 180,
+ "cells_file": "results/T9.cells.csv",
+ "excluded_file": "results/T9.excluded.csv",
+ "n_days": 90,
+ "n_units": 275,
+ "families": 42,
+ "cells": 555,
+ "p05": 108,
+ "p05_expected": 27.8,
+ "bh_q02": 107,
+ "top": [
+  {
+   "label": "全台",
+   "metric": "RB無補正",
+   "n_days": 7,
+   "effect": 0.056,
+   "ci": [
+    0.0032,
+    0.1084
+   ],
+   "q": 0.0987,
+   "contrast": "in_vs_out",
+   "level": "anniversary",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "全台",
+   "metric": "AT帯補正",
+   "n_days": 8,
+   "effect": 0.08,
+   "ci": [
+    -0.0127,
+    0.172
+   ],
+   "q": 0.1624,
+   "contrast": "in_vs_out",
+   "level": "other",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "AT・ART",
+   "metric": "AT帯補正",
+   "n_days": 8,
+   "effect": 0.08,
+   "ci": [
+    -0.0109,
+    0.1701
+   ],
+   "q": 0.1691,
+   "contrast": "in_vs_out",
+   "level": "other",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ジャグラー",
+   "metric": "RB無補正",
+   "n_days": 7,
+   "effect": 0.076,
+   "ci": [
+    0.0079,
+    0.1438
+   ],
+   "q": 0.3873,
+   "contrast": "in_vs_out",
+   "level": "anniversary",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "BT",
+   "metric": "機械割差",
+   "n_days": 42,
+   "effect": 1.231,
+   "ci": [
+    0.0981,
+    2.3636
+   ],
+   "q": 0.3998,
+   "contrast": "in_vs_out",
+   "level": "coverage",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "AT帯補正: 80%検出の目安 ±0.131; AT無補正: 80%検出の目安 ±0.151; RB帯補正: 80%検出の目安 ±0.086; RB無補正: 80%検出の目安 ±0.091; 回転数: 80%検出の目安 ±1108.699; 差枚: 80%検出の目安 ±218.925; 機械割差: 80%検出の目安 ±2.279",
+ "caveats": [
+  "基準は窓全体の機種平均なので in_sample。開店前の評価には使わない",
+  "RBは帯補正あり・なしを並べる。符号が割れたら判定しない"
+ ],
+ "reason": ""
+}

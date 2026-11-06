@@ -1,0 +1,108 @@
+{
+ "axis_id": "S1",
+ "hall": "楽園蒲田店",
+ "asof": "20261104",
+ "window": "3m,regime,all",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "日×窓。分類は開始時に固定した規則",
+ "planned": 881,
+ "done": 881,
+ "excluded": 0,
+ "cells_file": "results/S1.cells.csv",
+ "excluded_file": "results/S1.excluded.csv",
+ "n_days": 90,
+ "n_units": 274,
+ "families": 0,
+ "cells": 881,
+ "p05": 0,
+ "p05_expected": 0.0,
+ "bh_q02": 0,
+ "top": [],
+ "power": "",
+ "caveats": [
+  "基準は窓全体の機種の好調率。検定なしの分類で、件数を見るためのもの",
+  "台数4台未満の機種は除く"
+ ],
+ "reason": "",
+ "extra": {
+  "3m": {
+   "n_days": 90,
+   "counts": {
+    "どちらでもない": 60,
+    "全体型": 16,
+    "集中型": 14
+   },
+   "event_counts": {
+    "どちらでもない": 42,
+    "全体型": 13,
+    "集中型": 5
+   },
+   "event_days": 60,
+   "hall_resid_pt_by_label": {
+    "どちらでもない": 0.02,
+    "全体型": 0.35,
+    "集中型": -0.42
+   },
+   "center_machines": {
+    "甲鉄城のカバネリ 海門(うなと)決戦": 4,
+    "交響詩篇エウレカセブン HI-EVOLUTION ZERO TYPE‐ART": 3,
+    "化物語": 3,
+    "やじきた道中記参る！": 2,
+    "ワールドダイスター": 1
+   }
+  },
+  "regime": {
+   "n_days": 121,
+   "counts": {
+    "どちらでもない": 74,
+    "集中型": 24,
+    "全体型": 23
+   },
+   "event_counts": {
+    "どちらでもない": 54,
+    "全体型": 20,
+    "集中型": 12
+   },
+   "event_days": 86,
+   "hall_resid_pt_by_label": {
+    "どちらでもない": -0.13,
+    "全体型": 0.39,
+    "集中型": 0.04
+   },
+   "center_machines": {
+    "ネオアイムジャグラーEX": 5,
+    "甲鉄城のカバネリ 海門(うなと)決戦": 5,
+    "交響詩篇エウレカセブン HI-EVOLUTION ZERO TYPE‐ART": 4,
+    "東京喰種": 3,
+    "化物語": 3
+   }
+  },
+  "all": {
+   "n_days": 670,
+   "counts": {
+    "どちらでもない": 446,
+    "集中型": 121,
+    "全体型": 103
+   },
+   "event_counts": {
+    "どちらでもない": 76,
+    "集中型": 21,
+    "全体型": 16
+   },
+   "event_days": 113,
+   "hall_resid_pt_by_label": {
+    "どちらでもない": -0.21,
+    "全体型": 0.69,
+    "集中型": -0.45
+   },
+   "center_machines": {
+    "マイジャグラーV": 20,
+    "ネオアイムジャグラーEX": 16,
+    "スマスロ北斗の拳": 13,
+    "交響詩篇エウレカセブン HI-EVOLUTION ZERO TYPE‐ART": 13,
+    "甲鉄城のカバネリ 海門(うなと)決戦": 11
+   }
+  }
+ }
+}

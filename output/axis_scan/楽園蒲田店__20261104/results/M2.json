@@ -1,0 +1,95 @@
+{
+ "axis_id": "M2",
+ "hall": "楽園蒲田店",
+ "asof": "20261104",
+ "window": "20260807-20261104",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "単位×時間。「前日の稼働」は暦日でないので外した。3m のみ",
+ "planned": 1116,
+ "done": 826,
+ "excluded": 290,
+ "cells_file": "results/M2.cells.csv",
+ "excluded_file": "results/M2.excluded.csv",
+ "n_days": 90,
+ "n_units": 6,
+ "families": 177,
+ "cells": 826,
+ "p05": 78,
+ "p05_expected": 41.3,
+ "bh_q02": 10,
+ "top": [
+  {
+   "label": "ジャグラー×5のつく日",
+   "metric": "回転数",
+   "n_days": 8,
+   "effect": 0.0854,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.1375,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ハナハナ・ハナビ×5のつく日",
+   "metric": "RB当り",
+   "n_days": 8,
+   "effect": 0.0878,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.1375,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ハナハナ・ハナビ×20日",
+   "metric": "回転数",
+   "n_days": 3,
+   "effect": 0.4074,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.1375,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "A+AT×7のつく日",
+   "metric": "回転数",
+   "n_days": 9,
+   "effect": 0.2319,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.165,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "A+AT×1-7日",
+   "metric": "回転数",
+   "n_days": 19,
+   "effect": 0.1387,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.165,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "",
+ "caveats": [
+  "seg は排他で、差枚は出さない",
+  "基準は期間全体で in_sample",
+  "新台は除外"
+ ],
+ "reason": ""
+}

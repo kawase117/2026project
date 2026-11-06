@@ -1,0 +1,104 @@
+{
+ "axis_id": "T1",
+ "hall": "楽園蒲田店",
+ "asof": "20261104",
+ "window": "3m,all,regime",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "窓3×単位(全台+タイプ)×指標7×水準。全組み合わせ(2軸)。3日未満の水準は除外",
+ "planned": 1029,
+ "done": 777,
+ "excluded": 252,
+ "cells_file": "results/T1.cells.csv",
+ "excluded_file": "results/T1.excluded.csv",
+ "n_days": 90,
+ "n_units": 275,
+ "families": 42,
+ "cells": 777,
+ "p05": 177,
+ "p05_expected": 38.9,
+ "bh_q02": 169,
+ "top": [
+  {
+   "label": "AT・ART",
+   "metric": "機械割差",
+   "n_days": 13,
+   "effect": 1.646,
+   "ci": [
+    0.6939,
+    2.5991
+   ],
+   "q": 0.063,
+   "contrast": "in_vs_out",
+   "level": "水曜",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "全台",
+   "metric": "機械割差",
+   "n_days": 13,
+   "effect": 0.893,
+   "ci": [
+    0.2295,
+    1.5566
+   ],
+   "q": 0.063,
+   "contrast": "in_vs_out",
+   "level": "水曜",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ノーマル他",
+   "metric": "RB無補正",
+   "n_days": 13,
+   "effect": 0.118,
+   "ci": [
+    0.0315,
+    0.2052
+   ],
+   "q": 0.2799,
+   "contrast": "in_vs_out",
+   "level": "日曜",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "AT・ART",
+   "metric": "AT帯補正",
+   "n_days": 12,
+   "effect": 0.082,
+   "ci": [
+    0.0032,
+    0.1612
+   ],
+   "q": 0.2869,
+   "contrast": "in_vs_out",
+   "level": "木曜",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "全台",
+   "metric": "AT帯補正",
+   "n_days": 12,
+   "effect": 0.082,
+   "ci": [
+    0.0047,
+    0.1597
+   ],
+   "q": 0.2974,
+   "contrast": "in_vs_out",
+   "level": "木曜",
+   "falsification": "済",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "AT帯補正: 80%検出の目安 ±0.110; AT無補正: 80%検出の目安 ±0.123; RB帯補正: 80%検出の目安 ±0.064; RB無補正: 80%検出の目安 ±0.070; 回転数: 80%検出の目安 ±897.235; 差枚: 80%検出の目安 ±185.378; 機械割差: 80%検出の目安 ±2.053",
+ "caveats": [
+  "基準は窓全体の機種平均なので in_sample。開店前の評価には使わない",
+  "RBは帯補正あり・なしを並べる。符号が割れたら判定しない"
+ ],
+ "reason": ""
+}

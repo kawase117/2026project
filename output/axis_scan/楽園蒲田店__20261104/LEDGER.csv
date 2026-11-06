@@ -1,0 +1,43 @@
+﻿axis_id,axis,unit,metrics,window,status,scope,planned,done,excluded,basis,runner,result_file,reason,updated
+L1,機種の水準,機種,"機械割差,差枚,回転数,RB位置,AT位置","1m,2m,3m,train,verify,m202611,m202610,m202609,m202608",完了,単位×指標5×窓9×対比2(全組み合わせ、2軸)。train で選び verify で確かめる翌月検証を含む,13950,6122,7828,ex_post,theory_rescan.run_levels,results/L1.json,,20261106
+L2,島の水準,島,"機械割差,差枚,回転数,RB位置,AT位置","1m,2m,3m,train,verify,m202611,m202610,m202609,m202608",完了,単位×指標5×窓9×対比2(全組み合わせ、2軸)。train で選び verify で確かめる翌月検証を含む,6300,3028,3272,ex_post,theory_rescan.run_levels,results/L2.json,,20261106
+L3,位置の水準,端番/通路角,"機械割差,差枚,回転数,RB位置,AT位置","1m,2m,3m,train,verify,m202611,m202610,m202609,m202608",完了,単位×指標5×窓9×対比2(全組み合わせ、2軸)。train で選び verify で確かめる翌月検証を含む,270,240,30,ex_post,theory_rescan.run_levels,results/L3.json,,20261106
+L4,台番号の水準,台番号,"機械割差,差枚,回転数,RB位置,AT位置","1m,2m,3m,train,verify,m202611,m202610,m202609,m202608",完了,単位×指標5×窓9×対比2(全組み合わせ、2軸)。train で選び verify で確かめる翌月検証を含む,52830,30124,22706,ex_post,theory_rescan.run_levels,results/L4.json,,20261106
+L5,末尾の水準,末尾,"機械割差,差枚,回転数,RB位置,AT位置","1m,2m,3m,train,verify,m202611,m202610,m202609,m202608",完了,単位×指標5×窓9×対比2(全組み合わせ、2軸)。train で選び verify で確かめる翌月検証を含む,900,776,124,ex_post,theory_rescan.run_levels,results/L5.json,,20261106
+S1,全体型/機種集中,日,好調台(G>=3000かつ機械割>=105%),"3m,regime,all",完了,日×窓。分類は開始時に固定した規則,881,881,0,in_sample,theory_rescan.run_s1,results/S1.json,,20261106
+V1,大負け×高回転,機種/タイプ/全台,"発生率,同帯当りO/E",20260807-20261104,完了,群×3G閾値×2負け定義。比較はイベント日と他の日(曜日の中で入れ替え)。日を1観測にする,930,840,90,ex_post,theory_rescan.run_v1,results/V1.json,,20261106
+F1,反証確認,各軸の上位候補,候補と同じ指標,20260807-20261104,完了,比較条件は開始時に固定した規則のみ。追加なし,40,38,2,in_sample,theory_rescan.run_falsification,results/F1.json,,20261106
+N1,新台の導入後7日,機種×経過日0-6,"機械割差,差枚,回転数,RB位置,AT位置",導入日〜35日,完了,初出がDBの最初の日より後の機種×指標×経過日7,3542,3182,360,ex_post,theory_rescan.run_n1,results/N1.json,,20261106
+T1,曜日,全台/タイプ,"機械割差,差枚,回転数,RB無補正,RB帯補正,AT無補正,AT帯補正","3m,all,regime",完了,窓3×単位(全台+タイプ)×指標7×水準。全組み合わせ(2軸)。3日未満の水準は除外,1029,777,252,in_sample,theory_rescan.run_time_axes(unit_time_scan の水準と入れ替えを再利用),results/T1.json,,20261106
+T2,日の下一桁,全台/タイプ,"機械割差,差枚,回転数,RB無補正,RB帯補正,AT無補正,AT帯補正","3m,all,regime",完了,窓3×単位(全台+タイプ)×指標7×水準。全組み合わせ(2軸)。3日未満の水準は除外,1470,1110,360,in_sample,theory_rescan.run_time_axes(unit_time_scan の水準と入れ替えを再利用),results/T2.json,,20261106
+T3,DD,全台/タイプ,"機械割差,差枚,回転数,RB無補正,RB帯補正,AT無補正,AT帯補正","3m,all,regime",完了,窓3×単位(全台+タイプ)×指標7×水準。全組み合わせ(2軸)。3日未満の水準は除外,4557,3330,1227,in_sample,theory_rescan.run_time_axes(unit_time_scan の水準と入れ替えを再利用),results/T3.json,,20261106
+T4,ゾロ目,全台/タイプ,"機械割差,差枚,回転数,RB無補正,RB帯補正,AT無補正,AT帯補正","3m,all,regime",完了,窓3×単位(全台+タイプ)×指標7×水準。全組み合わせ(2軸)。3日未満の水準は除外,294,222,72,in_sample,theory_rescan.run_time_axes(unit_time_scan の水準と入れ替えを再利用),results/T4.json,,20261106
+T5,月内の週・給料日,全台/タイプ,"機械割差,差枚,回転数,RB無補正,RB帯補正,AT無補正,AT帯補正","3m,all,regime",完了,窓3×単位(全台+タイプ)×指標7×水準。全組み合わせ(2軸)。3日未満の水準は除外,1176,888,288,in_sample,theory_rescan.run_time_axes(unit_time_scan の水準と入れ替えを再利用),results/T5.json,,20261106
+T6,祝日・連休,全台/タイプ,"機械割差,差枚,回転数,RB無補正,RB帯補正,AT無補正,AT帯補正","3m,all,regime",完了,窓3×単位(全台+タイプ)×指標7×水準。全組み合わせ(2軸)。3日未満の水準は除外,588,444,144,in_sample,theory_rescan.run_time_axes(unit_time_scan の水準と入れ替えを再利用),results/T6.json,,20261106
+T7,イベント日,全台/タイプ,"機械割差,差枚,回転数,RB無補正,RB帯補正,AT無補正,AT帯補正","3m,all,regime",完了,窓3×単位(全台+タイプ)×指標7×水準。全組み合わせ(2軸)。3日未満の水準は除外,147,111,36,in_sample,theory_rescan.run_time_axes(unit_time_scan の水準と入れ替えを再利用),results/T7.json,,20261106
+T8,イベント系列・公約,全台/タイプ,"機械割差,差枚,回転数,RB無補正,RB帯補正,AT無補正,AT帯補正","3m,all,regime",完了,窓3×単位(全台+タイプ)×指標7×水準。全組み合わせ(2軸)。3日未満の水準は除外,2744,2072,672,in_sample,theory_rescan.run_time_axes(unit_time_scan の水準と入れ替えを再利用),results/T8.json,,20261106
+T9,イベント種別,全台/タイプ,"機械割差,差枚,回転数,RB無補正,RB帯補正,AT無補正,AT帯補正","3m,all,regime",完了,窓3×単位(全台+タイプ)×指標7×水準。全組み合わせ(2軸)。3日未満の水準は除外,735,555,180,in_sample,theory_rescan.run_time_axes(unit_time_scan の水準と入れ替えを再利用),results/T9.json,,20261106
+T10,レジーム前後,全台/タイプ,"機械割差,差枚,回転数,RB無補正,RB帯補正,AT無補正,AT帯補正","3m,all,regime",完了,窓3×単位(全台+タイプ)×指標7×水準。全組み合わせ(2軸)。3日未満の水準は除外,49,37,12,in_sample,theory_rescan.run_time_axes(unit_time_scan の水準と入れ替えを再利用),results/T10.json,,20261106
+T11,ホール固有の日付,,,,データ不足,,0,0,0,,,,ホール固有の日付の登録がない。文書にある特定DDは T3 と説の再判定で見る,20261106
+T12,近隣イベント・天気,,,,未実施,,0,0,0,,,,近隣ホールのイベント・天気のデータがこのDBにない(手段なし),20261106
+H1,前日,機種/台番号/末尾/島/端番,"機械割差,差枚,回転数,RB位置,AT位置","3m,prev3m",完了,単位5×指標5×窓2×(素の値/自分の長期水準を引く)。全期間は計算量で対象外(前の3か月を再現確認に置く),100,73,27,as_of,theory_rescan.run_history,results/H1.json,,20261106
+H2,7日前,機種/台番号/末尾/島/端番,"機械割差,差枚,回転数,RB位置,AT位置","3m,prev3m",完了,単位5×指標5×窓2×(素の値/自分の長期水準を引く)。全期間は計算量で対象外(前の3か月を再現確認に置く),100,73,27,as_of,theory_rescan.run_history,results/H2.json,,20261106
+H3,14日前,機種/台番号/末尾/島/端番,"機械割差,差枚,回転数,RB位置,AT位置","3m,prev3m",完了,単位5×指標5×窓2×(素の値/自分の長期水準を引く)。全期間は計算量で対象外(前の3か月を再現確認に置く),100,72,28,as_of,theory_rescan.run_history,results/H3.json,,20261106
+H4,直近1か月,機種/台番号/末尾/島/端番,"機械割差,差枚,回転数,RB位置,AT位置","3m,prev3m",完了,単位5×指標5×窓2×(素の値/自分の長期水準を引く)。全期間は計算量で対象外(前の3か月を再現確認に置く),100,72,28,as_of,theory_rescan.run_history,results/H4.json,,20261106
+H5,直近2か月,機種/台番号/末尾/島/端番,"機械割差,差枚,回転数,RB位置,AT位置","3m,prev3m",完了,単位5×指標5×窓2×(素の値/自分の長期水準を引く)。全期間は計算量で対象外(前の3か月を再現確認に置く),100,71,29,as_of,theory_rescan.run_history,results/H5.json,,20261106
+H6,直近3か月,機種/台番号/末尾/島/端番,"機械割差,差枚,回転数,RB位置,AT位置","3m,prev3m",完了,単位5×指標5×窓2×(素の値/自分の長期水準を引く)。全期間は計算量で対象外(前の3か月を再現確認に置く),100,69,31,as_of,theory_rescan.run_history,results/H6.json,,20261106
+P1,末尾×時間,末尾,"当りO/E,機械割(差枚/3G),回転数/期待",20260807-20261104,完了,位置×時間(曜日・D・DD・ゾロ目・イベント系列)。全組み合わせ(2軸)。3m のみ,2640,2640,0,in_sample,axis_scan.run_scan,results/P1.json,,20261106
+P2,角番×時間,角番,"当りO/E,機械割(差枚/3G),回転数/期待",20260807-20261104,完了,位置×時間(曜日・D・DD・ゾロ目・イベント系列)。全組み合わせ(2軸)。3m のみ,792,792,0,in_sample,axis_scan.run_scan,results/P2.json,,20261106
+P3,並び×時間,並び,"当りO/E,機械割(差枚/3G),回転数/期待",20260807-20261104,完了,位置×時間(曜日・D・DD・ゾロ目・イベント系列)。全組み合わせ(2軸)。3m のみ,132,132,0,in_sample,axis_scan.run_scan,results/P3.json,,20261106
+P4,島×時間,section,"RB当り,機械割,回転数",20260807-20261104,完了,単位×時間。「前日の稼働」は暦日でないので外した。3m のみ,13020,9069,3951,in_sample,unit_time_scan.scan_units,results/P4.json,,20261106
+P4:座標,座標(壁側・通路側),,,,未実施,,0,0,0,,,,壁側・通路側の定義がDB列から確定できない(手段なし)。島は P4 で見る,20261106
+P5,機種の台数,機種の台数,"機械割差,差枚,回転数,RB位置,AT位置","3m,all",完了,区分5×指標5×窓2,50,42,8,ex_post,theory_rescan.run_levels,results/P5.json,,20261106
+P6,機種の境界,機種の境界,"機械割差,差枚,回転数,RB位置,AT位置","3m,all",完了,2区分×指標5×窓2,20,18,2,ex_post,theory_rescan.run_levels,results/P6.json,,20261106
+M1,機種×時間,machine_name,"RB当り,機械割,回転数",20260807-20261104,完了,単位×時間。「前日の稼働」は暦日でないので外した。3m のみ,27528,14330,13198,in_sample,unit_time_scan.scan_units,results/M1.json,,20261106
+M2,機種タイプ×時間,mtype,"RB当り,機械割,回転数",20260807-20261104,完了,単位×時間。「前日の稼働」は暦日でないので外した。3m のみ,1116,826,290,in_sample,unit_time_scan.scan_units,results/M2.json,,20261106
+X1,位置×時間,末尾・角番・並び,"当りO/E,機械割(差枚/3G),回転数/期待",20260807-20261104,完了,P1・P2・P3 の和。BHは全セル共通,3564,3564,0,in_sample,axis_scan.run_scan,results/X1.json,,20261106
+X2,機種・島・タイプ×時間,機種・タイプ・島,"RB当り,機械割,回転数",20260807-20261104,完了,M1・M2・P4 の和,41664,24225,17439,in_sample,unit_time_scan.scan_units,results/X2.json,,20261106
+X3,末尾×機種・角番×機種,,,,未実施,,0,0,0,,,,末尾×D は P1 に含む。末尾×機種・角番×機種は1セルが数台で、総当たりは検出力が足りない,20261106
+X4,3軸以上,,,,未実施,,0,0,0,,,,事前仮説のない3軸以上は対象外(検出力)。文書にある交互作用は CLAIM で見る,20261106
+CHK2,高設定推定の絶対数,タイプ,1日あたりの高設定推定台数,"3m,月別4",完了,G>=3000の確認済み機種。事後確率(設定5以上)>=0.5,30,30,0,ex_post,theory_rescan.run_density,results/CHK2.json,,20261106
+CLAIM,文書の説の再判定,文書の説,"payout,rb_rate,bonus_rate,games,diff",直近90日とそれ以前,完了,説15件×指標。説の定義は backtest/theory_claims/rakuen.json。n_days=直近の日数、n_units=比較期間の日数,36,36,0,in_sample,theory_rescan.run_claims(deathwatch の統計量),results/CLAIM.json,,20261106
