@@ -38,6 +38,7 @@ description: backtest/ 配下のモジュールの役割分担と使い分けの
 | 連番ブロック（並び）を検出 | `narabi.py` | （直接実行） |
 | 末尾予告の両隣への波及 | `neighbor_effect.py` | （直接実行） |
 | 既知セオリーが死んでいないか | `deathwatch.py` | （直接実行） |
+| ホールの全軸スキャンと theory 文書の説の再判定 | `theory_rescan.py` | `--key` / `--only` / `--write-doc` |
 | 効果量の非定常性を検定 | `regime.py` | （直接実行） |
 | 差枚の打ち切りを検出 | `censoring.py` | （直接実行） |
 | 朝の材料を1枚にまとめる | `morning.py` / `scripts/run_morning.py` | （直接実行） |
