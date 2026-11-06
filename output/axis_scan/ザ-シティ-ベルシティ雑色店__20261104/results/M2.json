@@ -1,0 +1,95 @@
+{
+ "axis_id": "M2",
+ "hall": "ザ-シティ-ベルシティ雑色店",
+ "asof": "20261104",
+ "window": "20260807-20261104",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "単位×時間。「前日の稼働」は暦日でないので外した。3m のみ",
+ "planned": 915,
+ "done": 580,
+ "excluded": 335,
+ "cells_file": "results/M2.cells.csv",
+ "excluded_file": "results/M2.excluded.csv",
+ "n_days": 90,
+ "n_units": 5,
+ "families": 174,
+ "cells": 580,
+ "p05": 40,
+ "p05_expected": 29.0,
+ "bh_q02": 0,
+ "top": [
+  {
+   "label": "ハナハナ・ハナビ×13日",
+   "metric": "回転数",
+   "n_days": 3,
+   "effect": 0.5403,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.6802,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "BT×8-14日",
+   "metric": "回転数",
+   "n_days": 21,
+   "effect": 0.1972,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.6802,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "BT×3日",
+   "metric": "回転数",
+   "n_days": 3,
+   "effect": 0.4838,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.6802,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "BT×13日",
+   "metric": "回転数",
+   "n_days": 3,
+   "effect": 0.4844,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.6802,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "A+AT×4のつく日",
+   "metric": "回転数",
+   "n_days": 9,
+   "effect": 0.2262,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.6802,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "",
+ "caveats": [
+  "seg は排他で、差枚は出さない",
+  "基準は期間全体で in_sample",
+  "新台は除外"
+ ],
+ "reason": ""
+}

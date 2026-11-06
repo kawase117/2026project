@@ -1,0 +1,74 @@
+{
+ "axis_id": "S1",
+ "hall": "ザ-シティ-ベルシティ雑色店",
+ "asof": "20261104",
+ "window": "3m,all",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "日×窓。分類は開始時に固定した規則",
+ "planned": 762,
+ "done": 762,
+ "excluded": 0,
+ "cells_file": "results/S1.cells.csv",
+ "excluded_file": "results/S1.excluded.csv",
+ "n_days": 90,
+ "n_units": 172,
+ "families": 0,
+ "cells": 762,
+ "p05": 0,
+ "p05_expected": 0.0,
+ "bh_q02": 0,
+ "top": [],
+ "power": "",
+ "caveats": [
+  "基準は窓全体の機種の好調率。検定なしの分類で、件数を見るためのもの",
+  "台数4台未満の機種は除く"
+ ],
+ "reason": "",
+ "extra": {
+  "3m": {
+   "n_days": 90,
+   "counts": {
+    "集中型": 69,
+    "全体型": 16,
+    "どちらでもない": 5
+   },
+   "event_counts": {},
+   "event_days": 0,
+   "hall_resid_pt_by_label": {
+    "どちらでもない": -0.61,
+    "全体型": 1.01,
+    "集中型": -0.48
+   },
+   "center_machines": {
+    "ゴーゴージャグラー3": 24,
+    "マイジャグラーV": 16,
+    "ジャグラーガールズ": 15,
+    "ネオアイムジャグラーEX": 15,
+    "リコリス・リコイル": 13
+   }
+  },
+  "all": {
+   "n_days": 672,
+   "counts": {
+    "集中型": 518,
+    "全体型": 97,
+    "どちらでもない": 57
+   },
+   "event_counts": {},
+   "event_days": 0,
+   "hall_resid_pt_by_label": {
+    "どちらでもない": -1.27,
+    "全体型": 1.48,
+    "集中型": -0.53
+   },
+   "center_machines": {
+    "ゴーゴージャグラー3": 216,
+    "マイジャグラーV": 145,
+    "ハッピージャグラーVIII": 99,
+    "ファンキージャグラー2": 82,
+    "モンキーターンV": 72
+   }
+  }
+ }
+}

@@ -1,0 +1,104 @@
+{
+ "axis_id": "T4",
+ "hall": "ザ-シティ-ベルシティ雑色店",
+ "asof": "20261104",
+ "window": "3m,all",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "窓2×単位(全台+タイプ)×指標7×水準。全組み合わせ(2軸)。3日未満の水準は除外",
+ "planned": 182,
+ "done": 130,
+ "excluded": 52,
+ "cells_file": "results/T4.cells.csv",
+ "excluded_file": "results/T4.excluded.csv",
+ "n_days": 90,
+ "n_units": 172,
+ "families": 24,
+ "cells": 130,
+ "p05": 18,
+ "p05_expected": 6.5,
+ "bh_q02": 21,
+ "top": [
+  {
+   "label": "全台",
+   "metric": "機械割差",
+   "n_days": 3,
+   "effect": 2.76,
+   "ci": [
+    -0.0989,
+    5.6195
+   ],
+   "q": 0.1189,
+   "contrast": "in_vs_out",
+   "level": "強ゾロ目(月=日)",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ジャグラー",
+   "metric": "機械割差",
+   "n_days": 3,
+   "effect": 2.784,
+   "ci": [
+    0.2767,
+    5.2907
+   ],
+   "q": 0.1899,
+   "contrast": "in_vs_out",
+   "level": "強ゾロ目(月=日)",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "全台",
+   "metric": "RB無補正",
+   "n_days": 3,
+   "effect": 0.113,
+   "ci": [
+    -0.005,
+    0.2308
+   ],
+   "q": 0.1979,
+   "contrast": "in_vs_out",
+   "level": "強ゾロ目(月=日)",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "BT",
+   "metric": "RB無補正",
+   "n_days": 3,
+   "effect": 0.467,
+   "ci": [
+    -0.0068,
+    0.94
+   ],
+   "q": 0.3398,
+   "contrast": "in_vs_out",
+   "level": "強ゾロ目(月=日)",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "全台",
+   "metric": "RB帯補正",
+   "n_days": 3,
+   "effect": 0.047,
+   "ci": [
+    -0.0337,
+    0.1268
+   ],
+   "q": 0.6107,
+   "contrast": "in_vs_out",
+   "level": "強ゾロ目(月=日)",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "RB帯補正: 80%検出の目安 ±0.389; RB無補正: 80%検出の目安 ±0.458; 回転数: 80%検出の目安 ±1299.049; 差枚: 80%検出の目安 ±617.180; 機械割差: 80%検出の目安 ±8.051",
+ "caveats": [
+  "基準は窓全体の機種平均なので in_sample。開店前の評価には使わない",
+  "RBは帯補正あり・なしを並べる。符号が割れたら判定しない"
+ ],
+ "reason": ""
+}

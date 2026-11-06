@@ -1,0 +1,167 @@
+{
+ "axis_id": "L1",
+ "hall": "ザ-シティ-ベルシティ雑色店",
+ "asof": "20261104",
+ "window": "1m,2m,3m,train,verify,m202611,m202610,m202609,m202608",
+ "status": "完了",
+ "basis": "ex_post",
+ "scope": "単位×指標5×窓9×対比2(全組み合わせ、2軸)。train で選び verify で確かめる翌月検証を含む",
+ "planned": 6480,
+ "done": 2462,
+ "excluded": 4018,
+ "cells_file": "results/L1.cells.csv",
+ "excluded_file": "results/L1.excluded.csv",
+ "n_days": 90,
+ "n_units": 172,
+ "families": 0,
+ "cells": 2462,
+ "p05": 963,
+ "p05_expected": 123.1,
+ "bh_q02": 989,
+ "top": [
+  {
+   "label": "ゴーゴージャグラー3",
+   "metric": "RB位置",
+   "n_days": 90,
+   "effect": 0.142,
+   "ci": [
+    0.1008,
+    0.1836
+   ],
+   "q": 0.0025,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": 0.131
+  },
+  {
+   "label": "マイジャグラーV",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 1.127,
+   "ci": [
+    0.6101,
+    1.6512
+   ],
+   "q": 0.0118,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ゴーゴージャグラー3",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 1.324,
+   "ci": [
+    0.6729,
+    1.9349
+   ],
+   "q": 0.0188,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ソードアート・オンラインII",
+   "metric": "回転数",
+   "n_days": 90,
+   "effect": 2123.08,
+   "ci": [
+    1829.5604,
+    2406.3261
+   ],
+   "q": 0.0013,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": 1705.197
+  },
+  {
+   "label": "マイジャグラーV",
+   "metric": "回転数",
+   "n_days": 90,
+   "effect": 1846.178,
+   "ci": [
+    1630.4768,
+    2082.8903
+   ],
+   "q": 0.0013,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": 1596.658
+  }
+ ],
+ "power": "RB位置: 3m の CI 半幅の中央値 ±0.076; 回転数: 3m の CI 半幅の中央値 ±263.996; 差枚: 3m の CI 半幅の中央値 ±251.837; 機械割差: 3m の CI 半幅の中央値 ±4.516",
+ "caveats": [
+  "新台(導入後7日)は除外",
+  "同じ日の他の台日との差で、当日の比較なので事後分析",
+  "差枚と機械割差は1つの証拠として数える"
+ ],
+ "reason": "",
+ "extra": {
+  "next_month": [
+   {
+    "unit_kind": "機種",
+    "metric": "RB位置",
+    "n_units": 10,
+    "spearman_train_verify": 0.564,
+    "top_units": [
+     "ゴーゴージャグラー3",
+     "マイジャグラーV"
+    ],
+    "train_mean": 0.081,
+    "verify_mean": 0.044,
+    "verify_all_mean": -0.079
+   },
+   {
+    "unit_kind": "機種",
+    "metric": "回転数",
+    "n_units": 32,
+    "spearman_train_verify": 0.839,
+    "top_units": [
+     "ソードアート・オンラインII",
+     "マイジャグラーV",
+     "ゴーゴージャグラー3"
+    ],
+    "train_mean": 2140.832,
+    "verify_mean": 1636.855,
+    "verify_all_mean": -386.366
+   },
+   {
+    "unit_kind": "機種",
+    "metric": "差枚",
+    "n_units": 32,
+    "spearman_train_verify": 0.32,
+    "top_units": [
+     "真打 吉宗",
+     "北斗の拳 転生の章2",
+     "とある魔術の禁書目録2"
+    ],
+    "train_mean": 321.521,
+    "verify_mean": -6.332,
+    "verify_all_mean": -21.682
+   },
+   {
+    "unit_kind": "機種",
+    "metric": "機械割差",
+    "n_units": 32,
+    "spearman_train_verify": 0.28,
+    "top_units": [
+     "真打 吉宗",
+     "北斗の拳 転生の章2",
+     "マギアレコード 魔法少女まどか☆マギカ外伝"
+    ],
+    "train_mean": 4.278,
+    "verify_mean": -4.116,
+    "verify_all_mean": -1.052
+   }
+  ]
+ }
+}

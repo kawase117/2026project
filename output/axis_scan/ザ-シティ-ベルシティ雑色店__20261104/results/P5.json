@@ -1,0 +1,91 @@
+{
+ "axis_id": "P5",
+ "hall": "ザ-シティ-ベルシティ雑色店",
+ "asof": "20261104",
+ "window": "3m,all",
+ "status": "完了",
+ "basis": "ex_post",
+ "scope": "区分5×指標5×窓2",
+ "planned": 40,
+ "done": 31,
+ "excluded": 9,
+ "cells_file": "results/P5.cells.csv",
+ "excluded_file": "results/P5.excluded.csv",
+ "n_days": 90,
+ "n_units": 172,
+ "families": 0,
+ "cells": 31,
+ "p05": 28,
+ "p05_expected": 1.6,
+ "bh_q02": 31,
+ "top": [
+  {
+   "label": "11-20台",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 1.162,
+   "ci": [
+    0.7483,
+    1.4998
+   ],
+   "q": 0.002,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "11-20台",
+   "metric": "RB位置",
+   "n_days": 90,
+   "effect": 0.064,
+   "ci": [
+    0.0476,
+    0.0836
+   ],
+   "q": 0.003,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "6-10台",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 2.037,
+   "ci": [
+    0.5335,
+    3.9169
+   ],
+   "q": 0.0053,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "11-20台",
+   "metric": "回転数",
+   "n_days": 90,
+   "effect": 1637.056,
+   "ci": [
+    1483.2381,
+    1820.9414
+   ],
+   "q": 0.0013,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "RB位置: 3m の CI 半幅の中央値 ±0.037; 回転数: 3m の CI 半幅の中央値 ±136.421; 差枚: 3m の CI 半幅の中央値 ±58.087; 機械割差: 3m の CI 半幅の中央値 ±0.695",
+ "caveats": [
+  "機種の水準と分離しない。台数で揃えた機種比較ではない"
+ ],
+ "reason": "",
+ "extra": {
+  "next_month": []
+ }
+}

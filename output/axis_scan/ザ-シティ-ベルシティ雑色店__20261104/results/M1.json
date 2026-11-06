@@ -1,0 +1,95 @@
+{
+ "axis_id": "M1",
+ "hall": "ザ-シティ-ベルシティ雑色店",
+ "asof": "20261104",
+ "window": "20260807-20261104",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "単位×時間。「前日の稼働」は暦日でないので外した。3m のみ",
+ "planned": 11895,
+ "done": 5452,
+ "excluded": 6443,
+ "cells_file": "results/M1.cells.csv",
+ "excluded_file": "results/M1.excluded.csv",
+ "n_days": 90,
+ "n_units": 65,
+ "families": 174,
+ "cells": 5452,
+ "p05": 266,
+ "p05_expected": 272.6,
+ "bh_q02": 0,
+ "top": [
+  {
+   "label": "東京喰種×8-14日",
+   "metric": "回転数",
+   "n_days": 21,
+   "effect": 0.2214,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.6052,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "モンキーターンV×22-28日",
+   "metric": "回転数",
+   "n_days": 21,
+   "effect": 0.2691,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.6052,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "モンスターハンターライズ×17日",
+   "metric": "回転数",
+   "n_days": 3,
+   "effect": 1.0775,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.6052,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "押忍!番長ZERO×29日",
+   "metric": "回転数",
+   "n_days": 3,
+   "effect": 0.8451,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.6052,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ハッピージャグラーVIII×1-7日",
+   "metric": "回転数",
+   "n_days": 19,
+   "effect": 0.1812,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.6052,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "",
+ "caveats": [
+  "seg は排他で、差枚は出さない",
+  "基準は期間全体で in_sample",
+  "新台は除外"
+ ],
+ "reason": ""
+}
