@@ -1,0 +1,25 @@
+{
+  "rule_id": "rakuen_hana_d7",
+  "hall": "楽園蒲田店",
+  "hypothesis": "楽園のハナハナは 7のつく日に、ホール平均に対して他の日より上。文書 §12.2 の説で、再検証では機械割差 +3.042pt から +4.222pt [+3.0, +5.488](直近9日)。",
+  "source_instinct": "2026-11-06 theory 文書の再検証(output/axis_scan/楽園蒲田店__20261104/ の CLAIM dd_hana)。ユーザー指示で登録。結果を見た後の候補で、確定ではない",
+  "eval_start": "20260807",
+  "eval_end": "20261104",
+  "success_criterion": "2026-11-07〜2027-02-28 の対象日(9日以上)のエッジ(ハナハナ全台平均差枚 − 同日ホール全台平均差枚)の平均が、同じ期間の対象外の日の同じ量を上回り、かつ対象日の平均が0以上。対象外の日はDBから同じ定義で計算する。機械割差も併記する。",
+  "universe": {},
+  "eligibility": {
+    "hana_flag": 1
+  },
+  "entry_days": {
+    "dd": [
+      7,
+      17,
+      27
+    ]
+  },
+  "score": "all_eligible",
+  "lookback_days": 30,
+  "min_history_days": 1,
+  "top_n": 999,
+  "min_games": 0
+}

@@ -1,0 +1,19 @@
+{
+  "rule_id": "mitoya_unato_level",
+  "hall": "みとや大森町店",
+  "hypothesis": "みとやの甲鉄城のカバネリ 海門決戦(17台)は、日を問わずホール平均より上。再検証の水準はホール比 +5.172pt [+4.04, +6.222]、train(直近30日より前の90日)で選んだ後の翌月 +6.966。",
+  "source_instinct": "2026-11-06 theory 文書の再検証(output/axis_scan/みとや大森町店__20261104/ の L1)。ユーザー指示で登録。結果を見た後の候補で、確定ではない",
+  "eval_start": "20260807",
+  "eval_end": "20261104",
+  "success_criterion": "2026-11-07〜12-06 の日数が20以上で、エッジ(全台平均差枚 − 同日ホール全台平均差枚)の日次平均の95%区間の下限 > 0。機種の稼働が1か月で減るので、機械割差も併記する。",
+  "universe": {},
+  "eligibility": {
+    "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦"
+  },
+  "entry_days": {},
+  "score": "all_eligible",
+  "lookback_days": 30,
+  "min_history_days": 1,
+  "top_n": 999,
+  "min_games": 0
+}
