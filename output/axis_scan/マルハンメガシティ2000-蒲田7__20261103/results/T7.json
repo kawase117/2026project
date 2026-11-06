@@ -1,0 +1,104 @@
+{
+ "axis_id": "T7",
+ "hall": "マルハンメガシティ2000-蒲田7",
+ "asof": "20261103",
+ "window": "3m,all",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "窓2×単位(全台+タイプ)×指標7×水準。全組み合わせ(2軸)。3日未満の水準は除外",
+ "planned": 98,
+ "done": 74,
+ "excluded": 24,
+ "cells_file": "results/T7.cells.csv",
+ "excluded_file": "results/T7.excluded.csv",
+ "n_days": 90,
+ "n_units": 142,
+ "families": 28,
+ "cells": 74,
+ "p05": 18,
+ "p05_expected": 3.7,
+ "bh_q02": 28,
+ "top": [
+  {
+   "label": "全台",
+   "metric": "機械割差",
+   "n_days": 12,
+   "effect": 0.964,
+   "ci": [
+    0.1828,
+    1.7456
+   ],
+   "q": 0.0285,
+   "contrast": "in_vs_out",
+   "level": "台帳のイベント日",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ノーマル他",
+   "metric": "RB無補正",
+   "n_days": 12,
+   "effect": 0.289,
+   "ci": [
+    0.0158,
+    0.5629
+   ],
+   "q": 0.1249,
+   "contrast": "in_vs_out",
+   "level": "台帳のイベント日",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "A+AT",
+   "metric": "RB無補正",
+   "n_days": 12,
+   "effect": 0.08,
+   "ci": [
+    0.0031,
+    0.1568
+   ],
+   "q": 0.1249,
+   "contrast": "in_vs_out",
+   "level": "台帳のイベント日",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "AT・ART",
+   "metric": "機械割差",
+   "n_days": 12,
+   "effect": 1.244,
+   "ci": [
+    0.1516,
+    2.337
+   ],
+   "q": 0.1409,
+   "contrast": "in_vs_out",
+   "level": "台帳のイベント日",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "AT・ART",
+   "metric": "AT無補正",
+   "n_days": 12,
+   "effect": 0.042,
+   "ci": [
+    -0.0186,
+    0.1023
+   ],
+   "q": 0.2184,
+   "contrast": "in_vs_out",
+   "level": "台帳のイベント日",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "AT帯補正: 80%検出の目安 ±0.063; AT無補正: 80%検出の目安 ±0.086; RB帯補正: 80%検出の目安 ±0.065; RB無補正: 80%検出の目安 ±0.072; 回転数: 80%検出の目安 ±638.113; 差枚: 80%検出の目安 ±292.622; 機械割差: 80%検出の目安 ±1.865",
+ "caveats": [
+  "基準は窓全体の機種平均なので in_sample。開店前の評価には使わない",
+  "RBは帯補正あり・なしを並べる。符号が割れたら判定しない"
+ ],
+ "reason": ""
+}

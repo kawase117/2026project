@@ -1,0 +1,95 @@
+{
+ "axis_id": "M2",
+ "hall": "マルハンメガシティ2000-蒲田7",
+ "asof": "20261103",
+ "window": "20260806-20261103",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "単位×時間。「前日の稼働」は暦日でないので外した。3m のみ",
+ "planned": 1116,
+ "done": 766,
+ "excluded": 350,
+ "cells_file": "results/M2.cells.csv",
+ "excluded_file": "results/M2.excluded.csv",
+ "n_days": 90,
+ "n_units": 6,
+ "families": 177,
+ "cells": 766,
+ "p05": 64,
+ "p05_expected": 38.3,
+ "bh_q02": 9,
+ "top": [
+  {
+   "label": "BT×25日",
+   "metric": "回転数",
+   "n_days": 3,
+   "effect": 0.2656,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.1701,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "BT×木曜",
+   "metric": "RB当り",
+   "n_days": 13,
+   "effect": 0.0856,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.1701,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ジャグラー×木曜",
+   "metric": "RB当り",
+   "n_days": 13,
+   "effect": 0.0414,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.2087,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ハナハナ・ハナビ×6のつく日",
+   "metric": "回転数",
+   "n_days": 9,
+   "effect": 0.1688,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.3188,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "BT×給料日前後24-26日",
+   "metric": "回転数",
+   "n_days": 9,
+   "effect": 0.1235,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.328,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "",
+ "caveats": [
+  "seg は排他で、差枚は出さない",
+  "基準は期間全体で in_sample",
+  "新台は除外"
+ ],
+ "reason": ""
+}

@@ -1,0 +1,104 @@
+{
+ "axis_id": "T6",
+ "hall": "マルハンメガシティ2000-蒲田7",
+ "asof": "20261103",
+ "window": "3m,all",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "窓2×単位(全台+タイプ)×指標7×水準。全組み合わせ(2軸)。3日未満の水準は除外",
+ "planned": 392,
+ "done": 291,
+ "excluded": 101,
+ "cells_file": "results/T6.cells.csv",
+ "excluded_file": "results/T6.excluded.csv",
+ "n_days": 90,
+ "n_units": 142,
+ "families": 28,
+ "cells": 291,
+ "p05": 44,
+ "p05_expected": 14.6,
+ "bh_q02": 59,
+ "top": [
+  {
+   "label": "ノーマル他",
+   "metric": "RB帯補正",
+   "n_days": 6,
+   "effect": 0.128,
+   "ci": [
+    -0.1799,
+    0.4351
+   ],
+   "q": 0.5435,
+   "contrast": "in_vs_out",
+   "level": "祝日の前日",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "A+AT",
+   "metric": "RB帯補正",
+   "n_days": 8,
+   "effect": 0.039,
+   "ci": [
+    -0.0634,
+    0.1411
+   ],
+   "q": 0.5435,
+   "contrast": "in_vs_out",
+   "level": "連休(3日以上の土日祝)",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "A+AT",
+   "metric": "RB無補正",
+   "n_days": 8,
+   "effect": 0.075,
+   "ci": [
+    -0.0241,
+    0.1734
+   ],
+   "q": 0.6375,
+   "contrast": "in_vs_out",
+   "level": "連休(3日以上の土日祝)",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "A+AT",
+   "metric": "RB無補正",
+   "n_days": 32,
+   "effect": 0.029,
+   "ci": [
+    0.008,
+    0.0501
+   ],
+   "q": 0.8245,
+   "contrast": "in_vs_out",
+   "level": "土日祝",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "BT",
+   "metric": "機械割差",
+   "n_days": 32,
+   "effect": 0.919,
+   "ci": [
+    0.3774,
+    1.4607
+   ],
+   "q": 0.9052,
+   "contrast": "in_vs_out",
+   "level": "土日祝",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "AT帯補正: 80%検出の目安 ±0.080; AT無補正: 80%検出の目安 ±0.119; RB帯補正: 80%検出の目安 ±0.058; RB無補正: 80%検出の目安 ±0.066; 回転数: 80%検出の目安 ±804.406; 差枚: 80%検出の目安 ±232.655; 機械割差: 80%検出の目安 ±2.145",
+ "caveats": [
+  "基準は窓全体の機種平均なので in_sample。開店前の評価には使わない",
+  "RBは帯補正あり・なしを並べる。符号が割れたら判定しない"
+ ],
+ "reason": ""
+}

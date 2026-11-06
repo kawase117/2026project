@@ -1,0 +1,57 @@
+{
+ "axis_id": "CLAIM",
+ "hall": "マルハンメガシティ2000-蒲田7",
+ "asof": "20261103",
+ "window": "直近90日とそれ以前",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "説16件×指標。説の定義は backtest/theory_claims/kamata7.json。n_days=直近の日数、n_units=比較期間の日数",
+ "planned": 35,
+ "done": 35,
+ "excluded": 0,
+ "cells_file": "results/CLAIM.cells.csv",
+ "excluded_file": "results/CLAIM.excluded.csv",
+ "n_days": 90,
+ "n_units": 16,
+ "families": 0,
+ "cells": 35,
+ "p05": 0,
+ "p05_expected": 0.0,
+ "bh_q02": 0,
+ "top": [],
+ "power": "",
+ "caveats": [
+  "判定は差の有意性に基づく。CIがゼロを跨ぐだけでは「消えた」にしない",
+  "直近が6日未満は判定しない",
+  "payout は same_day が非加重(deathwatch と同じ)、cross_day と hall_level が回転数加重。旧本文の非加重の数値とは直接比べない"
+ ],
+ "reason": "",
+ "extra": {
+  "untested": [
+   {
+    "text": "6セグメント構造と各セグメントの有効変数(§1)",
+    "reason": "フロアとA/N区画の定義が旧スクリプト依存。島の水準は L2、機種タイプは M2 で見た"
+   },
+   {
+    "text": "DD×角番テーブル(§2.1)",
+    "reason": "3軸で検出力が尽きる。X1 の DD×角番 で2軸までを見た"
+   },
+   {
+    "text": "経過日数の3フェーズ(§2.7)",
+    "reason": "定義が旧スクリプト依存。新台の効果は N1 で別に見た"
+   },
+   {
+    "text": "機種別DD/曜日パターン(§2.8・§2.8b)",
+    "reason": "個別セルは M1 の総当たりに含む。説としての再判定はしていない"
+   },
+   {
+    "text": "MLモデル V12b(§5)",
+    "reason": "walk-forward の再実行は範囲外"
+   },
+   {
+    "text": "AT一般の機種ラインナップ追従(冒頭 2026-07-23)",
+    "reason": "前向き検証が未実施の規則。L1 と H系で機種の水準の持続は見た"
+   }
+  ]
+ }
+}

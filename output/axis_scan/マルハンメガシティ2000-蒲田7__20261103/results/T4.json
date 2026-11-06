@@ -1,0 +1,104 @@
+{
+ "axis_id": "T4",
+ "hall": "マルハンメガシティ2000-蒲田7",
+ "asof": "20261103",
+ "window": "3m,all",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "窓2×単位(全台+タイプ)×指標7×水準。全組み合わせ(2軸)。3日未満の水準は除外",
+ "planned": 196,
+ "done": 148,
+ "excluded": 48,
+ "cells_file": "results/T4.cells.csv",
+ "excluded_file": "results/T4.excluded.csv",
+ "n_days": 90,
+ "n_units": 142,
+ "families": 28,
+ "cells": 148,
+ "p05": 27,
+ "p05_expected": 7.4,
+ "bh_q02": 35,
+ "top": [
+  {
+   "label": "BT",
+   "metric": "機械割差",
+   "n_days": 3,
+   "effect": 2.361,
+   "ci": [
+    -2.0649,
+    6.7861
+   ],
+   "q": 0.5512,
+   "contrast": "in_vs_out",
+   "level": "強ゾロ目(月=日)",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "A+AT",
+   "metric": "RB帯補正",
+   "n_days": 3,
+   "effect": 0.048,
+   "ci": [
+    -0.11,
+    0.2068
+   ],
+   "q": 0.6897,
+   "contrast": "in_vs_out",
+   "level": "強ゾロ目(月=日)",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "A+AT",
+   "metric": "RB無補正",
+   "n_days": 3,
+   "effect": 0.09,
+   "ci": [
+    -0.0801,
+    0.2592
+   ],
+   "q": 0.9695,
+   "contrast": "in_vs_out",
+   "level": "強ゾロ目(月=日)",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ジャグラー",
+   "metric": "RB無補正",
+   "n_days": 3,
+   "effect": 0.006,
+   "ci": [
+    -0.0345,
+    0.0466
+   ],
+   "q": 0.9695,
+   "contrast": "in_vs_out",
+   "level": "強ゾロ目(月=日)",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "全台",
+   "metric": "回転数",
+   "n_days": 3,
+   "effect": 1299.332,
+   "ci": [
+    757.2195,
+    1841.4437
+   ],
+   "q": 0.018,
+   "contrast": "in_vs_out",
+   "level": "強ゾロ目(月=日)",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "AT帯補正: 80%検出の目安 ±0.102; AT無補正: 80%検出の目安 ±0.137; RB帯補正: 80%検出の目安 ±0.107; RB無補正: 80%検出の目安 ±0.114; 回転数: 80%検出の目安 ±959.478; 差枚: 80%検出の目安 ±399.131; 機械割差: 80%検出の目安 ±3.120",
+ "caveats": [
+  "基準は窓全体の機種平均なので in_sample。開店前の評価には使わない",
+  "RBは帯補正あり・なしを並べる。符号が割れたら判定しない"
+ ],
+ "reason": ""
+}

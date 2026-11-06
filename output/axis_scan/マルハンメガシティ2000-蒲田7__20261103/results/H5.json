@@ -1,0 +1,105 @@
+{
+ "axis_id": "H5",
+ "hall": "マルハンメガシティ2000-蒲田7",
+ "asof": "20261103",
+ "window": "3m,prev3m",
+ "status": "完了",
+ "basis": "as_of",
+ "scope": "単位5×指標5×窓2×(素の値/自分の長期水準を引く)。全期間は計算量で対象外(前の3か月を再現確認に置く)",
+ "planned": 100,
+ "done": 72,
+ "excluded": 28,
+ "cells_file": "results/H5.cells.csv",
+ "excluded_file": "results/H5.excluded.csv",
+ "n_days": 90,
+ "n_units": 715,
+ "families": 2,
+ "cells": 72,
+ "p05": 32,
+ "p05_expected": 3.6,
+ "bh_q02": 34,
+ "top": [
+  {
+   "label": "島|機械割差|own_level_removed",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 0.027,
+   "ci": [
+    0.0053,
+    0.0491
+   ],
+   "q": 0.0222,
+   "contrast": "own_level_removed",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "島|差枚|own_level_removed",
+   "metric": "差枚",
+   "n_days": 90,
+   "effect": 0.025,
+   "ci": [
+    0.004,
+    0.0451
+   ],
+   "q": 0.054,
+   "contrast": "own_level_removed",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "末尾|機械割差|own_level_removed",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 0.048,
+   "ci": [
+    -0.0137,
+    0.1083
+   ],
+   "q": 0.226,
+   "contrast": "own_level_removed",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "末尾|差枚|own_level_removed",
+   "metric": "差枚",
+   "n_days": 90,
+   "effect": 0.041,
+   "ci": [
+    -0.0114,
+    0.0959
+   ],
+   "q": 0.2448,
+   "contrast": "own_level_removed",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "島|RB位置|own_level_removed",
+   "metric": "RB位置",
+   "n_days": 90,
+   "effect": 0.03,
+   "ci": [
+    -0.0299,
+    0.0873
+   ],
+   "q": 0.4707,
+   "contrast": "own_level_removed",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "順位相関の CI 半幅の中央値 ±0.036",
+ "caveats": [
+  "top は自分の長期水準を引いた版から選ぶ。素の値は日を問わない強さ(水準)を再検出するだけなので候補にしない",
+  "特徴量は対象日より前だけ。結果(当日の値)は同日の断面で引いたもの",
+  "台番号は同じ機種の期間だけで窓を作る"
+ ],
+ "reason": ""
+}

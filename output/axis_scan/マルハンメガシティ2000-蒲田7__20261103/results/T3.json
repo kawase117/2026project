@@ -1,0 +1,104 @@
+{
+ "axis_id": "T3",
+ "hall": "マルハンメガシティ2000-蒲田7",
+ "asof": "20261103",
+ "window": "3m,all",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "窓2×単位(全台+タイプ)×指標7×水準。全組み合わせ(2軸)。3日未満の水準は除外",
+ "planned": 3038,
+ "done": 2183,
+ "excluded": 855,
+ "cells_file": "results/T3.cells.csv",
+ "excluded_file": "results/T3.excluded.csv",
+ "n_days": 90,
+ "n_units": 142,
+ "families": 28,
+ "cells": 2183,
+ "p05": 168,
+ "p05_expected": 109.2,
+ "bh_q02": 56,
+ "top": [
+  {
+   "label": "全台",
+   "metric": "AT無補正",
+   "n_days": 3,
+   "effect": 0.207,
+   "ci": [
+    0.069,
+    0.3455
+   ],
+   "q": 0.098,
+   "contrast": "in_vs_out",
+   "level": "1日",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "全台",
+   "metric": "RB無補正",
+   "n_days": 3,
+   "effect": 0.052,
+   "ci": [
+    0.0168,
+    0.0878
+   ],
+   "q": 0.1539,
+   "contrast": "in_vs_out",
+   "level": "30日",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "AT・ART",
+   "metric": "AT無補正",
+   "n_days": 3,
+   "effect": 0.207,
+   "ci": [
+    0.0651,
+    0.3494
+   ],
+   "q": 0.2659,
+   "contrast": "in_vs_out",
+   "level": "1日",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "全台",
+   "metric": "AT帯補正",
+   "n_days": 3,
+   "effect": 0.107,
+   "ci": [
+    -0.0065,
+    0.2201
+   ],
+   "q": 0.6507,
+   "contrast": "in_vs_out",
+   "level": "16日",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "全台",
+   "metric": "AT帯補正",
+   "n_days": 3,
+   "effect": 0.096,
+   "ci": [
+    -0.0049,
+    0.1967
+   ],
+   "q": 0.6507,
+   "contrast": "in_vs_out",
+   "level": "20日",
+   "falsification": "済",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "AT帯補正: 80%検出の目安 ±0.145; AT無補正: 80%検出の目安 ±0.180; RB帯補正: 80%検出の目安 ±0.122; RB無補正: 80%検出の目安 ±0.135; 回転数: 80%検出の目安 ±1303.349; 差枚: 80%検出の目安 ±495.405; 機械割差: 80%検出の目安 ±3.549",
+ "caveats": [
+  "基準は窓全体の機種平均なので in_sample。開店前の評価には使わない",
+  "RBは帯補正あり・なしを並べる。符号が割れたら判定しない"
+ ],
+ "reason": ""
+}

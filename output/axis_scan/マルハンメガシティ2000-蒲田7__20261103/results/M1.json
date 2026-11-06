@@ -1,0 +1,95 @@
+{
+ "axis_id": "M1",
+ "hall": "マルハンメガシティ2000-蒲田7",
+ "asof": "20261103",
+ "window": "20260806-20261103",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "単位×時間。「前日の稼働」は暦日でないので外した。3m のみ",
+ "planned": 17112,
+ "done": 10440,
+ "excluded": 6672,
+ "cells_file": "results/M1.cells.csv",
+ "excluded_file": "results/M1.excluded.csv",
+ "n_days": 90,
+ "n_units": 92,
+ "families": 177,
+ "cells": 10440,
+ "p05": 547,
+ "p05_expected": 522.0,
+ "bh_q02": 0,
+ "top": [
+  {
+   "label": "北斗の拳 転生の章2×台帳のイベント日",
+   "metric": "回転数",
+   "n_days": 12,
+   "effect": 0.1962,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.8691,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "沖ドキ!DUO アンコール×4のつく日",
+   "metric": "機械割",
+   "n_days": 8,
+   "effect": 18.5485,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.8691,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "モグモグ風林火山 大海戦の巻×8-14日",
+   "metric": "機械割",
+   "n_days": 21,
+   "effect": 28.1384,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.8691,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "とある魔術の禁書目録2×8のつく日",
+   "metric": "回転数",
+   "n_days": 9,
+   "effect": 0.2611,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.8691,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ゴーゴージャグラー3×金曜",
+   "metric": "RB当り",
+   "n_days": 13,
+   "effect": 0.0731,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.8691,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "",
+ "caveats": [
+  "seg は排他で、差枚は出さない",
+  "基準は期間全体で in_sample",
+  "新台は除外"
+ ],
+ "reason": ""
+}

@@ -1,0 +1,172 @@
+{
+ "axis_id": "L1",
+ "hall": "マルハンメガシティ2000-蒲田7",
+ "asof": "20261103",
+ "window": "1m,2m,3m,train,verify,m202611,m202610,m202609,m202608",
+ "status": "完了",
+ "basis": "ex_post",
+ "scope": "単位×指標5×窓9×対比2(全組み合わせ、2軸)。train で選び verify で確かめる翌月検証を含む",
+ "planned": 8550,
+ "done": 4192,
+ "excluded": 4358,
+ "cells_file": "results/L1.cells.csv",
+ "excluded_file": "results/L1.excluded.csv",
+ "n_days": 90,
+ "n_units": 142,
+ "families": 0,
+ "cells": 4192,
+ "p05": 1625,
+ "p05_expected": 209.6,
+ "bh_q02": 1633,
+ "top": [
+  {
+   "label": "ネオアイムジャグラーEX",
+   "metric": "RB位置",
+   "n_days": 90,
+   "effect": 0.252,
+   "ci": [
+    0.2164,
+    0.2998
+   ],
+   "q": 0.0021,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": 0.233
+  },
+  {
+   "label": "ゴーゴージャグラー3",
+   "metric": "RB位置",
+   "n_days": 90,
+   "effect": 0.057,
+   "ci": [
+    0.0236,
+    0.096
+   ],
+   "q": 0.0034,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "マギアレコード 魔法少女まどか☆マギカ外伝",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 4.789,
+   "ci": [
+    1.958,
+    8.6131
+   ],
+   "q": 0.0205,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": 2.241
+  },
+  {
+   "label": "甲鉄城のカバネリ 海門(うなと)決戦",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 1.235,
+   "ci": [
+    0.5808,
+    1.8244
+   ],
+   "q": 0.0205,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "この素晴らしい世界に祝福を！",
+   "metric": "AT位置",
+   "n_days": 90,
+   "effect": 0.06,
+   "ci": [
+    -0.1578,
+    0.2682
+   ],
+   "q": 0.558,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "AT位置: 3m の CI 半幅の中央値 ±0.134; RB位置: 3m の CI 半幅の中央値 ±0.056; 回転数: 3m の CI 半幅の中央値 ±236.176; 差枚: 3m の CI 半幅の中央値 ±209.333; 機械割差: 3m の CI 半幅の中央値 ±2.151",
+ "caveats": [
+  "新台(導入後7日)は除外",
+  "同じ日の他の台日との差で、当日の比較なので事後分析",
+  "差枚と機械割差は1つの証拠として数える"
+ ],
+ "reason": "",
+ "extra": {
+  "next_month": [
+   {
+    "unit_kind": "機種",
+    "metric": "RB位置",
+    "n_units": 15,
+    "spearman_train_verify": 0.929,
+    "top_units": [
+     "ネオアイムジャグラーEX",
+     "ハッピージャグラーVIII"
+    ],
+    "train_mean": 0.166,
+    "verify_mean": 0.14,
+    "verify_all_mean": -0.062
+   },
+   {
+    "unit_kind": "機種",
+    "metric": "回転数",
+    "n_units": 70,
+    "spearman_train_verify": 0.92,
+    "top_units": [
+     "ソードアート・オンラインII",
+     "マイジャグラーV",
+     "ワールドダイスター",
+     "邪神ちゃんドロップキック",
+     "キングハナハナ-30"
+    ],
+    "train_mean": 1721.526,
+    "verify_mean": 1317.875,
+    "verify_all_mean": -468.461
+   },
+   {
+    "unit_kind": "機種",
+    "metric": "差枚",
+    "n_units": 70,
+    "spearman_train_verify": 0.295,
+    "top_units": [
+     "マギアレコード 魔法少女まどか☆マギカ外伝",
+     "シャーマンキング",
+     "戦国乙女4 戦乱に閃く炯眼の軍師",
+     "スーパーブラックジャック",
+     "ToLOVEるダークネス TRANCE ver.8.7"
+    ],
+    "train_mean": 227.376,
+    "verify_mean": -71.313,
+    "verify_all_mean": -5.382
+   },
+   {
+    "unit_kind": "機種",
+    "metric": "機械割差",
+    "n_units": 70,
+    "spearman_train_verify": 0.241,
+    "top_units": [
+     "マギアレコード 魔法少女まどか☆マギカ外伝",
+     "シャーマンキング",
+     "ソードアート・オンライン",
+     "戦国乙女4 戦乱に閃く炯眼の軍師",
+     "スーパーブラックジャック"
+    ],
+    "train_mean": 2.925,
+    "verify_mean": 0.67,
+    "verify_all_mean": 0.13
+   }
+  ]
+ }
+}
