@@ -1,0 +1,105 @@
+{
+ "axis_id": "H5",
+ "hall": "ARROW池上店",
+ "asof": "20261104",
+ "window": "3m,prev3m",
+ "status": "完了",
+ "basis": "as_of",
+ "scope": "単位3×指標5×窓2×(素の値/自分の長期水準を引く)。全期間は計算量で対象外(前の3か月を再現確認に置く)",
+ "planned": 60,
+ "done": 56,
+ "excluded": 4,
+ "cells_file": "results/H5.cells.csv",
+ "excluded_file": "results/H5.excluded.csv",
+ "n_days": 90,
+ "n_units": 320,
+ "families": 2,
+ "cells": 56,
+ "p05": 24,
+ "p05_expected": 2.8,
+ "bh_q02": 28,
+ "top": [
+  {
+   "label": "末尾|RB位置|own_level_removed",
+   "metric": "RB位置",
+   "n_days": 90,
+   "effect": 0.054,
+   "ci": [
+    -0.0009,
+    0.1063
+   ],
+   "q": 0.106,
+   "contrast": "own_level_removed",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "機種|差枚|own_level_removed",
+   "metric": "差枚",
+   "n_days": 90,
+   "effect": 0.026,
+   "ci": [
+    -0.0126,
+    0.068
+   ],
+   "q": 0.3094,
+   "contrast": "own_level_removed",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "末尾|機械割差|own_level_removed",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 0.015,
+   "ci": [
+    -0.0388,
+    0.0648
+   ],
+   "q": 0.686,
+   "contrast": "own_level_removed",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "末尾|差枚|own_level_removed",
+   "metric": "差枚",
+   "n_days": 90,
+   "effect": 0.014,
+   "ci": [
+    -0.0463,
+    0.0665
+   ],
+   "q": 0.686,
+   "contrast": "own_level_removed",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "機種|RB位置|own_level_removed",
+   "metric": "RB位置",
+   "n_days": 90,
+   "effect": 0.02,
+   "ci": [
+    -0.0424,
+    0.0858
+   ],
+   "q": 0.686,
+   "contrast": "own_level_removed",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "順位相関の CI 半幅の中央値 ±0.045",
+ "caveats": [
+  "top は自分の長期水準を引いた版から選ぶ。素の値は日を問わない強さ(水準)を再検出するだけなので候補にしない",
+  "特徴量は対象日より前だけ。結果(当日の値)は同日の断面で引いたもの",
+  "台番号は同じ機種の期間だけで窓を作る"
+ ],
+ "reason": ""
+}

@@ -1,0 +1,104 @@
+{
+ "axis_id": "T1",
+ "hall": "ARROW池上店",
+ "asof": "20261104",
+ "window": "3m,all",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "窓2×単位(全台+タイプ)×指標7×水準。全組み合わせ(2軸)。3日未満の水準は除外",
+ "planned": 686,
+ "done": 518,
+ "excluded": 168,
+ "cells_file": "results/T1.cells.csv",
+ "excluded_file": "results/T1.excluded.csv",
+ "n_days": 90,
+ "n_units": 164,
+ "families": 28,
+ "cells": 518,
+ "p05": 117,
+ "p05_expected": 25.9,
+ "bh_q02": 123,
+ "top": [
+  {
+   "label": "全台",
+   "metric": "RB帯補正",
+   "n_days": 13,
+   "effect": 0.04,
+   "ci": [
+    0.0068,
+    0.0729
+   ],
+   "q": 0.0455,
+   "contrast": "in_vs_out",
+   "level": "金曜",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "BT",
+   "metric": "RB帯補正",
+   "n_days": 13,
+   "effect": 0.077,
+   "ci": [
+    0.019,
+    0.1342
+   ],
+   "q": 0.1341,
+   "contrast": "in_vs_out",
+   "level": "金曜",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "全台",
+   "metric": "AT無補正",
+   "n_days": 13,
+   "effect": 0.066,
+   "ci": [
+    -0.0238,
+    0.1554
+   ],
+   "q": 0.5758,
+   "contrast": "in_vs_out",
+   "level": "火曜",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "AT・ART",
+   "metric": "AT無補正",
+   "n_days": 13,
+   "effect": 0.066,
+   "ci": [
+    -0.022,
+    0.1536
+   ],
+   "q": 0.594,
+   "contrast": "in_vs_out",
+   "level": "火曜",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "全台",
+   "metric": "RB無補正",
+   "n_days": 13,
+   "effect": 0.021,
+   "ci": [
+    -0.0082,
+    0.051
+   ],
+   "q": 0.7251,
+   "contrast": "in_vs_out",
+   "level": "火曜",
+   "falsification": "済",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "AT帯補正: 80%検出の目安 ±0.113; AT無補正: 80%検出の目安 ±0.129; RB帯補正: 80%検出の目安 ±0.097; RB無補正: 80%検出の目安 ±0.100; 回転数: 80%検出の目安 ±934.103; 差枚: 80%検出の目安 ±481.447; 機械割差: 80%検出の目安 ±3.503",
+ "caveats": [
+  "基準は窓全体の機種平均なので in_sample。開店前の評価には使わない",
+  "RBは帯補正あり・なしを並べる。符号が割れたら判定しない"
+ ],
+ "reason": ""
+}

@@ -1,0 +1,135 @@
+{
+ "axis_id": "V1",
+ "hall": "ARROW池上店",
+ "asof": "20261104",
+ "window": "20260807-20261104",
+ "status": "完了",
+ "basis": "ex_post",
+ "scope": "群×3G閾値×2負け定義。比較はイベント日と他の日(曜日の中で入れ替え)。日を1観測にする",
+ "planned": 480,
+ "done": 378,
+ "excluded": 102,
+ "cells_file": "results/V1.cells.csv",
+ "excluded_file": "results/V1.excluded.csv",
+ "n_days": 90,
+ "n_units": 320,
+ "families": 0,
+ "cells": 378,
+ "p05": 29,
+ "p05_expected": 18.9,
+ "bh_q02": 8,
+ "top": [
+  {
+   "label": "革命機ヴァルヴレイヴ2|5000G|差枚<=-2000",
+   "metric": "発生率",
+   "n_days": 90,
+   "effect": 0.455,
+   "ci": [
+    0.2427,
+    0.6677
+   ],
+   "q": 0.0629,
+   "contrast": "イベント日vs他",
+   "level": "革命機ヴァルヴレイヴ2",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "東京喰種|5000G|差枚<=-2000",
+   "metric": "発生率",
+   "n_days": 90,
+   "effect": 0.208,
+   "ci": [
+    0.0986,
+    0.3181
+   ],
+   "q": 0.0629,
+   "contrast": "イベント日vs他",
+   "level": "東京喰種",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "",
+ "caveats": [
+  "大負け×高回転だけでは要確認候補。確認済みのRB・AT当り率の裏付けがあるものだけ不発候補",
+  "日次の合計なので、負けてから回されたのか先に好調で後から負けたのかは判別できない",
+  "新台は除外。機種人気は「自機種の前の90日のp75超」の割合で併記"
+ ],
+ "reason": "",
+ "extra": {
+  "repeat_top_5000G": [
+   {
+    "gmin": 5000,
+    "loss": "機械割差<=-10.0pt",
+    "machine_number": 547,
+    "machine_name": "ソードアート・オンラインII",
+    "times": 39
+   },
+   {
+    "gmin": 5000,
+    "loss": "差枚<=-2000",
+    "machine_number": 547,
+    "machine_name": "ソードアート・オンラインII",
+    "times": 39
+   },
+   {
+    "gmin": 5000,
+    "loss": "差枚<=-2000",
+    "machine_number": 548,
+    "machine_name": "ソードアート・オンラインII",
+    "times": 39
+   },
+   {
+    "gmin": 5000,
+    "loss": "機械割差<=-10.0pt",
+    "machine_number": 548,
+    "machine_name": "ソードアート・オンラインII",
+    "times": 38
+   },
+   {
+    "gmin": 5000,
+    "loss": "差枚<=-2000",
+    "machine_number": 542,
+    "machine_name": "ソードアート・オンラインII",
+    "times": 35
+   },
+   {
+    "gmin": 5000,
+    "loss": "機械割差<=-10.0pt",
+    "machine_number": 550,
+    "machine_name": "ソードアート・オンラインII",
+    "times": 34
+   },
+   {
+    "gmin": 5000,
+    "loss": "差枚<=-2000",
+    "machine_number": 550,
+    "machine_name": "ソードアート・オンラインII",
+    "times": 34
+   },
+   {
+    "gmin": 5000,
+    "loss": "差枚<=-2000",
+    "machine_number": 546,
+    "machine_name": "ソードアート・オンラインII",
+    "times": 34
+   },
+   {
+    "gmin": 5000,
+    "loss": "機械割差<=-10.0pt",
+    "machine_number": 542,
+    "machine_name": "ソードアート・オンラインII",
+    "times": 33
+   },
+   {
+    "gmin": 5000,
+    "loss": "差枚<=-2000",
+    "machine_number": 543,
+    "machine_name": "ソードアート・オンラインII",
+    "times": 32
+   }
+  ],
+  "repeat_file": "V1_repeat.csv"
+ }
+}

@@ -1,0 +1,106 @@
+{
+ "axis_id": "P5",
+ "hall": "ARROW池上店",
+ "asof": "20261104",
+ "window": "3m,all",
+ "status": "完了",
+ "basis": "ex_post",
+ "scope": "区分5×指標5×窓2",
+ "planned": 50,
+ "done": 41,
+ "excluded": 9,
+ "cells_file": "results/P5.cells.csv",
+ "excluded_file": "results/P5.excluded.csv",
+ "n_days": 90,
+ "n_units": 164,
+ "families": 0,
+ "cells": 41,
+ "p05": 23,
+ "p05_expected": 2.1,
+ "bh_q02": 23,
+ "top": [
+  {
+   "label": "3-5台",
+   "metric": "RB位置",
+   "n_days": 90,
+   "effect": 0.157,
+   "ci": [
+    0.0941,
+    0.2175
+   ],
+   "q": 0.0013,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "11-20台",
+   "metric": "RB位置",
+   "n_days": 90,
+   "effect": 0.077,
+   "ci": [
+    0.0418,
+    0.1095
+   ],
+   "q": 0.0013,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "11-20台",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 0.279,
+   "ci": [
+    -0.0984,
+    0.6633
+   ],
+   "q": 0.34,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "3-5台",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 0.315,
+   "ci": [
+    -0.1582,
+    0.7785
+   ],
+   "q": 0.3467,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "21台以上",
+   "metric": "回転数",
+   "n_days": 90,
+   "effect": 484.855,
+   "ci": [
+    380.4951,
+    598.6786
+   ],
+   "q": 0.0017,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "RB位置: 3m の CI 半幅の中央値 ±0.034; 回転数: 3m の CI 半幅の中央値 ±97.459; 差枚: 3m の CI 半幅の中央値 ±63.288; 機械割差: 3m の CI 半幅の中央値 ±0.414",
+ "caveats": [
+  "機種の水準と分離しない。台数で揃えた機種比較ではない"
+ ],
+ "reason": "",
+ "extra": {
+  "next_month": []
+ }
+}

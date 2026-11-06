@@ -1,0 +1,80 @@
+{
+ "axis_id": "S1",
+ "hall": "ARROW池上店",
+ "asof": "20261104",
+ "window": "3m,all",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "日×窓。分類は開始時に固定した規則",
+ "planned": 762,
+ "done": 762,
+ "excluded": 0,
+ "cells_file": "results/S1.cells.csv",
+ "excluded_file": "results/S1.excluded.csv",
+ "n_days": 90,
+ "n_units": 164,
+ "families": 0,
+ "cells": 762,
+ "p05": 0,
+ "p05_expected": 0.0,
+ "bh_q02": 0,
+ "top": [],
+ "power": "",
+ "caveats": [
+  "基準は窓全体の機種の好調率。検定なしの分類で、件数を見るためのもの",
+  "台数4台未満の機種は除く"
+ ],
+ "reason": "",
+ "extra": {
+  "3m": {
+   "n_days": 90,
+   "counts": {
+    "どちらでもない": 53,
+    "集中型": 21,
+    "全体型": 16
+   },
+   "event_counts": {
+    "どちらでもない": 2,
+    "全体型": 1
+   },
+   "event_days": 3,
+   "hall_resid_pt_by_label": {
+    "どちらでもない": -0.24,
+    "全体型": 1.26,
+    "集中型": -0.71
+   },
+   "center_machines": {
+    "マイジャグラーV": 9,
+    "ファンキージャグラー2": 4,
+    "ハッピージャグラーVIII": 3,
+    "マイジャグラーⅥ": 3,
+    "獣王": 3
+   }
+  },
+  "all": {
+   "n_days": 672,
+   "counts": {
+    "どちらでもない": 333,
+    "集中型": 226,
+    "全体型": 113
+   },
+   "event_counts": {
+    "どちらでもない": 2,
+    "全体型": 1
+   },
+   "event_days": 3,
+   "hall_resid_pt_by_label": {
+    "どちらでもない": -0.27,
+    "全体型": 1.27,
+    "集中型": -0.48
+   },
+   "center_machines": {
+    "マイジャグラーV": 71,
+    "東京喰種": 35,
+    "ファンキージャグラー2": 28,
+    "モンキーターンV": 26,
+    "スマスロ北斗の拳": 19
+   }
+  }
+ }
+}

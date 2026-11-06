@@ -1,0 +1,95 @@
+{
+ "axis_id": "M1",
+ "hall": "ARROW池上店",
+ "asof": "20261104",
+ "window": "20260807-20261104",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "単位×時間。「前日の稼働」は暦日でないので外した。3m のみ",
+ "planned": 13578,
+ "done": 7616,
+ "excluded": 5962,
+ "cells_file": "results/M1.cells.csv",
+ "excluded_file": "results/M1.excluded.csv",
+ "n_days": 90,
+ "n_units": 73,
+ "families": 177,
+ "cells": 7616,
+ "p05": 395,
+ "p05_expected": 380.8,
+ "bh_q02": 0,
+ "top": [
+  {
+   "label": "いざ！番長×29日以降",
+   "metric": "回転数",
+   "n_days": 8,
+   "effect": 0.4617,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.7246,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ネオアイムジャグラーEX×19日",
+   "metric": "回転数",
+   "n_days": 3,
+   "effect": 0.1351,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.7246,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ジャグラーガールズ×金曜",
+   "metric": "RB当り",
+   "n_days": 13,
+   "effect": 0.1764,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.7246,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "甲鉄城のカバネリ 海門(うなと)決戦×8のつく日",
+   "metric": "回転数",
+   "n_days": 9,
+   "effect": 0.2151,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.7246,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ゴーゴージャグラー3×5のつく日",
+   "metric": "RB当り",
+   "n_days": 8,
+   "effect": 0.1151,
+   "ci": [
+    null,
+    null
+   ],
+   "q": 0.7246,
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "",
+ "caveats": [
+  "seg は排他で、差枚は出さない",
+  "基準は期間全体で in_sample",
+  "新台は除外"
+ ],
+ "reason": ""
+}

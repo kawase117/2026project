@@ -1,0 +1,104 @@
+{
+ "axis_id": "T6",
+ "hall": "ARROW池上店",
+ "asof": "20261104",
+ "window": "3m,all",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "窓2×単位(全台+タイプ)×指標7×水準。全組み合わせ(2軸)。3日未満の水準は除外",
+ "planned": 392,
+ "done": 296,
+ "excluded": 96,
+ "cells_file": "results/T6.cells.csv",
+ "excluded_file": "results/T6.excluded.csv",
+ "n_days": 90,
+ "n_units": 164,
+ "families": 28,
+ "cells": 296,
+ "p05": 81,
+ "p05_expected": 14.8,
+ "bh_q02": 92,
+ "top": [
+  {
+   "label": "BT",
+   "metric": "機械割差",
+   "n_days": 32,
+   "effect": 1.448,
+   "ci": [
+    0.7558,
+    2.1395
+   ],
+   "q": 0.1259,
+   "contrast": "in_vs_out",
+   "level": "土日祝",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "BT",
+   "metric": "機械割差",
+   "n_days": 6,
+   "effect": 2.722,
+   "ci": [
+    -0.0195,
+    5.4636
+   ],
+   "q": 0.3118,
+   "contrast": "in_vs_out",
+   "level": "祝日",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "全台",
+   "metric": "AT無補正",
+   "n_days": 6,
+   "effect": 0.028,
+   "ci": [
+    -0.1022,
+    0.1574
+   ],
+   "q": 0.7481,
+   "contrast": "in_vs_out",
+   "level": "祝日の前日",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "AT・ART",
+   "metric": "AT無補正",
+   "n_days": 6,
+   "effect": 0.028,
+   "ci": [
+    -0.1038,
+    0.159
+   ],
+   "q": 0.7526,
+   "contrast": "in_vs_out",
+   "level": "祝日の前日",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ノーマル他",
+   "metric": "RB帯補正",
+   "n_days": 6,
+   "effect": 0.062,
+   "ci": [
+    -0.1283,
+    0.2522
+   ],
+   "q": 0.8496,
+   "contrast": "in_vs_out",
+   "level": "祝日",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "AT帯補正: 80%検出の目安 ±0.146; AT無補正: 80%検出の目安 ±0.163; RB帯補正: 80%検出の目安 ±0.094; RB無補正: 80%検出の目安 ±0.101; 回転数: 80%検出の目安 ±978.032; 差枚: 80%検出の目安 ±335.958; 機械割差: 80%検出の目安 ±2.232",
+ "caveats": [
+  "基準は窓全体の機種平均なので in_sample。開店前の評価には使わない",
+  "RBは帯補正あり・なしを並べる。符号が割れたら判定しない"
+ ],
+ "reason": ""
+}

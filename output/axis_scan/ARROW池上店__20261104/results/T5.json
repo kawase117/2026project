@@ -1,0 +1,104 @@
+{
+ "axis_id": "T5",
+ "hall": "ARROW池上店",
+ "asof": "20261104",
+ "window": "3m,all",
+ "status": "完了",
+ "basis": "in_sample",
+ "scope": "窓2×単位(全台+タイプ)×指標7×水準。全組み合わせ(2軸)。3日未満の水準は除外",
+ "planned": 784,
+ "done": 592,
+ "excluded": 192,
+ "cells_file": "results/T5.cells.csv",
+ "excluded_file": "results/T5.excluded.csv",
+ "n_days": 90,
+ "n_units": 164,
+ "families": 28,
+ "cells": 592,
+ "p05": 80,
+ "p05_expected": 29.6,
+ "bh_q02": 57,
+ "top": [
+  {
+   "label": "全台",
+   "metric": "機械割差",
+   "n_days": 9,
+   "effect": 1.247,
+   "ci": [
+    0.188,
+    2.3058
+   ],
+   "q": 0.1999,
+   "contrast": "in_vs_out",
+   "level": "月初1-3日",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "AT・ART",
+   "metric": "機械割差",
+   "n_days": 9,
+   "effect": 1.912,
+   "ci": [
+    0.3191,
+    3.5044
+   ],
+   "q": 0.2879,
+   "contrast": "in_vs_out",
+   "level": "月初1-3日",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ハナハナ・ハナビ",
+   "metric": "RB帯補正",
+   "n_days": 11,
+   "effect": 0.105,
+   "ci": [
+    0.0211,
+    0.1898
+   ],
+   "q": 0.2899,
+   "contrast": "in_vs_out",
+   "level": "月末28日以降",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ハナハナ・ハナビ",
+   "metric": "RB無補正",
+   "n_days": 11,
+   "effect": 0.101,
+   "ci": [
+    0.0119,
+    0.1897
+   ],
+   "q": 0.3731,
+   "contrast": "in_vs_out",
+   "level": "月末28日以降",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  },
+  {
+   "label": "A+AT",
+   "metric": "RB無補正",
+   "n_days": 21,
+   "effect": 0.188,
+   "ci": [
+    0.022,
+    0.3544
+   ],
+   "q": 0.3731,
+   "contrast": "in_vs_out",
+   "level": "8-14日",
+   "falsification": "未実施",
+   "next_month": "未検証"
+  }
+ ],
+ "power": "AT帯補正: 80%検出の目安 ±0.110; AT無補正: 80%検出の目安 ±0.124; RB帯補正: 80%検出の目安 ±0.089; RB無補正: 80%検出の目安 ±0.094; 回転数: 80%検出の目安 ±839.418; 差枚: 80%検出の目安 ±438.566; 機械割差: 80%検出の目安 ±2.947",
+ "caveats": [
+  "基準は窓全体の機種平均なので in_sample。開店前の評価には使わない",
+  "RBは帯補正あり・なしを並べる。符号が割れたら判定しない"
+ ],
+ "reason": ""
+}

@@ -1,0 +1,174 @@
+{
+ "axis_id": "L1",
+ "hall": "ARROW池上店",
+ "asof": "20261104",
+ "window": "1m,2m,3m,train,verify,m202611,m202610,m202609,m202608",
+ "status": "完了",
+ "basis": "ex_post",
+ "scope": "単位×指標5×窓9×対比2(全組み合わせ、2軸)。train で選び verify で確かめる翌月検証を含む",
+ "planned": 7200,
+ "done": 3180,
+ "excluded": 4020,
+ "cells_file": "results/L1.cells.csv",
+ "excluded_file": "results/L1.excluded.csv",
+ "n_days": 90,
+ "n_units": 164,
+ "families": 0,
+ "cells": 3180,
+ "p05": 1020,
+ "p05_expected": 159.0,
+ "bh_q02": 1041,
+ "top": [
+  {
+   "label": "スマート沖スロ ニューキングハナハナV",
+   "metric": "RB位置",
+   "n_days": 90,
+   "effect": 0.421,
+   "ci": [
+    0.263,
+    0.583
+   ],
+   "q": 0.0043,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": 0.408
+  },
+  {
+   "label": "ネオアイムジャグラーEX",
+   "metric": "RB位置",
+   "n_days": 90,
+   "effect": 0.108,
+   "ci": [
+    0.0725,
+    0.1433
+   ],
+   "q": 0.0043,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "済",
+   "next_month": "未検証"
+  },
+  {
+   "label": "ニューパルサーDX3",
+   "metric": "機械割差",
+   "n_days": 90,
+   "effect": 2.728,
+   "ci": [
+    1.3183,
+    4.1416
+   ],
+   "q": 0.021,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "該当なし",
+   "next_month": "済",
+   "verify_effect": 2.931
+  },
+  {
+   "label": "戦国コレクション6",
+   "metric": "機械割差",
+   "n_days": 89,
+   "effect": 2.134,
+   "ci": [
+    0.9454,
+    3.6105
+   ],
+   "q": 0.021,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": 2.513
+  },
+  {
+   "label": "ソードアート・オンラインII",
+   "metric": "回転数",
+   "n_days": 90,
+   "effect": 1928.147,
+   "ci": [
+    1752.2822,
+    2127.4732
+   ],
+   "q": 0.0017,
+   "contrast": "vs_hall",
+   "level": "",
+   "falsification": "済",
+   "next_month": "済",
+   "verify_effect": 1643.609
+  }
+ ],
+ "power": "RB位置: 3m の CI 半幅の中央値 ±0.127; 回転数: 3m の CI 半幅の中央値 ±289.925; 差枚: 3m の CI 半幅の中央値 ±287.909; 機械割差: 3m の CI 半幅の中央値 ±2.323",
+ "caveats": [
+  "新台(導入後7日)は除外",
+  "同じ日の他の台日との差で、当日の比較なので事後分析",
+  "差枚と機械割差は1つの証拠として数える"
+ ],
+ "reason": "",
+ "extra": {
+  "next_month": [
+   {
+    "unit_kind": "機種",
+    "metric": "RB位置",
+    "n_units": 16,
+    "spearman_train_verify": 0.753,
+    "top_units": [
+     "スマート沖スロ ニューキングハナハナV",
+     "ニューパルサーDX3"
+    ],
+    "train_mean": 0.389,
+    "verify_mean": 0.245,
+    "verify_all_mean": 0.008
+   },
+   {
+    "unit_kind": "機種",
+    "metric": "回転数",
+    "n_units": 50,
+    "spearman_train_verify": 0.784,
+    "top_units": [
+     "ソードアート・オンラインII",
+     "邪神ちゃんドロップキック",
+     "とんでもスキルで異世界放浪メシ",
+     "ウルトラミラクルジャグラー",
+     "戦国乙女5 業火を穿つ宿焔の双刃"
+    ],
+    "train_mean": 1440.698,
+    "verify_mean": 691.729,
+    "verify_all_mean": -360.911
+   },
+   {
+    "unit_kind": "機種",
+    "metric": "差枚",
+    "n_units": 50,
+    "spearman_train_verify": 0.352,
+    "top_units": [
+     "ゴッドイーター リザレクション",
+     "ニューパルサーDX3",
+     "北斗の拳 転生の章2",
+     "戦国コレクション6",
+     "ケロット5"
+    ],
+    "train_mean": 291.822,
+    "verify_mean": 196.796,
+    "verify_all_mean": 80.194
+   },
+   {
+    "unit_kind": "機種",
+    "metric": "機械割差",
+    "n_units": 50,
+    "spearman_train_verify": 0.361,
+    "top_units": [
+     "ゴッドイーター リザレクション",
+     "ニューパルサーDX3",
+     "北斗の拳 転生の章2",
+     "戦国コレクション6",
+     "攻殻機動隊"
+    ],
+    "train_mean": 2.179,
+    "verify_mean": 2.206,
+    "verify_all_mean": 0.669
+   }
+  ]
+ }
+}
