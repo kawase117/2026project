@@ -1,0 +1,113 @@
+{
+  "rule_id": "k1_model_gratio_dd7kei_top2",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "freeze_hash": "a933efebb75c7036",
+  "target_date": "20261107",
+  "data_asof": "20261106",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-10-17",
+    "2026-11-07"
+  ],
+  "score": "hist_model_gratio_mean_diff",
+  "selection_unit": "machine_model",
+  "success_criterion": "フォワード20エントリー日を経過した時点で、指名機種全台の総和ベースedge（対ホール全体同日平均、diff_coins_normalized）の平均が正であり、7日ブロックブートストラップ95%CI下限が0を上回ること。満たさなければ破棄する。判定はフォワードテストのみで行い、バックテスト数値および2026-08-07の観測は採否根拠にしない。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "革命機ヴァルヴレイヴ",
+      "score": 2745.929448,
+      "history_rows": 10,
+      "machines": [
+        2025,
+        2026,
+        2027,
+        2028
+      ]
+    },
+    {
+      "machine_name": "スマスロ北斗の拳",
+      "score": 531.827707,
+      "history_rows": 119,
+      "machines": [
+        2060,
+        2061,
+        2062,
+        2063,
+        2064,
+        2065,
+        2066
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 2025,
+      "machine_name": "革命機ヴァルヴレイヴ",
+      "score": 2745.929448,
+      "history_days": 10
+    },
+    {
+      "machine_number": 2026,
+      "machine_name": "革命機ヴァルヴレイヴ",
+      "score": 2745.929448,
+      "history_days": 10
+    },
+    {
+      "machine_number": 2027,
+      "machine_name": "革命機ヴァルヴレイヴ",
+      "score": 2745.929448,
+      "history_days": 10
+    },
+    {
+      "machine_number": 2028,
+      "machine_name": "革命機ヴァルヴレイヴ",
+      "score": 2745.929448,
+      "history_days": 10
+    },
+    {
+      "machine_number": 2060,
+      "machine_name": "スマスロ北斗の拳",
+      "score": 531.827707,
+      "history_days": 119
+    },
+    {
+      "machine_number": 2061,
+      "machine_name": "スマスロ北斗の拳",
+      "score": 531.827707,
+      "history_days": 119
+    },
+    {
+      "machine_number": 2062,
+      "machine_name": "スマスロ北斗の拳",
+      "score": 531.827707,
+      "history_days": 119
+    },
+    {
+      "machine_number": 2063,
+      "machine_name": "スマスロ北斗の拳",
+      "score": 531.827707,
+      "history_days": 119
+    },
+    {
+      "machine_number": 2064,
+      "machine_name": "スマスロ北斗の拳",
+      "score": 531.827707,
+      "history_days": 119
+    },
+    {
+      "machine_number": 2065,
+      "machine_name": "スマスロ北斗の拳",
+      "score": 531.827707,
+      "history_days": 119
+    },
+    {
+      "machine_number": 2066,
+      "machine_name": "スマスロ北斗の拳",
+      "score": 531.827707,
+      "history_days": 119
+    }
+  ],
+  "result": null,
+  "plan_digest": "6775669878f65b08"
+}
