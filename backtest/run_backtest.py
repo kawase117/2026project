@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import sqlite3
 import sys
 from pathlib import Path
@@ -249,6 +250,10 @@ def score_history(hist: pd.DataFrame, score: str, d0: pd.Timestamp | None = None
         return h.groupby("machine_name")["edge"].mean()
     if score == "hist_tail_rb_due3":
         return _tail_rb_due(hist, n_tails=3, recent_days=7)
+    if score == "hist_section_resid30_top25pct":
+        return _section_recent_level(hist, _require_d0(d0, score), remove_own_level=True)
+    if score == "hist_section_recent30_top25pct":
+        return _section_recent_level(hist, _require_d0(d0, score), remove_own_level=False)
     raise ValueError(f"scoring 不可の score: {score!r}")
 
 
@@ -283,6 +288,37 @@ def _tail_rb_due(hist: pd.DataFrame, n_tails: int, recent_days: int) -> pd.Serie
     due = total.nsmallest(n_tails)
     tails = h.drop_duplicates("machine_number").set_index("machine_number")["tail"]
     return (-tails.map(due)).dropna()
+
+
+def _section_recent_level(hist: pd.DataFrame, d0: pd.Timestamp, remove_own_level: bool) -> pd.Series:
+    """島の直近30日の機械割差で、上位25%の島の台を選ぶ。
+
+    みとやの再検証(2026-11-06)で、自分の長期水準を引いた直近30日の島の水準と当日の機械割差の
+    順位相関が +0.169 [+0.105, +0.236] だった(theory_rescan の H4)。定義をそれに揃える:
+      - 島の水準は Σ差枚 ÷ Σ(3×回転数)。0Gの行は観測日に数えない
+      - 直近は [d0-30, d0)、長期は窓全体。観測は島×日で、直近21日・長期54日以上
+      - 窓の途中で導入された台は最初の7日を除く(新台は設定と無関係に回る)
+    選ぶのは上位25%(切り上げ)の島の台だけで、他は NaN にする(top_n=999 で全部選ぶ前提)。
+    """
+    h = hist[(hist["dt"] < d0) & (hist["games_normalized"] > 0) & hist["section"].notna()].copy()
+    if h.empty:
+        return pd.Series(dtype=float)
+    window_start = hist["dt"].min()
+    first_seen = h.groupby("machine_number")["dt"].transform("min")
+    h = h[(first_seen <= window_start) | (h["dt"] >= first_seen + pd.Timedelta(days=7))]
+
+    def level(part: pd.DataFrame, min_days: int) -> pd.Series:
+        by = part.groupby("section")
+        rate = 100.0 * by["diff_coins_normalized"].sum() / (3.0 * by["games_normalized"].sum())
+        return rate[by["dt"].nunique() >= min_days]
+
+    recent = level(h[h["dt"] >= d0 - pd.Timedelta(days=30)], 21)
+    section_score = (recent - level(h, 54)).dropna() if remove_own_level else recent
+    if section_score.empty:
+        return pd.Series(dtype=float)
+    top = section_score.nlargest(math.ceil(len(section_score) * 0.25))
+    machines = h.drop_duplicates("machine_number", keep="last").set_index("machine_number")["section"]
+    return machines.map(top).dropna()
 
 
 def _require_d0(d0: pd.Timestamp | None, score: str) -> pd.Timestamp:

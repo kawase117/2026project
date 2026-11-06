@@ -54,6 +54,8 @@ ALLOWED_SCORES = {
     "hist_model_gratio_mean_diff",  # 機種粒度: G比×平均差枚（総和ベース）。2026-08-01 正解ラベル検証で主指標。
     "hist_model_mean_edge",  # 機種粒度: 同日ホール平均との差枚差の平均。「この店で恒常的に厚い機種」を選ぶ。
     "hist_tail_rb_due3",  # 直近7営業日に RB が出ていない3末尾の台（末尾単位で均すホール向け、2026-09-29）
+    "hist_section_resid30_top25pct",  # 島: 直近30日の機械割差 − 自分の長期(窓全体)の上位25%の島の台。比較用(素のエッジが弱い)。lookback_days=180
+    "hist_section_recent30_top25pct",  # 島: 直近30日の機械割差そのものの上位25%の島の台。lookback_days=180
     # 以下4つは 2026-11-01 追加（2026-10-31 パターンスキャンの試験枠）。
     "all_eligible",  # eligible の台を全部選ぶ。フィルタだけのルールをフォワードに載せる（"none" は plan できない）
     "prev_day_ph",  # 対象日の前日の、設定5以上の事後確率（ジャグラー専用、lookback 窓で事前をEM推定）
