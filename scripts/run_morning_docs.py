@@ -125,13 +125,21 @@ BAD_PHRASES = re.compile(
 # ana-slo の公開が遅く、前日分がまだ無いホール（日数）。ARROW池上は毎朝ちょうど1日遅れで、
 # 翌朝に前日分が入る（2026-10-17〜19 の朝のログで確認）。待っていると文書が永久に出ないので、
 # 遅れを許して DB 最終日までの確定データで書く。
+# 遅れを許すのは予測の段だけ。答え合わせは前日分が DB にあるときだけ作る(answercheck_ready)。
+# 2026-11-08: 遅れを許して DB 最終日(11/6)の分を答え合わせした結果、11/8 向けの予告を 11/6 の結果に
+# 当てはめた誤った ARROW 節が 11/7 の答え合わせ文書に入った。
 HALL_LAG_DAYS = {"arrow": 1}
 
 
 def ready_day(key: str, yesterday: str) -> str:
-    """そのホールが「揃った」と言える最低の日付。"""
+    """そのホールが「揃った」と言える最低の日付(予測の段を回してよい日付)。"""
     lag = HALL_LAG_DAYS.get(key, 0)
     return (datetime.strptime(yesterday, "%Y%m%d") - timedelta(days=lag)).strftime("%Y%m%d")
+
+
+def answercheck_ready(key: str, yesterday: str, maxes: dict[str, str]) -> bool:
+    """前日分が DB にあるか。無ければ答え合わせは作らない(遅れるホールでも別の日で代用しない)。"""
+    return maxes.get(HALLS[key][0], "") >= yesterday
 
 
 def find_claude() -> str:
@@ -716,12 +724,16 @@ def prediction_prompt(key: str, today: str, yesterday: str, answer: Path, out: P
         history = event_history_block(key, today)
     except Exception as exc:
         history = "過去回の集計に失敗: %s" % type(exc).__name__
+    if answer.exists():
+        answer_line = "%s（末尾の「予測への示唆」も読む）" % answer
+    else:
+        answer_line = "なし（前日分の答え合わせは作っていない。読みに行かず、答え合わせに触れない）"
     return f"""\
 {display}（DB名: {hall}）の{today}の予測を書いてください。出力先: {out}
 
 {facts_block(key, today, yesterday)}
 ## 入力
-- 前日の答え合わせ: {answer}（末尾の「予測への示唆」も読む）
+- 前日の答え合わせ: {answer_line}
 - 当日の予告: 上の予告ファイル（あれば）。撤回済みは除く。
   `venv\\Scripts\\python.exe -m backtest.event_days check` 等で当日のイベント日台帳（document/registry/EVENT_DAYS.jsonl）も確認する。
   予告として使ってよいのは登録済みのファイルだけ。X の収集結果は読まない（未登録の予告の有無は上の事実に書いてある）。
@@ -1093,8 +1105,8 @@ def process_hall(key: str, day_dir: Path, yesterday: str, today: str, dry_run: b
 
     def answercheck_stage() -> bool:
         """機械集計を作ってプロンプトに渡し、検証に通った出力の先頭へ同じ表を差し込む。"""
-        # ana-slo の公開が遅れるホールは、DB にある最終日の分を答え合わせする。
-        answer_day = min(yesterday, hall_max_dates().get(HALLS[key][0], yesterday))
+        # 前日分が DB にあるときだけ呼ばれる(stages のループで answercheck_ready を見ている)。
+        answer_day = yesterday
         hall_db = PROJECT_ROOT / "db" / ("%s.db" % HALLS[key][0])
         facts = day_facts(hall_db, answer_day)
         # 発信者(slo_tokyo)の設定判定と、判定された機種の実績。速報が無いホール・日は空。
@@ -1121,11 +1133,6 @@ def process_hall(key: str, day_dir: Path, yesterday: str, today: str, dry_run: b
             if table:
                 facts_md = facts_md + "\n\n" + table.text
         prompt = answercheck_prompt(key, answer_day, today, part("answercheck"), facts_md)
-        if answer_day != yesterday:
-            prompt += (
-                "\n\n## 注意\n前日（%s）分は ana-slo 未公開のため、DB最終日（%s）の分を答え合わせする。"
-                "見出し直下に「※%s分の答え合わせ（前日分は未公開）」と1行書く。\n" % (yesterday, answer_day, answer_day)
-            )
         ok = generate(
             prompt,
             part("answercheck"),
@@ -1171,6 +1178,10 @@ def process_hall(key: str, day_dir: Path, yesterday: str, today: str, dry_run: b
     ]
     for stage, action in stages:
         if done(stage).exists():
+            continue
+        if stage == "answercheck" and not answercheck_ready(key, yesterday, hall_max_dates()):
+            # 断片も完了印も作らない。後の起動で前日分が入っていれば、そこで答え合わせを作る。
+            print("- %s / answercheck: 前日（%s）分が DB に無いので作らない" % (key, yesterday), flush=True)
             continue
         print("- %s / %s" % (key, stage), flush=True)
         if dry_run:
