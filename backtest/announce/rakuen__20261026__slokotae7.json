@@ -40,96 +40,19 @@
     }
   ],
   "unscored_claims": [],
-  "needs_manual_review": true,
+  "needs_manual_review": false,
   "no_confirmed_machines": false,
-  "result": {
-    "scored_at_data_max": "20261026",
-    "hall_baseline_mean_diff": 8.5,
-    "hall_n_machines": 587,
-    "new_machine_days": 30,
-    "censoring": {
-      "n_censored_hi": 1,
-      "n_censored_lo": 0,
-      "machines_hi": [
-        "甲鉄城のカバネリ 海門(うなと)決戦"
-      ],
-      "machines_lo": [],
-      "bounds": [
-        -5095,
-        15477
-      ]
-    },
-    "claims": [
-      {
-        "type": "model_named",
-        "claim": {
-          "type": "model_named",
-          "machine_name": "ソードアート・オンラインII",
-          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
-        },
-        "score": -494.6,
-        "mean_diff": -642.4,
-        "gratio": 0.77,
-        "n_machines": 12,
-        "rank": 50,
-        "candidate_models": 57,
-        "age_days": 140,
-        "age_bucket": "established",
-        "base_rate": 0.048,
-        "hit": false
-      },
-      {
-        "type": "model_named",
-        "claim": {
-          "type": "model_named",
-          "machine_name": "ミリオンゴッド‐神々の軌跡‐",
-          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
-        },
-        "score": -333.9,
-        "mean_diff": -464.7,
-        "gratio": 0.719,
-        "n_machines": 13,
-        "rank": 42,
-        "candidate_models": 57,
-        "age_days": 189,
-        "age_bucket": "established",
-        "base_rate": 0.048,
-        "hit": false
-      },
-      {
-        "type": "model_named",
-        "claim": {
-          "type": "model_named",
-          "machine_name": "甲鉄城のカバネリ",
-          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
-        },
-        "hit": null,
-        "note": "当日 甲鉄城のカバネリ が設置3台以上の候補に無い（撤去・台数不足・表記ゆれ）"
-      },
-      {
-        "type": "model_named",
-        "claim": {
-          "type": "model_named",
-          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
-          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
-        },
-        "score": 4406.9,
-        "mean_diff": 1597.3,
-        "gratio": 2.759,
-        "n_machines": 30,
-        "rank": 2,
-        "candidate_models": 57,
-        "n_censored_hi": 1,
-        "n_censored_lo": 0,
-        "censoring_bias": "lower_bound",
-        "max_score_understatement": 324.0,
-        "age_days": 238,
-        "age_bucket": "established",
-        "base_rate": 0.048,
-        "hit": true
-      }
-    ]
-  },
-  "announce_digest": "4c34675440275f6b",
-  "provisional": true
+  "result": null,
+  "announce_digest": "0392313937840009",
+  "provisional": true,
+  "amendments": [
+    {
+      "at": "2026-11-07T12:11:22+09:00",
+      "prev_digest": "4c34675440275f6b",
+      "reason": "別店舗の投稿(楽園柏)。楽園蒲田には触れておらず、ホール別名「楽園」の照合で誤って割り当てられた",
+      "void": true,
+      "amended_after_target": true
+    }
+  ],
+  "voided": true
 }

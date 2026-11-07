@@ -45,100 +45,19 @@
     }
   ],
   "unscored_claims": [],
-  "needs_manual_review": true,
+  "needs_manual_review": false,
   "no_confirmed_machines": false,
-  "result": {
-    "scored_at_data_max": "20261028",
-    "hall_baseline_mean_diff": 29.9,
-    "hall_n_machines": 587,
-    "new_machine_days": 30,
-    "censoring": {
-      "n_censored_hi": 0,
-      "n_censored_lo": 0,
-      "machines_hi": [],
-      "machines_lo": [],
-      "bounds": [
-        -5095,
-        15477
-      ]
-    },
-    "claims": [
-      {
-        "type": "model_named",
-        "claim": {
-          "type": "model_named",
-          "machine_name": "ストリートファイター6",
-          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
-        },
-        "hit": null,
-        "note": "当日 ストリートファイター6 が設置3台以上の候補に無い（撤去・台数不足・表記ゆれ）"
-      },
-      {
-        "type": "model_named",
-        "claim": {
-          "type": "model_named",
-          "machine_name": "パリピ孔明",
-          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
-        },
-        "score": -18.1,
-        "mean_diff": -142.5,
-        "gratio": 0.127,
-        "n_machines": 4,
-        "rank": 25,
-        "candidate_models": 57,
-        "age_days": 23,
-        "age_bucket": "new",
-        "base_rate": 0.105,
-        "hit": false
-      },
-      {
-        "type": "model_named",
-        "claim": {
-          "type": "model_named",
-          "machine_name": "リコリス・リコイル",
-          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
-        },
-        "score": 474.9,
-        "mean_diff": 431.0,
-        "gratio": 1.102,
-        "n_machines": 22,
-        "rank": 10,
-        "candidate_models": 57,
-        "age_days": 51,
-        "age_bucket": "established",
-        "base_rate": 0.048,
-        "hit": false
-      },
-      {
-        "type": "model_named",
-        "claim": {
-          "type": "model_named",
-          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
-          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
-        },
-        "score": -458.5,
-        "mean_diff": -242.5,
-        "gratio": 1.89,
-        "n_machines": 30,
-        "rank": 45,
-        "candidate_models": 57,
-        "age_days": 240,
-        "age_bucket": "established",
-        "base_rate": 0.048,
-        "hit": false
-      },
-      {
-        "type": "model_named",
-        "claim": {
-          "type": "model_named",
-          "machine_name": "邪神ちゃんドロップキック",
-          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
-        },
-        "hit": null,
-        "note": "当日 邪神ちゃんドロップキック が設置3台以上の候補に無い（撤去・台数不足・表記ゆれ）"
-      }
-    ]
-  },
-  "announce_digest": "d481a8f9b4a7dd67",
-  "provisional": true
+  "result": null,
+  "announce_digest": "7c55dd6d67b08e0c",
+  "provisional": true,
+  "amendments": [
+    {
+      "at": "2026-11-07T12:11:27+09:00",
+      "prev_digest": "d481a8f9b4a7dd67",
+      "reason": "別店舗の投稿(楽園柏)。楽園蒲田には触れておらず、ホール別名「楽園」の照合で誤って割り当てられた",
+      "void": true,
+      "amended_after_target": true
+    }
+  ],
+  "voided": true
 }

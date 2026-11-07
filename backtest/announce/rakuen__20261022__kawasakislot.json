@@ -35,82 +35,19 @@
     }
   ],
   "unscored_claims": [],
-  "needs_manual_review": true,
+  "needs_manual_review": false,
   "no_confirmed_machines": false,
-  "result": {
-    "scored_at_data_max": "20261022",
-    "hall_baseline_mean_diff": 154.3,
-    "hall_n_machines": 587,
-    "new_machine_days": 30,
-    "censoring": {
-      "n_censored_hi": 1,
-      "n_censored_lo": 0,
-      "machines_hi": [
-        "聖闘士星矢 海皇覚醒 CUSTOM EDITION"
-      ],
-      "machines_lo": [],
-      "bounds": [
-        -5095,
-        15477
-      ]
-    },
-    "claims": [
-      {
-        "type": "model_named",
-        "claim": {
-          "type": "model_named",
-          "machine_name": "マイジャグラーV",
-          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
-        },
-        "score": -106.9,
-        "mean_diff": -73.5,
-        "gratio": 1.455,
-        "n_machines": 20,
-        "rank": 41,
-        "candidate_models": 57,
-        "age_days": 659,
-        "age_bucket": "established",
-        "base_rate": 0.048,
-        "hit": false
-      },
-      {
-        "type": "model_named",
-        "claim": {
-          "type": "model_named",
-          "machine_name": "東京喰種",
-          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。 ヒント: 全台系の可能性(zentaikei_countならn_models必須/model_namedのままでも可)"
-        },
-        "score": 35.9,
-        "mean_diff": 48.0,
-        "gratio": 0.747,
-        "n_machines": 18,
-        "rank": 30,
-        "candidate_models": 57,
-        "age_days": 625,
-        "age_bucket": "established",
-        "base_rate": 0.048,
-        "hit": false
-      },
-      {
-        "type": "model_named",
-        "claim": {
-          "type": "model_named",
-          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
-          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
-        },
-        "score": 1059.5,
-        "mean_diff": 559.0,
-        "gratio": 1.895,
-        "n_machines": 30,
-        "rank": 6,
-        "candidate_models": 57,
-        "age_days": 234,
-        "age_bucket": "established",
-        "base_rate": 0.048,
-        "hit": false
-      }
-    ]
-  },
-  "announce_digest": "acf03c933d97bbe0",
-  "provisional": true
+  "result": null,
+  "announce_digest": "ebd38f90ea2ad012",
+  "provisional": true,
+  "amendments": [
+    {
+      "at": "2026-11-07T12:11:12+09:00",
+      "prev_digest": "acf03c933d97bbe0",
+      "reason": "別店舗の投稿(楽園溝の口)。楽園蒲田には触れておらず、ホール別名「楽園」の照合で誤って割り当てられた",
+      "void": true,
+      "amended_after_target": true
+    }
+  ],
+  "voided": true
 }

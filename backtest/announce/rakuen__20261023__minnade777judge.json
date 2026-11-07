@@ -25,54 +25,19 @@
     }
   ],
   "unscored_claims": [],
-  "needs_manual_review": true,
+  "needs_manual_review": false,
   "no_confirmed_machines": false,
-  "result": {
-    "scored_at_data_max": "20261023",
-    "hall_baseline_mean_diff": 366.7,
-    "hall_n_machines": 587,
-    "new_machine_days": 30,
-    "censoring": {
-      "n_censored_hi": 3,
-      "n_censored_lo": 2,
-      "machines_hi": [
-        "ソードアート・オンラインII",
-        "モンスターハンターライズ"
-      ],
-      "machines_lo": [
-        "真打 吉宗",
-        "魔法少女にあこがれて"
-      ],
-      "bounds": [
-        -5095,
-        15477
-      ]
-    },
-    "claims": [
-      {
-        "type": "model_named",
-        "claim": {
-          "type": "model_named",
-          "machine_name": "ソードアート・オンラインII",
-          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
-        },
-        "score": 12637.6,
-        "mean_diff": 6449.0,
-        "gratio": 1.96,
-        "n_machines": 12,
-        "rank": 2,
-        "candidate_models": 57,
-        "n_censored_hi": 2,
-        "n_censored_lo": 0,
-        "censoring_bias": "lower_bound",
-        "max_score_understatement": 1150.6,
-        "age_days": 137,
-        "age_bucket": "established",
-        "base_rate": 0.048,
-        "hit": true
-      }
-    ]
-  },
-  "announce_digest": "5a35f1816d02232c",
-  "provisional": true
+  "result": null,
+  "announce_digest": "d307feb59aef39f4",
+  "provisional": true,
+  "amendments": [
+    {
+      "at": "2026-11-07T12:11:15+09:00",
+      "prev_digest": "5a35f1816d02232c",
+      "reason": "別店舗の投稿(楽園町田)。楽園蒲田には触れておらず、ホール別名「楽園」の照合で誤って割り当てられた",
+      "void": true,
+      "amended_after_target": true
+    }
+  ],
+  "voided": true
 }
