@@ -60,6 +60,7 @@ from morning_facts import (  # 同ディレクトリ
 )
 from run_morning import hall_max_dates
 from runlock import acquire_or_exit
+from hall_watch import watch_note
 from takoslot_note import takoslot_section
 
 import result_check
@@ -1069,6 +1070,9 @@ def merge(day_dir: Path, today: str, yesterday: str) -> None:
         )
         if missing:
             head += "\n未生成: %s（07:30 の起動で作る）" % "・".join(missing)
+        note = watch_note(today, PROJECT_ROOT / "db")
+        if note:
+            head += "\n\n" + note
         body = "\n\n".join(got) + "\n\n" + juggler_section(day_dir, today, ready)
         rb_part = day_dir / "rb_candidates.md"
         if rb_part.exists():
