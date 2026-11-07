@@ -1,0 +1,37 @@
+{
+  "announce_id": "rakuen__20261106__reo_slotgroup",
+  "hall": "楽園蒲田店",
+  "target_date": "20261106",
+  "source": {
+    "account": "reo_slotgroup",
+    "url": "",
+    "posted_at": "2026-11-05T17:36:39+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "11/6 れおのホール予想\n\nBIGディッパー東中野\nThe Luminousu取材\n\nBIGディッパー大井町\nスロでも編集部来店\n\nBIGディッパー木場\nスロでも編集部来店\n\nPIA上野\nドラゴン来店取材玉ハイパー\n\n楽園立川\n激クレイジー\n\nマルハン昭島\nまいったぁ-まいったぁ-",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"楽園蒲田店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-08-07\", \"2026-11-05\"], \"n_days\": 90, \"n_model_days\": 5089, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2337.9, \"models_over_threshold_per_day\": {\"mean\": 2.83, \"median\": 3.0, \"max\": 11}, \"candidate_models_per_day\": 56.5, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.92, \"median\": 3.0, \"max\": 13}, \"p_at_least_1\": 0.989, \"p_at_least_2\": 0.944, \"p_at_least_3\": 0.7, \"p_at_least_4\": 0.489, \"p_at_least_10\": 0.011}}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [],
+  "unscored_claims": [],
+  "needs_manual_review": false,
+  "no_confirmed_machines": true,
+  "result": null,
+  "announce_digest": "7530a49b7f96adb9",
+  "provisional": true,
+  "amendments": [
+    {
+      "at": "2026-11-07T11:57:10+09:00",
+      "prev_digest": "fa4f5b49165a8ff0",
+      "reason": "別店舗の投稿(楽園立川)。ホール別名「楽園」の照合で楽園蒲田に誤って割り当てられた",
+      "void": true,
+      "amended_after_target": true
+    }
+  ],
+  "voided": true
+}
