@@ -220,6 +220,8 @@ def unregistered_announce_posts(key: str, today: str, since_hours: int = 36) -> 
             if hall not in ad.hall_aliases.plausible_halls(text, posted_at.date()):
                 continue
             handle = row["handle"]
+            if ad.is_result_post(handle, text, today):
+                continue
             if any(ANNOUNCE_DIR.glob("%s__%s__%s.*" % (slug, today, handle))):
                 continue
             found.append((handle, "https://x.com/%s/status/%s" % (handle, row["tweet_id"])))

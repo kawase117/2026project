@@ -62,6 +62,9 @@ HALL_SLUGS = {
 }
 
 LEADING_DATE_RE = re.compile(r"(\d{1,2})/(\d{1,2})")
+RESULT_HEADING_RE = re.compile(r"\s*(\d{1,2})月(\d{1,2})日\s*[(（][月火水木金土日]")
+# config.ACCOUNTS の役割が答え合わせだけのアカウント。他の「結果報告」は予告も出すので本文で判定する。
+RESULT_ONLY_HANDLES = {"slokotae7", "kengyo_niki"}
 ZENTAIKEI_HINT_RE = re.compile(r"全(?:台|機種|[⑤⑥\d])")
 RATIO_HINT_RE = re.compile(r"1/(\d)|ニブイチ|ハンブンコ")
 
@@ -86,6 +89,27 @@ def _guess_target_date(text: str, posted_at: datetime) -> str:
     if posted_at.hour < 12:
         return base.strftime("%Y%m%d")
     return (base + timedelta(days=1)).strftime("%Y%m%d")
+
+
+def is_result_post(handle: str, text: str, target_date: str) -> bool:
+    """予告ではなく結果の投稿か(document/procedures/EVENTS.md の仕分け)。
+
+    答え合わせ専用のアカウントと、本文が対象日より前の「◯月◯日(曜)」で始まる投稿を結果とみなす。
+    対象日と同じ日付の見出しは予告の書き方なので残す。
+    """
+    if handle in RESULT_ONLY_HANDLES:
+        return True
+    m = RESULT_HEADING_RE.match(text)
+    if not m:
+        return False
+    target = datetime.strptime(target_date, "%Y%m%d").date()
+    try:
+        heading = date(target.year, int(m.group(1)), int(m.group(2)))
+    except ValueError:
+        return False
+    if heading > target:  # 1月の対象日に12月の見出し
+        heading = heading.replace(year=target.year - 1)
+    return heading < target
 
 
 def _existing_draft_or_registered(hall: str, target_date: str, handle: str) -> list[str]:
@@ -158,6 +182,8 @@ def draft_for_date(target_date: str, since_hours: int = 30, dry_run: bool = Fals
 
         guessed_date = _guess_target_date(text, posted_at)
         if guessed_date != target_date:
+            continue
+        if is_result_post(row["handle"], text, target_date):
             continue
 
         for hall in halls:
