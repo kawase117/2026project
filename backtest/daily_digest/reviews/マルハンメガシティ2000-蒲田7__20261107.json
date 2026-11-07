@@ -1,8 +1,6160 @@
 {
   "hall": "マルハンメガシティ2000-蒲田7",
   "target_date": "20261107",
-  "generated_at": "2026-11-08T07:37:53.652953+09:00",
-  "data_asof": "20261106",
-  "skipped": true,
-  "note": "target_date のデータがまだ無い（ana-slo未公開、または取り込み未完了）"
+  "generated_at": "2026-11-08T08:26:56.477453+09:00",
+  "data_asof": "20261107",
+  "data_lag_days": 0,
+  "traffic_stratum": "高稼働",
+  "excluded_new_machines": [
+    "Vivy ‐Fluorite Eye's Song‐",
+    "ゴジラ対エヴァンゲリオン 2",
+    "ソードアート・オンライン オルタナティブ ガンゲイル・オンライン",
+    "ラグナドール",
+    "聖闘士星矢 黄金十二宮"
+  ],
+  "axes": {
+    "machine": {
+      "hot": [
+        {
+          "name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+          "today_mean_diff": 780.0,
+          "today_win_rate": 0.4,
+          "edge": 276.6,
+          "pct": 1.0,
+          "n_machines": 15,
+          "mean_games": 3537.0,
+          "games_ratio": 0.891
+        },
+        {
+          "name": "スーパーブラックジャック",
+          "today_mean_diff": -700.0,
+          "today_win_rate": 0.5,
+          "edge": 177.8,
+          "pct": 0.987,
+          "n_machines": 4,
+          "mean_games": 3142.4,
+          "games_ratio": 0.792
+        },
+        {
+          "name": "東京喰種",
+          "today_mean_diff": 1168.3,
+          "today_win_rate": 0.439,
+          "edge": 177.0,
+          "pct": 0.974,
+          "n_machines": 41,
+          "mean_games": 3632.8,
+          "games_ratio": 0.915
+        },
+        {
+          "name": "ソードアート・オンライン",
+          "today_mean_diff": 150.0,
+          "today_win_rate": 0.5,
+          "edge": 176.2,
+          "pct": 0.961,
+          "n_machines": 10,
+          "mean_games": 2433.5,
+          "games_ratio": 0.613
+        },
+        {
+          "name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+          "today_mean_diff": -371.4,
+          "today_win_rate": 0.286,
+          "edge": 175.9,
+          "pct": 0.947,
+          "n_machines": 25,
+          "mean_games": 2913.7,
+          "games_ratio": 0.734
+        }
+      ],
+      "cold": [
+        {
+          "name": "獣王",
+          "today_mean_diff": 4783.3,
+          "today_win_rate": 0.667,
+          "edge": -922.5,
+          "pct": 0.026,
+          "n_machines": 6,
+          "mean_games": 6259.6,
+          "games_ratio": 1.577
+        },
+        {
+          "name": "ストリートファイター6",
+          "today_mean_diff": null,
+          "today_win_rate": null,
+          "edge": -596.8,
+          "pct": 0.039,
+          "n_machines": 4,
+          "mean_games": 2059.9,
+          "games_ratio": 0.519
+        },
+        {
+          "name": "ソードアート・オンラインII",
+          "today_mean_diff": -215.4,
+          "today_win_rate": 0.308,
+          "edge": -505.6,
+          "pct": 0.066,
+          "n_machines": 13,
+          "mean_games": 7047.4,
+          "games_ratio": 1.776
+        },
+        {
+          "name": "ヤバチバ",
+          "today_mean_diff": 1375.0,
+          "today_win_rate": 0.5,
+          "edge": -458.9,
+          "pct": 0.079,
+          "n_machines": 6,
+          "mean_games": 1738.0,
+          "games_ratio": 0.438
+        },
+        {
+          "name": "パリピ孔明",
+          "today_mean_diff": null,
+          "today_win_rate": null,
+          "edge": -456.6,
+          "pct": 0.092,
+          "n_machines": 4,
+          "mean_games": 2444.0,
+          "games_ratio": 0.616
+        }
+      ]
+    },
+    "kakuban": {
+      "applicable": true,
+      "games_ratio_basis": "全館ベース(セグメント別未対応)",
+      "segments": {
+        "2F全体": {
+          "peak_rank": "5",
+          "rows": [
+            {
+              "rank": "1",
+              "residual": -587.8,
+              "mean_games": 5759.5,
+              "games_ratio": 1.056,
+              "win_rate": 0.415,
+              "n": 54
+            },
+            {
+              "rank": "2",
+              "residual": 341.4,
+              "mean_games": 5600.0,
+              "games_ratio": 1.027,
+              "win_rate": 0.49,
+              "n": 53
+            },
+            {
+              "rank": "3",
+              "residual": -385.9,
+              "mean_games": 5505.0,
+              "games_ratio": 1.009,
+              "win_rate": 0.471,
+              "n": 54
+            },
+            {
+              "rank": "4",
+              "residual": 253.3,
+              "mean_games": 5347.3,
+              "games_ratio": 0.98,
+              "win_rate": 0.49,
+              "n": 52
+            },
+            {
+              "rank": "5",
+              "residual": 645.8,
+              "mean_games": 5445.4,
+              "games_ratio": 0.998,
+              "win_rate": 0.489,
+              "n": 45
+            },
+            {
+              "rank": "6",
+              "residual": -196.3,
+              "mean_games": 5360.4,
+              "games_ratio": 0.983,
+              "win_rate": 0.464,
+              "n": 38
+            },
+            {
+              "rank": "7",
+              "residual": 614.3,
+              "mean_games": 5058.0,
+              "games_ratio": 0.927,
+              "win_rate": 0.484,
+              "n": 24
+            },
+            {
+              "rank": "8",
+              "residual": -312.7,
+              "mean_games": 5316.6,
+              "games_ratio": 0.975,
+              "win_rate": 0.333,
+              "n": 18
+            }
+          ]
+        },
+        "3F全体": {
+          "peak_rank": "7",
+          "rows": [
+            {
+              "rank": "1",
+              "residual": 84.8,
+              "mean_games": 5759.5,
+              "games_ratio": 1.056,
+              "win_rate": 0.415,
+              "n": 52
+            },
+            {
+              "rank": "2",
+              "residual": -127.8,
+              "mean_games": 5600.0,
+              "games_ratio": 1.027,
+              "win_rate": 0.49,
+              "n": 50
+            },
+            {
+              "rank": "3",
+              "residual": -383.5,
+              "mean_games": 5505.0,
+              "games_ratio": 1.009,
+              "win_rate": 0.471,
+              "n": 49
+            },
+            {
+              "rank": "4",
+              "residual": 85.4,
+              "mean_games": 5347.3,
+              "games_ratio": 0.98,
+              "win_rate": 0.49,
+              "n": 50
+            },
+            {
+              "rank": "5",
+              "residual": 402.1,
+              "mean_games": 5445.4,
+              "games_ratio": 0.998,
+              "win_rate": 0.489,
+              "n": 49
+            },
+            {
+              "rank": "6",
+              "residual": 80.0,
+              "mean_games": 5360.4,
+              "games_ratio": 0.983,
+              "win_rate": 0.464,
+              "n": 46
+            },
+            {
+              "rank": "7",
+              "residual": 550.9,
+              "mean_games": 5058.0,
+              "games_ratio": 0.927,
+              "win_rate": 0.484,
+              "n": 38
+            },
+            {
+              "rank": "8",
+              "residual": -1324.0,
+              "mean_games": 5316.6,
+              "games_ratio": 0.975,
+              "win_rate": 0.333,
+              "n": 21
+            }
+          ]
+        },
+        "AT@2F": {
+          "peak_rank": "5",
+          "rows": [
+            {
+              "rank": "1",
+              "residual": -595.5,
+              "mean_games": 5759.5,
+              "games_ratio": 1.056,
+              "win_rate": 0.415,
+              "n": 53
+            },
+            {
+              "rank": "2",
+              "residual": 334.1,
+              "mean_games": 5600.0,
+              "games_ratio": 1.027,
+              "win_rate": 0.49,
+              "n": 52
+            },
+            {
+              "rank": "3",
+              "residual": -396.3,
+              "mean_games": 5505.0,
+              "games_ratio": 1.009,
+              "win_rate": 0.471,
+              "n": 52
+            },
+            {
+              "rank": "4",
+              "residual": 275.1,
+              "mean_games": 5347.3,
+              "games_ratio": 0.98,
+              "win_rate": 0.49,
+              "n": 49
+            },
+            {
+              "rank": "5",
+              "residual": 645.8,
+              "mean_games": 5445.4,
+              "games_ratio": 0.998,
+              "win_rate": 0.489,
+              "n": 45
+            },
+            {
+              "rank": "6",
+              "residual": -196.3,
+              "mean_games": 5360.4,
+              "games_ratio": 0.983,
+              "win_rate": 0.464,
+              "n": 38
+            },
+            {
+              "rank": "7",
+              "residual": 614.3,
+              "mean_games": 5058.0,
+              "games_ratio": 0.927,
+              "win_rate": 0.484,
+              "n": 24
+            },
+            {
+              "rank": "8",
+              "residual": -312.7,
+              "mean_games": 5316.6,
+              "games_ratio": 0.975,
+              "win_rate": 0.333,
+              "n": 18
+            }
+          ]
+        },
+        "AT@3F": {
+          "peak_rank": "5",
+          "rows": [
+            {
+              "rank": "1",
+              "residual": 441.3,
+              "mean_games": 5759.5,
+              "games_ratio": 1.056,
+              "win_rate": 0.415,
+              "n": 26
+            },
+            {
+              "rank": "2",
+              "residual": -117.7,
+              "mean_games": 5600.0,
+              "games_ratio": 1.027,
+              "win_rate": 0.49,
+              "n": 24
+            },
+            {
+              "rank": "3",
+              "residual": -1153.2,
+              "mean_games": 5505.0,
+              "games_ratio": 1.009,
+              "win_rate": 0.471,
+              "n": 23
+            },
+            {
+              "rank": "4",
+              "residual": -0.9,
+              "mean_games": 5347.3,
+              "games_ratio": 0.98,
+              "win_rate": 0.49,
+              "n": 24
+            },
+            {
+              "rank": "5",
+              "residual": 1100.4,
+              "mean_games": 5445.4,
+              "games_ratio": 0.998,
+              "win_rate": 0.489,
+              "n": 23
+            },
+            {
+              "rank": "6",
+              "residual": 23.0,
+              "mean_games": 5360.4,
+              "games_ratio": 0.983,
+              "win_rate": 0.464,
+              "n": 22
+            },
+            {
+              "rank": "7",
+              "residual": 886.1,
+              "mean_games": 5058.0,
+              "games_ratio": 0.927,
+              "win_rate": 0.484,
+              "n": 20
+            }
+          ]
+        },
+        "AT等": {
+          "peak_rank": "5",
+          "rows": [
+            {
+              "rank": "1",
+              "residual": -254.2,
+              "mean_games": 5759.5,
+              "games_ratio": 1.056,
+              "win_rate": 0.415,
+              "n": 79
+            },
+            {
+              "rank": "2",
+              "residual": 191.4,
+              "mean_games": 5600.0,
+              "games_ratio": 1.027,
+              "win_rate": 0.49,
+              "n": 76
+            },
+            {
+              "rank": "3",
+              "residual": -628.4,
+              "mean_games": 5505.0,
+              "games_ratio": 1.009,
+              "win_rate": 0.471,
+              "n": 75
+            },
+            {
+              "rank": "4",
+              "residual": 184.4,
+              "mean_games": 5347.3,
+              "games_ratio": 0.98,
+              "win_rate": 0.49,
+              "n": 73
+            },
+            {
+              "rank": "5",
+              "residual": 799.6,
+              "mean_games": 5445.4,
+              "games_ratio": 0.998,
+              "win_rate": 0.489,
+              "n": 68
+            },
+            {
+              "rank": "6",
+              "residual": -115.9,
+              "mean_games": 5360.4,
+              "games_ratio": 0.983,
+              "win_rate": 0.464,
+              "n": 60
+            },
+            {
+              "rank": "7",
+              "residual": 737.9,
+              "mean_games": 5058.0,
+              "games_ratio": 0.927,
+              "win_rate": 0.484,
+              "n": 44
+            },
+            {
+              "rank": "8",
+              "residual": -1171.4,
+              "mean_games": 5316.6,
+              "games_ratio": 0.975,
+              "win_rate": 0.333,
+              "n": 29
+            }
+          ]
+        },
+        "ノーマル": {
+          "peak_rank": "3",
+          "rows": [
+            {
+              "rank": "1",
+              "residual": -268.4,
+              "mean_games": 5759.5,
+              "games_ratio": 1.056,
+              "win_rate": 0.415,
+              "n": 27
+            },
+            {
+              "rank": "2",
+              "residual": -105.4,
+              "mean_games": 5600.0,
+              "games_ratio": 1.027,
+              "win_rate": 0.49,
+              "n": 27
+            },
+            {
+              "rank": "3",
+              "residual": 268.0,
+              "mean_games": 5505.0,
+              "games_ratio": 1.009,
+              "win_rate": 0.471,
+              "n": 28
+            },
+            {
+              "rank": "4",
+              "residual": 137.3,
+              "mean_games": 5347.3,
+              "games_ratio": 0.98,
+              "win_rate": 0.49,
+              "n": 29
+            },
+            {
+              "rank": "5",
+              "residual": -215.7,
+              "mean_games": 5445.4,
+              "games_ratio": 0.998,
+              "win_rate": 0.489,
+              "n": 26
+            },
+            {
+              "rank": "6",
+              "residual": 132.2,
+              "mean_games": 5360.4,
+              "games_ratio": 0.983,
+              "win_rate": 0.464,
+              "n": 24
+            },
+            {
+              "rank": "7",
+              "residual": 178.5,
+              "mean_games": 5058.0,
+              "games_ratio": 0.927,
+              "win_rate": 0.484,
+              "n": 18
+            }
+          ]
+        },
+        "全館": {
+          "peak_rank": "7",
+          "rows": [
+            {
+              "rank": "1",
+              "residual": -257.8,
+              "mean_games": 5759.5,
+              "games_ratio": 1.056,
+              "win_rate": 0.415,
+              "n": 106
+            },
+            {
+              "rank": "2",
+              "residual": 113.6,
+              "mean_games": 5600.0,
+              "games_ratio": 1.027,
+              "win_rate": 0.49,
+              "n": 103
+            },
+            {
+              "rank": "3",
+              "residual": -384.8,
+              "mean_games": 5505.0,
+              "games_ratio": 1.009,
+              "win_rate": 0.471,
+              "n": 103
+            },
+            {
+              "rank": "4",
+              "residual": 171.0,
+              "mean_games": 5347.3,
+              "games_ratio": 0.98,
+              "win_rate": 0.49,
+              "n": 102
+            },
+            {
+              "rank": "5",
+              "residual": 518.8,
+              "mean_games": 5445.4,
+              "games_ratio": 0.998,
+              "win_rate": 0.489,
+              "n": 94
+            },
+            {
+              "rank": "6",
+              "residual": -45.0,
+              "mean_games": 5360.4,
+              "games_ratio": 0.983,
+              "win_rate": 0.464,
+              "n": 84
+            },
+            {
+              "rank": "7",
+              "residual": 575.5,
+              "mean_games": 5058.0,
+              "games_ratio": 0.927,
+              "win_rate": 0.484,
+              "n": 62
+            },
+            {
+              "rank": "8",
+              "residual": -857.3,
+              "mean_games": 5316.6,
+              "games_ratio": 0.975,
+              "win_rate": 0.333,
+              "n": 39
+            },
+            {
+              "rank": "9",
+              "residual": -464.4,
+              "mean_games": 5128.4,
+              "games_ratio": 0.94,
+              "win_rate": 0.333,
+              "n": 12
+            }
+          ]
+        }
+      }
+    },
+    "last_digit": {
+      "rows": [
+        {
+          "digit": "0",
+          "mean_diff": 266.7,
+          "mean_games": 5711.2,
+          "games_ratio": 1.047,
+          "win_rate": 0.417,
+          "n": 72,
+          "n_zorome": 7
+        },
+        {
+          "digit": "1",
+          "mean_diff": 439.2,
+          "mean_games": 5411.3,
+          "games_ratio": 0.992,
+          "win_rate": 0.473,
+          "n": 74,
+          "n_zorome": 8
+        },
+        {
+          "digit": "2",
+          "mean_diff": -231.9,
+          "mean_games": 5380.0,
+          "games_ratio": 0.986,
+          "win_rate": 0.375,
+          "n": 72,
+          "n_zorome": 8
+        },
+        {
+          "digit": "3",
+          "mean_diff": 394.4,
+          "mean_games": 5311.2,
+          "games_ratio": 0.974,
+          "win_rate": 0.394,
+          "n": 71,
+          "n_zorome": 8
+        },
+        {
+          "digit": "4",
+          "mean_diff": -31.0,
+          "mean_games": 5316.8,
+          "games_ratio": 0.975,
+          "win_rate": 0.465,
+          "n": 71,
+          "n_zorome": 8
+        },
+        {
+          "digit": "5",
+          "mean_diff": 290.1,
+          "mean_games": 5437.6,
+          "games_ratio": 0.997,
+          "win_rate": 0.507,
+          "n": 71,
+          "n_zorome": 7
+        },
+        {
+          "digit": "6",
+          "mean_diff": 785.9,
+          "mean_games": 5488.3,
+          "games_ratio": 1.006,
+          "win_rate": 0.479,
+          "n": 71,
+          "n_zorome": 6
+        },
+        {
+          "digit": "7",
+          "mean_diff": 347.9,
+          "mean_games": 5535.3,
+          "games_ratio": 1.015,
+          "win_rate": 0.465,
+          "n": 71,
+          "n_zorome": 6
+        },
+        {
+          "digit": "8",
+          "mean_diff": 1094.4,
+          "mean_games": 5663.2,
+          "games_ratio": 1.038,
+          "win_rate": 0.563,
+          "n": 71,
+          "n_zorome": 6
+        },
+        {
+          "digit": "9",
+          "mean_diff": 188.7,
+          "mean_games": 5288.0,
+          "games_ratio": 0.97,
+          "win_rate": 0.479,
+          "n": 71,
+          "n_zorome": 6
+        }
+      ],
+      "decoy_warning": "二値flag台数だけで順位付けしない。ホールは本命末尾を隠すため別末尾に少数の高設定を混ぜる撒き餌のリスクがある（フェイク末尾）。"
+    },
+    "machine_count": {
+      "rows": [
+        {
+          "count": 1,
+          "mean_diff": -550.0,
+          "mean_games": 4548.0,
+          "games_ratio": 0.834,
+          "win_rate": 0.25,
+          "n": 4
+        },
+        {
+          "count": 2,
+          "mean_diff": 329.2,
+          "mean_games": 4992.3,
+          "games_ratio": 0.915,
+          "win_rate": 0.458,
+          "n": 24
+        },
+        {
+          "count": 3,
+          "mean_diff": 283.3,
+          "mean_games": 5039.3,
+          "games_ratio": 0.924,
+          "win_rate": 0.533,
+          "n": 30
+        },
+        {
+          "count": 4,
+          "mean_diff": 573.1,
+          "mean_games": 4740.9,
+          "games_ratio": 0.869,
+          "win_rate": 0.5,
+          "n": 52
+        },
+        {
+          "count": 5,
+          "mean_diff": -100.0,
+          "mean_games": 5077.3,
+          "games_ratio": 0.931,
+          "win_rate": 0.4,
+          "n": 40
+        },
+        {
+          "count": 6,
+          "mean_diff": 1212.5,
+          "mean_games": 5678.8,
+          "games_ratio": 1.041,
+          "win_rate": 0.5,
+          "n": 24
+        },
+        {
+          "count": 7,
+          "mean_diff": -200.0,
+          "mean_games": 6252.7,
+          "games_ratio": 1.146,
+          "win_rate": 0.571,
+          "n": 7
+        },
+        {
+          "count": 8,
+          "mean_diff": -16.7,
+          "mean_games": 5086.1,
+          "games_ratio": 0.932,
+          "win_rate": 0.5,
+          "n": 48
+        },
+        {
+          "count": 9,
+          "mean_diff": -173.3,
+          "mean_games": 5808.3,
+          "games_ratio": 1.065,
+          "win_rate": 0.4,
+          "n": 45
+        },
+        {
+          "count": 10,
+          "mean_diff": 635.0,
+          "mean_games": 5377.8,
+          "games_ratio": 0.986,
+          "win_rate": 0.4,
+          "n": 40
+        },
+        {
+          "count": 13,
+          "mean_diff": -276.9,
+          "mean_games": 5973.5,
+          "games_ratio": 1.095,
+          "win_rate": 0.385,
+          "n": 26
+        },
+        {
+          "count": 14,
+          "mean_diff": -542.9,
+          "mean_games": 5365.2,
+          "games_ratio": 0.984,
+          "win_rate": 0.214,
+          "n": 14
+        },
+        {
+          "count": 15,
+          "mean_diff": 1820.0,
+          "mean_games": 6045.6,
+          "games_ratio": 1.108,
+          "win_rate": 0.467,
+          "n": 30
+        },
+        {
+          "count": 16,
+          "mean_diff": 206.2,
+          "mean_games": 5742.1,
+          "games_ratio": 1.053,
+          "win_rate": 0.375,
+          "n": 16
+        },
+        {
+          "count": 18,
+          "mean_diff": 83.3,
+          "mean_games": 7347.7,
+          "games_ratio": 1.347,
+          "win_rate": 0.333,
+          "n": 18
+        },
+        {
+          "count": 21,
+          "mean_diff": -740.5,
+          "mean_games": 4788.1,
+          "games_ratio": 0.878,
+          "win_rate": 0.286,
+          "n": 42
+        },
+        {
+          "count": 23,
+          "mean_diff": 300.0,
+          "mean_games": 6928.1,
+          "games_ratio": 1.27,
+          "win_rate": 0.652,
+          "n": 23
+        },
+        {
+          "count": 24,
+          "mean_diff": 598.6,
+          "mean_games": 5185.2,
+          "games_ratio": 0.951,
+          "win_rate": 0.528,
+          "n": 72
+        },
+        {
+          "count": 38,
+          "mean_diff": 468.4,
+          "mean_games": 6465.4,
+          "games_ratio": 1.185,
+          "win_rate": 0.579,
+          "n": 38
+        },
+        {
+          "count": 39,
+          "mean_diff": -59.0,
+          "mean_games": 7141.1,
+          "games_ratio": 1.309,
+          "win_rate": 0.436,
+          "n": 39
+        },
+        {
+          "count": 41,
+          "mean_diff": 1168.3,
+          "mean_games": 4217.2,
+          "games_ratio": 0.773,
+          "win_rate": 0.439,
+          "n": 41
+        },
+        {
+          "count": 42,
+          "mean_diff": 990.5,
+          "mean_games": 4609.2,
+          "games_ratio": 0.845,
+          "win_rate": 0.595,
+          "n": 42
+        }
+      ]
+    },
+    "row": {
+      "applicable": true,
+      "columns": [
+        {
+          "section": "3234-3249",
+          "n": 16,
+          "mean_diff": 3056.2,
+          "mean_games": 3829.8,
+          "games_ratio": 0.702,
+          "win_rate": 0.5,
+          "top_single_ratio": 4.84,
+          "first_machine_number": 3234
+        },
+        {
+          "section": "3088-3102",
+          "n": 15,
+          "mean_diff": 2426.7,
+          "mean_games": 7272.7,
+          "games_ratio": 1.333,
+          "win_rate": 0.467,
+          "top_single_ratio": 6.3,
+          "first_machine_number": 3088
+        },
+        {
+          "section": "2023-2031",
+          "n": 9,
+          "mean_diff": 1688.9,
+          "mean_games": 4566.3,
+          "games_ratio": 0.837,
+          "win_rate": 0.778,
+          "top_single_ratio": 4.56,
+          "first_machine_number": 2023
+        },
+        {
+          "section": "2089-2101",
+          "n": 13,
+          "mean_diff": 1523.1,
+          "mean_games": 5070.4,
+          "games_ratio": 0.93,
+          "win_rate": 0.615,
+          "top_single_ratio": 6.37,
+          "first_machine_number": 2089
+        },
+        {
+          "section": "2011-2022",
+          "n": 12,
+          "mean_diff": 1458.3,
+          "mean_games": 4308.6,
+          "games_ratio": 0.79,
+          "win_rate": 0.667,
+          "top_single_ratio": 5.21,
+          "first_machine_number": 2011
+        },
+        {
+          "section": "2032-2040",
+          "n": 9,
+          "mean_diff": 1444.4,
+          "mean_games": 4510.8,
+          "games_ratio": 0.827,
+          "win_rate": 0.556,
+          "top_single_ratio": 5.4,
+          "first_machine_number": 2032
+        },
+        {
+          "section": "2213-2229",
+          "n": 17,
+          "mean_diff": 1252.9,
+          "mean_games": 4881.2,
+          "games_ratio": 0.895,
+          "win_rate": 0.588,
+          "top_single_ratio": 5.67,
+          "first_machine_number": 2213
+        },
+        {
+          "section": "3250-3264",
+          "n": 15,
+          "mean_diff": 1213.3,
+          "mean_games": 4818.5,
+          "games_ratio": 0.883,
+          "win_rate": 0.467,
+          "top_single_ratio": 13.85,
+          "first_machine_number": 3250
+        },
+        {
+          "section": "2053-2064",
+          "n": 12,
+          "mean_diff": 1150.0,
+          "mean_games": 4811.3,
+          "games_ratio": 0.882,
+          "win_rate": 0.5,
+          "top_single_ratio": 10.87,
+          "first_machine_number": 2053
+        },
+        {
+          "section": "2314-2329",
+          "n": 16,
+          "mean_diff": 1125.0,
+          "mean_games": 3673.6,
+          "games_ratio": 0.674,
+          "win_rate": 0.438,
+          "top_single_ratio": 16.09,
+          "first_machine_number": 2314
+        }
+      ],
+      "note": "「列」はmachine_layout_history.sectionの島単位。角番（島内の順位）・並び（島内の連番サブブロック）とは異なり島全体を1塊として見る。top_single_ratioが1に近いほど列全体型（蒲田7曜日知見の月）、大きいほど列1台型（同・金）に近い。"
+    },
+    "rb_settings": {
+      "coverage_pct": 0.326,
+      "machines": [
+        {
+          "name": "少女☆歌劇 レヴュースタァライト ‐The SLOT‐",
+          "number": 2346,
+          "category": "A+AT",
+          "games": 7797,
+          "bb": 40,
+          "rb": 63,
+          "diff": 1600,
+          "win": true,
+          "posterior": {
+            "1": 0.0002,
+            "2": 0.0006,
+            "4": 0.0343,
+            "5": 0.1575,
+            "6": 0.8074
+          },
+          "best_setting": "6",
+          "best_prob": 0.8074,
+          "high_prob": 0.9649,
+          "below_min_games": false
+        },
+        {
+          "name": "少女☆歌劇 レヴュースタァライト ‐The SLOT‐",
+          "number": 2347,
+          "category": "A+AT",
+          "games": 7809,
+          "bb": 51,
+          "rb": 46,
+          "diff": 0,
+          "win": false,
+          "posterior": {
+            "1": 0.0005,
+            "2": 0.0011,
+            "4": 0.0462,
+            "5": 0.1803,
+            "6": 0.7719
+          },
+          "best_setting": "6",
+          "best_prob": 0.7719,
+          "high_prob": 0.9521,
+          "below_min_games": false
+        },
+        {
+          "name": "交響詩篇エウレカセブン HI-EVOLUTION ZERO TYPE‐ART",
+          "number": 2130,
+          "category": "A+AT",
+          "games": 8136,
+          "bb": 50,
+          "rb": 49,
+          "diff": 1600,
+          "win": true,
+          "posterior": {
+            "1": 0.0021,
+            "2": 0.0036,
+            "3": 0.0088,
+            "4": 0.0338,
+            "5": 0.1203,
+            "6": 0.8314
+          },
+          "best_setting": "6",
+          "best_prob": 0.8314,
+          "high_prob": 0.9517,
+          "below_min_games": false
+        },
+        {
+          "name": "ネオアイムジャグラーEX",
+          "number": 3326,
+          "category": "ノーマル",
+          "games": 9269,
+          "bb": 33,
+          "rb": 42,
+          "diff": 1000,
+          "win": true,
+          "posterior": {
+            "1": 0.0002,
+            "2": 0.0016,
+            "3": 0.0364,
+            "4": 0.0646,
+            "5": 0.4593,
+            "6": 0.4378
+          },
+          "best_setting": "5",
+          "best_prob": 0.4593,
+          "high_prob": 0.8972,
+          "below_min_games": false
+        },
+        {
+          "name": "少女☆歌劇 レヴュースタァライト ‐The SLOT‐",
+          "number": 2348,
+          "category": "A+AT",
+          "games": 5101,
+          "bb": 24,
+          "rb": 33,
+          "diff": -400,
+          "win": false,
+          "posterior": {
+            "1": 0.012,
+            "2": 0.0182,
+            "4": 0.1304,
+            "5": 0.2672,
+            "6": 0.5722
+          },
+          "best_setting": "6",
+          "best_prob": 0.5722,
+          "high_prob": 0.8394,
+          "below_min_games": false
+        },
+        {
+          "name": "キングハナハナ-30",
+          "number": 3002,
+          "category": "ノーマル",
+          "games": 8543,
+          "bb": 39,
+          "rb": 33,
+          "diff": 3500,
+          "win": true,
+          "posterior": {
+            "1": 0.0017,
+            "2": 0.0092,
+            "3": 0.0368,
+            "4": 0.1222,
+            "5": 0.2928,
+            "6": 0.5373
+          },
+          "best_setting": "6",
+          "best_prob": 0.5373,
+          "high_prob": 0.8301,
+          "below_min_games": false
+        },
+        {
+          "name": "ファンキージャグラー2",
+          "number": 3149,
+          "category": "ノーマル",
+          "games": 8347,
+          "bb": 30,
+          "rb": 38,
+          "diff": 1400,
+          "win": true,
+          "posterior": {
+            "1": 0.0013,
+            "2": 0.0052,
+            "3": 0.0291,
+            "4": 0.1511,
+            "5": 0.3014,
+            "6": 0.5118
+          },
+          "best_setting": "6",
+          "best_prob": 0.5118,
+          "high_prob": 0.8132,
+          "below_min_games": false
+        },
+        {
+          "name": "ディスクアップ ULTRAREMIX",
+          "number": 2161,
+          "category": "A+AT",
+          "games": 7708,
+          "bb": 25,
+          "rb": 24,
+          "diff": 300,
+          "win": true,
+          "posterior": {
+            "1": 0.089,
+            "2": 0.1183,
+            "5": 0.3338,
+            "6": 0.4589
+          },
+          "best_setting": "6",
+          "best_prob": 0.4589,
+          "high_prob": 0.7927,
+          "below_min_games": false
+        },
+        {
+          "name": "ネオアイムジャグラーEX",
+          "number": 3355,
+          "category": "ノーマル",
+          "games": 7778,
+          "bb": 25,
+          "rb": 33,
+          "diff": 200,
+          "win": true,
+          "posterior": {
+            "1": 0.0028,
+            "2": 0.0107,
+            "3": 0.0955,
+            "4": 0.1239,
+            "5": 0.3993,
+            "6": 0.3677
+          },
+          "best_setting": "5",
+          "best_prob": 0.3993,
+          "high_prob": 0.767,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーⅥ",
+          "number": 3140,
+          "category": "ノーマル",
+          "games": 9099,
+          "bb": 45,
+          "rb": 35,
+          "diff": 3200,
+          "win": true,
+          "posterior": {
+            "1": 0.0048,
+            "2": 0.0111,
+            "3": 0.0504,
+            "4": 0.1928,
+            "5": 0.3672,
+            "6": 0.3737
+          },
+          "best_setting": "6",
+          "best_prob": 0.3737,
+          "high_prob": 0.741,
+          "below_min_games": false
+        },
+        {
+          "name": "A‐SLOT+ 異世界かるてっと",
+          "number": 2178,
+          "category": "BT",
+          "games": 6091,
+          "bb": 38,
+          "rb": 35,
+          "diff": 1600,
+          "win": true,
+          "posterior": {
+            "1": 0.126,
+            "2": 0.1556,
+            "5": 0.333,
+            "6": 0.3854
+          },
+          "best_setting": "6",
+          "best_prob": 0.3854,
+          "high_prob": 0.7184,
+          "below_min_games": false
+        },
+        {
+          "name": "ファンキージャグラー2",
+          "number": 3153,
+          "category": "ノーマル",
+          "games": 8406,
+          "bb": 48,
+          "rb": 26,
+          "diff": 4100,
+          "win": true,
+          "posterior": {
+            "1": 0.0196,
+            "2": 0.0496,
+            "3": 0.0929,
+            "4": 0.1678,
+            "5": 0.2578,
+            "6": 0.4123
+          },
+          "best_setting": "6",
+          "best_prob": 0.4123,
+          "high_prob": 0.6701,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーV",
+          "number": 3278,
+          "category": "ノーマル",
+          "games": 8836,
+          "bb": 31,
+          "rb": 38,
+          "diff": 1200,
+          "win": true,
+          "posterior": {
+            "1": 0.0045,
+            "2": 0.0115,
+            "3": 0.0707,
+            "4": 0.2565,
+            "5": 0.3186,
+            "6": 0.3382
+          },
+          "best_setting": "6",
+          "best_prob": 0.3382,
+          "high_prob": 0.6568,
+          "below_min_games": false
+        },
+        {
+          "name": "ファンキージャグラー2",
+          "number": 3158,
+          "category": "ノーマル",
+          "games": 8057,
+          "bb": 40,
+          "rb": 27,
+          "diff": 3000,
+          "win": true,
+          "posterior": {
+            "1": 0.0201,
+            "2": 0.0485,
+            "3": 0.103,
+            "4": 0.2006,
+            "5": 0.2832,
+            "6": 0.3447
+          },
+          "best_setting": "6",
+          "best_prob": 0.3447,
+          "high_prob": 0.6279,
+          "below_min_games": false
+        },
+        {
+          "name": "ネオアイムジャグラーEX",
+          "number": 3338,
+          "category": "ノーマル",
+          "games": 7282,
+          "bb": 29,
+          "rb": 28,
+          "diff": 1300,
+          "win": true,
+          "posterior": {
+            "1": 0.0109,
+            "2": 0.031,
+            "3": 0.1389,
+            "4": 0.1928,
+            "5": 0.3116,
+            "6": 0.3149
+          },
+          "best_setting": "6",
+          "best_prob": 0.3149,
+          "high_prob": 0.6265,
+          "below_min_games": false
+        },
+        {
+          "name": "ネオアイムジャグラーEX",
+          "number": 3327,
+          "category": "ノーマル",
+          "games": 9307,
+          "bb": 35,
+          "rb": 35,
+          "diff": 500,
+          "win": true,
+          "posterior": {
+            "1": 0.0073,
+            "2": 0.0253,
+            "3": 0.1486,
+            "4": 0.1998,
+            "5": 0.3124,
+            "6": 0.3066
+          },
+          "best_setting": "5",
+          "best_prob": 0.3124,
+          "high_prob": 0.619,
+          "below_min_games": false
+        },
+        {
+          "name": "ネオアイムジャグラーEX",
+          "number": 3330,
+          "category": "ノーマル",
+          "games": 8272,
+          "bb": 34,
+          "rb": 31,
+          "diff": 2100,
+          "win": true,
+          "posterior": {
+            "1": 0.0098,
+            "2": 0.0301,
+            "3": 0.1422,
+            "4": 0.2071,
+            "5": 0.3011,
+            "6": 0.3097
+          },
+          "best_setting": "6",
+          "best_prob": 0.3097,
+          "high_prob": 0.6108,
+          "below_min_games": false
+        },
+        {
+          "name": "ゴーゴージャグラー3",
+          "number": 3168,
+          "category": "ノーマル",
+          "games": 8040,
+          "bb": 40,
+          "rb": 32,
+          "diff": 2700,
+          "win": true,
+          "posterior": {
+            "1": 0.0329,
+            "2": 0.0584,
+            "3": 0.1065,
+            "4": 0.1978,
+            "5": 0.2613,
+            "6": 0.3432
+          },
+          "best_setting": "6",
+          "best_prob": 0.3432,
+          "high_prob": 0.6044,
+          "below_min_games": false
+        },
+        {
+          "name": "ミスタージャグラー",
+          "number": 3315,
+          "category": "ノーマル",
+          "games": 7767,
+          "bb": 32,
+          "rb": 31,
+          "diff": 2200,
+          "win": true,
+          "posterior": {
+            "1": 0.0293,
+            "2": 0.0508,
+            "3": 0.0961,
+            "4": 0.2202,
+            "5": 0.3083,
+            "6": 0.2953
+          },
+          "best_setting": "5",
+          "best_prob": 0.3083,
+          "high_prob": 0.6036,
+          "below_min_games": false
+        },
+        {
+          "name": "スマスロ サンダーV",
+          "number": 2174,
+          "category": "BT",
+          "games": 7821,
+          "bb": 30,
+          "rb": 23,
+          "diff": 500,
+          "win": true,
+          "posterior": {
+            "1": 0.1589,
+            "2": 0.2379,
+            "5": 0.3102,
+            "6": 0.2931
+          },
+          "best_setting": "5",
+          "best_prob": 0.3102,
+          "high_prob": 0.6032,
+          "below_min_games": false
+        },
+        {
+          "name": "新ハナビ",
+          "number": 2152,
+          "category": "ノーマル",
+          "games": 7461,
+          "bb": 25,
+          "rb": 28,
+          "diff": -200,
+          "win": false,
+          "posterior": {
+            "1": 0.1622,
+            "2": 0.238,
+            "5": 0.2876,
+            "6": 0.3122
+          },
+          "best_setting": "6",
+          "best_prob": 0.3122,
+          "high_prob": 0.5998,
+          "below_min_games": false
+        },
+        {
+          "name": "ディスクアップ ULTRAREMIX",
+          "number": 2163,
+          "category": "A+AT",
+          "games": 5851,
+          "bb": 23,
+          "rb": 15,
+          "diff": 1900,
+          "win": true,
+          "posterior": {
+            "1": 0.1914,
+            "2": 0.2194,
+            "5": 0.3142,
+            "6": 0.275
+          },
+          "best_setting": "5",
+          "best_prob": 0.3142,
+          "high_prob": 0.5892,
+          "below_min_games": false
+        },
+        {
+          "name": "ディスクアップ ULTRAREMIX",
+          "number": 2159,
+          "category": "A+AT",
+          "games": 6476,
+          "bb": 23,
+          "rb": 17,
+          "diff": 700,
+          "win": true,
+          "posterior": {
+            "1": 0.1921,
+            "2": 0.2211,
+            "5": 0.3221,
+            "6": 0.2648
+          },
+          "best_setting": "5",
+          "best_prob": 0.3221,
+          "high_prob": 0.5869,
+          "below_min_games": false
+        },
+        {
+          "name": "タコスロ",
+          "number": 2168,
+          "category": "BT",
+          "games": 5683,
+          "bb": 19,
+          "rb": 20,
+          "diff": 700,
+          "win": true,
+          "posterior": {
+            "1": 0.1892,
+            "2": 0.2289,
+            "5": 0.2816,
+            "6": 0.3003
+          },
+          "best_setting": "6",
+          "best_prob": 0.3003,
+          "high_prob": 0.5819,
+          "below_min_games": false
+        },
+        {
+          "name": "ネオアイムジャグラーEX",
+          "number": 3341,
+          "category": "ノーマル",
+          "games": 8084,
+          "bb": 23,
+          "rb": 31,
+          "diff": -1000,
+          "win": false,
+          "posterior": {
+            "1": 0.0127,
+            "2": 0.0359,
+            "3": 0.1871,
+            "4": 0.1845,
+            "5": 0.309,
+            "6": 0.2708
+          },
+          "best_setting": "5",
+          "best_prob": 0.309,
+          "high_prob": 0.5798,
+          "below_min_games": false
+        },
+        {
+          "name": "喰霊‐零‐Re",
+          "number": 2345,
+          "category": "A+AT",
+          "games": 8073,
+          "bb": 42,
+          "rb": 18,
+          "diff": 4600,
+          "win": true,
+          "posterior": {
+            "1": 0.0655,
+            "2": 0.0737,
+            "3": 0.1044,
+            "4": 0.1769,
+            "5": 0.2367,
+            "6": 0.3428
+          },
+          "best_setting": "6",
+          "best_prob": 0.3428,
+          "high_prob": 0.5795,
+          "below_min_games": false
+        },
+        {
+          "name": "ディスクアップ ULTRAREMIX",
+          "number": 2160,
+          "category": "A+AT",
+          "games": 7067,
+          "bb": 22,
+          "rb": 19,
+          "diff": -400,
+          "win": false,
+          "posterior": {
+            "1": 0.197,
+            "2": 0.2263,
+            "5": 0.3291,
+            "6": 0.2476
+          },
+          "best_setting": "5",
+          "best_prob": 0.3291,
+          "high_prob": 0.5767,
+          "below_min_games": false
+        },
+        {
+          "name": "ネオアイムジャグラーEX",
+          "number": 3337,
+          "category": "ノーマル",
+          "games": 8343,
+          "bb": 31,
+          "rb": 31,
+          "diff": 900,
+          "win": true,
+          "posterior": {
+            "1": 0.0126,
+            "2": 0.0366,
+            "3": 0.1668,
+            "4": 0.2104,
+            "5": 0.2901,
+            "6": 0.2835
+          },
+          "best_setting": "5",
+          "best_prob": 0.2901,
+          "high_prob": 0.5735,
+          "below_min_games": false
+        },
+        {
+          "name": "ゴーゴージャグラー3",
+          "number": 3179,
+          "category": "ノーマル",
+          "games": 8934,
+          "bb": 39,
+          "rb": 36,
+          "diff": 1600,
+          "win": true,
+          "posterior": {
+            "1": 0.0306,
+            "2": 0.0581,
+            "3": 0.1151,
+            "4": 0.2276,
+            "5": 0.278,
+            "6": 0.2906
+          },
+          "best_setting": "6",
+          "best_prob": 0.2906,
+          "high_prob": 0.5686,
+          "below_min_games": false
+        },
+        {
+          "name": "ウルトラミラクルジャグラー",
+          "number": 3305,
+          "category": "ノーマル",
+          "games": 8293,
+          "bb": 38,
+          "rb": 28,
+          "diff": 2500,
+          "win": true,
+          "posterior": {
+            "1": 0.0281,
+            "2": 0.0519,
+            "3": 0.1314,
+            "4": 0.223,
+            "5": 0.2797,
+            "6": 0.2858
+          },
+          "best_setting": "6",
+          "best_prob": 0.2858,
+          "high_prob": 0.5655,
+          "below_min_games": false
+        },
+        {
+          "name": "ゴーゴージャグラー3",
+          "number": 3169,
+          "category": "ノーマル",
+          "games": 6728,
+          "bb": 26,
+          "rb": 29,
+          "diff": 800,
+          "win": true,
+          "posterior": {
+            "1": 0.0323,
+            "2": 0.0584,
+            "3": 0.1127,
+            "4": 0.2321,
+            "5": 0.2883,
+            "6": 0.2761
+          },
+          "best_setting": "5",
+          "best_prob": 0.2883,
+          "high_prob": 0.5645,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーV",
+          "number": 3122,
+          "category": "ノーマル",
+          "games": 8908,
+          "bb": 36,
+          "rb": 34,
+          "diff": 1300,
+          "win": true,
+          "posterior": {
+            "1": 0.0151,
+            "2": 0.0313,
+            "3": 0.1167,
+            "4": 0.284,
+            "5": 0.3317,
+            "6": 0.2213
+          },
+          "best_setting": "5",
+          "best_prob": 0.3317,
+          "high_prob": 0.553,
+          "below_min_games": false
+        },
+        {
+          "name": "SHAKE BONUS TRIGGER",
+          "number": 2169,
+          "category": "BT",
+          "games": 8494,
+          "bb": 31,
+          "rb": 25,
+          "diff": 1200,
+          "win": true,
+          "posterior": {
+            "1": 0.1221,
+            "2": 0.3271,
+            "5": 0.1734,
+            "6": 0.3773
+          },
+          "best_setting": "6",
+          "best_prob": 0.3773,
+          "high_prob": 0.5507,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーV",
+          "number": 3290,
+          "category": "ノーマル",
+          "games": 8862,
+          "bb": 33,
+          "rb": 35,
+          "diff": 1700,
+          "win": true,
+          "posterior": {
+            "1": 0.013,
+            "2": 0.0281,
+            "3": 0.1169,
+            "4": 0.2945,
+            "5": 0.3209,
+            "6": 0.2267
+          },
+          "best_setting": "5",
+          "best_prob": 0.3209,
+          "high_prob": 0.5476,
+          "below_min_games": false
+        },
+        {
+          "name": "ウルトラミラクルジャグラー",
+          "number": 3306,
+          "category": "ノーマル",
+          "games": 8256,
+          "bb": 30,
+          "rb": 32,
+          "diff": 900,
+          "win": true,
+          "posterior": {
+            "1": 0.0211,
+            "2": 0.0406,
+            "3": 0.1546,
+            "4": 0.2419,
+            "5": 0.3086,
+            "6": 0.2333
+          },
+          "best_setting": "5",
+          "best_prob": 0.3086,
+          "high_prob": 0.5419,
+          "below_min_games": false
+        },
+        {
+          "name": "ディスクアップ2",
+          "number": 2153,
+          "category": "A+AT",
+          "games": 6958,
+          "bb": 25,
+          "rb": 20,
+          "diff": 1800,
+          "win": true,
+          "posterior": {
+            "1": 0.225,
+            "2": 0.2419,
+            "5": 0.2641,
+            "6": 0.2689
+          },
+          "best_setting": "6",
+          "best_prob": 0.2689,
+          "high_prob": 0.5331,
+          "below_min_games": false
+        },
+        {
+          "name": "アレックス ブライト",
+          "number": 2185,
+          "category": "BT",
+          "games": 5520,
+          "bb": 25,
+          "rb": 14,
+          "diff": 2800,
+          "win": true,
+          "posterior": {
+            "1": 0.2143,
+            "2": 0.2533,
+            "5": 0.2945,
+            "6": 0.2379
+          },
+          "best_setting": "5",
+          "best_prob": 0.2945,
+          "high_prob": 0.5324,
+          "below_min_games": false
+        },
+        {
+          "name": "ゴーゴージャグラー3",
+          "number": 3189,
+          "category": "ノーマル",
+          "games": 7843,
+          "bb": 22,
+          "rb": 35,
+          "diff": -1100,
+          "win": false,
+          "posterior": {
+            "1": 0.0239,
+            "2": 0.0496,
+            "3": 0.1143,
+            "4": 0.2814,
+            "5": 0.3201,
+            "6": 0.2107
+          },
+          "best_setting": "5",
+          "best_prob": 0.3201,
+          "high_prob": 0.5308,
+          "below_min_games": false
+        },
+        {
+          "name": "ディスクアップ ULTRAREMIX",
+          "number": 2156,
+          "category": "A+AT",
+          "games": 7948,
+          "bb": 31,
+          "rb": 19,
+          "diff": 2000,
+          "win": true,
+          "posterior": {
+            "1": 0.222,
+            "2": 0.2532,
+            "5": 0.3187,
+            "6": 0.2061
+          },
+          "best_setting": "5",
+          "best_prob": 0.3187,
+          "high_prob": 0.5248,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーⅥ",
+          "number": 3137,
+          "category": "ノーマル",
+          "games": 9417,
+          "bb": 50,
+          "rb": 30,
+          "diff": 4100,
+          "win": true,
+          "posterior": {
+            "1": 0.0365,
+            "2": 0.0609,
+            "3": 0.1316,
+            "4": 0.2476,
+            "5": 0.3627,
+            "6": 0.1607
+          },
+          "best_setting": "5",
+          "best_prob": 0.3627,
+          "high_prob": 0.5234,
+          "below_min_games": false
+        },
+        {
+          "name": "キングハナハナ-30",
+          "number": 3003,
+          "category": "ノーマル",
+          "games": 7891,
+          "bb": 37,
+          "rb": 21,
+          "diff": 2700,
+          "win": true,
+          "posterior": {
+            "1": 0.0354,
+            "2": 0.0801,
+            "3": 0.1451,
+            "4": 0.2189,
+            "5": 0.2617,
+            "6": 0.2589
+          },
+          "best_setting": "5",
+          "best_prob": 0.2617,
+          "high_prob": 0.5205,
+          "below_min_games": false
+        },
+        {
+          "name": "ネオアイムジャグラーEX",
+          "number": 3348,
+          "category": "ノーマル",
+          "games": 3770,
+          "bb": 11,
+          "rb": 15,
+          "diff": -400,
+          "win": false,
+          "posterior": {
+            "1": 0.0438,
+            "2": 0.0752,
+            "3": 0.1799,
+            "4": 0.1857,
+            "5": 0.265,
+            "6": 0.2503
+          },
+          "best_setting": "5",
+          "best_prob": 0.265,
+          "high_prob": 0.5153,
+          "below_min_games": false
+        },
+        {
+          "name": "SHAKE BONUS TRIGGER",
+          "number": 2171,
+          "category": "BT",
+          "games": 7627,
+          "bb": 31,
+          "rb": 17,
+          "diff": 3300,
+          "win": true,
+          "posterior": {
+            "1": 0.2742,
+            "2": 0.2142,
+            "5": 0.3315,
+            "6": 0.1801
+          },
+          "best_setting": "5",
+          "best_prob": 0.3315,
+          "high_prob": 0.5117,
+          "below_min_games": false
+        },
+        {
+          "name": "ウルトラミラクルジャグラー",
+          "number": 3307,
+          "category": "ノーマル",
+          "games": 8848,
+          "bb": 36,
+          "rb": 31,
+          "diff": 1000,
+          "win": true,
+          "posterior": {
+            "1": 0.0306,
+            "2": 0.0562,
+            "3": 0.1616,
+            "4": 0.2444,
+            "5": 0.284,
+            "6": 0.2232
+          },
+          "best_setting": "5",
+          "best_prob": 0.284,
+          "high_prob": 0.5072,
+          "below_min_games": false
+        },
+        {
+          "name": "ミスタージャグラー",
+          "number": 3310,
+          "category": "ノーマル",
+          "games": 8300,
+          "bb": 42,
+          "rb": 29,
+          "diff": 3000,
+          "win": true,
+          "posterior": {
+            "1": 0.0464,
+            "2": 0.0687,
+            "3": 0.1276,
+            "4": 0.2551,
+            "5": 0.2836,
+            "6": 0.2186
+          },
+          "best_setting": "5",
+          "best_prob": 0.2836,
+          "high_prob": 0.5022,
+          "below_min_games": false
+        },
+        {
+          "name": "ハッピージャグラーVIII",
+          "number": 3299,
+          "category": "ノーマル",
+          "games": 8676,
+          "bb": 31,
+          "rb": 34,
+          "diff": 900,
+          "win": true,
+          "posterior": {
+            "1": 0.0253,
+            "2": 0.0705,
+            "3": 0.145,
+            "4": 0.2578,
+            "5": 0.286,
+            "6": 0.2154
+          },
+          "best_setting": "5",
+          "best_prob": 0.286,
+          "high_prob": 0.5013,
+          "below_min_games": false
+        },
+        {
+          "name": "タコスロ",
+          "number": 2166,
+          "category": "BT",
+          "games": 6552,
+          "bb": 18,
+          "rb": 21,
+          "diff": -300,
+          "win": false,
+          "posterior": {
+            "1": 0.2535,
+            "2": 0.2653,
+            "5": 0.2583,
+            "6": 0.2228
+          },
+          "best_setting": "2",
+          "best_prob": 0.2653,
+          "high_prob": 0.4812,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーV",
+          "number": 3120,
+          "category": "ノーマル",
+          "games": 8618,
+          "bb": 38,
+          "rb": 30,
+          "diff": 2600,
+          "win": true,
+          "posterior": {
+            "1": 0.0354,
+            "2": 0.0618,
+            "3": 0.1563,
+            "4": 0.2803,
+            "5": 0.3119,
+            "6": 0.1543
+          },
+          "best_setting": "5",
+          "best_prob": 0.3119,
+          "high_prob": 0.4662,
+          "below_min_games": false
+        },
+        {
+          "name": "スマスロ サンダーV",
+          "number": 2175,
+          "category": "BT",
+          "games": 3992,
+          "bb": 9,
+          "rb": 11,
+          "diff": -1300,
+          "win": false,
+          "posterior": {
+            "1": 0.2575,
+            "2": 0.2798,
+            "5": 0.2605,
+            "6": 0.2022
+          },
+          "best_setting": "2",
+          "best_prob": 0.2798,
+          "high_prob": 0.4627,
+          "below_min_games": false
+        },
+        {
+          "name": "キングハナハナ-30",
+          "number": 3007,
+          "category": "ノーマル",
+          "games": 7587,
+          "bb": 37,
+          "rb": 18,
+          "diff": 2400,
+          "win": true,
+          "posterior": {
+            "1": 0.0518,
+            "2": 0.1019,
+            "3": 0.1638,
+            "4": 0.2213,
+            "5": 0.241,
+            "6": 0.2202
+          },
+          "best_setting": "5",
+          "best_prob": 0.241,
+          "high_prob": 0.4612,
+          "below_min_games": false
+        },
+        {
+          "name": "タコスロ",
+          "number": 2167,
+          "category": "BT",
+          "games": 5305,
+          "bb": 16,
+          "rb": 15,
+          "diff": 500,
+          "win": true,
+          "posterior": {
+            "1": 0.2806,
+            "2": 0.2724,
+            "5": 0.2394,
+            "6": 0.2076
+          },
+          "best_setting": "1",
+          "best_prob": 0.2806,
+          "high_prob": 0.447,
+          "below_min_games": false
+        },
+        {
+          "name": "ゴーゴージャグラー3",
+          "number": 3182,
+          "category": "ノーマル",
+          "games": 8334,
+          "bb": 38,
+          "rb": 31,
+          "diff": 1600,
+          "win": true,
+          "posterior": {
+            "1": 0.0672,
+            "2": 0.1048,
+            "3": 0.1609,
+            "4": 0.2206,
+            "5": 0.2241,
+            "6": 0.2223
+          },
+          "best_setting": "5",
+          "best_prob": 0.2241,
+          "high_prob": 0.4464,
+          "below_min_games": false
+        },
+        {
+          "name": "ファンキージャグラー2",
+          "number": 3145,
+          "category": "ノーマル",
+          "games": 7914,
+          "bb": 30,
+          "rb": 27,
+          "diff": 600,
+          "win": true,
+          "posterior": {
+            "1": 0.045,
+            "2": 0.0852,
+            "3": 0.1686,
+            "4": 0.2682,
+            "5": 0.2759,
+            "6": 0.1571
+          },
+          "best_setting": "5",
+          "best_prob": 0.2759,
+          "high_prob": 0.433,
+          "below_min_games": false
+        },
+        {
+          "name": "喰霊‐零‐Re",
+          "number": 2344,
+          "category": "A+AT",
+          "games": 8181,
+          "bb": 28,
+          "rb": 22,
+          "diff": -2800,
+          "win": false,
+          "posterior": {
+            "1": 0.118,
+            "2": 0.1246,
+            "3": 0.1454,
+            "4": 0.1808,
+            "5": 0.2019,
+            "6": 0.2293
+          },
+          "best_setting": "6",
+          "best_prob": 0.2293,
+          "high_prob": 0.4312,
+          "below_min_games": false
+        },
+        {
+          "name": "ファンキージャグラー2",
+          "number": 3165,
+          "category": "ノーマル",
+          "games": 7836,
+          "bb": 34,
+          "rb": 25,
+          "diff": 1900,
+          "win": true,
+          "posterior": {
+            "1": 0.0536,
+            "2": 0.0996,
+            "3": 0.1712,
+            "4": 0.2446,
+            "5": 0.259,
+            "6": 0.172
+          },
+          "best_setting": "5",
+          "best_prob": 0.259,
+          "high_prob": 0.4309,
+          "below_min_games": false
+        },
+        {
+          "name": "スマスロ ハナビ",
+          "number": 2180,
+          "category": "A+AT",
+          "games": 5685,
+          "bb": 19,
+          "rb": 16,
+          "diff": 300,
+          "win": true,
+          "posterior": {
+            "1": 0.2736,
+            "2": 0.2966,
+            "5": 0.2557,
+            "6": 0.1741
+          },
+          "best_setting": "2",
+          "best_prob": 0.2966,
+          "high_prob": 0.4298,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーV",
+          "number": 3286,
+          "category": "ノーマル",
+          "games": 8142,
+          "bb": 28,
+          "rb": 31,
+          "diff": 200,
+          "win": true,
+          "posterior": {
+            "1": 0.0314,
+            "2": 0.0584,
+            "3": 0.1777,
+            "4": 0.3132,
+            "5": 0.272,
+            "6": 0.1473
+          },
+          "best_setting": "4",
+          "best_prob": 0.3132,
+          "high_prob": 0.4193,
+          "below_min_games": false
+        },
+        {
+          "name": "SHAKE BONUS TRIGGER",
+          "number": 2170,
+          "category": "BT",
+          "games": 8142,
+          "bb": 20,
+          "rb": 23,
+          "diff": -1900,
+          "win": false,
+          "posterior": {
+            "1": 0.284,
+            "2": 0.2989,
+            "5": 0.2955,
+            "6": 0.1216
+          },
+          "best_setting": "2",
+          "best_prob": 0.2989,
+          "high_prob": 0.4171,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーV",
+          "number": 3283,
+          "category": "ノーマル",
+          "games": 6339,
+          "bb": 22,
+          "rb": 24,
+          "diff": -100,
+          "win": false,
+          "posterior": {
+            "1": 0.0486,
+            "2": 0.0783,
+            "3": 0.1833,
+            "4": 0.282,
+            "5": 0.2529,
+            "6": 0.155
+          },
+          "best_setting": "4",
+          "best_prob": 0.282,
+          "high_prob": 0.4079,
+          "below_min_games": false
+        },
+        {
+          "name": "アレックス ブライト",
+          "number": 2186,
+          "category": "BT",
+          "games": 7056,
+          "bb": 24,
+          "rb": 17,
+          "diff": 300,
+          "win": true,
+          "posterior": {
+            "1": 0.2934,
+            "2": 0.3007,
+            "5": 0.2648,
+            "6": 0.1411
+          },
+          "best_setting": "2",
+          "best_prob": 0.3007,
+          "high_prob": 0.4059,
+          "below_min_games": false
+        },
+        {
+          "name": "ディスクアップ ULTRAREMIX",
+          "number": 2162,
+          "category": "A+AT",
+          "games": 3842,
+          "bb": 13,
+          "rb": 8,
+          "diff": -400,
+          "win": false,
+          "posterior": {
+            "1": 0.2998,
+            "2": 0.2996,
+            "5": 0.2509,
+            "6": 0.1497
+          },
+          "best_setting": "1",
+          "best_prob": 0.2998,
+          "high_prob": 0.4006,
+          "below_min_games": false
+        },
+        {
+          "name": "ディスクアップ ULTRAREMIX",
+          "number": 2158,
+          "category": "A+AT",
+          "games": 7094,
+          "bb": 32,
+          "rb": 14,
+          "diff": 2800,
+          "win": true,
+          "posterior": {
+            "1": 0.2953,
+            "2": 0.3107,
+            "5": 0.2636,
+            "6": 0.1305
+          },
+          "best_setting": "2",
+          "best_prob": 0.3107,
+          "high_prob": 0.3941,
+          "below_min_games": false
+        },
+        {
+          "name": "ネオアイムジャグラーEX",
+          "number": 3343,
+          "category": "ノーマル",
+          "games": 5091,
+          "bb": 14,
+          "rb": 18,
+          "diff": -700,
+          "win": false,
+          "posterior": {
+            "1": 0.0651,
+            "2": 0.1075,
+            "3": 0.228,
+            "4": 0.2056,
+            "5": 0.2059,
+            "6": 0.188
+          },
+          "best_setting": "3",
+          "best_prob": 0.228,
+          "high_prob": 0.3938,
+          "below_min_games": false
+        },
+        {
+          "name": "ゴーゴージャグラー3",
+          "number": 3171,
+          "category": "ノーマル",
+          "games": 8785,
+          "bb": 38,
+          "rb": 32,
+          "diff": 2100,
+          "win": true,
+          "posterior": {
+            "1": 0.0816,
+            "2": 0.1239,
+            "3": 0.1825,
+            "4": 0.2273,
+            "5": 0.2068,
+            "6": 0.1779
+          },
+          "best_setting": "4",
+          "best_prob": 0.2273,
+          "high_prob": 0.3847,
+          "below_min_games": false
+        },
+        {
+          "name": "ディスクアップ2",
+          "number": 2154,
+          "category": "A+AT",
+          "games": 4853,
+          "bb": 12,
+          "rb": 9,
+          "diff": -1500,
+          "win": false,
+          "posterior": {
+            "1": 0.3344,
+            "2": 0.2891,
+            "5": 0.211,
+            "6": 0.1655
+          },
+          "best_setting": "1",
+          "best_prob": 0.3344,
+          "high_prob": 0.3765,
+          "below_min_games": false
+        },
+        {
+          "name": "タコスロ",
+          "number": 2165,
+          "category": "BT",
+          "games": 4588,
+          "bb": 16,
+          "rb": 9,
+          "diff": 200,
+          "win": true,
+          "posterior": {
+            "1": 0.341,
+            "2": 0.2874,
+            "5": 0.2036,
+            "6": 0.1679
+          },
+          "best_setting": "1",
+          "best_prob": 0.341,
+          "high_prob": 0.3716,
+          "below_min_games": false
+        },
+        {
+          "name": "ゴーゴージャグラー3",
+          "number": 3183,
+          "category": "ノーマル",
+          "games": 7866,
+          "bb": 32,
+          "rb": 29,
+          "diff": 1000,
+          "win": true,
+          "posterior": {
+            "1": 0.0868,
+            "2": 0.1279,
+            "3": 0.1847,
+            "4": 0.2298,
+            "5": 0.2058,
+            "6": 0.165
+          },
+          "best_setting": "4",
+          "best_prob": 0.2298,
+          "high_prob": 0.3708,
+          "below_min_games": false
+        },
+        {
+          "name": "うみねこのなく頃に2",
+          "number": 2343,
+          "category": "A+AT",
+          "games": 7411,
+          "bb": 29,
+          "rb": 13,
+          "diff": 4000,
+          "win": true,
+          "posterior": {
+            "1": 0.1272,
+            "2": 0.1496,
+            "3": 0.1702,
+            "4": 0.1863,
+            "5": 0.1847,
+            "6": 0.1821
+          },
+          "best_setting": "4",
+          "best_prob": 0.1863,
+          "high_prob": 0.3668,
+          "below_min_games": false
+        },
+        {
+          "name": "スマスロ ハナビ",
+          "number": 2182,
+          "category": "A+AT",
+          "games": 4378,
+          "bb": 14,
+          "rb": 11,
+          "diff": -300,
+          "win": false,
+          "posterior": {
+            "1": 0.3297,
+            "2": 0.3048,
+            "5": 0.2242,
+            "6": 0.1413
+          },
+          "best_setting": "1",
+          "best_prob": 0.3297,
+          "high_prob": 0.3655,
+          "below_min_games": false
+        },
+        {
+          "name": "ネオアイムジャグラーEX",
+          "number": 3346,
+          "category": "ノーマル",
+          "games": 8197,
+          "bb": 43,
+          "rb": 26,
+          "diff": 3600,
+          "win": true,
+          "posterior": {
+            "1": 0.0445,
+            "2": 0.097,
+            "3": 0.1854,
+            "4": 0.311,
+            "5": 0.1654,
+            "6": 0.1968
+          },
+          "best_setting": "4",
+          "best_prob": 0.311,
+          "high_prob": 0.3622,
+          "below_min_games": false
+        },
+        {
+          "name": "ネオアイムジャグラーEX",
+          "number": 3329,
+          "category": "ノーマル",
+          "games": 7495,
+          "bb": 27,
+          "rb": 25,
+          "diff": 200,
+          "win": true,
+          "posterior": {
+            "1": 0.0534,
+            "2": 0.1051,
+            "3": 0.2394,
+            "4": 0.2475,
+            "5": 0.1803,
+            "6": 0.1743
+          },
+          "best_setting": "4",
+          "best_prob": 0.2475,
+          "high_prob": 0.3546,
+          "below_min_games": false
+        },
+        {
+          "name": "スマスロ サンダーV",
+          "number": 2173,
+          "category": "BT",
+          "games": 2616,
+          "bb": 5,
+          "rb": 5,
+          "diff": -1800,
+          "win": false,
+          "posterior": {
+            "1": 0.3522,
+            "2": 0.2993,
+            "5": 0.2086,
+            "6": 0.14
+          },
+          "best_setting": "1",
+          "best_prob": 0.3522,
+          "high_prob": 0.3485,
+          "below_min_games": false
+        },
+        {
+          "name": "ウルトラミラクルジャグラー",
+          "number": 3308,
+          "category": "ノーマル",
+          "games": 8291,
+          "bb": 41,
+          "rb": 22,
+          "diff": 2600,
+          "win": true,
+          "posterior": {
+            "1": 0.107,
+            "2": 0.1512,
+            "3": 0.1779,
+            "4": 0.2162,
+            "5": 0.1888,
+            "6": 0.1588
+          },
+          "best_setting": "4",
+          "best_prob": 0.2162,
+          "high_prob": 0.3476,
+          "below_min_games": false
+        },
+        {
+          "name": "ゴーゴージャグラー3",
+          "number": 3188,
+          "category": "ノーマル",
+          "games": 9142,
+          "bb": 34,
+          "rb": 34,
+          "diff": 100,
+          "win": true,
+          "posterior": {
+            "1": 0.0796,
+            "2": 0.1258,
+            "3": 0.1952,
+            "4": 0.252,
+            "5": 0.2085,
+            "6": 0.1389
+          },
+          "best_setting": "4",
+          "best_prob": 0.252,
+          "high_prob": 0.3473,
+          "below_min_games": false
+        },
+        {
+          "name": "キングハナハナ-30",
+          "number": 3014,
+          "category": "ノーマル",
+          "games": 3759,
+          "bb": 15,
+          "rb": 10,
+          "diff": 500,
+          "win": true,
+          "posterior": {
+            "1": 0.1226,
+            "2": 0.1575,
+            "3": 0.1822,
+            "4": 0.1918,
+            "5": 0.1833,
+            "6": 0.1627
+          },
+          "best_setting": "4",
+          "best_prob": 0.1918,
+          "high_prob": 0.346,
+          "below_min_games": false
+        },
+        {
+          "name": "新ハナビ",
+          "number": 2151,
+          "category": "ノーマル",
+          "games": 5575,
+          "bb": 22,
+          "rb": 13,
+          "diff": 500,
+          "win": true,
+          "posterior": {
+            "1": 0.3588,
+            "2": 0.2981,
+            "5": 0.2171,
+            "6": 0.126
+          },
+          "best_setting": "1",
+          "best_prob": 0.3588,
+          "high_prob": 0.3431,
+          "below_min_games": false
+        },
+        {
+          "name": "ジャグラーガールズ",
+          "number": 3316,
+          "category": "ノーマル",
+          "games": 8335,
+          "bb": 34,
+          "rb": 28,
+          "diff": 1000,
+          "win": true,
+          "posterior": {
+            "1": 0.0876,
+            "2": 0.139,
+            "3": 0.209,
+            "4": 0.2215,
+            "5": 0.2049,
+            "6": 0.1379
+          },
+          "best_setting": "4",
+          "best_prob": 0.2215,
+          "high_prob": 0.3429,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーV",
+          "number": 3275,
+          "category": "ノーマル",
+          "games": 7244,
+          "bb": 28,
+          "rb": 25,
+          "diff": 600,
+          "win": true,
+          "posterior": {
+            "1": 0.0692,
+            "2": 0.1056,
+            "3": 0.2095,
+            "4": 0.2745,
+            "5": 0.2363,
+            "6": 0.1049
+          },
+          "best_setting": "4",
+          "best_prob": 0.2745,
+          "high_prob": 0.3412,
+          "below_min_games": false
+        },
+        {
+          "name": "スマスロ ハナビ",
+          "number": 2183,
+          "category": "A+AT",
+          "games": 4199,
+          "bb": 9,
+          "rb": 11,
+          "diff": -1200,
+          "win": false,
+          "posterior": {
+            "1": 0.3479,
+            "2": 0.3114,
+            "5": 0.2187,
+            "6": 0.122
+          },
+          "best_setting": "1",
+          "best_prob": 0.3479,
+          "high_prob": 0.3408,
+          "below_min_games": false
+        },
+        {
+          "name": "ミスタージャグラー",
+          "number": 3312,
+          "category": "ノーマル",
+          "games": 8045,
+          "bb": 39,
+          "rb": 26,
+          "diff": 2400,
+          "win": true,
+          "posterior": {
+            "1": 0.0954,
+            "2": 0.1232,
+            "3": 0.1855,
+            "4": 0.2573,
+            "5": 0.2064,
+            "6": 0.1322
+          },
+          "best_setting": "4",
+          "best_prob": 0.2573,
+          "high_prob": 0.3386,
+          "below_min_games": false
+        },
+        {
+          "name": "ディスクアップ ULTRAREMIX",
+          "number": 2155,
+          "category": "A+AT",
+          "games": 6733,
+          "bb": 22,
+          "rb": 14,
+          "diff": 700,
+          "win": true,
+          "posterior": {
+            "1": 0.3374,
+            "2": 0.3339,
+            "5": 0.2368,
+            "6": 0.0919
+          },
+          "best_setting": "1",
+          "best_prob": 0.3374,
+          "high_prob": 0.3287,
+          "below_min_games": false
+        },
+        {
+          "name": "ネオアイムジャグラーEX",
+          "number": 3345,
+          "category": "ノーマル",
+          "games": 6966,
+          "bb": 23,
+          "rb": 23,
+          "diff": -400,
+          "win": false,
+          "posterior": {
+            "1": 0.0684,
+            "2": 0.1222,
+            "3": 0.2512,
+            "4": 0.2352,
+            "5": 0.1667,
+            "6": 0.1563
+          },
+          "best_setting": "3",
+          "best_prob": 0.2512,
+          "high_prob": 0.323,
+          "below_min_games": false
+        },
+        {
+          "name": "ネオアイムジャグラーEX",
+          "number": 3331,
+          "category": "ノーマル",
+          "games": 7831,
+          "bb": 34,
+          "rb": 25,
+          "diff": 1400,
+          "win": true,
+          "posterior": {
+            "1": 0.0597,
+            "2": 0.1169,
+            "3": 0.2236,
+            "4": 0.2771,
+            "5": 0.1569,
+            "6": 0.1658
+          },
+          "best_setting": "4",
+          "best_prob": 0.2771,
+          "high_prob": 0.3227,
+          "below_min_games": false
+        },
+        {
+          "name": "ネオアイムジャグラーEX",
+          "number": 3334,
+          "category": "ノーマル",
+          "games": 7245,
+          "bb": 31,
+          "rb": 23,
+          "diff": 1500,
+          "win": true,
+          "posterior": {
+            "1": 0.069,
+            "2": 0.1261,
+            "3": 0.2243,
+            "4": 0.2669,
+            "5": 0.1534,
+            "6": 0.1603
+          },
+          "best_setting": "4",
+          "best_prob": 0.2669,
+          "high_prob": 0.3137,
+          "below_min_games": false
+        },
+        {
+          "name": "キングハナハナ-30",
+          "number": 3013,
+          "category": "ノーマル",
+          "games": 7175,
+          "bb": 23,
+          "rb": 22,
+          "diff": -500,
+          "win": false,
+          "posterior": {
+            "1": 0.1081,
+            "2": 0.1657,
+            "3": 0.2048,
+            "4": 0.2088,
+            "5": 0.1782,
+            "6": 0.1344
+          },
+          "best_setting": "4",
+          "best_prob": 0.2088,
+          "high_prob": 0.3126,
+          "below_min_games": false
+        },
+        {
+          "name": "ネオアイムジャグラーEX",
+          "number": 3353,
+          "category": "ノーマル",
+          "games": 6059,
+          "bb": 27,
+          "rb": 19,
+          "diff": 1300,
+          "win": true,
+          "posterior": {
+            "1": 0.0837,
+            "2": 0.1373,
+            "3": 0.2127,
+            "4": 0.2539,
+            "5": 0.152,
+            "6": 0.1604
+          },
+          "best_setting": "4",
+          "best_prob": 0.2539,
+          "high_prob": 0.3124,
+          "below_min_games": false
+        },
+        {
+          "name": "ファンキージャグラー2",
+          "number": 3151,
+          "category": "ノーマル",
+          "games": 7078,
+          "bb": 27,
+          "rb": 22,
+          "diff": 200,
+          "win": true,
+          "posterior": {
+            "1": 0.0946,
+            "2": 0.1425,
+            "3": 0.2092,
+            "4": 0.2427,
+            "5": 0.2128,
+            "6": 0.0981
+          },
+          "best_setting": "4",
+          "best_prob": 0.2427,
+          "high_prob": 0.3109,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーV",
+          "number": 3285,
+          "category": "ノーマル",
+          "games": 7606,
+          "bb": 31,
+          "rb": 25,
+          "diff": 1000,
+          "win": true,
+          "posterior": {
+            "1": 0.0848,
+            "2": 0.1243,
+            "3": 0.2206,
+            "4": 0.2628,
+            "5": 0.2234,
+            "6": 0.0841
+          },
+          "best_setting": "4",
+          "best_prob": 0.2628,
+          "high_prob": 0.3075,
+          "below_min_games": false
+        },
+        {
+          "name": "ミスタージャグラー",
+          "number": 3311,
+          "category": "ノーマル",
+          "games": 8729,
+          "bb": 34,
+          "rb": 30,
+          "diff": 1100,
+          "win": true,
+          "posterior": {
+            "1": 0.1019,
+            "2": 0.1435,
+            "3": 0.1999,
+            "4": 0.2509,
+            "5": 0.1864,
+            "6": 0.1173
+          },
+          "best_setting": "4",
+          "best_prob": 0.2509,
+          "high_prob": 0.3037,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーV",
+          "number": 3119,
+          "category": "ノーマル",
+          "games": 8480,
+          "bb": 44,
+          "rb": 24,
+          "diff": 3000,
+          "win": true,
+          "posterior": {
+            "1": 0.12,
+            "2": 0.1573,
+            "3": 0.2045,
+            "4": 0.2201,
+            "5": 0.2323,
+            "6": 0.0657
+          },
+          "best_setting": "5",
+          "best_prob": 0.2323,
+          "high_prob": 0.298,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーⅥ",
+          "number": 3136,
+          "category": "ノーマル",
+          "games": 8096,
+          "bb": 39,
+          "rb": 24,
+          "diff": 2400,
+          "win": true,
+          "posterior": {
+            "1": 0.1112,
+            "2": 0.1499,
+            "3": 0.2129,
+            "4": 0.2323,
+            "5": 0.2243,
+            "6": 0.0694
+          },
+          "best_setting": "4",
+          "best_prob": 0.2323,
+          "high_prob": 0.2937,
+          "below_min_games": false
+        },
+        {
+          "name": "ネオアイムジャグラーEX",
+          "number": 3340,
+          "category": "ノーマル",
+          "games": 6836,
+          "bb": 23,
+          "rb": 22,
+          "diff": -100,
+          "win": false,
+          "posterior": {
+            "1": 0.0829,
+            "2": 0.1392,
+            "3": 0.2536,
+            "4": 0.2352,
+            "5": 0.1486,
+            "6": 0.1405
+          },
+          "best_setting": "3",
+          "best_prob": 0.2536,
+          "high_prob": 0.2891,
+          "below_min_games": false
+        },
+        {
+          "name": "ゴーゴージャグラー3",
+          "number": 3180,
+          "category": "ノーマル",
+          "games": 8006,
+          "bb": 36,
+          "rb": 27,
+          "diff": 1200,
+          "win": true,
+          "posterior": {
+            "1": 0.1361,
+            "2": 0.1748,
+            "3": 0.2089,
+            "4": 0.1951,
+            "5": 0.1552,
+            "6": 0.1299
+          },
+          "best_setting": "3",
+          "best_prob": 0.2089,
+          "high_prob": 0.2851,
+          "below_min_games": false
+        },
+        {
+          "name": "キングハナハナ-30",
+          "number": 3006,
+          "category": "ノーマル",
+          "games": 5359,
+          "bb": 21,
+          "rb": 13,
+          "diff": 400,
+          "win": true,
+          "posterior": {
+            "1": 0.1449,
+            "2": 0.1824,
+            "3": 0.1996,
+            "4": 0.1905,
+            "5": 0.1601,
+            "6": 0.1225
+          },
+          "best_setting": "3",
+          "best_prob": 0.1996,
+          "high_prob": 0.2826,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーV",
+          "number": 3121,
+          "category": "ノーマル",
+          "games": 7440,
+          "bb": 18,
+          "rb": 29,
+          "diff": -1300,
+          "win": false,
+          "posterior": {
+            "1": 0.0541,
+            "2": 0.0934,
+            "3": 0.2497,
+            "4": 0.3221,
+            "5": 0.1942,
+            "6": 0.0864
+          },
+          "best_setting": "4",
+          "best_prob": 0.3221,
+          "high_prob": 0.2806,
+          "below_min_games": false
+        },
+        {
+          "name": "スマスロ ハナビ",
+          "number": 2181,
+          "category": "A+AT",
+          "games": 3542,
+          "bb": 10,
+          "rb": 7,
+          "diff": -300,
+          "win": false,
+          "posterior": {
+            "1": 0.4093,
+            "2": 0.3115,
+            "5": 0.1821,
+            "6": 0.0971
+          },
+          "best_setting": "1",
+          "best_prob": 0.4093,
+          "high_prob": 0.2792,
+          "below_min_games": false
+        },
+        {
+          "name": "アレックス ブライト",
+          "number": 2184,
+          "category": "BT",
+          "games": 3268,
+          "bb": 10,
+          "rb": 4,
+          "diff": -500,
+          "win": false,
+          "posterior": {
+            "1": 0.3972,
+            "2": 0.3309,
+            "5": 0.1956,
+            "6": 0.0763
+          },
+          "best_setting": "1",
+          "best_prob": 0.3972,
+          "high_prob": 0.2719,
+          "below_min_games": false
+        },
+        {
+          "name": "ネオアイムジャグラーEX",
+          "number": 3362,
+          "category": "ノーマル",
+          "games": 6318,
+          "bb": 21,
+          "rb": 20,
+          "diff": -600,
+          "win": false,
+          "posterior": {
+            "1": 0.0983,
+            "2": 0.1534,
+            "3": 0.2507,
+            "4": 0.2276,
+            "5": 0.1388,
+            "6": 0.1312
+          },
+          "best_setting": "3",
+          "best_prob": 0.2507,
+          "high_prob": 0.2699,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーV",
+          "number": 3117,
+          "category": "ノーマル",
+          "games": 7838,
+          "bb": 29,
+          "rb": 26,
+          "diff": 200,
+          "win": true,
+          "posterior": {
+            "1": 0.0943,
+            "2": 0.1382,
+            "3": 0.2458,
+            "4": 0.2648,
+            "5": 0.1931,
+            "6": 0.0638
+          },
+          "best_setting": "4",
+          "best_prob": 0.2648,
+          "high_prob": 0.2569,
+          "below_min_games": false
+        },
+        {
+          "name": "うみねこのなく頃に2",
+          "number": 2341,
+          "category": "A+AT",
+          "games": 5560,
+          "bb": 15,
+          "rb": 11,
+          "diff": 1400,
+          "win": true,
+          "posterior": {
+            "1": 0.2145,
+            "2": 0.1987,
+            "3": 0.1756,
+            "4": 0.1563,
+            "5": 0.1352,
+            "6": 0.1198
+          },
+          "best_setting": "1",
+          "best_prob": 0.2145,
+          "high_prob": 0.2549,
+          "below_min_games": false
+        },
+        {
+          "name": "ジャグラーガールズ",
+          "number": 3317,
+          "category": "ノーマル",
+          "games": 7856,
+          "bb": 41,
+          "rb": 20,
+          "diff": 2300,
+          "win": true,
+          "posterior": {
+            "1": 0.196,
+            "2": 0.1916,
+            "3": 0.2106,
+            "4": 0.1483,
+            "5": 0.1368,
+            "6": 0.1168
+          },
+          "best_setting": "3",
+          "best_prob": 0.2106,
+          "high_prob": 0.2536,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーⅥ",
+          "number": 3127,
+          "category": "ノーマル",
+          "games": 8632,
+          "bb": 49,
+          "rb": 22,
+          "diff": 4100,
+          "win": true,
+          "posterior": {
+            "1": 0.1688,
+            "2": 0.1987,
+            "3": 0.1991,
+            "4": 0.1832,
+            "5": 0.2037,
+            "6": 0.0466
+          },
+          "best_setting": "5",
+          "best_prob": 0.2037,
+          "high_prob": 0.2503,
+          "below_min_games": false
+        },
+        {
+          "name": "ファンキージャグラー2",
+          "number": 3147,
+          "category": "ノーマル",
+          "games": 7144,
+          "bb": 30,
+          "rb": 20,
+          "diff": 600,
+          "win": true,
+          "posterior": {
+            "1": 0.1342,
+            "2": 0.1848,
+            "3": 0.2223,
+            "4": 0.2106,
+            "5": 0.1729,
+            "6": 0.0752
+          },
+          "best_setting": "3",
+          "best_prob": 0.2223,
+          "high_prob": 0.2481,
+          "below_min_games": false
+        },
+        {
+          "name": "ネオアイムジャグラーEX",
+          "number": 3360,
+          "category": "ノーマル",
+          "games": 4848,
+          "bb": 14,
+          "rb": 15,
+          "diff": -500,
+          "win": false,
+          "posterior": {
+            "1": 0.1333,
+            "2": 0.1765,
+            "3": 0.2411,
+            "4": 0.2019,
+            "5": 0.1283,
+            "6": 0.1189
+          },
+          "best_setting": "3",
+          "best_prob": 0.2411,
+          "high_prob": 0.2472,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーⅥ",
+          "number": 3130,
+          "category": "ノーマル",
+          "games": 8399,
+          "bb": 23,
+          "rb": 31,
+          "diff": -1300,
+          "win": false,
+          "posterior": {
+            "1": 0.0633,
+            "2": 0.1078,
+            "3": 0.2694,
+            "4": 0.3155,
+            "5": 0.1815,
+            "6": 0.0625
+          },
+          "best_setting": "4",
+          "best_prob": 0.3155,
+          "high_prob": 0.244,
+          "below_min_games": false
+        },
+        {
+          "name": "ハッピージャグラーVIII",
+          "number": 3297,
+          "category": "ノーマル",
+          "games": 3638,
+          "bb": 11,
+          "rb": 12,
+          "diff": -500,
+          "win": false,
+          "posterior": {
+            "1": 0.1597,
+            "2": 0.1956,
+            "3": 0.2064,
+            "4": 0.1944,
+            "5": 0.1448,
+            "6": 0.0991
+          },
+          "best_setting": "3",
+          "best_prob": 0.2064,
+          "high_prob": 0.244,
+          "below_min_games": false
+        },
+        {
+          "name": "ネオアイムジャグラーEX",
+          "number": 3357,
+          "category": "ノーマル",
+          "games": 7093,
+          "bb": 25,
+          "rb": 22,
+          "diff": -100,
+          "win": false,
+          "posterior": {
+            "1": 0.1003,
+            "2": 0.161,
+            "3": 0.2566,
+            "4": 0.2385,
+            "5": 0.1243,
+            "6": 0.1193
+          },
+          "best_setting": "3",
+          "best_prob": 0.2566,
+          "high_prob": 0.2436,
+          "below_min_games": false
+        },
+        {
+          "name": "ファンキージャグラー2",
+          "number": 3155,
+          "category": "ノーマル",
+          "games": 7073,
+          "bb": 23,
+          "rb": 22,
+          "diff": -800,
+          "win": false,
+          "posterior": {
+            "1": 0.1222,
+            "2": 0.1645,
+            "3": 0.2308,
+            "4": 0.2409,
+            "5": 0.1823,
+            "6": 0.0593
+          },
+          "best_setting": "4",
+          "best_prob": 0.2409,
+          "high_prob": 0.2416,
+          "below_min_games": false
+        },
+        {
+          "name": "ゴーゴージャグラー3",
+          "number": 3184,
+          "category": "ノーマル",
+          "games": 6278,
+          "bb": 20,
+          "rb": 22,
+          "diff": -700,
+          "win": false,
+          "posterior": {
+            "1": 0.1478,
+            "2": 0.1834,
+            "3": 0.2188,
+            "4": 0.2099,
+            "5": 0.1506,
+            "6": 0.0894
+          },
+          "best_setting": "3",
+          "best_prob": 0.2188,
+          "high_prob": 0.2401,
+          "below_min_games": false
+        },
+        {
+          "name": "ファンキージャグラー2",
+          "number": 3162,
+          "category": "ノーマル",
+          "games": 8192,
+          "bb": 40,
+          "rb": 21,
+          "diff": 1800,
+          "win": true,
+          "posterior": {
+            "1": 0.1418,
+            "2": 0.2065,
+            "3": 0.2218,
+            "4": 0.19,
+            "5": 0.1613,
+            "6": 0.0786
+          },
+          "best_setting": "3",
+          "best_prob": 0.2218,
+          "high_prob": 0.2399,
+          "below_min_games": false
+        },
+        {
+          "name": "ファンキージャグラー2",
+          "number": 3160,
+          "category": "ノーマル",
+          "games": 7490,
+          "bb": 28,
+          "rb": 22,
+          "diff": 0,
+          "win": false,
+          "posterior": {
+            "1": 0.1291,
+            "2": 0.1774,
+            "3": 0.2307,
+            "4": 0.2262,
+            "5": 0.1749,
+            "6": 0.0618
+          },
+          "best_setting": "3",
+          "best_prob": 0.2307,
+          "high_prob": 0.2366,
+          "below_min_games": false
+        },
+        {
+          "name": "ジャグラーガールズ",
+          "number": 3318,
+          "category": "ノーマル",
+          "games": 4231,
+          "bb": 15,
+          "rb": 13,
+          "diff": 200,
+          "win": true,
+          "posterior": {
+            "1": 0.1845,
+            "2": 0.2068,
+            "3": 0.2051,
+            "4": 0.1674,
+            "5": 0.1447,
+            "6": 0.0915
+          },
+          "best_setting": "2",
+          "best_prob": 0.2068,
+          "high_prob": 0.2362,
+          "below_min_games": false
+        },
+        {
+          "name": "ネオアイムジャグラーEX",
+          "number": 3325,
+          "category": "ノーマル",
+          "games": 7085,
+          "bb": 32,
+          "rb": 21,
+          "diff": 1700,
+          "win": true,
+          "posterior": {
+            "1": 0.1065,
+            "2": 0.1699,
+            "3": 0.2251,
+            "4": 0.2654,
+            "5": 0.1125,
+            "6": 0.1206
+          },
+          "best_setting": "4",
+          "best_prob": 0.2654,
+          "high_prob": 0.2331,
+          "below_min_games": false
+        },
+        {
+          "name": "ネオアイムジャグラーEX",
+          "number": 3352,
+          "category": "ノーマル",
+          "games": 4096,
+          "bb": 13,
+          "rb": 12,
+          "diff": -500,
+          "win": false,
+          "posterior": {
+            "1": 0.1615,
+            "2": 0.1949,
+            "3": 0.2233,
+            "4": 0.195,
+            "5": 0.1152,
+            "6": 0.1101
+          },
+          "best_setting": "3",
+          "best_prob": 0.2233,
+          "high_prob": 0.2253,
+          "below_min_games": false
+        },
+        {
+          "name": "ネオアイムジャグラーEX",
+          "number": 3336,
+          "category": "ノーマル",
+          "games": 7575,
+          "bb": 29,
+          "rb": 23,
+          "diff": 900,
+          "win": true,
+          "posterior": {
+            "1": 0.1037,
+            "2": 0.1688,
+            "3": 0.2528,
+            "4": 0.2506,
+            "5": 0.1124,
+            "6": 0.1116
+          },
+          "best_setting": "3",
+          "best_prob": 0.2528,
+          "high_prob": 0.2241,
+          "below_min_games": false
+        },
+        {
+          "name": "ハッピージャグラーVIII",
+          "number": 3304,
+          "category": "ノーマル",
+          "games": 4766,
+          "bb": 16,
+          "rb": 15,
+          "diff": -200,
+          "win": false,
+          "posterior": {
+            "1": 0.1643,
+            "2": 0.2032,
+            "3": 0.2145,
+            "4": 0.1951,
+            "5": 0.1363,
+            "6": 0.0866
+          },
+          "best_setting": "3",
+          "best_prob": 0.2145,
+          "high_prob": 0.2229,
+          "below_min_games": false
+        },
+        {
+          "name": "スマスロ ハナビ",
+          "number": 2179,
+          "category": "A+AT",
+          "games": 4141,
+          "bb": 14,
+          "rb": 7,
+          "diff": -600,
+          "win": false,
+          "posterior": {
+            "1": 0.4641,
+            "2": 0.3131,
+            "5": 0.1519,
+            "6": 0.071
+          },
+          "best_setting": "1",
+          "best_prob": 0.4641,
+          "high_prob": 0.2228,
+          "below_min_games": false
+        },
+        {
+          "name": "ディスクアップ ULTRAREMIX",
+          "number": 2164,
+          "category": "A+AT",
+          "games": 5712,
+          "bb": 20,
+          "rb": 9,
+          "diff": 600,
+          "win": true,
+          "posterior": {
+            "1": 0.4089,
+            "2": 0.369,
+            "5": 0.1726,
+            "6": 0.0496
+          },
+          "best_setting": "1",
+          "best_prob": 0.4089,
+          "high_prob": 0.2221,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーⅥ",
+          "number": 3134,
+          "category": "ノーマル",
+          "games": 5205,
+          "bb": 12,
+          "rb": 19,
+          "diff": -1800,
+          "win": false,
+          "posterior": {
+            "1": 0.1162,
+            "2": 0.1565,
+            "3": 0.2584,
+            "4": 0.248,
+            "5": 0.1525,
+            "6": 0.0685
+          },
+          "best_setting": "3",
+          "best_prob": 0.2584,
+          "high_prob": 0.221,
+          "below_min_games": false
+        },
+        {
+          "name": "キングハナハナ-30",
+          "number": 3004,
+          "category": "ノーマル",
+          "games": 5014,
+          "bb": 19,
+          "rb": 11,
+          "diff": 600,
+          "win": true,
+          "posterior": {
+            "1": 0.1944,
+            "2": 0.2112,
+            "3": 0.2029,
+            "4": 0.171,
+            "5": 0.1295,
+            "6": 0.0909
+          },
+          "best_setting": "2",
+          "best_prob": 0.2112,
+          "high_prob": 0.2204,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーV",
+          "number": 3141,
+          "category": "ノーマル",
+          "games": 8211,
+          "bb": 24,
+          "rb": 29,
+          "diff": -900,
+          "win": false,
+          "posterior": {
+            "1": 0.0844,
+            "2": 0.1328,
+            "3": 0.2786,
+            "4": 0.2881,
+            "5": 0.1653,
+            "6": 0.0508
+          },
+          "best_setting": "4",
+          "best_prob": 0.2881,
+          "high_prob": 0.2161,
+          "below_min_games": false
+        },
+        {
+          "name": "キングハナハナ-30",
+          "number": 3009,
+          "category": "ノーマル",
+          "games": 3428,
+          "bb": 8,
+          "rb": 10,
+          "diff": -800,
+          "win": false,
+          "posterior": {
+            "1": 0.214,
+            "2": 0.2145,
+            "3": 0.1952,
+            "4": 0.1606,
+            "5": 0.1238,
+            "6": 0.0919
+          },
+          "best_setting": "2",
+          "best_prob": 0.2145,
+          "high_prob": 0.2157,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーV",
+          "number": 3277,
+          "category": "ノーマル",
+          "games": 8106,
+          "bb": 25,
+          "rb": 28,
+          "diff": -1700,
+          "win": false,
+          "posterior": {
+            "1": 0.093,
+            "2": 0.1417,
+            "3": 0.2757,
+            "4": 0.2765,
+            "5": 0.1639,
+            "6": 0.0492
+          },
+          "best_setting": "4",
+          "best_prob": 0.2765,
+          "high_prob": 0.2131,
+          "below_min_games": false
+        },
+        {
+          "name": "ネオアイムジャグラーEX",
+          "number": 3332,
+          "category": "ノーマル",
+          "games": 7471,
+          "bb": 41,
+          "rb": 21,
+          "diff": 3200,
+          "win": true,
+          "posterior": {
+            "1": 0.1134,
+            "2": 0.1822,
+            "3": 0.1975,
+            "4": 0.2982,
+            "5": 0.0946,
+            "6": 0.114
+          },
+          "best_setting": "4",
+          "best_prob": 0.2982,
+          "high_prob": 0.2086,
+          "below_min_games": false
+        },
+        {
+          "name": "ネオアイムジャグラーEX",
+          "number": 3335,
+          "category": "ノーマル",
+          "games": 5937,
+          "bb": 26,
+          "rb": 17,
+          "diff": 500,
+          "win": true,
+          "posterior": {
+            "1": 0.1406,
+            "2": 0.1944,
+            "3": 0.2198,
+            "4": 0.237,
+            "5": 0.1017,
+            "6": 0.1064
+          },
+          "best_setting": "4",
+          "best_prob": 0.237,
+          "high_prob": 0.2081,
+          "below_min_games": false
+        },
+        {
+          "name": "ネオアイムジャグラーEX",
+          "number": 3342,
+          "category": "ノーマル",
+          "games": 6153,
+          "bb": 33,
+          "rb": 17,
+          "diff": 1800,
+          "win": true,
+          "posterior": {
+            "1": 0.1369,
+            "2": 0.1948,
+            "3": 0.1969,
+            "4": 0.264,
+            "5": 0.0963,
+            "6": 0.111
+          },
+          "best_setting": "4",
+          "best_prob": 0.264,
+          "high_prob": 0.2073,
+          "below_min_games": false
+        },
+        {
+          "name": "ファンキージャグラー2",
+          "number": 3166,
+          "category": "ノーマル",
+          "games": 7654,
+          "bb": 34,
+          "rb": 20,
+          "diff": 1200,
+          "win": true,
+          "posterior": {
+            "1": 0.1609,
+            "2": 0.2139,
+            "3": 0.2289,
+            "4": 0.1897,
+            "5": 0.1477,
+            "6": 0.0589
+          },
+          "best_setting": "3",
+          "best_prob": 0.2289,
+          "high_prob": 0.2067,
+          "below_min_games": false
+        },
+        {
+          "name": "ウルトラミラクルジャグラー",
+          "number": 3309,
+          "category": "ノーマル",
+          "games": 7985,
+          "bb": 40,
+          "rb": 18,
+          "diff": 2200,
+          "win": true,
+          "posterior": {
+            "1": 0.2025,
+            "2": 0.2385,
+            "3": 0.1816,
+            "4": 0.1731,
+            "5": 0.12,
+            "6": 0.0843
+          },
+          "best_setting": "2",
+          "best_prob": 0.2385,
+          "high_prob": 0.2043,
+          "below_min_games": false
+        },
+        {
+          "name": "キングハナハナ-30",
+          "number": 3010,
+          "category": "ノーマル",
+          "games": 3497,
+          "bb": 11,
+          "rb": 8,
+          "diff": -300,
+          "win": false,
+          "posterior": {
+            "1": 0.2266,
+            "2": 0.2191,
+            "3": 0.1944,
+            "4": 0.1564,
+            "5": 0.118,
+            "6": 0.0854
+          },
+          "best_setting": "1",
+          "best_prob": 0.2266,
+          "high_prob": 0.2034,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーⅥ",
+          "number": 3135,
+          "category": "ノーマル",
+          "games": 8294,
+          "bb": 29,
+          "rb": 27,
+          "diff": 200,
+          "win": true,
+          "posterior": {
+            "1": 0.1139,
+            "2": 0.1632,
+            "3": 0.2721,
+            "4": 0.2518,
+            "5": 0.1575,
+            "6": 0.0415
+          },
+          "best_setting": "3",
+          "best_prob": 0.2721,
+          "high_prob": 0.199,
+          "below_min_games": false
+        },
+        {
+          "name": "ジャグラーガールズ",
+          "number": 3321,
+          "category": "ノーマル",
+          "games": 3387,
+          "bb": 10,
+          "rb": 10,
+          "diff": -300,
+          "win": false,
+          "posterior": {
+            "1": 0.2204,
+            "2": 0.2294,
+            "3": 0.2016,
+            "4": 0.1508,
+            "5": 0.1253,
+            "6": 0.0725
+          },
+          "best_setting": "2",
+          "best_prob": 0.2294,
+          "high_prob": 0.1978,
+          "below_min_games": false
+        },
+        {
+          "name": "ネオアイムジャグラーEX",
+          "number": 3361,
+          "category": "ノーマル",
+          "games": 7863,
+          "bb": 34,
+          "rb": 23,
+          "diff": 1200,
+          "win": true,
+          "posterior": {
+            "1": 0.1154,
+            "2": 0.1847,
+            "3": 0.2383,
+            "4": 0.2649,
+            "5": 0.0957,
+            "6": 0.101
+          },
+          "best_setting": "4",
+          "best_prob": 0.2649,
+          "high_prob": 0.1967,
+          "below_min_games": false
+        },
+        {
+          "name": "ネオアイムジャグラーEX",
+          "number": 3354,
+          "category": "ノーマル",
+          "games": 6929,
+          "bb": 21,
+          "rb": 21,
+          "diff": -1100,
+          "win": false,
+          "posterior": {
+            "1": 0.1301,
+            "2": 0.1888,
+            "3": 0.2712,
+            "4": 0.2145,
+            "5": 0.1022,
+            "6": 0.0931
+          },
+          "best_setting": "3",
+          "best_prob": 0.2712,
+          "high_prob": 0.1954,
+          "below_min_games": false
+        },
+        {
+          "name": "ディスクアップ ULTRAREMIX",
+          "number": 2157,
+          "category": "A+AT",
+          "games": 3966,
+          "bb": 10,
+          "rb": 5,
+          "diff": -1900,
+          "win": false,
+          "posterior": {
+            "1": 0.435,
+            "2": 0.3717,
+            "5": 0.1511,
+            "6": 0.0422
+          },
+          "best_setting": "1",
+          "best_prob": 0.435,
+          "high_prob": 0.1933,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーV",
+          "number": 3291,
+          "category": "ノーマル",
+          "games": 6832,
+          "bb": 18,
+          "rb": 24,
+          "diff": -1100,
+          "win": false,
+          "posterior": {
+            "1": 0.1118,
+            "2": 0.1591,
+            "3": 0.2802,
+            "4": 0.2573,
+            "5": 0.1435,
+            "6": 0.048
+          },
+          "best_setting": "3",
+          "best_prob": 0.2802,
+          "high_prob": 0.1916,
+          "below_min_games": false
+        },
+        {
+          "name": "ネオアイムジャグラーEX",
+          "number": 3358,
+          "category": "ノーマル",
+          "games": 5784,
+          "bb": 18,
+          "rb": 17,
+          "diff": -900,
+          "win": false,
+          "posterior": {
+            "1": 0.1558,
+            "2": 0.2032,
+            "3": 0.2489,
+            "4": 0.2032,
+            "5": 0.0978,
+            "6": 0.0911
+          },
+          "best_setting": "3",
+          "best_prob": 0.2489,
+          "high_prob": 0.1889,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーⅥ",
+          "number": 3124,
+          "category": "ノーマル",
+          "games": 8345,
+          "bb": 29,
+          "rb": 27,
+          "diff": 0,
+          "win": false,
+          "posterior": {
+            "1": 0.1193,
+            "2": 0.1693,
+            "3": 0.2759,
+            "4": 0.2469,
+            "5": 0.1505,
+            "6": 0.038
+          },
+          "best_setting": "3",
+          "best_prob": 0.2759,
+          "high_prob": 0.1886,
+          "below_min_games": false
+        },
+        {
+          "name": "ゴーゴージャグラー3",
+          "number": 3172,
+          "category": "ノーマル",
+          "games": 7612,
+          "bb": 32,
+          "rb": 24,
+          "diff": 400,
+          "win": true,
+          "posterior": {
+            "1": 0.1967,
+            "2": 0.2228,
+            "3": 0.2276,
+            "4": 0.1668,
+            "5": 0.11,
+            "6": 0.076
+          },
+          "best_setting": "3",
+          "best_prob": 0.2276,
+          "high_prob": 0.186,
+          "below_min_games": false
+        },
+        {
+          "name": "ジャグラーガールズ",
+          "number": 3322,
+          "category": "ノーマル",
+          "games": 7020,
+          "bb": 15,
+          "rb": 26,
+          "diff": -1900,
+          "win": false,
+          "posterior": {
+            "1": 0.1443,
+            "2": 0.2323,
+            "3": 0.2414,
+            "4": 0.1974,
+            "5": 0.1414,
+            "6": 0.0432
+          },
+          "best_setting": "3",
+          "best_prob": 0.2414,
+          "high_prob": 0.1845,
+          "below_min_games": false
+        },
+        {
+          "name": "ファンキージャグラー2",
+          "number": 3148,
+          "category": "ノーマル",
+          "games": 4178,
+          "bb": 20,
+          "rb": 9,
+          "diff": 500,
+          "win": true,
+          "posterior": {
+            "1": 0.2258,
+            "2": 0.2369,
+            "3": 0.2038,
+            "4": 0.1502,
+            "5": 0.1195,
+            "6": 0.0637
+          },
+          "best_setting": "2",
+          "best_prob": 0.2369,
+          "high_prob": 0.1832,
+          "below_min_games": false
+        },
+        {
+          "name": "キングハナハナ-30",
+          "number": 3011,
+          "category": "ノーマル",
+          "games": 3744,
+          "bb": 9,
+          "rb": 10,
+          "diff": -1600,
+          "win": false,
+          "posterior": {
+            "1": 0.2447,
+            "2": 0.2301,
+            "3": 0.1959,
+            "4": 0.1493,
+            "5": 0.1066,
+            "6": 0.0734
+          },
+          "best_setting": "1",
+          "best_prob": 0.2447,
+          "high_prob": 0.18,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーV",
+          "number": 3270,
+          "category": "ノーマル",
+          "games": 6759,
+          "bb": 32,
+          "rb": 18,
+          "diff": 1400,
+          "win": true,
+          "posterior": {
+            "1": 0.1988,
+            "2": 0.2243,
+            "3": 0.2251,
+            "4": 0.1744,
+            "5": 0.1403,
+            "6": 0.037
+          },
+          "best_setting": "3",
+          "best_prob": 0.2251,
+          "high_prob": 0.1774,
+          "below_min_games": false
+        },
+        {
+          "name": "ゴーゴージャグラー3",
+          "number": 3190,
+          "category": "ノーマル",
+          "games": 4784,
+          "bb": 10,
+          "rb": 16,
+          "diff": -2000,
+          "win": false,
+          "posterior": {
+            "1": 0.1955,
+            "2": 0.2153,
+            "3": 0.2264,
+            "4": 0.1865,
+            "5": 0.1181,
+            "6": 0.0582
+          },
+          "best_setting": "3",
+          "best_prob": 0.2264,
+          "high_prob": 0.1763,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーV",
+          "number": 3288,
+          "category": "ノーマル",
+          "games": 8203,
+          "bb": 34,
+          "rb": 24,
+          "diff": 1600,
+          "win": true,
+          "posterior": {
+            "1": 0.1618,
+            "2": 0.205,
+            "3": 0.2557,
+            "4": 0.2047,
+            "5": 0.1412,
+            "6": 0.0315
+          },
+          "best_setting": "3",
+          "best_prob": 0.2557,
+          "high_prob": 0.1727,
+          "below_min_games": false
+        },
+        {
+          "name": "スマスロ サンダーV",
+          "number": 2172,
+          "category": "BT",
+          "games": 7573,
+          "bb": 38,
+          "rb": 12,
+          "diff": 3500,
+          "win": true,
+          "posterior": {
+            "1": 0.5195,
+            "2": 0.3121,
+            "5": 0.1168,
+            "6": 0.0516
+          },
+          "best_setting": "1",
+          "best_prob": 0.5195,
+          "high_prob": 0.1684,
+          "below_min_games": false
+        },
+        {
+          "name": "ネオアイムジャグラーEX",
+          "number": 3351,
+          "category": "ノーマル",
+          "games": 5231,
+          "bb": 23,
+          "rb": 14,
+          "diff": 800,
+          "win": true,
+          "posterior": {
+            "1": 0.1856,
+            "2": 0.2251,
+            "3": 0.2085,
+            "4": 0.2131,
+            "5": 0.0821,
+            "6": 0.0856
+          },
+          "best_setting": "2",
+          "best_prob": 0.2251,
+          "high_prob": 0.1677,
+          "below_min_games": false
+        },
+        {
+          "name": "ファンキージャグラー2",
+          "number": 3157,
+          "category": "ノーマル",
+          "games": 4815,
+          "bb": 18,
+          "rb": 12,
+          "diff": 0,
+          "win": false,
+          "posterior": {
+            "1": 0.2226,
+            "2": 0.2313,
+            "3": 0.218,
+            "4": 0.1642,
+            "5": 0.1183,
+            "6": 0.0456
+          },
+          "best_setting": "2",
+          "best_prob": 0.2313,
+          "high_prob": 0.1639,
+          "below_min_games": false
+        },
+        {
+          "name": "ネオアイムジャグラーEX",
+          "number": 3328,
+          "category": "ノーマル",
+          "games": 5495,
+          "bb": 30,
+          "rb": 14,
+          "diff": 2200,
+          "win": true,
+          "posterior": {
+            "1": 0.1882,
+            "2": 0.2316,
+            "3": 0.1871,
+            "4": 0.2343,
+            "5": 0.0741,
+            "6": 0.0848
+          },
+          "best_setting": "4",
+          "best_prob": 0.2343,
+          "high_prob": 0.1588,
+          "below_min_games": false
+        },
+        {
+          "name": "ファンキージャグラー2",
+          "number": 3163,
+          "category": "ノーマル",
+          "games": 8243,
+          "bb": 38,
+          "rb": 20,
+          "diff": 2000,
+          "win": true,
+          "posterior": {
+            "1": 0.1995,
+            "2": 0.2503,
+            "3": 0.2322,
+            "4": 0.1622,
+            "5": 0.1161,
+            "6": 0.0397
+          },
+          "best_setting": "2",
+          "best_prob": 0.2503,
+          "high_prob": 0.1558,
+          "below_min_games": false
+        },
+        {
+          "name": "ネオアイムジャグラーEX",
+          "number": 3356,
+          "category": "ノーマル",
+          "games": 2500,
+          "bb": 4,
+          "rb": 6,
+          "diff": -1600,
+          "win": false,
+          "posterior": {
+            "1": 0.2543,
+            "2": 0.239,
+            "3": 0.2022,
+            "4": 0.1486,
+            "5": 0.0814,
+            "6": 0.0744
+          },
+          "best_setting": "1",
+          "best_prob": 0.2543,
+          "high_prob": 0.1558,
+          "below_min_games": false
+        },
+        {
+          "name": "ゴーゴージャグラー3",
+          "number": 3178,
+          "category": "ノーマル",
+          "games": 7403,
+          "bb": 33,
+          "rb": 22,
+          "diff": 700,
+          "win": true,
+          "posterior": {
+            "1": 0.2341,
+            "2": 0.2446,
+            "3": 0.225,
+            "4": 0.1426,
+            "5": 0.0895,
+            "6": 0.0642
+          },
+          "best_setting": "2",
+          "best_prob": 0.2446,
+          "high_prob": 0.1537,
+          "below_min_games": false
+        },
+        {
+          "name": "ネオアイムジャグラーEX",
+          "number": 3350,
+          "category": "ノーマル",
+          "games": 5978,
+          "bb": 18,
+          "rb": 17,
+          "diff": -800,
+          "win": false,
+          "posterior": {
+            "1": 0.1818,
+            "2": 0.2248,
+            "3": 0.2489,
+            "4": 0.1914,
+            "5": 0.0797,
+            "6": 0.0734
+          },
+          "best_setting": "3",
+          "best_prob": 0.2489,
+          "high_prob": 0.153,
+          "below_min_games": false
+        },
+        {
+          "name": "ゴーゴージャグラー3",
+          "number": 3187,
+          "category": "ノーマル",
+          "games": 6990,
+          "bb": 29,
+          "rb": 21,
+          "diff": 300,
+          "win": true,
+          "posterior": {
+            "1": 0.2312,
+            "2": 0.2424,
+            "3": 0.2264,
+            "4": 0.1478,
+            "5": 0.0916,
+            "6": 0.0606
+          },
+          "best_setting": "2",
+          "best_prob": 0.2424,
+          "high_prob": 0.1521,
+          "below_min_games": false
+        },
+        {
+          "name": "キングハナハナ-30",
+          "number": 3008,
+          "category": "ノーマル",
+          "games": 7289,
+          "bb": 29,
+          "rb": 14,
+          "diff": -500,
+          "win": false,
+          "posterior": {
+            "1": 0.2397,
+            "2": 0.2457,
+            "3": 0.2133,
+            "4": 0.1532,
+            "5": 0.095,
+            "6": 0.053
+          },
+          "best_setting": "2",
+          "best_prob": 0.2457,
+          "high_prob": 0.1481,
+          "below_min_games": false
+        },
+        {
+          "name": "ファンキージャグラー2",
+          "number": 3154,
+          "category": "ノーマル",
+          "games": 5687,
+          "bb": 22,
+          "rb": 14,
+          "diff": 200,
+          "win": true,
+          "posterior": {
+            "1": 0.2291,
+            "2": 0.2416,
+            "3": 0.2231,
+            "4": 0.1594,
+            "5": 0.1098,
+            "6": 0.0371
+          },
+          "best_setting": "2",
+          "best_prob": 0.2416,
+          "high_prob": 0.1469,
+          "below_min_games": false
+        },
+        {
+          "name": "ジャグラーガールズ",
+          "number": 3320,
+          "category": "ノーマル",
+          "games": 6065,
+          "bb": 19,
+          "rb": 18,
+          "diff": -700,
+          "win": false,
+          "posterior": {
+            "1": 0.239,
+            "2": 0.2613,
+            "3": 0.2187,
+            "4": 0.1374,
+            "5": 0.1018,
+            "6": 0.0418
+          },
+          "best_setting": "2",
+          "best_prob": 0.2613,
+          "high_prob": 0.1436,
+          "below_min_games": false
+        },
+        {
+          "name": "ファンキージャグラー2",
+          "number": 3144,
+          "category": "ノーマル",
+          "games": 6972,
+          "bb": 32,
+          "rb": 16,
+          "diff": 1200,
+          "win": true,
+          "posterior": {
+            "1": 0.2327,
+            "2": 0.2616,
+            "3": 0.2223,
+            "4": 0.1456,
+            "5": 0.1018,
+            "6": 0.0359
+          },
+          "best_setting": "2",
+          "best_prob": 0.2616,
+          "high_prob": 0.1378,
+          "below_min_games": false
+        },
+        {
+          "name": "ゴーゴージャグラー3",
+          "number": 3176,
+          "category": "ノーマル",
+          "games": 8776,
+          "bb": 45,
+          "rb": 25,
+          "diff": 2700,
+          "win": true,
+          "posterior": {
+            "1": 0.2595,
+            "2": 0.2614,
+            "3": 0.2214,
+            "4": 0.1199,
+            "5": 0.0739,
+            "6": 0.0638
+          },
+          "best_setting": "2",
+          "best_prob": 0.2614,
+          "high_prob": 0.1378,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーV",
+          "number": 3280,
+          "category": "ノーマル",
+          "games": 6712,
+          "bb": 18,
+          "rb": 22,
+          "diff": -1700,
+          "win": false,
+          "posterior": {
+            "1": 0.1583,
+            "2": 0.204,
+            "3": 0.2878,
+            "4": 0.2127,
+            "5": 0.1081,
+            "6": 0.0291
+          },
+          "best_setting": "3",
+          "best_prob": 0.2878,
+          "high_prob": 0.1372,
+          "below_min_games": false
+        },
+        {
+          "name": "ネオアイムジャグラーEX",
+          "number": 3359,
+          "category": "ノーマル",
+          "games": 4947,
+          "bb": 17,
+          "rb": 13,
+          "diff": -400,
+          "win": false,
+          "posterior": {
+            "1": 0.2211,
+            "2": 0.2442,
+            "3": 0.2171,
+            "4": 0.1806,
+            "5": 0.0697,
+            "6": 0.0673
+          },
+          "best_setting": "2",
+          "best_prob": 0.2442,
+          "high_prob": 0.1369,
+          "below_min_games": false
+        },
+        {
+          "name": "ネオアイムジャグラーEX",
+          "number": 3339,
+          "category": "ノーマル",
+          "games": 4390,
+          "bb": 16,
+          "rb": 11,
+          "diff": -300,
+          "win": false,
+          "posterior": {
+            "1": 0.2384,
+            "2": 0.2502,
+            "3": 0.2037,
+            "4": 0.1748,
+            "5": 0.067,
+            "6": 0.0659
+          },
+          "best_setting": "2",
+          "best_prob": 0.2502,
+          "high_prob": 0.1329,
+          "below_min_games": false
+        },
+        {
+          "name": "ゴーゴージャグラー3",
+          "number": 3185,
+          "category": "ノーマル",
+          "games": 6567,
+          "bb": 22,
+          "rb": 20,
+          "diff": -700,
+          "win": false,
+          "posterior": {
+            "1": 0.2374,
+            "2": 0.2474,
+            "3": 0.2325,
+            "4": 0.1517,
+            "5": 0.086,
+            "6": 0.0451
+          },
+          "best_setting": "2",
+          "best_prob": 0.2474,
+          "high_prob": 0.131,
+          "below_min_games": false
+        },
+        {
+          "name": "キングハナハナ-30",
+          "number": 3016,
+          "category": "ノーマル",
+          "games": 6124,
+          "bb": 22,
+          "rb": 12,
+          "diff": -300,
+          "win": false,
+          "posterior": {
+            "1": 0.276,
+            "2": 0.2536,
+            "3": 0.2029,
+            "4": 0.1375,
+            "5": 0.0833,
+            "6": 0.0467
+          },
+          "best_setting": "1",
+          "best_prob": 0.276,
+          "high_prob": 0.13,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーV",
+          "number": 3267,
+          "category": "ノーマル",
+          "games": 7521,
+          "bb": 25,
+          "rb": 23,
+          "diff": -800,
+          "win": false,
+          "posterior": {
+            "1": 0.1755,
+            "2": 0.2198,
+            "3": 0.2788,
+            "4": 0.1961,
+            "5": 0.1063,
+            "6": 0.0235
+          },
+          "best_setting": "3",
+          "best_prob": 0.2788,
+          "high_prob": 0.1298,
+          "below_min_games": false
+        },
+        {
+          "name": "ファンキージャグラー2",
+          "number": 3156,
+          "category": "ノーマル",
+          "games": 6908,
+          "bb": 27,
+          "rb": 17,
+          "diff": 300,
+          "win": true,
+          "posterior": {
+            "1": 0.2357,
+            "2": 0.2533,
+            "3": 0.2305,
+            "4": 0.1543,
+            "5": 0.099,
+            "6": 0.0271
+          },
+          "best_setting": "2",
+          "best_prob": 0.2533,
+          "high_prob": 0.1262,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーⅥ",
+          "number": 3131,
+          "category": "ノーマル",
+          "games": 7575,
+          "bb": 28,
+          "rb": 22,
+          "diff": 400,
+          "win": true,
+          "posterior": {
+            "1": 0.1956,
+            "2": 0.2341,
+            "3": 0.2655,
+            "4": 0.1794,
+            "5": 0.1038,
+            "6": 0.0216
+          },
+          "best_setting": "3",
+          "best_prob": 0.2655,
+          "high_prob": 0.1253,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーV",
+          "number": 3294,
+          "category": "ノーマル",
+          "games": 6642,
+          "bb": 16,
+          "rb": 22,
+          "diff": -1800,
+          "win": false,
+          "posterior": {
+            "1": 0.1635,
+            "2": 0.2099,
+            "3": 0.2956,
+            "4": 0.2079,
+            "5": 0.0977,
+            "6": 0.0254
+          },
+          "best_setting": "3",
+          "best_prob": 0.2956,
+          "high_prob": 0.1231,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーV",
+          "number": 3143,
+          "category": "ノーマル",
+          "games": 8499,
+          "bb": 34,
+          "rb": 24,
+          "diff": 700,
+          "win": true,
+          "posterior": {
+            "1": 0.2009,
+            "2": 0.2409,
+            "3": 0.2635,
+            "4": 0.1736,
+            "5": 0.1031,
+            "6": 0.0179
+          },
+          "best_setting": "3",
+          "best_prob": 0.2635,
+          "high_prob": 0.1211,
+          "below_min_games": false
+        },
+        {
+          "name": "キングハナハナ-30",
+          "number": 3001,
+          "category": "ノーマル",
+          "games": 6452,
+          "bb": 21,
+          "rb": 14,
+          "diff": -300,
+          "win": false,
+          "posterior": {
+            "1": 0.2837,
+            "2": 0.2595,
+            "3": 0.2035,
+            "4": 0.1334,
+            "5": 0.0778,
+            "6": 0.0421
+          },
+          "best_setting": "1",
+          "best_prob": 0.2837,
+          "high_prob": 0.1198,
+          "below_min_games": false
+        },
+        {
+          "name": "ファンキージャグラー2",
+          "number": 3150,
+          "category": "ノーマル",
+          "games": 8014,
+          "bb": 41,
+          "rb": 17,
+          "diff": 2100,
+          "win": true,
+          "posterior": {
+            "1": 0.2495,
+            "2": 0.2887,
+            "3": 0.217,
+            "4": 0.1254,
+            "5": 0.0876,
+            "6": 0.0319
+          },
+          "best_setting": "2",
+          "best_prob": 0.2887,
+          "high_prob": 0.1195,
+          "below_min_games": false
+        },
+        {
+          "name": "ゴーゴージャグラー3",
+          "number": 3175,
+          "category": "ノーマル",
+          "games": 5617,
+          "bb": 24,
+          "rb": 15,
+          "diff": 400,
+          "win": true,
+          "posterior": {
+            "1": 0.2844,
+            "2": 0.2633,
+            "3": 0.2138,
+            "4": 0.1196,
+            "5": 0.071,
+            "6": 0.0479
+          },
+          "best_setting": "1",
+          "best_prob": 0.2844,
+          "high_prob": 0.1189,
+          "below_min_games": false
+        },
+        {
+          "name": "ネオアイムジャグラーEX",
+          "number": 3333,
+          "category": "ノーマル",
+          "games": 2939,
+          "bb": 11,
+          "rb": 6,
+          "diff": -300,
+          "win": false,
+          "posterior": {
+            "1": 0.2895,
+            "2": 0.2632,
+            "3": 0.1772,
+            "4": 0.1513,
+            "5": 0.0596,
+            "6": 0.0592
+          },
+          "best_setting": "1",
+          "best_prob": 0.2895,
+          "high_prob": 0.1188,
+          "below_min_games": false
+        },
+        {
+          "name": "ハッピージャグラーVIII",
+          "number": 3295,
+          "category": "ノーマル",
+          "games": 5110,
+          "bb": 18,
+          "rb": 13,
+          "diff": -400,
+          "win": false,
+          "posterior": {
+            "1": 0.2685,
+            "2": 0.2551,
+            "3": 0.2133,
+            "4": 0.1451,
+            "5": 0.0772,
+            "6": 0.0408
+          },
+          "best_setting": "1",
+          "best_prob": 0.2685,
+          "high_prob": 0.118,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーV",
+          "number": 3268,
+          "category": "ノーマル",
+          "games": 8212,
+          "bb": 41,
+          "rb": 20,
+          "diff": 2500,
+          "win": true,
+          "posterior": {
+            "1": 0.2582,
+            "2": 0.2717,
+            "3": 0.2185,
+            "4": 0.1345,
+            "5": 0.1008,
+            "6": 0.0164
+          },
+          "best_setting": "2",
+          "best_prob": 0.2717,
+          "high_prob": 0.1172,
+          "below_min_games": false
+        },
+        {
+          "name": "ゴーゴージャグラー3",
+          "number": 3181,
+          "category": "ノーマル",
+          "games": 7140,
+          "bb": 27,
+          "rb": 21,
+          "diff": -100,
+          "win": false,
+          "posterior": {
+            "1": 0.2568,
+            "2": 0.2593,
+            "3": 0.2306,
+            "4": 0.1363,
+            "5": 0.0751,
+            "6": 0.042
+          },
+          "best_setting": "2",
+          "best_prob": 0.2593,
+          "high_prob": 0.117,
+          "below_min_games": false
+        },
+        {
+          "name": "ジャグラーガールズ",
+          "number": 3319,
+          "category": "ノーマル",
+          "games": 2219,
+          "bb": 7,
+          "rb": 3,
+          "diff": -700,
+          "win": false,
+          "posterior": {
+            "1": 0.3477,
+            "2": 0.2662,
+            "3": 0.1734,
+            "4": 0.0958,
+            "5": 0.0749,
+            "6": 0.042
+          },
+          "best_setting": "1",
+          "best_prob": 0.3477,
+          "high_prob": 0.1169,
+          "below_min_games": false
+        },
+        {
+          "name": "ミスタージャグラー",
+          "number": 3314,
+          "category": "ノーマル",
+          "games": 6258,
+          "bb": 22,
+          "rb": 18,
+          "diff": -300,
+          "win": false,
+          "posterior": {
+            "1": 0.2407,
+            "2": 0.2505,
+            "3": 0.2341,
+            "4": 0.1587,
+            "5": 0.0761,
+            "6": 0.0399
+          },
+          "best_setting": "2",
+          "best_prob": 0.2505,
+          "high_prob": 0.116,
+          "below_min_games": false
+        },
+        {
+          "name": "ファンキージャグラー2",
+          "number": 3146,
+          "category": "ノーマル",
+          "games": 3812,
+          "bb": 16,
+          "rb": 7,
+          "diff": 0,
+          "win": false,
+          "posterior": {
+            "1": 0.2983,
+            "2": 0.2663,
+            "3": 0.1988,
+            "4": 0.1214,
+            "5": 0.0827,
+            "6": 0.0325
+          },
+          "best_setting": "1",
+          "best_prob": 0.2983,
+          "high_prob": 0.1152,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーV",
+          "number": 3293,
+          "category": "ノーマル",
+          "games": 8284,
+          "bb": 28,
+          "rb": 25,
+          "diff": -600,
+          "win": false,
+          "posterior": {
+            "1": 0.1816,
+            "2": 0.2289,
+            "3": 0.2863,
+            "4": 0.1891,
+            "5": 0.0963,
+            "6": 0.0178
+          },
+          "best_setting": "3",
+          "best_prob": 0.2863,
+          "high_prob": 0.1141,
+          "below_min_games": false
+        },
+        {
+          "name": "ファンキージャグラー2",
+          "number": 3164,
+          "category": "ノーマル",
+          "games": 6106,
+          "bb": 27,
+          "rb": 13,
+          "diff": 1000,
+          "win": true,
+          "posterior": {
+            "1": 0.2776,
+            "2": 0.2762,
+            "3": 0.2125,
+            "4": 0.1256,
+            "5": 0.0818,
+            "6": 0.0262
+          },
+          "best_setting": "1",
+          "best_prob": 0.2776,
+          "high_prob": 0.1081,
+          "below_min_games": false
+        },
+        {
+          "name": "ファンキージャグラー2",
+          "number": 3161,
+          "category": "ノーマル",
+          "games": 2795,
+          "bb": 8,
+          "rb": 5,
+          "diff": -1000,
+          "win": false,
+          "posterior": {
+            "1": 0.3153,
+            "2": 0.2584,
+            "3": 0.1968,
+            "4": 0.1219,
+            "5": 0.0793,
+            "6": 0.0282
+          },
+          "best_setting": "1",
+          "best_prob": 0.3153,
+          "high_prob": 0.1075,
+          "below_min_games": false
+        },
+        {
+          "name": "うみねこのなく頃に2",
+          "number": 2342,
+          "category": "A+AT",
+          "games": 8158,
+          "bb": 14,
+          "rb": 14,
+          "diff": -1700,
+          "win": false,
+          "posterior": {
+            "1": 0.3897,
+            "2": 0.258,
+            "3": 0.1521,
+            "4": 0.0968,
+            "5": 0.0611,
+            "6": 0.0423
+          },
+          "best_setting": "1",
+          "best_prob": 0.3897,
+          "high_prob": 0.1034,
+          "below_min_games": false
+        },
+        {
+          "name": "ファンキージャグラー2",
+          "number": 3152,
+          "category": "ノーマル",
+          "games": 2826,
+          "bb": 14,
+          "rb": 3,
+          "diff": 100,
+          "win": true,
+          "posterior": {
+            "1": 0.3373,
+            "2": 0.278,
+            "3": 0.1818,
+            "4": 0.1014,
+            "5": 0.07,
+            "6": 0.0316
+          },
+          "best_setting": "1",
+          "best_prob": 0.3373,
+          "high_prob": 0.1016,
+          "below_min_games": false
+        },
+        {
+          "name": "ハッピージャグラーVIII",
+          "number": 3296,
+          "category": "ノーマル",
+          "games": 4900,
+          "bb": 10,
+          "rb": 15,
+          "diff": -1800,
+          "win": false,
+          "posterior": {
+            "1": 0.2391,
+            "2": 0.2708,
+            "3": 0.2298,
+            "4": 0.1586,
+            "5": 0.0714,
+            "6": 0.0302
+          },
+          "best_setting": "2",
+          "best_prob": 0.2708,
+          "high_prob": 0.1015,
+          "below_min_games": false
+        },
+        {
+          "name": "ネオアイムジャグラーEX",
+          "number": 3347,
+          "category": "ノーマル",
+          "games": 6337,
+          "bb": 27,
+          "rb": 16,
+          "diff": 700,
+          "win": true,
+          "posterior": {
+            "1": 0.2351,
+            "2": 0.2678,
+            "3": 0.2037,
+            "4": 0.1925,
+            "5": 0.0495,
+            "6": 0.0513
+          },
+          "best_setting": "2",
+          "best_prob": 0.2678,
+          "high_prob": 0.1008,
+          "below_min_games": false
+        },
+        {
+          "name": "ファンキージャグラー2",
+          "number": 3167,
+          "category": "ノーマル",
+          "games": 7632,
+          "bb": 37,
+          "rb": 16,
+          "diff": 1600,
+          "win": true,
+          "posterior": {
+            "1": 0.2748,
+            "2": 0.2938,
+            "3": 0.2142,
+            "4": 0.1174,
+            "5": 0.0762,
+            "6": 0.0237
+          },
+          "best_setting": "2",
+          "best_prob": 0.2938,
+          "high_prob": 0.0998,
+          "below_min_games": false
+        },
+        {
+          "name": "ハッピージャグラーVIII",
+          "number": 3298,
+          "category": "ノーマル",
+          "games": 3774,
+          "bb": 15,
+          "rb": 7,
+          "diff": -200,
+          "win": false,
+          "posterior": {
+            "1": 0.3358,
+            "2": 0.2577,
+            "3": 0.1901,
+            "4": 0.1166,
+            "5": 0.0631,
+            "6": 0.0367
+          },
+          "best_setting": "1",
+          "best_prob": 0.3358,
+          "high_prob": 0.0998,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーV",
+          "number": 3284,
+          "category": "ノーマル",
+          "games": 5868,
+          "bb": 23,
+          "rb": 15,
+          "diff": 100,
+          "win": true,
+          "posterior": {
+            "1": 0.2645,
+            "2": 0.2714,
+            "3": 0.2309,
+            "4": 0.1341,
+            "5": 0.0808,
+            "6": 0.0184
+          },
+          "best_setting": "2",
+          "best_prob": 0.2714,
+          "high_prob": 0.0991,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーV",
+          "number": 3292,
+          "category": "ノーマル",
+          "games": 7141,
+          "bb": 31,
+          "rb": 18,
+          "diff": 900,
+          "win": true,
+          "posterior": {
+            "1": 0.2645,
+            "2": 0.2758,
+            "3": 0.2298,
+            "4": 0.132,
+            "5": 0.0828,
+            "6": 0.0151
+          },
+          "best_setting": "2",
+          "best_prob": 0.2758,
+          "high_prob": 0.0979,
+          "below_min_games": false
+        },
+        {
+          "name": "ハッピージャグラーVIII",
+          "number": 3303,
+          "category": "ノーマル",
+          "games": 3609,
+          "bb": 13,
+          "rb": 7,
+          "diff": -900,
+          "win": false,
+          "posterior": {
+            "1": 0.3302,
+            "2": 0.2608,
+            "3": 0.1925,
+            "4": 0.1186,
+            "5": 0.0627,
+            "6": 0.0352
+          },
+          "best_setting": "1",
+          "best_prob": 0.3302,
+          "high_prob": 0.0979,
+          "below_min_games": false
+        },
+        {
+          "name": "ハッピージャグラーVIII",
+          "number": 3301,
+          "category": "ノーマル",
+          "games": 5324,
+          "bb": 23,
+          "rb": 11,
+          "diff": 400,
+          "win": true,
+          "posterior": {
+            "1": 0.3332,
+            "2": 0.2586,
+            "3": 0.1952,
+            "4": 0.1174,
+            "5": 0.0615,
+            "6": 0.0342
+          },
+          "best_setting": "1",
+          "best_prob": 0.3332,
+          "high_prob": 0.0957,
+          "below_min_games": false
+        },
+        {
+          "name": "ネオアイムジャグラーEX",
+          "number": 3349,
+          "category": "ノーマル",
+          "games": 6669,
+          "bb": 27,
+          "rb": 17,
+          "diff": 400,
+          "win": true,
+          "posterior": {
+            "1": 0.2371,
+            "2": 0.2713,
+            "3": 0.2097,
+            "4": 0.1881,
+            "5": 0.0466,
+            "6": 0.0474
+          },
+          "best_setting": "2",
+          "best_prob": 0.2713,
+          "high_prob": 0.0939,
+          "below_min_games": false
+        },
+        {
+          "name": "A‐SLOT+ 異世界かるてっと",
+          "number": 2176,
+          "category": "BT",
+          "games": 2579,
+          "bb": 5,
+          "rb": 6,
+          "diff": -2000,
+          "win": false,
+          "posterior": {
+            "1": 0.5154,
+            "2": 0.3909,
+            "5": 0.0778,
+            "6": 0.0159
+          },
+          "best_setting": "1",
+          "best_prob": 0.5154,
+          "high_prob": 0.0937,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーV",
+          "number": 3289,
+          "category": "ノーマル",
+          "games": 4431,
+          "bb": 12,
+          "rb": 12,
+          "diff": -1100,
+          "win": false,
+          "posterior": {
+            "1": 0.2648,
+            "2": 0.2688,
+            "3": 0.2389,
+            "4": 0.1354,
+            "5": 0.0718,
+            "6": 0.0203
+          },
+          "best_setting": "2",
+          "best_prob": 0.2688,
+          "high_prob": 0.0921,
+          "below_min_games": false
+        },
+        {
+          "name": "ハッピージャグラーVIII",
+          "number": 3300,
+          "category": "ノーマル",
+          "games": 4590,
+          "bb": 12,
+          "rb": 12,
+          "diff": -1100,
+          "win": false,
+          "posterior": {
+            "1": 0.289,
+            "2": 0.2745,
+            "3": 0.2132,
+            "4": 0.1343,
+            "5": 0.0612,
+            "6": 0.0278
+          },
+          "best_setting": "1",
+          "best_prob": 0.289,
+          "high_prob": 0.0889,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーⅥ",
+          "number": 3139,
+          "category": "ノーマル",
+          "games": 4600,
+          "bb": 16,
+          "rb": 11,
+          "diff": -500,
+          "win": false,
+          "posterior": {
+            "1": 0.2978,
+            "2": 0.2853,
+            "3": 0.2189,
+            "4": 0.116,
+            "5": 0.0656,
+            "6": 0.0165
+          },
+          "best_setting": "1",
+          "best_prob": 0.2978,
+          "high_prob": 0.0821,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーⅥ",
+          "number": 3126,
+          "category": "ノーマル",
+          "games": 8084,
+          "bb": 27,
+          "rb": 23,
+          "diff": -200,
+          "win": false,
+          "posterior": {
+            "1": 0.2338,
+            "2": 0.2685,
+            "3": 0.2742,
+            "4": 0.1465,
+            "5": 0.0669,
+            "6": 0.0101
+          },
+          "best_setting": "3",
+          "best_prob": 0.2742,
+          "high_prob": 0.077,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーⅥ",
+          "number": 3123,
+          "category": "ノーマル",
+          "games": 6072,
+          "bb": 20,
+          "rb": 16,
+          "diff": -400,
+          "win": false,
+          "posterior": {
+            "1": 0.2779,
+            "2": 0.2846,
+            "3": 0.2415,
+            "4": 0.1232,
+            "5": 0.061,
+            "6": 0.0119
+          },
+          "best_setting": "2",
+          "best_prob": 0.2846,
+          "high_prob": 0.0729,
+          "below_min_games": false
+        },
+        {
+          "name": "ゴーゴージャグラー3",
+          "number": 3174,
+          "category": "ノーマル",
+          "games": 5727,
+          "bb": 17,
+          "rb": 15,
+          "diff": -1500,
+          "win": false,
+          "posterior": {
+            "1": 0.3215,
+            "2": 0.2835,
+            "3": 0.2173,
+            "4": 0.1058,
+            "5": 0.0497,
+            "6": 0.0223
+          },
+          "best_setting": "1",
+          "best_prob": 0.3215,
+          "high_prob": 0.0719,
+          "below_min_games": false
+        },
+        {
+          "name": "ハッピージャグラーVIII",
+          "number": 3302,
+          "category": "ノーマル",
+          "games": 4277,
+          "bb": 13,
+          "rb": 9,
+          "diff": -600,
+          "win": false,
+          "posterior": {
+            "1": 0.3528,
+            "2": 0.279,
+            "3": 0.1929,
+            "4": 0.1072,
+            "5": 0.0466,
+            "6": 0.0215
+          },
+          "best_setting": "1",
+          "best_prob": 0.3528,
+          "high_prob": 0.0681,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーV",
+          "number": 3266,
+          "category": "ノーマル",
+          "games": 7098,
+          "bb": 27,
+          "rb": 18,
+          "diff": -200,
+          "win": false,
+          "posterior": {
+            "1": 0.2898,
+            "2": 0.2944,
+            "3": 0.2341,
+            "4": 0.1142,
+            "5": 0.0584,
+            "6": 0.0091
+          },
+          "best_setting": "2",
+          "best_prob": 0.2944,
+          "high_prob": 0.0675,
+          "below_min_games": false
+        },
+        {
+          "name": "ゴーゴージャグラー3",
+          "number": 3177,
+          "category": "ノーマル",
+          "games": 6253,
+          "bb": 27,
+          "rb": 15,
+          "diff": 200,
+          "win": true,
+          "posterior": {
+            "1": 0.3544,
+            "2": 0.2927,
+            "3": 0.2017,
+            "4": 0.0848,
+            "5": 0.0415,
+            "6": 0.0249
+          },
+          "best_setting": "1",
+          "best_prob": 0.3544,
+          "high_prob": 0.0664,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーⅥ",
+          "number": 3132,
+          "category": "ノーマル",
+          "games": 7250,
+          "bb": 23,
+          "rb": 20,
+          "diff": -700,
+          "win": false,
+          "posterior": {
+            "1": 0.2633,
+            "2": 0.284,
+            "3": 0.2602,
+            "4": 0.1275,
+            "5": 0.0562,
+            "6": 0.0088
+          },
+          "best_setting": "2",
+          "best_prob": 0.284,
+          "high_prob": 0.065,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーV",
+          "number": 3272,
+          "category": "ノーマル",
+          "games": 6760,
+          "bb": 25,
+          "rb": 17,
+          "diff": -200,
+          "win": false,
+          "posterior": {
+            "1": 0.2968,
+            "2": 0.2969,
+            "3": 0.2313,
+            "4": 0.1105,
+            "5": 0.0554,
+            "6": 0.009
+          },
+          "best_setting": "2",
+          "best_prob": 0.2969,
+          "high_prob": 0.0644,
+          "below_min_games": false
+        },
+        {
+          "name": "ジャグラーガールズ",
+          "number": 3324,
+          "category": "ノーマル",
+          "games": 3978,
+          "bb": 17,
+          "rb": 5,
+          "diff": -400,
+          "win": false,
+          "posterior": {
+            "1": 0.4493,
+            "2": 0.2801,
+            "3": 0.1496,
+            "4": 0.0588,
+            "5": 0.042,
+            "6": 0.0202
+          },
+          "best_setting": "1",
+          "best_prob": 0.4493,
+          "high_prob": 0.0622,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーV",
+          "number": 3276,
+          "category": "ノーマル",
+          "games": 5980,
+          "bb": 23,
+          "rb": 14,
+          "diff": -300,
+          "win": false,
+          "posterior": {
+            "1": 0.3209,
+            "2": 0.3036,
+            "3": 0.2141,
+            "4": 0.0996,
+            "5": 0.0525,
+            "6": 0.0093
+          },
+          "best_setting": "1",
+          "best_prob": 0.3209,
+          "high_prob": 0.0618,
+          "below_min_games": false
+        },
+        {
+          "name": "ゴーゴージャグラー3",
+          "number": 3170,
+          "category": "ノーマル",
+          "games": 4645,
+          "bb": 20,
+          "rb": 9,
+          "diff": 100,
+          "win": true,
+          "posterior": {
+            "1": 0.3875,
+            "2": 0.2938,
+            "3": 0.1864,
+            "4": 0.0738,
+            "5": 0.0363,
+            "6": 0.0222
+          },
+          "best_setting": "1",
+          "best_prob": 0.3875,
+          "high_prob": 0.0585,
+          "below_min_games": false
+        },
+        {
+          "name": "キングハナハナ-30",
+          "number": 3015,
+          "category": "ノーマル",
+          "games": 7557,
+          "bb": 26,
+          "rb": 13,
+          "diff": -500,
+          "win": false,
+          "posterior": {
+            "1": 0.392,
+            "2": 0.2852,
+            "3": 0.1772,
+            "4": 0.0892,
+            "5": 0.0399,
+            "6": 0.0166
+          },
+          "best_setting": "1",
+          "best_prob": 0.392,
+          "high_prob": 0.0564,
+          "below_min_games": false
+        },
+        {
+          "name": "キングハナハナ-30",
+          "number": 3005,
+          "category": "ノーマル",
+          "games": 6995,
+          "bb": 23,
+          "rb": 12,
+          "diff": -1000,
+          "win": false,
+          "posterior": {
+            "1": 0.4037,
+            "2": 0.2835,
+            "3": 0.1722,
+            "4": 0.0858,
+            "5": 0.0385,
+            "6": 0.0163
+          },
+          "best_setting": "1",
+          "best_prob": 0.4037,
+          "high_prob": 0.0548,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーV",
+          "number": 3142,
+          "category": "ノーマル",
+          "games": 5155,
+          "bb": 11,
+          "rb": 14,
+          "diff": -1900,
+          "win": false,
+          "posterior": {
+            "1": 0.2956,
+            "2": 0.2941,
+            "3": 0.2455,
+            "4": 0.1108,
+            "5": 0.0449,
+            "6": 0.009
+          },
+          "best_setting": "1",
+          "best_prob": 0.2956,
+          "high_prob": 0.054,
+          "below_min_games": false
+        },
+        {
+          "name": "ジャグラーガールズ",
+          "number": 3323,
+          "category": "ノーマル",
+          "games": 5789,
+          "bb": 25,
+          "rb": 10,
+          "diff": -100,
+          "win": false,
+          "posterior": {
+            "1": 0.4521,
+            "2": 0.2861,
+            "3": 0.1532,
+            "4": 0.0549,
+            "5": 0.0376,
+            "6": 0.0161
+          },
+          "best_setting": "1",
+          "best_prob": 0.4521,
+          "high_prob": 0.0537,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーⅥ",
+          "number": 3133,
+          "category": "ノーマル",
+          "games": 7767,
+          "bb": 25,
+          "rb": 21,
+          "diff": -900,
+          "win": false,
+          "posterior": {
+            "1": 0.28,
+            "2": 0.2967,
+            "3": 0.2563,
+            "4": 0.114,
+            "5": 0.0468,
+            "6": 0.0061
+          },
+          "best_setting": "2",
+          "best_prob": 0.2967,
+          "high_prob": 0.0529,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーⅥ",
+          "number": 3125,
+          "category": "ノーマル",
+          "games": 5978,
+          "bb": 15,
+          "rb": 16,
+          "diff": -1500,
+          "win": false,
+          "posterior": {
+            "1": 0.3013,
+            "2": 0.3009,
+            "3": 0.2452,
+            "4": 0.1048,
+            "5": 0.041,
+            "6": 0.0068
+          },
+          "best_setting": "1",
+          "best_prob": 0.3013,
+          "high_prob": 0.0478,
+          "below_min_games": false
+        },
+        {
+          "name": "ネオアイムジャグラーEX",
+          "number": 3344,
+          "category": "ノーマル",
+          "games": 6223,
+          "bb": 23,
+          "rb": 14,
+          "diff": 100,
+          "win": true,
+          "posterior": {
+            "1": 0.3382,
+            "2": 0.312,
+            "3": 0.1725,
+            "4": 0.1301,
+            "5": 0.0238,
+            "6": 0.0234
+          },
+          "best_setting": "1",
+          "best_prob": 0.3382,
+          "high_prob": 0.0472,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーV",
+          "number": 3118,
+          "category": "ノーマル",
+          "games": 7893,
+          "bb": 34,
+          "rb": 18,
+          "diff": 900,
+          "win": true,
+          "posterior": {
+            "1": 0.3467,
+            "2": 0.3229,
+            "3": 0.2025,
+            "4": 0.0818,
+            "5": 0.0416,
+            "6": 0.0046
+          },
+          "best_setting": "1",
+          "best_prob": 0.3467,
+          "high_prob": 0.0462,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーV",
+          "number": 3279,
+          "category": "ノーマル",
+          "games": 7478,
+          "bb": 31,
+          "rb": 17,
+          "diff": 600,
+          "win": true,
+          "posterior": {
+            "1": 0.3505,
+            "2": 0.3233,
+            "3": 0.2021,
+            "4": 0.0802,
+            "5": 0.0393,
+            "6": 0.0046
+          },
+          "best_setting": "1",
+          "best_prob": 0.3505,
+          "high_prob": 0.0439,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーV",
+          "number": 3269,
+          "category": "ノーマル",
+          "games": 6903,
+          "bb": 26,
+          "rb": 16,
+          "diff": -100,
+          "win": false,
+          "posterior": {
+            "1": 0.3471,
+            "2": 0.321,
+            "3": 0.2079,
+            "4": 0.0818,
+            "5": 0.0374,
+            "6": 0.0048
+          },
+          "best_setting": "1",
+          "best_prob": 0.3471,
+          "high_prob": 0.0422,
+          "below_min_games": false
+        },
+        {
+          "name": "ゴーゴージャグラー3",
+          "number": 3173,
+          "category": "ノーマル",
+          "games": 4121,
+          "bb": 13,
+          "rb": 7,
+          "diff": -1200,
+          "win": false,
+          "posterior": {
+            "1": 0.4134,
+            "2": 0.2984,
+            "3": 0.1802,
+            "4": 0.0658,
+            "5": 0.0285,
+            "6": 0.0137
+          },
+          "best_setting": "1",
+          "best_prob": 0.4134,
+          "high_prob": 0.0421,
+          "below_min_games": false
+        },
+        {
+          "name": "ゴーゴージャグラー3",
+          "number": 3186,
+          "category": "ノーマル",
+          "games": 3755,
+          "bb": 10,
+          "rb": 6,
+          "diff": -1700,
+          "win": false,
+          "posterior": {
+            "1": 0.4127,
+            "2": 0.2973,
+            "3": 0.1807,
+            "4": 0.0672,
+            "5": 0.0289,
+            "6": 0.0132
+          },
+          "best_setting": "1",
+          "best_prob": 0.4127,
+          "high_prob": 0.0421,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーⅥ",
+          "number": 3138,
+          "category": "ノーマル",
+          "games": 7421,
+          "bb": 21,
+          "rb": 20,
+          "diff": -1900,
+          "win": false,
+          "posterior": {
+            "1": 0.299,
+            "2": 0.3072,
+            "3": 0.2525,
+            "4": 0.1005,
+            "5": 0.0363,
+            "6": 0.0045
+          },
+          "best_setting": "2",
+          "best_prob": 0.3072,
+          "high_prob": 0.0408,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーV",
+          "number": 3273,
+          "category": "ノーマル",
+          "games": 5650,
+          "bb": 20,
+          "rb": 12,
+          "diff": -700,
+          "win": false,
+          "posterior": {
+            "1": 0.3745,
+            "2": 0.3251,
+            "3": 0.1919,
+            "4": 0.0715,
+            "5": 0.0322,
+            "6": 0.0047
+          },
+          "best_setting": "1",
+          "best_prob": 0.3745,
+          "high_prob": 0.0369,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーV",
+          "number": 3281,
+          "category": "ノーマル",
+          "games": 7096,
+          "bb": 27,
+          "rb": 16,
+          "diff": -700,
+          "win": false,
+          "posterior": {
+            "1": 0.3652,
+            "2": 0.3287,
+            "3": 0.1987,
+            "4": 0.0722,
+            "5": 0.0317,
+            "6": 0.0036
+          },
+          "best_setting": "1",
+          "best_prob": 0.3652,
+          "high_prob": 0.0353,
+          "below_min_games": false
+        },
+        {
+          "name": "ミスタージャグラー",
+          "number": 3313,
+          "category": "ノーマル",
+          "games": 3894,
+          "bb": 15,
+          "rb": 5,
+          "diff": -200,
+          "win": false,
+          "posterior": {
+            "1": 0.4065,
+            "2": 0.2963,
+            "3": 0.1934,
+            "4": 0.0726,
+            "5": 0.022,
+            "6": 0.0092
+          },
+          "best_setting": "1",
+          "best_prob": 0.4065,
+          "high_prob": 0.0312,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーV",
+          "number": 3274,
+          "category": "ノーマル",
+          "games": 6814,
+          "bb": 22,
+          "rb": 16,
+          "diff": -1100,
+          "win": false,
+          "posterior": {
+            "1": 0.3619,
+            "2": 0.3288,
+            "3": 0.2075,
+            "4": 0.0715,
+            "5": 0.0272,
+            "6": 0.0031
+          },
+          "best_setting": "1",
+          "best_prob": 0.3619,
+          "high_prob": 0.0304,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーV",
+          "number": 3265,
+          "category": "ノーマル",
+          "games": 6354,
+          "bb": 21,
+          "rb": 14,
+          "diff": -1200,
+          "win": false,
+          "posterior": {
+            "1": 0.3834,
+            "2": 0.3329,
+            "3": 0.1925,
+            "4": 0.0636,
+            "5": 0.0248,
+            "6": 0.0029
+          },
+          "best_setting": "1",
+          "best_prob": 0.3834,
+          "high_prob": 0.0277,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーV",
+          "number": 3271,
+          "category": "ノーマル",
+          "games": 6395,
+          "bb": 21,
+          "rb": 14,
+          "diff": -1300,
+          "win": false,
+          "posterior": {
+            "1": 0.3883,
+            "2": 0.3346,
+            "3": 0.19,
+            "4": 0.0611,
+            "5": 0.0233,
+            "6": 0.0026
+          },
+          "best_setting": "1",
+          "best_prob": 0.3883,
+          "high_prob": 0.026,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーⅥ",
+          "number": 3128,
+          "category": "ノーマル",
+          "games": 6163,
+          "bb": 20,
+          "rb": 13,
+          "diff": -800,
+          "win": false,
+          "posterior": {
+            "1": 0.4016,
+            "2": 0.3371,
+            "3": 0.1818,
+            "4": 0.056,
+            "5": 0.021,
+            "6": 0.0024
+          },
+          "best_setting": "1",
+          "best_prob": 0.4016,
+          "high_prob": 0.0234,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーV",
+          "number": 3287,
+          "category": "ノーマル",
+          "games": 4738,
+          "bb": 15,
+          "rb": 8,
+          "diff": -1400,
+          "win": false,
+          "posterior": {
+            "1": 0.4367,
+            "2": 0.337,
+            "3": 0.1584,
+            "4": 0.0469,
+            "5": 0.0185,
+            "6": 0.0025
+          },
+          "best_setting": "1",
+          "best_prob": 0.4367,
+          "high_prob": 0.021,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーV",
+          "number": 3282,
+          "category": "ノーマル",
+          "games": 4454,
+          "bb": 8,
+          "rb": 9,
+          "diff": -2600,
+          "win": false,
+          "posterior": {
+            "1": 0.4099,
+            "2": 0.3338,
+            "3": 0.182,
+            "4": 0.0538,
+            "5": 0.0179,
+            "6": 0.0025
+          },
+          "best_setting": "1",
+          "best_prob": 0.4099,
+          "high_prob": 0.0204,
+          "below_min_games": false
+        },
+        {
+          "name": "マイジャグラーⅥ",
+          "number": 3129,
+          "category": "ノーマル",
+          "games": 5862,
+          "bb": 11,
+          "rb": 13,
+          "diff": -2900,
+          "win": false,
+          "posterior": {
+            "1": 0.4173,
+            "2": 0.343,
+            "3": 0.1824,
+            "4": 0.0445,
+            "5": 0.0117,
+            "6": 0.0011
+          },
+          "best_setting": "1",
+          "best_prob": 0.4173,
+          "high_prob": 0.0128,
+          "below_min_games": false
+        },
+        {
+          "name": "A‐SLOT+ 異世界かるてっと",
+          "number": 2177,
+          "category": "BT",
+          "games": 1024,
+          "bb": 2,
+          "rb": 0,
+          "diff": -1100,
+          "win": false,
+          "posterior": {
+            "1": 0.4212,
+            "2": 0.3614,
+            "5": 0.1512,
+            "6": 0.0662
+          },
+          "best_setting": "1",
+          "best_prob": 0.4212,
+          "high_prob": 0.2174,
+          "below_min_games": true
+        },
+        {
+          "name": "ファンキージャグラー2",
+          "number": 3159,
+          "category": "ノーマル",
+          "games": 1386,
+          "bb": 4,
+          "rb": 1,
+          "diff": -600,
+          "win": false,
+          "posterior": {
+            "1": 0.3091,
+            "2": 0.25,
+            "3": 0.1867,
+            "4": 0.1222,
+            "5": 0.0884,
+            "6": 0.0436
+          },
+          "best_setting": "1",
+          "best_prob": 0.3091,
+          "high_prob": 0.132,
+          "below_min_games": true
+        },
+        {
+          "name": "キングハナハナ-30",
+          "number": 3012,
+          "category": "ノーマル",
+          "games": 1460,
+          "bb": 2,
+          "rb": 1,
+          "diff": -1000,
+          "win": false,
+          "posterior": {
+            "1": 0.3484,
+            "2": 0.2456,
+            "3": 0.1702,
+            "4": 0.112,
+            "5": 0.0741,
+            "6": 0.0497
+          },
+          "best_setting": "1",
+          "best_prob": 0.3484,
+          "high_prob": 0.1238,
+          "below_min_games": true
+        }
+      ]
+    },
+    "narabi": {
+      "blocks": [
+        {
+          "start": 2024,
+          "section": "2023-2031",
+          "mean_diff": 3100,
+          "mean_games": 4077.5,
+          "games_ratio": 0.748,
+          "win_rate": 1.0,
+          "segments": [
+            "AT等"
+          ],
+          "names": [
+            "甲鉄城のカバネリ 海門(うなと)決戦"
+          ]
+        },
+        {
+          "start": 2032,
+          "section": "2032-2040",
+          "mean_diff": 4950,
+          "mean_games": 4535.0,
+          "games_ratio": 0.831,
+          "win_rate": 1.0,
+          "segments": [
+            "AT等"
+          ],
+          "names": [
+            "甲鉄城のカバネリ 海門(うなと)決戦"
+          ]
+        },
+        {
+          "start": 2098,
+          "section": "2089-2101",
+          "mean_diff": 4300,
+          "mean_games": 7717.2,
+          "games_ratio": 1.415,
+          "win_rate": 1.0,
+          "segments": [
+            "AT等"
+          ],
+          "names": [
+            "Vivy ‐Fluorite Eye's Song‐"
+          ]
+        },
+        {
+          "start": 2208,
+          "section": "2196-2212",
+          "mean_diff": 6750,
+          "mean_games": 5548.5,
+          "games_ratio": 1.017,
+          "win_rate": 1.0,
+          "segments": [
+            "AT等"
+          ],
+          "names": [
+            "ソードアート・オンライン オルタナティブ ガンゲイル・オンライン"
+          ]
+        },
+        {
+          "start": 2256,
+          "section": "2247-2263",
+          "mean_diff": 1875,
+          "mean_games": 5217.8,
+          "games_ratio": 0.957,
+          "win_rate": 1.0,
+          "segments": [
+            "AT等"
+          ],
+          "names": [
+            "スマスロ北斗の拳"
+          ]
+        },
+        {
+          "start": 2283,
+          "section": "2281-2297",
+          "mean_diff": 3100,
+          "mean_games": 3101.0,
+          "games_ratio": 0.569,
+          "win_rate": 0.75,
+          "segments": [
+            "AT等"
+          ],
+          "names": [
+            "ゴッドイーター リザレクション"
+          ]
+        },
+        {
+          "start": 3225,
+          "section": "3218-3233",
+          "mean_diff": 2300,
+          "mean_games": 4108.5,
+          "games_ratio": 0.753,
+          "win_rate": 0.75,
+          "segments": [
+            "AT等"
+          ],
+          "names": [
+            "東京喰種"
+          ]
+        },
+        {
+          "start": 3243,
+          "section": "3234-3249",
+          "mean_diff": 5900,
+          "mean_games": 4137.0,
+          "games_ratio": 0.758,
+          "win_rate": 0.75,
+          "segments": [
+            "AT等"
+          ],
+          "names": [
+            "東京喰種"
+          ]
+        }
+      ],
+      "count": 8
+    }
+  },
+  "is_event_day": false,
+  "event": null
 }
