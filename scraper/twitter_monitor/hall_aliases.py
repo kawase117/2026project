@@ -13,6 +13,7 @@ infer_hall.py の台番号+機種名の数値一致だけでは、対象外ホ�
 そもそも対象ホールの話ではない可能性が高いので、数値一致の対象から除外する。
 """
 
+import re
 from datetime import date
 
 # hall_name -> [(keyword, valid_from, valid_until), ...]
@@ -84,6 +85,13 @@ HALL_ALIAS_EXCLUSIONS: dict[str, tuple[str, ...]] = {
     "みとや大森町店": ("みとや水道橋", "みとやジャックポット", "みとや浅草"),
 }
 
+# 同系列の店が多く列挙しきれないホールは、略記に続く語の形で別店舗を除く。
+# 「楽園」に漢字・カタカナが続けば別店舗の名前(溝の口・町田・アメ横…)と読む。
+# 蒲田を含みうる語(全店・合同・グループ・特定日・対抗)は残す(2026-11-07 実データから)。
+HALL_ALIAS_EXCLUSION_PATTERNS: dict[str, re.Pattern[str]] = {
+    "楽園蒲田店": re.compile(r"楽園(?!蒲田|全|合同|グループ|特定|対抗)(?=[一-鿿ァ-ヶ]|なんば)"),
+}
+
 
 # 本文での略記。HALL_ALIASES は infer_hall / event_days も使うので、画像抽出の
 # 絞り込みでだけ必要な略記はここに分ける（「メガ1」「蒲田7」など）。
@@ -122,6 +130,9 @@ def plausible_halls(text: str, on_date: date | None) -> set[str]:
         scan = text
         for other in HALL_ALIAS_EXCLUSIONS.get(hall_name, ()):
             scan = scan.replace(other, "")
+        pattern = HALL_ALIAS_EXCLUSION_PATTERNS.get(hall_name)
+        if pattern is not None:
+            scan = pattern.sub("", scan)
         for keyword, valid_from, valid_until in aliases:
             if keyword not in scan:
                 continue

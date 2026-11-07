@@ -242,7 +242,8 @@ def unregistered_announce_block(key: str, today: str) -> str:
     )
 
 
-_MACHINE_NO = re.compile(r"(?<![\d,.+\-/])\d{3,4}(?![\d,./]|[年月日枚回Gg%円万台])")
+# 英字に接する数字は発信者名の一部(minnade777judge など)で、台番号ではない。
+_MACHINE_NO = re.compile(r"(?<![A-Za-z\d,.+\-/])\d{3,4}(?![A-Za-z\d,./]|[年月日枚回Gg%円万台])")
 _ANNOUNCE_TEXT_KEYS = ("raw_text", "claims", "unscored_claims", "weakness_note", "amendments")
 
 
