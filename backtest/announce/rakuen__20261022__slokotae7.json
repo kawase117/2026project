@@ -65,174 +65,19 @@
     }
   ],
   "unscored_claims": [],
-  "needs_manual_review": true,
+  "needs_manual_review": false,
   "no_confirmed_machines": false,
-  "result": {
-    "scored_at_data_max": "20261022",
-    "hall_baseline_mean_diff": 154.3,
-    "hall_n_machines": 587,
-    "new_machine_days": 30,
-    "censoring": {
-      "n_censored_hi": 1,
-      "n_censored_lo": 0,
-      "machines_hi": [
-        "聖闘士星矢 海皇覚醒 CUSTOM EDITION"
-      ],
-      "machines_lo": [],
-      "bounds": [
-        -5095,
-        15477
-      ]
-    },
-    "claims": [
-      {
-        "type": "model_named",
-        "claim": {
-          "type": "model_named",
-          "machine_name": "とある魔術の禁書目録",
-          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
-        },
-        "hit": null,
-        "note": "当日 とある魔術の禁書目録 が設置3台以上の候補に無い（撤去・台数不足・表記ゆれ）"
-      },
-      {
-        "type": "model_named",
-        "claim": {
-          "type": "model_named",
-          "machine_name": "アレックス ブライト",
-          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
-        },
-        "score": -367.3,
-        "mean_diff": -507.7,
-        "gratio": 0.723,
-        "n_machines": 3,
-        "rank": 48,
-        "candidate_models": 57,
-        "age_days": 472,
-        "age_bucket": "established",
-        "base_rate": 0.048,
-        "hit": false
-      },
-      {
-        "type": "model_named",
-        "claim": {
-          "type": "model_named",
-          "machine_name": "ソードアート・オンラインII",
-          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
-        },
-        "score": -1531.0,
-        "mean_diff": -979.8,
-        "gratio": 1.563,
-        "n_machines": 12,
-        "rank": 56,
-        "candidate_models": 57,
-        "age_days": 136,
-        "age_bucket": "established",
-        "base_rate": 0.048,
-        "hit": false
-      },
-      {
-        "type": "model_named",
-        "claim": {
-          "type": "model_named",
-          "machine_name": "ネオアイムジャグラーEX",
-          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
-        },
-        "score": 58.4,
-        "mean_diff": 56.7,
-        "gratio": 1.031,
-        "n_machines": 66,
-        "rank": 28,
-        "candidate_models": 57,
-        "age_days": 388,
-        "age_bucket": "established",
-        "base_rate": 0.048,
-        "hit": false
-      },
-      {
-        "type": "model_named",
-        "claim": {
-          "type": "model_named",
-          "machine_name": "ミリオンゴッド‐神々の軌跡‐",
-          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
-        },
-        "score": 1511.1,
-        "mean_diff": 1322.8,
-        "gratio": 1.142,
-        "n_machines": 13,
-        "rank": 5,
-        "candidate_models": 57,
-        "age_days": 185,
-        "age_bucket": "established",
-        "base_rate": 0.048,
-        "hit": false
-      },
-      {
-        "type": "model_named",
-        "claim": {
-          "type": "model_named",
-          "machine_name": "モンスターハンターライズ",
-          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
-        },
-        "score": 796.8,
-        "mean_diff": 659.2,
-        "gratio": 1.209,
-        "n_machines": 6,
-        "rank": 10,
-        "candidate_models": 57,
-        "age_days": 659,
-        "age_bucket": "established",
-        "base_rate": 0.048,
-        "hit": false
-      },
-      {
-        "type": "model_named",
-        "claim": {
-          "type": "model_named",
-          "machine_name": "化物語",
-          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
-        },
-        "score": 782.6,
-        "mean_diff": 719.6,
-        "gratio": 1.088,
-        "n_machines": 9,
-        "rank": 12,
-        "candidate_models": 57,
-        "age_days": 318,
-        "age_bucket": "established",
-        "base_rate": 0.048,
-        "hit": false
-      },
-      {
-        "type": "model_named",
-        "claim": {
-          "type": "model_named",
-          "machine_name": "甲鉄城のカバネリ",
-          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
-        },
-        "hit": null,
-        "note": "当日 甲鉄城のカバネリ が設置3台以上の候補に無い（撤去・台数不足・表記ゆれ）"
-      },
-      {
-        "type": "model_named",
-        "claim": {
-          "type": "model_named",
-          "machine_name": "甲鉄城のカバネリ 海門(うなと)決戦",
-          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
-        },
-        "score": 1059.5,
-        "mean_diff": 559.0,
-        "gratio": 1.895,
-        "n_machines": 30,
-        "rank": 6,
-        "candidate_models": 57,
-        "age_days": 234,
-        "age_bucket": "established",
-        "base_rate": 0.048,
-        "hit": false
-      }
-    ]
-  },
-  "announce_digest": "34c93e3f9b9ab54b",
-  "provisional": true
+  "result": null,
+  "announce_digest": "7fe77a48a976c008",
+  "provisional": true,
+  "amendments": [
+    {
+      "at": "2026-11-07T12:26:37+09:00",
+      "prev_digest": "34c93e3f9b9ab54b",
+      "reason": "予告ではなく楽園蒲田の過去の結果(10/21分)。EVENTS.md の仕分けでは登録しないもの",
+      "void": true,
+      "amended_after_target": true
+    }
+  ],
+  "voided": true
 }
