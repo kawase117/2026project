@@ -1,0 +1,99 @@
+{
+  "rule_id": "k7_monday_model_gratio_top2",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "freeze_hash": "678fec8decdec048",
+  "target_date": "20261109",
+  "data_asof": "20261107",
+  "data_lag_days": 2,
+  "lookback_window": [
+    "2026-10-10",
+    "2026-11-09"
+  ],
+  "score": "hist_model_gratio_mean_diff",
+  "selection_unit": "machine_model",
+  "success_criterion": "フォワードで月曜20エントリー日を経過した時点で、picks の平均差枚が同日ホール平均に対して +300枚/台 以上、かつ 95%CI 下限 > 0 であること。満たさなければ破棄し、蒲田7の曜日仕掛けを機種粒度で狙う路線はこの1本で打ち止めとする。バックテストの結果は採否根拠にしない（in-sample。曜日の指定は instinct 由来で事後発見ではないが、score と top_n の組み合わせは今回初めて決めたので in-sample 評価は甘い方向に歪む）。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 3172.131018,
+      "history_rows": 14,
+      "machines": [
+        2191,
+        2192,
+        2193,
+        2194,
+        2195
+      ]
+    },
+    {
+      "machine_name": "Vivy ‐Fluorite Eye's Song‐",
+      "score": 1028.122686,
+      "history_rows": 16,
+      "machines": [
+        2098,
+        2099,
+        2100,
+        2101
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 2191,
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 3172.131018,
+      "history_days": 14
+    },
+    {
+      "machine_number": 2192,
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 3172.131018,
+      "history_days": 14
+    },
+    {
+      "machine_number": 2193,
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 3172.131018,
+      "history_days": 14
+    },
+    {
+      "machine_number": 2194,
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 3172.131018,
+      "history_days": 14
+    },
+    {
+      "machine_number": 2195,
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 3172.131018,
+      "history_days": 14
+    },
+    {
+      "machine_number": 2098,
+      "machine_name": "Vivy ‐Fluorite Eye's Song‐",
+      "score": 1028.122686,
+      "history_days": 16
+    },
+    {
+      "machine_number": 2099,
+      "machine_name": "Vivy ‐Fluorite Eye's Song‐",
+      "score": 1028.122686,
+      "history_days": 16
+    },
+    {
+      "machine_number": 2100,
+      "machine_name": "Vivy ‐Fluorite Eye's Song‐",
+      "score": 1028.122686,
+      "history_days": 16
+    },
+    {
+      "machine_number": 2101,
+      "machine_name": "Vivy ‐Fluorite Eye's Song‐",
+      "score": 1028.122686,
+      "history_days": 16
+    }
+  ],
+  "result": null,
+  "plan_digest": "6d9fae926cd4bcbe"
+}

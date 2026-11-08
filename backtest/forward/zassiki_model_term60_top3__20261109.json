@@ -1,0 +1,127 @@
+{
+  "rule_id": "zassiki_model_term60_top3",
+  "hall": "ザ-シティ-ベルシティ雑色店",
+  "freeze_hash": "c19f10b6e683a454",
+  "target_date": "20261109",
+  "data_asof": "20261108",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-09-10",
+    "2026-11-09"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +87 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 271.818888,
+      "history_rows": 312,
+      "machines": [
+        873,
+        874,
+        875,
+        876,
+        877,
+        878
+      ]
+    },
+    {
+      "machine_name": "東京喰種",
+      "score": 199.875419,
+      "history_rows": 78,
+      "machines": [
+        861,
+        862,
+        863
+      ]
+    },
+    {
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "score": 121.731073,
+      "history_rows": 162,
+      "machines": [
+        840,
+        841,
+        842
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 873,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 271.818888,
+      "history_days": 312
+    },
+    {
+      "machine_number": 874,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 271.818888,
+      "history_days": 312
+    },
+    {
+      "machine_number": 875,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 271.818888,
+      "history_days": 312
+    },
+    {
+      "machine_number": 876,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 271.818888,
+      "history_days": 312
+    },
+    {
+      "machine_number": 877,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 271.818888,
+      "history_days": 312
+    },
+    {
+      "machine_number": 878,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 271.818888,
+      "history_days": 312
+    },
+    {
+      "machine_number": 861,
+      "machine_name": "東京喰種",
+      "score": 199.875419,
+      "history_days": 78
+    },
+    {
+      "machine_number": 862,
+      "machine_name": "東京喰種",
+      "score": 199.875419,
+      "history_days": 78
+    },
+    {
+      "machine_number": 863,
+      "machine_name": "東京喰種",
+      "score": 199.875419,
+      "history_days": 78
+    },
+    {
+      "machine_number": 840,
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "score": 121.731073,
+      "history_days": 162
+    },
+    {
+      "machine_number": 841,
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "score": 121.731073,
+      "history_days": 162
+    },
+    {
+      "machine_number": 842,
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "score": 121.731073,
+      "history_days": 162
+    }
+  ],
+  "result": null,
+  "plan_digest": "55d4d0d5f446eb03"
+}

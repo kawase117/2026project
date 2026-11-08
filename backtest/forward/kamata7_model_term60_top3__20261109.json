@@ -1,0 +1,386 @@
+{
+  "rule_id": "kamata7_model_term60_top3",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "freeze_hash": "b5bec81d02cedc0e",
+  "target_date": "20261109",
+  "data_asof": "20261107",
+  "data_lag_days": 2,
+  "lookback_window": [
+    "2026-09-10",
+    "2026-11-09"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +75 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "戦国コレクション6",
+      "score": 375.801007,
+      "history_rows": 76,
+      "machines": [
+        2306,
+        2307,
+        2308,
+        2309
+      ]
+    },
+    {
+      "machine_name": "痛いのは嫌なので防御力に極振りしたいと思います。",
+      "score": 238.507098,
+      "history_rows": 133,
+      "machines": [
+        2269,
+        2270,
+        2271,
+        2272
+      ]
+    },
+    {
+      "machine_name": "東京喰種",
+      "score": 189.57211,
+      "history_rows": 2305,
+      "machines": [
+        3209,
+        3210,
+        3211,
+        3212,
+        3213,
+        3214,
+        3215,
+        3216,
+        3217,
+        3218,
+        3219,
+        3220,
+        3221,
+        3222,
+        3223,
+        3224,
+        3225,
+        3226,
+        3227,
+        3228,
+        3229,
+        3230,
+        3231,
+        3232,
+        3233,
+        3234,
+        3235,
+        3236,
+        3237,
+        3238,
+        3239,
+        3240,
+        3241,
+        3242,
+        3243,
+        3244,
+        3245,
+        3246,
+        3247,
+        3248,
+        3249
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 2306,
+      "machine_name": "戦国コレクション6",
+      "score": 375.801007,
+      "history_days": 76
+    },
+    {
+      "machine_number": 2307,
+      "machine_name": "戦国コレクション6",
+      "score": 375.801007,
+      "history_days": 76
+    },
+    {
+      "machine_number": 2308,
+      "machine_name": "戦国コレクション6",
+      "score": 375.801007,
+      "history_days": 76
+    },
+    {
+      "machine_number": 2309,
+      "machine_name": "戦国コレクション6",
+      "score": 375.801007,
+      "history_days": 76
+    },
+    {
+      "machine_number": 2269,
+      "machine_name": "痛いのは嫌なので防御力に極振りしたいと思います。",
+      "score": 238.507098,
+      "history_days": 133
+    },
+    {
+      "machine_number": 2270,
+      "machine_name": "痛いのは嫌なので防御力に極振りしたいと思います。",
+      "score": 238.507098,
+      "history_days": 133
+    },
+    {
+      "machine_number": 2271,
+      "machine_name": "痛いのは嫌なので防御力に極振りしたいと思います。",
+      "score": 238.507098,
+      "history_days": 133
+    },
+    {
+      "machine_number": 2272,
+      "machine_name": "痛いのは嫌なので防御力に極振りしたいと思います。",
+      "score": 238.507098,
+      "history_days": 133
+    },
+    {
+      "machine_number": 3209,
+      "machine_name": "東京喰種",
+      "score": 189.57211,
+      "history_days": 2305
+    },
+    {
+      "machine_number": 3210,
+      "machine_name": "東京喰種",
+      "score": 189.57211,
+      "history_days": 2305
+    },
+    {
+      "machine_number": 3211,
+      "machine_name": "東京喰種",
+      "score": 189.57211,
+      "history_days": 2305
+    },
+    {
+      "machine_number": 3212,
+      "machine_name": "東京喰種",
+      "score": 189.57211,
+      "history_days": 2305
+    },
+    {
+      "machine_number": 3213,
+      "machine_name": "東京喰種",
+      "score": 189.57211,
+      "history_days": 2305
+    },
+    {
+      "machine_number": 3214,
+      "machine_name": "東京喰種",
+      "score": 189.57211,
+      "history_days": 2305
+    },
+    {
+      "machine_number": 3215,
+      "machine_name": "東京喰種",
+      "score": 189.57211,
+      "history_days": 2305
+    },
+    {
+      "machine_number": 3216,
+      "machine_name": "東京喰種",
+      "score": 189.57211,
+      "history_days": 2305
+    },
+    {
+      "machine_number": 3217,
+      "machine_name": "東京喰種",
+      "score": 189.57211,
+      "history_days": 2305
+    },
+    {
+      "machine_number": 3218,
+      "machine_name": "東京喰種",
+      "score": 189.57211,
+      "history_days": 2305
+    },
+    {
+      "machine_number": 3219,
+      "machine_name": "東京喰種",
+      "score": 189.57211,
+      "history_days": 2305
+    },
+    {
+      "machine_number": 3220,
+      "machine_name": "東京喰種",
+      "score": 189.57211,
+      "history_days": 2305
+    },
+    {
+      "machine_number": 3221,
+      "machine_name": "東京喰種",
+      "score": 189.57211,
+      "history_days": 2305
+    },
+    {
+      "machine_number": 3222,
+      "machine_name": "東京喰種",
+      "score": 189.57211,
+      "history_days": 2305
+    },
+    {
+      "machine_number": 3223,
+      "machine_name": "東京喰種",
+      "score": 189.57211,
+      "history_days": 2305
+    },
+    {
+      "machine_number": 3224,
+      "machine_name": "東京喰種",
+      "score": 189.57211,
+      "history_days": 2305
+    },
+    {
+      "machine_number": 3225,
+      "machine_name": "東京喰種",
+      "score": 189.57211,
+      "history_days": 2305
+    },
+    {
+      "machine_number": 3226,
+      "machine_name": "東京喰種",
+      "score": 189.57211,
+      "history_days": 2305
+    },
+    {
+      "machine_number": 3227,
+      "machine_name": "東京喰種",
+      "score": 189.57211,
+      "history_days": 2305
+    },
+    {
+      "machine_number": 3228,
+      "machine_name": "東京喰種",
+      "score": 189.57211,
+      "history_days": 2305
+    },
+    {
+      "machine_number": 3229,
+      "machine_name": "東京喰種",
+      "score": 189.57211,
+      "history_days": 2305
+    },
+    {
+      "machine_number": 3230,
+      "machine_name": "東京喰種",
+      "score": 189.57211,
+      "history_days": 2305
+    },
+    {
+      "machine_number": 3231,
+      "machine_name": "東京喰種",
+      "score": 189.57211,
+      "history_days": 2305
+    },
+    {
+      "machine_number": 3232,
+      "machine_name": "東京喰種",
+      "score": 189.57211,
+      "history_days": 2305
+    },
+    {
+      "machine_number": 3233,
+      "machine_name": "東京喰種",
+      "score": 189.57211,
+      "history_days": 2305
+    },
+    {
+      "machine_number": 3234,
+      "machine_name": "東京喰種",
+      "score": 189.57211,
+      "history_days": 2305
+    },
+    {
+      "machine_number": 3235,
+      "machine_name": "東京喰種",
+      "score": 189.57211,
+      "history_days": 2305
+    },
+    {
+      "machine_number": 3236,
+      "machine_name": "東京喰種",
+      "score": 189.57211,
+      "history_days": 2305
+    },
+    {
+      "machine_number": 3237,
+      "machine_name": "東京喰種",
+      "score": 189.57211,
+      "history_days": 2305
+    },
+    {
+      "machine_number": 3238,
+      "machine_name": "東京喰種",
+      "score": 189.57211,
+      "history_days": 2305
+    },
+    {
+      "machine_number": 3239,
+      "machine_name": "東京喰種",
+      "score": 189.57211,
+      "history_days": 2305
+    },
+    {
+      "machine_number": 3240,
+      "machine_name": "東京喰種",
+      "score": 189.57211,
+      "history_days": 2305
+    },
+    {
+      "machine_number": 3241,
+      "machine_name": "東京喰種",
+      "score": 189.57211,
+      "history_days": 2305
+    },
+    {
+      "machine_number": 3242,
+      "machine_name": "東京喰種",
+      "score": 189.57211,
+      "history_days": 2305
+    },
+    {
+      "machine_number": 3243,
+      "machine_name": "東京喰種",
+      "score": 189.57211,
+      "history_days": 2305
+    },
+    {
+      "machine_number": 3244,
+      "machine_name": "東京喰種",
+      "score": 189.57211,
+      "history_days": 2305
+    },
+    {
+      "machine_number": 3245,
+      "machine_name": "東京喰種",
+      "score": 189.57211,
+      "history_days": 2305
+    },
+    {
+      "machine_number": 3246,
+      "machine_name": "東京喰種",
+      "score": 189.57211,
+      "history_days": 2305
+    },
+    {
+      "machine_number": 3247,
+      "machine_name": "東京喰種",
+      "score": 189.57211,
+      "history_days": 2305
+    },
+    {
+      "machine_number": 3248,
+      "machine_name": "東京喰種",
+      "score": 189.57211,
+      "history_days": 2305
+    },
+    {
+      "machine_number": 3249,
+      "machine_name": "東京喰種",
+      "score": 189.57211,
+      "history_days": 2305
+    }
+  ],
+  "result": null,
+  "plan_digest": "0fad523695063cae"
+}
