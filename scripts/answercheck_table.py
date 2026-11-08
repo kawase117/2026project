@@ -38,6 +38,7 @@ TOP_RANK_RATE = 0.10
 UNIT_MIN_GAMES = prb.MIN_GAMES  # 台単位のRB比は、これ未満の回転では出さない
 MAX_UNITS = 12  # 台の表の上限（RB候補が27台など多い日は先頭だけ）
 MAX_EXTRA = 5  # 予測外で強かった機種の表示数
+SMALL_HIST_DAYS = 90
 
 VERDICT_STRONG, VERDICT_FLAT, VERDICT_WEAK = "確かに強い", "平ら", "弱い"
 VERDICT_SMALL, VERDICT_HOLD = "標本小", "判定保留"
@@ -81,12 +82,33 @@ class UnitRow:
 
 
 @dataclass
+class SmallUnitRow:
+    number: int
+    name: str
+    games: float
+    diff: float
+    g_ratio: float
+    score: float
+    rank: int
+    total: int
+    hist_mean: float | None
+    hist_games: float | None
+    hist_days: int
+    rb_prob: float | None
+    base_prob: float | None
+    z: float | None
+    verdict: str
+    result: str
+
+
+@dataclass
 class CheckTable:
     lines: list[str]
     rows: list[Row] = field(default_factory=list)
     units: list[UnitRow] = field(default_factory=list)
     day: str = ""
     known_names: list[str] = field(default_factory=list)  # その日DBにある全機種名（本文の帰属判定用）
+    small_units: list[SmallUnitRow] = field(default_factory=list)
 
     @property
     def text(self) -> str:
@@ -226,6 +248,18 @@ def build_check_table(
                 (day,),
             ).fetchall()
             base_rate = _baseline(con, day) if day_rows else {}
+            start = (datetime.strptime(day, "%Y%m%d") - timedelta(days=SMALL_HIST_DAYS)).strftime("%Y%m%d")
+            end = (datetime.strptime(day, "%Y%m%d") - timedelta(days=1)).strftime("%Y%m%d")
+            hist_rows = (
+                con.execute(
+                    "SELECT machine_name, AVG(diff_coins_normalized), AVG(COALESCE(games_normalized, 0)), COUNT(*) "
+                    "FROM machine_detailed_results WHERE date BETWEEN ? AND ? AND diff_coins_normalized IS NOT NULL "
+                    "GROUP BY machine_name",
+                    (start, end),
+                ).fetchall()
+                if day_rows
+                else []
+            )
         finally:
             con.close()
     except sqlite3.Error:
@@ -295,6 +329,44 @@ def build_check_table(
             used.add(name)
             rows.append(make_row(group, name))
 
+    # 台1台の値は機種平均よりばらつきが大きく、機種順位表に混ぜると極端に出やすい。
+    # 当日の全台分布で上位・下位1割を測り、機種の3段判定と同じ割合・z>3に揃える。
+    # 直近90日の同機種平均は普段との比較材料として併記する（2026-11-07 みとや うみねこ2の手評価）。
+    history = {name: (mean, games, days) for name, mean, games, days in hist_rows}
+    all_scores = [diff * ((games or 0) / hall_avg_g if hall_avg_g else 0.0) for _, _, games, diff, _ in day_rows]
+    small_units: list[SmallUnitRow] = []
+    for name in dict.fromkeys(picks.get("models") or []):
+        if name not in by_model or len(by_model[name]) >= MODEL_MIN_UNITS:
+            continue
+        hist_mean, hist_games, hist_days = history.get(name, (None, None, 0))
+        for number, games, diff, rb in by_model[name]:
+            g_ratio = games / hall_avg_g if hall_avg_g else 0.0
+            score = diff * g_ratio
+            rank = 1 + sum(other > score for other in all_scores)
+            stat = _rb_stats([(games, rb)], base_rate.get(name)) if games >= UNIT_MIN_GAMES else {}
+            z = stat.get("z")
+            verdict = judge(rank, len(day_rows), z)
+            small_units.append(
+                SmallUnitRow(
+                    number,
+                    name,
+                    games,
+                    diff,
+                    g_ratio,
+                    score,
+                    rank,
+                    len(day_rows),
+                    hist_mean,
+                    hist_games,
+                    hist_days,
+                    stat.get("rb_prob"),
+                    stat.get("base_prob"),
+                    z,
+                    verdict,
+                    outcome(GROUP_PICK, verdict),
+                )
+            )
+
     unit_numbers = [int(n) for n in picks.get("jug_units") or []]
     unit_source = "ジャグラー候補台"
     if not unit_numbers and auto_units:
@@ -340,13 +412,14 @@ def build_check_table(
             rows.append(row)
             extras += 1
 
-    lines = _render(day, rows, units, unit_source, len(unit_numbers), hall_avg_g, total, db_path)
-    return CheckTable(lines, rows, units, day, sorted(by_model))
+    lines = _render(day, rows, small_units, units, unit_source, len(unit_numbers), hall_avg_g, total, db_path)
+    return CheckTable(lines, rows, units, day, sorted(by_model), small_units)
 
 
 def _render(
     day: str,
     rows: list[Row],
+    small_units: list[SmallUnitRow],
     units: list[UnitRow],
     unit_source: str,
     n_units_all: int,
@@ -361,7 +434,7 @@ def _render(
         "- ホール平均G %s、%d台以上の機種は全%d。順位は平均差枚×G比（G比＝機種平均G÷ホール平均G）。"
         % (format(round(hall_avg_g), ","), MODEL_MIN_UNITS, total),
         "- 判定: z>%g、または順位が上位%d%%なら「確かに強い」、z<-%g または下位%d%%なら「弱い」、それ以外は「平ら」。"
-        "%d台未満は「標本小」で判定しない。避けた機種は強弱が逆（強ければ外れ）。"
+        "%d台未満は「標本小」で判定しない。避けた機種は強弱が逆（強ければ外れ）。推した3台未満の機種は台ごとに下の表で判定する。"
         % (STRONG_Z, pct, STRONG_Z, pct, MODEL_MIN_UNITS),
     ]
     prev = (datetime.strptime(day, "%Y%m%d") - timedelta(days=1)).strftime("%Y%m%d")
@@ -404,6 +477,35 @@ def _render(
             )
     else:
         out += ["", "名指しされた機種は無い（推した・避けた・予告の公約）。"]
+    if small_units:
+        out += [
+            "",
+            "少台数の推し（台ごとに評価。順位は当日の全%d台の差枚×G比、判定の割合と z の基準は機種と同じ。直近%d日は同機種の台×日の平均）:"
+            % (small_units[0].total, SMALL_HIST_DAYS),
+            "",
+            "| 台番号 | 機種 | 回転数 | 差枚 | G比 | 差枚×G比の順位 | 直近90日の平均差枚 | 直近90日の平均G | RB確率(通常日) | z | 判定 | 予測の結果 |",
+            "|---:|---|---:|---:|---:|---:|---:|---:|---|---:|---|---|",
+        ]
+        for u in small_units:
+            rb = "%s (%s)" % (_fmt_prob(u.rb_prob), _fmt_prob(u.base_prob)) if u.base_prob else "-"
+            out.append(
+                "| %d | %s | %s | %s | %.2f | %d台中%d位 | %s | %s | %s | %s | %s | %s |"
+                % (
+                    u.number,
+                    u.name,
+                    format(round(u.games), ","),
+                    _signed(u.diff),
+                    u.g_ratio,
+                    u.total,
+                    u.rank,
+                    _signed(u.hist_mean) if u.hist_mean is not None else "-",
+                    format(round(u.hist_games), ",") if u.hist_games is not None else "-",
+                    rb,
+                    "%+.1f" % u.z if u.z is not None else "-",
+                    u.verdict,
+                    u.result,
+                )
+            )
     if units:
         note = "RB確率の(通常日)＝同機種の直近%d日。台のzは自機種の通常日に対する値" % prb.BASELINE_DAYS
         if n_units_all > MAX_UNITS:
@@ -546,7 +648,7 @@ def check_table_numbers(text: str, table: CheckTable | None, facts_md: str = "")
             by_name.setdefault(normalize(r.name), r)
     # 帰属は、その日DBにある全機種名で判定する（表に無い機種の数字を、名前の似た表の機種に当てない）。
     known = sorted({normalize(n) for n in table.known_names} | set(by_name), key=len, reverse=True)
-    unit_numbers = {str(u.number) for u in table.units}
+    unit_numbers = {str(u.number) for u in table.units} | {str(u.number) for u in table.small_units}
     for raw in text.splitlines():
         stripped = raw.lstrip()
         if stripped.startswith("#") or stripped.startswith("|---"):

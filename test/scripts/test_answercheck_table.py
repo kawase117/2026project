@@ -97,6 +97,43 @@ def test_small_sample_is_not_judged(tmp_path):
     table = build(tmp_path, {"models": ["SMALL"]})
     r = row(table, "SMALL")
     assert (r.verdict, r.result, r.mean) == ("標本小", "判定なし", None)
+    assert len(table.small_units) == 2
+    assert all((u.rank, u.total, u.verdict, u.result) == (1, 33, "確かに強い", "当たり") for u in table.small_units)
+    assert "少台数の推し" in table.text
+    assert at.check_table_numbers("SMALLの台28は4,000G・+3,000枚", table) == ([], [])
+
+
+def test_small_unit_history_uses_only_prior_90_days(tmp_path):
+    db, pred, ann = make_env(tmp_path, {"models": ["SMALL"]})
+    target = datetime.strptime(DAY, "%Y%m%d")
+    with sqlite3.connect(db) as con:
+        con.executemany(
+            "INSERT INTO machine_detailed_results VALUES (?,?,?,?,?,?)",
+            [
+                ((target - timedelta(days=back)).strftime("%Y%m%d"), 28, "SMALL", games, diff, None)
+                for back, games, diff in ((1, 2000, 1000), (90, 6000, -500), (91, 10000, 9000))
+            ],
+        )
+    table = at.build_check_table(db, pred, ann, "kamata7", "kamata7", DAY)
+    assert all((u.hist_mean, u.hist_games, u.hist_days) == (250, 4000, 2) for u in table.small_units)
+
+
+def test_small_unit_weak_and_scope(tmp_path):
+    db, pred, ann = make_env(tmp_path, {"models": ["WEAK", "機種A9"], "avoid_models": ["SMALL"]})
+    with sqlite3.connect(db) as con:
+        con.executemany(
+            "INSERT INTO machine_detailed_results VALUES (?,?,?,?,?,?)",
+            [(DAY, number, "WEAK", 8000, -3000, None) for number in (50, 51)],
+        )
+    table = at.build_check_table(db, pred, ann, "kamata7", "kamata7", DAY)
+    assert len(table.small_units) == 2
+    assert {u.name for u in table.small_units} == {"WEAK"}
+    assert all((u.verdict, u.result) == ("弱い", "外れ") for u in table.small_units)
+
+
+def test_large_pick_and_small_avoid_have_no_small_units(tmp_path):
+    table = build(tmp_path, {"models": ["機種A9"], "avoid_models": ["SMALL"]})
+    assert table.small_units == []
 
 
 def test_extra_strong_models_are_listed(tmp_path):

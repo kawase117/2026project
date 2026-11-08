@@ -100,18 +100,18 @@ HALLS = {
 }
 # 予告ファイル名の頭は、ledger のキーと違うホールがある。
 ANNOUNCE_PREFIX = {"hiroki_higashiguchi": "hiroki", "mitoya": "mitoya_omori"}
-# CLAUDE.md: 設定5以上の割合が高いホールは予告の有無にかかわらず候補を出す。
-# 蒲田1は予告にジャグラー強化がある日だけ。機械実行は安いので表の元データは作り、載せるかは merge で決める。
-JUGGLER_HALLS = {"kamata7", "rakuen", "mitoya", "kamata1", "hiroki_nishiguchi"}
+# PREDICTION.md §2 の2026-11-08改定: みとやは常時、楽園は11月末まで、蒲田1は登録済みの強化予告日だけ載せる。
+# 蒲田7は停止文だけを載せる。機械実行は安いので表の元データは作り、載せるかは連結時に決める。
+JUGGLER_HALLS = {"kamata7", "rakuen", "mitoya", "kamata1"}
+RAKUEN_JUGGLER_UNTIL = "20261130"
 # 全ホール共通の「ジャグラー候補」表の1列目。prediction_ledger.hall_of が当てられる呼び名にする。
 JUGGLER_LABEL = {
     "kamata7": "蒲田7",
     "rakuen": "楽園蒲田店",
     "mitoya": "みとや大森町店",
     "kamata1": "蒲田1",
-    "hiroki_nishiguchi": "ヒロキ蒲田西口店",
 }
-JUGGLER_LOW_NOTE = "ジャグラーの設定5以上の割合が低く、候補を出さない。"
+JUGGLER_LOW_NOTE = "ジャグラー候補表の対象外(PREDICTION.md §2、2026-11-08 改定)。"
 # 採点で有害と出たので候補表を止めたホール(PREDICTION.md の扱いの表)。割合が低いホールとは理由が違うので別に書く。
 JUGGLER_STOPPED = {"kamata7": "ジャグラー候補は出さない(10月は有害、差枚edge −141・95%CI上限 −15)。"}
 
@@ -857,6 +857,59 @@ def parse_juggler(text: str) -> tuple[str, list[tuple[int, str, bool, int, int]]
     return (avg.group(1) if avg else "-"), rows
 
 
+def juggler_announced(key: str, today: str) -> bool:
+    """登録済み予告のジャグラー強化だけを見る。
+
+    蒲田1の登録はほぼ予想者投稿の自動下ごしらえで、claims が
+    「根菜→コン→ミスタージャグラー？」のような言葉遊びから部分一致で拾われる。
+    2026-11-08 のユーザー指示により、連想行だけの推測は強化に数えない。
+    連想行以外の地の文で機種名に触れただけでも数える限界がある。
+    """
+    ledger = ANNOUNCE_DIR / "LEDGER.jsonl"
+    if not ledger.exists():
+        return False
+    latest: dict[str, dict] = {}
+    try:
+        for line in ledger.read_text(encoding="utf-8").splitlines():
+            try:
+                entry = json.loads(line)
+            except ValueError:
+                continue
+            if not isinstance(entry, dict) or entry.get("hall") != HALLS[key][0] or entry.get("target_date") != today:
+                continue
+            if entry.get("voided") or not isinstance(entry.get("key"), str):
+                continue
+            latest[entry["key"]] = entry
+    except OSError:
+        return False
+    for ledger_key, entry in latest.items():
+        raw_text = ""
+        try:
+            data = json.loads((ANNOUNCE_DIR / f"{ledger_key}.json").read_text(encoding="utf-8"))
+        except OSError, ValueError:
+            data = {}
+        if isinstance(data, dict):
+            if any(a.get("void") for a in data.get("amendments") or [] if isinstance(a, dict)):
+                continue
+            raw_text = data.get("raw_text") or ""
+        lines = unicodedata.normalize("NFKC", raw_text).splitlines() if isinstance(raw_text, str) else []
+        for claim in entry.get("claims_detail") or []:
+            name = claim.get("machine_name") if isinstance(claim, dict) else None
+            if not isinstance(name, str) or "ジャグラー" not in name:
+                continue
+            normalized = unicodedata.normalize("NFKC", name)
+            short = re.sub(r"[\s\dA-Za-z\u2160-\u2188]+$", "", normalized)
+            keys = {normalized}
+            if short:
+                keys.add(short)
+            matching = [line for line in lines if any(k in line for k in keys)]
+            if not matching or not all(
+                line.strip().startswith("→") and line.strip().endswith("?") for line in matching
+            ):
+                return True
+    return False
+
+
 def juggler_section(day_dir: Path, today: str, ready: list[str]) -> str:
     """全ホール共通の「## ジャグラー候補」の節。prediction_ledger は1列目をホール、最終列を台番号として読む。"""
     table, low, stopped = [], [], []
@@ -867,9 +920,10 @@ def juggler_section(day_dir: Path, today: str, ready: list[str]) -> str:
         if key not in JUGGLER_LABEL:
             low.append(HALLS[key][1])
             continue
-        if key == "kamata1" and not any(
-            "ジャグ" in p.read_text(encoding="utf-8", errors="replace") for p in announce_files(key, today)
-        ):
+        if key == "rakuen" and today > RAKUEN_JUGGLER_UNTIL:
+            low.append("楽園（2026-11-30 で掲載終了）")
+            continue
+        if key == "kamata1" and not juggler_announced(key, today):
             low.append("%s（予告にジャグラー強化が無い日）" % HALLS[key][1])
             continue
         part = day_dir / ("%s.juggler.md" % key)
@@ -886,7 +940,7 @@ def juggler_section(day_dir: Path, today: str, ready: list[str]) -> str:
         good = ["%dは%sGでRB %d" % (u, format(g, ","), rb) for u, _, ok, g, rb in top if ok]
         note = "。RB良好: %s" % "、".join(good) if good else ""
         table.append("| %s | %s | %s%s |" % (JUGGLER_LABEL[key], avg, listing, note))
-    lines = ["## ジャグラー候補（高設定の割合が高いホール、DB最終日の確定データから作る翌日向け）", ""]
+    lines = ["## ジャグラー候補（PREDICTION.md §2 の対象ホール、DB最終日の確定データから作る翌日向け）", ""]
     if table:
         lines += ["| ホール | 履歴の翌日平均 | 上位の候補（台、機種） |", "|---|---|---|"] + table
     if low:
