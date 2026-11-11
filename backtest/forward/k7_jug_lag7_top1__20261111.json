@@ -1,0 +1,74 @@
+{
+  "rule_id": "k7_jug_lag7_top1",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "freeze_hash": "05b3d06b885a1827",
+  "target_date": "20261111",
+  "data_asof": "20261110",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-11-01",
+    "2026-11-11"
+  ],
+  "score": "lag7_model_top1",
+  "selection_unit": "machine",
+  "success_criterion": "11月の日数が20以上で、エッジ(選んだ台の差枚 − 同日ジャグ全台平均)の平均が負、かつ95%区間の上限 < 0。対照の k7_jug_lag8_top1 より低いこと。満たせば、試験枠(c)の「持ち越し上位を外す」をこれに置き換えるかをユーザーと決める。",
+  "is_dry_run": false,
+  "picks": [
+    {
+      "machine_number": 3308,
+      "machine_name": "ウルトラミラクルジャグラー",
+      "score": 1.0,
+      "history_days": 10
+    },
+    {
+      "machine_number": 3180,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 1.0,
+      "history_days": 10
+    },
+    {
+      "machine_number": 3322,
+      "machine_name": "ジャグラーガールズ",
+      "score": 1.0,
+      "history_days": 10
+    },
+    {
+      "machine_number": 3336,
+      "machine_name": "ネオアイムジャグラーEX",
+      "score": 1.0,
+      "history_days": 10
+    },
+    {
+      "machine_number": 3300,
+      "machine_name": "ハッピージャグラーVIII",
+      "score": 1.0,
+      "history_days": 10
+    },
+    {
+      "machine_number": 3152,
+      "machine_name": "ファンキージャグラー2",
+      "score": 1.0,
+      "history_days": 10
+    },
+    {
+      "machine_number": 3284,
+      "machine_name": "マイジャグラーV",
+      "score": 1.0,
+      "history_days": 10
+    },
+    {
+      "machine_number": 3128,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 1.0,
+      "history_days": 7
+    },
+    {
+      "machine_number": 3310,
+      "machine_name": "ミスタージャグラー",
+      "score": 1.0,
+      "history_days": 10
+    }
+  ],
+  "result": null,
+  "plan_digest": "e05a8097328a1df3"
+}

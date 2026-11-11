@@ -1,0 +1,38 @@
+{
+  "rule_id": "k1_jug_dd1kei_rbz_top3",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "freeze_hash": "5c176bc76465f438",
+  "target_date": "20261111",
+  "data_asof": "20261110",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-10-12",
+    "2026-11-11"
+  ],
+  "score": "hist_mean_rb_prob_model_z",
+  "selection_unit": "machine",
+  "success_criterion": "判定はフォワードテストのみで行う。バックテストの数値を採否根拠にしてはならない（このDDセットは過去データを見て決めたため、同じ過去データでの確認は自己参照になる）。フォワード12エントリー日を経過した時点で、選択3台の『同日ジャグ全台平均に対する差枚エッジ』の平均が +150枚/台 以上、かつ 95%CI 下限が 0 を上回ること。加えて対照ルール k1_jug_plain_rbz_top3 の同期間エッジ平均を上回ること。いずれかを満たさなければ破棄する。破棄した場合、DDセットや score を変えた派生ルールは作らない（変種を作って当てにいくことを禁じる）。なお本仮説は2026年に形成されつつあるレジームを対象としており、ホールが方針を変えれば失効しうる。失効と測定ミスは区別して記録すること。",
+  "is_dry_run": false,
+  "picks": [
+    {
+      "machine_number": 2241,
+      "machine_name": "マイジャグラーV",
+      "score": 0.52871,
+      "history_days": 28
+    },
+    {
+      "machine_number": 2285,
+      "machine_name": "ネオアイムジャグラーEX",
+      "score": 0.47294,
+      "history_days": 26
+    },
+    {
+      "machine_number": 2292,
+      "machine_name": "ネオアイムジャグラーEX",
+      "score": 0.418127,
+      "history_days": 29
+    }
+  ],
+  "result": null,
+  "plan_digest": "9d40201753f58785"
+}
