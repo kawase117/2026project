@@ -1,0 +1,197 @@
+{
+  "rule_id": "kamata7_model_term60_top3",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "freeze_hash": "b5bec81d02cedc0e",
+  "target_date": "20261112",
+  "data_asof": "20261110",
+  "data_lag_days": 2,
+  "lookback_window": [
+    "2026-09-13",
+    "2026-11-12"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +75 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "戦国コレクション6",
+      "score": 279.337538,
+      "history_rows": 88,
+      "machines": [
+        2306,
+        2307,
+        2308,
+        2309
+      ]
+    },
+    {
+      "machine_name": "革命機ヴァルヴレイヴ",
+      "score": 228.883619,
+      "history_rows": 438,
+      "machines": [
+        3103,
+        3104,
+        3105,
+        3106,
+        3107,
+        3108,
+        3109,
+        3110,
+        3111,
+        3112,
+        3113,
+        3114,
+        3115,
+        3116
+      ]
+    },
+    {
+      "machine_name": "痛いのは嫌なので防御力に極振りしたいと思います。",
+      "score": 219.79274,
+      "history_rows": 143,
+      "machines": [
+        2269,
+        2270,
+        2271,
+        2272
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 2306,
+      "machine_name": "戦国コレクション6",
+      "score": 279.337538,
+      "history_days": 88
+    },
+    {
+      "machine_number": 2307,
+      "machine_name": "戦国コレクション6",
+      "score": 279.337538,
+      "history_days": 88
+    },
+    {
+      "machine_number": 2308,
+      "machine_name": "戦国コレクション6",
+      "score": 279.337538,
+      "history_days": 88
+    },
+    {
+      "machine_number": 2309,
+      "machine_name": "戦国コレクション6",
+      "score": 279.337538,
+      "history_days": 88
+    },
+    {
+      "machine_number": 3103,
+      "machine_name": "革命機ヴァルヴレイヴ",
+      "score": 228.883619,
+      "history_days": 438
+    },
+    {
+      "machine_number": 3104,
+      "machine_name": "革命機ヴァルヴレイヴ",
+      "score": 228.883619,
+      "history_days": 438
+    },
+    {
+      "machine_number": 3105,
+      "machine_name": "革命機ヴァルヴレイヴ",
+      "score": 228.883619,
+      "history_days": 438
+    },
+    {
+      "machine_number": 3106,
+      "machine_name": "革命機ヴァルヴレイヴ",
+      "score": 228.883619,
+      "history_days": 438
+    },
+    {
+      "machine_number": 3107,
+      "machine_name": "革命機ヴァルヴレイヴ",
+      "score": 228.883619,
+      "history_days": 438
+    },
+    {
+      "machine_number": 3108,
+      "machine_name": "革命機ヴァルヴレイヴ",
+      "score": 228.883619,
+      "history_days": 438
+    },
+    {
+      "machine_number": 3109,
+      "machine_name": "革命機ヴァルヴレイヴ",
+      "score": 228.883619,
+      "history_days": 438
+    },
+    {
+      "machine_number": 3110,
+      "machine_name": "革命機ヴァルヴレイヴ",
+      "score": 228.883619,
+      "history_days": 438
+    },
+    {
+      "machine_number": 3111,
+      "machine_name": "革命機ヴァルヴレイヴ",
+      "score": 228.883619,
+      "history_days": 438
+    },
+    {
+      "machine_number": 3112,
+      "machine_name": "革命機ヴァルヴレイヴ",
+      "score": 228.883619,
+      "history_days": 438
+    },
+    {
+      "machine_number": 3113,
+      "machine_name": "革命機ヴァルヴレイヴ",
+      "score": 228.883619,
+      "history_days": 438
+    },
+    {
+      "machine_number": 3114,
+      "machine_name": "革命機ヴァルヴレイヴ",
+      "score": 228.883619,
+      "history_days": 438
+    },
+    {
+      "machine_number": 3115,
+      "machine_name": "革命機ヴァルヴレイヴ",
+      "score": 228.883619,
+      "history_days": 438
+    },
+    {
+      "machine_number": 3116,
+      "machine_name": "革命機ヴァルヴレイヴ",
+      "score": 228.883619,
+      "history_days": 438
+    },
+    {
+      "machine_number": 2269,
+      "machine_name": "痛いのは嫌なので防御力に極振りしたいと思います。",
+      "score": 219.79274,
+      "history_days": 143
+    },
+    {
+      "machine_number": 2270,
+      "machine_name": "痛いのは嫌なので防御力に極振りしたいと思います。",
+      "score": 219.79274,
+      "history_days": 143
+    },
+    {
+      "machine_number": 2271,
+      "machine_name": "痛いのは嫌なので防御力に極振りしたいと思います。",
+      "score": 219.79274,
+      "history_days": 143
+    },
+    {
+      "machine_number": 2272,
+      "machine_name": "痛いのは嫌なので防御力に極振りしたいと思います。",
+      "score": 219.79274,
+      "history_days": 143
+    }
+  ],
+  "result": null,
+  "plan_digest": "cc2a3f9771557895"
+}
