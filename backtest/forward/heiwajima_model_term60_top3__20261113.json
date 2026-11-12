@@ -1,0 +1,148 @@
+{
+  "rule_id": "heiwajima_model_term60_top3",
+  "hall": "レイトギャップ平和島",
+  "freeze_hash": "80fab02ec0c44816",
+  "target_date": "20261113",
+  "data_asof": "20261112",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-09-14",
+    "2026-11-13"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +81 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 390.862587,
+      "history_rows": 195,
+      "machines": [
+        933,
+        934,
+        935,
+        936
+      ]
+    },
+    {
+      "machine_name": "チバリヨ2プラス",
+      "score": 289.185317,
+      "history_rows": 277,
+      "machines": [
+        983,
+        984,
+        985,
+        986,
+        987,
+        988
+      ]
+    },
+    {
+      "machine_name": "革命機ヴァルヴレイヴ",
+      "score": 280.081036,
+      "history_rows": 34,
+      "machines": [
+        835,
+        836,
+        837,
+        838,
+        839
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 933,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 390.862587,
+      "history_days": 195
+    },
+    {
+      "machine_number": 934,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 390.862587,
+      "history_days": 195
+    },
+    {
+      "machine_number": 935,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 390.862587,
+      "history_days": 195
+    },
+    {
+      "machine_number": 936,
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "score": 390.862587,
+      "history_days": 195
+    },
+    {
+      "machine_number": 983,
+      "machine_name": "チバリヨ2プラス",
+      "score": 289.185317,
+      "history_days": 277
+    },
+    {
+      "machine_number": 984,
+      "machine_name": "チバリヨ2プラス",
+      "score": 289.185317,
+      "history_days": 277
+    },
+    {
+      "machine_number": 985,
+      "machine_name": "チバリヨ2プラス",
+      "score": 289.185317,
+      "history_days": 277
+    },
+    {
+      "machine_number": 986,
+      "machine_name": "チバリヨ2プラス",
+      "score": 289.185317,
+      "history_days": 277
+    },
+    {
+      "machine_number": 987,
+      "machine_name": "チバリヨ2プラス",
+      "score": 289.185317,
+      "history_days": 277
+    },
+    {
+      "machine_number": 988,
+      "machine_name": "チバリヨ2プラス",
+      "score": 289.185317,
+      "history_days": 277
+    },
+    {
+      "machine_number": 835,
+      "machine_name": "革命機ヴァルヴレイヴ",
+      "score": 280.081036,
+      "history_days": 34
+    },
+    {
+      "machine_number": 836,
+      "machine_name": "革命機ヴァルヴレイヴ",
+      "score": 280.081036,
+      "history_days": 34
+    },
+    {
+      "machine_number": 837,
+      "machine_name": "革命機ヴァルヴレイヴ",
+      "score": 280.081036,
+      "history_days": 34
+    },
+    {
+      "machine_number": 838,
+      "machine_name": "革命機ヴァルヴレイヴ",
+      "score": 280.081036,
+      "history_days": 34
+    },
+    {
+      "machine_number": 839,
+      "machine_name": "革命機ヴァルヴレイヴ",
+      "score": 280.081036,
+      "history_days": 34
+    }
+  ],
+  "result": null,
+  "plan_digest": "8a5566a56d23e545"
+}

@@ -1,0 +1,134 @@
+{
+  "rule_id": "kamata7_model_term60_top3",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "freeze_hash": "b5bec81d02cedc0e",
+  "target_date": "20261113",
+  "data_asof": "20261111",
+  "data_lag_days": 2,
+  "lookback_window": [
+    "2026-09-14",
+    "2026-11-13"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +75 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 1014.433995,
+      "history_rows": 33,
+      "machines": [
+        2191,
+        2192,
+        2193,
+        2194,
+        2195
+      ]
+    },
+    {
+      "machine_name": "戦国コレクション6",
+      "score": 380.658807,
+      "history_rows": 92,
+      "machines": [
+        2306,
+        2307,
+        2308,
+        2309
+      ]
+    },
+    {
+      "machine_name": "痛いのは嫌なので防御力に極振りしたいと思います。",
+      "score": 216.519408,
+      "history_rows": 147,
+      "machines": [
+        2269,
+        2270,
+        2271,
+        2272
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 2191,
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 1014.433995,
+      "history_days": 33
+    },
+    {
+      "machine_number": 2192,
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 1014.433995,
+      "history_days": 33
+    },
+    {
+      "machine_number": 2193,
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 1014.433995,
+      "history_days": 33
+    },
+    {
+      "machine_number": 2194,
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 1014.433995,
+      "history_days": 33
+    },
+    {
+      "machine_number": 2195,
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 1014.433995,
+      "history_days": 33
+    },
+    {
+      "machine_number": 2306,
+      "machine_name": "戦国コレクション6",
+      "score": 380.658807,
+      "history_days": 92
+    },
+    {
+      "machine_number": 2307,
+      "machine_name": "戦国コレクション6",
+      "score": 380.658807,
+      "history_days": 92
+    },
+    {
+      "machine_number": 2308,
+      "machine_name": "戦国コレクション6",
+      "score": 380.658807,
+      "history_days": 92
+    },
+    {
+      "machine_number": 2309,
+      "machine_name": "戦国コレクション6",
+      "score": 380.658807,
+      "history_days": 92
+    },
+    {
+      "machine_number": 2269,
+      "machine_name": "痛いのは嫌なので防御力に極振りしたいと思います。",
+      "score": 216.519408,
+      "history_days": 147
+    },
+    {
+      "machine_number": 2270,
+      "machine_name": "痛いのは嫌なので防御力に極振りしたいと思います。",
+      "score": 216.519408,
+      "history_days": 147
+    },
+    {
+      "machine_number": 2271,
+      "machine_name": "痛いのは嫌なので防御力に極振りしたいと思います。",
+      "score": 216.519408,
+      "history_days": 147
+    },
+    {
+      "machine_number": 2272,
+      "machine_name": "痛いのは嫌なので防御力に極振りしたいと思います。",
+      "score": 216.519408,
+      "history_days": 147
+    }
+  ],
+  "result": null,
+  "plan_digest": "643817475f74d153"
+}

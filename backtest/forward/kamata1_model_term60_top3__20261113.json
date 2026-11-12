@@ -1,0 +1,127 @@
+{
+  "rule_id": "kamata1_model_term60_top3",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "freeze_hash": "bb185b622fae47b2",
+  "target_date": "20261113",
+  "data_asof": "20261111",
+  "data_lag_days": 2,
+  "lookback_window": [
+    "2026-09-14",
+    "2026-11-13"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +187 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "モンスターハンターライズ",
+      "score": 449.075806,
+      "history_rows": 176,
+      "machines": [
+        2117,
+        2118,
+        2119,
+        2120,
+        2427
+      ]
+    },
+    {
+      "machine_name": "新鬼武者3",
+      "score": 390.535565,
+      "history_rows": 126,
+      "machines": [
+        2265,
+        2266,
+        2267,
+        2268
+      ]
+    },
+    {
+      "machine_name": "痛いのは嫌なので防御力に極振りしたいと思います。",
+      "score": 276.789867,
+      "history_rows": 143,
+      "machines": [
+        2203,
+        2204,
+        2205
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 2117,
+      "machine_name": "モンスターハンターライズ",
+      "score": 449.075806,
+      "history_days": 176
+    },
+    {
+      "machine_number": 2118,
+      "machine_name": "モンスターハンターライズ",
+      "score": 449.075806,
+      "history_days": 176
+    },
+    {
+      "machine_number": 2119,
+      "machine_name": "モンスターハンターライズ",
+      "score": 449.075806,
+      "history_days": 176
+    },
+    {
+      "machine_number": 2120,
+      "machine_name": "モンスターハンターライズ",
+      "score": 449.075806,
+      "history_days": 176
+    },
+    {
+      "machine_number": 2427,
+      "machine_name": "モンスターハンターライズ",
+      "score": 449.075806,
+      "history_days": 176
+    },
+    {
+      "machine_number": 2265,
+      "machine_name": "新鬼武者3",
+      "score": 390.535565,
+      "history_days": 126
+    },
+    {
+      "machine_number": 2266,
+      "machine_name": "新鬼武者3",
+      "score": 390.535565,
+      "history_days": 126
+    },
+    {
+      "machine_number": 2267,
+      "machine_name": "新鬼武者3",
+      "score": 390.535565,
+      "history_days": 126
+    },
+    {
+      "machine_number": 2268,
+      "machine_name": "新鬼武者3",
+      "score": 390.535565,
+      "history_days": 126
+    },
+    {
+      "machine_number": 2203,
+      "machine_name": "痛いのは嫌なので防御力に極振りしたいと思います。",
+      "score": 276.789867,
+      "history_days": 143
+    },
+    {
+      "machine_number": 2204,
+      "machine_name": "痛いのは嫌なので防御力に極振りしたいと思います。",
+      "score": 276.789867,
+      "history_days": 143
+    },
+    {
+      "machine_number": 2205,
+      "machine_name": "痛いのは嫌なので防御力に極振りしたいと思います。",
+      "score": 276.789867,
+      "history_days": 143
+    }
+  ],
+  "result": null,
+  "plan_digest": "e6fa451a63bb1bb1"
+}

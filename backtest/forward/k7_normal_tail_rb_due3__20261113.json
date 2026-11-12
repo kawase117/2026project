@@ -1,0 +1,440 @@
+{
+  "rule_id": "k7_normal_tail_rb_due3",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "freeze_hash": "e0230fe2167c5aa5",
+  "target_date": "20261113",
+  "data_asof": "20261111",
+  "data_lag_days": 2,
+  "lookback_window": [
+    "2026-09-14",
+    "2026-11-13"
+  ],
+  "score": "hist_tail_rb_due3",
+  "selection_unit": "machine",
+  "success_criterion": "フォワード20エントリー日を経過した時点で、選出台（番が来た3末尾のノーマル機）の RB の機種期待値からの超過を合算した z と、同日の選ばれなかったノーマル機の同じ z との差の日平均が正で、7日ブロックブートストラップ95%CI下限が0を上回ること。満たさなければ、2026-09-29 に観測した末尾単位の均しは後ろ向き探索のアーティファクト、またはすでに失効したと結論する。差枚（edge）は参考として併記するが採否には使わない（ノーマル機の上乗せは AT 機の揺れと当日のホール全体の上下に埋もれるため）。",
+  "is_dry_run": false,
+  "picks": [
+    {
+      "machine_number": 3266,
+      "machine_name": "マイジャグラーV",
+      "score": 2.814481,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3276,
+      "machine_name": "マイジャグラーV",
+      "score": 2.814481,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3346,
+      "machine_name": "ネオアイムジャグラーEX",
+      "score": 2.814481,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3336,
+      "machine_name": "ネオアイムジャグラーEX",
+      "score": 2.814481,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3326,
+      "machine_name": "ネオアイムジャグラーEX",
+      "score": 2.814481,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3286,
+      "machine_name": "マイジャグラーV",
+      "score": 2.814481,
+      "history_days": 59
+    },
+    {
+      "machine_number": 2166,
+      "machine_name": "タコスロ",
+      "score": 2.814481,
+      "history_days": 59
+    },
+    {
+      "machine_number": 2176,
+      "machine_name": "A‐SLOT+ 異世界かるてっと",
+      "score": 2.814481,
+      "history_days": 59
+    },
+    {
+      "machine_number": 2186,
+      "machine_name": "アレックス ブライト",
+      "score": 2.814481,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3136,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 2.814481,
+      "history_days": 24
+    },
+    {
+      "machine_number": 3356,
+      "machine_name": "ネオアイムジャグラーEX",
+      "score": 2.814481,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3166,
+      "machine_name": "ファンキージャグラー2",
+      "score": 2.814481,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3156,
+      "machine_name": "ファンキージャグラー2",
+      "score": 2.814481,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3146,
+      "machine_name": "ファンキージャグラー2",
+      "score": 2.814481,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3176,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 2.814481,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3186,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 2.814481,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3006,
+      "machine_name": "キングハナハナ-30",
+      "score": 2.814481,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3306,
+      "machine_name": "ウルトラミラクルジャグラー",
+      "score": 2.814481,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3316,
+      "machine_name": "ジャグラーガールズ",
+      "score": 2.814481,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3296,
+      "machine_name": "ハッピージャグラーVIII",
+      "score": 2.814481,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3016,
+      "machine_name": "キングハナハナ-30",
+      "score": 2.814481,
+      "history_days": 59
+    },
+    {
+      "machine_number": 2156,
+      "machine_name": "ディスクアップ ULTRAREMIX",
+      "score": 2.814481,
+      "history_days": 59
+    },
+    {
+      "machine_number": 2346,
+      "machine_name": "少女☆歌劇 レヴュースタァライト ‐The SLOT‐",
+      "score": 2.814481,
+      "history_days": 24
+    },
+    {
+      "machine_number": 3126,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 2.814481,
+      "history_days": 8
+    },
+    {
+      "machine_number": 3270,
+      "machine_name": "マイジャグラーV",
+      "score": 2.466239,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3120,
+      "machine_name": "マイジャグラーV",
+      "score": 2.466239,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3140,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 2.466239,
+      "history_days": 24
+    },
+    {
+      "machine_number": 3280,
+      "machine_name": "マイジャグラーV",
+      "score": 2.466239,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3170,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 2.466239,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3150,
+      "machine_name": "ファンキージャグラー2",
+      "score": 2.466239,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3190,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 2.466239,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3180,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 2.466239,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3160,
+      "machine_name": "ファンキージャグラー2",
+      "score": 2.466239,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3340,
+      "machine_name": "ネオアイムジャグラーEX",
+      "score": 2.466239,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3360,
+      "machine_name": "ネオアイムジャグラーEX",
+      "score": 2.466239,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3350,
+      "machine_name": "ネオアイムジャグラーEX",
+      "score": 2.466239,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3330,
+      "machine_name": "ネオアイムジャグラーEX",
+      "score": 2.466239,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3290,
+      "machine_name": "マイジャグラーV",
+      "score": 2.466239,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3310,
+      "machine_name": "ミスタージャグラー",
+      "score": 2.466239,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3130,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 2.466239,
+      "history_days": 24
+    },
+    {
+      "machine_number": 2170,
+      "machine_name": "SHAKE BONUS TRIGGER",
+      "score": 2.466239,
+      "history_days": 38
+    },
+    {
+      "machine_number": 2180,
+      "machine_name": "スマスロ ハナビ",
+      "score": 2.466239,
+      "history_days": 38
+    },
+    {
+      "machine_number": 2130,
+      "machine_name": "交響詩篇エウレカセブン HI-EVOLUTION ZERO TYPE‐ART",
+      "score": 2.466239,
+      "history_days": 59
+    },
+    {
+      "machine_number": 2160,
+      "machine_name": "ディスクアップ ULTRAREMIX",
+      "score": 2.466239,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3300,
+      "machine_name": "ハッピージャグラーVIII",
+      "score": 2.466239,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3010,
+      "machine_name": "キングハナハナ-30",
+      "score": 2.466239,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3320,
+      "machine_name": "ジャグラーガールズ",
+      "score": 2.466239,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3274,
+      "machine_name": "マイジャグラーV",
+      "score": 2.268364,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3284,
+      "machine_name": "マイジャグラーV",
+      "score": 2.268364,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3294,
+      "machine_name": "マイジャグラーV",
+      "score": 2.268364,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3334,
+      "machine_name": "ネオアイムジャグラーEX",
+      "score": 2.268364,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3344,
+      "machine_name": "ネオアイムジャグラーEX",
+      "score": 2.268364,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3354,
+      "machine_name": "ネオアイムジャグラーEX",
+      "score": 2.268364,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3144,
+      "machine_name": "ファンキージャグラー2",
+      "score": 2.268364,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3004,
+      "machine_name": "キングハナハナ-30",
+      "score": 2.268364,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3184,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 2.268364,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3174,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 2.268364,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3164,
+      "machine_name": "ファンキージャグラー2",
+      "score": 2.268364,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3154,
+      "machine_name": "ファンキージャグラー2",
+      "score": 2.268364,
+      "history_days": 59
+    },
+    {
+      "machine_number": 2164,
+      "machine_name": "ディスクアップ ULTRAREMIX",
+      "score": 2.268364,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3014,
+      "machine_name": "キングハナハナ-30",
+      "score": 2.268364,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3324,
+      "machine_name": "ジャグラーガールズ",
+      "score": 2.268364,
+      "history_days": 59
+    },
+    {
+      "machine_number": 2174,
+      "machine_name": "スマスロ サンダーV",
+      "score": 2.268364,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3314,
+      "machine_name": "ミスタージャグラー",
+      "score": 2.268364,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3304,
+      "machine_name": "ハッピージャグラーVIII",
+      "score": 2.268364,
+      "history_days": 59
+    },
+    {
+      "machine_number": 2184,
+      "machine_name": "アレックス ブライト",
+      "score": 2.268364,
+      "history_days": 59
+    },
+    {
+      "machine_number": 2154,
+      "machine_name": "ディスクアップ2",
+      "score": 2.268364,
+      "history_days": 59
+    },
+    {
+      "machine_number": 2344,
+      "machine_name": "喰霊‐零‐Re",
+      "score": 2.268364,
+      "history_days": 59
+    },
+    {
+      "machine_number": 3134,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 2.268364,
+      "history_days": 24
+    },
+    {
+      "machine_number": 3124,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 2.268364,
+      "history_days": 8
+    }
+  ],
+  "result": null,
+  "plan_digest": "f46e992d9c74e821"
+}
