@@ -1,0 +1,64 @@
+{
+  "announce_id": "kamata1__20261111__Kamacho_data",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "target_date": "20261111",
+  "source": {
+    "account": "Kamacho_data",
+    "url": "",
+    "posted_at": "2026-11-10T20:58:26+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "11/11(水) メガシティ蒲田1 毎月11日\n\n過去10回の総差枚\n10/11(日)　+57,900枚\n9/11(金)　+99,000枚\n8/11(火)　+76,200枚\n（ほか7回）\n\n過去10回、好調台の割合が\nいちばん高かった機種は「炎炎2」\n（延べ45台中18台）\n\n狙い目はnoteで（リンクはリプ欄）",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"マルハンメガシティ2000-蒲田1\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-08-12\", \"2026-11-10\"], \"n_days\": 90, \"n_model_days\": 4432, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2107.9, \"models_over_threshold_per_day\": {\"mean\": 2.47, \"median\": 2.0, \"max\": 7}, \"candidate_models_per_day\": 49.2, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.06, \"median\": 3.0, \"max\": 8}, \"p_at_least_1\": 0.956, \"p_at_least_2\": 0.767, \"p_at_least_3\": 0.544, \"p_at_least_4\": 0.344, \"p_at_least_10\": 0.0}} / named_context: {\"as_of\": \"20261110\", \"window_days\": 30, \"n_candidates_ge3machines\": 55, \"hall_over_threshold_rate_approx\": 0.036, \"threshold\": 1800.0, \"models\": [{\"name\": \"スマスロ炎炎ノ消防隊2\", \"n_machines\": 5, \"rank\": 34, \"of\": 55, \"n_days_present\": 30, \"over_threshold\": 2, \"rate\": 0.067, \"mean_score\": 270.0}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    }
+  ],
+  "unscored_claims": [],
+  "needs_manual_review": true,
+  "no_confirmed_machines": false,
+  "result": {
+    "scored_at_data_max": "20261111",
+    "hall_baseline_mean_diff": 112.9,
+    "hall_n_machines": 365,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "スマスロ炎炎ノ消防隊2",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -365.3,
+        "mean_diff": -340.0,
+        "gratio": 1.074,
+        "n_machines": 5,
+        "rank": 38,
+        "candidate_models": 55,
+        "age_days": 282,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
+  "announce_digest": "4e8b209747f8f77d",
+  "provisional": true
+}

@@ -1,0 +1,108 @@
+{
+  "announce_id": "heiwajima__20261109__pachi_slohunter",
+  "hall": "レイトギャップ平和島",
+  "target_date": "20261109",
+  "source": {
+    "account": "pachi_slohunter",
+    "url": "",
+    "posted_at": "2026-11-08T19:36:55+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "ガイの注目店舗\n⠀\n11/9\nレイトギャップ平和島\n⠀\nミリオンゴッド30台設置\nマイジャグⅥも16台に増台済み\n週間おすすめに注目\n⠀\n今回の注目ポイント\nミリオンゴッドが都内最大級\n↪︎大幅増台で合計30台設置\n↪︎引き続き注目したい主力機種\n⠀\nマイジャグⅥも要チェック\n↪︎以前から3倍以上に増台\n↪︎現在は合計16台のラインナップ\n⠀\n週間おすすめ\nリコリス・リコイル\n↪︎今週のパチンコはリコリコに注目\n⠀\n今後の注目スケジュール\n11/11 年に1度のゾロ目\n11/14 裏反撃来店取材\n11/15 Half strong取材\n⠀\n主力機種と週間おすすめをチェック\n今週のレイトギャップ平和島に注目",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"レイトギャップ平和島\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-08-09\", \"2026-11-07\"], \"n_days\": 90, \"n_model_days\": 4061, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 1900.9, \"models_over_threshold_per_day\": {\"mean\": 2.27, \"median\": 2.0, \"max\": 7}, \"candidate_models_per_day\": 45.1, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 2.46, \"median\": 2.0, \"max\": 7}, \"p_at_least_1\": 0.911, \"p_at_least_2\": 0.7, \"p_at_least_3\": 0.444, \"p_at_least_4\": 0.244, \"p_at_least_10\": 0.0}} / named_context: {\"as_of\": \"20261107\", \"window_days\": 30, \"n_candidates_ge3machines\": 45, \"hall_over_threshold_rate_approx\": 0.0, \"threshold\": 1800.0, \"models\": [{\"name\": \"マイジャグラーV\", \"n_machines\": 5, \"rank\": null, \"of\": 45, \"n_days_present\": 4, \"over_threshold\": 1, \"rate\": 0.25, \"mean_score\": 268.2}, {\"name\": \"ミリオンゴッド‐神々の軌跡‐\", \"n_machines\": 30, \"rank\": 1, \"of\": 45, \"n_days_present\": 30, \"over_threshold\": 4, \"rate\": 0.133, \"mean_score\": 549.2}, {\"name\": \"リコリス・リコイル\", \"n_machines\": 7, \"rank\": 10, \"of\": 45, \"n_days_present\": 30, \"over_threshold\": 2, \"rate\": 0.067, \"mean_score\": 33.5}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "マイジャグラーV",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "ミリオンゴッド‐神々の軌跡‐",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "リコリス・リコイル",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    }
+  ],
+  "unscored_claims": [
+    {
+      "text": "マイジャグラーⅥ(部分一致score=0.625)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    }
+  ],
+  "needs_manual_review": true,
+  "no_confirmed_machines": false,
+  "result": {
+    "scored_at_data_max": "20261109",
+    "hall_baseline_mean_diff": -8.0,
+    "hall_n_machines": 423,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "マイジャグラーV",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "hit": null,
+        "note": "当日 マイジャグラーV が設置3台以上の候補に無い（撤去・台数不足・表記ゆれ）"
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ミリオンゴッド‐神々の軌跡‐",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 54.3,
+        "mean_diff": 64.9,
+        "gratio": 0.837,
+        "n_machines": 30,
+        "rank": 15,
+        "candidate_models": 45,
+        "age_days": 203,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "リコリス・リコイル",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -776.9,
+        "mean_diff": -829.3,
+        "gratio": 0.937,
+        "n_machines": 7,
+        "rank": 40,
+        "candidate_models": 45,
+        "age_days": 63,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
+  "announce_digest": "7e7f09be4b08408d",
+  "provisional": true
+}

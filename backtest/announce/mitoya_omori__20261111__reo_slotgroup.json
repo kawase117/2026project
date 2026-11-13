@@ -1,0 +1,39 @@
+{
+  "announce_id": "mitoya_omori__20261111__reo_slotgroup",
+  "hall": "みとや大森町店",
+  "target_date": "20261111",
+  "source": {
+    "account": "reo_slotgroup",
+    "url": "",
+    "posted_at": "2026-11-10T20:29:50+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "11/11 れおのホール予想\n\nみとや全店舗\n\n□裏感激取材(初開催)\n\n明日はみとや全店舗で合同取材開催と全ての店舗での分岐越えに期待で合同取材という事でお馴染み合同仕掛けに注目",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"みとや大森町店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-08-12\", \"2026-11-10\"], \"n_days\": 90, \"n_model_days\": 3349, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 1866.1, \"models_over_threshold_per_day\": {\"mean\": 1.87, \"median\": 2.0, \"max\": 7}, \"candidate_models_per_day\": 37.2, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 1.94, \"median\": 2.0, \"max\": 8}, \"p_at_least_1\": 0.833, \"p_at_least_2\": 0.6, \"p_at_least_3\": 0.311, \"p_at_least_4\": 0.1, \"p_at_least_10\": 0.0}}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [],
+  "unscored_claims": [],
+  "needs_manual_review": true,
+  "no_confirmed_machines": true,
+  "result": {
+    "scored_at_data_max": "20261111",
+    "hall_baseline_mean_diff": 374.7,
+    "hall_n_machines": 277,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": []
+  },
+  "announce_digest": "115a7de96bc1a2f0",
+  "provisional": true
+}

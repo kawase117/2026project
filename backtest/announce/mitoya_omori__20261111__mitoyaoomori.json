@@ -1,0 +1,64 @@
+{
+  "announce_id": "mitoya_omori__20261111__mitoyaoomori",
+  "hall": "みとや大森町店",
+  "target_date": "20261111",
+  "source": {
+    "account": "mitoyaoomori",
+    "url": "",
+    "posted_at": "2026-11-10T18:12:33+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "／\n\nみとや全店合同取材\n　【裏・感激】\n 抽選時間 時分\n\n秋といえば\n食欲の秋　読書の秋　行楽の秋\n\n神社orお城めぐり？\nそれとも喫茶店で読書？\n美味しいお肉も食べたいなぁ\n今秋を楽しもうじゃないか\n\n全店オススメ\ne東京喰種シリーズ\n\nご来店お待ちしております",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"みとや大森町店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-08-12\", \"2026-11-10\"], \"n_days\": 90, \"n_model_days\": 3349, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 1866.1, \"models_over_threshold_per_day\": {\"mean\": 1.87, \"median\": 2.0, \"max\": 7}, \"candidate_models_per_day\": 37.2, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 1.94, \"median\": 2.0, \"max\": 8}, \"p_at_least_1\": 0.833, \"p_at_least_2\": 0.6, \"p_at_least_3\": 0.311, \"p_at_least_4\": 0.1, \"p_at_least_10\": 0.0}} / named_context: {\"as_of\": \"20261110\", \"window_days\": 30, \"n_candidates_ge3machines\": 40, \"hall_over_threshold_rate_approx\": 0.0, \"threshold\": 1800.0, \"models\": [{\"name\": \"東京喰種\", \"n_machines\": 9, \"rank\": 27, \"of\": 40, \"n_days_present\": 30, \"over_threshold\": 3, \"rate\": 0.1, \"mean_score\": 286.0}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "東京喰種",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    }
+  ],
+  "unscored_claims": [],
+  "needs_manual_review": true,
+  "no_confirmed_machines": false,
+  "result": {
+    "scored_at_data_max": "20261111",
+    "hall_baseline_mean_diff": 374.7,
+    "hall_n_machines": 277,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "東京喰種",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 4073.8,
+        "mean_diff": 2861.6,
+        "gratio": 1.424,
+        "n_machines": 9,
+        "rank": 1,
+        "candidate_models": 40,
+        "age_days": 646,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": true
+      }
+    ]
+  },
+  "announce_digest": "4c6a0196a7fcd5f0",
+  "provisional": true
+}

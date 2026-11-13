@@ -1,0 +1,105 @@
+{
+  "announce_id": "kamata1__20261108__999999Q9Q",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "target_date": "20261108",
+  "source": {
+    "account": "999999Q9Q",
+    "url": "",
+    "posted_at": "2026-11-07T21:23:43+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "【ビンゴ探しと参ろうではないか】\nよこやんの新章メガいち伝説予想\n\n明日はビンゴカード風な企画。配分は不明だが、先に公開された9機種の中から、強化される機種が選択されると考えられる。\n\nこのビジュアルならば、最低でも3機種が強化されて「ビンゴ」的なことになるはず。全なのかニブイチなのかは不明だが、何もない日でも全やニブイチを用意するよこやんのことだ。裏切りはないだろう。あとはポストからの予想だな\n\nカラフルな丸い粒\n→五輪玉→いざ番長？（取材対象）\n→絆高確→絆2天膳？（取材対象）\n\n甘い一粒→スイート→ときめきスイート\n→ToLOVEる？\n\n一粒→ワン\n→ファンキージャグラー？\n\nカラフルな粒→カラフル→まどマギ\n→マギレコ？\n\n#マルハンメガシティ2000蒲田1",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"マルハンメガシティ2000-蒲田1\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-08-08\", \"2026-11-06\"], \"n_days\": 90, \"n_model_days\": 4404, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2138.2, \"models_over_threshold_per_day\": {\"mean\": 2.46, \"median\": 2.0, \"max\": 6}, \"candidate_models_per_day\": 48.9, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.12, \"median\": 3.0, \"max\": 8}, \"p_at_least_1\": 0.956, \"p_at_least_2\": 0.789, \"p_at_least_3\": 0.567, \"p_at_least_4\": 0.367, \"p_at_least_10\": 0.0}} / named_context: {\"as_of\": \"20261106\", \"window_days\": 30, \"n_candidates_ge3machines\": 55, \"hall_over_threshold_rate_approx\": 0.018, \"threshold\": 1800.0, \"models\": [{\"name\": \"バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION\", \"n_machines\": 2, \"rank\": null, \"of\": 55, \"n_days_present\": 30, \"over_threshold\": 3, \"rate\": 0.1, \"mean_score\": 321.4}, {\"name\": \"マギアレコード 魔法少女まどか☆マギカ外伝\", \"n_machines\": 5, \"rank\": 50, \"of\": 55, \"n_days_present\": 30, \"over_threshold\": 1, \"rate\": 0.033, \"mean_score\": 132.1}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    }
+  ],
+  "unscored_claims": [
+    {
+      "text": "ファンキージャグラー2(部分一致score=0.909)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    },
+    {
+      "text": "ミスタージャグラー(部分一致score=0.667)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    },
+    {
+      "text": "マイジャグラーV(部分一致score=0.625)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    },
+    {
+      "text": "マイジャグラーⅥ(部分一致score=0.625)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    },
+    {
+      "text": "ゴーゴージャグラー3(部分一致score=0.6)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    }
+  ],
+  "needs_manual_review": true,
+  "no_confirmed_machines": false,
+  "result": {
+    "scored_at_data_max": "20261108",
+    "hall_baseline_mean_diff": 7.1,
+    "hall_n_machines": 365,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "hit": null,
+        "note": "当日 バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION が設置3台以上の候補に無い（撤去・台数不足・表記ゆれ）"
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -855.0,
+        "mean_diff": -960.0,
+        "gratio": 0.891,
+        "n_machines": 5,
+        "rank": 47,
+        "candidate_models": 55,
+        "age_days": 579,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
+  "announce_digest": "929bdab4529d79f5",
+  "provisional": true
+}

@@ -1,0 +1,44 @@
+{
+  "announce_id": "kamata1__20261113__999999Q9Q",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "target_date": "20261113",
+  "source": {
+    "account": "999999Q9Q",
+    "url": "",
+    "posted_at": "2026-11-12T23:18:24+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "【迷ったらメイン機orジャグ】\n新章メガいちよこやん予想\n\n明日は3の付く日。よこやん采配の基本パターンである全機種・ニブイチ機種・メイン機種（スマスロ中心）の単品強化、この詰め合わせ3点セットを意識するのが勝利への近道とされている。\n\n全も単品も、毎日安定して仕掛けてくるのが今のメガいち。毎日配分が高いジャグラーシリーズから全を作ってくることもしばしば。\n\nメイン機は東京喰種を中心に毎日配分高め。リセットの恩恵を受けつつ、判別も進められることを考えるとかなり美味しい。明日はファン感初日ということもあるのでいつも通りの仕掛けがより強化されそうな雰囲気も感じる\n\n#マルハンメガシティ2000蒲田1",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"マルハンメガシティ2000-蒲田1\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-08-13\", \"2026-11-11\"], \"n_days\": 90, \"n_model_days\": 4439, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2102.1, \"models_over_threshold_per_day\": {\"mean\": 2.47, \"median\": 2.0, \"max\": 7}, \"candidate_models_per_day\": 49.3, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.06, \"median\": 3.0, \"max\": 8}, \"p_at_least_1\": 0.956, \"p_at_least_2\": 0.767, \"p_at_least_3\": 0.544, \"p_at_least_4\": 0.344, \"p_at_least_10\": 0.0}} / named_context: {\"as_of\": \"20261111\", \"window_days\": 30, \"n_candidates_ge3machines\": 55, \"hall_over_threshold_rate_approx\": 0.091, \"threshold\": 1800.0, \"models\": [{\"name\": \"東京喰種\", \"n_machines\": 20, \"rank\": 47, \"of\": 55, \"n_days_present\": 30, \"over_threshold\": 1, \"rate\": 0.033, \"mean_score\": 23.9}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "東京喰種",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    }
+  ],
+  "unscored_claims": [
+    {
+      "text": "マイジャグラーV(部分一致score=0.625)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    },
+    {
+      "text": "マイジャグラーⅥ(部分一致score=0.625)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    }
+  ],
+  "needs_manual_review": true,
+  "no_confirmed_machines": false,
+  "result": null,
+  "announce_digest": "d676b452ce1dca37",
+  "provisional": true
+}

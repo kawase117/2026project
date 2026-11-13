@@ -52,7 +52,112 @@
   "unscored_claims": [],
   "needs_manual_review": true,
   "no_confirmed_machines": false,
-  "result": null,
+  "result": {
+    "scored_at_data_max": "20261104",
+    "hall_baseline_mean_diff": 55.5,
+    "hall_n_machines": 715,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "かぐや様は告らせたい",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -270.7,
+        "mean_diff": -288.9,
+        "gratio": 0.937,
+        "n_machines": 9,
+        "rank": 47,
+        "candidate_models": 68,
+        "age_days": 485,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "この素晴らしい世界に祝福を！",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "hit": null,
+        "note": "当日 この素晴らしい世界に祝福を！ が設置3台以上の候補に無い（撤去・台数不足・表記ゆれ）"
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "hit": null,
+        "note": "当日 バジリスク～甲賀忍法帖～絆2 天膳 BLACK EDITION が設置3台以上の候補に無い（撤去・台数不足・表記ゆれ）"
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "マギアレコード 魔法少女まどか☆マギカ外伝",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 74.0,
+        "mean_diff": 152.4,
+        "gratio": 0.486,
+        "n_machines": 21,
+        "rank": 26,
+        "candidate_models": 68,
+        "age_days": 485,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "モンスターハンターライズ",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -214.4,
+        "mean_diff": -330.0,
+        "gratio": 0.65,
+        "n_machines": 10,
+        "rank": 43,
+        "candidate_models": 68,
+        "age_days": 485,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "新鬼武者3",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -252.5,
+        "mean_diff": -520.0,
+        "gratio": 0.486,
+        "n_machines": 5,
+        "rank": 45,
+        "candidate_models": 68,
+        "age_days": 393,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
   "announce_digest": "2f238c7c0e7e053f",
   "provisional": true
 }

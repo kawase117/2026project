@@ -1,0 +1,64 @@
+{
+  "announce_id": "kamata1__20261107__999999Q9Q",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "target_date": "20261107",
+  "source": {
+    "account": "999999Q9Q",
+    "url": "",
+    "posted_at": "2026-11-06T23:07:00+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "【私は未来から来ました。明日はメイン機種を攻めてください】\n新章メガいちよこやん予想\n\n明日は7の付く日。よこやんが展開する三英傑である全・ニブイチ機種（複数）・メイン機種（スマスロ中心）への単品強化で全域強化を成してくると予想できる。\n\n【狙い所】\n・全機種\n→主に2〜5台機種。7の日は複数機種やってくる可能性も\n・ニブイチ機種\n→主に7台以上の多台数機種\n・メイン機種への単品投下\n→オススメ最終日のミリオンゴッドは特に注目\n\n先月、平均差枚+461枚というとんでもない結果を出した日が10月17日の土曜日。7の付く日+土曜日という同じ条件が揃っている明日の状況は期待せざるを得ない\n\n#マルハンメガシティ2000蒲田1",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"マルハンメガシティ2000-蒲田1\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-08-06\", \"2026-11-04\"], \"n_days\": 90, \"n_model_days\": 4390, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2165.9, \"models_over_threshold_per_day\": {\"mean\": 2.44, \"median\": 2.0, \"max\": 7}, \"candidate_models_per_day\": 48.8, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 3.14, \"median\": 3.0, \"max\": 8}, \"p_at_least_1\": 0.956, \"p_at_least_2\": 0.789, \"p_at_least_3\": 0.567, \"p_at_least_4\": 0.367, \"p_at_least_10\": 0.0}} / named_context: {\"as_of\": \"20261104\", \"window_days\": 30, \"n_candidates_ge3machines\": 55, \"hall_over_threshold_rate_approx\": 0.036, \"threshold\": 1800.0, \"models\": [{\"name\": \"ミリオンゴッド‐神々の軌跡‐\", \"n_machines\": 8, \"rank\": 11, \"of\": 55, \"n_days_present\": 30, \"over_threshold\": 2, \"rate\": 0.067, \"mean_score\": -14.9}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "ミリオンゴッド‐神々の軌跡‐",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    }
+  ],
+  "unscored_claims": [],
+  "needs_manual_review": true,
+  "no_confirmed_machines": false,
+  "result": {
+    "scored_at_data_max": "20261107",
+    "hall_baseline_mean_diff": 446.8,
+    "hall_n_machines": 365,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ミリオンゴッド‐神々の軌跡‐",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -660.6,
+        "mean_diff": -612.5,
+        "gratio": 1.079,
+        "n_machines": 8,
+        "rank": 40,
+        "candidate_models": 55,
+        "age_days": 201,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
+  "announce_digest": "d636509fce5da5e7",
+  "provisional": true
+}

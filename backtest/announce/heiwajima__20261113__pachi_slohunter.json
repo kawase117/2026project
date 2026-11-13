@@ -1,0 +1,49 @@
+{
+  "announce_id": "heiwajima__20261113__pachi_slohunter",
+  "hall": "レイトギャップ平和島",
+  "target_date": "20261113",
+  "source": {
+    "account": "pachi_slohunter",
+    "url": "",
+    "posted_at": "2026-11-12T19:20:00+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "ガイの注目店舗\n⠀\n11/13\nレイトギャップ平和島\n⠀\n感謝\nリコリコおすすめ週間\nファン感謝デー初日\n⠀\n今回の最重要ポイント\n11/9〜15はリコリス・リコイル推し\n↪︎千束＆たきなの告知が登場\nスマスロのおすすめ機種として注目\n⠀\nスロットおすすめ機種\n11/13〜15の3日間\n↪︎戦国乙女5\n↪︎SAOⅡ\n↪︎ファン感期間中は両機種も要チェック\n⠀\nファン感謝デー\n11/13〜15の3日間開催\n↪︎週末に向けて盛り上がる店内\n⠀\n今後のスケジュール\n11/14 裏半撃\n11/15 HALF STRONG\n↪︎週末も注目企画が続く\n⠀\n777CON-PASS\n↪︎当日予約9:29締切\n↪︎9:30抽選開始\n⠀\nリコリコ推しに加えておすすめ機種も充実\n13日のレイトギャップに注目",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"レイトギャップ平和島\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-08-14\", \"2026-11-12\"], \"n_days\": 90, \"n_model_days\": 4071, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 1888.9, \"models_over_threshold_per_day\": {\"mean\": 2.27, \"median\": 2.0, \"max\": 7}, \"candidate_models_per_day\": 45.2, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 2.4, \"median\": 2.0, \"max\": 7}, \"p_at_least_1\": 0.9, \"p_at_least_2\": 0.678, \"p_at_least_3\": 0.444, \"p_at_least_4\": 0.233, \"p_at_least_10\": 0.0}} / named_context: {\"as_of\": \"20261112\", \"window_days\": 30, \"n_candidates_ge3machines\": 45, \"hall_over_threshold_rate_approx\": 0.044, \"threshold\": 1800.0, \"models\": [{\"name\": \"ソードアート・オンライン\", \"n_machines\": 1, \"rank\": null, \"of\": 45, \"n_days_present\": 30, \"over_threshold\": 6, \"rate\": 0.2, \"mean_score\": 1440.2}, {\"name\": \"リコリス・リコイル\", \"n_machines\": 7, \"rank\": 10, \"of\": 45, \"n_days_present\": 30, \"over_threshold\": 1, \"rate\": 0.033, \"mean_score\": -155.5}, {\"name\": \"戦国乙女5 業火を穿つ宿焔の双刃\", \"n_machines\": 8, \"rank\": 4, \"of\": 45, \"n_days_present\": 30, \"over_threshold\": 4, \"rate\": 0.133, \"mean_score\": 489.3}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "ソードアート・オンライン",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "リコリス・リコイル",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。 ヒント: 1/9系の可能性(model_named_ratioならratio指定が必要)"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "戦国乙女5 業火を穿つ宿焔の双刃",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    }
+  ],
+  "unscored_claims": [
+    {
+      "text": "ケロット5(部分一致score=0.6)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    }
+  ],
+  "needs_manual_review": true,
+  "no_confirmed_machines": false,
+  "result": null,
+  "announce_digest": "36c65f425a3b7ea4",
+  "provisional": true
+}

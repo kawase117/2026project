@@ -1,0 +1,110 @@
+{
+  "announce_id": "arrow__20261107__kawasakislot",
+  "hall": "ARROW池上店",
+  "target_date": "20261107",
+  "source": {
+    "account": "kawasakislot",
+    "url": "",
+    "posted_at": "2026-11-06T17:27:55+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "11/7 ARROW池上\n→とある来店取材【全知全能】【薔薇領域】\n\n2回目のとある取材！前回は取材対象のバラがまるごとでフェスでしたｗ\n\n明日の仕掛けは\n全知全能：全⑤⑥×3機種以上 ※3台以上機種\n薔薇領域：バラ（1台機種）の20％以上\nでよいかなとｗ\n\n前回の公式結果見るに早番はバラ行ったほうが良いレベルｗ\n添付画像の通り、バラBOXにある1台バラ23台が全部！で、平均2,400枚\n明日もここまでやるかは不明だけど、こういう想定以上の派手な仕掛けをやってくれるお店、ということは明らか\n\n全⑤⑥探しは..3台以上設置機種から\n機種数多いので難しいといえば難しいけど他取材での結果見るに特定日以外は4台設置機種からの仕掛けが多め\n炎炎2とか青ブタとかニューキングハナハナあたりが扱い良し\n\nあとはオススメ機種のGODとゴージャグは単品探せそう\n\n9:30抽選",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"ARROW池上店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-08-06\", \"2026-11-04\"], \"n_days\": 90, \"n_model_days\": 2731, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2186.4, \"models_over_threshold_per_day\": {\"mean\": 1.52, \"median\": 1.0, \"max\": 10}, \"candidate_models_per_day\": 30.3, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 2.03, \"median\": 1.0, \"max\": 10}, \"p_at_least_1\": 0.8, \"p_at_least_2\": 0.478, \"p_at_least_3\": 0.322, \"p_at_least_4\": 0.2, \"p_at_least_10\": 0.011}} / named_context: {\"as_of\": \"20261104\", \"window_days\": 30, \"n_candidates_ge3machines\": 33, \"hall_over_threshold_rate_approx\": 0.061, \"threshold\": 1800.0, \"models\": [{\"name\": \"スマスロ炎炎ノ消防隊2\", \"n_machines\": 4, \"rank\": 26, \"of\": 33, \"n_days_present\": 30, \"over_threshold\": 4, \"rate\": 0.133, \"mean_score\": -54.8}, {\"name\": \"ミリオンゴッド‐神々の軌跡‐\", \"n_machines\": 24, \"rank\": 18, \"of\": 33, \"n_days_present\": 30, \"over_threshold\": 0, \"rate\": 0.0, \"mean_score\": -113.5}, {\"name\": \"青春ブタ野郎はバニーガール先輩の夢を見ない\", \"n_machines\": 4, \"rank\": 5, \"of\": 33, \"n_days_present\": 30, \"over_threshold\": 5, \"rate\": 0.167, \"mean_score\": 384.2}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "スマスロ炎炎ノ消防隊2",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "ミリオンゴッド‐神々の軌跡‐",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    },
+    {
+      "type": "model_named",
+      "machine_name": "青春ブタ野郎はバニーガール先輩の夢を見ない",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+    }
+  ],
+  "unscored_claims": [],
+  "needs_manual_review": true,
+  "no_confirmed_machines": false,
+  "result": {
+    "scored_at_data_max": "20261107",
+    "hall_baseline_mean_diff": -261.8,
+    "hall_n_machines": 320,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "スマスロ炎炎ノ消防隊2",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 5.4,
+        "mean_diff": 5.2,
+        "gratio": 1.032,
+        "n_machines": 4,
+        "rank": 13,
+        "candidate_models": 33,
+        "age_days": 278,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "ミリオンゴッド‐神々の軌跡‐",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": -570.2,
+        "mean_diff": -667.0,
+        "gratio": 0.855,
+        "n_machines": 24,
+        "rank": 20,
+        "candidate_models": 33,
+        "age_days": 201,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      },
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "青春ブタ野郎はバニーガール先輩の夢を見ない",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。"
+        },
+        "score": 874.7,
+        "mean_diff": 1052.2,
+        "gratio": 0.831,
+        "n_machines": 4,
+        "rank": 4,
+        "candidate_models": 33,
+        "age_days": 61,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
+  "announce_digest": "331e187be175d252",
+  "provisional": true
+}

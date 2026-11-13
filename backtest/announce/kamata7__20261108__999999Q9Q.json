@@ -1,0 +1,50 @@
+{
+  "announce_id": "kamata7__20261108__999999Q9Q",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "target_date": "20261108",
+  "source": {
+    "account": "999999Q9Q",
+    "url": "",
+    "posted_at": "2026-11-07T23:24:49+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "【出るか？週末のファンタジスタウスイ】\nGALAXYウスイのメガなな予想\n\n日曜日のメガななは機種イチ以上。メイン機種から少台数機種まで、設置台数に関係なく、全ての機種に煌めく1台が潜む。特にジャグラーシリーズは多数複数の当たりがブチ込まれることで知られる。\n\n全機種もある前提で考えていいのだが、週末は台数の多いメインどころで全を作ってくる可能性が高い。メガいちとのW抽選も美味しい要素の一つ、蒲田に赴くなら両店舗の攻略を頭に叩き込むべし\n\n#マルハンメガシティ2000蒲田7",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"マルハンメガシティ2000-蒲田7\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-08-07\", \"2026-11-05\"], \"n_days\": 90, \"n_model_days\": 5831, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2187.3, \"models_over_threshold_per_day\": {\"mean\": 3.24, \"median\": 3.0, \"max\": 9}, \"candidate_models_per_day\": 64.8, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 4.1, \"median\": 3.5, \"max\": 10}, \"p_at_least_1\": 0.989, \"p_at_least_2\": 0.956, \"p_at_least_3\": 0.767, \"p_at_least_4\": 0.5, \"p_at_least_10\": 0.022}}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [],
+  "unscored_claims": [
+    {
+      "text": "マイジャグラーV(部分一致score=0.625)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    },
+    {
+      "text": "マイジャグラーⅥ(部分一致score=0.625)",
+      "reason": "match_machine_namesのあいまい照合(score<1.0)。自動確定しない。",
+      "frozen_scoring_procedure": ""
+    }
+  ],
+  "needs_manual_review": true,
+  "no_confirmed_machines": true,
+  "result": {
+    "scored_at_data_max": "20261108",
+    "hall_baseline_mean_diff": 14.5,
+    "hall_n_machines": 715,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": []
+  },
+  "announce_digest": "3091dbe5fafab65a",
+  "provisional": true
+}

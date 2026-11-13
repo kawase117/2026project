@@ -1,0 +1,39 @@
+{
+  "announce_id": "kinji_higashiguchi__20261112__Kamacho_data",
+  "hall": "金時蒲田東口店",
+  "target_date": "20261112",
+  "source": {
+    "account": "Kamacho_data",
+    "url": "",
+    "posted_at": "2026-11-11T21:28:25+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "11/12(木) 金時蒲田東口 マックスケガレ 過去の結果\n\nイベント日ごとの総差枚\n\n10/12(月)　+57,106枚\n平均：+57,106枚\n\n前回はプラス\n今回も続くか…\n\n狙い目はリプにぶら下げときます。\n\n#金時蒲田東口",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"金時蒲田東口店\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-08-12\", \"2026-11-10\"], \"n_days\": 90, \"n_model_days\": 2041, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 1331.7, \"models_over_threshold_per_day\": {\"mean\": 1.14, \"median\": 1.0, \"max\": 5}, \"candidate_models_per_day\": 22.7, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 0.8, \"median\": 1.0, \"max\": 5}, \"p_at_least_1\": 0.522, \"p_at_least_2\": 0.2, \"p_at_least_3\": 0.044, \"p_at_least_4\": 0.022, \"p_at_least_10\": 0.0}}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [],
+  "unscored_claims": [],
+  "needs_manual_review": true,
+  "no_confirmed_machines": true,
+  "result": {
+    "scored_at_data_max": "20261112",
+    "hall_baseline_mean_diff": 299.8,
+    "hall_n_machines": 195,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": []
+  },
+  "announce_digest": "41312a75958560b1",
+  "provisional": true
+}

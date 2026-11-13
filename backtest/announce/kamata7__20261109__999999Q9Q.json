@@ -1,0 +1,64 @@
+{
+  "announce_id": "kamata7__20261109__999999Q9Q",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "target_date": "20261109",
+  "source": {
+    "account": "999999Q9Q",
+    "url": "",
+    "posted_at": "2026-11-08T23:25:36+09:00",
+    "kind": "予告"
+  },
+  "raw_text": "【少台数は全、メイン機種は列仕掛けを狙え】\nGALAXYウスイのメガなな予想\n\n月曜の蒲田は列仕掛け。ニブイチ配分の列が複数出現、特にニブイチ機種は東京喰種など、1機種で1列以上を構成しているメイン機種でやりがち。\n\n少台数が並んだ列では、ニブイチ列仕掛けはあまり見かけない一方で、全機種は少台数に潜む可能性が高い。なんなら平日のなんでもない日に複数の全を用意するのがウスイという男\n\n#マルハンメガシティ2000蒲田7",
+  "posted_at_note": "自動下ごしらえ(announce_autodraft.py)による生成。register前に人間の確認が必要。",
+  "weakness_note": "",
+  "prior_check_note": "baserate(90日,閾値1800): {\"hall\": \"マルハンメガシティ2000-蒲田7\", \"metric\": \"gratio_mean_diff\", \"window\": [\"2026-08-09\", \"2026-11-07\"], \"n_days\": 90, \"n_model_days\": 5839, \"min_machines\": 3, \"percentile\": 0.95, \"threshold\": 2176.9, \"models_over_threshold_per_day\": {\"mean\": 3.24, \"median\": 3.0, \"max\": 9}, \"candidate_models_per_day\": 64.9, \"fixed_threshold\": {\"threshold\": 1800.0, \"models_over_threshold_per_day\": {\"mean\": 4.0, \"median\": 3.0, \"max\": 10}, \"p_at_least_1\": 0.989, \"p_at_least_2\": 0.944, \"p_at_least_3\": 0.756, \"p_at_least_4\": 0.478, \"p_at_least_10\": 0.022}} / named_context: {\"as_of\": \"20261107\", \"window_days\": 30, \"n_candidates_ge3machines\": 68, \"hall_over_threshold_rate_approx\": 0.103, \"threshold\": 1800.0, \"models\": [{\"name\": \"東京喰種\", \"n_machines\": 41, \"rank\": 17, \"of\": 68, \"n_days_present\": 30, \"over_threshold\": 1, \"rate\": 0.033, \"mean_score\": 306.1}]}",
+  "zentaikei": {
+    "metric": "gratio_mean_diff",
+    "threshold": 1800.0,
+    "min_machines": 3
+  },
+  "claims": [
+    {
+      "type": "model_named",
+      "machine_name": "東京喰種",
+      "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。 ヒント: 1/2系の可能性(model_named_ratioならratio指定が必要)"
+    }
+  ],
+  "unscored_claims": [],
+  "needs_manual_review": true,
+  "no_confirmed_machines": false,
+  "result": {
+    "scored_at_data_max": "20261110",
+    "hall_baseline_mean_diff": -36.1,
+    "hall_n_machines": 715,
+    "new_machine_days": 30,
+    "censoring": {
+      "n_censored_hi": 0,
+      "n_censored_lo": 0,
+      "machines_hi": [],
+      "machines_lo": []
+    },
+    "claims": [
+      {
+        "type": "model_named",
+        "claim": {
+          "type": "model_named",
+          "machine_name": "東京喰種",
+          "note": "自動下ごしらえ: 本文の部分一致で検出。type/claims内容は要人間確認。 ヒント: 1/2系の可能性(model_named_ratioならratio指定が必要)"
+        },
+        "score": 480.6,
+        "mean_diff": 448.8,
+        "gratio": 1.071,
+        "n_machines": 41,
+        "rank": 8,
+        "candidate_models": 68,
+        "age_days": 490,
+        "age_bucket": "established",
+        "base_rate": 0.048,
+        "hit": false
+      }
+    ]
+  },
+  "announce_digest": "efed93b72c57902c",
+  "provisional": true
+}
