@@ -1,0 +1,134 @@
+{
+  "rule_id": "zassiki_model_term60_top3",
+  "hall": "ザ-シティ-ベルシティ雑色店",
+  "freeze_hash": "c19f10b6e683a454",
+  "target_date": "20261115",
+  "data_asof": "20261114",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-09-16",
+    "2026-11-15"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +87 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "東京喰種",
+      "score": 428.037303,
+      "history_rows": 80,
+      "machines": [
+        861,
+        862,
+        863
+      ]
+    },
+    {
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 276.30885,
+      "history_rows": 311,
+      "machines": [
+        873,
+        874,
+        875,
+        876,
+        877,
+        878
+      ]
+    },
+    {
+      "machine_name": "モンキーターンV",
+      "score": 104.34185,
+      "history_rows": 129,
+      "machines": [
+        857,
+        858,
+        859,
+        860
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 861,
+      "machine_name": "東京喰種",
+      "score": 428.037303,
+      "history_days": 80
+    },
+    {
+      "machine_number": 862,
+      "machine_name": "東京喰種",
+      "score": 428.037303,
+      "history_days": 80
+    },
+    {
+      "machine_number": 863,
+      "machine_name": "東京喰種",
+      "score": 428.037303,
+      "history_days": 80
+    },
+    {
+      "machine_number": 873,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 276.30885,
+      "history_days": 311
+    },
+    {
+      "machine_number": 874,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 276.30885,
+      "history_days": 311
+    },
+    {
+      "machine_number": 875,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 276.30885,
+      "history_days": 311
+    },
+    {
+      "machine_number": 876,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 276.30885,
+      "history_days": 311
+    },
+    {
+      "machine_number": 877,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 276.30885,
+      "history_days": 311
+    },
+    {
+      "machine_number": 878,
+      "machine_name": "北斗の拳 転生の章2",
+      "score": 276.30885,
+      "history_days": 311
+    },
+    {
+      "machine_number": 857,
+      "machine_name": "モンキーターンV",
+      "score": 104.34185,
+      "history_days": 129
+    },
+    {
+      "machine_number": 858,
+      "machine_name": "モンキーターンV",
+      "score": 104.34185,
+      "history_days": 129
+    },
+    {
+      "machine_number": 859,
+      "machine_name": "モンキーターンV",
+      "score": 104.34185,
+      "history_days": 129
+    },
+    {
+      "machine_number": 860,
+      "machine_name": "モンキーターンV",
+      "score": 104.34185,
+      "history_days": 129
+    }
+  ],
+  "result": null,
+  "plan_digest": "16b621c3dbea97e6"
+}
