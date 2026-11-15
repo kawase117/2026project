@@ -1,0 +1,38 @@
+{
+  "rule_id": "mitoya_myj6_prevph_top3",
+  "hall": "みとや大森町店",
+  "freeze_hash": "48fdcde8bd8bd57e",
+  "target_date": "20261116",
+  "data_asof": "20261115",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-10-17",
+    "2026-11-16"
+  ],
+  "score": "prev_day_ph",
+  "selection_unit": "machine",
+  "success_criterion": "2026-11-06〜12-05 の日数が20以上で、エッジ(3台の差枚 − 同日マイジャグラーⅥ全台平均)の平均の95%区間の下限 > 0。対照の mitoya_myj6_prevdiff_top3 を上回ること。",
+  "is_dry_run": false,
+  "picks": [
+    {
+      "machine_number": 674,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 0.823654,
+      "history_days": 28
+    },
+    {
+      "machine_number": 653,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 0.674482,
+      "history_days": 14
+    },
+    {
+      "machine_number": 648,
+      "machine_name": "マイジャグラーⅥ",
+      "score": 0.674211,
+      "history_days": 28
+    }
+  ],
+  "result": null,
+  "plan_digest": "9599c85e8fb0cbad"
+}
