@@ -1,0 +1,127 @@
+{
+  "rule_id": "kamata7_model_term60_top3",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "freeze_hash": "b5bec81d02cedc0e",
+  "target_date": "20261117",
+  "data_asof": "20261116",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-09-18",
+    "2026-11-17"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +75 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 555.529775,
+      "history_rows": 52,
+      "machines": [
+        2191,
+        2192,
+        2193,
+        2194,
+        2195
+      ]
+    },
+    {
+      "machine_name": "戦国コレクション6",
+      "score": 358.674521,
+      "history_rows": 110,
+      "machines": [
+        2306,
+        2307,
+        2308,
+        2309
+      ]
+    },
+    {
+      "machine_name": "ガールズ&パンツァー 最終章",
+      "score": 202.919691,
+      "history_rows": 166,
+      "machines": [
+        2322,
+        2323,
+        2324
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 2191,
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 555.529775,
+      "history_days": 52
+    },
+    {
+      "machine_number": 2192,
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 555.529775,
+      "history_days": 52
+    },
+    {
+      "machine_number": 2193,
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 555.529775,
+      "history_days": 52
+    },
+    {
+      "machine_number": 2194,
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 555.529775,
+      "history_days": 52
+    },
+    {
+      "machine_number": 2195,
+      "machine_name": "戦国乙女4 戦乱に閃く炯眼の軍師",
+      "score": 555.529775,
+      "history_days": 52
+    },
+    {
+      "machine_number": 2306,
+      "machine_name": "戦国コレクション6",
+      "score": 358.674521,
+      "history_days": 110
+    },
+    {
+      "machine_number": 2307,
+      "machine_name": "戦国コレクション6",
+      "score": 358.674521,
+      "history_days": 110
+    },
+    {
+      "machine_number": 2308,
+      "machine_name": "戦国コレクション6",
+      "score": 358.674521,
+      "history_days": 110
+    },
+    {
+      "machine_number": 2309,
+      "machine_name": "戦国コレクション6",
+      "score": 358.674521,
+      "history_days": 110
+    },
+    {
+      "machine_number": 2322,
+      "machine_name": "ガールズ&パンツァー 最終章",
+      "score": 202.919691,
+      "history_days": 166
+    },
+    {
+      "machine_number": 2323,
+      "machine_name": "ガールズ&パンツァー 最終章",
+      "score": 202.919691,
+      "history_days": 166
+    },
+    {
+      "machine_number": 2324,
+      "machine_name": "ガールズ&パンツァー 最終章",
+      "score": 202.919691,
+      "history_days": 166
+    }
+  ],
+  "result": null,
+  "plan_digest": "40c7b61212f83de7"
+}
