@@ -1,0 +1,113 @@
+{
+  "rule_id": "kamata1_model_term60_top3",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "freeze_hash": "bb185b622fae47b2",
+  "target_date": "20261119",
+  "data_asof": "20261118",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-09-20",
+    "2026-11-19"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +187 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "革命機ヴァルヴレイヴ",
+      "score": 560.296199,
+      "history_rows": 49,
+      "machines": [
+        2025,
+        2026,
+        2027,
+        2028
+      ]
+    },
+    {
+      "machine_name": "ToLOVEるダークネス TRANCE ver.8.7",
+      "score": 495.082406,
+      "history_rows": 42,
+      "machines": [
+        2411,
+        2412,
+        2413
+      ]
+    },
+    {
+      "machine_name": "ゴッドイーター リザレクション",
+      "score": 434.047249,
+      "history_rows": 31,
+      "machines": [
+        2416,
+        2417,
+        2418
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 2025,
+      "machine_name": "革命機ヴァルヴレイヴ",
+      "score": 560.296199,
+      "history_days": 49
+    },
+    {
+      "machine_number": 2026,
+      "machine_name": "革命機ヴァルヴレイヴ",
+      "score": 560.296199,
+      "history_days": 49
+    },
+    {
+      "machine_number": 2027,
+      "machine_name": "革命機ヴァルヴレイヴ",
+      "score": 560.296199,
+      "history_days": 49
+    },
+    {
+      "machine_number": 2028,
+      "machine_name": "革命機ヴァルヴレイヴ",
+      "score": 560.296199,
+      "history_days": 49
+    },
+    {
+      "machine_number": 2411,
+      "machine_name": "ToLOVEるダークネス TRANCE ver.8.7",
+      "score": 495.082406,
+      "history_days": 42
+    },
+    {
+      "machine_number": 2412,
+      "machine_name": "ToLOVEるダークネス TRANCE ver.8.7",
+      "score": 495.082406,
+      "history_days": 42
+    },
+    {
+      "machine_number": 2413,
+      "machine_name": "ToLOVEるダークネス TRANCE ver.8.7",
+      "score": 495.082406,
+      "history_days": 42
+    },
+    {
+      "machine_number": 2416,
+      "machine_name": "ゴッドイーター リザレクション",
+      "score": 434.047249,
+      "history_days": 31
+    },
+    {
+      "machine_number": 2417,
+      "machine_name": "ゴッドイーター リザレクション",
+      "score": 434.047249,
+      "history_days": 31
+    },
+    {
+      "machine_number": 2418,
+      "machine_name": "ゴッドイーター リザレクション",
+      "score": 434.047249,
+      "history_days": 31
+    }
+  ],
+  "result": null,
+  "plan_digest": "1ef9027e06ac42d5"
+}
