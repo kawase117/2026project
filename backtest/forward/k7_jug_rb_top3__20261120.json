@@ -1,0 +1,38 @@
+{
+  "rule_id": "k7_jug_rb_top3",
+  "hall": "マルハンメガシティ2000-蒲田7",
+  "freeze_hash": "9e914424a794c5e3",
+  "target_date": "20261120",
+  "data_asof": "20261119",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-10-21",
+    "2026-11-20"
+  ],
+  "score": "hist_mean_rb_prob",
+  "selection_unit": "machine",
+  "success_criterion": "エッジ（同日ジャグ全台平均との差枚差）の平均が +150枚/台 以上、かつ 95%CI 下限が 0 を上回ること。下回れば実弾投入しない。",
+  "is_dry_run": false,
+  "picks": [
+    {
+      "machine_number": 3176,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 0.003222,
+      "history_days": 28
+    },
+    {
+      "machine_number": 3172,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 0.003215,
+      "history_days": 25
+    },
+    {
+      "machine_number": 3188,
+      "machine_name": "ゴーゴージャグラー3",
+      "score": 0.003206,
+      "history_days": 24
+    }
+  ],
+  "result": null,
+  "plan_digest": "138f437b5a39e9bd"
+}
