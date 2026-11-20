@@ -100,18 +100,18 @@ HALLS = {
 }
 # 予告ファイル名の頭は、ledger のキーと違うホールがある。
 ANNOUNCE_PREFIX = {"hiroki_higashiguchi": "hiroki", "mitoya": "mitoya_omori"}
-# PREDICTION.md §2 の2026-11-08改定: みとやは常時、楽園は11月末まで、蒲田1は登録済みの強化予告日だけ載せる。
-# 蒲田7は停止文だけを載せる。機械実行は安いので表の元データは作り、載せるかは連結時に決める。
-JUGGLER_HALLS = {"kamata7", "rakuen", "mitoya", "kamata1"}
-RAKUEN_JUGGLER_UNTIL = "20261130"
+# CLAUDE.md: 設定5以上の割合が高いホールは予告の有無にかかわらず候補を出す。
+# 蒲田1は予告にジャグラー強化がある日だけ。機械実行は安いので表の元データは作り、載せるかは merge で決める。
+JUGGLER_HALLS = {"kamata7", "rakuen", "mitoya", "kamata1", "hiroki_nishiguchi"}
 # 全ホール共通の「ジャグラー候補」表の1列目。prediction_ledger.hall_of が当てられる呼び名にする。
 JUGGLER_LABEL = {
     "kamata7": "蒲田7",
     "rakuen": "楽園蒲田店",
     "mitoya": "みとや大森町店",
     "kamata1": "蒲田1",
+    "hiroki_nishiguchi": "ヒロキ蒲田西口店",
 }
-JUGGLER_LOW_NOTE = "ジャグラー候補表の対象外(PREDICTION.md §2、2026-11-08 改定)。"
+JUGGLER_LOW_NOTE = "ジャグラーの設定5以上の割合が低く、候補を出さない。"
 # 採点で有害と出たので候補表を止めたホール(PREDICTION.md の扱いの表)。割合が低いホールとは理由が違うので別に書く。
 JUGGLER_STOPPED = {"kamata7": "ジャグラー候補は出さない(10月は有害、差枚edge −141・95%CI上限 −15)。"}
 
@@ -254,7 +254,7 @@ def unregistered_announce_block(key: str, today: str) -> str:
 
 
 # 英字に接する数字は発信者名の一部(minnade777judge など)で、台番号ではない。
-_MACHINE_NO = re.compile(r"(?<![A-Za-z\d,.+\-/])\d{3,4}(?![A-Za-z\d,./]|[年月日枚回Gg%円万台])")
+_MACHINE_NO = re.compile(r"(?<![A-Za-z\d,.+\-/−])\d{3,4}(?![A-Za-z\d,./]|[年月日枚回Gg%円万台])")
 _ANNOUNCE_TEXT_KEYS = ("raw_text", "claims", "unscored_claims", "weakness_note", "amendments")
 
 
@@ -273,23 +273,68 @@ def announce_numbers(key: str, today: str) -> set[str]:
     return nums
 
 
+def has_active_announcement(key: str, today: str) -> bool:
+    """撤回・無効化されていない登録済み予告だけを数える。"""
+    for path in announce_files(key, today):
+        try:
+            obj = json.loads(path.read_text(encoding="utf-8"))
+        except OSError, ValueError:
+            continue
+        if isinstance(obj, dict) and not any(
+            amend.get("void") for amend in obj.get("amendments") or [] if isinstance(amend, dict)
+        ):
+            return True
+    return False
+
+
 def judgement_number_errors(text: str, key: str, today: str) -> list[str]:
     """`判断:` の行の台番号(3〜4桁)は、登録済み予告に出るものだけ。台を本文で選ぶのは予告で台が指定された日だけ。"""
-    allowed = announce_numbers(key, today)
-    errors = []
+    return _machine_number_errors(text, set(), announce_numbers(key, today), judgement_only=True)
+
+
+def _machine_number_errors(
+    text: str, candidates: set[str], announced: set[str], *, judgement_only: bool = False
+) -> list[str]:
+    """同じ台番号照合を旧判断行検査と断片全体の検査で共有する。"""
+    errors: list[str] = []
     for line in text.splitlines():
         s = unicodedata.normalize("NFKC", line.strip())
-        if not re.match(r"^[\s\-*]*\**判断\**\s*[:：]", s):
+        if judgement_only and not re.match(r"^[\s\-*]*\**判断\**\s*[:：]", s):
             continue
-        s_no = s.replace("鉄台2026", "")  # 蒲田7の予告が無い日の定型の語。台番号ではない
-        stray = sorted({n for n in _MACHINE_NO.findall(s_no) if n not in allowed})
+        if not judgement_only and s.startswith("## "):
+            continue
+        s_no = s.replace("鉄台2026", "")
+        stray = sorted(set(_MACHINE_NO.findall(s_no)) - candidates - announced)
         if stray:
             errors.append(
-                "`判断:` の行に、登録済みの予告に無い台番号がある(%s)。台番号は予告で指定された日だけ原文どおりに書く。"
-                "予告が無い日・予告に無い番号は、末尾のRB機種候補の表(自動)に任せる: 「%s」"
+                "本文の台番号がこのホールのRB・ジャグラー自動候補にも登録済み予告の指定台にもない(%s): 「%s」"
                 % ("・".join(stray), line.strip())
             )
     return errors
+
+
+def candidate_numbers(day_dir: Path, key: str) -> set[str]:
+    """当日の機械出力から、このホールの候補台番号だけを読む。"""
+    numbers: set[str] = set()
+    rb = day_dir / "rb_candidates.md"
+    if rb.exists():
+        section = ""
+        for line in rb.read_text(encoding="utf-8").splitlines():
+            if line.startswith("### "):
+                section = line
+            if HALLS[key][0] not in section or line.startswith("### "):
+                continue
+            # 機種別の台数や日付は含めず、台の補助欄だけから拾う。
+            if line.startswith("- ") and ":" in line:
+                numbers.update(_MACHINE_NO.findall(line.split(":", 1)[1]))
+            elif re.match(r"^\|[^|]+\|\s*\d{3,4}\s*\|", line):
+                numbers.add(line.split("|")[2].strip())
+    jug = day_dir / f"{key}.juggler.md"
+    if jug.exists():
+        for line in jug.read_text(encoding="utf-8").splitlines():
+            if re.match(r"^\s*\d{3,4}\s+\S", line):
+                numbers.add(line.split()[0])
+    return numbers
 
 
 def facts_block(key: str, today: str, yesterday: str) -> str:
@@ -581,17 +626,113 @@ def suggestion_errors(text: str, lessons: list[dict]) -> list[str]:
     return errors
 
 
-def validate_prediction(text: str, key: str, today: str, need_judgement: bool) -> list[str]:
+_JUDGEMENT_LINE = re.compile(r"^判断:")
+_BASELINE_LINE = re.compile(r"^基準:")
+# 過去の損益・結果を理由にしたことが明瞭な語だけを拒否する。
+AVOID_RESULT_WORDS = (
+    "前日は弱かった",
+    "前日弱かった",
+    "前日負け",
+    "前日の負け",
+    "前回負け",
+    "前回の負け",
+    "過去回の負け",
+    "大外れ",
+    "外れた",
+    "差枚マイナス",
+    "差枚がマイナス",
+)
+AVOID_STRUCTURAL_WORDS = (
+    "機械割",
+    "稼働不足",
+    "低稼働",
+    "回転数不足",
+    "回転数が伸びない",
+    "台数",
+    "減台",
+    "増台",
+    "入替",
+    "RB確率",
+    "RB補正",
+    "RB判別",
+    "ホール補正",
+)
+
+
+def validate_prediction_fragment(
+    text: str,
+    key: str,
+    today: str,
+    candidate_machines: set[str],
+    baseline: tuple[str, ...] = (),
+    announced_machines: set[str] | None = None,
+    has_announcement: bool = False,
+) -> list[str]:
+    """断片と明示された当日情報だけで判定する。ファイルや DB は読まない。"""
+    allowed_announcement = announced_machines or set()
     errors = []
     if not text.lstrip().startswith("## "):
         errors.append("先頭行が `## <ホール名>` の見出しでない")
     for m in BAD_PHRASES.finditer(text):
         errors.append("分析できなかった・質問で終わった表現がある: 「%s」" % m.group(0))
     errors += weekday_errors(text, today)
-    if need_judgement and not re.search(r"^[\s\-*]*\**判断\**\s*[:：]", text, re.M):
-        errors.append("`判断: ...` で始まる行がない（凍結が推す機種・台をここから拾う）")
-    errors += judgement_number_errors(text, key, today)
+    raw_lines = text.splitlines()
+    lines = [line.strip() for line in raw_lines]
+    judgements = [line for line in raw_lines if _JUDGEMENT_LINE.match(line)]
+    if len(judgements) != 1:
+        errors.append("`判断:` で始まる行はホール節にちょうど1行必要（現在%d行）" % len(judgements))
+    if baseline:
+        content = [line for line in lines[1:] if line]
+        if not content or not _BASELINE_LINE.match(content[0]):
+            errors.append("基準があるホールは見出し直後の最初の行を `基準:` にする")
+        elif not all(name in content[0] for name in baseline):
+            errors.append("`基準:` 行に当日の基準機種が揃っていない")
+        if len(judgements) == 1:
+            choice = _JUDGEMENT_LINE.sub("", judgements[0], count=1).strip()
+            if key == "kamata7" and not has_announcement:
+                if any(name in choice for name in baseline) or not (
+                    "機種は推さない" in choice or "推す機種なし" in choice
+                ):
+                    errors.append("予告のない蒲田7の `判断:` は機種名を挙げず、機種を推さない旨を書く")
+            elif not any(choice.startswith(name) for name in baseline):
+                errors.append(
+                    "`判断:` は基準機種名（%s）のいずれかから書き始める。差し替えには理由が必要" % "・".join(baseline)
+                )
+            elif any(name not in choice for name in baseline) and not any(
+                word in choice for word in ("予告", "公約", "差し替え", "台数", "稼働", "RB")
+            ):
+                errors.append("`判断:` で基準機種を差し替える場合は理由を書く")
+    elif key == "kamata7" and not has_announcement and len(judgements) == 1:
+        choice = _JUDGEMENT_LINE.sub("", judgements[0], count=1).strip()
+        if not ("機種は推さない" in choice or "推す機種なし" in choice):
+            errors.append("予告のない蒲田7の `判断:` は機種名を挙げず、機種を推さない旨を書く")
+    for line in lines:
+        normalized = unicodedata.normalize("NFKC", line)
+        if "避ける" in normalized:
+            bad = [word for word in AVOID_RESULT_WORDS if word in normalized]
+            if bad:
+                errors.append("`避ける` に過去の損益・結果を理由にした語がある（%s）: 「%s」" % ("・".join(bad), line))
+            elif normalized.startswith("避ける:") and not any(word in normalized for word in AVOID_STRUCTURAL_WORDS):
+                errors.append(
+                    "`避ける` の理由は機械割・稼働不足・台数変化・RB確率補正などの構造的理由に限る: 「%s」" % line
+                )
+    errors += _machine_number_errors(text, candidate_machines, allowed_announcement)
     return errors
+
+
+def validate_prediction(text: str, key: str, today: str, need_judgement: bool = True) -> list[str]:
+    """既存の生成フロー用アダプター。日付別入力を読んで純粋な検証へ渡す。"""
+    del need_judgement  # 判断行は予告と基準の有無にかかわらず必須。
+    names, _ = baseline_models(key, today)
+    return validate_prediction_fragment(
+        text,
+        key,
+        today,
+        candidate_numbers(OUT_ROOT / today, key),
+        tuple(names),
+        announce_numbers(key, today),
+        has_active_announcement(key, today),
+    )
 
 
 COMMON_RULES = """\
@@ -857,59 +998,6 @@ def parse_juggler(text: str) -> tuple[str, list[tuple[int, str, bool, int, int]]
     return (avg.group(1) if avg else "-"), rows
 
 
-def juggler_announced(key: str, today: str) -> bool:
-    """登録済み予告のジャグラー強化だけを見る。
-
-    蒲田1の登録はほぼ予想者投稿の自動下ごしらえで、claims が
-    「根菜→コン→ミスタージャグラー？」のような言葉遊びから部分一致で拾われる。
-    2026-11-08 のユーザー指示により、連想行だけの推測は強化に数えない。
-    連想行以外の地の文で機種名に触れただけでも数える限界がある。
-    """
-    ledger = ANNOUNCE_DIR / "LEDGER.jsonl"
-    if not ledger.exists():
-        return False
-    latest: dict[str, dict] = {}
-    try:
-        for line in ledger.read_text(encoding="utf-8").splitlines():
-            try:
-                entry = json.loads(line)
-            except ValueError:
-                continue
-            if not isinstance(entry, dict) or entry.get("hall") != HALLS[key][0] or entry.get("target_date") != today:
-                continue
-            if entry.get("voided") or not isinstance(entry.get("key"), str):
-                continue
-            latest[entry["key"]] = entry
-    except OSError:
-        return False
-    for ledger_key, entry in latest.items():
-        raw_text = ""
-        try:
-            data = json.loads((ANNOUNCE_DIR / f"{ledger_key}.json").read_text(encoding="utf-8"))
-        except OSError, ValueError:
-            data = {}
-        if isinstance(data, dict):
-            if any(a.get("void") for a in data.get("amendments") or [] if isinstance(a, dict)):
-                continue
-            raw_text = data.get("raw_text") or ""
-        lines = unicodedata.normalize("NFKC", raw_text).splitlines() if isinstance(raw_text, str) else []
-        for claim in entry.get("claims_detail") or []:
-            name = claim.get("machine_name") if isinstance(claim, dict) else None
-            if not isinstance(name, str) or "ジャグラー" not in name:
-                continue
-            normalized = unicodedata.normalize("NFKC", name)
-            short = re.sub(r"[\s\dA-Za-z\u2160-\u2188]+$", "", normalized)
-            keys = {normalized}
-            if short:
-                keys.add(short)
-            matching = [line for line in lines if any(k in line for k in keys)]
-            if not matching or not all(
-                line.strip().startswith("→") and line.strip().endswith("?") for line in matching
-            ):
-                return True
-    return False
-
-
 def juggler_section(day_dir: Path, today: str, ready: list[str]) -> str:
     """全ホール共通の「## ジャグラー候補」の節。prediction_ledger は1列目をホール、最終列を台番号として読む。"""
     table, low, stopped = [], [], []
@@ -920,10 +1008,9 @@ def juggler_section(day_dir: Path, today: str, ready: list[str]) -> str:
         if key not in JUGGLER_LABEL:
             low.append(HALLS[key][1])
             continue
-        if key == "rakuen" and today > RAKUEN_JUGGLER_UNTIL:
-            low.append("楽園（2026-11-30 で掲載終了）")
-            continue
-        if key == "kamata1" and not juggler_announced(key, today):
+        if key == "kamata1" and not any(
+            "ジャグ" in p.read_text(encoding="utf-8", errors="replace") for p in announce_files(key, today)
+        ):
             low.append("%s（予告にジャグラー強化が無い日）" % HALLS[key][1])
             continue
         part = day_dir / ("%s.juggler.md" % key)
@@ -940,7 +1027,7 @@ def juggler_section(day_dir: Path, today: str, ready: list[str]) -> str:
         good = ["%dは%sGでRB %d" % (u, format(g, ","), rb) for u, _, ok, g, rb in top if ok]
         note = "。RB良好: %s" % "、".join(good) if good else ""
         table.append("| %s | %s | %s%s |" % (JUGGLER_LABEL[key], avg, listing, note))
-    lines = ["## ジャグラー候補（PREDICTION.md §2 の対象ホール、DB最終日の確定データから作る翌日向け）", ""]
+    lines = ["## ジャグラー候補（高設定の割合が高いホール、DB最終日の確定データから作る翌日向け）", ""]
     if table:
         lines += ["| ホール | 履歴の翌日平均 | 上位の候補（台、機種） |", "|---|---|---|"] + table
     if low:

@@ -18,7 +18,9 @@ def write_announce(directory, key, handle, raw_text, claims=None, void=False):
 
 
 def errors_for(line):
-    return morning.validate_prediction("## 蒲田7\n" + line + "\n", "kamata7", TODAY, True)
+    # 既存の単独検査は判断行の予告照合を対象にする。断片全体の新規則は
+    # test_morning_prediction_validation.py で個別に検証する。
+    return morning.judgement_number_errors("## 蒲田7\n" + line + "\n", "kamata7", TODAY)
 
 
 def test_number_in_announce_text_passes(tmp_path, monkeypatch):
