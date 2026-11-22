@@ -1,0 +1,210 @@
+{
+ "prediction_id": "20261120__mitoya",
+ "hall": "みとや大森町店",
+ "target_date": "20261120",
+ "data_asof": "20261119",
+ "picks": {
+  "models": [
+   "甲鉄城のカバネリ 海門(うなと)決戦",
+   "東京喰種",
+   "マイジャグラーⅥ"
+  ],
+  "avoid_models": [],
+  "units": [],
+  "jug_units": [
+   660,
+   671,
+   674,
+   659,
+   647
+  ]
+ },
+ "unresolved": [],
+ "skipped": [],
+ "source_doc": "document/reviews/2026-11-20-prediction.md",
+ "frozen_at": "2026-11-20T09:56:52+09:00",
+ "timing_basis": "frozen_at",
+ "timing": "pre_open",
+ "result": {
+  "day_mean": 0.5,
+  "universe_size": 277,
+  "models": {
+   "n_machines": 60,
+   "mean_diff": 440.2,
+   "edge": 439.8
+  },
+  "avoid_models": null,
+  "units": null,
+  "jug_units": {
+   "n_machines": 5,
+   "mean_diff": 857.0,
+   "edge": 856.5
+  },
+  "missing_units": [],
+  "missing_models": [],
+  "rb": {
+   "min_games": 3000,
+   "baseline_days": 60,
+   "min_base_machine_days": 20,
+   "day_rb_ratio": 1.0412020939973836,
+   "models": {
+    "n_machines": 28,
+    "games": 174491.0,
+    "rb_obs": 566.0,
+    "rb_exp": 544.870361270257,
+    "rb_ratio": 1.0387792036999102,
+    "z": 0.9052019467534382,
+    "rb_edge": -0.0024228902974734456
+   },
+   "avoid_models": null,
+   "units": null,
+   "jug_units": {
+    "n_machines": 5,
+    "games": 37139.0,
+    "rb_obs": 128.0,
+    "rb_exp": 115.97125552158035,
+    "rb_ratio": 1.1037217750581418,
+    "z": 1.116979287642573,
+    "rb_edge": 0.06251968106075823
+   },
+   "excluded": {
+    "low_games": 64,
+    "no_baseline": [],
+    "not_judgeable": [
+     "Vivy ‐Fluorite Eye's Song‐",
+     "いざ！番長",
+     "かぐや様は告らせたい",
+     "とある魔術の禁書目録2",
+     "やじきた道中記参る！",
+     "ガールズ&パンツァー 最終章",
+     "ゴジラ対エヴァンゲリオン 2",
+     "ゴッドイーター リザレクション",
+     "スマスロ北斗の拳",
+     "スマスロ炎炎ノ消防隊2",
+     "スーパーブラックジャック",
+     "ソードアート・オンライン オルタナティブ ガンゲイル・オンライン",
+     "ソードアート・オンラインII",
+     "ゾンビランドサガ",
+     "パリピ孔明",
+     "マギアレコード 魔法少女まどか☆マギカ外伝",
+     "ミリオンゴッド‐神々の軌跡‐",
+     "モグモグ風林火山",
+     "モンキーターンV",
+     "モンスターハンターライズ：サンブレイク",
+     "ラグナドール",
+     "ラブ嬢3～Wご指名はいかがですか?～",
+     "リコリス・リコイル",
+     "ワールドダイスター",
+     "七つの魔剣が支配する",
+     "化物語",
+     "南国育ち SPECIAL",
+     "彼女、お借りします",
+     "戦国コレクション6",
+     "戦国乙女5 業火を穿つ宿焔の双刃",
+     "戦姫絶唱シンフォギア 正義の歌",
+     "攻殻機動隊",
+     "新鬼武者3",
+     "東京リベンジャーズ",
+     "東京喰種",
+     "沖ドキ!DUO アンコール",
+     "牙狼 闇を照らす者",
+     "獣王",
+     "甲鉄城のカバネリ 海門(うなと)決戦",
+     "真・一騎当千",
+     "真打 吉宗",
+     "聖闘士星矢 黄金十二宮",
+     "転生王女と天才令嬢の魔法革命",
+     "邪神ちゃんドロップキック",
+     "青春ブタ野郎はバニーガール先輩の夢を見ない",
+     "革命機ヴァルヴレイヴ2",
+     "魔法少女にあこがれて"
+    ]
+   }
+  },
+  "rb_s1": {
+   "min_games": 3000,
+   "min_history_machine_days": 100,
+   "range_margin": 0.05,
+   "models": {
+    "n_machines": 28,
+    "games": 174491.0,
+    "rb_obs": 566.0,
+    "rb_exp_s1": 426.00341796875,
+    "s1_ratio": 1.328627837538899,
+    "z": 6.782829351809373,
+    "rb_s1_edge": null
+   },
+   "avoid_models": null,
+   "units": null,
+   "jug_units": {
+    "n_machines": 5,
+    "games": 37139.0,
+    "rb_obs": 128.0,
+    "rb_exp_s1": 90.67138671875,
+    "s1_ratio": 1.4116912140876168,
+    "z": 3.920186490712521,
+    "rb_s1_edge": 0.10552312043044387,
+    "n_compared_machines": 1,
+    "no_comparator": []
+   },
+   "excluded": {
+    "low_games": 190,
+    "not_judgeable": [
+     "Vivy ‐Fluorite Eye's Song‐",
+     "ゴジラ対エヴァンゲリオン 2",
+     "スマスロ北斗の拳",
+     "ソードアート・オンライン オルタナティブ ガンゲイル・オンライン",
+     "ソードアート・オンラインII",
+     "リコリス・リコイル",
+     "ワールドダイスター",
+     "化物語",
+     "戦国乙女5 業火を穿つ宿焔の双刃",
+     "新鬼武者3",
+     "東京喰種",
+     "牙狼 闇を照らす者",
+     "獣王",
+     "甲鉄城のカバネリ 海門(うなと)決戦",
+     "真打 吉宗",
+     "青春ブタ野郎はバニーガール先輩の夢を見ない",
+     "革命機ヴァルヴレイヴ2",
+     "魔法少女にあこがれて"
+    ],
+    "no_rb_spec": [],
+    "history_short": [],
+    "out_of_range": [
+     "うみねこのなく頃に2(1/423)"
+    ]
+   }
+  },
+  "games": {
+   "reach_games": 7000,
+   "hall_median_games": 1797.0,
+   "units": null,
+   "jug_units": {
+    "n_machines": 5,
+    "g_ratio": 1.2869791215455255,
+    "g_edge": 0.4006380938440076,
+    "n_g_compared": 5,
+    "n_at": 0,
+    "reach_share": null,
+    "reach_edge": null,
+    "n_reach_compared": 0
+   },
+   "models": {
+    "n_machines": 60,
+    "g_ratio": 2.314514932294565,
+    "g_edge": 1.2413438253036508,
+    "n_at": 26,
+    "reach_share": 0.0,
+    "reach_edge": -2.112676056338028
+   }
+  },
+  "jug_model": {
+   "n_machines": 5,
+   "mean_diff": 857.0,
+   "edge": 757.5172413793103,
+   "n_compared": 5
+  }
+ },
+ "digest": "0a730bcdfe9c4624"
+}
