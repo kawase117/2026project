@@ -1,0 +1,92 @@
+{
+ "prediction_id": "20261125__big_dipper__rbauto",
+ "hall": "BIGディッパー戸越銀座店",
+ "target_date": "20261125",
+ "picks": {
+  "models": [
+   "ディスクアップ ULTRAREMIX",
+   "ネオアイムジャグラーEX"
+  ],
+  "avoid_models": [
+   "ゴーゴージャグラー3",
+   "マイジャグラーV"
+  ],
+  "units": [],
+  "jug_units": []
+ },
+ "frozen_at": "2026-11-25T07:01:22+09:00",
+ "timing": "pre_open",
+ "timing_basis": "frozen_at",
+ "source": "rb_auto",
+ "data_asof": "20261123",
+ "lag_days": 1,
+ "rb_auto": {
+  "candidates": [
+   {
+    "family_name": "ネオアイムジャグラーEX",
+    "machine_names": [
+     "ネオアイムジャグラーEX"
+    ],
+    "units": 3,
+    "n_w": 222,
+    "n_lr": 755,
+    "z90": 0.5648878275299143,
+    "adj90": 0.09651847037952915,
+    "z7": 0.5674708085120866,
+    "rank": 1
+   },
+   {
+    "family_name": "ディスクアップ ULTRAREMIX",
+    "machine_names": [
+     "ディスクアップ ULTRAREMIX"
+    ],
+    "units": 3,
+    "n_w": 221,
+    "n_lr": 1287,
+    "z90": 0.12427300339946755,
+    "adj90": 0.056097710927691044,
+    "z7": 0.4165372918227178,
+    "rank": 2
+   }
+  ],
+  "avoid": [
+   {
+    "family_name": "マイジャグラーV",
+    "machine_names": [
+     "マイジャグラーV"
+    ],
+    "units": 5,
+    "n_w": 1068,
+    "n_lr": 10865,
+    "z90": 0.2124233554852277,
+    "adj90": -0.04977104931554613,
+    "z7": 0.2970564455754938,
+    "rank": 6
+   },
+   {
+    "family_name": "ゴーゴージャグラー3",
+    "machine_names": [
+     "ゴーゴージャグラー3"
+    ],
+    "units": 6,
+    "n_w": 441,
+    "n_lr": 2289,
+    "z90": 0.31139568285084396,
+    "adj90": -0.06841483040189211,
+    "z7": 0.13034699569156202,
+    "rank": 7
+   }
+  ],
+  "units": {},
+  "day_flag": {
+   "flag": "弱め",
+   "x_dow": 0.17812290223927496,
+   "pct": 0.08620689655172414,
+   "n_reference": 58
+  },
+  "data_asof": "20261123",
+  "lag_days": 1
+ },
+ "result": null,
+ "digest": "839db29a79100b04"
+}
