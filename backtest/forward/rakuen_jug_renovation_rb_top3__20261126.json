@@ -33,6 +33,60 @@
       "history_days": 24
     }
   ],
-  "result": null,
+  "result": {
+    "scored_with_hash": "2c84cf17dfa96448",
+    "day_baseline": -29.4,
+    "universe_size": 117,
+    "picks_realized": [
+      {
+        "machine_number": 1180,
+        "games": 4481.0,
+        "diff": 1572.0,
+        "edge": 1601.3589743589744
+      },
+      {
+        "machine_number": 1160,
+        "games": 1027.0,
+        "diff": -95.0,
+        "edge": -65.64102564102564
+      },
+      {
+        "machine_number": 1164,
+        "games": 305.0,
+        "diff": -95.0,
+        "edge": -65.64102564102564
+      }
+    ],
+    "mean_diff_per_pick": 460.7,
+    "mean_edge_per_pick": 490.0,
+    "missing_machines": [],
+    "rb_perspective": {
+      "day_baseline_rb_rate": 0.00219,
+      "picks_rb": [
+        {
+          "machine_number": 1160,
+          "rb_rate": 0.00195,
+          "baseline_ratio": 0.89,
+          "rb_rank": 72,
+          "rb_universe_size": 117
+        },
+        {
+          "machine_number": 1164,
+          "rb_rate": 0.0,
+          "baseline_ratio": 0.0,
+          "rb_rank": 116,
+          "rb_universe_size": 117
+        },
+        {
+          "machine_number": 1180,
+          "rb_rate": 0.00402,
+          "baseline_ratio": 1.84,
+          "rb_rank": 6,
+          "rb_universe_size": 117
+        }
+      ]
+    },
+    "model_perspective": null
+  },
   "plan_digest": "64020a9bcd690dfc"
 }

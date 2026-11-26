@@ -192,6 +192,282 @@
   "data_asof": "20261125",
   "lag_days": 0
  },
- "result": null,
+ "result": {
+  "day_mean": -43.8,
+  "universe_size": 277,
+  "models": {
+   "n_machines": 11,
+   "mean_diff": 164.4,
+   "edge": 208.2
+  },
+  "avoid_models": {
+   "n_machines": 16,
+   "mean_diff": 39.1,
+   "edge": -82.9
+  },
+  "units": {
+   "n_machines": 13,
+   "mean_diff": 107.2,
+   "edge": 151.1
+  },
+  "jug_units": null,
+  "missing_units": [],
+  "missing_models": [],
+  "rb": {
+   "min_games": 3000,
+   "baseline_days": 60,
+   "min_base_machine_days": 20,
+   "day_rb_ratio": 1.0134102326920924,
+   "models": {
+    "n_machines": 2,
+    "games": 9450.0,
+    "rb_obs": 35.0,
+    "rb_exp": 30.27849079371464,
+    "rb_ratio": 1.1559360814398807,
+    "z": 0.8580522385673615,
+    "rb_edge": 0.1425258487477883
+   },
+   "avoid_models": {
+    "n_machines": 5,
+    "games": 22422.0,
+    "rb_obs": 64.0,
+    "rb_exp": 65.82442245808699,
+    "rb_ratio": 0.9722835022327971,
+    "z": -0.2248701869657307,
+    "rb_edge": -0.04112673045929527
+   },
+   "units": {
+    "n_machines": 3,
+    "games": 13671.0,
+    "rb_obs": 27.0,
+    "rb_exp": 37.43645338183867,
+    "rb_ratio": 0.721222166122669,
+    "z": -1.705711542773493,
+    "rb_edge": -0.2921880665694234
+   },
+   "jug_units": null,
+   "excluded": {
+    "low_games": 64,
+    "no_baseline": [],
+    "not_judgeable": [
+     "Vivy ‐Fluorite Eye's Song‐",
+     "いざ！番長",
+     "かぐや様は告らせたい",
+     "とある魔術の禁書目録2",
+     "やじきた道中記参る！",
+     "ガールズ&パンツァー 最終章",
+     "ゴジラ対エヴァンゲリオン 2",
+     "ゴッドイーター リザレクション",
+     "スマスロ北斗の拳",
+     "スマスロ炎炎ノ消防隊2",
+     "スーパーブラックジャック",
+     "ソードアート・オンライン オルタナティブ ガンゲイル・オンライン",
+     "ソードアート・オンラインII",
+     "ゾンビランドサガ",
+     "パリピ孔明",
+     "マギアレコード 魔法少女まどか☆マギカ外伝",
+     "ミリオンゴッド‐神々の軌跡‐",
+     "モグモグ風林火山",
+     "モンキーターンV",
+     "モンスターハンターライズ：サンブレイク",
+     "ラグナドール",
+     "ラブ嬢3～Wご指名はいかがですか?～",
+     "リコリス・リコイル",
+     "ワールドダイスター",
+     "七つの魔剣が支配する",
+     "化物語",
+     "南国育ち SPECIAL",
+     "彼女、お借りします",
+     "戦国コレクション6",
+     "戦国乙女5 業火を穿つ宿焔の双刃",
+     "戦姫絶唱シンフォギア 正義の歌",
+     "攻殻機動隊",
+     "新鬼武者3",
+     "東京リベンジャーズ",
+     "東京喰種",
+     "沖ドキ!DUO アンコール",
+     "牙狼 闇を照らす者",
+     "獣王",
+     "甲鉄城のカバネリ 海門(うなと)決戦",
+     "真・一騎当千",
+     "真打 吉宗",
+     "聖闘士星矢 黄金十二宮",
+     "転生王女と天才令嬢の魔法革命",
+     "邪神ちゃんドロップキック",
+     "青春ブタ野郎はバニーガール先輩の夢を見ない",
+     "革命機ヴァルヴレイヴ2",
+     "魔法少女にあこがれて"
+    ]
+   }
+  },
+  "rb_s1": {
+   "min_games": 3000,
+   "min_history_machine_days": 100,
+   "range_margin": 0.05,
+   "models": {
+    "n_machines": 2,
+    "games": 9450.0,
+    "rb_obs": 35.0,
+    "rb_exp_s1": 24.803149606299215,
+    "s1_ratio": 1.411111111111111,
+    "z": 2.047446823531224,
+    "rb_s1_edge": null
+   },
+   "avoid_models": {
+    "n_machines": 5,
+    "games": 22422.0,
+    "rb_obs": 64.0,
+    "rb_exp_s1": 59.46531657701566,
+    "s1_ratio": 1.076257618457497,
+    "z": 0.5880511527881536,
+    "rb_s1_edge": null
+   },
+   "units": {
+    "n_machines": 3,
+    "games": 13671.0,
+    "rb_obs": 27.0,
+    "rb_exp_s1": 31.41200973101239,
+    "s1_ratio": 0.8595438569899426,
+    "z": -0.7872063704905092,
+    "rb_s1_edge": -0.22962605568193542,
+    "n_compared_machines": 3,
+    "no_comparator": []
+   },
+   "jug_units": null,
+   "excluded": {
+    "low_games": 206,
+    "not_judgeable": [
+     "Vivy ‐Fluorite Eye's Song‐",
+     "スマスロ炎炎ノ消防隊2",
+     "スーパーブラックジャック",
+     "ソードアート・オンライン オルタナティブ ガンゲイル・オンライン",
+     "ソードアート・オンラインII",
+     "新鬼武者3",
+     "沖ドキ!DUO アンコール",
+     "牙狼 闇を照らす者",
+     "獣王",
+     "甲鉄城のカバネリ 海門(うなと)決戦",
+     "真打 吉宗",
+     "聖闘士星矢 黄金十二宮",
+     "邪神ちゃんドロップキック"
+    ],
+    "no_rb_spec": [],
+    "history_short": [],
+    "out_of_range": [
+     "うみねこのなく頃に2(1/422)"
+    ]
+   }
+  },
+  "games": {
+   "reach_games": 7000,
+   "hall_median_games": 1579.0,
+   "units": {
+    "n_machines": 13,
+    "g_ratio": 0.9324699073377306,
+    "g_edge": -0.1790722702074244,
+    "n_g_compared": 13,
+    "n_at": 0,
+    "reach_share": null,
+    "reach_edge": null,
+    "n_reach_compared": 0
+   },
+   "jug_units": null,
+   "models": {
+    "n_machines": 11,
+    "g_ratio": 1.3051413437733894,
+    "g_edge": -0.11049956343446565,
+    "n_at": 0,
+    "reach_share": null,
+    "reach_edge": null
+   }
+  },
+  "rb_stage": {
+   "played_games": 3000,
+   "all": {
+    "n_candidates": 13,
+    "n_present": 13,
+    "n_played": 3,
+    "played_share": 23.076923076923077,
+    "played_edge": -20.340236686390533,
+    "n_played_compared": 13,
+    "g_ratio": 0.9324699073377306,
+    "g_edge": -0.1790722702074244,
+    "n_g_compared": 13
+   },
+   "top5_units": [
+    735,
+    729,
+    742,
+    718,
+    731
+   ],
+   "top5": {
+    "n_candidates": 5,
+    "n_present": 5,
+    "n_played": 2,
+    "played_share": 40.0,
+    "played_edge": 11.0,
+    "n_played_compared": 5,
+    "g_ratio": 1.1229277311910995,
+    "g_edge": -0.02830081812193539,
+    "n_g_compared": 5
+   },
+   "top5_rb_s1": {
+    "n_machines": 2,
+    "games": 8088.0,
+    "rb_obs": 11.0,
+    "rb_exp_s1": 18.717603182581286,
+    "s1_ratio": 0.5876820815518018,
+    "z": -1.7838458676833897,
+    "rb_s1_edge": -0.21108863041249876,
+    "n_compared_machines": 2,
+    "no_comparator": []
+   }
+  },
+  "rb_machine": {
+   "n_eligible": 3,
+   "top": null,
+   "bottom": {
+    "n_families": 1,
+    "adj": -0.01104392788178915,
+    "edge": -0.09562628528229208
+   },
+   "excluded": {
+    "not_judgeable": [
+     "Vivy ‐Fluorite Eye's Song‐",
+     "スマスロ炎炎ノ消防隊2",
+     "スーパーブラックジャック",
+     "ソードアート・オンライン オルタナティブ ガンゲイル・オンライン",
+     "ソードアート・オンラインII",
+     "新鬼武者3",
+     "沖ドキ!DUO アンコール",
+     "牙狼 闇を照らす者",
+     "獣王",
+     "甲鉄城のカバネリ 海門(うなと)決戦",
+     "真打 吉宗",
+     "聖闘士星矢 黄金十二宮",
+     "邪神ちゃんドロップキック"
+    ],
+    "no_offset": [],
+    "not_comparable": [
+     "SHAKE BONUS TRIGGER",
+     "うみねこのなく頃に2",
+     "ウルトラミラクルジャグラー",
+     "ジャグラーガールズSS",
+     "ディスクアップ ULTRAREMIX",
+     "ファンキージャグラー2"
+    ]
+   }
+  },
+  "rb_day": {
+   "flag": {
+    "flag": "強め",
+    "x_dow": 0.402869381026258,
+    "pct": 1.0,
+    "n_reference": 60
+   },
+   "y_level": 0.3466100562677488
+  }
+ },
  "digest": "fa2e0be86cfb675c"
 }

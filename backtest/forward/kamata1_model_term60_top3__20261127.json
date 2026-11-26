@@ -1,0 +1,127 @@
+{
+  "rule_id": "kamata1_model_term60_top3",
+  "hall": "マルハンメガシティ2000-蒲田1",
+  "freeze_hash": "bb185b622fae47b2",
+  "target_date": "20261127",
+  "data_asof": "20261126",
+  "data_lag_days": 1,
+  "lookback_window": [
+    "2026-09-28",
+    "2026-11-27"
+  ],
+  "score": "hist_model_mean_edge",
+  "selection_unit": "machine_model",
+  "success_criterion": "判定はフォワードのみ。30エントリー日を経過した時点で edge 平均が +60枚/台 以上、かつ7日ブロックbootstrapの95%CI下限 > 0 であること。過去日の推定は60日窓で +187 枚（当ホール）なので、その半分は取れて然るべき。下回れば『タームで持続する』という主張を当ホールについて棄却し、月次機種選択の派生はこの1本で打ち止めとする。",
+  "is_dry_run": false,
+  "models": [
+    {
+      "machine_name": "革命機ヴァルヴレイヴ",
+      "score": 548.909588,
+      "history_rows": 69,
+      "machines": [
+        2025,
+        2026,
+        2027,
+        2028
+      ]
+    },
+    {
+      "machine_name": "ゴッドイーター リザレクション",
+      "score": 446.681001,
+      "history_rows": 44,
+      "machines": [
+        2416,
+        2417,
+        2418
+      ]
+    },
+    {
+      "machine_name": "モンスターハンターライズ",
+      "score": 287.290611,
+      "history_rows": 223,
+      "machines": [
+        2117,
+        2118,
+        2119,
+        2120,
+        2427
+      ]
+    }
+  ],
+  "picks": [
+    {
+      "machine_number": 2025,
+      "machine_name": "革命機ヴァルヴレイヴ",
+      "score": 548.909588,
+      "history_days": 69
+    },
+    {
+      "machine_number": 2026,
+      "machine_name": "革命機ヴァルヴレイヴ",
+      "score": 548.909588,
+      "history_days": 69
+    },
+    {
+      "machine_number": 2027,
+      "machine_name": "革命機ヴァルヴレイヴ",
+      "score": 548.909588,
+      "history_days": 69
+    },
+    {
+      "machine_number": 2028,
+      "machine_name": "革命機ヴァルヴレイヴ",
+      "score": 548.909588,
+      "history_days": 69
+    },
+    {
+      "machine_number": 2416,
+      "machine_name": "ゴッドイーター リザレクション",
+      "score": 446.681001,
+      "history_days": 44
+    },
+    {
+      "machine_number": 2417,
+      "machine_name": "ゴッドイーター リザレクション",
+      "score": 446.681001,
+      "history_days": 44
+    },
+    {
+      "machine_number": 2418,
+      "machine_name": "ゴッドイーター リザレクション",
+      "score": 446.681001,
+      "history_days": 44
+    },
+    {
+      "machine_number": 2117,
+      "machine_name": "モンスターハンターライズ",
+      "score": 287.290611,
+      "history_days": 223
+    },
+    {
+      "machine_number": 2118,
+      "machine_name": "モンスターハンターライズ",
+      "score": 287.290611,
+      "history_days": 223
+    },
+    {
+      "machine_number": 2119,
+      "machine_name": "モンスターハンターライズ",
+      "score": 287.290611,
+      "history_days": 223
+    },
+    {
+      "machine_number": 2120,
+      "machine_name": "モンスターハンターライズ",
+      "score": 287.290611,
+      "history_days": 223
+    },
+    {
+      "machine_number": 2427,
+      "machine_name": "モンスターハンターライズ",
+      "score": 287.290611,
+      "history_days": 223
+    }
+  ],
+  "result": null,
+  "plan_digest": "3240506aca9acc96"
+}
